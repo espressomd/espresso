@@ -197,9 +197,9 @@ int generic_oneway_reaction(int reaction_id){
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 
 	//create or hide particles of types with corresponding types in reaction
-	for(int i=0;i<min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
-		//change min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
-		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
+	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
+		//change std::min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
+		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
 			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
@@ -237,7 +237,7 @@ int generic_oneway_reaction(int reaction_id){
 	}
 
 	//create or hide particles of types with noncorresponding replacement types
-	for(int i=min(current_reaction->len_product_types,current_reaction->len_educt_types);i< max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
+	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
 		if(current_reaction->len_product_types<current_reaction->len_educt_types){
 			//hide superfluous educt_types particles
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
@@ -909,9 +909,9 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 	
 	//create or hide particles of types with corresponding types in reaction
-	for(int i=0;i<min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
-		//change min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
-		for(int j=0;j<min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
+	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
+		//change std::min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
+		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
 			int p_id ;
 			find_particle_type(current_reaction->educt_types[i], &p_id);
 			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
@@ -948,7 +948,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 
 	}
 	//create or hide particles of types with noncorresponding replacement types
-	for(int i=min(current_reaction->len_product_types,current_reaction->len_educt_types);i< max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
+	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
 		if(current_reaction->len_product_types<current_reaction->len_educt_types){
 			//hide superfluous educt_types particles
 			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
@@ -1013,7 +1013,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	//look wether the proposed state lies in Gamma and add the Wang-Landau modification factor, this is a bit nasty due to the energy collective variable case (memory layout of storage array of the histogram and the wang_landau_potential values is "cuboid")
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
-			bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+			bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 			//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1229,10 +1229,10 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1402,11 +1402,11 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
 				double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
-				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1501,10 +1501,10 @@ bool do_HMC_move(){
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
 				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
 			}else{
-				bf=min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1596,7 +1596,7 @@ int do_reaction_wang_landau(){
 	}
 	
 	//shift wang landau potential minimum to zero
-	if(tries%(max(90000,9*current_wang_landau_system.wang_landau_steps))==0){
+	if(tries%(std::max(90000,9*current_wang_landau_system.wang_landau_steps))==0){
 		//for numerical stability here we also subtract the minimum positive value of the wang_landau_potential from the wang_landau potential, allowed since only the difference in the wang_landau potential is of interest.
 		double minimum_wang_landau_potential=find_minimum_non_negative_value(current_wang_landau_system.wang_landau_potential,current_wang_landau_system.len_histogram);
 		for(int i=0;i<current_wang_landau_system.len_histogram;i++){
