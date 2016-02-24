@@ -37,7 +37,6 @@ endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 option(WITH_MPI    "Build a mpi parallel version of ESPResSo" ON)
-option(WITH_TK     "Build with tk support"  OFF)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)

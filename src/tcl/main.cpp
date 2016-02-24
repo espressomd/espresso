@@ -23,9 +23,6 @@
 */
 /* first, since we need the TK define */
 #include "utils.hpp"
-#ifdef TK
-#include <tk.h>
-#endif
 #include "initialize_interpreter.hpp"
 #include "initialize.hpp"
 #include "communication.hpp"
@@ -38,12 +35,7 @@ int main(int argc, char **argv)
   on_program_start();
 
   if (this_node == 0) {
-    /* master node */
-#ifdef TK
-    Tk_Main(argc, argv, tcl_appinit);
-#else
     Tcl_Main(argc, argv, tcl_appinit);
-#endif
   }
   else {
     /* slave node */
