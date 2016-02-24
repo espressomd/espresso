@@ -49,18 +49,20 @@ option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation marker
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
 
+# Check which config file to use
+include(MyConfig)
+
 ######################################################################
 # Libraries
 ######################################################################
-#
 
-find_package(MyConfig)
-
-if (WITH_CUDA)
-  find_package(CUDA REQUIRED)
-  list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-  list(APPEND LIBRARIES ${CUDA_LIBRARIES})
-  set(CUDA 1)
+if (WITH_CUDA)  
+  find_package(CUDA QUIET)
+  if(CUDA_FOUND)
+    list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
+    list(APPEND LIBRARIES ${CUDA_LIBRARIES})   
+    set(CUDA 1)
+  endif(CUDA_FOUND)
 endif(WITH_CUDA)     
 
 find_package(PythonInterp)
@@ -77,8 +79,6 @@ if (FFTW3_FOUND)
   include_directories(${FFTW3_INCLUDE_DIR})
   list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
-else(FFTW3_FOUND)
-  message(STATUS "FFTW3 not found, diabling it.")
 endif(FFTW3_FOUND)
 
 if (WITH_TCL)
@@ -124,13 +124,13 @@ if(WITH_TESTS)
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS 1)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
 
 #######################################################################
 # Process MPI settings
 #######################################################################
+
 if(WITH_MPI)
   find_package(MPI REQUIRED)
   list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
@@ -158,3 +158,10 @@ add_subdirectory(scripts)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(config)
+
+#######################################################################
+# Feature summary
+#######################################################################
+
+include(FeatureSummary)
+feature_summary(WHAT ALL)

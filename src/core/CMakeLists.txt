@@ -1,9 +1,11 @@
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
-else()
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
-endif()
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+if(CUDA)
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+  else()
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+  endif()
+  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+endif(CUDA)
 
 file(GLOB EspressoCore_SRC
           "*.cpp"
@@ -33,7 +35,7 @@ add_library(EspressoCore SHARED ${EspressoCore_SRC}
 target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
-if(WITH_CUDA)
+if(CUDA)
   file(GLOB EspressoCuda_SRC
           "*.cu"
           )
@@ -47,7 +49,7 @@ if(WITH_CUDA)
   set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
-endif(WITH_CUDA)
+endif(CUDA)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
