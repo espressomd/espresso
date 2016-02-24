@@ -1,7 +1,4 @@
-file(GLOB Electrostatics_SRC *.cpp)
-add_library(Electrostatics SHARED ${Electrostatics_SRC})
-
-set_target_properties(Electrostatics PROPERTIES LINKER_LANGUAGE CXX)
+add_library(Electrostatics INTERFACE)
 
 if(SCAFACOS)
   add_dependencies(Electrostatics Scafacos)
