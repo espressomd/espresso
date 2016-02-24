@@ -16,7 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+include "myconfig.pxi"
 import particle_data
+from libcpp cimport bool
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
+
+cdef bool skin_set

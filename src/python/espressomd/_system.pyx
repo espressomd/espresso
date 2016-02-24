@@ -21,6 +21,7 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 
+cimport integrate
 import interactions
 from actors import Actors
 cimport cuda_init
@@ -264,7 +265,8 @@ cdef class System:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(28)
+            mpi_bcast_parameter(29)
+            integrate.skin_set = True
 
         def __get__(self):
             global skin
