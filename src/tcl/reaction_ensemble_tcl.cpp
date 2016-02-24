@@ -362,6 +362,17 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					current_wang_landau_system.use_hybrid_monte_carlo=true;
 					printf("Make sure to use a bigger time step when using hybrid monte carlo steps!\n");
 				}
+				if(ARG1_IS_S("write_wang_landau_checkpoint")){
+					argc-=1; argv+=1;
+					char* identifier =strdup(argv[1]);
+					write_wang_landau_checkpoint(identifier);
+				}
+				if(ARG1_IS_S("load_wang_landau_checkpoint")){
+					argc-=1; argv+=1;
+					char* identifier =strdup(argv[1]);
+					load_wang_landau_checkpoint(identifier);
+				}				
+				
 			}
 		}
 		

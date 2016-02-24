@@ -69,15 +69,16 @@ typedef struct wang_landau_system {
 	double* wang_landau_potential; //equals the logarithm to basis e of the degeneracy of the states
 	int nr_collective_variables;
 	collective_variable** collective_variables;
+	int* nr_subindices_of_collective_variable;
 	double wang_landau_parameter; //equals the logarithm to basis e of the modification factor of the degeneracy of states when the state is visited
 	double initial_wang_landau_parameter;
-	int already_refined_n_times;
 	
 	int int_fill_value;
 	double double_fill_value;
 	
 	int number_of_monte_carlo_moves_between_check_of_convergence;
 	double final_wang_landau_parameter;
+	int used_bins; //for 1/t algorithm
 	int monte_carlo_trial_moves; //for 1/t algorithm
 
 	int wang_landau_steps; //may be used for performance improvements, when you do not want to record other observables in the tcl script
@@ -85,15 +86,14 @@ typedef struct wang_landau_system {
 	
 	double* minimum_energies_at_flat_index; //only present in energy preparation run
 	double* maximum_energies_at_flat_index; //only present in energy preparation run
+	
 	bool do_energy_reweighting;
 	int counter_ion_type;
 	int polymer_start_id;
 	int polymer_end_id;
 	bool fix_polymer;
 	bool do_not_sample_reaction_partition_function;
-	int used_bins;
 	bool use_hybrid_monte_carlo;
-	int* nr_subindices_of_collective_variable;
 } wang_landau_system;
 
 extern wang_landau_system current_wang_landau_system;
@@ -103,5 +103,10 @@ int do_reaction_wang_landau();
 void free_wang_landau();
 int update_maximum_and_minimum_energies_at_current_state(); //use for preliminary energy reweighting runs
 void write_out_preliminary_energy_run_results(char* filename);
+
+
+//checkpointing, only designed to reassign values of a previous simulation to a new simulation with the same initialization process
+int write_wang_landau_checkpoint(char* identifier);
+int load_wang_landau_checkpoint(char* identifier);
 
 #endif /* ifdef REACTION_H */

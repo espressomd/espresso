@@ -15,6 +15,8 @@
 #include "integrate.hpp" //for time_step
 #include <stdlib.h>  // for qsort()
 #include <stdio.h> //for getline()
+#include <iostream> //for std::cout
+#include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI
 
 reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
@@ -633,16 +635,16 @@ int get_flattened_index_wang_landau_of_current_state(){
 
 wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 , \
 						.wang_landau_potential=NULL,.nr_collective_variables=0,\
-						.collective_variables=NULL, .wang_landau_parameter=1.0,\
- 						.initial_wang_landau_parameter=1.0,.already_refined_n_times=0, \
+						.collective_variables=NULL, .nr_subindices_of_collective_variable=NULL , .wang_landau_parameter=1.0,\
+ 						.initial_wang_landau_parameter=1.0, \
  						.int_fill_value=-10,.double_fill_value=-10.0,\
  						.number_of_monte_carlo_moves_between_check_of_convergence=5000, .final_wang_landau_parameter=0.00001,\
- 						.monte_carlo_trial_moves=0, .wang_landau_steps=1,\
+ 						.used_bins=-10, .monte_carlo_trial_moves=0, .wang_landau_steps=1,\
  						.output_filename=NULL,\
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
  						.do_energy_reweighting=false, .counter_ion_type=-10, .polymer_start_id=-10 ,\
  						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false,\
- 					.used_bins=-10, .use_hybrid_monte_carlo=false
+ 					.use_hybrid_monte_carlo=false
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 1 wang_landau_steps if you want to record other observables in the tcl script.
 
 double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value, double delta_CV) {
@@ -1610,12 +1612,12 @@ int do_reaction_wang_landau(){
 		//write out preliminary wang-landau potential results
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 		
-		//remove holes from the sampling range for improved convergence
-		//be aware that this check also limits the maximal difference in degeneracies that you can sample
-		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
-			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_average_of_hisogram_before_removal_of_unused_bins)
-				remove_bins_that_have_not_been_sampled();
-		}
+//		//remove holes from the sampling range for improved convergence
+//		//be aware that this check also limits the maximal difference in degeneracies that you can sample
+//		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
+//			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_average_of_hisogram_before_removal_of_unused_bins)
+//				remove_bins_that_have_not_been_sampled();
+//		}
 	}
 	return 0;	
 };
@@ -1710,7 +1712,6 @@ void refine_wang_landau_parameter_one_over_t(){
 		current_wang_landau_system.wang_landau_parameter= current_wang_landau_system.wang_landau_parameter/2.0;
 		
 	}
-	current_wang_landau_system.already_refined_n_times+=1;
 }
 
 bool achieved_desired_number_of_refinements_one_over_t() {
@@ -1861,5 +1862,86 @@ void remove_bins_that_have_not_been_sampled(){
 	printf("Removed %d bins from the Wang-Landau spectrum\n",removed_bins);
 	//update used bins
 	current_wang_landau_system.used_bins-=removed_bins;
+}
+
+int write_wang_landau_checkpoint(char* identifier){
+	std::ofstream outfile;
+
+	//write current wang landau parameters (wang_landau_parameter, monte_carlo_trial_moves, flat_index_of_current_state)
+	outfile.open(std::string("checkpoint_wang_landau_parameters_")+identifier);
+	outfile << current_wang_landau_system.wang_landau_parameter << " " << current_wang_landau_system.monte_carlo_trial_moves << " " << get_flattened_index_wang_landau_of_current_state() << "\n" ;	
+	outfile.close();
+
+	//write histogram
+	outfile.open(std::string("checkpoint_wang_landau_histogram_")+identifier);
+	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
+		outfile << current_wang_landau_system.histogram[i] <<"\n" ;
+	}
+	outfile.close();
+	//write wang landau potential
+	outfile.open(std::string("checkpoint_wang_landau_potential_")+identifier);
+	for(int i=0;i<current_wang_landau_system.len_histogram;i++){
+		outfile << current_wang_landau_system.wang_landau_potential[i]<<"\n";	
+	}
+	outfile.close();
+	return 0;
+}
+
+
+int load_wang_landau_checkpoint(char* identifier){
+	std::ifstream infile;
+	
+	//restore wang landau parameters
+	infile.open(std::string("checkpoint_wang_landau_parameters_")+identifier);
+	if(infile.is_open()) {
+		
+		double wang_landau_parameter_entry;
+		int wang_landau_monte_carlo_trial_moves_entry;
+		int flat_index_of_state_at_checkpointing;
+		int line=0;
+		while (infile >> wang_landau_parameter_entry >> wang_landau_monte_carlo_trial_moves_entry >> flat_index_of_state_at_checkpointing)
+		{
+			current_wang_landau_system.wang_landau_parameter=wang_landau_parameter_entry;
+			current_wang_landau_system.monte_carlo_trial_moves=wang_landau_monte_carlo_trial_moves_entry;
+			line+=1;
+		}
+		infile.close();
+	} else {
+		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_parameters_")+identifier  << "\n";
+	}
+	
+	//restore histogram
+	infile.open(std::string("checkpoint_wang_landau_histogram_")+identifier);
+	if(infile.is_open()){ 
+		int hist_entry;
+		int line=0;
+		while (infile >> hist_entry)
+		{
+			current_wang_landau_system.histogram[line]=hist_entry;
+			line+=1;
+		}
+		infile.close();
+	} else {
+		std::cout << "Exception opening/ reading " << std::string("checkpoint_wang_landau_histogram_")+identifier << "\n";
+	}
+	
+	//restore wang landau potential
+	infile.open(std::string("checkpoint_wang_landau_potential_")+identifier);
+	if(infile.is_open()) {	
+		double wang_landau_potential_entry;
+		int line=0;
+		while (infile >> wang_landau_potential_entry)
+		{
+			current_wang_landau_system.wang_landau_potential[line]=wang_landau_potential_entry;
+			line+=1;
+		}
+		infile.close();
+	} else {
+		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_potential_")+identifier  << "\n";
+	}
+	
+	//possible task: restore state in which the system was when the checkpoint was written. However as long as checkpointing and restoring the system form the checkpoint is rare this should not matter statistically.
+	
+	return 0;
 }
 
