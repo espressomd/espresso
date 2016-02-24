@@ -95,30 +95,6 @@ void free_pairList(PairList *list)
 
 /** Returns true if the particles are to be considered for short range 
     interactions */
-bool verlet_list_criterion(Particle* p1, Particle* p2,double dist2)
-{
-  if (dist2 > SQR(max_cut +skin))
-    return false;
-
-    
-  // Within short-range distance (incl dpd and the like)
-  if(dist2 <= SQR(get_ia_param(p1->p.type, p2->p.type)->max_cut + skin))
-    return true;
-
-  // Within real space cutoff of electrostatics and both charged
-  #ifdef ELECTROSTATICS
-    if ((dist2 <= SQR(coulomb_cutoff + skin)) && (p1->p.q!=0) && (p2->p.q!=0))
-      return true;
-  #endif
-
-  // Within dipolar cutoff and both cary magnetic moments
-  #ifdef DIPOLES
-  if ((dist2 <= SQR(dipolar_cutoff+skin)) && (p1->p.dipm!=0) && (p2->p.dipm!=0))
-    return true;
-  #endif
-  
-  return false;
-}
 
 
 void build_verlet_lists()
