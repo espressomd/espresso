@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -521,12 +521,6 @@ void mpi_get_constraint_force(int constraint, double force[3]);
 /** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
 void mpi_get_configtemp(double cfgtmp[2]);
 #endif
-
-/** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
-void mpi_bit_random_seed(int cnt, int *seed);
-
-/** Issue REQ_BIT_RANDOM_STAT: read/set status of the bit random number generators on each node. */
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat);
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir' by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
