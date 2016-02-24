@@ -733,6 +733,7 @@ cdef class ParticleHandle:
         del self
 
     # Bond related methods
+    # Does not work properly with 3 or more partner bonds!
     def add_verified_bond(self, bond):
         """Add a bond, the validity of which has already been verified"""
         # If someone adds bond types with more than four partners, this has to
@@ -741,9 +742,6 @@ cdef class ParticleHandle:
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
-            print "BOND[i]",bond[i] ,bond, bond_info
-            print
-            # print "BOND_INFO", bond_info, self.id
         if change_particle_bond(self.id, bond_info, 0):
             raise Exception("Adding the bond failed.")
 
