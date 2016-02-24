@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -170,7 +170,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("imd", tclcommand_imd);
   /* in file random.cpp */
   REGISTER_COMMAND("t_random", tclcommand_t_random);
-  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in file h5mdfile_tcl.cpp */

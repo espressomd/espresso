@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -107,7 +107,6 @@ void on_program_start()
     call the initialization of the modules here
   */
   init_random();
-  init_bit_random();
 
   init_node_grid();
   /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */
