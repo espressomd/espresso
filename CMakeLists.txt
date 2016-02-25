@@ -124,6 +124,7 @@ if(WITH_TESTS)
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS 1)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
+  add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
 

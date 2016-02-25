@@ -117,7 +117,8 @@ if(WITH_TCL)
     set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
   endforeach(testfile ${tcl_tests})
   add_custom_target(check_tcl COMMAND ${CMAKE_CTEST_COMMAND}
-    DEPENDS Espresso testsuite)  
+    DEPENDS Espresso testsuite)
+  add_dependencies(check check_tcl)
 endif(WITH_TCL)
 
 if(WITH_PYTHON)

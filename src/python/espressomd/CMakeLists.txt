@@ -16,6 +16,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
+add_dependencies(gen_pxiconfig EspressoConfig)
 
 add_custom_command(OUTPUT _espresso/myconfig.pxi
 		   COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/_espresso
@@ -25,6 +26,8 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
+
+add_custom_target(espressomd)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -55,5 +58,6 @@ foreach(cython_file ${cython_SRC})
      set_target_properties(${basename} PROPERTIES SUFFIX ".so")
   endif()
   target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+  add_dependencies(espressomd ${basename})
 endforeach()
 
