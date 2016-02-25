@@ -104,6 +104,7 @@ set(tcl_tests  analysis.tcl
 if(WITH_MPI)
     include(ProcessorCount)
     ProcessorCount(NP)
+    math(EXPR NP "${NP}/2 + 1")
 endif(WITH_MPI)
 
 if(WITH_TCL)
