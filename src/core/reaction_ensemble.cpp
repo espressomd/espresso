@@ -1907,7 +1907,7 @@ int load_wang_landau_checkpoint(char* identifier){
 		}
 		infile.close();
 	} else {
-		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_parameters_")+identifier  << "\n";
+		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_parameters_")+identifier  << "\n" << std::flush;
 	}
 	
 	//restore histogram
@@ -1922,7 +1922,7 @@ int load_wang_landau_checkpoint(char* identifier){
 		}
 		infile.close();
 	} else {
-		std::cout << "Exception opening/ reading " << std::string("checkpoint_wang_landau_histogram_")+identifier << "\n";
+		std::cout << "Exception opening/ reading " << std::string("checkpoint_wang_landau_histogram_")+identifier << "\n" << std::flush;
 	}
 	
 	//restore wang landau potential
@@ -1937,7 +1937,7 @@ int load_wang_landau_checkpoint(char* identifier){
 		}
 		infile.close();
 	} else {
-		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_potential_")+identifier  << "\n";
+		std::cout << "Exception opening " << std::string("checkpoint_wang_landau_potential_")+identifier  << "\n" << std::flush;
 	}
 	
 	//possible task: restore state in which the system was when the checkpoint was written. However as long as checkpointing and restoring the system form the checkpoint is rare this should not matter statistically.
