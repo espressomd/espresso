@@ -1,5 +1,5 @@
-add_custom_target(testsuite ALL
-                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} .)
+add_custom_target(testsuite
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(tcl_tests  analysis.tcl
                angle.tcl
@@ -104,18 +104,23 @@ set(tcl_tests  analysis.tcl
 if(WITH_MPI)
     include(ProcessorCount)
     ProcessorCount(NP)
+    math(EXPR NP "${NP}/2 + 1")
 endif(WITH_MPI)
 
 if(WITH_TCL)
   foreach(testfile ${tcl_tests})
     get_filename_component(basename ${testfile} NAME_WE)
+    set(TEST_EXECUTABLE ${PYTHON_EXECUTABLE} test_wrapper.py ${CMAKE_BINARY_DIR}/Espresso)
     if(WITH_MPI)
-      add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NP} ../Espresso ${testfile})
+      add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NP} ${TEST_EXECUTABLE} ${testfile})
     else(WITH_MPI)
-      add_test(${basename} ../Espresso ${testfile})
+      add_test(${basename} ${TEST_EXECUTABLE} ${testfile})
     endif(WITH_MPI)
     set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
   endforeach(testfile ${tcl_tests})
+  add_custom_target(check_tcl COMMAND ${CMAKE_CTEST_COMMAND}
+    DEPENDS Espresso testsuite)
+  add_dependencies(check check_tcl)
 endif(WITH_TCL)
 
 if(WITH_PYTHON)

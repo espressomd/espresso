@@ -33,7 +33,10 @@ else()
     set(MYCONFIG_FILE ${CMAKE_SOURCE_DIR}/src/core/myconfig-default.hpp)
   endif()
 endif()
-configure_file( ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp COPYONLY )
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
+  COMMAND ${CMAKE_COMMAND} -E copy ${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp
+  DEPENDS ${MYCONFIG_FILE})
+add_custom_target(myconfig DEPENDS ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp)
 message(STATUS "Config file: ${MYCONFIG_FILE}")
 # Clear variable, otherwise cmake must be run by hand to detect myconfig
 # Also prevents find_file from skipping when variable is already set

@@ -16,6 +16,7 @@
 # where its current version can be found, or write to
 # Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 
 # 55021 Mainz, Germany.
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 
 source "tests_common.tcl"
