@@ -1,6 +1,7 @@
 file(GLOB Actor_SRC *.cpp)
 
 add_library(Actor SHARED ${Actor_SRC})
+add_dependencies(Actor EspressoConfig)
 
 if(CUDA)
   file(GLOB ActorCuda_SRC *.cu)

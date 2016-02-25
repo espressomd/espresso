@@ -1,5 +1,5 @@
-add_custom_target(testsuite ALL
-                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} .)
+add_custom_target(testsuite
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(tcl_tests  analysis.tcl
                angle.tcl
@@ -116,6 +116,8 @@ if(WITH_TCL)
     endif(WITH_MPI)
     set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
   endforeach(testfile ${tcl_tests})
+  add_custom_target(check_tcl COMMAND ${CMAKE_CTEST_COMMAND}
+    DEPENDS Espresso testsuite)  
 endif(WITH_TCL)
 
 if(WITH_PYTHON)

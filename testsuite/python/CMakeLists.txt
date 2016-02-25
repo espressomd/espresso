@@ -13,3 +13,6 @@ foreach(testfile ${py_tests})
   add_test(${basename} ../../pypresso ${testfile})
   set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
 endforeach(testfile ${py_tests})
+
+add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND}
+  DEPENDS ${CMAKE_BINARY_DIR}/pypresso testsuite)    
