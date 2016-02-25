@@ -5,8 +5,9 @@ sudo: required
 before_install:
  - sudo apt-get clean
  - sudo apt-get update
- - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential python-numpy python-pip pep8
- - sudo -H PATH="${PATH}:/usr/local/clang-3.4/bin" pip install cython --upgrade 
+ - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential python-pip pep8
+ - sudo -H PATH="${PATH}:/usr/local/clang-3.4/bin" pip install cython --upgrade
+ - sudo -H PATH="${PATH}:/usr/local/clang-3.4/bin" pip install numpy --upgrade
  - if [ "$with_mpi" != false ]; then sudo apt-get install -y libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
  - pip install --user codecov
