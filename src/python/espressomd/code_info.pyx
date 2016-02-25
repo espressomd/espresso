@@ -52,6 +52,9 @@ def features():
     IF BOND_ENDANGLEDIST_HARMONIC == 1:
         f.append("BOND_ENDANGLEDIST_HARMONIC")
 
+    IF TK == 1:
+        f.append("TK")
+
     IF BOND_ANGLE_HARMONIC == 1:
         f.append("BOND_ANGLE_HARMONIC")
 

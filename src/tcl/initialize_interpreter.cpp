@@ -65,6 +65,10 @@
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
 
+#ifdef TK
+#include <tk.h>
+#endif
+
 /****************************************
  * various forwards
  *****************************************/
@@ -287,6 +291,11 @@ int tcl_appinit(Tcl_Interp *interp)
 {
   if (Tcl_Init(interp) == TCL_ERROR)
     return TCL_ERROR;
+
+#ifdef TK
+  if (Tk_Init(interp) == TCL_ERROR)
+    return TCL_ERROR;
+#endif
 
   /*
     installation of tcl commands

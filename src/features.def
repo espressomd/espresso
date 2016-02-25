@@ -234,6 +234,7 @@ ONEPART_DEBUG
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external
 FFTW external
+TK   external
 H5MD external
 SCAFACOS external
 
