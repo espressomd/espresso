@@ -76,7 +76,9 @@ int partCfgSorted = 0;
 /** bondlist for partCfg, if bonds are needed */
 IntList partCfg_bl = { NULL, 0, 0 };
 
-#if !defined(HAVE_CXX11) and !defined(MASS)
+#if defined(HAVE_CXX11)
+  const double ParticleProperties::mass;
+#elif !defined(MASS)
   const double ParticleProperties::mass = 1.0;
 #endif
 

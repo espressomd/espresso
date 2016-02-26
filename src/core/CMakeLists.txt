@@ -1,12 +1,3 @@
-if(CUDA)
-  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
-  else()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
-  endif()
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
-endif(CUDA)
-
 file(GLOB EspressoCore_SRC
           "*.cpp"
           )

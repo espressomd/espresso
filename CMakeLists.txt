@@ -75,12 +75,23 @@ message(STATUS ${__PRETTYFUNC__})
 # Libraries
 ######################################################################
 
-if (WITH_CUDA)  
+if (WITH_CUDA)
   find_package(CUDA QUIET)
   if(CUDA_FOUND)
     list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-    list(APPEND LIBRARIES ${CUDA_LIBRARIES})   
+    list(APPEND LIBRARIES ${CUDA_LIBRARIES})
     set(CUDA 1)
+
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+    else()
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+    endif()
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+  
+    if (APPLE)
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+    endif()
   endif(CUDA_FOUND)
 endif(WITH_CUDA)     
 
@@ -169,6 +180,14 @@ if (NOT DEFINED DATA)
 endif(NOT DEFINED DATA)
 
 set(SCRIPTDIR ${DATA}/scripts)
+
+#######################################################################
+# Flags
+#######################################################################
+
+if(APPLE)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+endif()
 
 #######################################################################
 # Subdirectories
