@@ -53,6 +53,25 @@ set(MYCONFIG_NAME "myconfig.hpp"
 include(MyConfig)
 
 ######################################################################
+# Pretty function
+######################################################################
+
+include(CheckCXXSourceCompiles)
+
+foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+   check_cxx_source_compiles("
+     #include <string>
+     int main() { std::string(${func_name}); }
+     " result${func_name} QUIET)
+   if(result${func_name})
+     set(__PRETTYFUNC__ ${func_name})
+     break()
+   endif(result${func_name})
+endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+
+message(STATUS ${__PRETTYFUNC__})
+
+######################################################################
 # Libraries
 ######################################################################
 
