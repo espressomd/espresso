@@ -62,7 +62,7 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    check_cxx_source_compiles("
      #include <string>
      int main() { std::string(${func_name}); }
-     " result${func_name} QUIET)
+     " result${func_name})
    if(result${func_name})
      set(__PRETTYFUNC__ ${func_name})
      break()
