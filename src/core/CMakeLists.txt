@@ -33,7 +33,7 @@ add_dependencies(EspressoConfig myconfig)
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Scafacos)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(CUDA)
