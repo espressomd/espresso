@@ -69,8 +69,6 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    endif(result${func_name})
 endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 
-message(STATUS ${__PRETTYFUNC__})
-
 ######################################################################
 # Libraries
 ######################################################################
@@ -162,18 +160,18 @@ endif(WITH_TESTS)
 # Process MPI settings
 #######################################################################
 
-if(WITH_MPI)
-  find_package(MPI REQUIRED)
-  list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
+find_package(MPI)
+if(WITH_MPI AND MPI_FOUND)
+  list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
   list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
   include_directories(${MPI_INCLUDE_PATH})
   list(APPEND LIBRARIES ${MPI_LIBRARIES})
   set(MPI_SOURCE)
   set(HAVE_MPI 1)
-else(WITH_MPI)
-  include_directories(src/mpifake)  
-  set(MPI_SOURCE src/mpifake/mpi.c)
-endif(WITH_MPI)
+else()
+  include_directories(${CMAKE_SOURCE_DIR}/src/core/mpifake)  
+  set(MPI_SOURCE ${CMAKE_SOURCE_DIR}/src/core/mpifake/mpi.cpp)
+endif()
 
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
