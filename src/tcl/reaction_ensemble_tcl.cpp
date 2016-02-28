@@ -230,10 +230,6 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 		} else { //for performance reasons skip the other checks if do is found as argument
 			if( ARG1_IS_S("add_reaction") ) {
 				//add reaction. note all calls of this function have to be done before the first call of "initialize()"
-				if(current_reaction_system.reactions==NULL){
-					// this initializes the reaction_system
-					create_current_reaction_system_struct();
-				}
 				tclcommand_add_reaction(interp, argc, argv);
 		
 			}

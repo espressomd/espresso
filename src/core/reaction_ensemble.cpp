@@ -42,13 +42,6 @@ void free_wang_landau();
 void remove_bins_that_have_not_been_sampled();
 double average_int_list(int* int_number_list, int len_int_nr_list);
 
-
-int create_current_reaction_system_struct(){
-	single_reaction** reactions_list=(single_reaction**) malloc(sizeof(single_reaction*));
-	current_reaction_system.reactions=reactions_list;
-	return 0;
-}
-
 int do_reaction(){
 	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
 	generic_oneway_reaction(reaction_id);

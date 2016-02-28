@@ -34,8 +34,6 @@ extern reaction_system current_reaction_system;
 
 int do_reaction();
 
-int create_current_reaction_system_struct();
-
 int free_reaction_ensemble();
 
 int check_reaction_ensemble();
