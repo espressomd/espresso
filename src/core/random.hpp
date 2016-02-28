@@ -47,23 +47,6 @@ extern long  iy;
 extern long  iv[NTAB_RANDOM];
 /*@}*/
 
-/** Stuff for Burkhards r250-generator */
-/*@{*/
-#define MERS1 147
-#define MERS_BIT_RANDOM 250
-#define NBIT 32
-#define BIGINTEGER 2147483647
-#define BIGFLOAT 2147483647.
-#define FACTOR 4.6566128752457969e-10
-#define MULTIPLY 16807.
-#define NWARM 10000
-
-extern int bit_seed;
-extern int rand_w_array[MERS_BIT_RANDOM];
-extern int random_pointer_1;
-extern int random_pointer_2;
-/*@}*/
-
 typedef struct {
   long  idum;
   long  iy;
@@ -222,26 +205,5 @@ inline double gaussian_random_cut(void) {
   }
 
 }
-
-
-/*----------------------------------------------------------*/
-/*----------------------------------------------------------*/
-/*----------------------------------------------------------*/
-
-typedef struct {
-  int random_pointer_1;
-  int random_pointer_2;
-  int rand_w_array[MERS_BIT_RANDOM];
-} BitRandomStatus;
-
-double bit_random_generator(void);
-void   init_bit_random(void);
-void   init_bit_random_generator(int iseed);
-void   init_bit_random_stat(BitRandomStatus my_stat);
-int    print_bit_random_seed(void);
-BitRandomStatus print_bit_random_stat(void);
-
-
-/*----------------------------------------------------------*/
 
 #endif
