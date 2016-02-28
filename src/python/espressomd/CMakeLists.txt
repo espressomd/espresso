@@ -1,3 +1,4 @@
+
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
 file(GLOB cython_AUX *.py)
@@ -15,6 +16,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
+add_dependencies(gen_pxiconfig EspressoConfig)
 
 add_custom_command(OUTPUT _espresso/myconfig.pxi
 		   COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/_espresso
@@ -24,6 +26,8 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
+
+add_custom_target(espressomd)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -38,21 +42,13 @@ foreach(cython_file ${cython_SRC})
                      DEPENDS _espresso/myconfig.pxi 
                      )
 
-  if (${basename} STREQUAL "_tcl")
-    file(GLOB_RECURSE Espresso_tcl_SRC
-            "${CMAKE_CURRENT_SOURCE_DIR}/../../tcl/*.cpp"
-            )
-    add_library(${basename} SHARED ${basename}.cpp ${Espresso_tcl_SRC})
-    target_include_directories(${basename} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../tcl)
-    add_definitions(-DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
-  else()
-    add_library(${basename} SHARED ${basename}.cpp)
-  endif()
+  add_library(${basename} SHARED ${basename}.cpp)
   set_target_properties(${basename} PROPERTIES PREFIX "")
   set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
   if (APPLE)
      set_target_properties(${basename} PROPERTIES SUFFIX ".so")
   endif()
   target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+  add_dependencies(espressomd ${basename})
 endforeach()
 
