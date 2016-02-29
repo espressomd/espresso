@@ -23,6 +23,10 @@ reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
+
+int number_of_times_in_the_same_bin=0;//for avoiding becoming trapped in HMC-Wang-Landau
+int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
+
 double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from tcl interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
 
 //declaration of boring helper functions
@@ -734,6 +738,11 @@ int get_flattened_index_wang_landau_without_energy_collective_variable(int flatt
 void unravel_index(int* len_dims, int ndims, int flattened_index, int* unraveled_index_out); //needed for writing results and energy collective variable
 
 int initialize_wang_landau(){
+	if(current_wang_landau_system.nr_subindices_of_collective_variable!=NULL){
+		//initialize_wang_landau() has been called before, free everything that was allocated
+		free(current_wang_landau_system.nr_subindices_of_collective_variable);
+	}
+	
 	//initialize deltas for collective variables which are of the type of a degree of association
 	int energy_collective_variable_index=-10;
 	double* min_boundaries_energies=NULL;
@@ -829,6 +838,9 @@ int initialize_wang_landau(){
 		
 	}
 
+	free(max_boundaries_energies);
+	free(min_boundaries_energies);
+
 	//assign determine_current_state_in_this_collective_variable function pointers to correct function
 	for(int collective_variable_i=0; collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		collective_variable* current_collective_variable=current_wang_landau_system.collective_variables[collective_variable_i];
@@ -842,9 +854,6 @@ int initialize_wang_landau(){
 		}
 		
 	}
-	
-	//set automatically molecular dynamics time step in a good manner for the Wang-Landau reaction ensemble that for Hybrid Monte Carlo moves
-	
 	
 	return true;
 }
@@ -1164,7 +1173,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		bool particle_inserted_too_close_to_another_one=true;
 		while(particle_inserted_too_close_to_another_one==true&& attempts<max_tries){
 			//change particle position
-			double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
+			double pos_x=box_l[0]*d_random();
 			double pos_y=box_l[1]*d_random();
 			double pos_z=box_l[2]*d_random();
 			double new_pos[3]={pos_x, pos_y, pos_z};
@@ -1340,7 +1349,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		bool particle_inserted_too_close_to_another_one=true;
 		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
 			//change particle position
-			double pos_x=box_l[0]*bit_random_generator(); //here we use the r250 random generator with higher period by using box_l[0]*bit_random_generator()
+			double pos_x=box_l[0]*d_random();
 			double pos_y=box_l[1]*d_random();
 			double pos_z=box_l[2]*d_random();
 			double new_pos[3]={pos_x, pos_y, pos_z};
@@ -1496,10 +1505,9 @@ bool do_HMC_move(){
 	if(old_state_index>=0 && new_state_index>=0){
 		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
 			if(current_wang_landau_system.do_energy_reweighting==true){
-				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
-				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
+				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //do not include kinetic energy here!
 			}else{
-				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))); //do not include the kinetic energy here
 			}
 		}else{
 			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
@@ -1516,6 +1524,13 @@ bool do_HMC_move(){
 		bf=10;	//accept, in order to be able to sample new configs, which might lie in Gamma
 	}else if(old_state_index>=0 && new_state_index<0){
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
+	}
+	
+	//avoid becoming trapped
+	if(number_of_times_in_the_same_bin>100 && bf>=0){
+		bf=10;
+		printf("avoided trapping \n");
+		fflush(stdout);
 	}
 		
 	bool got_accepted=false;
@@ -1545,6 +1560,15 @@ bool do_HMC_move(){
 			place_particle(p_id,pos_vec);
 		}
 	}
+	
+	//avoid becoming trapped
+	if(get_flattened_index_wang_landau_of_current_state()==last_bin_index and last_bin_index>=0) {
+		number_of_times_in_the_same_bin+=1;
+	}else{
+		number_of_times_in_the_same_bin=0;
+		last_bin_index=get_flattened_index_wang_landau_of_current_state();
+	}
+	
 	return got_accepted;
 }
 
@@ -1563,7 +1587,8 @@ int do_reaction_wang_landau(){
 			accepted_moves+=1;
 		}
 		
-		//try to sample config partition function
+		//perform additional Monte-carlo moves to to sample configurational partition function
+		//according to "Density-of-states Monte Carlo method for simulation of fluids"
 		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
 		for(int k=0;k<4;k++){
 			if(current_wang_landau_system.counter_ion_type>=0){

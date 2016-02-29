@@ -216,6 +216,7 @@ int tclcommand_add_reaction_coordinate(Tcl_Interp *interp, int argc, char **argv
 	current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
 	current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable;
 	current_wang_landau_system.nr_collective_variables+=1;
+	initialize_wang_landau();
 	return TCL_OK;
 
 }
@@ -229,7 +230,6 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			do_reaction();
 		} else { //for performance reasons skip the other checks if do is found as argument
 			if( ARG1_IS_S("add_reaction") ) {
-				//add reaction. note all calls of this function have to be done before the first call of "initialize()"
 				tclcommand_add_reaction(interp, argc, argv);
 		
 			}
@@ -243,7 +243,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			}
 			
 			if(ARG1_IS_S("set_default_charge_of_type")) {
-				//needs to be called for each type individually after initialize was called
+				//needs to be called for each type individually after reaction was added
 				int type;
 				ARG_IS_I(2,type);
 				double charge;
@@ -291,11 +291,6 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 
 				if(ARG1_IS_S("add")){
 					tclcommand_add_reaction_coordinate(interp, argc, argv);
-				}
-				
-				if(ARG1_IS_S("initialize")) {
-					//needs to be called after all collective variables are added
-					initialize_wang_landau();
 				}
 
 				if(ARG1_IS_S("final_wang_landau_parameter")) {
