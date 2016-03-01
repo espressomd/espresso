@@ -42,16 +42,7 @@ foreach(cython_file ${cython_SRC})
                      DEPENDS _espresso/myconfig.pxi 
                      )
 
-  if (${basename} STREQUAL "_tcl")
-    file(GLOB_RECURSE Espresso_tcl_SRC
-            "${CMAKE_CURRENT_SOURCE_DIR}/../../tcl/*.cpp"
-            )
-    add_library(${basename} SHARED ${basename}.cpp ${Espresso_tcl_SRC})
-    target_include_directories(${basename} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../tcl)
-    add_definitions(-DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
-  else()
-    add_library(${basename} SHARED ${basename}.cpp)
-  endif()
+  add_library(${basename} SHARED ${basename}.cpp)
   set_target_properties(${basename} PROPERTIES PREFIX "")
   set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
   if (APPLE)

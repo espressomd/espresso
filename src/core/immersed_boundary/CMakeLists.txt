@@ -10,3 +10,5 @@ if(CUDA)
   CUDA_ADD_CUFFT_TO_TARGET(ImmersedBoundaryCuda)
   target_link_libraries(ImmersedBoundary ImmersedBoundaryCuda)
 endif(CUDA)
+
+set_target_properties(ImmersedBoundary PROPERTIES LINKER_LANGUAGE CXX)

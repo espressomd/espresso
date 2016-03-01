@@ -1,12 +1,3 @@
-if(CUDA)
-  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
-  else()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
-  endif()
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
-endif(CUDA)
-
 file(GLOB EspressoCore_SRC
           "*.cpp"
           )
@@ -31,9 +22,9 @@ add_custom_command(OUTPUT config-version.cpp
 add_custom_target(EspressoConfig DEPENDS config-features.hpp)
 add_dependencies(EspressoConfig myconfig)
 
-add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp)
+add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp ${MPI_SOURCE})
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid Electrostatics ImmersedBoundary)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Scafacos)
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(CUDA)

@@ -244,7 +244,7 @@ void calculate_spherocylinder_dist(Particle *p1, double ppos[3], Particle *c_p, 
     d += ppos_local[i] * c->axis[i];
   }
 
-  if(abs(d) >= c->length) {
+  if(fabs(d) >= c->length) {
     *dist = 0.0;
     
     for(i = 0; i < 3; i++) {
@@ -841,7 +841,7 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
 	d /= tmp;
 	
-	if(abs(d) < abs(*dist))
+	if(fabs(d) < fabs(*dist))
 	{
 		vec[0] = d * axc[0]/tmp;
 		vec[1] = d * axc[1]/tmp;
@@ -857,7 +857,7 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
 	d /= tmp;
 
-	if(abs(d) < abs(*dist))
+	if(fabs(d) < fabs(*dist))
 	{							
 		vec[0] = -d * bxc[0]/tmp;
 		vec[1] = -d * bxc[1]/tmp;
@@ -872,7 +872,7 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
 	d /= tmp;
 	
-	if(abs(d) < abs(*dist))
+	if(fabs(d) < fabs(*dist))
 	{																					
 		vec[0] = d * axb[0]/tmp;
 		vec[1] = d * axb[1]/tmp;
@@ -888,7 +888,7 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
 	d /= tmp;
 
-	if(abs(d) < abs(*dist))
+	if(fabs(d) < fabs(*dist))
 	{																						
 		vec[0] = -d * axc[0]/tmp;
 		vec[1] = -d * axc[1]/tmp;
@@ -903,7 +903,7 @@ void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
 	d /= tmp;
 
-	if(abs(d) < abs(*dist))
+	if(fabs(d) < fabs(*dist))
 	{																						
 		vec[0] = d * bxc[0]/tmp;
 		vec[1] = d * bxc[1]/tmp;

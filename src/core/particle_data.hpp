@@ -85,12 +85,7 @@ struct ParticleProperties {
   /** particle mass */
   double mass;
 #else
-  /** set mass to 0 */
-#ifdef HAVE_CXX11
-  constexpr static double mass = 1.0;
-#else
-  const static double mass;
-#endif /* HAVE_CXX11 */
+  constexpr static double mass{1.0};
 #endif /* MASS */
 
 #ifdef SHANCHEN

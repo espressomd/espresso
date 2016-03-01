@@ -53,15 +53,43 @@ set(MYCONFIG_NAME "myconfig.hpp"
 include(MyConfig)
 
 ######################################################################
+# Pretty function
+######################################################################
+
+include(CheckCXXSourceCompiles)
+
+foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+   check_cxx_source_compiles("
+     #include <string>
+     int main() { std::string(${func_name}); }
+     " result${func_name})
+   if(result${func_name})
+     set(__PRETTYFUNC__ ${func_name})
+     break()
+   endif(result${func_name})
+endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+
+######################################################################
 # Libraries
 ######################################################################
 
-if (WITH_CUDA)  
+if (WITH_CUDA)
   find_package(CUDA QUIET)
   if(CUDA_FOUND)
     list(APPEND LIBRARIES ${CUDA_CUFFT_LIBRARIES})
-    list(APPEND LIBRARIES ${CUDA_LIBRARIES})   
+    list(APPEND LIBRARIES ${CUDA_LIBRARIES})
     set(CUDA 1)
+
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+    else()
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
+    endif()
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
+  
+    if (APPLE)
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
+    endif()
   endif(CUDA_FOUND)
 endif(WITH_CUDA)     
 
@@ -132,24 +160,32 @@ endif(WITH_TESTS)
 # Process MPI settings
 #######################################################################
 
-if(WITH_MPI)
-  find_package(MPI REQUIRED)
-  list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
+find_package(MPI)
+if(WITH_MPI AND MPI_FOUND)
+  list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
   list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
   include_directories(${MPI_INCLUDE_PATH})
   list(APPEND LIBRARIES ${MPI_LIBRARIES})
   set(MPI_SOURCE)
   set(HAVE_MPI 1)
-else(WITH_MPI)
-  include_directories(src/mpifake)  
-  set(MPI_SOURCE src/mpifake/mpi.c)
-endif(WITH_MPI)
+else()
+  include_directories(${CMAKE_SOURCE_DIR}/src/core/mpifake)  
+  set(MPI_SOURCE ${CMAKE_SOURCE_DIR}/src/core/mpifake/mpi.cpp)
+endif()
 
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
 
 set(SCRIPTDIR ${DATA}/scripts)
+
+#######################################################################
+# Flags
+#######################################################################
+
+if(APPLE)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+endif()
 
 #######################################################################
 # Subdirectories
