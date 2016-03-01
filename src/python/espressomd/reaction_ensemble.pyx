@@ -104,7 +104,7 @@ IF REACTION_ENSEMBLE:
             current_reaction_system.reactions=<single_reaction**> realloc(current_reaction_system.reactions,sizeof(single_reaction*)*(current_reaction_system.nr_single_reactions+1)); #enlarge current_reaction_system
             current_reaction_system.reactions[current_reaction_system.nr_single_reactions]=new_reaction;
             current_reaction_system.nr_single_reactions+=1;
-	
+            
             #assign different types an index in a growing list that starts at and is incremented by 1 for each new type
             update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types); 
             
@@ -134,91 +134,103 @@ IF REACTION_ENSEMBLE:
 
 
 
-	#//////////////////////////Wang-Landau algorithm
-	def add_collective_variable_degree_of_association(self,*args,**kwargs):
-		for k in kwargs:
-			if k in self.valid_keys_add_collective_variable_degree_of_association():
-				self._params[k]=kwargs[k]
-			else: KeyError("%s is not a valid key" %k)
-		cdef collective_variable* new_collective_variable=<collective_variable*> malloc(sizeof(collective_variable))
+        #//////////////////////////Wang-Landau algorithm
+        def add_collective_variable_degree_of_association(self,*args,**kwargs):
+            for k in kwargs:
+                if k in self.valid_keys_add_collective_variable_degree_of_association():
+                    self._params[k]=kwargs[k]
+                else: KeyError("%s is not a valid key" %k)
+            cdef collective_variable* new_collective_variable=<collective_variable*> malloc(sizeof(collective_variable))
 
-		new_collective_variable.associated_type=self.params["associated_type"]
-		new_collective_variable.CV_minimum=self.params["min"]
-		new_collective_variable.CV_maximum=self.params["max"]
+            new_collective_variable.associated_type=self._params["associated_type"]
+            new_collective_variable.CV_minimum=self._params["min"]
+            new_collective_variable.CV_maximum=self._params["max"]
 
-            	cdef int *corresponding_acid_types = <int *>malloc(len(self._params["corresponding_acid_types"]) * sizeof(int))
-            	for i in range(len(self._params["corresponding_acid_types"])):
-                	corresponding_acid_types[i]=self._params["corresponding_acid_types"][i]
-            	new_collective_variable.corresponding_acid_types=corresponding_acid_types
-		new_collective_variable.nr_corresponding_acid_types=len(self._params["corresponding_acid_types"])
-
-
-		current_wang_landau_system.collective_variables=<collective_variable**> realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1))
-		current_wang_landau_system.collective_variables.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable
-		current_wang_landau_system.nr_collective_variables+=1
-		
-		initialize_wang_landau()
-
-	def valid_keys_add_collective_variable_degree_of_association(self):
-		return "associated_type", "min", "max", "corresponding_acid_types"
-
-	def add_collective_variable_potential_energy(self,*args,**kwargs):
-		for k in kwargs:
-			if k in self.valid_keys_add_collective_variable_potential_energy():
-				self._params[k]=kwargs[k]
-			else: KeyError("%s is not a valid key" %k)
-		cdef collective_variable* new_collective_variable=<collective_variable*> realloc(sizeof(collective_variable)*(current_wang_landau_system.nr_collective_variables+1))
-
-		new_collective_variable.energy_boundaries_filename=self._params[filename]
-		new_collective_variable.delta_CV=self._params[delta]
-		
-		current_wang_landau_system.collective_variables=<collective_variable**> realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
-		current_wang_landau_system.collective_variables.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable
-		current_wang_landau_system.nr_collective_variables+=1;
-		
-		initialize_wang_landau()
+            cdef int *corresponding_acid_types = <int *>malloc(len(self._params["corresponding_acid_types"]) * sizeof(int))
+            for i in range(len(self._params["corresponding_acid_types"])):
+                corresponding_acid_types[i]=self._params["corresponding_acid_types"][i]
+                new_collective_variable.corresponding_acid_types=corresponding_acid_types
+            new_collective_variable.nr_corresponding_acid_types=len(self._params["corresponding_acid_types"])
 
 
-	def valid_keys_add_collective_variable_potential_energy():
-		return "filename","delta"
+            current_wang_landau_system.collective_variables=<collective_variable**> realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1))
+            current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable
+            current_wang_landau_system.nr_collective_variables+=1
+            
+            initialize_wang_landau()
 
-	def set_wang_landau_parameters(self):
-		for k in kwargs:
-			if k in self.valid_keys_set_wang_landau_parameters():
-				self._params[k]=kwargs[k]
-			else: KeyError("%s is not a valid key" %k)
-		
-		current_wang_landau_system.final_wang_landau_parameter=self._params[final_wang_landau_parameter]
-		current_wang_landau_system.wang_landau_steps=self._params[wang_landau_steps]
-		current_wang_landau_system.output_filename=self._params[full_path_to_output_filename]
-		current_wang_landau_system.do_not_sample_reaction_partition_function=self._params[do_not_sample_reaction_partition_function]
-		current_wang_landau_system.use_hybrid_monte_carlo=self._params[use_hybrid_monte_carlo]
+        def valid_keys_add_collective_variable_degree_of_association(self):
+            return "associated_type", "min", "max", "corresponding_acid_types"
 
-	def valid_keys_set_wang_landau_parameters():
-		return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function", "use_hybrid_monte_carlo"
-		
-	def load_wang_landau_checkpoint(self):
-		load_wang_landau_checkpoint("checkpoint")
-	def write_wang_landau_checkpoint(self):
-		write_wang_landau_checkpoint("checkpoint")
-		
-	def update_maximum_and_minimum_energies_at_current_state(self):
-		update_maximum_and_minimum_energies_at_current_state()
-	
-	def write_out_preliminary_energy_run_results(self):
-		write_out_preliminary_energy_run_results("preliminary_energy_run_results")
-	
-	##TODO specify monte carlo move
-	def counter_ion_type(self):
-		return
-		
-	def polymer_start_id(self):
-		return
-		
-	def polymer_end_id(self):
-		return
-	def fix_polymer_monomers(self):
-		return
-	
-	
-	
+        def add_collective_variable_potential_energy(self,*args,**kwargs):
+            for k in kwargs:
+                if k in self.valid_keys_add_collective_variable_potential_energy():
+                    self._params[k]=kwargs[k]
+                else: KeyError("%s is not a valid key" %k)
+            cdef collective_variable* new_collective_variable=<collective_variable*> malloc(sizeof(collective_variable)*(current_wang_landau_system.nr_collective_variables+1))
+
+            new_collective_variable.energy_boundaries_filename=self._params["filename"]
+            new_collective_variable.delta_CV=self._params["delta"]
+            
+            current_wang_landau_system.collective_variables=<collective_variable**> realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
+            current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable
+            current_wang_landau_system.nr_collective_variables+=1;
+            
+            initialize_wang_landau()
+
+
+        def valid_keys_add_collective_variable_potential_energy(self):
+            return "filename","delta"
+
+        def set_wang_landau_parameters(self,*args,**kwargs):
+            for k in kwargs:
+                if k in self.valid_keys_set_wang_landau_parameters():
+                    self._params[k]=kwargs[k]
+                else: KeyError("%s is not a valid key" %k)
+            
+            current_wang_landau_system.final_wang_landau_parameter=self._params["final_wang_landau_parameter"]
+            current_wang_landau_system.wang_landau_steps=self._params["wang_landau_steps"]
+            current_wang_landau_system.output_filename=self._params["full_path_to_output_filename"]
+            current_wang_landau_system.do_not_sample_reaction_partition_function=self._params["do_not_sample_reaction_partition_function"]
+            current_wang_landau_system.use_hybrid_monte_carlo=self._params["use_hybrid_monte_carlo"]
+
+        def valid_keys_set_wang_landau_parameters(self):
+            return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function", "use_hybrid_monte_carlo"
+            
+        def load_wang_landau_checkpoint(self):
+            load_wang_landau_checkpoint("checkpoint")
+        def write_wang_landau_checkpoint(self):
+            write_wang_landau_checkpoint("checkpoint")
+            
+        def update_maximum_and_minimum_energies_at_current_state(self):
+            update_maximum_and_minimum_energies_at_current_state()
+        
+        def write_out_preliminary_energy_run_results(self):
+            write_out_preliminary_energy_run_results("preliminary_energy_run_results")
+            
+        
+        ##specify monte carlo move
+        
+        property counter_ion_type:
+            def __set__(self, int c_type):
+                current_wang_landau_system.counter_ion_type=c_type
+            def __get__(self):
+                return current_wang_landau_system.counter_ion_type
+        property polymer_start_id:
+            def __set__(self, int start_id):
+                current_wang_landau_system.polymer_start_id=start_id
+            def __get__(self):
+                        return current_wang_landau_system.polymer_start_id
+        property polymer_end_id:
+            def __set__(self, int end_id):
+                current_wang_landau_system.polymer_end_id=end_id
+            def __get__(self):
+                return current_wang_landau_system.polymer_end_id
+            
+        property fix_polymer_monomers:
+            def __set__(self, bool fix_polymer):
+                current_wang_landau_system.fix_polymer=fix_polymer
+            def __get__(self):
+                    return current_wang_landau_system.fix_polymer
+
+

@@ -81,9 +81,11 @@ RE.add(equilibrium_constant=K_diss,educt_types=[0,1],educt_coefficients=[1,1], p
 RE.add(equilibrium_constant=1.0/K_diss,product_types=[0,1],product_coefficients=[1,1], educt_types=[2], educt_coefficients=[1])
 RE.default_charges(dictionary={"0":1,"1":-1, "2":0})
 
-for i in range(10000) :
+RE.fix_polymer_monomers=True
+
+for i in range(100000) :
 	_types=np.array(system.part[:].type)
 	RE.reaction()
 	_types=np.array(system.part[:].type)
-	print(len(_types[_types==0]))
+#	print(len(_types[_types==0]))
 

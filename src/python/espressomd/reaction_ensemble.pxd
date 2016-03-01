@@ -1,5 +1,7 @@
 include "myconfig.pxi"
 
+from libcpp cimport bool
+
 cdef extern from "reaction_ensemble.hpp":
     ctypedef struct single_reaction:
         int* educt_types
@@ -37,41 +39,41 @@ cdef extern from "reaction_ensemble.hpp":
 #///////////////////////////////////////////// Wang-Landau algorithm
 
     ctypedef struct collective_variable:
-	    double CV_minimum
-	    double CV_maximum
-	    double delta_CV
-	    double (*determine_current_state_in_collective_variable_with_index) (int)
-	    int* corresponding_acid_types
-	    int nr_corresponding_acid_types
-	    int associated_type
-	    char* energy_boundaries_filename
+        double CV_minimum
+        double CV_maximum
+        double delta_CV
+        double (*determine_current_state_in_collective_variable_with_index) (int)
+        int* corresponding_acid_types
+        int nr_corresponding_acid_types
+        int associated_type
+        char* energy_boundaries_filename
 
     ctypedef struct wang_landau_system:
-	    int* histogram
-	    int len_histogram
-	    double* wang_landau_potential
-	    int nr_collective_variables
-	    collective_variable** collective_variables
-	    int* nr_subindices_of_collective_variable
-	    double wang_landau_parameter
-	    double initial_wang_landau_parameter
-	    int int_fill_value
-	    double double_fill_value
-	    int number_of_monte_carlo_moves_between_check_of_convergence
-	    double final_wang_landau_parameter
-	    int used_bins
-	    int monte_carlo_trial_moves
-	    int wang_landau_steps
-	    char* output_filename
-	    double* minimum_energies_at_flat_index
-	    double* maximum_energies_at_flat_index
-	    bool do_energy_reweighting
-	    int counter_ion_type
-	    int polymer_start_id
-	    int polymer_end_id
-	    bool fix_polymer
-	    bool do_not_sample_reaction_partition_function
-	    bool use_hybrid_monte_carlo
+        int* histogram
+        int len_histogram
+        double* wang_landau_potential
+        int nr_collective_variables
+        collective_variable** collective_variables
+        int* nr_subindices_of_collective_variable
+        double wang_landau_parameter
+        double initial_wang_landau_parameter
+        int int_fill_value
+        double double_fill_value
+        int number_of_monte_carlo_moves_between_check_of_convergence
+        double final_wang_landau_parameter
+        int used_bins
+        int monte_carlo_trial_moves
+        int wang_landau_steps
+        char* output_filename
+        double* minimum_energies_at_flat_index
+        double* maximum_energies_at_flat_index
+        bool do_energy_reweighting
+        int counter_ion_type
+        int polymer_start_id
+        int polymer_end_id
+        bool fix_polymer
+        bool do_not_sample_reaction_partition_function
+        bool use_hybrid_monte_carlo
 
     cdef extern wang_landau_system current_wang_landau_system
     int initialize_wang_landau()
