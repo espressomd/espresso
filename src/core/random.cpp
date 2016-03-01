@@ -25,6 +25,7 @@
 #include "global.hpp"
 #include "random.hpp"
 #include "communication.hpp"
+#include <iostream>
 
 // ############## usage of standard C++ <random> objects
 std::mt19937 generator;

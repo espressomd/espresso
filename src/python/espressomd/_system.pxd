@@ -20,3 +20,7 @@ import particle_data
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
+
+cdef extern from "communication.hpp":
+        void mpi_random_seed(int cnt, int *seed)
+
