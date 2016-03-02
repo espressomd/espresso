@@ -41,10 +41,8 @@ if(CUDA)
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
+  add_dependencies(EspressoCuda EspressoConfig)
 
-  # Explicitly add dpendency on config-features.cpp, this triggers rebuild of CUDA
-  # on config change.
-  add_dependencies(EspressoCore EspressoCuda config-features.cpp)
   set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
   target_link_libraries(EspressoCore EspressoCuda)
