@@ -2,6 +2,11 @@ language: cpp
 dist: trusty
 sudo: required
 
+cache: pip
+
+virtualenv:
+  system_site_packages: true
+
 before_install:
  - sudo apt-get update
  - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential python-pip pep8 cmake python-numpy
@@ -10,6 +15,7 @@ before_install:
  - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
  - pip install --user codecov
  - dpkg -L python-numpy
+ - export
 
 env:
   - myconfig=default
@@ -24,23 +30,7 @@ env:
 
 compiler:
   - gcc
-
-matrix:
-  include:
-    - compiler: clang
-      env: with-mpi=false myconfig=default 
-    - compiler: clang
-      env: with-mpi=false myconfig=maxset with_coverage=true
-    - compiler: clang
-      env: with-mpi=false myconfig=molcut
-    - compiler: clang
-      env: with-mpi=false myconfig=rest1
-    - compiler: clang
-      env: with-mpi=false myconfig=rest2
-    - compiler: clang
-      env: with-mpi=false make_check=false myconfig=nocheck-maxset 
-    - compiler: clang
-      env: with-mpi=false myconfig=maxset without-cuda
+  - clang
 
 script: ./maintainer/travis/build_cmake.sh
 
