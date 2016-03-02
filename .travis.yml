@@ -30,6 +30,7 @@ env:
   - myconfig=rest2
   - make_check=false myconfig=nocheck-maxset
   - with_fftw=false with_mpi=false myconfig=maxset
+  - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 compiler:
   - gcc
