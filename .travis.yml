@@ -2,7 +2,10 @@ language: cpp
 dist: trusty
 sudo: required
 
-cache: pip
+cache: 
+  - pip
+  - apt
+  - ccache
 
 virtualenv:
   system_site_packages: true
