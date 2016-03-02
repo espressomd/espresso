@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -928,7 +928,7 @@ if test .$bibtex = .no; then
    echo "To be able to rebuild the user's guide, add bibtex to your PATH."
 fi
 if test .$doxygen = .no; then
-   echo "To be able to build the developer's guide, add doxygen to your PATH." #'
+   echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
 if test .$with_python_interface = .no; then
    echo "Not building Python interface."
@@ -937,3 +937,10 @@ if test .$use_tcl = .no; then
    echo "Not building Tcl interface."
 fi
 
+cat << EOF
+****************************************************************
+* DEPRECATION WARNING: The autoconf/autotools build system     *
+* will be replaced by cmake in the future.                     *
+* New features are only available via cmake.                   *
+****************************************************************
+EOF
