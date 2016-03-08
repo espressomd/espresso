@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -390,13 +390,13 @@ __device__ void static Aliasing_sums_ik (const P3MGpuData p, int NX, int NY, int
 
   for ( MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++ ) {
     NMX = ( ( NX > p.mesh[0]/2 ) ? NX - p.mesh[0] : NX ) + p.mesh[0]*MX;
-    S1 = pow ( csinc(Meshi[0]*NMX ), 2*p.cao );
+    S1 = pow ( csinc(Meshi[0]*NMX ), 2.0*p.cao );
     for ( MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++ ) {
       NMY = ( ( NY > p.mesh[1]/2 ) ? NY - p.mesh[1] : NY ) + p.mesh[1]*MY;
-      S2   = S1*pow ( csinc (Meshi[1]*NMY ), 2*p.cao );
+      S2   = S1*pow ( csinc (Meshi[1]*NMY ), 2.0*p.cao );
       for ( MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++ ) {
 	NMZ = ( ( NZ > p.mesh[2]/2 ) ? NZ - p.mesh[2] : NZ ) + p.mesh[2]*MZ;
-	S3   = S2*pow ( csinc( Meshi[2]*NMZ ), 2*p.cao );
+	S3   = S2*pow ( csinc( Meshi[2]*NMZ ), 2.0*p.cao );
 
 	NM2 = SQR ( NMX*Leni[0] ) + SQR ( NMY*Leni[1] ) + SQR ( NMZ*Leni[2] );
 	*Nenner += S3;

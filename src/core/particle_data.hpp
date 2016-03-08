@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -72,7 +72,8 @@
     needed in the interaction calculation, but are just copies of
     particles stored on different nodes.
 */
-typedef struct {
+typedef struct ParticleProperties ParticleProperties;
+struct ParticleProperties {
   /** unique identifier for the particle. */
   int    identity;
   /** Molecule identifier. */
@@ -84,13 +85,8 @@ typedef struct {
   /** particle mass */
   double mass;
 #else
-  /** set mass to 0 */
-#if HAVE_CXX11
-  constexpr static double mass = 1.0;
-#else
-  const static double mass = 1.0;
-#endif
-#endif
+  constexpr static double mass{1.0};
+#endif /* MASS */
 
 #ifdef SHANCHEN
   double solvation[2*LB_COMPONENTS];
@@ -196,7 +192,7 @@ typedef struct {
   #endif
 
 #endif
-} ParticleProperties;
+};
 
 /** Positional information on a particle. Information that is
     communicated to calculate interactions with ghost particles. */

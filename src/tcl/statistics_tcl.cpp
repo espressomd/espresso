@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -52,6 +52,8 @@
 #include <vector>
 #include <string>
 #include <map>
+
+using std::ostringstream;
 
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);

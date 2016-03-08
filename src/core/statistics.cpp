@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -257,10 +257,14 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
     if (include_lbfluid) {
       double momentum_fluid[3] = { 0., 0., 0. };
 #ifdef LB
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
 #endif
 #ifdef LB_GPU
-      lb_calc_fluid_momentum_GPU(momentum_fluid);
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
 #endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
@@ -1406,9 +1410,7 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-        ostringstream msg;
-        msg <<"failed upon replacing particle " << i << "  in Espresso";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"failed upon replacing particle " << i << "  in Espresso";
     }
   }
 }

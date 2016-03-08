@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -140,3 +140,16 @@ cdef extern from "npt.hpp":
 
 cdef extern from "statistics.hpp":
     extern int n_configs
+
+cdef extern from "reaction.hpp":
+    ctypedef struct  reaction_struct:
+        int reactant_type
+        int product_type
+        int catalyzer_type
+        double range
+        double ct_rate
+        double eq_rate
+        int sing_mult
+        int swap
+
+    extern reaction_struct reaction

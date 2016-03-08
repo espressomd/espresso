@@ -4,7 +4,7 @@
 #
 #############################################################
 #
-# Copyright (C) 2010,2011,2013,2014 The ESPResSo project
+# Copyright (C) 2010,2011,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Axel Arnold
 # Copyright (C) 2011 Sela Samin
 # 

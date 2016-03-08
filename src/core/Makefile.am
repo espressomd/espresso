@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -25,7 +25,7 @@ endif
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspresso.la
+lib_LTLIBRARIES = libEspresso.la
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
@@ -89,6 +89,8 @@ libEspresso_la_SOURCES = \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
+	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
+	scafacos.cpp scafacos.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -114,7 +116,7 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	RunningAverage.cpp RunningAverage.hpp
+	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

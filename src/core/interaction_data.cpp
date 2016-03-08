@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -502,8 +502,13 @@ static void recalc_global_maximal_nonbonded_cutoff()
     if (max_cut_global < rf_params.r_cut)
       max_cut_global = rf_params.r_cut;
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+      max_cut_global = std::max(max_cut_global, Electrostatics::Scafacos::get_r_cut());
+      break;
+#endif
   default:
-	  break;
+    break;
   }
 #endif /*ifdef ELECTROSTATICS */
   
