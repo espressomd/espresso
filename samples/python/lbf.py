@@ -46,34 +46,28 @@ system.part.add(id=0, pos=[box_l/2.0,box_l/2.0,box_l/2.0], fix=[1,1,1])
 # system.part.add(id=0, pos=[box_l/2.0,box_l/2.0,box_l/2.0], ext_force=[0,0,1])
 
 
-lbf = lb.LBF(agrid=1, fric=1, dens=1, visc=1, tau=0.01, ext_force=[0,0,-1.0/(box_l**3)])
+lbf = lb.LBFluid(agrid=1, fric=1, dens=1, visc=1, tau=0.01, ext_force=[0,0,-1.0/(box_l**3)])
 system.actors.add(lbf)
 print(system.actors)
 
 
-# f_list = []
-# for i in range(1000):
-#     f_list.append(system.part[0].f)
-#     integrate.integrate(10)
-#     print(i)
+f_list = []
+for i in range(10):
+    f_list.append(system.part[0].f)
+    integrate.integrate(10)
+    print(i)
 
-# f_list=np.array(f_list)
+f_list=np.array(f_list)
 
-# np.savetxt("/home/trau/Desktop/python_f.dat",f_list)
-# exit()
-
-f_list = np.loadtxt("/home/trau/Desktop/python_f.dat")
-print(f_list.shape)
 import matplotlib.pyplot as pp
-
-tcl_data = np.loadtxt("/home/trau/Desktop/singleparticle_cpu_master_F1_L50_forcefit_cpu.dat")
-
-print(tcl_data.shape)
 
 fig1=pp.figure()
 ax=fig1.add_subplot(111)
-ax.plot(f_list[:,2],label="f(z) python")
-ax.plot(tcl_data[:,8],label="f(z) tcl")
+ax.plot(f_list[:,0],label="F_x")
+ax.plot(f_list[:,1],label="F_y")
+ax.plot(f_list[:,2],label="F_z")
 ax.legend()
+ax.set_xlabel("t")
+ax.set_ylabel("F")
 
 pp.show()
