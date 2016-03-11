@@ -733,6 +733,7 @@ cdef class ParticleHandle:
         del self
 
     # Bond related methods
+    # Does not work properly with 3 or more partner bonds!
     def add_verified_bond(self, bond):
         """Add a bond, the validity of which has already been verified"""
         # If someone adds bond types with more than four partners, this has to
@@ -967,14 +968,126 @@ cdef class ParticleSlice:
                     q_array[i] = x[0]
                 return q_array
 
-        def update(self, P):
 
-            if "id" in P:
-                raise Exception("Cannot change particle id.")
+    IF EXTERNAL_FORCES:
+        property ext_force:
+            """External force on a particle defined by a vector"""
 
-            for k in P.keys():
-                setattr(self, k, P[k])
+            def __set__(self, _ext_f_array):
+                if len(self.id_selection) != len(_ext_f_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_ext_f_array),len(self.id_selection)))
 
+                cdef double ext_f[3]
+                cdef int ext_flag
+                for j in range(len(self.id_selection)):
+                    for i in range(3):
+                        ext_f[i] = _ext_f_array[j][i]
+                    if (ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0):
+                        ext_flag = 0
+                    else:
+                        ext_flag = PARTICLE_EXT_FORCE
+                    if set_particle_ext_force(self.id_selection[j], ext_flag, ext_f) == 1:
+                        raise Exception("set particle position first")
+
+            def __get__(self):
+                ext_f_array = np.zeros((len(self.id_selection),3))
+                cdef double * ext_f = NULL
+                cdef int * ext_flag = NULL
+                for i in range(len(self.id_selection)):
+                    self.update_particle_data(self.id_selection[i])
+                    pointer_to_ext_force( & (self.particle_data), ext_flag, ext_f)
+                    if (ext_flag[0] & PARTICLE_EXT_FORCE):
+                        ext_f_array[i] = np.array([ext_f[0], ext_f[1], ext_f[2]])
+                    else:
+                        ext_f_array[i] = np.array([0.0, 0.0, 0.0])
+                return ext_f_array
+
+
+    def update(self, P):
+        if "id" in P:
+            raise Exception("Cannot change particle id.")
+            
+        for k in P.keys():
+            setattr(self, k, P[k])
+
+    # Bond related methods
+    def add_verified_bond(self, bond):
+        """Add a bond, the validity of which has already been verified"""
+        # If someone adds bond types with more than four partners, this has to
+        # be changed
+        cdef int bond_info[5]
+        bond_info[0] = bond[0]._bond_id
+        for j in range(len(self.id_selection)):
+            for i in range(1,len(bond)):
+                bond_info[i] = bond[i][j]
+            if change_particle_bond(self.id_selection[j], bond_info, 0):
+                raise Exception("Adding the bond failed.")
+
+    def delete_verified_bond(self, bond):
+        cdef int bond_info[5]
+        bond_info[0] = bond[0]._bond_id
+        for j in range(len(self.id_selection)):
+            for i in range(1,len(bond)):
+                bond_info[i] = bond[i][j]
+            if change_particle_bond(self.id_selection[j], bond_info, 1):
+                raise Exception("Deleting the bond failed.")
+
+    def check_bond_or_throw_exception(self, bond):
+        """Checks the validity of the given bond:
+        * if the bondtype is given as an object or a numerical id
+        * if all partners are of type int
+        * if the number of partners satisfies the bond
+        * If the bond type used exists (is lower than n_bonded_ia)
+        * If the number of bond partners fits the bond type
+        Throw an exception if any of these are not met"""
+
+        # Has it []-access
+        if not hasattr(bond, "__getitem__"):
+            raise ValueError(
+                "Bond needs to be a tuple or list containing bond type and partners")
+
+        # Bond type or numerical bond id
+        if not isinstance(bond[0], BondedInteraction):
+            if isinstance(bond[0], int):
+                bond[0] = BondedInteractions()[bond[0]]
+            else:
+                raise Exception(
+                    "1st element of Bond has to be of type BondedInteraction or int.")
+
+        # Validity of the numeric id
+        if bond[0]._bond_id >= n_bonded_ia:
+            raise ValueError("The bond type", bond._bond_id, "does not exist.")
+
+        # Number of partners
+        if bonded_ia_params[bond[0]._bond_id].num != len(bond) - 1:
+            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
+                             bond[0]._bond_id], "partners.")
+
+        # Type check on partners
+        for y in bond[1:]:
+            if not (isinstance(y, list) or isinstance(y, np.ndarray)):
+                raise ValueError("Expected list of partners.")
+            # print "SHAPE",np.array(y).shape
+            # if len(np.array(y).shape) != 1:
+            #     raise ValueError("Expected 1D list of partners.")
+            # check for length
+
+    def add_bond(self, _bond):
+        """Add a single bond to the particle"""
+        bond = list(_bond)  # As we will modify it
+        print "BOND",bond
+        self.check_bond_or_throw_exception(bond)
+        self.add_verified_bond(bond)
+
+    def delete_bond(self, _bond):
+        """Delete a single bond from the particle"""
+        bond = list(_bond)  # as we modify it
+        self.check_bond_or_throw_exception(bond)
+        self.delete_verified_bond(bond)
+
+    def delete_all_bonds(self):
+        if change_particle_bond(self.id, NULL, 1):
+            raise Exception("Deleting all bonds failed.")
 
 
 

@@ -22,6 +22,9 @@
 # limitations under the License.
 #=============================================================================
 
+# Set minimal accepted version
+set(CYTHON_REQUIRED_VERSION 0.22)
+
 # Use the Cython executable that lives next to the Python executable
 # if it is a local installation.
 find_package( PythonInterp )
@@ -37,6 +40,18 @@ else()
     )
 endif()
 
+# Check version
+if(CYTHON_EXECUTABLE)
+  execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
+    ERROR_VARIABLE CYTHON_OUTPUT OUTPUT_QUIET)
+  string(REGEX REPLACE "^Cython version ([0-9]+\\.[0-9]+).*" "\\1" CYTHON_VERSION "${CYTHON_OUTPUT}")
+
+  if(${CYTHON_VERSION} VERSION_LESS ${CYTHON_REQUIRED_VERSION})
+    message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, found verson ${CYTHON_VERSION}")
+  else()
+    message(STATUS "Found Cython version ${CYTHON_VERSION}")
+  endif()
+endif()
 
 include( FindPackageHandleStandardArgs )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( Cython REQUIRED_VARS CYTHON_EXECUTABLE )
