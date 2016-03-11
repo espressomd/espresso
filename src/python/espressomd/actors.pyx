@@ -94,15 +94,15 @@ cdef class Actor:
         self._set_params_in_es_core()
 
     def _get_interaction_type(self):
-        bases = self.classlookup(self.__class__)
+        bases = self.class_lookup(self.__class__)
         for i in range(len(bases)):
             if bases[i].__name__ in Actor.active_list:
                 return bases[i].__name__
 
-    def classlookup(self, cls):
+    def class_lookup(self, cls):
         c = list(cls.__bases__)
         for base in c:
-            c.extend(self.classlookup(base))
+            c.extend(self.class_lookup(base))
         return c
 
     def is_active(self):

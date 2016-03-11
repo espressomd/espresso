@@ -24,28 +24,19 @@ import cuda_init
 from globals cimport *
 from copy import deepcopy
 
-####################################################
-#
 # Actor class
-#
 ####################################################
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
-####################################################
-#
-# LB_FLUID main class
-#
+# LBFluid main class
 ####################################################
 IF LB_GPU or LB:
-    cdef class LBF(HydrodynamicInteraction):
+    cdef class LBFluid(HydrodynamicInteraction):
 
-        ####################################################
-        #
         # validate the given parameters on actor initalization
-        #
         ####################################################
         def validate_params(self):
             default_params = self.default_params()
@@ -61,26 +52,17 @@ IF LB_GPU or LB:
                     if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
                         raise ValueError("Density must be one positive double")
 
-        ####################################################
-        #
         # list of valid keys for parameters
-        #
         ####################################################
         def valid_keys(self):
             return "gpu", "agrid", "dens", "fric", "ext_force", "visc", "tau"
 
-        ####################################################
-        #
         # list of esential keys required for the fluid
-        #
         ####################################################
         def required_keys(self):
             return ["dens", "agrid", "visc", "tau"]
 
-        ####################################################
-        #
         # list of default parameters
-        #
         ####################################################
         def default_params(self):
             IF SHANCHEN:
@@ -100,10 +82,7 @@ IF LB_GPU or LB:
                         "bulk_visc": -1.0,
                         "tau": -1.0}
 
-        ####################################################
-        #
         # function that calls wrapper functions which set the parameters at C-Level
-        #
         ####################################################
         def _lb_init(self):
             py_lattice_switch = 1
@@ -137,10 +116,7 @@ IF LB_GPU or LB:
                 if python_lbfluid_set_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
-        ####################################################
-        #
         # function that calls wrapper functions which get the parameters from C-Level
-        #
         ####################################################
         def _get_params_from_es_core(self):
             default_params = self.default_params()
@@ -171,82 +147,18 @@ IF LB_GPU or LB:
 
             return self.params
 
-
-
-        ####################################################
-        #
         # Activate Actor
-        #
         ####################################################
         def _activate_method(self):
             self.validate_params()
             self._set_params_in_es_core()
             self._lb_init()
 
-        ####################################################
-        #
-        # Deactivate Actor
-        #
-        ####################################################
-        # def _deactivateMethod(self):
-
-        #   self._set_params_in_es_core()
-
-
-        ####################################################
-        #
-        # redef set_params for lb use
-        #
-        ####################################################
-
-        # def set_params(self, **kwargs):
-        #     """Update parameters. Only given """
-        #     # Check, if any key was passed, which is not known
-        #     for k in .keys():
-        #         if k not in self.valid_keys():
-        #             raise ValueError(
-        #                 "Only the following keys are supported: " + self.valid_keys().__str__())
-
-        #     print "_params", _params
-
-
-        #     if "dens" in _params:
-        #         if python_lbfluid_set_density(_params["dens"]):
-        #             raise Exception("lb_lbfluid_set_density error")
-
-        #     if "tau" in _params:
-        #         if python_lbfluid_set_tau(_params["tau"]):
-        #             raise Exception("lb_lbfluid_set_tau error")
-
-        #     if "visc" in _params:
-        #         if python_lbfluid_set_visc(_params["visc"]):
-        #             raise Exception("lb_lbfluid_set_visc error")
-
-        #     if "bulk_visc" in _params:
-        #         if python_lbfluid_set_bulk_visc(_params["bulk_visc"]):
-        #             raise Exception("lb_lbfluid_set_bulk_visc error")
-
-        #     if "agrid" in _params:
-        #         if python_lbfluid_set_agrid(_params["agrid"]):
-        #             raise Exception("lb_lbfluid_set_agrid error")
-
-        #     if "fric" in _params:
-        #         if python_lbfluid_set_friction(_params["fric"]):
-        #             raise Exception("lb_lbfluid_set_friction error")
-
-        #     if "ext_force" in _params:
-        #         if python_lbfluid_set_ext_force(_params["ext_force"]):
-        #             raise Exception("lb_lbfluid_set_ext_force error")
-
-        #     # update paras
-        #     self._params.update(_params)
-
-
 
 
 
 # IF LB_GPU:
-#     cdef class LBF_GPU(LBF):
+#     cdef class LBFluid_GPU(LBFluid):
 #         def _lb_init(self):
 #             py_lattice_switch = 2
 #             if lb_set_lattice_switch(py_lattice_switch):

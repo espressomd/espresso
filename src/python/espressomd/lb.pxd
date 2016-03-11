@@ -323,13 +323,6 @@ IF LB_GPU or LB:
 
 ###############################################
 
-cdef int LB_COMPONENTS
-IF SHANCHEN:
-    LB_COMPONENTS = 2
-ELSE:
-    LB_COMPONENTS = 1
-
-
 IF LB_GPU:
     cdef extern from "lbgpu.hpp":
         ctypedef struct LB_parameters_gpu:
@@ -363,19 +356,19 @@ IF LB_GPU:
 
         IF SHANCHEN:
             ctypedef struct LB_parameters_gpu:
-                float rho[LB_COMPONENTS]
-                float mu[LB_COMPONENTS]
-                float viscosity[LB_COMPONENTS]
-                float gamma_shear[LB_COMPONENTS]
-                float gamma_bulk[LB_COMPONENTS]
-                float gamma_odd[LB_COMPONENTS]
-                float gamma_even[LB_COMPONENTS]
+                float rho[2]
+                float mu[2]
+                float viscosity[2]
+                float gamma_shear[2]
+                float gamma_bulk[2]
+                float gamma_odd[2]
+                float gamma_even[2]
                 bool is_TRT
-                float friction[LB_COMPONENTS]
+                float friction[2]
                 int lb_couple_switch
-                float lb_coupl_pref[LB_COMPONENTS]
-                float lb_coupl_pref2[LB_COMPONENTS]
-                float bulk_viscosity[LB_COMPONENTS]
+                float lb_coupl_pref[2]
+                float lb_coupl_pref2[2]
+                float bulk_viscosity[2]
                 float agrid
                 float tau
                 float time_step
@@ -387,12 +380,12 @@ IF LB_GPU:
                 int fluct
                 int calc_val
                 int external_force
-                float ext_force[3*LB_COMPONENTS]
+                float ext_force[3*2]
                 unsigned int your_seed
                 unsigned int reinit
-                float gamma_mobility[LB_COMPONENTS]
-                float mobility[LB_COMPONENTS]
-                float coupling[LB_COMPONENTS*LB_COMPONENTS]
+                float gamma_mobility[2]
+                float mobility[2]
+                float coupling[4]
                 int remove_momentum
 
 
