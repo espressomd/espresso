@@ -19,37 +19,27 @@
 from __future__ import print_function
 import espressomd._system as es
 import espressomd
-from espressomd import thermostat
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
+from espressomd.interactions import *
 from espressomd import reaction_ensemble
 import numpy as np
 
 import sys
 
-print("""
-=======================================================
-=                   slice_input.py                    =
-=======================================================
-
-Program Information:""")
 print(code_info.features())
-
 dev = "cpu"
 
 # System parameters
 #############################################################
-
-box_l = 10.0
+box_l = 10
 
 # Integration parameters
 #############################################################
-
 system = espressomd.System()
-system.time_step = 0.01
+system.time_step = 0.02
 system.skin = 0.4
-
 system.max_num_cells = 2744
 
 
@@ -59,33 +49,30 @@ system.max_num_cells = 2744
 
 # Interaction setup
 #############################################################
-
 system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
+#type 0 = HA
+#type 1 = A-
+#type 2 = H+
 
-n_part = 10
-
-id_list = np.arange(n_part)
-pos_list = np.random.random((n_part,3)) * system.box_l
-type_list = [0,0,0,0,0,1,1,1,1,1]
-
-system.part.add(id=id_list ,pos=pos_list, type=type_list)
-
-
+N0 = 5 # number of titratable units
 K_diss=0.0088
 
+system.part.add(id=np.arange(N0) ,pos=np.random.random((N0,3)) * system.box_l, type=np.ones(N0)*1)
+system.part.add(id=np.arange(N0,2*N0) ,pos=np.random.random((N0,3)) * system.box_l, type=2*np.ones(N0))
+
+
 RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, exclusion_radius=1)
-RE.add(equilibrium_constant=K_diss,educt_types=[0,1],educt_coefficients=[1,1], product_types=[2], product_coefficients=[1])
-RE.add(equilibrium_constant=1.0/K_diss,product_types=[0,1],product_coefficients=[1,1], educt_types=[2], educt_coefficients=[1])
-RE.default_charges(dictionary={"0":1,"1":-1, "2":0})
+RE.add(equilibrium_constant=K_diss,educt_types=[0],educt_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
+RE.add(equilibrium_constant=1.0/K_diss, educt_types=[1,2], educt_coefficients=[1,1], product_types=[0],product_coefficients=[1])
+RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
+RE.print_status()
 
-RE.fix_polymer_monomers=True
-
-for i in range(100000) :
-	_types=np.array(system.part[:].type)
+print("poss", system.part[:].pos)
+while True:
 	RE.reaction()
 	_types=np.array(system.part[:].type)
-#	print(len(_types[_types==0]))
-
+	print("HA", len(_types[_types==0]), "A-", len(_types[_types==1]), "H+", len(_types[_types==2]))
+	
