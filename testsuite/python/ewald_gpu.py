@@ -21,7 +21,7 @@ import espressomd
 import unittest as ut
 import numpy as np
 
-if EWALD_GPU:
+if "EWALD_GPU" in espressomd.features():
     from espressomd.electrostatics import EwaldGpu
 
     class ewald_GPU_test(ut.TestCase):
