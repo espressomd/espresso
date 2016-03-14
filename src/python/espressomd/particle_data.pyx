@@ -29,7 +29,6 @@ from globals cimport max_seen_particle
 
 PARTICLE_EXT_FORCE = 1
 
-
 def COORD_FIXED(coord):
     return 2L << coord
 COORDS_FIX_MASK = COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2)
