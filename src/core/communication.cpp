@@ -2358,11 +2358,6 @@ void mpi_random_seed_slave(int pnode, int cnt) {
   init_random_seed(this_idum);
 }
 
-/*************** REQ_BCAST_LJFORCECAP ************/
-/*************** REQ_BCAST_LJANGLEFORCECAP ************/
-/*************** REQ_BCAST_MORSEFORCECAP ************/
-/*************** REQ_BCAST_BUCKFORCECAP ************/
-/*************** REQ_BCAST_TABFORCECAP ************/
 void mpi_cap_forces(double fc)
 {
   force_cap = fc;

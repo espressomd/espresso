@@ -31,9 +31,9 @@ class CellSystem(ut.TestCase):
         self.S.cell_system.set_n_square(use_verlet_lists=False)
         s = self.S.cell_system.get_state()
         self.assertEqual(s, {"use_verlet_lists": 0, "type": "nsquare"})
-        self.S.cell_system.set_layered(n_layers=5)
+        self.S.cell_system.set_layered(nLayers=5)
         s = self.S.cell_system.get_state()
-        self.assertEqual(s, {"type": "layered", "n_layers": 5})
+        self.assertEqual(s, {"type": "layered", "nLayers": 5})
 
         self.S.cell_system.set_domain_decomposition(use_verlet_lists=True)
         s = self.S.cell_system.get_state()
