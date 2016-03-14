@@ -48,10 +48,10 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def set_layered(self, n_layers=""):
-        """set_layered(nLayers="")
+    def set_layered(self, n_layers=None):
+        """set_layered(nLayers=None)
         Set the layerd cell system with nLayers layers"""
-        if n_layers != "":
+        if n_layers:
             if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
 
