@@ -139,14 +139,15 @@ cmd "make" || exit $?
 
 end "BUILD"
 
-# CHECK
+# CHEKC	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
 if $make_check; then
     start "TEST"
 
     cmd "make check $make_params"
     ec=$?
-    if [ $ec != 0 ]; then
-        cat $srcdir/testsuite/runtest.log
+    if [ $ec != 0 ]; then	
+	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
+        cat $srcdir/testsuite/Testing/Temporary/LastTest.log
         exit $ec
     fi
 
