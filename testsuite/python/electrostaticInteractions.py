@@ -42,12 +42,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         return True
 
-    def setUp(self):
+    def setUp(self):        
         self.system.box_l = 10, 10, 10
-        self.system.part[0].pos = 0, 0, 0
-        self.system.part[1].pos = 0.1, 0.1, 0.1
-        self.system.part[0].q = 1
-        self.system.part[1].q = -1
+        self.system.part.add(id = 0, pos=(0.0, 0.0, 0.0), q=1)
+        self.system.part.add(id = 1, pos=(0.1, 0.1, 0.1), q=-1)
 
     def generateTestForElectrostaticInteraction(_interClass, _params):
         """Generates test cases for checking interaction parameters set and gotten back
@@ -92,14 +90,15 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     test_DH = generateTestForElectrostaticInteraction(DH, dict(bjerrum_length=1.0,
                                                                kappa=2.3,
                                                                r_cut=2))
-    test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
-                                                                 kappa=2.3,
-                                                                 r_cut=2,
-                                                                 r0=1,
-                                                                 r1=2,
-                                                                 eps_int=0.8,
-                                                                 eps_ext=1,
-                                                                 alpha=2))
+    if "CDG" in espressomd.features():
+        test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
+                                                                     kappa=2.3,
+                                                                     r_cut=2,
+                                                                     r0=1,
+                                                                     r1=2,
+                                                                     eps_int=0.8,
+                                                                     eps_ext=1,
+                                                                     alpha=2))
 
 
 if __name__ == "__main__":
