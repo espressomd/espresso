@@ -20,7 +20,6 @@ cdef class Actor:
         self._params=params
         self._set_params_in_es_core()
 
-
     def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
@@ -38,6 +37,7 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
+        self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()

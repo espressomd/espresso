@@ -497,22 +497,10 @@ void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, long *seed);
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
-/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
-void mpi_random_stat(int cnt, RandomStatus *stat);
-
-/** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
+/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-//void mpi_morse_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-//void mpi_buck_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);

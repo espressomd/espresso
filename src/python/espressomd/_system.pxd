@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import particle_data
+from libcpp.vector cimport vector
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
+
+cdef extern from "communication.hpp":
+        void mpi_random_seed(int cnt, vector[int] &seed)
+

@@ -114,7 +114,6 @@ static int terminated = 0;
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
-  CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
@@ -2337,69 +2336,28 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 }
 
 /*************** REQ_RANDOM_SEED ************/
-void mpi_random_seed(int cnt, long *seed) {
-  long this_idum = print_random_seed();
-
+void mpi_random_seed(int cnt, std::vector<int> &seeds) {
+  int this_idum;
   mpi_call(mpi_random_seed_slave, -1, cnt);
+  
+  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
 
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_LONG,seed,1,MPI_LONG,0,comm_cart); }
-  else {
-    MPI_Scatter(seed,1,MPI_LONG,&this_idum,1,MPI_LONG,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
-    init_random_seed(this_idum);
-  }
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
+  init_random_seed(this_idum);
 }
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  long this_idum = print_random_seed();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_LONG,NULL,0,MPI_LONG,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,1,MPI_LONG,&this_idum,1,MPI_LONG,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
-    init_random_seed(this_idum);
-  }
+  int this_idum;
+  
+  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
+  init_random_seed(this_idum);
 }
 
-/*************** REQ_RANDOM_STAT ************/
-void mpi_random_stat(int cnt, RandomStatus *stat) {
-  RandomStatus this_stat = print_random_stat();
-
-  mpi_call(mpi_random_stat_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(stat,1*sizeof(RandomStatus),MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    init_random_stat(this_stat);
-  }
-}
-
-void mpi_random_stat_slave(int pnode, int cnt) {
-  RandomStatus this_stat = print_random_stat();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    init_random_stat(this_stat);
-  }
-}
-
-
-/*************** REQ_BCAST_LJFORCECAP ************/
-/*************** REQ_BCAST_LJANGLEFORCECAP ************/
-/*************** REQ_BCAST_MORSEFORCECAP ************/
-/*************** REQ_BCAST_BUCKFORCECAP ************/
-/*************** REQ_BCAST_TABFORCECAP ************/
 void mpi_cap_forces(double fc)
 {
   force_cap = fc;
