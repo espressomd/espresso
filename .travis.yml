@@ -3,22 +3,25 @@ dist: trusty
 sudo: required
 
 cache: 
-  - pip
   - apt
   - ccache
-
-virtualenv:
-  system_site_packages: true
 
 before_install:
  - sudo apt-get update
  - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential python-pip pep8 cmake python-numpy
- - sudo -H PATH="${PATH}:/usr/local/clang-3.4/bin" pip install cython --upgrade
  - if [ "$with_mpi" != false ]; then sudo apt-get install -y libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
- - pip install --user codecov
- - dpkg -L python-numpy
- - export
+ - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+ - chmod +x miniconda.sh
+ - bash miniconda.sh -b -p $HOME/miniconda
+ - export PATH=/home/travis/miniconda/bin:$PATH
+ - conda update --yes conda
+
+install:
+ - conda create --yes -n test
+ - source activate test
+ - conda install --yes numpy cython pip
+ - pip install codecov
 
 env:
   - myconfig=default
