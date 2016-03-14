@@ -8,7 +8,7 @@ cache:
 
 before_install:
  - sudo apt-get update
- - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential python-pip pep8 cmake python-numpy
+ - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential pep8 cmake
  - if [ "$with_mpi" != false ]; then sudo apt-get install -y libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
  - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
@@ -18,7 +18,7 @@ before_install:
  - conda update --yes conda
 
 install:
- - conda create --yes -n test
+ - conda create --yes -n test python=2.7
  - source activate test
  - conda install --yes numpy cython pip
  - pip install codecov
@@ -33,7 +33,6 @@ env:
   - myconfig=rest2
   - make_check=false myconfig=nocheck-maxset
   - with_fftw=false with_mpi=false myconfig=maxset
-  - export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 compiler:
   - gcc
