@@ -25,7 +25,7 @@ class MpiCallbacks {
    * @param f The callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  static int add(function_type &f);
+  int add(function_type &f);
 
   /**
    * @brief Add a new callback.
@@ -36,7 +36,7 @@ class MpiCallbacks {
    * @param fp Pointer to the callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  static int add(func_ptr_type fp);
+  int add(func_ptr_type fp);
     
   /**
    * @brief Remove callback.
@@ -46,7 +46,7 @@ class MpiCallbacks {
    *
    * @param id Identifier of the calback to remove.
    */
-  static void remove(const int id);
+  void remove(const int id);
   
   /**
    * @brief call a callback.
@@ -60,7 +60,7 @@ class MpiCallbacks {
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  static void call(int id, int par1, int par2);
+  void call(int id, int par1, int par2);
 
   /**
    * @brief call a callback.
@@ -74,7 +74,7 @@ class MpiCallbacks {
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  static void call(func_ptr_type fp, int par1, int par2);
+  void call(func_ptr_type fp, int par1, int par2);
 
   /**
    * @brief Mpi slave loop.
@@ -85,12 +85,12 @@ class MpiCallbacks {
    * This should be run on the slaves and must be running
    * so thet the master can issue call().
    */
-  static void loop();
+  void loop();
   
   /**
    * The MPI communicator used for the callbacks.   
    */
-  static boost::mpi::communicator mpi_comm;
+  boost::mpi::communicator mpi_comm;
   
  private:    
   /**
@@ -104,16 +104,22 @@ class MpiCallbacks {
    * @param par2 First parameter to pass to the callback function.
    * @param par2 Second parameter to pass to the callback function.
    */
-  static void slave(int id, int par1, int par2);
+  void slave(int id, int par1, int par2);
   
   /**
    * Internal storage for the callback functions.
    */
-  static Utils::NumeratedContainer<function_type> m_callbacks;
+  Utils::NumeratedContainer<function_type> m_callbacks;
   /** Mapping of function pointers to ids, so callbabcks can be
    *  called by their point for backward compapbility.
    */
-  static std::map<func_ptr_type, int> m_func_ptr_to_id;
+  std::map<func_ptr_type, int> m_func_ptr_to_id;
 };
+
+/**
+ * Get an instance of MpiCallbacks. This needs to be done this way to
+ * avoid the static initializer fiasco.
+ */
+MpiCallbacks &mpiCallbacks();
 
 #endif

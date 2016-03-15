@@ -61,7 +61,8 @@ void MpiCallbacks::loop() {
   }
 }
 
-/** Initialize static members */
-boost::mpi::communicator MpiCallbacks::mpi_comm;
-Utils::NumeratedContainer<MpiCallbacks::function_type> MpiCallbacks::m_callbacks;
-std::map<MpiCallbacks::func_ptr_type, int> MpiCallbacks::m_func_ptr_to_id;
+MpiCallbacks &mpiCallbacks() {
+  static MpiCallbacks *instance = new MpiCallbacks();
+
+  return *instance;
+}

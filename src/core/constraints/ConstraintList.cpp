@@ -1,4 +1,3 @@
-
 #include "ConstraintList.hpp"
 #include "GeometryConstraint.hpp"
 
@@ -9,7 +8,25 @@
 
 namespace Constraints {
 
-ConstraintList list;
+namespace {
+ConstraintList *list_local = nullptr;
+}
+
+ConstraintList &list() {
+  if((list_local == nullptr) && (this_node == 0)) {
+    /** Initialize list_local on first call */
+    list_local = ParallelFactory<ConstraintList>::make("ConstraintList");
+  }
+
+  assert(list_local != nullptr);
+  return *list_local;
+}
+
+ConstraintList *list_local = nullptr;
+
+ConstraintList::ConstraintList() {
+  list_local = this;
+}
 
 /** @TODO: Collect total force on constraint */
 

@@ -77,7 +77,6 @@ class ConstraintList : public ParallelObject {
         {
           /** Get id from master */
           Constraint *c = get_pointer_from_id(id);
-          std::cout << "ConstraintList::add_constraint(" << c->name() << ")" << std::endl;
           
           m_constraints.insert(c);
 
@@ -106,7 +105,12 @@ class ConstraintList : public ParallelObject {
   std::unordered_set<Constraint *> m_constraints;
 };
 
-  extern ConstraintList list;
+/**
+ * Workaround to ensure construction order.
+ * (master only). Will construct instances on
+ * slaves and set the list_p to the local instance.
+ */
+ConstraintList &list();
 }
   
 #endif

@@ -42,23 +42,22 @@ template<class T>
 class ParallelFactory {
  public:
   static_assert(std::is_base_of<ParallelObject, T>::value, "Class needs to be an ParallelObject for use with the parallel Factory.");
-  typedef std::shared_ptr<T> pointer_type;
-  typedef std::function<pointer_type ()> Builder;
+  typedef std::unique_ptr<T> pointer_type;
+  typedef std::function<T *()> Builder;
 
   template<class Derived>
-  static pointer_type builder() {
+  static T *builder() {
     static_assert(std::is_base_of<T, Derived>::value,
-                  "Class to build needs to be a subclass of the class the factory is for.");
-    
-    return pointer_type(new Derived());
+                  "Class to build needs to be a subclass of the class the factory is for.");    
+    return new Derived();
   }
-
+  
   static pointer_type make(const std::string &name) {
     mpi_call(ParallelFactory<T>::mpi_slave, name.size(), 0);
 
     MPI_Bcast(const_cast<char *>(&(*name.begin())), name.size(), MPI_CHAR, 0, comm_cart);
     
-    return do_make(name);
+    return pointer_type(do_make(name));
   }
 
   static void mpi_slave(int name_size, int) {
@@ -68,7 +67,7 @@ class ParallelFactory {
     MPI_Bcast(&(*name.begin()), name_size, MPI_CHAR, 0, comm_cart);
     
     try {      
-      pointer_type p = do_make(name);
+      T *p = do_make(name);
       assert(p != nullptr);
     } catch(std::exception &e) {
       runtimeErrorMsg() << e.what();
@@ -92,7 +91,7 @@ class ParallelFactory {
   }
   
  private:
-  static pointer_type do_make(std::string name) {
+  static T *do_make(std::string name) {
     if (m_map.find(name) == m_map.end()) {
       throw std::domain_error("Class '" + name + "' not found.");
     }

@@ -208,7 +208,7 @@ void mpi_add_callback(SlaveCallback *cb) {
 #ifdef HAVE_MPI
   /** Name is only used for debug messages */
   names.push_back("dynamic callback");
-  MpiCallbacks::add(cb);
+  mpiCallbacks().add(cb);
 #endif
 }
 
@@ -273,7 +273,7 @@ void mpi_init(int *argc, char ***argv)
 #endif
 
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
-    MpiCallbacks::add(slave_callbacks[i]);
+    mpiCallbacks().add(slave_callbacks[i]);
   }
 #endif /* HAVE_MPI */
   
@@ -289,7 +289,7 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   } else {
     std::cout << "mpi_call(dynamic)" << std::endl;
   }
-  MpiCallbacks::call(cb, node, param);
+  mpiCallbacks().call(cb, node, param);
 }  
 #else
 void mpi_call(SlaveCallback cb, int node, int param) {}
@@ -3066,7 +3066,7 @@ void mpi_thermalize_cpu_slave(int node, int temp)
 void mpi_loop()
 {
   /** @TODO: Adde debugging information */
-  MpiCallbacks::loop();
+  mpiCallbacks().loop();
 //   for (;;) {
 // #ifdef ASYNC_BARRIER
 //     MPI_Barrier(comm_cart);

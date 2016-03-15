@@ -12,7 +12,7 @@ void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
 }
 
 ParallelScriptObject::~ParallelScriptObject() {  
-  if(MpiCallbacks::mpi_comm.rank() == 0) {
+  if(mpiCallbacks().mpi_comm.rank() == 0) {
     call_slaves(DELETE, 0);
   }
 }
