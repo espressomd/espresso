@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,7 +22,6 @@ import espressomd
 import numpy as np
 from espressomd.electrostatics import P3M, DH
 
-
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
@@ -42,12 +41,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         return True
 
-    def setUp(self):
+    def setUp(self):        
         self.system.box_l = 10, 10, 10
-        self.system.part[0].pos = 0, 0, 0
-        self.system.part[1].pos = 0.1, 0.1, 0.1
-        self.system.part[0].q = 1
-        self.system.part[1].q = -1
+        if not self.system.part.exists(0):
+            self.system.part.add(id = 0, pos=(0.0, 0.0, 0.0), q=1)
+        if not self.system.part.exists(1):
+            self.system.part.add(id = 1, pos=(0.1, 0.1, 0.1), q=-1)
 
     def generateTestForElectrostaticInteraction(_interClass, _params):
         """Generates test cases for checking interaction parameters set and gotten back
@@ -65,11 +64,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
             # set Parameter
             Inter = interClass(**params)
-            Inter.validateParams()
-            Inter._setParamsInEsCore()
+            Inter.validate_params()
 
             # Read them out again
-            outParams = Inter.getParams()
+            outParams = Inter.get_params()
 
             self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
                             params.__str__() + " vs. output parameters " + outParams.__str__())
@@ -88,18 +86,18 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                                                  alpha=12,
                                                                  accuracy=0.01))
 
-    # test_P3M_GPU=
     test_DH = generateTestForElectrostaticInteraction(DH, dict(bjerrum_length=1.0,
                                                                kappa=2.3,
                                                                r_cut=2))
-    test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
-                                                                 kappa=2.3,
-                                                                 r_cut=2,
-                                                                 r0=1,
-                                                                 r1=2,
-                                                                 eps_int=0.8,
-                                                                 eps_ext=1,
-                                                                 alpha=2))
+    if "CDG" in espressomd.features():
+        test_CDH = generateTestForElectrostaticInteraction(CDH, dict(bjerrum_length=1.0,
+                                                                     kappa=2.3,
+                                                                     r_cut=2,
+                                                                     r0=1,
+                                                                     r1=2,
+                                                                     eps_int=0.8,
+                                                                     eps_ext=1,
+                                                                     alpha=2))
 
 
 if __name__ == "__main__":
