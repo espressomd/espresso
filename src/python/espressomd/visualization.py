@@ -1,15 +1,7 @@
-import sys
-if sys.platform == 'darwin':
-	try:
-		import multiprocessing
-		multiprocessing.set_start_method('spawn')
-	except:
-		raise Exception("Mayavi visualization is not supported on Mac OS X because fork()ed processes may not have a GUI.")
-
 import numpy
 from mayavi import mlab
+from pyface.api import GUI
 from tvtk.tools import visual
-from multiprocessing import Process, Queue
 import atexit
 
 from espressomd.interactions import NonBondedInteractions
@@ -20,72 +12,57 @@ output=vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-def mayavi_render(queue):
-	points = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="sphere", scale_factor=1, name="Particles")
-	points.glyph.color_mode = 'color_by_scalar'
-	points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
-	box = mlab.outline(extent=(0,0,0,0,0,0), color=(1,1,1), name="Box")
-	arrows = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="2ddash", scale_factor=1, name="Bonds")
-	arrows.glyph.color_mode = 'color_by_scalar'
-
-	def animate():
-		f = mlab.gcf()
-		visual.set_viewer(f)
-
-		running = False
-		while True:
-			coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed = queue.get()
-
-			if box_changed or not running:
-				box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
-
-			if not N_changed:
-				points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
-			else:
-				points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
-			if not running:
-				f.scene.reset_zoom()
-				running = True
-
-			if not Nbonds_changed:
-				if bonds.shape[0] > 0:
-					arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
-			else:
-				arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
-
-			yield
-
-	# Remove the parameter window
-	from mayavi.tools.animator import Animator
-	def e(self):
-		raise Exception("Please ignore this exception. It is needed to keep the Parameters window from showing up.")
-	Animator.show = e
-
-	mlab.show(mlab.animate(delay=10, ui=True)(animate))()
-	raise Exception("Animation window closed")
-
 class mayavi_live:
 	def __init__(self, system):
 		self.system = system
-		self.queue = Queue()
-		self.process = Process(target=mayavi_render, args=(self.queue,))
-		self.process.daemon = True
-		self.process.start()
+
+		# objects drawn
+		self.points = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="sphere", scale_factor=1, name="Particles")
+		self.points.glyph.color_mode = 'color_by_scalar'
+		self.points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
+		self.box = mlab.outline(extent=(0,0,0,0,0,0), color=(1,1,1), name="Box")
+		self.arrows = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="2ddash", scale_factor=1, name="Bonds")
+		self.arrows.glyph.color_mode = 'color_by_scalar'
+
+		# state
 		self.last_N = 1
 		self.last_Nbonds = 1
 		self.last_boxl = [0,0,0]
-		atexit.register(self.stop)
+		self.running = False
+		self.last_T = -1
 
-	def stop(self):
-		if self.process.is_alive():
-			self.process.terminate()
+		# GUI window
+		self.gui = GUI()
+		self.gui.invoke_later(self.update)
 
-	def __del__(self):
-		self.stop()
+	def draw(self, coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed):
+		f = mlab.gcf()
+		visual.set_viewer(f)
+
+		if box_changed or not self.running:
+			self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
+
+		if not N_changed:
+			self.points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+		else:
+			self.points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+		if not self.running:
+			f.scene.reset_zoom()
+			self.running = True
+
+		if not Nbonds_changed:
+			if bonds.shape[0] > 0:
+				self.arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
+		else:
+			self.arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
 	def update(self):
-		if not self.process.is_alive():
-			raise Exception("Animation process terminated")
+		self.process_gui_events()
+
+		if self.last_T == self.system.time:
+			return
+		self.last_T = self.system.time
+		
 		N = self.system.n_part
 		coords = numpy.empty((N,3))
 		types = numpy.empty(N, dtype=int)
@@ -115,11 +92,19 @@ class mayavi_live:
 
 		boxl = self.system.box_l
 
-		self.queue.put(( coords, types, radii, (self.last_N != N), 
-		                 bond_coords, (self.last_Nbonds != Nbonds),
-		                 boxl, (self.last_boxl != boxl).any() ))
+		self.draw( coords, types, radii, (self.last_N != N), 
+		           bond_coords, (self.last_Nbonds != Nbonds),
+		           boxl, (self.last_boxl != boxl).any() )
 		self.last_N = N
 		self.last_Nbonds = Nbonds
 		self.last_boxl = boxl
+
+		self.gui.invoke_later(self.update)
+
+	def process_gui_events(self):
+		self.gui.process_events()
+
+	def run_gui_event_loop(self):
+		self.gui.start_event_loop()
 
 # TODO: constraints
