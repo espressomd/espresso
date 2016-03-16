@@ -295,6 +295,18 @@ cdef class System:
             global sim_time
             return sim_time
 
+    property smaller_time_step:
+        def __set__(self, double _smaller_time_step):
+            IF MULTI_TIMESTEP:
+                global smaller_time_step
+                if _smaller_time_step <= 0:
+                    raise ValueError("Smaller time step must be positive")
+                mpi_set_smaller_time_step(_smaller_time_step)
+
+        def __get__(self):
+            global smaller_time_step
+            return smaller_time_step
+
     property time_step:
         def __set__(self, double _time_step):
             IF LB:

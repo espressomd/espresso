@@ -38,10 +38,7 @@ PARTICLE_EXT_TORQUE = 16
 
 
 particle_attributes = ["type","pos", "v", "f", "bonds"]
-
-IF MULTI_TIMESTEP:
-    particle_attributes.append("smaller_timestep")
-                    
+                     
 IF MASS:
     particle_attributes.append("mass")
 
@@ -156,7 +153,7 @@ cdef class ParticleHandle:
             global time_step, smaller_time_step
             self.update_particle_data()
             IF MULTI_TIMESTEP:
-                if smaller_time_step > 0. and self.smaller_timestep:
+                if smaller_time_step > 0. and self.particle_data.p.smaller_timestep:
                     return np.array([self.particle_data.m.v[0]/smaller_time_step,
                                      self.particle_data.m.v[1]/smaller_time_step,
                                      self.particle_data.m.v[2]/smaller_time_step])
@@ -234,23 +231,6 @@ cdef class ParticleHandle:
             return tuple(bonds)
 
     # Properties that exist only when certain features are activated
-    # MULTI_TIMESTEP
-    IF MULTI_TIMESTEP == 1:
-        property smaller_timestep:
-            """Particle flag specifying whether particle trajectory should be integrated with time_step of small_time_step"""
-
-            def __set__(self, _smaller_timestep):
-                check_type_or_throw_except(
-                    _smaller_timestep, 1, int, "Smaller time step flag has to be 1 ints")
-                if set_particle_smaller_timestep(self.id, _smaller_timestep) == 1:
-                    raise Exception("error setting particle smaller_timestep")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef int * x = NULL
-                pointer_to_smaller_timestep( & (self.particle_data), x)
-                return x[0]
-
     # MASS
     IF MASS == 1:
         property mass:
@@ -912,6 +892,19 @@ cdef class ParticleSlice:
         """Particle velocity"""
 
         def __set__(self, _v_array):
+<<<<<<< HEAD
+            global time_step
+            if len(self.id_selection) != len(_v_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_v_array),len(self.id_selection)))
+                
+            cdef double myv[3]
+            for j in range(len(_v_array)):
+                for i in range(3):
+                    myv[i] = _v_array[j][i]
+                    myv[i] *= time_step
+                if set_particle_v(self.id_selection[j], myv) == 1:
+                    raise Exception("set particle position first")
+=======
             if len(np.array(_v_array).shape) == 1:
                 for id in self.id_selection:
                     ParticleHandle(id).v = _v_array
@@ -922,11 +915,20 @@ cdef class ParticleSlice:
                 
             for i in range(len(self.id_selection)):
                 ParticleHandle(self.id_selection[i]).v = _v_array[i]
+>>>>>>> fa39df454fda191b1abbcf508dc9e3985fea46e4
 
         def __get__(self):
+            global time_step
             v_array = np.zeros((len(self.id_selection),3))
             for i in range(len(self.id_selection)):
+<<<<<<< HEAD
+                self.update_particle_data(self.id_selection[i])
+                v_array[i,:] = np.array([self.particle_data.m.v[0]/time_step,
+                                         self.particle_data.m.v[1]/time_step,
+                                         self.particle_data.m.v[2]/time_step])
+=======
                 v_array[i,:] = ParticleHandle(self.id_selection[i]).v
+>>>>>>> fa39df454fda191b1abbcf508dc9e3985fea46e4
             return v_array
 
 
@@ -935,6 +937,18 @@ cdef class ParticleSlice:
         """Particle force"""
 
         def __set__(self, _f_array):
+<<<<<<< HEAD
+            global time_step
+            if len(self.id_selection) != len(_f_array):
+                raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
+            cdef double myf[3]
+            for j in range(len(_f_array)):
+                for i in range(3):
+                    myf[i] = _f_array[j][i]
+                    myf[i] *= (0.5*time_step**2)
+                if set_particle_f(self.id_selection[j], myf) == 1:
+                    raise Exception("set particle position first")
+=======
             if len(np.array(_f_array).shape) == 1:
                 for id in self.id_selection:
                     ParticleHandle(id).f = _f_array
@@ -944,11 +958,20 @@ cdef class ParticleSlice:
                 raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
             for i in range(len(_f_array)):
                 ParticleHandle(self.id_selection[i]).f = _f_array[i]
+>>>>>>> fa39df454fda191b1abbcf508dc9e3985fea46e4
 
         def __get__(self):
+            global time_step
             f_array = np.zeros((len(self.id_selection),3))
             for i in range(len(self.id_selection)):
+<<<<<<< HEAD
+                self.update_particle_data(self.id_selection[i])
+                f_array[i,:] = np.array([self.particle_data.f.f[0]/(0.5*time_step**2),
+                                         self.particle_data.f.f[1]/(0.5*time_step**2),
+                                         self.particle_data.f.f[2]/(0.5*time_step**2)])
+=======
                 f_array[i,:] = ParticleHandle(self.id_selection[i]).f
+>>>>>>> fa39df454fda191b1abbcf508dc9e3985fea46e4
             return f_array
 
 

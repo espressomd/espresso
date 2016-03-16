@@ -29,6 +29,7 @@ cdef extern from "global.hpp":
 
 cdef extern from "communication.hpp":
     extern int n_nodes
+    void mpi_set_smaller_time_step(double smaller_time_step)
     void mpi_set_time_step(double time_step)
     void mpi_bcast_parameter(int p)
 
