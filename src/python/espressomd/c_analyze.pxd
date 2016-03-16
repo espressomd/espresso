@@ -114,3 +114,6 @@ cdef extern from "statistics.hpp":
     void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
                               double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
     void angularmomentum(int p_type, double * com)
+    void calc_gyration_tensor(int p_type, vector[double] gt)
+    void momentofinertiamatrix(int p_type, double* MofImatrix)
+    void analyze_rdfchain(double r_min, double r_max, int r_bins, double **f1, double **f2, double **f3)
