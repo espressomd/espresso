@@ -48,6 +48,7 @@
 #include "fene.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
+#include "drude.hpp"
 #include "quartic.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
@@ -181,6 +182,7 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef INTER_RF
   ret += interrf_pair_energy(p1,p2,ia_params,dist);
 #endif
+
 
   return ret;
 }
@@ -345,6 +347,11 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_HARMONIC:
       bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      bond_broken = drude_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
     case BONDED_IA_QUARTIC:
       bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;

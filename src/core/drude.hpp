@@ -30,7 +30,6 @@
 
 #include "utils.hpp"
 #include "interaction_data.hpp"
-#include "harmonic.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 
@@ -87,17 +86,22 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
   double mass_c = p1->p.mass;
   double mass_d = p2->p.mass;
   double mass_tot = mass_d + mass_c;
+  double mass_tot_inv = 1.0/mass_tot;
   double mass_red = mass_d * mass_c / mass_tot;
 
-  double rnd_c[3] = { (d_random()-0.5), (d_random()-0.5), (d_random()-0.5) };
-  double rnd_d[3] = { (d_random()-0.5), (d_random()-0.5), (d_random()-0.5) };
+  //double rnd_c[3] = { (d_random()-0.5), (d_random()-0.5), (d_random()-0.5) };
+  //double rnd_d[3] = { (d_random()-0.5), (d_random()-0.5), (d_random()-0.5) };
 
   for (i=0;i<3;i++)  {
-    force_com[i]  = -gamma_c/time_step*(mass_c*p1->m.v[i]+mass_d*p2->m.v[i]) + sqrt(24.0*gamma_c/time_step*temp_c*mass_tot) * rnd_c[i];
-    force_dist[i] = -gamma_d/time_step*(p2->m.v[i] - p1->m.v[i])*mass_red    + sqrt(24.0*gamma_d/time_step*temp_d*mass_red) * rnd_d[i];
+    double com_vel = mass_tot_inv * (mass_c * p1->m.v[i] + mass_d * p2->m.v[i])
+    force_com[i]  = mass_tot_inv * (-gamma_c / time_step * com_vel  + sqrt(24.0 * gamma_c / time_step * temp_c) * (d_random()-0.5));
+
+    double dist_vel = p2->m.v[i] - p1->m.v[i]
+    force_dist[i]  =                -gamma_d / time_step * dist_vel + sqrt(24.0 * gamma_d / time_step * temp_d) * (d_random()-0.5);
+
+    //force_com[i]  = 1.0/mass_tot  -gamma_c/time_step*(mass_c*p1->m.v[i]+mass_d*p2->m.v[i]) + sqrt(24.0*gamma_c/time_step*temp_c*mass_tot) * rnd_c[i];
+    //force_dist[i] = -gamma_d/time_step*(p2->m.v[i] - p1->m.v[i])*mass_red    + sqrt(24.0*gamma_d/time_step*temp_d*mass_red) * rnd_d[i];
   }
-
-
 
   /* Apply forces: 
      -Harmonic bond
@@ -115,16 +119,11 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
     fprintf(stderr,"dist<ROUND_ERROR_PREC");
   }
   
-  //Forces on core  
   for (i=0;i<3;i++)  {
      force_harmonic[i] = fac_harmonic*dx[i];
      force_subt_elec[i] = -coulomb.prefactor * chgfac * dx[i] / dist / dist2;
-     force1[i] = mass_c/mass_tot*force_com[i] - force_dist[i] + force_harmonic[i] + force_subt_elec[i];
-  }
-
-  //Forces on drude
-  for (i=0;i<3;i++)  {
-     force2[i] = mass_d/mass_tot*force_com[i] + force_dist[i] - force_harmonic[i] - force_subt_elec[i];
+     force1[i] = force_com[i] - 1.0/mass_c * force_dist[i] + force_harmonic[i] + force_subt_elec[i]; //Core
+     force2[i] = force_com[i] + 1.0/mass_d * force_dist[i] - force_harmonic[i] - force_subt_elec[i]; //Drude
   }
 
   /*

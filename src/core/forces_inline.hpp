@@ -57,6 +57,7 @@
 #include "object-in-fluid/out_direction.hpp"
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
+#include "drude.hpp"
 #include "subt_lj.hpp"
 #include "angle_harmonic.hpp"
 #include "angle_cosine.hpp"
@@ -579,6 +580,11 @@ inline void add_bonded_force(Particle *p1)
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      bond_broken = calc_drude_forces(p1, p2, iaparams, dx, force,force2);
+      break;
+#endif
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2,  iaparams, dx, force);
       break;
