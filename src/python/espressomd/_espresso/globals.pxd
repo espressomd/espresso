@@ -152,4 +152,4 @@ cdef extern from "reaction.hpp":
         int sing_mult
         int swap
 
-    extern reaction_struct reaction
+    cdef extern reaction_struct reaction

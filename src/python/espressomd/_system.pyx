@@ -21,6 +21,7 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 
+cimport integrate
 import interactions
 from actors import Actors
 cimport cuda_init
@@ -34,7 +35,6 @@ setable_properties=["box_l","max_num_cells","min_num_cells",
                     "node_grid","npt_piston","npt_p_diff",
                     "periodicity","skin","time",
                     "time_step","timings"]
-
 
 cdef class System:
     doge = 1
@@ -264,7 +264,8 @@ cdef class System:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(28)
+            mpi_bcast_parameter(29)
+            integrate.skin_set = True
 
         def __get__(self):
             global skin
@@ -383,6 +384,31 @@ cdef class System:
         def __get__(self):
             global max_cut_bonded
             return max_cut_bonded
+    
+    
+    property seed:
+            def __set__(self, _seed):
+                cdef vector[int] seed_array
+                global __seed
+                __seed=_seed
+                if(isinstance(_seed,int) and self.n_nodes==1):
+                    seed_array[0]=int(_seed)
+                    mpi_random_seed(0,seed_array)
+                elif(isinstance(_seed, list) or type(_seed)==np.ndarray):
+                    if(len(_seed)<self.n_nodes or len(_seed)>self.n_nodes):
+                        raise ValueError("The list needs to contain one seed value per node")
+
+                    for i in range(len(_seed)):
+                        seed_array[i]=int(_seed[i])
+
+                    mpi_random_seed(self.n_nodes,seed_array)
+                else:
+                        raise ValueError("The seed has to be an integer or a list of integers with one integer per node")
+
+            def __get__(self):
+                global __seed
+                return __seed
+        
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates

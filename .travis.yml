@@ -1,13 +1,27 @@
 language: cpp
+dist: trusty
+sudo: required
+
+cache: 
+  - apt
+  - ccache
 
 before_install:
- - sudo apt-get clean
  - sudo apt-get update
- - sudo apt-get install tcl-dev libhdf5-serial-dev build-essential python-numpy python-pip pep8
- - sudo -H PATH="${PATH}:/usr/local/clang-3.4/bin" pip install cython --upgrade 
- - if [ "$with_mpi" != false ]; then sudo apt-get install libopenmpi-dev openmpi-bin; fi
- - if [ "$with_fftw" != false ]; then sudo apt-get install libfftw3-dev; fi
- - pip install --user codecov
+ - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential pep8 cmake
+ - if [ "$with_mpi" != false ]; then sudo apt-get install -y libopenmpi-dev openmpi-bin; fi
+ - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
+ - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+ - chmod +x miniconda.sh
+ - bash miniconda.sh -b -p $HOME/miniconda
+ - export PATH=/home/travis/miniconda/bin:$PATH
+ - conda update --yes conda
+
+install:
+ - conda create --yes -n test python=2.7.6
+ - source activate test
+ - conda install --yes numpy cython pip
+ - pip install codecov
 
 env:
   - myconfig=default
@@ -22,25 +36,9 @@ env:
 
 compiler:
   - gcc
+  - clang
 
-matrix:
-  include:
-    - compiler: clang
-      env: with-mpi=false myconfig=default 
-    - compiler: clang
-      env: with-mpi=false myconfig=maxset with_coverage=true
-    - compiler: clang
-      env: with-mpi=false myconfig=molcut
-    - compiler: clang
-      env: with-mpi=false myconfig=rest1
-    - compiler: clang
-      env: with-mpi=false myconfig=rest2
-    - compiler: clang
-      env: with-mpi=false make_check=false myconfig=nocheck-maxset 
-    - compiler: clang
-      env: with-mpi=false myconfig=maxset without-cuda
-
-script: ./maintainer/travis/build.sh
+script: ./maintainer/travis/build_cmake.sh
 
 after_success:
  - codecov
