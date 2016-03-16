@@ -146,10 +146,16 @@ end "BUILD"
 if $make_check; then
     start "TEST"
 
-    cmd "make check $make_params"
+    cmd "make check_tcl $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
-	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
+        cat $srcdir/testsuite/Testing/Temporary/LastTest.log
+        exit $ec
+    fi
+
+    cmd "make check_unit_tests $make_params"
+    ec=$?
+    if [ $ec != 0 ]; then	
         cat $srcdir/testsuite/Testing/Temporary/LastTest.log
         exit $ec
     fi
