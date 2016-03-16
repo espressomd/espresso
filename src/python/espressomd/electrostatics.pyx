@@ -21,6 +21,7 @@ include "myconfig.pxi"
 cimport actors
 import actors
 cimport globals
+import numpy as np
 
 cdef class ElectrostaticInteraction(actors.Actor):
     def _tune(self):
@@ -412,11 +413,12 @@ IF ELECTROSTATICS:
             return { "bjerrum_length": -1, 
                      "maxPWerror": -1, 
                      "far_switch_radius_2" : -1, 
+                     "far_switch_radius" : -1,
                      "bessel_cutoff" : -1, 
                      "tune" : True}
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "far_switch_radius_2", "bessel_cutoff", "tune"
+            return "bjerrum_length", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
 
         def required_keys(self):
             return ["bjerrum_length", "maxPWerror"]
@@ -424,7 +426,8 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm1d_params)
-            params["far_switch_radius_2"]=np.sqrt(params["far_switch_radius_2"])
+            print params["far_switch_radius_2"]
+            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
@@ -482,7 +485,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             return { "bjerrum_length": -1, 
                      "maxPWerror": -1.0, 
                      "far_switch_radius" : -1.0, 
-                     "far_switch_radius_2" : 9, 
+                     "far_switch_radius_2" : -1.0, 
                      "bessel_cutoff" : -1, 
                      "tune" : True}
 
@@ -495,6 +498,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm1d_params)
+            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
@@ -556,7 +560,7 @@ IF ELECTROSTATICS:
             return ["bjerrum_length", "maxPWerror"]
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_top", "delta_bot", "pot_diff", "dielectric", "dielectric_contrast", "capacitor"
+            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_top", "delta_bot", "pot_diff", "dielectric", "dielectric_contrast", "capacitor", "far_cut"
 
         def _get_params_from_es_core(self):
             params={}
