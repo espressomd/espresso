@@ -129,6 +129,9 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
+# Acticate anaconda environment
+cmd "source activate test"
+
 cmd "cmake $cmake_params $srcdir" || exit $?
 end "CONFIGURE"
 
