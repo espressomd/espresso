@@ -20,37 +20,43 @@ from utils cimport *
 cimport globals
 from globals cimport max_seen_particle
 
+
 def is_valid_type(type_id):
-    return (not isinstance(type_id,int) or type_id < 0 or type_id > globals.n_particle_types)
-    
+    return (not isinstance(type_id, int) or type_id < 0 or type_id > globals.n_particle_types)
+
+
 def check_valid_type(type_id):
     if is_valid_type(type_id):
-        raise ValueError("type",type_id,"does not exist!")
+        raise ValueError("type", type_id, "does not exist!")
+
 
 def setup(type_list=None):
-    if not hasattr(type_list,"__iter__"):
+    if not hasattr(type_list, "__iter__"):
         raise ValueError("type_list has to be iterable.")
-    
+
     for type_id in type_list:
-       if (type_id < 0):
-           raise ValueError("type",type_id,"is invalid!")
-       if (max_seen_particle<0):
-           raise ValueError("The system contains no particles. Create one particle with arbitrary type first!")
-       init_type_array(type_id)
+        if (type_id < 0):
+            raise ValueError("type", type_id, "is invalid!")
+        if (max_seen_particle < 0):
+            raise ValueError(
+                "The system contains no particles. Create one particle with arbitrary type first!")
+        init_type_array(type_id)
+
 
 def delete_particles(type_id=None):
     check_valid_type(type_id)
     delete_particle_of_type(type_id)
-    
+
+
 def find_particle(type_id=None):
     check_valid_type(type_id)
     cdef int pid
-    find_particle_type(type_id, &pid)
+    find_particle_type(type_id, & pid)
     return int(pid)
-    
+
+
 def number_of_particles(type_id=None):
     check_valid_type(type_id)
     cdef int number
-    number_of_particles_with_type(type_id,&number)
+    number_of_particles_with_type(type_id, & number)
     return int(number)
-    
