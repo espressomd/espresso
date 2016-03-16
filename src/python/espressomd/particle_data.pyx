@@ -26,7 +26,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step
+from globals cimport max_seen_particle, time_step, smaller_time_step
 
 PARTICLE_EXT_FORCE = 1
 
@@ -38,7 +38,10 @@ PARTICLE_EXT_TORQUE = 16
 
 
 particle_attributes = ["type","pos", "v", "f", "bonds"]
-                     
+
+IF MULTI_TIMESTEP:
+    particle_attributes.append("smaller_timestep")
+                    
 IF MASS:
     particle_attributes.append("mass")
 
@@ -139,29 +142,44 @@ cdef class ParticleHandle:
         """Particle velocity"""
 
         def __set__(self, _v):
+            global time_step
             cdef double myv[3]
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
             for i in range(3):
                 myv[i] = _v[i]
+                myv[i] *= time_step
             if set_particle_v(self.id, myv) == 1:
                 raise Exception("set particle position first")
 
         def __get__(self):
+            global time_step, smaller_time_step
             self.update_particle_data()
-            return np.array([self.particle_data.m.v[0],
-                             self.particle_data.m.v[1],
-                             self.particle_data.m.v[2]])
+            IF MULTI_TIMESTEP:
+                if smaller_time_step > 0. and self.smaller_timestep:
+                    return np.array([self.particle_data.m.v[0]/smaller_time_step,
+                                     self.particle_data.m.v[1]/smaller_time_step,
+                                     self.particle_data.m.v[2]/smaller_time_step])
+                else:
+                    return np.array([self.particle_data.m.v[0]/time_step,
+                                     self.particle_data.m.v[1]/time_step,
+                                     self.particle_data.m.v[2]/time_step])
+            ELSE:
+                return np.array([self.particle_data.m.v[0]/time_step,
+                                 self.particle_data.m.v[1]/time_step,
+                                 self.particle_data.m.v[2]/time_step])
 
     # Force
     property f:
         """Particle force"""
 
         def __set__(self, _f):
+            global time_step
             cdef double myf[3]
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
             for i in range(3):
                 myf[i] = _f[i]
+                myf[i] *= (0.5*time_step**2)
             if set_particle_f(self.id, myf) == 1:
                 raise Exception("set particle position first")
 
@@ -216,6 +234,23 @@ cdef class ParticleHandle:
             return tuple(bonds)
 
     # Properties that exist only when certain features are activated
+    # MULTI_TIMESTEP
+    IF MULTI_TIMESTEP == 1:
+        property smaller_timestep:
+            """Particle flag specifying whether particle trajectory should be integrated with time_step of small_time_step"""
+
+            def __set__(self, _smaller_timestep):
+                check_type_or_throw_except(
+                    _smaller_timestep, 1, int, "Smaller time step flag has to be 1 ints")
+                if set_particle_smaller_timestep(self.id, _smaller_timestep) == 1:
+                    raise Exception("error setting particle smaller_timestep")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef int * x = NULL
+                pointer_to_smaller_timestep( & (self.particle_data), x)
+                return x[0]
+
     # MASS
     IF MASS == 1:
         property mass:

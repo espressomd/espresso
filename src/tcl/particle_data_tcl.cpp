@@ -279,11 +279,11 @@ void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0. && part->p.smaller_timestep) {
     Tcl_PrintDouble(interp, part->m.v[0]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   } else 
 #endif
   {
