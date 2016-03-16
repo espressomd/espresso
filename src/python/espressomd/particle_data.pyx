@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+
 cimport numpy as np
 import numpy as np
 cimport utils
@@ -25,7 +26,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle
+from globals cimport max_seen_particle, time_step
 
 PARTICLE_EXT_FORCE = 1
 
@@ -165,10 +166,11 @@ cdef class ParticleHandle:
                 raise Exception("set particle position first")
 
         def __get__(self):
+            global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.f.f[0],
-                             self.particle_data.f.f[1],
-                             self.particle_data.f.f[2]])
+            return np.array([self.particle_data.f.f[0]/(0.5*time_step**2),
+                             self.particle_data.f.f[1]/(0.5*time_step**2),
+                             self.particle_data.f.f[2]/(0.5*time_step**2)])
 
     # Bonds
     property bonds:
