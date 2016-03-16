@@ -26,7 +26,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step
+from globals cimport max_seen_particle, time_step, smaller_time_step
 
 PARTICLE_EXT_FORCE = 1
 
@@ -139,29 +139,44 @@ cdef class ParticleHandle:
         """Particle velocity"""
 
         def __set__(self, _v):
+            global time_step
             cdef double myv[3]
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
             for i in range(3):
                 myv[i] = _v[i]
+                myv[i] *= time_step
             if set_particle_v(self.id, myv) == 1:
                 raise Exception("set particle position first")
 
         def __get__(self):
+            global time_step, smaller_time_step
             self.update_particle_data()
-            return np.array([self.particle_data.m.v[0],
-                             self.particle_data.m.v[1],
-                             self.particle_data.m.v[2]])
+            IF MULTI_TIMESTEP:
+                if smaller_time_step > 0. and self.particle_data.p.smaller_timestep:
+                    return np.array([self.particle_data.m.v[0]/smaller_time_step,
+                                     self.particle_data.m.v[1]/smaller_time_step,
+                                     self.particle_data.m.v[2]/smaller_time_step])
+                else:
+                    return np.array([self.particle_data.m.v[0]/time_step,
+                                     self.particle_data.m.v[1]/time_step,
+                                     self.particle_data.m.v[2]/time_step])
+            ELSE:
+                return np.array([self.particle_data.m.v[0]/time_step,
+                                 self.particle_data.m.v[1]/time_step,
+                                 self.particle_data.m.v[2]/time_step])
 
     # Force
     property f:
         """Particle force"""
 
         def __set__(self, _f):
+            global time_step
             cdef double myf[3]
             check_type_or_throw_except(_f, 3, float, "Force has to be floats")
             for i in range(3):
                 myf[i] = _f[i]
+                myf[i] *= (0.5*time_step**2)
             if set_particle_f(self.id, myf) == 1:
                 raise Exception("set particle position first")
 
@@ -881,6 +896,7 @@ cdef class ParticleSlice:
         """Particle velocity"""
 
         def __set__(self, _v_array):
+            global time_step
             if len(self.id_selection) != len(_v_array):
                 raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_v_array),len(self.id_selection)))
                 
@@ -888,17 +904,18 @@ cdef class ParticleSlice:
             for j in range(len(_v_array)):
                 for i in range(3):
                     myv[i] = _v_array[j][i]
-
+                    myv[i] *= time_step
                 if set_particle_v(self.id_selection[j], myv) == 1:
                     raise Exception("set particle position first")
 
         def __get__(self):
+            global time_step
             v_array = np.zeros((len(self.id_selection),3))
             for i in range(len(self.id_selection)):
                 self.update_particle_data(self.id_selection[i])
-                v_array[i,:] = np.array([self.particle_data.m.v[0],
-                                         self.particle_data.m.v[1],
-                                         self.particle_data.m.v[2]])
+                v_array[i,:] = np.array([self.particle_data.m.v[0]/time_step,
+                                         self.particle_data.m.v[1]/time_step,
+                                         self.particle_data.m.v[2]/time_step])
             return v_array
 
 
@@ -907,22 +924,25 @@ cdef class ParticleSlice:
         """Particle force"""
 
         def __set__(self, _f_array):
+            global time_step
             if len(self.id_selection) != len(_f_array):
                 raise Exception("Input list size (%i) does not match slice size (%i)"%(len(_f_array),len(self.id_selection)))
             cdef double myf[3]
             for j in range(len(_f_array)):
                 for i in range(3):
                     myf[i] = _f_array[j][i]
+                    myf[i] *= (0.5*time_step**2)
                 if set_particle_f(self.id_selection[j], myf) == 1:
                     raise Exception("set particle position first")
 
         def __get__(self):
+            global time_step
             f_array = np.zeros((len(self.id_selection),3))
             for i in range(len(self.id_selection)):
                 self.update_particle_data(self.id_selection[i])
-                f_array[i,:] = np.array([self.particle_data.f.f[0],
-                                         self.particle_data.f.f[1],
-                                         self.particle_data.f.f[2]])
+                f_array[i,:] = np.array([self.particle_data.f.f[0]/(0.5*time_step**2),
+                                         self.particle_data.f.f[1]/(0.5*time_step**2),
+                                         self.particle_data.f.f[2]/(0.5*time_step**2)])
             return f_array
 
 

@@ -36,6 +36,7 @@ cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch
     extern double sim_time
+    extern double smaller_time_step
     extern double verlet_reuse
 
 cdef extern from "verlet.hpp":
