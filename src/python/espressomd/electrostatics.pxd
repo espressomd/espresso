@@ -214,7 +214,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 #    cdef extern from "EspressoSystemInterface.cpp":
 #        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;
 
-IF ELECTROSTATICS :
+IF ELECTROSTATICS and MMM1D_GPU:
     cdef extern from "mmm1d.hpp":
         ctypedef struct MMM1D_struct:
             double far_switch_radius_2;
@@ -228,14 +228,61 @@ IF ELECTROSTATICS :
         int MMM1D_sanity_checks();
         int mmm1d_tune(char **log);
 
+    cdef extern from "interaction_data.hpp":
+        int coulomb_set_bjerrum(double bjerrum)
+
+        ctypedef enum CoulombMethod :
+            COULOMB_NONE, 
+            COULOMB_DH, 
+            COULOMB_P3M, 
+            COULOMB_MMM1D, 
+            COULOMB_MMM2D, 
+            COULOMB_MAGGS, 
+            COULOMB_ELC_P3M,
+            COULOMB_RF, 
+            COULOMB_INTER_RF, 
+            COULOMB_P3M_GPU,
+            COULOMB_MMM1D_GPU,
+            COULOMB_EWALD_GPU,
+            COULOMB_EK 
+
+        ctypedef struct Coulomb_parameters:
+            double bjerrum
+            double prefactor
+            CoulombMethod method
+
+        cdef extern Coulomb_parameters coulomb
+
     cdef inline pyMMM1D_tune():
         cdef char *log
         cdef int resp
         MMM1D_init();
         if MMM1D_sanity_checks()==1:
-            raise ValueError("MMM1D Sanity check failed: wrong peridicity or wrong cellsystem, PRTFM")
+            raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
         resp=mmm1d_tune(&log)
         return resp, log
+
+IF ELECTROSTATICS:
+    cdef extern from "mmm2d.hpp":
+        ctypedef struct MMM2D_struct:
+            double maxPWerror;
+            double far_cut;
+            double far_cut2;
+            int far_calculated;
+            int dielectric_contrast_on;
+            int const_pot_on;
+            double pot_diff;
+            double delta_mid_top;
+            double delta_mid_bot;
+            double delta_mult;
+
+        cdef extern MMM2D_struct mmm2d_params;
+
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+
+        void MMM2D_init();
+
+        int MMM2D_sanity_checks();
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
@@ -263,4 +310,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
             float force_benchmark(SystemInterface &s);
             
             void check_periodicity();
+
 
