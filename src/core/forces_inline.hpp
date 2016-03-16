@@ -902,7 +902,7 @@ inline void check_particle_force(Particle *part) {
 inline void add_single_particle_force(Particle *p) {
   add_bonded_force(p);
 #ifdef CONSTRAINTS
-  Constraints::list_local->add_forces(p);
+  Constraints::list().add_forces(p);
 #endif
 #ifdef EXTERNAL_FORCES
   add_external_potential_forces(p);

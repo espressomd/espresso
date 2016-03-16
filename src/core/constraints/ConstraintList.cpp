@@ -12,19 +12,20 @@ namespace {
 ConstraintList *list_local = nullptr;
 }
 
+using Utils::ParallelFactory;
+
 ConstraintList &list() {
   if((list_local == nullptr) && (this_node == 0)) {
     /** Initialize list_local on first call */
-    list_local = ParallelFactory<ConstraintList>::make("ConstraintList");
+    list_local = ParallelFactory<ConstraintList>::make("ConstraintList").release();
   }
-
+  
   assert(list_local != nullptr);
+  
   return *list_local;
 }
 
-ConstraintList *list_local = nullptr;
-
-ConstraintList::ConstraintList() {
+ConstraintList::ConstraintList() : ParallelObject() {
   list_local = this;
 }
 

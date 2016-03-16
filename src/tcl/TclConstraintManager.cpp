@@ -60,7 +60,7 @@ void ConstraintManager::parse_from_string(std::list<std::string> &argv) {
     argv.pop_front();
     
     auto c = m_objects[id];    
-    Constraints::list.remove_constraint(c);
+    Constraints::list().remove_constraint(c);
     
     m_shapes.erase(id);
     m_objects.remove(id);
@@ -97,27 +97,28 @@ void ConstraintManager::parse_from_string(std::list<std::string> &argv) {
   
   /** Check if this is plain constraint */
   if(ManagedNumeratedContainer<Constraint>::factory_type::has_builder(name)) {
-    std::cout << name << std::endl;
     id = m_objects.add(name);
     TclScriptObject(*m_objects[id], interp).parse_from_string(argv);
 
     /** If it's not one of the other types it is a GeometryConstraint */
   } else {
-    std::cout << name << std::endl;
     id = m_objects.add("geometry_constraint");
     auto c = m_objects[id] ;
-    auto s = Shapes::Factory::make(name);
+    std::shared_ptr<Shapes::Shape> s = Shapes::Factory::make(name);
 
-    TclScriptObject(*s, interp).parse_from_string(argv);        
-    TclScriptObject(*c, interp).parse_from_string(argv);
-    
+    TclScriptObject(*s, interp).parse_from_string(argv);
     c->set_parameter("shape", s->get_id());
 
+    TclScriptObject(*c, interp).parse_from_string(argv);
+    
+    s->broadcast_parameters();    
+    c->broadcast_parameters();
+    
     m_shapes[id] = s;
   }
 
-  std::cout << m_objects[id]->name() << std::endl;
-  Constraints::list.add_constraint(m_objects[id]);
+  Constraints::ConstraintList &cl = Constraints::list(); 
+  cl.add_constraint(m_objects[id]);
   m_names[id] = name;
   
   std::stringstream ss;

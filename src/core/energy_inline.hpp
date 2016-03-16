@@ -523,7 +523,7 @@ inline void add_single_particle_energy(Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
-  Constraints::list_local->add_energies(p);
+  Constraints::list().add_energies(p);
 #endif
 #ifdef EXTERNAL_FORCES
   add_external_potential_energy(p);

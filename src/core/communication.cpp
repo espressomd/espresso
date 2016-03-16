@@ -284,10 +284,10 @@ void mpi_init(int *argc, char ***argv)
 void mpi_call(SlaveCallback cb, int node, int param) {
   auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
   if(it != slave_callbacks.end()) {
-    auto id = slave_callbacks.end() - it;    
-    std::cout << "mpi_call(" << names[id] << "), id = " << id << std::endl;
+    auto id = it - slave_callbacks.begin();    
+    //    std::cout << "mpi_call(" << names[id] << "), id = " << id << std::endl;
   } else {
-    std::cout << "mpi_call(dynamic)" << std::endl;
+    //std::cout << "mpi_call(dynamic)" << std::endl;
   }
   mpiCallbacks().call(cb, node, param);
 }  

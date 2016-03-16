@@ -4,8 +4,11 @@
 #include "ChargedRod.hpp"
 #include "ExternalMagneticField.hpp"
 #include "GeometryConstraint.hpp"
+#include "ConstraintList.hpp"
 
 namespace Constraints {
+
+using Utils::ParallelFactory;
 
 void initialize_factory() {
   Factory::register_new("plate", Factory::builder<ChargedPlate>);

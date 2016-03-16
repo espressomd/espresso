@@ -134,6 +134,7 @@ Parameters GeometryConstraint::get_parameters() {
   p["reflecting"] = reflection_type;
   p["penetrable"] = penetrable;
   p["tunable_slip"] = tuneable_slip;
+  p["shape"] = m_shape_id;
     
   return p;
 }
@@ -152,6 +153,7 @@ Parameters GeometryConstraint::all_parameters() const {
 }
 
 void GeometryConstraint::set_parameter(const std::string &name, const Variant &value) {
+  std::cout << "GeometryConstraint::set_parameter(" << name << ", " << value << ")\n";
   SET_PARAMETER_HELPER("only_positive", only_positive);
   if(name == "type") {
     SET_PARAMETER_HELPER("type", part_rep.p.type);
@@ -166,8 +168,12 @@ void GeometryConstraint::set_parameter(const std::string &name, const Variant &v
   SET_PARAMETER_HELPER("tunable_slip", tuneable_slip);
 
   if(name == "shape") {
-    m_shape = dynamic_cast<Shapes::Shape *>(ParallelObject::get_local_address(value));
+    m_shape_id = value;
+    m_shape = dynamic_cast<Shapes::Shape *>(ParallelObject::get_local_address(m_shape_id));
     assert(m_shape != nullptr);
+
+    std::cout << "m_shape->name() = " << m_shape->name() << std::endl;
+    
     return;
   }
 }

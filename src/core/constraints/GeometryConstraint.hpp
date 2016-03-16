@@ -19,7 +19,7 @@ class GeometryConstraint : public Constraint {
   void add_energy(Particle *p, const double *folded_pos, Observable_stat &energy);
   void add_force(Particle *p, const double *folded_pos);
   Shapes::Shape* get_shape() const { return m_shape; }
-  virtual const std::string name() { return Constraint::name() + std::string("GeometryConstraint::") + m_shape->name(); }
+  virtual const std::string name() const { return Constraint::name() + std::string("GeometryConstraint::") + m_shape->name(); }
 
   /** Data members */
   Particle part_rep;

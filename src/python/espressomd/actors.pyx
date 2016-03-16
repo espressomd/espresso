@@ -1,9 +1,7 @@
 include "myconfig.pxi"
 from highlander import ThereCanOnlyBeOne
 
-
 cdef class Actor:
-
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,

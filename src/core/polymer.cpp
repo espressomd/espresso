@@ -140,7 +140,7 @@ int constraint_collision(double *p1, double *p2){
   memmove(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
 
-  for(auto &it : Constraints::list) {
+  for(auto &it : Constraints::list()) {
     const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(it);
     
     if(c != nullptr){

@@ -6,6 +6,7 @@
 
 class ParallelScriptObject : public ScriptObject, public ParallelObject {
  public:
+  virtual void broadcast_parameters();
   virtual void set_parameters_all_nodes(Parameters &parameters);
   virtual ~ParallelScriptObject();
   

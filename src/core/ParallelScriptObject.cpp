@@ -2,6 +2,12 @@
 
 #include <iostream>
 
+void ParallelScriptObject::broadcast_parameters() {
+  Parameters master_parameters = get_parameters();
+  
+  set_parameters_all_nodes(master_parameters);
+}
+
 void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
   call_slaves(SET_PARAMETERS, 0);
 

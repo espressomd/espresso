@@ -16,6 +16,7 @@ namespace Constraints {
 class ConstraintList : public ParallelObject {  
  public:
   typedef typename std::unordered_set<Constraint *>::iterator iterator;
+  ConstraintList();
   
   /** Add constraint (master only) */
   void add_constraint(std::shared_ptr<Constraint> c) {
