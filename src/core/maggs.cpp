@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2010,2011 Florian Fahrenberger
   Copyright (C) 2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -2338,7 +2338,7 @@ void maggs_calc_forces()
     np = cell->n;
     for(i=0; i<np; i++) { 
       q = p[i].p.q;
-      if( abs(q) > 1.0e-5 ) {
+      if( fabs(q) > 1.0e-5 ) {
 	FOR3D(d) {
 	  pos[d]   = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
 	  first[d] = (int) pos[d];

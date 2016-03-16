@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,18 +27,18 @@ from espressomd.interactions import FeneBond
 class CellSystem(ut.TestCase):
     S = espressomd.System()
 
-    def test_cellSystem(self):
-        self.S.cellSystem.setNsquare(useVerletLists=False)
-        s = self.S.cellSystem.getState()
-        self.assertEqual(s, {"useVerletLists": 0, "type": "nsquare"})
-        self.S.cellSystem.setLayered(nLayers=5)
-        s = self.S.cellSystem.getState()
+    def test_cell_system(self):
+        self.S.cell_system.set_n_square(use_verlet_lists=False)
+        s = self.S.cell_system.get_state()
+        self.assertEqual(s, {"use_verlet_lists": 0, "type": "nsquare"})
+        self.S.cell_system.set_layered(nLayers=5)
+        s = self.S.cell_system.get_state()
         self.assertEqual(s, {"type": "layered", "nLayers": 5})
 
-        self.S.cellSystem.setDomainDecomposition(useVerletLists=True)
-        s = self.S.cellSystem.getState()
+        self.S.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        s = self.S.cell_system.get_state()
         self.assertEqual(
-            s, {"useVerletLists": 1, "type": "domainDecomposition"})
+            s, {"use_verlet_lists": 1, "type": "domain_decomposition"})
 
 
 if __name__ == "__main__":
