@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -53,7 +53,8 @@ int comforce_set_params(int part_type_a, int part_type_b,
 void calc_comforce()
 {
   IA_parameters *ia_params;
-  double com0[3], com1[3], MofImatrix[9], diff[3];
+  std::vector<double> com0 (3), com1 (3);
+  double  MofImatrix[9], diff[3];
   double vect0[3], vect1[3], eva[3], eve[3], fvect[3];
   Particle *p;
   int np;
@@ -63,8 +64,8 @@ void calc_comforce()
     for (int t1=t0+1; t1<n_particle_types; t1++) {
       ia_params = get_ia_param(t0,t1);
       if (ia_params->COMFORCE_flag == 1) {
-        centermass(t0,com0);
-        centermass(t1,com1);
+        com0 = centerofmass(t0);
+        com1 = centerofmass(t1);
         for (int i = 0; i < 3; i++) {
           diff[i]=com1[i]-com0[i];
         }

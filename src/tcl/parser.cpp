@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -33,7 +33,7 @@ using namespace std;
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_intlist(il, il->n = tmp_argc);
   for (int i = 0 ; i < tmp_argc; i++) 
@@ -47,7 +47,7 @@ int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
 
 int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_doublelist(dl, dl->n = tmp_argc);
   for  (int i = 0 ; i < tmp_argc; i++) 

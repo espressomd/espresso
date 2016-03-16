@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include "parser.hpp"
 #include "communication.hpp"
-#include "hdf5.h"
 #include <stdio.h>
 #include <iostream>
 
 #ifdef H5MD
+#include <hdf5.h>
 
 typedef char h5string[1000];
 class H5mdfile
@@ -113,6 +113,8 @@ class H5mdfile
 	// Get dataset dimensions
 	int get_dataset_dims(int argc, char **argv, Tcl_Interp *interp);
 
+	// Flush data to disc
+	int H5_Fflush(int argc, char **argv, Tcl_Interp *interp);
 };
 
 H5mdfile h5mdfile;
@@ -312,6 +314,16 @@ int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc, char **ar
 		}
 		return h5mdfile.get_dataset_dims(argc, argv, interp);
 	}
+	
+	if (!strncmp(argv[1], "H5_Fflush", strlen(argv[1])))
+	{
+		if(argc!=2)
+		{
+			Tcl_AppendResult(interp, "\nExpected: h5mdfile H5_Fflush\n",(char *) NULL);
+			return TCL_ERROR;
+		}
+		return h5mdfile.H5_Fflush(argc, argv, interp);
+	}
 	return TCL_ERROR;
 }
 
@@ -385,22 +397,22 @@ int H5mdfile::H5_Dread(int argc, char **argv, Tcl_Interp *interp)
 
 	if(H5Tequal(dataset_type_id, H5T_NATIVE_FLOAT))
 	{
-	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+	   dset_data=(float*) Utils::malloc(dset_data_size*sizeof(float));
 	   memset(dset_data,0,dset_data_size*sizeof(float));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_NATIVE_DOUBLE))
 	{
-	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+	   dset_data=(double*) Utils::malloc(dset_data_size*sizeof(double));
 	   memset(dset_data,0,dset_data_size*sizeof(double));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_NATIVE_INT))
 	{
-	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+	   dset_data=(int*) Utils::malloc(dset_data_size*sizeof(int));
 	   memset(dset_data,0,dset_data_size*sizeof(int));
 	}
 	else if(H5Tequal(dataset_type_id, H5T_C_S1))
 	{
-	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
+	   dset_data = (h5string*) Utils::malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
@@ -560,25 +572,25 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	if(!strncmp(argv[3], "float", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_FLOAT;
-	   dset_data=(float*) malloc(dset_data_size*sizeof(float));
+	   dset_data=(float*) Utils::malloc(dset_data_size*sizeof(float));
 	   memset(dset_data,0,dset_data_size*sizeof(float));
 	}
 	else if(!strncmp(argv[3], "double", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_DOUBLE;
-	   dset_data=(double*) malloc(dset_data_size*sizeof(double));
+	   dset_data=(double*) Utils::malloc(dset_data_size*sizeof(double));
 	   memset(dset_data,0,dset_data_size*sizeof(double));
 	}
 	else if(!strncmp(argv[3], "int", strlen(argv[3])))
 	{
 	   dataset_type_id = H5T_NATIVE_INT;
-	   dset_data=(int*) malloc(dset_data_size*sizeof(int));
+	   dset_data=(int*) Utils::malloc(dset_data_size*sizeof(int));
 	   memset(dset_data,0,dset_data_size*sizeof(int));
 	}
 	else if(!strncmp(argv[3], "str", strlen(argv[3])))
 	{
 	   dataset_type_id = H5Tcopy(H5T_C_S1);
-	   dset_data = (h5string*) malloc(dset_data_size * sizeof(h5string));
+	   dset_data = (h5string*) Utils::malloc(dset_data_size * sizeof(h5string));
 	}
 	else
 	{
@@ -653,6 +665,11 @@ int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)
 		sprintf(buffer, "%d ", (int)dims_out[i]);
 		Tcl_AppendResult(interp, buffer, (char *)NULL);
 	}
+	return TCL_OK;
+}
+int H5mdfile::H5_Fflush(int argc, char **argv, Tcl_Interp *interp)
+{
+	H5Fflush(dataset_id, H5F_SCOPE_LOCAL);
 	return TCL_OK;
 }
 #endif

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -65,6 +65,33 @@ set methods {}
 set setups {}
 set accuracies {}
 
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] } then {
+    proc setup_scafacos_ewald {} {
+        inter coulomb 1.0 scafacos ewald ewald_r_cut 1.001 tolerance_field 1e-4
+    }
+    lappend methods "SCAFACOS_ewald"
+    lappend setups "setup_scafacos_ewald"
+    lappend accuracies 1e-3
+}
+
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
+    proc setup_scafacos_p3m {} {
+        inter coulomb 1.0 scafacos p3m p3m_r_cut 1.001 p3m_grid 64 p3m_cao 7 p3m_alpha 2.70746
+    }
+    lappend methods "SCAFACOS_p3m"
+    lappend setups "setup_scafacos_p3m"
+    lappend accuracies 1e-3
+}
+
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] } then {
+    proc setup_scafacos_p2nfft {} {
+        inter coulomb 1.0 scafacos p2nfft p2nfft_r_cut 1.001 tolerance_field 1e-4
+    }
+    lappend methods "SCAFACOS_p2nfft"
+    lappend setups "setup_scafacos_p2nfft"
+    lappend accuracies 1e-3
+}
+
 if { [ has_feature "P3M" ] } then {
     proc setup_p3m {} {
         inter coulomb 1.0 p3m 1.001 64 7 2.70746
@@ -72,14 +99,6 @@ if { [ has_feature "P3M" ] } then {
     }
     lappend methods "P3M" 
     lappend setups "setup_p3m"
-    lappend accuracies 1e-3
-}
-if { [ has_feature "SCAFACOS_P3M" ] } then {
-    proc setup_scafacos_p3m {} {
-        inter coulomb 1.0 scafacos_p3m cutoff 1.001 grid 64 cao 7 alpha 2.70746
-    }
-    lappend methods "SCAFACOS_P3M"
-    lappend setups "setup_scafacos_p3m"
     lappend accuracies 1e-3
 }
 
@@ -95,7 +114,7 @@ if { [ has_feature "CUDA" ] && [ has_feature "P3M" ] } then {
 
 if { [ has_feature "CUDA" ] && [ has_feature "EWALD_GPU" ] } then {
     proc setup_ewald_gpu {} {
-	inter coulomb 1.0 ewaldgpu 3.50433349609375 6 0.7396786117553711
+	inter coulomb 1.0 ewaldgpu 2.70746 64 1.001
     }
     lappend methods "EWALD-GPU"
     lappend setups "setup_ewald_gpu"

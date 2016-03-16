@@ -1,3 +1,4 @@
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -24,13 +25,14 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspressoTcl.la
+lib_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
 	TclOutputHelper.hpp \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
 	h5mdfile_tcl.cpp h5mdfile_tcl.hpp \
+	rotate_system_tcl.cpp rotate_system_tcl.hpp \
 	readpdb_tcl.cpp \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
@@ -101,6 +103,9 @@ libEspressoTcl_la_SOURCES += \
 	ljgen_tcl.cpp ljgen_tcl.hpp \
 	morse_tcl.cpp morse_tcl.hpp \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
+	object-in-fluid/affinity_tcl.cpp \
+	object-in-fluid/affinity_tcl.hpp \
+	object-in-fluid/membrane_collision_tcl.cpp object-in-fluid/membrane_collision_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
 	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
@@ -122,18 +127,12 @@ libEspressoTcl_la_SOURCES += \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
 	umbrella_tcl.cpp umbrella_tcl.hpp \
-	object-in-fluid/area_force_local_tcl.cpp \
-	object-in-fluid/area_force_local_tcl.hpp \
-	object-in-fluid/area_force_global_tcl.cpp \
-	object-in-fluid/area_force_global_tcl.hpp \
-	object-in-fluid/bending_force_tcl.cpp \
-	object-in-fluid/bending_force_tcl.hpp \
-	object-in-fluid/stretching_force_tcl.cpp \
-	object-in-fluid/stretching_force_tcl.hpp \
-	object-in-fluid/stretchlin_force_tcl.cpp \
-	object-in-fluid/stretchlin_force_tcl.hpp \
-	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp \
+	object-in-fluid/oif_global_forces_tcl.cpp \
+	object-in-fluid/oif_global_forces_tcl.hpp \
+	object-in-fluid/oif_local_forces_tcl.cpp \
+	object-in-fluid/oif_local_forces_tcl.hpp \
+	object-in-fluid/out_direction_tcl.cpp \
+	object-in-fluid/out_direction_tcl.hpp \
 	immersed_boundary/ibm_triel_tcl.cpp \
 	immersed_boundary/ibm_triel_tcl.hpp \
 	immersed_boundary/ibm_volume_conservation_tcl.cpp \
@@ -158,6 +157,7 @@ libEspressoTcl_la_SOURCES += \
 libEspressoTcl_la_SOURCES += \
 	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
 	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
+	actor/DipolarDirectSum_tcl.cpp actor/DipolarDirectSum_tcl.hpp \
 	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp \
 	actor/HarmonicOrientationWell_tcl.cpp actor/HarmonicOrientationWell_tcl.hpp
 
@@ -184,7 +184,7 @@ Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 # generate the Tcl library for the python interpreter
 if PYTHON_INTERFACE
-noinst_LTLIBRARIES += libEspressoTcl4Py.la
+lib_LTLIBRARIES += libEspressoTcl4Py.la
 libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
 libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -25,12 +25,9 @@
 #include "utils.hpp"
 #include "integrate.hpp"
 
-#include "object-in-fluid/stretching_force.hpp"
-#include "object-in-fluid/stretchlin_force.hpp"
-#include "object-in-fluid/area_force_local.hpp"
-#include "object-in-fluid/area_force_global.hpp"
-#include "object-in-fluid/bending_force.hpp"
-#include "object-in-fluid/volume_force.hpp"
+#include "object-in-fluid/oif_local_forces.hpp"
+#include "object-in-fluid/oif_global_forces.hpp"
+#include "object-in-fluid/out_direction.hpp"
 #include "dihedral.hpp"
 #include "mdlc_correction.hpp"
 #include "hydrogen_bond.hpp"

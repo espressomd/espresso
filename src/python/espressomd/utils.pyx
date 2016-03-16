@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,49 +16,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 cimport numpy as np
 import numpy as np
-
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
     void * malloc(size_t size)
     void * realloc(void * ptr, size_t size)
 
-cdef np.ndarray create_nparray_from_IntList(IntList * il):
+cdef np.ndarray create_nparray_from_int_list(int_list * il):
     numpyArray = np.zeros(il.n)
     for i in range(il.n):
         numpyArray[i] = il.e[i]
 
     return numpyArray
 
-cdef np.ndarray create_nparray_from_DoubleList(DoubleList * dl):
+cdef np.ndarray create_nparray_from_double_list(double_list * dl):
     numpyArray = np.zeros(dl.n)
     for i in range(dl.n):
         numpyArray[i] = dl.e[i]
-    return numpyArray
 
-
-cdef np.ndarray create_nparray_from_double_array(double * x, int n):
-    numpyArray = np.zeros(n)
-    for i in range(n):
-        numpyArray[i] = x[i]
-    return numpyArray
-
-cdef IntList * create_IntList_from_python_object(obj):
-    cdef IntList * il
-    il = <IntList * > malloc(sizeof(IntList))
+cdef int_list * create_int_list_from_python_object(obj):
+    cdef int_list * il
+    il = <int_list * > malloc(sizeof(int_list))
     init_intlist(il)
 
     alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
         print il.e[i]
-
     return il
 
-cdef checkTypeOrExcept(x, n, t, msg):
+cdef check_type_or_throw_except(x, n, t, msg):
     """Checks that x is of type t and that n values are given, otherwise throws ValueError with the message msg.
        If x is an array/list/tuple, the type checking is done on the elements, and
        all elements are checked.
@@ -82,7 +71,14 @@ cdef checkTypeOrExcept(x, n, t, msg):
             if not (t == float and isinstance(x, int)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
-cdef checkRangeOrExcept(x, v_min, incl_min, v_max, incl_max):
+
+cdef np.ndarray create_nparray_from_double_array(double * x, int n):
+    numpyArray = np.zeros(n)
+    for i in range(n):
+        numpyArray[i] = x[i]
+    return numpyArray
+
+cdef check_range_or_except(x, v_min, incl_min, v_max, incl_max):
     """Checks that x is in range [v_min,v_max] (inlude boundaries via inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to disable limit """
 
     # Array/list/tuple

@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -90,7 +90,7 @@ for { set i 10 } { $i < 90 } { incr i } {
     part 0 pos 0 $l 0 q 1.0
     integrate 0
     set E_i [lindex [part 0 pr f] 1]
-    set tol [expr sqrt(($E_i - $ref_field)**2)]
+    set tol [expr sqrt(pow($E_i - ($ref_field), 2))]
     if { $tol >= $field_tol } {
 	error_exit "Force deviation $tol bigger than tolerance $field_tol"
     }

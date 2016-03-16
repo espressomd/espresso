@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -195,7 +195,7 @@ void cells_re_init(int new_cs)
 
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
+  memmove(&tmp_local,&local_cells,sizeof(CellPList));
   init_cellplist(&local_cells);
 
   /* MOVE old cells to temporary buffer */
@@ -248,7 +248,7 @@ void realloc_cells(int size)
   }
   /* resize the cell list */
   if(size != n_cells) {
-    cells = (Cell *) realloc(cells, sizeof(Cell)*size);
+    cells = (Cell *) Utils::realloc(cells, sizeof(Cell)*size);
   }
   /* initialize new cells */
   for(i=n_cells; i<size; i++) {

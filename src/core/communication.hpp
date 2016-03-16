@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -206,6 +206,26 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 #endif
 
+#ifdef AFFINITY
+/** Issue REQ_SET_AFFINITY: send particle affinity.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param bond_site its new site of the affinity bond.
+*/
+void mpi_send_affinity(int node, int part, double bond_site[3]);
+#endif
+
+#ifdef MEMBRANE_COLLISION
+/** Issue REQ_SET_MEMBRANE_COLLISION: send outward direction of the particle.
+ Also calls \ref on_particle_change.
+ \param part the particle.
+ \param node the node it is attached to.
+ \param out_direction its new outward direction.
+ */
+void mpi_send_out_direction(int node, int part, double out_direction[3]);
+#endif
+
 #ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.
@@ -271,7 +291,7 @@ void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance, double* rel_ori);
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -463,7 +483,10 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional coefficient. */
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#ifdef ROTATION
+void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
@@ -474,22 +497,10 @@ void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, long *seed);
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
-/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
-void mpi_random_stat(int cnt, RandomStatus *stat);
-
-/** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
+/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-//void mpi_morse_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-//void mpi_buck_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
@@ -498,12 +509,6 @@ void mpi_get_constraint_force(int constraint, double force[3]);
 /** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
 void mpi_get_configtemp(double cfgtmp[2]);
 #endif
-
-/** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
-void mpi_bit_random_seed(int cnt, int *seed);
-
-/** Issue REQ_BIT_RANDOM_STAT: read/set status of the bit random number generators on each node. */
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat);
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir' by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);

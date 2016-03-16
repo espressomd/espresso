@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -109,13 +109,6 @@ int correlation_get_correlation_time(double_correlation* self, double* correlati
       if (self->n_sweeps[k]==0)
         break;
       C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
-//        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f deltat %f \n", 
-//            C_tau, 
-//            self->tau[k]*self->dt, 
-//            exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data),
-//            self->result[k][j]/ (double) self->n_sweeps[k],
-//            self->dt*(self->tau[k]-self->tau[k-1])
-//            );
 
 //        if (C_tau < i*self->tau[k]*self->dt) {
         if (exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data)
@@ -162,7 +155,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   // check if dt is a multiple of the md timestep
-  if ( abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
+  if ( std::abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
     return 16;
   }
 
@@ -313,15 +306,15 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 //    self->is_from_file = 0;
 //  }
 
-  self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
+  self->A_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   if (self->autocorrelation) 
     self->B_data = self->A_data;
   else 
-    self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
+    self->B_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
   
   self->n_data=0;
-  self->A_accumulated_average = (double*)malloc(dim_A*sizeof(double));
-  self->A_accumulated_variance= (double*)malloc(dim_A*sizeof(double));
+  self->A_accumulated_average = (double*)Utils::malloc(dim_A*sizeof(double));
+  self->A_accumulated_variance= (double*)Utils::malloc(dim_A*sizeof(double));
   for (k=0; k<dim_A; k++) {
     self->A_accumulated_average[k]=0;
     self->A_accumulated_variance[k]=0;
@@ -330,8 +323,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     self->B_accumulated_average =  self->A_accumulated_average;
     self->B_accumulated_variance = self->B_accumulated_variance;
   } else {
-    self->B_accumulated_average = (double*)malloc(dim_B*sizeof(double));
-    self->B_accumulated_variance = (double*)malloc(dim_B*sizeof(double));
+    self->B_accumulated_average = (double*)Utils::malloc(dim_B*sizeof(double));
+    self->B_accumulated_variance = (double*)Utils::malloc(dim_B*sizeof(double));
     for (k=0; k<dim_B; k++) {
       self->B_accumulated_average[k]=0;
       self->B_accumulated_variance[k]=0;
@@ -340,19 +333,19 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 
 
   self->n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
-  self->tau = (int*)                malloc(self->n_result*sizeof(int));
-  self->n_sweeps = (unsigned int*)  malloc(self->n_result*sizeof(int));
-  self->result_data  = (double*)    malloc(self->n_result*dim_corr*sizeof(double));
-  self->n_vals = (unsigned int*) malloc(hierarchy_depth*sizeof(unsigned int));
+  self->tau = (int*)                Utils::malloc(self->n_result*sizeof(int));
+  self->n_sweeps = (unsigned int*)  Utils::malloc(self->n_result*sizeof(int));
+  self->result_data  = (double*)    Utils::malloc(self->n_result*dim_corr*sizeof(double));
+  self->n_vals = (unsigned int*) Utils::malloc(hierarchy_depth*sizeof(unsigned int));
 
   // allocate space for convenience pointer to A and B buffers
-  self->A = (double***)malloc(hierarchy_depth*sizeof(double**));
+  self->A = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
   if(self->autocorrelation) self->B = self->A;
-  else self->B = (double***)malloc(hierarchy_depth*sizeof(double**));
+  else self->B = (double***)Utils::malloc(hierarchy_depth*sizeof(double**));
 
   for (i=0; i<self->hierarchy_depth; i++) {
-    self->A[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
-    if(!self->autocorrelation) self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
+    self->A[i] = (double**) Utils::malloc((self->tau_lin+1)*sizeof(double*));
+    if(!self->autocorrelation) self->B[i] = (double**) Utils::malloc((self->tau_lin+1)*sizeof(double*));
   }
 
   // and initialize the values
@@ -371,7 +364,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   // allocate space for convenience pointer to the result
-  self->result  = (double**)        malloc(self->n_result*sizeof(double*));
+  self->result  = (double**)        Utils::malloc(self->n_result*sizeof(double*));
   for (i=0; i<self->n_result; i++) {
     self->n_sweeps[i]=0;
     self->result[i]=&self->result_data[i*self->dim_corr];
@@ -380,7 +373,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
       self->result[i][j]=0;
   }
 
-  self->newest = (unsigned int *)malloc(hierarchy_depth*sizeof(unsigned int));
+  self->newest = (unsigned int *)Utils::malloc(hierarchy_depth*sizeof(unsigned int));
   for ( i = 0; i<self->hierarchy_depth; i++ ) {
     self->newest[i]= self->tau_lin;
   }
@@ -443,12 +436,12 @@ int double_correlation_get_data( double_correlation* self ) {
   if ( observable_calculate(self->A_obs) != 0 )
     return 1;
   // copy the result:
-  memcpy(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
+  memmove(self->A[0][self->newest[0]], self->A_obs->last_value, self->dim_A*sizeof(double));
 
   if (!self->autocorrelation) {
     if ( observable_calculate(self->B_obs) != 0 )
       return 2;
-    memcpy(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
+    memmove(self->B[0][self->newest[0]], self->B_obs->last_value, self->dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
@@ -465,7 +458,7 @@ int double_correlation_get_data( double_correlation* self ) {
     }
   } 
 
-  double* temp = (double*)malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)Utils::malloc(self->dim_corr*sizeof(double));
   if (!temp)
     return 4;
 // Now update the lowest level correlation estimates
@@ -638,7 +631,7 @@ int double_correlation_finalize( double_correlation* self ) {
   unsigned tau_lin=self->tau_lin;
   int hierarchy_depth=self->hierarchy_depth;
 
-  double* temp = (double*)malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)Utils::malloc(self->dim_corr*sizeof(double));
 
   // make a flag that the correlation is finalized
   self->finalized=1;

@@ -13,7 +13,7 @@ n_part = 5
 system = espressomd.System()
 system.time_step = 0.01
 system.skin      = 0.4
-system.thermostat.setLangevin(kT=1.0,gamma=1.0)
+system.thermostat.set_langevin(kT=1.0,gamma=1.0)
 
 # integration
 int_steps   = 250000
@@ -21,16 +21,16 @@ int_n_times = 500
 
 system.box_l = [box_l,box_l,box_l]
 
-system.nonBondedInter[0,0].lennardJones.setParams(
+system.non_bonded_inter[0,0].lennard_jones.set_params(
     epsilon=0, sigma=1,
     cutoff=2, shift="auto")
-system.bondedInter[0] = HarmonicBond(k=1.0,r_0=1.0)
+system.bonded_inter[0] = HarmonicBond(k=1.0,r_0=1.0)
 
 for i in range(n_part):
-  system.part[i].pos=numpy.random.random(3)*system.box_l
+  system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
 for i in range(n_part-1):
-  system.part[i].addBond(system.bondedInter[0], system.part[i+1].id)
+  system.part[i].add_bond((system.bonded_inter[0], system.part[i+1].id))
 
 mayavi = visualization.mayavi_live(system)
 

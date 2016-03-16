@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -150,18 +150,14 @@ void dd_create_cell_grid()
 	/* ok, too many cells for this direction, set to minimum */
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
 	if ( dd.cell_grid[i] < 1 ) {
-	  ostringstream msg;
-	  msg << "interaction range " << max_range << " in direction "
+	  runtimeErrorMsg() << "interaction range " << max_range << " in direction "
 	      << i << " is larger than the local box size " << local_box_l[i];
-	  runtimeError(msg);
 	  dd.cell_grid[i] = 1;
 	}
 #ifdef LEES_EDWARDS
         if ( (i == 0) && (dd.cell_grid[0] < 2) ) {
-	  ostringstream msg;
-	  msg << "interaction range " << max_range << " in direction "
+	  runtimeErrorMsg() << "interaction range " << max_range << " in direction "
 	      << i << " is larger than half the local box size " << local_box_l[i] << "/2";
-	  runtimeError(msg);
 	  dd.cell_grid[0] = 2;
         }
 #endif
@@ -202,18 +198,14 @@ void dd_create_cell_grid()
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
-        ostringstream msg;
-        msg << "number of cells "<< n_local_cells << " is smaller than minimum " << min_num_cells <<
+        runtimeErrorMsg() << "number of cells "<< n_local_cells << " is smaller than minimum " << min_num_cells <<
                " (interaction range too large or min_num_cells too large)";
-        runtimeError(msg);
     }
   }
 
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
-      ostringstream msg;
-      msg << "no suitable cell grid found ";
-      runtimeError(msg);
+      runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
   /* now set all dependent variables */
@@ -339,7 +331,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
         comm->comm[cnt].node          = this_node;
 
         /* Buffer has to contain Send and Recv cells -> factor 2 */
-        comm->comm[cnt].part_lists    = (ParticleList**)malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+        comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
         comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
         /* prepare folding of ghost positions */
         if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
@@ -369,7 +361,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
             if((node_pos[dir]+i)%2==0) {
               comm->comm[cnt].type          = GHOST_SEND;
               comm->comm[cnt].node          = node_neighbors[2*dir+lr];
-              comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+              comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
               comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
@@ -388,7 +380,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
             if((node_pos[dir]+(1-i))%2==0) {
               comm->comm[cnt].type          = GHOST_RECV;
               comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
-              comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+              comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
               comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
         
               lc[dir] = hc[dir] = ( 1 - lr ) * ( dd.cell_grid[dir] + 1 );
@@ -506,7 +498,7 @@ void dd_init_cell_interactions()
   int m,n,o,p,q,r,ind1,ind2,c_cnt=0,n_cnt;
  
   /* initialize cell neighbor structures */
-  dd.cell_inter = (IA_Neighbor_List *) realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
+  dd.cell_inter = (IA_Neighbor_List *) Utils::realloc(dd.cell_inter,local_cells.n*sizeof(IA_Neighbor_List));
   for(m=0; m<local_cells.n; m++) { 
     dd.cell_inter[m].nList = NULL; 
     dd.cell_inter[m].n_neighbors=0; 
@@ -514,7 +506,7 @@ void dd_init_cell_interactions()
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m,n,o) {
-    dd.cell_inter[c_cnt].nList = (IA_Neighbor *) realloc(dd.cell_inter[c_cnt].nList, CELLS_MAX_NEIGHBORS*sizeof(IA_Neighbor));
+    dd.cell_inter[c_cnt].nList = (IA_Neighbor *) Utils::realloc(dd.cell_inter[c_cnt].nList, CELLS_MAX_NEIGHBORS*sizeof(IA_Neighbor));
 
     n_cnt=0;
     ind1 = get_linear_index(m,n,o,dd.ghost_cell_grid);
@@ -625,9 +617,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
-	ostringstream msg;
-	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-	runtimeError(msg);
+	runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
       }
 #endif
     }
@@ -635,15 +625,32 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
-	ostringstream msg;
-	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-	runtimeError(msg);
+	runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
       }
 #endif
     }
   }
   i = get_linear_index(cpos[0],cpos[1],cpos[2], dd.ghost_cell_grid);  
   return &cells[i];
+}
+
+void dd_position_to_cell_indices(double pos[3],int* idx)
+{
+  int i;
+  double lpos;
+
+  for(i=0;i<3;i++) {
+    lpos = pos[i] - my_left[i];
+
+    idx[i] = (int)(lpos*dd.inv_cell_size[i])+1;
+
+    if (idx[i] < 1) {
+      idx[i] = 1;
+    }
+    else if (idx[i] > dd.cell_grid[i]) {
+      idx[i] = dd.cell_grid[i];
+    }
+  }
 }
 
 /*************************************************/
@@ -731,9 +738,7 @@ void dd_on_geometry_change(int flags) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
-        ostringstream msg;
-        msg <<"box_l in direction " << i << " is too small";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"box_l in direction " << i << " is too small";
     }
 
   /* A full resorting is necessary if the grid has changed. We simply
@@ -893,9 +898,9 @@ void dd_topology_release()
   for(i=0; i<local_cells.n; i++) {
     for(j=0; j<dd.cell_inter[i].n_neighbors; j++) 
       free_pairList(&dd.cell_inter[i].nList[j].vList);
-    dd.cell_inter[i].nList = (IA_Neighbor *) realloc(dd.cell_inter[i].nList,0);
+    dd.cell_inter[i].nList = (IA_Neighbor *) Utils::realloc(dd.cell_inter[i].nList,0);
   }
-  dd.cell_inter = (IA_Neighbor_List *) realloc(dd.cell_inter,0);
+  dd.cell_inter = (IA_Neighbor_List *) Utils::realloc(dd.cell_inter,0);
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
@@ -1087,9 +1092,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
       MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {
       if(finished == 0) {
-      ostringstream msg;
-      msg << "some particles moved more than min_local_box_l, reduce the time step";
-      runtimeError(msg);
+      runtimeErrorMsg() << "some particles moved more than min_local_box_l, reduce the time step";
 	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
 	   However, their positions have to be made valid again. */
 	finished = 1;
@@ -1157,11 +1160,7 @@ void calc_link_cell()
 	j_start = 0;
 	/* Tasks within cell: bonded forces */
 	if(n == 0) {
-	  add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-	  add_constraints_forces(&p1[i]);
-#endif
-	  add_external_potential_forces(&p1[i]);
+          add_single_particle_force(&p1[i]);
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
@@ -1202,13 +1201,8 @@ void calculate_link_cell_energies()
     np1  = cell->n;
     /* calculate bonded interactions (loop local particles) */
     for(i = 0; i < np1; i++)  {
-      add_kinetic_energy(&p1[i]);
-      add_bonded_energy(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_energy(&p1[i]);
-#endif
-      add_external_potential_energy(&p1[i]);
-
+      add_single_particle_energy(&p1[i]);
+      
       if (rebuild_verletlist)
         memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
     }

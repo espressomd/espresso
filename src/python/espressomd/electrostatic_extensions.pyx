@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,48 +19,55 @@
 
 cimport utils
 include "myconfig.pxi"
-from actors import Actor
+cimport actors
+import actors
 
 IF ELECTROSTATICS and P3M:
-    class ElectrostaticExtensions(Actor):
+    cdef class ElectrostaticExtensions(actors.Actor):
         pass
 
-    class ELC(ElectrostaticExtensions):
+    cdef class ELC(ElectrostaticExtensions):
 
-        def validateParams(self):
-            default_params = self.defaultParams()
-            checkTypeOrExcept(self._params["maxPWerror"], 1, float, "")
-            checkRangeOrExcept(
+        def validate_params(self):
+            default_params = self.default_params()
+            check_type_or_throw_except(
+                self._params["maxPWerror"], 1, float, "")
+            check_range_or_except(
                 self._params["maxPWerror"], 0, False, "inf", True)
-            checkTypeOrExcept(self._params["gap_size"], 1, float, "")
-            checkRangeOrExcept(self._params["gap_size"], 0, False, "inf", True)
-            checkTypeOrExcept(self._params["far_cut"], 1, float, "")
-            checkTypeOrExcept(self._params["neutralize"], 1, type(True), "")
+            check_type_or_throw_except(self._params["gap_size"], 1, float, "")
+            check_range_or_except(
+                self._params["gap_size"], 0, False, "inf", True)
+            check_type_or_throw_except(self._params["far_cut"], 1, float, "")
+            check_type_or_throw_except(
+                self._params["neutralize"], 1, type(True), "")
 
-        def validKeys(self):
+        def valid_keys(self):
             return "maxPWerror", "gap_size", "far_cut", "neutralize"
 
-        def requiredKeys(self):
+        def required_keys(self):
             return ["maxPWerror", "gap_size"]
 
-        def defaultParams(self):
+        def default_params(self):
             return {"maxPWerror": -1,
                     "gap_size": -1,
                     "far_cut": -1,
                     "neutralize": True}
 
-        def _getParamsFromEsCore(self):
+        def _get_params_from_es_core(self):
             params = {}
             params.update(elc_params)
             return params
 
-        def _setParamsInEsCore(self):
+        def _set_params_in_es_core(self):
+            if coulomb.method == COULOMB_P3M_GPU:
+                raise Exception(
+                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
             if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
                 raise ValueError(
                     "Choose a 3d electrostatics method prior to ELC")
 
-        def _activateMethod(self):
-            self._setParamsInEsCore()
+        def _activate_method(self):
+            self._set_params_in_es_core()
 
-        def _deactivateMethod(self):
+        def _deactivate_method(self):
             pass

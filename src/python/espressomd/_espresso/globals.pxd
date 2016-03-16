@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -50,6 +50,7 @@ cdef extern from "domain_decomposition.hpp":
     ctypedef struct IA_Neighbor_List:
         pass
     ctypedef struct  DomainDecomposition:
+        int use_vList
         int cell_grid[3]
         double cell_size[3]
 
@@ -103,6 +104,9 @@ IF LB_GPU:
 
 cdef extern from "cells.hpp":
     extern double max_range
+    ctypedef struct CellStructure:
+        int type
+    CellStructure cell_structure
 
 cdef extern from "layered.hpp":
     extern int n_layers
@@ -123,6 +127,7 @@ cdef extern from "grid.hpp":
     double local_box_l[3]
     extern int node_grid[3]
     extern int periodic
+    extern double min_box_l
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
@@ -132,3 +137,19 @@ cdef extern from "npt.hpp":
         double p_diff
         double piston
     extern nptiso_struct nptiso
+
+cdef extern from "statistics.hpp":
+    extern int n_configs
+
+cdef extern from "reaction.hpp":
+    ctypedef struct  reaction_struct:
+        int reactant_type
+        int product_type
+        int catalyzer_type
+        double range
+        double ct_rate
+        double eq_rate
+        int sing_mult
+        int swap
+
+    cdef extern reaction_struct reaction

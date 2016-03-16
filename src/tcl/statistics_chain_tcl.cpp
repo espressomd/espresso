@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,8 +24,7 @@
 #include "statistics.hpp"
 #include "parser.hpp"
 #include "statistics_chain.hpp"
-#include "tcl/topology_tcl.hpp"
-
+#include "topology_tcl.hpp"
 
 /****************************************************************************************
  *                                 chain structure commands parsing
@@ -94,7 +93,7 @@ int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char 
   }
 
   if (!average)
-    calc_re(&re); 
+    calc_re(&re);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -124,7 +123,7 @@ int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rg(&rg); 
+    calc_rg(&rg);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
@@ -153,7 +152,7 @@ int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char 
     return TCL_ERROR;
   }
   if (!average)
-    calc_rh(&rh); 
+    calc_rh(&rh);
   else {
     if (n_configs == 0) {
       Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);

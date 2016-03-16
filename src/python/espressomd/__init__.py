@@ -1,3 +1,4 @@
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -17,10 +18,6 @@
 #
 #
 # Define the espressomd package
-import sys, ctypes
-
-# OpenMPI magic
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
 # Initialize MPI, start the main loop on the slaves
 import espressomd._init

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -91,17 +91,15 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
-          msg <<"Particle does not exist in calc_mol_vel! id= " << topology[mol_id].part.e[i] << "\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Particle does not exist in calc_mol_vel! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
       #endif
       if (ifParticleIsVirtual(p)) continue;
       for (j=0;j<3;j++){
-         v_com[j] += PMASS(*p)*p->m.v[j];
+         v_com[j] += (*p).p.mass*p->m.v[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -111,9 +109,7 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
-       msg <<"There is more than one COM in calc_mol_vel! mol_id= " << mol_id << "\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"There is more than one COM in calc_mol_vel! mol_id= " << mol_id << "\n";
       return;
    }
 #endif
@@ -137,18 +133,16 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
-          msg <<"Particle does not exist in calc_mol_pos! id= " << topology[mol_id].part.e[i] << "\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Particle does not exist in calc_mol_pos! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
       #endif
       if (ifParticleIsVirtual(p)) continue;
       get_mi_vector(vec12,p->r.p, p_com->r.p);
       for (j=0;j<3;j++){
-          r_com[j] += PMASS(*p)*vec12[j];
+          r_com[j] += (*p).p.mass*vec12[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -159,9 +153,7 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
-       msg <<"There is more than one COM in calc_mol_pos! mol_id= " << mol_id << "\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"There is more than one COM in calc_mol_pos! mol_id= " << mol_id << "\n";
       return;
    }
 #endif
@@ -183,9 +175,9 @@ int calc_mol_pos_cfg(Particle *p_com,double r_com[3]){
       p=&partCfg[topology[mol_id].part.e[i]];
       if (ifParticleIsVirtual(p)) continue;
       for (j=0;j<3;j++){
-            r_com[j] += PMASS(*p)*p->r.p[j];
+            r_com[j] += (*p).p.mass*p->r.p[j];
       }
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
 #endif
@@ -220,14 +212,12 @@ void put_mol_force_on_parts(Particle *p_com){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
-          msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
       #endif
        if (ifParticleIsVirtual(p)) continue;
-      M+=PMASS(*p);
+      M+=(*p).p.mass;
    }
 #else
    M=topology[mol_id].part.n-1;
@@ -236,15 +226,13 @@ void put_mol_force_on_parts(Particle *p_com){
       p=local_particles[topology[mol_id].part.e[i]];
       #ifdef VIRTUAL_SITES_DEBUG
       if (p==NULL){
-          ostringstream msg;
-          msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
          return;
       }
       #endif
       if (!ifParticleIsVirtual(p)) {
          for (j=0;j<3;j++){
-            p->f.f[j]+=PMASS(*p)*force[j]/M;
+            p->f.f[j]+=(*p).p.mass*force[j]/M;
          }
 #ifdef VIRTUAL_SITES_DEBUG
          count++;
@@ -253,9 +241,7 @@ void put_mol_force_on_parts(Particle *p_com){
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-       ostringstream msg;
-       msg <<"There is more than one COM input_mol_force_on_parts! mol_id= " << mol_id << "\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"There is more than one COM input_mol_force_on_parts! mol_id= " << mol_id << "\n";
       return;
    }
 #endif
@@ -269,18 +255,14 @@ Particle *get_mol_com_particle(Particle *calling_p){
    mol_id=calling_p->p.mol_id;
 
    if (mol_id < 0) {
-     ostringstream msg;
-     msg <<"Particle does not have a mol id! pnr= " << calling_p->p.identity << "\n";
-     runtimeError(msg);
+     runtimeErrorMsg() <<"Particle does not have a mol id! pnr= " << calling_p->p.identity << "\n";
      return NULL;
    }
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
 
       if (p==NULL){
-          ostringstream msg;
-          msg <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Particle does not exist in put_mol_force_on_parts! id= " << topology[mol_id].part.e[i] << "\n";
          return NULL;
       }
 
@@ -289,9 +271,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
        }
    }
 
-   ostringstream msg;
-   msg <<"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr= " << calling_p->p.identity << "\n";
-   runtimeError(msg);
+   runtimeErrorMsg() <<"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr= " << calling_p->p.identity << "\n";
    return NULL;
 
    return calling_p;
@@ -304,15 +284,11 @@ double get_mol_dist(Particle *p1,Particle *p2){
    p2_com=get_mol_com_particle(p2);
    #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
-       ostringstream msg;
-       msg <<"COM Particle not found for particle in get_mol_dist id= " << p1->p.identity << "\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"COM Particle not found for particle in get_mol_dist id= " << p1->p.identity << "\n";
       dist[0]=dist[1]=dist[2]=0.0;
    }
    if (p2_com==NULL){
-       ostringstream msg;
-       msg <<"COM Particle not found for particle in get_mol_dist id= " << p2->p.identity << "\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"COM Particle not found for particle in get_mol_dist id= " << p2->p.identity << "\n";
       dist[0]=dist[1]=dist[2]=0.0;
    }
    #endif
@@ -397,7 +373,7 @@ double calc_energy_kinetic_mol(int type){
             return -(i);
          }
 #endif
-         E_kin+=PMASS(*p_com)*sqrlen(p_com->m.v);
+         E_kin+=(*p_com).p.mass*sqrlen(p_com->m.v);
       }
    }
    E_kin*=0.5/time_step/time_step;

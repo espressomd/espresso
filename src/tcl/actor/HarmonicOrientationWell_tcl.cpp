@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -19,6 +19,7 @@
 
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 
+#ifdef CUDA
 #ifdef ROTATION
 
 #include "forces.hpp"
@@ -56,4 +57,5 @@ int tclcommand_HarmonicOrientationWell(ClientData data, Tcl_Interp *interp, int 
 }
 
 
+#endif
 #endif

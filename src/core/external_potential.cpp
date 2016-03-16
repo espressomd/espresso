@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -31,7 +31,7 @@ void external_potential_pre_init() {
 
 
 int generate_external_potential(ExternalPotential** e) {
-  external_potentials = (ExternalPotential*) realloc(external_potentials,
+  external_potentials = (ExternalPotential*) Utils::realloc(external_potentials,
 		  (n_external_potentials+1) * sizeof(ExternalPotential));
   *e = &external_potentials[n_external_potentials];
   n_external_potentials++;
@@ -49,7 +49,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
     return ES_ERROR;
   strcpy((char*)&(e->filename), filename);
   external_potentials[number].type=EXTERNAL_POTENTIAL_TYPE_TABULATED;
-  external_potentials[number].scale = (double*) malloc(n_particle_types*sizeof(double));
+  external_potentials[number].scale = (double*) Utils::malloc(n_particle_types*sizeof(double));
   external_potentials[number].n_particle_types = n_particle_types;
   for (int i = 0; i < n_particle_types; i++) {
     external_potentials[number].scale[i]=scale[i];
@@ -71,9 +71,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   FILE* infile = fopen(filename, "r");
   
   if (!infile)  {
-      ostringstream msg;
-      msg <<"Could not open file "<< filename << "\n";
-      runtimeError(msg);
+    runtimeErrorMsg() <<"Could not open file "<< filename << "\n";
     return ES_ERROR;
   }
   char first_line[100];
@@ -132,22 +130,16 @@ int lattice_read_file(Lattice* lattice, char* filename) {
 
   int halosize=1;
 
-  if (size[0] > 0 && abs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
-      ostringstream msg;
-      msg <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
-      runtimeError(msg);
+  if (size[0] > 0 && fabs(size[0] - box_l[0]) > ROUND_ERROR_PREC) {
+    runtimeErrorMsg() <<"Box size in x is wrong "<< size[0] << " vs " << box_l[0] <<"\n";
     return ES_ERROR;
   }
-  if (size[1] > 0 && abs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
-    ostringstream msg;
-    msg <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
-    runtimeError(msg);
+  if (size[1] > 0 && fabs(size[1] - box_l[1]) > ROUND_ERROR_PREC) {
+    runtimeErrorMsg() <<"Box size in y is wrong "<< size[1] << " vs " << box_l[1] <<"\n";
     return ES_ERROR;
   }
-  if (size[2] > 0 && abs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
-    ostringstream msg;
-    msg <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
-    runtimeError(msg);
+  if (size[2] > 0 && fabs(size[2] - box_l[2]) > ROUND_ERROR_PREC) {
+    runtimeErrorMsg() <<"Box size in z is wrong "<< size[2] << " vs " << box_l[2] <<"\n";
     return ES_ERROR;
   }
 
@@ -164,7 +156,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
   lattice->init(res, offset, halosize, dim);
   lattice->interpolation_type = INTERPOLATION_LINEAR;
 
-  char* line = (char*) malloc((3+dim)*ES_DOUBLE_SPACE);
+  char* line = (char*) Utils::malloc((3+dim)*ES_DOUBLE_SPACE);
   double pos[3];
   double f[3];
   int i;
@@ -251,8 +243,8 @@ void add_external_potential_tabulated_forces(ExternalPotential* e, Particle* p) 
   double field[3];
   double ppos[3];
   int    img[3];
-  memcpy(ppos, p->r.p, 3*sizeof(double));
-  memcpy(img, p->r.p, 3*sizeof(int));
+  memmove(ppos, p->r.p, 3*sizeof(double));
+  memmove(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
   e->tabulated.potential.interpolate_gradient(p->r.p, field);
@@ -267,9 +259,7 @@ void add_external_potential_forces(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_forces(&external_potentials[i], p);
     } else {
-        ostringstream msg;
-        msg <<"unknown external potential type";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"unknown external potential type";
       return;
     }
   }
@@ -283,8 +273,8 @@ void add_external_potential_tabulated_energy(ExternalPotential* e, Particle* p) 
   double potential;
   double ppos[3];
   int img[3];
-  memcpy(ppos, p->r.p, 3*sizeof(double));
-  memcpy(img, p->r.p, 3*sizeof(int));
+  memmove(ppos, p->r.p, 3*sizeof(double));
+  memmove(img, p->r.p, 3*sizeof(int));
   fold_position(ppos, img);
  
   e->tabulated.potential.interpolate(p->r.p, &potential);
@@ -296,9 +286,7 @@ void add_external_potential_energy(Particle* p) {
     if (external_potentials[i].type==EXTERNAL_POTENTIAL_TYPE_TABULATED) {
       add_external_potential_tabulated_energy(&external_potentials[i], p);
     } else {
-        ostringstream msg;
-        msg <<"unknown external potential type";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"unknown external potential type";
       return;
     }
   }

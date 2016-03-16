@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -21,6 +21,7 @@
 
 #include "config.hpp"
 
+#ifdef CUDA
 #ifdef ROTATION
 
 #include "Actor.hpp"
@@ -43,5 +44,6 @@ protected:
   float k;
 };
 
+#endif
 #endif
 #endif

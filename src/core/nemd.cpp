@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -74,9 +74,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
 
   /* check node grid */
   if( n_nodes > 1 ) {
-      ostringstream msg;
-      msg <<"NEMD is a single node feature";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"NEMD is a single node feature";
     return;
   }
 
@@ -98,8 +96,8 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
 
   nemddata.n_exchange       = n_exchange;
  
-  nemddata.slab             = (Slab *)malloc(nemddata.n_slabs*sizeof(Slab));
-  nemddata.velocity_profile = (double *)malloc(nemddata.n_slabs*sizeof(double));
+  nemddata.slab             = (Slab *)Utils::malloc(nemddata.n_slabs*sizeof(Slab));
+  nemddata.velocity_profile = (double *)Utils::malloc(nemddata.n_slabs*sizeof(double));
 
   nemddata.momentum = 0.0;
   nemddata.momentum_norm = 0;
@@ -118,8 +116,8 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
   }
   /* allocate arrays for indices of fastest particles in slab */
   if(nemddata.n_exchange > 0) {
-    nemddata.slab[nemddata.top_slab].fastest = (int *)malloc(nemddata.n_exchange*sizeof(int));
-    nemddata.slab[nemddata.mid_slab].fastest = (int *)malloc(nemddata.n_exchange*sizeof(int));
+    nemddata.slab[nemddata.top_slab].fastest = (int *)Utils::malloc(nemddata.n_exchange*sizeof(int));
+    nemddata.slab[nemddata.mid_slab].fastest = (int *)Utils::malloc(nemddata.n_exchange*sizeof(int));
   }
   for(i=0;i<nemddata.n_exchange;i++) {
     nemddata.slab[nemddata.top_slab].fastest[i] = -1;
@@ -152,9 +150,7 @@ void nemd_change_momentum()
     INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
     if(mid_slab->n_fastest != nemddata.n_exchange || 
        top_slab->n_fastest != nemddata.n_exchange) {
-        ostringstream msg;
-        msg <<"nemd_exchange_momentum: Not enough particles in slab!";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"nemd_exchange_momentum: Not enough particles in slab!";
       /* cannot continue */
       return;
     }

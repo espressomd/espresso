@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -43,6 +43,10 @@
 #include "lb.hpp"
 #include "virtual_sites.hpp"
 #include "initialize.hpp"
+
+#include <vector>
+#include <string>
+#include <map>
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
@@ -127,7 +131,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *) malloc(n_molecules*n_molecules *sizeof(int));
+    contact_num = (int *) Utils::malloc(n_molecules*n_molecules *sizeof(int));
     for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
   } else {
     contact_num = (int *) 0; /* Just to keep the compiler happy */
@@ -235,68 +239,81 @@ void predict_momentum_particles(double *result)
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
+
 /** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Rsult for this processor (Output)
+ * inputs are bools to include particles and fluid in the linear momentum calculation
+ * @param momentum Result for this processor (Output)
  */
-void momentum_calc(double *momentum) 
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid)
 {
-    double momentum_fluid[3] = { 0., 0., 0. };
     double momentum_particles[3] = { 0., 0., 0. };
-
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+    std::vector<double> linear_momentum(3,0.0);
+    if (include_particles) {
+      mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+      linear_momentum[0] += momentum_particles[0];
+      linear_momentum[1] += momentum_particles[1];
+      linear_momentum[2] += momentum_particles[2];
+    }
+    if (include_lbfluid) {
+      double momentum_fluid[3] = { 0., 0., 0. };
 #ifdef LB
-    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
 #endif
-
-    momentum[0] = momentum_fluid[0] + momentum_particles[0];
-    momentum[1] = momentum_fluid[1] + momentum_particles[1];
-    momentum[2] = momentum_fluid[2] + momentum_particles[2];
-
+#ifdef LB_GPU
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
+#endif
+      linear_momentum[0] += momentum_fluid[0];
+      linear_momentum[1] += momentum_fluid[1];
+      linear_momentum[2] += momentum_fluid[2];
+    }
+    return linear_momentum;
 }
 
-void centermass(int type, double *com)
+
+std::vector<double> centerofmass(int type)
 {
-  int i, j;
-  double M = 0.0;
-  com[0]=com[1]=com[2]=0.;
-   	
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if ((partCfg[j].p.type == type) || (type == -1)) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
-      }
-      M += PMASS(partCfg[j]);
+    std::vector<double> com (3);
+    double mass = 0.0;
+    
+    updatePartCfg(WITHOUT_BONDS);
+    for (int i=0; i<n_part; i++) {
+        if ((partCfg[i].p.type == type) || (type == -1)) {
+            for (int j=0; j<3; j++) {
+                com[j] += partCfg[i].r.p[j]*(partCfg[i]).p.mass;
+            }
+            mass += (partCfg[i]).p.mass;
+        }
     }
-  }
-  
-  for (i=0; i<3; i++) {
-    com[i] /= M;
-  }
-  return;
+    for (int j=0; j<3; j++) com[j] /= mass;
+    return com;
 }
 
-void centermass_vel(int type, double *com)
+
+std::vector<double> centerofmass_vel(int type)
 {
-  /*center of mass velocity scaled with time_step*/
-  int i, j;
-  int count = 0;
-  com[0]=com[1]=com[2]=0.;
+    /*center of mass velocity scaled with time_step*/
+    std::vector<double> com_vel (3);
+    int i, j;
+    int count = 0;
 
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if (type == partCfg[j].p.type) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].m.v[i];
-      }
-      count++;
+    updatePartCfg(WITHOUT_BONDS);
+    for (j=0; j<n_part; j++) {
+        if (type == partCfg[j].p.type) {
+            for (i=0; i<3; i++) {
+            	com_vel[i] += partCfg[j].m.v[i];
+            }
+            count++;
+        }
     }
-  }
 
-  for (i=0; i<3; i++) {
-    com[i] /= count;
-  }
-  return;
+    for (i=0; i<3; i++) {
+        com_vel[i] /= count;
+    }
+    return com_vel;
 }
 
 void angularmomentum(int type, double *com)
@@ -312,7 +329,7 @@ void angularmomentum(int type, double *com)
     if (type == partCfg[j].p.type) 
     {
       vector_product(partCfg[j].r.p,partCfg[j].m.v,tmp);
-      pre_factor=PMASS(partCfg[j]);
+      pre_factor=(partCfg[j]).p.mass;
       for (i=0; i<3; i++) {
         com[i] += tmp[i]*pre_factor;
       }
@@ -324,19 +341,19 @@ void angularmomentum(int type, double *com)
 void  momentofinertiamatrix(int type, double *MofImatrix)
 {
   int i,j,count;
-  double p1[3],com[3],massi;
-
+  double p1[3],massi;
+  std::vector<double> com (3);
   count=0;
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) MofImatrix[i]=0.;
-  centermass(type, com);
+  com = centerofmass(type);
   for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
       for (i=0; i<3; i++) {
       	p1[i] = partCfg[j].r.p[i] - com[i];
       }
-      massi= PMASS(partCfg[j]);
+      massi= (partCfg[j]).p.mass;
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]) ; 
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);
@@ -355,19 +372,19 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
 void calc_gyration_tensor(int type, double **_gt)
 {
   int i, j, count;
-  double com[3];
+  std::vector<double> com (3);
   double eva[3],eve0[3],eve1[3],eve2[3];
   double *gt=NULL, tmp;
   double Smatrix[9],p1[3];
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  *_gt = gt = (double*)realloc(gt,16*sizeof(double)); 
+  *_gt = gt = (double*)Utils::realloc(gt,16*sizeof(double)); 
 
   updatePartCfg(WITHOUT_BONDS);
 
   /* Calculate the position of COM */
-  centermass(type,com);
+  com = centerofmass(type);
 
   /* Calculate the gyration tensor Smatrix */
   count=0;
@@ -621,6 +638,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf)
+{
+  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+           r_min, r_max, r_bins, &rdf[0]);
+}
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
@@ -674,6 +697,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
 }
 
+
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                 double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+              r_min, r_max, r_bins, &rdf[0], n_conf);
+}
+
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 		 double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
@@ -684,7 +715,7 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3],p2[3];
 
-  rdf_tmp = (double*)malloc(r_bins*sizeof(double));
+  rdf_tmp = (double*)Utils::malloc(r_bins*sizeof(double));
 
   if(n_p1 == n_p2) {
     for(i=0;i<n_p1;i++)
@@ -742,6 +773,13 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                          double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+                       r_min, r_max, r_bins, &rdf[0], n_conf);
+}
+
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 			  double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
@@ -751,7 +789,7 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3],p2[3];
 
-  rdf_tmp = (double*)malloc(r_bins*sizeof(double));
+  rdf_tmp = (double*)Utils::malloc(r_bins*sizeof(double));
 
   if(n_p1 == n_p2) {
     for(i=0;i<n_p1;i++)
@@ -817,7 +855,7 @@ void calc_structurefactor(int type, int order, double **_ff) {
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
-  *_ff = ff = (double*)realloc(ff,2*order2*sizeof(double));
+  *_ff = ff = (double*)Utils::realloc(ff,2*order2*sizeof(double));
   twoPI_L = 2*PI/box_l[0];
   
   if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
@@ -949,7 +987,7 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   // double *bins;
   
   int *label;
-  label = (int*)malloc(n_part*sizeof(int));
+  label = (int*)Utils::malloc(n_part*sizeof(int));
   
   /* calculation over last n_conf configurations */
   t=n_configs-n_conf;
@@ -997,6 +1035,119 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_
   free(label);
 }
 
+
+int calc_cylindrical_average(std::vector<double> center, std::vector<double> direction, double length,
+                             double radius, int bins_axial, int bins_radial, std::vector<int> types,
+                             std::map<std::string, std::vector<std::vector<std::vector<double> > > > &distribution)
+{
+  int index_axial;
+  int index_radial;
+  double binwd_axial  = length / bins_axial;
+  double binwd_radial = radius / bins_radial;
+
+  // Select all particle types if the only entry in types is -1
+  bool all_types = false;
+  if (types.size() == 1 && types[0] == -1) all_types = true;
+
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("density",   std::vector<std::vector<std::vector<double> > >(types.size())) );
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("v_r",       std::vector<std::vector<std::vector<double> > >(types.size())) );
+  distribution.insert( std::pair<std::string, std::vector<std::vector<std::vector<double> > > >
+                                ("v_t",       std::vector<std::vector<std::vector<double> > >(types.size())) );
+
+  for (unsigned int type = 0; type < types.size(); type++) {
+    distribution["density"][type].resize(bins_radial);
+        distribution["v_r"][type].resize(bins_radial);
+        distribution["v_t"][type].resize(bins_radial);
+    for (int index_radial = 0; index_radial < bins_radial; index_radial++) {
+      distribution["density"][type][index_radial].assign(bins_axial, 0.0);
+          distribution["v_r"][type][index_radial].assign(bins_axial, 0.0);
+          distribution["v_t"][type][index_radial].assign(bins_axial, 0.0);
+    }
+  }
+
+  // Update particles
+  updatePartCfg(WITHOUT_BONDS);
+
+  // Make sure particles are folded
+  for (int i = 0 ; i < n_part ; i++) {
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
+    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
+  }
+
+  // Declare variables for the density calculation
+  double height, dist, v_radial, v_axial;
+  double norm_direction = utils::veclen(direction);
+  std::vector<double> pos(3), vel(3), diff, hat;
+
+  for (int part_id = 0; part_id < n_part; part_id++) {
+    for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+      if ( types[type_id] == partCfg[part_id].p.type || all_types) {
+        pos[0] = partCfg[part_id].r.p[0];
+        pos[1] = partCfg[part_id].r.p[1];
+        pos[2] = partCfg[part_id].r.p[2];
+        vel[0] = partCfg[part_id].m.v[0];
+        vel[1] = partCfg[part_id].m.v[1];
+        vel[2] = partCfg[part_id].m.v[2];
+
+        // Find the vector from center to the current particle
+        diff = utils::vecsub(pos,center);
+
+        // Find the height of the particle above the axis (height) and
+        // the distance from the center point (dist)
+        hat    = utils::cross_product(direction,diff);
+        height = utils::veclen(hat);
+        dist   = utils::dot_product(direction,diff) / norm_direction;
+
+        // Determine the components of the velocity parallel and
+        // perpendicular to the direction vector
+        if ( height == 0 )
+          v_radial = utils::veclen(utils::cross_product(vel,direction)) / norm_direction;
+        else
+          v_radial = utils::dot_product(vel,hat) / height;
+        v_axial  = utils::dot_product(vel,direction) / norm_direction;
+        
+        // Work out relevant indices for x and y
+        index_radial = static_cast<int>( floor(height / binwd_radial) );
+        index_axial  = static_cast<int>( floor((dist + 0.5*length) / binwd_axial) );
+
+        if ( (index_radial < bins_radial && index_radial >= 0) &&
+             (index_axial  < bins_axial  && index_axial  >= 0) ) {
+          distribution["density"][type_id][index_radial][index_axial] += 1;
+          distribution["v_r"][type_id][index_radial][index_axial] += v_radial;
+          distribution["v_t"][type_id][index_radial][index_axial] += v_axial;
+        }
+      }
+    }
+  }
+
+  // Now we turn the counts into densities by dividing by one radial
+  // bin (binvolume).  We also divide the velocites by the counts.
+  double binvolume;
+  for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
+    for (int index_radial = 0 ; index_radial < bins_radial ; index_radial++) {
+      // All bins are cylindrical shells of thickness binwd_radial.
+      // The volume is thus: binvolume = pi*(r_outer - r_inner)^2 * length
+      if ( index_radial == 0 )
+        binvolume = M_PI * binwd_radial*binwd_radial * length;
+      else
+        binvolume = M_PI * (index_radial*index_radial + 2*index_radial) * binwd_radial*binwd_radial * length;
+      for (int index_axial = 0 ; index_axial < bins_axial ; index_axial++) {
+        if ( distribution["density"][type_id][index_radial][index_axial] != 0 ) {
+          distribution["v_r"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
+          distribution["v_t"][type_id][index_radial][index_axial] /= distribution["density"][type_id][index_radial][index_axial];
+          distribution["density"][type_id][index_radial][index_axial] /= binvolume;
+        }
+      }
+    }
+  }
+
+  return ES_OK;
+}
+
+
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
@@ -1017,7 +1168,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
 
-  /*Make sure particles are folded  */
+  /* Make sure particles are folded */
   for (i = 0 ; i < n_part ; i++) {
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
     fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
@@ -1030,8 +1181,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   for ( pi = 0 ; pi < n_part ; pi++ ) {
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       if ( beadids->e[bi] == partCfg[pi].p.type ) {
-
-
 	/* Find the vector from the point to the center */
 	vecsub(center,partCfg[pi].r.p,pvector);
 
@@ -1045,17 +1194,16 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 	   onto the axis vector */
 	ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
 	
-    
 	/* Work out relevant indices for x and y */
 	xindex = (int)(floor(xdist/xbinwidth));
 	yindex = (int)(floor((ydist+yrange*0.5)/ybinwidth));
 	/*
-	printf("x %d y %d \n",xindex,yindex);
-	printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
-	printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
-	printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
-	printf("dists %f %f \n",xdist,ydist);
-	fflush(stdout);
+          printf("x %d y %d \n",xindex,yindex);
+          printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
+          printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
+          printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
+          printf("dists %f %f \n",xdist,ydist);
+          fflush(stdout);
 	*/
 	/* Check array bounds */
 	if ( (xindex < xbins && xindex > 0) && (yindex < ybins && yindex > 0) ) {
@@ -1071,7 +1219,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     }
   }
 
-
   /* Now turn counts into densities for the density map */
   for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
     for ( i = 0 ; i < xbins ; i++ ) {
@@ -1083,15 +1230,14 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     }
   }
 
-
   /* if required calculate the theta density profile */
   if ( thetabins > 0 ) {
     /* Convert the center to an output of the density center */
     xav = xav/(double)(beadcount);
     yav = yav/(double)(beadcount);
     thetabinwidth = 2*PI/(double)(thetabins);
-    thetaradii = (double*)malloc(thetabins*nbeadtypes*sizeof(double));
-    thetacounts = (int*)malloc(thetabins*nbeadtypes*sizeof(int));
+    thetaradii = (double*)Utils::malloc(thetabins*nbeadtypes*sizeof(double));
+    thetacounts = (int*)Utils::malloc(thetabins*nbeadtypes*sizeof(int));
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       for ( t = 0 ; t < thetabins ; t++ ) {
 	thetaradii[bi*thetabins+t] = 0.0;
@@ -1099,59 +1245,47 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
       }
     }
     /* Maybe there is a nicer way to do this but now I will just repeat the loop over all particles */
-      for ( pi = 0 ; pi < n_part ; pi++ ) {
-	for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
-	  if ( beadids->e[bi] == partCfg[pi].p.type ) {
-	    vecsub(center,partCfg[pi].r.p,pvector);
-	    vector_product(axis,pvector,vectprod);
-	    xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
-	    ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
-	    /* Center the coordinates */
-
-	    xdist = xdist - xav;
-	    ydist = ydist - yav;
-	    rdist = sqrt(xdist*xdist+ydist*ydist);
-	    if ( ydist >= 0 ) {
-	      theta = acos(xdist/rdist);
-	    } else {
-	      theta = 2*PI-acos(xdist/rdist);
-	    }
-	    tindex = (int)(floor(theta/thetabinwidth));
-	    thetaradii[bi*thetabins+tindex] += xdist + xav;
-	    thetacounts[bi*thetabins+tindex] += 1;
-	    if ( tindex >= thetabins ) {
-	      fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
-	    } else {
-	      density_profile[bi].e[tindex] += 1;
-	    }
-	  }	  
-	}
-      }
-
-
-
-      /* normalize the theta densities*/
+    for ( pi = 0 ; pi < n_part ; pi++ ) {
       for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
-	for ( t = 0 ; t < thetabins ; t++ ) {
-	  rdist = thetaradii[bi*thetabins+t]/(double)(thetacounts[bi*thetabins+t]);
-	  density_profile[bi].e[t] /= rdist*rdist;
-	}
+        if ( beadids->e[bi] == partCfg[pi].p.type ) {
+          vecsub(center,partCfg[pi].r.p,pvector);
+          vector_product(axis,pvector,vectprod);
+          xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
+          ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
+          /* Center the coordinates */
+
+          xdist = xdist - xav;
+          ydist = ydist - yav;
+          rdist = sqrt(xdist*xdist+ydist*ydist);
+          if ( ydist >= 0 ) {
+            theta = acos(xdist/rdist);
+          } else {
+            theta = 2*PI-acos(xdist/rdist);
+          }
+          tindex = (int)(floor(theta/thetabinwidth));
+          thetaradii[bi*thetabins+tindex] += xdist + xav;
+          thetacounts[bi*thetabins+tindex] += 1;
+          if ( tindex >= thetabins ) {
+            fprintf(stderr,"ERROR: outside density_profile array bounds in calc_radial_density_map"); fflush(NULL); errexit(); 
+          } else {
+            density_profile[bi].e[tindex] += 1;
+          }
+        }	  
       }
-       
+    }
 
+    /* normalize the theta densities*/
+    for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
+      for ( t = 0 ; t < thetabins ; t++ ) {
+        rdist = thetaradii[bi*thetabins+t]/(double)(thetacounts[bi*thetabins+t]);
+        density_profile[bi].e[t] /= rdist*rdist;
+      }
+    }
 
-      free(thetaradii);
-      free(thetacounts);
-
+    free(thetaradii);
+    free(thetacounts);
   }
-  
 
-
-
-
-
-
-  //  printf("done \n");
   return ES_OK;
 }
 
@@ -1207,8 +1341,8 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 void analyze_append() {
   int i;
   n_part_conf = n_part;
-  configs = (double**)realloc(configs,(n_configs+1)*sizeof(double *));
-  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs = (double**)Utils::realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs][3*i]   = partCfg[i].r.p[0];
     configs[n_configs][3*i+1] = partCfg[i].r.p[1];
@@ -1224,7 +1358,7 @@ void analyze_push() {
   for(i=0; i<n_configs-1; i++) {
     configs[i]=configs[i+1];
   }
-  configs[n_configs-1] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs[n_configs-1] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs-1][3*i]   = partCfg[i].r.p[0];
     configs[n_configs-1][3*i+1] = partCfg[i].r.p[1];
@@ -1249,15 +1383,15 @@ void analyze_remove(int ind) {
     configs[i]=configs[i+1];
   }
   n_configs--;
-  configs = (double**)realloc(configs,n_configs*sizeof(double *));
+  configs = (double**)Utils::realloc(configs,n_configs*sizeof(double *));
   if (n_configs == 0) n_part_conf = 0;
 }
 
 void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs = (double**)realloc(configs,(n_configs+1)*sizeof(double *));
-  configs[n_configs] = (double *) malloc(3*n_part_conf*sizeof(double));
+  configs = (double**)Utils::realloc(configs,(n_configs+1)*sizeof(double *));
+  configs[n_configs] = (double *) Utils::malloc(3*n_part_conf*sizeof(double));
   for(i=0; i<n_part_conf; i++) {
     configs[n_configs][3*i]   = tmp_config[3*i];
     configs[n_configs][3*i+1] = tmp_config[3*i+1];
@@ -1276,9 +1410,7 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-        ostringstream msg;
-        msg <<"failed upon replacing particle " << i << "  in Espresso";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"failed upon replacing particle " << i << "  in Espresso";
     }
   }
 }
@@ -1364,9 +1496,9 @@ void centermass_conf(int k, int type_1, double *com)
     {
       for (i=0; i<3; i++)
       {
-         com[i] += configs[k][3*j+i]*PMASS(partCfg[j]);
+         com[i] += configs[k][3*j+i]*(partCfg[j]).p.mass;
       }
-      M += PMASS(partCfg[j]);
+      M += (partCfg[j]).p.mass;
     }
   }
   for (i=0; i<3; i++) 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -107,12 +107,12 @@ int bcast_iccp3m_cfg(void){
    * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
-    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.sigma      = (double*) realloc (iccp3m_cfg.sigma     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.areas      = (double*) Utils::realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) Utils::realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) Utils::realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) Utils::realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) Utils::realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.sigma      = (double*) Utils::realloc (iccp3m_cfg.sigma     ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
 
   MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
@@ -155,9 +155,7 @@ int iccp3m_iteration() {
    
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
-       ostringstream msg;
-       msg <<"ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n";
    }
    
    
@@ -186,9 +184,7 @@ int iccp3m_iteration() {
            ez += iccp3m_cfg.extz;
            
            if (ex == 0 && ey == 0 && ez == 0) {
-             ostringstream msg;
-             msg <<"ICCP3M found zero electric field on a charge. This must never happen";
-             runtimeError(msg);
+             runtimeErrorMsg() <<"ICCP3M found zero electric field on a charge. This must never happen";
            }
            /* the dot product   */
            fdot = ex*iccp3m_cfg.nvectorx[id]+
@@ -218,9 +214,7 @@ int iccp3m_iteration() {
          /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
          /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
                       if(fabs(part[i].p.q) > 1e6) {
-                          ostringstream msg;
-                          msg <<"too big charge assignment in iccp3m! q >1e6 , assigned charge= " << part[i].p.q << "\n";
-                          runtimeError(msg);
+                          runtimeErrorMsg() <<"too big charge assignment in iccp3m! q >1e6 , assigned charge= " << part[i].p.q << "\n";
                         diff = 1e90; /* A very high value is used as error code */
                         break;
                       }
@@ -299,7 +293,7 @@ void layered_calculate_ia_iccp3m()
       p1 = &pl[i];
 
       if (rebuild_verletlist)
-        memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
+        memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
       /* cell itself. No bonded / constraints considered in ICCP3M */
       for(j = i+1; j < npl; j++) {
@@ -372,7 +366,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	j_start = 0;
 	/* Tasks within cell: (no bonded forces) store old position, avoid double counting */
 	if(n == 0) {
-	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	  memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
 	/* Loop neighbor cell particles */
@@ -384,7 +378,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
 	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
-	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
+	  if(verlet_list_criterion(p1+i,p2+j, dist2)) {
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
 
@@ -458,7 +452,7 @@ void calc_link_cell_iccp3m()
         /* Tasks within cell: bonded forces */
         if(n == 0) {
 	  if (rebuild_verletlist)
-	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+	    memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 
           j_start = i+1;
         }
@@ -466,7 +460,7 @@ void calc_link_cell_iccp3m()
 	for(j = j_start; j < np2; j++) {
 	    {
 	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-	      if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
+	      if(verlet_list_criterion(p1+i,p2+j,dist2)) {
 		/* calc non bonded interactions */
 		add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
 	      }
@@ -493,7 +487,7 @@ void nsq_calculate_ia_iccp3m()
     pt1 = &partl[p];
 
     if (rebuild_verletlist)
-      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+      memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -535,9 +529,7 @@ void init_forces_iccp3m()
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
   if(integ_switch == INTEG_METHOD_NPT_ISO){
-      ostringstream msg;
-      msg << "ICCP3M cannot be used with pressure coupling";
-      runtimeError(msg);
+      runtimeErrorMsg() << "ICCP3M cannot be used with pressure coupling";
   }
 #endif
 
@@ -574,17 +566,13 @@ void calc_long_range_forces_iccp3m()
 			coulomb.method == COULOMB_P3M     ||
 			coulomb.method == COULOMB_MMM2D   ||
             coulomb.method == COULOMB_MMM1D)  ) {
-        ostringstream msg;
-        msg <<"ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
 	}
 	switch (coulomb.method) {
 #ifdef P3M
 	case COULOMB_ELC_P3M:
         if (elc_params.dielectric_contrast_on) {
-            ostringstream msg;
-            msg << "ICCP3M conflicts with ELC dielectric constrast";
-            runtimeError(msg);
+            runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
 		}
 		p3m_charge_assign();
 		p3m_calc_kspace_forces(1,0);
@@ -621,7 +609,7 @@ inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2)
   /* check size of verlet List */
   if(pl->n+1 >= pl->max) {
     pl->max += LIST_INCREMENT;
-    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
   /* add pair */
   pl->pair[(2*pl->n)  ] = p1;
@@ -637,7 +625,7 @@ void resize_verlet_list_iccp3m(PairList *pl)
   if( diff > 2*LIST_INCREMENT ) {
     diff = (diff/LIST_INCREMENT)-1;
     pl->max -= diff*LIST_INCREMENT;
-    pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
 
@@ -735,24 +723,18 @@ int iccp3m_sanity_check()
 #ifdef P3M
 	case COULOMB_ELC_P3M: {
         if (elc_params.dielectric_contrast_on) {
-            ostringstream msg;
-            msg << "ICCP3M conflicts with ELC dielectric constrast";
-            runtimeError(msg);
+            runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric constrast";
 			return 1;
 		}
 		break;
 	}
 #endif
     case COULOMB_DH: {
-        ostringstream msg;
-        msg <<"ICCP3M does not work with Debye-Hueckel iccp3m.h";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"ICCP3M does not work with Debye-Hueckel iccp3m.h";
 		return 1;
 	}
     case COULOMB_RF: {
-        ostringstream msg;
-        msg <<"ICCP3M does not work with COULOMB_RF iccp3m.h";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"ICCP3M does not work with COULOMB_RF iccp3m.h";
 		return 1;
 	}
 	default:
@@ -761,9 +743,7 @@ int iccp3m_sanity_check()
   
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
-      ostringstream msg;
-      msg <<"ICCP3M does not work in the NPT ensemble";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"ICCP3M does not work in the NPT ensemble";
     return 1;
   }
 #endif

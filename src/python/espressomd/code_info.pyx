@@ -19,9 +19,6 @@ def features():
     IF PTENSOR_DEBUG == 1:
         f.append("PTENSOR_DEBUG")
 
-    IF MEM_DEBUG == 1:
-        f.append("MEM_DEBUG")
-
     IF NO_INTRA_NB == 1:
         f.append("NO_INTRA_NB")
 
@@ -54,9 +51,6 @@ def features():
 
     IF BOND_ENDANGLEDIST_HARMONIC == 1:
         f.append("BOND_ENDANGLEDIST_HARMONIC")
-
-    IF AREA_FORCE_GLOBAL == 1:
-        f.append("AREA_FORCE_GLOBAL")
 
     IF TK == 1:
         f.append("TK")
@@ -130,8 +124,11 @@ def features():
     IF STAT_DEBUG == 1:
         f.append("STAT_DEBUG")
 
-    IF VOLUME_FORCE == 1:
-        f.append("VOLUME_FORCE")
+    IF OIF_LOCAL_FORCES == 1:
+        f.append("OIF_LOCAL_FORCES")
+
+    IF OIF_LOCAL_FORCES == 1:
+        f.append("OIF_GLOBAL_FORCES")
 
     IF COMFORCE == 1:
         f.append("COMFORCE")

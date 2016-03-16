@@ -12,6 +12,7 @@ autom4te.cache
 .deps/
 myconfig.h
 build/
+CMakeFiles
 
 *.*~
 
@@ -38,6 +39,7 @@ src/acconfig.hpp.in
 *.end
 *.obs*
 *.chk
+*.h5
 
 # doxygen
 doc/dg/html/

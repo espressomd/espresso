@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,12 +24,17 @@
     This file contains the code for statistics on the data.
 */
 
+#include <vector>
+
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
 #include "topology.hpp"
+
 #include <vector>
+#include <string>
+#include <map>
 
 /** \name Data Types */
 /************************************************************/
@@ -227,9 +232,11 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param r_bins   Number of bins.
     @param rdf     Array to store the result (size: r_bins).
 */
-void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
-	      double r_min, double r_max, int r_bins, double *rdf);
 
+void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
+	      double r_min, double r_max, int r_bins, double *rdf);
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf);
 
 /** Calculates the radial distribution function averaged over last n_conf configurations.
 
@@ -251,6 +258,8 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 */
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+              double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 /** Calculates the intermolecular radial distribution function averaged over last n_conf configurations.
 
@@ -273,6 +282,8 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 
 /** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
@@ -319,6 +330,10 @@ std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf)
 /** Calculates the density profile in dir direction */
 void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type);
 
+int calc_cylindrical_average(std::vector<double> center, std::vector<double> direction, double length,
+                             double radius, int bins_axial, int bins_radial, std::vector<int> types,
+                             std::map<std::string, std::vector<std::vector<std::vector<double> > > > &distribution);
+
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile);
 
 void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_part, int n_conf, int time, int type, double *bins) ;  
@@ -339,16 +354,19 @@ inline double min_distance(double pos1[3], double pos2[3]) {
   return sqrt(min_distance2(pos1, pos2));
 }
 
+
 /** calculate the center of mass of a special type of the current configuration
  *  \param type  type of the particle
  *  \param com   center of mass position
  */
-void centermass(int type, double *com);
+std::vector<double> centerofmass(int part_type);
+
 
 /** Docs missing
 \todo Docs missing
 */
-void centermass_vel(int type, double *com);
+std::vector<double> centerofmass_vel(int type);
+
 
 /** calculate the angular momentum of a special type of the current configuration
  *  \param type  type of the particle
@@ -378,6 +396,7 @@ void predict_momentum_particles(double *result);
 \todo Docs missing
 */
 void momentum_calc(double *momentum);
+std::vector<double> calc_linear_momentum(int include_particles, int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j)
 {

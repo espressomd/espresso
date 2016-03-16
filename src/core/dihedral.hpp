@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -85,7 +85,7 @@ inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Partic
 */
 inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
 				 Bonded_ia_parameters *iaparams, double force2[3],
-				 double force1[2], double force3[2])
+				 double force1[3], double force3[3])
 {
   int i;
   /* vectors for dihedral angle calculation */

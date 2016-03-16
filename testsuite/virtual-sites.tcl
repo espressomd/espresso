@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -31,9 +31,10 @@ require_feature "VIRTUAL_SITES_NO_VELOCITY" off
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ELECTROSTATICS"
 require_feature "LENNARD_JONES"
+require_feature "ROTATIONAL_INERTIA"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase virtual-sites.tcl running on 1 nodes"
+puts "- Testcase virtual-sites.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "---------------------------------------------------------------"
 
 setmd box_l 10 10 10
@@ -192,4 +193,4 @@ for {set i 0} {$i<10000} {incr i } {
 puts "OK: Handling of periodic boundaries"
 puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-exit 0
+

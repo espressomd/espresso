@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -128,7 +128,7 @@ int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int
     }
   return TCL_OK;
   } else if (ARG0_IS_S("formatted")) {
-    double* values = (double*) malloc(self->dim_A*sizeof(double));
+    double* values = (double*) Utils::malloc(self->dim_A*sizeof(double));
     for (unsigned i=0; i< self->dim_A; i++) {
       values[i]=self->A_accumulated_average[i]/self->n_data;
     }
@@ -169,7 +169,7 @@ int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* inte
     Tcl_AppendResult(interp, buffer, "Does this make sense for an non-autocorrelation function? ", (char *)NULL);
     return TCL_ERROR;
   }
-  correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  correlation_time = (double*) Utils::malloc(self->dim_corr*sizeof(double));
   correlation_get_correlation_time(self, correlation_time);
   
   for (unsigned j=0; j<self->dim_corr; j++) {
@@ -195,7 +195,7 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
     Tcl_AppendResult(interp, buffer, "Error in print_average_errorbars: Must be an autocorrelation ", (char *)NULL);
     return TCL_ERROR;
   }
-  correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  correlation_time = (double*) Utils::malloc(self->dim_corr*sizeof(double));
   correlation_get_correlation_time(self, correlation_time);
   
   for (unsigned j=0; j<self->dim_corr; j++) {
@@ -306,7 +306,7 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
 int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 //  int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
  // int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
-  void **args = (void**)malloc(sizeof(void*)); // arguments to be passed to the correlation
+  void **args = (void**)Utils::malloc(sizeof(void*)); // arguments to be passed to the correlation
   char *compressA_name=NULL;
   char *compressB_name=NULL;
   char *corr_operation_name=NULL;
@@ -570,7 +570,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   }
 
   // Let us just realloc space. Does not matter even if we can not make a proper correlation out of that.
-  correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
+  correlations=(double_correlation*) Utils::realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
 
   // Now initialize the new correlation and check the arguments for consistency
   error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
@@ -609,7 +609,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     *change=1;
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"fcs_acf")) {
-    dl = (DoubleList*)malloc(sizeof(DoubleList));
+    dl = (DoubleList*)Utils::malloc(sizeof(DoubleList));
     alloc_doublelist(dl, 3);
     dl->n = 3;
     for (i=0; i<3; i++ )  { 
@@ -678,8 +678,8 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   dim_sf=params->dim_sf;
   order2=params->order*params->order;
   
-  av_sf_Re=(double*)malloc(order2*sizeof(double));
-  av_sf_Im=(double*)malloc(order2*sizeof(double));
+  av_sf_Re=(double*)Utils::malloc(order2*sizeof(double));
+  av_sf_Im=(double*)Utils::malloc(order2*sizeof(double));
 
   // compute spherically averaged sf
   for (unsigned j=0; j<self->n_result; j++) {

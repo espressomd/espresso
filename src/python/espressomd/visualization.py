@@ -1,9 +1,8 @@
 import sys
 if sys.platform == 'darwin':
-	if sys.version_info >= (3,4):
+	try:
 		multiprocessing.set_start_method('spawn')
-	else:
-		import os
+	except:
 		raise Exception("Mayavi visualization is not supported on Mac OS X because fork()ed processes may not have a GUI.")
 
 import numpy
@@ -48,7 +47,8 @@ def mayavi_render(queue):
 				running = True
 
 			if not Nbonds_changed:
-				arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
+				if bonds.shape[0] > 0:
+					arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
 			else:
 				arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
@@ -96,7 +96,7 @@ class mayavi_live:
 			coords[i,:] = self.system.part[i].pos
 			t = self.system.part[i].type
 			types[i] = t +1
-			radii[i] = inter[t,t].lennardJones._getParamsFromEsCore()['sigma'] * 0.5
+			radii[i] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
 
 			bs = self.system.part[i].bonds
 			for b in bs:
@@ -110,7 +110,7 @@ class mayavi_live:
 			i,j,t = bonds[n]
 			bond_coords[n,:3] = self.system.part[i].pos
 			bond_coords[n,3:6] = self.system.part[j].pos - self.system.part[i].pos
-			bond_coords[n,6] = t
+			bond_coords[n,6] = 0 # numeric bond IDs have been removed
 
 		boxl = self.system.box_l
 

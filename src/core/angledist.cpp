@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -92,8 +92,8 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   distmx = iaparams->p.angledist.distmax;
 
   /* folds coordinates of p_mid into original box */
-  memcpy(folded_pos, p_mid->r.p, 3*sizeof(double));
-  memcpy(img, p_mid->l.i, 3*sizeof(int));
+  memmove(folded_pos, p_mid->r.p, 3*sizeof(double));
+  memmove(img, p_mid->l.i, 3*sizeof(int));
   fold_position(folded_pos, img);
 
   /* Calculates distance between p_mid and constraint */

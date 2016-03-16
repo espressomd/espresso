@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -96,8 +96,8 @@ void save_last_state()
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
-			memcpy(&part[i].l.r_ls, &part[i].r, sizeof(ParticlePosition));
-			memcpy(&part[i].l.m_ls, &part[i].m, sizeof(ParticleMomentum));
+			memmove(&part[i].l.r_ls, &part[i].r, sizeof(ParticlePosition));
+			memmove(&part[i].l.m_ls, &part[i].m, sizeof(ParticleMomentum));
 		}
 	}
 	
@@ -121,8 +121,8 @@ void load_last_state()
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
-			memcpy(&part[i].r, &part[i].l.r_ls, sizeof(ParticlePosition));
-			memcpy(&part[i].m, &part[i].l.m_ls, sizeof(ParticleMomentum));
+			memmove(&part[i].r, &part[i].l.r_ls, sizeof(ParticlePosition));
+			memmove(&part[i].m, &part[i].l.m_ls, sizeof(ParticleMomentum));
 		}
 	}
   //part = local_cells.cell[0]->part;
@@ -186,7 +186,7 @@ double calc_local_temp()
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       for (j = 0; j < 3; j++) {
-				temp += PMASS(part[i])*SQR(part[i].m.v[j]/time_step);
+				temp += (part[i]).p.mass*SQR(part[i].m.v[j]/time_step);
 				#ifdef ROTATION
 					temp += SQR(part[i].m.omega[j]);
 				#endif	
@@ -219,7 +219,7 @@ void calc_kinetic(double *ek_trans , double *ek_rot)
 			#endif
 			
 			/* kinetic energy */
-			et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*PMASS(part[i]);
+			et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*(part[i]).p.mass;
 
 			/* rotational energy */
 			#ifdef ROTATION
@@ -347,7 +347,7 @@ void simple_momentum_update()
 			#endif
 			
 			#ifdef MASS
-				sigmat = sqrt(temperature / PMASS(part[i]));
+				sigmat = sqrt(temperature / (part[i]).p.mass);
 			#endif
       for (j = 0; j < 3; j++) {
 				part[i].m.v[j] = sigmat*gaussian_random()*time_step;
@@ -380,7 +380,7 @@ void partial_momentum_update()
     part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
 			#ifdef MASS
-				sigmat = sqrt(temperature / PMASS(part[i]));
+				sigmat = sqrt(temperature / (part[i]).p.mass);
 			#endif
       for (j = 0; j < 3; j++) {
 				part[i].m.v[j] = cosp*(part[i].m.v[j])+sinp*(sigmat*gaussian_random()*time_step);

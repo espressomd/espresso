@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -280,7 +280,7 @@ static void mpifake_pack(void *dest, void *src, int count, MPI_Datatype dtype) {
     break;
 
   default:
-    memcpy((char *)dest, (char *)src, count *dtype->size);
+    memmove((char *)dest, (char *)src, count *dtype->size);
 
   }
 
@@ -381,7 +381,7 @@ static int mpifake_unpack(void *_dest, void *_src, int count, MPI_Datatype dtype
 
   default:
     size = count * dtype->size;
-    memcpy((char *)dest, (char *)src, size);
+    memmove((char *)dest, (char *)src, size);
     return size;
 
   }
@@ -456,7 +456,7 @@ void mpifake_copy(void *src, void *dest, int *count, MPI_Datatype *dtype) {
     break;
 
   default:
-    memcpy((char *)dest, (char *)src, *count*(*dtype)->size);
+    memmove((char *)dest, (char *)src, *count*(*dtype)->size);
 
   }
 

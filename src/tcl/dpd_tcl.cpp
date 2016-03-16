@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -28,6 +28,21 @@
 #include "thermostat.hpp"
 #include "interaction_data.hpp"
 #include "virtual_sites.hpp"
+
+int tclcallback_dpd_ignore_fixed_particles(Tcl_Interp *interp, void *_data)
+{
+  int data = *(int *)_data;
+
+  if ((data == 0) || (data == 1)) {
+    dpd_ignore_fixed_particles = data;
+    mpi_bcast_parameter(FIELD_DPD_IGNORE_FIXED_PARTICLES);
+    return (TCL_OK);
+  } else{
+    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
+    return (TCL_ERROR);
+  }
+}
+
 
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
@@ -257,15 +272,6 @@ int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** 
 		     "<temperature>",
 		     (char *) NULL);
     return TCL_ERROR;
-  }
-
-  if (argc>2 && ARG_IS_S(2, "ignore_fixed_particles")) {
-    if (argc == 3)
-      dpd_ignore_fixed_particles=1;
-    else if (argc!= 4 || (!ARG_IS_I(3, dpd_ignore_fixed_particles))) 
-      return TCL_ERROR;
-    mpi_bcast_parameter(FIELD_DPD_IGNORE_FIXED_PARTICLES);
-    return TCL_OK;
   }
 
   /* copy lattice-boltzmann parameters */

@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -21,7 +21,9 @@ tests = \
 	analysis.tcl \
 	angle.tcl \
 	bonded_coulomb.tcl \
+	collision-detection-angular.tcl \
 	collision-detection-centers.tcl \
+	collision-detection-glue.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
@@ -29,11 +31,13 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	correlation.tcl \
-	correlation_checkpoint.tcl \
 	constraints_rhomboid.tcl \
 	coulomb_cloud_wall.tcl \
+	dawaanr-and-dds-gpu.tcl \
 	dh.tcl \
 	dielectric.tcl \
+	dihedral.tcl \
+	dpd.tcl \
 	ek_eof_one_species_x.tcl \
 	ek_eof_one_species_y.tcl \
 	ek_eof_one_species_z.tcl \
@@ -63,6 +67,7 @@ tests = \
 	intppbc.tcl \
 	kinetic.tcl \
 	langevin.tcl \
+	langevin_per_particle.tcl \
 	layered.tcl \
 	lb.tcl \
 	lb_fluid_coupling.tcl \
@@ -83,8 +88,10 @@ tests = \
 	magnetic-field.tcl \
 	mass.tcl \
 	mass-and-rinertia.tcl \
+	mass-and-rinertia_per_particle.tcl \
 	mdlc.tcl \
 	minimize_energy.tcl \
+	minimize_energy_rotation.tcl \
 	mmm1d.tcl \
 	mmm1dgpu.tcl \
 	ewaldgpu.tcl \
@@ -96,10 +103,13 @@ tests = \
 	observable.tcl \
 	p3m.tcl \
 	p3m_gpu.tcl \
+	p3m_gpu_simple_noncubic.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	pdb_parser.tcl \
+	rotate-system.tcl \
+	rotate-system-dipoles.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	sc_fluid_gpu.tcl \
@@ -109,7 +119,8 @@ tests = \
 	tabulated.tcl \
         tunable_slip.tcl \
         uwerr.tcl \
-	virtual-sites.tcl 
+	virtual-sites.tcl \
+	virtual-sites-rotation.tcl 
 # please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
@@ -127,6 +138,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
 	coulomb_cloud_wall_system.data \
+	dihedral.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
 	p3m_system.data p3m_system_gpu.data \

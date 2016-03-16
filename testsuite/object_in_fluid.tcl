@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -36,8 +36,8 @@
 
 source "tests_common.tcl"
 
-require_feature "AREA_FORCE_GLOBAL"
-require_feature "VOLUME_FORCE"
+require_feature "OIF_GLOBAL_FORCES"
+require_feature "OIF_LOCAL_FORCES"
 require_feature "LB"
 require_max_nodes_per_side 2
 
@@ -113,7 +113,7 @@ if { [catch {
 	
 	set generate_new_data 0
 	# Here, you write new reference configuration in case you uncomment the next line
-  # set generate_new_data 1
+   # set generate_new_data 1
 	if { $generate_new_data == 1} {
 	    write_data_final "object_in_fluid_system-final.data"
 	    exit

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -177,6 +177,14 @@ int tclcallback_sd_radius(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data <= 0) {
+    if (-1.001 < data && data < -.999){
+#if defined(SD) || defined(BD)
+      Tcl_AppendResult(interp, "SD radius was set to -1. It must be set to a reasonable value bevor the integrate_sd can be called.", (char *) NULL);
+#endif
+      sd_radius=-1;
+      mpi_bcast_parameter(FIELD_SD_RADIUS);
+      return (TCL_OK);
+    }
     Tcl_AppendResult(interp, "radius must be > 0.", (char *) NULL);
     return (TCL_ERROR);
   }

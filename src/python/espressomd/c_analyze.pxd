@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,13 +18,20 @@
 #
 # For C-extern Analysis
 
+#
+# TODO: Merge blocks of cdef extern for same headers.
+#
+
+
 cimport numpy as np
 from utils cimport *
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "particle_data.hpp":
     cdef int updatePartCfg(int bonds_flag)
+    int n_particle_types
 
 cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(int type, int order, double ** sf)
@@ -33,7 +40,7 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat:
         int init_status
-        DoubleList data
+        double_list data
         int n_coulomb
         int n_dipolar
         int n_non_bonded
@@ -43,19 +50,30 @@ cdef extern from "statistics.hpp":
         double * dipolar
         double * vs_relative
 
+cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
-
-cdef extern from "statistics.hpp":
-    cdef double mindist(IntList * set1, IntList * set2)
-    cdef void nbhood(double pos[3], double r_catch, IntList * il, int planedims[3])
+    cdef double mindist(int_list * set1, int_list * set2)
+    cdef void nbhood(double pos[3], double r_catch, int_list * il, int planedims[3])
     cdef double distto(double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
+    cdef double mindist(int_list * set1, int_list * set2)
+    cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
+    cdef vector[double] centerofmass(int part_type)
+    cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
+                                      double radius, int bins_axial, int bins_radial, vector[int] types,
+                                      map[string, vector[vector[vector[double]]]] & distribution)
+
 
 cdef extern from "pressure.hpp":
+    cdef Observable_stat total_pressure
+    cdef Observable_stat_non_bonded total_pressure_non_bonded
+    cdef Observable_stat total_p_tensor
+    cdef Observable_stat_non_bonded total_p_tensor_non_bonded
+    cdef void update_pressure(int)
     cdef void analyze_pressure_all(vector[string] & pressure_labels, vector[double] & pressures, int v_comp)
     cdef double analyze_pressure(string pressure_to_calc, int v_comp)
     cdef double analyze_pressure_pair(string pressure_to_calc, int type1, int type2, int v_comp)
@@ -64,7 +82,7 @@ cdef extern from "pressure.hpp":
     cdef int analyze_stress_tensor(string pressure_to_calc, int v_comp, vector[double] & stress)
     cdef int analyze_stress_pair(string pressure_to_calc, int type1, int type2, int v_comp, vector[double] & stress)
     cdef int analyze_stress_single(string pressure_to_calc, int bond_or_type, int v_comp, vector[double] & stress)
-    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, DoubleList * local_stress_tensor)
+    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
@@ -74,18 +92,25 @@ cdef extern from "energy.hpp":
     cdef void master_energy_calc()
     cdef void init_energies(Observable_stat * stat)
 
-cdef extern from "pressure.hpp":
-    cdef Observable_stat total_pressure
-    cdef Observable_stat_non_bonded total_pressure_non_bonded
-    cdef Observable_stat total_p_tensor
-    cdef Observable_stat_non_bonded total_p_tensor_non_bonded
-
-    cdef void update_pressure(int)
-
+cdef extern from "statistics_chain.hpp":
+    int sortPartCfg()
+    int chain_start
+    int chain_n_chains
+    int chain_length
+    void calc_re(double ** re)
+    void calc_rg(double ** rg)
+    void calc_rh(double ** rh)
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
 
+cdef extern from "statistics.hpp":
+    void calc_rdf(vector[int] p1_types, vector[int] p2_types,
+                  double r_min, double r_max, int r_bins, vector[double] rdf)
 
-cdef extern from "particle_data.hpp":
-    int n_particle_types
+    void calc_rdf_av(vector[int] p1_types, vector[int] p2_types,
+                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+
+    void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
+                              double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+    void angularmomentum(int p_type, double * com)

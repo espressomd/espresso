@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -303,10 +303,10 @@ if { $total_pressure_difference_yy > 5.0e-07 } {
 if { $total_pressure_difference_zz > 5.0e-07 } {
   error_exit "Pressure accuracy zz component not achieved"
 }
-if { $total_pressure_difference_xy > 1.0e-10 } {
+if { $total_pressure_difference_xy > 5.0e-10 } {
   error_exit "Pressure accuracy xy component not achieved"
 }
-if { $total_pressure_difference_yz > 1.0e-10 } {
+if { $total_pressure_difference_yz > 5.0e-10 } {
   error_exit "Pressure accuracy yz component not achieved"
 }
 if { $total_pressure_difference_xz > 7.5e-06 } {

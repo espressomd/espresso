@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -79,6 +79,7 @@ void init_energies(Observable_stat *stat)
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
+ case DIPOLAR_DS_GPU:   n_dipolar = 2; break;
   }
 
 #endif
@@ -153,11 +154,11 @@ void energy_calc(double *result)
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
   if (n_external_potentials > 0) {
-    double* energies = (double*) malloc(n_external_potentials*sizeof(double));
+    double* energies = (double*) Utils::malloc(n_external_potentials*sizeof(double));
     for (int i=0; i<n_external_potentials; i++) {
       energies[i]=external_potentials[i].energy;
     }
-    double* energies_sum =  (double*) malloc(n_external_potentials*sizeof(double)); 
+    double* energies_sum =  (double*) Utils::malloc(n_external_potentials*sizeof(double)); 
     MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
     for (int i=0; i<n_external_potentials; i++) {
       external_potentials[i].energy=energies_sum[i];
@@ -243,13 +244,14 @@ void calc_long_range_energies()
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
     break;
+  case DIPOLAR_DS_GPU:
+    // Do nothing, it's an actor.
+    break;
   case DIPOLAR_NONE:
       break;
   default:
-      ostringstream msg;
-      msg <<"unknown dipolar method";
-      runtimeError(msg);
-      break;
+    runtimeErrorMsg() <<"unknown dipolar method";
+    break;
   } 
 #endif /* ifdef DIPOLES */
 

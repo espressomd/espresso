@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -65,7 +65,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
   prepare_comm(comm, data_parts, n_nodes);
   /* every node has its dedicated comm step */
   for(n = 0; n < n_nodes; n++) {
-    comm->comm[n].part_lists = (ParticleList**)malloc(sizeof(ParticleList *));
+    comm->comm[n].part_lists = (ParticleList**)Utils::malloc(sizeof(ParticleList *));
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
@@ -162,7 +162,7 @@ void nsq_balance_particles(int global_flag)
     return;
 
   int pp = cells_get_n_particles();
-  int *ppnode = (int*)malloc(n_nodes*sizeof(int));
+  int *ppnode = (int*)Utils::malloc(n_nodes*sizeof(int));
   /* minimal difference between node shares */
   int minshare = n_part/n_nodes;
   int maxshare = minshare + 1;
@@ -252,12 +252,9 @@ void nsq_calculate_ia()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_bonded_force(pt1);
-#ifdef CONSTRAINTS
-    add_constraints_forces(pt1);
-#endif
-    add_external_potential_forces(pt1);
-
+    
+    add_single_particle_force(pt1);
+    
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
@@ -306,13 +303,9 @@ void nsq_calculate_energies()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_kinetic_energy(pt1);
-    add_bonded_energy(pt1);
-#ifdef CONSTRAINTS
-    add_constraints_energy(pt1);
-#endif
-    add_external_potential_energy(pt1);
 
+    add_single_particle_energy(pt1);
+    
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 

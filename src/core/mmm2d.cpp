@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1305,7 +1305,7 @@ double MMM2D_add_far(int f, int e)
   if (mmm2d_params.far_cut == 0.0)
     return 0.5*eng;
   
-  undone = (int*)malloc((n_scxcache + 1)*sizeof(int));
+  undone = (int*)Utils::malloc((n_scxcache + 1)*sizeof(int));
 
   prepare_scx_cache();
   prepare_scy_cache();
@@ -1512,9 +1512,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
 
 #ifdef ADDITIONAL_CHECKS
   if (d[2] >box_l[1]/2) {
-      ostringstream msg;
-      msg <<"near formula called for too distant particle pair";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"near formula called for too distant particle pair";
     return;
   }
 #endif
@@ -1594,9 +1592,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
       fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
     }
     if (end < 0) {
-        ostringstream msg;
-        msg <<"MMM2D: distance was negative, coordinates probably out of range";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"MMM2D: distance was negative, coordinates probably out of range";
       end = 0;
     }
     end = complexCutoff[end];
@@ -1897,17 +1893,13 @@ int MMM2D_sanity_checks()
 {
 
   if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"MMM2D requires periodicity 1 1 0";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM2D requires periodicity 1 1 0";
     return 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-      ostringstream msg;
-      msg <<"MMM2D at present requires layered (or n-square) cellsystem";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM2D at present requires layered (or n-square) cellsystem";
     return 1;
   }
   return 0;
@@ -1921,9 +1913,7 @@ void MMM2D_init()
 
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
-      ostringstream msg;
-      msg <<"MMM2D auto-retuning: " << mmm2d_errors[err];
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM2D auto-retuning: " << mmm2d_errors[err];
     coulomb.method = COULOMB_NONE;
     return;
   }
@@ -1931,17 +1921,13 @@ void MMM2D_init()
       (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
-        ostringstream msg;
-        msg <<"MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers";
     }
   }
   else {
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
-      ostringstream msg;
-      msg <<"MMM2D auto-retuning: "<< mmm2d_errors[err];
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM2D auto-retuning: "<< mmm2d_errors[err];
 	coulomb.method = COULOMB_NONE;
 	return;
       }
@@ -1956,12 +1942,12 @@ void MMM2D_on_resort_particles()
     n_localpart = cells_get_n_particles();
     n_scxcache = (int)(ceil(mmm2d_params.far_cut/ux) + 1);
     n_scycache = (int)(ceil(mmm2d_params.far_cut/uy) + 1);
-    scxcache = (SCCache*)realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
-    scycache = (SCCache*)realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
+    scxcache = (SCCache*)Utils::realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
+    scycache = (SCCache*)Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
-    partblk   = (double*)realloc(partblk,  n_localpart*8*sizeof(double));
-    lclcblk   = (double*)realloc(lclcblk,  n_cells*8*sizeof(double));
-    gblcblk   = (double*)realloc(gblcblk,  n_layers*8*sizeof(double));
+    partblk   = (double*)Utils::realloc(partblk,  n_localpart*8*sizeof(double));
+    lclcblk   = (double*)Utils::realloc(lclcblk,  n_cells*8*sizeof(double));
+    gblcblk   = (double*)Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
   }
   MMM2D_self_energy();
 }

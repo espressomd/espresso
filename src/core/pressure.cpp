@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -374,16 +374,12 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
   //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],value););
   
   if ((value)*(p2r[given]) < -0.0001) {
-      ostringstream msg;
-      msg <<"analyze stress_profile: getintersection: intersection is not between the two given particles - " << value << " is not between " << 0.0 << " and " << p2r[given] << " and box size is " << box_size[given] << ", given is " << given << "\n";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"analyze stress_profile: getintersection: intersection is not between the two given particles - " << value << " is not between " << 0.0 << " and " << p2r[given] << " and box size is " << box_size[given] << ", given is " << given << "\n";
     return 0; 
   } else if (given == get) {
     *answer =  drem_down(value + pos1[given],box_size[given]);;
   } else if (0==p2r[given]) {
-      ostringstream msg;
-      msg <<"analyze stress_profile: getintersection: intersection is a line, not a point - value is " << value << " same as " << 0.0 << " and " << p2r[given] << "\n";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"analyze stress_profile: getintersection: intersection is a line, not a point - value is " << value << " same as " << 0.0 << " and " << p2r[given] << "\n";
     return 0;   
   } else {
     *answer =  drem_down(pos1[get]+p2r[get]/p2r[given]*value,box_size[get]);
@@ -617,8 +613,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
   
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: x goes from %d to %d\n",this_node,startx, endx);)
     /* Initialise starty array */
-    starty = (int *)malloc(sizeof(int)*(occupiedxbins+1));
-    occupiedybins = (int *)malloc(sizeof(int)*occupiedxbins);
+    starty = (int *)Utils::malloc(sizeof(int)*(occupiedxbins+1));
+    occupiedybins = (int *)Utils::malloc(sizeof(int)*occupiedxbins);
 
     /* find in which y-bins the line starts and stops for each x-bin */
     /* in xbin the line starts in y-bin number starty[xbin-startx] and ends in starty[xbin-startx+1] */
@@ -645,8 +641,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     }
 
     /* Initialise startz array */
-    occupiedzbins = (int *)malloc(sizeof(int)*totoccupiedybins);
-    startz = (int *)malloc(sizeof(int)*(totoccupiedybins+1));
+    occupiedzbins = (int *)Utils::malloc(sizeof(int)*totoccupiedybins);
+    startz = (int *)Utils::malloc(sizeof(int)*(totoccupiedybins+1));
     /* find in which z-bins the line starts and stops for each y-bin*/
     counter = 0;
     if (facein == 2) {
@@ -775,9 +771,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: calclength is %e and length is %e\n}",this_node,calclength,length););
     
     if (calclength - length >0.0000000001) {
-        ostringstream msg;
-        msg << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
-        runtimeError(msg);
+        runtimeErrorMsg() << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
       return 0;
     }
     free(occupiedzbins);
@@ -949,9 +943,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
-        ostringstream msg;
-        msg <<"analyze stress_profile: Analyzed box (" << range[i] << ") with skin+max_cut(" << skin+max_cut << ") is larger than simulation box (" << box_l[i] << ").\n";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"analyze stress_profile: Analyzed box (" << range[i] << ") with skin+max_cut(" << skin+max_cut << ") is larger than simulation box (" << box_l[i] << ").\n";
       return 0;
     }
     range_start[i] = drem_down(range_start[i],box_l[i]);
@@ -976,8 +968,8 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 	PTENSOR_TRACE(fprintf(stderr,"%d:Ideal gas component is {",this_node));
 	for(k=0;k<3;k++) {
 	  for(l=0;l<3;l++) {
-	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*PMASS(*p1)/time_step/time_step;
-	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*PMASS(*p1)/time_step/time_step));
+	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step;
+	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step));
 	  }
 	}
 
@@ -1069,275 +1061,6 @@ int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
   }
   return 0;
 }
-//return two vectors with the various pressure in the system and an appropriate label for each
-void analyze_pressure_all(std::vector<std::string> & pressure_labels, std::vector<double> & pressures, int v_comp)
-{
-	int i, j;
-	double current_pressure_term;
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	current_pressure_term = total_pressure.data.e[0];
-	for (i = 1; i < total_pressure.data.n; i++) {
-		current_pressure_term += total_pressure.data.e[i];
-	}
-	pressures.push_back(current_pressure_term);
-	pressure_labels.push_back("pressure");
-
-	pressures.push_back(total_pressure.data.e[0]);
-	pressure_labels.push_back("ideal");
-	for(i=0;i<n_bonded_ia;i++) {
-		if (bonded_ia_params[i].type != BONDED_IA_NONE) {
-			pressures.push_back( *obsstat_bonded(&total_pressure, i));
-			pressure_labels.push_back( get_name_of_bonded_ia(bonded_ia_params[i].type));
-		}
-	}
-
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				pressures.push_back(*obsstat_nonbonded(&total_pressure, i, j));
-				std::ostringstream cur_label;
-				cur_label << "nonbonded " << i << " " << j;
-				pressure_labels.push_back( cur_label.str() );
-			}
-		}
-	}
-
-	/* In case we need intra- and inter- nonbonded (nb) contribution of total pressure  */
-	current_pressure_term = 0;
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-				current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
-		}
-	}
-	pressures.push_back(current_pressure_term);
-	pressure_labels.push_back("total_nb_intra");
-
-	current_pressure_term = 0;
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-				current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
-		}
-	}
-	pressures.push_back(current_pressure_term);
-	pressure_labels.push_back("total_nb_inter");
-
-
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				pressures.push_back(*obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j));
-        std::ostringstream cur_label;
-				cur_label << "nb_intra " << i << " " << j;
-				pressure_labels.push_back( cur_label.str() );
-			}
-		}
-	}
-
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				pressures.push_back(*obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j));
-        std::ostringstream cur_label;
-				cur_label << "nb_inter " << i << " " << j;
-				pressure_labels.push_back( cur_label.str() );
-			}
-		}
-	}
-
-#if  defined(ELECTROSTATICS) || defined (DIPOLES)
-	if(
-#ifdef ELECTROSTATICS
-			coulomb.method != COULOMB_NONE
-#else
-			0
-#endif
-			||
-#ifdef DIPOLES
-			coulomb.Dmethod != DIPOLAR_NONE
-#else
-			0
-#endif
-	) {
-		/* total Coulomb pressure */
-		current_pressure_term = total_pressure.coulomb[0];
-		for (i = 1; i < total_pressure.n_coulomb; i++)
-			current_pressure_term += total_pressure.coulomb[i];
-		for (i = 0; i < total_pressure.n_dipolar; i++)
-			current_pressure_term += total_pressure.dipolar[i];
-		pressures.push_back(current_pressure_term);
-		pressure_labels.push_back("coulomb-total");
-#if  defined(ELECTROSTATICS) && defined (DIPOLES)
-		pressure_labels.push_back("coulomb");
-		pressure_labels.push_back("magdipoles");
-#else
-#if defined(ELECTROSTATICS)
-		pressure_labels.push_back("coulomb");
-#endif
-#if defined(DIPOLES)
-		pressure_labels.push_back("magdipoles");
-#endif
-#endif
-
-		/* if it is split up, then print the split up parts */
-		if (total_pressure.n_coulomb > 1) {
-			for (i = 0; i < total_pressure.n_coulomb; i++) {
-				pressures.push_back(total_pressure.coulomb[i]);
-			}
-		}
-	}
-#endif
-#ifdef VIRTUAL_SITES_RELATIVE
-	pressures.push_back(total_pressure.vs_relative[0]);
-	pressure_labels.push_back("va_relative");
-#endif
-}
-
-double analyze_pressure(std::string pressure_to_calc, int v_comp)
-{
-	int i, j;
-	double current_pressure_term;
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	if (pressure_to_calc== "total") {
-		current_pressure_term = total_pressure.data.e[0];
-		for (i = 1; i < total_pressure.data.n; i++)
-			current_pressure_term += total_pressure.data.e[i];
-		return current_pressure_term;
-	}
-	else if (pressure_to_calc== "ideal") {
-		return total_pressure.data.e[0];
-	}
-	else if (pressure_to_calc=="coulomb") {
-#ifdef ELECTROSTATICS
-		double coulomb_pressure = 0;
-		for (i = 0; i < total_pressure.n_coulomb; i++)
-			coulomb_pressure += total_pressure.coulomb[i];
-		return coulomb_pressure;
-#else
-		if (warnings) fprintf(stderr,"Warning, trying to measure Coulombic pressure but electrostatics not compiled into ESPResSo, check the myconfig.hpp\n");
-#endif
-	}
-	else if (pressure_to_calc=="tot_nonbonded_intra" || pressure_to_calc=="tot_nb_intra") {
-		current_pressure_term = 0;
-		for (i = 0; i < n_particle_types; i++)
-			for (j = i; j < n_particle_types; j++)
-				current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
-		return current_pressure_term;
-	}
-	else if  (pressure_to_calc=="tot_nonbonded_inter" || pressure_to_calc=="tot_nb_inter") {
-		current_pressure_term = 0;
-		for (i = 0; i < n_particle_types; i++)
-			for (j = i; j < n_particle_types; j++)
-				current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
-		return current_pressure_term;
-	}
-	else if (pressure_to_calc=="tot_bonded") {
-		current_pressure_term = 0;
-		for(i=0;i<n_bonded_ia;i++) {
-			if (bonded_ia_params[i].type != BONDED_IA_NONE) {
-				current_pressure_term += *obsstat_bonded(&total_pressure, i);
-			}
-		}
-		return current_pressure_term;
-	}
-
-	if (warnings) fprintf(stderr,"Warning, pressure calculation function called does not exist\n");
-	return 0;
-
-}
-
-double analyze_pressure_single(std::string pressure_to_calc, int bond_or_type, int v_comp)
-{
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	if (pressure_to_calc=="bonded") {
-		if(bond_or_type < 0 || bond_or_type >= n_bonded_ia){
-			fprintf(stderr, "Warning: bond type does not exist\n");
-			return 0;
-		}
-		return *obsstat_bonded(&total_pressure, bond_or_type);
-	}
-	else if (pressure_to_calc=="nonbonded" || pressure_to_calc=="nb" ) {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return 0;
-		}
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++){
-			current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, bond_or_type, i);
-			current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, bond_or_type, i);
-		}
-		return current_pressure_term;
-	}
-	else if (pressure_to_calc=="nonbonded_intra" || pressure_to_calc=="nb_intra" ) {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return 0;
-		}
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++)
-			current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, bond_or_type, i);
-		return current_pressure_term;
-	}
-	else if (pressure_to_calc=="nonbonded_inter" || pressure_to_calc=="nb_inter" ) {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return 0;
-		}
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++)
-			current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, bond_or_type, i);
-		return current_pressure_term;
-	}
-	else {
-		if (warnings) fprintf(stderr,"Warning: pressure calculation called does not exist\n");
-		return 0;
-	}
-}
-
-double analyze_pressure_pair(std::string pressure_to_calc, int type1, int type2, int v_comp)
-{
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	if(type1 < 0 || type1 >= n_particle_types || type2 < 0 || type2 >= n_particle_types) {
-		if (warnings) fprintf(stderr,"Warning: tried to calculate pressure between a type which does not exist\n");
-		return 0;
-	}
-	if ( pressure_to_calc=="nonbonded") {
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++){
-			current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, type1, type2);
-			current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, type1, type2);
-		}
-		return current_pressure_term;
-	}
-	else if ( pressure_to_calc=="nb_intra" ||  pressure_to_calc=="nonbonded_intra" ) {
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++){
-			current_pressure_term += *obsstat_nonbonded_intra(&total_pressure_non_bonded, type1, type2);
-		}
-		return current_pressure_term;
-	}
-	else if ( pressure_to_calc=="nb_inter" ||  pressure_to_calc=="nonbonded_inter" ) {
-		double current_pressure_term = 0;
-		for (int i = 0; i<n_particle_types; i++){
-			current_pressure_term += *obsstat_nonbonded_inter(&total_pressure_non_bonded, type1, type2);
-		}
-		return current_pressure_term;
-	}
-	else {
-		if (warnings) fprintf(stderr,"Warning, pressure calculation called does not exist\n");
-		return 0;
-	}
-}
-
 void update_stress_tensor (int v_comp) {
 	int i;
 	double p_vel[3];
@@ -1364,303 +1087,6 @@ void update_stress_tensor (int v_comp) {
 	}
 }
 
-void analyze_stress_tensor_all(std::vector<std::string> & stressTensorLabel, std::vector<double> & stressTensorValues, int v_comp)
-{
-	double value;
-	int i, j, k;
-	value = 0.0;
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	for(j=0; j<9; j++) {
-		value = total_p_tensor.data.e[j];
-		for (i = 1; i < total_p_tensor.data.n/9; i++) value += total_p_tensor.data.e[9*i + j];
-		std::ostringstream cur_label;
-		cur_label << "stress_tensor_total " << j;
-		stressTensorLabel.push_back(cur_label.str());
-		stressTensorValues.push_back(value);
-	}
-
-	for(j=0; j<9; j++) {
-		stressTensorLabel.push_back("ideal_stress_tensor");
-		std::ostringstream cur_label;
-		cur_label << "ideal_stress_tensor " << j;
-		stressTensorLabel.push_back(cur_label.str());
-		stressTensorValues.push_back(total_p_tensor.data.e[j]);
-	}
-
-	for(i=0;i<n_bonded_ia;i++) {
-		if (bonded_ia_params[i].type != BONDED_IA_NONE) {
-			for(j=0; j<9; j++) {
-				std::ostringstream cur_label;
-				cur_label << get_name_of_bonded_ia(bonded_ia_params[i].type) << i << " " << j;
-				stressTensorLabel.push_back(cur_label.str());
-				stressTensorValues.push_back(obsstat_bonded(&total_p_tensor, i)[j]);
-			}
-		}
-	}
-
-	for (i = 0; i < n_particle_types; i++) {
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				for(k=0; k<9; k++) {
-					stressTensorValues.push_back(obsstat_nonbonded(&total_p_tensor, i, j)[k]);
-					std::ostringstream cur_label;
-					cur_label << "nonbonded " << i << " " << j << " " << k;
-					stressTensorLabel.push_back( cur_label.str() );
-				}
-			}
-		}
-	}
-
-
-	for(k=0; k<9; k++) {
-		value = 0.0;
-		for (i = 0; i < n_particle_types; i++)
-			for (j = i; j < n_particle_types; j++) {
-				value += obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k];
-			}
-		std::ostringstream cur_label;
-		cur_label << "total_nb_intra " << i << " " << j;
-		stressTensorLabel.push_back( cur_label.str() );
-		stressTensorValues.push_back(value);
-	}
-
-	for(k=0; k<9; k++) {
-		value = 0.0;
-		for (i = 0; i < n_particle_types; i++)
-			for (j = i; j < n_particle_types; j++) {
-				value += obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k];
-			}
-		std::ostringstream cur_label;
-		cur_label << "total_nb_inter " << i << " " << j;
-		stressTensorLabel.push_back( cur_label.str() );
-		stressTensorValues.push_back(value);
-	}
-
-	for (i = 0; i < n_particle_types; i++)
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				for(k=0; k<9; k++) {
-					std::ostringstream cur_label;
-					cur_label << "nb_intra_tensor " << i << " " << j << " " << k;
-					stressTensorLabel.push_back( cur_label.str() );
-					stressTensorValues.push_back(obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k]);
-				}
-			}
-		}
-
-	for (i = 0; i < n_particle_types; i++)
-		for (j = i; j < n_particle_types; j++) {
-			if (checkIfParticlesInteract(i, j)) {
-				for(k=0; k<9; k++) {
-					std::ostringstream cur_label;
-					cur_label << "nb_inter_tensor " << i << " " << j << " " << k;
-					stressTensorLabel.push_back( cur_label.str() );
-					stressTensorValues.push_back(obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k]);
-				}
-			}
-		}
-
-#ifdef ELECTROSTATICS
-	if(coulomb.method != COULOMB_NONE) {
-		for(j=0; j<9; j++) {
-			std::ostringstream cur_label;
-			cur_label << "coulomb " << j;
-			stressTensorLabel.push_back( cur_label.str() );
-			stressTensorValues.push_back(total_p_tensor.coulomb[j]);
-		}
-	}
-#endif
-
-#ifdef DIPOLES
-	if(coulomb.Dmethod != DIPOLAR_NONE) {
-		fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.cpp ... \n");
-	}
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-	for (j=0;j<9;j++) {
-		std::ostringstream cur_label;
-		cur_label << "vs_relative " << j;
-		stressTensorLabel.push_back( cur_label.str() );
-		stressTensorValues.push_back(total_p_tensor.vs_relative[j]);
-	}
-#endif
-
-
-}
-
-/************************************************************/
-int analyze_stress_tensor(std::string pressure_to_calc, int v_comp, std::vector<double> & tvalue)
-{
-	/* 'analyze stress_tensor [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
-	int i, j, k;
-	tvalue.reserve(9);
-	for (int i = 0; i < 9; i++) {
-		tvalue.push_back(0);
-	}
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_stress_tensor(v_comp);
-
-	if (pressure_to_calc=="total") {
-		for(j=0; j<9; j++) {
-			tvalue[j] = total_p_tensor.data.e[j];
-			for (i = 1; i < total_p_tensor.data.n/9; i++) tvalue[j] += total_p_tensor.data.e[9*i + j];
-		}
-		return ES_OK;
-	}
-	else if (pressure_to_calc=="ideal") {
-		for(j=0; j<9; j++)  tvalue[j] = total_p_tensor.data.e[j];
-		return ES_OK;
-	}
-	else if( pressure_to_calc=="tot_nb_intra" || pressure_to_calc=="tot_nonbonded_intra" ) {
-		for(k=0; k<9; k++) {
-			for (i = 0; i < n_particle_types; i++)
-				for (j = i; j < n_particle_types; j++) {
-					tvalue[k] += obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k];
-				}
-		}
-		return ES_OK;
-	}
-	else if( pressure_to_calc=="tot_nb_inter" || pressure_to_calc=="tot_nonbonded_inter" ) {
-		for(k=0; k<9; k++) {
-			for (i = 0; i < n_particle_types; i++)
-				for (j = i; j < n_particle_types; j++) {
-					tvalue[k] += obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k];
-				}
-		}
-		return ES_OK;
-	}
-	else if(pressure_to_calc=="coulomb") {
-#ifdef ELECTROSTATICS
-		for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
-		return ES_OK;
-#else
-		fprintf(stderr, "ELECTROSTATICS not compiled (see config.hpp)\n");
-		return ES_ERROR;
-#endif
-	}
-	else if(pressure_to_calc=="dipolar") {
-#ifdef DIPOLES
-		/* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
-		fprintf(stderr," stress tensor, magnetostatics, something should go here, file statistics.cpp ");
-		return ES_ERROR;
-#else
-		fprintf(stderr, "DIPOLES not compiled (see config.hpp), although Espresso doesn't calculate the stress tensor for dipoles\n");
-		return ES_ERROR;
-#endif
-	}
-#ifdef VIRTUAL_SITES_RELATIVE
-	else if (pressure_to_calc=="VS_RELATIVE") {
-		for(j=0; j<9; j++) tvalue[j] = total_p_tensor.vs_relative[j];
-		return ES_OK;
-	}
-#endif
-
-	if (warnings) fprintf(stderr,"Warning, pressure calculation function called does not exist\n");
-	return ES_ERROR;
-}
-
-int analyze_stress_pair(std::string pressure_to_calc, int type1, int type2, int v_comp, std::vector<double> & tvalue)
-{
-	tvalue.reserve(9);
-	for (int i = 0; i < 9; i++) {
-		tvalue.push_back(0);
-	}
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	if(type1 < 0 || type1 >= n_particle_types || type2 < 0 || type2 >= n_particle_types) {
-		if (warnings) fprintf(stderr,"Warning: tried to calculate pressure between a type which does not exist\n");
-		return ES_ERROR;
-	}
-	if ( pressure_to_calc=="nonbonded") {
-		for (int i = 0; i<9; i++){
-			tvalue[i] = obsstat_nonbonded_inter(&total_pressure_non_bonded, type1, type2)[i];
-			tvalue[i] += obsstat_nonbonded_intra(&total_pressure_non_bonded, type1, type2)[i];
-		}
-		return ES_OK;
-	}
-	else if ( pressure_to_calc=="nonbonded_intra" || pressure_to_calc=="nb_intra") {
-		for (int i = 0; i<9; i++){
-			tvalue[i] = obsstat_nonbonded_intra(&total_pressure_non_bonded, type1, type2)[i];
-		}
-		return ES_OK;
-	}
-	if ( pressure_to_calc=="nonbonded_inter" || pressure_to_calc=="nb_inter") {
-		for (int i = 0; i<9; i++){
-			tvalue[i] = obsstat_nonbonded_inter(&total_pressure_non_bonded, type1, type2)[i];
-		}
-		return ES_OK;
-	}
-	else {
-		if (warnings) fprintf(stderr,"Warning, pressure calculation called does not exist\n");
-		return 1;
-	}
-}
-
-int analyze_stress_single(std::string pressure_to_calc, int bond_or_type, int v_comp, std::vector<double> & tvalue)
-{
-	int k;
-
-	tvalue.reserve(9);
-	for (int i = 0; i < 9; i++) {
-		tvalue.push_back(0);
-	}
-
-	if (total_pressure.init_status != 1+v_comp )
-		update_pressure(v_comp);
-
-	if (pressure_to_calc=="bonded") {
-		if(bond_or_type < 0 || bond_or_type >= n_bonded_ia){
-			fprintf(stderr, "Warning: bond type does not exist\n");
-			return ES_ERROR;
-		}
-		for(k=0; k<9; k++) tvalue[k] = obsstat_bonded(&total_p_tensor, bond_or_type)[k];
-		return ES_OK;
-	}
-	else if (pressure_to_calc=="nonbonded" || pressure_to_calc=="nb_intra") {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return ES_ERROR;
-		}
-		for (int i = 0; i<n_particle_types; i++)
-			for(k=0; k<9; k++) {
-				tvalue[k] += obsstat_nonbonded_intra(&total_pressure_non_bonded, bond_or_type, i)[k];
-				tvalue[k] += obsstat_nonbonded_intra(&total_pressure_non_bonded, bond_or_type, i)[k];
-			}
-		return ES_OK;
-	}
-	else if (pressure_to_calc=="nonbonded_intra" || pressure_to_calc=="nb_intra") {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return ES_ERROR;
-		}
-		for (int i = 0; i<n_particle_types; i++)
-			for(k=0; k<9; k++)
-				tvalue[k] += obsstat_nonbonded_intra(&total_pressure_non_bonded, bond_or_type, i)[k];
-		return ES_OK;
-	}
-	else if (pressure_to_calc=="nonbonded_inter" || pressure_to_calc=="nb_inter") {
-		if(bond_or_type < 0 || bond_or_type >= n_particle_types){
-			fprintf(stderr, "Warning: particle type does not exist\n");
-			return ES_ERROR;
-		}
-		for (int i = 0; i<n_particle_types; i++)
-			for(k=0; k<9; k++)
-				tvalue[k] += obsstat_nonbonded_inter(&total_pressure_non_bonded, bond_or_type, i)[k];
-		return ES_OK;
-	}
-	else {
-		if (warnings) fprintf(stderr,"Warning: pressure calculation called does not exist\n");
-		return ES_ERROR;
-	}
-}
-
 int analyze_local_stress_tensor(int* periodic, double* range_start, double* range, int* bins, DoubleList* local_stress_tensor)
 {
 	int i,j;
@@ -1671,7 +1097,7 @@ int analyze_local_stress_tensor(int* periodic, double* range_start, double* rang
 
 
 	/* Allocate a doublelist of bins to keep track of stress profile */
-	TensorInBin = (DoubleList *)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+	TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
 	if ( TensorInBin ) {
 		/* Initialize the stress profile */
 		for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {

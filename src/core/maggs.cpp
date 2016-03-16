@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2010,2011 Florian Fahrenberger
   Copyright (C) 2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -154,7 +154,7 @@ typedef struct {
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 1, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
+MAGGS_struct maggs = { 1, 0, 1.0, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -409,60 +409,42 @@ int maggs_sanity_checks()
   FOR3D(d) if(node_grid[d] > max_node_grid) max_node_grid = node_grid[d];
 	
   if (maggs.bjerrum == 0.) {
-      ostringstream msg;
-      msg <<"MEMD: bjerrum length is zero.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: bjerrum length is zero.";
     ret = -1;
   }
   else if ( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      ostringstream msg;
-      msg <<"MEMD needs cubic box";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD needs cubic box";
     ret = -1;
   }
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"MEMD requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires periodicity 1 1 1";
     ret = 1;
   }
   else if ( maggs.mesh%max_node_grid != 0 ) {
-      ostringstream msg;
-      msg <<"MEMD: meshsize is incompatible with number of processes";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: meshsize is incompatible with number of processes";
     ret = -1;
   }
   /*
   else if ( maggs_count_charged_particles() == 0 ) {
-  ostringstream msg;
-  msg <<"MEMD: No charges in the system.";
-  runtimeError(msg);
+  runtimeErrorMsg() <<"MEMD: No charges in the system.";
       ret = -1;
   }
   */
   else if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
-      msg <<"MEMD requires domain-decomposition cellsystem.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires domain-decomposition cellsystem.";
     ret = -1;
   }
   else if (dd.use_vList) {
-      ostringstream msg;
-      msg <<"MEMD requires no Verlet Lists.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires no Verlet Lists.";
     ret = -1;
   }
   /** check if speed of light parameter makes sense */
   else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
-      ostringstream msg;
-      msg <<"MEMD: Speed of light is set too high. Increase f_mass.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: Speed of light is set too high. Increase f_mass.";
     ret = -1;      
   }
   else if (maggs.a < skin) {
-      ostringstream msg;
-      msg <<"MEMD: Skin should be smaller than MEMD mesh size.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: Skin should be smaller than MEMD mesh size.";
     ret = -1;
   }
 #ifdef EXTERNAL_FORCES
@@ -473,9 +455,7 @@ int maggs_sanity_checks()
     int np = cell->n;
     for(int i = 0; i < np; i++) {
       if ( (p[i].p.q != 0.0) & p[i].p.ext_flag & COORDS_FIX_MASK) {
-      ostringstream msg;
-      msg <<"MEMD does not work with fixed particles.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD does not work with fixed particles.";
 	ret = -1;
       }
     }
@@ -671,11 +651,11 @@ void maggs_setup_local_lattice()
 	
   lparams.volume    = xyzcube;
   /** allocate memory for sites and neighbors */
-  lattice  = (t_site*) malloc(xyzcube*sizeof(t_site));
-  neighbor = (t_dirs*) malloc(xyzcube*sizeof(t_dirs));
+  lattice  = (t_site*) Utils::malloc(xyzcube*sizeof(t_site));
+  neighbor = (t_dirs*) Utils::malloc(xyzcube*sizeof(t_dirs));
 	
-  Bfield   = (double*) malloc(3*xyzcube*sizeof(double));
-  Dfield   = (double*) malloc(3*xyzcube*sizeof(double));
+  Bfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
+  Dfield   = (double*) Utils::malloc(3*xyzcube*sizeof(double));
 	
   /** set up lattice sites */
   FORALL_SITES(ix, iy, iz) {
@@ -799,15 +779,97 @@ int maggs_get_mesh_1D()
 double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
 {
     int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
-    /* save and return old epsilon for information purposes */
-    double epsilon_before = lattice[node_index].permittivity[direction];
-    /* set relative epsilon */
-    lattice[node_index].permittivity[direction] = relative_epsilon;
+    int dim, on_this_node = 0;
+    double position;
+    double node[3] = {(double)node_x, (double)node_y, (double)node_z};
+    
+    FOR3D(dim) {
+        position = (double)node[dim]/(double)lparams.dim[dim] * box_l[dim];
+        position = node[dim];
+        if ( position >= lparams.halo_left_down[dim] && position < lparams.halo_upper_right[dim] ) {
+            on_this_node = 0;
+            if (this_node)
+                fprintf(stderr, "EPSILON! %d\n", this_node);
+        } else {
+            on_this_node = 0;
+        }
+    }
+    
+    if (on_this_node) {
+        /* save and return old epsilon for information purposes */
+        double epsilon_before = lattice[node_index].permittivity[direction];
+        /* set relative epsilon */
+        lattice[node_index].permittivity[direction] = relative_epsilon;
 
-    return epsilon_before;
+        return epsilon_before;
+    } else {
+        return 0.0;
+    }
 }
 
 
+int maggs_set_adaptive_flag(double scaling)
+{
+    maggs.adaptive_flag = 1;
+    maggs.scaling = scaling;
+    return 0;
+}
+
+/** set permittivity adaptively according to salt concentration
+ Use this very carefully, since it assumes a certain set of parameters. The length is not simulation units anymore
+ @param node_x              index of the node in x direction
+ @param node_y              index of the node in y direction
+ @param node_z              index of the node in z direction
+ */
+double maggs_set_adaptive_permittivity(int node_x, int node_y, int node_z)
+{
+    int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
+    int dim, cell_index, on_this_node, i, np = 0;
+    double position;
+    int direction=1;
+    double node[3] = {(double)node_x, (double)node_y, (double)node_z};
+    double concentration=0.0;
+    double relative_epsilon = 1.0;
+    Cell* cell;
+    Particle* p;
+    
+    FOR3D(dim) {
+        cell_index = neighbor[node_index][dim];
+        cell = local_cells.cell[cell_index];
+        p  = cell->part;
+        np = cell->n;
+
+        for(i=0; i<np; i++) {
+            concentration += p[i].p.q;
+        }
+    }
+    
+    concentration /= 0.0000035246;
+    relative_epsilon = 78.5 / (1.0 + 0.278 * concentration) * maggs.scaling;
+    
+    FOR3D(dim) {
+        position = (double)node[dim]/(double)lparams.dim[dim] * box_l[dim];
+        position = node[dim];
+        if ( position >= lparams.halo_left_down[dim] && position < lparams.halo_upper_right[dim] ) {
+            on_this_node = 0;
+            if (this_node)
+                fprintf(stderr, "EPSILON! %d\n", this_node);
+        } else {
+            on_this_node = 0;
+        }
+    }
+    
+    if (on_this_node) {
+        /* save and return old epsilon for information purposes */
+        double epsilon_before = lattice[node_index].permittivity[direction];
+        /* set relative epsilon */
+        lattice[node_index].permittivity[direction] = relative_epsilon;
+        
+        return epsilon_before;
+    } else {
+        return 0.0;
+    }
+}
 
 
 
@@ -931,7 +993,7 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       nblocks = surface_patch[s_dir].nblocks;
 			
       for(l=0; l<nblocks; l++){
-	memcpy(&(field[doffset]), &(field[offset]), stride);
+	memmove(&(field[doffset]), &(field[offset]), stride);
 	offset  += skip;
 	doffset += skip;
       }
@@ -2255,7 +2317,7 @@ void maggs_calc_forces()
 	
   Npart = cells_get_n_particles();
   if(Npart>Npart_old) {
-    grad = (double *) realloc(grad, 12*Npart*sizeof(double));
+    grad = (double *) Utils::realloc(grad, 12*Npart*sizeof(double));
     Npart_old = Npart;
   }
 	
@@ -2276,7 +2338,7 @@ void maggs_calc_forces()
     np = cell->n;
     for(i=0; i<np; i++) { 
       q = p[i].p.q;
-      if( abs(q) > 1.0e-5 ) {
+      if( fabs(q) > 1.0e-5 ) {
 	FOR3D(d) {
 	  pos[d]   = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
 	  first[d] = (int) pos[d];

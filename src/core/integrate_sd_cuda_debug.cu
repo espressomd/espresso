@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -182,7 +182,7 @@ void _cudaCheckError(const char *msg, const char * file, const int line)
 
 
 myTimer::myTimer(unsigned int _numCounters):numCounters(_numCounters),counters(NULL){
-  counters=(unsigned long long *)malloc(sizeof(unsigned long long)*numCounters);
+  counters=(unsigned long long *)Utils::malloc(sizeof(unsigned long long)*numCounters);
   assert(counters!=NULL);
   for (unsigned int i=0;i<numCounters;i++){
     counters[i]=0;

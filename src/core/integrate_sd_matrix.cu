@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -167,7 +167,7 @@ void getAndHash(const real * data, const int size, unsigned char result[MD5_DIGE
 void matrix::hash_data(){
 #ifdef SD_DEBUG
   if (data_hash == NULL){
-    data_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    data_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(data, size*ldd, data_hash);
 #endif
@@ -176,7 +176,7 @@ void matrix::hash_data(){
 void matrix::hash_dense(){
 #ifdef SD_DEBUG
   if (dense_hash == NULL){
-    dense_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    dense_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(dense, size*ldd, dense_hash);
 #endif
@@ -210,7 +210,7 @@ void wavepart::hash_vecs(){
 #ifdef SD_DEBUG
   fprintf(stderr,"going to allocate %d bytes, vecs_hash is %p\n",MD5_DIGEST_LENGTH, vecs_hash);
   if (vecs_hash == NULL){
-    vecs_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    vecs_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
     fprintf(stderr,"allocated %d bytes\n",MD5_DIGEST_LENGTH);
   }
   getAndHash(vecs, num*3 , vecs_hash);
@@ -219,7 +219,7 @@ void wavepart::hash_vecs(){
 void wavepart::hash_matrices(){
 #ifdef SD_DEBUG
   if (matrices_hash == NULL){
-    matrices_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    matrices_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(matrices, num*6, matrices_hash);
 #endif
@@ -227,7 +227,7 @@ void wavepart::hash_matrices(){
 void wavepart::hash_cosines(){
 #ifdef SD_DEBUG
   if (cosines_hash == NULL){
-    cosines_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    cosines_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(cosines, num*ldd_short, cosines_hash);
 #endif
@@ -235,7 +235,7 @@ void wavepart::hash_cosines(){
 void wavepart::hash_sines(){
 #ifdef SD_DEBUG
   if (sines_hash == NULL){
-    sines_hash=(unsigned char *) malloc(MD5_DIGEST_LENGTH);
+    sines_hash=(unsigned char *) Utils::malloc(MD5_DIGEST_LENGTH);
   }
   getAndHash(sines, num*ldd_short, sines_hash);
 #endif

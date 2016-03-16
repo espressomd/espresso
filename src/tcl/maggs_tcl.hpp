@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2010,2011 Florian Fahrenberger
- Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+ Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -66,6 +66,15 @@
  @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
  */
 int tclcommand_localeps(Tcl_Interp* interp, int argc, char** argv);
+
+/** parce TCL command for dielectrics. Checks the parameters and calls the according
+ functions.
+ @return 0 for success, -1 otherwise
+ @param interp  TCL Interpreter handle
+ @param argc    number of TCL arguments after "inter coulomb $bjerrum maggs"
+ @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
+ */
+int tclcommand_adaptive_eps(Tcl_Interp* interp, int argc, char** argv);
 
 /** parse TCL command. The number of parameters is checked and
     maggs_set_parameters function is called.

@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -86,6 +86,8 @@ LB_parameters_gpu lbpar_gpu = {
   SC0,
   // gamma_even
   SC0,
+  //is_TRT
+  false,
   // friction
   SC0,
   // lb_couple_switch
@@ -266,6 +268,35 @@ void lb_reinit_parameters_gpu() {
       /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
       lbpar_gpu.gamma_bulk[ii] = 1. - 2./(9.*lbpar_gpu.bulk_viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
     }
+
+    //By default, gamma_even and gamma_odd are chosen such that the MRT becomes
+    //a TRT with ghost mode relaxation factors that minimize unphysical wall
+    //slip at bounce-back boundaries. For the relation between the gammas
+    //achieving this, consult
+    //  D. d’Humières, I. Ginzburg, Comp. & Math. w. App. 58(5):823–840 (2009)
+    //Note that the relaxation operator in Espresso is defined as
+    //  m* = m_eq + gamma * (m - m_eq)
+    //as opposed to this reference, where
+    //  m* = m + lambda * (m - m_eq)
+    
+    if (lbpar_gpu.is_TRT) {
+      lbpar_gpu.gamma_bulk[ii] = lbpar_gpu.gamma_shear[ii];
+      lbpar_gpu.gamma_even[ii] = lbpar_gpu.gamma_shear[ii];
+      lbpar_gpu.gamma_odd[ii] = -(7.0f*lbpar_gpu.gamma_even[ii]+1.0f)/(lbpar_gpu.gamma_even[ii]+7.0f);
+      //lbpar_gpu.gamma_odd[ii] = lbpar_gpu.gamma_shear[ii]; //uncomment for BGK
+    }
+    
+    //lbpar_gpu.gamma_even[ii] = 0.0; //uncomment for special case of BGK
+    //lbpar_gpu.gamma_odd[ii] = 0.0;
+    //lbpar_gpu.gamma_shear[ii] = 0.0;
+    //lbpar_gpu.gamma_bulk[ii] = 0.0;
+    
+    //printf("gamma_shear=%e\n", lbpar_gpu.gamma_shear[ii]);
+    //printf("gamma_bulk=%e\n", lbpar_gpu.gamma_bulk[ii]);
+    //printf("TRT gamma_odd=%e\n", lbpar_gpu.gamma_odd[ii]);
+    //printf("TRT gamma_even=%e\n", lbpar_gpu.gamma_even[ii]);
+    //printf("\n");
+
 #ifdef SHANCHEN
     if (lbpar_gpu.mobility[0] > 0.0) {
       lbpar_gpu.gamma_mobility[0] = 1. - 2./(6.*lbpar_gpu.mobility[0]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
@@ -317,9 +348,7 @@ void lb_reinit_parameters_gpu() {
     for (dir=0;dir<3;dir++) {
     /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
-          ostringstream msg;
-          msg <<"Lattice spacing lbpar_gpu.agrid= "<< lbpar_gpu.agrid << " is incompatible with box_l[" << dir << "]=" << box_l[dir];
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice spacing lbpar_gpu.agrid= "<< lbpar_gpu.agrid << " is incompatible with box_l[" << dir << "]=" << box_l[dir];
       }
     }
     
@@ -365,7 +394,7 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
     ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
   size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
-  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) realloc(host_extern_nodeforces, size_of_extforces);
+  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) Utils::realloc(host_extern_nodeforces, size_of_extforces);
   
   host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
   host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
@@ -385,28 +414,30 @@ void lb_GPU_sanity_checks()
 {
   if(this_node == 0){
     if (lbpar_gpu.agrid < 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann agrid not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann agrid not set";
     }
     if (lbpar_gpu.tau < 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann time step not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann time step not set";
     }
     for(int i=0;i<LB_COMPONENTS;i++){
       if (lbpar_gpu.rho[0] < 0.0) {
-          ostringstream msg;
-          msg <<"Lattice Boltzmann fluid density not set";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice Boltzmann fluid density not set";
       }
       if (lbpar_gpu.viscosity[0] < 0.0) {
-          ostringstream msg;
-          msg <<"Lattice Boltzmann fluid viscosity not set";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice Boltzmann fluid viscosity not set";
       }
     }
   }
+}
+
+int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary)
+{
+  return lb_lbfluid_save_checkpoint(filename, binary);
+}
+
+int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
+{
+  return lb_lbfluid_load_checkpoint(filename, binary);
 }
 
 #endif /* LB_GPU */

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -179,7 +179,7 @@ int tclcommand_analyze_parse_holes(Tcl_Interp *interp, int argc, char **argv)
   /* perfrom hole cluster algorithm */
   n_holes = cluster_free_volume_grid(mesh, meshdim, &holes);
   /* surface to volume ratio */
-  surface = (int *) malloc(sizeof(int)*(n_holes+1));
+  surface = (int *) Utils::malloc(sizeof(int)*(n_holes+1));
   cluster_free_volume_surface(mesh, meshdim, n_holes, holes, surface);
   /* calculate accessible volume / max size*/
   for ( i=0; i<=n_holes; i++ ) { 
