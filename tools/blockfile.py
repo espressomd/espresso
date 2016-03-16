@@ -170,6 +170,7 @@ class blockfile(object):
                     pass
                 block = ''
             if self.f.tell() == os.fstat(self.f.fileno()).st_size:
+                self._rewind()
                 return
     
     def __del__(self):
@@ -178,7 +179,7 @@ class blockfile(object):
         """
         self.close()
 
-    def rewind(self):
+    def _rewind(self):
         self.f.seek(0)
 
     def close(self):
