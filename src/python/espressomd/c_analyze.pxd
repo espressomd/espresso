@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
+
+#
+# TODO: Merge blocks of cdef extern for same headers.
+#
+
 
 cimport numpy as np
 from utils cimport *
@@ -98,3 +103,14 @@ cdef extern from "statistics_chain.hpp":
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
+
+cdef extern from "statistics.hpp":
+    void calc_rdf(vector[int] p1_types, vector[int] p2_types,
+                  double r_min, double r_max, int r_bins, vector[double] rdf)
+
+    void calc_rdf_av(vector[int] p1_types, vector[int] p2_types,
+                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+
+    void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
+                              double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+    void angularmomentum(int p_type, double * com)

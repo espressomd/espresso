@@ -1,6 +1,6 @@
 
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -178,7 +178,7 @@ espressoSystemInterface.update();
   case CELL_STRUCTURE_DOMDEC:
     if(dd.use_vList) {
       if (rebuild_verletlist)
-    build_verlet_lists_and_calc_verlet_ia();
+        build_verlet_lists_and_calc_verlet_ia();
       else
     calculate_verlet_ia();
     }
@@ -301,6 +301,11 @@ void calc_long_range_forces()
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
     break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Electrostatics::Scafacos::add_long_range_force();
+    break;
+#endif
   default:
     break;
   }
@@ -346,9 +351,7 @@ void calc_long_range_forces()
   case DIPOLAR_NONE:
       break;
   default:
-      ostringstream msg;
-      msg <<"unknown dipolar method";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"unknown dipolar method";
       break;
   }
 #endif  /*ifdef DIPOLES */

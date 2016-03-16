@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -430,10 +430,8 @@ int lb_lbfluid_set_agrid(double p_agrid){
     for (int dir=0;dir<3;dir++) {
       /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
-          ostringstream msg;
-          msg <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
+          runtimeErrorMsg() <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
                 << box_l[dir] << ", factor=" << tmp[dir] << " err= " << fabs(box_l[dir]-tmp[dir]*p_agrid);
-          runtimeError(msg);
       }
     }
     lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
@@ -1119,9 +1117,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #endif // LB
     }
     else {
-        ostringstream msg;
-        msg <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
         return ES_ERROR;
     }
     return ES_OK;
@@ -1784,51 +1780,35 @@ int lb_sanity_checks() {
     int ret = 0;
 
     if (lbpar.agrid <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann agrid not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann agrid not set";
         ret = 1;
     }
     if (lbpar.tau <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann time step not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann time step not set";
         ret = 1;
     }
     if (lbpar.rho[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid density not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid density not set";
         ret = 1;
     }
     if (lbpar.viscosity[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid viscosity not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid viscosity not set";
         ret = 1;
     }
     if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        ostringstream msg;
-        msg <<"LB requires domain-decomposition cellsystem";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires domain-decomposition cellsystem";
         ret = -1;
     }
     if (skin == 0.0) {
-        ostringstream msg;
-        msg <<"LB requires a positive skin";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires a positive skin";
         ret = 1;
     }
     if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        ostringstream msg;
-        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
         ret = -1;
     }
     if (thermo_switch & ~THERMO_LB) {
-        ostringstream msg;
-        msg <<"LB must not be used with other thermostats";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB must not be used with other thermostats";
         ret = 1;
     }
     return ret;
@@ -2055,9 +2035,7 @@ void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
   
   if (lbpar.agrid <= 0.0) {
-      ostringstream msg;
-      msg <<"Lattice Boltzmann agrid not set when initializing fluid";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"Lattice Boltzmann agrid not set when initializing fluid";
   }
   
   if (check_runtime_errors()) return;
@@ -3391,9 +3369,7 @@ void lb_calc_average_rho() {
 static int compare_buffers(double *buf1, double *buf2, int size) {
     int ret;
     if (memcmp(buf1,buf2,size)) {
-        ostringstream msg;
-        msg <<"Halo buffers are not identical";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Halo buffers are not identical";
         ret = 1;
     } else {
         ret = 0;

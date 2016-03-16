@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -320,9 +320,7 @@ void layered_topology_init(CellPList *old)
 
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
-      ostringstream msg;
-      msg <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
     node_grid[0] = node_grid[1] = 1;
     node_grid[2] = n_nodes;
   }
@@ -331,9 +329,7 @@ void layered_topology_init(CellPList *old)
     if (max_range > 0) {
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
-      ostringstream msg;
-      msg <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
 	n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -355,9 +351,7 @@ void layered_topology_init(CellPList *old)
   layer_h_i = 1/layer_h;
 
   if (layer_h < max_range) {
-      ostringstream msg;
-      msg <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
   }
 
   /* check wether node is top and/or bottom */
@@ -539,9 +533,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
     else {
       if (flag) {
-      ostringstream msg;
-      msg <<"layered_exchange_and_sort_particles: particle moved more than one cell";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered_exchange_and_sort_particles: particle moved more than one cell";
 
 	/* sort left over particles into border cells */
 	CELL_TRACE(fprintf(stderr, "%d: emergency sort\n", this_node));

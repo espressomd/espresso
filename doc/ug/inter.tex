@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -1539,7 +1539,7 @@ using P3M! If you are not sure, read the following references
 \subsubsection{Tuning Coulomb P3M}
 \label{ssec:tunep3m}
 \begin{essyntax}
-  inter coulomb \var{l_B} p3m \alt{tune \asep tunev2} [gpu]
+  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
   accuracy \var{accuracy}\\
   \opt{r_cut \var{r_\mathrm{cut}}}
   \opt{mesh \var{mesh}}
@@ -1835,6 +1835,7 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
   inter coulomb \var{l_B} mmm1d tune \var{maximal\_pairwise\_error}
   \begin{features}
     \required{ELECTROSTATICS}
+    \required{PARTIAL_PERIODIC}
   \end{features}
 \end{essyntax}
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
@@ -1859,6 +1860,7 @@ test force calculations.
   \begin{features}
     \required{CUDA}
 	\required{ELECTROSTATICS}
+	\required{PARTIAL_PERIODIC}
 	\required{MMM1D_GPU}
   \end{features}
 \end{essyntax}
@@ -2060,6 +2062,38 @@ The keyword \keyword{adaptive} after the \keyword{inter coulomb} command will us
 It should be mentioned that this algorithm is not a black box and should be understood to a degree if used. Small changes in the parameters, especially the mesh size, can quickly lead to unphysical results. This is not only because of the retarded electrodynamics solution offered by the MEMD algorithm in general, but because of the sensitivity of the dielectric response to the volume over which the local salt concentration is sampled. If this volume is set too small, harsh changes in the local dielectric properties can occur and the algorithm may become unstable, or worse, produce incorrect electrostatic forces.
 
 The calculation of local permittivity will for the same parameters -- depending on your computer -- run roughly a factor of $2$ to $4$ longer than MEMD without temporally varying dielectric properties.
+
+\subsection{Scafacos}
+\index{Scafacos|mainindex}
+Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fast Coulomb solvers} library.
+\begin{essyntax}
+  scafacos_methods
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+This shows the methods available at the compile time of \es{}.
+Scafacos can be used as Coulomb solver for the system.
+\begin{essyntax}
+  inter coulomb \var{l_b} scafacos \var{method} \opt{\var{parameters}} \opt{tolerance_field \var{prec}}
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
+\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
+are not set, and the method supports it, the open parameteres are tuned.
+To use the \texttt{ewald} solver from scafacos as electrostatics solver for your system, set its cutoff
+to $1.5$ and tune the other parameters for an accuracy of $10^{-3}$, use the command
+\begin{tclcode}
+  inter coulomb 1.0 scafacos ewald ewald_r_cut 1.5 tolerance_field 1e-3
+\end{tclcode}
+For details of the various methods and their parameters please refer to the Scafacos manual.
+Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
+to build Scafacos as a shared library.
 
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}

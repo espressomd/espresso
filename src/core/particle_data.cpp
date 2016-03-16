@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -350,15 +350,11 @@ int updatePartCfg(int bonds_flag)
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-      ostringstream msg;
-      msg <<"could not update positions of virtual sites in partcfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not update positions of virtual sites in partcfg";
     return 0;
   }
 #endif
@@ -1229,9 +1225,7 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-        ostringstream msg;
-        msg <<"invalid/unknown bonded interaction type " << bond[0];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"invalid/unknown bonded interaction type " << bond[0];
       return ES_ERROR;
     }
   }
@@ -2277,3 +2271,16 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
   res = p->p.rinertia;
 }
 #endif
+
+bool particle_exists(int part) {
+    if (!particle_node)
+        build_particle_node();
+    
+    if (part < 0 || part > max_seen_particle)
+        return false;
+    
+    if (particle_node[part]!=-1) 
+        return true;
+   return false;
+} 
+

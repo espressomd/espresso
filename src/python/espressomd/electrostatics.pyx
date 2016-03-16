@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,6 +25,11 @@ cdef class ElectrostaticInteraction(actors.Actor):
     def _tune(self):
         raise Exception(
             "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
+
+    def _set_params_in_es_core(self):
+        raise Exception(
+            "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+
 
 
 IF COULOMB_DEBYE_HUECKEL:

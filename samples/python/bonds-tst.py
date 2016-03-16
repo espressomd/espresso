@@ -15,9 +15,9 @@ S.bonded_inter.add(f2)
 for b in S.bonded_inter:
     print b
 
-S.part[0].pos = (0., 0., 0.)
-S.part[1].pos = 0, 0, 0
-S.part[2].pos = 0, 0, 0
+S.part.add(id=0, pos=(0., 0., 0.))
+S.part.add(id=1, pos=(0, 0, 0))
+S.part.add(id=2, pos=(0, 0, 0))
 
 
 print S.part[0].bonds

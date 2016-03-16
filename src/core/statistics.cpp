@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -47,7 +47,6 @@
 #include <vector>
 #include <string>
 #include <map>
-
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
@@ -240,24 +239,6 @@ void predict_momentum_particles(double *result)
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Result for this processor (Output)
- */
-void momentum_calc(double *momentum) 
-{
-    double momentum_fluid[3] = { 0., 0., 0. };
-    double momentum_particles[3] = { 0., 0., 0. };
-
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
-#ifdef LB
-    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
-#endif
-
-    momentum[0] = momentum_fluid[0] + momentum_particles[0];
-    momentum[1] = momentum_fluid[1] + momentum_particles[1];
-    momentum[2] = momentum_fluid[2] + momentum_particles[2];
-
-}
 
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum calculation
@@ -274,13 +255,20 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
       linear_momentum[2] += momentum_particles[2];
     }
     if (include_lbfluid) {
-#ifdef LB
       double momentum_fluid[3] = { 0., 0., 0. };
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+#ifdef LB
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
+#endif
+#ifdef LB_GPU
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
+#endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
       linear_momentum[2] += momentum_fluid[2];
-#endif
     }
     return linear_momentum;
 }
@@ -650,6 +638,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf)
+{
+  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+           r_min, r_max, r_bins, &rdf[0]);
+}
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
@@ -701,6 +695,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
+}
+
+
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                 double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+              r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -769,6 +771,13 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
   free(rdf_tmp);
 
+}
+
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                          double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+                       r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -1401,9 +1410,7 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-        ostringstream msg;
-        msg <<"failed upon replacing particle " << i << "  in Espresso";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"failed upon replacing particle " << i << "  in Espresso";
     }
   }
 }

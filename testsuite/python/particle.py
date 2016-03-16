@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -58,7 +58,8 @@ class ParticleProperties(ut.TestCase):
         return True
 
     def setUp(self):
-        self.es.part[self.pid].pos = 0, 0, 0
+        if not self.es.part.exists(self.pid):
+            self.es.part.add(id=self.pid, pos=(0, 0, 0))
 
     def generateTestForVectorProperty(_propName, _value):
         """Generates test cases for vectorial particle properties such as

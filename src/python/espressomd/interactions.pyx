@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,9 +18,6 @@
 #
 include "myconfig.pxi"
 # Non-bonded interactions
-
-include "myconfig.pxi"
-
 
 cdef class NonBondedInteraction(object):
 

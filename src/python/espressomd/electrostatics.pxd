@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -183,7 +183,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             @staticmethod
             EspressoSystemInterface * _Instance()
 
-    cdef extern from "EwaldgpuForce.hpp":
+    cdef extern from "actor/EwaldGPU.hpp":
         cdef cppclass EwaldgpuForce:
             EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
             int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)

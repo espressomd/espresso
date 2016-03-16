@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,17 +17,76 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-
-
-# IF LB_GPU == 1:
-
-# cdef extern from "../src/config.hpp":
-#    pass
-
-# cdef extern from "../src/lattice.hpp":
-#  int lattice_switch
+from libcpp cimport bool
 
 IF LB_GPU or LB:
+
+
+##############################################
+#
+# extern functions and structs
+#
+##############################################
+
+    cdef extern from "lb.hpp":
+
+        ##############################################
+        #
+        # Python LB struct clone of C-struct
+        #
+        ##############################################
+        ctypedef struct lb_parameters:
+            double rho[2]
+            double viscosity[2]
+            double bulk_viscosity[2]
+            double agrid
+            double tau
+            double friction[2]
+            double ext_force[3]
+            double rho_lb_units[2]
+            double gamma_odd[2]
+            double gamma_even[2]
+            int resent_halo
+###############################################
+#
+# init struct
+#
+###############################################
+        ctypedef struct lb_parameters:
+            lb_parameters lb_params
+
+##############################################
+#
+# exported C-functions from lb.hpp
+#
+##############################################
+        int lb_lbfluid_set_tau(double c_tau)
+        int lb_lbfluid_get_tau(double * c_tau)
+        int lb_lbfluid_set_density(double * c_dens)
+        int lb_lbfluid_get_density(double * c_dens)
+        int lb_lbfluid_set_visc(double * c_visc)
+        int lb_lbfluid_get_visc(double * c_visc)
+        int lb_lbfluid_set_agrid(double c_agrid)
+        int lb_lbfluid_get_agrid(double * c_agrid)
+        int lb_lbfluid_set_friction(double * c_friction)
+        int lb_lbfluid_get_friction(double * c_friction)
+        int lb_lbfluid_set_gamma_odd(double * c_gamma_odd)
+        int lb_lbfluid_get_gamma_odd(double * c_gamma_odd)
+        int lb_lbfluid_set_gamma_even(double * c_gamma_even)
+        int lb_lbfluid_get_gamma_even(double * c_gamma_even)
+        int lb_lbfluid_set_ext_force(int component, double c_fx, double c_fy, double c_fz)
+        int lb_lbfluid_get_ext_force(double * c_f)
+        int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
+        int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
+        int lb_lbfluid_print_vtk_velocity(char * filename)
+        int lb_lbfluid_print_vtk_boundary(char * filename)
+        int lb_lbfluid_print_velocity(char * filename)
+        int lb_lbfluid_print_boundary(char * filename)
+        int lb_lbfluid_save_checkpoint(char * filename, int binary)
+        int lb_lbfluid_load_checkpoint(char * filename, int binary)
+        int lb_set_lattice_switch(int py_switch)
+        int lb_get_lattice_switch(int * py_switch)
+
 
     ###############################################
     #
@@ -92,7 +151,7 @@ IF LB_GPU or LB:
         # get pointers
         c_agrid = p_agrid
         # call c-function
-        if(lb_lbfluid_set_tau(c_agrid)):
+        if(lb_lbfluid_set_agrid(c_agrid)):
             raise Exception("lb_fluid_set_agrid error at C-level interface")
 
         return 0
@@ -264,68 +323,69 @@ IF LB_GPU or LB:
 
 ###############################################
 
+IF LB_GPU:
+    cdef extern from "lbgpu.hpp":
+        ctypedef struct LB_parameters_gpu:
+            float rho
+            float mu
+            float viscosity
+            float gamma_shear
+            float gamma_bulk
+            float gamma_odd
+            float gamma_even
+            bool is_TRT
+            float friction
+            int lb_couple_switch
+            float lb_coupl_pref
+            float lb_coupl_pref2
+            float bulk_viscosity
+            float agrid
+            float tau
+            float time_step
+            unsigned int dim_x
+            unsigned int dim_y
+            unsigned int dim_z
+            unsigned int number_of_nodes
+            unsigned int number_of_particles
+            int fluct
+            int calc_val
+            int external_force
+            float ext_force[3]
+            unsigned int your_seed
+            unsigned int reinit
 
-##############################################
-#
-# extern functions and structs
-#
-##############################################
+        IF SHANCHEN:
+            ctypedef struct LB_parameters_gpu:
+                float rho[2]
+                float mu[2]
+                float viscosity[2]
+                float gamma_shear[2]
+                float gamma_bulk[2]
+                float gamma_odd[2]
+                float gamma_even[2]
+                bool is_TRT
+                float friction[2]
+                int lb_couple_switch
+                float lb_coupl_pref[2]
+                float lb_coupl_pref2[2]
+                float bulk_viscosity[2]
+                float agrid
+                float tau
+                float time_step
+                unsigned int dim_x
+                unsigned int dim_y
+                unsigned int dim_z
+                unsigned int number_of_nodes
+                unsigned int number_of_particles
+                int fluct
+                int calc_val
+                int external_force
+                float ext_force[3*2]
+                unsigned int your_seed
+                unsigned int reinit
+                float gamma_mobility[2]
+                float mobility[2]
+                float coupling[4]
+                int remove_momentum
 
-    cdef extern from "lb.hpp":
 
-        ##############################################
-        #
-        # Python LB struct clone of C-struct
-        #
-        ##############################################
-        ctypedef struct lb_parameters:
-            double rho[2]
-            double viscosity[2]
-            double bulk_viscosity[2]
-            double agrid
-            double tau
-            double friction[2]
-            double ext_force[3]
-            double rho_lb_units[2]
-            double gamma_odd[2]
-            double gamma_even[2]
-            int resent_halo
-###############################################
-#
-# init struct
-#
-###############################################
-        ctypedef struct lb_parameters:
-            lb_parameters lb_params
-
-##############################################
-#
-# exported C-functions from lb.hpp
-#
-##############################################
-        int lb_lbfluid_set_tau(double c_tau)
-        int lb_lbfluid_get_tau(double * c_tau)
-        int lb_lbfluid_set_density(double * c_dens)
-        int lb_lbfluid_get_density(double * c_dens)
-        int lb_lbfluid_set_visc(double * c_visc)
-        int lb_lbfluid_get_visc(double * c_visc)
-        int lb_lbfluid_set_agrid(double c_agrid)
-        int lb_lbfluid_get_agrid(double * c_agrid)
-        int lb_lbfluid_set_friction(double * c_friction)
-        int lb_lbfluid_get_friction(double * c_friction)
-        int lb_lbfluid_set_gamma_odd(double * c_gamma_odd)
-        int lb_lbfluid_get_gamma_odd(double * c_gamma_odd)
-        int lb_lbfluid_set_gamma_even(double * c_gamma_even)
-        int lb_lbfluid_get_gamma_even(double * c_gamma_even)
-        int lb_lbfluid_set_ext_force(int component, double c_fx, double c_fy, double c_fz)
-        int lb_lbfluid_get_ext_force(double * c_f)
-        int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
-        int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
-        int lb_lbfluid_print_vtk_velocity(char * filename)
-        int lb_lbfluid_print_vtk_boundary(char * filename)
-        int lb_lbfluid_print_velocity(char * filename)
-        int lb_lbfluid_print_boundary(char * filename)
-        int lb_lbfluid_save_checkpoint(char * filename, int binary)
-        int lb_lbfluid_load_checkpoint(char * filename, int binary)
-        int lb_set_lattice_switch(int py_switch)
-        int lb_get_lattice_switch(int * py_switch)
