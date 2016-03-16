@@ -214,7 +214,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 #    cdef extern from "EspressoSystemInterface.cpp":
 #        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;
 
-IF ELECTROSTATICS and MMM1D_GPU:
+IF ELECTROSTATICS:
     cdef extern from "mmm1d.hpp":
         ctypedef struct MMM1D_struct:
             double far_switch_radius_2;
