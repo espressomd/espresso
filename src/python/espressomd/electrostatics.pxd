@@ -260,3 +260,25 @@ IF ELECTROSTATICS and MMM1D_GPU:
         resp=mmm1d_tune(&log)
         return resp, log
 
+IF ELECTROSTATICS:
+    cdef extern from "mmm2d.hpp":
+        ctypedef struct MMM2D_struct:
+            double maxPWerror;
+            double far_cut;
+            double far_cut2;
+            int far_calculated;
+            int dielectric_contrast_on;
+            int const_pot_on;
+            double pot_diff;
+            double delta_mid_top;
+            double delta_mid_bot;
+            double delta_mult;
+
+        cdef extern MMM2D_struct mmm2d_params;
+
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+
+        void MMM2D_init();
+
+        int MMM2D_sanity_checks();
+
