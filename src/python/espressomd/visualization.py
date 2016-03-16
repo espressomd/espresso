@@ -13,7 +13,13 @@ output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
 class mayavi_live:
+	"""This class provides live visualization using Enthought Mayavi"""
 	def __init__(self, system):
+		"""Constructor.
+		**Arguments**
+
+		:system: instance of espressomd.System
+		"""
 		self.system = system
 
 		# objects drawn
@@ -29,13 +35,14 @@ class mayavi_live:
 		self.last_Nbonds = 1
 		self.last_boxl = [0,0,0]
 		self.running = False
-		self.last_T = -1
+		self.last_T = None
 
 		# GUI window
 		self.gui = GUI()
 		self.gui.invoke_later(self.update)
 
-	def draw(self, coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed):
+	def _draw(self, coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed):
+		"""Update the Mayavi objects with new particle information."""
 		f = mlab.gcf()
 		visual.set_viewer(f)
 
@@ -57,9 +64,10 @@ class mayavi_live:
 			self.arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
 	def update(self):
+		"""Pull the latest particle information from Espresso and update the Mayavi visualization"""
 		self.process_gui_events()
 
-		if self.last_T == self.system.time:
+		if self.last_T is not None and self.last_T == self.system.time:
 			return
 		self.last_T = self.system.time
 		
@@ -92,19 +100,23 @@ class mayavi_live:
 
 		boxl = self.system.box_l
 
-		self.draw( coords, types, radii, (self.last_N != N), 
+		self._draw( coords, types, radii, (self.last_N != N), 
 		           bond_coords, (self.last_Nbonds != Nbonds),
 		           boxl, (self.last_boxl != boxl).any() )
 		self.last_N = N
 		self.last_Nbonds = Nbonds
 		self.last_boxl = boxl
 
-		self.gui.invoke_later(self.update)
 
 	def process_gui_events(self):
+		"""Process GUI events, e.g. mouse clicks, in the Mayavi window.
+		Call this function as often as you can to get a smooth GUI experience."""
 		self.gui.process_events()
 
 	def run_gui_event_loop(self):
+		"""Start the GUI event loop.
+		This function blocks until the Mayavi window is closed.
+		So you probably only want to use it if your Espresso simulation's integrate loop is running in a separate thread."""
 		self.gui.start_event_loop()
 
 # TODO: constraints
