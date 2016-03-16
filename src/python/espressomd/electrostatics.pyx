@@ -500,29 +500,16 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            print "coulomb pref: ", globals.temperature * coulomb.bjerrum
             self.thisptr.set_params(globals.box_l[2], globals.temperature*coulomb.bjerrum, self._params["maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"]) 
-            #MMM1D_set_params(self._params["far_switch_radius_2"], self._params["maxPWerror"])
 
         def _tune(self):
-            print "do setup"
             self.thisptr.setup(dereference(self.interface))
-            print "tune", self._params["maxPWerror"], self._params["far_switch_radius"]
             self.thisptr.tune(dereference(self.interface), self._params["maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"]) 
-            print "after tune"
-
-
-	#void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
-	#void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual = false);
-    #        self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
-                print "do tune"
                 self._tune()
-            print "after tune"
 
 
             self._set_params_in_es_core()
-            #mpi_bcast_coulomb_params()
