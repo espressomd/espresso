@@ -1,6 +1,3 @@
-add_custom_target(testsuite
-                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
 set(tcl_tests  analysis.tcl
                angle.tcl
                bonded_coulomb.tcl
@@ -101,6 +98,10 @@ set(tcl_tests  analysis.tcl
                virtual-sites.tcl 
                virtual-sites-rotation.tcl)
 
+add_custom_target(tcl_tests
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+
 if(WITH_MPI)
     include(ProcessorCount)
     ProcessorCount(NP)
@@ -119,10 +120,7 @@ if(WITH_TCL)
     set_tests_properties(${basename} PROPERTIES SKIP_RETURN_CODE 42)
   endforeach(testfile ${tcl_tests})
   add_custom_target(check_tcl COMMAND ${CMAKE_CTEST_COMMAND}
-    DEPENDS Espresso testsuite)
+    DEPENDS Espresso tcl_tests)
   add_dependencies(check check_tcl)
 endif(WITH_TCL)
 
-if(WITH_PYTHON)
-  add_subdirectory(python)
-endif(WITH_PYTHON)
