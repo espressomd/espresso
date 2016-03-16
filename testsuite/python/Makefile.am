@@ -17,13 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # alphabetically sorted list of test scripts
+tests = \
+	bondedInteractions.py \
+	cellsystem.py \
+	electrostaticInteractions.py \
+	ewald_gpu.py \
+	magnetostaticInteractions.py \
+	nonBondedInteractions.py \
+	p3m_gpu.py \
+	particle.py
+
+# please keep the alphabetic ordering of the above list!
+
+deactivated_tests =
+
+# add data files for the tests here
+EXTRA_DIST = $(tests) $(deactivated_tests)
 
 # run the testsuite
-SUBDIRS=
-if TCL
-SUBDIRS += tcl
-endif
-
-if PYTHON_INTERFACE
-SUBDIRS += python
-endif
+# run the testsuite
+check-local: runtest.sh
+	if test -n "$(processors)"; then \
+	  @builddir@/runtest.sh -p "${processors}" $(tests); \
+	else \
+	  @builddir@/runtest.sh $(tests); \
+	fi
