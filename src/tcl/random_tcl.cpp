@@ -107,7 +107,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     printf("Got "); 
         
     for(int i=0;i<n_nodes;i++) 
-      printf("%ld ",seeds[i]);
+      printf("%d ",seeds[i]);
         
     printf("as new seeds.\n");
 #endif
@@ -118,8 +118,8 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
 
   /* else */
-  sprintf(buffer, "Usage: 't_random [{ int <n> | seed [<seed(0)> ... <seed(%d)>] | stat [status-list] }]'",n_nodes-1);
-  Tcl_AppendResult(interp, "Unknown job '",argv[0],"' requested!\n",buffer, (char *)NULL);
+  sprintf(buffer, "Usage: 't_random [{ int <n> | seed [<seed(0)> ... <seed(%d)>] }]'",n_nodes-1);
+  Tcl_AppendResult(interp, "Unknown argument '",argv[0],"' requested!\n",buffer, (char *)NULL);
   return (TCL_ERROR); 
 }
 
