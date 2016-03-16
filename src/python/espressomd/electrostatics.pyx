@@ -390,3 +390,59 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                 self._params["isTuned"] = True
 
             self._set_params_in_es_core()
+
+IF ELECTROSTATICS and MMM1D_GPU:
+    cdef class MMM1D_Gpu(electrostatics.ElectrostaticInteraction):
+
+        def validate_params(self):
+            default_params = self.default_params()
+            if self._params["bjerrum_length"] < 0 :
+                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
+                raise ValueError("maxPWerror should be a positive double")
+            if self._params["far_switch_radius_2"] < 0 and self._params["far_switch_radius_2"] != default_params["far_switch_radius_2"]:
+                raise ValueError("switch radius shoulb be a positive double")
+            if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]: 
+                raise ValueError("bessel_cutoff should be a positive integer")
+
+
+
+        def default_params(self):
+            return { "bjerrum_length": -1, 
+                     "maxPWerror": -1, 
+                     "far_switch_radius_2" : -1, 
+                     "bessel_cutoff" : -1, 
+                     "tune" : True}
+
+        def valid_keys(self):
+            return "bjerrum_length", "maxPWerror", "far_switch_radius_2", "bessel_cutoff", "tune"
+
+        def required_keys(self):
+            return ["bjerrum_length", "maxPWerror"]
+
+        def _get_params_from_es_core(self):
+            params={}
+            params.update(mmm1d_params)
+            params["far_switch_radius_2"]=np.sqrt(params["far_switch_radius_2"])
+            params["bjerrum_length"] = coulomb.bjerrum
+            return params
+
+        def _set_params_in_es_core(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            MMM1D_set_params(self._params["far_switch_radius_2"], self._params["maxPWerror"])
+
+        def _tune(self):
+            cdef int resp 
+            cdef char * log
+            resp, log= pyMMM1D_tune()
+            if resp:
+                raise Exception("failed to tune ewald gpu")
+            print log
+            self._params.update(self._get_params_from_es_core())
+
+        def _activate_method(self):
+            coulomb.method = COULOMB_MMM1D_GPU
+            if self._params["tune"]:
+                self._tune()
+
+            self._set_params_in_es_core()
