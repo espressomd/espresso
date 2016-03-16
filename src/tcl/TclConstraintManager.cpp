@@ -40,7 +40,6 @@ std::string ConstraintManager::print_one(int id) {
   return os.str();
 }
 
-
 const int ConstraintManager::get_id(const std::string &s) const {
   std::stringstream ss(s);
   int id;
