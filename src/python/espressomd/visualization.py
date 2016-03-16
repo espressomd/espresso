@@ -1,6 +1,7 @@
 import sys
 if sys.platform == 'darwin':
 	try:
+		import multiprocessing
 		multiprocessing.set_start_method('spawn')
 	except:
 		raise Exception("Mayavi visualization is not supported on Mac OS X because fork()ed processes may not have a GUI.")
@@ -57,7 +58,7 @@ def mayavi_render(queue):
 	# Remove the parameter window
 	from mayavi.tools.animator import Animator
 	def e(self):
-		raise Exception("Please ignore this exception. Everything is fine.")
+		raise Exception("Please ignore this exception. It is needed to keep the Parameters window from showing up.")
 	Animator.show = e
 
 	mlab.show(mlab.animate(delay=10, ui=True)(animate))()

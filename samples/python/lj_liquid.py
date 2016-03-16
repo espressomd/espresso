@@ -25,6 +25,7 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd import visualization
 import numpy
+from matplotlib import pyplot
 
 print("""
 =======================================================
@@ -67,7 +68,7 @@ min_dist = 0.9
 
 # integration
 int_steps = 1000
-int_n_times = 5
+int_n_times = 50
 
 
 #############################################################
@@ -187,6 +188,12 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 energies = analyze.energy(system=system)
 print(energies)
 
+plot, = pyplot.plot([0],[energies['total']], label="total")
+pyplot.xlabel("Time")
+pyplot.ylabel("Energy")
+pyplot.legend()
+pyplot.show(block=False)
+
 j = 0
 for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
@@ -198,6 +205,11 @@ for i in range(0, int_n_times):
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
     energies = analyze.energy(system=system)
     print(energies)
+    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
+    pyplot.xlim(0, system.time)
+    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    pyplot.draw()
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
     linear_momentum = analyze.analyze_linear_momentum(system=system)
     print(linear_momentum)
