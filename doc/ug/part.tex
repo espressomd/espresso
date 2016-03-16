@@ -1268,12 +1268,22 @@ part gc
 \alt{\var{type} \asep \alt{\alt{find \asep delete \asep
 status \asep number} \var{type}}}
 \end{essyntax}
+\begin{pycode}
+from espressomd import grand_canonical
+grand_canonical.setup([_type])
+grand_canonical.delete_particles(_type)
+grand_canonical.find_particle(_type)
+grand_canonical.number_of_particles(_type)
+\end{pycode}
 
 If you want \es to keep track of particle ids of a certain type you have to
 initialize the method by calling 
 \begin{essyntax}
 	part gc \var{type}
 \end{essyntax}
+\begin{pycode}
+grand_canonical.setup([_type])
+\end{pycode}
 After that \es will keep track of particle ids of that type. 
 When using the keyword \texttt{find} and a particle type, the
 command will return a randomly chosen particle id, for a particle of
