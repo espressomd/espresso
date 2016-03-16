@@ -254,7 +254,7 @@ IF ELECTROSTATICS:
         cdef extern Coulomb_parameters coulomb
 
     cdef inline pyMMM1D_tune():
-        cdef char *log
+        cdef char *log = NULL 
         cdef int resp
         MMM1D_init();
         if MMM1D_sanity_checks()==1:
