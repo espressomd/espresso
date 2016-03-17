@@ -147,6 +147,21 @@ IF LB_GPU or LB:
 
             return self.params
 
+        # input/output function wrappers for whole LB fields
+        ####################################################
+        def print_vtk_velocity(self, path):
+            lb_lbfluid_print_vtk_velocity(path)
+        def print_vtk_boundary(self, path):
+            lb_lbfluid_print_vtk_boundary(path)
+        def print_velocity(self, path):
+            lb_lbfluid_print_velocity(path)
+        def print_boundary(self, path):
+            lb_lbfluid_print_boundary(path)
+        def save_checkpoint(self, path, binary):
+            lb_lbfluid_save_checkpoint(path, binary)
+        def load_checkpoint(self, path, binary):
+            lb_lbfluid_load_checkpoint(path, binary)
+
         # Activate Actor
         ####################################################
         def _activate_method(self):

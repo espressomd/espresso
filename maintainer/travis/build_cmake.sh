@@ -89,7 +89,7 @@ fi
 # CONFIGURE
 start "CONFIGURE"
 if $with_coverage ; then
-    cmake_params="-DCPPFLAGS=\"-coverage -O0\" -DCXXFLAGS=\"-coverage -O0\" $cmake_params"
+    cmake_params="-DCPPFLAGS=\"-coverage -O0\" -DCXXFLAGS=\"-coverage -O0\" -DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
 fi
 
 if $with_mpi; then
@@ -129,6 +129,9 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
+# Acticate anaconda environment
+cmd "source activate test"
+
 cmd "cmake $cmake_params $srcdir" || exit $?
 end "CONFIGURE"
 
@@ -139,14 +142,20 @@ cmd "make" || exit $?
 
 end "BUILD"
 
-# CHEKC	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
+# CHECK	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
 if $make_check; then
     start "TEST"
 
-    cmd "make check $make_params"
+    cmd "make check_tcl $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
-	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
+        cat $srcdir/testsuite/Testing/Temporary/LastTest.log
+        exit $ec
+    fi
+
+    cmd "make check_unit_tests $make_params"
+    ec=$?
+    if [ $ec != 0 ]; then	
         cat $srcdir/testsuite/Testing/Temporary/LastTest.log
         exit $ec
     fi

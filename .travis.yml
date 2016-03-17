@@ -18,7 +18,7 @@ before_install:
  - conda update --yes conda
 
 install:
- - conda create --yes -n test python=2.7.6
+ - conda create --yes -n test python=2.7.9
  - source activate test
  - conda install --yes numpy cython pip
  - pip install codecov
