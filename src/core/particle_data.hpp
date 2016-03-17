@@ -993,6 +993,10 @@ void pointer_to_virtual(Particle* p, int*& res);
 void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
 #endif
 
+#ifdef MULTI_TIMESTEP
+void pointer_to_smaller_timestep(Particle* p, int*&  res);
+#endif
+
 #ifdef MASS
 void pointer_to_mass(Particle* p, double*&  res);
 #endif
