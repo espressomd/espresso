@@ -20,6 +20,8 @@ from cython.operator cimport dereference
 include "myconfig.pxi"
 cimport actors
 import actors
+cimport globals
+import numpy as np
 
 cdef class ElectrostaticInteraction(actors.Actor):
     def _tune(self):
@@ -391,8 +393,8 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
             self._set_params_in_es_core()
 
-IF ELECTROSTATICS and MMM1D_GPU:
-    cdef class MMM1D_Gpu(electrostatics.ElectrostaticInteraction):
+IF ELECTROSTATICS:
+    cdef class MMM1D(electrostatics.ElectrostaticInteraction):
 
         def validate_params(self):
             default_params = self.default_params()
@@ -401,6 +403,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius_2"] < 0 and self._params["far_switch_radius_2"] != default_params["far_switch_radius_2"]:
+                raise ValueError("switch radius shoulb be a positive double")
+            if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
                 raise ValueError("switch radius shoulb be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]: 
                 raise ValueError("bessel_cutoff should be a positive integer")
@@ -411,11 +415,12 @@ IF ELECTROSTATICS and MMM1D_GPU:
             return { "bjerrum_length": -1, 
                      "maxPWerror": -1, 
                      "far_switch_radius_2" : -1, 
+                     "far_switch_radius" : -1,
                      "bessel_cutoff" : -1, 
                      "tune" : True}
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "far_switch_radius_2", "bessel_cutoff", "tune"
+            return "bjerrum_length", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
 
         def required_keys(self):
             return ["bjerrum_length", "maxPWerror"]
@@ -423,27 +428,103 @@ IF ELECTROSTATICS and MMM1D_GPU:
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm1d_params)
-            params["far_switch_radius_2"]=np.sqrt(params["far_switch_radius_2"])
+            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
+            if self._params["far_switch_radius"] == -1:
+                self._params["far_switch_radius_2"] =-1
+            else:
+                self._params["far_switch_radius_2"] = self._params["far_switch_radius"] * self._params["far_switch_radius"]
             MMM1D_set_params(self._params["far_switch_radius_2"], self._params["maxPWerror"])
 
         def _tune(self):
             cdef int resp 
-            cdef char * log
-            resp, log= pyMMM1D_tune()
+            resp= pyMMM1D_tune()
             if resp:
-                raise Exception("failed to tune ewald gpu")
-            print log
+                raise Exception("failed to tune mmm1d ")
             self._params.update(self._get_params_from_es_core())
+
+        def _activate_method(self):
+            coulomb.method = COULOMB_MMM1D
+            self._set_params_in_es_core()
+            if self._params["tune"]:
+                self._tune()
+
+            self._set_params_in_es_core()
+
+IF ELECTROSTATICS and MMM1D_GPU:
+    cdef class MMM1D_GPU(ElectrostaticInteraction):
+        cdef Mmm1dgpuForce * thisptr
+        cdef EspressoSystemInterface * interface
+        cdef char * log
+        cdef int resp
+
+        def __cinit__(self):
+            self.interface = EspressoSystemInterface._Instance()
+            default_params = self.default_params()
+            self.thisptr = new Mmm1dgpuForce(dereference(self.interface), 0.0, default_params["maxPWerror"])
+            self.interface.update()
+            self.interface.requestRGpu()
+
+        def __dealloc__(self):
+            del self.thisptr
+
+        def validate_params(self):
+            default_params = self.default_params()
+            if self._params["bjerrum_length"] < 0 :
+                raise ValueError("Bjerrum_length should be a positive double")
+            if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
+                raise ValueError("maxPWerror should be a positive double")
+            if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
+                raise ValueError("switch radius shoulb be a positive double")
+            if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]: 
+                raise ValueError("bessel_cutoff should be a positive integer")
+
+
+
+        def default_params(self):
+            return { "bjerrum_length": -1, 
+                     "maxPWerror": -1.0, 
+                     "far_switch_radius" : -1.0, 
+                     "far_switch_radius_2" : -1.0, 
+                     "bessel_cutoff" : -1, 
+                     "tune" : True}
+
+        def valid_keys(self):
+            return "bjerrum_length", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune"
+
+        def required_keys(self):
+            return ["bjerrum_length", "maxPWerror"]
+
+        def _get_params_from_es_core(self):
+            params={}
+            params.update(mmm1d_params)
+            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
+            params["bjerrum_length"] = coulomb.bjerrum
+            return params
+
+        def _set_params_in_es_core(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            default_params=self.default_params()
+            if self._params["far_switch_radius"] == default_params["far_switch_radius"]:
+                self._params["far_switch_radius_2"] =-1
+            else:
+                self._params["far_switch_radius_2"] = self._params["far_switch_radius"] * self._params["far_switch_radius"]
+
+            self.thisptr.set_params(globals.box_l[2], globals.temperature*coulomb.bjerrum, self._params["maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"]) 
+
+        def _tune(self):
+            self.thisptr.setup(dereference(self.interface))
+            self.thisptr.tune(dereference(self.interface), self._params["maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"]) 
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
+
 
             self._set_params_in_es_core()
 
@@ -457,18 +538,16 @@ IF ELECTROSTATICS:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["dielectric"] == 1 and ( self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0 ):
                 raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast"] == 1 and (self._params["delta_top"] == default_params["delta_top"] or self._params["delta_bot"] == default_params["delta_bot"] ):
+            if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"] ):
                 raise ValueError("Dielectric constrast not set!")
             if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
                 raise ValueError("Potential difference not set!")
-            if self._params["dielectric"] == 1 and self._params["dielectric_contrast"]==1 :
+            if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"]==1 :
                 raise ValueError("dielectric and dielectric_contrast are mutually exclusive!")
             if self._params["dielectric"] == 1 and self._params["capacitor"] ==1:
                 raise ValueError("dielectric and constant potential are mutually exclusive")
-            if self._params["dielectric_contrast"] == 1 and self._params["capacitor"] == 1:
+            if self._params["dielectric_contrast_on"] == 1 and self._params["capacitor"] == 1:
                 raise ValueError("dielectric contrast and constant potential are mutually exclusive")
-
-
 
 
         def default_params(self):
@@ -479,27 +558,43 @@ IF ELECTROSTATICS:
                      "mid" : 0,
                      "bot" : 0,
                      "dielectric" : 0,
-                     "dielectric_contrast": 0,
+                     "top"  : 0,
+                     "mid"  : 0,
+                     "bot"  : 0,
+                     "dielectric_contrast_on": 0,
                      "capacitor": 0,
-                     "delta_top": 0,
-                     "delta_bot": 0,
+                     "delta_mid_top": 0,
+                     "delta_mid_bot": 0,
                      "pot_diff" : 0 }
 
         def required_keys(self):
             return ["bjerrum_length", "maxPWerror"]
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_top", "delta_bot", "pot_diff", "dielectric", "dielectric_contrast", "capacitor"
+            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
 
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm2d_params)
             params["bjerrum_length"] = coulomb.bjerrum
+            if params["dielectric_contrast_on"] or params["const_pot_on"]:
+                params["dielectric"] = 0
+            else:
+                params["dielectric"] = 1
             return params
         
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_top"], self._params["delta_bot"], self._params["capacitor"], self._params["pot_diff"])
+            if self._params["dielectric"]:
+                self._params["delta_mid_top"] = (self._params["mid"] - self._params["top"])/(self._params["mid"] + self._params["top"])
+                self._params["delta_mid_bot"] = (self._params["mid"] - self._params["bot"])/(self._params["mid"] + self._params["bot"])
+            
+            if self._params["capacitor"] :
+                self._params["delta_mid_top"] = -1
+                self._params["delta_mid_bot"] = -1
+                self._params["const_pot_on"] = 1
+
+            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"])
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
