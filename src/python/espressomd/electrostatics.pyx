@@ -528,18 +528,16 @@ IF ELECTROSTATICS:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["dielectric"] == 1 and ( self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0 ):
                 raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast"] == 1 and (self._params["delta_top"] == default_params["delta_top"] or self._params["delta_bot"] == default_params["delta_bot"] ):
+            if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"] ):
                 raise ValueError("Dielectric constrast not set!")
             if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
                 raise ValueError("Potential difference not set!")
-            if self._params["dielectric"] == 1 and self._params["dielectric_contrast"]==1 :
+            if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"]==1 :
                 raise ValueError("dielectric and dielectric_contrast are mutually exclusive!")
             if self._params["dielectric"] == 1 and self._params["capacitor"] ==1:
                 raise ValueError("dielectric and constant potential are mutually exclusive")
-            if self._params["dielectric_contrast"] == 1 and self._params["capacitor"] == 1:
+            if self._params["dielectric_contrast_on"] == 1 and self._params["capacitor"] == 1:
                 raise ValueError("dielectric contrast and constant potential are mutually exclusive")
-
-
 
 
         def default_params(self):
@@ -550,27 +548,43 @@ IF ELECTROSTATICS:
                      "mid" : 0,
                      "bot" : 0,
                      "dielectric" : 0,
-                     "dielectric_contrast": 0,
+                     "top"  : 0,
+                     "mid"  : 0,
+                     "bot"  : 0,
+                     "dielectric_contrast_on": 0,
                      "capacitor": 0,
-                     "delta_top": 0,
-                     "delta_bot": 0,
+                     "delta_mid_top": 0,
+                     "delta_mid_bot": 0,
                      "pot_diff" : 0 }
 
         def required_keys(self):
             return ["bjerrum_length", "maxPWerror"]
 
         def valid_keys(self):
-            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_top", "delta_bot", "pot_diff", "dielectric", "dielectric_contrast", "capacitor", "far_cut"
+            return "bjerrum_length", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "capacitor", "far_cut"
 
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm2d_params)
             params["bjerrum_length"] = coulomb.bjerrum
+            if params["dielectric_contrast_on"] or params["const_pot_on"]:
+                params["dielectric"] = 0
+            else:
+                params["dielectric"] = 1
             return params
         
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_top"], self._params["delta_bot"], self._params["capacitor"], self._params["pot_diff"])
+            if self._params["dielectric"]:
+                self._params["delta_mid_top"] = (self._params["mid"] - self._params["top"])/(self._params["mid"] + self._params["top"])
+                self._params["delta_mid_bot"] = (self._params["mid"] - self._params["bot"])/(self._params["mid"] + self._params["bot"])
+            
+            if self._params["capacitor"] :
+                self._params["delta_mid_top"] = -1
+                self._params["delta_mid_bot"] = -1
+                self._params["const_pot_on"] = 1
+
+            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"])
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D

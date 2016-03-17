@@ -1773,6 +1773,48 @@ The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"u
     \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		dielectric=1,
+		top=\arg{double},
+		mid=\arg{double},
+		bot=\arg{double}
+	}
+	\leavevmode \\
+	\object{ 
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		capacitor=1,
+		pot\textunderscore diff=\arg{double}
+	}[
+	]
+	\leavevmode\\
+	\object{ 
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		dielectric\textunderscore contrast\textunderscore on=1,
+		delta\textunderscore mid\textunderscore top=\arg{double},
+		delta\textunderscore mid\textunderscore bot=\arg{double}
+	}[
+	]
+\end{pysyntax}
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
 number of slices of the cell system, which has to be tuned manually.
