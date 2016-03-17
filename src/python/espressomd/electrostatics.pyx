@@ -404,6 +404,8 @@ IF ELECTROSTATICS:
                 raise ValueError("maxPWerror should be a positive double")
             if self._params["far_switch_radius_2"] < 0 and self._params["far_switch_radius_2"] != default_params["far_switch_radius_2"]:
                 raise ValueError("switch radius shoulb be a positive double")
+            if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
+                raise ValueError("switch radius shoulb be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]: 
                 raise ValueError("bessel_cutoff should be a positive integer")
 
@@ -426,26 +428,28 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params={}
             params.update(mmm1d_params)
-            print params["far_switch_radius_2"]
             params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
+            if self._params["far_switch_radius"] == -1:
+                self._params["far_switch_radius_2"] =-1
+            else:
+                self._params["far_switch_radius_2"] = self._params["far_switch_radius"] * self._params["far_switch_radius"]
             MMM1D_set_params(self._params["far_switch_radius_2"], self._params["maxPWerror"])
 
         def _tune(self):
             cdef int resp 
-            cdef char * log
-            resp, log= pyMMM1D_tune()
+            resp= pyMMM1D_tune()
             if resp:
                 raise Exception("failed to tune mmm1d ")
-            print log
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM1D
+            self._set_params_in_es_core()
             if self._params["tune"]:
                 self._tune()
 
@@ -504,6 +508,12 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
+            default_params=self.default_params()
+            if self._params["far_switch_radius"] == default_params["far_switch_radius"]:
+                self._params["far_switch_radius_2"] =-1
+            else:
+                self._params["far_switch_radius_2"] = self._params["far_switch_radius"] * self._params["far_switch_radius"]
+
             self.thisptr.set_params(globals.box_l[2], globals.temperature*coulomb.bjerrum, self._params["maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"]) 
 
         def _tune(self):

@@ -1867,6 +1867,20 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
 \begin{citebox}
   Please cite~\citewbibkey{mmm1d} when using MMM1D.
 \end{citebox}
+\begin{pysyntax}
+	\object{
+	electrostatics
+	}{
+	MMM1D
+	}{
+	bjerrum\textunderscore length=\arg{double},
+	[far\textunderscore switch\textunderscore radius=\arg{double},]
+	maxPWerror=\arg{double}
+	}	
+	\begin{features}
+		\required{ELECTROSTATICS} \required{PARTIAL_PERIODIC}
+	\end{features}
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1}
@@ -1892,6 +1906,22 @@ out the fastest one. If this takes too long, you can change the value
 of the setmd variable \keyword{timings}, which controls the number of
 test force calculations.
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		MMM1D\textunderscore GPU
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		[far\textunderscore switch\textunderscore radius=\arg{double}],
+		[bessel\textunderscore cutoff=\arg{int}],
+		maxPWerror=\arg{double}
+	}
+	\begin{features}
+		\required{ELECTROSTATICS} \required{CUDA} \required{PARTIAL_PERIODIC}
+		\required{MMM1D_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   \variant{1}
   inter coulomb \var{l_B} mmm1dgpu \var{switch\_radius}
