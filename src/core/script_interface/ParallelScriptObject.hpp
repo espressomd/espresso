@@ -1,7 +1,7 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  Max-Planck-Institute for Polymer Research, Theory Group
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,22 +19,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPES_SHAPE_HPP
-#define __SHAPES_SHAPE_HPP
+#ifndef __PARALLEL_SCRIPTOBJECTP_HPP
+#define __PARALLEL_SCRIPTOBJECTP_HPP
 
-#include <string>
-#include "script_interface/ParallelScriptObject.hpp"
-#include "utils/ParallelFactory.hpp"
+#include "ScriptObject.hpp"
+#include "ParallelObject.hpp"
 
-namespace Shapes {
-struct Shape : public ScriptInterface::ParallelScriptObject {
-  virtual int calculate_dist(const double *ppos, double *dist, double *vec) = 0;
-  /* Human readable name of the shape. */
-  virtual const std::string name() const { return std::string("Shape"); }
+namespace ScriptInterface {
+
+class ParallelScriptObject : public ScriptObject, public ParallelObject {
+ public:
+  virtual void broadcast_parameters();
+  virtual void set_parameters_all_nodes(Parameters &parameters);
+  virtual ~ParallelScriptObject();
+  
+ private:
+  virtual void callback(int par, int);   
+  enum CallbackActions { DELETE, SET_PARAMETERS, SET_PARAMETER };  
 };
 
-typedef typename Utils::ParallelFactory<Shape> Factory;
-void initialize_factory();
 }
 
 #endif

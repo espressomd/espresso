@@ -24,8 +24,10 @@
 
 /** For is_base_of */
 #include <type_traits>
-/** For shared_ptr */
+/** For function */
 #include <functional>
+/** For unique_ptr */
+#include <memory>
 /** For ParallelObject */
 #include "ParallelObject.hpp"
 

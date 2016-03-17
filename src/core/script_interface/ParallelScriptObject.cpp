@@ -19,40 +19,50 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include <functional>
-
 #include <boost/mpi.hpp>
 
+#include "ParallelScriptObject.hpp"
 #include "MpiCallbacks.hpp"
-#include "ParallelObject.hpp"
 
-std::unordered_map<int, ParallelObject *> ParallelObject::address_table;
+namespace ScriptInterface {
 
-/** Ctor and Dtor run on all nodes in parallel */
-ParallelObject::ParallelObject() {
- {
-    using namespace std::placeholders;    
-    MpiCallbacks::function_type f;
-    /** Bind member function to this instance */
-    f = std::bind(&ParallelObject::callback, this, _1, _2);
+void ParallelScriptObject::broadcast_parameters() {
+  Parameters master_parameters = get_parameters();
+  
+  set_parameters_all_nodes(master_parameters);
+}
 
-    m_callback_id = mpiCallbacks().add(f);
+void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
+  call_slaves(SET_PARAMETERS, 0);
 
-    address_table[m_callback_id] = this;        
+  boost::mpi::communicator comm;
+  boost::mpi::broadcast(comm, parameters, 0);
+    
+  set_parameters(parameters);
+}
+
+ParallelScriptObject::~ParallelScriptObject() {  
+  if(mpiCallbacks().mpi_comm.rank() == 0) {
+    call_slaves(DELETE, 0);
   }
 }
 
-ParallelObject::~ParallelObject() {
-  /** Remove the callback when deleting the object */
-  mpiCallbacks().remove(m_callback_id);
+void ParallelScriptObject::callback(int par, int) {
+  switch(par) {
+    case SET_PARAMETERS:
+      {
+        Parameters param;
+        boost::mpi::communicator comm;
+        boost::mpi::broadcast(comm, param, 0);
+        set_parameters(param);          
+      }
+      break;
+    case DELETE:
+      delete this;
+      return;
+    default:
+      break;
+  }
 }
 
-void ParallelObject::call_slaves(int par1, int par2) {
-  mpiCallbacks().call(m_callback_id, par1, par2);
-}
- 
-int ParallelObject::get_id() const { return m_callback_id; }
-
-ParallelObject *ParallelObject::get_local_address(int id) {
-  return address_table.at(id);
 }
