@@ -1500,6 +1500,65 @@ requires assigning charges to the particles.  This is done using the
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ P3M 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double}
+	}[
+	]
+	\leavevmode \\
+	\object{
+		electrostatics
+	}{ P3M 
+	}{
+		bjerrum\textunderscore length=\arg{double}
+		r\textunderscore cut=\arg{double},
+		mesh=[\arg{int}, \arg{int}, \arg{int}],
+		cao=\arg{int},
+		alpha=\arg{double},
+		alpha=\arg{double},
+		epsilon=metallic | \arg{double},
+		inter=\arg{int},
+		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+	\end{features}
+\end{pysyntax}
+
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ P3M\textunderscore GPU
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double}
+	}[
+	]
+	\leavevmode \\
+	\object{
+		electrostatics
+	}{ P3M\textunderscore GPU
+	}{
+		bjerrum\textunderscore length=\arg{double}
+		r\textunderscore cut=\arg{double},
+		mesh=[\arg{int}, \arg{int}, \arg{int}],
+		cao=\arg{int},
+		alpha=\arg{double},
+		alpha=\arg{double},
+		epsilon=metallic | \arg{double},
+		inter=\arg{int},
+		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+	\end{features}
+\end{pysyntax}
+
 \begin{essyntax}
   inter coulomb \var{l_B} p3m [gpu] 
   \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
@@ -1627,6 +1686,24 @@ have the following meaning:
 \index{EwaldGPU method|mainindex}
 \index{interactions!EwaldGPU|mainindex}
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		EwaldGpu
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double},
+		precision=\arg{double},
+		K\textunderscore max=\arg{int} | [\arg{int}, \arg{int}, \arg{int}],
+		[alpha=\arg{double}],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+		\required{EWALD_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   inter coulomb \var{l_B} ewaldgpu 
   \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{alpha}
