@@ -533,6 +533,13 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      v[0] *= smaller_time_step/time_step;
+      v[1] *= smaller_time_step/time_step;
+      v[2] *= smaller_time_step/time_step;
+    }
+#endif
     memmove(p->m.v, v, 3*sizeof(double));
   }
   else
@@ -545,8 +552,14 @@ void mpi_send_v_slave(int pnode, int part)
 {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+#endif
   }
 
   on_particle_change();
@@ -1921,6 +1934,18 @@ void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
     p->p.smaller_timestep = smaller_timestep;
   }
   else {
@@ -1936,9 +1961,23 @@ void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
 #ifdef MULTI_TIMESTEP
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    int smaller_timestep;
     MPI_Status status;
-    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+    MPI_Recv(&smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
        comm_cart, &status);
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
+    p->p.smaller_timestep = smaller_timestep;
   }
 
   on_particle_change();
