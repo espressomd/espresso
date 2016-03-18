@@ -23,7 +23,7 @@ add_custom_target(EspressoConfig DEPENDS config-features.hpp)
 add_dependencies(EspressoConfig myconfig)
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp )
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Constraints Shapes)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Constraints Shapes ScriptInterface)
 target_link_libraries(EspressoCore ${MPI_SOURCE} ${Boost_MPI_LIBRARY_RELEASE} ${Boost_SERIALIZATION_RELEASE})
 
 if(SCAFACOS)

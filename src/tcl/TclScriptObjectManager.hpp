@@ -1,19 +1,34 @@
+/*
+  Copyright (C) 2015,2016 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef __TCLSCRIPTOBJECTMANAGER_HPP
 #define __TCLSCRIPTOBJECTMANAGER_HPP
 
-#include "TclCommand.hpp"
-#include "ScriptObject.hpp"
-#include "utils/ManagedNumeratedContainer.hpp"
-
-#ifdef HAVE_CXX11
-
 #include <type_traits>
-#endif
-
 #include <iostream>
 #include <string>
 #include <exception>
 #include <memory>
+#include <list>
+
+#include "TclCommand.hpp"
+#include "script_interface/ScriptObject.hpp"
+#include "utils/ManagedNumeratedContainer.hpp"
 
 namespace Tcl {
 
@@ -23,9 +38,7 @@ template<class T>
 class TclScriptObjectManager : public TclCommand {
 public:
   TclScriptObjectManager(Tcl_Interp *_interp) : TclCommand(_interp) {
-#ifdef HAVE_CXX11
-    static_assert(std::is_base_of<ScriptObject, T>::value, "Type has to be subclass of ScriptObject");
-#endif
+    static_assert(std::is_base_of<ScriptInterface::ScriptObject, T>::value, "Type has to be subclass of ScriptObject");
   }
 
   void parse_from_string(std::list<std::string> &argv) {
