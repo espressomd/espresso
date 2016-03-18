@@ -124,6 +124,7 @@ IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
 
         def validate_params(self):
+            print "validate_params"
             default_params = self.default_params()
             if not (self._params["bjerrum_length"] > 0.0):
                 raise ValueError("Bjerrum_length should be a positive double")
@@ -167,9 +168,11 @@ IF P3M == 1:
             return ["bjerrum_length", "accuracy"]
 
         def default_params(self):
+            print "default_params"
             return {"cao": -1,
                     "inter": -1,
                     "r_cut": -1,
+                    "alpha": -1,
                     "accuracy": -1,
                     "mesh": [-1, -1, -1],
                     "epsilon": 0.0,
@@ -177,6 +180,7 @@ IF P3M == 1:
                     "tune": True}
 
         def _get_params_from_es_core(self):
+            print "_get_params_from_es_core"
             params = {}
             params.update(p3m.params)
             params["bjerrum_length"] = coulomb.bjerrum
@@ -184,18 +188,22 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
-            p3m_set_ninterpol(self._params["inter"])
-            python_p3m_set_mesh_offset(self._params["mesh_off"])
+            print "_set_params_in_es_core"
+
             python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
                                   "cao"], self._params["alpha"], self._params["accuracy"])
             p3m_set_eps(self._params["epsilon"])
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
+            p3m_set_ninterpol(self._params["inter"])
+            python_p3m_set_mesh_offset(self._params["mesh_off"])
+
 
         def _tune(self):
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
-            p3m_set_eps(self._params["epsilon"])
+            print "_tune"
             python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                        "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+#           p3m_set_eps(self._params["epsilon"])
+#           coulomb_set_bjerrum(self._params["bjerrum_length"])
             resp, log = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
@@ -204,6 +212,7 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            print "_activate_method"
             if self._params["tune"]:
                 self._tune()
 

@@ -21,6 +21,7 @@ cdef class Actor:
         self._set_params_in_es_core()
 
     def __init__(self, *args, **kwargs):
+        print "actor__init__"
         self._isactive = False
         self._params = self.default_params()
         self.system = None
@@ -40,6 +41,7 @@ cdef class Actor:
         self._set_params_in_es_core()
 
     def _activate(self):
+        print "actor_activate"
         inter = self._get_interaction_type()
         if Actor.active_list[inter]:
             raise ThereCanOnlyBeOne(self.__class__.__bases__[0])

@@ -115,10 +115,24 @@ for i in range(n_part / 2 - 1):
     system.part[2 * i + 1].q = 1.0
 # P3M setup after charge assigned
 #############################################################
-p3m = electrostatics.P3M_GPU(bjerrum_length=1.0, accuracy=1e-2)
+
+print("\nSCRIPT--->Create p3m\n")
+p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
+
+print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
 
-print("P3M parameter:\n")
+print("\nSCRIPT--->P3M parameter:\n")
+p3m_params = p3m.get_params()
+for key in p3m_params.keys():
+    print("{} = {}".format(key, p3m_params[key]))
+
+print("\nSCRIPT--->Create p3m again\n")
+p3m._tune() 
+    2 = electrostatics.P3M(bjerrum_length=3.0, accuracy=1e-3, tune=True)
+system.actors.add(p3m)
+    
+print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
 for key in p3m_params.keys():
     print("{} = {}".format(key, p3m_params[key]))
