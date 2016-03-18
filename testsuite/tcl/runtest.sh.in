@@ -210,7 +210,7 @@ if test "x$failed" != "x"; then
     echo
     echo "**************************************************"
     echo "** Not all test cases were successful!"
-    echo "** Have a look at the file testsuite/runtest.log"
+    echo "** Have a look at the file testsuite/tcl/runtest.log"
     echo "** for the output of the testcases."
     if test "x$interrupted" != "x"; then
 	echo "**************************************************"
