@@ -83,7 +83,8 @@ libEspressoTcl_la_SOURCES = \
 	twist_stack_tcl.hpp twist_stack_tcl.cpp \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
-	integrate_sd_tcl.cpp integrate_sd_tcl.hpp
+	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
+	mpiio_tcl.cpp mpiio_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
