@@ -41,7 +41,10 @@
 #include "interaction_data.hpp"
 #include "random.hpp"
 #include "integrate.hpp"
-#include "constraint.hpp"
+#ifdef CONSTRAINTS
+#include "constraints/ConstraintList.hpp"
+#include "constraints/GeometryConstraint.hpp"
+#endif
 #include "global.hpp"
 
 
@@ -126,10 +129,7 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 #ifdef CONSTRAINTS
 
 int constraint_collision(double *p1, double *p2){
-  Particle part1,part2;
   double d1,d2,v[3];
-  Constraint *c;
-  int i;
   double folded_pos1[3];
   double folded_pos2[3];
   int img[3];
@@ -140,32 +140,16 @@ int constraint_collision(double *p1, double *p2){
   memmove(folded_pos2, p2, 3*sizeof(double));
   fold_position(folded_pos2, img);
 
-  for(i=0;i<n_constraints;i++){
-    c=&constraints[i];
-    switch(c->type){
-    case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1,folded_pos1,&part1,&c->c.wal,&d1,v);
-      calculate_wall_dist(&part2,folded_pos2,&part2,&c->c.wal,&d2,v);
-      if(d1*d2<=0.0)
+  for(auto &it : Constraints::list()) {
+    const Constraints::GeometryConstraint *c = dynamic_cast<Constraints::GeometryConstraint *>(it);
+    
+    if(c != nullptr){
+      c->get_shape()->calculate_dist(folded_pos1, &d1, v);
+      c->get_shape()->calculate_dist(folded_pos2, &d2, v);
+      if(d1*d2 <= 0.0)
 	return 1;
-      break;
-    case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1,folded_pos1,&part1,&c->c.sph,&d1,v);
-      calculate_sphere_dist(&part2,folded_pos2,&part2,&c->c.sph,&d2,v);
-      if(d1*d2<0.0)
-	return 1;
-      break;
-    case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1,folded_pos1,&part1,&c->c.cyl,&d1,v);
-      calculate_cylinder_dist(&part2,folded_pos2,&part2,&c->c.cyl,&d2,v);
-      if(d1*d2<0.0)
-	return 1;
-      break;
-    default:
-      if (warnings) fprintf (stderr, "Warning: Only wall, cylinder and sphere constraints can be excluded from the polymer accessible volume.\n"); 
-      break;
-    }
-  }
+    }    
+  }  
   return 0;
 }
 

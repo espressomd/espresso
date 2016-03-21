@@ -73,7 +73,7 @@ void init_forces()
   }
 
 #ifdef CONSTRAINTS
-  init_constraint_forces();
+  Constraints::list().init_forces();
 #endif
 }
 

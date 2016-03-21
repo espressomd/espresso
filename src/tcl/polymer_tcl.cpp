@@ -34,7 +34,6 @@
 #include "interaction_data.hpp"
 #include "parser.hpp"
 #include "grid.hpp"
-#include "constraint.hpp"
 
 /************************************************************* 
  * Functions                                                 *
@@ -219,15 +218,6 @@ int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **ar
       Tcl_AppendResult(interp, "Constraints are not compiled in!", (char *)NULL); return (TCL_ERROR); }
 #else
       constr=1;
-      tmp_try=0;
-      for(j=0;j<n_constraints;j++){
-	if(constraints[j].type==CONSTRAINT_MAZE || constraints[j].type==CONSTRAINT_PORE || constraints[j].type==CONSTRAINT_PLATE || constraints[j].type==CONSTRAINT_RHOMBOID)
-	  tmp_try++;
-      }
-      if (tmp_try>0) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "Warning: Only constraints of type WALL/SPHERE/CYLINDER are respected!", (char *)NULL); return (TCL_ERROR); }
-      else { i++; }
     }
 #endif
     /* Default */

@@ -19,13 +19,21 @@
 
 EXTRA_DIST =
 CLEANFILES =
+SUBDIRS = shapes constraints
+
 if UNIT_TESTS
-SUBDIRS = unit_tests
+SUBDIRS += unit_tests
 endif
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 lib_LTLIBRARIES = libEspresso.la
+
+# Objects from Subdirs
+libEspresso_la_LIBADD = \
+	shapes/libEspressoShapes.la \
+	constraints/libEspressoConstraints.la
+
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
@@ -36,7 +44,6 @@ libEspresso_la_SOURCES = \
 	comfixed.cpp comfixed.hpp \
 	comforce.hpp comforce.cpp \
 	config.hpp \
-	constraint.cpp constraint.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
@@ -77,6 +84,7 @@ libEspresso_la_SOURCES = \
 	nemd.cpp nemd.hpp \
 	npt.cpp npt.hpp \
 	nsquare.cpp nsquare.hpp \
+	Parameters.hpp \
 	particle_data.cpp particle_data.hpp \
 	polymer.cpp polymer.hpp \
 	polynom.cpp polynom.hpp \
@@ -111,12 +119,17 @@ libEspresso_la_SOURCES = \
 	virtual_sites_relative.cpp virtual_sites_relative.hpp \
 	vmdsock.cpp vmdsock.hpp \
 	ghmc.cpp ghmc.hpp \
-	Vector.cpp Vector.hpp \
-	SystemInterface.cpp SystemInterface.hpp \
+	Vatiant.hpp Variant.cpp \
+	Vector.hpp \
+	ScriptObject.hpp \
+	SystemInterface.hpp \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp
+	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp \
+	MpiCallbacks.hpp MpiCallbacks.cpp \
+	ParallelObject.hpp ParallelObject.cpp \
+	ParallelScriptObject.hpp ParallelScriptObject.cpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -276,7 +289,7 @@ $(LOFILES): %.lo: %.cu
 		$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-libEspresso_la_LIBADD = $(LOFILES)
+libEspresso_la_LIBADD += $(LOFILES)
 EXTRA_DIST += $(CUDA_SOURCE_FILES) $(CUDA_HEADER_FILES)
 CLEANFILES += $(LOFILES)
 

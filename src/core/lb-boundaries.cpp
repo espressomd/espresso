@@ -25,6 +25,10 @@
  *
  */
 
+#include "config.hpp"
+
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
+
 #include "utils.hpp"
 #include "constraint.hpp"
 #include "lb-boundaries.hpp"
@@ -34,8 +38,6 @@
 #include "electrokinetics_pdb_parse.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
-
-#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
 int n_lb_boundaries = 0;
 LB_Boundary *lb_boundaries = NULL;

@@ -16,13 +16,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+
+#ifndef __UTILS_VECTOR_HPP
+#define __UTILS_VECTOR_HPP
+
 #include <algorithm>
 #include <cmath>
+#include <vector>
 #ifdef HAVE_CXX11
 #include <initializer_list>
 #endif
-
-/* @TODO: should have move semantics with c++11 for peformance reasons. */
 
 template<int n, typename Scalar>
 class Vector {
@@ -37,6 +40,14 @@ class Vector {
       d[i] = a[i];
   }
 
+  Vector(const Vector& rhs) {
+    std::copy(rhs.d, rhs.d+n, d);
+  }
+
+  Vector(const std::vector<Scalar> &rhs) {
+    std::copy(rhs.d, rhs.d+n, d);
+  }
+  
 #ifdef HAVE_CXX11
   Vector(std::initializer_list<Scalar> l) {
     std::copy(l.begin(), l.begin() + n, d);
@@ -51,20 +62,18 @@ class Vector {
     return d + n;
   }
  
-  int size() const { return n; }
-  
-  Vector(const Vector& rhs) {
-    std::copy(rhs.d, rhs.d+n, d);
-  }
-
-  void swap(Vector& rhs) {
-    std::swap(d, rhs.d);
-  }
-
+  static int size() { return n; }
+    
   Vector& operator=(Vector& rhs) {
-    Vector tmp(rhs); swap(rhs); return *this;
+    std::copy(rhs.d, rhs.d + n, d);
+    return *this;
   }
 
+  Vector& operator=(const std::vector<Scalar>& rhs) {
+    std::copy(rhs.begin(), rhs.end(), d);
+    return *this;
+  }
+  
   Scalar &operator[](int i) {
     return d[i];
   }
@@ -85,7 +94,7 @@ class Vector {
   }
 
   inline Scalar norm(void) const {
-    return sqrt(norm2());
+    return std::sqrt(norm2());
   }
 
   inline void normalize(void) {
@@ -116,3 +125,4 @@ class Vector {
 
 typedef Vector<3, double> Vector3d;
 
+#endif

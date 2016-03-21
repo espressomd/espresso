@@ -48,7 +48,7 @@ if { [ catch {
 # Simulation box
 #############################################################
   setmd box_l 15 15 15
-  constraint rhomboid corner 5 5 5 b 5 0 0 a 0 5 0 c 0 0 5 direction outside type 1
+  constraint rhomboid corner 5 5 5 b 5 0 0 a 0 5 0 c 0 0 5 direction 1 type 1
 
 # Particles
 #############################################################

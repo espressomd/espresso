@@ -22,9 +22,9 @@ add_custom_command(OUTPUT config-version.cpp
 add_custom_target(EspressoConfig DEPENDS config-features.hpp)
 add_dependencies(EspressoConfig myconfig)
 
-add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp ${MPI_SOURCE})
-
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary)
+add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.hpp config-features.cpp config-version.cpp )
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Constraints Shapes ScriptInterface)
+target_link_libraries(EspressoCore ${MPI_SOURCE} ${Boost_MPI_LIBRARY_RELEASE} ${Boost_SERIALIZATION_RELEASE})
 
 if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
@@ -56,3 +56,6 @@ add_subdirectory(actor)
 add_subdirectory(immersed_boundary)
 add_subdirectory(object-in-fluid)
 add_subdirectory(electrostatics)
+add_subdirectory(constraints)
+add_subdirectory(shapes)
+add_subdirectory(script_interface)

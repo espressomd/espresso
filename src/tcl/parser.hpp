@@ -82,6 +82,8 @@ int gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define ARG0_IS_DOUBLELIST(il) ARG_IS_DOUBLELIST(0, (il))
 #define ARG1_IS_DOUBLELIST(il) ARG_IS_DOUBLELIST(1, (il))
 
+#define STR_IS_D(str, dest) ((!str.empty()) && (!(Tcl_GetDouble(interp, str.c_str(), &(dest)) == TCL_ERROR)))
+
 #define CHECK_VALUE(func, errmsg) \
         if (func == ES_ERROR) { \
            Tcl_AppendResult(interp, errmsg, (char *)NULL); \

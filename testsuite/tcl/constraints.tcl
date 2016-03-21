@@ -83,6 +83,8 @@ proc setup_system {file new} {
     inter 4 5 lennard-jones 1.0 1.0 1.12246 0.25 0.0
     inter 4 3 lennard-jones 1.0 1.0 1.12246 0.25 0.0
 
+    puts [constraint mindist_position 1. 2.]
+
     if { $new ==1 } {
 	# equilibrate system with lj-cap potential
 	set cap 100

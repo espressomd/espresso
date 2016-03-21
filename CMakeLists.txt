@@ -43,6 +43,7 @@ option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
+option(WITH_CCACHE "Use ccache as a launcher for the compiler" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 
 # choose the name of the config file
@@ -130,6 +131,8 @@ if(WITH_SCAFACOS)
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
+find_package(Boost COMPONENTS serialization mpi)
+
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
   pkg_check_modules(VALGRIND valgrind)
@@ -178,6 +181,17 @@ if (NOT DEFINED DATA)
 endif(NOT DEFINED DATA)
 
 set(SCRIPTDIR ${DATA}/scripts)
+
+#######################################################################
+# ccache
+#######################################################################
+if(WITH_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILER ${CCACHE_FOUND})
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_FOUND})
+  endif(CCACHE_FOUND)
+endif(WITH_CCACHE)
 
 #######################################################################
 # Flags

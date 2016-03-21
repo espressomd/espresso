@@ -18,18 +18,26 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CONSTRAINT_TCL_H
-#define CONSTRAINT_TCL_H
 
-#include "parser.hpp"
+#ifndef __PARALLEL_SCRIPTOBJECTP_HPP
+#define __PARALLEL_SCRIPTOBJECTP_HPP
 
-#ifdef CONSTRAINTS
+#include "ScriptObject.hpp"
+#include "ParallelObject.hpp"
 
-int tclcommand_constraint_print(Tcl_Interp *interp);
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-			  int argc, char **argv);
+namespace ScriptInterface {
 
+class ParallelScriptObject : public ScriptObject, public ParallelObject {
+ public:
+  virtual void broadcast_parameters();
+  virtual void set_parameters_all_nodes(Parameters &parameters);
+  virtual ~ParallelScriptObject();
+  
+ private:
+  virtual void callback(int par, int);   
+  enum CallbackActions { DELETE, SET_PARAMETERS, SET_PARAMETER };  
+};
 
-#endif /* CONSTRAINTS */
+}
 
-#endif /* CONSTRAINT_TCL_H */
+#endif

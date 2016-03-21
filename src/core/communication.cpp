@@ -73,6 +73,7 @@
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
 #include "scafacos.hpp"
+#include "MpiCallbacks.hpp"
 
 using namespace std;
 
@@ -112,7 +113,6 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
-  CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
@@ -174,38 +174,27 @@ static int terminated = 0;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+namespace {
+
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback * const slave_callbacks[] = {
+std::vector<SlaveCallback *> slave_callbacks{
   CALLBACK_LIST
 };
-
-const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
 
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
-const char *names[] = {
+std::vector<std::string> names{
   CALLBACK_LIST
 };
 
+}
+
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
-
-/** The requests are compiled statically here, so that after a crash
-    you can get the last issued request from the debugger. */ 
-static int request[3];
-
-/** Map callback function pointers to request codes */
-#ifndef HAVE_CXX11
-typedef std::map<SlaveCallback *, int> request_map_type;
-#else
-#include <unordered_map>
-typedef std::unordered_map<SlaveCallback *, int> request_map_type;
-#endif
-static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -214,6 +203,15 @@ int mpi_check_runtime_errors(void);
 /**********************************************
  * procedures
  **********************************************/
+
+void mpi_add_callback(SlaveCallback *cb) {
+#ifdef HAVE_MPI
+  /** Name is only used for debug messages */
+  names.push_back("dynamic callback");
+  mpiCallbacks().add(cb);
+#endif
+}
+
 
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
@@ -227,6 +225,7 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef HAVE_MPI
 #ifdef OPEN_MPI
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
@@ -273,39 +272,27 @@ void mpi_init(int *argc, char ***argv)
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 
-  for(int i = 0; i < N_CALLBACKS; ++i)  {
-    request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
+  for(int i = 0; i < slave_callbacks.size(); ++i)  {
+    mpiCallbacks().add(slave_callbacks[i]);
   }
-    
+#endif /* HAVE_MPI */
+  
   initRuntimeErrorCollector();
 }
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  request_map_type::iterator req_it = request_map.find(cb);
-  if (req_it == request_map.end())
-  {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
-    errexit();
+  auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
+  if(it != slave_callbacks.end()) {
+    auto id = it - slave_callbacks.begin();    
+    //    std::cout << "mpi_call(" << names[id] << "), id = " << id << std::endl;
+  } else {
+    //std::cout << "mpi_call(dynamic)" << std::endl;
   }
-  const int reqcode = req_it->second;
-  
-  request[0] = reqcode;
-  request[1] = node;
-  request[2] = param;
-
-  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
-		     this_node, names[reqcode], node, param));
-#ifdef ASYNC_BARRIER
-  MPI_Barrier(comm_cart);
-#endif
-  MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
+  mpiCallbacks().call(cb, node, param);
+}  
 #else
-
 void mpi_call(SlaveCallback cb, int node, int param) {}
-
 #endif
 
 /**************** REQ_TERM ************/
@@ -2265,54 +2252,6 @@ void mpi_send_ext_force_slave(int pnode, int part)
 #endif
 }
 
-/*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(int del_num)
-{
-#ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
-  }
-  else if (del_num == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-  else {
-    memmove(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-
-  on_constraint_change();
-#endif
-}
-
-void mpi_bcast_constraint_slave(int node, int parm)
-{   
-#ifdef CONSTRAINTS
-  if(parm == -1) {
-    n_constraints++;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
-  }
-  else if (parm == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));
-  }
-  else {
-    memmove(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint*)Utils::realloc(constraints,n_constraints*sizeof(Constraint));    
-  }
-
-  on_constraint_change();
-#endif
-}
-
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lbboundary(int del_num)
 {
@@ -2447,14 +2386,14 @@ void mpi_get_constraint_force(int cons, double force[3])
 {
 #ifdef CONSTRAINTS
   mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  /* @TODO do something */
 #endif
 }
 
 void mpi_get_constraint_force_slave(int node, int parm)
 {
 #ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  /* @TODO: do something */
 #endif
 }
 
@@ -3165,22 +3104,25 @@ void mpi_thermalize_cpu_slave(int node, int temp)
 
 void mpi_loop()
 {
-  for (;;) {
-#ifdef ASYNC_BARRIER
-    MPI_Barrier(comm_cart);
-#endif
-    MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
-		       names[request[0]], request[1], request[2]));
-    if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
-      fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
-      errexit();
-    }
-    slave_callbacks[request[0]](request[1], request[2]);
-    COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
-		       names[request[0]], request[1], request[2]));
+  /** @TODO: Adde debugging information */
+  mpiCallbacks().loop();
+//   for (;;) {
+// #ifdef ASYNC_BARRIER
+//     MPI_Barrier(comm_cart);
+// #endif
+//     int request[3];
+//     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+//     COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
+// 		       names[request[0]], request[1], request[2]));
+//     if ((request[0] < 0) || (request[0] >= slave_callbacks.size())) {
+//       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
+//       errexit();
+//     }
+//     slave_callbacks[request[0]](request[1], request[2]);
+//     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
+// 		       names[request[0]], request[1], request[2]));
   
-  }
+//   }
 }
 
 /*********************** error abort ****************/

@@ -23,6 +23,10 @@
  * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
  *
  */
+
+#include "config.hpp"
+
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 #include "utils.hpp"
 #include "parser.hpp"
 #include "constraint.hpp"
@@ -31,8 +35,6 @@
 #include "lb-boundaries.hpp"
 #include "communication.hpp"
 #include <limits>
-
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 // TCL Parser functions
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
@@ -1437,11 +1439,8 @@ int tclcommand_lbboundary_box(LB_Boundary *lbb, Tcl_Interp *interp, int argc, ch
   return (TCL_OK);
 }
 
-#endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
-
 int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
-#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
   
   if ( lattice_switch == LATTICE_OFF ) {
@@ -1569,10 +1568,6 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   }
 
   return gather_runtime_errors(interp, status);
-
-#else /* !defined(LB_BOUNDARIES) || !defined(LB_BOUNDARIES_GPU */
-  Tcl_AppendResult(interp, "LB_BOUNDARIES/LB_BOUNDARIES_GPU not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 }
 
+#endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */

@@ -1,5 +1,9 @@
 /* 
+<<<<<<< HEAD
+   Copyright (C) 2010,2011,2012,2014,2015 The ESPResSo project
+=======
    Copyright (C) 2010,2011,2012,2014,2015,2016 The ESPResSo project
+>>>>>>> master
 
    This file is part of ESPResSo.
   
@@ -18,6 +22,7 @@
 */
 #include "config.hpp"
 #ifdef CUDA /* Terminates at end of file */
+#ifdef ELECTROKINETICS /* Terminates at end of file */
 
 #include <cuda.h>
 #include <cufft.h>
@@ -34,8 +39,6 @@
 #include "fd-electrostatics.hpp"
 #include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
-
-#ifdef ELECTROKINETICS /* Terminates at end of file */
 
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */

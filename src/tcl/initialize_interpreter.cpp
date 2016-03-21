@@ -26,7 +26,6 @@
 #include "global.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
-#include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
 #include "dpd_tcl.hpp"
 #include "galilei_tcl.hpp"
@@ -64,6 +63,12 @@
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
+#include "TclScriptObject.hpp"
+#include "TclScriptObjectManager.hpp"
+#include "shapes/Shape.hpp"
+#ifdef CONSTRAINTS
+#include "TclConstraintManager.hpp"
+#endif
 
 #ifdef TK
 #include <tk.h>
@@ -176,8 +181,6 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   #ifdef H5MD
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
-  /* in constraint.cpp */
-  REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in readpdb.cpp */
@@ -198,7 +201,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
   REGISTER_COMMAND("lbnode", tclcommand_lbnode);
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)  
   REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
+#endif
   /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.hpp */
@@ -254,6 +259,13 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
+
+  Tcl::TclScriptObjectManager<Shapes::Shape> *shape = new Tcl::TclScriptObjectManager<Shapes::Shape>(interp);  
+  shape->create_command("shape");
+
+  Constraints::Tcl::ConstraintManager *constraints = new Constraints::Tcl::ConstraintManager(interp);
+  constraints->create_command("constraint");  
+
 #if defined(SCAFACOS) and defined(ELECTROSTATICS)
   REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
 #endif

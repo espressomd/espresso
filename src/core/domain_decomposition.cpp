@@ -32,9 +32,7 @@
 #include "forces.hpp"
 #include "pressure.hpp"
 #include "energy_inline.hpp"
-#include "constraint.hpp"
 #include "initialize.hpp"
-#include "external_potential.hpp"
 
 /************************************************/
 /** \name Defines */
@@ -1160,7 +1158,9 @@ void calc_link_cell()
 	j_start = 0;
 	/* Tasks within cell: bonded forces */
 	if(n == 0) {
+
           add_single_particle_force(&p1[i]);
+
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 

@@ -36,8 +36,6 @@
 #include "energy_inline.hpp"
 #include "pressure.hpp"
 #include "domain_decomposition.hpp"
-#include "constraint.hpp"
-#include "external_potential.hpp"
 
 /** Granularity of the verlet list */
 #define LIST_INCREMENT 20

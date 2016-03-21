@@ -37,10 +37,12 @@
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
 
-#include "utils.hpp"
-#include "constraint.hpp"
+#include "config.hpp"
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
+
+#include "utils.hpp"
+#include "constraint.hpp"
 
 /** wall constraint applied */
 #define LB_BOUNDARY_WAL 1

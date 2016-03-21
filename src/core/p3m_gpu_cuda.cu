@@ -589,6 +589,7 @@ void assign_charges(const CUDA_particle_data * const pdata,
   while((parts_per_block+1)*cao3 <= THREADS_PER_BLOCK) {
     parts_per_block++;
   }
+  
   if((p.n_part % parts_per_block) == 0)
     n_blocks = max(1, p.n_part / parts_per_block);
   else

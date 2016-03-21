@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):

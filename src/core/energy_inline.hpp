@@ -69,12 +69,12 @@
 #include "twist_stack.hpp"
 #include "actor/EwaldGPU_ShortRange.hpp"
 
-#ifdef CONSTRAINTS
-#include "constraint.hpp"
-#endif
-
 #ifdef EXTERNAL_FORCES
 #include "external_potential.hpp"
+#endif
+
+#ifdef CONSTRAINTS
+#include "constraints/ConstraintList.hpp"
 #endif
 
 #include "energy.hpp"
@@ -523,7 +523,7 @@ inline void add_single_particle_energy(Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
 #ifdef CONSTRAINTS
-  add_constraints_energy(p);
+  Constraints::list().add_energies(p);
 #endif
 #ifdef EXTERNAL_FORCES
   add_external_potential_energy(p);

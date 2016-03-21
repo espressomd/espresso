@@ -41,7 +41,6 @@ libEspressoTcl_la_SOURCES = \
 	comfixed_tcl.cpp comfixed_tcl.hpp \
 	comforce_tcl.cpp comforce_tcl.hpp \
 	config_tcl.cpp \
-	constraint_tcl.cpp constraint_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
 	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
 	external_potential_tcl.cpp external_potential_tcl.hpp \
@@ -83,7 +82,11 @@ libEspressoTcl_la_SOURCES = \
 	twist_stack_tcl.hpp twist_stack_tcl.cpp \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
-	integrate_sd_tcl.cpp integrate_sd_tcl.hpp
+	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
+	TclCommand.hpp TclCommand.cpp \
+	TclScriptObject.hpp TclScriptObject.cpp \
+	TclScriptObjectManager.hpp \
+	TclConstraintManager.cpp TclConstraintManager.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \

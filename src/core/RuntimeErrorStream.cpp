@@ -14,4 +14,6 @@ RuntimeErrorStream::~RuntimeErrorStream() {
   m_ec.error(m_buff, m_function.c_str(), m_file.c_str(), m_line);
 }
 
+
+
 }

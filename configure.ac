@@ -419,8 +419,12 @@ AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 ## Check for Boost
 ##################
 
-AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
-AX_BOOST_UNIT_TEST_FRAMEWORK
+BOOST_REQUIRE([1.42])
+BOOST_TEST
+BOOST_SERIALIZATION
+LIBS+= " $BOOST_SERIALIZATION_LIBS"
+BOOST_MPI
+LIBS+=" $BOOST_MPI_LIBS"
 AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
@@ -786,6 +790,8 @@ AC_CONFIG_FILES([
 	config/myconfig-sample-header.hpp
 	src/Makefile
 	src/core/Makefile
+        src/core/shapes/Makefile
+ 	src/core/constraints/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
 	src/core/unit_tests/Makefile
