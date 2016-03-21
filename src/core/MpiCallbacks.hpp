@@ -110,7 +110,7 @@ class MpiCallbacks {
    * Internal storage for the callback functions.
    */
   Utils::NumeratedContainer<function_type> m_callbacks;
-  /** Mapping of function pointers to ids, so callbabcks can be
+  /** Mapping of function pointers to ids, so static callbabcks can be
    *  called by their pointer for backward compapbility.
    */
   std::map<func_ptr_type, int> m_func_ptr_to_id;

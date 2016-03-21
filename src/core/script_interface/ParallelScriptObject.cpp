@@ -35,8 +35,7 @@ void ParallelScriptObject::broadcast_parameters() {
 void ParallelScriptObject::set_parameters_all_nodes(Parameters &parameters) {
   call_slaves(SET_PARAMETERS, 0);
 
-  boost::mpi::communicator comm;
-  boost::mpi::broadcast(comm, parameters, 0);
+  boost::mpi::broadcast(mpiCallbacks().mpi_comm, parameters, 0);
     
   set_parameters(parameters);
 }
@@ -52,8 +51,7 @@ void ParallelScriptObject::callback(int par, int) {
     case SET_PARAMETERS:
       {
         Parameters param;
-        boost::mpi::communicator comm;
-        boost::mpi::broadcast(comm, param, 0);
+        boost::mpi::broadcast(mpiCallbacks().mpi_comm, param, 0);
         set_parameters(param);          
       }
       break;
