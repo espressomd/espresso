@@ -254,7 +254,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
-#ifdef SCAFACOS
+#if defined(SCAFACOS) and defined(ELECTROSTATICS)
   REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
 #endif
 }
