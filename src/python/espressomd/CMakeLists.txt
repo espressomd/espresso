@@ -49,25 +49,29 @@ add_custom_target(espressomd)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
-  list(APPEND cython_generated_SRC "${basename}.cpp")
-  add_custom_command(OUTPUT ${basename}.cpp
-                     COMMAND ${CYTHON_EXECUTABLE}  --cplus
-                     -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
-                     -I ${CMAKE_CURRENT_SOURCE_DIR}
-                     -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
-                     ${cython_file}
-                     -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
-                     DEPENDS _espresso/myconfig.pxi ${cython_file}
-                     )
 
-  add_library(${basename} SHARED ${basename}.cpp)
+  if("${basename}" STREQUAL "")
+      message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
+  else()
+      list(APPEND cython_generated_SRC "${basename}.cpp")
+      add_custom_command(OUTPUT ${basename}.cpp
+                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
+                         -I ${CMAKE_CURRENT_SOURCE_DIR}
+                         -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
+                         ${cython_file}
+                         -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
+                         DEPENDS _espresso/myconfig.pxi ${cython_file}
+                         )
 
-  set_target_properties(${basename} PROPERTIES PREFIX "")
-  set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
-  if (APPLE)
-     set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+      add_library(${basename} SHARED ${basename}.cpp)
+      set_target_properties(${basename} PROPERTIES PREFIX "")
+      set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
+      if (APPLE)
+         set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+      endif()
+      target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+      add_dependencies(espressomd ${basename})
   endif()
-  target_link_libraries(${basename} EspressoCore ${LIBRARIES})
-  add_dependencies(espressomd ${basename})
 endforeach()
 

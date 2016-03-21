@@ -31,6 +31,8 @@ import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
 
+import sys
+
 setable_properties=["box_l","max_num_cells","min_num_cells",
                     "node_grid","npt_piston","npt_p_diff",
                     "periodicity","skin","time",
@@ -293,6 +295,18 @@ cdef class System:
             global sim_time
             return sim_time
 
+    property smaller_time_step:
+        def __set__(self, double _smaller_time_step):
+            IF MULTI_TIMESTEP:
+                global smaller_time_step
+                if _smaller_time_step <= 0:
+                    raise ValueError("Smaller time step must be positive")
+                mpi_set_smaller_time_step(_smaller_time_step)
+
+        def __get__(self):
+            global smaller_time_step
+            return smaller_time_step
+
     property time_step:
         def __set__(self, double _time_step):
             IF LB:
@@ -392,12 +406,13 @@ cdef class System:
                 global __seed
                 __seed=_seed
                 if(isinstance(_seed,int) and self.n_nodes==1):
+                    seed_array.resize(1)
                     seed_array[0]=int(_seed)
                     mpi_random_seed(0,seed_array)
-                elif(isinstance(_seed, list) or type(_seed)==np.ndarray):
+                elif( hasattr(_seed,"__iter__")):
                     if(len(_seed)<self.n_nodes or len(_seed)>self.n_nodes):
                         raise ValueError("The list needs to contain one seed value per node")
-
+                    seed_array.resize(len(_seed))
                     for i in range(len(_seed)):
                         seed_array[i]=int(_seed[i])
 
