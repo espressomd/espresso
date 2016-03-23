@@ -21,18 +21,15 @@
 
 #include "scafacos.hpp"
 
-#ifdef SCAFACOS
+#if defined(SCAFACOS) and defined(ELECTROSTATICS)
 
 #include <vector>
 
 #include <cassert>
 #include <memory>
-#include <string>
 #include <algorithm>
 #include <iostream>
 #include <limits>
-
-#include <mpi.h>
 
 #include "cells.hpp"
 #include "errorhandling.hpp"
@@ -44,11 +41,7 @@
 #include "interaction_data.hpp"
 #include "electrostatics/scafacos/Scafacos.hpp"
 
-#endif /* SCAFACOS */
-
 /** This file contains the c-like interface for Scafacos */
-
-#ifdef SCAFACOS
 
 namespace Electrostatics {
 namespace Scafacos {
@@ -252,8 +245,8 @@ void set_parameters(const std::string &method, const std::string &params) {
 
 #endif /* SCAFACOS */
 
-void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {  
-  #ifdef SCAFACOS
+void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
+  #if defined(SCAFACOS) and defined(ELECTROSTATICS)
   using namespace Electrostatics::Scafacos;
   std::string method;
   std::string params;
