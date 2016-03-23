@@ -358,6 +358,56 @@ binary particle data happens through
 For the exact format of the written binary sequence, see
 \texttt{src/tcl/binary_file_tcl.cpp}.
 
+
+\section{MPI-IO}
+\index{mpiio}
+
+When using \es with MPI, blockfiles and writemd have the disadvantage,
+that the master node does \textit{all} the output. This is done by
+sequentially communicating all particle data to the master node. MPI-IO
+offers the possibility to write out particle data in parallel using
+binary IO. To output variables and other non-array inforamtion, use
+normal blockfiles (section~\ref{sec:structured-file-format}).
+
+To dump data using MPI-IO, use the following syntax:
+\begin{essyntax}
+  mpiio \var{filename} \opt{read|write} \opt{pos|v|bond|type}
+\end{essyntax}
+This command writes data to several files using \var{filename} as
+filename prefix. Beware, that \var{filename} must not be a Tcl channel
+but a string which must not contain colons (MPI fails on these). The
+data can be positions (\keyword{pos}), velocities (\keyword{v}),
+particle types (\keyword{type}) and particle bonds (\keyword{bond}). The
+particle ids are always dumped. For safety reasons, MPI-IO will not
+overwrite existing files, so if the command fails and prints
+\texttt{MPI_ERR_IO} make sure the files are non-existent.
+
+The files produced by this command will be (assumed \var{filename} is
+``1''):
+\begin{description}[align=right,labelwidth=2cm]
+  \item [1.head] Internal information (Dumped fields, bond partner num); always produced
+  \item [1.pref] Internal information (Exscan results of nlocalparts);
+    always produced
+  \item [1.ids] Particle ids; always produced
+  \item [1.type] Particle types; optional
+  \item [1.pos] Particle positions; optional
+  \item [1.vel] Particle velocities; optional
+  \item [1.bond] Bond information; optional
+  \item [1.boff] Internal bond prefix information; optional, necessary
+    to read 1.bond
+\end{description}
+
+Currently, these files have to be read by exactly the same number of MPI
+processes that was used to dump them, otherwise an error is
+signalled. Also, the same type of machine (endianess, byte order) has to
+be used. Otherwise only garbage will be read. The read command replaces
+the particles, i.e. all previous existent particles will be
+\textit{deleted}.
+
+There is a python script (\texttt{tools/mpiio2blockfile.py}) which
+converts MPI-IO snapshots to regular \es blockfiles.
+
+
 \section{Writing VTF files}
 \label{sec:vtf}
 %\quickrefheading{Handling of VTF files}

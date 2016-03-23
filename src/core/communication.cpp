@@ -73,6 +73,7 @@
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
 #include "scafacos.hpp"
+#include "mpiio.hpp"
 
 using namespace std;
 
@@ -169,6 +170,7 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
   CB(mpi_scafacos_set_parameters_slave) \
+  CB(mpi_mpiio_slave) \
   
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -3258,3 +3260,39 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 #endif
 }
 
+
+void mpi_mpiio(const char *filename, unsigned fields, int write) {
+#ifdef HAVE_MPI
+  size_t flen = strlen(filename) + 1;
+  if (flen + 5 > INT_MAX) {
+    fprintf(stderr, "Seriously?\n");
+    errexit();
+  }
+  mpi_call(mpi_mpiio_slave, -1, (int) flen);
+  MPI_Bcast((void *) filename, (int) flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+#else
+  runtimeErrorMsg() << "ESPResSo is compiled without MPI support. No MPI-IO available.";
+#endif
+}
+
+void mpi_mpiio_slave(int dummy, int flen) {
+#ifdef HAVE_MPI
+  char *filename = new char[flen];
+  unsigned fields;
+  int write;
+  MPI_Bcast((void *) filename, flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+  delete[] filename;
+#endif
+}
