@@ -8,7 +8,7 @@ cache:
 
 before_install:
  - sudo apt-get update
- - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential pep8 cmake
+ - sudo apt-get install -y tcl-dev libhdf5-serial-dev build-essential pep8 cmake libboost-dev libboost-test-dev
  - if [ "$with_mpi" != false ]; then sudo apt-get install -y libopenmpi-dev openmpi-bin; fi
  - if [ "$with_fftw" != false ]; then sudo apt-get install -y libfftw3-dev; fi
  - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
