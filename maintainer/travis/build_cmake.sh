@@ -99,9 +99,9 @@ else
 fi
 
 if $with_fftw; then
-    cmake_params="-DWITH_FFTW=ON $cmake_params"
+    cmake_params="$cmake_params"
 else
-    cmake_params="-DWITH_FFTW=OFF $cmake_params"
+    cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
 
 if $with_tcl; then
