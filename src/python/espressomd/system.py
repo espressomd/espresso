@@ -10,7 +10,7 @@ class System(_system.System):
        _system.System.__init__(self)
 
     def __setattr__(self, name, value):
-        try: self.__getattribute__(name)
-        except AttributeError:
+        if hasattr(self, name):
+            super(System, self).__setattr__(name, value)
+        else:
             raise AttributeError("System does not have the attribute", name)
-        super(System, self).__setattr__(name, value)
