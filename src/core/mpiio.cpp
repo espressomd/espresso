@@ -82,7 +82,7 @@ static void mpiio_dump_array(std::string fn, T* arr, size_t len,
   MPI_File f;
   int ret;
 
-  ret = MPI_File_open(MPI_COMM_WORLD, fn.c_str(),
+  ret = MPI_File_open(MPI_COMM_WORLD, const_cast<char *>(fn.c_str()),
                       // MPI_MODE_EXCL: Prohibit overwriting
                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
                       MPI_INFO_NULL, &f);
@@ -95,8 +95,8 @@ static void mpiio_dump_array(std::string fn, T* arr, size_t len,
             fn.c_str(), buf);
     errexit();
   }
-  ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T, "native",
-                          MPI_INFO_NULL);
+  ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T,
+                          const_cast<char *>("native"), MPI_INFO_NULL);
   ret |= MPI_File_write_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
   MPI_File_close(&f);
   if (ret) {
@@ -281,8 +281,9 @@ static void mpiio_read_array(std::string fn, T* arr, size_t len,
   MPI_File f;
   int ret;
 
-  ret = MPI_File_open(MPI_COMM_WORLD, fn.c_str(), MPI_MODE_RDONLY,
-                      MPI_INFO_NULL, &f);
+  ret = MPI_File_open(MPI_COMM_WORLD, const_cast<char *>(fn.c_str()),
+                      MPI_MODE_RDONLY, MPI_INFO_NULL, &f);
+
   if (ret) {
     char buf[MPI_MAX_ERROR_STRING];
     int len;
@@ -292,8 +293,9 @@ static void mpiio_read_array(std::string fn, T* arr, size_t len,
             fn.c_str(), buf);
     errexit();
   }
-  ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T, "native",
-                          MPI_INFO_NULL);
+  ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T,
+                          const_cast<char *>("native"), MPI_INFO_NULL);
+  
   ret |= MPI_File_read_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
   MPI_File_close(&f);
   if (ret) {
