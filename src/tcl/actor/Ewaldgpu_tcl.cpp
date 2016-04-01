@@ -1,7 +1,7 @@
 #include "Ewaldgpu_tcl.hpp"
 #include "forces.hpp"
 #include "energy.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "EspressoSystemInterface.hpp"
 
 #ifdef EWALD_GPU
@@ -128,7 +128,7 @@ int tclcommand_inter_coulomb_parse_ewaldgpu_tune(Tcl_Interp * interp, int argc, 
 	int num_ky=-1;
 	int num_kz=-1;
 	int K_max = 30;
-	int time_calc_steps = -1;
+	int time_calc_steps = 100;
 	double accuracy = 0.0001;
 	double precision = 0.000001;
 

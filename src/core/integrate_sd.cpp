@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -61,6 +61,8 @@
 #include "virtual_sites.hpp"
 #include "statistics_correlation.hpp"
 #include "ghmc.hpp"
+
+using std::ostringstream;
 
 /************************************************
  * DEFINES
@@ -448,7 +450,7 @@ void propagate_pos_sd()
       for (int d=0;d<3;d++){
 	p[i].r.p[d] = pos[3*j+d]+box_l[d]*rint(p[i].r.p[d]/box_l[d]);
 	p[i].m.v[d] = velocity[3*j+d];
-	//p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*part);
+	//p[i].f.f[d] *= (0.5*time_step*time_step)/(*part).p.mass;
       }
 #else
       for (int d=0;d<3;d++){
@@ -458,7 +460,7 @@ void propagate_pos_sd()
 #endif
       // somehow this does not effect anything, although it is called ...
       for (int d=0;d<3;d++){
-	p[i].f.f[d] *= (0.5*time_step*time_step)/PMASS(*p);
+	p[i].f.f[d] *= (0.5*time_step*time_step)/(*p).p.mass;
       }
       for (int d=0;d<DIM;d++){
         assert(!isnan(pos[DIM*i+d]));

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -72,7 +72,8 @@
     needed in the interaction calculation, but are just copies of
     particles stored on different nodes.
 */
-typedef struct {
+typedef struct ParticleProperties ParticleProperties;
+struct ParticleProperties {
   /** unique identifier for the particle. */
   int    identity;
   /** Molecule identifier. */
@@ -83,7 +84,9 @@ typedef struct {
 #ifdef MASS
   /** particle mass */
   double mass;
-#endif
+#else
+  constexpr static double mass{1.0};
+#endif /* MASS */
 
 #ifdef SHANCHEN
   double solvation[2*LB_COMPONENTS];
@@ -147,6 +150,10 @@ typedef struct {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+  /* Friction coefficient gamma for rotation */
+#ifdef ROTATION
+  double gamma_rot;
+#endif
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -185,7 +192,7 @@ typedef struct {
   #endif
 
 #endif
-} ParticleProperties;
+};
 
 /** Positional information on a particle. Information that is
     communicated to calculate interactions with ghost particles. */
@@ -702,7 +709,10 @@ int set_particle_temperature(int part, double T);
     @return ES_OK if particle existed
 */
 int set_particle_gamma(int part, double gamma);
+#ifdef ROTATION
+int set_particle_gamma_rot(int part, double gamma);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   #ifdef ROTATION
@@ -983,6 +993,10 @@ void pointer_to_virtual(Particle* p, int*& res);
 void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
 #endif
 
+#ifdef MULTI_TIMESTEP
+void pointer_to_smaller_timestep(Particle* p, int*&  res);
+#endif
+
 #ifdef MASS
 void pointer_to_mass(Particle* p, double*&  res);
 #endif
@@ -1002,7 +1016,10 @@ void pointer_to_fix(Particle *p, int*& res);
 #ifdef LANGEVIN_PER_PARTICLE
 void pointer_to_gamma(Particle *p, double*& res);
 void pointer_to_temperature(Particle *p, double*& res);
+#ifdef ROTATION
+void pointer_to_gamma_rot(Particle *p, double*& res);
 #endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int*& res);
@@ -1019,5 +1036,7 @@ void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim);
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle *p, double*& res);
 #endif
+
+bool particle_exists(int part);
 
 #endif

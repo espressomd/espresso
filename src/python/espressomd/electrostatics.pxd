@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -85,35 +85,19 @@ IF ELECTROSTATICS:
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
 
-        cdef extern from "p3m_gpu.hpp":
-            # may need a fix, when double precision should be used on GPU
-            IF _P3M_GPU_DOUBLE:
-                void p3m_gpu_init(int cao, int mesh, double alpha, double box)
+        IF CUDA:
+            cdef extern from "p3m_gpu.hpp":
+                void p3m_gpu_init(int cao, int * mesh, double alpha, double * box)
 
-            ELSE:
-                void p3m_gpu_init(int cao, int mesh, float alpha, float box)
-
-        IF _P3M_GPU_DOUBLE:
             cdef inline python_p3m_gpu_init(params):
                 cdef int cao
-                cdef int mesh
+                cdef int mesh[3]
                 cdef double alpha
-                cdef double box
+                cdef double box[3]
                 cao = params["cao"]
-                mesh = params["mesh"][0]
+                mesh = params["mesh"]
                 alpha = params["alpha"]
-                box = params["box"][0]
-                p3m_gpu_init(cao, mesh, alpha, box)
-        ELSE:
-            cdef inline python_p3m_gpu_init(_params):
-                cdef int cao
-                cdef int mesh
-                cdef float alpha
-                cdef float box
-                cao = _params["cao"]
-                mesh = _params["mesh"][0]
-                alpha = _params["alpha"]
-                box = _params["box"][0]
+                box = params["box"]
                 p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
@@ -199,7 +183,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             @staticmethod
             EspressoSystemInterface * _Instance()
 
-    cdef extern from "EwaldgpuForce.hpp":
+    cdef extern from "actor/EwaldGPU.hpp":
         cdef cppclass EwaldgpuForce:
             EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
             int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)

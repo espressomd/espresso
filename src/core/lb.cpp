@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -78,6 +78,7 @@ LB_Parameters lbpar = {
     /* mobility  */ {0.,0.},   /* coupling       */ {0.,0.,0.,0.}, /* remove_momentum */ 0,
 #endif
 #endif
+    /* is_TRT  */        false,
     /* resend_halo    */ 0
 };
 
@@ -306,11 +307,13 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.bulk_viscosity[ii] = (float)p_bulk_visc[ii];
+      lbpar_gpu.is_TRT = false;
       on_lb_params_change_gpu(LBPAR_BULKVISC);
 #endif // LB_GPU
     } else {
 #ifdef LB
       lbpar.bulk_viscosity[ii] = p_bulk_visc[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif // LB
     }
@@ -325,11 +328,13 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd) {
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_odd[ii] = (float)p_gamma_odd[ii];
+      lbpar_gpu.is_TRT = false;
       on_lb_params_change_gpu(0);
 #endif // LB_GPU
     } else {
 #ifdef LB
       lbpar.gamma_odd[ii] = gamma_odd[ii] = p_gamma_odd[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
     }
@@ -345,11 +350,13 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even)
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       lbpar_gpu.gamma_even[ii] = (float)p_gamma_even[ii];
+      lbpar_gpu.is_TRT = false;
       on_lb_params_change_gpu(0);
 #endif // LB_GPU
     } else {
 #ifdef LB
       lbpar.gamma_even[ii] = gamma_even[ii] = p_gamma_even[ii];
+      lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
     }
@@ -435,10 +442,8 @@ int lb_lbfluid_set_agrid(double p_agrid){
     for (int dir=0;dir<3;dir++) {
       /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
-          ostringstream msg;
-          msg <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
+          runtimeErrorMsg() <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
                 << box_l[dir] << ", factor=" << tmp[dir] << " err= " << fabs(box_l[dir]-tmp[dir]*p_agrid);
-          runtimeError(msg);
       }
     }
     lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
@@ -1146,9 +1151,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #endif // LB
     }
     else {
-        ostringstream msg;
-        msg <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
         return ES_ERROR;
     }
     return ES_OK;
@@ -1814,51 +1817,35 @@ int lb_sanity_checks() {
     int ret = 0;
 
     if (lbpar.agrid <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann agrid not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann agrid not set";
         ret = 1;
     }
     if (lbpar.tau <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann time step not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann time step not set";
         ret = 1;
     }
     if (lbpar.rho[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid density not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid density not set";
         ret = 1;
     }
     if (lbpar.viscosity[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid viscosity not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid viscosity not set";
         ret = 1;
     }
     if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        ostringstream msg;
-        msg <<"LB requires domain-decomposition cellsystem";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires domain-decomposition cellsystem";
         ret = -1;
     }
     if (skin == 0.0) {
-        ostringstream msg;
-        msg <<"LB requires a positive skin";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires a positive skin";
         ret = 1;
     }
     if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        ostringstream msg;
-        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
         ret = -1;
     }
     if (thermo_switch & ~THERMO_LB) {
-        ostringstream msg;
-        msg <<"LB must not be used with other thermostats";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB must not be used with other thermostats";
         ret = 1;
     }
     return ret;
@@ -1950,6 +1937,10 @@ static void lb_prepare_communication() {
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters() {
     int i;
+    double bulk_factor ;
+    if(LB_COMPONENTS==1) bulk_factor=3;
+    if(LB_COMPONENTS==2) bulk_factor=2;
+
     for(int ii=0;ii<LB_COMPONENTS;++ii) { 
        if (lbpar.viscosity[ii] > 0.0) {
            /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
@@ -1958,24 +1949,35 @@ void lb_reinit_parameters() {
        }
    
        if (lbpar.bulk_viscosity[ii] > 0.0) {
-	   double factor = 3;
            /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
            // unit conversion: viscosity
-	   if(LB_COMPONENTS==2) factor=2;
-           gamma_bulk[ii] = 1. - 2./(3.*factor*lbpar.bulk_viscosity[ii]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
+           gamma_bulk[ii] = 1. - 2./(bulk_factor*3.*lbpar.bulk_viscosity[ii]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
        }
 #ifdef SHANCHEN
        if (lbpar.mobility[0] > 0.0) {
 	   gamma_mobility[0] = 1. - 2./(6.*lbpar.mobility[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid) + 1.);
        }
-
 #endif
-   
+
        gamma_odd[ii] = lbpar.gamma_odd[ii];
        gamma_even[ii] = lbpar.gamma_even[ii];
-   
+
+       // TODO: should one use a special flag (similar to TRT) to enforce BGK ? 
+       //gamma_shear[ii] = 0.0; //uncomment for special case of BGK
+       //gamma_bulk[ii] = 0.0;
+       //gamma_odd[ii] = 0.0;
+       //gamma_even[ii] = 0.0;
+
+       if (lbpar.is_TRT) {
+	   // TODO: check factors for LB_COMPONENTS==2, is there any work on TRT w/ ShanChen ?
+           gamma_bulk[ii] = gamma_shear[ii];
+           gamma_even[ii] = gamma_shear[ii];
+           gamma_odd[ii]  = -(7.0*gamma_even[ii]+1.0)/(gamma_even[ii]+7.0);
+           //gamma_odd = gamma_shear; //uncomment for BGK
+       }
+
        double mu = 0.0;
-   
+
        if (temperature > 0.0)
          {
            /* fluctuating hydrodynamics ? */
@@ -1984,7 +1986,7 @@ void lb_reinit_parameters() {
            /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
             * Note that the modes are not normalized as in the paper here! */
            mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-           
+
 #ifdef D3Q19
            double (*e)[19] = d3q19_modebase;
 #else // D3Q19
@@ -2100,9 +2102,7 @@ void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
   
   if (lbpar.agrid <= 0.0) {
-      ostringstream msg;
-      msg <<"Lattice Boltzmann agrid not set when initializing fluid";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"Lattice Boltzmann agrid not set when initializing fluid";
   }
   
   if (check_runtime_errors()) return;
@@ -4047,9 +4047,7 @@ void lb_calc_average_rho() {
 static int compare_buffers(double *buf1, double *buf2, int size) {
     int ret;
     if (memcmp(buf1,buf2,size)) {
-        ostringstream msg;
-        msg <<"Halo buffers are not identical";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Halo buffers are not identical";
         ret = 1;
     } else {
         ret = 0;

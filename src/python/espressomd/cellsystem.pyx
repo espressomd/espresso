@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,11 +20,11 @@ cimport cellsystem
 from globals cimport *
 
 cdef class CellSystem(object):
-    def setDomainDecomposition(self, useVerletLists=True):
+    def set_domain_decomposition(self, use_verlet_lists=True):
         """Activates domain decomposition cell system
-        setDomainDecomposition(useVerletList=True)
+        set_domain_decomposition(useVerletList=True)
         """
-        if useVerletLists:
+        if use_verlet_lists:
             dd.use_vList = 1
         else:
             dd.use_vList = 0
@@ -36,10 +36,10 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def setNsquare(self, useVerletLists=True):
+    def set_n_square(self, use_verlet_lists=True):
         """Activates the nsquare force calculation
         """
-        if useVerletLists:
+        if use_verlet_lists:
             dd.use_vList = 1
         else:
             dd.use_vList = 0
@@ -48,10 +48,10 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def setLayered(self, nLayers=""):
-        """setLayered(nLayers="")
+    def set_layered(self, nLayers=None):
+        """set_layered(nLayers=None)
         Set the layerd cell system with nLayers layers"""
-        if nLayers != "":
+        if nLayers:
             if not isinstance(nLayers, int):
                 raise ValueError("layer height should be positive")
 
@@ -80,16 +80,16 @@ cdef class CellSystem(object):
             raise Exception("Broadcasting the node grid failed")
         return True
 
-    def getState(self):
+    def get_state(self):
         s = {}
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
             s["nLayers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
-            s["type"] = "domainDecomposition"
-            s["useVerletLists"] = dd.use_vList
+            s["type"] = "domain_decomposition"
+            s["use_verlet_lists"] = dd.use_vList
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
-            s["useVerletLists"] = dd.use_vList
+            s["use_verlet_lists"] = dd.use_vList
 
         return s

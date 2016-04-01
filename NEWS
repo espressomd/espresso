@@ -21,17 +21,22 @@ New user-visible features
 * Multiple time step integration that allows one of two time steps per particle
 * Stokesian Dynamics support (GPU only)
 * Dipolar direct sum on gpu for large systems (more particles than the max number of threads the gpu runs in parallel)
+* analyze momentum now returns the total momentum including the fluid momentum.
+* CMake build system
+* Support for the Scafacos library for electrostatis
+* Random number generator changed to Mersenne Twister as implemented by C++11.
 
 Known bugs
 ----------
-* The electrostatics part of the pressure tensor is wrong
+* Correlator checkpointing does not work with certain combination of features.
 
 User-visible changes
 --------------------
+* bit_random tcl command removed.
 
 Changes visible for developers
 ------------------------------
-
+* CMake build system
 
 ESPResSo 3.3
 ============

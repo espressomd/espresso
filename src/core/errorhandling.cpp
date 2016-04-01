@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -94,6 +94,10 @@ void _runtimeError(const char* msg,
 void _runtimeError(const std::ostringstream &msg, 
                      const char* function, const char* file, const int line) {
   runtimeErrorCollector->error(msg, function, file, line);
+}
+
+ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
+  return ErrorHandling::RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
 }
 
 int check_runtime_errors() {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -54,7 +54,7 @@ inline double buck_energy_r(double A, double B, double C, double D, double shift
 
 /** Calculate Buckingham force between particle p1 and p2 and add
     it to their force. */
-inline void add_buck_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_buck_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
                                   double d[3], double dist, double force[3])
 {
   int j;
