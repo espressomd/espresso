@@ -458,9 +458,9 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j, double *
          lj[2] += 0.5 * lbfields[index].force[2+ii*3];
       }
   }
-   j[0]=lj[0];
-   j[1]=lj[1];
-   j[2]=lj[2];
+  j[0]=lj[0];
+  j[1]=lj[1];
+  j[2]=lj[2];
   if (!pi) { 
      return;
   } else { 

@@ -2553,7 +2553,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     for(int ii=0; ii< LB_COMPONENTS ; ii++) { 
 #ifdef GAUSSRANDOM
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = rho[ii]/sqrt(rhotot);
+       double rootrho = sqrt(rho[ii]);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
        double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
@@ -2585,7 +2585,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
 #elif defined (GAUSSRANDOMCUT)
 
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = rho[ii]/sqrt(rhotot);
+       double rootrho = sqrt(rho[ii]);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
        double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
@@ -2618,7 +2618,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
    
 #elif defined (FLATNOISE)
        double mu = temperature/lbmodel.c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-       double rootrho = rho[ii]*sqrt(12.0f)/sqrt(rhotot);
+       double rootrho = sqrt(12.0f * rho[ii]);
 #ifdef SHANCHEN
        double c = rho[0]/rhotot; 
        double factor = sqrt(mu*rhotot*c*(1-c)*((2./3.)*(1.-SQR(gamma_mobility[0])))) * (2*ii-1);
@@ -2626,7 +2626,6 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
        mode[2+ii*LBQ] += factor * rnd_buffer[1];
        mode[3+ii*LBQ] += factor * rnd_buffer[2];
 #endif
-   
        /* stress modes */
        mode[4+ii*LBQ] += rootrho*lb_phi[4+ii*LBQ]*(d_random()-0.5);
        mode[5+ii*LBQ] += rootrho*lb_phi[5+ii*LBQ]*(d_random()-0.5);

@@ -122,7 +122,6 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  // @Todo: lblattice.agrid is 3d. What to use here?
   temp *= 1./(3.*number_of_non_boundary_nodes*
               lbpar.tau*lbpar.tau*lbpar.agrid)/n_nodes;
 

@@ -89,6 +89,7 @@ set(tcl_tests  analysis.tcl
                rotation.tcl 
                rotation_per_particle.tcl 
                sc_fluid_gpu.tcl 
+               sc_fluid.tcl 
                sd_ewald.tcl 
                sd_two_spheres.tcl 
                sd_thermalization.tcl 
