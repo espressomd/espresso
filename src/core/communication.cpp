@@ -115,6 +115,7 @@ static int terminated = 0;
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
+  CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
@@ -2376,7 +2377,6 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 #endif
 }
 
-/*************** REQ_RANDOM_SEED ************/
 void mpi_random_seed(int cnt, std::vector<int> &seeds) {
   int this_idum;
   mpi_call(mpi_random_seed_slave, -1, cnt);
@@ -2397,6 +2397,35 @@ void mpi_random_seed_slave(int pnode, int cnt) {
   printf("%d: Received seed %d\n",this_node,this_idum);
 #endif
   init_random_seed(this_idum);
+}
+
+std::string mpi_random_stat() {
+  std::string res = Random::get_state();
+  std::vector<int> sizes(n_nodes);
+
+  mpi_call(mpi_random_stat_slave, 0, 0);
+
+  int size = res.size();
+  MPI_Gather( &size, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0, comm_cart);
+   
+  for(int i = 1; i < n_nodes; i++) {
+    std::string tmp;
+    tmp.resize(sizes[i]);
+    MPI_Recv(&(tmp[0]), sizes[i], MPI_CHAR, i, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    res.append(" ");
+    res.append(tmp);
+  }
+
+  return res;
+}
+
+void mpi_random_stat_slave(int, int) {
+  std::string state = Random::get_state();
+
+  int size = state.size();
+  MPI_Gather(&size, 1, MPI_INT, 0, 1, MPI_INT, 0, comm_cart);
+
+  MPI_Send(state.data(), state.size(), MPI_CHAR, 0, SOME_TAG, comm_cart);
 }
 
 void mpi_cap_forces(double fc)
