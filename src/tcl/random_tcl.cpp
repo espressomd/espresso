@@ -73,9 +73,11 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     }
   }
   else if ( ARG_IS_S(0,"stat") ) {
-    Tcl_AppendResult(interp, mpi_random_stat().c_str(), nullptr);
+    if(argc == 1) {
+      Tcl_AppendResult(interp, mpi_random_stat().c_str(), nullptr);
 
-    return TCL_OK;
+      return TCL_OK;
+    }
   }
   else if ( ARG_IS_S(0,"seed") )    /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   {
