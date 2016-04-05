@@ -47,6 +47,7 @@ extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 
 std::string get_state();
+void set_state(const std::string &s);
 }
 
 /**

@@ -34,6 +34,11 @@ std::string get_state() {
 
   return os.str();
 }
+
+void set_state(const std::string &s) {
+  std::istringstream is(s);
+  is >> generator;
+}
 }
 
 void init_random(void)

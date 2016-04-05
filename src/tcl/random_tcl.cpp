@@ -77,8 +77,43 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       Tcl_AppendResult(interp, mpi_random_stat().c_str(), nullptr);
 
       return TCL_OK;
+    } else {
+      auto error_msg = [interp]() {
+                Tcl_AppendResult(interp, "\nWrong # of args: Usage: 't_random stat \"<state(1)> ... <state(n_nodes*624)>\"'", (char *) NULL);
+      };
+      
+      if(argc != 2) {
+        error_msg();
+        return TCL_ERROR;
+      }
+      std::vector<std::string> states(n_nodes);
+
+      std::istringstream iss(argv[1]);
+      std::string tmp;
+
+      /** Argument counter to check that the caller provided enough numbers. */      
+      int n_args = 0;
+      for(int node = 0; (node < n_nodes) && std::getline(iss, tmp, ' '); node++) {        
+        n_args++;
+        /** First one is handled different, because of the space */
+        states[node] = tmp;
+
+        for(int i = 0; (i < 623) && std::getline(iss, tmp, ' '); i++) {
+          n_args++;
+          states[node].append(" ");
+          states[node].append(tmp);
+        }
+      }
+
+      if(n_args == n_nodes*624)
+        return TCL_OK;
+      else {
+        error_msg();
+        return TCL_ERROR;
+      }
     }
   }
+  
   else if ( ARG_IS_S(0,"seed") )    /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
   {
     std::vector<int> seeds(n_nodes);
