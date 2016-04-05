@@ -64,6 +64,7 @@
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
+#include "mpiio_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -176,6 +177,8 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   #ifdef H5MD
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
+  /* in mpiio_tcl.cpp */
+  REGISTER_COMMAND("mpiio", tclcommand_mpiio);
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
@@ -254,7 +257,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
-#ifdef SCAFACOS
+#if defined(SCAFACOS) and defined(ELECTROSTATICS)
   REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
 #endif
 }

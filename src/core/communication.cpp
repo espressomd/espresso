@@ -73,6 +73,7 @@
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
 #include "scafacos.hpp"
+#include "mpiio.hpp"
 
 using namespace std;
 
@@ -169,6 +170,7 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
   CB(mpi_scafacos_set_parameters_slave) \
+  CB(mpi_mpiio_slave) \
   
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -533,6 +535,13 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      v[0] *= smaller_time_step/time_step;
+      v[1] *= smaller_time_step/time_step;
+      v[2] *= smaller_time_step/time_step;
+    }
+#endif
     memmove(p->m.v, v, 3*sizeof(double));
   }
   else
@@ -545,8 +554,14 @@ void mpi_send_v_slave(int pnode, int part)
 {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+#endif
   }
 
   on_particle_change();
@@ -1921,6 +1936,18 @@ void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
     p->p.smaller_timestep = smaller_timestep;
   }
   else {
@@ -1936,9 +1963,23 @@ void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
 #ifdef MULTI_TIMESTEP
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    int smaller_timestep;
     MPI_Status status;
-    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+    MPI_Recv(&smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
        comm_cart, &status);
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
+    p->p.smaller_timestep = smaller_timestep;
   }
 
   on_particle_change();
@@ -3219,3 +3260,39 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 #endif
 }
 
+
+void mpi_mpiio(const char *filename, unsigned fields, int write) {
+#ifdef HAVE_MPI
+  size_t flen = strlen(filename) + 1;
+  if (flen + 5 > INT_MAX) {
+    fprintf(stderr, "Seriously?\n");
+    errexit();
+  }
+  mpi_call(mpi_mpiio_slave, -1, (int) flen);
+  MPI_Bcast((void *) filename, (int) flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+#else
+  runtimeErrorMsg() << "ESPResSo is compiled without MPI support. No MPI-IO available.";
+#endif
+}
+
+void mpi_mpiio_slave(int dummy, int flen) {
+#ifdef HAVE_MPI
+  char *filename = new char[flen];
+  unsigned fields;
+  int write;
+  MPI_Bcast((void *) filename, flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+  delete[] filename;
+#endif
+}

@@ -792,6 +792,8 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/tcl/Makefile
+	testsuite/python/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile
@@ -809,8 +811,10 @@ AC_CONFIG_FILES([
 	doc/tutorials/08-visualization/Makefile 
 	doc/latexit.sh
 	])
-AC_CONFIG_FILES([testsuite/runtest.sh],
-	[chmod 755 testsuite/runtest.sh])
+AC_CONFIG_FILES([testsuite/tcl/runtest.sh],
+	[chmod 755 testsuite/tcl/runtest.sh])
+AC_CONFIG_FILES([testsuite/python/runtest.sh],
+	[chmod 755 testsuite/python/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 AC_CONFIG_FILES([src/python/pypresso],

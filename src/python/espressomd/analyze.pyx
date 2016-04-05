@@ -645,6 +645,9 @@ def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
 
     return np.array([r, rdf])
 
+#
+# angularmomentum
+#
 
 def angularmomentum(system=None, p_type=None):
     print "p_type = ", p_type
@@ -657,3 +660,125 @@ def angularmomentum(system=None, p_type=None):
     c_analyze.angularmomentum(p1, com)
 
     return np.array([com[0], com[1], com[2]])
+
+#
+# gyration_tensor
+#
+
+def gyration_tensor(system=None, p_type=None):
+    cdef vector[double] gt
+
+    if p_type is not None:
+        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        if (p_type < 0 or p_type >= c_analyze.n_particle_types):
+            raise ValueError("Particle type",p_type, "does not exist!")
+    else:
+        p_type = -1
+
+    c_analyze.calc_gyration_tensor(p_type, gt)
+
+    return { "Rg^2" : gt[3],
+             "shape" : [ gt[4], gt[5], gt[6] ],
+             "eva0" : [ gt[0], [ gt[7], gt[8], gt[9] ] ],
+             "eva1" : [ gt[1], [ gt[10], gt[11], gt[12] ] ],
+             "eva2" : [ gt[2], [ gt[13], gt[14], gt[15] ] ] }
+
+#
+# momentofinertiamatrix
+#
+
+def momentofinertiamatrix(system=None, p_type=None):
+    cdef double[9] MofImatrix
+
+    if p_type is not None:
+        check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+        if (p_type < 0 or p_type >= c_analyze.n_particle_types):
+            raise ValueError("Particle type",p_type, "does not exist!")
+
+        c_analyze.momentofinertiamatrix(p_type, MofImatrix)
+
+        MofImatrix_np = np.empty((9))
+        for i in range(9): MofImatrix_np[i] = MofImatrix[i]
+
+        return MofImatrix_np
+
+#
+# rdfchain
+#
+
+def rdfchain(system=None, r_min=None, r_max=None, r_bins=None,
+             chain_start=None, n_chains=None, chain_length=None):
+    cdef double *f1
+    cdef double *f2
+    cdef double *f3
+
+    check_type_or_throw_except(r_min, 1, float, "r_min has to be a float")
+    check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")
+    check_type_or_throw_except(r_bins, 1, int, "r_bins has to be an int")
+
+    check_topology(system=system, chain_start=chain_start,
+                   number_of_chains=number_of_chains, chain_length=chain_length)
+
+    if (c_analyze.chain_n_chains == 0 or chain_length == 0):
+        raise Exception("The chain topology has not been set")
+    if (r_bins <=0):
+        raise Exception("Nothing to be done - choose <r_bins> greater zero!")
+    if (r_min <= 0.):
+        raise Exception("<r_min> has to be positive")
+    if (r_max <= r_min):
+        raise Exception("<r_max> has to be larger than <r_min>")
+
+    # Used to take the WITHOUT_BONDS define
+    c_analyze.updatePartCfg(0)
+    c_analyze.analyze_rdfchain(r_min, r_max, r_bins, &f1, &f2, &f3);
+
+    rdfchain = np.empty((r_bins,4))
+    bin_width = (r_max - r_min) / float(r_bins)
+    r = r_min + bin_width/2.0;
+    for i in range(r_bins):
+        rdfchain[i,0] = r
+        rdfchain[i,1] = f1[i]
+        rdfchain[i,2] = f2[i]
+        rdfchain[i,3] = f3[i]
+        r += bin_width;
+
+    return rdfchain
+
+#
+# Vkappa
+#
+
+_Vkappa = {
+    "Vk1" : 0.0,
+    "Vk2" : 0.0,
+    "avk" : 0.0
+}
+def Vkappa(system=None, mode=None, Vk1=None, Vk2=None, avk=None):
+    check_type_or_throw_except(mode, 1, str, "mode has to be a string")
+
+    if ( mode == "reset" ):
+        _Vkappa["Vk1"] = 0.0
+        _Vkappa["Vk2"] = 0.0
+        _Vkappa["avk"] = 0.0
+    elif ( mode == "read" ):
+        return _Vkappa
+    elif ( mode == "set" ):
+        check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
+        _Vkappa["Vk1"] = Vk1
+        check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
+        _Vkappa["Vk2"] = Vk2
+        check_type_or_throw_except(avk, 1, float, "avk has to be a float")
+        _Vkappa["avk"] = avk
+        if ( _Vkappa["avk"] <= 0.0 ):
+            raise Exception("ERROR: # of averages <avk> has to be positive! Resetting values.")
+            result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
+        result = _Vkappa["Vk2"] / _Vkappa["avk"] - (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+    else:
+        raise Exception("ERROR: Unknown mode.")
+    #else: # <- WTF?  Why is there a second `else'?
+    #    _Vkappa["Vk1"] += system.box_l[0] * system.box_l[1] * system.box_l[2]
+    #    _Vkappa["Vk2"] += (system.box_l[0] * system.box_l[1] * system.box_l[2])**2
+    #    _Vkappa["avk"] += 1.0
+    #    result = _Vkappa["Vk2"] / _Vkappa["avk"] - (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+
+    return result
