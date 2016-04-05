@@ -1,3 +1,4 @@
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -24,7 +25,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
 endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspressoTcl.la
+lib_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
 	TclOutputHelper.hpp \
 	bin_tcl.cpp \
@@ -82,7 +83,8 @@ libEspressoTcl_la_SOURCES = \
 	twist_stack_tcl.hpp twist_stack_tcl.cpp \
 	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
 	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
-	integrate_sd_tcl.cpp integrate_sd_tcl.hpp
+	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
+	mpiio_tcl.cpp mpiio_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -183,7 +185,7 @@ Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 # generate the Tcl library for the python interpreter
 if PYTHON_INTERFACE
-noinst_LTLIBRARIES += libEspressoTcl4Py.la
+lib_LTLIBRARIES += libEspressoTcl4Py.la
 libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
 libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la

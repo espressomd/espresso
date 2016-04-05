@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -48,18 +48,18 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def set_layered(self, n_layers=""):
-        """set_layered(nLayers="")
+    def set_layered(self, nLayers=None):
+        """set_layered(nLayers=None)
         Set the layerd cell system with nLayers layers"""
-        if n_layers != "":
-            if not isinstance(n_layers, int):
+        if nLayers:
+            if not isinstance(nLayers, int):
                 raise ValueError("layer height should be positive")
 
-            if not n_layers > 0:
+            if not nLayers > 0:
                 raise ValueError("the number of layers has to be >0")
 
             global n_layers
-            n_layers = int(n_layers)
+            n_layers = int(nLayers)
             global determine_n_layers
             determine_n_layers = 0
 
@@ -84,9 +84,9 @@ cdef class CellSystem(object):
         s = {}
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["n_layers"] = n_layers
+            s["nLayers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
-            s["type"] = "domainDecomposition"
+            s["type"] = "domain_decomposition"
             s["use_verlet_lists"] = dd.use_vList
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"

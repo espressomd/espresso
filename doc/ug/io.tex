@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %  Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -190,18 +190,16 @@ to \var{channel}.
 \index{random seed}
 \begin{essyntax}
   \variant{1} blockfile \var{channel} write random
-  \variant{2} blockfile \var{channel} write bit_random
   \variant{3} blockfile \var{channel} write seed
-  \variant{4} blockfile \var{channel} write bitseed
 \end{essyntax}
 
-Variants \variant{1} and \variant{2} write the full information on the
-current states of the respecitive random number generators (see
-sections \vref{ssec:trandom} and \vref{ssec:bitrandom}) on any node to
+Variant \variant{1} write the full information on the
+current states of the random number generators (see
+sections \vref{ssec:trandom}) on any node to
 \var{channel}.  Using this information, it is possible to recover the
 exact states of the generators.
 
-Variants \variant{3} and \variant{4} write only the seed(s) which were
+Variant \variant{3} write only the seed(s) which were
 used to initialize the random number generators. Note that this
 information is not sufficient to restore the full state of a random
 number generator, because the internal state might contain more
@@ -359,6 +357,56 @@ binary particle data happens through
 \end{essyntax}
 For the exact format of the written binary sequence, see
 \texttt{src/tcl/binary_file_tcl.cpp}.
+
+
+\section{MPI-IO}
+\index{mpiio}
+
+When using \es with MPI, blockfiles and writemd have the disadvantage,
+that the master node does \textit{all} the output. This is done by
+sequentially communicating all particle data to the master node. MPI-IO
+offers the possibility to write out particle data in parallel using
+binary IO. To output variables and other non-array inforamtion, use
+normal blockfiles (section~\ref{sec:structured-file-format}).
+
+To dump data using MPI-IO, use the following syntax:
+\begin{essyntax}
+  mpiio \var{filename} \opt{read|write} \opt{pos|v|bond|type}
+\end{essyntax}
+This command writes data to several files using \var{filename} as
+filename prefix. Beware, that \var{filename} must not be a Tcl channel
+but a string which must not contain colons (MPI fails on these). The
+data can be positions (\keyword{pos}), velocities (\keyword{v}),
+particle types (\keyword{type}) and particle bonds (\keyword{bond}). The
+particle ids are always dumped. For safety reasons, MPI-IO will not
+overwrite existing files, so if the command fails and prints
+\texttt{MPI_ERR_IO} make sure the files are non-existent.
+
+The files produced by this command will be (assumed \var{filename} is
+``1''):
+\begin{description}[align=right,labelwidth=2cm]
+  \item [1.head] Internal information (Dumped fields, bond partner num); always produced
+  \item [1.pref] Internal information (Exscan results of nlocalparts);
+    always produced
+  \item [1.ids] Particle ids; always produced
+  \item [1.type] Particle types; optional
+  \item [1.pos] Particle positions; optional
+  \item [1.vel] Particle velocities; optional
+  \item [1.bond] Bond information; optional
+  \item [1.boff] Internal bond prefix information; optional, necessary
+    to read 1.bond
+\end{description}
+
+Currently, these files have to be read by exactly the same number of MPI
+processes that was used to dump them, otherwise an error is
+signalled. Also, the same type of machine (endianess, byte order) has to
+be used. Otherwise only garbage will be read. The read command replaces
+the particles, i.e. all previous existent particles will be
+\textit{deleted}.
+
+There is a python script (\texttt{tools/mpiio2blockfile.py}) which
+converts MPI-IO snapshots to regular \es blockfiles.
+
 
 \section{Writing VTF files}
 \label{sec:vtf}
@@ -525,19 +573,23 @@ filenames including a running index (\texttt{data_0.vtk},
 
 \begin{essyntax}
   writevtk \var{filename} 
-  \opt{\alt{all \asep \var{type}}}
+  \opt{\alt{all \asep \var{types}}}
 \end{essyntax}
 
 \begin{arguments}
 \item[\var{filename}]
   Name of the file to export the particle positions into.
-
-\item[\opt{\alt{all \asep \var{type}}}] Specifies which particle type
-  should be exportet. The default is \keyword{all}. Alternatively, a
-  type number can be given. Exporting the positions of all particles
-  but in separate files might make sense if one wants to distinguish
-  the different particle types in the visualization (i.e. by color or
-  size).
+\item[\opt{\alt{all \asep \var{type}}}] Specifies a list of particle
+  types which should be exportet. The default is
+  \keyword{all}. Alternatively, a list of type number can be
+  given. Exporting the positions of all particles but in separate
+  files might make sense if one wants to distinguish the different
+  particle types in the visualization (i.e. by color or size).  To
+  export a type \texttt{1} use something along \texttt{writevtk
+    "test.tcl" "1"}.  To export types \texttt{1}, \texttt{5},
+  \texttt{7}, which are not to be distinguished in the visualization,
+  use \texttt{writevtk "test.tcl" "7 1 5"}.  The order in the list is
+  arbitrary, but duplicates are \emph{not} ignored!
 \end{arguments}
 
 \section{Reading and Writing PDB/PSF files}
@@ -855,6 +907,91 @@ h5md_close
   \end{features}
 \end{essyntax}
 Closes the H5MD data file.
+
+
+\section{Writing H5MD-files with Python}
+To write data in a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
+\begin{pycode}
+from espressomd import h5md
+system = espressomd.System()
+h5=h5md.h5md("File.h5",system)
+\end{pycode}
+The \texttt{h5md} class contains the sub-class \texttt{write_to_h5}, which contains all write commands such as \texttt{userdefined}. The sample python script ``h5md_WriteFile.py'' shows the usage of writing a hdf5-file.
+
+\subsection{\keyword{userdefined}: Write an arbitrary value}
+\begin{pyessyntax}
+h5.write_to_h5.userdefined(\var{value},\var{groupname},\var{datasetname},\var{datatype},\\\var{datasetindex},\var{chunks})
+\end{pyessyntax}
+The command \texttt{userdefined} writes the value \var{value} of type \var{datatype} in the hdf5-file. The storage path is given by \var{groupname} and the dataset is called \var{datasetname}. Fragmenting the dataset to smaller units can increase the access speed to the hdf5-file. The dataset can be chunked to smaller dataset sub units with size \var{chunks}. When not defining the chunk size explicitly, it will be set to automatic.
+\begin{arguments}
+\item[\var{value}] The value to be written.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{datatype}] The value's data type.
+\item[\var{datasetindex}] Position of \var{value} within the dataset.
+\item[\var{chunks}] Size of dataset sub units. 
+\end{arguments}
+
+\subsection{\keyword{particle_property}: Write particle properties}
+\begin{pyessyntax}
+h5.write_to_h5.particle_property(\var{timestep},\var{groupname},\var{datasetname},\var{chunks})
+\end{pyessyntax}
+This command writes particle properties, such as the position, in the hdf5-file for all particles at once. The command \mbox{\texttt{particle_property}} is a short cut for the various particle properties such as \texttt{pos} (position) and \texttt{f} (force). These values are stored at the assigned time-step \var{timestep}. When the values are time-independent set \var{timestep=-1}. When leaving out the variables \var{groupname} and \var{datasetname}, the predefined values of \var{groupname} and \var{datasetname} are used in accordance to the H5MD-format.
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{chunks}] Size of dataset sub units. 
+\end{arguments}
+
+\subsection{\keyword{observables}: Write observables}
+\begin{pyessyntax}
+h5.write_to_h5.observable(\var{timestep},\var{groupname},\var{datasetname},\var{chunks})
+\end{pyessyntax}
+With this command the various ESPResSo observables can be written. The command \texttt{observable} is a short cut for the various observables such as \texttt{analyze_energy}.
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file.
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{chunks}] Size of dataset sub units.
+\end{arguments}
+
+\subsection{\keyword{VMD}: Write VMD}
+\begin{pyessyntax}
+h5.write_to_h5.VMD(\var{datasetname},\var{value})
+\end{pyessyntax}
+The molecular visualization program VMD can read hdf5-files, when the H5MD-format is applied. To use VMD only the particle positions are needed. For coloring issues VMD can use further datasets. These datasets \var{datasetname} (e.g. 'indexOfSpecies'), with the associated values \var{value}, are written via the \texttt{VMD} command. The datasets are stored in the h5-group "parameters/vmd_structure/". All possible dataset are shown in the example file. 
+\begin{arguments}
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{value}] The value to be written.
+\end{arguments}
+
+
+\section{Reading H5MD-files with Python}
+To read data from a hdf5-file, again an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. The \texttt{h5md} class contains the sub-class \texttt{read_from_h5}, which contains all read commands such as \texttt{userdefined}. The sample python script ``h5md_ReadFile.py'' shows the usage of reading from a hdf5-file.
+\subsection{\keyword{userdefined}: Read an arbitrary value}
+\begin{pyessyntax}
+h5.read_from_h5.userdefined(\var{groupname},\var{datasetname},\var{datasetindex})
+\end{pyessyntax}
+The command \texttt{userdefined} reads and returns a value from the hdf5-file positioned at \var{datasetindex}.
+\begin{arguments}
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\item[\var{datasetindex}] Position of \var{value} within the dataset.
+\end{arguments}
+
+\subsection{\keyword{particle_property}: Read particle properties}
+\begin{pyessyntax}
+h5.read_from_h5.particle_property(\var{timestep},\var{groupname},\var{datasetname})
+\end{pyessyntax}
+This command reads a particle property at time-step \var{timestep} from the hdf5-file and passes the values to the respective ESPResSo variables. The command \mbox{\texttt{particle_property}} is again a short cut for the various particle property commands such as \texttt{pos} and \texttt{f}.
+\begin{arguments}
+\item[\var{timestep}] Time index in the hdf5-file. 
+\item[\var{groupname}] Name of the group, which contains the dataset.
+\item[\var{datasetname}] Name of the dataset, which contains the values.
+\end{arguments}
+
+
 
 \section{Error handling}
 Errors in the parameters are detected as early as possible, and

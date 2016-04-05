@@ -11,7 +11,16 @@ cdef class Actor:
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False)
 
-    def __cinit__(self, *args, **kwargs):
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self,params):
+        self._params=params
+        self._set_params_in_es_core()
+
+    def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
         self.system = None
@@ -28,6 +37,7 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
+        self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()
@@ -84,7 +94,16 @@ cdef class Actor:
         self._set_params_in_es_core()
 
     def _get_interaction_type(self):
-        return self.__class__.__bases__[0].__name__
+        bases = self.class_lookup(self.__class__)
+        for i in range(len(bases)):
+            if bases[i].__name__ in Actor.active_list:
+                return bases[i].__name__
+
+    def class_lookup(self, cls):
+        c = list(cls.__bases__)
+        for base in c:
+            c.extend(self.class_lookup(base))
+        return c
 
     def is_active(self):
         print self.__class__.__name__, self._isactive

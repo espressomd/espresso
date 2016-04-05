@@ -9,7 +9,7 @@
 #include <iostream>
 
 #ifdef H5MD
-#include "hdf5.h"
+#include <hdf5.h>
 
 typedef char h5string[1000];
 class H5mdfile

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -277,5 +277,40 @@ protected:
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;
 };
+
+/********************************************************************************************/
+
+template<class value_type>
+value_type EspressoSystemInterface::const_iterator<value_type>::operator*() const {
+  return (*m_const_iterator);
+}
+
+template<class value_type>
+SystemInterface::const_iterator<value_type> &EspressoSystemInterface::const_iterator<value_type>::operator=(const SystemInterface::const_iterator<value_type> &rhs) {
+   m_const_iterator = static_cast<const EspressoSystemInterface::const_iterator<value_type> &>(rhs).m_const_iterator;
+  return *this;
+}
+
+template<class value_type>
+EspressoSystemInterface::const_iterator<value_type> &EspressoSystemInterface::const_iterator<value_type>::operator=(typename std::vector<value_type>::const_iterator rhs) {
+   m_const_iterator = rhs;
+  return *this;
+}
+
+template<class value_type>
+bool EspressoSystemInterface::const_iterator<value_type>::operator==(SystemInterface::const_iterator<value_type> const &rhs) const {
+   return (m_const_iterator == static_cast<const EspressoSystemInterface::const_iterator<value_type> &>(rhs).m_const_iterator);
+}
+
+template<class value_type>
+bool EspressoSystemInterface::const_iterator<value_type>::operator!=(SystemInterface::const_iterator<value_type> const &rhs) const {
+   return (m_const_iterator != static_cast<const EspressoSystemInterface::const_iterator<value_type> &>(rhs).m_const_iterator);
+}
+
+template<class value_type>
+SystemInterface::const_iterator<value_type> &EspressoSystemInterface::const_iterator<value_type>::operator++() {
+  ++m_const_iterator;
+  return *this;
+}
 
 #endif

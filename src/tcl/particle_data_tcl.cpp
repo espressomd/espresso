@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -279,11 +279,11 @@ void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0. && part->p.smaller_timestep) {
     Tcl_PrintDouble(interp, part->m.v[0]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   } else 
 #endif
   {
@@ -2170,12 +2170,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		sprintf(buffer, "\nWrong type for the <type> parameter");
+		Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2198,12 +2198,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+			sprintf(buffer, "\nWrong type for the <type> parameter");
+			Tcl_AppendResult(interp, buffer, (char *)NULL);  
+			return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2226,12 +2226,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 			return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+			sprintf(buffer, "\nWrong type for the <type> parameter");
+			Tcl_AppendResult(interp, buffer, (char *)NULL);  
+			return (TCL_ERROR); 
+		}
 
 		if ( type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2268,12 +2268,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 			return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		      sprintf(buffer, "\nWrong type for the <type> parameter");
+		      Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		      return (TCL_ERROR); 
+		}
 
 		int number;
 		if ( type < 0 ) {
@@ -2291,12 +2291,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 	} else if ( argc == 1 ) {
 		// initialize particle array for given type
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		      sprintf(buffer, "\nWrong type for the <type> parameter");
+		      Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		      return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);

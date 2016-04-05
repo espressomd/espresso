@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 from __future__ import print_function
-import ctypes
-import sys
-sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
 import espresso as es
 import numpy

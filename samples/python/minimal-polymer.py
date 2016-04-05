@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,6 +28,13 @@ import numpy
 #############################################################
 
 system = espressomd.System()
+
+
+system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
+#if no seed is provided espresso generates a seed
+print system.seed
+
+
 system.time_step = 0.01
 system.skin = 0.4
 system.box_l = [100, 100, 100]
@@ -42,7 +49,7 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 for i in range(50):
-    system.part[i].pos = [i, 0, 0]
+    system.part.add(id=i, pos=[i, 0, 0])
     if i > 0:
         system.part[i].add_bond((fene, i - 1))
 

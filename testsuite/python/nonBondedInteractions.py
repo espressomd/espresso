@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,6 +22,8 @@ import espressomd
 import numpy as np
 from espressomd.interactions import LennardJonesInteraction
 
+if "LENNARD_JONES_GENERIC" in espressomd.features():
+    from espressomd.interactions import GenericLennardJonesInteraction
 
 class Non_bonded_interactionsTests(ut.TestCase):
     #  def __init__(self,particleId):
@@ -98,21 +100,22 @@ class Non_bonded_interactionsTests(ut.TestCase):
             "shift": 4.1, "offset": 5.1, "min": 7.1},
         "lennard_jones")
 
-    test_ljgen1 = generateTestForNon_bonded_interaction(
-        0, 0, GenericLennardJonesInteraction,
-        {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
-            "e1": 7, "e2": 8, "b1": 9., "b2": 10., "lambda": 11., "delta": 12.},
-        "generic_lennard_jones")
-    test_ljgen2 = generateTestForNon_bonded_interaction(
-        0, 0, GenericLennardJonesInteraction,
-        {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1, "offset": 5.1,
-            "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1, "lambda": 11.1, "delta": 12.1},
-        "generic_lennard_jones")
-    test_ljgen3 = generateTestForNon_bonded_interaction(
-        0, 0, GenericLennardJonesInteraction,
-        {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
-            "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2, "lambda": 11.2, "delta": 12.2},
-        "generic_lennard_jones")
+    if "LENNARD_JONES_GENERIC" in espressomd.features():
+        test_ljgen1 = generateTestForNon_bonded_interaction(
+            0, 0, GenericLennardJonesInteraction,
+            {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
+             "e1": 7, "e2": 8, "b1": 9., "b2": 10.},
+            "generic_lennard_jones")
+        test_ljgen2 = generateTestForNon_bonded_interaction(
+            0, 0, GenericLennardJonesInteraction,
+            {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1, "offset": 5.1,
+             "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1},
+            "generic_lennard_jones")
+        test_ljgen3 = generateTestForNon_bonded_interaction(
+            0, 0, GenericLennardJonesInteraction,
+            {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
+             "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2},
+            "generic_lennard_jones")
 
     def test_forcecap(self):
         self.es.non_bonded_inter.set_force_cap(17.5)

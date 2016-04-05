@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -1837,7 +1837,7 @@ int observable_calc_tclcommand(observable* self) {
     token = strtok(NULL, " ");
     counter++;
   }
-  delete string;
+  delete[] string;
   Tcl_ResetResult(interp);
   if (counter != self->n) {
       return 1;

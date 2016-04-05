@@ -1,7 +1,7 @@
 #include "Ewaldgpu_tcl.hpp"
 #include "forces.hpp"
 #include "energy.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "EspressoSystemInterface.hpp"
 
 #ifdef EWALD_GPU

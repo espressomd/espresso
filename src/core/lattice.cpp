@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -48,12 +48,10 @@ int Lattice::init(double *agrid, double* offset, int halo_size, size_t dim) {
     for (int dir=0;dir<3;dir++) {
       // check if local_box_l is compatible with lattice spacing
       if (fabs(local_box_l[dir]-this->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
-          ostringstream msg;
-          msg << "Lattice spacing agrid["<< dir << "]=" << agrid[dir] \
+          runtimeErrorMsg() << "Lattice spacing agrid["<< dir << "]=" << agrid[dir] \
               << " is incompatible with local_box_l["<< dir << "]=" << local_box_l[dir]\
               << " ( box_l["<< dir << "]=" << box_l[dir] \
               << " node_grid["<< dir << "]=" << node_grid[dir] <<" )";
-          runtimeError(msg);
       }
     }
 
@@ -90,9 +88,7 @@ void Lattice::interpolate(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear(pos, value);
     } else {
-        ostringstream msg;
-        msg <<"Unknown interpolation type";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Unknown interpolation type";
     }
 }
 
@@ -100,18 +96,14 @@ void Lattice::interpolate_linear(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        ostringstream msg;
-        msg <<"Error in interpolate_linear: halo size is 0";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Error in interpolate_linear: halo size is 0";
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            ostringstream msg;
-            msg <<"Error in interpolate_linear: Particle out of range";
-            runtimeError(msg);
+            runtimeErrorMsg() <<"Error in interpolate_linear: Particle out of range";
             return;
         }
     }
@@ -152,9 +144,7 @@ void Lattice::interpolate_gradient(double* pos, double* value) {
     if (this->interpolation_type == INTERPOLATION_LINEAR) {
         interpolate_linear_gradient(pos, value);
     } else {
-        ostringstream msg;
-        msg <<"Unknown interpolation type";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Unknown interpolation type";
     }
 }
 
@@ -162,18 +152,14 @@ void Lattice::interpolate_linear_gradient(double* pos, double* value) {
     int left_halo_index[3];
     double d[3];
     if (this->halo_size <= 0) {
-        ostringstream msg;
-        msg << "Error in interpolate_linear: halo size is 0";
-        runtimeError(msg);
+        runtimeErrorMsg() << "Error in interpolate_linear: halo size is 0";
         return;
     }
     for (int dim = 0; dim<3; dim++) {
         left_halo_index[dim]=(int) floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]) + this->halo_size;
         d[dim]=((pos[dim]-this->local_offset[dim])/this->agrid[dim] - floor((pos[dim]-this->local_offset[dim])/this->agrid[dim]));
         if (left_halo_index[dim] < 0 || left_halo_index[dim] >= this->halo_grid[dim]) {
-            ostringstream msg;
-            msg <<"Error in interpolate_linear: Particle out of range";
-            runtimeError(msg);
+            runtimeErrorMsg() <<"Error in interpolate_linear: Particle out of range";
             return;
         }
     }
@@ -292,7 +278,7 @@ int Lattice::global_pos_in_local_halobox(double pos[3]) {
 int Lattice::global_pos_to_lattice_index_checked(double pos[3], int* index) {
     int i;
     for (i=0; i<3; i++)
-        if (abs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
+        if (fabs(fmod(pos[i]-this->offset[i],this->agrid[i])) > ROUND_ERROR_PREC)
             return ES_ERROR;
     int ind[3];
     for (i=0; i<3; i++)
@@ -356,7 +342,7 @@ void Lattice::map_position_to_lattice(const double pos[3], index_t node_index[8]
         /* surrounding elementary cell is not completely inside this box,
            adjust if this is due to round off errors */
         if (ind[dir] < 0) {
-            if (abs(rel) < ROUND_ERROR_PREC) {
+            if (fabs(rel) < ROUND_ERROR_PREC) {
                 ind[dir] = 0; // TODO
             } else {
                 fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -232,9 +232,11 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param r_bins   Number of bins.
     @param rdf     Array to store the result (size: r_bins).
 */
-void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
-	      double r_min, double r_max, int r_bins, double *rdf);
 
+void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
+	      double r_min, double r_max, int r_bins, double *rdf);
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf);
 
 /** Calculates the radial distribution function averaged over last n_conf configurations.
 
@@ -256,6 +258,8 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 */
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+              double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 /** Calculates the intermolecular radial distribution function averaged over last n_conf configurations.
 
@@ -278,6 +282,8 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf);
 
 
 /** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
@@ -377,8 +383,8 @@ void angularmomentum(int type, double *com);
 void centermass_conf(int k, int type_1, double *com);
 
 
-void momentofinertiamatrix(int type, double *MofImatrix);
-void calc_gyration_tensor(int type, double **gt);
+void momentofinertiamatrix(int type, double* MofImatrix);
+void calc_gyration_tensor(int type, std::vector<double>& gt);
 void calculate_verlet_neighbors();
 
 /** returns the momentum of the particles in the simulation box.
