@@ -232,9 +232,6 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
-
-
-
 #endif
 
 } ParticleForce;
@@ -250,8 +247,6 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
-
-
 #endif
 } ParticleMomentum;
 
@@ -991,6 +986,10 @@ void pointer_to_virtual(Particle* p, int*& res);
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3);
+#endif
+
+#ifdef MULTI_TIMESTEP
+void pointer_to_smaller_timestep(Particle* p, int*&  res);
 #endif
 
 #ifdef MASS

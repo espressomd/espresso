@@ -16,8 +16,32 @@ means, the user's guide can be found on the ESPResSo-Homepage at
 	http://espressomd.org
 
 
-QUICK START
------------
+QUICK START - CMake (Recommended)
+---------------------------------
+The recommended way is to build by the cmake tool.
+CMake recommends to build in a build directory not inside the
+source. On Linux you can create and enter directory in a location
+of your choice by
+
+> mkdir <path-to-build-dir> && cd <path-to-build-dir>
+
+Then you can run cmake and build ESPResSo by
+
+> cmake <path-to-espresso-source>
+> make
+
+If you have installed the curses frontend to cmake you can see
+and modify the build options graphically by running
+
+> ccmake <path-to-espresso-source>
+
+When these steps have completed successfully, you can run Espresso with
+help of the command
+
+> ./Espresso
+
+QUICK START - Autotools (Deprecated)
+------------------------------------
 In most cases, once you have obtained the sources, compiling and
 running ESPResSo requires only two steps:
 
@@ -40,6 +64,7 @@ Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
 without any warranty.
+
 
 LICENSE
 -------

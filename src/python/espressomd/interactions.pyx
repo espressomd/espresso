@@ -19,9 +19,6 @@
 include "myconfig.pxi"
 # Non-bonded interactions
 
-include "myconfig.pxi"
-
-
 cdef class NonBondedInteraction(object):
 
     cdef public object _part_types

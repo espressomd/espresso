@@ -1837,7 +1837,7 @@ int observable_calc_tclcommand(observable* self) {
     token = strtok(NULL, " ");
     counter++;
   }
-  delete string;
+  delete[] string;
   Tcl_ResetResult(interp);
   if (counter != self->n) {
       return 1;
