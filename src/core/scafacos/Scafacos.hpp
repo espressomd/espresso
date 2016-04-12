@@ -3,6 +3,8 @@
 #include <list>
 #include <fcs.h>
 #include <mpi.h>
+#include "../config.hpp"
+
 
 namespace Scafacos {
 
@@ -27,9 +29,17 @@ struct Scafacos {
 
     return 0.0;
   }
-  /** Calculate the forces */
+  
+  /** Calculate the fields and potentials for charges */
   void run(std::vector<double> &charges, std::vector<double> &positions,
-           std::vector<double> &forces);
+           std::vector<double> &fields,std::vector<double> &potentials);
+  
+  /** Calculate fields and potentials for dipoles */
+  #ifdef SCAFACOS_DIPOLES
+  void run_dipolar(std::vector<double> &dipoles, std::vector<double> &positions,
+                 std::vector<double> &fields, std::vector<double> &potentials);
+  
+  #endif
   /** Tune parameters */
   void tune(std::vector<double> &charges, std::vector<double> &positions);
   /** Get shortrange cutoff (0.0 if not supported) */

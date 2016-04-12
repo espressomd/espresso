@@ -121,7 +121,7 @@ void add_long_range_force() {
   particles.update_particle_data();
   
   if(scafacos)
-    scafacos->run(particles.charges, particles.positions, particles.fields);
+    scafacos->run(particles.charges, particles.positions, particles.fields,particles.potentials);
   else
     runtimeError("Scafacos internal error.");
   
