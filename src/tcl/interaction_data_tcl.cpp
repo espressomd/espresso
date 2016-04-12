@@ -170,6 +170,7 @@ int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char *
 
 int tclprint_to_result_scafacos(Tcl_Interp *interp) {
   std::string p = Scafacos::get_parameters();
+  Tcl_AppendResult(interp, "scafacos ", 0);
   Tcl_AppendResult(interp, p.c_str(), 0);
   return TCL_OK;
 }
