@@ -25,6 +25,10 @@
 #ifdef OPEN_MPI
 #include <dlfcn.h>
 #endif
+
+#include <boost/mpi.hpp>
+#include <boost/serialization/string.hpp>
+
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -80,6 +84,7 @@ using namespace std;
 int this_node = -1;
 int n_nodes = -1;
 MPI_Comm comm_cart;
+boost::mpi::communicator boost_comm;
 int graceful_exit = 0;
 /* whether there is already a termination going on. */
 static int terminated = 0;
@@ -115,7 +120,8 @@ static int terminated = 0;
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
-  CB(mpi_random_stat_slave) \
+  CB(mpi_random_get_stat_slave) \
+  CB(mpi_random_set_stat_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
@@ -277,10 +283,12 @@ void mpi_init(int *argc, char ***argv)
 #endif
 
   for(int i = 0; i < N_CALLBACKS; ++i)  {
-    request_map.insert(std::pair<SlaveCallback *, int>(slave_callbacks[i], i));
+    request_map.insert(std::make_pair(slave_callbacks[i], i));
   }
     
   initRuntimeErrorCollector();
+
+  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);      
 }
 
 #ifdef HAVE_MPI
@@ -2399,11 +2407,28 @@ void mpi_random_seed_slave(int pnode, int cnt) {
   init_random_seed(this_idum);
 }
 
-std::string mpi_random_stat() {
+void mpi_random_set_stat(const std::vector<std::string> &stat) {
+  mpi_call(mpi_random_set_stat_slave, 0, 0);
+  
+  for(int i = 1; i < n_nodes; i++) {
+    boost_comm.send(i, SOME_TAG, stat[i]);
+  }
+
+  Random::set_state(stat[0]);
+}
+
+void mpi_random_set_stat_slave(int, int) {
+  std::string msg;
+  boost_comm.recv(0, SOME_TAG, msg);
+
+  Random::set_state(msg);
+}
+
+std::string mpi_random_get_stat() {
   std::string res = Random::get_state();
   std::vector<int> sizes(n_nodes);
 
-  mpi_call(mpi_random_stat_slave, 0, 0);
+  mpi_call(mpi_random_get_stat_slave, 0, 0);
 
   int size = res.size();
   MPI_Gather( &size, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0, comm_cart);
@@ -2419,12 +2444,11 @@ std::string mpi_random_stat() {
   return res;
 }
 
-void mpi_random_stat_slave(int, int) {
+void mpi_random_get_stat_slave(int, int) {
   std::string state = Random::get_state();
 
   int size = state.size();
   MPI_Gather(&size, 1, MPI_INT, 0, 1, MPI_INT, 0, comm_cart);
-
   MPI_Send(state.data(), state.size(), MPI_CHAR, 0, SOME_TAG, comm_cart);
 }
 

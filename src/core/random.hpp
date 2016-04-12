@@ -46,12 +46,19 @@ extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 
+/**
+ * @brief Get a string representation of the state of the PRNG.
+ */
 std::string get_state();
+
+/**
+ * @brief Set the state of the PRNG from a string representation.
+ */
 void set_state(const std::string &s);
 }
 
 /**
- * @brief draws a random real number from the uniform distribution in the range [0,1)
+ * @brief Draws a random real number from the uniform distribution in the range [0,1)
 */
 
 inline double d_random() {
@@ -82,7 +89,7 @@ inline double gaussian_random(void){
 /**
  * @brief Generator for cutoff Gaussian random numbers.
  *
- *Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
+ * Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
  * an actual standard deviation of 1.
  *
  * @return Gaussian random number.

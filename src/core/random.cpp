@@ -31,7 +31,7 @@ std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 std::string get_state() {
   std::ostringstream os;
   os << generator;
-
+  
   return os.str();
 }
 

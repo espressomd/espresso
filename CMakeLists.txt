@@ -143,6 +143,14 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 include(RequireCXX11)
 
 #######################################################################
+# Boost
+#######################################################################
+
+find_package(Boost REQUIRED mpi)
+include_directories(${Boost_INCLUDE_DIRS})
+  list(APPEND LIBRARIES ${Boost_LIBRARIES})
+
+#######################################################################
 # Testing 
 #######################################################################
 
