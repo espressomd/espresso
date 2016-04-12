@@ -2426,17 +2426,12 @@ void mpi_random_set_stat_slave(int, int) {
 
 std::string mpi_random_get_stat() {
   std::string res = Random::get_state();
-  std::vector<int> sizes(n_nodes);
 
   mpi_call(mpi_random_get_stat_slave, 0, 0);
-
-  int size = res.size();
-  MPI_Gather( &size, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0, comm_cart);
    
   for(int i = 1; i < n_nodes; i++) {
     std::string tmp;
-    tmp.resize(sizes[i]);
-    MPI_Recv(&(tmp[0]), sizes[i], MPI_CHAR, i, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    boost_comm.recv(i, SOME_TAG, tmp);
     res.append(" ");
     res.append(tmp);
   }
@@ -2447,9 +2442,7 @@ std::string mpi_random_get_stat() {
 void mpi_random_get_stat_slave(int, int) {
   std::string state = Random::get_state();
 
-  int size = state.size();
-  MPI_Gather(&size, 1, MPI_INT, 0, 1, MPI_INT, 0, comm_cart);
-  MPI_Send(state.data(), state.size(), MPI_CHAR, 0, SOME_TAG, comm_cart);
+  boost_comm.send(0, SOME_TAG, state);
 }
 
 void mpi_cap_forces(double fc)
