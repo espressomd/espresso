@@ -64,8 +64,7 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 set methods {}
 set setups {}
 set accuracies {}
-
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] } then {
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] >=0 } then {
     proc setup_scafacos_ewald {} {
         inter coulomb 1.0 scafacos ewald ewald_r_cut 1.001 tolerance_field 1e-4
     }
@@ -74,7 +73,7 @@ if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] } then {
     lappend accuracies 1e-3
 }
 
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] >=0} then {
     proc setup_scafacos_p3m {} {
         inter coulomb 1.0 scafacos p3m p3m_r_cut 1.001 p3m_grid 64 p3m_cao 7 p3m_alpha 2.70746
     }
@@ -83,7 +82,7 @@ if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
     lappend accuracies 1e-3
 }
 
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] } then {
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] >=0 } then {
     proc setup_scafacos_p2nfft {} {
         inter coulomb 1.0 scafacos p2nfft p2nfft_r_cut 1.001 tolerance_field 1e-4
     }
