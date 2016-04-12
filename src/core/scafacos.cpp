@@ -55,9 +55,9 @@ struct ScafacosData {
   int update_particle_data();
   void update_particle_forces() const;
   /** Inputs */
-  std::vector<double> charges, positions;
+  std::vector<double> charges, positions,dipoles;
   /** Outputs */
-  std::vector<double> forces;
+  std::vector<double> fields,potentials;
 };
 
 
@@ -93,14 +93,14 @@ void ScafacosData::update_particle_forces() const {
     const int np = cell->n;
     
     for(int i = 0; i < np; i++) {
-      p[i].f.f[0] += coulomb.prefactor*p[i].p.q*forces[it++];
-      p[i].f.f[1] += coulomb.prefactor*p[i].p.q*forces[it++];
-      p[i].f.f[2] += coulomb.prefactor*p[i].p.q*forces[it++];
+      p[i].f.f[0] += coulomb.prefactor*p[i].p.q*fields[it++];
+      p[i].f.f[1] += coulomb.prefactor*p[i].p.q*fields[it++];
+      p[i].f.f[2] += coulomb.prefactor*p[i].p.q*fields[it++];
     }
  }
 
  /** Check that the particle number did not change */
- assert(it == forces.size());
+ assert(it == fields.size());
 }
 
 static Scafacos *scafacos = 0;
@@ -121,7 +121,7 @@ void add_long_range_force() {
   particles.update_particle_data();
   
   if(scafacos)
-    scafacos->run(particles.charges, particles.positions, particles.forces);
+    scafacos->run(particles.charges, particles.positions, particles.fields);
   else
     runtimeError("Scafacos internal error.");
   
