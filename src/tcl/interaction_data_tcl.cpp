@@ -136,11 +136,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv) {
   std::list<std::string> methods = Scafacos::available_methods();
   
-  Tcl_AppendResult(interp, "{ ", 0);
   for(auto &m: methods) {
     Tcl_AppendResult(interp, m.c_str(), " ", 0);
   }
-  Tcl_AppendResult(interp, "}", 0);
 
   return TCL_OK;
 }
