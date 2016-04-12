@@ -303,7 +303,7 @@ void calc_long_range_forces()
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Electrostatics::Scafacos::add_long_range_force();
+    Scafacos::add_long_range_force();
     break;
 #endif
   default:

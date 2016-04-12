@@ -496,7 +496,7 @@ double calc_electrostatics_cutoff()
     return rf_params.r_cut;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-      return  Electrostatics::Scafacos::get_r_cut();
+      return  Scafacos::get_r_cut();
 #endif
   default:
     break;

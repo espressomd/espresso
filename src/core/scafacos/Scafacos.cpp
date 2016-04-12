@@ -1,7 +1,6 @@
 #include "Scafacos.hpp"
 #include "errorhandling.hpp"
 
-namespace Electrostatics {
 namespace Scafacos {
 
 #define handle_error(stmt) { const FCSResult res = stmt; if(res) runtimeError(fcs_result_get_message(res)); }
@@ -118,5 +117,4 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
   handle_error(fcs_set_common(handle, 0, boxa, boxb, boxc, off, periodicity, total_particles));
 }
 
-}
 }

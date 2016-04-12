@@ -21,7 +21,7 @@
 
 #include "scafacos.hpp"
 
-#if defined(SCAFACOS) and defined(ELECTROSTATICS)
+#if defined(SCAFACOS) 
 
 #include <vector>
 
@@ -39,11 +39,10 @@
 #include "integrate.hpp"
 #include "tuning.hpp"
 #include "interaction_data.hpp"
-#include "electrostatics/scafacos/Scafacos.hpp"
+#include "scafacos/Scafacos.hpp"
 
 /** This file contains the c-like interface for Scafacos */
 
-namespace Electrostatics {
 namespace Scafacos {
 
 /** Get available scafacos methods */
@@ -241,13 +240,12 @@ void set_parameters(const std::string &method, const std::string &params) {
 }
 
 }
-}
 
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
-  #if defined(SCAFACOS) and defined(ELECTROSTATICS)
-  using namespace Electrostatics::Scafacos;
+  #if defined(SCAFACOS) 
+  using namespace Scafacos;
   std::string method;
   std::string params;
 

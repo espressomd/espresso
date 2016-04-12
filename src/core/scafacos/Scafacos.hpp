@@ -4,7 +4,6 @@
 #include <fcs.h>
 #include <mpi.h>
 
-namespace Electrostatics {
 namespace Scafacos {
 
 /** \brief Abstraction of a method from the scafacos library */
@@ -52,5 +51,4 @@ struct Scafacos {
 };
 
 
-}
 }
