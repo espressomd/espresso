@@ -175,7 +175,6 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
   
   // Pack the necessary information
   // Esp. rescale the velocities.
-  boff[0] = 0;
   int i1 = 0, i3 = 0;
   for (int c = 0; c < local_cells.n; ++c) {
     cell = local_cells.cell[c];
@@ -220,6 +219,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
   
   if (fields & MPIIO_OUT_BND) {
     // Convert the bond counts to bond prefixes
+    boff[0] = 0;
     for (int i = 1; i <= nlocalpart; ++i)
       boff[i] += boff[i - 1];
     int numbonds = boff[nlocalpart];
