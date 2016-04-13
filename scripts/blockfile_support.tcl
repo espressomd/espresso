@@ -409,8 +409,8 @@ proc blockfile_read_auto_topology {channel read auto} {
 
 # t_random
 proc blockfile_write_random {channel write random} {
-    blockfile $channel write start random
-    puts $channel "\n\t{[join [t_random stat] "\} \{"]}\n\}"
+    #blockfile $channel write start random
+    #puts $channel "\n\t{[join [t_random stat] "\} \{"]}\n\}"
 }
 
 proc blockfile_read_auto_random {channel read auto} {

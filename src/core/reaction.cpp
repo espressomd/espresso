@@ -243,6 +243,7 @@ void integrate_reaction_swap()
   double dist2, vec21[3], ct_ratexp, eq_ratexp, rand;
   int n_reactions;
 
+  double product_q, reactant_q;
   std::vector<int> catalyzers, reactants, products;
 
   // If multiple catalyzers get close to each other, they might eat up
@@ -314,9 +315,17 @@ void integrate_reaction_swap()
               // correct half space, append it to the lists of viable
               // reaction candidates
               if ( p_neigh[i].p.type == reaction.reactant_type &&  in_lower_half_space(p_local[*id],p_neigh[i]) )
+              {
                 reactants.push_back(i);
+#ifdef ELECTROSTATICS
+                reactant_q = p_neigh[i].p.q;
+#endif // ELECTROSTATICS
+              }
               if ( p_neigh[i].p.type == reaction.product_type  && !in_lower_half_space(p_local[*id],p_neigh[i]) )
                 products.push_back(i);
+#ifdef ELECTROSTATICS
+                product_q = p_neigh[i].p.q;
+#endif // ELECTROSTATICS
             }
           }
 
@@ -388,41 +397,26 @@ void integrate_reaction_swap()
         // If the particle has been tagged we perform the changes
         if ( p_local[i].p.catalyzer_count != 0 )
         {
-#ifdef ELECTROSTATICS
-          // Flip charge
-          p_local[i].p.q *= -1;
-#endif /* ELECTROSTATICS */
-          
-          // Flip type
+          // Flip type and charge
           if ( p_local[i].p.type == reaction.reactant_type )
+          {
             p_local[i].p.type = reaction.product_type;
+#ifdef ELECTROSTATICS
+            p_local[i].p.q = product_q;
+#endif // ELECTROSTATICS
+          }
           else
+          {
             p_local[i].p.type = reaction.reactant_type;
-
+#ifdef ELECTROSTATICS
+            p_local[i].p.q = reactant_q;
+#endif // ELECTROSTATICS
+          }
           // Reset the tag for the next step
           p_local[i].p.catalyzer_count = 0;
         }
       }
     }
-
-    /* TODO: remove if proved to be unnecessary
-    // Reset all the catalyzer counts, such that in the next time step
-    // a new reaction can take place
-    for ( std::vector<int>::iterator c = rand_cells.begin(); c != rand_cells.end(); c++)
-    {
-      for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
-      {
-        cell = dd.cell_inter[*c].nList[n].pList;
-        p2   = cell->part;
-        np   = cell->n;
-        // Particle list loop
-        for ( int i = 0; i < np; i++ )
-        {
-          p2[i].p.catalyzer_count = 0;
-        }
-      }
-    }
-    */
 
     on_particle_change();
   }
