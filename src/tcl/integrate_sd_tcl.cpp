@@ -121,7 +121,7 @@ int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
-  #ifdef SD
+  #if defined(SD) || defined(BD)
   int  n_steps;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
