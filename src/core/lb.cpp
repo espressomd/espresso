@@ -1855,8 +1855,10 @@ int lb_sanity_checks() {
 
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
-    lbfluid[0]    = (double**) Utils::malloc(2*LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::malloc(LB_COMPONENTS*2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[0]    = (double**) Utils::malloc(LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*)  Utils::malloc(LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1]    = (double**) Utils::malloc(LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1][0] = (double*)  Utils::malloc(LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 }
 
 
@@ -1866,10 +1868,10 @@ static void lb_realloc_fluid() {
 
     LB_TRACE(printf("reallocating fluid\n"));
 
-    lbfluid[0]    = (double**) Utils::realloc(*lbfluid,2*LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::realloc(**lbfluid,2*LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
-    lbfluid[1]    = (double **)lbfluid[0] + LB_COMPONENTS*lbmodel.n_veloc;
-    lbfluid[1][0] = (double *)lbfluid[0][0] + LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc;
+    lbfluid[0]    = (double**) Utils::realloc(lbfluid[0],LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1]    = (double**) Utils::realloc(lbfluid[1],LB_COMPONENTS*lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*)  Utils::realloc(lbfluid[0][0],LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1][0] = (double*)  Utils::realloc(lbfluid[1][0],LB_COMPONENTS*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 
     for(int ii=0;ii<LB_COMPONENTS;++ii){
       for (i=0; i<lbmodel.n_veloc; ++i) {
@@ -2140,6 +2142,8 @@ void lb_init() {
 void lb_release_fluid() {
     free(lbfluid[0][0]);
     free(lbfluid[0]);
+    free(lbfluid[1][0]);
+    free(lbfluid[1]);
     free(lbfields);
 }
 

@@ -109,41 +109,44 @@ typedef struct {
 namespace Utils {
   /** used instead of realloc.
       Makes sure that resizing to zero FREEs pointer */
-  inline void *realloc(void *old, int size) {
-    void *p;
-    if (size <= 0) {
-      ::free(old);
-      return NULL;
-    }
-    p = (void *)::realloc(old, size);
-    if(p == NULL) {
-      fprintf(stderr, "Could not allocate memory.\n");
-      errexit();
-    }
-    return p;
+template<typename T>
+inline T *realloc(T *old, size_t size) {
+  if (size <= 0) {
+    ::free(static_cast<void *>(old));
+    return nullptr;
   }
+  
+  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
+  
+  if(p == nullptr) {
+    fprintf(stderr, "Could not allocate memory.\n");
+    errexit();
+  }
+  return p;
+}
 
   /** used instead of malloc.
       Makes sure that a zero size allocation returns a NULL pointer */
-  inline void *malloc(int size)
-  {
-    void *p;
-    if (size <= 0) {
-      return NULL;
-    }
-    p = (void *)::malloc(size);
-    if(p == NULL) {
-      fprintf(stderr, "Could not allocate memory.\n");
-      errexit();
-    }
-    return p;
+inline void *malloc(size_t size)
+{
+  if (size <= 0) {
+    return nullptr;
   }
+  
+  void *p = ::malloc(size);
+  
+  if(p == nullptr) {
+    fprintf(stderr, "Could not allocate memory.\n");
+    errexit();
+  }
+  return p;
+}
 
-  /** Calculate signum of val, is supported by T */
-  template <typename T>
-  int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-  }
+/** Calculate signum of val, if supported by T */
+template <typename T>
+int sgn(T val) {
+  return (T(0) < val) - (val < T(0));
+}
 }
 
 /*@}*/
