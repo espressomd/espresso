@@ -29,6 +29,17 @@ struct Scafacos {
 
     return 0.0;
   }
+
+  //* Get pair energy for near field contrib */
+  inline double pair_energy(double dist) const {     
+    if(has_near) {
+      fcs_float potential;
+      fcs_compute_near_potential(handle, dist, &potential);
+      return potential;
+    }
+
+    return 0.0;
+  }
   
   /** Calculate the fields and potentials for charges */
   void run(std::vector<double> &charges, std::vector<double> &positions,

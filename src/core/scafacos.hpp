@@ -36,10 +36,14 @@
 
 namespace Scafacos {
 #if defined(SCAFACOS) 
-/** Pair force */
+/** Near-field pair force */
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force);
+/** Near-field pair energy */
+double pair_energy(Particle* p1, Particle* p2, double dist);
 /** Long range part */
 void add_long_range_force();
+/** Calculate long range energy contribution */
+double long_range_energy(); 
 /** Get parameters */
 std::string get_parameters();
 /** Set parameters */

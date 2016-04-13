@@ -126,6 +126,9 @@ if { ! [ llength $methods ] } {
 }
 puts "Methods to test: $methods"
 
+# Reference energy from p3m method.
+set reference_energy 148.9423
+
 foreach method $methods setup $setups accuracy $accuracies {
     puts "Testing $method..."
     eval $setup
@@ -149,6 +152,16 @@ foreach method $methods setup $setups accuracy $accuracies {
 
         set rmsf [expr sqrt($rmsf / [setmd n_part])]
         puts [format "  rms_force_error=%e" $rmsf]
+	set E [analyze energy coulomb]
+	
+	# Compare energies. Eclude p3m-gpu which does not have energy calculation
+	if { $method != "P3M-GPU" } {
+	  set dE [expr abs($E-$reference_energy)]
+	  puts "Energy difference to ref. value $dE"
+	  if { $dE >1E-3 } {
+	    error_exit "Difference in energy too large." 
+	  }
+	}
         if { $rmsf > $accuracy } then {
             error [format \
                        "coulomb_cloud_wall: rms_force_error=%e larger than accuracy=%e" \

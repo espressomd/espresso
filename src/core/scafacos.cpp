@@ -117,6 +117,10 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *
   }
 }
 
+double pair_energy(Particle* p1, Particle* p2, double dist) {
+  return coulomb.prefactor*p1->p.q*p2->p.q*scafacos->pair_energy(dist);
+}
+
 void add_long_range_force() {
   particles.update_particle_data();
   
@@ -126,6 +130,17 @@ void add_long_range_force() {
     runtimeError("Scafacos internal error.");
   
   particles.update_particle_forces();
+}
+
+double long_range_energy() {
+  particles.update_particle_data();
+  
+  if(scafacos)
+    scafacos->run(particles.charges, particles.positions, particles.fields,particles.potentials);
+  else
+    runtimeError("Scafacos internal error.");
+
+  return 0.5* coulomb.prefactor * std::inner_product(particles.charges.begin(),particles.charges.end(),particles.potentials.begin(),0.0);
 }
 
 /** Determine runtime for a specific cutoff */
