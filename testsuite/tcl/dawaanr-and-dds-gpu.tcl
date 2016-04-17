@@ -68,7 +68,7 @@ setmd time_step 0.0001
 setmd skin 0.1
 
 
-foreach n { 110 111 540 541 } {
+foreach n { 541 } {
 
 
 
