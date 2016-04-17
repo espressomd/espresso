@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1783,7 +1783,7 @@ void p3m_count_charged_particles()
 double p3m_real_space_error(double prefac, double r_cut_iL, 
 			    int n_c_part, double sum_q2, double alpha_L)
 {
-  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt((double)n_c_part*r_cut_iL)*box_l[1]*box_l[2]);
+  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / sqrt((double)n_c_part*r_cut_iL*box_l[0]*box_l[0]*box_l[1]*box_l[2]);
 }
 
 double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L)
@@ -1927,15 +1927,11 @@ int p3m_sanity_checks_boxl() {
   for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(p3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-        ostringstream msg;
-        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
       ret = 1;
     }
     if(p3m.params.cao_cut[i] >= local_box_l[i]) {
-        ostringstream msg;
-        msg <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"P3M_init: k-space cutoff " << p3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
       ret = 1;
     }
   }
@@ -1952,52 +1948,38 @@ int p3m_sanity_checks()
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"P3M requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M requires periodicity 1 1 1";
     ret = 1;
   }
   
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
-      msg << "P3M at present requires the domain decomposition cell system";
-      runtimeError(msg);
+      runtimeErrorMsg() << "P3M at present requires the domain decomposition cell system";
     ret = 1;
   }
 
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
-      ostringstream msg;
-      msg <<"P3M_init: mesh size is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M_init: mesh size is not yet set";
     ret = 1;
   }
   if( p3m.params.cao == 0) {
-      ostringstream msg;
-      msg <<"P3M_init: cao is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M_init: cao is not yet set";
     ret = 1;
   }
   if (p3m.params.alpha < 0.0 ) {
-      ostringstream msg;
-      msg <<"P3M_init: alpha must be >0";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M_init: alpha must be >0";
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      ostringstream msg;
-      msg <<"P3M_init: node grid must be sorted, largest first";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
     ret = 1;
   }
   
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
       (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-        ostringstream msg;
-        msg <<"P3M_init: Nonmetallic epsilon requires cubic box";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
 	  ret = 1;
 	}
   }

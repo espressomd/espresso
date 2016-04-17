@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -85,19 +85,20 @@ IF ELECTROSTATICS:
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
 
-        cdef extern from "p3m_gpu.hpp":
-            void p3m_gpu_init(int cao, int *mesh, double alpha, double *box)
+        IF CUDA:
+            cdef extern from "p3m_gpu.hpp":
+                void p3m_gpu_init(int cao, int * mesh, double alpha, double * box)
 
-        cdef inline python_p3m_gpu_init(params):
-            cdef int cao
-            cdef int mesh[3]
-            cdef double alpha
-            cdef double box[3]
-            cao = params["cao"]
-            mesh = params["mesh"]
-            alpha = params["alpha"]
-            box = params["box"]
-            p3m_gpu_init(cao, mesh, alpha, box)
+            cdef inline python_p3m_gpu_init(params):
+                cdef int cao
+                cdef int mesh[3]
+                cdef double alpha
+                cdef double box[3]
+                cao = params["cao"]
+                mesh = params["mesh"]
+                alpha = params["alpha"]
+                box = params["box"]
+                p3m_gpu_init(cao, mesh, alpha, box)
 
         # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):
@@ -182,7 +183,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             @staticmethod
             EspressoSystemInterface * _Instance()
 
-    cdef extern from "EwaldgpuForce.hpp":
+    cdef extern from "actor/EwaldGPU.hpp":
         cdef cppclass EwaldgpuForce:
             EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
             int set_params(double rcut, int num_kx, int num_ky, int num_kz, double alpha)

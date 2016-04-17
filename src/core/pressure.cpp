@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -374,16 +374,12 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
   //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],value););
   
   if ((value)*(p2r[given]) < -0.0001) {
-      ostringstream msg;
-      msg <<"analyze stress_profile: getintersection: intersection is not between the two given particles - " << value << " is not between " << 0.0 << " and " << p2r[given] << " and box size is " << box_size[given] << ", given is " << given << "\n";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"analyze stress_profile: getintersection: intersection is not between the two given particles - " << value << " is not between " << 0.0 << " and " << p2r[given] << " and box size is " << box_size[given] << ", given is " << given << "\n";
     return 0; 
   } else if (given == get) {
     *answer =  drem_down(value + pos1[given],box_size[given]);;
   } else if (0==p2r[given]) {
-      ostringstream msg;
-      msg <<"analyze stress_profile: getintersection: intersection is a line, not a point - value is " << value << " same as " << 0.0 << " and " << p2r[given] << "\n";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"analyze stress_profile: getintersection: intersection is a line, not a point - value is " << value << " same as " << 0.0 << " and " << p2r[given] << "\n";
     return 0;   
   } else {
     *answer =  drem_down(pos1[get]+p2r[get]/p2r[given]*value,box_size[get]);
@@ -775,9 +771,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: calclength is %e and length is %e\n}",this_node,calclength,length););
     
     if (calclength - length >0.0000000001) {
-        ostringstream msg;
-        msg << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
-        runtimeError(msg);
+        runtimeErrorMsg() << this_node << ": analyze stress_profile: bug in distribute tensor code - calclength is " << calclength << " and length is " << length;
       return 0;
     }
     free(occupiedzbins);
@@ -949,9 +943,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
-        ostringstream msg;
-        msg <<"analyze stress_profile: Analyzed box (" << range[i] << ") with skin+max_cut(" << skin+max_cut << ") is larger than simulation box (" << box_l[i] << ").\n";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"analyze stress_profile: Analyzed box (" << range[i] << ") with skin+max_cut(" << skin+max_cut << ") is larger than simulation box (" << box_l[i] << ").\n";
       return 0;
     }
     range_start[i] = drem_down(range_start[i],box_l[i]);

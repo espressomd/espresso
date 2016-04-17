@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -152,16 +152,12 @@ int MMM1D_sanity_checks()
 {
   //char *errtxt;
   if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"MMM1D requires periodicity 0 0 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM1D requires periodicity 0 0 1";
     return 1;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-      ostringstream msg;
-      msg <<"MMM1D requires n-square cellsystem";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM1D requires n-square cellsystem";
     return 1;
   }
   return 0;

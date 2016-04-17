@@ -12,6 +12,7 @@ autom4te.cache
 .deps/
 myconfig.h
 build/
+CMakeFiles
 
 *.*~
 

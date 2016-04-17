@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -63,6 +63,10 @@
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "minimize_energy.hpp"
+
+#ifdef VALGRIND_INSTRUMENTATION
+#include <callgrind.h>
+#endif
 
 /************************************************
  * DEFINES
@@ -147,9 +151,7 @@ void integrator_sanity_checks()
   //char *errtext;
 
   if ( time_step < 0.0 ) {
-      ostringstream msg;
-      msg <<"time_step not set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"time_step not set";
   }
 }
 
@@ -159,9 +161,7 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-        ostringstream msg;
-        msg <<"npt on, but piston mass not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt on, but piston mass not set";
     }
 
 #ifdef ELECTROSTATICS
@@ -174,9 +174,7 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        ostringstream msg;
-        msg <<"npt only works with P3M, Debye-Huckel or reaction field";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt only works with P3M, Debye-Huckel or reaction field";
       }
     }
 #endif /*ELECTROSTATICS*/
@@ -189,9 +187,7 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        ostringstream msg;
-        msg <<"NpT does not work with your dipolar method, please use P3M.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"NpT does not work with your dipolar method, please use P3M.";
       }
     }
 #endif  /* ifdef DIPOLES */
@@ -333,6 +329,10 @@ void integrate_vv(int n_steps, int reuse_forces)
 
   n_verlet_updates = 0;
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_START_INSTRUMENTATION;
+#endif
+    
   /* Integration loop */
   for (int step=0; step<n_steps; step++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n", this_node, step));
@@ -558,6 +558,10 @@ void integrate_vv(int n_steps, int reuse_forces)
     #endif
   }
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+    
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
@@ -768,10 +772,8 @@ void propagate_press_box_pos_and_rescale_npt()
         nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
 
-          ostringstream msg;
-          msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
+          runtimeErrorMsg() << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
                  << " just caused the volume to become negative, decrease dt";
-          runtimeError(msg);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
 	scal[2] = 1;
       }
@@ -1125,6 +1127,8 @@ void force_and_velocity_display()
 #endif
 }
 
+/** @TODO: This needs to go!! */
+
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
 {
 
@@ -1133,27 +1137,21 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
 
   if ( recalc_forces ) {
   	if ( reuse_forces ) {
-      std::ostringstream msg;
-      msg <<"cannot reuse old forces and recalculate forces";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot reuse old forces and recalculate forces";
   	}
   	reuse_forces = -1;
   }
 
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
-    std::ostringstream msg;
-    msg <<"illegal number of steps (must be >0)";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"illegal number of steps (must be >0)";
     return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     if (max_cut == 0.0) {
-      std::ostringstream msg;
-      msg <<"cannot automatically determine skin, please set it manually";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
     skin = 0.4*max_cut;
@@ -1194,9 +1192,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
   nptiso.piston = piston;
 
   if ( nptiso.piston <= 0.0 ) {
-    std::ostringstream msg;
-    msg <<"You must set <piston> as well before you can use this integrator!\n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must set <piston> as well before you can use this integrator!\n";
     return ES_ERROR;
   }
   if ( xdir || ydir || zdir ) {
@@ -1254,10 +1250,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
 
 
   if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    std::ostringstream msg;
-    msg <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
-    msg <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
+    runtimeErrorMsg() <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
     integ_switch = INTEG_METHOD_NVT;
   	mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   	return (ES_ERROR);

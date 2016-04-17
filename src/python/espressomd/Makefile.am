@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,8 +23,6 @@ AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core \
 	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/core/libEspresso.la \
-	@LIBS@
 
 if MPI_FAKE
 AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
@@ -59,8 +57,11 @@ PYXFILES =  \
 	magnetostatics.pyx \
 	magnetostatic_extensions.pyx \
 	particle_data.pyx \
+	reaction.pyx \
 	thermostat.pyx \
-	utils.pyx
+	utils.pyx \
+	h5md.pyx \
+	grand_canonical.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -81,11 +82,16 @@ PXDFILES = \
 	magnetostatic_extensions.pxd \
 	p3m_common.pxd \
 	particle_data.pxd \
+	reaction.pxd \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
 	utils.pxd \
-	actors.pxd
+	actors.pxd \
+	h5md.pxd \
+	grand_canonical.pxd
+
+LIBS +=	$(top_builddir)/src/core/libEspresso.la
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
@@ -134,7 +140,7 @@ dummy_SOURCES = dummy.cpp
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
 $(LAFILES): %.la: %.lo
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(abs_builddir) -L$(top_builddir)/src/core/.libs $(LIBS) -lEspresso -rpath $(pyexecdir) $<
 CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
@@ -142,8 +148,17 @@ SOFILES = $(PYXFILES:.pyx=.so)
 all-local: $(SOFILES)
 CLEANFILES += $(SOFILES)
 
-$(SOFILES): %.so: %.la
+if DARWIN
+SOSUFFIX=dylib
+else
+SOSUFFIX=so
+endif
+
+$(SOFILES): %.so: %.la libEspresso.so
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
+
+libEspresso.so:
+	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.$(SOSUFFIX) $@
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
@@ -151,7 +166,7 @@ gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src
+gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src -DHAVE_CONFIG_H
 gen_pxiconfig: gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp $(top_builddir)/src/core/myconfig-final.hpp
 	$(AM_V_CXXLD)$(CXXLINK) $(gen_pxiconfig_CPPFLAGS) $<
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -67,7 +67,7 @@
 #include "elc.hpp"
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
-#include "actor/EwaldgpuForce_ShortRange.hpp"
+#include "actor/EwaldGPU_ShortRange.hpp"
 
 #ifdef CONSTRAINTS
 #include "constraint.hpp"
@@ -291,10 +291,8 @@ inline void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-        ostringstream msg;
-        msg <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1]
-           <<" (particles not stored on the same node)";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1]
+                        <<" (particles not stored on the same node)";
       return;
     }
 
@@ -302,11 +300,9 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-      ostringstream msg;
-      msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-2] << " and " << p1->bl.e[i-1]
-         <<" (particles not stored on the same node)";
-      runtimeError(msg);
-    return;
+        runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-2] << " and " << p1->bl.e[i-1]
+                          <<" (particles not stored on the same node)";
+        return;
       }
     }
 
@@ -314,11 +310,9 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-      ostringstream msg;
-      msg <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-3] <<", "<< p1->bl.e[i-2]
-            << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
-      runtimeError(msg);
-    return;
+        runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-3] <<", "<< p1->bl.e[i-2]
+                          << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+        return;
       }
     }
 #ifdef TWIST_STACK
@@ -329,9 +323,8 @@ inline void add_bonded_energy(Particle *p1)
       p8 = local_particles[p1->bl.e[i++]];
 
       if(!p4 || !p5 || !p6 || !p7 || !p8) {
-	ostringstream msg;
-	msg << "bond broken between particles" <<
-	  p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+	runtimeErrorMsg() << "bond broken between particles" <<
+            p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
 	return;
       }
     }
@@ -424,9 +417,7 @@ inline void add_bonded_energy(Particle *p1)
 	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
 	break;
       default :
-      ostringstream msg;
-      msg << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-      runtimeError(msg);
+        runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
     return;
       }
       break;
@@ -444,9 +435,7 @@ inline void add_bonded_energy(Particle *p1)
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
       default :
-          ostringstream msg;
-          msg << "add_bonded_energy: overlapped bond type of atom " << p1->p.identity << " unknown\n";
-          runtimeError(msg);
+        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom " << p1->p.identity << " unknown\n";
         return;
       }
       break;
@@ -458,31 +447,23 @@ inline void add_bonded_energy(Particle *p1)
       break;
 #endif
     default :
-        ostringstream msg;
-        msg <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
       return;
     }
 
     if (bond_broken) {
       switch (n_partners) {
       case 1: {
-      ostringstream msg;
-      msg <<"bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
-      runtimeError(msg);
+        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
     break;
       }
       case 2: {
-    ostringstream msg;
-    msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and " << p3->p.identity;
-    runtimeError(msg);
+        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and " << p3->p.identity;
     break;
       }
       case 3: {
-      ostringstream msg;
-      msg <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
-          << ", " << p3->p.identity << " and " << p4->p.identity;
-      runtimeError(msg);
+        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
+                          << ", " << p3->p.identity << " and " << p4->p.identity;
     break;
       }
       }

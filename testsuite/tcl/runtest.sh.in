@@ -1,0 +1,231 @@
+#!/bin/sh
+#
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2006,2007,2008,2009,2010,2011,2012 Olaf Lenz, Axel Arnold
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#    Max-Planck-Institute for Polymer Research, Theory Group
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+usage() {
+    cat <<EOF
+Usage: $0 [-p PROCESSORS] [TESTCASES]...
+  Run TESTCASES on PROCESSORS processors.
+  Instead of specifying PROCESSORS and TESTCASES on the command line,
+  you can set the environment variables TESTCASES and PROCESSORS.
+EOF
+    exit 2
+}
+
+# list of tests that are not supported by this version
+BLACKLIST=el2d_die.tcl
+
+TESTLOG=runtest.log
+
+srcdir=@srcdir@
+ESPRESSO=@top_builddir@/Espresso
+ESMPIEXEC=@ESPRESSO_MPIEXEC@
+
+# tests need to be run from the directory where this script is located
+cd ${0%runtest.sh}
+
+# handle processors
+if test "x@MPI_FAKE@" = "xyes" || test x@CPU_COUNT@ = "x1"; then 
+  processors=1
+  if test "x$1" = "x-p"; then
+      echo "ERROR: ESPResSo compiled without MPI, but -p $2 given!"
+      exit 2
+  fi
+elif test "x$1" = "x-p"; then
+  processors="$2"
+  shift 2
+elif test -n "$PROCESSORS"; then
+  processors=$PROCESSORS
+else
+  processors="@CPU_COUNT@"
+fi
+
+echo "$0 started on "`date` > $TESTLOG
+echo "processors=$processors" >> $TESTLOG
+
+# handle testcases
+testcases=$TESTCASES
+test $# -ge 1 && testcases="$@"
+echo "testcases=$testcases" >> $TESTLOG
+
+# check if testcases are available
+if test -z "$testcases"; then
+    echo "No testcases specified!"
+    usage
+fi
+
+# check for blacklisted tests
+testcases_old=$testcases
+testcases=
+blacklisted=
+for testcase in $testcases_old; do
+    ignore=
+    for bl_testcase in $BLACKLIST; do
+	if test "$bl_testcase" = "$testcase"; then
+	    ignore=1
+	    break;
+	fi
+    done
+    if ! test "$ignore"; then
+	testcases="$testcases $testcase"
+    else
+	blacklisted="$blacklisted $testcase"
+    fi
+done
+
+# link all files from the src directory to the run directory, if they are not identical
+for file in `ls $srcdir/`; do
+    if test -f $srcdir/$file && ! test -f $file; then
+	echo @LN_S@ $srcdir/$file .
+	@LN_S@ $srcdir/$file .
+    fi
+done
+
+
+# execute the tests
+for np in $processors; do
+    #limit to 8 processors, causes trouble otherwise for mass-and-inertia.tcl on 12
+    if [ "$np" -gt "8" ]; then
+      np=8
+    fi
+    echo "** RUNNING TESTSUITE FOR $np tasks"
+    echo >> $TESTLOG
+    echo "**************************************************" >> $TESTLOG
+    echo "**** RUNNING TESTSUITE FOR $np tasks" >> $TESTLOG
+    failed=
+    ignored=
+    succeeded=
+    for testcase in $testcases; do
+	if test x@MPI_FAKE@ = "xyes"; then
+	  CMD="$ESPRESSO $srcdir/$testcase -quiet"
+	else
+	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase -quiet"
+	fi
+	printf "%35s - " $testcase
+	echo "**************************************************" >> $TESTLOG
+	echo "** $testcase" >> $TESTLOG
+	echo $CMD >> $TESTLOG
+	$CMD >> $TESTLOG 2>&1
+	rc=$?
+	echo >> $TESTLOG
+	case $rc in
+	    (0) 
+	    echo "ok"
+	    echo "SUCCESS: $testcase" >> $TESTLOG
+	    succeeded="$succeeded $testcase"
+	    ;;
+	    (42)
+	    # 42 is the constant used to denote that a test is to be ignored
+	    echo "ignored"
+	    echo "IGNORED: $testcase" >> $TESTLOG
+	    ignored="$ignored $testcase"
+	    ;;
+	    (66)
+	    echo "ERROR"
+	    echo "FAILED: $testcase" >> $TESTLOG
+	    failed="$failed $testcase"
+	    ;;
+	    (130)
+	    # SIGINT
+	    echo "INTERRUPT"
+	    echo "INTERRUPT: $testcase" >> $TESTCASE
+	    interrupted=yes
+	    break
+	    ;;
+	    (*) 
+	    echo "ERROR (code=$rc)"
+	    echo "UNKNOWN ERROR: $testcase (probably interrupted?)" >> $TESTLOG
+	    echo "Exit code: $rc" >> $TESTLOG
+	    interrupted=yes
+	    failed="$failed $testcase"
+	    break
+	    ;;
+	esac
+    done
+    echo
+    # interrupt if not all test cases on a certain processor number
+    # were successful
+    if test "x$failed" != "x"; then 
+	echo "Some test cases failed with $np tasks, interrupting test suite."
+	echo "**************************************************" >> $TESTLOG
+	echo "Some test cases failed with $np tasks, interrupting test suite." >> $TESTLOG
+	break
+    fi
+done
+
+echo >> $TESTLOG
+echo "************************************" >> $TESTLOG
+echo "************************************" >> $TESTLOG
+echo "************ SUMMARY ***************" >> $TESTLOG
+echo "************************************" >> $TESTLOG
+echo "************************************" >> $TESTLOG
+echo "$np TASKS" >> $TESTLOG
+
+if test "x$blacklisted" != "x"; then
+    echo "BLACKLISTED TESTS:" >> $TESTLOG
+    for testcase in $blacklisted; do
+	echo "  $testcase" >> $TESTLOG
+    done
+fi
+
+if test "x$ignored" != "x"; then
+    echo "IGNORED TESTS:" >> $TESTLOG
+    for testcase in $ignored; do
+	echo "  $testcase" >> $TESTLOG
+    done
+fi
+
+if test "x$succeeded" != "x"; then
+    echo "SUCEEDED TESTS:" >> $TESTLOG
+    for testcase in $succeeded; do
+	echo "  $testcase" >> $TESTLOG
+    done
+fi
+
+if test "x$failed" != "x"; then
+    echo "FAILED TESTS:" >> $TESTLOG
+    for testcase in $failed; do
+	echo "  $testcase" >> $TESTLOG
+    done
+
+    echo
+    echo "**************************************************"
+    echo "** Not all test cases were successful!"
+    echo "** Have a look at the file testsuite/tcl/runtest.log"
+    echo "** for the output of the testcases."
+    if test "x$interrupted" != "x"; then
+	echo "**************************************************"
+	echo "** The testsuite was interrupted!"
+    fi
+    echo "**************************************************"
+    echo
+
+    exit 1
+else
+    echo
+    echo "**************************************************"
+    echo "** All tests were successful!"
+    echo "**************************************************"
+    echo
+fi
+
+

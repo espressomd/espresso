@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,6 +22,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#ifdef OPEN_MPI
+#include <dlfcn.h>
+#endif
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -51,7 +54,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "maggs.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "elc.hpp"
 #include "iccp3m.hpp"
 #include "statistics_chain.hpp"
@@ -69,6 +72,8 @@
 #include "EspressoSystemInterface.hpp"
 #include "statistics_observable.hpp"
 #include "minimize_energy.hpp"
+#include "scafacos.hpp"
+#include "mpiio.hpp"
 
 using namespace std;
 
@@ -110,10 +115,7 @@ static int terminated = 0;
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
   CB(mpi_random_seed_slave) \
-  CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
-  CB(mpi_bit_random_seed_slave) \
-  CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
   CB(mpi_rescale_particles_slave) \
@@ -167,7 +169,9 @@ static int terminated = 0;
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
   CB(mpi_thermalize_cpu_slave) \
-
+  CB(mpi_scafacos_set_parameters_slave) \
+  CB(mpi_mpiio_slave) \
+  
 // create the forward declarations
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
@@ -198,11 +202,12 @@ static int request[3];
 
 /** Map callback function pointers to request codes */
 #ifndef HAVE_CXX11
-std::map<SlaveCallback *, int> request_map;
+typedef std::map<SlaveCallback *, int> request_map_type;
 #else
 #include <unordered_map>
-std::unordered_map<SlaveCallback *, int> request_map;
+typedef std::unordered_map<SlaveCallback *, int> request_map_type;
 #endif
+static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -224,6 +229,30 @@ void mpi_core(MPI_Comm *comm, int *errcode,...) {
 
 void mpi_init(int *argc, char ***argv)
 {
+#ifdef OPEN_MPI
+  void *handle = 0;
+  int mode = RTLD_NOW | RTLD_GLOBAL;
+#ifdef RTLD_NOLOAD
+  mode |= RTLD_NOLOAD;
+#endif
+  void * _openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol)
+  {
+    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n", this_node);
+    errexit();
+  }
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+  
+  if (!handle) handle = dlopen(_openmpi_info.dli_fname, mode);
+  
+  if (!handle)
+  {
+    fprintf(stderr, "%d: Aborting because unable to load libmpi into the global symbol space.\n", this_node);
+    errexit();
+  }
+#endif
+
 #ifdef MPI_CORE
   MPI_Errhandler mpi_errh;
 #endif
@@ -255,7 +284,13 @@ void mpi_init(int *argc, char ***argv)
 
 #ifdef HAVE_MPI
 void mpi_call(SlaveCallback cb, int node, int param) {
-  const int reqcode = request_map[cb];
+  request_map_type::iterator req_it = request_map.find(cb);
+  if (req_it == request_map.end())
+  {
+    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
+    errexit();
+  }
+  const int reqcode = req_it->second;
   
   request[0] = reqcode;
   request[1] = node;
@@ -500,6 +535,13 @@ void mpi_send_v(int pnode, int part, double v[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      v[0] *= smaller_time_step/time_step;
+      v[1] *= smaller_time_step/time_step;
+      v[2] *= smaller_time_step/time_step;
+    }
+#endif
     memmove(p->m.v, v, 3*sizeof(double));
   }
   else
@@ -512,8 +554,14 @@ void mpi_send_v_slave(int pnode, int part)
 {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG,
-	     comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(p->m.v, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+#ifdef MULTI_TIMESTEP
+    if (smaller_time_step > 0. && p->p.smaller_timestep) {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+#endif
   }
 
   on_particle_change();
@@ -1888,6 +1936,18 @@ void mpi_send_smaller_timestep_flag(int pnode, int part, int smaller_timestep)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
     p->p.smaller_timestep = smaller_timestep;
   }
   else {
@@ -1903,9 +1963,23 @@ void mpi_send_smaller_timestep_flag_slave(int pnode, int part)
 #ifdef MULTI_TIMESTEP
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+    int smaller_timestep;
     MPI_Status status;
-    MPI_Recv(&p->p.smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
+    MPI_Recv(&smaller_timestep, 1, MPI_INT, 0, SOME_TAG,
        comm_cart, &status);
+    if(p->p.smaller_timestep == 0 && smaller_timestep != 0)
+    {
+      p->m.v[0] *= smaller_time_step/time_step;
+      p->m.v[1] *= smaller_time_step/time_step;
+      p->m.v[2] *= smaller_time_step/time_step;
+    }
+    else if(p->p.smaller_timestep != 0 && smaller_timestep == 0)
+    {
+      p->m.v[0] *= time_step/smaller_time_step;
+      p->m.v[1] *= time_step/smaller_time_step;
+      p->m.v[2] *= time_step/smaller_time_step;
+    }
+    p->p.smaller_timestep = smaller_timestep;
   }
 
   on_particle_change();
@@ -1964,15 +2038,14 @@ void mpi_bcast_coulomb_params()
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
 
-
-
-
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
+    // fall through, scafacos has internal parameter propagation
+  case COULOMB_SCAFACOS:
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -2304,69 +2377,28 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 }
 
 /*************** REQ_RANDOM_SEED ************/
-void mpi_random_seed(int cnt, long *seed) {
-  long this_idum = print_random_seed();
-
+void mpi_random_seed(int cnt, std::vector<int> &seeds) {
+  int this_idum;
   mpi_call(mpi_random_seed_slave, -1, cnt);
+  
+  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
 
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_LONG,seed,1,MPI_LONG,0,comm_cart); }
-  else {
-    MPI_Scatter(seed,1,MPI_LONG,&this_idum,1,MPI_LONG,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
-    init_random_seed(this_idum);
-  }
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
+  init_random_seed(this_idum);
 }
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  long this_idum = print_random_seed();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %ld\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_LONG,NULL,0,MPI_LONG,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,1,MPI_LONG,&this_idum,1,MPI_LONG,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %ld\n",this_node,this_idum));
-    init_random_seed(this_idum);
-  }
+  int this_idum;
+  
+  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+#ifdef RANDOM_TRACE
+  printf("%d: Received seed %d\n",this_node,this_idum);
+#endif
+  init_random_seed(this_idum);
 }
 
-/*************** REQ_RANDOM_STAT ************/
-void mpi_random_stat(int cnt, RandomStatus *stat) {
-  RandomStatus this_stat = print_random_stat();
-
-  mpi_call(mpi_random_stat_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(stat,1*sizeof(RandomStatus),MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    init_random_stat(this_stat);
-  }
-}
-
-void mpi_random_stat_slave(int pnode, int cnt) {
-  RandomStatus this_stat = print_random_stat();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    MPI_Gather(&this_stat,1*sizeof(RandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(RandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %ld/%ld/...\n",this_node,this_stat.idum,this_stat.iy));
-    init_random_stat(this_stat);
-  }
-}
-
-
-/*************** REQ_BCAST_LJFORCECAP ************/
-/*************** REQ_BCAST_LJANGLEFORCECAP ************/
-/*************** REQ_BCAST_MORSEFORCECAP ************/
-/*************** REQ_BCAST_BUCKFORCECAP ************/
-/*************** REQ_BCAST_TABFORCECAP ************/
 void mpi_cap_forces(double fc)
 {
   force_cap = fc;
@@ -2444,64 +2476,6 @@ void mpi_get_configtemp_slave(int node, int cnt)
   extern double configtemp[2];  
   MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
-}
-
-/*************** REQ_BIT_RANDOM_SEED ************/
-void mpi_bit_random_seed(int cnt, int *seed) {
-  int this_idum = print_bit_random_seed();
-
-  mpi_call(mpi_bit_random_seed_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_INT,seed,1,MPI_INT,0,comm_cart); }
-  else {
-    MPI_Scatter(seed,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
-    init_bit_random_generator(this_idum);
-  }
-}
-
-void mpi_bit_random_seed_slave(int pnode, int cnt) {
-  int this_idum = print_bit_random_seed();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have seed %d\n",this_node,this_idum));
-    MPI_Gather(&this_idum,1,MPI_INT,NULL,0,MPI_INT,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
-    init_bit_random_generator(this_idum);
-  }
-}
-
-/*************** REQ_BIT_RANDOM_STAT ************/
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat) {
-  BitRandomStatus this_stat = print_bit_random_stat();
-
-  mpi_call(mpi_bit_random_stat_slave, -1, cnt);
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(stat,1*sizeof(BitRandomStatus),MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    init_bit_random_stat(this_stat);
-  }
-}
-
-void mpi_bit_random_stat_slave(int pnode, int cnt) {
-  BitRandomStatus this_stat = print_bit_random_stat();
-
-  if (cnt==0) {
-    RANDOM_TRACE(printf("%d: Have status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    MPI_Gather(&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,NULL,0,MPI_BYTE,0,comm_cart); }
-  else {
-    MPI_Scatter(NULL,0,MPI_BYTE,&this_stat,1*sizeof(BitRandomStatus),MPI_BYTE,0,comm_cart);
-    RANDOM_TRACE(printf("%d: Received status %d/%d/...\n",this_node,this_stat.random_pointer_1,this_stat.random_pointer_2));
-    init_bit_random_stat(this_stat);
-  }
 }
 
 /****************** REQ_RESCALE_PART ************/
@@ -3286,3 +3260,39 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 #endif
 }
 
+
+void mpi_mpiio(const char *filename, unsigned fields, int write) {
+#ifdef HAVE_MPI
+  size_t flen = strlen(filename) + 1;
+  if (flen + 5 > INT_MAX) {
+    fprintf(stderr, "Seriously?\n");
+    errexit();
+  }
+  mpi_call(mpi_mpiio_slave, -1, (int) flen);
+  MPI_Bcast((void *) filename, (int) flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+#else
+  runtimeErrorMsg() << "ESPResSo is compiled without MPI support. No MPI-IO available.";
+#endif
+}
+
+void mpi_mpiio_slave(int dummy, int flen) {
+#ifdef HAVE_MPI
+  char *filename = new char[flen];
+  unsigned fields;
+  int write;
+  MPI_Bcast((void *) filename, flen, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&write, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (write)
+    mpi_mpiio_common_write(filename, fields);
+  else
+    mpi_mpiio_common_read(filename, fields);
+  delete[] filename;
+#endif
+}

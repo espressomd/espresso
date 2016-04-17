@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -21,6 +21,8 @@
 #include "rotation.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
+
+using std::ostringstream;
 
 // This is the "relative" implementation for virtual sites.
 // Virtual particles are placed relative to the position of a real particle

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -150,18 +150,14 @@ void dd_create_cell_grid()
 	/* ok, too many cells for this direction, set to minimum */
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
 	if ( dd.cell_grid[i] < 1 ) {
-	  ostringstream msg;
-	  msg << "interaction range " << max_range << " in direction "
+	  runtimeErrorMsg() << "interaction range " << max_range << " in direction "
 	      << i << " is larger than the local box size " << local_box_l[i];
-	  runtimeError(msg);
 	  dd.cell_grid[i] = 1;
 	}
 #ifdef LEES_EDWARDS
         if ( (i == 0) && (dd.cell_grid[0] < 2) ) {
-	  ostringstream msg;
-	  msg << "interaction range " << max_range << " in direction "
+	  runtimeErrorMsg() << "interaction range " << max_range << " in direction "
 	      << i << " is larger than half the local box size " << local_box_l[i] << "/2";
-	  runtimeError(msg);
 	  dd.cell_grid[0] = 2;
         }
 #endif
@@ -202,18 +198,14 @@ void dd_create_cell_grid()
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
-        ostringstream msg;
-        msg << "number of cells "<< n_local_cells << " is smaller than minimum " << min_num_cells <<
+        runtimeErrorMsg() << "number of cells "<< n_local_cells << " is smaller than minimum " << min_num_cells <<
                " (interaction range too large or min_num_cells too large)";
-        runtimeError(msg);
     }
   }
 
   /* quit program if unsuccesful */
   if(n_local_cells > max_num_cells) {
-      ostringstream msg;
-      msg << "no suitable cell grid found ";
-      runtimeError(msg);
+      runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
   /* now set all dependent variables */
@@ -625,9 +617,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
-	ostringstream msg;
-	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-	runtimeError(msg);
+	runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
       }
 #endif
     }
@@ -635,9 +625,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
-	ostringstream msg;
-	msg << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
-	runtimeError(msg);
+	runtimeErrorMsg() << "particle @ (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ") is outside of the allowed cell grid";
       }
 #endif
     }
@@ -750,9 +738,7 @@ void dd_on_geometry_change(int flags) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
-        ostringstream msg;
-        msg <<"box_l in direction " << i << " is too small";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"box_l in direction " << i << " is too small";
     }
 
   /* A full resorting is necessary if the grid has changed. We simply
@@ -1106,9 +1092,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
       MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {
       if(finished == 0) {
-      ostringstream msg;
-      msg << "some particles moved more than min_local_box_l, reduce the time step";
-      runtimeError(msg);
+      runtimeErrorMsg() << "some particles moved more than min_local_box_l, reduce the time step";
 	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
 	   However, their positions have to be made valid again. */
 	finished = 1;

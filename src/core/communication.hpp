@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -497,22 +497,10 @@ void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, long *seed);
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
-/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
-void mpi_random_stat(int cnt, RandomStatus *stat);
-
-/** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
+/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-//void mpi_morse_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-//void mpi_buck_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
@@ -521,12 +509,6 @@ void mpi_get_constraint_force(int constraint, double force[3]);
 /** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
 void mpi_get_configtemp(double cfgtmp[2]);
 #endif
-
-/** Issue REQ_BIT_RANDOM_SEED: read/set seed of the bit random number generators on each node. */
-void mpi_bit_random_seed(int cnt, int *seed);
-
-/** Issue REQ_BIT_RANDOM_STAT: read/set status of the bit random number generators on each node. */
-void mpi_bit_random_stat(int cnt, BitRandomStatus *stat);
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir' by a factor 'scale'. */
 void mpi_rescale_particles(int dir, double scale);
@@ -642,6 +624,13 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 
 /** CPU Thermostat */
 void mpi_thermalize_cpu(int temp);
+
+/** MPI-IO output function.
+ *  \param filename Filename prefix for the created files. Must be null-terminated.
+ *  \param fields Fields to dump (see mpiio_tcl.hpp).
+ *  \param write 1 to write, 0 to read
+ */
+void mpi_mpiio(const char *filename, unsigned fields, int write);
 
 /*@}*/
 

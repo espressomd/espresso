@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,6 +23,9 @@
  */
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
@@ -80,6 +83,9 @@
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
 #include "actor/Ewaldgpu_tcl.hpp"
+#ifdef SCAFACOS
+#include "scafacos.hpp"
+#endif
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -125,6 +131,52 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /********************************************************************************/
 /*                                 electrostatics                               */
 /********************************************************************************/
+
+#ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv) {
+  std::list<std::string> methods = Electrostatics::Scafacos::available_methods();
+  
+  Tcl_AppendResult(interp, "{ ", 0);
+  for(auto &m: methods) {
+    Tcl_AppendResult(interp, m.c_str(), " ", 0);
+  }
+  Tcl_AppendResult(interp, "}", 0);
+
+  return TCL_OK;
+}
+
+int tclcommand_inter_coulomb_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
+  if(argc < 1)
+    return TCL_ERROR;
+
+  const std::string method(argv[0]);
+  
+  std::stringstream params;
+
+  if(argc > 1) {
+    for(int i = 1; i < argc; i++) {
+      params << std::string(argv[i]);
+      if(i != (argc-1))
+        params << ",";
+    }
+  }
+
+  coulomb.method  = COULOMB_SCAFACOS;
+
+  mpi_bcast_coulomb_params();
+  
+  Electrostatics::Scafacos::set_parameters(method, params.str());
+  
+  return TCL_OK;
+}
+
+int tclprint_to_result_scafacos(Tcl_Interp *interp) {
+  std::string p = Electrostatics::Scafacos::get_parameters();
+  Tcl_AppendResult(interp, p.c_str(), 0);
+  return TCL_OK;
+}
+
+#endif
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -212,6 +264,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
+  #ifdef SCAFACOS
+  REGISTER_COULOMB("scafacos", tclcommand_inter_coulomb_parse_scafacos);
+  #endif
+  
   /* fallback */
   coulomb.method  = COULOMB_NONE;
   coulomb.bjerrum = 0.0;
@@ -574,6 +630,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
+#endif
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS: tclprint_to_result_scafacos(interp); break;
 #endif
   default: break;
   }
