@@ -302,15 +302,25 @@ double get_r_cut() {
   return 0.0;  
 }
 
-void set_parameters(const std::string &method, const std::string &params) {
+void set_parameters(const std::string &method, const std::string &params, bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not modify the buffer */
   MPI_Bcast(const_cast<char *>(&(*method.begin())), method.size(), MPI_CHAR, 0, comm_cart);
   MPI_Bcast(const_cast<char *>(&(*params.begin())), params.size(), MPI_CHAR, 0, comm_cart);
+  
+  #ifdef SCAFACOS_DIPOLES
+    bool d=dipolar_ia;
+    MPI_Bcast(&d,sizeof(bool), MPI_CHAR, 0, comm_cart);
+  #endif
+
 
   set_params_safe(method, params);
+  #ifdef SCAFACOS_DIPOLES
+    set_dipolar(d);
+  #endif
+
 }
 
 
@@ -343,7 +353,14 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
+  #ifdef SCAFACOS_DIPOLES 
+    bool dip;
+    MPI_Bcast(&dip,sizeof(bool), MPI_CHAR, 0, comm_cart);
+  #endif
     
   set_params_safe(method, params);
+  #ifdef SCAFACOS_DIPOLES 
+    set_dipolar(dip);
+  #endif
   #endif /* SCAFACOS */
 }

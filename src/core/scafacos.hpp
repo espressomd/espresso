@@ -47,7 +47,7 @@ double long_range_energy();
 /** Get parameters */
 std::string get_parameters();
 /** Set parameters */
-void set_parameters(const std::string &method, const std::string &params);
+void set_parameters(const std::string &method, const std::string &params, bool dipolar);
 double get_r_cut();
 std::list<std::string> available_methods();
 #endif /* SCAFACOS */
