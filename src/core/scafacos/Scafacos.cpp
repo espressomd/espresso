@@ -112,7 +112,7 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &po
   assert(dipoles.size()%3==0);
   const int local_n_part = dipoles.size()/3;
 
-  fields.resize(9*local_n_part);
+  fields.resize(6*local_n_part);
   potentials.resize(3*local_n_part);
 
   //handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
@@ -133,6 +133,14 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
   boxc[2] = box_l[2];
   
   handle_error(fcs_set_common(handle, 0, boxa, boxb, boxc, off, periodicity, total_particles));
+}
+
+void Scafacos::set_dipolar(bool d) {
+#ifndef SCAFACOS_DIPOLES
+  throw std::exception("Dipolar extension not compiled in. Switch on via SCAFACOS_DIPOLES in myconfig.hpp");
+#else
+  m_dipolar =d;
+#endif
 }
 
 }

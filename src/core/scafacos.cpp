@@ -60,11 +60,23 @@ struct ScafacosData {
   std::vector<double> fields,potentials;
 };
 
+static Scafacos *scafacos = 0;
+static ScafacosData particles;
 
 /** \brief Collect particle data in continous arrays as required by fcs */
 int ScafacosData::update_particle_data() {
   positions.clear();
-  charges.clear();
+  
+  
+  if (! dipolar()) {
+    charges.clear();
+  }
+  else
+  {
+    #ifdef SCAFACOS_DIPOLES
+      dipoles.clear();
+    #endif
+  }
 
   for(int c = 0; c < local_cells.n; c++) {
     Cell const * cell = local_cells.cell[c];
@@ -75,11 +87,20 @@ int ScafacosData::update_particle_data() {
       positions.push_back(p[i].r.p[0]);
       positions.push_back(p[i].r.p[1]);
       positions.push_back(p[i].r.p[2]);
-      charges.push_back(p[i].p.q);
+      if (!dipolar()) {
+        charges.push_back(p[i].p.q);
+      }
+      else {
+        #ifdef SCAFACOS_DIPOLES
+          dipoles.push_back(p[i].r.dip[0]);
+          dipoles.push_back(p[i].r.dip[1]);
+          dipoles.push_back(p[i].r.dip[2]);
+        #endif
+      }
     }    
   }
   
-  return charges.size();
+  return positions.size()/3;
 }
 
 /** \brief Write forces back to particles */
@@ -93,18 +114,56 @@ void ScafacosData::update_particle_forces() const {
     const int np = cell->n;
     
     for(int i = 0; i < np; i++) {
-      p[i].f.f[0] += coulomb.prefactor*p[i].p.q*fields[it++];
-      p[i].f.f[1] += coulomb.prefactor*p[i].p.q*fields[it++];
-      p[i].f.f[2] += coulomb.prefactor*p[i].p.q*fields[it++];
+      if (!dipolar()) { 
+        p[i].f.f[0] += coulomb.prefactor*p[i].p.q*fields[it++];
+        p[i].f.f[1] += coulomb.prefactor*p[i].p.q*fields[it++];
+        p[i].f.f[2] += coulomb.prefactor*p[i].p.q*fields[it++];
+      } 
+      else
+      {
+        #ifdef SCAFACOS_DIPOLES
+	  // Indices
+	  // 3 "potential" values per particles (see below)
+	  int it_p=3*it;
+	  // 6 "field" values per particles (see below)
+	  int it_f=6*it;
+
+	  // The scafacos term "potential" here in fact refers to the magnetic field
+	  // So, the torques are given by m \times B
+	  double t[3];
+	  utils::cross_product(p[i].r.dip, &(potentials[it_p]),t);
+	  // The force is given by G m, where G is a matrix
+	  // which comes from teh "fields" output of scafacos like this
+	  // 0 1 2
+	  // 1 3 4
+	  // 2 4 5
+	  // where the numbers refer to indices in the "field" output from scafacos
+	  double f[3];
+	  f[0] = fields[it_f+0] *p[i].r.dip[0] +fields[it_f+1]*p[i].r.dip[1] +fields[it_f+2] *p[i].r.dip[2];
+	  f[1] = fields[it_f+1] *p[i].r.dip[0] +fields[it_f+3]*p[i].r.dip[1] +fields[it_f+4] *p[i].r.dip[2];
+	  f[2] = fields[it_f+2] *p[i].r.dip[0] +fields[it_f+4]*p[i].r.dip[1] +fields[it_f+5] *p[i].r.dip[2];
+
+	  // Add to particles
+	  for (int j=0;j<3;j++) {
+	    p[i].f.f[j]+=coulomb.Dprefactor *f[j];
+	    p[i].f.torque[j]+=coulomb.Dprefactor *t[j];
+	  }
+	  it++;
+	#endif
+      }
     }
  }
 
  /** Check that the particle number did not change */
- assert(it == fields.size());
+ if (!dipolar()) {  
+   assert(it == fields.size());
+ }
+ else 
+ {
+   assert(it = positions.size()/3);
+ }
 }
 
-static Scafacos *scafacos = 0;
-static ScafacosData particles;
 
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force) {
   assert(scafacos);
@@ -254,8 +313,22 @@ void set_parameters(const std::string &method, const std::string &params) {
   set_params_safe(method, params);
 }
 
+
+
+bool dipolar() {
+  if (scafacos) return scafacos->dipolar();
+  runtimeErrorMsg() << "Scafacos not initialized";
 }
 
+void set_dipolar(bool d) {
+  if (scafacos){ 
+    scafacos->set_dipolar(d);
+  }
+  else
+    runtimeErrorMsg() << "Scafacos not initialized.";
+}
+
+}
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {

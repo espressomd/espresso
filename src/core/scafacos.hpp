@@ -52,6 +52,12 @@ double get_r_cut();
 std::list<std::string> available_methods();
 #endif /* SCAFACOS */
 
+/** Is scafacos used for dipolar interactions */
+bool dipolar();
+
+/** Choose whether scafacos is used for dipolar interactions */
+void set_dipolar(bool d);
+
 }
 
 /** Parameter callback */

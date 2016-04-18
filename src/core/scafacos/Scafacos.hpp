@@ -61,14 +61,27 @@ struct Scafacos {
   /** Get a list of methods supported by the library */
   static std::list<std::string> available_methods();
   
-  /** Handle from the library */
-  FCS handle;
-  /** Whether the method supports near field delegation */
-  bool has_near;
-  /** The scafacos method name of this instance */
-  const std::string method;
-  /** The last parameters set */
-  std::string m_last_parameters;
+  /** Scafacos used for dipolar ia */
+  bool dipolar() { return m_dipolar; }
+
+  /** Switch scafacos to dipolar ia */
+  void set_dipolar(bool d);
+
+  
+
+    /** Handle from the library */
+    FCS handle;
+    /** Whether the method supports near field delegation */
+    bool has_near;
+    /** The scafacos method name of this instance */
+    const std::string method;
+    /** The last parameters set */
+    std::string m_last_parameters;
+
+    /** Scafacos used for dipolar ia */
+    bool m_dipolar;
+
+
 };
 
 
