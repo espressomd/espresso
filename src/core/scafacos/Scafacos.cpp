@@ -132,7 +132,12 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
   boxb[1] = box_l[1];
   boxc[2] = box_l[2];
   
-  handle_error(fcs_set_common(handle, 0, boxa, boxb, boxc, off, periodicity, total_particles));
+  // For the coulomb case, short-range ia in scafacos are turned of, because
+  // Espresso does them
+  int sr=0;
+  // For the dipolar case, scafacos should do the short range ia
+  if (dipolar()) sr=1;
+  handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
 }
 
 void Scafacos::set_dipolar(bool d) {
