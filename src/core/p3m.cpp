@@ -2105,8 +2105,6 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-
-
         for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
             for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {
                 for(j[2]=0; j[2] < fft.plan[3].new_mesh[RZ]; j[2]++) {
