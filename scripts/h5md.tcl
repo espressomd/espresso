@@ -363,9 +363,9 @@ proc h5md_observable1D_write { args } {
 }
 
 # Writes to a user defined 1 dimensional but timedependent observable dataset
-proc h5md_observable2D_init_new { data_path name p_ids } {
-	set num_particles [llength $p_ids]
-	if { [setmd n_part] == 0 || $num_particles <1 } {
+proc h5md_observable2D_init { data_path name } {
+	global h5md_num_part h5md_p_ids
+	if { [setmd n_part] == 0 || $h5md_num_part <1 } {
 		puts "Please set your particles before h5md initialisation\n"; flush stdout
 		return
 	}
@@ -385,27 +385,27 @@ proc h5md_observable2D_init_new { data_path name p_ids } {
 	h5mdfile H5Screate_simple type double dims 0 
 	h5mdfile H5Pset_chunk dims 1 
 	h5mdfile H5Dcreate2 "observables/$name/time"
-	h5mdfile H5Screate_simple type double dims 0 $h5md_num_part 3
-	h5mdfile H5Pset_chunk dims 5 $h5md_num_part 3
+	h5mdfile H5Screate_simple type double dims 0 $h5md_num_part
+	h5mdfile H5Pset_chunk dims 5 $h5md_num_part
 	h5mdfile H5Dcreate2 "observables/$name/value"
 
 }
 
 proc h5md_observable2D_write { name } {
 	global h5md_num_part h5md_p_ids
+	
 	h5mdfile H5Dopen2 "observables/$name/value"
 	set offset [h5mdfile get_dataset_dims]
 	puts $offset
 	# Write observable of all particles
-	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] $h5md_num_part 3
-	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0 0
-	h5mdfile H5Screate_simple type double dims 1 $h5md_num_part 3
-	for { set j 0 } { $j < $h5md_num_part } { incr j } {
-		set p_id [lindex $h5md_p_ids $j]
+	h5mdfile H5Dextend dims [expr [lindex $offset 0]+1] $h5md_num_part
+	h5mdfile H5Sselect_hyperslab offset [expr [lindex $offset 0]] 0
+	h5mdfile H5Screate_simple type double dims 1 $h5md_num_part
+	set j 0
+	foreach p_id $h5md_p_ids {
 		set property [part $p_id print $name]
-		h5mdfile H5_write_value value [lindex $property 0] index 0 $j 0
-		h5mdfile H5_write_value value [lindex $property 1] index 0 $j 1
-		h5mdfile H5_write_value value [lindex $property 2] index 0 $j 2
+		h5mdfile H5_write_value value $property index 0 $j
+		incr j
 	}
 	h5mdfile H5Dwrite
 	# Write simulation step (assumes that time_step hasnt changed)
