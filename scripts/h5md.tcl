@@ -33,9 +33,8 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
 	h5mdfile H5Gcreate2 "particles/atoms/force"
 	h5mdfile H5Gcreate2 "parameters"
 	h5mdfile H5Gcreate2 "parameters/vmd_structure"
+	h5mdfile H5Gcreate2 "parameters/files"
 	h5mdfile H5Gcreate2 "observables" 
-	h5mdfile H5Gcreate2 "files"
-	h5mdfile H5Gcreate2 "files/scripts"
 	# Create datasets
 	
 	#box
@@ -98,7 +97,7 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
 	h5mdfile H5Dcreate2 "particles/atoms/species"
 
 	h5md_write_species
-	
+    dump_script_to_h5md	
 	##################
 	# vmd
 	##################
@@ -491,7 +490,6 @@ proc dump_script_to_h5md {} {
         h5mdfile H5Dcreate2 "parameters/files/tclvariables"
         h5mdfile H5Dopen2 "parameters/files/tclvariables"
         for { set i 0 } { $i < [llength $which] } { incr i } {
-            puts "key: [lindex $which $i], value: [set ::[lindex $which $i]]"
             h5mdfile H5_write_value value [lindex $which $i] index $i 0 
             h5mdfile H5_write_value value [set ::[lindex $which $i]] index $i 1
         }
