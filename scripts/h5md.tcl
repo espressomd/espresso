@@ -21,8 +21,7 @@ proc h5md_init { data_path } {
 	h5mdfile H5Gcreate2 "parameters"
 	h5mdfile H5Gcreate2 "parameters/vmd_structure"
 	h5mdfile H5Gcreate2 "observables" 
-	h5mdfile H5Gcreate2 "files"
-	h5mdfile H5Gcreate2 "files/scripts"
+	h5mdfile H5Gcreate2 "parameters/files"
 	# Create datasets
 	
 	#box
@@ -83,14 +82,15 @@ proc h5md_init { data_path } {
 	h5mdfile H5Dcreate2 "particles/atoms/species"
 
 	h5md_write_species
-	
+    dump_script_to_h5md 
+
 	##################
 	# vmd
 	##################
-    	set types [h5mdutil_get_types]
-    	set names "X H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg"
+    set types [h5mdutil_get_types]
+    set names "X H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg"
     	
-    	#index of species
+    #index of species
 	h5mdfile H5Screate_simple type int dims [llength $types]
 	h5mdfile H5Pset_chunk dims [llength $types]
 	h5mdfile H5Dcreate2 "parameters/vmd_structure/indexOfSpecies"
@@ -414,4 +414,55 @@ proc h5mdutil_get_types {} {
 		}
 	}
 	return $type_list
+}
+
+
+proc dump_script_to_h5md {} {
+    set script ""
+    set fp [open [file normalize [info script]] "r"]
+    set file_data [read $fp]
+    close $fp
+    set data [split $file_data "\n"]
+    foreach line $data {
+        lappend script $line
+    }
+    ### write each line to h5md
+    h5mdfile H5Screate_simple type str dims [llength $script]
+    h5mdfile H5Pset_chunk dims 1
+    h5mdfile H5Dcreate2 "parameters/files/script"
+    h5mdfile H5Dopen2 "parameters/files/script"
+    for { set index 0 } { $index < [llength $script] } { incr index } {
+        h5mdfile H5_write_value value [lindex $script $index] index $index
+    }
+    h5mdfile H5Dwrite
+    ### write command line arguments to seperate dataset
+    if { $::argc > 0 } {
+        h5mdfile H5Screate_simple type str dims $::argc
+        h5mdfile H5Pset_chunk dims 1
+        h5mdfile H5Dcreate2 "parameters/files/arguments"
+        h5mdfile H5Dopen2 "parameters/files/arguments"
+        for { set index 0 } { $index < $::argc } { incr index } {
+            h5mdfile H5_write_value value [lindex $::argv $index] index $index
+        }
+        h5mdfile H5Dwrite
+    }
+    set which [info globals]
+    foreach ixx {quiet tcl_version argv argv0 tcl_interactive auto_oldpath errorCode  
+        auto_path errorInfo tcl_pkgPath tcl_patchLevel argc tcl_libPath
+        tcl_library tk_strictMotif tk_library tk_version tk_patchLevel tcl_platform env} {
+        set ind [lsearch -exact $which $ixx]
+        set which [lreplace $which $ind $ind]
+    }
+    if { [llength $which] > 0 } {
+        h5mdfile H5Screate_simple type str dims [llength $which] 2
+        h5mdfile H5Pset_chunk dims [llength $which] 1
+        h5mdfile H5Dcreate2 "parameters/files/tclvariables"
+        h5mdfile H5Dopen2 "parameters/files/tclvariables"
+        for { set i 0 } { $i < [llength $which] } { incr i } {
+            puts "key: [lindex $which $i], value: [set ::[lindex $which $i]]"
+            h5mdfile H5_write_value value [lindex $which $i] index $i 0 
+            h5mdfile H5_write_value value [set ::[lindex $which $i]] index $i 1
+        }
+        h5mdfile H5Dwrite
+    }
 }
