@@ -1,4 +1,5 @@
 set h5md_num_part 0
+set h5md_p_ids ""
 
 proc h5md_init { data_path {_h5md_p_ids ""} } {
 	global h5md_num_part h5md_p_ids
