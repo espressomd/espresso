@@ -282,7 +282,7 @@ void tune() {
   }
 }
 
-static void set_params_safe(const std::string &method, const std::string &params) {
+static void set_params_safe(const std::string &method, const std::string &params, bool dipolar_ia) {
   if(scafacos && (scafacos->method != method)) {
     delete scafacos;
     scafacos = 0;
@@ -292,6 +292,7 @@ static void set_params_safe(const std::string &method, const std::string &params
 
   scafacos->parse_parameters(params);
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
+  scafacos->set_dipolar(dipolar_ia);
   scafacos->set_common_parameters(box_l, per, n_part);
 
   on_coulomb_change();
@@ -335,7 +336,7 @@ void set_parameters(const std::string &method, const std::string &params, bool d
   #endif
 
 
-  set_params_safe(method, params);
+  set_params_safe(method, params,dipolar_ia);
   #ifdef SCAFACOS_DIPOLES
     set_dipolar(d);
   #endif
@@ -372,12 +373,12 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
+  bool dip=false;
   #ifdef SCAFACOS_DIPOLES 
-    bool dip;
     MPI_Bcast(&dip,sizeof(bool), MPI_CHAR, 0, comm_cart);
   #endif
     
-  set_params_safe(method, params);
+  set_params_safe(method, params,dip);
   #ifdef SCAFACOS_DIPOLES 
     set_dipolar(dip);
   #endif

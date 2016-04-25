@@ -1,3 +1,4 @@
+
 #include "Scafacos.hpp"
 #include "errorhandling.hpp"
 #include <cassert>
@@ -131,12 +132,19 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
   boxa[0] = box_l[0];
   boxb[1] = box_l[1];
   boxc[2] = box_l[2];
-  
-  // For the coulomb case, short-range ia in scafacos are turned of, because
-  // Espresso does them
+  // Does scafacos calculate the near field part
+  // For charges, if the method supports it, Es calculates near field
   int sr=0;
-  // For the dipolar case, scafacos should do the short range ia
-  if (dipolar()) sr=1;
+  if (! dipolar() && has_near ) {
+    sr=0;
+  }
+  else
+  {
+   // Scafacos does near field calc
+   sr=1;
+  }
+  int d=dipolar();
+//  printf("Short range switch %d, dipolar=%d, has_near=%d\n",sr,d,has_near);
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
 }
 
@@ -149,3 +157,5 @@ void Scafacos::set_dipolar(bool d) {
 }
 
 }
+
+
