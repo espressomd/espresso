@@ -61,7 +61,7 @@ proc test_langevin_per_particle {test_case} {
     # 20 is a really small chance, but since we measure quite a lot,
     # that is still quite a small interval, and the test probably only
     # fails if there is really something wrong
-    set confidence 20
+    set confidence 23
     set maxstep 1000
     set intstep 100
 
