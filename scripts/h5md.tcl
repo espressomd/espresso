@@ -92,7 +92,7 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
 	h5mdfile H5Screate_simple type double dims 0 $h5md_num_part 3
 	h5mdfile H5Pset_chunk dims 5 $h5md_num_part 3
 	h5mdfile H5Dcreate2 "particles/atoms/force/value"
-    # species
+	# species
 	h5mdfile H5Screate_simple type int dims $h5md_num_part 
 	h5mdfile H5Pset_chunk dims $h5md_num_part
 	h5mdfile H5Dcreate2 "particles/atoms/species"
