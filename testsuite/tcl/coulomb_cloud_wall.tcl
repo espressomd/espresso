@@ -127,7 +127,7 @@ if { ! [ llength $methods ] } {
 puts "Methods to test: $methods"
 
 # Reference energy from p3m method.
-set reference_energy 148.9423
+set reference_energy 148.94229549
 
 foreach method $methods setup $setups accuracy $accuracies {
     puts "Testing $method..."
@@ -157,7 +157,7 @@ foreach method $methods setup $setups accuracy $accuracies {
 	# Compare energies. Eclude p3m-gpu which does not have energy calculation
 	if { $method != "P3M-GPU" } {
 	  set dE [expr abs($E-$reference_energy)]
-	  puts "Energy difference to ref. value $dE"
+	  puts "Energy difference to ref. value $dE. Is $E, should be $reference_energy"
 	  if { $dE >1E-3 } {
 	    error_exit "Difference in energy too large." 
 	  }
