@@ -30,6 +30,7 @@
 #include "cells.hpp"
 #include "domain_decomposition.hpp"
 #include <vector>
+#include <random>
 #include <algorithm>
 
 reaction_struct reaction;
@@ -246,6 +247,14 @@ void integrate_reaction_swap()
   double product_q, reactant_q;
   std::vector<int> catalyzers, reactants, products;
 
+  // To randomize the lists of cells below we need a random number
+  // engine.  In previous versions of C++ this was a single function
+  // std::random_shuffle, which is unfortunately deprecated in C++17
+  // and discouraged from C++11 on.
+  std::random_device rd;  // non-deterministic random number generator
+                          // using hardware entropy source
+  std::mt19937 rng(rd()); // Mersenne Twister by Matsumoto and Nishimura
+
   // If multiple catalyzers get close to each other, they might eat up
   // each others reactants.  If we traverse the cells in a sorted
   // manner, then catalyzers in the upper left will use up all the
@@ -255,7 +264,7 @@ void integrate_reaction_swap()
   std::vector<int> rand_cells(local_cells.n);
   for ( int i = 0; i < local_cells.n; i++ )
     rand_cells[i] = i;
-  std::random_shuffle(rand_cells.begin(), rand_cells.end());
+  std::shuffle(rand_cells.begin(), rand_cells.end(), rng);
 
 
   if ( reaction.ct_rate > 0.0 )
@@ -283,7 +292,7 @@ void integrate_reaction_swap()
         if ( p_local[i].p.type == reaction.catalyzer_type )
           catalyzers.push_back(i);
       }
-      std::random_shuffle(catalyzers.begin(), catalyzers.end());
+      std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
       // Loop cell neighbors
       //for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
@@ -357,7 +366,7 @@ void integrate_reaction_swap()
 
               // ...tag as many products as there will be reactions
               // at random
-              std::random_shuffle(products.begin(), products.end());
+              std::shuffle(products.begin(), products.end(), rng);
               for ( int p = 0; p < n_reactions; p++ )
                 p_neigh[products[p]].p.catalyzer_count = 1;
             }
@@ -375,7 +384,7 @@ void integrate_reaction_swap()
                 }
               }
 
-              std::random_shuffle(reactants.begin(), reactants.end());
+              std::shuffle(reactants.begin(), reactants.end(), rng);
               for ( int p = 0; p < n_reactions; p++ )
                 p_neigh[reactants[p]].p.catalyzer_count = 1;
             }
