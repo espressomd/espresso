@@ -232,9 +232,6 @@ typedef struct {
 #ifdef ROTATION
   /** torque */
   double torque[3];
-
-
-
 #endif
 
 } ParticleForce;
@@ -250,8 +247,6 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
-
-
 #endif
 } ParticleMomentum;
 

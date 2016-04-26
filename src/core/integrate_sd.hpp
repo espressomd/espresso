@@ -52,6 +52,8 @@ extern double sd_random_precision;
 #  endif
 #endif
 
+#endif
+
 #define DIM (3)
 
 /** \file integrate_sd.hpp    Stokes dynamics integrator.
@@ -117,5 +119,5 @@ int sd_set_particles_apart();
 int sd_test(int size, int type);
 
 /*@}*/
-#endif /* SD */
+//#endif /* SD */
 #endif
