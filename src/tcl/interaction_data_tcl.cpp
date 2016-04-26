@@ -147,6 +147,28 @@ int tclcommand_inter_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) 
   if(argc < 1)
     return TCL_ERROR;
 
+  // Scafacos can be used either for charges or for dipoles, not for both.
+  if (dipolar) {
+    if (coulomb.method==COULOMB_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for charges.";
+      return TCL_ERROR;
+    }
+  }
+  else 
+  {
+    #ifdef SCAFACOS_DIPOLES
+    if (coulomb.Dmethod==DIPOLAR_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for dipoles.";
+      return TCL_ERROR;
+    }
+    #endif
+  }
+
+
+
+
+
+  
   const std::string method(argv[0]);
   
   std::stringstream params;
