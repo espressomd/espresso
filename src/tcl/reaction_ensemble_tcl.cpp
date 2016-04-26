@@ -258,6 +258,12 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			if( ARG1_IS_S("free_memory")) {
 				free_reaction_ensemble();
 			}
+			
+			if (ARG1_IS_S("monte_carlo_move_for_type")) {
+				int mc_type;
+				ARG_IS_I(2,mc_type);
+				do_global_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
+			}
 		
 			if( ARG1_IS_S("water_type")) {
 				//check for warter_type for making autodissociation of water possible in implicit water (langevin thermostat). If you work with explicit water do not provide this argument and simply provide the reaction as any other reaction is provided to the feature!

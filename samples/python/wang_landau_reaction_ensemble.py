@@ -76,7 +76,7 @@ RE.print_status()
 
 ## Wang-Landau stuff
 RE.add_collective_variable_degree_of_association(associated_type=0,min=0, max=1, corresponding_acid_types=[0,1])
-np.savetxt("temp_energy_file.dat",np.c_[[0,0.5,1],[0,0,0],[9,9,9]],header="nbar E_min E_max")
+np.savetxt("temp_energy_file.dat",np.c_[[0,0.5,1],[0,0,0],[9,9,9]],header="nbar E_min E_max") # Note header may not be omitted since it is expected
 RE.add_collective_variable_potential_energy(filename="temp_energy_file.dat",delta=0.5)
 os.remove("temp_energy_file.dat")
 RE.set_wang_landau_parameters(final_wang_landau_parameter=0.00001, wang_landau_steps=1, full_path_to_output_filename="WL.out", do_not_sample_reaction_partition_function=True, use_hybrid_monte_carlo=True)

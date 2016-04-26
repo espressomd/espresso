@@ -24,6 +24,7 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
+from espressomd import grand_canonical
 import numpy as np
 
 import sys
@@ -60,8 +61,8 @@ system.box_l = [box_l, box_l, box_l]
 N0 = 5 # number of titratable units
 K_diss=0.0088
 
-system.part.add(id=np.arange(N0) ,pos=np.random.random((N0,3)) * system.box_l, type=np.ones(N0)*1)
-system.part.add(id=np.arange(N0,2*N0) ,pos=np.random.random((N0,3)) * system.box_l, type=2*np.ones(N0))
+system.part.add(id=np.arange(N0) ,pos=np.random.random((N0,3)) * system.box_l, type=1)
+system.part.add(id=np.arange(N0,2*N0) ,pos=np.random.random((N0,3)) * system.box_l, type=2)
 
 
 RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, exclusion_radius=1)
@@ -73,6 +74,5 @@ RE.print_status()
 print("poss", system.part[:].pos)
 while True:
 	RE.reaction()
-	_types=np.array(system.part[:].type)
-	print("HA", len(_types[_types==0]), "A-", len(_types[_types==1]), "H+", len(_types[_types==2]))
-	
+	print("HA", grand_canonical.number_of_particles(type_id=0), "A-", grand_canonical.number_of_particles(type_id=1), "H+", grand_canonical.number_of_particles(type_id=2))
+

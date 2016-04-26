@@ -61,7 +61,9 @@ PYXFILES =  \
 	thermostat.pyx \
 	utils.pyx \
 	h5md.pyx \
-	grand_canonical.pyx
+	grand_canonical.pyx \
+	reaction_ensemble.pyx
+
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -89,7 +91,9 @@ PXDFILES = \
 	utils.pxd \
 	actors.pxd \
 	h5md.pxd \
-	grand_canonical.pxd
+	grand_canonical.pxd \
+	reaction_ensemble.pxd
+
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
 

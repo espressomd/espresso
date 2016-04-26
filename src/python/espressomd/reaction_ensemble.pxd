@@ -32,7 +32,7 @@ cdef extern from "reaction_ensemble.hpp":
     int find_index_of_type(int type)
     int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types)
     int update_type_index(int* educt_types, int len_educt_types , int* product_types, int len_product_types)
-
+    int check_reaction_ensemble()
 
 
 
@@ -85,12 +85,8 @@ cdef extern from "reaction_ensemble.hpp":
 
     int write_wang_landau_checkpoint(char* identifier)
     int load_wang_landau_checkpoint(char* identifier)
-
+   
 
 cdef class ReactionEnsemble:
     cdef _params
-
-
-
-
 

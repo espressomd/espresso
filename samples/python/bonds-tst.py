@@ -21,7 +21,7 @@ S.part.add(id=2, pos=(0, 0, 0))
 
 
 print S.part[0].bonds
-S.part[0].add_bond((f2, 1))
+S.part[0].add_bond((f2, 1)) #add bonds via add_bond(tuple) and tuple=(bond_object, id_of_next particle)
 S.part[0].add_bond((0, 2))
 print S.part[0].bonds
 tmp = S.part[0].bonds

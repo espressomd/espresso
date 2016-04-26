@@ -1,5 +1,5 @@
 include "myconfig.pxi"
-from libc.stdlib cimport malloc, realloc
+from libc.stdlib cimport malloc, realloc, calloc
 
 IF REACTION_ENSEMBLE:
 
@@ -75,12 +75,12 @@ IF REACTION_ENSEMBLE:
             cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))
             
             new_reaction.equilibrium_constant=self._params["equilibrium_constant"]
-            print self._params["educt_types"]
             cdef int *educt_types = <int *>malloc(len(self._params["educt_types"]) * sizeof(int))
             for i in range(len(self._params["educt_types"])):
                 educt_types[i]=self._params["educt_types"][i]
             new_reaction.educt_types=educt_types
             new_reaction.len_educt_types=len(self._params["educt_types"]);
+            
             
             cdef int *educt_coefficients = <int *>malloc(len(self._params["educt_coefficients"]) * sizeof(int))
             for i in range(len(self._params["educt_coefficients"])):
@@ -92,6 +92,7 @@ IF REACTION_ENSEMBLE:
                 product_types[i]=self._params["product_types"][i]
             new_reaction.product_types=product_types
             new_reaction.len_product_types=len(self._params["product_types"]);
+            
             
             cdef int *product_coefficients = <int *>malloc(len(self._params["product_coefficients"]) * sizeof(int))
             for i in range(len(self._params["product_coefficients"])):
@@ -106,8 +107,7 @@ IF REACTION_ENSEMBLE:
             current_reaction_system.nr_single_reactions+=1;
             
             #assign different types an index in a growing list that starts at and is incremented by 1 for each new type
-            update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types); 
-            
+            update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types);
             
 
         def default_charges(self,*args,**kwargs):
@@ -132,15 +132,46 @@ IF REACTION_ENSEMBLE:
         def reaction(self):
             do_reaction()
 
+        def print_status(self):
+            if(current_reaction_system.nr_single_reactions == 0):
+                print("Reaction System is not initialized")
+            else:
+                print("Reaction System is the following:")
+                print("Educt Types")
+                for single_reaction_i in range(current_reaction_system.nr_single_reactions):
+                    print "Reaction Nr.", single_reaction_i
+                    print "Educt Types"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_educt_types):
+                        print current_reaction_system.reactions[single_reaction_i].educt_types[i]
 
+                    print "Educt coefficients"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_educt_types):
+                        print current_reaction_system.reactions[single_reaction_i].educt_coefficients[i]
+                    
+                    print "Product Types"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
+                        print current_reaction_system.reactions[single_reaction_i].product_types[i]
 
+                    print "Product coefficients"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
+                        print current_reaction_system.reactions[single_reaction_i].product_coefficients[i]
+                    
+            print "Reaction ensemble temperature:", current_reaction_system.temperature_reaction_ensemble
+            print "Exclusion radius:", current_reaction_system.exclusion_radius
+            check_reaction_ensemble()
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):
             for k in kwargs:
                 if k in self.valid_keys_add_collective_variable_degree_of_association():
                     self._params[k]=kwargs[k]
                 else: KeyError("%s is not a valid key" %k)
-            cdef collective_variable* new_collective_variable=<collective_variable*> malloc(sizeof(collective_variable))
+            cdef collective_variable* new_collective_variable=<collective_variable*> calloc(1,sizeof(collective_variable))
+
+            for k in self.required_keys_add_collective_variable_degree_of_association():
+                if k not in kwargs:
+                    raise ValueError(
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
+                self._params[k] = kwargs[k]
 
             new_collective_variable.associated_type=self._params["associated_type"]
             new_collective_variable.CV_minimum=self._params["min"]
@@ -162,12 +193,21 @@ IF REACTION_ENSEMBLE:
         def valid_keys_add_collective_variable_degree_of_association(self):
             return "associated_type", "min", "max", "corresponding_acid_types"
 
+        def required_keys_add_collective_variable_degree_of_association(self):
+            return "associated_type", "min", "max", "corresponding_acid_types"
+
         def add_collective_variable_potential_energy(self,*args,**kwargs):
             for k in kwargs:
                 if k in self.valid_keys_add_collective_variable_potential_energy():
                     self._params[k]=kwargs[k]
                 else: KeyError("%s is not a valid key" %k)
-            cdef collective_variable* new_collective_variable=<collective_variable*> malloc(sizeof(collective_variable)*(current_wang_landau_system.nr_collective_variables+1))
+                
+                for k in self.required_keys_add_collective_variable_potential_energy():
+                    if k not in kwargs:
+                        raise ValueError(
+                            "At least the following keys have to be given as keyword arguments: " + self.required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
+                    self._params[k] = kwargs[k]
+            cdef collective_variable* new_collective_variable=<collective_variable*> calloc(1,sizeof(collective_variable)*(current_wang_landau_system.nr_collective_variables+1))
 
             new_collective_variable.energy_boundaries_filename=self._params["filename"]
             new_collective_variable.delta_CV=self._params["delta"]
@@ -178,8 +218,10 @@ IF REACTION_ENSEMBLE:
             
             initialize_wang_landau()
 
-
         def valid_keys_add_collective_variable_potential_energy(self):
+            return "filename","delta"
+
+        def required_keys_add_collective_variable_potential_energy(self):
             return "filename","delta"
 
         def set_wang_landau_parameters(self,*args,**kwargs):
@@ -233,4 +275,6 @@ IF REACTION_ENSEMBLE:
             def __get__(self):
                     return current_wang_landau_system.fix_polymer
 
+        def do_reaction_wang_landau(self):
+            do_reaction_wang_landau()
 
