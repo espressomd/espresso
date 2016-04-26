@@ -42,6 +42,7 @@ class H5mdfile
 	float*			dset_data_float; // Dataset array (type: float)
 	double*			dset_data_double; // Dataset array (type: double)
 	h5string*		dset_data_string; // Dataset array (type: string)
+	char**           dset_data_chars;
 	int 				dset_data_singlevalue_int; // Single value of complete respectively extended dataset array (type: int)
 	float 			dset_data_singlevalue_float; // Single value of complete respectively extended dataset array (type: float)
 	double 			dset_data_singlevalue_double; // Single value of complete respectively extended dataset array (type: double)
@@ -590,7 +591,8 @@ int H5mdfile::H5_Screate_simple(int argc, char **argv, Tcl_Interp *interp)
 	else if(!strncmp(argv[3], "str", strlen(argv[3])))
 	{
 	   dataset_type_id = H5Tcopy(H5T_C_S1);
-	   dset_data = (h5string*) Utils::malloc(dset_data_size * sizeof(h5string));
+	   H5Tset_size(dataset_type_id, H5T_VARIABLE) ;
+	   dset_data = (char**) Utils::malloc(dset_data_size * sizeof(char*));
 	}
 	else
 	{
@@ -640,10 +642,13 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 		dset_data_int = static_cast<int*>(dset_data);
 		dset_data_int[index]=atoi(argv[3]);
 	}
-	if(H5Tequal(dataset_type_id, H5T_C_S1))
+	
+	if(H5Tis_variable_str(dataset_type_id)!=0)
 	{
-		dset_data_string = static_cast<h5string*>(dset_data);
-		strcpy(dset_data_string[index], argv[3]);
+//		dset_data_string = static_cast<h5string*>(dset_data);
+//        dset_data_chars=static_cast<char *>(dset_data);
+        dset_data_chars=(char**) dset_data;
+		dset_data_chars[index]=strdup(argv[3]);
 	}
 	return TCL_OK;
 }

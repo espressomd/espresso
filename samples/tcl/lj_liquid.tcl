@@ -41,7 +41,7 @@ set name  "lj_liquid"
 set ident "_s1"
 
 # 
-set vmd_output "no"
+set vmd_output "yes"
 
 # System parameters
 #############################################################

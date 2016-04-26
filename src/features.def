@@ -101,6 +101,7 @@ SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
+BD
 SD 		      	        requires CUDA
 SD 		      	        requires ARPACK
 SD				implies BD
