@@ -536,23 +536,23 @@ When using \es with MPI, blockfiles and writemd have the disadvantage,
 that the master node does \textit{all} the output. This is done by
 sequentially communicating all particle data to the master node. MPI-IO
 offers the possibility to write out particle data in parallel using
-binary IO. To output variables and other non-array inforamtion, use
+binary IO. To output variables and other non-array information, use
 normal blockfiles (section~\ref{sec:structured-file-format}).
 
 To dump data using MPI-IO, use the following syntax:
 \begin{essyntax}
-  mpiio \var{filename} \opt{read|write} \opt{pos|v|bond|type}
+  mpiio \var{filename} \opt{read|write} \opt{pos|v|bond|type}\dots
 \end{essyntax}
 This command writes data to several files using \var{filename} as
-filename prefix. Beware, that \var{filename} must not be a Tcl channel
-but a string which must not contain colons (MPI fails on these). The
-data can be positions (\keyword{pos}), velocities (\keyword{v}),
-particle types (\keyword{type}) and particle bonds (\keyword{bond}). The
-particle ids are always dumped. For safety reasons, MPI-IO will not
-overwrite existing files, so if the command fails and prints
-\texttt{MPI_ERR_IO} make sure the files are non-existent.
+common filename prefix. Beware, that \var{filename} must not be a Tcl channel
+but a string which must not contain colons. The data can be positions
+(\keyword{pos}), velocities (\keyword{v}), particle types (\keyword{type}) and
+particle bonds (\keyword{bond}) or any combination of these. The particle ids
+are always dumped. For safety reasons, MPI-IO will not overwrite existing
+files, so if the command fails and prints \texttt{MPI_ERR_IO} make sure the
+files are non-existent.
 
-The files produced by this command will be (assumed \var{filename} is
+The files produced by this command are (assumed \var{filename} is
 ``1''):
 \begin{description}[align=right,labelwidth=2cm]
   \item [1.head] Internal information (Dumped fields, bond partner num); always produced
