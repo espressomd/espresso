@@ -495,8 +495,12 @@ inline void add_kinetic_energy(Particle *p1)
 //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
 //   }
 //   else
-// #endif  
+// #endif
+#ifndef SEMI_INTEGRATED
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+#else
+  energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*SQR((*p1).p.mass);
+#endif
 
 #ifdef ROTATION
 #ifdef ROTATION_PER_PARTICLE

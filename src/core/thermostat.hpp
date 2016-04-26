@@ -300,7 +300,11 @@ inline void friction_thermo_langevin(Particle *p)
     #endif
     {
       // Apply the force
+#ifndef SEMI_INTEGRATED
       p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+#else
+      p->f.f[j] = 0;
+#endif
     }
   } // END LOOP OVER ALL COMPONENTS
 
@@ -309,6 +313,32 @@ inline void friction_thermo_langevin(Particle *p)
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
+
+#ifdef SEMI_INTEGRATED
+/** Propagate the positions: random walk part.*/
+inline void random_walk(Particle *p)
+{
+	int j;
+	double e_damp, sigma, sigma_coeff;
+
+#if defined (FLATNOISE)
+	sigma_coeff = sqrt(24.0*temperature/langevin_gamma);
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+	sigma_coeff = sqrt(2.0*temperature/langevin_gamma);
+#endif
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+	  {
+		  e_damp = exp(-langevin_gamma*time_step/p->p.mass);
+		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*langevin_gamma))*(-3+4*e_damp-e_damp*e_damp));
+		  p->r.p[j] += sqrt(sigma) * noise;
+	  }
+    }
+}
+#endif // SEMI_INTEGRATED
 
 #ifdef ROTATION
 /** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
@@ -385,7 +415,6 @@ inline void friction_thermo_langevin_rotation(Particle *p)
 
 
 #endif // ROTATION
-
 
 #undef noise
 #endif

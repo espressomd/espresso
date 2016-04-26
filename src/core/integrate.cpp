@@ -618,6 +618,7 @@ void rescale_forces()
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
 
   scale = 0.5 * time_step * time_step;
+
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     if (current_time_step_is_small)
@@ -632,6 +633,7 @@ void rescale_forces()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
+
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
@@ -647,7 +649,7 @@ void rescale_forces_propagate_vel()
   Cell *cell;
   Particle *p;
   int i, j, np, c;
-  double scale;
+  double scale,e_damp;
 
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO){
@@ -697,8 +699,16 @@ void rescale_forces_propagate_vel()
           }
           else
 #endif
+
+#ifndef SEMI_INTEGRATED
             /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j]; 
+              p[i].m.v[j] += p[i].f.f[j];
+#else
+              /* only deterministic and non-dissipative part of the force is used here */
+              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+#endif
+
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -879,6 +889,7 @@ void propagate_vel()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
+  double e_damp;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -915,8 +926,15 @@ void propagate_vel()
             }
             else
 #endif
+
+#ifndef SEMI_INTEGRATED
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
               p[i].m.v[j] += p[i].f.f[j];
+#else
+              /* only deterministic and non-dissipative part of the force is used here */
+              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+#endif
 
             /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -944,6 +962,8 @@ void propagate_vel()
 
 void propagate_pos()
 {
+  double e_damp, rescale;
+
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
   if(integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
@@ -972,8 +992,16 @@ void propagate_pos()
               /* change momentum of each particle in top and bottom slab */
               if(j==0) nemd_add_velocity(&p[i]);
 #endif
+#ifndef SEMI_INTEGRATED
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
+#else
+              e_damp = exp(-langevin_gamma*time_step/((p[i]).p.mass));
+              rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
+              p[i].r.p[j] += rescale * (((p[i]).p.mass/langevin_gamma)*(p[i].f.f[j]/langevin_gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/langevin_gamma)*time_step);
+              random_walk(&(p[i]));
+
+#endif
             }
         }
         /* Verlet criterion check */
@@ -989,6 +1017,7 @@ void propagate_vel_pos()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
+  double e_damp, rescale;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
 
@@ -1016,14 +1045,27 @@ void propagate_vel_pos()
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p[i].m.v[j] += p[i].f.f[j];
+#ifndef SEMI_INTEGRATED
+              /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+              p[i].m.v[j] += p[i].f.f[j];
+#else
+              /* only deterministic and non-dissipative part of the force is used here */
+              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+#endif
 
 #ifdef MULTI_TIMESTEP
         if (smaller_time_step < 0. || current_time_step_is_small==1)
 #endif  
-            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
-            p[i].r.p[j] += p[i].m.v[j];
+
+#ifndef SEMI_INTEGRATED
+              /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
+              p[i].r.p[j] += p[i].m.v[j];
+#else
+        	  rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
+              p[i].r.p[j] += rescale * (((p[i]).p.mass/langevin_gamma)*(p[i].f.f[j]/langevin_gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/langevin_gamma)*time_step);
+              random_walk(&(p[i]));
+#endif
         }
 
       }
