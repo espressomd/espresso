@@ -600,7 +600,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 					vec[j] = p1->p.bond_site[j] - folded_pos[j]; // Shouldn't be the vec vector normalized? Yes, but with affinity_r0 and not by len!!!
 				len2 = sqrlen(vec);
 				len = sqrt(len2);
-				if (len > 0.75*(ia_params->affinity_r0)) {
+				if (len > 1.0*(ia_params->affinity_r0)) {
 					fac = ia_params->affinity_kappa*(len - 1.0*(ia_params->affinity_r0));
 					//printf("len %f r0 %f\n",len, ia_params->affinity_r0);
 				}
