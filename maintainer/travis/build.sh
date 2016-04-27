@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -93,6 +94,9 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
+if $with_coverage ; then
+    configure_params="CPPFLAGS=\"-coverage -O0\" CXXFLAGS=\"-coverage -O0\" $configure_params"
+fi
 
 if $with_mpi; then
     configure_params="--with-mpi $configure_params"
@@ -159,3 +163,7 @@ if $make_check; then
 
     end "TEST"
 fi
+
+for i in `find . -name  "*.gcno"` ; do
+    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
+done

@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright 2009,2010 Christoph Junghans
 #
 # This file is part of ESPResSo.

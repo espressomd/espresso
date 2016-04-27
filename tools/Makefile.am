@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -140,6 +140,7 @@ enum OverlappedBondedInteraction{
 		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
 		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
                 COULOMB_EK, //< Coulomb method is electrokinetics
+                COULOMB_SCAFACOS, //< Coulomb method is scafacos
 	};
 
 #endif
@@ -1199,6 +1200,14 @@ extern double max_cut;
 extern double max_cut_nonbonded;
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
 extern double max_cut_bonded;
+/** Cutoff of coulomb real space part */
+extern double coulomb_cutoff;
+/** Cutoff of dipolar real space part */
+extern double dipolar_cutoff;
+
+
+
+
 /** Minimal global interaction cutoff. Particles with a distance
     smaller than this are guaranteed to be available on the same node
     (through ghosts).  */

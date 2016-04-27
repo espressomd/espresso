@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -38,7 +38,7 @@ int gaussian_set_params(int part_type_a, int part_type_b,
 			double eps, double sig, double cut);
 
 /** Calculate Gaussian force between particle p1 and p2 */
-inline void add_gaussian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2, double force[3])
+inline void add_gaussian_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params, double d[3], double dist, double dist2, double force[3])
 {
   double fac;
   int j;

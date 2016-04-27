@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -122,7 +122,7 @@ set:
 \item[npt_p_ext] (double, \ro) Pressure for NPT simulations.
 \item[npt_p_inst] (double) Pressure calculated during an
   NPT_isotropic integration.
-\item[piston] (double, \ro) Mass off the box when using NPT_isotropic
+\item[npt_piston] (double, \ro) Mass off the box when using NPT_isotropic
   integrator.
 \item[periodicity] (bool[3]) Specifies periodicity for the three
   directions. If the feature PARTIAL_PERIODIC is set, this variable
@@ -679,8 +679,10 @@ finally gives the id of the currently active GPU.
 \begin{essyntax}
 \variant{1} on\_collision
 \variant{2} on\_collision off
-\variant{4} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
-\variant{5} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{3} on\_collision \opt{exception} bind_centers \var{d} \var{bond1}
+\variant{4} on\_collision \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\variant{5} on\_collision \opt{exception} glue_to_surface \var{d} \var{bond1} \var{bond2} \var{type} \var{type2} \var{type3} \var{type4} \var{d2}
+\variant{6} on\_collision \opt{exception} bind_three_particles \var{d} \var{bond1} \var{bond2} \var{res}
 \end{essyntax}
 
 With the help of the feature \feature{COLLISION_DETECTION}, bonds
@@ -703,7 +705,7 @@ Two methods of binding are available:
 
 \item \lit{bind_at_point_of_collision} prevents sliding of the
   particles at the contact. This is achieved by creating two virtual
-  sites at the point of collision. They are rigidly connectd to the
+  sites at the point of collision. They are rigidly connected to the
   colliding particles, respectively. A bond is then created between
   the virtual sites, or an angular bond between the two real particles
   and the virtual particles. In the latter case, the virtual particles
@@ -728,6 +730,29 @@ Two methods of binding are available:
   created at the point of collision (if applicable). Be sure not to
   define a short-ranged interaction for this particle type, as two
   particles will be generated in the same place.
+
+\item \lit{glue_to_surface} is used to fix a particle of type
+  \var{type2} onto the surface of a particle of type \var{type3}. This
+  is achieved by creating a virtual site (particle type \var{type})
+  which is rigidly connected to the particle of \var{type3}. A bond of
+  type \var{bond2} is then created between the virtual site and the
+  particle of \var{type}.  Additionally, a bond of type \var{bond1}
+  between the colliding particles is also created.  After the collision,
+  the particle of type \var{type3} is changed to type \var{type4}.
+
+\item \lit{bind_three_particles} allows for the creation of agglomerates
+  which maintain their shape similarly to those create by the
+  \lit{bind_at_point_of_collision} method. The present approach works
+  without virtual sites. Instead, for each two-particle collision, the
+  surrounding is searched for a third particle. If one is found, angular
+  bonds are placed on each of the three particles in addition to the
+  distance based bonds between the particle centers. The id of the
+  angular bonds is determined from the angle between the particles. Zero
+  degrees corresponds to bond id \var{bond2}, whereas 180 degrees
+  corresponds to bond id \var{bond2} +\var{res}.  This method das not
+  depend on the particles' rotational degrees of freedom being
+  integrated. Virtual sites are also not required, and the method is
+  implemented to run on more than one cpu core.
 \end{itemize}
 
 The code can throw an exception (background error) in case two
@@ -806,10 +831,28 @@ with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$
 the integration time step. If the equilibrium rate constant is not
 specified it is assumed that \var{k\_eq} = 0.
 
+
+\begin{pysyntax}
+  \object{
+    espressomd.reaction
+  }{
+    Reaction
+  }{
+    product_type   = \arg{int},
+    reactant_type  = \arg{int},
+    catalyzer_type = \arg{int},
+    ct_range       = \arg{float},
+    ct_rate        = \arg{float},
+    eq_rate        = \arg{float},
+    react_once     = \arg{bool},
+    swap           = \arg{bool}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
 \variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
 product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
-\opt{eq_rate \var{k\_eq}} \opt{react_once \var{on/off}}
+\opt{eq_rate \var{k\_eq}} \opt{react_once \var{on/off}} \opt{swap \var{on/off}}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
@@ -854,6 +897,12 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
   moment, there can only be one reaction in the simulation.
 \item Variant \variant{2} returns the current reaction parameters.
 \end{itemize}
+
+The Python interface has some modified capabilities with respect to
+the TCL interface.  For example, you can alter parameters using the
+\texttt{.setup()} method of the reaction instance.  The reaction
+mechanism can be inhibited and restarted using \texttt{.stop()} and
+\texttt{.start()}.
 
 In future versions of \es the capabilities of the
 \feature{CATALYTIC_REACTIONS} feature may be generalized to handle

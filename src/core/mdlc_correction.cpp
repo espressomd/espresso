@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -720,9 +720,7 @@ int mdlc_tune(double error)
 int mdlc_sanity_checks()
 {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"mdlc requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"mdlc requires periodicity 1 1 1";
     return 1;
   }
 
@@ -763,9 +761,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   else {
     dlc_params.far_calculated = 1;
     if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
-        msg <<"mdlc tuning failed, gap size too small";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"mdlc tuning failed, gap size too small";
     }
   }
   mpi_bcast_coulomb_params();

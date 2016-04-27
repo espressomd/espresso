@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -21,6 +21,8 @@
 #include "rotation.hpp"
 
 #ifdef VIRTUAL_SITES_RELATIVE
+
+using std::ostringstream;
 
 // This is the "relative" implementation for virtual sites.
 // Virtual particles are placed relative to the position of a real particle
@@ -284,6 +286,8 @@ int vs_relate_to(int part_num, int relate_to)
      quat[0]=1;
      quat[1]=quat[2]=quat[3]=0;
     }
+    free_particle(&p_relate_to);
+    free_particle(&p_current);
 
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation

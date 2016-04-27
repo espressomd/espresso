@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -54,6 +54,8 @@ EOF
 
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
 m4_define([_AC_PROG_CXX_G],[])
+
+AM_CONDITIONAL(DARWIN, [test $(uname) = "Darwin"])
 
 #############
 #### MPI ####
@@ -121,7 +123,7 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 AX_CXX_VAR_PRETTYFUNC()
 
 # check for c++11 support
-AX_CXX_COMPILE_STDCXX_11(ext,optional)
+AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
 
 # set the optimization flags
 # never overwrite users CXXFLAGS
@@ -213,7 +215,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-LIBS="$LIBS -lm"
+LIBS="$LIBS -lm -ldl"
 
 ##################################
 # check for FFTW
@@ -272,6 +274,7 @@ AS_IF([test x$with_cuda != xno],[
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
     save_CPPFLAGS=$CPPFLAGS
+    save_CXXFLAGS=$CXXFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -338,13 +341,16 @@ AS_IF([test x$with_cuda != xno],[
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
-    
+
+    # Enable C++11 
+    NVCCFLAGS="$NVCCFLAGS -O3 -std c++11"    
+
     # if no other compute capability is defined by the user, we default to 2.0
     case "$NVCCFLAGS" in
        *-arch=*) ;;
        *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
     esac
-    
+
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
@@ -398,17 +404,7 @@ AS_IF([test x$with_cuda != xno],[
     LDFLAGS=$save_noncuda_LDFLAGS
     LIBS=$save_noncuda_LIBS
     
-    AS_IF([test x$cuda_ok == xyes], [
-        # NVCC doesn't work with llvm's libc++ so we need to also
-        # compile the rest with libstdc++, if nvcc-compiled code is
-        # used
-        AC_MSG_CHECKING([whether the compiler accepts -stdlib=libstdc++])
-        saved_CXXFLAGS=$CXXFLAGS
-        CXXFLAGS="-stdlib=libstdc++ $CXXFLAGS"
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[ AC_MSG_RESULT(yes) ],[
-                AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS
-        ])
-        
+    AS_IF([test x$cuda_ok == xyes], [       
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         # reset standard compiler options
@@ -419,6 +415,13 @@ AS_IF([test x$with_cuda != xno],[
 ])
 
 AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
+
+## Check for Boost
+##################
+
+AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
+AX_BOOST_UNIT_TEST_FRAMEWORK
+AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
 ##################################
@@ -785,9 +788,12 @@ AC_CONFIG_FILES([
 	src/core/Makefile
 	src/tcl/Makefile
 	src/python/espressomd/Makefile
+	src/core/unit_tests/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/tcl/Makefile
+	testsuite/python/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile
@@ -805,8 +811,10 @@ AC_CONFIG_FILES([
 	doc/tutorials/08-visualization/Makefile 
 	doc/latexit.sh
 	])
-AC_CONFIG_FILES([testsuite/runtest.sh],
-	[chmod 755 testsuite/runtest.sh])
+AC_CONFIG_FILES([testsuite/tcl/runtest.sh],
+	[chmod 755 testsuite/tcl/runtest.sh])
+AC_CONFIG_FILES([testsuite/python/runtest.sh],
+	[chmod 755 testsuite/python/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 AC_CONFIG_FILES([src/python/pypresso],
@@ -852,6 +860,7 @@ Libraries
 FFTW                    = $fftw_found
 efence                  = $with_efence
 h5md			= $with_h5md
+boost_test		= $ax_cv_boost_unit_test_framework
 
 EOF
 
@@ -923,7 +932,7 @@ if test .$bibtex = .no; then
    echo "To be able to rebuild the user's guide, add bibtex to your PATH."
 fi
 if test .$doxygen = .no; then
-   echo "To be able to build the developer's guide, add doxygen to your PATH." #'
+   echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
 if test .$with_python_interface = .no; then
    echo "Not building Python interface."
@@ -932,3 +941,10 @@ if test .$use_tcl = .no; then
    echo "Not building Tcl interface."
 fi
 
+cat << EOF
+****************************************************************
+* DEPRECATION WARNING: The autoconf/autotools build system     *
+* will be replaced by cmake in the future.                     *
+* New features are only available via cmake.                   *
+****************************************************************
+EOF

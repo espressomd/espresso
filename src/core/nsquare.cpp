@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -252,12 +252,9 @@ void nsq_calculate_ia()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_bonded_force(pt1);
-#ifdef CONSTRAINTS
-    add_constraints_forces(pt1);
-#endif
-    add_external_potential_forces(pt1);
-
+    
+    add_single_particle_force(pt1);
+    
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
@@ -306,13 +303,9 @@ void nsq_calculate_energies()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_kinetic_energy(pt1);
-    add_bonded_energy(pt1);
-#ifdef CONSTRAINTS
-    add_constraints_energy(pt1);
-#endif
-    add_external_potential_energy(pt1);
 
+    add_single_particle_energy(pt1);
+    
     if (rebuild_verletlist)
       memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 

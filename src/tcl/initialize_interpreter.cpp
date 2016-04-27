@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -64,6 +64,7 @@
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
+#include "mpiio_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -170,13 +171,14 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("imd", tclcommand_imd);
   /* in file random.cpp */
   REGISTER_COMMAND("t_random", tclcommand_t_random);
-  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in file h5mdfile_tcl.cpp */
   #ifdef H5MD
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
+  /* in mpiio_tcl.cpp */
+  REGISTER_COMMAND("mpiio", tclcommand_mpiio);
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
@@ -255,6 +257,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
+#if defined(SCAFACOS) and defined(ELECTROSTATICS)
+  REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
+#endif
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

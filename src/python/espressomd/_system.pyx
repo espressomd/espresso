@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,7 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 
+cimport integrate
 import interactions
 from actors import Actors
 cimport cuda_init
@@ -30,21 +31,39 @@ import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
 
+import sys
+
+setable_properties=["box_l","max_num_cells","min_num_cells",
+                    "node_grid","npt_piston","npt_p_diff",
+                    "periodicity","skin","time",
+                    "time_step","timings"]
 
 cdef class System:
     doge = 1
-    part = particle_data.particleList()
-    nonBondedInter = interactions.NonBondedInteractions()
-    bondedInter = interactions.BondedInteractions()
-    cellSystem = CellSystem()
+    part = particle_data.ParticleList()
+    non_bonded_inter = interactions.NonBondedInteractions()
+    bonded_inter = interactions.BondedInteractions()
+    cell_system = CellSystem()
     thermostat = Thermostat()
 
     def __init__(self):
         self.actors = Actors(_system=self)
 
 #        self.part = particle_data.particleList()
-#        self.nonBondedInter = interactions.NonBondedInteractions()
-#        self.bondedInter = interactions.BondedInteractions()
+#        self.non_bonded_inter = interactions.NonBondedInteractions()
+#        self.bonded_inter = interactions.BondedInteractions()
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict={}
+        for property_ in setable_properties:
+            odict[property_] = System.__getattribute__(self,property_)
+        return odict
+
+    def __setstate__(self,params):
+        for property_ in params.keys():
+            System.__setattr__(self,property_,params[property_])
+
 
     property box_l:
         def __set__(self, _box_l):
@@ -247,7 +266,8 @@ cdef class System:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(28)
+            mpi_bcast_parameter(29)
+            integrate.skin_set = True
 
         def __get__(self):
             global skin
@@ -274,6 +294,18 @@ cdef class System:
         def __get__(self):
             global sim_time
             return sim_time
+
+    property smaller_time_step:
+        def __set__(self, double _smaller_time_step):
+            IF MULTI_TIMESTEP:
+                global smaller_time_step
+                if _smaller_time_step <= 0:
+                    raise ValueError("Smaller time step must be positive")
+                mpi_set_smaller_time_step(_smaller_time_step)
+
+        def __get__(self):
+            global smaller_time_step
+            return smaller_time_step
 
     property time_step:
         def __set__(self, double _time_step):
@@ -366,23 +398,49 @@ cdef class System:
         def __get__(self):
             global max_cut_bonded
             return max_cut_bonded
+    
+    
+    property seed:
+            def __set__(self, _seed):
+                cdef vector[int] seed_array
+                global __seed
+                __seed=_seed
+                if(isinstance(_seed,int) and self.n_nodes==1):
+                    seed_array.resize(1)
+                    seed_array[0]=int(_seed)
+                    mpi_random_seed(0,seed_array)
+                elif( hasattr(_seed,"__iter__")):
+                    if(len(_seed)<self.n_nodes or len(_seed)>self.n_nodes):
+                        raise ValueError("The list needs to contain one seed value per node")
+                    seed_array.resize(len(_seed))
+                    for i in range(len(_seed)):
+                        seed_array[i]=int(_seed[i])
 
-    def changeVolumeAndRescaleParticles(dNew, dir="xyz"):
+                    mpi_random_seed(self.n_nodes,seed_array)
+                else:
+                        raise ValueError("The seed has to be an integer or a list of integers with one integer per node")
+
+            def __get__(self):
+                global __seed
+                return __seed
+        
+
+    def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates
-           changeVolumeAndRescaleParticles(dNew, dir="xyz")
-           dNew: new length, dir=coordinate tow work on, "xyz" for isotropic
+           change_volume_and_rescale_particles(d_new, dir="xyz")
+           d_new: new length, dir=coordinate tow work on, "xyz" for isotropic
         """
-        if dNew < 0:
+        if d_new < 0:
             raise ValueError("No negative lengths")
         if dir == "xyz":
-            dNew = dNew**(1. / 3.)
-            rescale_boxl(3, dNew)
+            d_new = d_new**(1. / 3.)
+            rescale_boxl(3, d_new)
         elif dir == "x":
-            rescale_boxl(0, dNew)
+            rescale_boxl(0, d_new)
         elif dir == "y":
-            rescale_boxl(1, dNew)
+            rescale_boxl(1, d_new)
         elif dir == "z":
-            rescale_boxl(2, dNew)
+            rescale_boxl(2, d_new)
         else:
             raise ValueError(
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')

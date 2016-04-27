@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -706,23 +706,23 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 
     /** ghost modes */
     random_wrapper(rn);
-    mode[10 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[11 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[1];
+    mode[10 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[11 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[12 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f))) * rn->randomnr[0];
-    mode[13 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[12 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/3.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[13 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[14 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[0];
-    mode[15 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f))) * rn->randomnr[1];
+    mode[14 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[0];
+    mode[15 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f/9.0f)*(1.0f-(para.gamma_odd[ii]*para.gamma_odd[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[16 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f)))     * rn->randomnr[0];
-    mode[17 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f))) * rn->randomnr[1];
+    mode[16 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(2.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii]))))     * rn->randomnr[0];
+    mode[17 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/9.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii])))) * rn->randomnr[1];
 
     random_wrapper(rn);
-    mode[18 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f))) * rn->randomnr[0];
+    mode[18 + ii * LBQ] += sqrtf(Rho*(para.mu[ii]*(4.0f/3.0f)*(1.0f-(para.gamma_even[ii]*para.gamma_even[ii])))) * rn->randomnr[0];
   }
 }
 
@@ -1545,9 +1545,9 @@ __device__ __inline__ void interpolation_three_point_coupling( LB_nodes_gpu n_a,
     /** the +0.5 is to turn the floorf into a round function */
     my_center[i] = (int)(floorf(scaledpos+0.5f));
     scaledpos = scaledpos-1.0f*my_center[i];
-    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*pow(scaledpos+1.0f,2) ) )/6.0f;
+    temp_delta[0+3*i] = ( 5.0f - 3.0f*abs(scaledpos+1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos+1.0f) - 3.0f*powf(scaledpos+1.0f,2) ) )/6.0f;
     temp_delta[1+3*i] = ( 1.0f + sqrtf( 1.0f - 3.0f*powf(scaledpos,2) ) )/3.0f;
-    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*pow(scaledpos-1.0f,2) ) )/6.0f;
+    temp_delta[2+3*i] = ( 5.0f - 3.0f*abs(scaledpos-1.0f) - sqrtf( -2.0f + 6.0f*abs(scaledpos-1.0f) - 3.0f*powf(scaledpos-1.0f,2) ) )/6.0f;
   }
 
   for (int i=-1; i<=1; i++) {

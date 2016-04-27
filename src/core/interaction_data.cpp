@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -37,7 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"
@@ -107,6 +107,13 @@ double max_cut_bonded;
 /** maximal cutoff of type-independent short range ia, mainly
     electrostatics and DPD*/
 double max_cut_global;
+/** Everything which is in the global cutoff except real space cutoffs
+    of dipolar and Coulomb mehtods */
+double max_cut_global_without_coulomb_and_dipolar;
+
+// Real space cutoff of long range methods 
+double coulomb_cutoff;
+double dipolar_cutoff;
 
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
@@ -459,14 +466,11 @@ static void recalc_maximal_cutoff_bonded()
   }
 }
 
-static void recalc_global_maximal_nonbonded_cutoff()
-{
-  /* user defined minimal global cut. This makes sure that data of
-   pairs of particles with a distance smaller than this are always
-   available on the same node (through ghosts). Required for example
-   for the relative virtual sites algorithm. */
-  max_cut_global = min_global_cut;
 
+
+double calc_electrostatics_cutoff()
+{
+// Electrostatics cutoff
 #ifdef ELECTROSTATICS
   /* Cutoff for the real space electrostatics.
      Note that the box length may have changed,
@@ -475,38 +479,35 @@ static void recalc_global_maximal_nonbonded_cutoff()
   switch (coulomb.method) {
 #ifdef P3M 
   case COULOMB_ELC_P3M:
-    if (max_cut_global < elc_params.space_layer)
-      max_cut_global = elc_params.space_layer;
-    // fall through
+    return std::max(elc_params.space_layer,p3m.params.r_cut_iL* box_l[0]);
   case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
+  case COULOMB_P3M: 
     /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut = p3m.params.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
-  }
+    return p3m.params.r_cut_iL* box_l[0];
 #endif
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU:
-    if (max_cut_global < ewaldgpu_params.rcut)
-        max_cut_global = ewaldgpu_params.rcut;
-  break;
+    return ewaldgpu_params.rcut;
 #endif
   case COULOMB_DH:
-    if (max_cut_global < dh_params.r_cut)
-      max_cut_global = dh_params.r_cut;
-    break;
+      return dh_params.r_cut;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
-    if (max_cut_global < rf_params.r_cut)
-      max_cut_global = rf_params.r_cut;
-    break;
+    return rf_params.r_cut;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+      return  Electrostatics::Scafacos::get_r_cut();
+#endif
   default:
-	  break;
+    break;
   }
 #endif /*ifdef ELECTROSTATICS */
-  
+return 0;
+}
+
+
+double calc_dipolar_cutoff()
+{
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -514,16 +515,27 @@ static void recalc_global_maximal_nonbonded_cutoff()
     // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut = dp3m.params.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
+    return dp3m.params.r_cut_iL* box_l[0];
   }
 #endif /*ifdef DP3M */
   default:
       break;
   }       
 #endif
+return 0;
+}
+
+
+static void recalc_global_maximal_nonbonded_and_long_range_cutoff()
+{
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+   max_cut_global = min_global_cut;
+
+  
+
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
@@ -539,6 +551,19 @@ static void recalc_global_maximal_nonbonded_cutoff()
   }
 #endif
 
+// global cutoff without dipolar and coulomb methods is needed
+// for more selective additoin of particle pairs to verlet lists
+max_cut_global_without_coulomb_and_dipolar=max_cut_global;
+
+
+
+  // Electrostatics and magnetostatics
+  coulomb_cutoff= calc_electrostatics_cutoff();
+  max_cut_global =std::max(max_cut_global,coulomb_cutoff);
+  
+  dipolar_cutoff= calc_dipolar_cutoff();
+  max_cut_global =std::max(max_cut_global,dipolar_cutoff);
+
 }
 
 static void recalc_maximal_cutoff_nonbonded()
@@ -547,7 +572,7 @@ static void recalc_maximal_cutoff_nonbonded()
 
   CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded\n", this_node));
 
-  recalc_global_maximal_nonbonded_cutoff();
+  recalc_global_maximal_nonbonded_and_long_range_cutoff();
 
   CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded: max_cut_global = %f\n", this_node, max_cut_global));
 
@@ -692,10 +717,12 @@ static void recalc_maximal_cutoff_nonbonded()
       data_sym->particlesInteract =
 	data->particlesInteract = (max_cut_current > 0.0);
       
-      /* take into account any electrostatics */
-      if (max_cut_global > max_cut_current)
-	max_cut_current = max_cut_global;
+      /* Bigger cutoffs are chosen due to dpd and the like. 
+         Coulomb and dipolar interactions are handled in the Verlet lists
+	 separately. */
 
+      max_cut_current =std::max(max_cut_current,max_cut_global_without_coulomb_and_dipolar);
+      
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
 

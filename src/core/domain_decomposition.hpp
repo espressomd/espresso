@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -197,6 +197,9 @@ void dd_exchange_and_sort_particles(int global_flag);
 
 /** implements \ref CellStructure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
+
+/** Get three cell indices (coordinates in cell gird) from particle position */
+void dd_position_to_cell_indices(double pos[3],int* idx);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
