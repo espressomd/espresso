@@ -611,7 +611,7 @@ bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polym
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
-		double random_position=box_l[1]*d_random();
+		double random_position=std::min(box_l[0],std::min(box_l[1],box_l[2]))*d_random();
 		double temp_pos[3]={random_position,random_position,random_position}; //move ions out of way so that they don't hinder you creating a completely new configuration
 		place_particle(p_id,temp_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
@@ -1298,7 +1298,7 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
-		double random_position=box_l[1]*d_random();
+		double random_position=std::min(box_l[0],std::min(box_l[1],box_l[2]))*d_random();
 		double temp_pos[3]={random_position,random_position,random_position}; //move ions out of way so that they don't hinder you creating a completely new configuration
 		place_particle(p_id,temp_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
@@ -2106,4 +2106,208 @@ int load_wang_landau_checkpoint(char* identifier){
 	
 	return 0;
 }
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////  Constant-pH Reactions
+// For the constant pH reactions you need to provide the deprotonation and afterwards the corresponding protonation reaction (in this order). If you want to deal with multiple reactions do it multiple times.
+// Note that there is a difference in the usecase of the constant pH reactions and the above reaction ensemble. For the constant pH simulation directily the **apparent equilibrium constant which carries a unit** needs to be provided -- this is different from the reaction ensemble above, where the dimensionless reaction constant needs to be provided. Again: For the constant-pH algorithm not the dimensionless reaction constant needs to be provided here, but the apparent reaction constant.
+//XXX this needs proper documentation, also that for the backward reaction the inverse equilibrium constant needs to be provided
+/////////////////////////////////////////////
+int generic_oneway_reaction_constant_pH(int reaction_id);
+double constant_pH=-10;
+
+int do_reaction_constant_pH(){
+	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
+	if(reaction_id%2 ==1 )
+		reaction_id-=1;
+	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id]; //this is the deprotonation
+	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
+	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
+		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
+	}
+	int N_0 = (old_particle_numbers[find_index_of_type(current_reaction->educt_types[0])]+old_particle_numbers[find_index_of_type(current_reaction->product_types[0])]);
+	
+	int frequency=i_random(N_0);
+	if(frequency<old_particle_numbers[find_index_of_type(current_reaction->product_types[0])]){
+		generic_oneway_reaction_constant_pH(reaction_id+1); //protonation=neutralization of the titratable group
+	}else{
+		generic_oneway_reaction_constant_pH(reaction_id); //deprotonation
+	}
+	free(old_particle_numbers);
+	return 0;
+}
+
+
+
+int generic_oneway_reaction_constant_pH(int reaction_id){
+	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
+	
+	//generic one way reaction
+	//A+B+...+G +... --> K+...X + Z +...
+	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles
+	//further it is crucial for the function in which order you provide the educt and product types since particles will be replaced correspondingly!
+	
+	if (all_educt_particles_exist(reaction_id) ==false ) {
+		//makes sure, no incomplete reaction is performed -> only need to consider rollback of complete reactions
+		return 0;
+	}
+	
+	//calculate potential energy
+	double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	
+	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
+	//do reaction
+	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
+	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
+		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
+	}
+	int* p_ids_created_particles =NULL;
+	int len_p_ids_created_particles=0;
+	double* hidden_particles_properties=NULL;
+	int len_hidden_particles_properties=0;
+	double* changed_particles_properties=NULL;
+	int len_changed_particles_properties=0;
+	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
+
+	//create or hide particles of types with corresponding types in reaction
+	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
+		//change min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
+		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
+			int p_id ;
+			find_particle_type(current_reaction->educt_types[i], &p_id);
+			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+			len_changed_particles_properties+=1;
+			replace(p_id,current_reaction->product_types[i]);
+		}
+		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
+		//iff product_coefficients(i)-educt_coefficients(i)<0, hide this number of educt particles
+		if ( current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] >0) {
+			for(int j=0; j< current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] ;j++) {
+				int p_id=-1;
+				while(p_id == -1) {
+					p_id=create_particle(current_reaction->product_types[i]);
+				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+				p_ids_created_particles[len_p_ids_created_particles]=p_id;
+				len_p_ids_created_particles+=1;
+			}
+		} else if (current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i] >0) {
+			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
+				int p_id ;
+				find_particle_type(current_reaction->educt_types[i], &p_id);
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+				len_hidden_particles_properties+=1;
+				hide_particle(p_id,current_reaction->educt_types[i]);
+			}
+		}
+
+	}
+
+	//create or hide particles of types with noncorresponding replacement types
+	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
+		if(current_reaction->len_product_types<current_reaction->len_educt_types){
+			//hide superfluous educt_types particles
+			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
+				int p_id ;
+				find_particle_type(current_reaction->educt_types[i], &p_id);
+				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+				len_hidden_particles_properties+=1;
+				hide_particle(p_id,current_reaction->educt_types[i]);
+			}
+		} else {
+			//create additional product_types particles
+			for(int j=0;j<current_reaction->product_coefficients[i];j++){
+				int p_id = -1;
+				while (p_id == -1) {
+					p_id= create_particle(current_reaction->product_types[i]);
+				}
+				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+				p_ids_created_particles[len_p_ids_created_particles]=p_id;
+				len_p_ids_created_particles+=1;
+			}
+		}
+	}
+	
+	double E_pot_new=calculate_current_potential_energy_of_system(0);
+
+	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
+	//calculate boltzmann factor
+	double ln_bf;
+	if(current_reaction->nu_bar > 0){ //deprotonation of monomer
+		double pKa = -log10(current_reaction->equilibrium_constant);
+		ln_bf= (E_pot_new - E_pot_old)- 1.0/beta*log(10)*(constant_pH-pKa) ;
+	}else{ //protonation of monomer (yields neutral monomer)
+		double pKa = -(-log10(current_reaction->equilibrium_constant)); //additional minus, since in this case 1/Ka is stored in the equilibrium constant
+		
+		ln_bf= (E_pot_new - E_pot_old)+ 1.0/beta*log(10)*(constant_pH-pKa);
+	}
+	double bf=exp(-beta*ln_bf);
+	
+	int reaction_is_accepted=0;
+	if ( d_random() < bf ) {
+		//accept
+		//delete hidden educt_particles (remark: dont delete changed particles)
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
+			int p_id = (int) hidden_particles_properties[i];
+			delete_particle(p_id); //delete particle
+		}
+		reaction_is_accepted= 1;
+	} else {
+		//reject
+		//reverse reaction
+		//1) delete created product particles
+		qsort(p_ids_created_particles, len_p_ids_created_particles, sizeof(int), intcmp); // needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
+		for(int i=0;i<len_p_ids_created_particles;i++){
+			delete_particle(p_ids_created_particles[i]);
+		}
+		//2)restore previously hidden educt particles
+		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
+			int p_id = (int) hidden_particles_properties[i];
+			double charge= hidden_particles_properties[i+1];
+			int type=(int) hidden_particles_properties[i+2];
+			//set charge
+			set_particle_q(p_id, charge);
+			//set type
+			set_particle_type(p_id, type);
+		}
+		//2)restore previously changed educt particles
+		for(int i=0;i<len_changed_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
+			int p_id = (int) changed_particles_properties[i];
+			double charge= changed_particles_properties[i+1];
+			int type=(int) changed_particles_properties[i+2];
+			//set charge
+			set_particle_q(p_id, charge);
+			//set type
+			set_particle_type(p_id, type);
+		}
+		reaction_is_accepted= 0;
+	}
+	//free
+	free(old_particle_numbers);
+	free(changed_particles_properties);
+	free(p_ids_created_particles);
+	free(hidden_particles_properties);
+	return reaction_is_accepted;
+
+}
+
+
+
+
+
 

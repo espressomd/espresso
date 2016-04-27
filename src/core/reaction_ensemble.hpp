@@ -48,6 +48,9 @@ int find_index_of_type(int type);
 
 bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polymer, int end_id_polymer);
 
+
+
+
 ///////////////////////////////////////////// Wang-Landau algorithm
 
 typedef struct collective_variable{
@@ -108,5 +111,17 @@ void write_out_preliminary_energy_run_results(char* filename);
 //checkpointing, only designed to reassign values of a previous simulation to a new simulation with the same initialization process
 int write_wang_landau_checkpoint(char* identifier);
 int load_wang_landau_checkpoint(char* identifier);
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////  Constant-pH Reactions
+int do_reaction_constant_pH();
+extern double constant_pH;
+
 
 #endif /* ifdef REACTION_H */
