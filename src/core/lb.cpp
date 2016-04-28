@@ -815,6 +815,115 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 	return 0;
 }
 
+int lb_lbfluid_print_vtk_velocitycut(int cutx, int cuty, int cutz, char* filename) {
+    FILE* fp = fopen(filename, "w");
+    
+    if(fp == NULL)
+    {
+        return 1;
+    }
+    
+    if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+        fprintf(stderr, "Not implemented yet (%s:%d) ",__FILE__,__LINE__);
+        errexit();
+#endif // LB_GPU
+    } else {
+#ifdef LB
+        int pos[3];
+        double u[3];
+        int gridsize[3];
+        
+        gridsize[0] = box_l[0] / lbpar.agrid;
+        gridsize[1] = box_l[1] / lbpar.agrid;
+        gridsize[2] = box_l[2] / lbpar.agrid;
+        
+        
+        if(cutx != 0){
+            if((cuty!=0)||(cutz!=0)) {
+                printf("Too many non-zero parameters for lbfluid print vtk velocity_cut\n");
+                return 1;
+            }
+            
+            fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cut_x\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS 1 %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+                gridsize[1], gridsize[2],
+                cutx+lblattice.agrid[0]*0.5, lblattice.agrid[1]*0.5, lblattice.agrid[2]*0.5,
+                lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
+                gridsize[1]*gridsize[2]);
+            pos[0] = cutx;
+        
+            for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+            {
+                for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+                {
+                    lb_lbnode_get_u(pos, u);
+                    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
+                }
+            }
+        }
+        
+        if(cuty != 0){
+            if((cutx!=0)||(cutz!=0)) {
+                printf("Too many non-zero parameters for lbfluid print vtk velocity_cut \n");
+                return 1;
+            }
+            
+            fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cut_y\n"
+                    "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d 1 %d\n"
+                    "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                    "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+                    gridsize[0], gridsize[2],
+                    lblattice.agrid[0]*0.5, cuty+lblattice.agrid[1]*0.5, lblattice.agrid[2]*0.5,
+                    lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
+                    gridsize[0]*gridsize[2]);
+            pos[1] = cuty;
+            
+            for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+            {
+                for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+                {
+                    lb_lbnode_get_u(pos, u);
+                    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
+                }
+            }
+        }
+        
+        if(cutz != 0){
+            if((cutx!=0)||(cuty!=0)) {
+                printf("Too many non-zero parameters for lbfluid print vtk velocity_cut \n");
+                return 1;
+            }
+            
+            fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cut_z\n"
+                    "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d 1\n"
+                    "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
+                    "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
+                    gridsize[0], gridsize[1],
+                    lblattice.agrid[0]*0.5, lblattice.agrid[1]*0.5, cutz+lblattice.agrid[2]*0.5,
+                    lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
+                    gridsize[0]*gridsize[1]);
+            pos[2] = cutz;
+            
+            for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+            {
+                for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+                {
+                    lb_lbnode_get_u(pos, u);
+                    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
+                }
+            }
+        }
+        
+#endif // LB
+    }
+    fclose(fp);
+
+    return 0;
+}
+
 
 int lb_lbfluid_print_boundary(char* filename) {
     FILE* fp = fopen(filename, "w");

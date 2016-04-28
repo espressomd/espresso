@@ -538,6 +538,7 @@ int lb_get_lattice_switch(int* py_switch);
 /* IO routines */
 int lb_lbfluid_print_vtk_boundary(char* filename);
 int lb_lbfluid_print_vtk_velocity(char* filename);
+int lb_lbfluid_print_vtk_velocitycut(int cutx, int cuty, int cutz, char* filename);
 int lb_lbfluid_print_vtk_density(char** filename);
 int lb_lbfluid_print_boundary(char* filename);
 int lb_lbfluid_print_velocity(char* filename);

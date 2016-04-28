@@ -363,7 +363,7 @@ file with name \var{filename} at once. Currently supported values for the
 parameter \var{property} are boundary and velocity when using \lit{LB} or \lit{LB_GPU} and density and velocity when using \lit{SHANCHEN}. The additional option 
 \lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
 exported. If you plan to use paraview for visualization, note that also the 
-particle positions can be exportet in the VTK format \ref{sec:writevtk}.
+particle positions can be exported in the VTK format \ref{sec:writevtk}. For VTK visualisation of 2D cut of the velocity field you may use the "velocitycut xcut ycut zcut" as \lit{property}. Here, only one value of the three values xcut, ycut and zcut may be nonzero. This value determines the position of the cutting plane. As an example, using "velocitycut 0 10 0" will output the cross-section of the velocity field by a plane perpendicular to $y$-axis at $y = 10$.
 If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
 \section{Setting up boundary conditions}
