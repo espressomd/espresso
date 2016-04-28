@@ -549,6 +549,10 @@ void on_temperature_change()
     }
   }
 #endif
+
+#ifdef ELECTROSTATICS
+  recalc_coulomb_prefactor();
+#endif
 }
 
 void on_parameter_change(int field)
