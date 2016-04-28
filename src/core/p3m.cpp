@@ -2090,10 +2090,9 @@ void p3m_calc_kspace_stress (double* stress) {
     if (p3m.sum_q2 > 0) {
         double* node_k_space_stress;
         double* k_space_stress;
-        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
-        int jx, jy, jz, i, ind = 0;
+        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0, kspace_eng=0.0;
+        int j[3], i, ind = 0;
         // ordering after fourier transform
-        const int x = 2, y = 0, z = 1;
         node_k_space_stress = (double*)Utils::malloc(9*sizeof(double));
         k_space_stress = (double*)Utils::malloc(9*sizeof(double));
 
@@ -2106,43 +2105,43 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-        for(jx=0; jx < fft.plan[3].new_mesh[0]; jx++) {
-            for(jy=0; jy < fft.plan[3].new_mesh[1]; jy++) {
-                for(jz=0; jz < fft.plan[3].new_mesh[2]; jz++) {
-                       kx = p3m.d_op[2][ jx + fft.plan[3].start[0] ];
-                       ky = p3m.d_op[0][ jy + fft.plan[3].start[1] ];
-                       kz = p3m.d_op[1][ jz + fft.plan[3].start[2] ];
-                    sqk = SQR(kx/box_l[x]) + SQR(ky/box_l[y]) + SQR(kz/box_l[z]);
+        for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
+            for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {
+                for(j[2]=0; j[2] < fft.plan[3].new_mesh[RZ]; j[2]++) {
+                       kx = 2.0 * PI * p3m.d_op[RX][ j[KX] + fft.plan[3].start[KX] ]/box_l[RX];
+                       ky = 2.0 * PI * p3m.d_op[RY][ j[KY] + fft.plan[3].start[KY] ]/box_l[RY];
+                       kz = 2.0 * PI * p3m.d_op[RZ][ j[KZ] + fft.plan[3].start[KZ] ]/box_l[RZ];
+                       sqk = SQR(kx) + SQR(ky) + SQR(kz);
                     if (sqk == 0) {
                         node_k_space_energy = 0.0;
                         vterm = 0.0;
                     }
                     else {
-                        vterm = -2.0 * (1/sqk + SQR(PI/p3m.params.alpha));
-                        node_k_space_energy = p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
+                        vterm = -2.0 * (1/sqk + SQR(1.0/2.0/p3m.params.alpha));
+                        node_k_space_energy =  p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
                     }
                     ind++;
+                    node_k_space_stress[0] += node_k_space_energy * (1.0 + vterm*SQR(kx));     /* sigma_xx */
+                    node_k_space_stress[1] += node_k_space_energy * (vterm*kx*ky);  /* sigma_xy */
+                    node_k_space_stress[2] += node_k_space_energy * (vterm*kx*kz);  /* sigma_xz */
 
-                    node_k_space_stress[0] += node_k_space_energy * (1.0 + vterm*SQR(kx/box_l[x]));     /* sigma_xx */
-                    node_k_space_stress[1] += node_k_space_energy * (vterm*kx*ky/(box_l[x]*box_l[y]));  /* sigma_xy */
-                    node_k_space_stress[2] += node_k_space_energy * (vterm*kx*kz/(box_l[x]*box_l[z]));  /* sigma_xz */
+                    node_k_space_stress[3] += node_k_space_energy * (vterm*kx*ky);  /* sigma_yx */
+                    node_k_space_stress[4] += node_k_space_energy * (1.0 + vterm*SQR(ky));     /* sigma_yy */
+                    node_k_space_stress[5] += node_k_space_energy * (vterm*ky*kz);  /* sigma_yz */
 
-                    node_k_space_stress[3] += node_k_space_energy * (vterm*kx*ky/(box_l[x]*box_l[y]));  /* sigma_yx */
-                    node_k_space_stress[4] += node_k_space_energy * (1.0 + vterm*SQR(ky/box_l[y]));     /* sigma_yy */
-                    node_k_space_stress[5] += node_k_space_energy * (vterm*ky*kz/(box_l[y]*box_l[z]));  /* sigma_yz */
-
-                    node_k_space_stress[6] += node_k_space_energy * (vterm*kx*kz/(box_l[x]*box_l[z]));  /* sigma_zx */
-                    node_k_space_stress[7] += node_k_space_energy * (vterm*ky*kz/(box_l[y]*box_l[z]));  /* sigma_zy */
-                    node_k_space_stress[8] += node_k_space_energy * (1.0 + vterm*SQR(kz/box_l[z]));     /* sigma_zz */
+                    node_k_space_stress[6] += node_k_space_energy * (vterm*kx*kz);  /* sigma_zx */
+                    node_k_space_stress[7] += node_k_space_energy * (vterm*ky*kz);  /* sigma_zy */
+                    node_k_space_stress[8] += node_k_space_energy * (1.0 + vterm*SQR(kz));     /* sigma_zz */
                 }
             }
-        }
-        MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-        for (i = 0; i < 9; i++) {
-            stress[i] += k_space_stress[i] * force_prefac;
-        }
-//         fprintf(stderr, "sxx = %.5e, syy = %.5e, szz = %.5e\n", stress[0], stress[4], stress[8]);
-//         fprintf(stderr, "sxy = %.5e, sxz = %.5e, syz = %.5e\n", stress[1], stress[2], stress[5]);
+		}
+
+		MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+		if ( this_node == 0 ) { 
+			for (i = 0; i < 9; i++) {
+				stress[i] = k_space_stress[i] * force_prefac;
+			}
+		}
         free (node_k_space_stress);
         free (k_space_stress);
     }

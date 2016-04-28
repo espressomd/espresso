@@ -2107,6 +2107,8 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;   
  case  DIPOLAR_DS_GPU:
     break;   
+  case DIPOLAR_SCAFACOS:
+    break;
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for unknown method %d\n", this_node, coulomb.Dmethod);
     errexit();
