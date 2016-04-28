@@ -332,8 +332,8 @@ inline void random_walk(Particle *p)
 	  if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
 	  {
-		  e_damp = exp(-langevin_gamma*time_step/p->p.mass);
-		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*langevin_gamma))*(-3+4*e_damp-e_damp*e_damp));
+		  e_damp = exp(-p->p.gamma*time_step/p->p.mass);
+		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*p->p.gamma))*(-3+4*e_damp-e_damp*e_damp));
 		  p->r.p[j] += sqrt(sigma) * noise;
 	  }
     }

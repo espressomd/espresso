@@ -146,7 +146,7 @@ void energy_calc(double *result)
 #ifndef SEMI_INTEGRATED
 	  energy.data.e[0] /= (2.0*time_step*time_step);
 #else
-  	  energy.data.e[0] /= (2.0*pow(time_step,4));
+  	  energy.data.e[0] /= (2.0*pow(time_step,4)/4);
 #endif
 
   calc_long_range_energies();

@@ -705,8 +705,8 @@ void rescale_forces_propagate_vel()
               p[i].m.v[j] += p[i].f.f[j];
 #else
               /* only deterministic and non-dissipative part of the force is used here */
-              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -932,8 +932,8 @@ void propagate_vel()
               p[i].m.v[j] += p[i].f.f[j];
 #else
               /* only deterministic and non-dissipative part of the force is used here */
-              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
 #endif
 
             /* SPECIAL TASKS in particle loop */
@@ -996,9 +996,9 @@ void propagate_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
-              e_damp = exp(-langevin_gamma*time_step/((p[i]).p.mass));
+              e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
               rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
-              p[i].r.p[j] += rescale * (((p[i]).p.mass/langevin_gamma)*(p[i].f.f[j]/langevin_gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/langevin_gamma)*time_step);
+              p[i].r.p[j] += rescale * (((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step);
               random_walk(&(p[i]));
 
 #endif
@@ -1050,8 +1050,8 @@ void propagate_vel_pos()
               p[i].m.v[j] += p[i].f.f[j];
 #else
               /* only deterministic and non-dissipative part of the force is used here */
-              e_damp = exp(-langevin_gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/langevin_gamma)*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -1063,7 +1063,7 @@ void propagate_vel_pos()
               p[i].r.p[j] += p[i].m.v[j];
 #else
         	  rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
-              p[i].r.p[j] += rescale * (((p[i]).p.mass/langevin_gamma)*(p[i].f.f[j]/langevin_gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/langevin_gamma)*time_step);
+              p[i].r.p[j] += rescale * (((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step);
               random_walk(&(p[i]));
 #endif
         }
