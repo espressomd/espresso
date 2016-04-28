@@ -941,7 +941,7 @@ int set_particle_type(int part, int type)
 			  int prev_type = (&cur_par)->p.type;
 			  if ( prev_type != type ) {
 			  // particle existed before so delete it from the list
-			  remove_id_type_array(part, prev_type);
+			  	remove_id_type_array(part, prev_type);
 			  }
 		  }
 	  }
@@ -1242,11 +1242,11 @@ int remove_particle(int part)
 {
   int pnode;
 
-  Particle *cur_par = (Particle *) Utils::malloc (sizeof(Particle));
-  if (get_particle_data(part, cur_par) == ES_ERROR )
+  Particle cur_par;
+  if (get_particle_data(part, &cur_par) == ES_ERROR )
 	  return ES_ERROR;
-  int type = cur_par->p.type;
-  free(cur_par);
+  int type = cur_par.p.type;
+  free_particle(&cur_par);
   if (remove_id_type_array(part, type) == ES_ERROR )
 	  return ES_ERROR;
 
