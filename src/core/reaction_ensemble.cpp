@@ -85,10 +85,6 @@ int free_reaction_ensemble(){
 	free(current_reaction_system.type_index);
 	free(current_reaction_system.charges_of_types);
 
-	//check wether wang_landau was used
-	if(current_wang_landau_system.histogram != NULL)
-		free_wang_landau();
-
 	return 0;
 }
 
@@ -455,7 +451,8 @@ int delete_particle (int p_id) {
 		set_particle_q(p_id,last_particle.p.q);
 		//set type
 		set_particle_type(p_id,last_particle.p.type);
-
+		
+		free_particle(&last_particle );
 
 		p_id=max_seen_particle;
 		remove_particle(p_id);
@@ -580,7 +577,6 @@ bool is_in_list(int value, int* list, int len_list){
 
 bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polymer, int end_id_polymer){
 	int p_id;
-	Particle part;
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 
 	int particle_number_of_type;
@@ -604,10 +600,11 @@ bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polym
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-
+		Particle part;
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
+		free_particle(&part);
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
@@ -657,11 +654,12 @@ bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polym
 	double old_pos_polymer_particle[3*(end_id_polymer-start_id_polymer+1)];
 	if(start_id_polymer>=0 && end_id_polymer >=0 ){
 		
-		Particle part;
 		for(int i=start_id_polymer;i<=end_id_polymer;i++){
+			Particle part;
 			get_particle_data(i, &part);
 			double ppos[3];
 			memmove(ppos, part.r.p, 3*sizeof(double));
+			free_particle(&part);
 			old_pos_polymer_particle[3*i]=ppos[0];
 			old_pos_polymer_particle[3*i+1]=ppos[1];
 			old_pos_polymer_particle[3*i+2]=ppos[2];
@@ -1254,7 +1252,6 @@ void refine_wang_landau_parameter_one_over_t();
 
 bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polymer){
 	int p_id;
-	Particle part;
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(old_state_index>=0){
 		if(current_wang_landau_system.histogram[old_state_index]>=0)
@@ -1291,10 +1288,11 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-
+		Particle part;
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
+		free_particle(&part);
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
@@ -1344,11 +1342,12 @@ bool do_global_mc_move_for_type(int type, int start_id_polymer, int end_id_polym
 	double old_pos_polymer_particle[3*(end_id_polymer-start_id_polymer+1)];
 	if((start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value) && current_wang_landau_system.fix_polymer==false){
 		
-		Particle part;
 		for(int i=start_id_polymer;i<=end_id_polymer;i++){
+			Particle part;
 			get_particle_data(i, &part);
 			double ppos[3];
 			memmove(ppos, part.r.p, 3*sizeof(double));
+			free_particle(&part);
 			old_pos_polymer_particle[3*i]=ppos[0];
 			old_pos_polymer_particle[3*i+1]=ppos[1];
 			old_pos_polymer_particle[3*i+2]=ppos[2];
@@ -1468,7 +1467,6 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 	int attempts=0;
 
 	int p_id;
-	Particle part;
 
 	while(changed_particle_counter<1){
 		//save old_position
@@ -1480,10 +1478,11 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-
+		Particle part;
 		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
+		free_particle(&part);
 		particle_positions[0]=ppos[0];
 		particle_positions[1]=ppos[1];
 		particle_positions[2]=ppos[2];
@@ -1527,6 +1526,7 @@ bool do_local_mc_move_for_type(int type, int start_id_polymer, int end_id_polyme
 		Particle part;
 		get_particle_data(random_polymer_particle_id, &part);
 		memmove(old_pos_polymer_particle, part.r.p, 3*sizeof(double));
+		free_particle(&part);
 		//move particle to new position nearby
 		double random_direction_vector[3];
 		double length_of_displacement=0.05;
@@ -1621,7 +1621,7 @@ bool do_HMC_move(){
 		get_particle_data(p_id, &part); //XXX memory leaks here a little bit
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
-		free_particle(&part);//fixes memory leak. if omitted a lot of memory is leaked
+		free_particle(&part);
 		particle_positions[3*p_id]=ppos[0];
 		particle_positions[3*p_id+1]=ppos[1];
 		particle_positions[3*p_id+2]=ppos[2];
@@ -1805,8 +1805,9 @@ void free_wang_landau(){
 	if(current_wang_landau_system.minimum_energies_at_flat_index!=NULL) //only present in energy preparation run
 		free(current_wang_landau_system.minimum_energies_at_flat_index);
 	if(current_wang_landau_system.maximum_energies_at_flat_index!=NULL)
-		free(current_wang_landau_system.maximum_energies_at_flat_index);	
-
+		free(current_wang_landau_system.maximum_energies_at_flat_index);
+	
+	free_reaction_ensemble();
 
 }
 
