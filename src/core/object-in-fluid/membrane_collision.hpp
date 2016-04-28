@@ -76,6 +76,12 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
             
             memmove(out1, p1->p.out_direction, 3*sizeof(double));
             memmove(out2, p2->p.out_direction, 3*sizeof(double));
+			// check whether out_direction was set
+			if ( fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) + fabs(out2[1]) + fabs(out2[2]) < SMALL_OIF_MEMBRANE_CUTOFF) 
+			{
+				fprintf(stderr, "membrane_collision.hpp: out_direction is not set. Probably, you have not used switch \" normal\" in your oif_create_template command. Exiting the process. \n");
+				errexit();
+			}
             
             // this is the direction in which the repulsive forces will be applied and its norm
             vector_subt(dir,out1,out2);
