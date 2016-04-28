@@ -321,17 +321,16 @@ inline void random_walk(Particle *p)
 	int j;
 	double e_damp, sigma, sigma_coeff;
 
-#if defined (FLATNOISE)
-	sigma_coeff = sqrt(24.0*temperature/langevin_gamma);
-#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-	sigma_coeff = sqrt(2.0*temperature/langevin_gamma);
-#endif
-
     for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	  if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
 	  {
+#if defined (FLATNOISE)
+		  sigma_coeff = 24.0*temperature/p->p.gamma;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = 2.0*temperature/p->p.gamma;
+#endif
 		  e_damp = exp(-p->p.gamma*time_step/p->p.mass);
 		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*p->p.gamma))*(-3+4*e_damp-e_damp*e_damp));
 		  p->r.p[j] += sqrt(sigma) * noise;
