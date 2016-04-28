@@ -496,7 +496,7 @@ double calc_electrostatics_cutoff()
     return rf_params.r_cut;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-      return  Electrostatics::Scafacos::get_r_cut();
+      return  Scafacos::get_r_cut();
 #endif
   default:
     break;
@@ -518,6 +518,9 @@ double calc_dipolar_cutoff()
     return dp3m.params.r_cut_iL* box_l[0];
   }
 #endif /*ifdef DP3M */
+  // Note: Dipolar calculation via scafacos
+  // There doesn't seem to be short range delegation for dipolar methods
+  // in Scafacos, so no cutoff is contributed
   default:
       break;
   }       
@@ -1008,6 +1011,8 @@ int dipolar_set_Dbjerrum(double bjerrum)
       dp3m_set_bjerrum();
       break;
 #endif
+    case DIPOLAR_SCAFACOS: ;
+      // Fall through 
     default:
         break;
     }
