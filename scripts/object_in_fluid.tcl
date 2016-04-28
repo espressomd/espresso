@@ -2159,7 +2159,7 @@ proc oif_object_set { args } {
 	set mesh_nodes_file ""
 	set origin 0
 	set kill_motion 0
-	set un_kill_motion 1
+	set un_kill_motion 0
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
     while { $pos < $n_args } {
@@ -2649,6 +2649,7 @@ proc oif_object_analyze { args } {
 
 	set objectID -1
 	set center_location 0
+	set center_location_folded 0
 	set pos_bounds ""
 	set volume -1
 	set surface -1
@@ -2675,6 +2676,10 @@ proc oif_object_analyze { args } {
 			"origin" {  
 				incr pos
 				set center_location 1
+			}
+			"origin-folded" {  
+				incr pos
+				set center_location_folded 1
 			}
 			"approx-pos" {  
 				incr pos
@@ -2816,6 +2821,37 @@ proc oif_object_analyze { args } {
 		set coords [list $centerX $centerY $centerZ]
 		return $coords
 	}
+	
+	if { $center_location_folded == 1 } {
+       set centerX 0
+       set centerY 0
+       set centerZ 0
+       set firstPartId [lindex $oif_object_starting_particles $objectID]
+       set nnode [lindex $oif_nparticles $objectID]
+       for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+           set coords [part $iii print pos]
+           set centerX [expr $centerX + [lindex $coords 0]]
+           set centerY [expr $centerY + [lindex $coords 1]]
+           set centerZ [expr $centerZ + [lindex $coords 2]]
+       }
+       set centerX [expr $centerX/$nnode]
+       set centerY [expr $centerY/$nnode]
+       set centerZ [expr $centerZ/$nnode]
+       set coords [list $centerX $centerY $centerZ]
+
+       set foldX [expr floor(1.0*[lindex $coords 0]/(1.0*[lindex [setmd box_l] 0]))]
+       set foldY [expr floor(1.0*[lindex $coords 1]/(1.0*[lindex [setmd box_l] 1]))]
+       set foldZ [expr floor(1.0*[lindex $coords 2]/(1.0*[lindex [setmd box_l] 2]))]
+       # these gives how many times is the origin folded in all three directions
+
+       set posX [expr [lindex $coords 0] - $foldX*[lindex [setmd box_l] 0]]
+       set posY [expr [lindex $coords 1] - $foldY*[lindex [setmd box_l] 1]]
+       set posZ [expr [lindex $coords 2] - $foldZ*[lindex [setmd box_l] 2]]
+
+       set coordsFolded [list $posX $posY $posZ]
+       return $coordsFolded
+   }
+	
 
 	if { $aff_type % 10 == 2 } {
 		set fout [open $aff_file a]

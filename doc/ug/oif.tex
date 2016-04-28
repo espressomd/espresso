@@ -178,7 +178,7 @@ Using a previously defined template \var{tid}, this command creates a new object
 \item[origin \var{x} \var{y} \var{z}] center of the object will be at this point.
 \item[part-type \var{type}] can be any integer starting at 0. All particles of one object have the same \verb|part-type|. One can have more objects with the same type of particles, but this is not recommended, because the interactions between objects are set up using these types.
 \item[\opt{rotate \var{x} \var{y} \var{z}}] angles in radians, by which the object is initially rotated around the $x, y, z$ axis. Default values are 0.0 0.0 0.0.
-\item[\opt{mass \var{m}}] mass of one particle. Default value is 1.0
+\item[\opt{mass \var{m}}] this parameter refers to the mass of one particle (one mesh point of the triangulation). For the proper setting, the mass of the  whole membrane must be distributed to all mesh points. Default value is 1.0.
 \end{arguments}
 
 \subsection{\label{ssec:oif-mesh-analyze}Mesh analysis}
