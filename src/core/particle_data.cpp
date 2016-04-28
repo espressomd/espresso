@@ -2022,10 +2022,9 @@ int find_particle_type_id(int type, int *id, int *in_id ){
 }
 
 int delete_particle_of_type(int type) { 
-	int *p_id, *index_id;
-	p_id=(int *) Utils::malloc (sizeof(int));
-	index_id=(int *) Utils::malloc (sizeof(int));
-	if (find_particle_type_id(type, p_id, index_id) == ES_ERROR )
+	int p_id;
+	int index_id;
+	if (find_particle_type_id(type, &p_id, &index_id) == ES_ERROR )
 		return ES_ERROR;
 
 	int in_type = Index.type[type];
@@ -2034,7 +2033,7 @@ int delete_particle_of_type(int type) {
 	if ( max < 0 ) 
 		return ES_ERROR;
 
-	if ( remove_particle(*p_id) == ES_ERROR ) {
+	if ( remove_particle(p_id) == ES_ERROR ) {
 		// takes also care of removing the index from the array
 		return ES_ERROR;
 	}
