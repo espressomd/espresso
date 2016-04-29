@@ -47,6 +47,7 @@
 #include "thermostat.hpp"
 #include "initialize.hpp"
 #include "cuda_interface.hpp"
+#include "random.hpp"
 
 /****************************************************
  *                     DEFINES
@@ -546,6 +547,66 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 #endif
 }
 
+#ifdef SEMI_INTEGRATED
 
+// Handle switching of noise function flat vs Gaussian
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
+#endif
+
+#if defined (FLATNOISE)
+  #define noise (d_random() -0.5)
+#elif defined (GAUSSRANDOMCUT)
+  #define noise gaussian_random_cut()
+#elif defined (GAUSSRANDOM)
+  #define noise gaussian_random()
+#else
+ #error "No noise function defined"
+#endif
+
+/** Rotate the particle p around the NORMALIZED axes X Y Z by amounts phi[] */
+void rotate_particle_3D(Particle* p, double* phi)
+{
+	  double aSpaceFrame[3];
+
+	  aSpaceFrame[0] = 1.0;
+	  aSpaceFrame[1] = 0.0;
+	  aSpaceFrame[2] = 0.0;
+	  rotate_particle(p,aSpaceFrame,phi[0]);
+
+	  aSpaceFrame[0] = 0.0;
+	  aSpaceFrame[1] = 1.0;
+	  aSpaceFrame[2] = 0.0;
+	  rotate_particle(p,aSpaceFrame,phi[1]);
+
+	  aSpaceFrame[0] = 0.0;
+	  aSpaceFrame[1] = 0.0;
+	  aSpaceFrame[2] = 1.0;
+	  rotate_particle(p,aSpaceFrame,phi[2]);
+}
+
+/** Propagate the positions: random walk part.*/
+void random_walk_rot(Particle *p)
+{
+	double e_damp, sigma, sigma_coeff, rinertia_m, phi, theta, dphi_m;
+	double dphi[3];
+
+#if defined (FLATNOISE)
+		  sigma_coeff = 24.0*temperature/p->p.gamma_rot;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = 2.0*temperature/p->p.gamma_rot;
+#endif
+		  rinertia_m = sqrt(SQR(p->p.rinertia[0])+SQR(p->p.rinertia[1])+SQR(p->p.rinertia[2]));
+		  e_damp = exp(-p->p.gamma_rot*time_step/rinertia_m);
+		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*p->p.gamma_rot))*(-3+4*e_damp-e_damp*e_damp));
+		  phi = 2*PI*d_random();
+		  theta = PI*d_random();
+		  dphi_m = noise * sqrt(3 * sigma);
+		  dphi[0] = dphi_m*sin(theta)*cos(phi);
+		  dphi[1] = dphi_m*sin(theta)*sin(phi);
+		  dphi[2] = dphi_m*cos(theta);
+		  rotate_particle_3D(p,dphi);
+}
+#endif // SEMI_INTEGRATED
 
 #endif

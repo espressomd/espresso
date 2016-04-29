@@ -296,7 +296,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
     if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       rescale_forces();
-#ifdef ROTATION
+#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
       convert_initial_torques();
 #endif
     }
@@ -470,7 +470,7 @@ void integrate_vv(int n_steps, int reuse_forces)
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       rescale_forces_propagate_vel();
-#ifdef ROTATION
+#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
     convert_torques_propagate_omega();
 #endif
     }
@@ -651,7 +651,7 @@ void rescale_forces_propagate_vel()
   Cell *cell;
   Particle *p;
   int i, j, np, c;
-  double scale,e_damp;
+  double scale,e_damp,rinertia_m;
 
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO){
@@ -710,6 +710,11 @@ void rescale_forces_propagate_vel()
               /* only deterministic and non-dissipative part of the force is used here */
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+
+              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -892,7 +897,7 @@ void propagate_vel()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp;
+  double e_damp,rinertia_m;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -904,7 +909,7 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef ROTATION
+#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
      propagate_omega_quat_particle(&p[i]);
 #endif
 
@@ -937,6 +942,10 @@ void propagate_vel()
               /* only deterministic and non-dissipative part of the force is used here */
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+
+              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
 
             /* SPECIAL TASKS in particle loop */
@@ -965,7 +974,8 @@ void propagate_vel()
 
 void propagate_pos()
 {
-  double e_damp;
+  double e_damp,rinertia_m;
+  double dphi[3];
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
   if(integ_switch == INTEG_METHOD_NPT_ISO)
@@ -1001,14 +1011,19 @@ void propagate_pos()
 #else
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
               p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
-              random_walk(&(p[i]));
 
+              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
+              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 #endif
             }
-        }
+        } // j
+        rotate_particle_3D(&(p[i]),dphi);
+        random_walk(&(p[i]));
+        random_walk_rot(&(p[i]));
         /* Verlet criterion check */
         if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
-      }
+      } // i
     }
   }
   announce_resort_particles();
@@ -1019,7 +1034,8 @@ void propagate_vel_pos()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp;
+  double e_damp,rinertia_m;
+  double dphi[3];
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
 
@@ -1034,7 +1050,7 @@ void propagate_vel_pos()
     np = cell->n;
     for(i = 0; i < np; i++) {
 
-#ifdef ROTATION
+#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
       propagate_omega_quat_particle(&p[i]);
 #endif
 
@@ -1054,6 +1070,10 @@ void propagate_vel_pos()
               /* only deterministic and non-dissipative part of the force is used here */
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+
+              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -1065,11 +1085,18 @@ void propagate_vel_pos()
               p[i].r.p[j] += p[i].m.v[j];
 #else
               p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
-              random_walk(&(p[i]));
+
+              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
+              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 #endif
         }
 
-      }
+      } // j
+
+      rotate_particle_3D(&(p[i]),dphi);
+      random_walk(&(p[i]));
+      random_walk_rot(&(p[i]));
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
@@ -1112,7 +1139,7 @@ void propagate_vel_pos()
             resort_particles=1;
 
 
-    }
+    } // i
   }
 
 #ifdef LEES_EDWARDS /* would be nice to be more refined about this */

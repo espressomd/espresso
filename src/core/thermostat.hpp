@@ -402,16 +402,19 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   for ( j = 0 ; j < 3 ; j++) 
   {
 #ifdef ROTATIONAL_INERTIA
+#ifndef SEMI_INTEGRATED
     p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
 #else
+    p->f.torque[j] = 0;
+#endif // SEMI_INTEGATED
+#else
     p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
-#endif
+#endif // ROTATIONAL_INERTIA
   }
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
-
 
 #endif // ROTATION
 
