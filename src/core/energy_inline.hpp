@@ -500,11 +500,7 @@ inline void add_kinetic_energy(Particle *p1)
 //   }
 //   else
 // #endif
-#ifndef SEMI_INTEGRATED
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
-#else
-  energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*pow((*p1).p.mass,3)/(0.25*time_step*time_step);
-#endif
 
 #ifdef ROTATION
 #ifdef ROTATION_PER_PARTICLE
@@ -515,16 +511,22 @@ if (p1->p.rotation)
   /* the rotational part is added to the total kinetic energy;
      Here we use the rotational inertia  */
 
+#ifndef SEMI_INTEGRATED
   energy.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
 		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
 		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
 #else
+  energy.data.e[0] += SQR(p1->m.omega[0])*p1->p.rinertia[0] +
+		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
+		       SQR(p1->m.omega[2])*p1->p.rinertia[2];
+#endif // SEMI_INTEGRATED
+#else
   /* the rotational part is added to the total kinetic energy;
      at the moment, we assume unit inertia tensor I=(1,1,1)  */
   energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
-#endif
+#endif // ROTATIONAL_INERTIA
  }
-#endif
+#endif // ROTATION
 }
 
 inline void add_single_particle_energy(Particle *p) {

@@ -617,6 +617,7 @@ void rescale_forces()
 
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
 
+#ifndef SEMI_INTEGRATED
   scale = 0.5 * time_step * time_step;
 
 #ifdef MULTI_TIMESTEP
@@ -642,6 +643,7 @@ void rescale_forces()
 
     }
   }
+#endif
 }
 
 void rescale_forces_propagate_vel()
@@ -673,11 +675,12 @@ void rescale_forces_propagate_vel()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
+#ifndef SEMI_INTEGRATED
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
-
+#endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef VIRTUAL_SITES
        // Virtual sites are not propagated during integration
@@ -962,7 +965,7 @@ void propagate_vel()
 
 void propagate_pos()
 {
-  double e_damp, rescale;
+  double e_damp;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
   if(integ_switch == INTEG_METHOD_NPT_ISO)
@@ -997,8 +1000,7 @@ void propagate_pos()
               p[i].r.p[j] += p[i].m.v[j];
 #else
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
-              p[i].r.p[j] += rescale * (((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step);
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
               random_walk(&(p[i]));
 
 #endif
@@ -1017,7 +1019,7 @@ void propagate_vel_pos()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp, rescale;
+  double e_damp;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
 
@@ -1062,8 +1064,7 @@ void propagate_vel_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
-        	  rescale = 1 / (0.5 * time_step * time_step/((p[i]).p.mass));
-              p[i].r.p[j] += rescale * (((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step);
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
               random_walk(&(p[i]));
 #endif
         }
