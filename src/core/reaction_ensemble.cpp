@@ -49,6 +49,7 @@ double average_int_list(int* int_number_list, int len_int_nr_list);
 int do_reaction(){
 	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
 	generic_oneway_reaction(reaction_id);
+	
 	return 0;
 }
 
@@ -151,6 +152,88 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
 	return sum_all_energies-kinetic_energy;
 }
 
+int make_reaction_attempt(single_reaction* current_reaction, double** changed_particles_properties, int* _len_changed_particles_properties, int** p_ids_created_particles, int* _len_p_ids_created_particles, double** hidden_particles_properties, int* _len_hidden_particles_properties) {
+	//make sure to free *changed_particles_properties, *p_id_s_changed_particles, *hidden_particles_properties after the call of make_reaction_attempt
+	int len_changed_particles_properties= *_len_changed_particles_properties;
+	int len_p_ids_created_particles= *_len_p_ids_created_particles;
+	int len_hidden_particles_properties= *_len_hidden_particles_properties;
+	
+	int number_of_saved_properties=3;//save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
+	
+	//create or hide particles of types with corresponding types in reaction
+	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
+		//change std::min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
+		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
+			int p_id ;
+			find_particle_type(current_reaction->educt_types[i], &p_id);
+			*changed_particles_properties=(double*) realloc(*changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
+			(*changed_particles_properties)[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
+			(*changed_particles_properties)[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+			(*changed_particles_properties)[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+			len_changed_particles_properties+=1;
+			replace(p_id,current_reaction->product_types[i]);
+		}
+		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
+		//iff product_coefficients(i)-educt_coefficients(i)<0, hide this number of educt particles
+		if ( current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] >0) {
+			for(int j=0; j< current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] ;j++) {
+				int p_id=-1;
+				while(p_id == -1) {
+					p_id=create_particle(current_reaction->product_types[i]);
+				}
+				*p_ids_created_particles=(int*) realloc(*p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+				*p_ids_created_particles[len_p_ids_created_particles]=p_id;
+				len_p_ids_created_particles+=1;
+			}
+		} else if (current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i] >0) {
+			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
+				int p_id ;
+				find_particle_type(current_reaction->educt_types[i], &p_id);
+				*hidden_particles_properties=(double*) realloc(*hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+				len_hidden_particles_properties+=1;
+				hide_particle(p_id,current_reaction->educt_types[i]);
+			}
+		}
+
+	}
+
+	//create or hide particles of types with noncorresponding replacement types
+	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
+		if(current_reaction->len_product_types<current_reaction->len_educt_types){
+			//hide superfluous educt_types particles
+			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
+				int p_id ;
+				find_particle_type(current_reaction->educt_types[i], &p_id);
+				*hidden_particles_properties=(double*) realloc(*hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
+				(*hidden_particles_properties)[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
+				len_hidden_particles_properties+=1;
+				hide_particle(p_id,current_reaction->educt_types[i]);
+			}
+		} else {
+			//create additional product_types particles
+			for(int j=0;j<current_reaction->product_coefficients[i];j++){
+				int p_id = -1;
+				while (p_id == -1) {
+					p_id= create_particle(current_reaction->product_types[i]);
+				}
+				*p_ids_created_particles=(int*) realloc(*p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+				*p_ids_created_particles[len_p_ids_created_particles]=p_id;
+				len_p_ids_created_particles+=1;
+			}
+		}
+	}
+
+
+	*_len_changed_particles_properties=len_changed_particles_properties;
+	*_len_p_ids_created_particles=len_p_ids_created_particles;
+	*_len_hidden_particles_properties=len_hidden_particles_properties;
+}
+
 int generic_oneway_reaction(int reaction_id){
 	float volume = box_l[0]*box_l[1]*box_l[2];
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
@@ -190,74 +273,7 @@ int generic_oneway_reaction(int reaction_id){
 	double* changed_particles_properties=NULL;
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
-
-	//create or hide particles of types with corresponding types in reaction
-	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
-		//change std::min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
-		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
-			int p_id ;
-			find_particle_type(current_reaction->educt_types[i], &p_id);
-			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-			len_changed_particles_properties+=1;
-			replace(p_id,current_reaction->product_types[i]);
-		}
-		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
-		//iff product_coefficients(i)-educt_coefficients(i)<0, hide this number of educt particles
-		if ( current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] >0) {
-			for(int j=0; j< current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] ;j++) {
-				int p_id=-1;
-				while(p_id == -1) {
-					p_id=create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		} else if (current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i] >0) {
-			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		}
-
-	}
-
-	//create or hide particles of types with noncorresponding replacement types
-	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
-		if(current_reaction->len_product_types<current_reaction->len_educt_types){
-			//hide superfluous educt_types particles
-			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		} else {
-			//create additional product_types particles
-			for(int j=0;j<current_reaction->product_coefficients[i];j++){
-				int p_id = -1;
-				while (p_id == -1) {
-					p_id= create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		}
-	}
+	make_reaction_attempt(current_reaction, &changed_particles_properties, &len_changed_particles_properties, &p_ids_created_particles, &len_p_ids_created_particles, &hidden_particles_properties, &len_hidden_particles_properties);
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	
@@ -323,6 +339,7 @@ int generic_oneway_reaction(int reaction_id){
 	free(changed_particles_properties);
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
+	
 	return reaction_is_accepted;
 
 }
@@ -426,7 +443,7 @@ int hide_particle(int p_id, int previous_type){
 }
 
 
-//copies last particle to that position and deletes the then last one
+//copies last particle to the particle with id p_id and deletes the then last one
 int delete_particle (int p_id) {
 	if (p_id == max_seen_particle) {
 		// last particle, just delete
@@ -1062,72 +1079,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 	
-	//create or hide particles of types with corresponding types in reaction
-	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
-		//change std::min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
-		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
-			int p_id ;
-			find_particle_type(current_reaction->educt_types[i], &p_id);
-			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-			len_changed_particles_properties+=1;
-			replace(p_id,current_reaction->product_types[i]);
-		}
-		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
-		//iff product_coefficients(i)-educt_coefficients(i)<0, hide this number of educt particles
-		if ( current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] >0) {
-			for(int j=0; j< current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] ;j++) {
-				int p_id=-1;
-				while(p_id == -1) {
-					p_id=create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		} else if (current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i] >0) {
-			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (double) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		}
-
-	}
-	//create or hide particles of types with noncorresponding replacement types
-	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
-		if(current_reaction->len_product_types<current_reaction->len_educt_types){
-			//hide superfluous educt_types particles
-			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= (double) current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		} else {
-			//create additional product_types particles
-			for(int j=0;j<current_reaction->product_coefficients[i];j++){
-				int p_id = -1;
-				while (p_id == -1) {
-					p_id= create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		}
-	}	
+	make_reaction_attempt(current_reaction, &changed_particles_properties, &len_changed_particles_properties, &p_ids_created_particles, &len_p_ids_created_particles, &hidden_particles_properties, &len_hidden_particles_properties);
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	//save new_state_index
@@ -1618,7 +1570,7 @@ bool do_HMC_move(){
 	for(int p_id=0; p_id<max_seen_particle+1; p_id++){
 		//save old positions
 		Particle part;
-		get_particle_data(p_id, &part); //XXX memory leaks here a little bit
+		get_particle_data(p_id, &part);
 		double ppos[3];
 		memmove(ppos, part.r.p, 3*sizeof(double));
 		free_particle(&part);
@@ -2176,73 +2128,7 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
 
-	//create or hide particles of types with corresponding types in reaction
-	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i++){
-		//change min(educt_coefficients(i),product_coefficients(i)) many particles of educt_types(i) to product_types(i)
-		for(int j=0;j<std::min(current_reaction->product_coefficients[i],current_reaction->educt_coefficients[i]);j++){
-			int p_id ;
-			find_particle_type(current_reaction->educt_types[i], &p_id);
-			changed_particles_properties=(double*) realloc(changed_particles_properties,sizeof(double)*(len_changed_particles_properties+1)*number_of_saved_properties);
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties]=(double) p_id;
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-			changed_particles_properties[len_changed_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-			len_changed_particles_properties+=1;
-			replace(p_id,current_reaction->product_types[i]);
-		}
-		//create product_coefficients(i)-educt_coefficients(i) many product particles iff product_coefficients(i)-educt_coefficients(i)>0,
-		//iff product_coefficients(i)-educt_coefficients(i)<0, hide this number of educt particles
-		if ( current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] >0) {
-			for(int j=0; j< current_reaction->product_coefficients[i]-current_reaction->educt_coefficients[i] ;j++) {
-				int p_id=-1;
-				while(p_id == -1) {
-					p_id=create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		} else if (current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i] >0) {
-			for(int j=0;j<current_reaction->educt_coefficients[i]-current_reaction->product_coefficients[i];j++) {
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		}
-
-	}
-
-	//create or hide particles of types with noncorresponding replacement types
-	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
-		if(current_reaction->len_product_types<current_reaction->len_educt_types){
-			//hide superfluous educt_types particles
-			for(int j=0;j<current_reaction->educt_coefficients[i];j++){
-				int p_id ;
-				find_particle_type(current_reaction->educt_types[i], &p_id);
-				hidden_particles_properties=(double*) realloc(hidden_particles_properties,sizeof(double)*(len_hidden_particles_properties+1)*number_of_saved_properties);
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties]=(double) p_id;
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+1]= current_reaction_system.charges_of_types[find_index_of_type(current_reaction->educt_types[i])];
-				hidden_particles_properties[len_hidden_particles_properties*number_of_saved_properties+2]=(double) current_reaction->educt_types[i];
-				len_hidden_particles_properties+=1;
-				hide_particle(p_id,current_reaction->educt_types[i]);
-			}
-		} else {
-			//create additional product_types particles
-			for(int j=0;j<current_reaction->product_coefficients[i];j++){
-				int p_id = -1;
-				while (p_id == -1) {
-					p_id= create_particle(current_reaction->product_types[i]);
-				}
-				p_ids_created_particles=(int*) realloc(p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				p_ids_created_particles[len_p_ids_created_particles]=p_id;
-				len_p_ids_created_particles+=1;
-			}
-		}
-	}
+	make_reaction_attempt(current_reaction, &changed_particles_properties, &len_changed_particles_properties, &p_ids_created_particles, &len_p_ids_created_particles, &hidden_particles_properties, &len_hidden_particles_properties);
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 
@@ -2306,9 +2192,6 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	return reaction_is_accepted;
 
 }
-
-
-
 
 
 
