@@ -168,7 +168,10 @@ enum DipolarInteraction{
    /** Dipolar method is direct sum plus DLC. */
     DIPOLAR_MDLC_DS,
    /** Direct summation on gpu */
-   DIPOLAR_DS_GPU 
+   DIPOLAR_DS_GPU,
+  /** Scafacos library */
+  DIPOLAR_SCAFACOS
+
 
    };
 #endif 

@@ -142,8 +142,8 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
 	#write charge for vmd_structure
 	h5mdfile H5Screate_simple type double dims $h5md_num_part
 	h5mdfile H5Pset_chunk dims $h5md_num_part
-	h5mdfile H5Dcreate2 "parameters/vmd_structure/charge"
-	h5mdfile H5Dopen2 "parameters/vmd_structure/charge"
+	h5mdfile H5Dcreate2 "particles/atoms/charge"
+	h5mdfile H5Dopen2 "particles/atoms/charge"
 	set i 0
 	foreach p_id $h5md_p_ids {
 		h5mdfile H5_write_value value [part $p_id pr q] index $i
@@ -364,7 +364,7 @@ proc h5md_observable1D_write { args } {
 
 
 # Writes to a user defined 1 dimensional but timedependent observable dataset
-proc h5md_observable2D_init { data_path name } {
+proc h5md_observable2D_init { name } {
 	global h5md_num_part h5md_p_ids
 	h5mdfile H5Gcreate2 "observables/$name"
     h5mdfile H5Screate_simple type int dims 0 
