@@ -1606,6 +1606,7 @@ int p3m_adaptive_tune(char **log) {
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
+    /* Medium-educated guess for the minimal mesh */
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0);
     mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     tune_mesh = 1;
@@ -1740,8 +1741,8 @@ int p3m_adaptive_tune(char **log) {
   P3M_TRACE(p3m_print());
 
   /* Tell the user about the outcome */
-  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n",
-	  mesh[0], cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  sprintf(b, "\nresulting parameters:\n%-4d %-4d %-4d %-3d %.5e %.5e %.5e %-8d\n",
+	  mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
   *log = strcat_alloc(*log, b);
   return ES_OK;
 }

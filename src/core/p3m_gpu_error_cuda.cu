@@ -67,15 +67,15 @@ __device__ static inline double csinc(double d)
 
 __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi, int cao, double alpha_L, double * he_q)
 {
-  int nx = -mesh.x/2 + blockDim.x*blockIdx.x + threadIdx.x;
-  int ny = -mesh.y/2 + blockDim.y*blockIdx.y + threadIdx.y;
-  int nz = -mesh.z/2 + blockDim.z*blockIdx.z + threadIdx.z;
+  const int nx = -mesh.x/2 + blockDim.x*blockIdx.x + threadIdx.x;
+  const int ny = -mesh.y/2 + blockDim.y*blockIdx.y + threadIdx.y;
+  const int nz = -mesh.z/2 + blockDim.z*blockIdx.z + threadIdx.z;
 
   if( (nx >= mesh.x/2) || (ny >= mesh.y/2) || (nz >= mesh.z/2))
     return;
 
-  int lind = ( (nx + mesh.x/2) * mesh.y*mesh.z + (ny + mesh.y/2) * mesh.z + (nz + mesh.z/2));
-
+  const int lind = (nx + mesh.x/2) * mesh.y*mesh.z + (ny + mesh.y/2) * mesh.z + (nz + mesh.z/2);
+  
   double alpha_L_i = 1./alpha_L;
   double n2, cs;
   double U2, ex, ex2;
@@ -275,51 +275,39 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi, int 
   }
 }
 
-
-static double *he_q = 0;
-static size_t he_q_size = 0;
-
-void p3m_gpu_error_reset() {
-  if(he_q != 0)
-    cudaFree(he_q);
-  he_q_size = 0;
-}
-
 double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, double sum_q2, double alpha_L, double *box) {
-  double he_q_final;
-  size_t mesh_size = mesh[0]*mesh[1]*mesh[2];
+  static thrust::device_vector<double> he_q;
+  
+  const size_t mesh_size = mesh[0]*mesh[1]*mesh[2];
 
-  if(mesh_size >= he_q_size) {
-    p3m_gpu_error_reset();
-    cudaMalloc(&he_q, mesh_size*sizeof(double));
-    he_q_size = mesh_size;
+  if(mesh_size > he_q.size()) {
+    he_q.resize(mesh_size);
   }
   
-  dim3 grid(max(1, mesh[0]/8 + 1),max(1, mesh[1]/8 + 1),max(1, mesh[2]/8 + 1));
+  dim3 grid(max(1, mesh[0]/8 + 1),
+            max(1, mesh[1]/8 + 1),
+            max(1, mesh[2]/8 + 1));
+  
   dim3 block(8,8,8);
   
-  int3 mesh3;
+  int3 mesh3;  
   mesh3.x = mesh[0];
   mesh3.y = mesh[1];
   mesh3.z = mesh[2];
+  
   double3 meshi;
-
   meshi.x = 1./mesh[0];
   meshi.y = 1./mesh[1];
   meshi.z = 1./mesh[2];
+
+  // printf("mesh %d %d %d, grid %d %d %d\n",
+  //        mesh3.x, mesh3.y, mesh3.z,
+  //        grid.x, grid.y, grid.z);
   
-  KERNELCALL(p3m_k_space_error_gpu_kernel_ik,grid,block,(mesh3, meshi, cao, alpha_L, he_q));
+  KERNELCALL(p3m_k_space_error_gpu_kernel_ik,grid,block,(mesh3, meshi, cao, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
 
-  cudaError_t err;
-
-  err = cudaGetLastError();
- 
-  if (err != cudaSuccess) { 
-    printf("CUDA error: %s, %s line %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
-    return 0;
-  }
-
-  he_q_final = thrust::reduce(thrust::device_ptr<double>(he_q), thrust::device_ptr<double>(he_q + mesh_size),  0.0,  thrust::plus<double>());
-
+  const double he_q_final = thrust::reduce(he_q.begin(), he_q.end());
+  //const double he_q_final = 10000000.;
+  
   return 2.0*prefactor*sum_q2*sqrt( he_q_final / npart) / (box[1]*box[2]);
 }
