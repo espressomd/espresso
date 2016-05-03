@@ -1018,9 +1018,11 @@ void propagate_pos()
 #endif
             }
         } // j
+#ifdef SEMI_INTEGRATED
         rotate_particle_3D(&(p[i]),dphi);
         random_walk(&(p[i]));
         random_walk_rot(&(p[i]));
+#endif
         /* Verlet criterion check */
         if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
       } // i
@@ -1093,11 +1095,11 @@ void propagate_vel_pos()
         }
 
       } // j
-
+#ifdef SEMI_INTEGRATED
       rotate_particle_3D(&(p[i]),dphi);
       random_walk(&(p[i]));
       random_walk_rot(&(p[i]));
-
+#endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
 
