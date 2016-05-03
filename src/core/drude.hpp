@@ -95,19 +95,15 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
   for (i=0;i<3;i++)  {
     double com_vel = mass_tot_inv * (mass_c * p1->m.v[i] + mass_d * p2->m.v[i]);
-    force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(24.0 * gamma_c / time_step * temp_c) * (d_random()-0.5);
-    //force_com[i] = mass_tot_inv * (-gamma_c * com_vel  + sqrt(2.0 * gamma_c / mass_tot * temp_c) * gaussian_random());
+    force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(24.0 * gamma_c / time_step * temp_c*3.0) * (d_random()-0.5);
+    //force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(2.0 * gamma_c / time_step * temp_c) * gaussian_random();
     double dist_vel = p2->m.v[i] - p1->m.v[i];
-    force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(24.0 * gamma_d / time_step * temp_d) * (d_random()-0.5);
-    //force_dist[i] =                -gamma_d * dist_vel + sqrt(2.0 * gamma_d / mass_red * temp_d) * gaussian_random();
-
-    //force_com[i]  = 1.0/mass_tot  -gamma_c/time_step*(mass_c*p1->m.v[i]+mass_d*p2->m.v[i]) + sqrt(24.0*gamma_c/time_step*temp_c*mass_tot) * rnd_c[i];
-    //force_dist[i] = -gamma_d/time_step*(p2->m.v[i] - p1->m.v[i])*mass_red    + sqrt(24.0*gamma_d/time_step*temp_d*mass_red) * rnd_d[i];
+    force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(24.0 * gamma_d / time_step * temp_d*3.0) * (d_random()-0.5);
+    //force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(2.0 * gamma_d / time_step * temp_d) * gaussian_random();
   }
 
   /* Apply forces: 
      -Harmonic bond
-     -Subtract electrostatics
      -Langevin thermostat on distance core-drude and com in lab coords result in cross terms for velocities and rnd kicks */
 
 
@@ -123,13 +119,21 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
   
   for (i=0;i<3;i++)  {
      force_harmonic[i] = fac_harmonic*dx[i];
-     force_subt_elec[i] = -coulomb.prefactor * chgfac * dx[i] / dist / dist2;
-     force1[i] = mass_c * mass_tot_inv * force_lv_com[i] - force_lv_dist[i] + force_harmonic[i] + force_subt_elec[i]; //Core
-     force2[i] = mass_d * mass_tot_inv * force_lv_com[i] + force_lv_dist[i] - force_harmonic[i] - force_subt_elec[i]; //Drude
+    
+     force1[i] = mass_c * mass_tot_inv * force_lv_com[i] - force_lv_dist[i] + force_harmonic[i]; //Core
+     force2[i] = mass_d * mass_tot_inv * force_lv_com[i] + force_lv_dist[i] - force_harmonic[i]; //Drude
+     
+     //force_subt_elec[i] = -coulomb.prefactor * chgfac * dx[i] / dist / dist2;
+     //force1[i] = mass_c * mass_tot_inv * force_lv_com[i] - force_lv_dist[i] + force_harmonic[i] + force_subt_elec[i]; //Core
+     //force2[i] = mass_d * mass_tot_inv * force_lv_com[i] + force_lv_dist[i] - force_harmonic[i] - force_subt_elec[i]; //Drude
+     
      //force1[i] = force_com[i] + force_harmonic[i] + force_subt_elec[i]; //Core
      //force2[i] = force_com[i] - force_harmonic[i] - force_subt_elec[i]; //Drude
   }
   
+  //fprintf(stderr,"Core Tot: %g %g %g\n", force1[0],force1[1],force1[2]);
+  //fprintf(stderr,"Drude Tot: %g %g %g\n", force2[0],force2[1],force2[2]);
+
  /* 
   fprintf(stderr,"\ndx: %g %g %g\n", dx[0],dx[1],dx[2]);
   fprintf(stderr,"dv: %g %g %g\n", p2->m.v[0] - p1->m.v[0],p2->m.v[1] - p1->m.v[1],p2->m.v[2] - p1->m.v[2]);
@@ -141,9 +145,8 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
   fprintf(stderr,"Drude Tot: %g %g %g\n", force2[0],force2[1],force2[2]);
  */
 
-  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: DRUDE f = (%.3e,%.3e,%.3e) with part id=%d \n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist));
-  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DRUDE f = (%.3e,%.3e,%.3e) with part id=%d \n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist));
-
+  ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: DRUDE f = (%.3e,%.3e,%.3e)\n",this_node,p1->f.f[0]+force1[0],p1->f.f[1]+force1[1],p1->f.f[2]+force1[2]));
+  ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: DRUDE f = (%.3e,%.3e,%.3e)\n",this_node,p2->f.f[0]+force2[0],p2->f.f[1]+force2[1],p2->f.f[2]+force2[2]));
   return 0;
   
 }
@@ -158,8 +161,10 @@ inline int drude_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iapara
   if ((iaparams->p.drude.r_cut > 0.0) && 
       (dist > iaparams->p.drude.r_cut)) 
     return 1;
+   //Harmonic 
+  *_energy = 0.5*iaparams->p.drude.k*dist2;
    //Harmonic - Coulomb 
-  *_energy = 0.5*iaparams->p.drude.k*dist2 - coulomb.prefactor * chgfac / dist;
+  //*_energy = 0.5*iaparams->p.drude.k*dist2 - coulomb.prefactor * chgfac / dist;
   
   return 0;
 }

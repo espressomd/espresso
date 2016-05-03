@@ -392,6 +392,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef P3M
      case COULOMB_ELC_P3M: {
        if (q1q2) {
+         
+
          p3m_add_pair_force(q1q2,d,dist2,dist,force);
 
          // forces from the virtual charges
