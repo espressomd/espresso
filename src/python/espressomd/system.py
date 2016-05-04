@@ -7,7 +7,7 @@ from espressomd import _system
 class System(_system.System):
 
     def __init__(self):
-       _system.System.__init__(self)
+        _system.System.__init__(self)
 
     def __setattr__(self, name, value):
         if hasattr(self, name):
@@ -18,7 +18,7 @@ class System(_system.System):
                 + "\nIf you know what you're doing, use "
                 + "system.create_attr()"
             )
-    
+
     def create_attr(self, *args, **kwargs):
         """
         Circumvents the __setattr__ lock. Allows to create and set new
@@ -31,10 +31,10 @@ class System(_system.System):
             try: name = str(arg)
             except ValueError:
                 print("Please pass either **kwargs or string *args to"
-                    + "create_attr()"
-                )
+                      + "create_attr()"
+                      )
                 continue
-            
+
             if hasattr(self, name):
                 print("Attribute " + name + " already exists.")
             else:
