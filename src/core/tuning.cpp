@@ -55,8 +55,10 @@ double time_force_calc(int default_samples)
       return -1;
   }
   const double tock = MPI_Wtime();
-  printf("dt %.5e, rds %d, MPIWtick() %.6e\n",
-         (tock - tick)/rds, rds, MPI_Wtick());
+
+  if((tock - tick) <= 5*MPI_Wtick()) {
+    runtimeWarning("Clock resolution is to low to reliably time integration.");
+  }  
   return 1000.*(tock - tick)/rds;
 }
 
