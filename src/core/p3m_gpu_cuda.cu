@@ -75,6 +75,74 @@ struct P3MGpuData {
 
 P3MGpuData p3m_gpu_data;
 
+namespace {
+
+
+/** This function returns either fabs or fabsf depending on
+ * the type of the argument via template specialization.
+ */
+template<typename T>
+__device__ T myabs(T x) {
+  return fabs(x);
+}
+
+template<>
+__device__ float myabs(float x) {
+  return fabsf(x);
+}
+
+/**
+ * \brief Calculate integer powers.
+ * This functions calculates x^n, where
+ * n is a positive integer that is known
+ * at compile time. It uses exponentiation by
+ * squaring to construct a efficient function.
+ */
+template<unsigned n, typename T>
+__device__ T int_pow(T x) {
+  switch(n) {
+    case 0:
+      return T(1);
+    case 1:
+      return x;
+    default:
+      /** Even branch */
+      if(n % 2 == 0) {
+        return int_pow<n / 2, T>(x * x);
+      } else {
+        return x * int_pow<(n - 1)/2, T>(x * x);
+      }
+  }
+}
+
+template<typename T>
+__device__ inline T csinc(T d)
+{
+  constexpr T epsi(0.1);
+
+  const T PId = PI*d;
+
+  if (myabs(d)>epsi)
+    return sin(PId)/PId;
+  else {
+    /** Coefficients of the Taylor expansion of sinc */
+    constexpr T c2 = -0.1666666666667e-0;
+    constexpr T c4 =  0.8333333333333e-2;
+    constexpr T c6 = -0.1984126984127e-3;
+    constexpr T c8 =  0.2755731922399e-5;
+    
+    const T PId2 = PId * PId;
+    return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
+  }
+}
+
+template<typename T>
+__device__ T sqr(T x) {
+  return x*x;
+}
+
+}
+
 struct p3m_gpu_fft_plans_t {
   /** FFT plans */
   cufftHandle forw_plan;
@@ -83,31 +151,10 @@ struct p3m_gpu_fft_plans_t {
 
 static char p3m_gpu_data_initialized = 0;
 
-#define SQR(A) ((A)*(A))
-
 extern __shared__ float weights[];
 
-__host__ __device__ inline double csinc(double d)
-{
-#define epsi 0.1
-
-#define c2 -0.1666666666667e-0
-#define c4  0.8333333333333e-2
-#define c6 -0.1984126984127e-3
-#define c8  0.2755731922399e-5
-
-  double PId = PI*d, PId2;
-
-  if (fabs(d)>epsi)
-    return sin(PId)/PId;
-  else {
-    PId2 = SQR(PId);
-    return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
-  }
-}
-
-template<int cao_value>
-__device__ REAL_TYPE caf(int i, REAL_TYPE x) {
+template<int cao_value, typename T>
+__device__ T caf(int i, T x) {
   switch (cao_value) {
   case 1 : return 1.0;
   case 2 : {
@@ -120,9 +167,9 @@ __device__ REAL_TYPE caf(int i, REAL_TYPE x) {
   } 
   case 3 : { 
     switch (i) {
-    case 0: return 0.5*SQR(0.5 - x);
-    case 1: return 0.75 - SQR(x);
-    case 2: return 0.5*SQR(0.5 + x);
+    case 0: return 0.5*sqr(0.5 - x);
+    case 1: return 0.75 - sqr(x);
+    case 2: return 0.5*sqr(0.5 + x);
     default:
       return 0.0;
     }
@@ -176,7 +223,7 @@ __device__ REAL_TYPE caf(int i, REAL_TYPE x) {
   return 0.0;
 }
 
-
+template<int cao>
 __device__ void static Aliasing_sums_ik (const P3MGpuData p, int NX, int NY, int NZ,
 						   REAL_TYPE *Zaehler, REAL_TYPE *Nenner ) {
   REAL_TYPE S1,S2,S3;
@@ -196,18 +243,18 @@ __device__ void static Aliasing_sums_ik (const P3MGpuData p, int NX, int NY, int
 
   for ( MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++ ) {
     NMX = ( ( NX > p.mesh[0]/2 ) ? NX - p.mesh[0] : NX ) + p.mesh[0]*MX;
-    S1 = pow ( csinc(Meshi[0]*NMX ), 2.0*p.cao );
+    S1 = int_pow<2*cao>( csinc(Meshi[0]*NMX ));
     for ( MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++ ) {
       NMY = ( ( NY > p.mesh[1]/2 ) ? NY - p.mesh[1] : NY ) + p.mesh[1]*MY;
-      S2   = S1*pow ( csinc (Meshi[1]*NMY ), 2.0*p.cao );
+      S2   = S1*int_pow<2*cao>( csinc (Meshi[1]*NMY ));
       for ( MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++ ) {
 	NMZ = ( ( NZ > p.mesh[2]/2 ) ? NZ - p.mesh[2] : NZ ) + p.mesh[2]*MZ;
-	S3   = S2*pow ( csinc( Meshi[2]*NMZ ), 2.0*p.cao );
+	S3   = S2*int_pow<2*cao>(csinc( Meshi[2]*NMZ ));
 
-	NM2 = SQR ( NMX*Leni[0] ) + SQR ( NMY*Leni[1] ) + SQR ( NMZ*Leni[2] );
+	NM2 = sqr ( NMX*Leni[0] ) + sqr ( NMY*Leni[1] ) + sqr ( NMZ*Leni[2] );
 	*Nenner += S3;
 
-	TE = exp( -SQR( PI/ ( p.alpha ))*NM2 );
+	TE = exp( -sqr( PI/ ( p.alpha ))*NM2 );
 	zwi  = S3 * TE/NM2;
 	Zaehler[0] += NMX*zwi*Leni[0];
 	Zaehler[1] += NMY*zwi*Leni[1];
@@ -219,6 +266,7 @@ __device__ void static Aliasing_sums_ik (const P3MGpuData p, int NX, int NY, int
 
 /* Calculate influence function */
 
+template<int cao>
 __global__ void calculate_influence_function_device (const P3MGpuData p) {
 
   const int NX = blockDim.x * blockIdx.x + threadIdx.x;
@@ -242,14 +290,14 @@ __global__ void calculate_influence_function_device (const P3MGpuData p) {
   else if ( ( NX% ( p.mesh[0]/2 ) == 0 ) && ( NY% ( p.mesh[1]/2 ) == 0 ) && ( NZ% ( p.mesh[2]/2 ) == 0 ) )
     p.G_hat[ind]=0.0;
   else {
-    Aliasing_sums_ik ( p, NX, NY, NZ, Zaehler, &Nenner );
+    Aliasing_sums_ik<cao>( p, NX, NY, NZ, Zaehler, &Nenner );
 		  
     Dnx = ( NX > p.mesh[0]/2 ) ? NX - p.mesh[0] : NX;
     Dny = ( NY > p.mesh[1]/2 ) ? NY - p.mesh[1] : NY;
     Dnz = ( NZ > p.mesh[2]/2 ) ? NZ - p.mesh[2] : NZ;
 	    
     zwi  = Dnx*Zaehler[0]*Leni[0] + Dny*Zaehler[1]*Leni[1] + Dnz*Zaehler[2]*Leni[2];
-    zwi /= ( ( SQR ( Dnx*Leni[0] ) + SQR ( Dny*Leni[1] ) + SQR ( Dnz*Leni[2] ) ) * SQR ( Nenner ) );
+    zwi /= ( ( sqr ( Dnx*Leni[0] ) + sqr ( Dny*Leni[1] ) + sqr ( Dnz*Leni[2] ) ) * sqr ( Nenner ) );
     p.G_hat[ind] = 2.0 * zwi / PI;
   }
 }
@@ -541,6 +589,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
    block.y = cao;
    block.z = cao;
 
+   /** Switch for assignment templates, the shared version only is faster for cao > 2 */
    switch(cao) {
    case 1:
      assign_forces_kernel<1, false><<<grid, block>>>(pdata, p, lb_particle_force_gpu, prefactor, parts_per_block);
@@ -571,7 +620,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
 
  /* Init the internal datastructures of the P3M GPU.
   * Mainly allocation on the device and influence function calculation.
-  * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory. 
+  * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory.
+  * We use real to complex FFTs, so the size of the reciprocal mesh
+  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
   */
 
  void p3m_gpu_init(int cao, int mesh[3], double alpha, double box[3]) {
@@ -639,6 +690,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
      }
 
      if((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
        const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] * (p3m_gpu_data.mesh[2] / 2 + 1);
        cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),  cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
        cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x), cmesh_size*sizeof(CUFFT_TYPE_COMPLEX)));
@@ -661,14 +713,36 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        grid.x = mesh[0] / block.x + 1;
        grid.z = mesh[2] / 2 + 1;
 
-       P3M_GPU_TRACE(printf("mesh %d %d %d, grid (%d %d %d), block (%d %d %d)\n", mesh[0], mesh[1], mesh[2], grid.x, grid.y, grid.z, block.x, block.y, block.z));
-       KERNELCALL(calculate_influence_function_device,grid,block,(p3m_gpu_data));
+       P3M_GPU_TRACE(printf("mesh %d %d %d, grid (%d %d %d), block (%d %d %d)\n",
+                            mesh[0], mesh[1], mesh[2],
+                            grid.x, grid.y, grid.z,
+                            block.x, block.y, block.z));
+
+       switch(p3m_gpu_data.cao) {
+         case 1:
+           KERNELCALL(calculate_influence_function_device<1>,grid,block,(p3m_gpu_data));
+         case 2:
+           KERNELCALL(calculate_influence_function_device<2>,grid,block,(p3m_gpu_data));
+         case 3:
+           KERNELCALL(calculate_influence_function_device<3>,grid,block,(p3m_gpu_data));
+         case 4:
+           KERNELCALL(calculate_influence_function_device<4>,grid,block,(p3m_gpu_data));
+         case 5:
+           KERNELCALL(calculate_influence_function_device<5>,grid,block,(p3m_gpu_data));
+         case 6:
+           KERNELCALL(calculate_influence_function_device<6>,grid,block,(p3m_gpu_data));
+         case 7:
+           KERNELCALL(calculate_influence_function_device<7>,grid,block,(p3m_gpu_data));
+       }
      }
      if(p3m_gpu_data.mesh_size > 0)
        p3m_gpu_data_initialized = 1;
    }
  }
 
+/**
+ *  \brief The long range part of the P3M algorithm.
+ */
  void p3m_gpu_add_farfield_force() {
    CUDA_particle_data* lb_particle_gpu;
    float* lb_particle_force_gpu;
@@ -688,21 +762,27 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
 
    cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, p3m_gpu_data.mesh_size*sizeof(REAL_TYPE)));
 
+   /** Interpolate the charges to the mesh */
    assign_charges(lb_particle_gpu, p3m_gpu_data);
 
+   /** Do forward FFT of the charge mesh */
    if (CUFFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan, (REAL_TYPE *) p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS){
      fprintf(stderr, "CUFFT error: Forward FFT failed\n");
      return;
    }
 
+   /** Do convolution */
    KERNELCALL( apply_influence_function, gridConv, threadsConv, (p3m_gpu_data));
 
+   /** Take derivative */
    KERNELCALL(apply_diff_op, gridConv, threadsConv, (p3m_gpu_data));
-  
+
+   /** Transform the components of the electric field back */
    CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x, (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
    CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y, (REAL_TYPE *)p3m_gpu_data.force_mesh_y);
    CUFFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z, (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
 
+   /** Assign the forces from the mesh back to the particles */
    assign_forces(lb_particle_gpu, p3m_gpu_data, lb_particle_force_gpu, prefactor);
  }
 
