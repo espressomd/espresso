@@ -143,6 +143,14 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 include(RequireCXX11)
 
 #######################################################################
+# Boost
+#######################################################################
+
+find_package(Boost REQUIRED mpi)
+include_directories(${Boost_INCLUDE_DIRS})
+  list(APPEND LIBRARIES ${Boost_LIBRARIES})
+
+#######################################################################
 # Testing 
 #######################################################################
 
@@ -160,18 +168,11 @@ endif(WITH_TESTS)
 # Process MPI settings
 #######################################################################
 
-find_package(MPI)
-if(WITH_MPI AND MPI_FOUND)
-  list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
-  list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
-  include_directories(${MPI_INCLUDE_PATH})
-  list(APPEND LIBRARIES ${MPI_LIBRARIES})
-  set(MPI_SOURCE)
-  set(HAVE_MPI 1)
-else()
-  include_directories(${CMAKE_SOURCE_DIR}/src/core/mpifake)  
-  set(MPI_SOURCE ${CMAKE_SOURCE_DIR}/src/core/mpifake/mpi.cpp)
-endif()
+find_package(MPI REQUIRED)
+list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
+list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
+include_directories(${MPI_INCLUDE_PATH})
+list(APPEND LIBRARIES ${MPI_LIBRARIES})
 
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
