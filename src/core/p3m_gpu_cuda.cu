@@ -333,12 +333,13 @@ __global__ void apply_influence_function( const P3MGpuData p ) {
 }
 
 
- template<int cao, bool shared>
+template<int cao, bool shared>
 __global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
-                                            const P3MGpuData par,
-                                            const int parts_per_block) {
+                                     const P3MGpuData par,
+                                     const int parts_per_block)
+{
   const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x % cao;
+  const int cao_id_x = threadIdx.x - part_in_block * cao;
   /** id of the particle **/
   int id = parts_per_block * (blockIdx.x*gridDim.y + blockIdx.y) + part_in_block;
   if(id >= par.n_part)
@@ -355,9 +356,9 @@ __global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
   m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
   m_pos[2] = p.p[2] * par.hi[2] - par.pos_shift;
 
-  nmp_x = (int) floor(m_pos[0] + 0.5);
-  nmp_y = (int) floor(m_pos[1] + 0.5);
-  nmp_z = (int) floor(m_pos[2] + 0.5);
+  nmp_x = (int) floorf(m_pos[0] + 0.5f);
+  nmp_y = (int) floorf(m_pos[1] + 0.5f);
+  nmp_z = (int) floorf(m_pos[2] + 0.5f);
 
   m_pos[0] -= nmp_x;
   m_pos[1] -= nmp_y;
@@ -382,7 +383,6 @@ __global__ void assign_charge_kernel(const CUDA_particle_data * const pdata,
     atomicAdd( &(charge_mesh[ind]), caf<cao>(cao_id_x, m_pos[0])*caf<cao>(threadIdx.y, m_pos[1])*caf<cao>(threadIdx.z, m_pos[2])*p.q);
   }
 }
-
 
 void assign_charges(const CUDA_particle_data * const pdata,
                     const P3MGpuData p) {
@@ -449,7 +449,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
                                      REAL_TYPE prefactor,
                                      int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x % cao;
+  const int cao_id_x = threadIdx.x - part_in_block * cao;
   /** id of the particle **/
   int id = parts_per_block * (blockIdx.x*gridDim.y + blockIdx.y) + part_in_block;
   if(id >= par.n_part)
@@ -465,9 +465,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
   m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
   m_pos[2] = p.p[2] * par.hi[2] - par.pos_shift;
 
-  nmp_x = (int) floor(m_pos[0] + 0.5);
-  nmp_y = (int) floor(m_pos[1] + 0.5);
-  nmp_z = (int) floor(m_pos[2] + 0.5);
+  nmp_x = (int) floorf(m_pos[0] + 0.5f);
+  nmp_y = (int) floorf(m_pos[1] + 0.5f);
+  nmp_z = (int) floorf(m_pos[2] + 0.5f);
 
   m_pos[0] -= nmp_x;
   m_pos[1] -= nmp_y;
@@ -487,12 +487,16 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
     __syncthreads();
 
     c = -prefactor
-        *weights[3*cao*part_in_block + 3*cao_id_x + 0]
+        *weights[3*cao*part_in_block + 3*cao_id_x    + 0]
         *weights[3*cao*part_in_block + 3*threadIdx.y + 1]
         *weights[3*cao*part_in_block + 3*threadIdx.z + 2]
         *p.q;    
    } else {
-    c = -prefactor*caf<cao>(cao_id_x, m_pos[0])*caf<cao>(threadIdx.y, m_pos[1])*caf<cao>(threadIdx.z, m_pos[2])*p.q;
+    c = -prefactor
+        *caf<cao>(cao_id_x,    m_pos[0])
+        *caf<cao>(threadIdx.y, m_pos[1])
+        *caf<cao>(threadIdx.z, m_pos[2])
+        *p.q;
   }
 
   const REAL_TYPE *force_mesh_x = (REAL_TYPE *)par.force_mesh_x;
