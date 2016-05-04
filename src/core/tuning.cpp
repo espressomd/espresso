@@ -32,21 +32,14 @@
 
 int timing_samples = 0;
 
-/* timing helper variables */
-static struct rusage time1, time2;
-
-void markTime()
-{
-  time2 = time1;
-  getrusage(RUSAGE_SELF, &time1);
-}
-
-double diffTime()
-{
-  return 1e-3*(time1.ru_utime.tv_usec - time2.ru_utime.tv_usec) +
-    1e3*(time1.ru_utime.tv_sec - time2.ru_utime.tv_sec);
-}
-
+/**
+ * \brief Time the force calculation.
+ * This times the force calculation without
+ * propagating the system. It therfor does
+ * not include e.g. verlet list updates.
+ *
+ * @return Time per integration in ms.
+ */
 double time_force_calc(int default_samples)
 {
   int rds = timing_samples > 0 ? timing_samples : default_samples;
@@ -56,13 +49,15 @@ double time_force_calc(int default_samples)
     return -1;
 
   /* perform force calculation test */
-  markTime();
+  const double tick = MPI_Wtime();
   for (i = 0; i < rds; i++) {
     if (mpi_integrate(0, -1))
       return -1;
   }
-  markTime();
-  return diffTime()/rds;
+  const double tock = MPI_Wtime();
+  printf("dt %.5e, rds %d, MPIWtick() %.6e\n",
+         (tock - tick)/rds, rds, MPI_Wtick());
+  return 1000.*(tock - tick)/rds;
 }
 
 static double time_calc(int rds)
@@ -71,13 +66,12 @@ static double time_calc(int rds)
     return -1;
 
   /* perform force calculation test */
-  markTime();
+  const double tick = MPI_Wtime();
     if (mpi_integrate(rds, -1))
       return -1;
-  markTime();
-  return diffTime()/rds;
+  const double tock = MPI_Wtime();
+  return 1000.*(tock - tick)/rds;
 }
-
 
 void tune_skin(double min, double max, double tol, int steps) {
   skin_set = true;
