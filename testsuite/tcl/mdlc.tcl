@@ -27,141 +27,110 @@ if {[has_feature "LEES_EDWARDS"]} {
     require_max_nodes_per_side 2
 }
 
+proc vectorsTheSame {a b} {
+ set tol 3E-3
+ set diff [vecsub $a $b]
+ if { [veclen $diff] > $tol } {
+  return 0
+  puts "Difference: [veclen $diff]"
+ }
+ return 1
+}
 set tcl_precision 15
 
+
+
+##############################################
 # volume fraction
-set rho 0.10
+set rho 0.3
+
+# This is only for box size calculation. The actual particle numbwe is
+# lower, because particles are removed from the mdlc gap region
+set n_particle 100
+
+set particle_radius 0.5
 set dipole_lambda 3.0
-set particle_radius 1.0
-set bjerrum 1
-set int_time_step 0.002
 
-set external_H_z 0.5
+#################################################
 
-# this are NOT relative errors, note!
-set accuracy_p3m 1.0e-3
-set accuracy_mdlc 1.0e-8
-
-set pos_dip_data [open "mdlc_system.data" r]
-
-set counter 0
-while { [eof $pos_dip_data] == 0 } {
-    set line [gets $pos_dip_data]
-    incr counter
-}
-close $pos_dip_data
-set n_particle [expr $counter-1]
-
-set dipole_modulus [expr sqrt($dipole_lambda * pow(2*$particle_radius,3))]
-
-# setting box paramters
-set box_l [expr sqrt($n_particle * 3.141592654 /$rho)*$particle_radius]
+set box_l [expr pow(((4 * $n_particle * 3.141592654) / (3*$rho)), 1.0/3.0)*$particle_radius]  
+puts "box_lenght $box_l"
 set skin 0.5
 
+
 # give Espresso some parameters
-setmd time_step $int_time_step
+setmd time_step 0.01
 setmd skin $skin
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
 setmd max_num_cells 2500
 
-# read positions and torques from file
-set pos_dip_data [open "mdlc_system.data" r]
-for {set i 0} {$i < $n_particle} {incr i} { 
-    set line [gets $pos_dip_data] 
-    set partid [lindex $line 0]
-    set posx [lindex $line 1]  
-    set posy [lindex $line 2] 
-    set posz [lindex $line 3] 
-    set posx [expr $posx ] 
-    set posy [expr $posy ]
-    set posz [expr $posz ]
-    
-    set dipx  [lindex $line 4]
-    set dipy  [lindex $line 5] 
-    set dipz  [lindex $line 6] 
-    part $partid pos $posx $posy $posz dip $dipx $dipy $dipz
-} 
-close $pos_dip_data
 
-thermostat off 
 
-puts "MDLC test case is running ..." 
+# Read reference data
+set f [open mdlc_reference_data_energy.dat]
+set ref_E [gets $f]
+close $f
 
-#puts "\n  Tuning p3m parameters...."  
-#puts [inter magnetic $bjerrum p3m tunev2 mesh 16 accuracy $accuracy_p3m]
-#puts [inter magnetic]
 
-# the following parameters where obtained by running the above tuning
-inter magnetic $bjerrum p3m 26.7723205659024 16 4 0.109394851183892 9.97941572136326e-06
+# Particles
+set ids ""
+set f [open "mdlc_reference_data_forces_torques.dat"]
+while { ! [eof $f] } {
+  set line [gets $f]
+  set id [lindex $line 0]
+  if {$id ==""} {
+    continue
+  }
+  set pos [lrange $line 1 3]
+  set dip [lrange $line 4 6]
+  set forces($id) [lrange $line 7 9]
+  set torques($id) [lrange $line 10 12]
+  set cmd "part $id pos $pos dip $dip"
+  eval $cmd
+  lappend ids $id
+
+}
+#puts [inter magnetic 1 p3m tunev2 accuracy 1E-5 mesh 128 r_cut 1.5 ]
+inter magnetic 1 p3m 1.5 64 7 2.855458 8.437322E-6
 inter magnetic epsilon metallic
-
-# calculating the gap-size 
-set gap_size [expr $box_l - (2*$particle_radius)]
-
-#puts "\n  switch on mdlc..."
-inter magnetic mdlc $accuracy_mdlc $gap_size
-
+puts [inter magnetic mdlc 1E-7 2]
+puts [inter magnetic]
+#inter magnetic 1 mdds n_cut 20 
+thermostat off
 integrate 0
 
-set failed 0
+set err_f 0.
+set err_t 0.
+foreach i $ids {
+ set err_f [expr $err_f +[veclen [vecsub [part $i print force] $forces($i)]]]
+ set err_t [expr $err_f +[veclen [vecsub [part $i print torque_lab] $torques($i)]]]
+}
+set err_f [expr $err_f /sqrt([setmd n_part])]
+set err_t [expr $err_f /sqrt([setmd n_part])]
+set err_e [expr abs([analyze energy magnetic] - $ref_E)]
+puts "Force error: $err_f"
+puts "torque error: $err_t"
+puts "energy error: $err_e"
 
-set rms_force  0
-set rms_torque 0
+# Tolerance values
+set tol_f 1E-3
+set tol_t 1E-3
+set tol_e 1E-3
 
-if { [catch {
-
-    # compare energy
-    set energy_data [open "mdlc_expected_energy.data" r]
-    set line [gets $energy_data]
-    set energy_from_mdds [lindex $line 0]
-    close $energy_data
-    set magnetic_energy [analyze energy magnetic]
-    set energy_err [expr ($magnetic_energy - $energy_from_mdds)]
-
-    # field is not considered in the energy
-    constraint ext_magn_field 0 0 0
-
-    if {$energy_err > $accuracy_p3m} {
-	set failed 1
-	puts "error of energy is $energy_err -> too large"
-    }
-
-    constraint ext_magn_field 0 0 $external_H_z
-
-    # compare forces and torques with results from "Wang code"
-    set force_torque_data [open "mdlc_expected_force_torque.data" r]
-    for {set i 0} {$i < $n_particle} {incr i} {
-	set line [gets $force_torque_data]
-	
-	set diff_force [vecsub [part $i print force] [lrange $line 1 3]]
-	set error_force [veclen $diff_force]
-	set rms_force [expr $rms_force + pow($error_force, 2)]
-
-	set diff_torque [vecsub [part $i print torque_lab] [lrange $line 4 6]]
-	set error_torque [veclen $diff_torque]
-	set rms_torque [expr $rms_torque + pow($error_torque, 2)]
-    }
-    close $force_torque_data
-
-    set rms_force [expr sqrt($rms_force/$n_particle)]
-    if {$rms_force > $accuracy_p3m} {
-	puts "rms force error $rms_force -> too large"
-	set failed 1
-    }
-
-    set rms_torque [expr sqrt($rms_torque/$n_particle)]
-    if {$rms_torque > 2*$accuracy_p3m} {
-	puts "rms torque error $rms_torque -> too large"
-	puts "we let it through for now, was always too high"
-	# set failed 1
-    }
-
-    if {$failed==1} {
-	error_exit "\nerror of forces, torques or magnetic energy was too large"
-    }
-} res ] } {
-    error_exit $res
+if { $err_f > $tol_f } {
+ error "Force error too large"
 }
 
-exit 0
+if { $err_t > $tol_t } {
+ error "Torque error too large"
+}
+if { $err_e > $tol_e } {
+ error "Energy error too large"
+}
+
+
+
+
+
+
