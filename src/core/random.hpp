@@ -41,16 +41,29 @@ void init_random(void);
  */
 void init_random_seed(int seed);
 
+namespace Random {
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 
 /**
- * @brief draws a random real number from the uniform distribution in the range [0,1)
+ * @brief Get a string representation of the state of the PRNG.
+ */
+std::string get_state();
+
+/**
+ * @brief Set the state of the PRNG from a string representation.
+ */
+void set_state(const std::string &s);
+}
+
+/**
+ * @brief Draws a random real number from the uniform distribution in the range [0,1)
 */
 
 inline double d_random() {
-	return uniform_real_distribution(generator); 
+  using namespace Random;
+  return uniform_real_distribution(generator); 
 }
 
 /**
@@ -59,15 +72,16 @@ inline double d_random() {
  * @param maxint range.
  */
 inline int i_random(int maxint){
-
-	std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
-	return uniform_int_dist(generator);
+  using namespace Random;
+  std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
+  return uniform_int_dist(generator);
 }
 
 /**
  * @brief draws a random number from the normal distribution with mean 0 and variance 1.
  */
 inline double gaussian_random(void){
+  using namespace Random;
   return normal_distribution(generator);
 }
 
@@ -75,12 +89,13 @@ inline double gaussian_random(void){
 /**
  * @brief Generator for cutoff Gaussian random numbers.
  *
- *Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
+ * Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
  * an actual standard deviation of 1.
  *
  * @return Gaussian random number.
  */
 inline double gaussian_random_cut(void){
+  using namespace Random;
   const double random_number=1.042267973*normal_distribution(generator);
   
   if ( fabs(random_number) > 2*1.042267973 ) {
