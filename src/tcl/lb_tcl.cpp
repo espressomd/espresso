@@ -739,6 +739,24 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
               argc -= 3;
               argv += 3;
             }
+            else if (ARG1_IS_S_EXACT("velocitycut"))
+            {
+                int cutx, cuty, cutz;
+                if (!ARG_IS_I(2,cutx) || !ARG_IS_I(3,cuty) || !ARG_IS_I(4,cutz))
+                {
+                    Tcl_AppendResult(interp, "Coordinates are not integer.", (char *)NULL);
+                    return TCL_ERROR;
+                }
+
+                if ( lb_lbfluid_print_vtk_velocitycut(cutx, cuty, cutz, argv[5]) != 0 )
+                {
+                    Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity_cut", (char *)NULL);
+                    return TCL_ERROR;
+                }
+                
+                argc -= 6;
+                argv += 6;
+            }
             else if (ARG1_IS_S_EXACT("density")) 
             {
               argc -= 2;
