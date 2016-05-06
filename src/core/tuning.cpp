@@ -31,7 +31,7 @@
 #include <limits>
 #include "utils/statistics/RunningAverage.hpp"
 
-static const int timing_samples = 10;
+int timing_samples = 10;
 
 /**
  * \brief Time the force calculation.
