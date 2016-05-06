@@ -29,8 +29,9 @@
 #include "integrate.hpp"
 #include "global.hpp"
 #include <limits>
+#include "utils/statistics/RunningAverage.hpp"
 
-int timing_samples = 0;
+static const int timing_samples = 10;
 
 /**
  * \brief Time the force calculation.
@@ -44,24 +45,42 @@ double time_force_calc(int default_samples)
 {
   int rds = timing_samples > 0 ? timing_samples : default_samples;
   int i;
-
+  Utils::Statistics::RunningAverage<double> running_average;
+  
   if (mpi_integrate(0, 0))
     return -1;
 
   /* perform force calculation test */
-  const double tick = MPI_Wtime();
   for (i = 0; i < rds; i++) {
+    const double tick = MPI_Wtime();
+    
     if (mpi_integrate(0, -1))
       return -1;
-  }
-  const double tock = MPI_Wtime();
 
-  if((tock - tick) <= 5*MPI_Wtick()) {
+    const double tock = MPI_Wtime();
+    running_average.add_sample((tock - tick));
+  }
+
+  if(running_average.avg() <= 5*MPI_Wtick()) {
     runtimeWarning("Clock resolution is to low to reliably time integration.");
-  }  
-  return 1000.*(tock - tick)/rds;
+  }
+
+  if(running_average.sig() >= 0.1*running_average.avg()) {
+    runtimeWarning("Statistics of tuning samples is very bad.");
+  }
+
+  /* MPI returns s, return value should be in ms. */
+  return 1000.*running_average.avg();
 }
 
+/**
+ * \brief Time the integration.
+ * This times the integration and
+ * propagates the system.
+ *
+ * @param rds Number of steps to integrate.
+ * @return Time per integration in ms.
+ */
 static double time_calc(int rds)
 {
   if (mpi_integrate(0, 0))
@@ -72,6 +91,8 @@ static double time_calc(int rds)
     if (mpi_integrate(rds, -1))
       return -1;
   const double tock = MPI_Wtime();
+
+  /* MPI returns s, return value should be in ms. */
   return 1000.*(tock - tick)/rds;
 }
 
