@@ -42,7 +42,8 @@
 #include "cuda_utils.hpp"
 
 #include "p3m_gpu.hpp"
-#include "utils.hpp"
+
+#include "p3m_gpu_common.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "interaction_data.hpp"
 
@@ -75,73 +76,6 @@ struct P3MGpuData {
 
 P3MGpuData p3m_gpu_data;
 
-namespace {
-
-
-/** This function returns either fabs or fabsf depending on
- * the type of the argument via template specialization.
- */
-template<typename T>
-__device__ T myabs(T x) {
-  return fabs(x);
-}
-
-template<>
-__device__ float myabs(float x) {
-  return fabsf(x);
-}
-
-/**
- * \brief Calculate integer powers.
- * This functions calculates x^n, where
- * n is a positive integer that is known
- * at compile time. It uses exponentiation by
- * squaring to construct a efficient function.
- */
-template<unsigned n, typename T>
-__device__ T int_pow(T x) {
-  switch(n) {
-    case 0:
-      return T(1);
-    case 1:
-      return x;
-    default:
-      /** Even branch */
-      if(n % 2 == 0) {
-        return int_pow<n / 2, T>(x * x);
-      } else {
-        return x * int_pow<(n - 1)/2, T>(x * x);
-      }
-  }
-}
-
-template<typename T>
-__device__ inline T csinc(T d)
-{
-  constexpr T epsi(0.1);
-
-  const T PId = PI*d;
-
-  if (myabs(d)>epsi)
-    return sin(PId)/PId;
-  else {
-    /** Coefficients of the Taylor expansion of sinc */
-    constexpr T c2 = -0.1666666666667e-0;
-    constexpr T c4 =  0.8333333333333e-2;
-    constexpr T c6 = -0.1984126984127e-3;
-    constexpr T c8 =  0.2755731922399e-5;
-    
-    const T PId2 = PId * PId;
-    return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
-  }
-}
-
-template<typename T>
-__device__ T sqr(T x) {
-  return x*x;
-}
-
-}
 
 struct p3m_gpu_fft_plans_t {
   /** FFT plans */
@@ -721,18 +655,25 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        switch(p3m_gpu_data.cao) {
          case 1:
            KERNELCALL(calculate_influence_function_device<1>,grid,block,(p3m_gpu_data));
+           break;
          case 2:
            KERNELCALL(calculate_influence_function_device<2>,grid,block,(p3m_gpu_data));
+           break;
          case 3:
            KERNELCALL(calculate_influence_function_device<3>,grid,block,(p3m_gpu_data));
+           break;
          case 4:
            KERNELCALL(calculate_influence_function_device<4>,grid,block,(p3m_gpu_data));
+           break;
          case 5:
            KERNELCALL(calculate_influence_function_device<5>,grid,block,(p3m_gpu_data));
+           break;
          case 6:
            KERNELCALL(calculate_influence_function_device<6>,grid,block,(p3m_gpu_data));
+           break;
          case 7:
            KERNELCALL(calculate_influence_function_device<7>,grid,block,(p3m_gpu_data));
+           break;
        }
      }
      if(p3m_gpu_data.mesh_size > 0)
