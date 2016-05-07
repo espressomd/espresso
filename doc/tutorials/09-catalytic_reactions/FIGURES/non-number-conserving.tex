@@ -1,7 +1,8 @@
 \documentclass[tikz]{standalone}
-\usepackage{amsmath}
+\usepackage{amsmath,chemformula}
 \begin{document}
 \begin{tikzpicture}[
+  chemarrow,
   particle/.style = {shade,ball color=#1,circle,inner sep=2pt},
   catalyzer/.style = {particle=green},
   reactant/.style = {particle=blue},
@@ -42,9 +43,9 @@
   \draw[dashed] (mid) +(0,-3) -- +(0,3);
   \node[above=2.5cm] at (C1) {$t$};
   \node[above=2.5cm] at (C2) {$t+\Delta t$};
-  \draw[thick,->] (R1) -- node[pos=.5,below] {$k_{\text{ct}}$} (P1);
-  \draw[thick,->] (R2) -- node[pos=.4,below] {$k_{\text{eq},+}$} (P2);
-  \draw[thick,->] (R3) -- node[pos=.3,below] {$k_{\text{eq},-}$} (P3);
+  \draw[-cf] (R1) -- node[pos=.5,below] {$k_{\text{ct}}$} (P1);
+  \draw[-cf] (R2) -- node[pos=.4,below] {$k_{\text{eq},+}$} (P2);
+  \draw[-cf] (R3) -- node[pos=.3,below] {$k_{\text{eq},-}$} (P3);
   \node[draw=gray,ultra thin,below=3.2cm] at (mid) {%
     \tikz\node[catalyzer] {}; Catalyzer\quad
     \tikz\node[product] {};   Product\quad
