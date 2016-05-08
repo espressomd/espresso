@@ -366,11 +366,6 @@ config-version.cpp: FORCE
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
-if MPI_FAKE
-libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
-# mpifake should come before any system includes
-AM_CPPFLAGS = -I$(srcdir)/mpifake
-endif
 
 .PHONY: FORCE
 FORCE:
