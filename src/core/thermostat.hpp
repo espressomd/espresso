@@ -334,6 +334,10 @@ inline void random_walk(Particle *p)
 		  e_damp = exp(-p->p.gamma*time_step/p->p.mass);
 		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*p->p.gamma))*(-3+4*e_damp-e_damp*e_damp));
 		  p->r.p[j] += sqrt(sigma) * noise;
+#ifdef WALL_BACK_Z
+          if ((j == 2) && (p->r.p[j] < 1)) p->r.p[j] = 1;
+          if ((j == 2) && (p->r.p[j] > box_l[2] - 1)) p->r.p[j] = box_l[2] - 1;
+#endif
 	  }
     }
 }
