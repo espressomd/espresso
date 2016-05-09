@@ -86,7 +86,7 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
-  
+
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
@@ -169,8 +169,8 @@ endif(WITH_TESTS)
 #######################################################################
 
 find_package(MPI REQUIRED)
-list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
-list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 
