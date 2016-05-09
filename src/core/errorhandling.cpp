@@ -63,7 +63,7 @@ RuntimeErrorCollector *runtimeErrorCollector = NULL;
 
 void
 initRuntimeErrorCollector() {
-  runtimeErrorCollector = new RuntimeErrorCollector(MPI_COMM_WORLD);
+  runtimeErrorCollector = new RuntimeErrorCollector(boost_comm);
 }
 
 void _runtimeWarning(const std::string &msg, 
@@ -104,7 +104,7 @@ int check_runtime_errors() {
   return runtimeErrorCollector->count();
 }
 
-list<string>
+vector<RuntimeError>
 mpiRuntimeErrorCollectorGather() {
   // Tell other processors to send their erros
   mpi_call(mpiRuntimeErrorCollectorGatherSlave, -1, 0);
