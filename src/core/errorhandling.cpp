@@ -58,6 +58,8 @@ void register_sigint_handler() {
 
 /* NEW RUNTIME ERROR HANDLING. */
 
+using namespace ErrorHandling;
+
 /** list that contains the runtime error messages */
 RuntimeErrorCollector *runtimeErrorCollector = NULL;
 

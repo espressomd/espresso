@@ -67,7 +67,7 @@ ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, c
     @return the number of characters in the error messages of all nodes together. */
 int check_runtime_errors();
 
-std::vector<RuntimeError>
+std::vector<ErrorHandling::RuntimeError>
 mpiRuntimeErrorCollectorGather();
 
 void mpiRuntimeErrorCollectorGatherSlave(int node, int parm);

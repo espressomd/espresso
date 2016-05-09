@@ -26,7 +26,7 @@
 #include "parser.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include <list>
+#include <vector>
 #include <string>
 
 using namespace std;
@@ -60,9 +60,13 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 }
 
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
-  list<string> errors = mpiRuntimeErrorCollectorGather();
+  using ErrorHandling::RuntimeError;
+  
+  vector<RuntimeError> errors = mpiRuntimeErrorCollectorGather();
 
-  if (errors.size() == 0) return error_code;
+  if (errors.size() == 0) {
+    return error_code;
+  }
 
   /* reset any results of the previous command, since we got an error
      during evaluation, they are at best bogus. But any normal error
@@ -72,13 +76,22 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
   if (error_code != TCL_ERROR)
     Tcl_ResetResult(interp);
   else
-    Tcl_AppendResult(interp, " ", (char *) NULL);
+    Tcl_AppendResult(interp, " ", nullptr);
 
-  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
+  Tcl_AppendResult(interp, "background_errors ", nullptr);
 
-  for (list<string>::const_iterator it = errors.begin();
-       it != errors.end(); ++it)
-    Tcl_AppendResult(interp, it->c_str(), (char*)NULL);
+  for (const auto &it: errors) {
+    Tcl_AppendResult(interp, "{ ", it.format().c_str(), " } ", nullptr);
+  }
 
-  return TCL_ERROR;
+  /** Check if there was an error or only warnings. */
+  if(any_of(errors.begin(), errors.end(), [](const RuntimeError &e) {
+        return e.level() >= RuntimeError::ErrorLevel::ERROR;
+      })) {
+    /** There was an actual error, bail out. */
+    return TCL_ERROR;
+  } else {
+    /** Only warnings */
+    return TCL_OK;
+  }
 }
