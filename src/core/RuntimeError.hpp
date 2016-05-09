@@ -21,8 +21,9 @@
 #define __RUNTIME_ERROR_HPP
 
 #include <string>
-
 #include <boost/serialization/access.hpp>
+
+namespace ErrorHandling {
 
 /** \brief A runtime error.
  * This class describes an runtime error,
@@ -33,7 +34,7 @@ struct RuntimeError {
   /** The error level, warnings are only displayed to the user,
    *  errors are fatal.
    */
-  enum class ErrorLevel { WARNING, ERROR };
+  enum class ErrorLevel { INFO, WARNING, ERROR };
   RuntimeError()
   {}
   RuntimeError(ErrorLevel level,
@@ -74,11 +75,20 @@ struct RuntimeError {
   int line() const {
     return m_line;
   }
+  /** Get a string representation */
+  std::string format() const;
 private:
   /** Boost serialization */
   friend class boost::serialization::access;
   template<class Archive>
-  void serialize(Archive & ar, const unsigned int version);
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & m_level;
+    ar & m_who;
+    ar & m_what;
+    ar & m_function;
+    ar & m_file;
+    ar & m_line;    
+  }
   
   ErrorLevel m_level;
   int m_who;
@@ -87,5 +97,7 @@ private:
   std::string m_file;
   int m_line;
 };
+
+} /* ErrorHandling */
 
 #endif

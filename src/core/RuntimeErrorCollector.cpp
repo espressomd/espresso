@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "RuntimeErrorCollector.hpp"
-#include <sstream>
 #include <utility>
 
 #include <boost/mpi/collectives.hpp>
@@ -28,17 +27,11 @@ using namespace std;
 using boost::mpi::communicator;
 using boost::mpi::all_reduce;
 
+namespace ErrorHandling {
+
 RuntimeErrorCollector::
 RuntimeErrorCollector(const communicator &comm) : m_comm(comm)
 {}
-
-  // ostringstream ostr;
-  // ostr << "{ WARNING: ";
-  // ostr << msg;
-  // ostr << " in function " << function << " (" << file << ":" << line 
-  //      << ") on node " << this_node;
-  // ostr << " } ";
-
 
 void RuntimeErrorCollector::
 warning(const string &msg,
@@ -90,11 +83,12 @@ error(const ostringstream &mstr,
 
 int RuntimeErrorCollector::
 count() const {
-  int numMessages = m_errors.size();
+  int totalMessages;
+  const int numMessages = m_errors.size();
   
-  all_reduce(m_comm, numMessages, std::plus<int>()); 
-
-  return numMessages;
+  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>()); 
+  
+  return totalMessages;
 }
 
 void RuntimeErrorCollector::clear() {
@@ -105,7 +99,9 @@ vector<RuntimeError> RuntimeErrorCollector::
 gather() {
   typedef vector<RuntimeError> return_type;
 
-  if (count() == 0) return return_type();
+  if (count() == 0) {
+    return return_type();
+  }
   
   vector<return_type> all_error_vectors;
   return_type all_errors;
@@ -128,7 +124,9 @@ gather() {
 void RuntimeErrorCollector::
 gatherSlave() {
   // If no processor encountered an error, return
-  if (this->count() == 0) return;
+  if (count() == 0) {
+    return;
+  }
 
   // Gather the errors on the master
   boost::mpi::gather(m_comm, m_errors, 0);
@@ -137,3 +135,4 @@ gatherSlave() {
   this->clear();
 }
 
+} /* ErrorHandling */

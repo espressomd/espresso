@@ -27,6 +27,8 @@
 
 #include "RuntimeError.hpp"
 
+namespace ErrorHandling {
+
 class RuntimeErrorCollector {
 public:
   RuntimeErrorCollector(const boost::mpi::communicator &comm);
@@ -65,5 +67,7 @@ private:
   std::vector<RuntimeError> m_errors;
   boost::mpi::communicator m_comm;
 };
+
+} /* ErrorHandling */
 
 #endif
