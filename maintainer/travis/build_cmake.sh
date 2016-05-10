@@ -88,9 +88,7 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-if $with_coverage ; then
-    cmake_params="-DCMAKE_CXX_FLAGS=\"-coverage -O0\" -DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
-fi
+cmake_params="-DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
 
 if $with_mpi; then
     cmake_params="-DWITH_MPI=ON $cmake_params"
@@ -161,7 +159,3 @@ if $make_check; then
 
     end "TEST"
 fi
-
-for i in `find . -name  "*.gcno"` ; do
-    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
-done
