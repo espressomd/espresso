@@ -23,7 +23,6 @@ add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
 
-
 # Vector
 add_executable(Vector_test Vector_test.cpp)
 target_link_libraries(Vector_test ${LIBRARIES})
@@ -46,6 +45,7 @@ add_dependencies(check_unit_tests RuntimeErrorCollector_test)
 add_executable(RunningAverage_test RunningAverage_test.cpp)
 target_link_libraries(RunningAverage_test ${LIBRARIES})
 add_test(runing_average RunningAverage_test)
+add_dependencies(check_unit_tests RunningAverage_test)
 
 # NumeratedContainer
 add_executable(NumeratedContainer_test NumeratedContainer_test.cpp)
