@@ -102,17 +102,15 @@ add_custom_target(tcl_tests
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 
-if(WITH_MPI)
-    include(ProcessorCount)
-    ProcessorCount(NP)
-    math(EXPR NP "${NP}/2 + 1")
-endif(WITH_MPI)
+include(ProcessorCount)
+ProcessorCount(NP)
+math(EXPR NP "${NP}/2 + 1")
 
 if(WITH_TCL)
   foreach(testfile ${tcl_tests})
     get_filename_component(basename ${testfile} NAME_WE)
     set(TEST_EXECUTABLE ${PYTHON_EXECUTABLE} test_wrapper.py ${CMAKE_BINARY_DIR}/Espresso)
-    if(WITH_MPI AND (EXISTS ${MPIEXEC}))
+    if(EXISTS ${MPIEXEC})
       add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NP} ${TEST_EXECUTABLE} ${testfile})
     else()
       add_test(${basename} ${TEST_EXECUTABLE} ${testfile})

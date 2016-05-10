@@ -37,7 +37,6 @@ endif(NOT CMAKE_BUILD_TYPE)
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
-option(WITH_MPI    "Build a mpi parallel version of ESPResSo" ON)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
@@ -146,9 +145,9 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi)
+find_package(Boost REQUIRED mpi serialization)
 include_directories(${Boost_INCLUDE_DIRS})
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
+list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
 # Testing 
