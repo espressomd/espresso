@@ -52,7 +52,7 @@ public:
    *
    * @param c The object to add.
    */
-  index_type add(T &c) {
+  index_type add(const T &c) {
     const index_type ind = get_index();
     m_container.insert(std::pair<index_type, T>(ind, c));
     return ind;
