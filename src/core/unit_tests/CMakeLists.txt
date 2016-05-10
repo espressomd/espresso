@@ -47,4 +47,15 @@ add_executable(RunningAverage_test RunningAverage_test.cpp)
 target_link_libraries(RunningAverage_test ${LIBRARIES})
 add_test(runing_average RunningAverage_test)
 
+# NumeratedContainer
+add_executable(NumeratedContainer_test NumeratedContainer_test.cpp)
+target_link_libraries(NumeratedContainer_test ${LIBRARIES})
+add_test(numerated_container NumeratedContainer_test)
+add_dependencies(check_unit_tests NumeratedContainer_test)
+
+# MpiCallbacks
+add_executable(MpiCallbacks_test MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
+target_link_libraries(MpiCallbacks_test ${LIBRARIES})
+add_test(mpi_callbacks MpiCallbacks_test)
+add_dependencies(check_unit_tests MpiCallbacks_test)
 

@@ -19,11 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "MpiCallbacks.hpp"
+#include <exception>
 
 #include <boost/mpi.hpp>
 
-#include <exception>
+#include "MpiCallbacks.hpp"
 
 void MpiCallbacks::call(int id, int par1, int par2) const {  
   /** Can only be call from master */
@@ -47,7 +47,7 @@ void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
   call(id, par1, par2);
 }
 
-int MpiCallbacks::add(function_type &f) {
+int MpiCallbacks::add(const function_type &f) {
   assert(f != nullptr);
   const int id = m_callbacks.add(f);
   
@@ -74,12 +74,21 @@ void MpiCallbacks::slave(int id, int par1, int par2) const {
   m_callbacks[id](par1, par2);
 }
 
+void MpiCallbacks::abort_loop() const {
+  call(0, 0, 0);
+}
+
 void MpiCallbacks::loop() const {
   for(;;) {
     int request[3];
     /** Communicate callback id and parameters */
     boost::mpi::broadcast(m_comm, request, 3, 0);
-    /** Call the callback */
-    slave(request[0], request[1], request[2]);
+    /** id == 0 is loop_abort. */
+    if(request[0] == 0) {
+      break;
+    } else {
+      /** Call the callback */
+      slave(request[0], request[1], request[2]);
+    }
   }
 }

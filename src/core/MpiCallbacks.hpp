@@ -31,12 +31,17 @@
  */
 class MpiCallbacks {
  public:
-  MpiCallbacks(const boost::mpi::communicator &comm) : m_comm(comm)
-  {}
   /** @brief Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
   /** @brief Type of the callback functions. */
   typedef std::function<void (int, int)> function_type;
+  
+  MpiCallbacks(const boost::mpi::communicator &comm)
+      : m_comm(comm)
+  {
+    /** Add a dummy at id 0 for loop abort. */
+    m_callbacks.add(function_type());
+  }
 
   /**
    * @brief Add a new callback.
@@ -47,7 +52,7 @@ class MpiCallbacks {
    * @param f The callback function to add.
    * @return An integer id with which the callback can be called.
    **/
-  int add(function_type &f);
+  int add(const function_type &f);
 
   /**
    * @brief Add a new static callback.
@@ -110,6 +115,13 @@ class MpiCallbacks {
   void loop() const;
 
   /**
+   * @brief Abort mpi loop.
+   *
+   * Make the slaves exit the MPI loop.
+   */
+  void abort_loop() const;
+  
+  /**
    * @brief The boost mpi communicator used by this instance
    */
   boost::mpi::communicator comm() const {
@@ -140,8 +152,9 @@ class MpiCallbacks {
    */
   Utils::NumeratedContainer<function_type> m_callbacks;
   
-  /** Mapping of function pointers to ids, so static callbabcks can be
-   *  called by their pointer for backward compability.
+  /**
+   * Mapping of function pointers to ids, so static callbacks can be
+   * called by their pointer for backward compability.
    */
   std::map<func_ptr_type, int> m_func_ptr_to_id;
 };
