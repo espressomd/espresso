@@ -29,9 +29,18 @@ cdef extern from "integrate.hpp":
     cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
     cdef extern cbool skin_set
 
+cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
+    cdef cppclass ErrorLevel:
+        pass
+
+cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
+    cdef ErrorLevel WARNING
+    cdef ErrorLevel ERROR
+
 cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
     cdef cppclass RuntimeError:
         string format()
+        ErrorLevel level()
 
 cdef extern from "errorhandling.hpp":
     cdef vector[RuntimeError] mpiRuntimeErrorCollectorGather()

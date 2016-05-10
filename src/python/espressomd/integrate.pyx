@@ -33,7 +33,11 @@ def integrate(nSteps, recalc_forces=False, reuse_forces=False):
         errors = mpiRuntimeErrorCollectorGather()
         for err in errors:
             print(err.format())
-        raise Exception("Encoutered errors during integrate")
+
+        for err in errors:
+            # Cast because cython does not support typed enums completely
+            if <int> err.level() == <int> ERROR:
+                raise Exception("Encoutered errors during integrate")
 
 
 def set_integrator_nvt():

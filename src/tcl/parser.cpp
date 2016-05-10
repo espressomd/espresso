@@ -24,6 +24,7 @@
 
 #include "utils.hpp"
 #include "parser.hpp"
+#include "global.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include <vector>
@@ -68,29 +69,37 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
     return error_code;
   }
 
-  /* reset any results of the previous command, since we got an error
-     during evaluation, they are at best bogus. But any normal error
-     messages should be kept, they might help to track down the
-     problem.
-  */
-  if (error_code != TCL_ERROR)
-    Tcl_ResetResult(interp);
-  else
-    Tcl_AppendResult(interp, " ", nullptr);
-
-  Tcl_AppendResult(interp, "background_errors ", nullptr);
-
+  std::stringstream msg;
+  
+  msg << "background_errors ";
+  
   for (const auto &it: errors) {
-    Tcl_AppendResult(interp, "{ ", it.format().c_str(), " } ", nullptr);
+    msg << "{ " << it.format() << "} ";
   }
-
+  
   /** Check if there was an error or only warnings. */
   if(any_of(errors.begin(), errors.end(), [](const RuntimeError &e) {
         return e.level() >= RuntimeError::ErrorLevel::ERROR;
       })) {
+    /* reset any results of the previous command, since we got an error
+       during evaluation, they are at best bogus. But any normal error
+       messages should be kept, they might help to track down the
+       problem.
+    */
+    if (error_code != TCL_ERROR)
+      Tcl_ResetResult(interp);
+    else
+      Tcl_AppendResult(interp, " ", nullptr);
+
+    Tcl_AppendResult(interp, msg.str().c_str(), nullptr);
+    
     /** There was an actual error, bail out. */
     return TCL_ERROR;
   } else {
+    /** Show warnings only if requested */
+    if(warnings) {
+      std::cerr << msg.str() << std::endl;
+    }    
     /** Only warnings */
     return TCL_OK;
   }

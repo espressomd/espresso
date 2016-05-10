@@ -39,7 +39,8 @@ std::string RuntimeError::format() const {
   }
 
   std::ostringstream ostr;
-  ostr << label << ": " << what() << " in function "
+  ostr << label << ": " << what()
+       << " in function "
        << function() << " (" << file() << ":" << line()
        << ") on node " << who();
 
