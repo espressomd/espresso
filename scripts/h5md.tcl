@@ -17,20 +17,21 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         return
     }
     set datadir [file dirname $data_path]
-    set filenamebase [file rootname ${data_path}]
-    set datadirfiles [glob -type f -nocomplain -dir ${datadir} *]
-    if { [expr [llength [glob -type f -nocomplain "${filenamebase}*.h5" $datadirfiles]] != 0] } {
+    set filenamebasepath [file rootname $data_path]
+    set filenamebase [file tail $filenamebasepath]
+    set datadirfiles [glob -type f -nocomplain -dir $datadir *]
+    if { [expr [llength [glob -type f -nocomplain -dir $datadir "${filenamebase}*.h5"]] != 0] } {
         puts "Found existing h5 file matching given pattern."; flush stdout
-        set lastfile [lindex [lsort -dictionary [glob "${filenamebase}*.h5" $datadir]] end]
+        set lastfile [lindex [lsort -dictionary [glob "${filenamebasepath}*.h5" $datadir]] end]
         set filename_index [expr int([lindex [split [file rootname [file tail $lastfile]] "_"] end])]
         set newfilename_index [expr $filename_index + 1]
-        set newfilename "${filenamebase}_${newfilename_index}.h5"
-        file copy "${lastfile}" "${newfilename}"
-        h5mdfile H5Fopen "${newfilename}"
+        set newfilename "${filenamebasepath}_${newfilename_index}.h5"
+        file copy "$lastfile" "$newfilename"
+        h5mdfile H5Fopen "$newfilename"
         return
     } else {
         # Create hdf5 file
-        set h5filename "${filenamebase}_1.h5"
+        set h5filename "${filenamebasepath}_1.h5"
         h5mdfile H5Fcreate "${h5filename}"
     }
 
