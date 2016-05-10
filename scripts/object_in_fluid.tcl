@@ -624,6 +624,9 @@ proc oif_create_template { args } {
 	set stretch_X 1.0
 	set stretch_Y 1.0
 	set stretch_Z 1.0
+	set mirror_X 0
+	set mirror_Y 0
+	set mirror_Z 0
 	set filenamenodes ""
 	set filenametriangles ""
     set ks 0.0
@@ -779,6 +782,27 @@ proc oif_create_template { args } {
 				set stretch_Z [lindex $args $pos]
 				incr pos
 			}
+			"mirror" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_X [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_Y [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_Z [lindex $args $pos]
+				incr pos
+			}
 		    "check" {  
 				incr pos
 				if { $pos >= $n_args } { 
@@ -848,6 +872,17 @@ proc oif_create_template { args } {
 	puts "	kag:            $kag"
 	puts "	kv:             $kv"
 	puts "	stretch: 	$stretch_X $stretch_Y $stretch_Z"
+	puts "	mirror: 	$mirror_X $mirror_Y $mirror_Z"
+#--------------------------------------------------------------------------------------------
+#check whether mirroring will be done for one plane
+	if { $mirror_X != 0 && $mirror_X != 1 || $mirror_Y != 0 && $mirror_Y != 1 || $mirror_Z != 0 && $mirror_Z != 1 } { 
+		puts "error: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting."
+		exit
+	}
+	if { [expr $mirror_X + $mirror_Y + $mirror_Z] > 1 } { 
+		puts "error: flipping allowed only for one axis. Exiting."
+		exit
+	}
 #--------------------------------------------------------------------------------------------
 #reading nodes
 	# read the number of lines in nodes files
@@ -864,15 +899,25 @@ proc oif_create_template { args } {
 			set mesh_nodes($mesh_nnodes,0) [expr $stretch_X*[lindex $line 0]]
 			set mesh_nodes($mesh_nnodes,1) [expr $stretch_Y*[lindex $line 1]]
 			set mesh_nodes($mesh_nnodes,2) [expr $stretch_Z*[lindex $line 2]]
+			#flipping the triangle orientation because of the mirroring
+		    if { $mirror_X == 1} {
+				set mesh_nodes($mesh_nnodes,0) [expr -1.0*$mesh_nodes($mesh_nnodes,0)]
+			}
+		    if { $mirror_Y == 1} {
+				set mesh_nodes($mesh_nnodes,1) [expr -1.0*$mesh_nodes($mesh_nnodes,1)]
+			}
+		    if { $mirror_Z == 1} {
+				set mesh_nodes($mesh_nnodes,2) [expr -1.0*$mesh_nodes($mesh_nnodes,2)]
+			}
 
 			# mesh_nodes is a 2D-array with three coordinates for each node (each node is one line) 
 		        # node $X coordinate y is accessed by $mesh_nodes($X,1)
-			incr mesh_nnodes
 		        
-	        list temp_node
-	        lappend temp_node [expr $stretch_X*[lindex $line 0]]
-		lappend temp_node [expr $stretch_Y*[lindex $line 1]]
-		lappend temp_node [expr $stretch_Z*[lindex $line 2]]
+        list temp_node
+        lappend temp_node $mesh_nodes($mesh_nnodes,0)
+		lappend temp_node $mesh_nodes($mesh_nnodes,1)
+		lappend temp_node $mesh_nodes($mesh_nnodes,2)
+		incr mesh_nnodes
 	        
 		# update global variable
 		lappend oif_template_nodes $temp_node
@@ -901,8 +946,13 @@ proc oif_create_template { args } {
 			set mesh_triangles($mesh_ntriangles,0) [lindex $line 0]
 			set mesh_triangles($mesh_ntriangles,1) [lindex $line 1]
 			set mesh_triangles($mesh_ntriangles,2) [lindex $line 2]
+			#flipping the triangle orientation because of the mirroring
+		    if {[expr $mirror_X + $mirror_Y + $mirror_Z] == 1} {
+				set tmp_index_Z $mesh_triangles($mesh_ntriangles,2)
+				set mesh_triangles($mesh_ntriangles,2) $mesh_triangles($mesh_ntriangles,1)
+				set mesh_triangles($mesh_ntriangles,1) $tmp_index_Z
+			}    
 			incr mesh_ntriangles
-		        
 	        list temp_triangle
 	        lappend temp_triangle [lindex $line 0]
 		lappend temp_triangle [lindex $line 1]
