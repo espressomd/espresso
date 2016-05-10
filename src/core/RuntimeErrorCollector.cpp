@@ -80,7 +80,6 @@ error(const ostringstream &mstr,
   error(mstr.str(), function, file, line);
 }
 
-
 int RuntimeErrorCollector::
 count() const {
   int totalMessages;
@@ -89,6 +88,18 @@ count() const {
   all_reduce(m_comm, numMessages, totalMessages, std::plus<int>()); 
   
   return totalMessages;
+}
+
+int RuntimeErrorCollector::
+count(RuntimeError::ErrorLevel level) {
+  const int numMessages = std::count_if(m_errors.begin(), m_errors.end(), [level](const RuntimeError &e) {
+          return e.level() >= level;
+    });
+  int totalMessages;
+
+  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>()); 
+  
+  return totalMessages;  
 }
 
 void RuntimeErrorCollector::clear() {

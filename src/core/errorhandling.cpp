@@ -32,6 +32,9 @@
 
 using namespace std;
 
+using ErrorHandling::RuntimeError;
+using ErrorHandling::RuntimeErrorCollector;
+
 static void sigint_handler(int sig) {
   /* without this exit handler the nodes might exit asynchronously
    * without calling MPI_Finalize, which may cause MPI to hang
@@ -98,12 +101,12 @@ void _runtimeError(const std::ostringstream &msg,
   runtimeErrorCollector->error(msg, function, file, line);
 }
 
-ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
-  return ErrorHandling::RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
+RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
+  return RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
 }
 
 int check_runtime_errors() {
-  return runtimeErrorCollector->count();
+  return runtimeErrorCollector->count(RuntimeError::ErrorLevel::ERROR);
 }
 
 vector<RuntimeError>

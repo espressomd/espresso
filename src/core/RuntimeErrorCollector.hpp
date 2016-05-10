@@ -54,9 +54,18 @@ public:
         const char* function, const char* file, const int line);
 
   /**
-   * \brief Return the number of flying errors and warnings
+   * \brief Return the number of all flying messages.
+   *
+   * @return Total number of messages.
    */
   int count() const;
+  /**
+   * \brief Number of Messages that have at least level level.
+   *
+   * @param level Severity filter.
+   * @return Number of Messages that have at least level.
+   */
+  int count(RuntimeError::ErrorLevel level);
   
   void clear();
 

@@ -75,7 +75,16 @@ BOOST_AUTO_TEST_CASE(count) {
 
   rec.warning("Test_error", "Test_functions", "Test_file", 42);
   
-  Testing::reduce_and_check(world, rec.count() == world.size() + 1);  
+  Testing::reduce_and_check(world, rec.count() == world.size() + 1);
+
+  /** There should now be one error and world.size() warnings */
+  Testing::reduce_and_check(world, rec.count(RuntimeError::ErrorLevel::ERROR) == 1);
+  /** All messages are at leaste WARNING or higher. */
+  {
+    /* Beware of the execution order */
+    int total = rec.count();
+    Testing::reduce_and_check(world, rec.count(RuntimeError::ErrorLevel::WARNING) == total);
+  }
 }
 
 /**
