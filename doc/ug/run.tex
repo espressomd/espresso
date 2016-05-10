@@ -670,6 +670,7 @@ Since you might be interested in thermodynamic properties of a reacting system y
   \variant{20} reaction\_ensemble wang\_landau write\_wang\_landau\_checkpoint \var{unique identifier}
   \variant{21} reaction\_ensemble wang\_landau load\_wang\_landau\_checkpoint \var{unique identifier}
   Required features: REACTION\_ENSEMBLE
+  \variant{22} reaction\_ensemble monte\_carlo\_move\_for\_type \var{type}
 \end{essyntax}
 Note: if the commands are used they should be used in this order (except of the last two), since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
 \variant{1} prints the current reaction system and checks for some essential parameters.
@@ -678,6 +679,7 @@ Note: if the commands are used they should be used in this order (except of the 
 \variant{5} sets an exclusion radius. This is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore $\exp(-\beta E)$ gives these configurations aproximately zero contribution in the partition function.
 \variant{11} provides the counter\_ion\_type that gets moved by MC moves as well as optionally the ids of the monomers that correspond to a polymer that should be moved. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable \variant{11} is therefore optional. In the case of using an energy collective variable \variant{11} together with \var{counter\_ion\_type} has to be used. Also in this case \var{polymer\_start\_id} and \var{polymer\_start\_id} are optional, since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation.
 \variant{20-21} can be used to checkpoint the Wang-Landau histogram, potential, parameter and the number of executed trial moves.
+\variant{22} performs a global monte carlo move for all paricles of the given type.
 
 \begin{arguments}
 \item[\var{K}] dimensionless equilibrium constant of the reaction (note this is not necessarily the equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
@@ -710,6 +712,16 @@ Required features: REACTION_ENSEMBLE
 \end{arguments}
 Note that \variant{6} has to be called for each type that occurs in the reaction system individually. Use \variant{7} and \variant{8} only when using implicit water (i.e. a Langevin thermostat or similar) and not with explicit water in the simulation box. If you use explicit water the water\_type may not be provided!
 
+\section{Constant pH}
+The Constant pH method from Reed and Reed (1992) is somewhat similar to some extent to the reaction ensemble when it is used for monoprotic acids. However the constant pH method significantly differs in its derivation and the physical setting it sets up. Whereas the pH in the reaction ensemble adjusts \textit{in the simulation box} (this means that is assured that there is a certain number of protons in the simulation box) the constant pH method couples the simulation box to a kind of proton bath in the way reactions are performed. In Espresso you can use the constant pH method by initializing the reactions of interest with the commands mentioned for the reaction ensemble. However with the difference that you do not provide the dimensionless reaction constant but directly the \textit{apparent reaction constant} (from the law of mass action) $K_a$ which can in general carry a unit. Additionally the following commands are available:
+\begin{essyntax}
+	\variant{1} reaction_ensemble constant_pH pH \var{pH}
+	\variant{2} reaction_ensemble constant_pH do
+\end{essyntax}
+\variant{1} sets the pH that the pH bath assumes and \variant{2} performs a reaction according to the constant pH method.
+
+
+Required features: REACTION_ENSEMBLE
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"
