@@ -45,23 +45,24 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 			sprintf(buffer, "\nequilibrium constant: %f " , current_reaction_system.reactions[single_reaction_i]->equilibrium_constant);
 			Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
 		}
-		
+
 		//temperature
 		sprintf(buffer, "\nreaction ensemble temperature: %f " , current_reaction_system.temperature_reaction_ensemble);
 		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
 		//exclusion radius
 		sprintf(buffer, "\nexclusion radius: %f " , current_reaction_system.exclusion_radius);
 		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-		
-		check_reaction_ensemble();
-		
+
+		if(check_reaction_ensemble()==ES_ERROR)
+                        return TCL_ERROR;
+
 	}
 	return TCL_OK;
 }
 
 int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 	single_reaction* new_reaction =(single_reaction *)malloc(sizeof(single_reaction));
-	
+
 	argc -= 1; argv += 1;
 	if(ARG1_IS_S("equilibrium_constant")){
 		ARG_IS_D(2, new_reaction->equilibrium_constant);
@@ -216,7 +217,9 @@ int tclcommand_add_reaction_coordinate(Tcl_Interp *interp, int argc, char **argv
 	current_wang_landau_system.collective_variables=(collective_variable**) realloc(current_wang_landau_system.collective_variables,sizeof(collective_variable*)*(current_wang_landau_system.nr_collective_variables+1));
 	current_wang_landau_system.collective_variables[current_wang_landau_system.nr_collective_variables]=new_collective_variable;
 	current_wang_landau_system.nr_collective_variables+=1;
-	initialize_wang_landau();
+	int return_code =TCL_OK;
+	if (initialize_wang_landau()==ES_ERROR)
+		return_code=TCL_ERROR;
 	return TCL_OK;
 
 }

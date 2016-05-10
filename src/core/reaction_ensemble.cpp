@@ -56,19 +56,20 @@ int do_reaction(){
 
 //checks the reaction_ensemble struct for valid parameters
 int check_reaction_ensemble(){
+	int check_is_successfull =ES_OK;
 	if(current_reaction_system.standard_pressure_in_simulation_units<0){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
-		exit(0);
+		check_is_successfull=ES_ERROR;
 	}
 	if(current_reaction_system.temperature_reaction_ensemble<0){
 		printf("Temperatures cannot be negative. Please provide a temperature (in k_B T) to the simulation. Normally it should be 1.0. This will be used directly to calculate beta:=1/(k_B T) which occurs in the exp(-beta*E)");
-		exit(0);
+		check_is_successfull=ES_ERROR;
 	}
 	if(current_reaction_system.water_type>=0 &&(current_reaction_system.given_length_in_SI_units<0 || current_reaction_system.given_length_in_simulation_units <0)){
 		printf("Please provide a length scale in order to make use of the water_type (e.g. for autodissociation reactions). Use the length_scales argument of the reaction_ensemble command.\n");
-		exit(0);
+		check_is_successfull=ES_ERROR;
 	}
-	return 0;
+	return check_is_successfull;
 }
 
 int free_reaction_ensemble(){
@@ -931,9 +932,8 @@ int initialize_wang_landau(){
 			pFile = fopen(current_collective_variable->energy_boundaries_filename,"r");
 			if (pFile==NULL){
 				printf("ERROR: energy boundaries file for the specific system could not be read.\n");
-				exit(0);
 				// Note that you cannot change the other collective variables in the pre-production run and the production run
-				return false;
+				return ES_ERROR;
 			}
 			//save minimum and maximum energies as a function of the other collective variables under current_wang_landau_system.energ...
 			char *line = NULL;
@@ -1022,7 +1022,7 @@ int initialize_wang_landau(){
 		
 	}
 	
-	return true;
+	return ES_OK;
 }
 
 //derived from 	generic_oneway_reaction()
@@ -1771,9 +1771,7 @@ double average_int_list(int* int_number_list, int len_int_nr_list){
 		if(int_number_list[i]>=0){ //checks for validity of index i (think of energy collective variables, in a cubic memory layout there will be indices which are not allowed by the energy boundaries. These values will be initalized with a negative fill value)
 			result+=(double) int_number_list[i];
 			counter_allowed_entries+=1;
-			
 		}
-			
 	}
 	return result/counter_allowed_entries;
 }
