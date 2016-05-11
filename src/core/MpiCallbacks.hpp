@@ -23,6 +23,7 @@
 #define __MPI_CALLBACKS
 
 #include <functional>
+
 #include <boost/mpi/communicator.hpp>
 #include "utils/NumeratedContainer.hpp"
 
@@ -156,7 +157,7 @@ class MpiCallbacks {
    * Mapping of function pointers to ids, so static callbacks can be
    * called by their pointer for backward compability.
    */
-  std::map<func_ptr_type, int> m_func_ptr_to_id;
+  std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };
 
 #endif
