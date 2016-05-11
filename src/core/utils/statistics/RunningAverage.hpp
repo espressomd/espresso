@@ -67,7 +67,7 @@ public:
   /** Variance of the samples */
   Scalar var() const {
     if(m_n > 1)
-      return m_new_var / (m_n - 1.);
+      return m_new_var / m_n;
     else
       return 0.0;
   }
