@@ -50,11 +50,7 @@
     debugging purposes you can add a nice name to \ref #names in the
     same way.  */
 
-/* from here we borrow the enumeration of
-   the global variables */
 #include "particle_data.hpp"
-#include "random.hpp"
-#include "topology.hpp"
 #include <mpi.h>
 #include "cuda_init.hpp"
 
