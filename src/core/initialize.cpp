@@ -106,7 +106,7 @@ void on_program_start()
   /*
     call the initialization of the modules here
   */
-  init_random();
+  Random::init_random();
 
   init_node_grid();
   /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */

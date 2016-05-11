@@ -50,11 +50,13 @@
     debugging purposes you can add a nice name to \ref #names in the
     same way.  */
 
-#include "particle_data.hpp"
 #include <mpi.h>
-#include "cuda_init.hpp"
 
-#include <boost/mpi/communicator.hpp>
+#include "MpiCallbacks.hpp"
+
+/** Included needed by callbacks. */
+#include "particle_data.hpp"
+#include "cuda_init.hpp"
 
 /**************************************************
  * exported variables
@@ -67,9 +69,20 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 extern MPI_Comm comm_cart;
-/** Boost::MPI communicator */
-extern boost::mpi::communicator boost_comm;
 /*@}*/
+
+/**
+ * Default MPI tag used by callbacks.
+ */
+#ifndef SOME_TAG
+#define SOME_TAG 42
+#endif
+
+/**
+ * @brief Returns a reference to the global callback class instance.
+ *
+ */
+MpiCallbacks &mpiCallbacks();
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -495,12 +508,6 @@ void mpi_bcast_constraint(int del_num);
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lbboundary(int del_num);
 #endif
-
-/** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, std::vector<int> &seeds);
-
-std::string mpi_random_get_stat();
-void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);

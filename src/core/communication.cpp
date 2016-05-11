@@ -29,10 +29,9 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
 
-#include "MpiCallbacks.hpp"
+#include "communication.hpp"
 
 #include "utils.hpp"
-#include "communication.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
@@ -46,7 +45,6 @@
 #include "statistics.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
-#include "random.hpp"
 #include "lj.hpp"
 #include "lb.hpp"
 #include "lb-boundaries.hpp"
@@ -121,9 +119,6 @@ static int terminated = 0;
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
-  CB(mpi_random_seed_slave) \
-  CB(mpi_random_get_stat_slave) \
-  CB(mpi_random_set_stat_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
@@ -204,9 +199,6 @@ std::vector<std::string> names{
 
 }
 
-// tag which is used by MPI send/recv inside the slave functions
-#define SOME_TAG 42
-
 /** The requests are compiled statically here, so that after a crash
     you can get the last issued request from the debugger. */ 
 static int request[3];
@@ -220,7 +212,7 @@ int mpi_check_runtime_errors(void);
  **********************************************/
 
 /* We use a singelton callback class for now. */ 
-MpiCallbacks &mpiCallbacks () {
+MpiCallbacks &mpiCallbacks() {
   static MpiCallbacks m_callbacks(boost_comm);
 
   return m_callbacks;
@@ -2385,66 +2377,6 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 
   on_lbboundary_change();
 #endif
-}
-
-void mpi_random_seed(int cnt, std::vector<int> &seeds) {
-  int this_idum;
-  mpi_call(mpi_random_seed_slave, -1, cnt);
-  
-  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-
-#ifdef RANDOM_TRACE
-  printf("%d: Received seed %d\n",this_node,this_idum);
-#endif
-  init_random_seed(this_idum);
-}
-
-void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_idum;
-  
-  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-#ifdef RANDOM_TRACE
-  printf("%d: Received seed %d\n",this_node,this_idum);
-#endif
-  init_random_seed(this_idum);
-}
-
-void mpi_random_set_stat(const std::vector<std::string> &stat) {
-  mpi_call(mpi_random_set_stat_slave, 0, 0);
-  
-  for(int i = 1; i < n_nodes; i++) {
-    boost_comm.send(i, SOME_TAG, stat[i]);
-  }
-
-  Random::set_state(stat[0]);
-}
-
-void mpi_random_set_stat_slave(int, int) {
-  std::string msg;
-  boost_comm.recv(0, SOME_TAG, msg);
-
-  Random::set_state(msg);
-}
-
-std::string mpi_random_get_stat() {
-  std::string res = Random::get_state();
-
-  mpi_call(mpi_random_get_stat_slave, 0, 0);
-   
-  for(int i = 1; i < n_nodes; i++) {
-    std::string tmp;
-    boost_comm.recv(i, SOME_TAG, tmp);
-    res.append(" ");
-    res.append(tmp);
-  }
-
-  return res;
-}
-
-void mpi_random_get_stat_slave(int, int) {
-  std::string state = Random::get_state();
-
-  boost_comm.send(0, SOME_TAG, state);
 }
 
 void mpi_cap_forces(double fc)
