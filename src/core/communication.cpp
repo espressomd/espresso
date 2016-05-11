@@ -189,6 +189,10 @@ std::vector<SlaveCallback *> slave_callbacks{
   CALLBACK_LIST
 };
 
+/** The callback name list is only used for
+    debugging.
+*/
+#ifdef COMM_DEBUG
 // create the list of names
 #undef CB
 #define CB(name) #name,
@@ -196,6 +200,7 @@ std::vector<SlaveCallback *> slave_callbacks{
 std::vector<std::string> names{
   CALLBACK_LIST
 };
+#endif
 
 }
 
@@ -218,14 +223,20 @@ MpiCallbacks &mpiCallbacks() {
   return m_callbacks;
 }
 
+#ifdef COMM_DEBUG
 void mpi_add_callback(SlaveCallback *cb, const string &name) {
   /** Name is only used for debug messages */
   names.push_back(name);
   mpiCallbacks().add(cb);
 }
+#endif
 
 void mpi_add_callback(SlaveCallback *cb) {
+#ifdef COMM_DEBUG
   mpi_add_callback(cb, "dynamic callback");
+#else
+  mpiCallbacks().add(cb);
+#endif
 }
 
 #ifdef MPI_CORE
@@ -303,7 +314,7 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   if(it != slave_callbacks.end()) {
     auto const id = it - slave_callbacks.begin();
     COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
-                       this_node, names[id], node, param));
+                       this_node, names[id].c_str(), node, param));
   }
 #endif /* COMM_DEBUG */
   mpiCallbacks().call(cb, node, param);
