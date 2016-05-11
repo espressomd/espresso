@@ -29,6 +29,8 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
 
+#include "MpiCallbacks.hpp"
+
 #include "utils.hpp"
 #include "communication.hpp"
 #include "interaction_data.hpp"
@@ -183,22 +185,24 @@ static int terminated = 0;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+namespace {
+
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback * const slave_callbacks[] = {
+std::vector<SlaveCallback *> slave_callbacks{
   CALLBACK_LIST
 };
-
-const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
 
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
-const char *names[] = {
+std::vector<std::string> names{
   CALLBACK_LIST
 };
+
+}
 
 // tag which is used by MPI send/recv inside the slave functions
 #define SOME_TAG 42
@@ -207,15 +211,6 @@ const char *names[] = {
     you can get the last issued request from the debugger. */ 
 static int request[3];
 
-/** Map callback function pointers to request codes */
-#ifndef HAVE_CXX11
-typedef std::map<SlaveCallback *, int> request_map_type;
-#else
-#include <unordered_map>
-typedef std::unordered_map<SlaveCallback *, int> request_map_type;
-#endif
-static request_map_type request_map;
-
 /** Forward declarations */
 
 int mpi_check_runtime_errors(void);
@@ -223,6 +218,23 @@ int mpi_check_runtime_errors(void);
 /**********************************************
  * procedures
  **********************************************/
+
+/* We use a singelton callback class for now. */ 
+MpiCallbacks &mpiCallbacks () {
+  static MpiCallbacks m_callbacks(boost_comm);
+
+  return m_callbacks;
+}
+
+void mpi_add_callback(SlaveCallback *cb, const string &name) {
+  /** Name is only used for debug messages */
+  names.push_back(name);
+  mpiCallbacks().add(cb);
+}
+
+void mpi_add_callback(SlaveCallback *cb) {
+  mpi_add_callback(cb, "dynamic callback");
+}
 
 #ifdef MPI_CORE
 void mpi_core(MPI_Comm *comm, int *errcode,...) {
@@ -277,41 +289,35 @@ void mpi_init(int *argc, char ***argv)
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
+  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);
+  
 #ifdef MPI_CORE
   MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
   MPI_Comm_set_errhandler(comm_cart, mpi_errh);
 #endif
 
-  for(int i = 0; i < N_CALLBACKS; ++i)  {
-    request_map.insert(std::make_pair(slave_callbacks[i], i));
+  for(int i = 0; i < slave_callbacks.size(); ++i)  {
+    mpiCallbacks().add(slave_callbacks[i]);
   }
-    
-  initRuntimeErrorCollector();
+      
+  initRuntimeErrorCollector(boost_comm);
 
-  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);      
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {
-  request_map_type::iterator req_it = request_map.find(cb);
-  if (req_it == request_map.end())
-  {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
-    errexit();
-  }
-  const int reqcode = req_it->second;
+#ifdef COMM_DEBUG
+  auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
   
-  request[0] = reqcode;
-  request[1] = node;
-  request[2] = param;
-
-  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
-		     this_node, names[reqcode], node, param));
-#ifdef ASYNC_BARRIER
-  MPI_Barrier(comm_cart);
-#endif
-  MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+  if(it != slave_callbacks.end()) {
+    auto const id = it - slave_callbacks.begin();
+    COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
+                       this_node, names[id], node, param));
+  }
+#endif /* COMM_DEBUG */
+  mpiCallbacks().call(cb, node, param);
+  
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
+}  
 
 /**************** REQ_TERM ************/
 
@@ -3209,22 +3215,7 @@ void mpi_thermalize_cpu_slave(int node, int temp)
 
 void mpi_loop()
 {
-  for (;;) {
-#ifdef ASYNC_BARRIER
-    MPI_Barrier(comm_cart);
-#endif
-    MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
-		       names[request[0]], request[1], request[2]));
-    if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
-      fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
-      errexit();
-    }
-    slave_callbacks[request[0]](request[1], request[2]);
-    COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
-		       names[request[0]], request[1], request[2]));
-  
-  }
+  mpiCallbacks().loop();
 }
 
 /*********************** error abort ****************/
