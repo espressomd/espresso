@@ -23,6 +23,7 @@ addons:
       - libboost1.55-dev 
       - libboost-test1.55-dev
       - libboost-mpi1.55-dev
+      - libboost-serialization1.55-dev
       - libopenmpi-dev
       - openmpi-bin
       - libfftw3-dev
