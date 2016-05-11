@@ -67,8 +67,8 @@ using namespace ErrorHandling;
 RuntimeErrorCollector *runtimeErrorCollector = NULL;
 
 void
-initRuntimeErrorCollector() {
-  runtimeErrorCollector = new RuntimeErrorCollector(boost_comm);
+initRuntimeErrorCollector(const boost::mpi::communicator &comm) {
+  runtimeErrorCollector = new RuntimeErrorCollector(comm);
 }
 
 void _runtimeWarning(const std::string &msg, 

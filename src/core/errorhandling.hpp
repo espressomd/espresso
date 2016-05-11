@@ -27,10 +27,11 @@
 #ifndef _ERRORHANDLING_HPP
 #define _ERRORHANDLING_HPP
 
-#include "config.hpp"
 #include <string>
 #include <sstream>
 #include <vector>
+
+#include "config.hpp"
 
 #include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
@@ -43,8 +44,13 @@ void register_sigint_handler();
 
 /* NEW RUNTIME ERROR HANDLING. */
 
+namespace boost { namespace mpi {
+class communicator;
+} }
+
 // Functions to report runtime errors
-void initRuntimeErrorCollector();
+void
+initRuntimeErrorCollector(const boost::mpi::communicator &);
 
 void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
 void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);
