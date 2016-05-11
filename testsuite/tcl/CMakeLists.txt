@@ -88,6 +88,9 @@ set(tcl_tests  analysis.tcl
                rotate-system-dipoles.tcl 
                rotation.tcl 
                rotation_per_particle.tcl 
+	       scafacos-dipoles.tcl
+	       scafacos-dipoles-non-periodic.tcl
+	       scafacos-dipoles-1d-and-2d-periodic.tcl
                sc_fluid_gpu.tcl 
                sd_ewald.tcl 
                sd_two_spheres.tcl 
