@@ -21,17 +21,17 @@ set tcl_precision 15
 set n_particle 100
 
 # number of periodic images
-set n_images 1000
+set n_images 2000
 #########################
 
 
 ##############################################
 # volume fraction
-set rho 0.10
+set rho 0.3
 
+set particle_radius 0.5
 set dipole_lambda 3.0
 
-set particle_radius 1.0 
 #################################################
 
 set external_H_z 0.5
@@ -41,7 +41,7 @@ set int_time_step 0.002
 set dipole_modulus [expr sqrt($dipole_lambda * pow(2*$particle_radius,3))]
 
 # setting box paramters
-set box_l [expr sqrt($n_particle * 3.141592654 /$rho)*$particle_radius]
+set box_l [expr pow(((4 * $n_particle * 3.141592654) / (3*$rho)), 1.0/3.0)*$particle_radius]  
 puts "box_lenght $box_l"
 set skin 0.5
 
@@ -62,7 +62,7 @@ for {set i 0} {$i < $n_particle} {incr i} {
     # the for the real particeles
     set posx [expr $box_l *[expr rand ()]]	
     set posy [expr $box_l *[expr rand ()]]	
-    set posz 	$particle_radius
+    set posz [expr $box_l *[expr rand ()]]	
     set costheta [expr 2*[expr rand()] - 1]
     set sintheta [expr sin(acos($costheta))]
     set phi [expr 2*3.1415926536*[expr rand()]] 
@@ -75,12 +75,27 @@ for {set i 0} {$i < $n_particle} {incr i} {
     
 }      
 
-set pos_dip_data [open "pos_dip.dat" w]
+# Relax particle configuration
+inter 0 0 lennard-jones 1 1 1.12 auto 
+puts "before relaxation [analyze energy]"
+minimize_energy 0 35000 0.1 0.01
+puts "after relaxation [analyze energy]"
+inter 0 0 lennard-jones 0 0 0 0 0
 
+# Remove particles that are in the mdlc gap region
+set gap 2.0
+set max_z [expr $box_l -$gap]
 for {set i 0} {$i < $n_particle} {incr i} {
-    puts $pos_dip_data "$i [part $i print pos dip]"
-}  
-close $pos_dip_data
+  set z [lindex [part $i print folded_pos] 2]
+  if { ($z> $max_z) || ($z <0) } {
+    part $i delete
+  }
+}
+puts "[setmd n_part] particles remain after clearing gap"
+
+
+
+
 
 thermostat off 
 
@@ -89,22 +104,22 @@ inter magnetic 1 mdds n_cut $n_images
 
 puts "\n\ncalculating forces and torques using direct summation ..."
 
-constraint ext_magn_field 0 0 $external_H_z
 
 integrate 0
 
 
-puts "\n\n\nwrite forces and torques in force_torque.dat ..." 
-set force_torque_data [open "force_torque.dat" w]
+set force_torque_data [open "mdlc_reference_data_forces_torques.dat" w]
 
 for {set i 0} {$i < $n_particle} {incr i} {
-    puts $force_torque_data "$i [part $i print force torque_lab]"
+    if { "[part $i print pos]" != "na" } {
+      puts $force_torque_data "$i [part $i print folded_position dip force torque_lab]"
+    }
 }
 
 close $force_torque_data
 
 
-set energy_data [open "energy.dat" w]
+set energy_data [open "mdlc_reference_data_energy.dat" w]
 puts $energy_data [analyze energy magnetic]
 close $energy_data
 

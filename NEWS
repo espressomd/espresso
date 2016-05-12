@@ -25,6 +25,7 @@ New user-visible features
 * CMake build system
 * Support for the Scafacos library for electrostatis
 * Random number generator changed to Mersenne Twister as implemented by C++11.
+* Espresso now depends on Boost MPI.
 
 Known bugs
 ----------

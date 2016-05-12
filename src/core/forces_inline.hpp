@@ -428,7 +428,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef SCAFACOS
      case COULOMB_SCAFACOS:
        if(q1q2) {
-         Electrostatics::Scafacos::add_pair_force(p1, p2, d, dist, force);
+         Scafacos::add_pair_force(p1, p2, d, dist, force);
        }
        break;
 #endif

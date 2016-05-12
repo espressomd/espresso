@@ -24,9 +24,10 @@
 
 #include "utils.hpp"
 #include "parser.hpp"
+#include "global.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include <list>
+#include <vector>
 #include <string>
 
 using namespace std;
@@ -60,25 +61,46 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 }
 
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
-  list<string> errors = mpiRuntimeErrorCollectorGather();
+  using ErrorHandling::RuntimeError;
+  
+  vector<RuntimeError> errors = mpiRuntimeErrorCollectorGather();
 
-  if (errors.size() == 0) return error_code;
+  if (errors.size() == 0) {
+    return error_code;
+  }
 
-  /* reset any results of the previous command, since we got an error
-     during evaluation, they are at best bogus. But any normal error
-     messages should be kept, they might help to track down the
-     problem.
-  */
-  if (error_code != TCL_ERROR)
-    Tcl_ResetResult(interp);
-  else
-    Tcl_AppendResult(interp, " ", (char *) NULL);
+  std::stringstream msg;
+  
+  msg << "background_errors ";
+  
+  for (const auto &it: errors) {
+    msg << "{ " << it.format() << "} ";
+  }
+  
+  /** Check if there was an error or only warnings. */
+  if(any_of(errors.begin(), errors.end(), [](const RuntimeError &e) {
+        return e.level() >= RuntimeError::ErrorLevel::ERROR;
+      })) {
+    /* reset any results of the previous command, since we got an error
+       during evaluation, they are at best bogus. But any normal error
+       messages should be kept, they might help to track down the
+       problem.
+    */
+    if (error_code != TCL_ERROR)
+      Tcl_ResetResult(interp);
+    else
+      Tcl_AppendResult(interp, " ", nullptr);
 
-  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
-
-  for (list<string>::const_iterator it = errors.begin();
-       it != errors.end(); ++it)
-    Tcl_AppendResult(interp, it->c_str(), (char*)NULL);
-
-  return TCL_ERROR;
+    Tcl_AppendResult(interp, msg.str().c_str(), nullptr);
+    
+    /** There was an actual error, bail out. */
+    return TCL_ERROR;
+  } else {
+    /** Show warnings only if requested */
+    if(warnings) {
+      std::cerr << msg.str() << std::endl;
+    }    
+    /** Only warnings */
+    return TCL_OK;
+  }
 }
