@@ -267,8 +267,26 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				ARG_IS_I(2,mc_type);
 				do_global_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
 			}
+		
+			if( ARG1_IS_S("water_type")) {
+				//check for warter_type for making autodissociation of water possible in implicit water (langevin thermostat). If you work with explicit water do not provide this argument and simply provide the reaction as any other reaction is provided to the feature!
+				ARG_IS_I(2,current_reaction_system.water_type);
+			}
 			if( ARG1_IS_S("standard_pressure_in_simulation_units")) {
 				ARG_IS_D(2,current_reaction_system.standard_pressure_in_simulation_units);
+			}
+			if(ARG1_IS_S("length_scales")){
+				//used for converting mol/l to #particles per simulation_box_volume
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("real")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.given_length_in_SI_units);		
+				}
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("simulation")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.given_length_in_simulation_units);
+				}					
 			}
 		}
 		///////////////////////////////////////////// Wang-Landau algorithm
