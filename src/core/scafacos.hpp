@@ -26,7 +26,7 @@
 
 #include "config.hpp"
 
-#if defined(SCAFACOS) and defined(ELECTROSTATICS)
+#if defined(SCAFACOS) 
 
 #include <list>
 #include <string>
@@ -34,22 +34,30 @@
 #include "particle_data.hpp"
 #endif /* SCAFACOS */
 
-namespace Electrostatics {
 namespace Scafacos {
-#if defined(SCAFACOS) and defined(ELECTROSTATICS)
-/** Pair force */
+#if defined(SCAFACOS) 
+/** Near-field pair force */
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force);
+/** Near-field pair energy */
+double pair_energy(Particle* p1, Particle* p2, double dist);
 /** Long range part */
 void add_long_range_force();
+/** Calculate long range energy contribution */
+double long_range_energy(); 
 /** Get parameters */
 std::string get_parameters();
 /** Set parameters */
-void set_parameters(const std::string &method, const std::string &params);
+void set_parameters(const std::string &method, const std::string &params, bool dipolar);
 double get_r_cut();
 std::list<std::string> available_methods();
 #endif /* SCAFACOS */
 
-}
+/** Is scafacos used for dipolar interactions */
+bool dipolar();
+
+/** Choose whether scafacos is used for dipolar interactions */
+void set_dipolar(bool d);
+
 }
 
 /** Parameter callback */

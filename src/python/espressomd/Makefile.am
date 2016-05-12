@@ -24,10 +24,6 @@ AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 
-if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
-endif
-
 #CYTHON compile options e.g. debug
 AM_CYFLAGS = $(CYFLAGS)
 

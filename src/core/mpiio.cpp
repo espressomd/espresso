@@ -63,7 +63,6 @@
 #include "mpiio.hpp"
 #include "../tcl/mpiio_tcl.hpp"
 
-#ifdef HAVE_MPI
 #include <mpi.h>
 
 /** Dumps arr of size len starting from prefix pref of type T using
@@ -471,4 +470,3 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   on_particle_change();
 }
 
-#endif // HAVE_MPI

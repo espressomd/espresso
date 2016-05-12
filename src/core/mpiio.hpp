@@ -25,7 +25,6 @@
 #ifndef _MPIIO_HPP
 #define _MPIIO_HPP
 
-#ifdef HAVE_MPI
 /** Parallel binary output using MPI-IO. To be called by all MPI
  * processes. Aborts ESPResSo if an error occurs.
  *
@@ -41,7 +40,5 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields);
  * \param fields Specifier which fields to read.
  */
 void mpi_mpiio_common_read(const char *filename, unsigned fields);
-
-#endif
 
 #endif
