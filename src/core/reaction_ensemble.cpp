@@ -943,7 +943,7 @@ int initialize_wang_landau(){
 	int* nr_subindices_of_collective_variable=(int*) malloc(current_wang_landau_system.nr_collective_variables*sizeof(int));
 	for(int collective_variable_i=0;collective_variable_i<current_wang_landau_system.nr_collective_variables;collective_variable_i++){
 		nr_subindices_of_collective_variable[collective_variable_i]=int((current_wang_landau_system.collective_variables[collective_variable_i]->CV_maximum-current_wang_landau_system.collective_variables[collective_variable_i]->CV_minimum)/current_wang_landau_system.collective_variables[collective_variable_i]->delta_CV)+1; //+1 for collecive variables which are of type degree of association
-	}//XXX avoid the begin and the end of the CV_interval not being a multiple of the delta_CV (e.g. for energy collective variable)
+	}
 	current_wang_landau_system.nr_subindices_of_collective_variable=nr_subindices_of_collective_variable;
 
 	//construct (possibly higher dimensional) histogram over Gamma (the room which should be equally sampled when the wang-landau algorithm has converged)
@@ -2034,32 +2034,43 @@ int load_wang_landau_checkpoint(char* identifier){
 /////////////////////////////////////////////  Constant-pH Reactions
 // For the constant pH reactions you need to provide the deprotonation and afterwards the corresponding protonation reaction (in this order). If you want to deal with multiple reactions do it multiple times.
 // Note that there is a difference in the usecase of the constant pH reactions and the above reaction ensemble. For the constant pH simulation directily the **apparent equilibrium constant which carries a unit** needs to be provided -- this is different from the reaction ensemble above, where the dimensionless reaction constant needs to be provided. Again: For the constant-pH algorithm not the dimensionless reaction constant needs to be provided here, but the apparent reaction constant.
-//XXX this needs proper documentation, also that for the backward reaction the inverse equilibrium constant needs to be provided
 /////////////////////////////////////////////
 int generic_oneway_reaction_constant_pH(int reaction_id);
 double constant_pH=-10;
 
 int do_reaction_constant_pH(){
-	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
-	if(reaction_id%2 ==1 )
-		reaction_id-=1;
-	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id]; //this is the deprotonation
-	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
-	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
-		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
-	}
-	int N_0 = (old_particle_numbers[find_index_of_type(current_reaction->educt_types[0])]+old_particle_numbers[find_index_of_type(current_reaction->product_types[0])]);
 	
-	int frequency=i_random(N_0);
-	if(frequency<old_particle_numbers[find_index_of_type(current_reaction->product_types[0])]){
-		generic_oneway_reaction_constant_pH(reaction_id+1); //protonation=neutralization of the titratable group
-	}else{
-		generic_oneway_reaction_constant_pH(reaction_id); //deprotonation
+	//get a list of reactions where a randomly selected particle type occurs in the educt list. the selection probability of the particle types has to be proportional to the number of occurances of the number of particles with this type
+	//XXX for optimizations this list could be determined during the initialization
+	int* list_of_reaction_ids_with_given_educt_type=NULL;
+	int found_reactions_with_given_educt_type=0;
+	while(found_reactions_with_given_educt_type==0) { // avoid selecting a (salt) particle which does not take part in a reaction
+		int random_p_id = i_random(max_seen_particle); // only used to determine which reaction is attempted.
+		Particle part;
+		int found_particle=get_particle_data(random_p_id,&part);
+		int type_of_random_p_id = part.p.type;
+		free_particle(&part);
+		if(found_particle==ES_ERROR)
+			continue;
+		//construct list of reactions with the above educt type
+		for(int reaction_i=0;reaction_i<current_reaction_system.nr_single_reactions;reaction_i++){
+			single_reaction* current_reaction=current_reaction_system.reactions[reaction_i];
+			for(int educt_i=0; educt_i< 1; educt_i++){ //educt_i<1 since it is assumed in this place that the types A, and HA occur in the first place only. These are the types that should be switched, H+ should not be switched
+				if(current_reaction->educt_types[educt_i]== type_of_random_p_id){
+					found_reactions_with_given_educt_type+=1;
+					list_of_reaction_ids_with_given_educt_type=(int*) realloc(list_of_reaction_ids_with_given_educt_type, sizeof(int)*found_reactions_with_given_educt_type);
+					list_of_reaction_ids_with_given_educt_type[found_reactions_with_given_educt_type-1]=reaction_i;
+					break;
+				}
+			}
+		}
 	}
-	free(old_particle_numbers);
+	//randomly select a reaction to be performed
+	int reaction_id=list_of_reaction_ids_with_given_educt_type[i_random(found_reactions_with_given_educt_type)];
+	free(list_of_reaction_ids_with_given_educt_type);
+	generic_oneway_reaction_constant_pH(reaction_id);
 	return 0;
 }
-
 
 
 int generic_oneway_reaction_constant_pH(int reaction_id){
