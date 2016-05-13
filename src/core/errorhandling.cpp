@@ -29,7 +29,6 @@
 
 #include "utils.hpp"
 #include "errorhandling.hpp"
-#include "communication.hpp"
 
 #include "RuntimeErrorCollector.hpp"
 
@@ -133,7 +132,7 @@ void errexit() {
 #ifdef FORCE_CORE
   core();
 #endif
-  mpi_abort();
+  ErrorHandling::m_callbacks->comm().abort(0);
   exit(1);
 }
 
