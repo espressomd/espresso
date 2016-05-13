@@ -132,7 +132,7 @@ void errexit() {
 #ifdef FORCE_CORE
   core();
 #endif
-  ErrorHandling::m_callbacks->comm().abort(0);
+  ErrorHandling::m_callbacks->comm().abort(1);
   exit(1);
 }
 
