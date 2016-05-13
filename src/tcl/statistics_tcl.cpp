@@ -1235,7 +1235,7 @@ static int tclcommand_analyze_parse_momentofinertiamatrix(Tcl_Interp *interp, in
 static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze gyration_tensor' */
     char buffer[6 * TCL_DOUBLE_SPACE + 10];
-    double *gt;
+    std::vector<double> gt;
     int type;
     /* parse arguments */
     if (argc == 0) {
@@ -1258,7 +1258,7 @@ static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc
         Tcl_AppendResult(interp, "usage: analyze gyration_tensor [<typeid>]", (char *) NULL);
         return (TCL_ERROR);
     }
-    calc_gyration_tensor(type, &gt);
+    calc_gyration_tensor(type, gt);
 
     Tcl_ResetResult(interp);
     sprintf(buffer, "%f", gt[3]); /* Squared Radius of Gyration */
@@ -1282,7 +1282,6 @@ static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc
     sprintf(buffer, "%f %f %f", gt[13], gt[14], gt[15]); /* Eigenvector of eva2 */
     Tcl_AppendResult(interp, buffer, " }", (char *) NULL);
 
-    free(gt);
     return (TCL_OK);
 }
 
@@ -1497,7 +1496,7 @@ static int tclcommand_analyze_parse_Vkappa(Tcl_Interp *interp, int argc, char **
         } else {
             Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *) NULL);
             return TCL_ERROR;
-        } else {
+        } else { // <- WTF?  Why is there a second `else'?
         Vkappa.Vk1 += box_l[0] * box_l[1] * box_l[2];
         Vkappa.Vk2 += SQR(box_l[0] * box_l[1] * box_l[2]);
         Vkappa.avk += 1.0;

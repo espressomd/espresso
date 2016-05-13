@@ -116,7 +116,8 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp
+	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp \
+	mpiio.cpp mpiio.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -365,11 +366,6 @@ config-version.cpp: FORCE
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
-if MPI_FAKE
-libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
-# mpifake should come before any system includes
-AM_CPPFLAGS = -I$(srcdir)/mpifake
-endif
 
 .PHONY: FORCE
 FORCE:

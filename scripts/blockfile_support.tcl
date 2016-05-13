@@ -378,7 +378,7 @@ proc blockfile_read_auto_integrate {channel read auto} {
 proc blockfile_write_thermostat {channel write thermostat} {
     blockfile $channel write start thermostat
     set data [join [thermostat] "\}\n\t\{"]
-    puts $channel "\n\t\{ off \}\n\t{$data}\n\}"
+    puts $channel "\n\t{$data}\n\}"
 }
 
 proc blockfile_read_auto_thermostat {channel read auto} {
@@ -430,31 +430,6 @@ proc blockfile_read_auto_seed {channel read auto} {
     eval t_random seed $data
 
     return "seed"
-}
-
-# bit_random
-proc blockfile_write_bitrandom {channel write bitrandom} {
-    blockfile $channel write start bitrandom
-    puts $channel "\n\t{[join [bit_random stat] "\} \{"]}\n\}"
-}
-
-proc blockfile_read_auto_bitrandom {channel read auto} {
-    set data [blockfile $channel read toend]
-    eval bit_random stat [eval concat $data]
-
-    return "bitrandom"
-}
-
-proc blockfile_write_bitseed {channel write bitseed} {
-    blockfile $channel write start bitseed
-    puts $channel "\n\t{[join [bit_random seed] "\} \{"]}\n\}"
-}
-
-proc blockfile_read_auto_bitseed {channel read auto} {
-    set data [blockfile $channel read toend]
-    eval bit_random seed $data
-
-    return "bitseed"
 }
 
 ######################################

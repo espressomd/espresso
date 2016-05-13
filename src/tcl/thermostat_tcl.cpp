@@ -396,10 +396,8 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, langevin_gamma_rotation, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, langevin_trans, buffer);
-    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, langevin_rotate, buffer);
-    Tcl_AppendResult(interp," ",buffer," } ", (char *)NULL);
+    Tcl_AppendResult(interp," ", langevin_trans? "on": "off", (char *)NULL);
+    Tcl_AppendResult(interp," ", langevin_rotate? "on": "off", " } ", (char *)NULL);
   }
     
 #ifdef DPD
@@ -468,6 +466,8 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp,"{ sd ",buffer, " } ", (char *)NULL);
     
   }
+#endif
+#ifdef BD
   if (thermo_switch & THERMO_BD){
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ bd ",buffer, " } ", (char *)NULL);

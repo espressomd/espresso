@@ -37,7 +37,7 @@ BLACKLIST=el2d_die.tcl
 TESTLOG=runtest.log
 
 srcdir=@srcdir@
-ESPRESSO=@top_builddir@/Espresso
+ESPRESSO=@top_builddir@/pypresso
 ESMPIEXEC=@ESPRESSO_MPIEXEC@
 
 # tests need to be run from the directory where this script is located
@@ -116,9 +116,9 @@ for np in $processors; do
     succeeded=
     for testcase in $testcases; do
 	if test x@MPI_FAKE@ = "xyes"; then
-	  CMD="$ESPRESSO $srcdir/$testcase -quiet"
+	  CMD="$ESPRESSO $srcdir/$testcase"
 	else
-	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase -quiet"
+	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase"
 	fi
 	printf "%35s - " $testcase
 	echo "**************************************************" >> $TESTLOG
