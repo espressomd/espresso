@@ -127,10 +127,8 @@ p3m_params = p3m.get_params()
 for key in p3m_params.keys():
     print("{} = {}".format(key, p3m_params[key]))
 
-print("\nSCRIPT--->Create p3m again\n")
+print("\nSCRIPT--->Explicit tune call\n")
 p3m._tune() 
-    2 = electrostatics.P3M(bjerrum_length=3.0, accuracy=1e-3, tune=True)
-system.actors.add(p3m)
     
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
