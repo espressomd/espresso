@@ -202,11 +202,10 @@ IF P3M == 1:
         def _tune(self):
             python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                        "cao"], -1.0, self._params["accuracy"], self._params["inter"])
-            resp, log = python_p3m_adaptive_tune()
+            resp = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
                     "failed to tune P3M parameters to required accuracy")
-            print log
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -286,11 +285,10 @@ IF P3M == 1:
             def _tune(self):
                 python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                            "cao"], -1.0, self._params["accuracy"], self._params["inter"])
-                resp, log = python_p3m_adaptive_tune()
+                resp = python_p3m_adaptive_tune()
                 if resp:
                     raise Exception(
                         "failed to tune P3M parameters to required accuracy")
-                print log
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
