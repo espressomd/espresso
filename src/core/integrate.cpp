@@ -1012,11 +1012,6 @@ void propagate_pos()
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
               p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
 
-#ifdef WALL_BACK_Z
-              if ((j == 2) && (p[i].r.p[j] < 1)) p[i].r.p[j] = 1;
-              if ((j == 2) && (p[i].r.p[j] > box_l[2] - 1)) p[i].r.p[j] = box_l[2] - 1;
-#endif
-
               rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
               dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
@@ -1092,11 +1087,6 @@ void propagate_vel_pos()
               p[i].r.p[j] += p[i].m.v[j];
 #else
               p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
-
-#ifdef WALL_BACK_Z
-              if ((j == 2) && (p[i].r.p[j] < 1)) p[i].r.p[j] = 1;
-              if ((j == 2) && (p[i].r.p[j] > box_l[2] - 1)) p[i].r.p[j] = box_l[2] - 1;
-#endif
 
               rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
