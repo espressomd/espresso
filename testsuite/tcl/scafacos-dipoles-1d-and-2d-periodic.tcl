@@ -28,6 +28,8 @@ source "tests_common.tcl"
 
 require_feature "DIPOLES" 
 require_feature "FFTW"
+require_feature SCAFACOS_DIPOLES
+require_feature PARTIAL_PERIODIC
 require_feature "ROTATION"
 require_feature "CONSTRAINTS"
 if {[has_feature "LEES_EDWARDS"]} {
