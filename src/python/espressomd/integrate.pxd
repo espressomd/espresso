@@ -42,5 +42,5 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
         string format()
         ErrorLevel level()
 
-cdef extern from "errorhandling.hpp":
-    cdef vector[RuntimeError] mpiRuntimeErrorCollectorGather()
+cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
+    cdef vector[RuntimeError]mpi_gather_runtime_errors()
