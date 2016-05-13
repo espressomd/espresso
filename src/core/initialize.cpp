@@ -89,7 +89,7 @@ void on_program_start()
   EF_ALLOW_MALLOC_0 = 1;
 #endif
 
-  register_sigint_handler();
+  ErrorHandling::register_sigint_handler();
 
   if (this_node == 0) {
     /* master node */

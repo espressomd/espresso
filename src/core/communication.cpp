@@ -32,6 +32,8 @@
 #include "communication.hpp"
 
 #include "utils.hpp"
+#include "errorhandling.hpp"
+
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
@@ -65,7 +67,6 @@
 #include "statistics_fluid.hpp"
 #include "virtual_sites.hpp"
 #include "topology.hpp"
-#include "errorhandling.hpp"
 #include "molforces.hpp"
 #include "mdlc_correction.hpp"
 #include "reaction.hpp"
@@ -168,7 +169,6 @@ static int terminated = 0;
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
-  CB(mpiRuntimeErrorCollectorGatherSlave)        \
   CB(mpi_check_runtime_errors_slave) \
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
@@ -303,7 +303,7 @@ void mpi_init(int *argc, char ***argv)
     mpiCallbacks().add(slave_callbacks[i]);
   }
       
-  initRuntimeErrorCollector(boost_comm);
+  ErrorHandling::init_error_handling(mpiCallbacks());
 
 }
 
