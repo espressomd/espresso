@@ -63,7 +63,7 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
   using ErrorHandling::RuntimeError;
   
-  vector<RuntimeError> errors = mpiRuntimeErrorCollectorGather();
+  vector<RuntimeError> errors = ErrorHandling::mpi_gather_runtime_errors();
 
   if (errors.size() == 0) {
     return error_code;

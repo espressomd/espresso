@@ -28,7 +28,6 @@
 #include "tcl.h"
 #include "communication.hpp"
 
-
 /*----------------------------------------------------------------------*/
 
 /**  Implementation of the tcl-command
@@ -75,7 +74,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   else if ( ARG_IS_S(0,"stat") ) {
     if(argc == 1) {
-      Tcl_AppendResult(interp, mpi_random_get_stat().c_str(), nullptr);
+      Tcl_AppendResult(interp, Random::mpi_random_get_stat().c_str(), nullptr);
 
       return TCL_OK;
     } else {
@@ -109,7 +108,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       }
 
       if(n_args == n_nodes*625) {
-        mpi_random_set_stat(states);
+        Random::mpi_random_set_stat(states);
         return TCL_OK;
       }
       else {
@@ -159,7 +158,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     printf("as new seeds.\n");
 #endif
     
-    mpi_random_seed(n_nodes,seeds);
+    Random::mpi_random_seed(n_nodes,seeds);
     
     return(TCL_OK);
   }

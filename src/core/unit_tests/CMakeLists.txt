@@ -1,4 +1,3 @@
-
   # Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -41,3 +40,15 @@ add_executable(RuntimeErrorCollector_test RuntimeErrorCollector_test.cpp ../Runt
 target_link_libraries(RuntimeErrorCollector_test ${LIBRARIES})
 add_test(runtimeerrorcollector_test RuntimeErrorCollector_test)
 add_dependencies(check_unit_tests RuntimeErrorCollector_test)
+
+# NumeratedContainer
+add_executable(NumeratedContainer_test NumeratedContainer_test.cpp)
+target_link_libraries(NumeratedContainer_test ${LIBRARIES})
+add_test(numerated_container NumeratedContainer_test)
+add_dependencies(check_unit_tests NumeratedContainer_test)
+
+# MpiCallbacks
+add_executable(MpiCallbacks_test MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
+target_link_libraries(MpiCallbacks_test ${LIBRARIES})
+add_test(mpi_callbacks MpiCallbacks_test)
+add_dependencies(check_unit_tests MpiCallbacks_test)

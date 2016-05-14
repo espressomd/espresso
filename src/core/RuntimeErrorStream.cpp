@@ -9,9 +9,12 @@ RuntimeErrorStream::RuntimeErrorStream(const RuntimeErrorStream &rhs) : m_ec(rhs
 
 
 RuntimeErrorStream::RuntimeErrorStream(RuntimeErrorCollector &ec, const std::string &file, const int line, const std::string &function) :
-    m_ec(ec), m_line(line), m_file(file), m_function(function) {}
+    m_ec(ec), m_line(line), m_file(file), m_function(function)
+{}
+
 RuntimeErrorStream::~RuntimeErrorStream() {
   m_ec.error(m_buff, m_function.c_str(), m_file.c_str(), m_line);
 }
 
-}
+} /* ErrorHandling */
+
