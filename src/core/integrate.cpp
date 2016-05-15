@@ -715,8 +715,8 @@ void rescale_forces_propagate_vel()
               /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              // here, the time_step is used only to align with Espresso default dimensionless model
-              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
+              // here, the additional time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
 
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
@@ -953,8 +953,8 @@ void propagate_vel()
               /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              // here, the time_step is used only to align with Espresso default dimensionless model
-              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
+              // here, the additional time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
 
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
@@ -1111,8 +1111,8 @@ void propagate_vel_pos()
               /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              // here, the time_step is used only to align with Espresso default dimensionless model
-              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
+              // here, the additional time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
               // TODO: this method currently is implemented for ball particles only.
               // Anisotropic rotation should be implemented as currently in the core Espresso framework.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;

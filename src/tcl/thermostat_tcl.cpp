@@ -167,11 +167,18 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
   }
+#ifdef SEMI_INTEGRATED
+  if (gammat <= 0) {
+      Tcl_AppendResult(interp, "SEMI_INTEGRATED method requires friction parameters larger than zero", (char *)NULL);
+      return (TCL_ERROR);
+    }
+#endif
 
   /* broadcast parameters */
   temperature = temp;
   langevin_gamma = gammat;
-  langevin_gamma_rotation = gammar;
+  if (gammar > 0.0) langevin_gamma_rotation = gammar;
+  else langevin_gamma_rotation = langevin_gamma;
   langevin_trans = trans;
   langevin_rotate = rot;
   thermo_switch = ( thermo_switch | THERMO_LANGEVIN );
