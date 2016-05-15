@@ -622,7 +622,7 @@ void rescale_forces()
 
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
 
-#ifndef SEMI_INTEGRATED
+//#ifndef SEMI_INTEGRATED
   scale = 0.5 * time_step * time_step;
 
 #ifdef MULTI_TIMESTEP
@@ -648,23 +648,7 @@ void rescale_forces()
 
     }
   }
-#else
-  if (sim_time == 0.0) for (c = 0; c < local_cells.n; c++) {
-	    cell = local_cells.cell[c];
-	    p  = cell->part;
-	    np = cell->n;
-	    for(i = 0; i < np; i++) {
-	      p[i].m.v[0] = 0.0;
-	      p[i].m.v[1] = 0.0;
-	      p[i].m.v[2] = 0.0;
-	      p[i].m.omega[0] = 0.0;
-	      p[i].m.omega[1] = 0.0;
-	      p[i].m.omega[2] = 0.0;
-	      random_walk_vel(&(p[i]),time_step);
-	      random_walk_rot_vel(&(p[i]),time_step);
-	    }
-	  }
-#endif
+//#endif
 }
 
 void rescale_forces_propagate_vel()
@@ -672,7 +656,7 @@ void rescale_forces_propagate_vel()
   Cell *cell;
   Particle *p;
   int i, j, np, c;
-  double scale,e_damp,rinertia_m;
+  double scale,e_damp,rinertia_m,scale_f;
 
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO){
@@ -696,12 +680,12 @@ void rescale_forces_propagate_vel()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
-#ifndef SEMI_INTEGRATED
+//#ifndef SEMI_INTEGRATED
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
-#endif
+//#endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef VIRTUAL_SITES
        // Virtual sites are not propagated during integration
@@ -729,8 +713,10 @@ void rescale_forces_propagate_vel()
               p[i].m.v[j] += p[i].f.f[j];
 #else
               /* only deterministic and non-dissipative part of the force is used here */
+              scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+              // here, the time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
 
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
@@ -922,7 +908,7 @@ void propagate_vel()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp,rinertia_m;
+  double e_damp,rinertia_m,scale_f;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -965,8 +951,10 @@ void propagate_vel()
               p[i].m.v[j] += p[i].f.f[j];
 #else
               /* only deterministic and non-dissipative part of the force is used here */
+              scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+              // here, the time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
 
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
@@ -1003,7 +991,7 @@ void propagate_vel()
 
 void propagate_pos()
 {
-  double e_damp,rinertia_m;
+  double e_damp,rinertia_m,scale_f;
   double dphi[3];
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
@@ -1038,8 +1026,9 @@ void propagate_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
+              scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
 
               // TODO: this method currently is implemented for ball particles only.
               // Anisotropic rotation should be implemented as currently in the core Espresso framework.
@@ -1067,7 +1056,7 @@ void propagate_vel_pos()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp,rinertia_m;
+  double e_damp,rinertia_m,scale_f;
   double dphi[3];
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
@@ -1100,8 +1089,9 @@ void propagate_vel_pos()
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
               p[i].m.v[j] += p[i].f.f[j];
 #else
+              scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
               // TODO: this method currently is implemented for ball particles only.
               // Anisotropic rotation should be implemented as currently in the core Espresso framework.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
@@ -1118,9 +1108,11 @@ void propagate_vel_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
-        /* only deterministic and non-dissipative part of the force is used here */
+              /* only deterministic and non-dissipative part of the force is used here */
+              scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+              // here, the time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v[j] = (p[i].m.v[j]*e_damp+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*(1-e_damp)) * time_step;
               // TODO: this method currently is implemented for ball particles only.
               // Anisotropic rotation should be implemented as currently in the core Espresso framework.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;

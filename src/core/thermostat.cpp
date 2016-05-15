@@ -26,6 +26,7 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include "rotation.hpp"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -174,6 +175,10 @@ void thermo_init()
 
 void thermo_heat_up()
 {
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+  double scale ;
   if(thermo_switch & THERMO_LANGEVIN) {
     langevin_pref2_buffer          = langevin_pref2;
     langevin_pref2_rotation_buffer = langevin_pref2_rotation;
@@ -189,6 +194,23 @@ void thermo_heat_up()
 #endif
 #ifdef INTER_DPD
   else if (thermo_switch & THERMO_INTER_DPD) {inter_dpd_heat_up();}
+#endif
+#ifdef SEMI_INTEGRATED
+  if (sim_time == 0.0) for (c = 0; c < local_cells.n; c++) {
+	    cell = local_cells.cell[c];
+	    p  = cell->part;
+	    np = cell->n;
+	    for(i = 0; i < np; i++) {
+	      p[i].m.v[0] = 0.0;
+	      p[i].m.v[1] = 0.0;
+	      p[i].m.v[2] = 0.0;
+	      p[i].m.omega[0] = 0.0;
+	      p[i].m.omega[1] = 0.0;
+	      p[i].m.omega[2] = 0.0;
+	      random_walk_vel(&(p[i]),time_step);
+	      random_walk_rot_vel(&(p[i]),time_step);
+	    }
+	  }
 #endif
 }
 

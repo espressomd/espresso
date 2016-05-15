@@ -356,7 +356,8 @@ inline void random_walk_vel(Particle *p, double dt)
 #endif
 		  e_damp = exp(-2*p->p.gamma*dt/p->p.mass);
 		  sigma = sigma_coeff*(1-e_damp);
-		  p->m.v[j] += sqrt(sigma) * noise;
+		  // here, the time_step is used only to align with Espresso default dimensionless model
+		  p->m.v[j] += sqrt(sigma) * noise * time_step;
 	  }
     }
 }
