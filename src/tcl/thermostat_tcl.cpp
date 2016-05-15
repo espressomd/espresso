@@ -169,8 +169,10 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   }
 #ifdef SEMI_INTEGRATED
   if (gammat <= 0) {
-      Tcl_AppendResult(interp, "SEMI_INTEGRATED method requires friction parameters larger than zero", (char *)NULL);
-      return (TCL_ERROR);
+      //Tcl_AppendResult(interp, "SEMI_INTEGRATED method requires friction parameters larger than zero.", (char *)NULL);
+      //return (TCL_ERROR);
+	  fprintf(stderr,"WARNING: SEMI_INTEGRATED method requires friction parameters larger than zero. Setting to 1.0. \n");
+	  gammat = 1.0;
     }
 #endif
 
