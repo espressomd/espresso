@@ -52,8 +52,12 @@ env:
   matrix:
     - myconfig=default
     - myconfig=maxset
+    - myconfig=maxset-semmiintegrated
     - myconfig=maxset-gaussrandom
+    - myconfig=maxset-gaussrandom-semmiintegrated
     - myconfig=maxset-gaussrandomcut
+    - myconfig=maxset-gaussrandomcut-semmiintegrated
+    - myconfig=semmiintegrated
     - myconfig=molcut
     - myconfig=rest1
     - myconfig=rest2
