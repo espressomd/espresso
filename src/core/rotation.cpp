@@ -596,7 +596,9 @@ void random_walk_rot(Particle *p)
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
 		  sigma_coeff = 2.0*temperature/p->p.gamma_rot;
 #endif
-		  rinertia_m = sqrt(SQR(p->p.rinertia[0])+SQR(p->p.rinertia[1])+SQR(p->p.rinertia[2]));
+		  // TODO: this method currently is implemented for ball particles only.
+		  // Anisotropic rotation should be implemented as currently in the core Espresso framework.
+		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
 		  e_damp = exp(-p->p.gamma_rot*time_step/rinertia_m);
 		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*p->p.gamma_rot))*(-3+4*e_damp-e_damp*e_damp));
 		  phi = 2*PI*d_random();
@@ -608,5 +610,31 @@ void random_walk_rot(Particle *p)
 		  rotate_particle_3D(p,dphi);
 }
 #endif // SEMI_INTEGRATED
+
+/** Determine the angular velocities: random walk part.*/
+void random_walk_rot_vel(Particle *p, double dt)
+{
+	int j;
+	double e_damp, sigma, sigma_coeff, rinertia_m;
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+	  {
+		  // TODO: this method currently is implemented for ball particles only.
+		  // Anisotropic rotation should be implemented as currently in the core Espresso framework.
+		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+#if defined (FLATNOISE)
+		  sigma_coeff = 12.0*temperature/rinertia_m;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = temperature/rinertia_m;
+#endif
+		  e_damp = exp(-2*p->p.gamma_rot*dt/rinertia_m);
+		  sigma = sigma_coeff*(1-e_damp);
+		  p->m.omega[j] += sqrt(sigma) * noise;
+	  }
+    }
+}
 
 #endif

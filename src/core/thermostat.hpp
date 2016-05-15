@@ -337,6 +337,29 @@ inline void random_walk(Particle *p)
 	  }
     }
 }
+
+/** Determine the velocities: random walk part.*/
+inline void random_walk_vel(Particle *p, double dt)
+{
+	int j;
+	double e_damp, sigma, sigma_coeff;
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+	  {
+#if defined (FLATNOISE)
+		  sigma_coeff = 12.0*temperature/p->p.mass;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = temperature/p->p.mass;
+#endif
+		  e_damp = exp(-2*p->p.gamma*dt/p->p.mass);
+		  sigma = sigma_coeff*(1-e_damp);
+		  p->m.v[j] += sqrt(sigma) * noise;
+	  }
+    }
+}
 #endif // SEMI_INTEGRATED
 
 #ifdef ROTATION

@@ -366,8 +366,13 @@ void integrate_vv(int n_steps, int reuse_forces)
        cannot be combined for the translation. 
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
+#ifndef SEMI_INTEGRATED
       propagate_vel();
-      propagate_pos(); 
+      propagate_pos();
+#else
+      propagate_pos();
+      propagate_vel();
+#endif
     } else if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if(steepest_descent_step())
 	break;
@@ -643,6 +648,22 @@ void rescale_forces()
 
     }
   }
+#else
+  if (sim_time == 0.0) for (c = 0; c < local_cells.n; c++) {
+	    cell = local_cells.cell[c];
+	    p  = cell->part;
+	    np = cell->n;
+	    for(i = 0; i < np; i++) {
+	      p[i].m.v[0] = 0.0;
+	      p[i].m.v[1] = 0.0;
+	      p[i].m.v[2] = 0.0;
+	      p[i].m.omega[0] = 0.0;
+	      p[i].m.omega[1] = 0.0;
+	      p[i].m.omega[2] = 0.0;
+	      random_walk_vel(&(p[i]),time_step);
+	      random_walk_rot_vel(&(p[i]),time_step);
+	    }
+	  }
 #endif
 }
 
@@ -711,7 +732,7 @@ void rescale_forces_propagate_vel()
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
 
-              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
               p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 
@@ -720,7 +741,9 @@ void rescale_forces_propagate_vel()
 #ifdef EXTERNAL_FORCES
         }
 #endif
-      }
+      } //j
+      random_walk_vel(&(p[i]),0.5*time_step);
+      random_walk_rot_vel(&(p[i]),0.5*time_step);
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     }
@@ -943,7 +966,7 @@ void propagate_vel()
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
 
-              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
               p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
@@ -958,7 +981,9 @@ void propagate_vel()
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
-      }
+      } //j
+      random_walk_vel(&(p[i]),0.5*time_step);
+      random_walk_rot_vel(&(p[i]),0.5*time_step);
     }
   }
 #ifdef ADDITIONAL_CHECKS
@@ -1012,7 +1037,9 @@ void propagate_pos()
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
               p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
 
-              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
+              // TODO: this method currently is implemented for ball particles only.
+              // Anisotropic rotation should be implemented as currently in the core Espresso framework.
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
               dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 #endif
@@ -1069,13 +1096,14 @@ void propagate_vel_pos()
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
               p[i].m.v[j] += p[i].f.f[j];
 #else
-              /* only deterministic and non-dissipative part of the force is used here */
-              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
+              // TODO: this method currently is implemented for ball particles only.
+              // Anisotropic rotation should be implemented as currently in the core Espresso framework.
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
+              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
+              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 
-              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
-              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
 
 #ifdef MULTI_TIMESTEP
@@ -1086,11 +1114,14 @@ void propagate_vel_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/p[i].p.gamma-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/p[i].p.gamma)*time_step;
-
-              rinertia_m = sqrt(SQR(p[i].p.rinertia[0])+SQR(p[i].p.rinertia[1])+SQR(p[i].p.rinertia[2]));
-              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
-              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
+        /* only deterministic and non-dissipative part of the force is used here */
+              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]/p[i].p.gamma)*(1-e_damp);
+              // TODO: this method currently is implemented for ball particles only.
+              // Anisotropic rotation should be implemented as currently in the core Espresso framework.
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
+              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
         }
 
@@ -1099,6 +1130,8 @@ void propagate_vel_pos()
       rotate_particle_3D(&(p[i]),dphi);
       random_walk(&(p[i]));
       random_walk_rot(&(p[i]));
+      random_walk_vel(&(p[i]),0.5*time_step);
+      random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
