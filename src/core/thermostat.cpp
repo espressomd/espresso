@@ -197,15 +197,16 @@ void thermo_heat_up()
 #endif
 
 #ifdef SEMI_INTEGRATED
-  if (sim_time == 0.0) for (c = 0; c < local_cells.n; c++) {
+  /*if (sim_time == 0.0)*/ for (c = 0; c < local_cells.n; c++) {
 	    cell = local_cells.cell[c];
 	    p  = cell->part;
 	    np = cell->n;
 	    for(i = 0; i < np; i++) {
 	      if (p[i].p.gamma <= 0.0) p[i].p.gamma = langevin_gamma;
 	      if (p[i].p.gamma_rot <= 0.0) p[i].p.gamma_rot = langevin_gamma_rotation;
-	      random_walk_vel(&(p[i]),time_step);
-	      random_walk_rot_vel(&(p[i]),time_step);
+	      if (p[i].p.T < 0) p[i].p.T = temperature;
+	      //random_walk_vel(&(p[i]),time_step);
+	      //random_walk_rot_vel(&(p[i]),time_step);
 	    }
 	  }
 #endif

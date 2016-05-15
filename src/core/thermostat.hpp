@@ -330,9 +330,9 @@ inline void random_walk(Particle *p)
 #endif
 	  {
 #if defined (FLATNOISE)
-		  sigma_coeff = 24.0*temperature/p->p.gamma;
+		  sigma_coeff = 24.0*p->p.T/p->p.gamma;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = 2.0*temperature/p->p.gamma;
+		  sigma_coeff = 2.0*p->p.T/p->p.gamma;
 #endif
 		  e_damp = exp(-p->p.gamma*time_step/p->p.mass);
 		  sigma = sigma_coeff*(time_step+(p->p.mass/(2*p->p.gamma))*(-3+4*e_damp-e_damp*e_damp));
@@ -353,9 +353,9 @@ inline void random_walk_vel(Particle *p, double dt)
 #endif
 	  {
 #if defined (FLATNOISE)
-		  sigma_coeff = 12.0*temperature/p->p.mass;
+		  sigma_coeff = 12.0*p->p.T/p->p.mass;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = temperature/p->p.mass;
+		  sigma_coeff = p->p.T/p->p.mass;
 #endif
 		  e_damp = exp(-2*p->p.gamma*dt/p->p.mass);
 		  sigma = sigma_coeff*(1-e_damp);

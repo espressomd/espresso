@@ -592,9 +592,9 @@ void random_walk_rot(Particle *p)
 	double dphi[3];
 
 #if defined (FLATNOISE)
-		  sigma_coeff = 24.0*temperature/p->p.gamma_rot;
+		  sigma_coeff = 24.0*p->p.T/p->p.gamma_rot;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = 2.0*temperature/p->p.gamma_rot;
+		  sigma_coeff = 2.0*p->p.T/p->p.gamma_rot;
 #endif
 		  // TODO: this method currently is implemented for ball particles only.
 		  // Anisotropic rotation should be implemented as currently in the core Espresso framework.
@@ -625,9 +625,9 @@ void random_walk_rot_vel(Particle *p, double dt)
 		  // Anisotropic rotation should be implemented as currently in the core Espresso framework.
 		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
 #if defined (FLATNOISE)
-		  sigma_coeff = 12.0*temperature/rinertia_m;
+		  sigma_coeff = 12.0*p->p.T/rinertia_m;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = temperature/rinertia_m;
+		  sigma_coeff = p->p.T/rinertia_m;
 #endif
 		  e_damp = exp(-2*p->p.gamma_rot*dt/rinertia_m);
 		  sigma = sigma_coeff*(1-e_damp);
