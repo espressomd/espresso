@@ -101,9 +101,9 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 
 #endif
 
-#ifdef SEMI_INTEGRATED
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
 void rotate_particle(Particle* p, double* a, double phi);
+#ifdef SEMI_INTEGRATED
 /** Rotate the particle p around the NORMALIZED axes X Y Z by amounts phi[] */
 void rotate_particle_3D(Particle* p, double* phi);
 /** Propagate the positions: random walk part.*/
