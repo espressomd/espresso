@@ -609,7 +609,6 @@ void random_walk_rot(Particle *p)
 		  dphi[2] = dphi_m*cos(theta);
 		  rotate_particle_3D(p,dphi);
 }
-#endif // SEMI_INTEGRATED
 
 /** Determine the angular velocities: random walk part.*/
 void random_walk_rot_vel(Particle *p, double dt)
@@ -636,5 +635,6 @@ void random_walk_rot_vel(Particle *p, double dt)
 	  }
     }
 }
+#endif // SEMI_INTEGRATED
 
 #endif

@@ -742,8 +742,10 @@ void rescale_forces_propagate_vel()
         }
 #endif
       } //j
+#ifdef SEMI_INTEGRATED
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
+#endif
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     }
@@ -982,8 +984,10 @@ void propagate_vel()
       force_and_velocity_check(&p[i]);
 #endif
       } //j
+#ifdef SEMI_INTEGRATED
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
+#endif
     }
   }
 #ifdef ADDITIONAL_CHECKS
