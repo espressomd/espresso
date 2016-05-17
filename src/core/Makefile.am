@@ -88,6 +88,7 @@ libEspresso_la_SOURCES = \
 	Ringbuffer.cpp Ringbuffer.hpp \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeError.cpp RuntimeError.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
 	scafacos.cpp scafacos.hpp \
