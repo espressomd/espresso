@@ -34,7 +34,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         set h5filename "${filenamebasepath}_1.h5"
         h5mdfile H5Fcreate "${h5filename}"
     }
-
     # Create data groups
     h5mdfile H5Gcreate2 "particles"
     h5mdfile H5Gcreate2 "particles/atoms"
@@ -48,7 +47,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
     h5mdfile H5Gcreate2 "parameters/files"
     h5mdfile H5Gcreate2 "observables" 
     # Create datasets
-    
     #box
     h5mdfile H5Screate_simple type double dims 3 3
     h5mdfile H5Pset_chunk dims 3 3
@@ -59,7 +57,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         h5mdfile H5_write_value value [lindex [setmd box_l] $i] index $i $i
     }
     h5mdfile H5Dwrite
-    
     #mass   
     h5mdfile H5Screate_simple type double dims $h5md_num_part
     h5mdfile H5Pset_chunk dims $h5md_num_part
@@ -107,15 +104,12 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
     h5mdfile H5Screate_simple type int dims $h5md_num_part 
     h5mdfile H5Pset_chunk dims $h5md_num_part
     h5mdfile H5Dcreate2 "particles/atoms/species"
-
+    # species and tcl script
     h5md_write_species
     dump_script_to_h5md 
-    ##################
-    # vmd
-    ##################
+    #vmd
     set types [h5mdutil_get_types]
     set names "X H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg"; # for coloring in VMD only
-        
     #index of species
     h5mdfile H5Screate_simple type int dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
@@ -127,7 +121,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
-    
     #name
     h5mdfile H5Screate_simple type str dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
@@ -139,7 +132,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
-    
     #type
     h5mdfile H5Screate_simple type str dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
@@ -149,7 +141,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         h5mdfile H5_write_value value [lindex $names [expr $i%112]] index $i
     }
     h5mdfile H5Dwrite
-    
     #write charge for vmd_structure
     h5mdfile H5Screate_simple type double dims $h5md_num_part
     h5mdfile H5Pset_chunk dims $h5md_num_part
@@ -161,7 +152,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
-    
     #bonds
     set froms ""
     set tos ""
@@ -179,7 +169,6 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
             }
         }
     }
-    
     if { [llength $froms] >0 } {
         h5mdfile H5Screate_simple type int dims [llength $froms]
         h5mdfile H5Pset_chunk dims [llength $froms]
@@ -199,8 +188,7 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         }
         h5mdfile H5Dwrite
     }
-        
-    
+    h5mdfile H5_Fflush
 }
 
 proc h5md_write_positions { args } {
@@ -240,7 +228,7 @@ proc h5md_write_positions { args } {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
+    #h5mdfile H5_Fflush
 }
 
 
@@ -277,7 +265,6 @@ proc h5md_write_velocities {} {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
 }
 
 
@@ -314,7 +301,6 @@ proc h5md_write_forces {} {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
 }
 
 proc h5md_write_species {} {
@@ -328,7 +314,6 @@ proc h5md_write_species {} {
         incr i
     }
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
 }
 
 # Initialize a user defined one dimensional observable, first argument is name of observable
@@ -370,7 +355,6 @@ proc h5md_observable1D_write { args } {
     h5mdfile H5Screate_simple type double dims 1
     h5mdfile H5_write_value value [lindex $args 1] index 0
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
 }
 
 
@@ -387,7 +371,6 @@ proc h5md_observable2D_init { name } {
     h5mdfile H5Screate_simple type double dims 0 $h5md_num_part
     h5mdfile H5Pset_chunk dims 5 $h5md_num_part
     h5mdfile H5Dcreate2 "observables/$name/value"
-
 }
 
 
@@ -422,8 +405,6 @@ proc h5md_observable2D_write { name } {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
-    h5mdfile H5_Fflush
-
 }
 
 
