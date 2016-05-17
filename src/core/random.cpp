@@ -23,10 +23,23 @@
 #include "random.hpp"
 #include "communication.hpp"
 
+namespace Random {
 std::mt19937 generator;
 std::normal_distribution<double> normal_distribution(0,1);
 std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 
+std::string get_state() {
+  std::ostringstream os;
+  os << generator;
+  
+  return os.str();
+}
+
+void set_state(const std::string &s) {
+  std::istringstream is(s);
+  is >> generator;
+}
+}
 
 void init_random(void)
 {
@@ -35,5 +48,6 @@ void init_random(void)
 
 void init_random_seed(int seed)
 {
+  using Random::generator;
   generator.seed(seed);
 }

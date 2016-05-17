@@ -30,8 +30,9 @@
 #include "config.hpp"
 #include <string>
 #include <sstream>
-#include <list>
+#include <vector>
 
+#include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
 
 /** exit ungracefully, core dump if switched on. */
@@ -66,7 +67,9 @@ ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, c
     @return the number of characters in the error messages of all nodes together. */
 int check_runtime_errors();
 
-std::list<std::string> mpiRuntimeErrorCollectorGather();
+std::vector<ErrorHandling::RuntimeError>
+mpiRuntimeErrorCollectorGather();
+
 void mpiRuntimeErrorCollectorGatherSlave(int node, int parm);
 
 #endif
