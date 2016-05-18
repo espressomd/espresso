@@ -311,6 +311,8 @@ void   p3m_init() {
     if(this_node==0) 
       P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
 
+      if (p3m_sanity_checks()) return;
+		
       fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: \n",this_node));
