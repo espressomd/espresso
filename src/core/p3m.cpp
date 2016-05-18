@@ -1332,8 +1332,8 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
 static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L)
 {
-  /* rounded up 2000/n_charges timing force evaluations */
-  int int_num = (1999 + p3m.sum_qpart)/p3m.sum_qpart;
+  /* rounded up 5000/n_charges timing force evaluations */
+  int int_num = (5000 + p3m.sum_qpart)/p3m.sum_qpart;
   double int_time;
 
   /* broadcast p3m parameters for test run */
@@ -1440,8 +1440,8 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
 
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f time %f\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, int_time));
   /* print result */
-  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n",
-	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
+  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.2f\n",
+	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
   *log = strcat_alloc(*log, b);
   return int_time;
 }
@@ -1606,8 +1606,9 @@ int p3m_adaptive_tune(char **log) {
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
+    /* Medium-educated guess for the minimal mesh */
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0);
-    mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
+    mesh_density_max = 512 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     tune_mesh = 1;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1740,8 +1741,8 @@ int p3m_adaptive_tune(char **log) {
   P3M_TRACE(p3m_print());
 
   /* Tell the user about the outcome */
-  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n",
-	  mesh[0], cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  sprintf(b, "\nresulting parameters:\n%-4d %-4d %-4d %-3d %.5e %.5e %.5e %-8.2f\n",
+	  mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy, time_best);
   *log = strcat_alloc(*log, b);
   return ES_OK;
 }

@@ -111,7 +111,6 @@ __device__ unsigned int getThreadIndex() {
 */
 __global__ void init_particle_force(float *particle_forces_device, float* particle_torques_device, CUDA_particle_seed *particle_seeds_device){
 
-
   unsigned int part_index = getThreadIndex();
 
   if(part_index<global_part_vars_device.number_of_particles){
