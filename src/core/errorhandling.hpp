@@ -35,7 +35,6 @@
 
 #include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
-#include "MpiCallbacks.hpp"
 
 /**
  * @brief exit ungracefully,
@@ -61,7 +60,7 @@ void register_sigint_handler();
  *
  * @param cb Callbacks system the error handler should be on.
  */
-void init_error_handling(MpiCallbacks &cb);
+void init_error_handling();
 
 void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
 void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);

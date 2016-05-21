@@ -78,11 +78,12 @@ extern MPI_Comm comm_cart;
 #define SOME_TAG 42
 #endif
 
+namespace Communication {
 /**
- * @brief Returns a reference to the global callback class instance.
- *
+ * @brief Get the global MpiCallbacks instance.
  */
 MpiCallbacks &mpiCallbacks();
+}
 
 /**************************************************
  * for every procedure requesting a MPI negotiation

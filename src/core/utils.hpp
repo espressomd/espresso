@@ -27,15 +27,16 @@
  *  and some constants...
  *
 */
+
+#include "config.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "config.hpp"
 #include "debug.hpp"
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
-
 #include <vector>
 #include <exception>
 

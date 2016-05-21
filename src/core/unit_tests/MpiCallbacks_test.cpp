@@ -53,6 +53,8 @@ void static_callback(int a, int b) {
 
 using boost::mpi::communicator;
 
+using Communication::MpiCallbacks;
+
 /**
  * Check is the mpi loop can be aborted
  * by abort_loop()

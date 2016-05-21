@@ -81,6 +81,7 @@
 #include "mpiio.hpp"
 
 using namespace std;
+using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
@@ -216,11 +217,13 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
+namespace Communication {
 /* We use a singelton callback class for now. */ 
 MpiCallbacks &mpiCallbacks() {
   static MpiCallbacks m_callbacks(boost_comm);
 
   return m_callbacks;
+}
 }
 
 #ifdef COMM_DEBUG
@@ -303,7 +306,7 @@ void mpi_init(int *argc, char ***argv)
     mpiCallbacks().add(slave_callbacks[i]);
   }
       
-  ErrorHandling::init_error_handling(mpiCallbacks());
+  ErrorHandling::init_error_handling();
 
 }
 

@@ -25,6 +25,8 @@
 
 #include "MpiCallbacks.hpp"
 
+namespace Communication {
+
 void MpiCallbacks::call(int id, int par1, int par2) const {  
   /** Can only be call from master */
   assert(m_comm.rank() == 0);
@@ -91,4 +93,6 @@ void MpiCallbacks::loop() const {
       slave(request[0], request[1], request[2]);
     }
   }
+}
+
 }
