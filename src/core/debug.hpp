@@ -30,11 +30,6 @@
 
 #include "config.hpp"
 
-#if defined FORCE_CORE || defined MPI_CORE
-/** this functions kills the task with SIGSEGV */
-void core();
-#endif
-
 /** this performs a lot of tests which will very likely detect corruptions of
     \ref local_particles and the cell structure.
 */
