@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+
 #  
 # This file is part of ESPResSo.
 #  
@@ -15,10 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.   
 
+
+# This tests the scafacos p2nfft dipolar calculations by matching against
+# reference data from direct summation. In 2d, reference data from the mdlc
+# test case is used
+
+
+
+
 source "tests_common.tcl"
 
 require_feature "DIPOLES" 
 require_feature "FFTW"
+require_feature SCAFACOS_DIPOLES
+require_feature PARTIAL_PERIODIC
 require_feature "ROTATION"
 require_feature "CONSTRAINTS"
 if {[has_feature "LEES_EDWARDS"]} {
@@ -62,20 +73,29 @@ set skin 0.5
 setmd time_step 0.01
 setmd skin $skin
 setmd box_l $box_l $box_l $box_l
-setmd periodic 1 1 1
 setmd max_num_cells 2500
 
 
+foreach dim {1 2} {
+
+puts "${dim}d periodic"
 
 # Read reference data
-set f [open mdlc_reference_data_energy.dat]
+if { $dim == 2} {
+  set file_prefix "mdlc"
+  setmd periodic 1 1 0
+} else {
+  setmd periodic 1 0 0
+  set file_prefix "scafacos_dipoles_1d"
+}
+set f [open ${file_prefix}_reference_data_energy.dat]
 set ref_E [gets $f]
 close $f
 
 
 # Particles
 set ids ""
-set f [open "mdlc_reference_data_forces_torques.dat"]
+set f [open "${file_prefix}_reference_data_forces_torques.dat"]
 while { ! [eof $f] } {
   set line [gets $f]
   set id [lindex $line 0]
@@ -92,13 +112,22 @@ while { ! [eof $f] } {
 
 }
 #puts [inter magnetic 1 p3m tunev2 accuracy 1E-5 mesh 128 r_cut 1.5 ]
-inter magnetic 1 p3m 1.5 64 7 2.855458 8.437322E-6
-inter magnetic epsilon metallic
-puts [inter magnetic mdlc 1E-7 2]
-puts [inter magnetic]
-#inter magnetic 1 mdds n_cut 20 
+#inter magnetic 1 p3m 1.5 128 6 2.855458 8.437322E-6
+if {$dim ==  2} {
+ inter magnetic 1 scafacos p2nfft p2nfft_verbose_tuning 0 pnfft_N 64,64,160 pnfft_window_name bspline pnfft_m 6 p2nfft_ignore_tolerance 1 pnfft_diff_ik 0 p2nfft_r_cut 6 p2nfft_alpha 1.5 p2nfft_epsB 0.1
+} else {
+  if { $dim == 1} {
+    # 1d periodic in x
+    inter magnetic 1 scafacos p2nfft p2nfft_verbose_tuning 1 pnfft_N 32,128,128 pnfft_direct 0 p2nfft_r_cut 2.855 p2nfft_alpha 1.5 p2nfft_intpol_order -1 p2nfft_reg_kernel_name ewald p2nfft_p 16 p2nfft_ignore_tolerance 1 pnfft_window_name bspline pnfft_m 8 pnfft_diff_ik 1 p2nfft_epsB 0.125
+ } else {
+   puts "Wrong dimensions $dim"
+   exit 1
+ }
+}
 thermostat off
 integrate 0
+
+
 
 set err_f 0.
 set err_t 0.
@@ -128,7 +157,9 @@ if { $err_t > $tol_t } {
 if { $err_e > $tol_e } {
  error "Energy error too large"
 }
-
+inter magnetic 0 
+part delete
+}
 
 
 

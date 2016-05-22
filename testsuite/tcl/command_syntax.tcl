@@ -26,9 +26,6 @@ setmd time_step 0.1
 setmd skin 0.1
 thermostat off
 
-time_integration 10
-time_integration
-
 if { [has_feature "LENNARD_JONES"]} {
     # test variants of using lennard-jones
     inter 0 0 lennard-jones 1.0 1.0 1.12246

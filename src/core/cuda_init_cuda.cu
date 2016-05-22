@@ -143,6 +143,7 @@ int cuda_test_device_access() {
   }
   h = 0;
   err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaFree(d);
 
   if((h == 42) && (err == cudaSuccess))
     return ES_OK;

@@ -23,6 +23,7 @@ addons:
       - libboost1.55-dev 
       - libboost-test1.55-dev
       - libboost-mpi1.55-dev
+      - libboost-serialization1.55-dev
       - libopenmpi-dev
       - openmpi-bin
       - libfftw3-dev
@@ -43,7 +44,6 @@ install:
  - conda create --yes -n test python=2.7.9
  - source activate test
  - conda install --yes numpy cython pip
- - pip install codecov
 
 env:
   global:
@@ -58,13 +58,9 @@ env:
     - myconfig=rest1
     - myconfig=rest2
     - make_check=false myconfig=nocheck-maxset
-    - with_fftw=false with_mpi=false myconfig=maxset
 
 compiler:
   - gcc
   - clang
 
 script: ./maintainer/travis/build_cmake.sh
-
-after_success:
- - codecov
