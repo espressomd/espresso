@@ -615,7 +615,7 @@ void random_walk_rot(Particle *p)
 void random_walk_rot_vel(Particle *p, double dt)
 {
 	int j;
-	double e_damp, sigma, sigma_coeff, rinertia_m;
+	double e_damp, sigma, sigma_coeff, rinertia_m, t_omega_lab[3];
 
     for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
@@ -635,7 +635,11 @@ void random_walk_rot_vel(Particle *p, double dt)
 		  sigma = sigma_coeff*(1-e_damp);
 		  p->m.omega[j] += sqrt(sigma) * noise;
 	  }
-    }
+    }//j
+    convert_omega_body_to_space(p,t_omega_lab);
+    p->m.omega_lab[0] = t_omega_lab[0];
+    p->m.omega_lab[1] = t_omega_lab[1];
+    p->m.omega_lab[2] = t_omega_lab[2];
 }
 #endif // SEMI_INTEGRATED
 

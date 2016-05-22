@@ -366,13 +366,13 @@ void integrate_vv(int n_steps, int reuse_forces)
        cannot be combined for the translation. 
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-#ifndef SEMI_INTEGRATED
+//#ifndef SEMI_INTEGRATED
       propagate_vel();
       propagate_pos();
-#else
+/*#else
       propagate_pos();
       propagate_vel();
-#endif
+#endif*/
     } else if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if(steepest_descent_step())
 	break;
@@ -644,6 +644,8 @@ void rescale_forces()
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
 
+      if (sim_time == 0.0) convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
+
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
@@ -692,7 +694,7 @@ void rescale_forces_propagate_vel()
        if (ifParticleIsVirtual(&p[i])) continue; 
 #endif
 
-      convert_omega_body_to_space(&(p[i]),omega_lab);
+      //convert_omega_body_to_space(&(p[i]),omega_lab);
       for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
@@ -724,7 +726,7 @@ void rescale_forces_propagate_vel()
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              omega_lab[j] = omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 
 #endif
 
@@ -733,7 +735,7 @@ void rescale_forces_propagate_vel()
 #endif
       } //j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),omega_lab);
+      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
@@ -934,7 +936,7 @@ void propagate_vel()
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
 
-    convert_omega_body_to_space(&(p[i]),omega_lab);
+    //if (sim_time == 0.0) convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
     for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].p.ext_flag & COORD_FIXED(j)))	
@@ -961,6 +963,7 @@ void propagate_vel()
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               // here, the additional time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v_0[j] = p[i].m.v[j];
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
 
               // WARNING: this method currently is implemented for ball particles only.
@@ -968,8 +971,10 @@ void propagate_vel()
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              //p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
-              omega_lab[j] = omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+              //p[i].m.omega_lab_0[j] = omega_lab[j];
+              p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
+              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+              //omega_lab[j] = omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #endif
 
             /* SPECIAL TASKS in particle loop */
@@ -984,7 +989,7 @@ void propagate_vel()
 #endif
       } //j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),omega_lab);
+      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
@@ -1040,14 +1045,14 @@ void propagate_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
 
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
-              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
+              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_lab_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 #endif
             }
         } // j
@@ -1093,7 +1098,7 @@ void propagate_vel_pos()
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
-     convert_omega_body_to_space(&(p[i]),omega_lab);
+     //convert_omega_body_to_space(&(p[i]),omega_lab);
      for(j=0; j < 3; j++){   
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
@@ -1103,15 +1108,19 @@ void propagate_vel_pos()
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
               p[i].m.v[j] += p[i].f.f[j];
 #else
+              /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
-              e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
+              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
+              // here, the additional time_step is used only to align with Espresso default dimensionless model
+              p[i].m.v_0[j] = p[i].m.v[j];
+              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
-              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
-              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
+              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
+              p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
+              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 
 #endif
 
@@ -1123,28 +1132,26 @@ void propagate_vel_pos()
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
 #else
-              /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
-              e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
-              // here, the additional time_step is used only to align with Espresso default dimensionless model
-              p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
-              e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              omega_lab[j] = omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+              e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
+              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_lab_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
 #endif
         }
 
       } // j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),omega_lab);
+      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
+      random_walk_vel(&(p[i]),0.5*time_step);
+      random_walk_rot_vel(&(p[i]),0.5*time_step);
       rotate_particle_3D(&(p[i]),dphi);
       random_walk(&(p[i]));
       random_walk_rot(&(p[i]));
-      random_walk_vel(&(p[i]),0.5*time_step);
-      random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));

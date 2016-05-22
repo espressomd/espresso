@@ -242,11 +242,14 @@ typedef struct {
 typedef struct {
   /** velocity. */
   double v[3];
+  double v_0[3]; // at the beginning of the Verlet cycle
 
 #ifdef ROTATION
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+  double omega_lab_0[3]; // Omega in the LAB frame at the beginning of the Verlet cycle
+  double omega_lab[3];
 #endif
 } ParticleMomentum;
 
