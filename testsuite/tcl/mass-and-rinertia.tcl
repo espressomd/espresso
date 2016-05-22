@@ -24,7 +24,8 @@ require_feature "ROTATIONAL_INERTIA"
 
 # Decelleration
 setmd skin 0
-setmd time_step 0.01
+setmd time_step 0.0001
+set time_step_v 0.0001
 thermostat langevin 0 1 
 set J "10 10 10"
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
@@ -39,7 +40,7 @@ part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1
 # as a quick solution.
 for {set i 0} {$i <100} {incr i} {
   for {set k 0} {$k <3} {incr k} {
-    if { abs([lindex [part 0 print omega_body] $k] -exp(-$i/10. /[lindex $J $k])) >0.01 } {
+    if { abs([lindex [part 0 print omega_body] $k] -exp(-$i*10*$time_step_v / [lindex $J $k])) >0.01 } {
       error_exit "Friction Deviation in omega too large. $i $k"
     }
   }
@@ -56,7 +57,7 @@ part 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rine
 
 for {set i 0} {$i <100} {incr i} {
   for {set k 0} {$k <3} {incr k} {
-   set expected [expr $i/10. *[lindex $T $k] /$J]
+   set expected [expr $i*10*$time_step_v * [lindex $T $k] /$J]
    if { abs([lindex [part 0 print omega_lab] $k] - $expected) >0.01 } {
       error_exit "Acceleration: Deviation in omega too large. Step $i, coordinate $k, expected $expected, got [lindex [part 0 print omega_lab] $k]"
     }

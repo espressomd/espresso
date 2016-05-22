@@ -145,9 +145,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
 
 
-    set loops 800
+    set loops 1000
     puts "Thermalizing..."
-    integrate 8000
+    integrate 10000
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {

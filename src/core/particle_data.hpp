@@ -640,6 +640,9 @@ int set_particle_quat(int part, double quat[4]);
 */
 int set_particle_omega_lab(int part, double omega[3]);
 
+// for the integration only
+void set_particle_omega_lab_within_integr(Particle *particle, double omega_lab[3]);
+
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.
     @param omega its new angular velocity.

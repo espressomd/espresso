@@ -51,6 +51,12 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   langevin_gamma = 0;
   /* Friction coefficient gamma for rotation */
   langevin_gamma_rotation = 0;
+#ifdef SEMI_INTEGRATED
+  /* langevin thermostat */
+  langevin_gamma = 1E-14; // up to the double accuracy.
+  /* Friction coefficient gamma for rotation */
+  langevin_gamma_rotation = 1E-14; // up to the double accuracy
+#endif
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   /* Langevin for translations */
   langevin_trans = true;

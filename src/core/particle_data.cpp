@@ -1023,6 +1023,23 @@ int set_particle_omega_lab(int part, double omega_lab[3])
   return ES_OK;
 }
 
+void set_particle_omega_lab_within_integr(Particle *particle, double omega_lab[3])
+{
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double omega[3];
+
+  define_rotation_matrix(particle, A);
+
+  particle->m.omega[0] = A[0 + 3*0]*omega_lab[0] + A[0 + 3*1]*omega_lab[1] + A[0 + 3*2]*omega_lab[2];
+  particle->m.omega[1] = A[1 + 3*0]*omega_lab[0] + A[1 + 3*1]*omega_lab[1] + A[1 + 3*2]*omega_lab[2];
+  particle->m.omega[2] = A[2 + 3*0]*omega_lab[0] + A[2 + 3*1]*omega_lab[1] + A[2 + 3*2]*omega_lab[2];
+
+}
+
 int set_particle_omega_body(int part, double omega[3])
 {
   /* Nothing to be done but pass, since the coordinates
