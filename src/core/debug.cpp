@@ -34,12 +34,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 
-#if defined FORCE_CORE || defined MPI_CORE
-int regular_exit = 0;
-#else
 int regular_exit = 1;
-#endif
-static int core_done = 0;
 
 #ifdef ONEPART_DEBUG
 int check_id =  ONEPART_DEBUG_ID ;

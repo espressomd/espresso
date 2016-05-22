@@ -34,7 +34,6 @@
 #include "RuntimeErrorCollector.hpp"
 
 using namespace std;
-using Communication::mpiCallbacks;
 
 namespace ErrorHandling {
 
@@ -66,17 +65,24 @@ void register_sigint_handler() {
   signal(SIGINT, sigint_handler);
 }
 
+namespace {
 /** RuntimeErrorCollector instance.
  *  This is a weak pointer so we don't
  *  leak on repeated calls of @f init_error_handling.
  */
 unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
+/** The callback loop we are on. */
+Communication::MpiCallbacks *m_callbacks = nullptr;
+}
+
 /** Initialize the error collection system. */
-void init_error_handling() {
-  mpiCallbacks().add(mpi_gather_runtime_errors_slave);
+void init_error_handling(Communication::MpiCallbacks &cb) {
+  m_callbacks = &cb;
   
-  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(new RuntimeErrorCollector(mpiCallbacks().comm()));
+  m_callbacks->add(mpi_gather_runtime_errors_slave);
+  
+  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(new RuntimeErrorCollector(m_callbacks->comm()));
 }
 
 void _runtimeWarning(const std::string &msg, 
@@ -116,7 +122,7 @@ RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, 
 vector<RuntimeError>
 mpi_gather_runtime_errors() {
   // Tell other processors to send their erros
-  mpiCallbacks().call(mpi_gather_runtime_errors_slave, -1, 0);
+  m_callbacks->call(mpi_gather_runtime_errors_slave, -1, 0);
   return runtimeErrorCollector->gather();
 }
 
@@ -127,10 +133,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm) {
 } /* ErrorHandling */
 
 void errexit() {
-#ifdef FORCE_CORE
-  core();
-#endif
-  mpiCallbacks().comm().abort(1);
+  ErrorHandling::m_callbacks->comm().abort(1);
   exit(1);
 }
 

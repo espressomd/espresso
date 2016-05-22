@@ -36,6 +36,15 @@
 #include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
 
+/* Forward declaration of MpiCallbacks,
+ * so we don't have to include the header.
+ * It depends on mpi and can not be in cuda
+ * code.
+ */
+namespace Communication {
+class MpiCallbacks;
+}
+
 /**
  * @brief exit ungracefully,
  * core dump if switched on.
@@ -60,7 +69,7 @@ void register_sigint_handler();
  *
  * @param cb Callbacks system the error handler should be on.
  */
-void init_error_handling();
+void init_error_handling(Communication::MpiCallbacks &callbacks);
 
 void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
 void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);

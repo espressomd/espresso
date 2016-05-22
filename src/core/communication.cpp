@@ -242,16 +242,6 @@ void mpi_add_callback(SlaveCallback *cb) {
 #endif
 }
 
-#ifdef MPI_CORE
-void mpi_core(MPI_Comm *comm, int *errcode,...) {
-  int len;
-  char string[1024];
-  MPI_Error_string(*errcode, string, &len);
-  fprintf(stderr, "%d: Aborting due to MPI error %d: %s. Forcing core dump.\n", this_node, *errcode, string);
-  core();
-}
-#endif
-
 void mpi_init(int *argc, char ***argv)
 {
 #ifdef OPEN_MPI
@@ -278,10 +268,6 @@ void mpi_init(int *argc, char ***argv)
   }
 #endif
 
-#ifdef MPI_CORE
-  MPI_Errhandler mpi_errh;
-#endif
-
   MPI_Init(argc, argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -297,16 +283,11 @@ void mpi_init(int *argc, char ***argv)
 
   boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);
   
-#ifdef MPI_CORE
-  MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
-  MPI_Comm_set_errhandler(comm_cart, mpi_errh);
-#endif
-
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
     mpiCallbacks().add(slave_callbacks[i]);
   }
       
-  ErrorHandling::init_error_handling();
+  ErrorHandling::init_error_handling(mpiCallbacks());
 
 }
 

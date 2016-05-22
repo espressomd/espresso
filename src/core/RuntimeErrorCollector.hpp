@@ -67,6 +67,9 @@ public:
    */
   int count(RuntimeError::ErrorLevel level);
   
+  /**
+   * @brief Reset error messages.
+   */
   void clear();
 
   std::vector<RuntimeError> gather();

@@ -93,10 +93,6 @@ void on_program_start()
 
   if (this_node == 0) {
     /* master node */
-#ifdef FORCE_CORE
-    /* core should be the last exit handler (process dies) */
-    atexit(core);
-#endif
     atexit(mpi_stop);
   }
 #ifdef CUDA
