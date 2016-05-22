@@ -26,8 +26,17 @@ require_feature "ROTATIONAL_INERTIA"
 setmd skin 0
 setmd time_step 0.01
 thermostat langevin 0 1 
-set J "10 10 1"
+set J "10 10 10"
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
+# In case of an anisotropic body and after a correct nonzero values 
+# definition (in the source code, "rotation.cpp") of the nonlinear 
+# parts of Euler's rotational equations, it seems that exponential
+# expected behaviour is a not correct assumption.
+# At least, nonlinear differential equations do not give
+# exponent-like behaviour (usually). Such anisotropic
+# decelleration should be validated using other equations.
+# This is why we've made a [set J "10 10 10"] above
+# as a quick solution.
 for {set i 0} {$i <100} {incr i} {
   for {set k 0} {$k <3} {incr k} {
     if { abs([lindex [part 0 print omega_body] $k] -exp(-$i/10. /[lindex $J $k])) >0.01 } {
