@@ -186,7 +186,7 @@ void calc_long_range_energies()
 	switch (coulomb.method) {
 #ifdef P3M
 	case COULOMB_P3M_GPU:
-		printf("long range energy calculation not implemented for GPU P3M\n"); //TODO make right
+        //printf("long range energy calculation not implemented for GPU P3M\n"); //TODO make right
 		break;
 	case COULOMB_P3M:
 		p3m_charge_assign();

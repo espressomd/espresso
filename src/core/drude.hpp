@@ -95,11 +95,11 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
   for (i=0;i<3;i++)  {
     double com_vel = mass_tot_inv * (mass_c * p1->m.v[i] + mass_d * p2->m.v[i]);
-    force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(24.0 * gamma_c / time_step * temp_c*3.0) * (d_random()-0.5);
-    //force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(2.0 * gamma_c / time_step * temp_c) * gaussian_random();
+    //force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(24.0 * gamma_c / time_step * temp_c) * (d_random()-0.5);
+    force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(2.0 * gamma_c / time_step * temp_c) * gaussian_random();
     double dist_vel = p2->m.v[i] - p1->m.v[i];
-    force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(24.0 * gamma_d / time_step * temp_d*3.0) * (d_random()-0.5);
-    //force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(2.0 * gamma_d / time_step * temp_d) * gaussian_random();
+    //force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(24.0 * gamma_d / time_step * temp_d) * (d_random()-0.5);
+    force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(2.0 * gamma_d / time_step * temp_d) * gaussian_random();
   }
 
   /* Apply forces: 
