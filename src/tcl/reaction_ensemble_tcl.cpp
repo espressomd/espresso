@@ -226,26 +226,33 @@ int tclcommand_add_reaction_coordinate(Tcl_Interp *interp, int argc, char **argv
 
 int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, char **argv){
 	int err = TCL_OK;
+	bool provided_unknown_command=true;
 	if(argc == 1){
+		provided_unknown_command=false;
 		err= tclcommand_reaction_ensemble_print_status(interp);
 	} else {
 		if(ARG1_IS_S("do")) {
+			provided_unknown_command=false;
 			do_reaction();
 		} else { //for performance reasons skip the other checks if do is found as argument
 			if( ARG1_IS_S("add_reaction") ) {
+				provided_unknown_command=false;
 				tclcommand_add_reaction(interp, argc, argv);
 		
 			}
 			if( ARG1_IS_S("temperature_reaction_ensemble") ){
+				provided_unknown_command=false;
 				argc-=1; argv+=1;
 				ARG_IS_D(1,current_reaction_system.temperature_reaction_ensemble);
 			}
 			if( ARG1_IS_S("exclusion_radius") ){
+				provided_unknown_command=false;
 				argc-=1; argv+=1;
 				ARG_IS_D(1,current_reaction_system.exclusion_radius);
 			}
 			
 			if(ARG1_IS_S("set_default_charge_of_type")) {
+				provided_unknown_command=false;
 				//needs to be called for each type individually after reaction was added
 				int type;
 				ARG_IS_I(2,type);
@@ -259,23 +266,28 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			}
 		
 			if( ARG1_IS_S("free_memory")) {
+				provided_unknown_command=false;
 				free_reaction_ensemble();
 			}
 			
 			if (ARG1_IS_S("monte_carlo_move_for_type")) {
+				provided_unknown_command=false;
 				int mc_type;
 				ARG_IS_I(2,mc_type);
 				do_global_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
 			}
 		
 			if( ARG1_IS_S("water_type")) {
+				provided_unknown_command=false;
 				//check for warter_type for making autodissociation of water possible in implicit water (langevin thermostat). If you work with explicit water do not provide this argument and simply provide the reaction as any other reaction is provided to the feature!
 				ARG_IS_I(2,current_reaction_system.water_type);
 			}
 			if( ARG1_IS_S("standard_pressure_in_simulation_units")) {
+				provided_unknown_command=false;
 				ARG_IS_D(2,current_reaction_system.standard_pressure_in_simulation_units);
 			}
 			if(ARG1_IS_S("length_scales")){
+				provided_unknown_command=false;
 				//used for converting mol/l to #particles per simulation_box_volume
 				argc-=1; argv+=1;
 				if(ARG1_IS_S("real")){
@@ -294,50 +306,61 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			argc-=1;
 			argv+=1;
 			if(ARG1_IS_S("do")) {
+				provided_unknown_command=false;
 				do_reaction_wang_landau();
 			} else { //for performance reasons skip the other checks if do is found as argument
 				//do other checks here
 
 				if(ARG1_IS_S("add")){
+					provided_unknown_command=false;
 					tclcommand_add_reaction_coordinate(interp, argc, argv);
 				}
 
 				if(ARG1_IS_S("final_wang_landau_parameter")) {
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					ARG_IS_D(1,current_wang_landau_system.final_wang_landau_parameter);
 				}
 				
 				if(ARG1_IS_S("wang_landau_steps")) {
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.wang_landau_steps);
 				}		
 	
 				if(ARG1_IS_S("full_path_to_output_filename")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					char* output_filename =strdup(argv[1]);
 					current_wang_landau_system.output_filename=output_filename;
 				}
 
 				if(ARG1_IS_S("free")) {
+					provided_unknown_command=false;
 					//needs to be called after all observables are added
 					free_wang_landau();
 				}
 				
 				if(ARG1_IS_S("update_maximum_and_minimum_energies_at_current_state")){
+					provided_unknown_command=false;
 					update_maximum_and_minimum_energies_at_current_state();
 				}
 				if(ARG1_IS_S("write_out_preliminary_energy_run_results")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					write_out_preliminary_energy_run_results(argv[1]);
 				}
 				if(ARG1_IS_S("do_not_sample_reaction_partition_function")){
+					provided_unknown_command=false;
 					current_wang_landau_system.do_not_sample_reaction_partition_function=true;
 				}
 				if(ARG1_IS_S("counter_ion_type")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.counter_ion_type);
 				}
 				if(ARG1_IS_S("polymer_start_id")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.polymer_start_id);
 					if(current_wang_landau_system.polymer_start_id<0){
@@ -347,6 +370,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 				}
 				if(ARG1_IS_S("polymer_end_id")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					ARG_IS_I(1,current_wang_landau_system.polymer_end_id);
 					if(current_wang_landau_system.polymer_end_id<0){
@@ -356,18 +380,23 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;			
 					
 				}
-				if(ARG1_IS_S("fix_polymer_monomers"))
+				if(ARG1_IS_S("fix_polymer_monomers")){
+					provided_unknown_command=false;
 					current_wang_landau_system.fix_polymer=true;
+				}
 				if(ARG1_IS_S("use_hybrid_monte_carlo")){
+					provided_unknown_command=false;
 					current_wang_landau_system.use_hybrid_monte_carlo=true;
 					printf("Make sure to use a bigger time step when using hybrid monte carlo steps!\n");
 				}
 				if(ARG1_IS_S("write_wang_landau_checkpoint")){
+					provided_unknown_command=false;					
 					argc-=1; argv+=1;
 					char* identifier =strdup(argv[1]);
 					write_wang_landau_checkpoint(identifier);
 				}
 				if(ARG1_IS_S("load_wang_landau_checkpoint")){
+					provided_unknown_command=false;
 					argc-=1; argv+=1;
 					char* identifier =strdup(argv[1]);
 					load_wang_landau_checkpoint(identifier);
@@ -380,21 +409,25 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 		
 		///////////////////////////////////////////// constant_pH
 		if (ARG1_IS_S("constant_pH")){
-			argc-=1; argv+=1;
 			if(ARG1_IS_S("do")) {
+				argc-=1; argv+=1;
+				provided_unknown_command=false;
 				do_reaction_constant_pH();
 			} else {
-				if(ARG1_IS_S("pH"))
+				if(ARG1_IS_S("pH")){
+					provided_unknown_command=false;				
 					argc-=1; argv+=1;
 					ARG_IS_D(1,constant_pH);
-				
+				}
 			}			
 		
 		}
 		
-		
-		
-		
+	}
+
+	if (provided_unknown_command==true){
+		printf("Provided unknown parameter to reaction ensemble.\n");
+		return TCL_ERROR;	
 	}
 		
 	return gather_runtime_errors(interp,err);
