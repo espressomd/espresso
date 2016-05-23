@@ -643,9 +643,9 @@ void rescale_forces()
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
-
+#ifdef ROTATION
       if (sim_time == 0.0) convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
-
+#endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
