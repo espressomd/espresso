@@ -61,6 +61,8 @@ class Vector {
 
   Vector& operator=(const Vector& rhs) {
     std::copy(rhs.d, rhs.d+n, d);
+
+    return *this;
   }
 
   Scalar &operator[](int i) {
