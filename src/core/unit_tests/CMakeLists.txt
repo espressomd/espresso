@@ -61,3 +61,10 @@ target_link_libraries(Factory_test ${LIBRARIES})
 add_test(factory Factory_test)
 add_dependencies(check_unit_tests Factory_test)
 
+# NumeratedContainer
+add_executable(NumeratedContainer_test NumeratedContainer_test.cpp)
+target_link_libraries(NumeratedContainer_test ${LIBRARIES})
+add_test(numerated_container NumeratedContainer_test)
+add_dependencies(check_unit_tests NumeratedContainer_test)
+
+
