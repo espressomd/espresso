@@ -29,6 +29,7 @@
 
 #include <mpi.h>
 #include <cstdio>
+#include <iostream>
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -759,8 +760,8 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
         return 1;
     }
 
-    std::vector<unsigned int> bb_low(3);
-    std::vector<unsigned int> bb_high(3);
+    std::vector<int> bb_low(3);
+    std::vector<int> bb_high(3);
 
     for(std::vector<int>::iterator val1 = bb1.begin(), val2 = bb2.begin(); val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2)
     {
@@ -782,7 +783,15 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
         bb_low.push_back(std::min(*val1, *val2));
         bb_high.push_back(std::max(*val1, *val2));
     }
-
+ 
+    //TODO delete
+    std::cout << std::endl << std::endl << std::endl;
+    for(auto i: bb_low)
+      std::cout << ' ' << i;
+    std::cout << std::endl;
+    for(auto i: bb_high)
+      std::cout << ' ' << i;
+    std::cout << std::endl << std::endl << std::endl;
 
     int pos[3];
     if (lattice_switch & LATTICE_LB_GPU) {
@@ -819,13 +828,14 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
                 (bb_low[0]+0.5)*lblattice.agrid[0], (bb_low[1]+0.5)*lblattice.agrid[1], (bb_low[2]+0.5)*lblattice.agrid[2],
                 lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
                 (bb_high[0]-bb_low[0]+1) * (bb_high[1]-bb_low[1]+1) * (bb_high[2]-bb_low[2]+1) );
-
+std::cout << std::endl << std::endl << std::endl; //TODO delete
         for(pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
             for(pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
                 for(pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++)
                 {
                     lb_lbnode_get_u(pos, u);
                     fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
+                    std::cout << '[' << pos[0] << ' ' << pos[1] << ' ' << pos[2] << ']' << ' ' << '[' << u[0] << ' ' << u[1] << ' ' << u[2] << ']' << std::endl; //TODO delete
                 }
 #endif // LB
     }
