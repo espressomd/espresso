@@ -43,4 +43,9 @@ unit_test(RunningAverage_test RunningAverage_test.cpp)
 set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
 
+# ScriptInterface
+add_executable(ScriptInterface_test ScriptInterface_test.cpp)
+target_link_libraries(ScriptInterface_test ${LIBRARIES})
+add_test(script_interface ScriptInterface_test)
+add_dependencies(check_unit_tests ScriptInterface_test)
 
