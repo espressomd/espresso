@@ -1,4 +1,3 @@
-
   # Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -27,6 +26,7 @@ add_dependencies(check check_unit_tests)
 
 # Vector
 add_executable(Vector_test Vector_test.cpp)
+target_link_libraries(Vector_test ${LIBRARIES})
 add_test(vector Vector_test)
 add_dependencies(check_unit_tests Vector_test)
 
@@ -41,3 +41,10 @@ add_executable(RuntimeErrorCollector_test RuntimeErrorCollector_test.cpp ../Runt
 target_link_libraries(RuntimeErrorCollector_test ${LIBRARIES})
 add_test(runtimeerrorcollector_test RuntimeErrorCollector_test)
 add_dependencies(check_unit_tests RuntimeErrorCollector_test)
+
+# RunningAverage
+add_executable(RunningAverage_test RunningAverage_test.cpp)
+target_link_libraries(RunningAverage_test ${LIBRARIES})
+add_test(runing_average RunningAverage_test)
+
+

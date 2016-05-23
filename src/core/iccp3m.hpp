@@ -75,6 +75,7 @@
 
 /* iccp3m data structures*/
 typedef struct {
+  int initialized;
   int n_ic;                             /* Last induced id (can not be smaller then 2) */
   int num_iteration;                    /* Number of max iterations                    */
   double eout;                          /* Dielectric constant of the bulk             */
@@ -82,10 +83,14 @@ typedef struct {
   double *ein;                          /* Array of dielectric constants at each surface element */
   double *sigma;                        /* Surface Charge density */
   double convergence;                   /* Convergence criterion                       */
-  double *nvectorx,*nvectory,*nvectorz; /* Surface normal vectors                      */
-  double extx,exty,extz;             /* External field                              */
+  double *nvectorx;
+  double *nvectory;
+  double *nvectorz;                     /* Surface normal vectors                      */
+  double extx;
+  double exty;
+  double extz;                          /* External field                              */
   double relax;                         /* relaxation parameter for iterative                       */
-  int citeration ;                      /* current number of iterations*/
+  int citeration;                      /* current number of iterations*/
   int set_flag;                         /* flag that indicates if ICCP3M has been initialized properly */    
   double *fx;
   double *fy;
@@ -137,6 +142,14 @@ int iccp3m_iteration();
 /** The initialisation of ICCP3M with zero values for all variables 
  */
 void iccp3m_init(void);
+
+/** The allocation of ICCP3M lists for python interface
+ */
+void iccp3m_alloc_lists();
+
+/** The set of the init flag from python interface
+ */
+void iccp3m_set_initialized();
 
 /** check sanity of parameters for use with ICCP3M 
  */

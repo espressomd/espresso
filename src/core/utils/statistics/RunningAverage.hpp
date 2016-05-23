@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -25,16 +25,58 @@
 namespace Utils {
 namespace Statistics {
 
+/**
+ * \brief Keep running average and variance.
+ * The average should be numerically stable.
+ */
 template<typename Scalar>
 class RunningAverage {
 public:
   RunningAverage() : m_n(0), m_new_var(0.0) {};
-  void add_sample(Scalar s);
-  void clear() { m_n = 0; }
-  const int &n() const { return &m_n; }
-  Scalar avg() const;
-  Scalar var() const;
-private:
+  void add_sample(Scalar s) {
+    m_n++;
+
+    if(m_n == 1) {
+      m_old_avg = m_new_avg = s;
+      m_old_var = 0.0;
+    } else {
+      m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
+      m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
+
+      m_old_avg = m_new_avg;
+      m_old_var = m_new_var;
+    }
+  }
+
+  void clear() {
+    m_n = 0;
+  }
+  
+  int n() const
+  {
+    return m_n;
+  }
+
+  /** Average of the samples */
+  Scalar avg() const { 
+    if(m_n > 0)
+      return m_new_avg;
+    else
+      return 0.0;
+  }
+  /** Variance of the samples */
+  Scalar var() const {
+    if(m_n > 1)
+      return m_new_var / m_n;
+    else
+      return 0.0;
+  }
+  /** Standard deviation of the samples */
+  Scalar sig() const {
+    return std::sqrt(var());
+  }
+
+ private:
   int m_n;
   Scalar m_old_avg, m_new_avg;
   Scalar m_old_var, m_new_var;

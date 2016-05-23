@@ -39,12 +39,17 @@ setable_properties=["box_l","max_num_cells","min_num_cells",
                     "time_step","timings"]
 
 cdef class System:
+    # NOTE: every attribute has to be declared at the class level.
+    # This means that methods cannot define an attribute by using
+    # `self.new_attr = somevalue` without declaring it inside this
+    # indentation level, either as method, property or reference.
     doge = 1
     part = particle_data.ParticleList()
     non_bonded_inter = interactions.NonBondedInteractions()
     bonded_inter = interactions.BondedInteractions()
     cell_system = CellSystem()
     thermostat = Thermostat()
+    actors = None
 
     def __init__(self):
         self.actors = Actors(_system=self)
