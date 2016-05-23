@@ -44,6 +44,7 @@ install:
  - source activate test
  - conda install --yes numpy cython pip
  - pip install codecov
+ - travis_wait mvn install
 
 env:
   global:
