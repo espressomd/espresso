@@ -21,6 +21,7 @@ tests = \
 	bondedInteractions.py \
 	cellsystem.py \
 	electrostaticInteractions.py \
+	engine_langevin.py \
 	ewald_gpu.py \
 	magnetostaticInteractions.py \
 	nonBondedInteractions.py \
