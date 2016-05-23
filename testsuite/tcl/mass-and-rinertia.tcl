@@ -66,8 +66,8 @@ for {set i 0} {$i <100} {incr i} {
   }
   integrate 100
 }
-part delete
-
+#part delete
+part deleteall
 
 
 
