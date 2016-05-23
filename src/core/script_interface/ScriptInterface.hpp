@@ -23,6 +23,8 @@
 #define __SCRIPT_INTERFACE_HPP
 
 #include <map>
+#include <string>
+#include <vector>
 
 #include <boost/variant.hpp>
 
@@ -57,7 +59,7 @@ namespace ScriptInterface {
  * @TODO Add extensive documentation.
  *
  */
-class ScriptInterface {
+class ScriptInterfaceBase {
  public:
   /**
    * @brief Human-readable name of the object.
