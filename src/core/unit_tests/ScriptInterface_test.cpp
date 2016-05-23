@@ -39,7 +39,7 @@ namespace Testing {
 /**
  * @brief Mock to test ScriptInterface.
  */
-struct ScriptInterfaceTest : public ScriptInterface::ScriptInterface {
+struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   const string name() const {
     return string("ScriptInterfaceTest");
   }
