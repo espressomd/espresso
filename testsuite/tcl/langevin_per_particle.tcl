@@ -61,7 +61,7 @@ proc test_langevin_per_particle {test_case} {
     # 20 is a really small chance, but since we measure quite a lot,
     # that is still quite a small interval, and the test probably only
     # fails if there is really something wrong
-    set confidence 20
+    set confidence 23
     set maxstep 1000
     set intstep 100
 
@@ -80,10 +80,9 @@ proc test_langevin_per_particle {test_case} {
         }
         puts "\n"
 
-        # make real random draw
         set cmd "t_random seed"
         for {set i 0} {$i < [setmd n_nodes]} { incr i } {
-            lappend cmd [expr [pid] + $i] }
+            lappend cmd [expr 42 + $i] }
         eval $cmd
 
         set box_l 10

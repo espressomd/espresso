@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,43 +18,27 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+/** \file mpiio.hpp
+ *  Implements binary output unsing MPI-IO.
+ */
 
-#include "RunningAverage.hpp"
+#ifndef _MPIIO_HPP
+#define _MPIIO_HPP
 
-namespace Utils {
-namespace Statistics {
+/** Parallel binary output using MPI-IO. To be called by all MPI
+ * processes. Aborts ESPResSo if an error occurs.
+ *
+ * \param filename A null-terminated filename prefix.
+ * \param fields Output specifier which fields to dump.
+ */
+void mpi_mpiio_common_write(const char *filename, unsigned fields);
 
-template<typename Scalar>
-void RunningAverage<Scalar>::add_sample(Scalar s) {
-  m_n++;
+/** Parallel binary input using MPI-IO. To be called by all MPI
+ * processes. Aborts ESPResSo if an error occurs.
+ *
+ * \param filename A null-terminated filename prefix.
+ * \param fields Specifier which fields to read.
+ */
+void mpi_mpiio_common_read(const char *filename, unsigned fields);
 
-  if(m_n == 1) {
-    m_old_avg = m_new_avg = s;
-    m_old_var = 0.0;
-  } else {
-    m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
-    m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
-
-    m_old_avg = m_new_avg;
-    m_old_var = m_new_var;
-  }
-}
-
-template<typename Scalar>
-Scalar RunningAverage<Scalar>::avg() const { 
-    if(m_n > 0)
-      return m_new_avg;
-    else
-      return 0.0;
-  }
-
-template<typename Scalar>
-Scalar RunningAverage<Scalar>::var() const {
-  if(m_n > 1)
-    return m_new_var / (m_n - 1.);
-  else
-    return 0.0;
-}
-
-}
-}
+#endif

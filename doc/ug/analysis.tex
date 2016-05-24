@@ -323,6 +323,19 @@ be used to shift the not separated molecules if needed.
 \subsection{Vkappa}
 \label{analyze:Vkappa}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    Vkappa
+  }{
+    system = \arg{system},
+    mode = \arg{string},
+    Vk1 = \arg{float},
+    Vk2 = \arg{float},
+    avk = \arg{float}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
 \end{essyntax}
@@ -471,6 +484,16 @@ Returns the center of mass of particles of the given type.
 \analyzeindex{moment of inertia matrix}
 \analyzeindex{principal axis of the moment of inertia}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    momentofinertiamatrix
+  }{
+    system = \arg{system},
+    p_type = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   \variant{1} analyze momentofinertiamatrix { \var{typeid} } 
   \variant{2} analyze find_principal_axis \var{typeid}
@@ -484,6 +507,16 @@ eigenvectors of the matrix.
 \label{analyze:gyration-tensor}
 \analyzeindex{gyration tensor}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    gyration_tensor
+  }{
+    system = \arg{system},
+    p_type = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze gyration\_tensor \opt{\var{typeid}} 
 \end{essyntax}
@@ -1056,6 +1089,21 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 \subsubsection{Chain radial distribution function}
 \analyzeindex{radial distribution function}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    rdfchain
+  }{
+    system = \arg{system},
+    r_min = \arg{float},
+    r_max = \arg{float},
+    r_bins = \arg{float},
+    chain_start = \arg{float},
+    n_chains = \arg{int},
+    chain_length = \arg{float}
+  }
+\end{pysyntax}
 \begin{essyntax}
  analyze rdfchain \var{rmin} \var{rmax} \var{rbins} 
  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}

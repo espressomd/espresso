@@ -111,8 +111,8 @@ void calc_ljgen_cap_radii()
         } else {
           params->LJGEN_capradius = 0.0; 
         }
-        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-                            this_node,i,j,params->LJGEN_capradius,force,cnt));
+        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f\n",
+                            this_node,i,j,params->LJGEN_capradius));
       }
     }
   }

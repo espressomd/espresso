@@ -39,6 +39,8 @@
 #include "cuda_interface.hpp"
 #include "forces.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "scafacos.hpp" 
+#include <cassert>
 
 ActorList energyActors;
 
@@ -63,6 +65,9 @@ void init_energies(Observable_stat *stat)
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:   n_coulomb = 2; break;
 #endif
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS: n_coulomb =2; break;
+#endif 
   default: n_coulomb  = 1;
   }
 #endif
@@ -80,6 +85,9 @@ void init_energies(Observable_stat *stat)
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
  case DIPOLAR_DS_GPU:   n_dipolar = 2; break;
+#ifdef SCAFACOS_DIPOLES
+ case DIPOLAR_SCAFACOS:   n_dipolar = 2; break;
+#endif
   }
 
 #endif
@@ -209,6 +217,11 @@ void calc_long_range_energies()
 		energy.coulomb[2] = ELC_energy();
 		break;
 #endif
+#ifdef SCAFACOS
+        case COULOMB_SCAFACOS:
+          assert(! Scafacos::dipolar());
+	  *energy.coulomb += Scafacos::long_range_energy(); break;
+#endif	  
 	case COULOMB_MMM2D:
 		*energy.coulomb += MMM2D_far_energy();
 		*energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
@@ -247,6 +260,11 @@ void calc_long_range_energies()
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
     break;
+#ifdef SCAFACOS_DIPOLES
+  case DIPOLAR_SCAFACOS:
+    assert(Scafacos::dipolar());
+    energy.dipolar[1] = Scafacos::long_range_energy();
+#endif
   case DIPOLAR_NONE:
       break;
   default:

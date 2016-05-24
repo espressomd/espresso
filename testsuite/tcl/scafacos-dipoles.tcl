@@ -18,31 +18,22 @@
 source "tests_common.tcl"
 
 require_feature "DIPOLES" 
-require_feature "FFTW"
 require_feature "ROTATION"
-require_feature "CONSTRAINTS"
-if {[has_feature "LEES_EDWARDS"]} {
-    require_max_nodes_per_side 1
-} {
-    require_max_nodes_per_side 2
-}
+require_feature "SCAFACOS_DIPOLES"
 
 set tcl_precision 15
 
 # volume fraction
-set rho 0.10
+set rho 0.09
 set dipole_lambda 3.0
 set particle_radius 1.0
 set bjerrum 1
 set int_time_step 0.002
 
-set external_H_z 0.5
-
 # this are NOT relative errors, note!
-set accuracy_p3m 1.0e-3
-set accuracy_mdlc 1.0e-8
+set accuracy_p3m 1.0e-4
 
-set pos_dip_data [open "mdlc_system.data" r]
+set pos_dip_data [open "p3m_magnetostatics2_system.data" r]
 
 set counter 0
 while { [eof $pos_dip_data] == 0 } {
@@ -55,7 +46,8 @@ set n_particle [expr $counter-1]
 set dipole_modulus [expr sqrt($dipole_lambda * pow(2*$particle_radius,3))]
 
 # setting box paramters
-set box_l [expr sqrt($n_particle * 3.141592654 /$rho)*$particle_radius]
+set box_l [expr pow(((4 * $n_particle * 3.141592654) / (3*$rho)), 1.0/3.0)*$particle_radius]  
+
 set skin 0.5
 
 # give Espresso some parameters
@@ -66,43 +58,30 @@ setmd periodic 1 1 1
 setmd max_num_cells 2500
 
 # read positions and torques from file
-set pos_dip_data [open "mdlc_system.data" r]
+set pos_dip_data [open "p3m_magnetostatics2_system.data" r]
 for {set i 0} {$i < $n_particle} {incr i} { 
     set line [gets $pos_dip_data] 
     set partid [lindex $line 0]
     set posx [lindex $line 1]  
     set posy [lindex $line 2] 
     set posz [lindex $line 3] 
-    set posx [expr $posx ] 
-    set posy [expr $posy ]
-    set posz [expr $posz ]
+    set posx [expr $posx + ($box_l / 2.0)] 
+    set posy [expr $posy +($box_l /  2.0)]
+    set posz [expr $posz +($box_l /  2.0)]
     
     set dipx  [lindex $line 4]
     set dipy  [lindex $line 5] 
     set dipz  [lindex $line 6] 
     part $partid pos $posx $posy $posz dip $dipx $dipy $dipz
 } 
-close $pos_dip_data
+close $pos_dip_data 
 
 thermostat off 
 
-puts "MDLC test case is running ..." 
 
-#puts "\n  Tuning p3m parameters...."  
-#puts [inter magnetic $bjerrum p3m tunev2 mesh 16 accuracy $accuracy_p3m]
-#puts [inter magnetic]
+inter magnetic $bjerrum scafacos p2nfft p2nfft_verbose_tuning 0 pnfft_N 32,32,32 pnfft_window_name bspline pnfft_m 5 p2nfft_ignore_tolerance 1 pnfft_diff_ik 1 p2nfft_r_cut 11 p2nfft_alpha 0.3
 
-# the following parameters where obtained by running the above tuning
-inter magnetic $bjerrum p3m 26.7723205659024 16 4 0.109394851183892 9.97941572136326e-06
-inter magnetic epsilon metallic
-
-# calculating the gap-size 
-set gap_size [expr $box_l - (2*$particle_radius)]
-
-#puts "\n  switch on mdlc..."
-inter magnetic mdlc $accuracy_mdlc $gap_size
-
-integrate 0
+puts [time { integrate 0} ]
 
 set failed 0
 
@@ -111,26 +90,8 @@ set rms_torque 0
 
 if { [catch {
 
-    # compare energy
-    set energy_data [open "mdlc_expected_energy.data" r]
-    set line [gets $energy_data]
-    set energy_from_mdds [lindex $line 0]
-    close $energy_data
-    set magnetic_energy [analyze energy magnetic]
-    set energy_err [expr ($magnetic_energy - $energy_from_mdds)]
-
-    # field is not considered in the energy
-    constraint ext_magn_field 0 0 0
-
-    if {$energy_err > $accuracy_p3m} {
-	set failed 1
-	puts "error of energy is $energy_err -> too large"
-    }
-
-    constraint ext_magn_field 0 0 $external_H_z
-
-    # compare forces and torques with results from "Wang code"
-    set force_torque_data [open "mdlc_expected_force_torque.data" r]
+    # compare forces and torques with results from "Wang code" 
+    set force_torque_data [open "p3m_magnetostatics2_expected.data" r]
     for {set i 0} {$i < $n_particle} {incr i} {
 	set line [gets $force_torque_data]
 	
@@ -153,9 +114,17 @@ if { [catch {
     set rms_torque [expr sqrt($rms_torque/$n_particle)]
     if {$rms_torque > 2*$accuracy_p3m} {
 	puts "rms torque error $rms_torque -> too large"
-	puts "we let it through for now, was always too high"
-	# set failed 1
+	set failed 1
     }
+
+    set E [analyze energy magnetic]
+    # Compare energy against result of p3m_magntostatics2.tcl
+    set E_diff [expr abs($E-5.571)]
+    if { $E_diff >1E-3 } {
+      set failed 1
+      puts "Energy difference too large" 
+    }
+
 
     if {$failed==1} {
 	error_exit "\nerror of forces, torques or magnetic energy was too large"
@@ -163,5 +132,9 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
+
+puts "rms force diff: $rms_force" 
+puts "rms torque diff: $rms_torque" 
+puts "energy diff: $E_diff" 
 
 exit 0

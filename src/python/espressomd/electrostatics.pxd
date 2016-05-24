@@ -23,6 +23,17 @@ from _system cimport *
 cimport numpy as np
 from utils cimport *
 
+cdef extern from "SystemInterface.hpp":
+    cdef cppclass SystemInterface:
+        pass
+cdef extern from "EspressoSystemInterface.hpp":
+    cdef cppclass EspressoSystemInterface(SystemInterface):
+        @staticmethod
+        EspressoSystemInterface * _Instance()
+        bool requestRGpu()
+        void update()
+
+
 IF ELECTROSTATICS:
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
@@ -112,7 +123,9 @@ IF ELECTROSTATICS:
             cdef char * log = NULL
             cdef int response
             response = p3m_adaptive_tune(& log)
-            return response, log
+            if response:
+                print log
+            return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
             cdef int mesh[3]
@@ -131,7 +144,7 @@ IF ELECTROSTATICS:
             else:
                 mesh = p_mesh
 
-            p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
+            return p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
         cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy, p_n_interpol):
             # cdef inline python_p3m_set_tune_params():
@@ -174,15 +187,6 @@ IF ELECTROSTATICS:
         int dh_set_params_cdh(double kappa, double r_cut, double eps_int, double eps_ext, double r0, double r1, double alpha)
 
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
-    cdef extern from "SystemInterface.hpp":
-        cdef cppclass SystemInterface:
-            SystemInterface()
-
-    cdef extern from "EspressoSystemInterface.hpp":
-        cdef cppclass EspressoSystemInterface:
-            @staticmethod
-            EspressoSystemInterface * _Instance()
-
     cdef extern from "actor/EwaldGPU.hpp":
         cdef cppclass EwaldgpuForce:
             EwaldgpuForce(EspressoSystemInterface & s, double r_cut, int num_kx, int num_ky, int num_kz, double alpha)
@@ -211,3 +215,104 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
         # ctypedef extern class EwaldgpuForce ewaldgpuForce
 #    cdef extern from "EspressoSystemInterface.cpp":
 #        cdef cppclass extern EspressoSystemInterface *EspressoSystemInterface;
+
+IF ELECTROSTATICS:
+    cdef extern from "mmm1d.hpp":
+        ctypedef struct MMM1D_struct:
+            double far_switch_radius_2;
+            double maxPWerror;
+            int    bessel_cutoff;
+
+        cdef extern MMM1D_struct mmm1d_params;
+
+        int MMM1D_set_params(double switch_rad, double maxPWerror);
+        void MMM1D_init();
+        int MMM1D_sanity_checks();
+        int mmm1d_tune(char **log);
+
+    cdef extern from "interaction_data.hpp":
+        int coulomb_set_bjerrum(double bjerrum)
+
+        ctypedef enum CoulombMethod :
+            COULOMB_NONE, 
+            COULOMB_DH, 
+            COULOMB_P3M, 
+            COULOMB_MMM1D, 
+            COULOMB_MMM2D, 
+            COULOMB_MAGGS, 
+            COULOMB_ELC_P3M,
+            COULOMB_RF, 
+            COULOMB_INTER_RF, 
+            COULOMB_P3M_GPU,
+            COULOMB_MMM1D_GPU,
+            COULOMB_EWALD_GPU,
+            COULOMB_EK 
+
+        ctypedef struct Coulomb_parameters:
+            double bjerrum
+            double prefactor
+            CoulombMethod method
+
+        cdef extern Coulomb_parameters coulomb
+
+    cdef inline pyMMM1D_tune():
+        cdef char *log = NULL 
+        cdef int resp
+        MMM1D_init();
+        if MMM1D_sanity_checks()==1:
+            raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
+        resp=mmm1d_tune(&log)
+        if resp:
+            print log
+        return resp
+
+IF ELECTROSTATICS:
+    cdef extern from "mmm2d.hpp":
+        ctypedef struct MMM2D_struct:
+            double maxPWerror;
+            double far_cut;
+            double far_cut2;
+            int far_calculated;
+            int dielectric_contrast_on;
+            int const_pot_on;
+            double pot_diff;
+            double delta_mid_top;
+            double delta_mid_bot;
+            double delta_mult;
+
+        cdef extern MMM2D_struct mmm2d_params;
+
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+
+        void MMM2D_init();
+
+        int MMM2D_sanity_checks();
+
+IF ELECTROSTATICS and MMM1D_GPU:
+
+    cdef extern from "actor/Mmm1dgpuForce.hpp":
+        ctypedef float mmm1dgpu_real
+        cdef cppclass Mmm1dgpuForce:
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius = -1, int bessel_cutoff = -1);
+            void setup(SystemInterface &s);
+            void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
+            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual = False);
+
+            unsigned int numThreads;
+            unsigned int numBlocks(SystemInterface &s);
+
+            mmm1dgpu_real host_boxz;
+            int host_npart;
+            bool need_tune;
+
+            int pairs;
+            mmm1dgpu_real *dev_forcePairs, *dev_energyBlocks;
+
+            mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
+            int bessel_cutoff;
+
+            float force_benchmark(SystemInterface &s);
+            
+            void check_periodicity();
+
+
