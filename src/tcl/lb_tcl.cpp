@@ -735,7 +735,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
               if ( argc == 1 )
               {
-              printf("\n\n\nIM HERE\n\n\n"); //TODO delete
                 if ( lb_lbfluid_print_vtk_velocity(argv[0]) != 0 ) 
                 {
                   Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
@@ -747,7 +746,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
               }
               else if ( argc == 7 )
               {
-                std::vector<int> bb(6);
+                std::vector<int> bb;
                 for ( int i = 0; i < 6; ++i)
                 {
                   int tmp;

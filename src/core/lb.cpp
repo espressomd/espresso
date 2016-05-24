@@ -760,8 +760,8 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
         return 1;
     }
 
-    std::vector<int> bb_low(3);
-    std::vector<int> bb_high(3);
+    std::vector<int> bb_low;
+    std::vector<int> bb_high;
 
     for(std::vector<int>::iterator val1 = bb1.begin(), val2 = bb2.begin(); val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2)
     {
@@ -782,16 +782,21 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
 
         bb_low.push_back(std::min(*val1, *val2));
         bb_high.push_back(std::max(*val1, *val2));
+
+        //TODO delete
+        std::cout << std::endl << *val1;
+        std::cout << std::endl << *val2;
+        std::cout << std::endl << std::min(*val1, *val2);
+        std::cout << std::endl << std::max(*val1, *val2) << std::endl;
+
+        std::cout << std::endl << std::endl << std::endl;
+        for(auto i: bb_low)
+          std::cout << ' ' << i;
+        std::cout << std::endl;
+        for(auto i: bb_high)
+          std::cout << ' ' << i;
+        std::cout << std::endl << std::endl << std::endl;
     }
- 
-    //TODO delete
-    std::cout << std::endl << std::endl << std::endl;
-    for(auto i: bb_low)
-      std::cout << ' ' << i;
-    std::cout << std::endl;
-    for(auto i: bb_high)
-      std::cout << ' ' << i;
-    std::cout << std::endl << std::endl << std::endl;
 
     int pos[3];
     if (lattice_switch & LATTICE_LB_GPU) {
