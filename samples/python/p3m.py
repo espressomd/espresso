@@ -25,7 +25,6 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from espressomd import visualization
 import numpy
 
 print("""
@@ -109,7 +108,6 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
 
 # Assingn charge to particles
 for i in range(n_part / 2 - 1):
@@ -159,7 +157,6 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #   Increase LJ cap
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
-    mayavi.update()
 
 # Just to see what else we may get from the c code
 print("""
@@ -203,11 +200,11 @@ for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     integrate.integrate(int_steps)
-    mayavi.update()
 
     energies = analyze.energy(system=system)
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
+
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")

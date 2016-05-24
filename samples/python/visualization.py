@@ -23,7 +23,10 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
+from espressomd import visualization
 import numpy
+from matplotlib import pyplot
+from threading import Thread
 
 print("""
 =======================================================
@@ -66,7 +69,7 @@ min_dist = 0.9
 
 # integration
 int_steps = 1000
-int_n_times = 5
+int_n_times = 50000
 
 
 #############################################################
@@ -105,6 +108,8 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
+mayavi = visualization.mayavi_live(system)
+
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
@@ -112,9 +117,6 @@ system.max_num_cells = 2744
 # open Observable file
 obs_file = open("pylj_liquid.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-# set obs_file [open "$name$ident.obs" "w"]
-# puts $obs_file "\# System: $name$ident"
-# puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -136,12 +138,10 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
-#   write observables
-#    puts $obs_file "{ time [setmd time] } [analyze energy]"
-
 #   Increase LJ cap
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
+    mayavi.update()
 
 # Just to see what else we may get from the c code
 print("""
@@ -163,7 +163,6 @@ verlet_reuse  {0.verlet_reuse}
 
 # write parameter file
 
-# polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.skin))
@@ -179,38 +178,52 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-#energies = es._espressoHandle.Tcl_Eval('analyze energy')
 energies = analyze.energy(system=system)
 print(energies)
 
+plot, = pyplot.plot([0],[energies['total']], label="total")
+pyplot.xlabel("Time")
+pyplot.ylabel("Energy")
+pyplot.legend()
+pyplot.show(block=False)
+
 j = 0
-for i in range(0, int_n_times):
+
+def main_loop():
+    global energies
     print("run %d at time=%f " % (i, system.time))
 
-#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
+    mayavi.update()
 
-#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
     energies = analyze.energy(system=system)
     print(energies)
+    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
     linear_momentum = analyze.analyze_linear_momentum(system=system)
     print(linear_momentum)
-    # print(analyze.calc_rh(system,0,3,5))
-    # print(analyze.calc_rg(system,0,3,5))
-    # print(analyze.calc_re(system,0,3,5))
 
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
+def main_thread():
+    for i in range(0, int_n_times):
+        main_loop()
 
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
+last_plotted = 0
+def update_plot():
+    global last_plotted
+    current_time = plot.get_xdata()[-1]
+    if last_plotted == current_time:
+        return
+    last_plotted = current_time
+    pyplot.xlim(0, plot.get_xdata()[-1])
+    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    pyplot.draw()
+
+t = Thread(target=main_thread)
+t.daemon = True
+t.start()
+mayavi.register_callback(update_plot, interval=2000)
+mayavi.run_gui_event_loop()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")
@@ -223,7 +236,6 @@ for i in range(n_part):
 obs_file.close()
 set_file.close()
 end_file.close()
-# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")
