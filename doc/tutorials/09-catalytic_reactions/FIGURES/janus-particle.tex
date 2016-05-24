@@ -1,5 +1,6 @@
 \documentclass[tikz]{standalone}
 \usepackage{chemformula}
+\usetikzlibrary{shapes.arrows}
 \definecolor{Gold}{rgb}{1,.844,0}
 \definecolor{Silver}{rgb}{.752,.752,.752}
 \begin{document}
@@ -28,6 +29,6 @@
   \node[below] at (3,-1.5) {\ch{2 H2O}};
   \draw[->] (3,+1.5) to[out=-150,in=90] (2,0) to[out=-90,in=150] (3,-1.5);
 
-  \draw[-{Implies[]},double,double distance=4pt] (-3,0) -- (-4,0);
+  \node[draw,thick,single arrow,shape border rotate=180] at (-3.5,0) {\phantom{larrow}};
 \end{tikzpicture}
 \end{document}
