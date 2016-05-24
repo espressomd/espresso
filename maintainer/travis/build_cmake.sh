@@ -136,21 +136,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make" || exit $?
+cmd "make -j $check_procs" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make check_tcl $make_params"
+    cmd "make check_tcl"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
-    cmd "make check_unit_tests $make_params"
+    cmd "make check_unit_tests"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
