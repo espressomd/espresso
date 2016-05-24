@@ -46,6 +46,7 @@ add_dependencies(check_unit_tests RuntimeErrorCollector_test)
 add_executable(RunningAverage_test RunningAverage_test.cpp)
 target_link_libraries(RunningAverage_test ${LIBRARIES})
 add_test(runing_average RunningAverage_test)
+add_dependencies(check_unit_tests RunningAverage_test)
 
 # ScriptInterface
 add_executable(ScriptInterface_test ScriptInterface_test.cpp)

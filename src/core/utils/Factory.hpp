@@ -90,6 +90,11 @@ class Factory {
 template<class T>
 std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
 
+  template<class T>
+  auto factory_make(const std::string &name) -> typename Factory<T>::pointer_type {
+    return Factory<T>::make(name);
+  }
+
 } /* namespace Utils */
 
 #endif
