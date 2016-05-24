@@ -52,6 +52,10 @@ typedef boost::variant<bool,
   }
 
 namespace ScriptInterface {
+  template<typename T> 
+  Variant make_variant(const T& x) {
+    return Variant(x);
+  }
 
 /**
  * @brief Base class for generic script interface.
@@ -92,7 +96,7 @@ class ScriptInterfaceBase {
    * @param name Name of the parameter
    * @return Value of parameter @param name.
    */
-  virtual const Variant get_parameter(const std::string &name) const {
+  virtual Variant get_parameter(const std::string &name) const {
     return get_parameters().at(name);
   };
   /**
