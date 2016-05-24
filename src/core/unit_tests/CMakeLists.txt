@@ -17,6 +17,9 @@
   # You should have received a copy of the GNU General Public License
   # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
+# Build tests only when testing
+set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
+  
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
 add_dependencies(check_unit_tests EspressoConfig)
