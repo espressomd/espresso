@@ -45,6 +45,7 @@ cdef int_list * create_int_list_from_python_object(obj):
     for i in range(len(obj)):
         il.e[i] = obj[i]
         print il.e[i]
+    il.n = len(obj)
     return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
