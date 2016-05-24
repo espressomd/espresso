@@ -128,9 +128,9 @@ integrate $sampsteps
 if { $new_configuration != 0 } {
   lbfluid print vtk velocity "engine_lbgpu_2pt.vtk"
 } else {
-  lbfluid print vtk velocity "engine_lbgpu_tmp.vtk"
-  set difference [calculate_vtk_max_pointwise_difference "./engine_lbgpu_2pt.vtk" "./engine_lbgpu_tmp.vtk"]
-  file delete "./engine_lbgpu_tmp.vtk"
+  lbfluid print vtk velocity "engine_lbgpu_2pt_tmp.vtk"
+  set difference [calculate_vtk_max_pointwise_difference "./engine_lbgpu_2pt.vtk" "./engine_lbgpu_2pt_tmp.vtk"]
+  file delete "./engine_lbgpu_2pt_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
 
@@ -154,9 +154,9 @@ integrate $sampsteps
 if { $new_configuration != 0 } {
   lbfluid print vtk velocity "engine_lbgpu_3pt.vtk"
 } else {
-  lbfluid print vtk velocity "engine_lbgpu_tmp.vtk"
-  set difference [calculate_vtk_max_pointwise_difference "./engine_lbgpu_3pt.vtk" "./engine_lbgpu_tmp.vtk"]
-  file delete "./engine_lbgpu_tmp.vtk"
+  lbfluid print vtk velocity "engine_lbgpu_3pt_tmp.vtk"
+  set difference [calculate_vtk_max_pointwise_difference "./engine_lbgpu_3pt.vtk" "./engine_lbgpu_3pt_tmp.vtk"]
+  file delete "./engine_lbgpu_3pt_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
 
