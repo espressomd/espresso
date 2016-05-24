@@ -35,6 +35,9 @@ cdef extern from "EspressoSystemInterface.hpp":
 
 
 IF ELECTROSTATICS:
+    cdef extern from "communication.hpp":
+        void mpi_bcast_coulomb_params()
+
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
@@ -51,7 +54,8 @@ IF ELECTROSTATICS:
                 COULOMB_P3M_GPU, \
                 COULOMB_MMM1D_GPU, \
                 COULOMB_EWALD_GPU, \
-                COULOMB_EK
+                COULOMB_EK, \
+                COULOMB_SCAFACOS
 
         int coulomb_set_bjerrum(double bjerrum)
 

@@ -22,6 +22,10 @@ cimport actors
 import actors
 cimport globals
 import numpy as np
+import scafacos
+cimport scafacos
+
+
 
 cdef class ElectrostaticInteraction(actors.Actor):
     def _tune(self):
@@ -32,6 +36,11 @@ cdef class ElectrostaticInteraction(actors.Actor):
         raise Exception(
             "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
 
+
+
+    def _deactivate_method(self):
+        coulomb.method = COULOMB_NONE
+        mpi_bcast_coulomb_params()
 
 
 IF COULOMB_DEBYE_HUECKEL:
@@ -603,3 +612,22 @@ IF ELECTROSTATICS:
             self._set_params_in_es_core()
             MMM2D_init()
             print MMM2D_sanity_checks()
+
+    IF SCAFACOS==1:
+        cdef class Scafacos(ElectrostaticInteraction):
+            # These "imports"  are needed, as cdef classes don't support multiple
+            # inheritance
+            dipolar=False
+            valid_keys = scafacos.valid_keys
+            required_keys = scafacos.required_keys
+            validate_params = scafacos.validate_params
+            _get_params_from_es_core = scafacos._get_params_from_es_core
+            _set_params_in_es_core = scafacos._set_params_in_es_core
+            _activate_method = scafacos._activate_method
+            
+            def _activate_method(self):
+               coulomb.method =COULOMB_SCAFACOS
+               coulomb.set_bjerrum(self._params["bjerrum_length"])
+               self._set_params_in_es_core()
+    
+    

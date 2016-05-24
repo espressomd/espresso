@@ -9,7 +9,8 @@ cdef class Actor:
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
-                       ElectrostaticExtensions=False)
+                       ElectrostaticExtensions=False,
+		       Scafacos=True)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
