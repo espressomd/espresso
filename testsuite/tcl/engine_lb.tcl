@@ -133,9 +133,9 @@ integrate $sampsteps
 if { $new_configuration != 0 } {
   lbfluid print vtk velocity "engine_lb.vtk"
 } else {
-  lbfluid print vtk velocity 1 1 5 11 11 5 "engine_lb_tmp.vtk"
+  lbfluid print vtk velocity "engine_lb_tmp.vtk"
   set difference [calculate_vtk_max_pointwise_difference "./engine_lb.vtk" "./engine_lb_tmp.vtk"]
-  #file delete "./engine_lb_tmp.vtk"
+  file delete "./engine_lb_tmp.vtk"
 
   puts "Maximum deviation to the reference point is: $difference\n"
 
