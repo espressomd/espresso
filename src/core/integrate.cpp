@@ -622,7 +622,6 @@ void rescale_forces()
 
   INTEG_TRACE(fprintf(stderr,"%d: rescale_forces:\n",this_node));
 
-//#ifndef SEMI_INTEGRATED
   scale = 0.5 * time_step * time_step;
 
 #ifdef MULTI_TIMESTEP
@@ -644,13 +643,14 @@ void rescale_forces()
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
 #ifdef ROTATION
-      if (sim_time == 0.0) convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
+      if ((p[i].m.omega_lab[0] == p[i].m.omega_lab[1] == p[i].m.omega_lab[2] == 0.0) &&
+    	 (fabs(p[i].m.omega[0]) + fabs(p[i].m.omega[1]) + fabs(p[i].m.omega[2]) > 0.0))
+    	    convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
 #endif
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
   }
-//#endif
 }
 
 void rescale_forces_propagate_vel()
@@ -727,6 +727,10 @@ void rescale_forces_propagate_vel()
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
               p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+
+#ifdef ROTATION_PER_PARTICLE
+              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
+#endif
 
 #endif
 
@@ -971,11 +975,13 @@ void propagate_vel()
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              //p[i].m.omega_lab_0[j] = omega_lab[j];
+
               p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
               p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
-              //omega_lab[j] = omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+#ifdef ROTATION_PER_PARTICLE
+              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
 #endif
+#endif // SEMI_INTEGRATED
 
             /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -1121,6 +1127,10 @@ void propagate_vel_pos()
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
               p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
               p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+
+#ifdef ROTATION_PER_PARTICLE
+              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
+#endif
 
 #endif
 

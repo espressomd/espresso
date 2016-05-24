@@ -447,6 +447,7 @@ void convert_initial_torques()
 void convert_omega_body_to_space(Particle *p, double *omega)
 {
   double A[9];
+
   define_rotation_matrix(p, A);
 
   omega[0] = A[0 + 3*0]*p->m.omega[0] + A[1 + 3*0]*p->m.omega[1] + A[2 + 3*0]*p->m.omega[2];
@@ -591,6 +592,10 @@ void random_walk_rot(Particle *p)
 	double e_damp, sigma, sigma_coeff, rinertia_m, phi, theta, dphi_m;
 	double dphi[3];
 
+#ifdef ROTATION_PER_PARTICLE
+    if (!p->p.rotation) return;
+#endif
+
 #if defined (FLATNOISE)
 		  sigma_coeff = 24.0*p->p.T/p->p.gamma_rot;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
@@ -615,7 +620,15 @@ void random_walk_rot(Particle *p)
 void random_walk_rot_vel(Particle *p, double dt)
 {
 	int j;
-	double e_damp, sigma, sigma_coeff, rinertia_m, t_omega_lab[3];
+	double e_damp, sigma, sigma_coeff, rinertia_m, t_omega_lab[3], a[3];
+
+#ifdef ROTATION_PER_PARTICLE
+	a[0] = a[1] = a[2] = 1.0;
+	if (!p->p.rotation) return;
+	if (!(p->p.rotation & 2)) a[0] = 0.0;
+	if (!(p->p.rotation & 4)) a[1] = 0.0;
+	if (!(p->p.rotation & 8)) a[2] = 0.0;
+#endif
 
     for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
@@ -633,7 +646,7 @@ void random_walk_rot_vel(Particle *p, double dt)
 #endif
 		  e_damp = exp(-2*p->p.gamma_rot*dt/rinertia_m);
 		  sigma = sigma_coeff*(1-e_damp);
-		  p->m.omega[j] += sqrt(sigma) * noise;
+		  p->m.omega[j] += a[j] * sqrt(sigma) * noise;
 	  }
     }//j
     convert_omega_body_to_space(p,t_omega_lab);
