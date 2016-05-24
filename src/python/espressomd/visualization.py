@@ -49,7 +49,7 @@ class mayavi_live:
 
 		# GUI window
 		self.gui = GUI()
-		self.timer = Timer(100, self._draw)
+		self.timers = [Timer(100, self._draw)]
 
 	def _draw(self):
 		"""Update the Mayavi objects with new particle information.
@@ -145,5 +145,7 @@ class mayavi_live:
 		So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""
 		self.gui.start_event_loop()
 
+	def register_callback(self, cb, interval=1000):
+		self.timers.append(Timer(interval, cb))
+
 # TODO: constraints
-# fix running in parallel with Pyplot

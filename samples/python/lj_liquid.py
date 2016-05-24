@@ -201,18 +201,13 @@ def main_loop():
     global energies
     print("run %d at time=%f " % (i, system.time))
 
-#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
     mayavi.update()
 
-#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
     energies = analyze.energy(system=system)
     print(energies)
-    #plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-    #plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
-    #pyplot.xlim(0, system.time)
-    #pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
-    #pyplot.draw()
+    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
     linear_momentum = analyze.analyze_linear_momentum(system=system)
     print(linear_momentum)
@@ -220,25 +215,25 @@ def main_loop():
     # print(analyze.calc_rg(system,0,3,5))
     # print(analyze.calc_re(system,0,3,5))
 
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
-
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
-
 def main_thread():
     for i in range(0, int_n_times):
         main_loop()
 
+last_plotted = 0
+def update_plot():
+    global last_plotted
+    current_time = plot.get_xdata()[-1]
+    if last_plotted == current_time:
+        return
+    last_plotted = current_time
+    pyplot.xlim(0, plot.get_xdata()[-1])
+    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    pyplot.draw()
+
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
+mayavi.register_callback(update_plot, interval=2000)
 mayavi.run_gui_event_loop()
 
 # write end configuration
