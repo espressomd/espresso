@@ -225,7 +225,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_NPTISO_PISTON)
 
         def __get__(self):
-            global npt_piston
             return nptiso.piston
 
     property npt_p_diff:
@@ -235,7 +234,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_NPTISO_PDIFF)
 
         def __get__(self):
-            global npt_p_diff
             return nptiso.p_diff
 
     property periodicity:
@@ -258,7 +256,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
-            global periodic
             periodicity = np.zeros(3)
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
@@ -275,17 +272,14 @@ cdef class System:
             integrate.skin_set = True
 
         def __get__(self):
-            global skin
             return skin
 
     property temperature:
         def __get__(self):
-            global temperature
             return temperature
 
     property thermo_switch:
         def __get__(self):
-            global thermo_switch
             return thermo_switch
 
     property time:
@@ -309,7 +303,6 @@ cdef class System:
                 mpi_set_smaller_time_step(_smaller_time_step)
 
         def __get__(self):
-            global smaller_time_step
             return smaller_time_step
 
     property time_step:
@@ -331,7 +324,6 @@ cdef class System:
             mpi_set_time_step(_time_step)
 
         def __get__(self):
-            global time_step
             return time_step
 
     property timings:
@@ -343,65 +335,42 @@ cdef class System:
                 timing_samples = _timings
 
         def __get__(self):
-            global timing_samples
             return timing_samples
 
     property transfer_rate:
         def __get__(self):
-            global transfer_rate
             return transfer_rate
 
     property max_cut_nonbonded:
         def __get__(self):
-            global max_cut_nonbonded
             return max_cut_nonbonded
 
     property verlet_reuse:
         def __get__(self):
-            global verlet_reuse
             return verlet_reuse
 
     property lattice_switch:
         def __get__(self):
-            global lattice_switch
             return lattice_switch
 
     property dpd_tgamma:
         def __get__(self):
-            global dpd_tgamma
             return dpd_tgamma
 
     property dpd_tr_cut:
         def __get__(self):
-            global dpd_tr_cut
             return dpd_tr_cut
 
     property dpd_twf:
         def __get__(self):
-            global dpd_twf
             return dpd_twf
 
     property dpd_wf:
         def __get__(self):
-            global dpd_wf
             return dpd_wf
-
-    property adress_vars:
-        def __get__(self):
-            global adress_vars
-            return np.array([
-                adress_vars[0],
-                adress_vars[1],
-                adress_vars[2],
-                adress_vars[3],
-                adress_vars[4],
-                adress_vars[5],
-                adress_vars[6]
-            ])
 
     property max_cut_bonded:
         def __get__(self):
-            global max_cut_bonded
             return max_cut_bonded
 
     property seed:
