@@ -62,6 +62,7 @@ foreach(cython_file ${cython_SRC})
                          ${cython_file}
                          -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
+                                 ${cython_HEADER}
                          )
 
       add_library(${basename} SHARED ${basename}.cpp)
