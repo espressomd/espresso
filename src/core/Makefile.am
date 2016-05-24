@@ -88,6 +88,7 @@ libEspresso_la_SOURCES = \
 	Ringbuffer.cpp Ringbuffer.hpp \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeError.cpp RuntimeError.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
 	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
 	scafacos.cpp scafacos.hpp \
@@ -116,7 +117,7 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	utils/statistics/RunningAverage.cpp utils/statistics/RunningAverage.hpp \
+	utils/statistics/RunningAverage.hpp \
 	mpiio.cpp mpiio.hpp
 
 # nonbonded potentials and forces
@@ -366,11 +367,6 @@ config-version.cpp: FORCE
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
-if MPI_FAKE
-libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
-# mpifake should come before any system includes
-AM_CPPFLAGS = -I$(srcdir)/mpifake
-endif
 
 .PHONY: FORCE
 FORCE:

@@ -80,10 +80,9 @@ proc test_langevin_per_particle {test_case} {
         }
         puts "\n"
 
-        # make real random draw
         set cmd "t_random seed"
         for {set i 0} {$i < [setmd n_nodes]} { incr i } {
-            lappend cmd [expr [pid] + $i] }
+            lappend cmd [expr 42 + $i] }
         eval $cmd
 
         set box_l 10

@@ -88,9 +88,7 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-if $with_coverage ; then
-    cmake_params="-DCPPFLAGS=\"-coverage -O0\" -DCXXFLAGS=\"-coverage -O0\" -DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
-fi
+cmake_params="-DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
 
 if $with_mpi; then
     cmake_params="-DWITH_MPI=ON $cmake_params"
@@ -142,27 +140,22 @@ cmd "make" || exit $?
 
 end "BUILD"
 
-# CHECK	cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log
 if $make_check; then
     start "TEST"
 
     cmd "make check_tcl $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
-        cat $srcdir/testsuite/Testing/Temporary/LastTest.log
+        cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
     cmd "make check_unit_tests $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
-        cat $srcdir/testsuite/Testing/Temporary/LastTest.log
+        cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
     end "TEST"
 fi
-
-for i in `find . -name  "*.gcno"` ; do
-    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
-done

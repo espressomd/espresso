@@ -58,6 +58,8 @@
 #include <mpi.h>
 #include "cuda_init.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
 /**************************************************
  * exported variables
  **************************************************/
@@ -69,6 +71,8 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 extern MPI_Comm comm_cart;
+/** Boost::MPI communicator */
+extern boost::mpi::communicator boost_comm;
 /*@}*/
 
 /**************************************************
@@ -498,6 +502,9 @@ void mpi_bcast_lbboundary(int del_num);
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
+
+std::string mpi_random_get_stat();
+void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
