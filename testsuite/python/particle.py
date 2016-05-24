@@ -138,8 +138,17 @@ class ParticleProperties(ut.TestCase):
     if "VIRTUAL_SITES" in espressomd.features():
         test_virtual = generateTestForScalarProperty("virtual", 1)
     if "VIRTUAL_SITES_RELATIVE" in espressomd.features():
-        test_zz_vs_relative = generateTestForScalarProperty(
-            "vs_relative", ((0, 5.0)))
+        def test_zz_vs_relative(self):
+            self.es.part.add(id=0,pos=(0,0,0))
+            self.es.part.add(id=1,pos=(0,0,0))
+	    self.es.part[1].vs_relative = (0, 5.0,(0.5,-0.5,-0.5,-0.5))
+            res=self.es.part[1].vs_relative
+	    print res
+            self.assertTrue(res[0]==0 and res[1]==5.0 and 
+	       self.arraysNearlyEqual(res[2],np.array((0.5,-0.5,-0.5,-0.5))),"vs_relative: "+res.__str__())
+                
+            
+
 
 
 if __name__ == "__main__":

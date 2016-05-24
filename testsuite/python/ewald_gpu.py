@@ -42,7 +42,7 @@ if "EWALD_GPU" in espressomd.features():
             ewald = EwaldGpu(bjerrum_length=self.test_params["bjerrum_length"], num_kx=self.test_params["num_kx"], num_ky=self.test_params["num_ky"], num_kz=self.test_params["num_kz"], rcut=self.test_params[
                 "rcut"], accuracy=self.test_params["accuracy"], precision=self.test_params["precision"], alpha=self.test_params["alpha"], time_calc_steps=self.test_params["time_calc_steps"], K_max=self.test_params["K_max"])
             self.es.actors.add(ewald)
-            set_params = ewald._getParamsFromEsCore()
+            set_params = ewald._get_params_from_es_core()
             SAME = True
             for i in self.test_params.keys():
                 if set_params[i] != self.test_params[i]:
