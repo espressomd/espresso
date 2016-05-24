@@ -1,4 +1,7 @@
 import numpy
+import os
+if not "ETS_TOOLKIT" in os.environ:
+	os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI
 from tvtk.tools import visual
