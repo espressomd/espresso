@@ -31,9 +31,9 @@ import numpy
 system = espressomd.System()
 
 
-#system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
-##if no seed is provided espresso generates a seed
-#print system.seed
+# system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
+# if no seed is provided espresso generates a seed
+# print system.seed
 
 
 system.time_step = 0.01
@@ -49,5 +49,4 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-diamond.Diamond(a=20,bond_length=2, MPC=20)
-
+diamond.Diamond(a=20, bond_length=2, MPC=20)
