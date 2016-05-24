@@ -4,8 +4,10 @@ if not "ETS_TOOLKIT" in os.environ:
 	os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI
+from pyface.timer.api import Timer
 from tvtk.tools import visual
 import atexit
+import threading
 
 from espressomd.interactions import NonBondedInteractions
 
@@ -16,7 +18,11 @@ output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
 class mayavi_live:
-	"""This class provides live visualization using Enthought Mayavi"""
+	"""This class provides live visualization using Enthought Mayavi.
+	Use the update method to push your current simulation state after
+	integrating. If you run your integrate loop in a separate thread, 
+	you can call run_gui_event_loop in your main thread to be able to
+	interact with the GUI."""
 	def __init__(self, system):
 		"""Constructor.
 		**Arguments**
@@ -34,6 +40,7 @@ class mayavi_live:
 		self.arrows.glyph.color_mode = 'color_by_scalar'
 
 		# state
+		self.data = None
 		self.last_N = 1
 		self.last_Nbonds = 1
 		self.last_boxl = [0,0,0]
@@ -42,12 +49,19 @@ class mayavi_live:
 
 		# GUI window
 		self.gui = GUI()
-		self.gui.invoke_later(self.update)
+		self.timer = Timer(100, self._draw)
 
-	def _draw(self, coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed):
-		"""Update the Mayavi objects with new particle information."""
+	def _draw(self):
+		"""Update the Mayavi objects with new particle information.
+		This is called periodically in the GUI thread"""
+		if self.data is None:
+			return
+
 		f = mlab.gcf()
 		visual.set_viewer(f)
+
+		coords, types, radii, N_changed, bonds, Nbonds_changed, boxl, box_changed = self.data
+		self.data = None
 
 		if box_changed or not self.running:
 			self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
@@ -67,8 +81,9 @@ class mayavi_live:
 			self.arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
 	def update(self):
-		"""Pull the latest particle information from Espresso and update the Mayavi visualization"""
-		self.process_gui_events()
+		"""Pull the latest particle information from Espresso.
+		This is the only function that should be called from the computation thread.
+		It does not call any Mayavi functions unless it is being called from the main (GUI) thread."""
 
 		if self.last_T is not None and self.last_T == self.system.time:
 			return
@@ -103,13 +118,21 @@ class mayavi_live:
 
 		boxl = self.system.box_l
 
-		self._draw( coords, types, radii, (self.last_N != N), 
-		           bond_coords, (self.last_Nbonds != Nbonds),
-		           boxl, (self.last_boxl != boxl).any() )
+		if self.data is None:
+			self.data = coords, types, radii, (self.last_N != N), \
+			            bond_coords, (self.last_Nbonds != Nbonds), \
+			            boxl, (self.last_boxl != boxl).any()
+		else:
+			self.data = coords, types, radii, self.data[3] or (self.last_N != N), \
+			            bond_coords, self.data[5] or (self.last_Nbonds != Nbonds), \
+			            boxl, self.data[7] or (self.last_boxl != boxl).any()
 		self.last_N = N
 		self.last_Nbonds = Nbonds
 		self.last_boxl = boxl
 
+		# when drawing from the main thread, the timer never fires, but we can safely call draw ourselves
+		if isinstance(threading.current_thread(), threading._MainThread):
+			self._draw()
 
 	def process_gui_events(self):
 		"""Process GUI events, e.g. mouse clicks, in the Mayavi window.
@@ -119,7 +142,8 @@ class mayavi_live:
 	def run_gui_event_loop(self):
 		"""Start the GUI event loop.
 		This function blocks until the Mayavi window is closed.
-		So you probably only want to use it if your Espresso simulation's integrate loop is running in a separate thread."""
+		So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""
 		self.gui.start_event_loop()
 
 # TODO: constraints
+# fix running in parallel with Pyplot

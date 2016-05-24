@@ -26,6 +26,7 @@ from espressomd import integrate
 from espressomd import visualization
 import numpy
 from matplotlib import pyplot
+from threading import Thread
 
 print("""
 =======================================================
@@ -195,7 +196,9 @@ pyplot.legend()
 pyplot.show(block=False)
 
 j = 0
-for i in range(0, int_n_times):
+
+def main_loop():
+    global energies
     print("run %d at time=%f " % (i, system.time))
 
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
@@ -205,11 +208,11 @@ for i in range(0, int_n_times):
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
     energies = analyze.energy(system=system)
     print(energies)
-    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
-    pyplot.xlim(0, system.time)
-    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
-    pyplot.draw()
+    #plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+    #plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
+    #pyplot.xlim(0, system.time)
+    #pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    #pyplot.draw()
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
     linear_momentum = analyze.analyze_linear_momentum(system=system)
     print(linear_momentum)
@@ -228,6 +231,15 @@ for i in range(0, int_n_times):
 #	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
 #	incr j
 #    }
+
+def main_thread():
+    for i in range(0, int_n_times):
+        main_loop()
+
+t = Thread(target=main_thread)
+t.daemon = True
+t.start()
+mayavi.run_gui_event_loop()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")
