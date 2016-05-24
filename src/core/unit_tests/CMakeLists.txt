@@ -19,7 +19,7 @@
 
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
-
+add_dependencies(check_unit_tests EspressoConfig)
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
 
