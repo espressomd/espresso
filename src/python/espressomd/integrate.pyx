@@ -44,14 +44,7 @@ def integrate(nSteps, recalc_forces=False, reuse_forces=False):
         reuse_forces, 1, bool, "reuse_forces has to be a bool")
     
     if (_integrate(nSteps, recalc_forces, reuse_forces)):
-        errors = mpiRuntimeErrorCollectorGather()
-        for err in errors:
-            print(err.format())
-
-        for err in errors:
-            # Cast because cython does not support typed enums completely
-            if <int> err.level() == <int> ERROR:
-                raise Exception("Encoutered errors during integrate")
+        handle_errors("Encoutered errors during integrate")
 
 def set_integrator_nvt():
     integrate_set_nvt()
