@@ -78,13 +78,6 @@ extern MPI_Comm comm_cart;
 #define SOME_TAG 42
 #endif
 
-namespace Communication {
-/**
- * @brief Get the global MpiCallbacks instance.
- */
-MpiCallbacks &mpiCallbacks();
-}
-
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on

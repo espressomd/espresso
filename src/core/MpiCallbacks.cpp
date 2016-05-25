@@ -77,7 +77,7 @@ void MpiCallbacks::slave(int id, int par1, int par2) const {
 }
 
 void MpiCallbacks::abort_loop() const {
-  call(0, 0, 0);
+  call(LOOP_ABORT, 0, 0);
 }
 
 void MpiCallbacks::loop() const {
@@ -86,7 +86,7 @@ void MpiCallbacks::loop() const {
     /** Communicate callback id and parameters */
     boost::mpi::broadcast(m_comm, request, 3, 0);
     /** id == 0 is loop_abort. */
-    if(request[0] == 0) {
+    if(request[0] == LOOP_ABORT) {
       break;
     } else {
       /** Call the callback */
@@ -95,4 +95,18 @@ void MpiCallbacks::loop() const {
   }
 }
 
+namespace {
+std::unique_ptr<MpiCallbacks> m_global_callback;
 }
+
+void initialize_callbacks(boost::mpi::communicator &comm) {
+  m_global_callback = std::unique_ptr<MpiCallbacks>(new MpiCallbacks(comm));
+}
+
+/* We use a singelton callback class for now. */ 
+MpiCallbacks &mpiCallbacks() {
+  return *m_global_callback;
+}
+
+} /* namespace Communication */
+

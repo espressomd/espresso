@@ -33,9 +33,9 @@ namespace Communication {
  */
 class MpiCallbacks {
  public:
-  /** @brief Function type of static callbacks. */
+  /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
-  /** @brief Type of the callback functions. */
+  /** Type of the callback functions. */
   typedef std::function<void (int, int)> function_type;
   
   MpiCallbacks(const boost::mpi::communicator &comm)
@@ -130,7 +130,11 @@ class MpiCallbacks {
     return m_comm;
   }
   
- private:  
+ private:
+  /**
+   * @brief Id for the loop_abort. Has to be 0.
+   */
+  enum { LOOP_ABORT = 0 };
   /**
    * @brief Callback to integrate with the old callback mechanism.
    *
@@ -162,11 +166,17 @@ class MpiCallbacks {
 };
 
 /**
+ * @brief Initialize the callback singelton.
+ * This sets the communicator to use.
+ */
+void initialize_callbacks(boost::mpi::communicator &comm);
+
+/**
  * @brief Returns a reference to the global callback class instance.
  *
  */
 MpiCallbacks &mpiCallbacks();
 
-}
+} /* namespace Communication */
 
 #endif
