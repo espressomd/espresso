@@ -15,12 +15,11 @@ start "CONFIGURE"
 [ -z "$configure_params" ] && configure_params=""
 [ -z "$configure_vars" ] && configure_vars=""
 [ -z "$with_cuda" ] && with_cuda="true"
-[ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="false"
 [ -z "$with_h5md" ] && with_h5md="true"
-outp configure_params configure_vars with_cuda with_mpi with_fftw \
+outp configure_params configure_vars with_cuda with_fftw \
     with_tcl with_python_interface with_h5md
 
 # change into build dir
@@ -28,12 +27,6 @@ pushd $builddir
 
 # set up configure params
 configure_params="--enable-silent-rules $configure_params"
-
-if $with_mpi; then
-    configure_params="--with-mpi $configure_params"
-else
-    configure_params="--without-mpi $configure_params"
-fi
 
 if $with_h5md; then
     configure_params="--with-h5md $configure_params"

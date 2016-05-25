@@ -24,10 +24,8 @@ source $DIR/common.sh
 # compiling on on proc is slow, lets use 4:
 [ -z "$build_procs" ] && build_procs=4
 # check_procs is never used...
-! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
-[ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="false" #true in other build_cmake.sh
@@ -57,7 +55,7 @@ if ! $insource ; then
 fi
 
 outp insource srcdir builddir \
-    configure_params with_mpi with_fftw \
+    configure_params with_fftw \
     with_tcl with_python_interface myconfig check_procs with_h5md with_cuda
 
 # check indentation of python files
@@ -76,12 +74,6 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-
-if $with_mpi; then
-    cmake_params="-DWITH_MPI=ON $cmake_params"
-else
-    cmake_params="-DWITH_MPI=OFF $cmake_params"
-fi
 
 if $with_fftw; then
     cmake_params="$cmake_params"
