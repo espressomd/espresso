@@ -81,7 +81,7 @@ if { [catch {
     inter 0 fene $fene_k $fene_r
 
     read_data "intpbc_system.data.gz"
-    write_data_h5_old_data "../test_data/nsquare_test_data.h5"
+    #write_data_h5_old_data "../test_data/nsquare_test_data.h5"
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
@@ -96,7 +96,7 @@ if { [catch {
 
     # here you can create the necessary snapshot
     # write_data "intpbc_system.data.gz"
-    write_data_h5_old_data "../test_data/"
+    #write_data_h5_old_data "../test_data/"
     ############## end
 
     set toteng [analyze energy total]
