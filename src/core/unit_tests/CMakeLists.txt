@@ -46,5 +46,30 @@ add_dependencies(check_unit_tests RuntimeErrorCollector_test)
 add_executable(RunningAverage_test RunningAverage_test.cpp)
 target_link_libraries(RunningAverage_test ${LIBRARIES})
 add_test(runing_average RunningAverage_test)
+add_dependencies(check_unit_tests RunningAverage_test)
+
+# ScriptInterface
+add_executable(ScriptInterface_test ScriptInterface_test.cpp)
+target_link_libraries(ScriptInterface_test ${LIBRARIES})
+add_test(script_interface ScriptInterface_test)
+add_dependencies(check_unit_tests ScriptInterface_test)
+
+# Wall
+add_executable(Wall_test Wall_test.cpp ../shapes/Wall.cpp)
+target_link_libraries(Wall_test ${LIBRARIES})
+add_test(wall Wall_test)
+add_dependencies(check_unit_tests Wall_test)
+
+# Factory
+add_executable(Factory_test Factory_test.cpp)
+target_link_libraries(Factory_test ${LIBRARIES})
+add_test(factory Factory_test)
+add_dependencies(check_unit_tests Factory_test)
+
+# NumeratedContainer
+add_executable(NumeratedContainer_test NumeratedContainer_test.cpp)
+target_link_libraries(NumeratedContainer_test ${LIBRARIES})
+add_test(numerated_container NumeratedContainer_test)
+add_dependencies(check_unit_tests NumeratedContainer_test)
 
 

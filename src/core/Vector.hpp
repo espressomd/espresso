@@ -18,11 +18,7 @@
 */
 #include <algorithm>
 #include <cmath>
-#ifdef HAVE_CXX11
 #include <initializer_list>
-#endif
-
-/* @TODO: should have move semantics with c++11 for peformance reasons. */
 
 template<int n, typename Scalar>
 class Vector {
@@ -32,37 +28,41 @@ class Vector {
  public:
   Vector() {}
 
-  explicit Vector(const Scalar * const a) {
+  explicit Vector(Scalar const* a) {
     for (int i = 0; i < n; i++)
       d[i] = a[i];
   }
 
-#ifdef HAVE_CXX11
   Vector(std::initializer_list<Scalar> l) {
     std::copy(l.begin(), l.begin() + n, d);
   }
-#endif
   
-  Scalar *begin() const {
+  Scalar *begin() {
     return d;
   }
 
-  Scalar *end() const {
+  Scalar *end() {
     return d + n;
   }
- 
+
+  Scalar const* begin() const {
+    return d;
+  }
+
+  Scalar const* end() const {
+    return d + n;
+  }
+  
   int size() const { return n; }
   
   Vector(const Vector& rhs) {
     std::copy(rhs.d, rhs.d+n, d);
   }
 
-  void swap(Vector& rhs) {
-    std::swap(d, rhs.d);
-  }
+  Vector& operator=(const Vector& rhs) {
+    std::copy(rhs.d, rhs.d+n, d);
 
-  Vector& operator=(Vector& rhs) {
-    Vector tmp(rhs); swap(rhs); return *this;
+    return *this;
   }
 
   Scalar &operator[](int i) {

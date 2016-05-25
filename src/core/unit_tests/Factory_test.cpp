@@ -1,0 +1,67 @@
+/*
+  Copyright (C) 2015,2016 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+#define BOOST_TEST_MODULE Factory test
+#include <boost/test/included/unit_test.hpp>
+
+#include "utils/Factory.hpp"
+
+namespace Testing {
+
+struct TestClass {
+  virtual void method() {}
+};
+
+struct DerivedTestClass : public TestClass {};
+
+struct OtherDerivedTestClass : public TestClass {};
+
+} /* namespace Testing */
+
+/** Check registration of builders */
+BOOST_AUTO_TEST_CASE(regiser_class) {
+  using namespace Testing;
+  typedef Utils::Factory<TestClass> Factory;
+
+  /* Overload with explicit builder */
+  Factory::register_new("test_class", Utils::Factory<TestClass>::builder<TestClass>);
+  Utils::Factory<TestClass>::register_new("derived_test_class", Utils::Factory<TestClass>::builder<DerivedTestClass>);
+  /* Overload with default builder */
+  Utils::Factory<TestClass>::register_new<OtherDerivedTestClass>("other_derived_class");
+
+  /* All three builder should be present. */
+  BOOST_CHECK(Factory::has_builder("test_class"));
+  BOOST_CHECK(Factory::has_builder("derived_test_class"));
+  BOOST_CHECK(Factory::has_builder("other_derived_class"));  
+}
+
+/** Check object construction. */
+BOOST_AUTO_TEST_CASE(make) {
+  using namespace Testing;
+  /* Make a base object */
+  std::unique_ptr<TestClass> o = Utils::Factory<TestClass>::make("test_class");
+  BOOST_CHECK(o != nullptr);
+
+  /* Make a derived object */
+  o = Utils::Factory<TestClass>::make("derived_test_class");
+  BOOST_CHECK(o != nullptr);
+
+  /* Check for correct (derived) type */
+  BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);  
+}
