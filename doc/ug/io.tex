@@ -96,12 +96,15 @@ some basic functions for writing simulation data to H5MD files.
 \begin{essyntax}
 h5md_init \var{/where/to/store/data/file} [\var{list\_of\_p\_ids}]
 \end{essyntax}
-The \codebox{h5md_init} command initializes the H5MD file and creates 
-groups and datasets according to the conventions of H5MD (see
-\url{http://nongnu.org/h5md/}). If a H5MD file already exists at the given
-path it will be opened and you can append data to it. The optional argument 
-\var{list\_of\_p\_ids} can be provided. In this case observables are written 
-for these particle ids only.
+The \codebox{h5md_init} command initializes the H5MD file and
+creates groups and datasets according to the conventions of H5MD (see
+\url{http://nongnu.org/h5md/}). The init command assumes that the filename ends
+with the suffix ".h5". If there is no filename present matching with the given,
+the filename will be given the suffix "_1.h5". In order to safely start from a
+checkpoint the init command automatically copies the old file to a new file
+with incremented suffix index (e.g. "_2.h5" for the first start from a
+checkpoint). The optional argument \var{list\_of\_p\_ids} can be provided. In
+this case observables are written for these particle ids only.
 
 \subsection{\keyword{h5md_write_positions}: Write particle positions to H5MD
 file}
@@ -750,7 +753,7 @@ filenames including a running index (\texttt{data_0.vtk},
 \item[\var{filename}]
   Name of the file to export the particle positions into.
 \item[\opt{\alt{all \asep \var{type}}}] Specifies a list of particle
-  types which should be exportet. The default is
+  types which should be exported. The default is
   \keyword{all}. Alternatively, a list of type number can be
   given. Exporting the positions of all particles but in separate
   files might make sense if one wants to distinguish the different
