@@ -25,6 +25,7 @@ from espressomd.interactions import LennardJonesInteraction
 if "LENNARD_JONES_GENERIC" in espressomd.features():
     from espressomd.interactions import GenericLennardJonesInteraction
 
+
 class Non_bonded_interactionsTests(ut.TestCase):
     #  def __init__(self,particleId):
     #    self.pid=particleId

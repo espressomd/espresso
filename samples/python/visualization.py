@@ -23,13 +23,14 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
+from espressomd import visualization
 import numpy
+from matplotlib import pyplot
+from threading import Thread
 
 print("""
 =======================================================
-=                      p3m.py                         =
+=                    lj_liquid.py                     =
 =======================================================
 
 Program Information:""")
@@ -58,7 +59,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-thermostat.Thermostat().set_langevin(1.0, 1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -68,7 +69,7 @@ min_dist = 0.9
 
 # integration
 int_steps = 1000
-int_n_times = 10
+int_n_times = 50000
 
 
 #############################################################
@@ -84,7 +85,6 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
 system.non_bonded_inter.set_force_cap(lj_cap)
-
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
@@ -103,41 +103,12 @@ analyze.distto(system, 0)
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist(es)
+act_min_dist = analyze.mindist(system)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
-
-# Assingn charge to particles
-for i in range(n_part / 2 - 1):
-    system.part[2 * i].q = -1.0
-    system.part[2 * i + 1].q = 1.0
-# P3M setup after charge assigned
-#############################################################
-
-print("\nSCRIPT--->Create p3m\n")
-p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
-
-print("\nSCRIPT--->Add actor\n")
-system.actors.add(p3m)
-
-print("\nSCRIPT--->P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key in p3m_params.keys():
-    print("{} = {}".format(key, p3m_params[key]))
-
-print("\nSCRIPT--->Explicit tune call\n")
-p3m._tune() 
-    
-print("\nSCRIPT--->P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key in p3m_params.keys():
-    print("{} = {}".format(key, p3m_params[key]))
-
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
-print(system.actors)
+mayavi = visualization.mayavi_live(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -163,12 +134,14 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(es)
+    act_min_dist = analyze.mindist(system)
+#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
+    mayavi.update()
 
 # Just to see what else we may get from the c code
 print("""
@@ -189,6 +162,7 @@ verlet_reuse  {0.verlet_reuse}
 """.format(system))
 
 # write parameter file
+
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.skin))
@@ -207,16 +181,49 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 energies = analyze.energy(system=system)
 print(energies)
 
+plot, = pyplot.plot([0],[energies['total']], label="total")
+pyplot.xlabel("Time")
+pyplot.ylabel("Energy")
+pyplot.legend()
+pyplot.show(block=False)
+
 j = 0
-for i in range(0, int_n_times):
+
+def main_loop():
+    global energies
     print("run %d at time=%f " % (i, system.time))
 
     integrate.integrate(int_steps)
+    mayavi.update()
 
     energies = analyze.energy(system=system)
     print(energies)
+    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
+    linear_momentum = analyze.analyze_linear_momentum(system=system)
+    print(linear_momentum)
 
+def main_thread():
+    for i in range(0, int_n_times):
+        main_loop()
+
+last_plotted = 0
+def update_plot():
+    global last_plotted
+    current_time = plot.get_xdata()[-1]
+    if last_plotted == current_time:
+        return
+    last_plotted = current_time
+    pyplot.xlim(0, plot.get_xdata()[-1])
+    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    pyplot.draw()
+
+t = Thread(target=main_thread)
+t.daemon = True
+t.start()
+mayavi.register_callback(update_plot, interval=2000)
+mayavi.run_gui_event_loop()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")
@@ -224,7 +231,7 @@ end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
 end_file.write("{ particles {id pos type} }")
 for i in range(n_part):
     end_file.write("%s\n" % system.part[i].pos)
-
+    # id & type not working yet
 
 obs_file.close()
 set_file.close()
