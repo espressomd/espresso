@@ -33,7 +33,6 @@ from cellsystem import CellSystem
 
 import sys
 
-__seed=-10
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
@@ -373,12 +372,11 @@ cdef class System:
         def __get__(self):
             return max_cut_bonded
 
+    __seed=None
     property seed:
         def __set__(self, _seed):
-            print(_seed)
             cdef vector[int] seed_array
-            global __seed
-            __seed = _seed
+            self.__seed = _seed
             if(isinstance(_seed, int) and self.n_nodes == 1):
                 seed_array.resize(1)
                 seed_array[0] = int(_seed)
@@ -397,7 +395,7 @@ cdef class System:
                     "The seed has to be an integer or a list of integers with one integer per node")
 
         def __get__(self):
-            return __seed
+            return self.__seed
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates

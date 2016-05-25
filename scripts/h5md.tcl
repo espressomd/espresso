@@ -470,8 +470,12 @@ proc dump_script_to_h5md {} {
         h5mdfile H5Dcreate2 "parameters/files/tclvariables"
         h5mdfile H5Dopen2 "parameters/files/tclvariables"
         for { set i 0 } { $i < [llength $which] } { incr i } {
-            h5mdfile H5_write_value value [lindex $which $i] index $i 0 
-            h5mdfile H5_write_value value [set ::[lindex $which $i]] index $i 1
+            if {[array exists ::[lindex $which $i] ]==0 } {
+                    h5mdfile H5_write_value value [lindex $which $i] index $i 0 
+                    h5mdfile H5_write_value value [set ::[lindex $which $i]] index $i 1
+            } else {
+                puts "Did not write tcl array variable [lindex $which $i] to h5md dataset"    
+            }
         }
         h5mdfile H5Dwrite
     }
