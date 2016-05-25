@@ -25,7 +25,8 @@
 #include <numeric>
 
 #define BOOST_TEST_MODULE RunningAverage test
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include "../utils/statistics/RunningAverage.hpp"
 
