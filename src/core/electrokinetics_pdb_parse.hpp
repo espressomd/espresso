@@ -22,7 +22,7 @@
 
 #include "electrokinetics.hpp"
 
-#ifdef EK_BOUNDARIES
+#ifdef ELECTROKINETICS
 
 extern float* pdb_charge_lattice;
 extern int* pdb_boundary_lattice;

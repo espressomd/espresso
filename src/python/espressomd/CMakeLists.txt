@@ -20,9 +20,7 @@
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
 file(GLOB cython_AUX *.py)
-foreach(file ${cython_AUX})
-  configure_file(${file} . COPYONLY)
-endforeach()
+file(COPY ${cython_AUX} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}

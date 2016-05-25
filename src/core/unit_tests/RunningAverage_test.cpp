@@ -22,7 +22,6 @@
 #include <iostream>
 #include <limits>
 #include <algorithm>
-#include <numeric>
 
 #define BOOST_TEST_MODULE RunningAverage test
 #include <boost/test/included/unit_test.hpp>
