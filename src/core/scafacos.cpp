@@ -67,7 +67,6 @@ static ScafacosData particles;
 int ScafacosData::update_particle_data() {
   positions.clear();
   
-  
   if (! dipolar()) {
     charges.clear();
   }
@@ -202,23 +201,20 @@ void add_long_range_force() {
 }
 
 double long_range_energy() {
-  particles.update_particle_data();
-  
-  if(scafacos)
+  if(scafacos) {
+    particles.update_particle_data();
     if (!dipolar()) {
       scafacos->run(particles.charges, particles.positions, particles.fields,particles.potentials);
-      return 0.5* coulomb.prefactor * std::inner_product(particles.charges.begin(),particles.charges.end(),particles.potentials.begin(),0.0);
+      return 0.5 * coulomb.prefactor * std::inner_product(particles.charges.begin(),particles.charges.end(),particles.potentials.begin(),0.0);
     } 
     else
     {
-      #ifdef SCAFACOS_DIPOLES
-        scafacos->run_dipolar(particles.charges, particles.positions, particles.fields,particles.potentials);
-        return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
-      #endif	
+#ifdef SCAFACOS_DIPOLES
+      scafacos->run_dipolar(particles.charges, particles.positions, particles.fields,particles.potentials);
+      return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
+#endif	
     }
-    else
-      runtimeError("Scafacos internal error.");
-
+  }
 }
 
 /** Determine runtime for a specific cutoff */
