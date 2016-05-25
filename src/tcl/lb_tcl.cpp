@@ -730,14 +730,49 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             }
             else if (ARG1_IS_S_EXACT("velocity")) 
             {
-              if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) 
+              argc -= 2;
+              argv += 2;
+
+              if ( argc == 1 )
               {
-                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                if ( lb_lbfluid_print_vtk_velocity(argv[0]) != 0 ) 
+                {
+                  Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc--;
+                argv++;
+              }
+              else if ( argc == 7 )
+              {
+                std::vector<int> bb;
+                for ( int i = 0; i < 6; ++i)
+                {
+                  int tmp;
+                  if ( !ARG0_IS_I(tmp) )
+                  {
+                    Tcl_AppendResult(interp, "Expecting 6 integers for the bounding box geometry in lbfluid print vtk velocity", (char *)NULL);
+                    return TCL_ERROR;
+                  }
+                  bb.push_back(tmp);
+                  argc--;
+                  argv++;
+                }
+                if ( lb_lbfluid_print_vtk_velocity(argv[0], std::vector<int>(bb.begin(),bb.begin()+3), std::vector<int>(bb.begin()+3,bb.end())) != 0 ) 
+                {
+                  Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc--;
+                argv++;
+              }
+              else
+              {
+                Tcl_AppendResult(interp, "Wrong number of arguments for lbfluid print vtk velocity", (char *)NULL);
                 return TCL_ERROR;
               }
-
-              argc -= 3;
-              argv += 3;
             }
             else if (ARG1_IS_S_EXACT("density")) 
             {

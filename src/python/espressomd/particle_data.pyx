@@ -48,12 +48,12 @@ IF MASS:
 IF ROTATION:
     particle_attributes.append("omega_lab")
     particle_attributes.append("ext_torque")
+    particle_attributes.append("quat")
 
 IF ROTATIONAL_INERTIA:
     particle_attributes.append("rinertia")
     particle_attributes.append("omega_body")
     particle_attributes.append("torque_lab")
-    particle_attributes.append("quat")
 
 IF ELECTROSTATICS:
     particle_attributes.append("q")
@@ -288,6 +288,45 @@ cdef class ParticleHandle:
                 convert_omega_body_to_space(& (self.particle_data), o)
                 return np.array([o[0], o[1], o[2]])
 
+# Quaternion
+        property quat:
+            """Quaternions"""
+
+            def __set__(self, _q):
+                cdef double myq[4]
+                check_type_or_throw_except(
+                    _q, 4, float, "Quaternions has to be 4 floats")
+                for i in range(4):
+                    myq[i] = _q[i]
+                if set_particle_quat(self.id, myq) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * x = NULL
+                pointer_to_quat(& (self.particle_data), x)
+                return np.array([x[0], x[1], x[2], x[3]])
+
+# Director ( z-axis in body fixed frame)
+        property director:
+            """Director"""
+
+            def __set__(self, _q):
+                raise Exception(
+                    "Setting the director is not implemented in the c++-core of Espresso")
+#        cdef double myq[3]
+#        check_type_or_throw_except(_q,3,float,"Director has to be 3 floats")
+#        for i in range(3):
+#            myq[i]=_q[i]
+#        if set_particle_quatu(self.id, myq) == 1:
+#          raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * x = NULL
+                pointer_to_quatu(& (self.particle_data), x)
+                return np.array([x[0], x[1], x[2]])
+
     # ROTATIONAL_INERTIA
     IF ROTATIONAL_INERTIA == 1:
         property rinertia:
@@ -347,44 +386,6 @@ cdef class ParticleHandle:
                 convert_torques_body_to_space(& (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
 
-# Quaternion
-        property quat:
-            """Quaternions"""
-
-            def __set__(self, _q):
-                cdef double myq[4]
-                check_type_or_throw_except(
-                    _q, 4, float, "Quaternions has to be 4 floats")
-                for i in range(4):
-                    myq[i] = _q[i]
-                if set_particle_quat(self.id, myq) == 1:
-                    raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_quat(& (self.particle_data), x)
-                return np.array([x[0], x[1], x[2], x[3]])
-# Director ( z-axis in body fixed frame)
-        property director:
-            """Director"""
-
-            def __set__(self, _q):
-                raise Exception(
-                    "Setting the director is not implemented in the c++-core of Espresso")
-#        cdef double myq[3]
-#        check_type_or_throw_except(_q,3,float,"Director has to be 3 floats")
-#        for i in range(3):
-#            myq[i]=_q[i]
-#        if set_particle_quatu(self.id, myq) == 1:
-#          raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_quatu(& (self.particle_data), x)
-                return np.array([x[0], x[1], x[2]])
-
 # Charge
     IF ELECTROSTATICS == 1:
         property q:
@@ -435,7 +436,7 @@ cdef class ParticleHandle:
 
             def __set__(self, x):
                 if len(x) != 3:
-                    raise ValueError("vs_relative needs six args")
+                    raise ValueError("vs_relative needs input like id,distance,(q1,q2,q3,q4)")
                 _relto = x[0]
                 _dist = x[1]
                 q = x[2]
