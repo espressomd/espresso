@@ -436,7 +436,7 @@ cdef class ParticleHandle:
 
             def __set__(self, x):
                 if len(x) != 3:
-                    raise ValueError("vs_relative needs six args")
+                    raise ValueError("vs_relative needs input like id,distance,(q1,q2,q3,q4)")
                 _relto = x[0]
                 _dist = x[1]
                 q = x[2]
