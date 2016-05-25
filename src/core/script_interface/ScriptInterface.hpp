@@ -52,7 +52,16 @@ typedef boost::variant<bool,
   }
 
 namespace ScriptInterface {
-  template<typename T> 
+
+/**
+ * @brief Make a Variant from argument.
+ * 
+ * This is a convinience function, so that
+ * rather involved constructors from
+ * boost::variant are not needed in the
+ * script interfaces.
+ */
+  template<typename T>
   Variant make_variant(const T& x) {
     return Variant(x);
   }
@@ -98,7 +107,8 @@ class ScriptInterfaceBase {
    */
   virtual Variant get_parameter(const std::string &name) const {
     return get_parameters().at(name);
-  };
+  }
+  
   /**
    * @brief Set single parameter.
    *
@@ -114,24 +124,14 @@ class ScriptInterfaceBase {
    *
    * @param Paramters Parameters to set.
    */  
-  virtual void set_parameters(const std::map<std::string, Variant> &parameters) {
-    for(auto const& it: parameters) {
+  virtual void set_parameters(const std::map<std::string, Variant> &parameters)
+  {
+    for (auto const& it : parameters) {
       set_parameter(it.first, it.second);
     }
   }
-  
-  /**
-   * @brief Broadcast parameters to slave nodes.
-   *
-   * Broadcast parameters to slave nodes, only defined here
-   * as NOOP so that ScriptObject and ParallelScriptObject
-   * have the same interface.
-   * Typcially the implementation from @class ParallelScriptobject
-   * is used.
-   */
-  virtual void broadcast_parameters() {};
 };
 
-}
+} /* namespace ScriptInterface */
 
 #endif
