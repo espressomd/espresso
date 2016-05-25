@@ -42,12 +42,10 @@ function cmd {
 [ -z "$insource" ] && insource="true"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && configure_params=""
-[ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$myconfig" ] && myconfig="default"
-! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
 
@@ -58,7 +56,7 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    configure_params with_mpi with_fftw \
+    configure_params with_fftw \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
@@ -89,12 +87,6 @@ fi
 # CONFIGURE
 start "CONFIGURE"
 cmake_params="-DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
-
-if $with_mpi; then
-    cmake_params="-DWITH_MPI=ON $cmake_params"
-else
-    cmake_params="-DWITH_MPI=OFF $cmake_params"
-fi
 
 if $with_fftw; then
     cmake_params="$cmake_params"
@@ -136,21 +128,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make" || exit $?
+cmd "make -j $check_procs" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make check_tcl $make_params"
+    cmd "make check_tcl"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
-    cmd "make check_unit_tests $make_params"
+    cmd "make check_unit_tests"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
