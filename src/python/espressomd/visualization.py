@@ -56,6 +56,8 @@ class mayavi_live:
 		This is called periodically in the GUI thread"""
 		if self.data is None:
 			return
+		
+		assert isinstance(threading.current_thread(), threading._MainThread)
 
 		f = mlab.gcf()
 		visual.set_viewer(f)
@@ -137,12 +139,14 @@ class mayavi_live:
 	def process_gui_events(self):
 		"""Process GUI events, e.g. mouse clicks, in the Mayavi window.
 		Call this function as often as you can to get a smooth GUI experience."""
+		assert isinstance(threading.current_thread(), threading._MainThread)
 		self.gui.process_events()
 
 	def run_gui_event_loop(self):
 		"""Start the GUI event loop.
 		This function blocks until the Mayavi window is closed.
 		So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""
+		assert isinstance(threading.current_thread(), threading._MainThread)
 		self.gui.start_event_loop()
 
 	def register_callback(self, cb, interval=1000):
