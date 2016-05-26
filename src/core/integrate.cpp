@@ -278,6 +278,7 @@ void integrate_vv(int n_steps, int reuse_forces)
       0: recalculate forces if recalc_forces is set, meaning it is probably necessary
       1: do not recalculate forces. Mostly when reading checkpoints with forces
    */
+
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     thermo_heat_up();
 
@@ -1051,7 +1052,7 @@ void propagate_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
 
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
@@ -1144,7 +1145,7 @@ void propagate_vel_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j])*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
