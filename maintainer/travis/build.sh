@@ -43,12 +43,10 @@ function cmd {
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$configure_params" ] && configure_params=""
 [ -z "$configure_vars" ] && configure_vars=""
-[ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$myconfig" ] && myconfig="default"
-! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=4
 [ -z "$make_check" ] && make_check="true"
 
@@ -59,7 +57,7 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    configure_params configure_vars with_mpi with_fftw \
+    configure_params configure_vars with_fftw \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
@@ -96,13 +94,6 @@ fi
 start "CONFIGURE"
 if $with_coverage ; then
     configure_params="CPPFLAGS=\"-coverage -O0\" CXXFLAGS=\"-coverage -O0\" $configure_params"
-fi
-
-if $with_mpi; then
-    configure_params="--with-mpi $configure_params"
-    configure_vars="CXX=mpic++"
-else
-    configure_params="--without-mpi $configure_params"
 fi
 
 FFTW_HEADER=$srcdir/src/core/fftw3.h
