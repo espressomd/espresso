@@ -51,6 +51,11 @@ class ParallelFactory {
  public:
   typedef std::shared_ptr<T> pointer_type;
   typedef Factory factory_type;
+
+  ParallelFactory() {
+    /** Register the callback for object creation. */
+    register_callback();
+  }
   
   ~ParallelFactory() {
     Communication::mpiCallbacks().remove(m_callback_id);
@@ -131,16 +136,15 @@ class ParallelFactory {
      * m_instances and sp.
      */
     if(sp.use_count() != 2) {
-      throw std::runtime_error(
-          "Tried to delete an object that is still referenced.");
+      throw std::runtime_error("Tried to delete an object that is still referenced.");
     }
 
-    /* Delete the object */
-    delete sp.get();
-          
     /* Delete the shared_ptr, does not delete the object because
      * the deleter is empty */
     m_instances.remove(id);
+    
+    /* Delete the object */
+    delete sp.get();
   }
   /** Register the callback for object creation. */
   void register_callback() {
