@@ -71,24 +71,22 @@ bool TestClass::destructed{false};
 using boost::mpi::communicator;
 using Utils::ParallelFactory;
 using std::string;
-using Communication::MpiCallbacks;
+
+using Communication::mpiCallbacks;
 
 BOOST_AUTO_TEST_CASE(make_instance) {
-  communicator world;
-  MpiCallbacks callbacks(world);
-  ErrorHandling::init_error_handling(callbacks);
-  
-  ParallelFactory<TestClass> factory(callbacks);
+  const communicator &world = mpiCallbacks().comm();
+  ParallelFactory<TestClass> factory;
 
   /* Register the test class with the underlying factory. */
   ParallelFactory<TestClass>::factory_type::register_new<TestClass>("TestClass");
 
   if(world.rank() == 0) {
     auto sp = factory.make("TestClass");
-    callbacks.abort_loop();
+    mpiCallbacks().abort_loop();
     Testing::reduce_and_check(world, TestClass::constructed && sp->constructed);
   } else {
-    callbacks.loop();
+    mpiCallbacks().loop();
     Testing::reduce_and_check(world, TestClass::constructed);
   }
 
@@ -100,16 +98,13 @@ BOOST_AUTO_TEST_CASE(make_instance) {
 }
 
 BOOST_AUTO_TEST_CASE(remove_instance) {
-  communicator world;
-  MpiCallbacks callbacks(world);
-  ErrorHandling::init_error_handling(callbacks);
+  const communicator &world = mpiCallbacks().comm();
+  ParallelFactory<TestClass> factory;
   
-  ParallelFactory<TestClass> factory(callbacks);
-
   if(world.rank() == 0) {
     auto sp = factory.make("TestClass");
 
-    /* Check that the reference count if checked. */
+    /* Check that the reference count is checked. */
     {
       auto sp2 = sp;
       BOOST_CHECK_THROW(factory.remove(sp), std::runtime_error);
@@ -119,10 +114,10 @@ BOOST_AUTO_TEST_CASE(remove_instance) {
 
     /* sp should have been reset. */
     BOOST_CHECK(sp == nullptr);
-    callbacks.abort_loop();
+    mpiCallbacks().abort_loop();
     Testing::reduce_and_check(world, TestClass::destructed);
   } else {
-    callbacks.loop();
+    mpiCallbacks().loop();
     Testing::reduce_and_check(world, TestClass::destructed);
   }
 
@@ -133,8 +128,17 @@ BOOST_AUTO_TEST_CASE(remove_instance) {
   }
 }
 
-int main(int argc, char**argv) {
+int main(int argc, char**argv) {  
+  /* Init mpi */
   boost::mpi::environment mpi_env(argc, argv);
+  boost::mpi::communicator world;
+  
+  /* Init callbacks */
+  Communication::initialize_callbacks(world);
+  /* Init error collector */
+  ErrorHandling::init_error_handling(mpiCallbacks());
+
+  /* Run tests */
   boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
 

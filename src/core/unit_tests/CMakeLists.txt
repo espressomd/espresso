@@ -26,10 +26,13 @@ add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
 
+# Global (Mpi and RuntimeError) for use in tests
+add_library(TestingErrorMpi ../MpiCallbacks.cpp ../errorhandling.cpp ../RuntimeErrorCollector.cpp ../RuntimeErrorStream.cpp)
+
 # unit_test function
 function(UNIT_TEST TEST_NAME TEST_SRC)
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES})
+  target_link_libraries(${TEST_NAME} TestingErrorMpi ${LIBRARIES})
   add_dependencies(${TEST_NAME} EspressoConfig)
   
   add_test(${TEST_NAME} ${TEST_NAME})
@@ -41,12 +44,7 @@ endfunction(UNIT_TEST)
 unit_test(Vector_test Vector_test.cpp)
 unit_test(RuntimeError_test RuntimeError_test.cpp)
 unit_test(RunningAverage_test RunningAverage_test.cpp)
-
-set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
-unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
-
+unit_test(RuntimeErrorCollector_test RuntimeErrorCollector_test.cpp)
 unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
-
-set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
-unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
-
+unit_test(MpiCallbacks_test MpiCallbacks_test.cpp)
+unit_test(ParallelFactory_test ParallelFactory_test.cpp)
