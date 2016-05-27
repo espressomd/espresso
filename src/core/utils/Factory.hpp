@@ -53,8 +53,6 @@ class Factory {
   static T* builder() {
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the factory is for.");
-    static_assert(std::is_default_constructible<Derived>::value,
-                  "Derived class needs to be default constructible.");
     return new Derived();
   }
 
@@ -82,6 +80,10 @@ class Factory {
   static void register_new(const std::string &name) {
     register_new(name, builder<Derived>);
   }
+
+  static const builder_type& get_builder(const std::string &name) {
+    return m_map.at(name);
+  };
   
  private:
   static std::map<std::string, builder_type> m_map;
@@ -90,10 +92,10 @@ class Factory {
 template<class T>
 std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
 
-  template<class T>
-  auto factory_make(const std::string &name) -> typename Factory<T>::pointer_type {
-    return Factory<T>::make(name);
-  }
+template<class T>
+auto factory_make(const std::string &name) -> typename Factory<T>::pointer_type {
+  return Factory<T>::make(name);
+}
 
 } /* namespace Utils */
 
