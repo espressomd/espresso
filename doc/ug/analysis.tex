@@ -95,6 +95,23 @@ radius \var{r\_catch} around the position of the particle with number
 \label{analyze:distribution}
 \analyzeindex{particle distribution}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze
+  }{
+    distribution
+  }{
+    system = \arg{system},
+    type_list_a = \arg{list of ints},
+    type_list_b = \arg{list of ints},
+    r_min = \arg{float},
+    r_max = \arg{float},
+    r_bins = \arg{int},
+    log_flag = \arg{int},
+    int_flag = \arg{int}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
   analyze distribution \var{part\_type\_list\_a} \var{part\_type\_list\_b}
   \opt{\var{rmin} \opt{\var{rmax} \opt{\var{rbins} 
