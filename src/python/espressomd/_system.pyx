@@ -30,6 +30,7 @@ import cuda_init
 import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
+from minimize_energy import MinimizeEnergy
 
 import sys
 
@@ -49,6 +50,7 @@ cdef class System:
     bonded_inter = interactions.BondedInteractions()
     cell_system = CellSystem()
     thermostat = Thermostat()
+    minimize_energy = MinimizeEnergy()
     actors = None
 
     def __init__(self):
