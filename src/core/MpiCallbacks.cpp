@@ -105,6 +105,11 @@ void initialize_callbacks(boost::mpi::communicator &comm) {
 
 /* We use a singelton callback class for now. */ 
 MpiCallbacks &mpiCallbacks() {
+  /* Check wheter we were initialized properly. */
+  if(m_global_callback == nullptr) {
+    throw std::runtime_error("mpiCallbacks called before initialization.");
+  }
+  
   return *m_global_callback;
 }
 
