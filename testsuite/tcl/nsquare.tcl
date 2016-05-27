@@ -57,18 +57,6 @@ proc write_data {file} {
     blockfile $f write bonds
     close $f
 }
-proc write_data_h5_old_data {path} {
-	h5md_init $path
-	h5md_write_positions;# write OLD positions by hand as we need the OLD positions
-}
-
-proc write_data_h5_new_data {path} {
-	energy [analyze energy total]
-	pressure [analyze pressure total]
-	verlet_reuse [setmd verlet_reuse]
-	h5md_write_forces
-}
-
 
 
 if { [catch {
@@ -81,7 +69,6 @@ if { [catch {
     inter 0 fene $fene_k $fene_r
 
     read_data "intpbc_system.data.gz"
-    #write_data_h5_old_data "../test_data/nsquare_test_data.h5"
 
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set F($i) [part $i pr f]
@@ -96,7 +83,6 @@ if { [catch {
 
     # here you can create the necessary snapshot
     # write_data "intpbc_system.data.gz"
-    #write_data_h5_old_data "../test_data/"
     ############## end
 
     set toteng [analyze energy total]
