@@ -27,7 +27,7 @@ import numpy
 from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List
-from traitsui.api import View, Group, Item, CheckListEditor
+from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
 from pygame import midi
 
 midi.init()
@@ -61,8 +61,8 @@ warm_n_times = 30
 min_dist = 0.9
 
 # integration
-int_steps = 1000
-int_n_times = 50000
+int_steps = 10
+int_n_times = 5000000
 
 
 #############################################################
@@ -108,42 +108,96 @@ for i in range(midi.get_count()):
 		outputs.append((i, interf + " " + name))
 
 class Controls(HasTraits):
-	inputdevice = List(editor=CheckListEditor(values=inputs))
-	outputdevice = List(editor=CheckListEditor(values=outputs))
-	temperature = Range(0., 5., 1., )
-	volume = Range(0., 2., 1., )
-	pressure = Range(0., 2., 1., )
-	particlenumber = Range(0, 20000, 10000, )
+	input_device = List(editor=CheckListEditor(values=inputs))
+	output_device = List(editor=CheckListEditor(values=outputs))
 	
-	midi_input = midi.Input(inputs[0][0])
-	midi_output = midi.Output(outputs[0][0])
+	max_temp  = 5.
+	max_press = 2.
+	max_vol   = 2.
+	max_n     = 20000
 	
-	MIDI_CC = 176
+	temperature = Range(0., max_temp, 1., )
+	volume = Range(0., max_vol, 1., )
+	pressure = Range(0., max_press, 1., )
+	number_of_particles = Range(0, max_n, n_part, )
+	
+	midi_input = midi.Input(inputs[0][0]) if len(inputs) > 0 else None
+	midi_output = midi.Output(outputs[0][0]) if len(outputs) > 0 else None
+	
+	MIDI_CC   = 176
 	MIDI_BASE = 81
-	MIDI_NUM_TEMPERATURE = MIDI_BASE+0
+	MIDI_NUM_TEMPERATURE       = MIDI_BASE+0
+	MIDI_NUM_VOLUME            = MIDI_BASE+1
+	MIDI_NUM_PRESSURE          = MIDI_BASE+2
+	MIDI_NUM_NUMBEROFPARTICLES = MIDI_BASE+3
 	
 	_ui = Any
-	view = View(Group(Item('inputdevice'), Item('outputdevice'), show_labels=True),
-	            Group(Item('temperature'), Item('volume'), Item('pressure'), Item('particlenumber'), show_labels=True),
-	            buttons=[], title='Simulation Parameters')
+	view = View(
+		Group(
+			Item('temperature', editor=RangeEditor(high_name='max_temp')),
+			Item('volume', editor=RangeEditor(high_name='max_vol')),
+#			Item('pressure', editor=RangeEditor(high_name='max_press')),
+			Item('number_of_particles', editor=RangeEditor(high_name='max_n', is_float=False)),
+			show_labels=True,
+			label='Parameters'
+		),
+		Group(
+			Item('input_device'),
+			Item('output_device'),
+			show_labels=True,
+			label='MIDI devices'
+		),
+		buttons=[],
+		title='Control'
+	)
 	
 	def __init__(self, **traits):
 		super(Controls, self).__init__(**traits)
 		self._ui = self.edit_traits()
+		
+		# send the default values to the MIDI controller
+		self._temperature_fired()
+		self._volume_fired()
+		self._pressure_fired()
+		self._number_of_particles_fired()
 	
-	def _inputdevice_fired(self):
-		self.midi_input.close()
-		self.midi_input = midi.Input(self.inputdevice[0])
+	def _input_device_fired(self):
+		if self.midi_input is not None:
+			self.midi_input.close()
+		self.midi_input = midi.Input(self.input_device[0])
 	
-	def _outputdevice_fired(self):
-		self.midi_output.close()
-		self.midi_output = midi.Output(self.outputdevice[0])
+	def _output_device_fired(self):
+		if self.midi_input is not None:
+			self.midi_output.close()
+		self.midi_output = midi.Output(self.output_device[0])
 	
 	def _temperature_fired(self):
-		status=self.MIDI_CC
-		data1=self.MIDI_NUM_TEMPERATURE
-		data2=int(self.temperature/5*127)
-		self.midi_output.write_short(status,data1,data2)
+		status = self.MIDI_CC
+		data1  = self.MIDI_NUM_TEMPERATURE
+		data2  = int(self.temperature/self.max_temp*127)
+		if self.midi_output is not None:
+			self.midi_output.write_short(status,data1,data2)
+	
+	def _volume_fired(self):
+		status = self.MIDI_CC
+		data1  = self.MIDI_NUM_VOLUME
+		data2  = int(self.volume/self.max_vol*127)
+		if self.midi_output is not None:
+			self.midi_output.write_short(status,data1,data2)
+	
+	def _pressure_fired(self):
+		status = self.MIDI_CC
+		data1  = self.MIDI_NUM_PRESSURE
+		data2  = int(self.pressure/self.max_press*127)
+		if self.midi_output is not None:
+			self.midi_output.write_short(status,data1,data2)
+	
+	def _number_of_particles_fired(self):
+		status = self.MIDI_CC
+		data1  = self.MIDI_NUM_NUMBEROFPARTICLES
+		data2  = int(self.number_of_particles/self.max_n*127)
+		if self.midi_output is not None:
+			self.midi_output.write_short(status,data1,data2)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -153,26 +207,26 @@ class Controls(HasTraits):
 lj_cap = 20
 system.non_bonded_inter.set_force_cap(lj_cap)
 
-# Warmup Integration Loop
-i = 0
-while (i < warm_n_times and act_min_dist < min_dist):
-    integrate.integrate(warm_steps)
-    # Warmup criterion
-    act_min_dist = analyze.mindist(system)
-    i += 1
-
-#   Increase LJ cap
-    lj_cap = lj_cap + 10
-    system.non_bonded_inter.set_force_cap(lj_cap)
-    mayavi.update()
+# # Warmup Integration Loop
+# i = 0
+# while (i < warm_n_times and act_min_dist < min_dist):
+#     integrate.integrate(warm_steps)
+#     # Warmup criterion
+#     act_min_dist = analyze.mindist(system)
+#     i += 1
+#
+# #   Increase LJ cap
+#     lj_cap = lj_cap + 10
+#     system.non_bonded_inter.set_force_cap(lj_cap)
+#     mayavi.update()
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
 # remove force capping
-lj_cap = 0
-system.non_bonded_inter.set_force_cap(lj_cap)
+#lj_cap = 0
+#system.non_bonded_inter.set_force_cap(lj_cap)
 
 # print initial energies
 energies = analyze.energy(system=system)
@@ -183,19 +237,36 @@ pyplot.ylabel("Energy")
 pyplot.legend()
 pyplot.show(block=False)
 
-j = 0
-
 def main_loop():
-    global energies
+	global energies
 
-    integrate.integrate(int_steps)
-    system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
-    mayavi.update()
+	integrate.integrate(int_steps)
+	mayavi.update()
+	
+	# update the parameters set in the GUI
+	system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+	
+	if controls.volume == 0:
+		controls.volume = 1
+	new_box = numpy.ones(3) * box_l * controls.volume
+	if numpy.any(numpy.array(system.box_l) != new_box):
+		for i in range(system.n_part):
+			system.part[i].pos *= new_box/system.box_l
+	system.box_l = new_box
+	
+	new_part = controls.number_of_particles
+	if new_part > system.n_part:
+		for i in range(new_part - system.n_part):
+			print ("Adding. Target %d, existing %d" % (new_part,system.n_part))
+			system.part.add(id=system.n_part+i, pos=numpy.random.random(3) * system.box_l)
+	elif new_part < system.n_part:
+		print ("Removing", (system.n_part - new_part))
+		for i in range(system.n_part - new_part):
+			system.part[numpy.random.randint(system.n_part)].delete()
 
-    energies = analyze.energy(system=system)
-    plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-    plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
-    linear_momentum = analyze.analyze_linear_momentum(system=system)
+	energies = analyze.energy(system=system)
+	plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
+	plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
 
 def main_thread():
     for i in range(0, int_n_times):
@@ -204,13 +275,23 @@ def main_thread():
 def midi_thread():
 	while True:
 		try:
-			if controls.midi_input.poll():
+			if controls.midi_input is not None and controls.midi_input.poll():
 				events = controls.midi_input.read(1000)
 				for event in events:
 					status,data1,data2,data3 = event[0]
-					if status == controls.MIDI_CC and data1 == controls.MIDI_NUM_TEMPERATURE:
-						temperature = data2 * 5.0 / 127
-						controls.temperature = temperature
+					if status == controls.MIDI_CC:
+						if data1 == controls.MIDI_NUM_TEMPERATURE:
+							temperature = data2 * controls.max_temp / 127
+							controls.temperature = temperature
+						elif data1 == controls.MIDI_NUM_VOLUME:
+							volume = data2 * controls.max_vol / 127
+							controls.volume = volume
+						elif data1 == controls.MIDI_NUM_PRESSURE:
+							pressure = data2 * controls.max_press / 127
+							controls.pressure = pressure
+						elif data1 == controls.MIDI_NUM_NUMBEROFPARTICLES:
+							npart = data2 * controls.max_n / 127
+							controls.number_of_particles = npart
 		except Exception as e:
 			print (e)
 
@@ -230,7 +311,8 @@ t.daemon = True
 mayavi.register_callback(update_plot, interval=2000)
 controls = Controls()
 t.start()
-t2 = Thread(target=midi_thread)
-t2.daemon = True
-t2.start()
+if controls.midi_input is not None:
+	t2 = Thread(target=midi_thread)
+	t2.daemon = True
+	t2.start()
 mayavi.run_gui_event_loop()
