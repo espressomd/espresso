@@ -58,6 +58,7 @@ proc write_data {file} {
     close $f
 }
 
+
 if { [catch {
     ############## integ-specific part
     setmd box_l     99 99 99
@@ -82,7 +83,6 @@ if { [catch {
 
     # here you can create the necessary snapshot
     # write_data "intpbc_system.data.gz"
-
     ############## end
 
     set toteng [analyze energy total]

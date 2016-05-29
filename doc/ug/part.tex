@@ -548,6 +548,7 @@ set up to be \var{bond\_length}.
 \end{arguments}
 
 \subsection{\texttt{counterions}: Setting up counterions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{counterions}
 \begin{essyntax}
   counterions
@@ -577,6 +578,7 @@ This command will create \var{N} counterions in the simulation box.
 
 \smallskip
 \subsection{\texttt{salt}: Setting up salt ions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{salt}
 \begin{essyntax}
   salt 
@@ -614,6 +616,7 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 
 \subsection{\texttt{diamond}: Setting up diamond polymer networks}
 \newescommand{diamond}
+
 \begin{essyntax}
   diamond 
   \var{a} \var{bond\_length} \var{monomers\_per\_chain} 
@@ -627,8 +630,16 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
   \end{features}
 \end{essyntax}
 
+ \begin{pycode}
+	from espressomd import diamond 
+\end{pycode}
+
+\begin{pysyntax}
+	diamond.Diamond(a=\arg{double},bond_length=\arg{double}, MPC=\arg{int}, [N_CI=\arg{int}, val_nodes=\arg{double}, val_cM=\arg{double}, val_CI=\arg{double}, cM_dist=\arg{int}, nonet] )
+\end{pysyntax}
+
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
-connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} in 
+connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} (MPC) in 
 a unit cell of length \var{a}. Chain monomers are placed at a mutual distance \var{bond\_length}
 along the vector connecting network nodes.
 The polymer is created starting from particle ID 0. Nodes are assigned type 0,
@@ -647,16 +658,16 @@ For inter-particle bonds interaction $0$ is taken which must be a two-particle b
 \item[\var{a}] Determines the size of the of the unit cell.
 \item[\var{bond\_length}] Specifies the bond length of the polymer
   chains connecting the 8 tetra-functional nodes.
-\item[\var{monomers\_per\_chain}] Sets the number of chain monomers
+\item[\var{monomers\_per\_chain}] (MPC) Sets the number of chain monomers
   between the functional nodes.
 \item[\opt{counterions \var{N_\mathrm{CI}}}] Adds \var{N_\mathrm{CI}}
   counterions to the system.
 \item[\opt{charges \var{val_\mathrm{node}} \var{val_\mathrm{monomer}}
     \var{val_\mathrm{CI}}}] Sets the charge of the nodes to
   \var{val_\mathrm{node}}, the charge of the connecting monomers to
-  \var{val_\mathrm{monomer}}, and the charge of the counterions to
+  \var{val_\mathrm{monomer}} (val\_cM), and the charge of the counterions to
   \var{val_\mathrm{CI}}.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Specifies the distance
+\item[\opt{distance \var{d_\mathrm{charged}}}] (cM\_dist) Specifies the distance
   between charged monomers along the interconnecting chains. If
   $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
   uncharged.

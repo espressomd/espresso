@@ -18,6 +18,9 @@
 #
 from utils cimport *
 
+cdef int _integrate(int nSteps, int recalc_forces, int reuse_forces):
+    with nogil:
+        return python_integrate(nSteps, recalc_forces, reuse_forces)
 
 def integrate(nSteps, recalc_forces=False, reuse_forces=False):
     """integrate(nSteps, recalc_forces=False, reuse_forces=False)"""
@@ -29,7 +32,7 @@ def integrate(nSteps, recalc_forces=False, reuse_forces=False):
     check_type_or_throw_except(
         reuse_forces, 1, bool, "reuse_forces has to be a bool")
     
-    if (python_integrate(nSteps, recalc_forces, reuse_forces)):
+    if (_integrate(nSteps, recalc_forces, reuse_forces)):
         errors = mpiRuntimeErrorCollectorGather()
         for err in errors:
             print(err.format())

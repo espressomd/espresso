@@ -20,7 +20,7 @@
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
 file(GLOB cython_AUX *.py)
-file(COPY ${cython_AUX} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
@@ -62,6 +62,7 @@ foreach(cython_file ${cython_SRC})
                          ${cython_file}
                          -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
+                                 ${cython_HEADER}
                          )
 
       add_library(${basename} SHARED ${basename}.cpp)
@@ -74,4 +75,12 @@ foreach(cython_file ${cython_SRC})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
+
+
+foreach(auxfile ${cython_AUX})
+  add_custom_command(TARGET espressomd
+                     COMMAND ${CMAKE_COMMAND} -E
+                       copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
+                    )
+endforeach(auxfile)
 
