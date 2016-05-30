@@ -110,7 +110,12 @@ IF ELECTROSTATICS:
                 cdef double alpha
                 cdef double box[3]
                 cao = params["cao"]
-                mesh = params["mesh"]
+                # Mesh can be specified as single int, but here, an array is needed
+                if not hasattr(params["mesh"],"__getitem__"):
+                  for i in range(3): 
+                    mesh[i]=params["mesh"]
+                else:
+                    mesh = params["mesh"]
                 alpha = params["alpha"]
                 box = params["box"]
                 p3m_gpu_init(cao, mesh, alpha, box)
