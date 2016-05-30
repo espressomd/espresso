@@ -613,13 +613,10 @@ IF ELECTROSTATICS:
             MMM2D_init()
             print MMM2D_sanity_checks()
 
-    IF SCAFACOS==1:
-        class Scafacos(ScafacosConnector,ElectrostaticInteraction):
-            # These "imports"  are needed, as cdef classes don't support multiple
-            # inheritance but the scafacos code is hared between electrostatics
-            # and magnetostatics
-            dipolar=False
-            
+    IF SCAFACOS == 1:
+        class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+            dipolar = False
+
             # Explicit constructor needed due to multiple inheritance
             def __init__(self,*args,**kwargs):
                actors.Actor.__init__(self,*args,**kwargs)
