@@ -52,6 +52,10 @@ cdef class Actor:
     def _deactivate(self):
         self._deactivate_method()
         self._isactive = False
+        inter = self._get_interaction_type()
+        if not Actor.active_list[inter]:
+            raise Exception("Class not registerd in Actor.active_list "+self.__class__.__bases__[0])
+        Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
@@ -110,7 +114,6 @@ cdef class Actor:
         return c
 
     def is_active(self):
-        print self.__class__.__name__, self._isactive
         return self._isactive
 
     def valid_keys(self):
@@ -167,10 +170,21 @@ class Actors:
             print actor
         return ""
 
-    def get(self):
-        # for actor in Actors.activeActors:
-        #     print actor.__class__.__name__
-        return "%s" % Actors.active_actors
+    def __getitem__(self,key):
+      return self.active_actors[key]
 
-    def deactivate(self, actor):
+    def __len__(self):
+        return len(self.active_actors)
+
+    
+    def __iter__(self):
+      for a in self.active_actors:
+        yield a
+
+    def __delitem__(self, idx):
+        actor=self[idx]
+        if not actor in self.active_actors:
+          raise Exception("Actor is not active")
         actor._deactivate()
+        self.active_actors.remove(actor)
+
