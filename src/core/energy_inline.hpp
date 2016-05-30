@@ -221,7 +221,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
     break;
 #endif
 #ifdef SCAFACOS
-    case COULOMB_SCAFACOS: ret+=Scafacos::pair_energy(p1,p2,dist); break;
+    case COULOMB_SCAFACOS: 
+      ret+=Scafacos::pair_energy(p1,p2,dist); 
+      break;
 #endif
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
