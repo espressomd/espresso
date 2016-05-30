@@ -29,11 +29,7 @@ import numpy
 
 system = espressomd.System()
 
-
-#system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
 #if no seed is provided espresso generates a seed
-#print system.seed
-
 
 system.time_step = 0.01
 system.skin = 0.4
@@ -50,11 +46,6 @@ system.bonded_inter.add(fene)
 
 poly = system.polymer
 poly(N_P = 1, bond_length = 1.0, MPC=50, bond_id=0)
-
-#for i in range(50):
-#    system.part.add(id=i, pos=[i, 0, 0])
-#    if i > 0:
-#        system.part[i].add_bond((fene, i - 1))
 
 
 #############################################################
