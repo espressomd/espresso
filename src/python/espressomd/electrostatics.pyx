@@ -641,9 +641,6 @@ IF ELECTROSTATICS:
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
-            # These "imports"  are needed, as cdef classes don't support multiple
-            # inheritance but the scafacos code is hared between electrostatics
-            # and magnetostatics
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
