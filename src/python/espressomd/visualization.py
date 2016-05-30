@@ -98,17 +98,22 @@ class mayavi_live:
 		radii = numpy.empty(N)
 		bonds = []
 
-		for i in range(N):
-			coords[i,:] = self.system.part[i].pos
+		j = 0
+		for i in range(self.system.max_part+1):
+			if not self.system.part.exists(i):
+				continue
+			coords[j,:] = self.system.part[i].pos
 			t = self.system.part[i].type
-			types[i] = t +1
-			radii[i] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
+			types[j] = t +1
+			radii[j] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
 
 			bs = self.system.part[i].bonds
 			for b in bs:
 				t = b[0]
 				for p in b[1:]:
 					bonds.append((i,p,t))
+			j += 1
+		assert j == self.system.n_part
 		Nbonds = len(bonds)
 		bond_coords = numpy.empty((Nbonds,7))
 

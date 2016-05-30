@@ -113,13 +113,14 @@ class Controls(HasTraits):
 	
 	max_temp  = 5.
 	max_press = 2.
-	max_vol   = 2.
-	max_n     = 20000
+	max_vol   = 3.
+	min_vol   = 1.
+	max_n     = 5000
 	
 	temperature = Range(0., max_temp, 1., )
-	volume = Range(0., max_vol, 1., )
+	volume = Range(min_vol, max_vol, 1., )
 	pressure = Range(0., max_press, 1., )
-	number_of_particles = Range(0, max_n, n_part, )
+	number_of_particles = Range(1, max_n, n_part, )
 	
 	midi_input = midi.Input(inputs[0][0]) if len(inputs) > 0 else None
 	midi_output = midi.Output(outputs[0][0]) if len(outputs) > 0 else None
@@ -135,7 +136,7 @@ class Controls(HasTraits):
 	view = View(
 		Group(
 			Item('temperature', editor=RangeEditor(high_name='max_temp')),
-			Item('volume', editor=RangeEditor(high_name='max_vol')),
+			Item('volume', editor=RangeEditor(low_name='min_vol', high_name='max_vol')),
 #			Item('pressure', editor=RangeEditor(high_name='max_press')),
 			Item('number_of_particles', editor=RangeEditor(high_name='max_n', is_float=False)),
 			show_labels=True,
@@ -228,13 +229,21 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 #lj_cap = 0
 #system.non_bonded_inter.set_force_cap(lj_cap)
 
-# print initial energies
-energies = analyze.energy(system=system)
+# get initial observables
+pressure = analyze.pressure(system)
+temperature = system.temperature
 
-plot, = pyplot.plot([0],[energies['total']], label="total")
+pyplot.subplot(132)
+pyplot.title("Temperature")
+plot1, = pyplot.plot([0],[temperature])
 pyplot.xlabel("Time")
-pyplot.ylabel("Energy")
-pyplot.legend()
+pyplot.ylabel("Temperature")
+pyplot.subplot(133)
+pyplot.title("Pressure")
+plot2, = pyplot.plot([0],[pressure['total']])
+pyplot.xlabel("Time")
+pyplot.ylabel("Pressure")
+#pyplot.legend()
 pyplot.show(block=False)
 
 def main_loop():
@@ -246,8 +255,12 @@ def main_loop():
 	# update the parameters set in the GUI
 	system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
 	
+	# make sure the parameters are valid
 	if controls.volume == 0:
 		controls.volume = 1
+	if controls.number_of_particles == 0:
+		controls.number_of_particles = 1
+	
 	new_box = numpy.ones(3) * box_l * controls.volume
 	if numpy.any(numpy.array(system.box_l) != new_box):
 		for i in range(system.n_part):
@@ -256,17 +269,18 @@ def main_loop():
 	
 	new_part = controls.number_of_particles
 	if new_part > system.n_part:
-		for i in range(new_part - system.n_part):
-			print ("Adding. Target %d, existing %d" % (new_part,system.n_part))
-			system.part.add(id=system.n_part+i, pos=numpy.random.random(3) * system.box_l)
+		for i in range(system.n_part, new_part):
+			system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 	elif new_part < system.n_part:
-		print ("Removing", (system.n_part - new_part))
-		for i in range(system.n_part - new_part):
-			system.part[numpy.random.randint(system.n_part)].delete()
+		for i in range(new_part, system.n_part):
+			system.part[i].delete()
+	assert system.n_part == system.max_part +1 # There should be no holes in particle numbers
 
 	energies = analyze.energy(system=system)
-	plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
-	plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
+	plot1.set_xdata(numpy.append(plot1.get_xdata(), system.time))
+	plot1.set_ydata(numpy.append(plot1.get_ydata(), system.temperature))
+	plot2.set_xdata(numpy.append(plot2.get_xdata(), system.time))
+	plot2.set_ydata(numpy.append(plot2.get_ydata(), analyze.pressure(system)['total']))
 
 def main_thread():
     for i in range(0, int_n_times):
@@ -298,12 +312,14 @@ def midi_thread():
 last_plotted = 0
 def update_plot():
     global last_plotted
-    current_time = plot.get_xdata()[-1]
+    current_time = plot1.get_xdata()[-1]
     if last_plotted == current_time:
         return
     last_plotted = current_time
-    pyplot.xlim(0, plot.get_xdata()[-1])
-    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    plot1.axes.set_xlim(0, plot1.get_xdata()[-1])
+    plot1.axes.set_ylim(0.8*plot1.get_ydata().min(), 1.2*plot1.get_ydata().max())
+    plot2.axes.set_xlim(0, plot2.get_xdata()[-1])
+    plot2.axes.set_ylim(0.8*plot2.get_ydata().min(), 1.2*plot2.get_ydata().max())
     pyplot.draw()
 
 t = Thread(target=main_thread)
