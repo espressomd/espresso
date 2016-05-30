@@ -22,7 +22,7 @@ cimport actors
 import actors
 cimport globals
 import numpy as np
-import scafacos
+from scafacos import *
 cimport scafacos
 
 
@@ -155,7 +155,7 @@ IF P3M == 1:
                 raise ValueError(
                     "P3M cao has to be an integer between -1 and 7")
 
-            if not (self._params["accuracy"] > 0):
+            if not (self._params["accuracy"] >= 0):
                 raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":
@@ -179,14 +179,14 @@ IF P3M == 1:
             return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
         def required_keys(self):
-            return ["bjerrum_length", "accuracy"]
+            return ["bjerrum_length"]
 
         def default_params(self):
             return {"cao": -1,
                     "inter": -1,
                     "r_cut": -1,
                     "alpha": -1,
-                    "accuracy": -1,
+                    "accuracy": 0,
                     "mesh": [-1, -1, -1],
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
@@ -248,7 +248,7 @@ IF P3M == 1:
                     raise ValueError(
                         "P3M cao has to be an integer between -1 and 7")
 
-                if not (self._params["accuracy"] > 0):
+                if not (self._params["accuracy"] >= 0):
                     raise ValueError("P3M accuracy has to be positive")
 
                 # if self._params["epsilon"] == "metallic":
@@ -269,13 +269,13 @@ IF P3M == 1:
                 return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
 
             def required_keys(self):
-                return ["bjerrum_length", "accuracy"]
+                return ["bjerrum_length"]
 
             def default_params(self):
                 return {"cao": -1,
                         "inter": -1,
                         "r_cut": -1,
-                        "accuracy": -1,
+                        "accuracy": 0.,
                         "mesh": [-1, -1, -1],
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
@@ -614,20 +614,20 @@ IF ELECTROSTATICS:
             print MMM2D_sanity_checks()
 
     IF SCAFACOS==1:
-        cdef class Scafacos(ElectrostaticInteraction):
+        class Scafacos(ScafacosConnector,ElectrostaticInteraction):
             # These "imports"  are needed, as cdef classes don't support multiple
-            # inheritance
+            # inheritance but the scafacos code is hared between electrostatics
+            # and magnetostatics
             dipolar=False
-            valid_keys = scafacos.valid_keys
-            required_keys = scafacos.required_keys
-            validate_params = scafacos.validate_params
-            _get_params_from_es_core = scafacos._get_params_from_es_core
-            _set_params_in_es_core = scafacos._set_params_in_es_core
-            _activate_method = scafacos._activate_method
+            
+            # Explicit constructor needed due to multiple inheritance
+            def __init__(self,*args,**kwargs):
+               actors.Actor.__init__(self,*args,**kwargs)
             
             def _activate_method(self):
                coulomb.method =COULOMB_SCAFACOS
-               coulomb.set_bjerrum(self._params["bjerrum_length"])
+               coulomb_set_bjerrum(self._params["bjerrum_length"])
                self._set_params_in_es_core()
     
-    
+            def default_params(self):
+                return {}
