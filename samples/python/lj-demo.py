@@ -111,9 +111,9 @@ class Controls(HasTraits):
 	input_device = List(editor=CheckListEditor(values=inputs))
 	output_device = List(editor=CheckListEditor(values=outputs))
 	
-	max_temp  = 5.
+	max_temp  = 2.
 	max_press = 2.
-	max_vol   = 3.
+	max_vol   = 5.
 	min_vol   = 1.
 	max_n     = 5000
 	
@@ -233,6 +233,27 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 pressure = analyze.pressure(system)
 temperature = system.temperature
 
+# TODO: this is some terrible polynomial fit, replace it with a better expression
+# equation of state
+pyplot.subplot(131)
+pyplot.semilogy()
+pyplot.title("Phase diagram")
+pyplot.xlabel("Temperature")
+pyplot.ylabel("Pressure")
+pyplot.xlim(0.5,2.0)
+pyplot.ylim(5e-5,2e1)
+xx = numpy.linspace(0.5,0.7,200)
+pyplot.plot(xx, -6.726* xx**4 + 16.92* xx**3 - 15.85* xx**2 + 6.563* xx - 1.015, 'k-')
+xx = numpy.linspace(0.7,1.3,600)
+pyplot.plot(xx, -0.5002* xx**4 + 2.233* xx**3 - 3.207* xx**2 + 1.917* xx - 0.4151, 'k-')
+xx = numpy.linspace(0.6,2.2,1500)
+pyplot.plot(xx, 16.72* xx**4 - 88.28* xx**3 + 168* xx**2 - 122.4* xx +29.79, 'k-')
+
+cursor = pyplot.scatter(temperature,pressure['total'],200,'r')
+pyplot.text(0.6, 10, 'solid')
+pyplot.text(1, 1, 'liquid')
+pyplot.text(1, 10**-3, 'gas')
+
 pyplot.subplot(132)
 pyplot.title("Temperature")
 plot1, = pyplot.plot([0],[temperature])
@@ -274,13 +295,14 @@ def main_loop():
 	elif new_part < system.n_part:
 		for i in range(new_part, system.n_part):
 			system.part[i].delete()
-	assert system.n_part == system.max_part +1 # There should be no holes in particle numbers
+	assert system.n_part == system.max_part +1 # There should be no gaps in particle numbers
 
 	energies = analyze.energy(system=system)
 	plot1.set_xdata(numpy.append(plot1.get_xdata(), system.time))
 	plot1.set_ydata(numpy.append(plot1.get_ydata(), system.temperature))
 	plot2.set_xdata(numpy.append(plot2.get_xdata(), system.time))
 	plot2.set_ydata(numpy.append(plot2.get_ydata(), analyze.pressure(system)['total']))
+	cursor.set_offsets(([[plot1.get_ydata()[-1], plot2.get_ydata()[-1]]]))
 
 def main_thread():
     for i in range(0, int_n_times):
