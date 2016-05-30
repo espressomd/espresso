@@ -521,7 +521,7 @@ def energy(system, etype='all', id1='default', id2='default'):
         total_dipolar = 0
         for i in range(c_analyze.total_energy.n_dipolar):
             total_dipolar += c_analyze.total_energy.dipolar[i]
-            e["dipolar", i] = c_analyze.total_energy.coulomb[i]
+            e["dipolar", i] = c_analyze.total_energy.dipolar[i]
         e["dipolar"] = total_dipolar
 
     return e
