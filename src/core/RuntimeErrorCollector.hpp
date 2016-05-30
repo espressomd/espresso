@@ -20,16 +20,18 @@
 #ifndef _RUNTIMEERRORCOLLECTOR_HPP
 #define _RUNTIMEERRORCOLLECTOR_HPP
 
-#include "config.hpp"
-#include <list>
+#include <vector>
 #include <string>
-#include "mpi.h"
+
+#include <boost/mpi/communicator.hpp>
+
+#include "RuntimeError.hpp"
+
+namespace ErrorHandling {
 
 class RuntimeErrorCollector {
-  std::list<std::string> errors;
-  MPI_Comm comm;
 public:
-  RuntimeErrorCollector(MPI_Comm comm);
+  RuntimeErrorCollector(const boost::mpi::communicator &comm);
 
   void 
   warning(const std::string &msg,
@@ -51,11 +53,30 @@ public:
   error(const std::ostringstream &mstr,
         const char* function, const char* file, const int line);
 
-  int count();
+  /**
+   * \brief Return the number of all flying messages.
+   *
+   * @return Total number of messages.
+   */
+  int count() const;
+  /**
+   * \brief Number of Messages that have at least level level.
+   *
+   * @param level Severity filter.
+   * @return Number of Messages that have at least level.
+   */
+  int count(RuntimeError::ErrorLevel level);
+  
   void clear();
 
-  std::list<std::string> gather();
+  std::vector<RuntimeError> gather();
   void gatherSlave();
+
+private:
+  std::vector<RuntimeError> m_errors;
+  boost::mpi::communicator m_comm;
 };
+
+} /* ErrorHandling */
 
 #endif

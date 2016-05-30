@@ -338,7 +338,7 @@ void angularmomentum(int type, double *com)
   return;
 }
 
-void  momentofinertiamatrix(int type, double *MofImatrix)
+void momentofinertiamatrix(int type, double* MofImatrix)
 {
   int i,j,count;
   double p1[3],massi;
@@ -369,17 +369,17 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
   return;
 }
 
-void calc_gyration_tensor(int type, double **_gt)
+void calc_gyration_tensor(int type, std::vector<double>& gt)
 {
   int i, j, count;
   std::vector<double> com (3);
   double eva[3],eve0[3],eve1[3],eve2[3];
-  double *gt=NULL, tmp;
+  double tmp;
   double Smatrix[9],p1[3];
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  *_gt = gt = (double*)Utils::realloc(gt,16*sizeof(double)); 
+  gt.resize(16);
 
   updatePartCfg(WITHOUT_BONDS);
 

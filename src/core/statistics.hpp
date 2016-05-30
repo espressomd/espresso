@@ -383,8 +383,8 @@ void angularmomentum(int type, double *com);
 void centermass_conf(int k, int type_1, double *com);
 
 
-void momentofinertiamatrix(int type, double *MofImatrix);
-void calc_gyration_tensor(int type, double **gt);
+void momentofinertiamatrix(int type, double* MofImatrix);
+void calc_gyration_tensor(int type, std::vector<double>& gt);
 void calculate_verlet_neighbors();
 
 /** returns the momentum of the particles in the simulation box.

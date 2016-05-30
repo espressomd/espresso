@@ -31,6 +31,7 @@
 #include "forces_inline.hpp"
 #include "electrokinetics.hpp"
 
+#include <cassert>
 ActorList forceActors;
 
 void init_forces()
@@ -303,7 +304,8 @@ void calc_long_range_forces()
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Electrostatics::Scafacos::add_long_range_force();
+    assert(! Scafacos::dipolar());
+    Scafacos::add_long_range_force();
     break;
 #endif
   default:
@@ -348,6 +350,11 @@ void calc_long_range_forces()
   case DIPOLAR_DS_GPU: 
     // Do nothing. It's an actor
     break;
+#ifdef SCAFACOS_DIPOLES
+  case DIPOLAR_SCAFACOS: 
+    assert(Scafacos::dipolar());
+    Scafacos::add_long_range_force();
+#endif
   case DIPOLAR_NONE:
       break;
   default:

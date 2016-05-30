@@ -122,7 +122,7 @@ set:
 \item[npt_p_ext] (double, \ro) Pressure for NPT simulations.
 \item[npt_p_inst] (double) Pressure calculated during an
   NPT_isotropic integration.
-\item[piston] (double, \ro) Mass off the box when using NPT_isotropic
+\item[npt_piston] (double, \ro) Mass off the box when using NPT_isotropic
   integrator.
 \item[periodicity] (bool[3]) Specifies periodicity for the three
   directions. If the feature PARTIAL_PERIODIC is set, this variable
@@ -836,7 +836,7 @@ specified it is assumed that \var{k\_eq} = 0.
   \object{
     espressomd.reaction
   }{
-    reaction
+    Reaction
   }{
     product_type   = \arg{int},
     reactant_type  = \arg{int},
@@ -897,6 +897,12 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
   moment, there can only be one reaction in the simulation.
 \item Variant \variant{2} returns the current reaction parameters.
 \end{itemize}
+
+The Python interface has some modified capabilities with respect to
+the TCL interface.  For example, you can alter parameters using the
+\texttt{.setup()} method of the reaction instance.  The reaction
+mechanism can be inhibited and restarted using \texttt{.stop()} and
+\texttt{.start()}.
 
 In future versions of \es the capabilities of the
 \feature{CATALYTIC_REACTIONS} feature may be generalized to handle

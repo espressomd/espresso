@@ -58,6 +58,8 @@
 #include <mpi.h>
 #include "cuda_init.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
 /**************************************************
  * exported variables
  **************************************************/
@@ -69,6 +71,8 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 extern MPI_Comm comm_cart;
+/** Boost::MPI communicator */
+extern boost::mpi::communicator boost_comm;
 /*@}*/
 
 /**************************************************
@@ -497,22 +501,13 @@ void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
-void mpi_random_seed(int cnt, long *seed);
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
-/** Issue REQ_RANDOM_STAT: read/set status of random number generators on each node. */
-void mpi_random_stat(int cnt, RandomStatus *stat);
+std::string mpi_random_get_stat();
+void mpi_random_set_stat(const std::vector<std::string> &stat);
 
-/** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
+/** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-//void mpi_morse_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-//void mpi_buck_cap_forces(double force_cap);
-
-/** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
@@ -636,6 +631,13 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
 
 /** CPU Thermostat */
 void mpi_thermalize_cpu(int temp);
+
+/** MPI-IO output function.
+ *  \param filename Filename prefix for the created files. Must be null-terminated.
+ *  \param fields Fields to dump (see mpiio_tcl.hpp).
+ *  \param write 1 to write, 0 to read
+ */
+void mpi_mpiio(const char *filename, unsigned fields, int write);
 
 /*@}*/
 

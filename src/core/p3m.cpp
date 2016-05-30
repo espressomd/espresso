@@ -131,6 +131,8 @@ static void p3m_spread_force_grid(double* mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
+static int p3m_sanity_checks_system(void);
+
 /** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
 static int p3m_sanity_checks_boxl(void);
 
@@ -306,16 +308,15 @@ void   p3m_init() {
     p3m.params.r_cut    = 0.0;
     p3m.params.r_cut_iL = 0.0;
 
-
-
     if(this_node==0) 
-      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
+      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\nElectrostatics switched off!\n"););
 
-      fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: \n",this_node));
 
-    if (p3m_sanity_checks()) return;
+    if (p3m_sanity_checks()) {
+      return;
+    }
 
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: starting\n",this_node));
 
@@ -1332,8 +1333,8 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
 static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L)
 {
-  /* rounded up 2000/n_charges timing force evaluations */
-  int int_num = (1999 + p3m.sum_qpart)/p3m.sum_qpart;
+  /* rounded up 5000/n_charges timing force evaluations */
+  int int_num = (5000 + p3m.sum_qpart)/p3m.sum_qpart;
   double int_time;
 
   /* broadcast p3m parameters for test run */
@@ -1440,8 +1441,8 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
 
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f time %f\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, int_time));
   /* print result */
-  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n",
-	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
+  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.2f\n",
+	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
   *log = strcat_alloc(*log, b);
   return int_time;
 }
@@ -1589,6 +1590,10 @@ int p3m_adaptive_tune(char **log) {
     }
   }
 
+  if (p3m_sanity_checks_system()) {
+    return ES_ERROR;
+  }
+  
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
@@ -1606,8 +1611,9 @@ int p3m_adaptive_tune(char **log) {
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
+    /* Medium-educated guess for the minimal mesh */
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0);
-    mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
+    mesh_density_max = 512 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     tune_mesh = 1;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1740,8 +1746,8 @@ int p3m_adaptive_tune(char **log) {
   P3M_TRACE(p3m_print());
 
   /* Tell the user about the outcome */
-  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n",
-	  mesh[0], cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  sprintf(b, "\nresulting parameters:\n%-4d %-4d %-4d %-3d %.5e %.5e %.5e %-8.2f\n",
+	  mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy, time_best);
   *log = strcat_alloc(*log, b);
   return ES_OK;
 }
@@ -1940,11 +1946,12 @@ int p3m_sanity_checks_boxl() {
   return ret;
 }
 
-
-
-
-int p3m_sanity_checks()
-{
+/**
+ * @brief General sanity checks independent of p3m parameters.
+ * 
+ * @return 0 if ok, 1 on error.
+ */
+int p3m_sanity_checks_system() {
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -1957,6 +1964,30 @@ int p3m_sanity_checks()
     ret = 1;
   }
 
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
+    ret = 1;
+  }
+  
+  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
+      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
+	  ret = 1;
+	}
+  }
+    
+  return ret;
+}
+
+
+int p3m_sanity_checks()
+{
+  int ret = 0;
+
+  if (p3m_sanity_checks_system())
+    ret = 1;
+  
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
@@ -1971,20 +2002,7 @@ int p3m_sanity_checks()
       runtimeErrorMsg() <<"P3M_init: alpha must be >0";
     ret = 1;
   }
-  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
-    ret = 1;
-  }
   
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
-	  ret = 1;
-	}
-  }
-  
-
   return ret;
 }
 
@@ -2104,8 +2122,6 @@ void p3m_calc_kspace_stress (double* stress) {
         p3m_gather_fft_grid(p3m.rs_mesh);
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
-
-
 
         for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
             for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {

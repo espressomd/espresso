@@ -24,10 +24,6 @@ AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
 	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
 
-if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
-endif
-
 #CYTHON compile options e.g. debug
 AM_CYFLAGS = $(CYFLAGS)
 
@@ -37,6 +33,7 @@ SUFFIXES = .pyx
 EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py \
 	  system.py \
+	  visualization.py \
 	  highlander.py
 
 PYXFILES =  \
@@ -60,7 +57,8 @@ PYXFILES =  \
 	reaction.pyx \
 	thermostat.pyx \
 	utils.pyx \
-	h5md.pyx
+	h5md.pyx \
+	grand_canonical.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -87,7 +85,8 @@ PXDFILES = \
 	thermostat.pxd \
 	utils.pxd \
 	actors.pxd \
-	h5md.pxd
+	h5md.pxd \
+	grand_canonical.pxd
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
 

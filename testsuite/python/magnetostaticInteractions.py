@@ -20,6 +20,7 @@
 import unittest as ut
 import espressomd
 import numpy as np
+
 from espressomd.magnetostatics import *
 
 
@@ -50,10 +51,8 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = 10, 10, 10
-        self.system.part[0].pos = 0, 0, 0
-        self.system.part[1].pos = 0.1, 0.1, 0.1
-        self.system.part[0].dip = 1.3, 2.1, -6
-        self.system.part[1].dip = 4.3, 4.1, 7.5
+        self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
+        self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
 
     def generateTestForMagnetostaticInteraction(_interClass, _params):
         """Generates test cases for checking interaction parameters set and gotten back
@@ -82,23 +81,24 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
         return func
 
-    test_DP3M = generateTestForMagnetostaticInteraction(DipolarP3M, dict(prefactor=1.0,
-                                                                         epsilon=0.0,
-                                                                         inter=1000,
-                                                                         mesh_off=[
-                                                                             0.5, 0.5, 0.5],
-                                                                         r_cut=2.4,
-                                                                         mesh=[
-                                                                             8, 8, 8],
-                                                                         cao=1,
-                                                                         alpha=12,
-                                                                         accuracy=0.01))
+    if "DP3M" in espressomd.features():
+        test_DP3M = generateTestForMagnetostaticInteraction(DipolarP3M, dict(prefactor=1.0,
+                                                                             epsilon=0.0,
+                                                                             inter=1000,
+                                                                             mesh_off=[
+                                                                                 0.5, 0.5, 0.5],
+                                                                             r_cut=2.4,
+                                                                             mesh=[
+                                                                                 8, 8, 8],
+                                                                             cao=1,
+                                                                             alpha=12,
+                                                                             accuracy=0.01))
 
-    test_DdsCpu = generateTestForMagnetostaticInteraction(
-        DipolarDirectSumCpu, dict(prefactor=3.4))
-    test_DdsRCpu = generateTestForMagnetostaticInteraction(
-        DipolarDirectSumWithReplicaCpu, dict(prefactor=3.4, n_replica=2))
-
+    if "DIPOLAR_DIRECT_SUM" in espressomd.features():
+        test_DdsCpu = generateTestForMagnetostaticInteraction(
+            DipolarDirectSumCpu, dict(prefactor=3.4))
+        test_DdsRCpu = generateTestForMagnetostaticInteraction(
+            DipolarDirectSumWithReplicaCpu, dict(prefactor=3.4, n_replica=2))
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

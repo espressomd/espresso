@@ -18,6 +18,9 @@
 #
 from utils cimport *
 
+cdef int _integrate(int nSteps, int recalc_forces, int reuse_forces):
+    with nogil:
+        return python_integrate(nSteps, recalc_forces, reuse_forces)
 
 def integrate(nSteps, recalc_forces=False, reuse_forces=False):
     """integrate(nSteps, recalc_forces=False, reuse_forces=False)"""
@@ -28,10 +31,16 @@ def integrate(nSteps, recalc_forces=False, reuse_forces=False):
         recalc_forces, 1, bool, "recalc_forces has to be a bool")
     check_type_or_throw_except(
         reuse_forces, 1, bool, "reuse_forces has to be a bool")
+    
+    if (_integrate(nSteps, recalc_forces, reuse_forces)):
+        errors = mpiRuntimeErrorCollectorGather()
+        for err in errors:
+            print(err.format())
 
-    if (python_integrate(nSteps, recalc_forces, reuse_forces)):
-        print (mpiRuntimeErrorCollectorGather())
-        raise Exception("Encoutered errors during integrate")
+        for err in errors:
+            # Cast because cython does not support typed enums completely
+            if <int> err.level() == <int> ERROR:
+                raise Exception("Encoutered errors during integrate")
 
 
 def set_integrator_nvt():
@@ -50,5 +59,8 @@ def set_integrator_isotropic_npt(ext_pressure=0.0, piston=0.0, xdir=0, ydir=0, z
     check_type_or_throw_except(
         zdir, 1, int, "NPT parameter zdir must be an int")
     if (integrate_set_npt_isotropic(ext_pressure, piston, xdir, ydir, zdir, cubic_box)):
-        print (mpiRuntimeErrorCollectorGather())
+        errors = mpiRuntimeErrorCollectorGather()
+        for err in errors:
+            print(err.format())
+
         raise Exception("Encoutered errors setting up the NPT integrator")

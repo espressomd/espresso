@@ -60,61 +60,18 @@ AM_CONDITIONAL(DARWIN, [test $(uname) = "Darwin"])
 #############
 #### MPI ####
 #############
-# Check for --with-mpi
-AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
-    [compile with MPI (parallelization) support. If none is found, the
-     fake implementation for only one processor is used. @<:@guess@:>@])
-],,[with_mpi=guess])
-
 # we use C++ as main code language
 AC_LANG([C++])
-AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
-  if test xyes = x"$with_mpi"; then
-    AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
-  else
-    AC_MSG_WARN([No MPI c++ compiler found, will use fake implementation!])
-    use_mpi_fake="yes"
-  fi
+AX_PROG_CXX_MPI(,,[
+AC_MSG_FAILURE([Couldn't compile with MPI.])
 ])
-
-# if requested, use the fake implementation
-AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
-MPI_FAKE=$use_mpi_fake
-AC_SUBST(MPI_FAKE)
 
 # determine ESPRESSO_MPIEXEC
-AS_IF([test x"$use_mpi_fake" = xyes], [
-  ESPRESSO_MPIEXEC=""
-],[
-  # mpiexec executable
-  AC_ARG_VAR([MPIEXEC], [MPI command mpiexec])
-  AS_IF([test x"$MPIEXEC" = x], [
-    AC_PATH_PROG([MPIEXEC], [mpiexec], [no])
-  ])
-
-  AC_MSG_CHECKING([for the mympiexec user script])
-  AC_ARG_WITH([mympiexec],
-    AS_HELP_STRING([--with-mympiexec@<:@=SCRIPT@:>@],
-      [specify the mpiexec-like program or script that should be
-       used to run ESPResSo in parallel. If the script doesn't
-       exist, it will try to use mpiexec. 
-	 @<:@SCRIPT=./mympiexec.sh@:>@]),
-    [if test x"$with_mympiexec" = xno; then
-       MYMPIEXEC=""
-     else
-       MYMPIEXEC="$with_mympiexec"
-       dir=`AS_DIRNAME([$MYMPIEXEC])`
-       if test x"$dir" = x.; then
-         MYMPIEXEC="`pwd`/$MYMPIEXEC"
-       fi
-     fi],
-    [ MYMPIEXEC="`pwd`/mympiexec.sh" ])
-  AC_MSG_RESULT($MYMPIEXEC)
-  AC_SUBST(MYMPIEXEC)
-
-  ESPRESSO_MPIEXEC="`pwd`/tools/es_mpiexec"
+# mpiexec executable
+AC_ARG_VAR([MPIEXEC], [MPI command mpiexec])
+AS_IF([test x"$MPIEXEC" = x], [
+AC_PATH_PROG([MPIEXEC], [mpiexec], [no])
 ])
-AC_SUBST(ESPRESSO_MPIEXEC)
 
 ##################################
 #### COMPILER CHARACTERISTICS ####
@@ -123,8 +80,7 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 AX_CXX_VAR_PRETTYFUNC()
 
 # check for c++11 support
-AX_CXX_COMPILE_STDCXX_11(noext,optional)
-
+AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
 
 # set the optimization flags
 # never overwrite users CXXFLAGS
@@ -275,6 +231,7 @@ AS_IF([test x$with_cuda != xno],[
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
     save_CPPFLAGS=$CPPFLAGS
+    save_CXXFLAGS=$CXXFLAGS
 
     # NVCC
     AC_PROG_CUDA
@@ -341,13 +298,16 @@ AS_IF([test x$with_cuda != xno],[
 
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
-    
+
+    # Enable C++11 
+    NVCCFLAGS="$NVCCFLAGS -O3 -std c++11"    
+
     # if no other compute capability is defined by the user, we default to 2.0
     case "$NVCCFLAGS" in
        *-arch=*) ;;
        *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
     esac
-    
+
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
@@ -416,8 +376,16 @@ AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 ## Check for Boost
 ##################
 
-AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
-AX_BOOST_UNIT_TEST_FRAMEWORK
+#AX_BOOST_BASE([1.48],, [AC_MSG_WARN([boost was not found on you system, parts of the test system will not be available.])])
+#AX_BOOST_UNIT_TEST_FRAMEWORK
+
+BOOST_REQUIRE
+BOOST_MPI
+BOOST_SERIALIZATION
+BOOST_TEST
+
+LIBS="$LIBS $BOOST_MPI_LIBS"
+
 AM_CONDITIONAL([UNIT_TESTS], [test x$ax_cv_boost_unit_test_framework == xyes])
 
 ## Checking for MAGMA
@@ -789,6 +757,8 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/tcl/Makefile
+	testsuite/python/Makefile
 	doc/Makefile
 	doc/logo/Makefile
 	doc/ug/Makefile
@@ -806,8 +776,10 @@ AC_CONFIG_FILES([
 	doc/tutorials/08-visualization/Makefile 
 	doc/latexit.sh
 	])
-AC_CONFIG_FILES([testsuite/runtest.sh],
-	[chmod 755 testsuite/runtest.sh])
+AC_CONFIG_FILES([testsuite/tcl/runtest.sh],
+	[chmod 755 testsuite/tcl/runtest.sh])
+AC_CONFIG_FILES([testsuite/python/runtest.sh],
+	[chmod 755 testsuite/python/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 AC_CONFIG_FILES([src/python/pypresso],
@@ -912,9 +884,6 @@ if test x$cuda_running = xno; then
    echo "CUDA enabled, but cannot run CUDA code out of the box. Make sure to set the dynamic library loader path correctly."
 fi
 
-if test x"$use_mpi_fake" = x"yes"; then
-   echo "WARNING: MPI disabled or not supported! Parallelization turned off."
-fi
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
 fi
