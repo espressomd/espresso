@@ -10,15 +10,15 @@ cdef class Actor:
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
                        ElectrostaticExtensions=False,
-		       Scafacos=True)
+                       Scafacos=True)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = self._params.copy()
         return odict
 
-    def __setstate__(self,params):
-        self._params=params
+    def __setstate__(self, params):
+        self._params = params
         self._set_params_in_es_core()
 
     def __init__(self, *args, **kwargs):
@@ -54,7 +54,8 @@ cdef class Actor:
         self._isactive = False
         inter = self._get_interaction_type()
         if not Actor.active_list[inter]:
-            raise Exception("Class not registerd in Actor.active_list "+self.__class__.__bases__[0])
+            raise Exception(
+                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
         Actor.active_list[inter] = False
 
     def is_valid(self):
@@ -167,21 +168,19 @@ class Actors:
             print actor
         return ""
 
-    def __getitem__(self,key):
-      return self.active_actors[key]
+    def __getitem__(self, key):
+        return self.active_actors[key]
 
     def __len__(self):
         return len(self.active_actors)
 
-    
     def __iter__(self):
-      for a in self.active_actors:
-        yield a
+        for a in self.active_actors:
+            yield a
 
     def __delitem__(self, idx):
-        actor=self[idx]
+        actor = self[idx]
         if not actor in self.active_actors:
-          raise Exception("Actor is not active")
+            raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)
-

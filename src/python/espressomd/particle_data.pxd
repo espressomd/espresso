@@ -222,5 +222,5 @@ cdef class ParticleHandle(object):
 cdef class ParticleSlice:
 
     cdef particle particle_data
-    cdef int update_particle_data(self,id) except -1
+    cdef int update_particle_data(self, id) except -1
     cdef public id_selection
