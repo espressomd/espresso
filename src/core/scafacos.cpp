@@ -165,6 +165,10 @@ void ScafacosData::update_particle_forces() const {
 
 
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force) {
+  if (dist >get_r_cut()) 
+    return;
+    
+
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
   const double fak = p2->p.q * p1->p.q * field * coulomb.prefactor / dist;
@@ -176,7 +180,10 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *
 }
 
 double pair_energy(Particle* p1, Particle* p2, double dist) {
-  return coulomb.prefactor*p1->p.q*p2->p.q*scafacos->pair_energy(dist);
+  if (dist <=get_r_cut()) 
+    return coulomb.prefactor*p1->p.q*p2->p.q*scafacos->pair_energy(dist);
+  else
+    return 0.;
 }
 
 void add_long_range_force() {
