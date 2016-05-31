@@ -23,13 +23,11 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 import numpy
 
 print("""
 =======================================================
-=                      p3m.py                         =
+=              lj_liquid_distribution.py              =
 =======================================================
 
 Program Information:""")
@@ -58,7 +56,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-thermostat.Thermostat().set_langevin(1.0, 1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -68,12 +66,28 @@ min_dist = 0.9
 
 # integration
 int_steps = 1000
-int_n_times = 10
+int_n_times = 5
 
 
 #############################################################
 #  Setup System                                             #
 #############################################################
+
+# distribution file
+distr_type_list_a = [0]
+distr_type_list_b = [1]
+distr_r_min = 0.1
+distr_r_max = box_l/2.0
+distr_r_bins = 200
+distr_log_flag = 0
+distr_int_flag = 1
+
+
+distr_file = open("pylj_liquid_distribution.dat", "w")
+distr_file.write("# r\tdistribution\n")
+distr_r = numpy.zeros(distr_r_bins)
+distr_values = numpy.zeros(distr_r_bins)
+
 
 # Interaction setup
 #############################################################
@@ -85,7 +99,6 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=lj_cut, shift="auto")
 system.non_bonded_inter.set_force_cap(lj_cap)
 
-
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
@@ -96,48 +109,21 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
+    if i < n_part/2.0:
+        system.part.add(type=0, id=i, pos=numpy.random.random(3) * system.box_l)
+    else:
+        system.part.add(type=1, id=i, pos=numpy.random.random(3) * system.box_l)
+
 
 analyze.distto(system, 0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist(es)
+act_min_dist = analyze.mindist(system)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
-
-
-# Assingn charge to particles
-for i in range(n_part / 2 - 1):
-    system.part[2 * i].q = -1.0
-    system.part[2 * i + 1].q = 1.0
-# P3M setup after charge assigned
-#############################################################
-
-print("\nSCRIPT--->Create p3m\n")
-p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
-
-print("\nSCRIPT--->Add actor\n")
-system.actors.add(p3m)
-
-print("\nSCRIPT--->P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key in p3m_params.keys():
-    print("{} = {}".format(key, p3m_params[key]))
-
-print("\nSCRIPT--->Explicit tune call\n")
-p3m._tune() 
-    
-print("\nSCRIPT--->P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key in p3m_params.keys():
-    print("{} = {}".format(key, p3m_params[key]))
-
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
-print(system.actors)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -146,6 +132,9 @@ print(system.actors)
 # open Observable file
 obs_file = open("pylj_liquid.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
+# set obs_file [open "$name$ident.obs" "w"]
+# puts $obs_file "\# System: $name$ident"
+# puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -163,8 +152,12 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(es)
+    act_min_dist = analyze.mindist(system)
+#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
+
+#   write observables
+#    puts $obs_file "{ time [setmd time] } [analyze energy]"
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
@@ -189,9 +182,12 @@ verlet_reuse  {0.verlet_reuse}
 """.format(system))
 
 # write parameter file
+
+# polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.skin))
+
 
 #############################################################
 #      Integration                                          #
@@ -204,6 +200,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
+#energies = es._espressoHandle.Tcl_Eval('analyze energy')
 energies = analyze.energy(system=system)
 print(energies)
 
@@ -211,12 +208,43 @@ j = 0
 for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
+#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
 
+    r, dist = analyze.distribution(system, type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
+                                   r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins, 
+                                   log_flag=distr_log_flag, int_flag=distr_int_flag)
+    distr_r = r
+    distr_values += dist
+
+#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
     energies = analyze.energy(system=system)
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
+    linear_momentum = analyze.analyze_linear_momentum(system=system)
+    print(linear_momentum)
+    # print(analyze.calc_rh(system,0,3,5))
+    # print(analyze.calc_rg(system,0,3,5))
+    # print(analyze.calc_re(system,0,3,5))
 
+#   write observables
+#    set energies [analyze energy]
+#    puts $obs_file "{ time [setmd time] } $energies"
+#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
+#    flush stdout
+
+#   write intermediate configuration
+#    if { $i%10==0 } {
+#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+#	incr j
+#    }
+
+#rescale distribution values and write out data
+distr_values /= int_n_times
+
+for i in xrange(distr_r_bins):
+    distr_file.write("{0}\t{1}\n".format(distr_r[i], distr_values[i]))
+distr_file.close()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")
@@ -224,11 +252,12 @@ end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
 end_file.write("{ particles {id pos type} }")
 for i in range(n_part):
     end_file.write("%s\n" % system.part[i].pos)
-
+    # id & type not working yet
 
 obs_file.close()
 set_file.close()
 end_file.close()
+# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")

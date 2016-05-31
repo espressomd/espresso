@@ -22,6 +22,7 @@ import espressomd
 import numpy as np
 from espressomd.electrostatics import P3M, DH
 
+
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
@@ -41,12 +42,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         return True
 
-    def setUp(self):        
+    def setUp(self):
         self.system.box_l = 10, 10, 10
         if not self.system.part.exists(0):
-            self.system.part.add(id = 0, pos=(0.0, 0.0, 0.0), q=1)
+            self.system.part.add(id=0, pos=(0.0, 0.0, 0.0), q=1)
         if not self.system.part.exists(1):
-            self.system.part.add(id = 1, pos=(0.1, 0.1, 0.1), q=-1)
+            self.system.part.add(id=1, pos=(0.1, 0.1, 0.1), q=-1)
 
     def generateTestForElectrostaticInteraction(_interClass, _params):
         """Generates test cases for checking interaction parameters set and gotten back
