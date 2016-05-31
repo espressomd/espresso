@@ -26,9 +26,15 @@ from espressomd import visualization
 import numpy
 from matplotlib import pyplot
 from threading import Thread
-from traits.api import HasTraits, Button, Any, Range, List
-from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
-from pygame import midi
+from traits.api import HasTraits, Button, Any, Range, List, Enum
+from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
+try:
+	from pygame import midi
+except:
+	try:
+		from portmidi import midi
+	except:
+		from pyportmidi import midi
 
 midi.init()
 
@@ -112,8 +118,8 @@ class Controls(HasTraits):
 	output_device = List(editor=CheckListEditor(values=outputs))
 	
 	max_temp  = 2.
-	max_press = 2.
-	max_vol   = 5.
+	max_press = 10.
+	max_vol   = 20.
 	min_vol   = 1.
 	max_n     = 5000
 	
@@ -121,6 +127,7 @@ class Controls(HasTraits):
 	volume = Range(min_vol, max_vol, 1., )
 	pressure = Range(0., max_press, 1., )
 	number_of_particles = Range(1, max_n, n_part, )
+	ensemble = Enum('NVT', 'NPT')
 	
 	midi_input = midi.Input(inputs[0][0]) if len(inputs) > 0 else None
 	midi_output = midi.Output(outputs[0][0]) if len(outputs) > 0 else None
@@ -137,8 +144,9 @@ class Controls(HasTraits):
 		Group(
 			Item('temperature', editor=RangeEditor(high_name='max_temp')),
 			Item('volume', editor=RangeEditor(low_name='min_vol', high_name='max_vol')),
-#			Item('pressure', editor=RangeEditor(high_name='max_press')),
+			Item('pressure', editor=RangeEditor(high_name='max_press')),
 			Item('number_of_particles', editor=RangeEditor(high_name='max_n', is_float=False)),
+			Item('ensemble', style='custom'),
 			show_labels=True,
 			label='Parameters'
 		),
@@ -273,20 +281,31 @@ def main_loop():
 	integrate.integrate(int_steps)
 	mayavi.update()
 	
-	# update the parameters set in the GUI
-	system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
-	
 	# make sure the parameters are valid
 	if controls.volume == 0:
 		controls.volume = 1
 	if controls.number_of_particles == 0:
 		controls.number_of_particles = 1
+	if controls.pressure == 0:
+		controls.pressure = 1e-5
+	
+	pressure = analyze.pressure(system)
 	
 	new_box = numpy.ones(3) * box_l * controls.volume
 	if numpy.any(numpy.array(system.box_l) != new_box):
 		for i in range(system.n_part):
 			system.part[i].pos *= new_box/system.box_l
 	system.box_l = new_box
+	
+	# update the parameters set in the GUI
+	system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
+	if controls.ensemble == 'NPT':
+		integrate.set_integrator_isotropic_npt(pressure['total'], 1.0, cubic_box=True)
+		controls.volume = system.box_l[0] / box_l
+	else:
+		integrate.set_integrator_nvt()
+		controls.pressure = pressure['total']
+		
 	
 	new_part = controls.number_of_particles
 	if new_part > system.n_part:
@@ -297,11 +316,10 @@ def main_loop():
 			system.part[i].delete()
 	assert system.n_part == system.max_part +1 # There should be no gaps in particle numbers
 
-	energies = analyze.energy(system=system)
 	plot1.set_xdata(numpy.append(plot1.get_xdata(), system.time))
 	plot1.set_ydata(numpy.append(plot1.get_ydata(), system.temperature))
 	plot2.set_xdata(numpy.append(plot2.get_xdata(), system.time))
-	plot2.set_ydata(numpy.append(plot2.get_ydata(), analyze.pressure(system)['total']))
+	plot2.set_ydata(numpy.append(plot2.get_ydata(), pressure['total']))
 	cursor.set_offsets(([[plot1.get_ydata()[-1], plot2.get_ydata()[-1]]]))
 
 def main_thread():
@@ -322,9 +340,11 @@ def midi_thread():
 						elif data1 == controls.MIDI_NUM_VOLUME:
 							volume = data2 * controls.max_vol / 127
 							controls.volume = volume
+							controls.ensemble = 'NVT'
 						elif data1 == controls.MIDI_NUM_PRESSURE:
 							pressure = data2 * controls.max_press / 127
 							controls.pressure = pressure
+							controls.ensemble = 'NPT'
 						elif data1 == controls.MIDI_NUM_NUMBEROFPARTICLES:
 							npart = data2 * controls.max_n / 127
 							controls.number_of_particles = npart
