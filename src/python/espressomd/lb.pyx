@@ -55,7 +55,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "gpu", "agrid", "dens", "fric", "ext_force", "visc", "tau"
+            return "agrid", "dens", "fric", "ext_force", "visc", "tau"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -84,9 +84,8 @@ IF LB_GPU or LB:
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
-        def _lb_init(self):
-            py_lattice_switch = 1
-            if lb_set_lattice_switch(py_lattice_switch):
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(1):
                 raise Exception("lb_set_lattice_switch error")
 
         def _set_params_in_es_core(self):
@@ -145,7 +144,7 @@ IF LB_GPU or LB:
                 if python_lbfluid_get_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
-            return self.params
+            return self._params
 
         # input/output function wrappers for whole LB fields
         ####################################################
@@ -166,15 +165,17 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
+            self._set_lattice_switch()
             self._set_params_in_es_core()
-            self._lb_init()
 
 
 
 
-# IF LB_GPU:
-#     cdef class LBFluid_GPU(LBFluid):
-#         def _lb_init(self):
-#             py_lattice_switch = 2
-#             if lb_set_lattice_switch(py_lattice_switch):
-#                 raise Exception("lb_set_lattice_switch error")
+
+IF LB_GPU:
+    cdef class LBFluid_GPU(LBFluid):
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(2):
+                raise Exception("lb_set_lattice_switch error")
+
+
