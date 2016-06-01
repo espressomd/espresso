@@ -29,7 +29,7 @@ add_dependencies(check check_unit_tests)
 # unit_test function
 function(UNIT_TEST TEST_NAME TEST_SRC)
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES})
+  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
   add_dependencies(${TEST_NAME} EspressoConfig)
   
   add_test(${TEST_NAME} ${TEST_NAME})
