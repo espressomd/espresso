@@ -131,6 +131,7 @@ int get_cpu_temp();
 /** Start the CPU thermostat */
 void set_cpu_temp(int temp);
 
+#ifdef LEES_EDWARDS
 /** locally defined funcion to find Vx. In case of LEES_EDWARDS, that is relative to the LE shear frame
     @param i      coordinate index
     @param vel    velocity vector
@@ -138,17 +139,13 @@ void set_cpu_temp(int temp);
     @return       adjusted (or not) i^th velocity coordinate */
 inline double le_frameV(int i, double *vel, double *pos)
 {
-#ifdef LEES_EDWARDS
-
    if( i == 0 ){
        double relY  = pos[1] * box_l_i[1] - 0.5;
        return( vel[0] - relY * lees_edwards_rate );
    }
-
-#endif
-
    return vel[i];
 }
+#endif
 
 #ifdef NPT
 /** add velocity-dependend noise and friction for NpT-sims to the particle's velocity 
@@ -173,214 +170,211 @@ inline double friction_thermV_nptiso(double p_diff) {
 
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
-*/
+ */
 inline void friction_thermo_langevin(Particle *p)
 {
-  extern double langevin_pref1, langevin_pref2;
-  
-  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
+    extern double langevin_pref1, langevin_pref2;
+
+    double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
 
 #ifdef MULTI_TIMESTEP
-  extern double langevin_pref1_small;
+    extern double langevin_pref1_small;
 #ifndef LANGEVIN_PER_PARTICLE
-  extern double langevin_pref2_small;
+    extern double langevin_pref2_small;
 #endif /* LANGEVIN_PER_PARTICLE */
 #endif /* MULTI_TIMESTEP */
 
-  int j;
-  double switch_trans = 1.0;
-  if ( langevin_trans == false )
-  {
-    switch_trans = 0.0;
-  }
-
-  // Virtual sites related decision making
+    int j;
+    if ( langevin_trans == true )
+    {
+        // Virtual sites related decision making
 #ifdef VIRTUAL_SITES
 #ifndef VIRTUAL_SITES_THERMOSTAT
-      // In this case, virtual sites are NOT thermostated 
-  if (ifParticleIsVirtual(p))
-    {
-      for (j=0;j<3;j++)
-        p->f.f[j]=0;
-  
-      return;
-    }
+        // In this case, virtual sites are NOT thermostated 
+        if (ifParticleIsVirtual(p))
+        {
+            for (j=0;j<3;j++)
+                p->f.f[j]=0;
+
+            return;
+        }
 #endif /* VIRTUAL_SITES_THERMOSTAT */
 #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
-      // In this case NON-virtual particles are NOT thermostated
-  if (!ifParticleIsVirtual(p))
-    {
-      for (j=0;j<3;j++)
-        p->f.f[j]=0;
-  
-      return;
-    }
+        // In this case NON-virtual particles are NOT thermostated
+        if (!ifParticleIsVirtual(p))
+        {
+            for (j=0;j<3;j++)
+                p->f.f[j]=0;
+
+            return;
+        }
 #endif /* THERMOSTAT_IGNORE_NON_VIRTUAL */
 #endif /* VIRTUAL_SITES */
 
-  // Get velocity effective in the thermostatting
-  double velocity[3];
-  for (int i = 0; i < 3; i++) {
-    // Particle velocity
-    velocity[i] = p->m.v[i];
-    #ifdef ENGINE
-      // In case of the engine feature, the velocity is relaxed
-      // towards a swimming velocity oriented parallel to the
-      // particles director
-      velocity[i] -= (p->swim.v_swim*time_step)*p->r.quatu[i];
-    #endif
+        // Get velocity effective in the thermostatting
+        double velocity[3];
+        for (int i = 0; i < 3; i++) {
+            // Particle velocity
+            velocity[i] = p->m.v[i];
+#ifdef ENGINE
+            // In case of the engine feature, the velocity is relaxed
+            // towards a swimming velocity oriented parallel to the
+            // particles director
+            velocity[i] -= (p->swim.v_swim*time_step)*p->r.quatu[i];
+#endif
 
-    // Local effective velocity for leeds-edwards boundary conditions
-    velocity[i]=le_frameV(i,velocity,p->r.p);
-  } // for
-  
-  // Determine prefactors for the friction and the noise term 
+#ifdef LEES_EDWARDS
+            // Local effective velocity for leeds-edwards boundary conditions
+            velocity[i]=le_frameV(i,velocity,p->r.p);
+#endif
+        } // for
 
-  // first, set defaults
-  langevin_pref1_temp = langevin_pref1;
-  langevin_pref2_temp = langevin_pref2;
+        // Determine prefactors for the friction and the noise term 
 
-  // Override defaults if per-particle values for T and gamma are given 
+        // first, set defaults
+        langevin_pref1_temp = langevin_pref1;
+        langevin_pref2_temp = langevin_pref2;
+
+        // Override defaults if per-particle values for T and gamma are given 
 #ifdef LANGEVIN_PER_PARTICLE  
-    // If a particle-specific gamma is given
+        // If a particle-specific gamma is given
 #if defined (FLATNOISE)
-  langevin_temp_coeff = 24.0;
+        langevin_temp_coeff = 24.0;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-  langevin_temp_coeff = 2.0;
+        langevin_temp_coeff = 2.0;
 #else
 #error No Noise defined
 #endif
 
-    if(p->p.gamma >= 0.) 
-    {
-      langevin_pref1_temp = -p->p.gamma/time_step;
-      // Is a particle-specific temperature also specified?
-      if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma/time_step);
-      else
-        // Default temperature but particle-specific gamma
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma/time_step);
+        if(p->p.gamma >= 0.) 
+        {
+            langevin_pref1_temp = -p->p.gamma/time_step;
+            // Is a particle-specific temperature also specified?
+            if(p->p.T >= 0.)
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma/time_step);
+            else
+                // Default temperature but particle-specific gamma
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma/time_step);
 
-    } // particle specific gamma
-    else 
-    {
-      langevin_pref1_temp = -langevin_gamma/time_step;
-      // No particle-specific gamma, but is there particle-specific temperature
-      if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma/time_step);
-      else
-        // Defaut values for both
-        langevin_pref2_temp = langevin_pref2;
-    }
+        } // particle specific gamma
+        else 
+        {
+            langevin_pref1_temp = -langevin_gamma/time_step;
+            // No particle-specific gamma, but is there particle-specific temperature
+            if(p->p.T >= 0.)
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma/time_step);
+            else
+                // Defaut values for both
+                langevin_pref2_temp = langevin_pref2;
+        }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  // Multi-timestep handling
-  // This has to be last, as it may set the prefactors to 0.
-  #ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0.) {
-      langevin_pref1_temp *= time_step/smaller_time_step;
-      if (p->p.smaller_timestep==1 && current_time_step_is_small==1) 
-        langevin_pref2_temp *= sqrt(time_step/smaller_time_step);
-      else if (p->p.smaller_timestep != current_time_step_is_small) {
-        langevin_pref1_temp  = 0.;
-        langevin_pref2_temp  = 0.;
-      }
-    }
+        // Multi-timestep handling
+        // This has to be last, as it may set the prefactors to 0.
+#ifdef MULTI_TIMESTEP
+        if (smaller_time_step > 0.) {
+            langevin_pref1_temp *= time_step/smaller_time_step;
+            if (p->p.smaller_timestep==1 && current_time_step_is_small==1) 
+                langevin_pref2_temp *= sqrt(time_step/smaller_time_step);
+            else if (p->p.smaller_timestep != current_time_step_is_small) {
+                langevin_pref1_temp  = 0.;
+                langevin_pref2_temp  = 0.;
+            }
+        }
 #endif /* MULTI_TIMESTEP */
 
-  
-  // Do the actual thermostatting
-  for ( j = 0 ; j < 3 ; j++) 
-  {
-    #ifdef EXTERNAL_FORCES
-      // If individual coordinates are fixed, set force to 0.
-      if ((p->p.ext_flag & COORD_FIXED(j)))
-        p->f.f[j] = 0;
-      else	
-    #endif
-    {
-      // Apply the force
-      p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+
+        // Do the actual thermostatting
+        for ( j = 0 ; j < 3 ; j++) 
+        {
+#ifdef EXTERNAL_FORCES
+            // If individual coordinates are fixed, set force to 0.
+            if ((p->p.ext_flag & COORD_FIXED(j)))
+                p->f.f[j] = 0;
+            else	
+#endif
+            {
+                // Apply the force
+                p->f.f[j] = langevin_pref1_temp*velocity[j] + langevin_pref2_temp*noise;
+            }
+        } // END LOOP OVER ALL COMPONENTS
     }
-  } // END LOOP OVER ALL COMPONENTS
 
-
-  // printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
+    // printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
+    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+    THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
 
 #ifdef ROTATION
 /** set the particle torques to the friction term, i.e. \f$\tau_i=-\gamma w_i + \xi_i\f$.
-    The same friction coefficient \f$\gamma\f$ is used as that for translation.
-*/
+  The same friction coefficient \f$\gamma\f$ is used as that for translation.
+ */
 inline void friction_thermo_langevin_rotation(Particle *p)
 {
-  extern double langevin_pref2_rotation;
-  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
+    extern double langevin_pref2_rotation;
+    double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
 
-  int j;
-  double switch_rotate = 1.0;
-  if ( langevin_rotate == false )
-  {
-    switch_rotate = 0.0;
-  }
+    int j;
+    double switch_rotate = 1.0;
+    if ( langevin_rotate == true )
+    {
 
-  // first, set defaults
-  langevin_pref1_temp = langevin_gamma_rotation;
-  langevin_pref2_temp = langevin_pref2_rotation;
+        // first, set defaults
+        langevin_pref1_temp = langevin_gamma_rotation;
+        langevin_pref2_temp = langevin_pref2_rotation;
 
-  // Override defaults if per-particle values for T and gamma are given
+        // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
-    // If a particle-specific gamma is given
+        // If a particle-specific gamma is given
 #if defined (FLATNOISE)
-  langevin_temp_coeff = 24.0;
+        langevin_temp_coeff = 24.0;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-  langevin_temp_coeff = 2.0;
+        langevin_temp_coeff = 2.0;
 #else
 #error No Noise defined
 #endif
 
-    if(p->p.gamma_rot >= 0.)
-    {
-      langevin_pref1_temp = p->p.gamma_rot;
-      // Is a particle-specific temperature also specified?
-      if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma_rot/time_step);
-      else
-        // Default temperature but particle-specific gamma
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma_rot/time_step);
+        if(p->p.gamma_rot >= 0.)
+        {
+            langevin_pref1_temp = p->p.gamma_rot;
+            // Is a particle-specific temperature also specified?
+            if(p->p.T >= 0.)
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma_rot/time_step);
+            else
+                // Default temperature but particle-specific gamma
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*temperature*p->p.gamma_rot/time_step);
 
-    } // particle specific gamma
-    else
-    {
-      langevin_pref1_temp = langevin_gamma_rotation;
-      // No particle-specific gamma, but is there particle-specific temperature
-      if(p->p.T >= 0.)
-        langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma_rotation/time_step);
-      else
-        // Default values for both
-        langevin_pref2_temp = langevin_pref2_rotation;
-    }
+        } // particle specific gamma
+        else
+        {
+            langevin_pref1_temp = langevin_gamma_rotation;
+            // No particle-specific gamma, but is there particle-specific temperature
+            if(p->p.T >= 0.)
+                langevin_pref2_temp = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma_rotation/time_step);
+            else
+                // Default values for both
+                langevin_pref2_temp = langevin_pref2_rotation;
+        }
 #endif /* LANGEVIN_PER_PARTICLE */
 
 
-  // Rotational degrees of virtual sites are thermostatted,
-  // so no switching here
+        // Rotational degrees of virtual sites are thermostatted,
+        // so no switching here
 
 
-  // Here the thermostats happens
-  for ( j = 0 ; j < 3 ; j++) 
-  {
+        // Here the thermostats happens
+        for ( j = 0 ; j < 3 ; j++) 
+        {
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
+            p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + langevin_pref2_temp*noise;
 #else
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
+            p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + langevin_pref2_temp*noise;
 #endif
-  }
+        }
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
-  THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
+    }
+    ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+    THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
 
 

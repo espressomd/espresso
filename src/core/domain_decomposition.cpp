@@ -1082,29 +1082,29 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
     /* Communicate wether particle exchange is finished */
     if(global_flag == CELL_GLOBAL_EXCHANGE) {
-      if(this_node==0) {
-	int sum;
-	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-	if( sum < n_nodes ) finished=0; else finished=sum; 
-      } else {
-	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-      }
-      MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
+        if(this_node==0) {
+            int sum;
+            MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+            if( sum < n_nodes ) finished=0; else finished=sum; 
+        } else {
+            MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+        }
+        MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {
-      if(finished == 0) {
-      runtimeErrorMsg() << "some particles moved more than min_local_box_l, reduce the time step";
-	/* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
-	   However, their positions have to be made valid again. */
-	finished = 1;
-	/* all out of range coordinates in the left overs cell are moved to (0,0,0) */
-	cell = local_cells.cell[0];
-	for (p = 0; p < cell->n; p++) {
-	  part = &cell->part[p];
-	  if(dir < 3 && (part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir]))
-	    for (i = 0; i < 3; i++)
-	      part->r.p[i] = 0;
-	}
-      }
+        if(finished == 0) {
+            runtimeErrorMsg() << "some particles moved more than min_local_box_l, reduce the time step";
+            /* the bad guys are all in cell 0, but probably their interactions are of no importance anyways.
+               However, their positions have to be made valid again. */
+            finished = 1;
+            /* all out of range coordinates in the left overs cell are moved to (0,0,0) */
+            cell = local_cells.cell[0];
+            for (p = 0; p < cell->n; p++) {
+                part = &cell->part[p];
+                if(dir < 3 && (part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir]))
+                    for (i = 0; i < 3; i++)
+                        part->r.p[i] = 0;
+            }
+        }
     }
     CELL_TRACE(fprintf(stderr,"%d: dd_exchange_and_sort_particles: finished value: %d\n",this_node,finished));
   }

@@ -40,6 +40,7 @@ libEspresso_la_SOURCES = \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
+	drude.cpp drude.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	electrokinetics_pdb_parse.cpp electrokinetics_pdb_parse.hpp \
 	energy.cpp energy_inline.hpp energy.hpp \
