@@ -411,6 +411,7 @@ proc h5md_observable2D_write { name } {
 
 # Close all h5md groups and datasets and free memory at the end
 proc h5md_close {} {
+    h5mdfile H5_Fflush
     h5mdfile H5Dclose
     h5mdfile H5Fclose
     h5mdfile H5_free_memory
