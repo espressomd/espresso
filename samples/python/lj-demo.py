@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
+from __future__ import print_function, division
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
@@ -346,7 +346,7 @@ def midi_thread():
 							controls.pressure = pressure
 							controls.ensemble = 'NPT'
 						elif data1 == controls.MIDI_NUM_NUMBEROFPARTICLES:
-							npart = data2 * controls.max_n / 127
+							npart = int(data2 * controls.max_n / 127)
 							controls.number_of_particles = npart
 		except Exception as e:
 			print (e)
