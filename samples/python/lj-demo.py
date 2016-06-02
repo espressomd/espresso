@@ -119,21 +119,21 @@ class Controls(HasTraits):
 	
 	max_temp  = 2.
 	max_press = 10.
+	min_press = 0
 	max_vol   = 20.
 	min_vol   = 1.
 	max_n     = 5000
 	
 	temperature = Range(0., max_temp, 1., )
 	volume = Range(min_vol, max_vol, 1., )
-	pressure = Range(0., max_press, 1., )
+	pressure = Range(min_press, max_press, 1., )
 	number_of_particles = Range(1, max_n, n_part, )
 	ensemble = Enum('NVT', 'NPT')
 	
 	midi_input = midi.Input(inputs[0][0]) if len(inputs) > 0 else None
 	midi_output = midi.Output(outputs[0][0]) if len(outputs) > 0 else None
 	
-	MIDI_CC   = 176
-	MIDI_BASE = 81
+	MIDI_BASE = 224
 	MIDI_NUM_TEMPERATURE       = MIDI_BASE+0
 	MIDI_NUM_VOLUME            = MIDI_BASE+1
 	MIDI_NUM_PRESSURE          = MIDI_BASE+2
@@ -144,7 +144,7 @@ class Controls(HasTraits):
 		Group(
 			Item('temperature', editor=RangeEditor(high_name='max_temp')),
 			Item('volume', editor=RangeEditor(low_name='min_vol', high_name='max_vol')),
-			Item('pressure', editor=RangeEditor(high_name='max_press')),
+			Item('pressure', editor=RangeEditor(low_name='min_press', high_name='max_press')),
 			Item('number_of_particles', editor=RangeEditor(high_name='max_n', is_float=False)),
 			Item('ensemble', style='custom'),
 			show_labels=True,
@@ -181,30 +181,30 @@ class Controls(HasTraits):
 		self.midi_output = midi.Output(self.output_device[0])
 	
 	def _temperature_fired(self):
-		status = self.MIDI_CC
-		data1  = self.MIDI_NUM_TEMPERATURE
-		data2  = int(self.temperature/self.max_temp*127)
+		status = self.MIDI_NUM_TEMPERATURE
+		data1  = int(self.temperature/self.max_temp*127)
+		data2 = data1
 		if self.midi_output is not None:
 			self.midi_output.write_short(status,data1,data2)
 	
 	def _volume_fired(self):
-		status = self.MIDI_CC
-		data1  = self.MIDI_NUM_VOLUME
-		data2  = int(self.volume/self.max_vol*127)
+		status = self.MIDI_NUM_VOLUME
+		data1  = int((self.volume-self.min_vol)/(self.max_vol-self.min_vol)*127)
+		data2 = data1
 		if self.midi_output is not None:
 			self.midi_output.write_short(status,data1,data2)
 	
 	def _pressure_fired(self):
-		status = self.MIDI_CC
-		data1  = self.MIDI_NUM_PRESSURE
-		data2  = int(self.pressure/self.max_press*127)
+		status = self.MIDI_NUM_PRESSURE
+		data1  = int((self.pressure-self.min_press)/(self.max_press-self.min_press)*127)
+		data2 = data1
 		if self.midi_output is not None:
 			self.midi_output.write_short(status,data1,data2)
 	
 	def _number_of_particles_fired(self):
-		status = self.MIDI_CC
-		data1  = self.MIDI_NUM_NUMBEROFPARTICLES
-		data2  = int(self.number_of_particles/self.max_n*127)
+		status = self.MIDI_NUM_NUMBEROFPARTICLES
+		data1  = int(self.number_of_particles/self.max_n*127)
+		data2 = data1
 		if self.midi_output is not None:
 			self.midi_output.write_short(status,data1,data2)
 
@@ -333,21 +333,20 @@ def midi_thread():
 				events = controls.midi_input.read(1000)
 				for event in events:
 					status,data1,data2,data3 = event[0]
-					if status == controls.MIDI_CC:
-						if data1 == controls.MIDI_NUM_TEMPERATURE:
-							temperature = data2 * controls.max_temp / 127
-							controls.temperature = temperature
-						elif data1 == controls.MIDI_NUM_VOLUME:
-							volume = data2 * controls.max_vol / 127
-							controls.volume = volume
-							controls.ensemble = 'NVT'
-						elif data1 == controls.MIDI_NUM_PRESSURE:
-							pressure = data2 * controls.max_press / 127
-							controls.pressure = pressure
-							controls.ensemble = 'NPT'
-						elif data1 == controls.MIDI_NUM_NUMBEROFPARTICLES:
-							npart = int(data2 * controls.max_n / 127)
-							controls.number_of_particles = npart
+					if status == controls.MIDI_NUM_TEMPERATURE:
+						temperature = data2 * controls.max_temp / 127
+						controls.temperature = temperature
+					elif status == controls.MIDI_NUM_VOLUME:
+						volume = data2 * (controls.max_vol-controls.min_vol) / 127 + controls.min_vol
+						controls.volume = volume
+						controls.ensemble = 'NVT'
+					elif status == controls.MIDI_NUM_PRESSURE:
+						pressure = data2 * (controls.max_press-controls.min_press) / 127 + controls.min_press
+						controls.pressure = pressure
+						controls.ensemble = 'NPT'
+					elif status == controls.MIDI_NUM_NUMBEROFPARTICLES:
+						npart = int(data2 * controls.max_n / 127)
+						controls.number_of_particles = npart
 		except Exception as e:
 			print (e)
 
