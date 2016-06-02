@@ -278,3 +278,7 @@ IF REACTION_ENSEMBLE:
         def do_reaction_wang_landau(self):
             do_reaction_wang_landau()
 
+        #//////////////constant pH interface missing
+#        def do_reaction_constant_pH(self):    
+        
+

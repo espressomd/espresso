@@ -1690,11 +1690,9 @@ int do_reaction_wang_landau(){
 			if(current_wang_landau_system.counter_ion_type>=0){
 				do_global_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id, current_wang_landau_system.polymer_end_id);//if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
 				//alternatively
-				//do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
+				do_local_mc_move_for_type(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
 				//alternatively
 				//do_HMC_move();
-			}else{
-				do_HMC_move();
 			}
 			if(current_wang_landau_system.use_hybrid_monte_carlo==true){
 				do_HMC_move();
