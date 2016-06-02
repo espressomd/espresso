@@ -163,8 +163,10 @@ class Controls(HasTraits):
 	def __init__(self, **traits):
 		super(Controls, self).__init__(**traits)
 		self._ui = self.edit_traits()
-		
-		# send the default values to the MIDI controller
+		self.push_current_values()
+	
+	def push_current_values(self):
+		"""send the current values to the MIDI controller"""
 		self._temperature_fired()
 		self._volume_fired()
 		self._pressure_fired()
@@ -179,6 +181,7 @@ class Controls(HasTraits):
 		if self.midi_input is not None:
 			self.midi_output.close()
 		self.midi_output = midi.Output(self.output_device[0])
+		self.push_current_values()
 	
 	def _temperature_fired(self):
 		status = self.MIDI_NUM_TEMPERATURE
