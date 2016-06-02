@@ -127,7 +127,7 @@ set:
 \item[periodicity] (bool[3]) Specifies periodicity for the three
   directions. If the feature PARTIAL_PERIODIC is set, this variable
   can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
-  readonly and gives the default setting (1,1,1). Cavet: Be aware of the fact that setting a dimension to be not periodic does not hinder particles from leaving the box in this direction. In this case for keeping particles in the simulation box a constraint has to be set. Further setting a certain dimension to be not periodic does not affect the minimum image convention for this dimension which means that the box length in this direction still has some effect.
+  readonly and gives the default setting (1,1,1). Caveat: Be aware of the fact that setting a dimension to be not periodic does not hinder particles from leaving the box in this direction. In this case for keeping particles in the simulation box a constraint has to be set.
 \item[skin] (double) Skin for the Verlet list.
 \item [temperature] (double, \ro) Temperature of the
   simulation.
