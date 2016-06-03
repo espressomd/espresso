@@ -488,10 +488,8 @@ inline int get_random_position_in_box (double* out_pos) {
 int create_particle(int desired_type){
 	//remark only works for cubic box
 	int p_id=max_seen_particle+1;
-	double pos_x;
-	double pos_y;
-	double pos_z;
-
+	double pos_vec[3];
+	
 	//create random velocity vector according to Maxwell Boltzmann distribution for components
 	double vel[3];
 	//we usse mass=1 for all particles, think about adapting this
@@ -506,7 +504,6 @@ int create_particle(int desired_type){
 	double min_dist=current_reaction_system.exclusion_radius; //setting of a minimal distance is allowed to avoid overlapping configurations if there is a repulsive potential. States with very high energies have a probability of almost zero and therefore do not contribute to ensemble averages.
 	if(min_dist!=0){
 		while(particle_inserted_too_close_to_another_one && insert_tries<max_insert_tries) {
-			double pos_vec[3];
 			get_random_position_in_box(pos_vec);
 			place_particle(p_id,pos_vec);
 			//set type
@@ -521,7 +518,6 @@ int create_particle(int desired_type){
 				particle_inserted_too_close_to_another_one=false;
 		}
 	}else{
-		double pos_vec[3];
 		get_random_position_in_box(pos_vec);
 		place_particle(p_id,pos_vec);
 		//set type
@@ -1500,7 +1496,7 @@ int do_reaction_wang_landau(){
 		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
 		for(int k=0;k<4;k++){
 			if(current_wang_landau_system.counter_ion_type>=0){
-				for {int l=0; l<15 } {incr l} {
+				for (int l=0; l<15; l++) { //TODO this loop should depend on the number of counter ions
 					do_global_mc_move_for_one_particle_of_type_wang_landau(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
 				}
 				//alternatively
