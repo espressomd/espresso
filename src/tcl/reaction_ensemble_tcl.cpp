@@ -2,6 +2,7 @@
 
 #ifdef REACTION_ENSEMBLE
 #include "reaction_ensemble.hpp"
+#include "particle_data.hpp" //for particle creation, modification
 
 //function declartion
 
@@ -274,7 +275,12 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				provided_unknown_command=false;
 				int mc_type;
 				ARG_IS_I(2,mc_type);
-				do_global_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
+				
+				int particle_number_of_type;
+				number_of_particles_with_type(mc_type, &(particle_number_of_type));
+				for(int i=0; i<10*particle_number_of_type; i++) {
+					do_local_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
+				}
 			}
 		
 			if( ARG1_IS_S("water_type")) {

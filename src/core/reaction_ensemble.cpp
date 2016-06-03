@@ -592,8 +592,7 @@ bool is_in_list(int value, int* list, int len_list){
 	return false;
 }
 
-
-bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polymer, int end_id_polymer){
+bool do_local_mc_move_for_type_without_wang_landau(int type, int start_id_polymer, int end_id_polymer){
 	int p_id;
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 
@@ -603,6 +602,7 @@ bool do_global_mc_move_for_type_without_wang_landau(int type, int start_id_polym
 		bool got_accepted=false;
 		return got_accepted;
 	}
+	particle_number_of_type=1;
 
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
