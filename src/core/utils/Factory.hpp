@@ -34,11 +34,45 @@ namespace Utils {
 /**
  * @brief Factory template.
  *
- * Can be used to construct registered classes by name.
- * One registry per base type (T). To get a new one,
- * use new type ( struct NewT : public T {}; ).
+ * Can be used to construct registered instances of classes derived
+ * from the base type (`T`) by name.
+ * One registry per base type (`T`). To get a new one,
+ * use new type ( `struct NewT : public T {};` ).
+ * To add a new type it has to be given a name an a function
+ * of type `Factory<T>::builder_type` to create an instance has to be provided.
+ * The class contains a default implementation for the creation
+ * function (`Factory<T>::builder<Derived>`) which just calls
+ * new to create an instance. A user provided function could
+ * be used to use a non-default constructor, or to allocate memory
+ * for the instance in a specific way, e.g. by placing all new instances
+ * in a vector.
+ *
+ * Example usage:
+ *
+ *     struct A {};
+ *     struct B : public A {};
+ *     struct C : public A {
+ *       C(int c) : m_c(c) {}
+ *       int m_c;
+ *     };
+ *
+ *     // Register B as 'b' with default builder:
+ *     Factory<A>::register_new<B>("b");
+ *     // Register C as 'c' with user_defined builder:
+ *     Factory<A>::register_new("c", []() -> typename Factory<A>::pointer_type { return new C(5); });
+ *
+ *     // Create a B
+ *     auto b = Factory<A>::make("b");
+ *     assert(dynamic_cast<B *>(b.get()));
+ *
+ *     // Create a C
+ *     auto c = Factory<A>::make("c");
+ *     assert(dynamic_cast<C *>(c.get())->m_c == 5);
  */
-template<class T>
+template<
+  /** The base type of the instances created by this factory */
+  class T
+  >
 class Factory {
  public:
   /** The returned pointer type */
@@ -46,16 +80,23 @@ class Factory {
   /** Type of the constructor functions */
   typedef std::function<T* ()> builder_type;
 
-  /** Default constructor function, which just
-   * calls new with the Derived type.
+  /**
+   * @brief Default constructor function,
+   * which just calls new with the Derived type.
    */
   template<class Derived>
   static T* builder() {
+    /* This produces nicer error messages if the requirements are not fullfilled. */
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the factory is for.");
+    static_assert(std::is_default_constructible<Derived>::value,
+                  "Derived class needs to be default constructible.");
     return new Derived();
   }
 
+  /**
+   * @brief Construct an instance by name.
+   */
   static pointer_type make(const std::string &name) {
     if (m_map.find(name) == m_map.end()) {
       throw std::domain_error("Class '" + name + "' not found.");
@@ -68,30 +109,50 @@ class Factory {
     }
   }
 
+  /**
+   * @brief Check if the factory knows how to make `name`.
+   *
+   * @param name Given name to check.
+   * @return Whether we know how to make a `name`.
+   */
   static bool has_builder(const std::string &name) {
     return not (m_map.find(name) == m_map.end());
   }
-  
+
+  /**
+   * @brief Register a new type.
+   *
+   * @param name Given name for the type, has to be unique in this Factory<T>.
+   * @param b Function to create an instance.   
+   */
   static void register_new(const std::string &name, const builder_type &b)  {
     m_map[name] = b;
   }
 
+  /**
+   * @brief Register a new type with the default construction function.
+   *
+   * @param name Given name for the type, has to be unique in this Factory<T>.
+   */  
   template<typename Derived>
   static void register_new(const std::string &name) {
     register_new(name, builder<Derived>);
   }
-
-  static const builder_type& get_builder(const std::string &name) {
-    return m_map.at(name);
-  };
   
  private:
+  /** Maps names to construction functions. */
   static std::map<std::string, builder_type> m_map;
 };
 
 template<class T>
 std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
 
+/**
+ * @brief Convenience function to creates an instance by name.
+ * Here the Base type is the template parameter of a free function, and
+ * not part of a type, which works around partially missing template support
+ * in cython.
+ */
 template<class T>
 auto factory_make(const std::string &name) -> typename Factory<T>::pointer_type {
   return Factory<T>::make(name);

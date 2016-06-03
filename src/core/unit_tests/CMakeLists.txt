@@ -48,3 +48,10 @@ unit_test(RuntimeErrorCollector_test RuntimeErrorCollector_test.cpp)
 unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
 unit_test(MpiCallbacks_test MpiCallbacks_test.cpp)
 unit_test(ParallelFactory_test ParallelFactory_test.cpp)
+unit_test(ScriptInterface_test ScriptInterface_test.cpp)
+
+set(Wall_test_SRC Wall_test.cpp ../shapes/Wall.cpp)
+unit_test(Wall_test "${Wall_test_SRC}")
+
+unit_test(Factory_test Factory_test.cpp)
+

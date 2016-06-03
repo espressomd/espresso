@@ -17,6 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+/** \file Factory_test.cpp Unit tests for the Utils::Factory class.
+ * The factory is tested by registering different types of classes
+ * with it (first test), and then checking if instances of those classes can be
+ * made via the Factory (second test).
+*/
+
 #define BOOST_TEST_MODULE Factory test
 #include <boost/test/included/unit_test.hpp>
 
@@ -28,13 +34,13 @@ struct TestClass {
   virtual void method() {}
 };
 
-struct DerivedTestClass : public TestClass {};
+ struct DerivedTestClass : public TestClass {};
 
 struct OtherDerivedTestClass : public TestClass {};
 
 } /* namespace Testing */
 
-/** Check registration of builders */
+/** Check registration of construction functions */
 BOOST_AUTO_TEST_CASE(regiser_class) {
   using namespace Testing;
   typedef Utils::Factory<TestClass> Factory;
@@ -45,7 +51,7 @@ BOOST_AUTO_TEST_CASE(regiser_class) {
   /* Overload with default builder */
   Utils::Factory<TestClass>::register_new<OtherDerivedTestClass>("other_derived_class");
 
-  /* All three builder should be present. */
+  /* All three builders should be present. */
   BOOST_CHECK(Factory::has_builder("test_class"));
   BOOST_CHECK(Factory::has_builder("derived_test_class"));
   BOOST_CHECK(Factory::has_builder("other_derived_class"));  
