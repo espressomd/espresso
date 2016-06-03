@@ -29,8 +29,11 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
 
-#include "utils.hpp"
 #include "communication.hpp"
+
+#include "utils.hpp"
+#include "errorhandling.hpp"
+
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
@@ -44,7 +47,6 @@
 #include "statistics.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
-#include "random.hpp"
 #include "lj.hpp"
 #include "lb.hpp"
 #include "lb-boundaries.hpp"
@@ -65,7 +67,6 @@
 #include "statistics_fluid.hpp"
 #include "virtual_sites.hpp"
 #include "topology.hpp"
-#include "errorhandling.hpp"
 #include "molforces.hpp"
 #include "mdlc_correction.hpp"
 #include "reaction.hpp"
@@ -80,6 +81,7 @@
 #include "mpiio.hpp"
 
 using namespace std;
+using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
@@ -119,9 +121,6 @@ static int terminated = 0;
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
-  CB(mpi_random_seed_slave) \
-  CB(mpi_random_get_stat_slave) \
-  CB(mpi_random_set_stat_slave) \
   CB(mpi_cap_forces_slave) \
   CB(mpi_get_constraint_force_slave) \
   CB(mpi_get_configtemp_slave) \
@@ -171,7 +170,6 @@ static int terminated = 0;
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
   CB(mpi_external_potential_sum_energies_slave) \
   CB(mpi_observable_lb_radial_velocity_profile_slave) \
-  CB(mpiRuntimeErrorCollectorGatherSlave)        \
   CB(mpi_check_runtime_errors_slave) \
   CB(mpi_minimize_energy_slave) \
   CB(mpi_gather_cuda_devices_slave) \
@@ -183,38 +181,33 @@ static int terminated = 0;
 #define CB(name) void name(int node, int param);
 CALLBACK_LIST
 
+namespace {
+
 // create the list of callbacks
 #undef CB
 #define CB(name) name,
-static SlaveCallback * const slave_callbacks[] = {
+std::vector<SlaveCallback *> slave_callbacks{
   CALLBACK_LIST
 };
 
-const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
-
+/** The callback name list is only used for
+    debugging.
+*/
+#ifdef COMM_DEBUG
 // create the list of names
 #undef CB
 #define CB(name) #name,
 
-const char *names[] = {
+std::vector<std::string> names{
   CALLBACK_LIST
 };
+#endif
 
-// tag which is used by MPI send/recv inside the slave functions
-#define SOME_TAG 42
+}
 
 /** The requests are compiled statically here, so that after a crash
     you can get the last issued request from the debugger. */ 
 static int request[3];
-
-/** Map callback function pointers to request codes */
-#ifndef HAVE_CXX11
-typedef std::map<SlaveCallback *, int> request_map_type;
-#else
-#include <unordered_map>
-typedef std::unordered_map<SlaveCallback *, int> request_map_type;
-#endif
-static request_map_type request_map;
 
 /** Forward declarations */
 
@@ -224,15 +217,21 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-#ifdef MPI_CORE
-void mpi_core(MPI_Comm *comm, int *errcode,...) {
-  int len;
-  char string[1024];
-  MPI_Error_string(*errcode, string, &len);
-  fprintf(stderr, "%d: Aborting due to MPI error %d: %s. Forcing core dump.\n", this_node, *errcode, string);
-  core();
+#ifdef COMM_DEBUG
+void mpi_add_callback(SlaveCallback *cb, const string &name) {
+  /** Name is only used for debug messages */
+  names.push_back(name);
+  mpiCallbacks().add(cb);
 }
 #endif
+
+void mpi_add_callback(SlaveCallback *cb) {
+#ifdef COMM_DEBUG
+  mpi_add_callback(cb, "dynamic callback");
+#else
+  mpiCallbacks().add(cb);
+#endif
+}
 
 void mpi_init(int *argc, char ***argv)
 {
@@ -260,10 +259,6 @@ void mpi_init(int *argc, char ***argv)
   }
 #endif
 
-#ifdef MPI_CORE
-  MPI_Errhandler mpi_errh;
-#endif
-
   MPI_Init(argc, argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -277,41 +272,32 @@ void mpi_init(int *argc, char ***argv)
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-#ifdef MPI_CORE
-  MPI_Comm_create_errhandler((MPI_Handler_function *)mpi_core, &mpi_errh);
-  MPI_Comm_set_errhandler(comm_cart, mpi_errh);
-#endif
+  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);
 
-  for(int i = 0; i < N_CALLBACKS; ++i)  {
-    request_map.insert(std::make_pair(slave_callbacks[i], i));
+  Communication::initialize_callbacks(boost_comm);
+  
+  for(int i = 0; i < slave_callbacks.size(); ++i)  {
+    mpiCallbacks().add(slave_callbacks[i]);
   }
-    
-  initRuntimeErrorCollector();
+      
+  ErrorHandling::init_error_handling(mpiCallbacks());
 
-  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);      
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {
-  request_map_type::iterator req_it = request_map.find(cb);
-  if (req_it == request_map.end())
-  {
-    fprintf(stderr, "%d: INTERNAL ERROR: Unknown slave callback %p requested\n%zu callbacks registered.\n", this_node, cb, request_map.size());
-    errexit();
-  }
-  const int reqcode = req_it->second;
+#ifdef COMM_DEBUG
+  auto it = std::find(slave_callbacks.begin(), slave_callbacks.end(), cb);
   
-  request[0] = reqcode;
-  request[1] = node;
-  request[2] = param;
-
-  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
-		     this_node, names[reqcode], node, param));
-#ifdef ASYNC_BARRIER
-  MPI_Barrier(comm_cart);
-#endif
-  MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+  if(it != slave_callbacks.end()) {
+    auto const id = it - slave_callbacks.begin();
+    COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
+                       this_node, names[id].c_str(), node, param));
+  }
+#endif /* COMM_DEBUG */
+  mpiCallbacks().call(cb, node, param);
+  
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
+}  
 
 /**************** REQ_TERM ************/
 
@@ -2381,66 +2367,6 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 #endif
 }
 
-void mpi_random_seed(int cnt, std::vector<int> &seeds) {
-  int this_idum;
-  mpi_call(mpi_random_seed_slave, -1, cnt);
-  
-  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-
-#ifdef RANDOM_TRACE
-  printf("%d: Received seed %d\n",this_node,this_idum);
-#endif
-  init_random_seed(this_idum);
-}
-
-void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_idum;
-  
-  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-#ifdef RANDOM_TRACE
-  printf("%d: Received seed %d\n",this_node,this_idum);
-#endif
-  init_random_seed(this_idum);
-}
-
-void mpi_random_set_stat(const std::vector<std::string> &stat) {
-  mpi_call(mpi_random_set_stat_slave, 0, 0);
-  
-  for(int i = 1; i < n_nodes; i++) {
-    boost_comm.send(i, SOME_TAG, stat[i]);
-  }
-
-  Random::set_state(stat[0]);
-}
-
-void mpi_random_set_stat_slave(int, int) {
-  std::string msg;
-  boost_comm.recv(0, SOME_TAG, msg);
-
-  Random::set_state(msg);
-}
-
-std::string mpi_random_get_stat() {
-  std::string res = Random::get_state();
-
-  mpi_call(mpi_random_get_stat_slave, 0, 0);
-   
-  for(int i = 1; i < n_nodes; i++) {
-    std::string tmp;
-    boost_comm.recv(i, SOME_TAG, tmp);
-    res.append(" ");
-    res.append(tmp);
-  }
-
-  return res;
-}
-
-void mpi_random_get_stat_slave(int, int) {
-  std::string state = Random::get_state();
-
-  boost_comm.send(0, SOME_TAG, state);
-}
-
 void mpi_cap_forces(double fc)
 {
   force_cap = fc;
@@ -3209,22 +3135,7 @@ void mpi_thermalize_cpu_slave(int node, int temp)
 
 void mpi_loop()
 {
-  for (;;) {
-#ifdef ASYNC_BARRIER
-    MPI_Barrier(comm_cart);
-#endif
-    MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
-		       names[request[0]], request[1], request[2]));
-    if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
-      fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
-      errexit();
-    }
-    slave_callbacks[request[0]](request[1], request[2]);
-    COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
-		       names[request[0]], request[1], request[2]));
-  
-  }
+  mpiCallbacks().loop();
 }
 
 /*********************** error abort ****************/
