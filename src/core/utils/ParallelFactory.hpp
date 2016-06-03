@@ -41,9 +41,7 @@ namespace Utils {
 /**
  * @brief Factory for parallel object construction.
  *
- * Implements the same concept as Utils::Factory, but creates
- * the instance on all nodes.
-*/
+ */
 template<class T, /* Class the factory is for. */
          class Factory = typename Utils::Factory<T> /* The factory used to locally create the objects */
          >
@@ -127,6 +125,11 @@ class ParallelFactory {
     return builder();
   }
 
+  /**
+   * @brief Remove instance.
+   *
+   * Remove instance by id and destroy the instance.
+   */
   void do_remove(int id) {
     auto sp = m_instances[id];
 
@@ -140,12 +143,13 @@ class ParallelFactory {
     }
 
     /* Delete the shared_ptr, does not delete the object because
-     * the deleter is empty */
+     * the deleter is empty. */
     m_instances.remove(id);
     
     /* Delete the object */
     delete sp.get();
   }
+  
   /** Register the callback for object creation. */
   void register_callback() {
     using std::placeholders::_1;
@@ -189,8 +193,12 @@ class ParallelFactory {
         }
     }
   }
-  
+
+  /** Id of out own callback. */
   int m_callback_id;
+  /** Map of the created instances,
+   * so they can be found on all nodes for deletion.
+   */
   Utils::NumeratedContainer<pointer_type> m_instances;
 };
 

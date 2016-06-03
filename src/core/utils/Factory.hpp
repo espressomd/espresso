@@ -89,8 +89,6 @@ class Factory {
     /* This produces nicer error messages if the requirements are not fullfilled. */
     static_assert(std::is_base_of<T, Derived>::value,
                   "Class to build needs to be a subclass of the class the factory is for.");
-    static_assert(std::is_default_constructible<Derived>::value,
-                  "Derived class needs to be default constructible.");
     return new Derived();
   }
 
@@ -137,6 +135,10 @@ class Factory {
   template<typename Derived>
   static void register_new(const std::string &name) {
     register_new(name, builder<Derived>);
+  }
+
+  static builder_type get_builder(const std::string &name) {
+    return m_map.at(name);
   }
   
  private:
