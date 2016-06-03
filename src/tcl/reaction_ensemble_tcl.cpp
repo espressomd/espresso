@@ -279,7 +279,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				int particle_number_of_type;
 				number_of_particles_with_type(mc_type, &(particle_number_of_type));
 				for(int i=0; i<particle_number_of_type; i++) {
-					do_local_mc_move_for_type_without_wang_landau(mc_type,-10,-10);
+					do_global_mc_move_for_one_particle_of_type(mc_type,-10,-10);
 				}
 			}
 		
