@@ -601,8 +601,9 @@ def structure_factor(system=None, sf_type='default', sf_order='default'):
 # RDF
 #
 
+
 def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
-        r_min = 0.0, r_max = None, r_bins = 100, n_conf = None):
+        r_min=0.0, r_max=None, r_bins=100, n_conf=None):
 
     if rdf_type is None:
         raise ValueError("rdf_type must not be empty!")
@@ -619,7 +620,8 @@ def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
         if n_conf is None:
             n_conf = n_configs
 
-    if r_max is None: r_max = min_box_l / 2.0;
+    if r_max is None:
+        r_max = min_box_l / 2.0
 
     cdef vector[double] rdf
     rdf.resize(r_bins)
@@ -630,15 +632,18 @@ def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
     if rdf_type == 'rdf':
         c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
     elif rdf_type == '<rdf>':
-        c_analyze.calc_rdf_av(p1_types, p2_types,r_min, r_max, r_bins, rdf, n_conf)
+        c_analyze.calc_rdf_av(p1_types, p2_types, r_min,
+                              r_max, r_bins, rdf, n_conf)
     elif rdf_type == '<rdf-intermol>':
-        c_analyze.calc_rdf_intermol_av(p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
+        c_analyze.calc_rdf_intermol_av(
+            p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
     else:
-        raise Exception("rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
+        raise Exception(
+            "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
 
     r = np.empty(r_bins)
     bin_width = (r_max - r_min) / r_bins
-    rr = r_min + bin_width/2.0
+    rr = r_min + bin_width / 2.0
     for i in range(r_bins):
         r[i] = rr
         rr += bin_width
@@ -646,8 +651,66 @@ def rdf(system=None, rdf_type=None, type_list_a=None, type_list_b=None,
     return np.array([r, rdf])
 
 #
+# distribution
+#
+
+
+def distribution(system=None, type_list_a=None, type_list_b=None,
+                 r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
+    """Calculates the distance distribution of particles
+    """
+
+    if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
+        raise ValueError("type_list_a has to be a list!")
+    if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
+        raise ValueError("type_list_b has to be a list!")
+
+    if r_max is None:
+        r_max = min_box_l / 2.0
+
+    if r_min < 0.0 or (log_flag == 1 and r_min == 0.0):
+        raise ValueError("r_min was chosen too small!")
+    if r_max <= r_min:
+        raise ValueError("r_max has to be greater than r_min!")
+    if r_bins < 1:
+        raise ValueError("r_bins has to be greater than zero!")
+
+    cdef double low
+    cdef double * distribution = < double * > malloc(sizeof(double) * r_bins)
+    p1_types = create_int_list_from_python_object(type_list_a)
+    p2_types = create_int_list_from_python_object(type_list_b)
+
+    c_analyze.updatePartCfg(0)
+    c_analyze.calc_part_distribution(p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+                                     r_min, r_max, r_bins, log_flag, & low, distribution)
+
+    np_distribution = create_nparray_from_double_array(distribution, r_bins)
+
+    free(distribution)
+
+    if int_flag:
+        np_distribution[0] += low
+        for i in xrange(r_bins - 1):
+            np_distribution[i + 1] += np_distribution[i]
+
+    r = np.zeros(r_bins)
+
+    if log_flag:
+        log_fac = (float(r_max) / r_min)**(1.0 / r_bins)
+        r[0] = r_min * np.sqrt(log_fac)
+        for i in xrange(1, r_bins):
+            r[i] = r[i - 1] * log_fac
+    else:
+        bin_width = (r_max - r_min) / float(r_bins)
+        r = np.linspace(r_min + bin_width / 2.0,
+                        r_max - bin_width / 2.0, r_bins)
+
+    return np.array([r, np_distribution])
+
+#
 # angularmomentum
 #
+
 
 def angularmomentum(system=None, p_type=None):
     print "p_type = ", p_type
@@ -665,27 +728,29 @@ def angularmomentum(system=None, p_type=None):
 # gyration_tensor
 #
 
+
 def gyration_tensor(system=None, p_type=None):
     cdef vector[double] gt
 
     if p_type is not None:
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
         if (p_type < 0 or p_type >= c_analyze.n_particle_types):
-            raise ValueError("Particle type",p_type, "does not exist!")
+            raise ValueError("Particle type", p_type, "does not exist!")
     else:
         p_type = -1
 
     c_analyze.calc_gyration_tensor(p_type, gt)
 
-    return { "Rg^2" : gt[3],
-             "shape" : [ gt[4], gt[5], gt[6] ],
-             "eva0" : [ gt[0], [ gt[7], gt[8], gt[9] ] ],
-             "eva1" : [ gt[1], [ gt[10], gt[11], gt[12] ] ],
-             "eva2" : [ gt[2], [ gt[13], gt[14], gt[15] ] ] }
+    return {"Rg^2": gt[3],
+            "shape": [gt[4], gt[5], gt[6]],
+            "eva0": [gt[0], [gt[7], gt[8], gt[9]]],
+            "eva1": [gt[1], [gt[10], gt[11], gt[12]]],
+            "eva2": [gt[2], [gt[13], gt[14], gt[15]]]}
 
 #
 # momentofinertiamatrix
 #
+
 
 def momentofinertiamatrix(system=None, p_type=None):
     cdef double[9] MofImatrix
@@ -693,12 +758,13 @@ def momentofinertiamatrix(system=None, p_type=None):
     if p_type is not None:
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
         if (p_type < 0 or p_type >= c_analyze.n_particle_types):
-            raise ValueError("Particle type",p_type, "does not exist!")
+            raise ValueError("Particle type", p_type, "does not exist!")
 
         c_analyze.momentofinertiamatrix(p_type, MofImatrix)
 
         MofImatrix_np = np.empty((9))
-        for i in range(9): MofImatrix_np[i] = MofImatrix[i]
+        for i in range(9):
+            MofImatrix_np[i] = MofImatrix[i]
 
         return MofImatrix_np
 
@@ -706,11 +772,12 @@ def momentofinertiamatrix(system=None, p_type=None):
 # rdfchain
 #
 
+
 def rdfchain(system=None, r_min=None, r_max=None, r_bins=None,
              chain_start=None, n_chains=None, chain_length=None):
-    cdef double *f1
-    cdef double *f2
-    cdef double *f3
+    cdef double * f1
+    cdef double * f2
+    cdef double * f3
 
     check_type_or_throw_except(r_min, 1, float, "r_min has to be a float")
     check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")
@@ -721,7 +788,7 @@ def rdfchain(system=None, r_min=None, r_max=None, r_bins=None,
 
     if (c_analyze.chain_n_chains == 0 or chain_length == 0):
         raise Exception("The chain topology has not been set")
-    if (r_bins <=0):
+    if (r_bins <= 0):
         raise Exception("Nothing to be done - choose <r_bins> greater zero!")
     if (r_min <= 0.):
         raise Exception("<r_min> has to be positive")
@@ -730,17 +797,17 @@ def rdfchain(system=None, r_min=None, r_max=None, r_bins=None,
 
     # Used to take the WITHOUT_BONDS define
     c_analyze.updatePartCfg(0)
-    c_analyze.analyze_rdfchain(r_min, r_max, r_bins, &f1, &f2, &f3);
+    c_analyze.analyze_rdfchain(r_min, r_max, r_bins, & f1, & f2, & f3)
 
-    rdfchain = np.empty((r_bins,4))
+    rdfchain = np.empty((r_bins, 4))
     bin_width = (r_max - r_min) / float(r_bins)
-    r = r_min + bin_width/2.0;
+    r = r_min + bin_width / 2.0
     for i in range(r_bins):
-        rdfchain[i,0] = r
-        rdfchain[i,1] = f1[i]
-        rdfchain[i,2] = f2[i]
-        rdfchain[i,3] = f3[i]
-        r += bin_width;
+        rdfchain[i, 0] = r
+        rdfchain[i, 1] = f1[i]
+        rdfchain[i, 2] = f2[i]
+        rdfchain[i, 3] = f3[i]
+        r += bin_width
 
     return rdfchain
 
@@ -749,33 +816,37 @@ def rdfchain(system=None, r_min=None, r_max=None, r_bins=None,
 #
 
 _Vkappa = {
-    "Vk1" : 0.0,
-    "Vk2" : 0.0,
-    "avk" : 0.0
+    "Vk1": 0.0,
+    "Vk2": 0.0,
+    "avk": 0.0
 }
+
+
 def Vkappa(system=None, mode=None, Vk1=None, Vk2=None, avk=None):
     check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
-    if ( mode == "reset" ):
+    if (mode == "reset"):
         _Vkappa["Vk1"] = 0.0
         _Vkappa["Vk2"] = 0.0
         _Vkappa["avk"] = 0.0
-    elif ( mode == "read" ):
+    elif (mode == "read"):
         return _Vkappa
-    elif ( mode == "set" ):
+    elif (mode == "set"):
         check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
         _Vkappa["Vk1"] = Vk1
         check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
         _Vkappa["Vk2"] = Vk2
         check_type_or_throw_except(avk, 1, float, "avk has to be a float")
         _Vkappa["avk"] = avk
-        if ( _Vkappa["avk"] <= 0.0 ):
-            raise Exception("ERROR: # of averages <avk> has to be positive! Resetting values.")
+        if (_Vkappa["avk"] <= 0.0):
+            raise Exception(
+                "ERROR: # of averages <avk> has to be positive! Resetting values.")
             result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
-        result = _Vkappa["Vk2"] / _Vkappa["avk"] - (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+        result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
+            (_Vkappa["Vk1"] / _Vkappa["avk"])**2
     else:
         raise Exception("ERROR: Unknown mode.")
-    #else: # <- WTF?  Why is there a second `else'?
+    # else: # <- WTF?  Why is there a second `else'?
     #    _Vkappa["Vk1"] += system.box_l[0] * system.box_l[1] * system.box_l[2]
     #    _Vkappa["Vk2"] += (system.box_l[0] * system.box_l[1] * system.box_l[2])**2
     #    _Vkappa["avk"] += 1.0

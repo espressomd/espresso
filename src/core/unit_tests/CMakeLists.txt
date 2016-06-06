@@ -17,34 +17,30 @@
   # You should have received a copy of the GNU General Public License
   # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
+# Build tests only when testing
+set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
+  
 # Target for the unit tests
 add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
 
 # Run unit tests on check
 add_dependencies(check check_unit_tests)
 
+# unit_test function
+function(UNIT_TEST TEST_NAME TEST_SRC)
+  add_executable(${TEST_NAME} ${TEST_SRC})
+  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  add_dependencies(${TEST_NAME} EspressoConfig)
+  
+  add_test(${TEST_NAME} ${TEST_NAME})
+  add_dependencies(check_unit_tests ${TEST_NAME})  
+endfunction(UNIT_TEST)
 
-# Vector
-add_executable(Vector_test Vector_test.cpp)
-target_link_libraries(Vector_test ${LIBRARIES})
-add_test(vector Vector_test)
-add_dependencies(check_unit_tests Vector_test)
+unit_test(Vector_test Vector_test.cpp)
+unit_test(RuntimeError_test RuntimeError_test.cpp)
+unit_test(RunningAverage_test RunningAverage_test.cpp)
 
-# RuntimeError
-add_executable(RuntimeError_test RuntimeError_test.cpp)
-target_link_libraries(RuntimeError_test ${LIBRARIES})
-add_test(runtimeerror RuntimeError_test)
-add_dependencies(check_unit_tests RuntimeError_test)
-
-# RuntimeErrorCollector
-add_executable(RuntimeErrorCollector_test RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
-target_link_libraries(RuntimeErrorCollector_test ${LIBRARIES})
-add_test(runtimeerrorcollector_test RuntimeErrorCollector_test)
-add_dependencies(check_unit_tests RuntimeErrorCollector_test)
-
-# RunningAverage
-add_executable(RunningAverage_test RunningAverage_test.cpp)
-target_link_libraries(RunningAverage_test ${LIBRARIES})
-add_test(runing_average RunningAverage_test)
+set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
+unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
 
 

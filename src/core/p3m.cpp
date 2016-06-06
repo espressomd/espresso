@@ -131,6 +131,8 @@ static void p3m_spread_force_grid(double* mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
+static int p3m_sanity_checks_system(void);
+
 /** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
 static int p3m_sanity_checks_boxl(void);
 
@@ -306,16 +308,15 @@ void   p3m_init() {
     p3m.params.r_cut    = 0.0;
     p3m.params.r_cut_iL = 0.0;
 
-
-
     if(this_node==0) 
-      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
+      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\nElectrostatics switched off!\n"););
 
-      fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: \n",this_node));
 
-    if (p3m_sanity_checks()) return;
+    if (p3m_sanity_checks()) {
+      return;
+    }
 
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: starting\n",this_node));
 
@@ -1589,6 +1590,10 @@ int p3m_adaptive_tune(char **log) {
     }
   }
 
+  if (p3m_sanity_checks_system()) {
+    return ES_ERROR;
+  }
+  
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
@@ -1941,11 +1946,12 @@ int p3m_sanity_checks_boxl() {
   return ret;
 }
 
-
-
-
-int p3m_sanity_checks()
-{
+/**
+ * @brief General sanity checks independent of p3m parameters.
+ * 
+ * @return 0 if ok, 1 on error.
+ */
+int p3m_sanity_checks_system() {
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -1958,6 +1964,30 @@ int p3m_sanity_checks()
     ret = 1;
   }
 
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
+    ret = 1;
+  }
+  
+  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
+      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
+	  ret = 1;
+	}
+  }
+    
+  return ret;
+}
+
+
+int p3m_sanity_checks()
+{
+  int ret = 0;
+
+  if (p3m_sanity_checks_system())
+    ret = 1;
+  
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
@@ -1972,20 +2002,7 @@ int p3m_sanity_checks()
       runtimeErrorMsg() <<"P3M_init: alpha must be >0";
     ret = 1;
   }
-  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
-    ret = 1;
-  }
   
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
-	  ret = 1;
-	}
-  }
-  
-
   return ret;
 }
 
