@@ -7,6 +7,8 @@ proc rotate_z {} {
 	}
 }
 
+source "tests_common.tcl"
+
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
 
