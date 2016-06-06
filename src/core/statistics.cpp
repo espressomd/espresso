@@ -929,7 +929,9 @@ void calc_structurefactor(int *p_types, int n_types, int order, double **_ff) {
     }
     n = 0;
     for(p=0; p<n_part; p++) {
-      if (partCfg[p].p.type == type) n++;
+      for(t=0; t<n_types; t++) {
+        if (partCfg[p].p.type == p_types[t]) n++;
+      }
     }
     for(qi=0; qi<order2; qi++) 
       if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
