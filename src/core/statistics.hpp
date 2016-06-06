@@ -325,6 +325,16 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
 
 void calc_structurefactor(int type, int order, double **sf);
 
+
+/** Calculates the spherically averaged structure factor.    
+    @param p_types   list with types of particles to be analyzed
+    @param n_types   length of p_types
+    @param order     the maximum wave vector length in 2PI/L
+    @param sf        pointer to hold the base of the array containing the result (size: 2*order^2).
+*/
+
+void calc_structurefactor(int *p_types, int n_types, int order, double **sf);
+
 std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf);
 
 /** Calculates the density profile in dir direction */
