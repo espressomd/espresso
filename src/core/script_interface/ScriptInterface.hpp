@@ -54,6 +54,12 @@ typedef boost::variant<bool,
 namespace ScriptInterface {
 
 /**
+ * Convinience typedefs.
+ */
+typedef std::map<std::string, Variant> VariantMap;
+typedef std::map<std::string, Parameter> ParameterMap;
+
+/**
  * @brief Make a Variant from argument.
  * 
  * This is a convinience function, so that
@@ -88,7 +94,7 @@ class ScriptInterfaceBase {
    *
    * @return Parameters set in class.
    */
-  virtual std::map<std::string, Variant> get_parameters() const = 0;
+  virtual VariantMap get_parameters() const = 0;
 
   /**
    * @brief Get requiered and optional parameters for class
@@ -97,7 +103,7 @@ class ScriptInterfaceBase {
    *
    * @return Expected parameters.
    */  
-  virtual std::map<std::string, Parameter> all_parameters() const = 0;
+  virtual ParameterMap all_parameters() const = 0;
   
   /**
    * @brief Get single parameter.
@@ -124,7 +130,7 @@ class ScriptInterfaceBase {
    *
    * @param Paramters Parameters to set.
    */  
-  virtual void set_parameters(const std::map<std::string, Variant> &parameters)
+  virtual void set_parameters(const VariantMap &parameters)
   {
     for (auto const& it : parameters) {
       set_parameter(it.first, it.second);

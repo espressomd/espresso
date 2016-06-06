@@ -33,8 +33,8 @@ namespace Shapes {
     }
     
     int calculate_dist(const double *ppos, double *dist, double *vec) const override;  
-    std::map<std::string, ScriptInterface::Parameter> all_parameters() const override;
-    std::map<std::string, Variant> get_parameters() const override;
+    ScriptInterface::ParameterMap all_parameters() const override;
+    ScriptInterface::VariantMap get_parameters() const override;
     void set_parameter(const std::string &name, const Variant &value) override;
     
     /** normal vector on the plane. */

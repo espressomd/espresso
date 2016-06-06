@@ -30,7 +30,7 @@ namespace Shapes {
 struct Shape : public ScriptInterface::ScriptInterfaceBase {
   virtual int calculate_dist(const double *ppos, double *dist, double *vec) const = 0;
   /* Human readable name of the shape. */
-  virtual const std::string name() const {
+  virtual const std::string name() const override {
     return std::string("Shape");
   }
 };

@@ -24,19 +24,21 @@
 using namespace std;
 using ScriptInterface::Parameter;
 using ScriptInterface::ParameterType;
+using ScriptInterface::ParameterMap;
+using ScriptInterface::VariantMap;
 
 namespace Shapes {
 
-map<string, Parameter> Wall::all_parameters() const {
-  map<string, Parameter> p;
+ParameterMap Wall::all_parameters() const {
+  ParameterMap p;
   p["normal"] = Parameter(ParameterType::DOUBLE_VECTOR, 3, true);
   p["dist"] = Parameter(ParameterType::DOUBLE, true);
 
   return p;
 }
 
-std::map<string, Variant> Wall::get_parameters() const {
-  std::map<string, Variant> p;
+VariantMap Wall::get_parameters() const {
+  VariantMap p;
 
   p["normal"] = vector<double>(n.begin(), n.end());    
   p["dist"] = d;
