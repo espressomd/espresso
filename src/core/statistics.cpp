@@ -850,48 +850,6 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
-void calc_structurefactor(int type, int order, double **_ff) {
-  int i, j, k, n, qi, p, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
-  
-  order2 = order*order;
-  *_ff = ff = (double*)Utils::realloc(ff,2*order2*sizeof(double));
-  twoPI_L = 2*PI/box_l[0];
-  
-  if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
-  else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
-  else {
-    for(qi=0; qi<2*order2; qi++) {
-      ff[qi] = 0.0;
-    }
-    for(i=0; i<=order; i++) {
-      for(j=-order; j<=order; j++) {
-        for(k=-order; k<=order; k++) {
-	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>=1)) {
-	    C_sum = S_sum = 0.0;
-	    for(p=0; p<n_part; p++) {
-	      if (partCfg[p].p.type == type) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum+= cos(qr);
-		S_sum+= sin(qr);
-	      }
-	    }
-	    ff[2*n-2]+= C_sum*C_sum + S_sum*S_sum;
-	    ff[2*n-1]++;
-	  }
-	}
-      }
-    }
-    n = 0;
-    for(p=0; p<n_part; p++) {
-      if (partCfg[p].p.type == type) n++;
-    }
-    for(qi=0; qi<order2; qi++) 
-      if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
-  }
-}
-
 void calc_structurefactor(int *p_types, int n_types, int order, double **_ff) {
   int i, j, k, n, qi, p, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
