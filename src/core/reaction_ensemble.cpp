@@ -771,6 +771,7 @@ bool do_local_mc_move_for_one_particle_of_type(int type, int start_id_polymer, i
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
 	int p_id_s_changed_particles[particle_number_of_type];
+	bool reject_this_move=false;
 
 	//save old_position
 	while(changed_particle_counter<particle_number_of_type){
@@ -798,16 +799,20 @@ bool do_local_mc_move_for_one_particle_of_type(int type, int start_id_polymer, i
 		temp_pos[1]=ppos[1]+random_direction_vector[1];
 		temp_pos[2]=ppos[2]+random_direction_vector[2];
 		if (current_reaction_system.box_is_cylindric_around_z_axis==true) {
-			while (sqrt(pow(temp_pos[0]-current_reaction_system.cyl_x,2)+pow(temp_pos[1]-current_reaction_system.cyl_y,2))> current_reaction_system.cyl_radius ) {
+			int counter=1;
+			while (sqrt(pow(temp_pos[0]-current_reaction_system.cyl_x,2)+pow(temp_pos[1]-current_reaction_system.cyl_y,2))> current_reaction_system.cyl_radius && counter<10 ) {
 				vec_random(random_direction_vector, length_of_displacement);
 				temp_pos[0]=ppos[0]+random_direction_vector[0];
 				temp_pos[1]=ppos[1]+random_direction_vector[1];
-				temp_pos[2]=ppos[2]+random_direction_vector[2];		
+				temp_pos[2]=ppos[2]+random_direction_vector[2];
+				counter++;	
 			}
 		}
 		place_particle(p_id,temp_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
 		changed_particle_counter+=1;
+		if (sqrt(pow(temp_pos[0]-current_reaction_system.cyl_x,2)+pow(temp_pos[1]-current_reaction_system.cyl_y,2))> current_reaction_system.cyl_radius )
+			reject_this_move=true;
 	}
 	
 	//propose new positions
@@ -876,7 +881,7 @@ bool do_local_mc_move_for_one_particle_of_type(int type, int start_id_polymer, i
 	bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
 	
 	bool got_accepted=false;
-	if(d_random()<bf){
+	if(d_random()<bf and not reject_this_move){
 		//accept
 	}else{
 		//reject
