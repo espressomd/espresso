@@ -167,8 +167,8 @@ if { abs($dawaanr_e - $scafacos_e*$ratio_dawaanr_scafacos) > 0.001 } {
 
 # Does the energy stay constant when swapping particles
 for {set i 0} {$i<10} {incr i} {
-  set a [expr int(rand() *$n)*2]
-  set b [expr int(rand() *$n)*2]
+  set a [expr int([t_random] *$n)*2]
+  set b [expr int([t_random] *$n)*2]
   set dipa [part $a print dip]
   set posa [part $a print pos]
   eval "part $a pos [part $b print pos] dip [part $b print dip]"
