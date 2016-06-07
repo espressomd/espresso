@@ -28,9 +28,16 @@ typedef struct reaction_system {
 	double given_length_in_simulation_units;
 	double temperature_reaction_ensemble;
 	double exclusion_radius; //this is used as a kind of hard sphere radius, if particles are closer than that it is assumed that their interaction energy gets approximately infinite => these configurations do not contribute to the partition function and ensemble averages.
+	double volume;
+	bool box_is_cylindric_around_z_axis;
+	double cyl_radius;
+	double cyl_x;
+	double cyl_y;
 } reaction_system;
 
 extern reaction_system current_reaction_system;
+
+void set_cuboid_reaction_ensemble_volume();
 
 int do_reaction();
 
@@ -48,6 +55,7 @@ int find_index_of_type(int type);
 
 bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
 
+bool do_local_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 

@@ -53,6 +53,9 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 		//exclusion radius
 		sprintf(buffer, "\nexclusion radius: %f " , current_reaction_system.exclusion_radius);
 		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+		//volume
+		sprintf(buffer, "\nvolume: %f " , current_reaction_system.volume);
+		Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
 
 		if(check_reaction_ensemble()==ES_ERROR)
                         return TCL_ERROR;
@@ -245,6 +248,10 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				provided_unknown_command=false;
 				argc-=1; argv+=1;
 				ARG_IS_D(1,current_reaction_system.temperature_reaction_ensemble);
+				
+				//setting a volume is a side effect, sets the default volume of the reaction ensemble as the volume of the cuboid simulation box. this volume can be altered by the command "reaction ensemble volume <volume>" if one wants to simulate e.g. in a system with constraint (e.g. cuboid box with cylinder constraint, so that the particles are only contained in the volume of the cylinder)
+				if(current_reaction_system.volume<0)
+					set_cuboid_reaction_ensemble_volume();
 			}
 			if( ARG1_IS_S("exclusion_radius") ){
 				provided_unknown_command=false;
@@ -279,7 +286,8 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				int particle_number_of_type;
 				number_of_particles_with_type(mc_type, &(particle_number_of_type));
 				for(int i=0; i<particle_number_of_type; i++) {
-					do_global_mc_move_for_one_particle_of_type(mc_type,-10,-10);
+//					do_global_mc_move_for_one_particle_of_type(mc_type,-10,-10);
+					do_local_mc_move_for_one_particle_of_type(mc_type,-10,-10);
 				}
 			}
 		
@@ -292,6 +300,27 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				provided_unknown_command=false;
 				ARG_IS_D(2,current_reaction_system.standard_pressure_in_simulation_units);
 			}
+			if( ARG1_IS_S("volume")) {
+				provided_unknown_command=false;
+				ARG_IS_D(2,current_reaction_system.volume);
+			}
+			if( ARG1_IS_S("cylindrical_constraint_in_z_direction")) {
+				provided_unknown_command=false;
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("center")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.cyl_x);
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.cyl_y);
+				}
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("radius")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.cyl_radius);
+				}
+				current_reaction_system.box_is_cylindric_around_z_axis=true;
+			}
+			
 			if(ARG1_IS_S("length_scales")){
 				provided_unknown_command=false;
 				//used for converting mol/l to #particles per simulation_box_volume
