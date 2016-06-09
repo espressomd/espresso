@@ -466,14 +466,36 @@ system.
   \end{features}
 \end{essyntax}
 
-This command will create \var{num\_polymers} polymer or
-polyelectrolyte chains with \var{monomers\_per\_chain} monomers per
+\begin{pysyntax}
+	\object{espressomd}{polymer}{
+		N\textunderscore P = \arg{int},
+		MPC = \arg{int},
+		bond\textunderscore length = \arg{double},
+		start\textunderscore id = \arg{int},
+		start\textunderscore pos = \arg{ndarray},
+		mode = 0 or 1 or 2,
+		shield = \arg{double},
+		max\textunderscore tries = \arg{int},
+		val\textunderscore poly = \arg{double},
+		charge\textunderscore distance = \arg{int},
+		type\textunderscore poly\textunderscore neutral = \arg{int}, 
+		type\textunderscore poly\textunderscore charged = \arg{int},
+		bond\textunderscore id = \arg{int}, 
+		angle = \arg{double} , 
+		angle2 = \arg{double}, 
+		pos2 = \arg{ndarray}, 
+		constraint = 0 or 1
+	}
+\end{pysyntax}
+
+This command will create \var{num\_polymers} N\_P polymer or
+polyelectrolyte chains with \var{monomers\_per\_chain} MPC monomers per
 chain. The length of the bond between two adjacent monomers will be
 set up to be \var{bond\_length}.
 
 \begin{arguments}
-\item[\var{num\_polymers}] Sets the number of polymer chains.
-\item[\var{monomers\_per\_chain}] Sets the number of monomers per
+\item[\var{num\_polymers}] N\_P Sets the number of polymer chains.
+\item[\var{monomers\_per\_chain}] MPC Sets the number of monomers per
   chain.
 \item[\var{bond\_length}] Sets the initial distance between two
   adjacent monomers. The distance during the course of the simulation
@@ -482,11 +504,11 @@ set up to be \var{bond\_length}.
   is based on Verlet algorithm and satisfy internal constraints for
   molecular models with internal constrains, using Lagrange
   multipliers.
-\item[\opt{start \var{pid}}] Sets the particle number of the
+\item[\opt{start \var{pid}}] start\_id Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
 
-\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of the
+\item[\opt{pos \var{x} \var{y} \var{z}}] start\_pos Sets the position of the
   first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
   a randomly chosen value)
   
@@ -494,10 +516,10 @@ set up to be \var{bond\_length}.
       \opt{\var{try_\mathrm{max}}}}}]
   Selects the setup mode:
   \begin{description}
-  \item[\keyword{RW} (Random walk)] The monomers are
+  \item[\keyword{RW} (Random walk)] mode = 1 The monomers are
     randomly placed by a random walk with a steps size of
     \var{bond_length}.
-  \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
+  \item[\keyword{PSAW} (Pruned self-avoiding walk)] mode = 2 The position of a
     monomer is randomly chosen in a distance of \var{bond\_length} to
     the previous monomer. If the position is closer to another
     particle than \var{shield}, the attempt is repeated up to
@@ -506,7 +528,7 @@ set up to be \var{bond\_length}.
     same. If you want a real self-avoiding walk, use the \keyword{SAW}
     mode.  However, \keyword{PSAW} is several orders of magnitude
     faster than \keyword{SAW}, especially for long chains.
-  \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
+  \item[\keyword{SAW} (Self-avoiding random walk)] mode = 0 The positions of
     the monomers are chosen as in the plain random walk. However, if
     this results in a chain that has a monomer that is closer to
     another particle than \var{shield}, a new attempt of setting up
@@ -524,22 +546,23 @@ set up to be \var{bond\_length}.
   types are set to $\var{typeid_\mathrm{charged}} =
   \var{typeid_\mathrm{neutral}}$. If charge is not set, it defaults to
   0.0.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Sets the stride
+\item[\opt{distance \var{d_\mathrm{charged}}}] charge\_distance Sets the stride
   between the indices of two charged monomers. This defaults defaults
   to 1, meaning that all monomers in the chain are charged.
-\item[\opt{types \var{typeid_\mathrm{neutral}}
+\item[\opt{types \var{typeid_\mathrm{neutral}} type\_poly\_neutral
+		type\_poly\_charged
     \var{typeid_\mathrm{charged}}}] Sets the type ids of the neutral
     and charged monomer types to be used with the \keyword{part}
     command. If only \var{typeid_\mathrm{neutral}} is defined,
     \var{typeid_\mathrm{charged}} defaults to $1$. If the option is
     omitted, both monomer types default to $0$.
-  \item[\opt{bond \var{bondid}}] Sets the type number of the bonded
+  \item[\opt{bond \var{bondid}}] bond\_id Sets the type number of the bonded
     interaction to be set up between the monomers. This defaults to
     $0$.  Any bonded interaction, no matter how many bonding-partners
     needed, is stored with the second particle in this bond. See
     chapter \ref{sec:inter-bonded}.
   \item[\opt{angle \var{\phi} [\var{\theta} [\var{x} \var{y}
-      \var{z}]]}] Allows for setting up helices or planar polymers:
+      \var{z}]]}] angle angle2 pos2 Allows for setting up helices or planar polymers:
     \var{\phi} and \var{theta} are the angles between adjacent bonds.
     \var{x}, \var{y} and \var{z} set the position of the second
     monomer of the first chain.

@@ -31,6 +31,7 @@ import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
 from minimize_energy import MinimizeEnergy
+from polymer import Polymer
 
 import sys
 
@@ -51,6 +52,7 @@ cdef class System:
     cell_system = CellSystem()
     thermostat = Thermostat()
     minimize_energy = MinimizeEnergy()
+    polymer = Polymer()
     actors = None
 
     def __init__(self):
