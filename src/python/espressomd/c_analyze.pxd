@@ -34,7 +34,7 @@ cdef extern from "particle_data.hpp":
     int n_particle_types
 
 cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(int type, int order, double ** sf)
+    cdef void calc_structurefactor(int *p_types, int n_types, int order, double **sf)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
 
 cdef extern from "statistics.hpp":
