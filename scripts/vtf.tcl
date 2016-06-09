@@ -239,7 +239,6 @@ proc writevcf { file args } {
     set folded 0
     set short 0
     set pids "all"
-    set userdata 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -290,8 +289,8 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file [part $pid print pos]
 		}
-		if { [llength $userdata] } then {
-		    puts $file [ lindex $userdata $pid ]
+		if { [info exists userdata] } then {
+		    puts $file " [ lindex $userdata $pid ]"
 		} else {
 		    puts $file ""
 		}
@@ -305,8 +304,8 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file "[vtfpid $pid] [part $pid print pos]"
 		}
-		if { [llength $userdata] } then {
-		    puts $file [ lindex $userdata $pid ]
+		if { [info exists userdata] } then {
+		    puts $file " [ lindex $userdata $pid ]"
 		} else {
 		    puts $file ""
 		}
