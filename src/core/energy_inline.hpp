@@ -511,15 +511,10 @@ if (p1->p.rotation)
   /* the rotational part is added to the total kinetic energy;
      Here we use the rotational inertia  */
 
-//#ifndef SEMI_INTEGRATED
-  energy.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
-		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
-		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
-/*#else
-  energy.data.e[0] += SQR(p1->m.omega[0])*p1->p.rinertia[0] +
-		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
-		       SQR(p1->m.omega[2])*p1->p.rinertia[2];
-#endif*/ // SEMI_INTEGRATED
+	energy.data.e[0] += (SQR(p1->m.omega[0])*(p1->p.rinertia[0]) +
+			       SQR(p1->m.omega[1])*(p1->p.rinertia[1]) +
+			       SQR(p1->m.omega[2])*(p1->p.rinertia[2]))*time_step*time_step;
+
 #else
   /* the rotational part is added to the total kinetic energy;
      at the moment, we assume unit inertia tensor I=(1,1,1)  */

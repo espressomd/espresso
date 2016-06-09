@@ -352,6 +352,8 @@ void convert_torques_propagate_omega()
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
+#ifndef SEMI_INTEGRATED
+
 #ifdef ROTATIONAL_INERTIA
       p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
       p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
@@ -383,8 +385,8 @@ void convert_torques_propagate_omega()
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
-    }
+#endif
+    }//p
   }
 }
 
@@ -504,10 +506,8 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
   double a[3];
   convert_vec_space_to_body(p,aSpaceFrame,a);
 
-
   // Apply restrictions from the rotation_per_particle feature
 #ifdef ROTATION_PER_PARTICLE
-//  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (p->p.rotation <2) return;
 
@@ -522,7 +522,6 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 
   for (int i=0;i<3;i++)
     a[i]/=l;
-//  printf("%g %g %g\n",a[0],a[1],a[2]);
 
 #endif
 
@@ -533,6 +532,52 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
   q[2]=tmp*a[1];
   q[3]=tmp*a[2];
   
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
+
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi */
+void rotate_particle_body(Particle* p, double* a, double phi)
+{
+  // Convert rotation axis to body-fixed frame
+
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
+
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+
+#endif
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+
   // Normalize
   normalize_quaternion(q);
 
@@ -589,8 +634,8 @@ void rotate_particle_3D(Particle* p, double* phi)
 /** Propagate the positions: random walk part.*/
 void random_walk_rot(Particle *p)
 {
-	double e_damp, sigma, sigma_coeff, rinertia_m, phi, theta, dphi_m;
-	double dphi[3];
+	double e_damp, sigma, sigma_coeff, rinertia_m, phi, theta, dphi_m, m_dphi;
+	double dphi[3], u_dphi[3];
 
 #ifdef ROTATION_PER_PARTICLE
     if (!p->p.rotation) return;
@@ -613,14 +658,24 @@ void random_walk_rot(Particle *p)
 		  dphi[0] = dphi_m*sin(theta)*cos(phi);
 		  dphi[1] = dphi_m*sin(theta)*sin(phi);
 		  dphi[2] = dphi_m*cos(theta);
-		  rotate_particle_3D(p,dphi);
+		  m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
+		  u_dphi[0] = dphi[0] / m_dphi;
+		  u_dphi[1] = dphi[1] / m_dphi;
+		  u_dphi[2] = dphi[2] / m_dphi;
+		  if (m_dphi == 0)
+		  {
+			  u_dphi[0] = 1.0;
+			  u_dphi[1] = 0.0;
+			  u_dphi[2] = 0.0;
+		  }
+		  rotate_particle_body(p,u_dphi,m_dphi);
 }
 
 /** Determine the angular velocities: random walk part.*/
 void random_walk_rot_vel(Particle *p, double dt)
 {
 	int j;
-	double e_damp, sigma, sigma_coeff, rinertia_m, t_omega_lab[3], a[3];
+	double e_damp, sigma, sigma_coeff, rinertia_m, a[3];
 
 #ifdef ROTATION_PER_PARTICLE
 	a[0] = a[1] = a[2] = 1.0;
@@ -649,10 +704,6 @@ void random_walk_rot_vel(Particle *p, double dt)
 		  p->m.omega[j] += a[j] * sqrt(sigma) * noise;
 	  }
     }//j
-    convert_omega_body_to_space(p,t_omega_lab);
-    p->m.omega_lab[0] = t_omega_lab[0];
-    p->m.omega_lab[1] = t_omega_lab[1];
-    p->m.omega_lab[2] = t_omega_lab[2];
 }
 #endif // SEMI_INTEGRATED
 

@@ -236,6 +236,8 @@ void on_integration_start()
 	      if (p[i].p.gamma <= 0.0) p[i].p.gamma = langevin_gamma;
 	      if (p[i].p.gamma_rot <= 0.0) p[i].p.gamma_rot = langevin_gamma_rotation;
 	      if (p[i].p.T < 0) p[i].p.T = temperature;
+	      //p[i].f.torque[0] = p[i].f.torque[1] = p[i].f.torque[2] = 0.0;
+	      //p[i].f.f[0] = p[i].f.f[1] = p[i].f.f[2] = 0.0;
 	    }
 	  }
 #endif

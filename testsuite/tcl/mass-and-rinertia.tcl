@@ -57,14 +57,16 @@ set T "1.4 0.01 -5.6"
 set J 7
 part 0 pos 0 0 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia $J $J $J
 
-for {set i 0} {$i <100} {incr i} {
+for {set i 0} {$i <1000} {incr i} {
+  integrate 100
   for {set k 0} {$k <3} {incr k} {
-   set expected [expr $i*100*$time_step_v * [lindex $T $k] /$J]
-   if { abs([lindex [part 0 print omega_lab] $k] - $expected) >0.01 } {
+   set expected [expr ($i+1)*100*$time_step_v * [lindex $T $k] /$J]
+   set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)/$expected]
+   if { $delta > 0.01 } {
       error_exit "Acceleration: Deviation in omega too large. Step $i, coordinate $k, expected $expected, got [lindex [part 0 print omega_lab] $k]"
     }
   }
-  integrate 100
+# integrate 100
 }
 #part delete
 part deleteall
@@ -80,8 +82,8 @@ part deleteall
 
 set box 10
 setmd box_l $box $box $box
-set kT 1.5
-set halfkT 0.75
+set kT 1.0
+set halfkT 0.5
 thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it

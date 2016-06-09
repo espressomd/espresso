@@ -972,7 +972,7 @@ void mpi_send_omega(int pnode, int part, double omega[3])
     p->m.omega[0] = omega[0];
     p->m.omega[1] = omega[1];
     p->m.omega[2] = omega[2];
-    convert_omega_body_to_space(p,p->m.omega_lab);
+    convert_omega_body_to_space(p,p->m.omega);
   }
   else {
     MPI_Send(omega, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);

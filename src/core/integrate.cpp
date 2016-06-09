@@ -297,7 +297,7 @@ void integrate_vv(int n_steps, int reuse_forces)
 
     if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       rescale_forces();
-#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
+#if defined(ROTATION)
       convert_initial_torques();
 #endif
     }
@@ -367,13 +367,8 @@ void integrate_vv(int n_steps, int reuse_forces)
        cannot be combined for the translation. 
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
-//#ifndef SEMI_INTEGRATED
       propagate_vel();
       propagate_pos();
-/*#else
-      propagate_pos();
-      propagate_vel();
-#endif*/
     } else if(integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if(steepest_descent_step())
 	break;
@@ -475,10 +470,10 @@ void integrate_vv(int n_steps, int reuse_forces)
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      rescale_forces_propagate_vel();
-#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
-    convert_torques_propagate_omega();
+#if defined(ROTATION)
+      convert_torques_propagate_omega();
 #endif
+      rescale_forces_propagate_vel();
     }
     // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
@@ -643,11 +638,7 @@ void rescale_forces()
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
-#ifdef ROTATION
-      if ((p[i].m.omega_lab[0] == p[i].m.omega_lab[1] == p[i].m.omega_lab[2] == 0.0) &&
-    	 (fabs(p[i].m.omega[0]) + fabs(p[i].m.omega[1]) + fabs(p[i].m.omega[2]) > 0.0))
-    	    convert_omega_body_to_space(&(p[i]),p[i].m.omega_lab);
-#endif
+
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
     }
@@ -683,12 +674,12 @@ void rescale_forces_propagate_vel()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
-//#ifndef SEMI_INTEGRATED
+
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/(p[i]).p.mass;
       p[i].f.f[1] *= scale/(p[i]).p.mass;
       p[i].f.f[2] *= scale/(p[i]).p.mass;
-//#endif
+
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef VIRTUAL_SITES
        // Virtual sites are not propagated during integration
@@ -727,10 +718,9 @@ void rescale_forces_propagate_vel()
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
-
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 #ifdef ROTATION_PER_PARTICLE
-              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
+              if (!p->p.rotation) p[i].m.omega[j] = p[i].m.omega_0[j];
 #endif
 
 #endif
@@ -740,7 +730,6 @@ void rescale_forces_propagate_vel()
 #endif
       } //j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
@@ -920,7 +909,7 @@ void propagate_vel()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp,rinertia_m,scale_f,omega_lab[3];
+  double e_damp,rinertia_m,scale_f;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -964,7 +953,7 @@ void propagate_vel()
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
               p[i].m.v[j] += p[i].f.f[j];
 #else
-              /* only deterministic and non-dissipative part of the force is used here */
+            /* only deterministic and non-dissipative part of the force is used here */
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*0.5*time_step/((p[i]).p.mass));
               // here, the additional time_step is used only to align with Espresso default dimensionless model
@@ -977,10 +966,11 @@ void propagate_vel()
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
 
-              p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
-              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+              p[i].m.omega_0[j] = p[i].m.omega[j];
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+
 #ifdef ROTATION_PER_PARTICLE
-              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
+            if (!p->p.rotation) p[i].m.omega[j] = p[i].m.omega_0[j];
 #endif
 #endif // SEMI_INTEGRATED
 
@@ -996,9 +986,8 @@ void propagate_vel()
 #endif
       } //j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
-      random_walk_vel(&(p[i]),0.5*time_step);
-      random_walk_rot_vel(&(p[i]),0.5*time_step);
+        random_walk_vel(&(p[i]),0.5*time_step);
+        random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
     }
   }
@@ -1016,9 +1005,10 @@ void propagate_vel()
 void propagate_pos()
 {
   double e_damp,rinertia_m,scale_f;
-  double dphi[3];
+  double dphi[3],u_dphi[3],m_dphi;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_pos:\n",this_node));
+
   if(integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
@@ -1052,19 +1042,34 @@ void propagate_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
-
+              p[i].r.p[j] += p[i].m.v[j];
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
-              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_lab_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
+
+              dphi[j] = ((rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step);
+
+              if (dphi[j] != dphi[j]) printf("\n TRACE propagate_vel_pos 1");
+              if (p[i].m.omega_0[j] != p[i].m.omega_0[j]) printf("\n TRACE propagate_vel_pos 2");
+              if (p[i].f.torque[j] != p[i].f.torque[j]) printf("\n TRACE propagate_vel_pos 3");
 #endif
             }
         } // j
 #ifdef SEMI_INTEGRATED
-        rotate_particle_3D(&(p[i]),dphi);
+        m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
+        u_dphi[0] = dphi[0] / m_dphi;
+        u_dphi[1] = dphi[1] / m_dphi;
+        u_dphi[2] = dphi[2] / m_dphi;
+        if (m_dphi == 0)
+        {
+        	  u_dphi[0] = 1.0;
+            u_dphi[1] = 0.0;
+            u_dphi[2] = 0.0;
+        }
+        rotate_particle_body(&(p[i]),u_dphi,m_dphi);
+
         random_walk(&(p[i]));
         random_walk_rot(&(p[i]));
 #endif
@@ -1081,8 +1086,8 @@ void propagate_vel_pos()
   Cell *cell;
   Particle *p;
   int c, i, j, np;
-  double e_damp,rinertia_m,scale_f,omega_lab[3];
-  double dphi[3];
+  double e_damp,rinertia_m,scale_f;
+  double dphi[3],u_dphi[3],m_dphi;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
 
@@ -1096,6 +1101,11 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef SEMI_INTEGRATED
+    	if (p[i].p.gamma <= 0.0) p[i].p.gamma = langevin_gamma;
+    	if (p[i].p.gamma_rot <= 0.0) p[i].p.gamma_rot = langevin_gamma_rotation;
+    	if (p[i].p.T < 0) p[i].p.T = temperature;
+#endif
 
 #if !defined(SEMI_INTEGRATED) && defined(ROTATION)
       propagate_omega_quat_particle(&p[i]);
@@ -1121,16 +1131,18 @@ void propagate_vel_pos()
               // here, the additional time_step is used only to align with Espresso default dimensionless model
               p[i].m.v_0[j] = p[i].m.v[j];
               p[i].m.v[j] = p[i].m.v[j]*e_damp+(p[i].f.f[j]*time_step/(p[i].p.gamma*scale_f))*(1-e_damp);
+
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*0.5*time_step/rinertia_m);
-              p[i].m.omega_lab_0[j] = p[i].m.omega_lab[j];
-              p[i].m.omega_lab[j] = p[i].m.omega_lab[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
+
+              p[i].m.omega_0[j] = p[i].m.omega[j];
+              p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/p[i].p.gamma_rot)*(1-e_damp);
 
 #ifdef ROTATION_PER_PARTICLE
-              if (!p->p.rotation) p[i].m.omega_lab[j] = p[i].m.omega_lab_0[j];
+              if (!p->p.rotation) p[i].m.omega[j] = p[i].m.omega_0[j];
 #endif
 
 #endif
@@ -1145,22 +1157,38 @@ void propagate_vel_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
+              p[i].r.p[j] += p[i].m.v[j];
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
               rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
               e_damp = exp(-p[i].p.gamma_rot*time_step/rinertia_m);
-              dphi[j] = (rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_lab_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step;
+
+              dphi[j] = ((rinertia_m/p[i].p.gamma_rot)*(p[i].f.torque[j]/p[i].p.gamma_rot-p[i].m.omega_0[j])*(e_damp-1)+(p[i].f.torque[j]/p[i].p.gamma_rot)*time_step);
+
+              if (dphi[j] != dphi[j]) printf("\n TRACE propagate_vel_pos 1");
+              if (p[i].m.omega_0[j] != p[i].m.omega_0[j]) printf("\n TRACE propagate_vel_pos 2");
+              if (p[i].f.torque[j] != p[i].f.torque[j]) printf("\n TRACE propagate_vel_pos 3");
 #endif
         }
 
       } // j
 #ifdef SEMI_INTEGRATED
-      set_particle_omega_lab_within_integr(&(p[i]),p[i].m.omega_lab);
       random_walk_vel(&(p[i]),0.5*time_step);
       random_walk_rot_vel(&(p[i]),0.5*time_step);
-      rotate_particle_3D(&(p[i]),dphi);
+
+      m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
+      u_dphi[0] = dphi[0] / m_dphi;
+      u_dphi[1] = dphi[1] / m_dphi;
+      u_dphi[2] = dphi[2] / m_dphi;
+      if (m_dphi == 0)
+      {
+      	  u_dphi[0] = 1.0;
+          u_dphi[1] = 0.0;
+          u_dphi[2] = 0.0;
+      }
+      rotate_particle_body(&(p[i]),u_dphi,m_dphi);
+
       random_walk(&(p[i]));
       random_walk_rot(&(p[i]));
 #endif

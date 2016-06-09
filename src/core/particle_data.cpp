@@ -193,9 +193,9 @@ void init_particle(Particle *part)
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
-  part->m.omega_lab[0] = 0.0;
-  part->m.omega_lab[1] = 0.0;
-  part->m.omega_lab[2] = 0.0;
+  part->m.omega_0[0] = 0.0;
+  part->m.omega_0[1] = 0.0;
+  part->m.omega_0[2] = 0.0;
 #endif
 
   /* ParticleForce */

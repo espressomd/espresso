@@ -52,12 +52,14 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   /* Friction coefficient gamma for rotation */
   langevin_gamma_rotation = 0;
 #ifdef SEMI_INTEGRATED
+  // For DEBUG only cause zero gamma makes any sense in the SEMI_INTEGRATED method
   /* langevin thermostat */
-  langevin_gamma = 1E-7; // up to the double accuracy.
+  langevin_gamma = 1E-4; // up to the double accuracy.
   /* Friction coefficient gamma for rotation */
-  langevin_gamma_rotation = 1E-7; // up to the double accuracy
+  langevin_gamma_rotation = 1E-4; // up to the double accuracy
 #endif
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
   /* Langevin for translations */
   langevin_trans = true;
   /* Langevin for rotations */
@@ -193,6 +195,7 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
   fprintf(stderr,"         as of this version! Please consult the user's guide.\n");

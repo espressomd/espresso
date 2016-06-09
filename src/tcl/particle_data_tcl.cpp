@@ -150,25 +150,13 @@ void tclcommand_part_print_omega_lab_frame(Particle *part, char *buffer, Tcl_Int
 //in Espresso angular velocities are in body-fixed frames. We should convert they to the space-fixed coordinates.
   convert_omega_body_to_space(part, omega);
 
-#ifdef SEMI_INTEGRATED
-  Tcl_PrintDouble(interp, part->m.omega_lab[0], buffer);
-#else
   Tcl_PrintDouble(interp, omega[0], buffer);
-#endif
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 
-#ifdef SEMI_INTEGRATED
-  Tcl_PrintDouble(interp, part->m.omega_lab[1], buffer);
-#else
   Tcl_PrintDouble(interp, omega[1], buffer);
-#endif
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 
-#ifdef SEMI_INTEGRATED
-  Tcl_PrintDouble(interp, part->m.omega_lab[2], buffer);
-#else
   Tcl_PrintDouble(interp, omega[2], buffer);
-#endif
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 

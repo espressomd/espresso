@@ -86,7 +86,7 @@ extern double temperature;
 /** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
 
-/** Langevin friction coefficient gamma. */
+/** Langevin friction coefficient gamma for the rotation. */
 extern double langevin_gamma_rotation;
 
 /** Langevin for translations */
@@ -273,6 +273,7 @@ inline void friction_thermo_langevin(Particle *p)
         langevin_pref2_temp = langevin_pref2;
 #ifdef SEMI_INTEGRATED
       p->p.gamma = langevin_gamma;
+      p->p.gamma_rot = langevin_gamma_rotation;
 #endif
     }
 #endif /* LANGEVIN_PER_PARTICLE */

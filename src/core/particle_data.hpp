@@ -248,8 +248,7 @@ typedef struct {
   /** angular velocity  
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
-  double omega_lab_0[3]; // Omega in the LAB frame at the beginning of the Verlet cycle
-  double omega_lab[3];
+  double omega_0[3];
 #endif
 } ParticleMomentum;
 
