@@ -20,8 +20,6 @@ source "tests_common.tcl"
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
 
-
-
 # Decelleration
 setmd skin 0
 setmd time_step 0.01
@@ -32,7 +30,7 @@ part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1
 # In case of an anisotropic body and after a correct nonzero values 
 # definition (in the source code, "rotation.cpp") of the nonlinear 
 # parts of Euler's rotational equations, it seems that exponential
-# expected behaviour is a not correct assumption.
+# expected behaviour is a not a fully precise assumption.
 # At least, nonlinear differential equations do not give
 # exponent-like behaviour (usually). Such anisotropic
 # decelleration should be validated using other equations.
@@ -50,6 +48,8 @@ for {set i 0} {$i <100} {incr i} {
 }
 
 #Accelerated motion
+setmd time_step 0.001
+set time_step_v 0.001
 part delete
 thermostat off
 set T "1.4 0.01 -5.6"
@@ -57,24 +57,18 @@ set T "1.4 0.01 -5.6"
 set J 7
 part 0 pos 0 0 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia $J $J $J
 
-for {set i 0} {$i <1000} {incr i} {
-  integrate 100
+for {set i 0} {$i <1E5} {incr i} {
   for {set k 0} {$k <3} {incr k} {
-   set expected [expr ($i+1)*100*$time_step_v * [lindex $T $k] /$J]
-   set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)/$expected]
+   set expected [expr $i*10*$time_step_v * [lindex $T $k] /$J]
+   set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)]
    if { $delta > 0.01 } {
       error_exit "Acceleration: Deviation in omega too large. Step $i, coordinate $k, expected $expected, got [lindex [part 0 print omega_lab] $k]"
     }
   }
-# integrate 100
+  integrate 10
 }
 #part delete
 part deleteall
-
-
-
-
-
 
 # thermlization
 # Cchecks if every degree of freedom has 1/2 kT of energy, even when
@@ -110,7 +104,7 @@ set oz2 0.
 
 set loops 100
 puts "Thermalizing..."
-integrate 1000
+integrate 2000
 puts "Measuring..."
 
 for {set i 0} {$i <$loops} {incr i} {
