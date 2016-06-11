@@ -68,7 +68,7 @@ set oz2 0.
 
 set loops 4000 
 puts "Thermalizing..."
-integrate 1000
+integrate 2000
 puts "Measuring..."
 
 if { [catch {

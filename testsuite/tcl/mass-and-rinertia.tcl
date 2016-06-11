@@ -114,7 +114,7 @@ set oz2 0.
 
 set loops 100
 puts "Thermalizing..."
-integrate 2000
+integrate 4000
 puts "Measuring..."
 
 for {set i 0} {$i <$loops} {incr i} {
