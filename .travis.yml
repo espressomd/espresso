@@ -57,7 +57,7 @@ env:
     - myconfig=maxset-gaussrandom-semiintegrated
     - myconfig=maxset-gaussrandomcut
     - myconfig=maxset-gaussrandomcut-semiintegrated
-    - myconfig=semmiintegrated
+    - myconfig=semiintegrated
     - myconfig=molcut
     - myconfig=rest1
     - myconfig=rest2
