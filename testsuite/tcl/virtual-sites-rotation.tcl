@@ -33,7 +33,7 @@ require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ROTATIONAL_INERTIA"
 require_feature "MASS"
-require_feature "SEMI_INTEGRATED off"
+require_feature "SEMI_INTEGRATED" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase virtual-sites-rotation.tcl running on  [format %02d [setmd n_nodes]] nodes  -"
@@ -52,7 +52,7 @@ thermostat langevin $kT 1 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 0.0
-setmd time_step 0.01
+setmd time_step 0.001
 
 set n 4
 for {set p 0 } { $p < [expr $n*2] } { incr p 2} { 
