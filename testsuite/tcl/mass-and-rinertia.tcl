@@ -48,6 +48,11 @@ for {set i 0} {$i <100} {incr i} {
 }
 
 #Accelerated motion
+if { [has_feature "SEMI_INTEGRATED"]} {
+    set si_flag 1
+    } else {
+    set si_flag 0    
+    }
 setmd time_step 0.001
 set time_step_v 0.001
 part delete
@@ -58,14 +63,19 @@ set J 7
 part 0 pos 0 0 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia $J $J $J
 
 for {set i 0} {$i <1E5} {incr i} {
-  for {set k 0} {$k <3} {incr k} {
-   set expected [expr $i*10*$time_step_v * [lindex $T $k] /$J]
-   set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)]
+    integrate 10
+    for {set k 0} {$k <3} {incr k} {
+        set expected [expr ($i+1)*10*$time_step_v * [lindex $T $k] /$J]
+        if { $si_flag } {
+            set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)/abs($expected)]
+        } else {
+            set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)]
+        }
    if { $delta > 0.01 } {
       error_exit "Acceleration: Deviation in omega too large. Step $i, coordinate $k, expected $expected, got [lindex [part 0 print omega_lab] $k]"
     }
   }
-  integrate 10
+#  integrate 10
 }
 #part delete
 part deleteall
@@ -76,8 +86,8 @@ part deleteall
 
 set box 10
 setmd box_l $box $box $box
-set kT 1.0
-set halfkT 0.5
+set kT 1.5
+set halfkT 0.75
 thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it

@@ -51,7 +51,7 @@ thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 0.0
-setmd time_step 0.01
+setmd time_step 0.005
 
 set n 4
 for {set p 0 } { $p < [expr $n*2] } { incr p 2} { 

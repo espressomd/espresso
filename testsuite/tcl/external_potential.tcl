@@ -26,7 +26,7 @@ require_max_nodes_per_side 1
 setmd box_l 6. 6. 6.
 thermostat off
 setmd skin 1.0
-setmd time_step 0.05
+setmd time_step 0.001
 cellsystem domain_decomposition -no_verlet_list
 #cellsystem nsquare
 #cellsystem layered
@@ -37,7 +37,7 @@ for { set i 0 } { $i < 1000 } { incr i } {
   integrate 100
   set current_energy [ analyze energy total  ] 
   puts "$current_energy [ expr $current_energy - $initial_energy ]"
-  if { abs($current_energy - $initial_energy ) > 0.02}  {
+  if { abs($current_energy - $initial_energy ) > 0.03}  {
     puts "Error in energy conservation"
     puts "The deviations are larger than 0.02"
     error_exit

@@ -36,6 +36,7 @@ GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
 ENGINE                          implies ROTATION
+SEMI_INTEGRATED
 
 /* Rotation */
 ROTATION

@@ -30,7 +30,7 @@ puts "----------------------------------------"
 puts "- Testcase intpbc.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
-set epsilon 5e-3
+set epsilon 5e-2
 thermostat off
 setmd time_step 0.001
 setmd skin 0.05
