@@ -273,7 +273,6 @@ inline void friction_thermo_langevin(Particle *p)
         langevin_pref2_temp = langevin_pref2;
 #ifdef SEMI_INTEGRATED
       p->p.gamma = langevin_gamma;
-      p->p.gamma_rot = langevin_gamma_rotation;
 #endif
     }
 #endif /* LANGEVIN_PER_PARTICLE */

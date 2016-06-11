@@ -921,10 +921,9 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
+#if (!defined(SEMI_INTEGRATED)) && defined(ROTATION)
      propagate_omega_quat_particle(&p[i]);
 #endif
-
         // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
@@ -1042,7 +1041,8 @@ void propagate_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += p[i].m.v[j];
+              //p[i].r.p[j] += p[i].m.v[j];
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
@@ -1107,7 +1107,7 @@ void propagate_vel_pos()
     	if (p[i].p.T < 0) p[i].p.T = temperature;
 #endif
 
-#if !defined(SEMI_INTEGRATED) && defined(ROTATION)
+#if (!defined(SEMI_INTEGRATED)) && defined(ROTATION)
       propagate_omega_quat_particle(&p[i]);
 #endif
 
@@ -1157,7 +1157,8 @@ void propagate_vel_pos()
 #else
               scale_f = 0.5 * time_step * time_step / (p[i]).p.mass;
               e_damp = exp(-p[i].p.gamma*time_step/((p[i]).p.mass));
-              p[i].r.p[j] += p[i].m.v[j];
+              //p[i].r.p[j] += p[i].m.v[j];
+              p[i].r.p[j] += ((p[i]).p.mass/p[i].p.gamma)*(p[i].f.f[j]/(p[i].p.gamma*scale_f)-p[i].m.v_0[j]/time_step)*(e_damp-1)+(p[i].f.f[j]/(p[i].p.gamma*scale_f))*time_step;
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
