@@ -92,7 +92,7 @@ thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
-setmd time_step 0.001
+setmd time_step 0.005
 
 set n 100
 set mass [expr rand() *20]
