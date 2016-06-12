@@ -19,6 +19,11 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
+if { [has_feature "SEMI_INTEGRATED"]} {
+    set si_flag 1
+} else {
+    set si_flag 0    
+}
 
 # Decelleration
 setmd skin 0
@@ -48,11 +53,6 @@ for {set i 0} {$i <100} {incr i} {
 }
 
 #Accelerated motion
-if { [has_feature "SEMI_INTEGRATED"]} {
-    set si_flag 1
-    } else {
-    set si_flag 0    
-    }
 setmd time_step 0.001
 set time_step_v 0.001
 part delete
@@ -92,7 +92,11 @@ thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
-setmd time_step 0.005
+if {$si_flag} {
+    setmd time_step 0.005
+} else {
+    setmd time_step 0.01
+}
 
 set n 100
 set mass [expr rand() *20]
