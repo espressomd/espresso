@@ -45,6 +45,7 @@ public:
     m_free_indices.insert(0);
     m_free_indices.insert(1);
   }
+  
   /**
    * @brief Copy c into the container.
    *
@@ -137,9 +138,10 @@ public:
   
 private:
   /** Data storage */
-  std::unordered_map<index_type, T> m_container;
+  std::unordered_map<index_type, T> m_container;  
   /** Set for free index bookkeeping */
   std::set<index_type> m_free_indices;
+  
   /**
    * @brief Get the next free index.
    *

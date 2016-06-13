@@ -28,8 +28,12 @@ static int TclCommand_wrapper (ClientData data, Tcl_Interp *interp, int argc, ch
     list<string> args(argv + 1, argv + argc);
 
     try {
-        p->parse_from_string(args);
-        
+      p->parse_from_string(args);
+
+      /* Tcl commands should remove all processed arguments from the
+       * list. Since we are at the highest level, if there are arguments
+       * left, those were unknown to the command.
+       */
       if(!args.empty()) {
         std::stringstream ss;
         ss << "Unknown argument '" << args.front() << "' in '";
