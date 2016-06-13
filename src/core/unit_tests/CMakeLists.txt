@@ -36,6 +36,8 @@ function(UNIT_TEST TEST_NAME TEST_SRC)
   add_dependencies(check_unit_tests ${TEST_NAME})  
 endfunction(UNIT_TEST)
 
+# Add tests here
+
 unit_test(Vector_test Vector_test.cpp)
 unit_test(RuntimeError_test RuntimeError_test.cpp)
 unit_test(RunningAverage_test RunningAverage_test.cpp)
@@ -43,4 +45,8 @@ unit_test(RunningAverage_test RunningAverage_test.cpp)
 set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
 
+unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
+
+set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
+unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
 
