@@ -32,6 +32,7 @@ from interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
+from collections import OrderedDict
 
 
 #
@@ -263,7 +264,7 @@ def pressure(self, v_comp=0):
     check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 #
     # Dict to store the results
-    p = {}
+    p = OrderedDict()
 
     # Update in espresso core if necessary
     if (c_analyze.total_pressure.init_status != 1 + v_comp):
@@ -346,7 +347,7 @@ def stress_tensor(self, v_comp=0):
     check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
     # Dict to store the results
-    p = {}
+    p = OrderedDict()
 
     # Update in espresso core if necessary
     if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
@@ -455,7 +456,7 @@ def energy(system, etype='all', id1='default', id2='default'):
 #  if system.n_part == 0:
 #    raise Exception('no particles')
 
-    e = {}
+    e = OrderedDict()
 
     if c_analyze.total_energy.init_status == 0:
         c_analyze.init_energies( & c_analyze.total_energy)
