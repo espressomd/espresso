@@ -33,7 +33,11 @@
 
 using namespace Utils;
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE(index_handling) {
+=======
+BOOST_AUTO_TEST_CASE(test_NumeratedContainer) {
+>>>>>>> upstream/master
   NumeratedContainer<int> container;
 
   int a = 18, b = 7, c = 3, d = 35325, e = 588;

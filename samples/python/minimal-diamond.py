@@ -22,6 +22,7 @@ from espressomd import thermostat
 from espressomd import analyze
 from espressomd import integrate
 from espressomd import interactions
+from espressomd import diamond
 import numpy
 
 # System parameters
@@ -29,7 +30,11 @@ import numpy
 
 system = espressomd.System()
 
-#if no seed is provided espresso generates a seed
+
+# system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
+# if no seed is provided espresso generates a seed
+# print system.seed
+
 
 system.time_step = 0.01
 system.skin = 0.4
@@ -44,16 +49,4 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-poly = system.polymer
-poly(N_P = 1, bond_length = 1.0, MPC=50, bond_id=0)
-
-
-#############################################################
-#      Integration                                          #
-#############################################################
-
-for i in range(20):
-    integrate.integrate(1000)
-
-    energies = analyze.energy(system=system)
-    print energies
+diamond.Diamond(a=20, bond_length=2, MPC=20)

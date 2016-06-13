@@ -34,29 +34,11 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 
-#if defined FORCE_CORE || defined MPI_CORE
-int regular_exit = 0;
-#else
 int regular_exit = 1;
-#endif
-static int core_done = 0;
 
 #ifdef ONEPART_DEBUG
 int check_id =  ONEPART_DEBUG_ID ;
 #endif
-
-void core()
-{
-  if (!core_done && !regular_exit) {
-    fprintf(stderr, "%d: forcing core dump on irregular exit (%d / %d) \n", this_node, core_done, regular_exit);
-    /* this produced a compiler warning and got thrown out by GCC: */
-    /* *(int *)0 = 0; */
-    abort();
-    /* doesn't work on AMD64 */
-    /* kill(getpid(), SIGSEGV); */
-    core_done = 1;
-  }
-}
 
 void check_particle_consistency()
 {

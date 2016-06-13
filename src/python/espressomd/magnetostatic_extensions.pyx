@@ -33,10 +33,10 @@ IF DIPOLES == 1:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params["maxPWerror"], 0, False, "inf", True)
+                self._params,"maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params["gap_size"], 0, False, "inf", True)
+                self._params,"gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):

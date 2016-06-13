@@ -29,12 +29,14 @@ add_dependencies(check check_unit_tests)
 # unit_test function
 function(UNIT_TEST TEST_NAME TEST_SRC)
   add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES})
+  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
   add_dependencies(${TEST_NAME} EspressoConfig)
   
   add_test(${TEST_NAME} ${TEST_NAME})
   add_dependencies(check_unit_tests ${TEST_NAME})  
 endfunction(UNIT_TEST)
+
+# Add tests here
 
 unit_test(Vector_test Vector_test.cpp)
 unit_test(RuntimeError_test RuntimeError_test.cpp)
@@ -49,5 +51,8 @@ set(Wall_test_SRC Wall_test.cpp ../shapes/Wall.cpp)
 unit_test(Wall_test "${Wall_test_SRC}")
 unit_test(Factory_test Factory_test.cpp)
 unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
+
+set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
+unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
 
 
