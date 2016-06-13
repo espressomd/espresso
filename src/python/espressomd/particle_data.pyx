@@ -27,6 +27,7 @@ from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step
+import collections
 
 PARTICLE_EXT_FORCE = 1
 
@@ -60,6 +61,23 @@ cdef class ParticleHandle:
         else:
             return 0
 
+    def __str__(self):
+        res=collections.OrderedDict()
+        # Id and pos first, then the rest
+        res["id"]=self.id
+        res["pos"]=self.pos
+        for a in particle_attributes:
+            tmp=getattr(self,a)
+            # Remove array type names from output
+            if isinstance(tmp,np.ndarray):
+                res[a]=tuple(tmp)
+            else:
+                res[a] =tmp
+        
+        # Get rid of OrderedDict in output
+        return str(res).replace("OrderedDict(","ParticleHandle(")
+
+    
     # The individual attributes of a particle are implemented as properties.
 
     # Particle Type
@@ -978,6 +996,15 @@ cdef class ParticleSlice:
                     
                 return ext_f_array
 
+    def __str__(self):
+      res=""
+      pl=ParticleList()
+      for i in self.id_selection:
+          if pl.exists(i):
+              res+=str(pl[i])+"\n"
+      # Remove final newline
+      return res[:-1]
+
 
     def update(self, P):
         if "id" in P:
@@ -1160,4 +1187,12 @@ cdef class ParticleList:
             return tf_array
     
 
+
+    def __str__(self):
+      res=""
+      for i in range(max_seen_particle+1):
+          if self.exists(i):
+              res+=str(self[i])+"\n"
+      # Remove final newline
+      return res[:-1]
 
