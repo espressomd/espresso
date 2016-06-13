@@ -161,6 +161,7 @@ if(WITH_TESTS)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
+  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################
