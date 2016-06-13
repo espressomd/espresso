@@ -38,7 +38,7 @@ import sys
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
-                      "time_step", "timings", "seed"]
+                      "time_step", "timings"]
 
 cdef class System:
     # NOTE: every attribute has to be declared at the class level.
