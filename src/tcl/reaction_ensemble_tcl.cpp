@@ -286,8 +286,8 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				int particle_number_of_type;
 				number_of_particles_with_type(mc_type, &(particle_number_of_type));
 				for(int i=0; i<particle_number_of_type; i++) {
-//					do_global_mc_move_for_one_particle_of_type(mc_type,-10,-10);
-					do_local_mc_move_for_one_particle_of_type(mc_type,-10,-10);
+					do_global_mc_move_for_one_particle_of_type(mc_type,-10,-10);
+//					do_local_mc_move_for_one_particle_of_type(mc_type,-10,-10);
 				}
 			}
 		
@@ -387,7 +387,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				}
 				if(ARG1_IS_S("do_not_sample_reaction_partition_function")){
 					provided_unknown_command=false;
-					current_wang_landau_system.do_not_sample_reaction_partition_function=true;
+		current_wang_landau_system.do_not_sample_reaction_partition_function=true;
 				}
 				if(ARG1_IS_S("counter_ion_type")){
 					provided_unknown_command=false;
@@ -435,7 +435,21 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					argc-=1; argv+=1;
 					char* identifier =strdup(argv[1]);
 					load_wang_landau_checkpoint(identifier);
-				}				
+				}
+
+				if(ARG1_IS_S("monte_carlo_move_for_type")) {
+					provided_unknown_command=false;
+					int mc_type;
+					ARG_IS_I(2,mc_type);
+					int particle_number_of_type;
+					number_of_particles_with_type(mc_type, &(particle_number_of_type));
+					for(int i=0; i<std::min(30,particle_number_of_type); i++) {
+						do_global_mc_move_for_one_particle_of_type_wang_landau(mc_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id);
+	//					do_local_mc_move_for_one_particle_of_type_wang_landau(mc_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id);
+					}
+				}
+
+				
 				
 			}
 		}

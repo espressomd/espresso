@@ -496,9 +496,9 @@ int get_random_position_in_box (double* out_pos) {
 		out_pos[0]=random_radius*cos(phi);
 		out_pos[1]=random_radius*sin(phi);
 		while (pow(out_pos[0],2)+pow(out_pos[1],2)<=pow(current_reaction_system.exclusion_radius,2)){
-			double random_radius=cyl_radius*sqrt(d_random());
-			out_pos[0]=random_radius*cos(phi)+cyl_x;
-			out_pos[1]=random_radius*sin(phi)+cyl_y;		
+			random_radius=cyl_radius*sqrt(d_random());
+			out_pos[0]=random_radius*cos(phi);
+			out_pos[1]=random_radius*sin(phi);		
 		}
 		out_pos[0]+=cyl_x;
 		out_pos[1]+=cyl_y;
@@ -1401,6 +1401,170 @@ bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_
 		}
 		return got_accepted;
 	}
+	int num_particles_moved=1; //std::min(2,particle_number_of_type);
+
+	double particle_positions[3*num_particles_moved];
+	int changed_particle_counter=0;
+	int p_id_s_changed_particles[num_particles_moved];
+
+	int max_tries=100*particle_number_of_type;//important for very dense systems
+	int attempts=0;
+
+	int p_id;
+
+	while(changed_particle_counter<num_particles_moved){
+		//save old_position
+		if(changed_particle_counter==0){
+			find_particle_type(type, &p_id);
+		}else{
+			//determine a p_id you have not touched yet
+			while(is_in_list(p_id,p_id_s_changed_particles,changed_particle_counter)){
+				find_particle_type(type, &p_id); //check wether you already touched this p_id
+			}
+		}
+		Particle part;
+		get_particle_data(p_id, &part);
+		double ppos[3];
+		memmove(ppos, part.r.p, 3*sizeof(double));
+		free_particle(&part);
+		particle_positions[3*changed_particle_counter+0]=ppos[0];
+		particle_positions[3*changed_particle_counter+1]=ppos[1];
+		particle_positions[3*changed_particle_counter+2]=ppos[2];
+		bool particle_inserted_too_close_to_another_one=true;
+		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
+			//change particle position
+			double new_pos[3];
+			get_random_position_in_box(new_pos);
+			place_particle(p_id,new_pos);
+			double d_min=distto(new_pos,p_id);
+			attempts+=1;
+			if(d_min>current_reaction_system.exclusion_radius){
+				particle_inserted_too_close_to_another_one=false;
+			}
+		}
+		
+		p_id_s_changed_particles[changed_particle_counter]=p_id;
+		changed_particle_counter+=1;
+	}
+	
+	if(attempts==max_tries){
+		//reversing
+		//create particles again at the positions they were
+		for(int i=0;i<num_particles_moved;i++){
+			double pos_vec[3]={particle_positions[3*i],particle_positions[3*i+1],particle_positions[3*i+2]};
+			place_particle(p_id_s_changed_particles[i],pos_vec);
+		}
+	}
+	
+	//change polymer conformation if start and end id are provided
+	double old_pos_polymer_particle[3];
+	int random_polymer_particle_id;
+	
+	if((start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value) && current_wang_landau_system.fix_polymer==false){
+		random_polymer_particle_id=start_id_polymer+i_random(end_id_polymer-start_id_polymer+1);
+		Particle part;
+		get_particle_data(random_polymer_particle_id, &part);
+		memmove(old_pos_polymer_particle, part.r.p, 3*sizeof(double));
+		free_particle(&part);
+		//move particle to new position nearby
+		double random_direction_vector[3];
+		double length_of_displacement=0.05;
+		vec_random(random_direction_vector, length_of_displacement);
+		double pos_x=old_pos_polymer_particle[0]+random_direction_vector[0];
+		double pos_y=old_pos_polymer_particle[1]+random_direction_vector[1];
+		double pos_z=old_pos_polymer_particle[2]+random_direction_vector[2];
+		double new_pos[3]={pos_x, pos_y, pos_z};
+		place_particle(random_polymer_particle_id,new_pos);
+	}
+	
+	
+	int new_state_index=get_flattened_index_wang_landau_of_current_state();
+	
+	double E_pot_new=calculate_current_potential_energy_of_system(0);
+
+	double bf=1.0;
+	if(old_state_index>=0 && new_state_index>=0){
+		if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]>=0 ){
+			if(current_wang_landau_system.do_energy_reweighting==true){
+				bf=std::min(1.0, bf*exp(current_wang_landau_system.wang_landau_potential[old_state_index]-current_wang_landau_system.wang_landau_potential[new_state_index])); //modify boltzmann factor according to wang-landau algorithm, according to grand canonical simulation paper "Density-of-states Monte Carlo method for simulation of fluids"
+				//this makes the new state being accepted with the conditinal probability bf (bf is a transition probability = conditional probability from the old state to move to the new state)
+			}else{
+				double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
+				bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+			}
+		}else{
+			if(current_wang_landau_system.histogram[new_state_index]>=0 &&current_wang_landau_system.histogram[old_state_index]<0 )
+				bf=10;//this makes the reaction get accepted, since we found a state in Gamma
+			else if (current_wang_landau_system.histogram[new_state_index]<0 &&current_wang_landau_system.histogram[old_state_index]<0)
+				bf=10;//accept, in order to be able to sample new configs, which might lie in Gamma
+			else if(current_wang_landau_system.histogram[new_state_index]<0 &&current_wang_landau_system.histogram[old_state_index]>=0)
+				bf=-10;//this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
+		}
+		
+	}else if(old_state_index<0 && new_state_index>=0){
+		bf=10;	//this makes the reaction get accepted, since we found a state in Gamma
+	}else if(old_state_index<0 && new_state_index<0){
+		bf=10;	//accept, in order to be able to sample new configs, which might lie in Gamma
+	}else if(old_state_index>=0 && new_state_index<0){
+		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
+	}
+	
+	bool got_accepted=false;
+	if(d_random()<bf){
+		//accept
+		got_accepted=true;
+		//modify wang_landau histogram and potential
+		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
+			if(current_wang_landau_system.histogram[new_state_index]>=0){
+				current_wang_landau_system.histogram[new_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[new_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			}
+		}
+	}else{
+		//reject
+		//modify wang_landau histogram and potential
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
+			if(current_wang_landau_system.histogram[old_state_index]>=0){
+				current_wang_landau_system.histogram[old_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			}
+		}
+		//create particles again at the positions they were
+		for(int j=0;j<num_particles_moved;j++){
+			double pos_vec[3]={particle_positions[3*j+0],particle_positions[3*j+1],particle_positions[3*j+2]};
+			place_particle(p_id_s_changed_particles[j],pos_vec);
+		}
+		//restore polymer particle again at original position
+		if(start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value){
+			place_particle(random_polymer_particle_id, old_pos_polymer_particle);
+		}
+	
+	}
+	return got_accepted;
+}
+
+bool do_local_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer){
+	int old_state_index=get_flattened_index_wang_landau_of_current_state();
+	if(old_state_index>=0){
+		if(current_wang_landau_system.histogram[old_state_index]>=0)
+			current_wang_landau_system.monte_carlo_trial_moves+=1;
+	}
+
+	double E_pot_old=calculate_current_potential_energy_of_system(0);
+
+	int particle_number_of_type;
+	number_of_particles_with_type(type, &(particle_number_of_type));
+	if(particle_number_of_type==0){
+		bool got_accepted=false;
+		//reject
+		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
+			if(current_wang_landau_system.histogram[old_state_index]>=0){
+				current_wang_landau_system.histogram[old_state_index]+=1;
+				current_wang_landau_system.wang_landau_potential[old_state_index]+=current_wang_landau_system.wang_landau_parameter;
+			}
+		}
+		return got_accepted;
+	}
 	double particle_positions[3];
 	int changed_particle_counter=0;
 	int p_id_s_changed_particles[particle_number_of_type];
@@ -1431,10 +1595,26 @@ bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_
 		bool particle_inserted_too_close_to_another_one=true;
 		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
 			//change particle position
-			double new_pos[3];
-			get_random_position_in_box(new_pos);
-			place_particle(p_id,new_pos);
-			double d_min=distto(new_pos,p_id);
+			double random_direction_vector[3];
+			double length_of_displacement=0.5;
+			vec_random(random_direction_vector, length_of_displacement);
+			double temp_pos[3];
+			temp_pos[0]=ppos[0]+random_direction_vector[0];
+			temp_pos[1]=ppos[1]+random_direction_vector[1];
+			temp_pos[2]=ppos[2]+random_direction_vector[2];
+			if (current_reaction_system.box_is_cylindric_around_z_axis==true) {
+				int counter=1;
+				while (sqrt(pow(temp_pos[0]-current_reaction_system.cyl_x,2)+pow(temp_pos[1]-current_reaction_system.cyl_y,2))> current_reaction_system.cyl_radius && counter<10 ) {
+					vec_random(random_direction_vector, length_of_displacement);
+					temp_pos[0]=ppos[0]+random_direction_vector[0];
+					temp_pos[1]=ppos[1]+random_direction_vector[1];
+					temp_pos[2]=ppos[2]+random_direction_vector[2];
+					counter++;	
+				}
+			}
+			place_particle(p_id,temp_pos);
+
+			double d_min=distto(temp_pos,p_id);
 			attempts+=1;
 			if(d_min>current_reaction_system.exclusion_radius){
 				particle_inserted_too_close_to_another_one=false;
@@ -1669,22 +1849,15 @@ int do_reaction_wang_landau(){
 		if(got_accepted==true){
 			accepted_moves+=1;
 		}
-		
+		//make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_one_particle_of_type_wang_landau, or do_HMC_move
 		//perform additional Monte-carlo moves to to sample configurational partition function
 		//according to "Density-of-states Monte Carlo method for simulation of fluids"
 		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
-		for(int k=0;k<15;k++){
-			if(current_wang_landau_system.counter_ion_type>=0){
-				do_global_mc_move_for_one_particle_of_type_wang_landau(current_wang_landau_system.counter_ion_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id); //if polymer_start_id and polymer_end_id are set by user then also moves for the ids from [polymer_start_id,polymer_end_id] are performed
-				//alternatively
-				//do_HMC_move();
-			}
-			if(current_wang_landau_system.use_hybrid_monte_carlo==true){
-				do_HMC_move();
-			}
+		if(current_wang_landau_system.use_hybrid_monte_carlo==true){
+			do_HMC_move();
 		}
 
-		if(can_refine_wang_landau_one_over_t()&& tries%5000==0){
+		if(can_refine_wang_landau_one_over_t()&& tries%10000==0){
 			//check for convergence
 			if(achieved_desired_number_of_refinements_one_over_t()==true){
 				write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
