@@ -16,8 +16,8 @@ cdef class Actor:
         odict = self._params.copy()
         return odict
 
-    def __setstate__(self,params):
-        self._params=params
+    def __setstate__(self, params):
+        self._params = params
         self._set_params_in_es_core()
 
     def __init__(self, *args, **kwargs):
@@ -94,8 +94,8 @@ cdef class Actor:
         self._set_params_in_es_core()
 
     def __str__(self):
-        return self.__class__.__name__+"("+str(self.get_params())+")"
-    
+        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+
     def _get_interaction_type(self):
         bases = self.class_lookup(self.__class__)
         for i in range(len(bases)):

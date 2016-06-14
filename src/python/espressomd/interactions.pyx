@@ -80,8 +80,8 @@ cdef class NonBondedInteraction(object):
         return self._params
 
     def __str__(self):
-        return self.__class__.__name__+"("+str(self.get_params())+")"
-    
+        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+
     def set_params(self, **p):
         """Update parameters. Only given """
         # Check, if any key was passed, which is not known
@@ -438,8 +438,8 @@ cdef class BondedInteraction(object):
             "Subclasses of BondedInteraction must define the _set_params_in_es_core() method.")
 
     def __str__(self):
-        return self.__class__.__name__+"("+str(self._params)+")"
-    
+        return self.__class__.__name__ + "(" + str(self._params) + ")"
+
     def set_default_params(self):
         raise Exception(
             "Subclasses of BondedInteraction must define the set_default_params() method.")

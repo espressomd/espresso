@@ -376,7 +376,7 @@ cdef class System:
         def __get__(self):
             return max_cut_bonded
 
-    __seed=None
+    __seed = None
     property seed:
         def __set__(self, _seed):
             cdef vector[int] seed_array
