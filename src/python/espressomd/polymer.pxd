@@ -16,15 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+
 include "myconfig.pxi"
-import particle_data
-from libcpp.vector cimport vector
-from libcpp cimport bool
 
-cdef extern from "grid.hpp":
-    cdef void rescale_boxl(int dir, double d_new)
+cdef extern from "polymer.hpp":
+    int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, int mode, double shield, int max_try, double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double* posed2, int constr);
+    int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet);
 
-cdef extern from "communication.hpp" namespace "Random":
-        void mpi_random_seed(int cnt, vector[int] &seed)
 
-cdef bool skin_set

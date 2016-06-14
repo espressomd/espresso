@@ -582,20 +582,23 @@ def check_topology(system=None, chain_start=None, number_of_chains=None, chain_l
 #
 
 
-def structure_factor(system=None, sf_type='default', sf_order='default'):
+def structure_factor(system=None, sf_types=None, sf_order=None):
     """Structure Factor
-       structure_factor(system = None, sf_type = 'default', sf_order = 'default' )
+       structure_factor(system = None, sf_types = None, sf_order = None )
     """
+    
+    if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
+        raise ValueError("sf_types has to be a list!")
+    check_type_or_throw_except(sf_order, 1, int, "sf_order has to be an int!")
+    
     cdef double * sf
-
-    check_type_or_throw_except(sf_type, 1, int, "sf_type must be an int")
-    check_type_or_throw_except(sf_order, 1, int, "sf_order must be an int")
-
+    p_types = create_int_list_from_python_object(sf_types)
+    
     # Used to take the WITHOUT_BONDS define
     c_analyze.updatePartCfg(0)
-    c_analyze.calc_structurefactor(sf_type, sf_order, & sf)
-
-    return c_analyze.modify_stucturefactor(sf_order, sf)
+    c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
+    
+    return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
 
 #
 # RDF
@@ -842,14 +845,9 @@ def Vkappa(system=None, mode=None, Vk1=None, Vk2=None, avk=None):
             raise Exception(
                 "ERROR: # of averages <avk> has to be positive! Resetting values.")
             result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
-        result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
-            (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+        else:
+            result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
+                (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+        return result
     else:
         raise Exception("ERROR: Unknown mode.")
-    # else: # <- WTF?  Why is there a second `else'?
-    #    _Vkappa["Vk1"] += system.box_l[0] * system.box_l[1] * system.box_l[2]
-    #    _Vkappa["Vk2"] += (system.box_l[0] * system.box_l[1] * system.box_l[2])**2
-    #    _Vkappa["avk"] += 1.0
-    #    result = _Vkappa["Vk2"] / _Vkappa["avk"] - (_Vkappa["Vk1"] / _Vkappa["avk"])**2
-
-    return result
