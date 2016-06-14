@@ -55,11 +55,7 @@ int find_index_of_type(int type);
 
 bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
 
-bool do_local_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
-
 bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer);
-
-bool do_local_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer);
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 
