@@ -112,7 +112,7 @@ int do_reaction_wang_landau();
 void free_wang_landau();
 int update_maximum_and_minimum_energies_at_current_state(); //use for preliminary energy reweighting runs
 void write_out_preliminary_energy_run_results(char* filename);
-
+bool do_HMC_move_wang_landau();
 
 //checkpointing, only designed to reassign values of a previous simulation to a new simulation with the same initialization process
 int write_wang_landau_checkpoint(char* identifier);

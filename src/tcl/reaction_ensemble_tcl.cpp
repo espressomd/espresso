@@ -445,6 +445,11 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					for(int i=0; i<std::min(30,particle_number_of_type); i++) {
 						do_global_mc_move_for_one_particle_of_type_wang_landau(mc_type,current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id);
 					}
+					
+					if(current_wang_landau_system.use_hybrid_monte_carlo==true){
+						do_HMC_move_wang_landau();
+					}
+					
 				}
 
 				

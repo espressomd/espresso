@@ -1385,7 +1385,7 @@ bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_
 	return got_accepted;
 }
 
-bool do_HMC_move(){
+bool do_HMC_move_wang_landau(){
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(old_state_index>=0){
 		if(current_wang_landau_system.histogram[old_state_index]>=0)
@@ -1512,13 +1512,10 @@ int do_reaction_wang_landau(){
 		if(got_accepted==true){
 			accepted_moves+=1;
 		}
-		//make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_one_particle_of_type_wang_landau, or do_HMC_move
+		//make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_one_particle_of_type_wang_landau, or do_HMC_move_wang_landau
 		//perform additional Monte-carlo moves to to sample configurational partition function
 		//according to "Density-of-states Monte Carlo method for simulation of fluids"
 		//do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)
-		if(current_wang_landau_system.use_hybrid_monte_carlo==true){
-			do_HMC_move();
-		}
 
 		if(can_refine_wang_landau_one_over_t()&& tries%10000==0){
 			//check for convergence
