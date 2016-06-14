@@ -461,8 +461,8 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 		
 		///////////////////////////////////////////// constant_pH
 		if (ARG1_IS_S("constant_pH")){
+			argc-=1; argv+=1;
 			if(ARG1_IS_S("do")) {
-				argc-=1; argv+=1;
 				provided_unknown_command=false;
 				do_reaction_constant_pH();
 			} else {
