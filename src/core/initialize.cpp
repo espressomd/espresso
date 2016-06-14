@@ -89,14 +89,10 @@ void on_program_start()
   EF_ALLOW_MALLOC_0 = 1;
 #endif
 
-  register_sigint_handler();
+  ErrorHandling::register_sigint_handler();
 
   if (this_node == 0) {
     /* master node */
-#ifdef FORCE_CORE
-    /* core should be the last exit handler (process dies) */
-    atexit(core);
-#endif
     atexit(mpi_stop);
   }
 #ifdef CUDA
@@ -106,7 +102,7 @@ void on_program_start()
   /*
     call the initialization of the modules here
   */
-  init_random();
+  Random::init_random();
 
   init_node_grid();
   /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */

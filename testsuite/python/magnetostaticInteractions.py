@@ -23,6 +23,7 @@ import numpy as np
 
 from espressomd.magnetostatics import *
 
+
 class MagnetostaticsInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
@@ -50,10 +51,8 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = 10, 10, 10
-        self.system.part[0].pos = 0, 0, 0
-        self.system.part[1].pos = 0.1, 0.1, 0.1
-        self.system.part[0].dip = 1.3, 2.1, -6
-        self.system.part[1].dip = 4.3, 4.1, 7.5
+        self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
+        self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
 
     def generateTestForMagnetostaticInteraction(_interClass, _params):
         """Generates test cases for checking interaction parameters set and gotten back

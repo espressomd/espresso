@@ -17,9 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.hpp"
+
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "config.hpp"
 #include "random.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"

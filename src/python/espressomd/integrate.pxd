@@ -23,7 +23,7 @@ from libcpp cimport bool as cbool
 cdef extern from "config.hpp":
     pass
 
-cdef extern from "integrate.hpp":
+cdef extern from "integrate.hpp" nogil:
     cdef int python_integrate(int n_steps, int recalc_forces, int reuse_forces)
     cdef void integrate_set_nvt()
     cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
@@ -42,5 +42,5 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
         string format()
         ErrorLevel level()
 
-cdef extern from "errorhandling.hpp":
-    cdef vector[RuntimeError] mpiRuntimeErrorCollectorGather()
+cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
+    cdef vector[RuntimeError]mpi_gather_runtime_errors()
