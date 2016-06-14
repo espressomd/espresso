@@ -116,7 +116,7 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 100
+set loops 300
 puts "Thermalizing..."
 integrate 4000
 puts "Measuring..."
