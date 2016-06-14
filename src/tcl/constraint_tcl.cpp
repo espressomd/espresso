@@ -1756,10 +1756,7 @@ static int tclcommand_constraint_parse_voxel(Constraint *con, Tcl_Interp *interp
 
 static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
   double pos[3];
-  double vec[3];
-  double dist=1e100;
-  double mindist = 1e100;
-  int n;
+  double mindist;
   char buffer[TCL_DOUBLE_SPACE];
   if (n_constraints==0) {
     Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
@@ -1768,68 +1765,7 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
 
   Particle* p1=0;
   if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
-    for(n=0;n<n_constraints;n++) {
-      switch(constraints[n].type) {
-        case CONSTRAINT_WAL: 
-          if ( !constraints[n].c.wal.penetrable )
-	          calculate_wall_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_SPH:
-          if ( !constraints[n].c.sph.penetrable )
-	          calculate_sphere_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_CYL: 
-          if ( !constraints[n].c.cyl.penetrable )
-	          calculate_cylinder_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_RHOMBOID: 
-          if ( !constraints[n].c.rhomboid.penetrable )
-	          calculate_rhomboid_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_MAZE: 
-          if ( !constraints[n].c.maze.penetrable )
-	          calculate_maze_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_STOMATOCYTE:
-          if ( !constraints[n].c.stomatocyte.penetrable )
-	          calculate_stomatocyte_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.stomatocyte, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_HOLLOW_CONE:
-          if ( !constraints[n].c.hollow_cone.penetrable )
-	          calculate_hollow_cone_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.hollow_cone, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_PORE: 
-	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
-          break;
-        case CONSTRAINT_SLITPORE: 
-	        calculate_slitpore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.slitpore, &dist, vec); 
-          break;
-        case CONSTRAINT_PLANE:
-	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
-          break;
-        case CONSTRAINT_VOXEL:
-	        calculate_voxel_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
-          break;
-        default: // rest of constraints just don't have associated distances
-          break;
-      }
-      mindist = dist<mindist ? dist : mindist;
-
-    }
+	mindist=get_min_dist_to_all_constraints(p1,pos);
     Tcl_PrintDouble(interp, mindist, buffer);
     Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
     return TCL_OK;
