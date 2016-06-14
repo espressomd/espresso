@@ -487,21 +487,17 @@ int delete_particle (int p_id) {
 int get_random_position_in_box (double* out_pos) {
 	if(current_reaction_system.box_is_cylindric_around_z_axis==true) {
 		//see http://mathworld.wolfram.com/DiskPointPicking.html
-		double cyl_radius= current_reaction_system.cyl_radius;
-		double cyl_x=current_reaction_system.cyl_x;
-		double cyl_y=current_reaction_system.cyl_y;
-
-		double random_radius=cyl_radius*sqrt(d_random());
+		double random_radius=current_reaction_system.cyl_radius*sqrt(d_random());
 		double phi=2.0*PI*d_random();
 		out_pos[0]=random_radius*cos(phi);
 		out_pos[1]=random_radius*sin(phi);
 		while (pow(out_pos[0],2)+pow(out_pos[1],2)<=pow(current_reaction_system.exclusion_radius,2)){
-			random_radius=cyl_radius*sqrt(d_random());
+			random_radius=current_reaction_system.cyl_radius*sqrt(d_random());
 			out_pos[0]=random_radius*cos(phi);
 			out_pos[1]=random_radius*sin(phi);		
 		}
-		out_pos[0]+=cyl_x;
-		out_pos[1]+=cyl_y;
+		out_pos[0]+=current_reaction_system.cyl_x;
+		out_pos[1]+=current_reaction_system.cyl_y;
 		out_pos[2]=box_l[2]*d_random();
 	} else {
 		//do it like this in the cubic case
