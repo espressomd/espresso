@@ -845,14 +845,9 @@ def Vkappa(system=None, mode=None, Vk1=None, Vk2=None, avk=None):
             raise Exception(
                 "ERROR: # of averages <avk> has to be positive! Resetting values.")
             result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
-        result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
-            (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+        else:
+            result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
+                (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+        return result
     else:
         raise Exception("ERROR: Unknown mode.")
-    # else: # <- WTF?  Why is there a second `else'?
-    #    _Vkappa["Vk1"] += system.box_l[0] * system.box_l[1] * system.box_l[2]
-    #    _Vkappa["Vk2"] += (system.box_l[0] * system.box_l[1] * system.box_l[2])**2
-    #    _Vkappa["avk"] += 1.0
-    #    result = _Vkappa["Vk2"] / _Vkappa["avk"] - (_Vkappa["Vk1"] / _Vkappa["avk"])**2
-
-    return result
