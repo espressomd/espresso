@@ -161,7 +161,7 @@ IF LB_GPU or LB:
             lb_lbfluid_save_checkpoint(path, binary)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(path, binary)
-        def lbnode_print_velocity(self, coord):
+        def lbnode_get_node_velocity(self, coord):
             cdef double[3] double_return
             cdef int[3] c_coord
             for i in range(len(coord)):

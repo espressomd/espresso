@@ -86,7 +86,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_load_checkpoint(char * filename, int binary)
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
-        int lb_lbnode_get_u(int * coord, double * double_return)
+        int lbnode_get_node_velocity(int * coord, double * double_return)
 
     ###############################################
     #
