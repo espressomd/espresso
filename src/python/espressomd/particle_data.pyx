@@ -1260,3 +1260,11 @@ cdef class ParticleList:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
 
+    def pairs(self):
+        """Generator returns all pairs of particles"""
+        for i in range(max_seen_particle+1):
+            for j in range(i+1,max_seen_particle+1,1):
+                if not (self.exists(i) and self.exists(j)):
+                    continue
+                yield (self[i],self[j])
+
