@@ -101,16 +101,23 @@ public:
   iterator begin() {
     return m_container.begin();
   }
-
+  
   /**
-   * @brief Get iterator to end of the container.
+   * @brief Get a const iterator to beginning of the container.
+   */
+  const_iterator begin() const {
+    return m_container.begin();
+  }
+  
+  /**
+   * @brief Get an iterator to end of the container.
    */
   iterator end() {
     return m_container.end();
   }
 
   /**
-   * @brief Get iterator to end of the container.
+   * @brief Get a const iterator to end of the container.
    */
   const_iterator end() const {
     return m_container.end();

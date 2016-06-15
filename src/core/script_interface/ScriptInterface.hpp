@@ -81,7 +81,10 @@ typedef std::map<std::string, Parameter> ParameterMap;
 class ScriptInterfaceBase {
  public:
   /**
-   * @brief Human-readable name of the object.
+   * @brief Name of the object.
+   *
+   * Should be the name of the derived type including
+   * namespace qualifiers. Must be unique.
    *
    * @return Name of the object.
    */   
