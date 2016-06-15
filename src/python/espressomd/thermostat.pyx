@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cimport thermostat
+cimport utils
 
 cdef class Thermostat:
 
@@ -54,7 +55,9 @@ cdef class Thermostat:
         if kT == "" or gamma == "":
             raise ValueError(
                 "Both, kT and gamma have to be given as keyword args")
-        if not isinstance(kT, float) or not isinstance(gamma, float) or float(kT) < 0. or float(gamma) < 0.:
+        utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+        utils.check_type_or_throw_except(gamma,1,float,"gamma must be a number")
+        if float(kT) < 0. or float(gamma) < 0.:
             raise ValueError("temperature and gamma must be positive numbers")
         global temperature
         temperature = float(kT)
