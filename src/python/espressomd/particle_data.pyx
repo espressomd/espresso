@@ -803,6 +803,11 @@ cdef class ParticleHandle:
                 raise Exception(
                     "1st element of Bond has to be of type BondedInteraction or int.")
 
+        # Check whether the bond has been added to the list of active bonded interactions
+        if bond[0]._bond_id==-1:
+          raise Exception("The bonded interaction has not yet been added to the list of active bonds in Espresso")
+        
+        
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
             raise ValueError("The bond type", bond._bond_id, "does not exist.")
