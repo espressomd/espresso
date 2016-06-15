@@ -22,21 +22,14 @@
 #include <type_traits>
 #include <iostream>
 #include <string>
-#include <exception>
 #include <memory>
+#include <exception>
 #include <list>
 
 #include "TclCommand.hpp"
 #include "TclScriptInterface.hpp"
 #include "utils/NumeratedContainer.hpp"
-#include "utils/Factory.hpp"
 #include "utils/make_bimap.hpp"
-
-/**
- * Map from the tcl names to class names, such that name_map.left provides
- * access by tcl names, and name.right by class names.
- */
-boost::bimap<std::string, std::string> name_map = Utils::make_bimap<std::string, std::string>({ { "a", "b" } });
 
 namespace ScriptInterface { namespace Tcl {
 
@@ -48,31 +41,28 @@ namespace ScriptInterface { namespace Tcl {
  * identify the new object. It can be deleted from Tcl by "delete <id>" and printed
  * by id. Without parameters the command prints all objects.
  */
-template<class T, class Factory = Utils::Factory<T> >
 class TclScriptInterfaceManager : public TclCommand {
  public:
-  TclScriptInterfaceManager(Tcl_Interp *_interp,
+  TclScriptInterfaceManager(Tcl_Interp *interp,
                             const boost::bimap<std::string, std::string> &name_map)
-      : TclCommand(_interp),
+      : TclCommand(interp),
         m_name_map(name_map)
-  {
-    static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "Type has to be subclass of ScriptInterfaceBase");
-  }
+  {}
 
-  virtual void parse_from_string(std::list<std::string> &argv) override {
+  virtual void parse_from_string(std::list<std::string> &argv) override {    
     switch(argv.size()) {
-      /* Print everything */
       case 0:
-        Tcl_AppendResult(interp, print_to_string().c_str(), 0);
+        /* Print everything */
+        Tcl_AppendResult(interp(), print_to_string().c_str(), nullptr);
         break;
-        /* Print object by id */
       case 1:
-        {
+        {          
+          /* Print object by id */
           const int id = parse_id(argv);
           
-          Tcl_AppendResult(interp, do_print(id).c_str(), 0);
+          Tcl_AppendResult(interp(), do_print(id).c_str(), nullptr);
         
-          return;
+          break;
         }
       default:
         {
@@ -90,10 +80,11 @@ class TclScriptInterfaceManager : public TclCommand {
             /* Pop the 'delete' */
             argv.pop_front();
             
-            const int id = parse_id(argv);            
+            const int id = parse_id(argv);
             do_delete(id);
 
-            return;
+            /* Don't parse parameteres for a deleted object. */
+            break;
           } else {
             id = parse_id(argv);
           }
@@ -101,14 +92,14 @@ class TclScriptInterfaceManager : public TclCommand {
           /* Pass remaining arguments to the
            * object for parsing. */
 
-          m_om[id]->parse_from_string(argv);
+          m_om[id].parse_from_string(argv);
 
           std::stringstream ss;
           ss << id;
-          Tcl_AppendResult(interp, ss.str().c_str(), 0);
+          Tcl_AppendResult(interp(), ss.str().c_str(), 0);
           break;
         }
-    }      
+    }
   }
 
   virtual std::string print_to_string() const override {
@@ -132,13 +123,10 @@ class TclScriptInterfaceManager : public TclCommand {
     argv.pop_front();
     
     /* Construct the object */
-    auto o = Factory::make(class_name);
-    /* Add to list and get an index.
-     * The object is not used anymore so it can be moved into
-     * the container. This works also with Factories that use
-     * pointer types that can not be copied, as unique_ptr.
-     */
-    return m_om.add(std::move(o));           
+    auto o = TclScriptInterface(class_name, interp());
+    
+    /* Add to list and get an index. */
+    return m_om.add(o);           
   }
   
   virtual void do_delete(int id) {
@@ -150,10 +138,10 @@ class TclScriptInterfaceManager : public TclCommand {
     auto const& o = m_om[id];
     
     /* Get the tcl name */
-    auto const& tcl_name = m_name_map.right.at(o->name());
+    auto const& tcl_name = m_name_map.right.at(o.name());
 
     /* Print the name and the parameters */
-    return tcl_name + " " + o->print_to_string();
+    return tcl_name + " " + o.print_to_string();
   }
 
   int parse_id(std::list<std::string> &argv) const {
@@ -166,9 +154,11 @@ class TclScriptInterfaceManager : public TclCommand {
     }
     /* Pop the id */
     argv.pop_front();
+
+    return id;
   }
   
-  Utils::NumeratedContainer<std::unique_ptr<TclScriptInterface> > m_om;
+  Utils::NumeratedContainer<TclScriptInterface> m_om;
   boost::bimap<std::string, std::string> const& m_name_map;
 };
 

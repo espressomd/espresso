@@ -17,17 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPE_FACTORY_HPP
-#define __SHAPE_FACTORY_HPP
+#ifndef SCRIPT_INTERFACE_INITIALIZE_HPP
+#define SCRIPT_INTERFACE_INITIALIZE_HPP
 
-#include "utils/Factory.hpp"
-#include "Shape.hpp"
+namespace ScriptInterface {
 
-namespace Shapes {
-typedef Utils::Factory<Shape> Factory;
+void initialize();
 
-void initialize_factory();
-
-} /* namespace Shapes */
+} /* namespace ScriptInterface */
 
 #endif

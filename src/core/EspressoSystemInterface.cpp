@@ -88,7 +88,9 @@ void EspressoSystemInterface::gatherParticles() {
       for(i = 0; i < np; i++) {
 
 	if(needsR())
-	  R.push_back(Vector3(p[i].r.p));
+	  R.push_back({p[i].r.p[0],
+                  p[i].r.p[1],
+                  p[i].r.p[2]});
 
 #ifdef ELECTROSTATICS
 	if(needsQ())
@@ -96,11 +98,15 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 #ifdef DIPOLES
 	if(needsDip())
-	  Dip.push_back(Vector3(p[i].r.dip));
+	  Dip.push_back(push_back({p[i].r.dip[0],
+                  p[i].r.dip[1],
+                  p[i].r.dip[2]});
 #endif
 #ifdef ROTATION
 	if(needsQuatu())
-	  Quatu.push_back(Vector3(p[i].r.quatu));
+	  Quatu.push_back(push_back({p[i].r.quatu[0],
+                  p[i].r.quatu[1],
+                  p[i].r.quatu[2]});
 #endif
       }
     }
@@ -166,6 +172,6 @@ unsigned int EspressoSystemInterface::npart() {
 }
 
 SystemInterface::Vector3 EspressoSystemInterface::box() {
-  return Vector3(box_l);
+  return {box_l[0], box_l[1], box_l[2]};
 }
 

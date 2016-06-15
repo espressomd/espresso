@@ -24,7 +24,7 @@ namespace ScriptInterface { namespace Tcl {
 string TclScriptInterface::print_to_string() const {
   ostringstream res;
 
-  for(auto &p: m_so.get_parameters()) {
+  for(auto &p: m_so->get_parameters()) {
     res << p.first << " " << p.second << " ";
   }
 
@@ -32,7 +32,7 @@ string TclScriptInterface::print_to_string() const {
 }
 
 void TclScriptInterface::parse_from_string(list<string> &argv) {  
-  ParameterMap p = m_so.all_parameters();
+  ParameterMap p = m_so->all_parameters();
   std::map<std::string, Variant> values;
   
   for(list<string>::iterator it = argv.begin(); it != argv.end();) {    
@@ -133,7 +133,7 @@ void TclScriptInterface::parse_from_string(list<string> &argv) {
   }
 
   /* Forward the parameters to m_so */
-  m_so.set_parameters(values);
+  m_so->set_parameters(values);
 }
 
 }} /* namespace */

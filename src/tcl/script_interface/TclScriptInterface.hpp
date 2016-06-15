@@ -20,20 +20,34 @@
 #ifndef TCL_TCLSCRIPTOBJECT_HPP
 #define TCL_TCLSCRIPTOBJECT_HPP
 
-/** Tcl interface to ScriptObjects
- */
+#include <memory>
+#include <string>
+
+#include "utils/Factory.hpp"
 
 #include "TclCommand.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface { namespace Tcl {
 
+/**
+ * @brief Tcl interface to @c ScriptInterfaceBase.
+ *
+ * This class encapsulates a ScripterfaceBase for access
+ * from Tcl. It owns the corresponding C++ object.
+ * Copies are shallow, so all copies point to the same
+ * C++ object. New objects are only created if the
+ * explicit contructor is used.
+ */
 class TclScriptInterface : public TclCommand {
 public:
-  TclScriptInterface(ScriptInterfaceBase &so, Tcl_Interp* interp)
-      : m_so(so),
-        TclCommand(interp)
-  {};
+  typedef typename  Utils::Factory<ScriptInterfaceBase> Factory;
+  
+  TclScriptInterface(std::string const& name, Tcl_Interp* interp)
+      : TclCommand(interp),
+        /* Create a new c++ object */
+        m_so(Factory::make(name))
+  {}
 
   /**
    * @brief Print parameters in Tcl formatting.
@@ -45,19 +59,12 @@ public:
    */
   void parse_from_string(std::list<std::string> &argv) override;
 
-  /**
-   * @brief Register the command with Tcl.
-   */
-  void create_command() {
-    TclCommand::create_command(m_so.name());
-  }
-  
   std::string name() const {
-    return m_so.name();
+    return m_so->name();
   }
 
 private:
-  ScriptInterfaceBase &m_so;
+  std::shared_ptr<ScriptInterfaceBase> m_so;
 };
 
 }} /* namespace */

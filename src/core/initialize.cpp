@@ -66,7 +66,6 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "scafacos.hpp"
-#include "shapes/ShapeFactory.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -145,8 +144,6 @@ void on_program_start()
     /* interaction_data.c: make sure 0<->0 ia always exists */
     make_particle_type_exist(0);
   }
-
-  Shapes::initialize_factory();
 }
 
 

@@ -12,5 +12,5 @@ file(COPY ${espresso_scripts} DESTINATION ${CMAKE_BINARY_DIR}/scripts)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_definitions(-DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 add_executable(Espresso ${Espresso_SRC} ${MPI_SOURCE})
-target_link_libraries(Espresso EspressoCore ${LIBRARIES})
+target_link_libraries(Espresso EspressoCore EspressoScriptInterface ${LIBRARIES})
 

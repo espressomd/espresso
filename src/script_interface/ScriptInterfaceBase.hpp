@@ -19,14 +19,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SCRIPT_INTERFACE_HPP
-#define __SCRIPT_INTERFACE_HPP
+#ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
+#define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 
 #include <map>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include <boost/variant.hpp>
+
+#include "Parameter.hpp"
+
+namespace ScriptInterface {
 
 /**
  * @brief Possible types for parameters.
@@ -38,20 +43,18 @@ typedef boost::variant<bool,
                        std::vector<int>,
                        std::vector<double> > Variant;
 
-#include "Parameter.hpp"
-
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the Variant.
  *
  * This will fail at compile time if the type of MEMBER_NAME is not one of the
  * possible types of Variant, and at runtime if the current type of the variant
  * is not that of MEMBER_NAME.
+ * remove_reference ensures that this also works with member access by reference
+ * for example as returned by a function.
  */
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME) if(name == PARAMETER_NAME) {\
-  MEMBER_NAME = boost::get<decltype(MEMBER_NAME)>(value);\
+    MEMBER_NAME = boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
   }
-
-namespace ScriptInterface {
 
 /**
  * Convinience typedefs.

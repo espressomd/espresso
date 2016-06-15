@@ -66,6 +66,10 @@
 #include "h5mdfile_tcl.hpp"
 #include "mpiio_tcl.hpp"
 
+#include "script_interface/initialize.hpp"
+#include "utils/make_bimap.hpp"
+#include "script_interface/TclScriptInterfaceManager.hpp"
+
 #ifdef TK
 #include <tk.h>
 #endif
@@ -136,7 +140,20 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
+/**
+ * Map from the tcl names to class names, such that name_map.left provides
+ * access by tcl names, and name.right by class names.
+ */
+static boost::bimap<std::string, std::string> shapes_name_map = Utils::make_bimap<std::string, std::string>({ { "wall", "Shapes::Wall" } });
+
 static void tcl_register_commands(Tcl_Interp* interp) {
+  /* Initialize ScriptInterface */
+  ScriptInterface::initialize();
+
+  auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(interp, shapes_name_map);
+
+  shapes->create_command("shapes");
+  
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);

@@ -19,20 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef __SHAPES_SHAPE_HPP
-#define __SHAPES_SHAPE_HPP
-
-#include <string>
-#include "script_interface/ScriptInterface.hpp"
+#ifndef SHAPES_SHAPE_HPP
+#define SHAPES_SHAPE_HPP
 
 namespace Shapes {
 
-struct Shape : public ScriptInterface::ScriptInterfaceBase {
+class Shape {
   virtual int calculate_dist(const double *ppos, double *dist, double *vec) const = 0;
-  /* Human readable name of the shape. */
-  virtual const std::string name() const override {
-    return std::string("Shape");
-  }
 };
 
 } /* namespace Shapes */

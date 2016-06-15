@@ -19,47 +19,33 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef SHAPES_WALL_HPP
-#define SHAPES_WALL_HPP
+#ifndef SCRIPT_INTERFACE_SHAPES_WALL_HPP
+#define SCRIPT_INTERFACE_SHAPES_WALL_HPP
 
-#include "Shape.hpp"
-#include "Vector.hpp"
+#include "ScriptInterface.hpp"
+#include "core/shapes/Wall.hpp"
 
-namespace Shapes {
-  class Wall : public Shape {
+namespace ScriptInterface { namespace Shapes {
+
+  class Wall : public ScriptInterfaceBase {
    public:
-    Wall()
-        : m_n({ 1., 0., 0. }),
-          m_d(0.0)
-    {}
-    
-    int calculate_dist(const double *ppos, double *dist, double *vec) const override;
-
-    void set_normal(const Vector3d &normal) {
-      m_n = normal;
-
-      m_n.normalize();
+    const std::string name() const override {
+      return "Shapes::Wall";
     }
     
-    Vector3d const& n() const {
-      return m_n;
-    }
+    ParameterMap all_parameters() const override;
+    VariantMap get_parameters() const override;
+    void set_parameter(const std::string &name, const Variant &value) override;
 
-    double const& d() const {
-      return m_d;
-    }
-    
-    double &d() {
-      return m_d;
+    ::Shapes::Wall const& wall() {
+      return m_wall;
     }
     
    private:
-    /** normal vector on the plane. */
-    Vector3d m_n;
-    /** distance of the wall from the origin. */
-    double m_d;
+    ::Shapes::Wall m_wall;
   };
 
-} /* namespace Shapes */
+} /* namespace Shapes */ } /* namespace ScriptInterface */
+
 
 #endif

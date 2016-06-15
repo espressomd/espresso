@@ -114,6 +114,11 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
+# If we build either interface turn on script interface
+if (WITH_PYTHON OR WITH_TCL)
+  set(WITH_SCRIPT_INTERFACE ON)
+endif()
+
 find_package(HDF5)
 if(HDF5_FOUND)
   set(H5MD 1)
