@@ -1387,3 +1387,12 @@ cdef class ParticleList:
     # # property n_part:
     #     def __get__(self):
     #         return n_part
+    
+    def pairs(self):
+        """Generator returns all pairs of particles"""
+        for i in range(max_seen_particle+1):
+            for j in range(i+1,max_seen_particle+1,1):
+                if not (self.exists(i) and self.exists(j)):
+                    continue
+                yield (self[i],self[j])
+
