@@ -31,17 +31,13 @@ from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
 
-import midi
-
-"""
 try:
-    from pygame import midi
+    import midi
 except:
     try:
-        from portmidi import midi
+        from pygame import midi
     except:
-        from pyportmidi import midi
-"""
+        from portmidi import midi
 midi.init()
 
 #if log flag is set, midi controller will change pressure logarithmically
