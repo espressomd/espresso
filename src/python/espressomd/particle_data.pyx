@@ -864,9 +864,15 @@ cdef class ParticleHandle:
                              bond[0]._bond_id], "partners.")
 
         # Type check on partners
-        for y in bond[1:]:
-            if not isinstance(y, int):
-                raise ValueError("Partners have to be integer.")
+        for i in range(1,len(bond)):
+            if not isinstance(bond[i], int):
+                if not isinstance(bond[i],ParticleHandle):
+                    raise ValueError("Bond partners have to be of type integer or ParticleHandle.")
+                else: 
+                    # Put the particle id instead of the particle handle
+                    bond[i]=bond[i].id
+
+
 
     def add_bond(self, _bond):
         """Add a single bond to the particle"""
