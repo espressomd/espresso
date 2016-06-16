@@ -31,8 +31,9 @@ from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
 
-#import midi
+import midi
 
+"""
 try:
     from pygame import midi
 except:
@@ -40,7 +41,7 @@ except:
         from portmidi import midi
     except:
         from pyportmidi import midi
-
+"""
 midi.init()
 
 #if log flag is set, midi controller will change pressure logarithmically
@@ -565,7 +566,7 @@ def update_plot():
 
 t = Thread(target=main_thread)
 t.daemon = True
-mayavi.register_callback(update_plot, interval=200)
+mayavi.register_callback(update_plot, interval=1000)
 controls = Controls()
 t.start()
 if controls.midi_input is not None:
