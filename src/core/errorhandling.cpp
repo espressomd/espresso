@@ -82,7 +82,7 @@ void init_error_handling(Communication::MpiCallbacks &cb) {
   
   m_callbacks->add(mpi_gather_runtime_errors_slave);
   
-  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(new RuntimeErrorCollector(m_callbacks->comm()));
+  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(new RuntimeErrorCollector(m_callbacks->comm_addr()));
 }
 
 void _runtimeWarning(const std::string &msg, 

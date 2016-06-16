@@ -30,14 +30,14 @@ using boost::mpi::all_reduce;
 namespace ErrorHandling {
 
 RuntimeErrorCollector::
-RuntimeErrorCollector(const communicator &comm) : m_comm(comm)
+RuntimeErrorCollector(const communicator *comm) : m_comm(comm)
 {}
 
 void RuntimeErrorCollector::
 warning(const string &msg,
         const char* function, const char* file, const int line) {
   m_errors.emplace_back(RuntimeError::ErrorLevel::WARNING,
-			m_comm.rank(),
+			comm().rank(),
 			msg,
 			string(function),
 			string(file),
@@ -60,7 +60,7 @@ void RuntimeErrorCollector::
 error(const string &msg,
       const char* function, const char* file, const int line) {
   m_errors.emplace_back(RuntimeError::ErrorLevel::ERROR,
-			m_comm.rank(),
+			comm().rank(),
 			msg,
 			string(function),
 			string(file),
@@ -85,7 +85,7 @@ count() const {
   int totalMessages;
   const int numMessages = m_errors.size();
   
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>()); 
+  all_reduce(comm(), numMessages, totalMessages, std::plus<int>()); 
   
   return totalMessages;
 }
@@ -97,7 +97,7 @@ count(RuntimeError::ErrorLevel level) {
     });
   int totalMessages;
 
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>()); 
+  all_reduce(comm(), numMessages, totalMessages, std::plus<int>()); 
   
   return totalMessages;  
 }
@@ -118,7 +118,7 @@ gather() {
   return_type all_errors;
 
   // Gather the errors on the master
-  boost::mpi::gather(m_comm, m_errors, all_error_vectors, 0);
+  boost::mpi::gather(comm(), m_errors, all_error_vectors, 0);
   
   /** Flaten the vector of vectors */
   for (auto const&v: all_error_vectors) {
@@ -140,7 +140,7 @@ gatherSlave() {
   }
 
   // Gather the errors on the master
-  boost::mpi::gather(m_comm, m_errors, 0);
+  boost::mpi::gather(comm(), m_errors, 0);
 
   // finally empty the list
   this->clear();

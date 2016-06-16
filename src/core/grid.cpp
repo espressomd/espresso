@@ -274,6 +274,7 @@ void grid_changed_n_nodes()
   MPI_Comm_free(&comm_cart);
   
   MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid, per, 0, &comm_cart);
+  boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);
 
   MPI_Comm_rank(comm_cart, &this_node);
 
