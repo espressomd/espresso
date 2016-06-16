@@ -31,7 +31,7 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector {
 public:
-  RuntimeErrorCollector(const boost::mpi::communicator &comm);
+  RuntimeErrorCollector(const boost::mpi::communicator *comm);
 
   void 
   warning(const std::string &msg,
@@ -77,7 +77,11 @@ public:
 
 private:
   std::vector<RuntimeError> m_errors;
-  boost::mpi::communicator m_comm;
+  const boost::mpi::communicator *m_comm;
+
+  boost::mpi::communicator comm() const {
+      return *m_comm;
+  }
 };
 
 } /* ErrorHandling */

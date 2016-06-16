@@ -273,8 +273,7 @@ void mpi_init(int *argc, char ***argv)
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
   boost_comm = boost::mpi::communicator(comm_cart, boost::mpi::comm_attach);
-
-  Communication::initialize_callbacks(boost_comm);
+  Communication::initialize_callbacks(&boost_comm);
   
   for(int i = 0; i < slave_callbacks.size(); ++i)  {
     mpiCallbacks().add(slave_callbacks[i]);

@@ -38,7 +38,7 @@ class MpiCallbacks {
   /** Type of the callback functions. */
   typedef std::function<void (int, int)> function_type;
   
-  MpiCallbacks(const boost::mpi::communicator &comm)
+  MpiCallbacks(const boost::mpi::communicator *comm)
       : m_comm(comm)
   {
     /** Add a dummy at id 0 for loop abort. */
@@ -127,6 +127,10 @@ class MpiCallbacks {
    * @brief The boost mpi communicator used by this instance
    */
   boost::mpi::communicator comm() const {
+    return *m_comm;
+  }
+
+  const boost::mpi::communicator* comm_addr() const {
     return m_comm;
   }
   
@@ -151,7 +155,7 @@ class MpiCallbacks {
   /**
    * The MPI communicator used for the callbacks.   
    */
-  boost::mpi::communicator m_comm;
+  const boost::mpi::communicator *m_comm;
   
   /**
    * Internal storage for the callback functions.
@@ -169,7 +173,7 @@ class MpiCallbacks {
  * @brief Initialize the callback singelton.
  * This sets the communicator to use.
  */
-void initialize_callbacks(boost::mpi::communicator &comm);
+void initialize_callbacks(const boost::mpi::communicator *comm);
 
 /**
  * @brief Returns a reference to the global callback class instance.

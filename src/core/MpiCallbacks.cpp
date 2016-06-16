@@ -24,12 +24,13 @@
 #include <boost/mpi.hpp>
 
 #include "MpiCallbacks.hpp"
+#include "communication.hpp"
 
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {  
   /** Can only be call from master */
-  assert(m_comm.rank() == 0);
+  assert(comm().rank() == 0);
   
   /** Check if callback exists */
   if(m_callbacks.find(id) == m_callbacks.end()) {    
@@ -38,7 +39,7 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
   
   int request[3]{id, par1, par2};
   /** Send request to slaves */
-  boost::mpi::broadcast(m_comm, request, 3, 0);
+  boost::mpi::broadcast(comm(), request, 3, 0);
 }
 
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
@@ -84,7 +85,7 @@ void MpiCallbacks::loop() const {
   for(;;) {
     int request[3];
     /** Communicate callback id and parameters */
-    boost::mpi::broadcast(m_comm, request, 3, 0);
+    boost::mpi::broadcast(comm(), request, 3, 0);
     /** id == 0 is loop_abort. */
     if(request[0] == LOOP_ABORT) {
       break;
@@ -99,7 +100,7 @@ namespace {
 std::unique_ptr<MpiCallbacks> m_global_callback;
 }
 
-void initialize_callbacks(boost::mpi::communicator &comm) {
+void initialize_callbacks(const boost::mpi::communicator *comm) {
   m_global_callback = std::unique_ptr<MpiCallbacks>(new MpiCallbacks(comm));
 }
 

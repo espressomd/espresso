@@ -69,6 +69,7 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 extern MPI_Comm comm_cart;
+extern boost::mpi::communicator boost_comm;
 /*@}*/
 
 /**
