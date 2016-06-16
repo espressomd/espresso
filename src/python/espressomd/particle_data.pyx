@@ -1069,7 +1069,14 @@ cdef class ParticleList:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         # Attributes to pickle.
-        # Conts of particle_attributes, minus a few exceptions
+        # Content of particle_attributes, minus a few exceptions
+        # dip, director: Setting only the director will overwrite
+        # the orientation of the particle around the axis parallel
+        # to dipole moment/director. Quaternions contain the full info
+        # id: The particle id is used as the storage key when pickling
+        # all particles via ParticleList, and the interface
+        # (rightly) does not support changing of the id after the particle
+        # was created.
         pickle_attr = copy(particle_attributes)
         for i in "director", "dip", "id":
             pickle_attr.remove(i)
