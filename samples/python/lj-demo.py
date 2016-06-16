@@ -31,9 +31,7 @@ from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
 
-
 #import midi
-
 
 try:
     from pygame import midi
@@ -156,20 +154,26 @@ for i in range(midi.get_count()):
 
 
 class Controls(HasTraits):
+    if len(inputs) == 1:
+        default_input = inputs
+        
     for i in inputs:
         if not "Through Port" in i[1]:
             default_input = i
             break
+    
     default_input = default_input if len(inputs) > 0 else None
     
+    
+    default_output = -1
     for i in outputs:
         if not "Through Port" in i[1]:
             default_output = i
             break
-    default_output = default_output if len(inputs) > 0 else None
+        else:
+            through_port_output = i
+    default_output = default_output if len(outputs) > 1 else through_port_output
     
-    #print("default input: {}".format(default_input))
-    #print("default output: {}".format(default_output))
     input_device = List(value=default_input, editor=CheckListEditor(values=inputs))
     output_device = List(value=default_output, editor=CheckListEditor(values=outputs))
     
@@ -188,8 +192,8 @@ class Controls(HasTraits):
     number_of_particles = Range(min_n, max_n, n_part, )
     ensemble = Enum('NVT', 'NPT')
 
-    midi_input = midi.Input(inputs[0][0]) if len(inputs) > 0 else None
-    midi_output = midi.Output(outputs[0][0]) if len(outputs) > 0 else None
+    midi_input = midi.Input(inputs[0][0]) if len(inputs) > 1 else None
+    midi_output = midi.Output(outputs[0][0]) if len(outputs) > 1 else None
 
     MIDI_BASE = 224
     MIDI_NUM_TEMPERATURE = MIDI_BASE + 0
@@ -346,8 +350,6 @@ pyplot.text(0.6, 10, 'solid')
 pyplot.text(1, 1, 'liquid')
 pyplot.text(1, 10**-3, 'gas')
 
-#change size labels
-
 pyplot.subplot(132)
 pyplot.title("Temperature")
 plot1, = pyplot.plot([0], [temperature])
@@ -406,22 +408,13 @@ def main_loop():
 
     pressure = analyze.pressure(system)
 
-    """
-    #new_box = numpy.ones(3) * box_l * controls.volume
-    new_box = numpy.ones(3) * controls.volume**(1./3.)
-    if numpy.any(numpy.array(system.box_l) != new_box):
-        for i in range(system.n_part):
-            system.part[i].pos *= new_box / system.box_l
-    system.box_l = new_box
-    """
-        
+    
     # update the parameters set in the GUI
     system.thermostat.set_langevin(kT=controls.temperature, gamma=1.0)
     if controls.ensemble == 'NPT':
-        # reset Vkappa when target pressure has changed, bug in espresso: reset Vkappa not possible
+        # reset Vkappa when target pressure has changed
         
         if old_pressure != controls.pressure:
-            #print("target pressure changed")
             analyze.Vkappa(system, 'reset')
             old_pressure = controls.pressure
             
@@ -436,12 +429,10 @@ def main_loop():
         integrate.set_integrator_nvt()
         controls.pressure = pressure['total']
         
-        #new_box = numpy.ones(3) * box_l * controls.volume
         new_box = numpy.ones(3) * controls.volume**(1./3.)
         if numpy.any(numpy.array(system.box_l) != new_box):
             for i in range(system.n_part):
                 system.part[i].pos *= new_box / system.box_l[0]
-                #system.part[i].pos = (new_box/ system.box_l[0] * system.part[i].pos) % system.box_l[0]
         system.box_l = new_box
 
     new_part = controls.number_of_particles
@@ -537,7 +528,6 @@ def rotate_scene():
             visualization.mlab.view(azimuth=mayavi_rotation_angle, distance='auto')
         else:
             current_view_vals = visualization.mlab.view()
-            #print(current_view_vals)
             visualization.mlab.view(azimuth=mayavi_rotation_angle, elevation=current_view_vals[1], distance=current_view_vals[2], focalpoint=current_view_vals[3])
     mayavi_rotation_angle%=360.
 
