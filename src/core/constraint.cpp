@@ -3026,5 +3026,75 @@ void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p, Constr
 
 
 }
+
+double get_min_dist_to_all_constraints(Particle* p1,double* pos){
+	double vec[3];
+	double dist=1e100;
+	double mindist = 1e100;
+    for(int n=0;n<n_constraints;n++) {
+      switch(constraints[n].type) {
+        case CONSTRAINT_WAL: 
+          if ( !constraints[n].c.wal.penetrable )
+	          calculate_wall_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_SPH:
+          if ( !constraints[n].c.sph.penetrable )
+	          calculate_sphere_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_CYL: 
+          if ( !constraints[n].c.cyl.penetrable )
+	          calculate_cylinder_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_RHOMBOID: 
+          if ( !constraints[n].c.rhomboid.penetrable )
+	          calculate_rhomboid_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_MAZE: 
+          if ( !constraints[n].c.maze.penetrable )
+	          calculate_maze_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_STOMATOCYTE:
+          if ( !constraints[n].c.stomatocyte.penetrable )
+	          calculate_stomatocyte_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.stomatocyte, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_HOLLOW_CONE:
+          if ( !constraints[n].c.hollow_cone.penetrable )
+	          calculate_hollow_cone_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.hollow_cone, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_PORE: 
+	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
+          break;
+        case CONSTRAINT_SLITPORE: 
+	        calculate_slitpore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.slitpore, &dist, vec); 
+          break;
+        case CONSTRAINT_PLANE:
+	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+          break;
+        case CONSTRAINT_VOXEL:
+	        calculate_voxel_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.voxel, &dist, vec); 
+          break;
+        default: // rest of constraints just don't have associated distances
+          break;
+      }
+      mindist = dist<mindist ? dist : mindist;
+
+    }
+
+}
+
 #endif
 

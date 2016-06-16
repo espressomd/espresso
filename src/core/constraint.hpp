@@ -118,6 +118,8 @@ void add_constraints_forces(Particle *p1);
 double add_constraints_energy(Particle *p1);
 
 void init_constraint_forces();
+
+double get_min_dist_to_all_constraints(Particle* p1, double* pos);
 #endif
 
 #endif
