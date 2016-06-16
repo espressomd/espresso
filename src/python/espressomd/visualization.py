@@ -69,9 +69,9 @@ class mayavi_live:
 			self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
 
 		if not N_changed:
-			self.points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+			self.points.mlab_source.set(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
 		else:
-			self.points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+			self.points.mlab_source.reset(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
 		if not self.running:
 			f.scene.reset_zoom()
 			self.running = True

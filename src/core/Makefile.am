@@ -118,7 +118,8 @@ libEspresso_la_SOURCES = \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
 	utils/statistics/RunningAverage.hpp \
-	mpiio.cpp mpiio.hpp
+	mpiio.cpp mpiio.hpp \
+	MpiCallbacks.cpp MpiCallbacks.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \

@@ -16,15 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# Minimize Energy
+
 include "myconfig.pxi"
-import particle_data
-from libcpp.vector cimport vector
-from libcpp cimport bool
+from _system cimport *
+cimport numpy as np
+from utils cimport *
 
-cdef extern from "grid.hpp":
-    cdef void rescale_boxl(int dir, double d_new)
+cdef extern from "minimize_energy.hpp": 
+    cdef void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement) 
 
-cdef extern from "communication.hpp" namespace "Random":
-        void mpi_random_seed(int cnt, vector[int] &seed)
-
-cdef bool skin_set
+cdef extern from "communication.hpp":
+    cdef int mpi_minimize_energy();
