@@ -421,19 +421,19 @@ The output corresponds to the blockfile format (see section
     structure_factor
   }{
     system = \arg{system},
-    sf_type = \arg{int},
+    sf_types = \arg{list of ints},
     sf_order = \arg{int}
   }
 \end{pysyntax}
 
 \begin{essyntax}
-  analyze structurefactor \var{type} \var{order}
+  analyze structurefactor \var{types} \var{order}
 \end{essyntax}
 
-Returns the spherically averaged structure factor $S(q)$ for particles
-of a given type \var{type}. The $S(q)$ is calculated for all possible
+Returns the spherically averaged structure factor $S(q)$ of particles
+specified in \var{types}. $S(q)$ is calculated for all possible
 wave vectors, $\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}$. Do
-not chose parameter \var{order} too large, because the number of
+not choose parameter \var{order} too large, because the number of
 calculations grows as $\var{order}^3$. 
 
 
