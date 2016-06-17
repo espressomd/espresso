@@ -364,8 +364,6 @@ void   p3m_init() {
   
     /* k-space part: */
     p3m_calc_differential_operator();
-    p3m_calc_influence_function_force();
-    p3m_calc_influence_function_energy();
 
     p3m_count_charged_particles();
 
