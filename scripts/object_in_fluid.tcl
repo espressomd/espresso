@@ -349,6 +349,41 @@ proc calc_stretching_force { args } {
     set f [list $fX $fY $fZ]
     return $f
 }
+
+proc calc_linear_stretching_force { args } {
+    # non-normalized stretching force
+    set n_args 0
+    foreach arg $args {
+	incr n_args
+    }
+    if { $n_args != 9 } {
+	puts "9 arguments are expected for calculation of stretching force"
+	puts "ks, aX, aY, aZ, bX, bY, bZ, dist0, dist"
+	return 0
+    }
+
+    set ks [lindex $args 0]
+    set aX [lindex $args 1]
+    set aY [lindex $args 2]
+    set aZ [lindex $args 3]
+    set bX [lindex $args 4]
+    set bY [lindex $args 5]
+    set bZ [lindex $args 6]
+    set dist0 [lindex $args 7]
+    set dist [lindex $args 8]
+    
+    set dr [expr $dist - $dist0]
+    # linear stretching: 
+    set fac [expr (-$ks * $dr)]
+    
+    set fX [expr ($fac*($bX-$aX)/$dist)]
+    set fY [expr ($fac*($bY-$aY)/$dist)]
+    set fZ [expr ($fac*($bZ-$aZ)/$dist)]
+    
+    set f [list $fX $fY $fZ]
+    return $f
+}
+
 #---------------------------------------------------------------------------
 # calculation of bending force
 
@@ -2704,6 +2739,7 @@ proc oif_object_analyze { args } {
 	set volume -1
 	set surface -1
 	set elastic_forces ""
+	set pressure_ks ""
 	set output_file ""
 	set velocity 0
 	set affinity ""
@@ -2797,6 +2833,15 @@ proc oif_object_analyze { args } {
 					break
 				}
 				set pos_bounds [lindex $args $pos]
+				incr pos
+			}
+			"pressure-ks" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_object_analyze: output file for pressure is needed"
+					break
+				}
+				set pressure_ks [lindex $args $pos]
 				incr pos
 			}
 			"elastic-forces" {  
@@ -3267,6 +3312,154 @@ proc oif_object_analyze { args } {
 		if { $pos_bounds == "y-max" } { set result $Ymax }
 
 		return $result
+	}
+
+
+	if { $pressure_ks != ""} {
+			# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set nedges [lindex $template 1]
+			set ntriangles [lindex $template 2]
+			set ks [lindex $template 3]
+
+			set start_id_of_nodes 0
+			set start_id_of_edges 0
+			set start_id_of_triangles 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+			    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover edges from this object's template
+			for {set i 0} {$i < $nedges} {incr i} {
+			    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+			    set mesh_edges($i,0) [lindex $edge_pair 0]
+			    set mesh_edges($i,1) [lindex $edge_pair 1]
+			}
+
+			# recover triangles from this object's template
+			for {set i 0} {$i < $ntriangles} {incr i} {
+			    set triangle [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
+			    set mesh_triangles($i,0) [lindex $triangle 0]
+			    set mesh_triangles($i,1) [lindex $triangle 1]
+			    set mesh_triangles($i,2) [lindex $triangle 2]
+			}
+
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+
+			# initialize the pressure list
+			for { set i 0 } { $i < [expr $nnodes] } { incr i } {
+				set pressure($i) 0.0
+			}
+
+			# initialize temporary areas list
+			for { set i 0} { $i < [expr $nnodes] } { incr i } {
+				set tmp_area($i) 0.0
+			}
+			
+			# Calculate the microslopic pressure around all points. 
+			# This will be done by running over all edges and computing the respective scalar product 
+			# and adding it to both points of the edge. 
+			# !!!!! First, without dividing by respective area around the points 
+			for { set i 0 } { $i < $nedges } { incr i } {
+			    # Take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			    set pA $mesh_edges($i,0)
+			    set pB $mesh_edges($i,1)
+#			    puts "object-id = $objectID, strat_id_of_particles = $start_id_of_particles, pA and pB values = $pA and $pB"
+			    
+			    # Get the current position of the same two points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+
+			    # Calculate stretching force between point A and point B
+			    set orig_dist 0.0
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set orig_dist [expr ($orig_dist + ($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j))*($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j)))]
+			    }
+			    set orig_dist [expr sqrt($orig_dist)]
+			    
+			    set curr_dist 0.0
+			    set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			    set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			    set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			    set curr_dist [expr sqrt($curr_dist)]
+			    #if { $pA == 0 } { puts "*** curdist = $curr_dist orig $orig_dist"}
+			    
+			    set fTemp [calc_linear_stretching_force $ks $currAx $currAy $currAz $currBx $currBy $currBz $orig_dist $curr_dist]
+
+				# Calculate the microsopic pressure around one point as a sum of scalar products of edge vector and the force vector. 
+				# The particluar contribution is added to the array pressure_ks
+				set scalar_product_f_r [expr (-1.0)*([lindex $fTemp 0]*($currBx - $currAx) + [lindex $fTemp 1]*($currBy - $currAy) + [lindex $fTemp 2]*($currBz - $currAz))]
+				set pressure($pA) [expr $pressure($pA) + $scalar_product_f_r]
+				#if { $pA == 0 } {puts "****** $scalar_product_f_r"}
+				set pressure($pB) [expr $pressure($pB) + $scalar_product_f_r]
+			}
+
+			## Now we need to calculate the respective areas around the points. 
+			## This will be done by running over all triangles and always adding 1/3 of the triangle area
+			## to all three points belonging to that triangle. The temporary areas will be stored in tmp_areas(i) array.
+
+			for { set i 0 } { $i < $ntriangles } { incr i } {
+			    # Take a triangle and copy the nodes of the triangle to pA, pB, pC
+			    set pA $mesh_triangles($i,0)
+			    set pB $mesh_triangles($i,1)
+			    set pC $mesh_triangles($i,2)
+			    
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    
+			    # Get the current position of the same three points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+			    
+			    # Calculate current local area for these three points
+#			    set orig_area [area_triangle origA origB origC]
+			    set curr_area [area_triangle currA currB currC]
+
+				# Save 1/3  of the area triangle to each mesh point 
+				set tmp_area($pA) [expr $tmp_area($pA) + 1./3.*$curr_area]
+				set tmp_area($pB) [expr $tmp_area($pB) + 1./3.*$curr_area]
+				set tmp_area($pC) [expr $tmp_area($pC) + 1./3.*$curr_area]
+			}
+			
+			# Now we divide the virial part with 2 x area belonging to the vertex and output it to the file
+			set out_f [open $pressure_ks "w"]
+			for { set i 0 } { $i < [expr $nnodes] } { incr i } {
+				puts $out_f "[expr $pressure($i)/(2.0*$tmp_area($i))]"
+#				puts "virial $pressure($i) area $tmp_area($i) pressure [expr $pressure($i)/(2.0*$tmp_area($i))]"
+				
+			}
+			close $out_f
+
 	}
 
 	if { $elastic_forces != ""} {
