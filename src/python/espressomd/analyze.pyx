@@ -32,6 +32,7 @@ from interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
+from collections import OrderedDict
 
 
 #
@@ -263,7 +264,7 @@ def pressure(self, v_comp=0):
     check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 #
     # Dict to store the results
-    p = {}
+    p = OrderedDict()
 
     # Update in espresso core if necessary
     if (c_analyze.total_pressure.init_status != 1 + v_comp):
@@ -346,7 +347,7 @@ def stress_tensor(self, v_comp=0):
     check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
     # Dict to store the results
-    p = {}
+    p = OrderedDict()
 
     # Update in espresso core if necessary
     if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
@@ -455,7 +456,7 @@ def energy(system, etype='all', id1='default', id2='default'):
 #  if system.n_part == 0:
 #    raise Exception('no particles')
 
-    e = {}
+    e = OrderedDict()
 
     if c_analyze.total_energy.init_status == 0:
         c_analyze.init_energies( & c_analyze.total_energy)
@@ -586,18 +587,18 @@ def structure_factor(system=None, sf_types=None, sf_order=None):
     """Structure Factor
        structure_factor(system = None, sf_types = None, sf_order = None )
     """
-    
+
     if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
         raise ValueError("sf_types has to be a list!")
     check_type_or_throw_except(sf_order, 1, int, "sf_order has to be an int!")
-    
+
     cdef double * sf
     p_types = create_int_list_from_python_object(sf_types)
-    
+
     # Used to take the WITHOUT_BONDS define
     c_analyze.updatePartCfg(0)
     c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
-    
+
     return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
 
 #

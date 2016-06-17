@@ -20,7 +20,7 @@ blockfile $fin read auto
 blockfile $fin read auto
 blockfile $fin read auto
 
-set eps 1e-7
+set eps 1e-6
 
 set bjerrum 2.0
 puts [inter coulomb $bjerrum p3m 4.19304 64 7 1.03503]
@@ -28,7 +28,7 @@ puts [inter coulomb $bjerrum p3m 4.19304 64 7 1.03503]
 set N [setmd n_part]
 set vol [expr pow([lindex [setmd box_l] 0], 3)]
 puts "results for system with $N particles in vol $vol"
-3integrate 0
+integrate 0
 set e_c [analyze energy coulomb]
 set ptensor_coul [analyze stress_tensor coulomb]
 for { set k 0 } { $k < 9 } { incr k } {
@@ -84,11 +84,11 @@ set p_trace [expr ($pc(0) + $pc(4) + $pc(8))/3.0]
 set p_trace_2 [expr ($pc_2(0) + $pc_2(4) + $pc_2(8))/3.0]
 
 if { [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0*$vol)) >10.0 * $eps ] } {
-	error "tensor trace and pressure deviate too much [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0 *$vol))]"
+    error "tensor trace and pressure deviate too much [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0 *$vol))]"
 }
 
 if { [expr abs($p_trace - $p_trace_2) > $eps] } {
-	error "trace differs after rotation"
+    error "trace differs after rotation"
 }
 
 

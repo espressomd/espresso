@@ -71,7 +71,7 @@ if { [catch {
     set box_l 10
     setmd box_l $box_l $box_l $box_l
     for {set i 0} {$i < 100} {incr i} {
-    	part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
+    	part $i pos [expr [t_random]*$box_l] [expr [t_random]*$box_l] [expr [t_random]*$box_l]
     }
 
     # make real random draw
