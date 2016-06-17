@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
+#include <thrust/transform_reduce.h>
+#include <thrust/functional.h>
+#include <thrust/device_ptr.h>
 #include "constraint.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -2280,18 +2283,6 @@ __global__ void ek_calculate_system_charge() {
   }
 }
 
-#ifdef EK_ELECTROSTATIC_COUPLING
-__global__ void ek_calculate_particle_charge( CUDA_particle_data * particle_data, LB_parameters_gpu * ek_lbparameters_gpu ) {
-
-  unsigned int index = ek_getThreadIndex();
-
-  if( index < ek_lbparameters_gpu->number_of_particles )
-  {
-    atomicadd(&charge_gpu, particle_data[ index ].q);
-  }
-}
-#endif
-
 
 //TODO delete ?? (it has the previous step setting now)
 //This is not compatible with external LB forces!
@@ -3807,6 +3798,16 @@ int ek_set_ext_force( int species,
 }
 
 
+#ifdef EK_ELECTROSTATIC_COUPLING
+struct ek_charge_of_particle
+{
+  __device__ float operator()(CUDA_particle_data particle)
+  {
+    return particle.q;
+  };
+
+};
+#endif
 
 float ek_calculate_net_charge() {
   float charge = 0.0f;
@@ -3853,21 +3854,13 @@ int ek_neutralize_system(int species) {
 #ifdef EK_ELECTROSTATIC_COUPLING
   particle_data_gpu = gpu_get_particle_pointer();
 
-  float particle_charge = 0.0f;
-  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &particle_charge, sizeof(float), 0, cudaMemcpyHostToDevice) );
-
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-    ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
-    ( threads_per_block * blocks_per_grid_y );
-  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-
-
-  KERNELCALL( ek_calculate_particle_charge, dim_grid, threads_per_block, 
-		(particle_data_gpu, ek_lbparameters_gpu));
-
-  cuda_safe_mem( cudaMemcpyFromSymbol(&particle_charge, charge_gpu, sizeof(float), 0, cudaMemcpyDeviceToHost ) );
+  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
+  float particle_charge = thrust::transform_reduce(
+      ptr,
+      ptr + lbpar_gpu.number_of_particles,
+      ek_charge_of_particle(),
+      0.0f,
+      thrust::plus<float>());
 
 #ifdef EK_BOUNDARIES
   compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / double(ek_parameters.number_of_nodes - ek_parameters.number_of_boundary_nodes);
