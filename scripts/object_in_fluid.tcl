@@ -3403,7 +3403,7 @@ proc oif_object_analyze { args } {
 			    set curr_dist [expr sqrt($curr_dist)]
 			    #if { $pA == 0 } { puts "*** curdist = $curr_dist orig $orig_dist"}
 			    
-			    set fTemp [calc_linear_stretching_force $ks $currAx $currAy $currAz $currBx $currBy $currBz $orig_dist $curr_dist]
+			    set fTemp [calc_stretching_force $ks $currAx $currAy $currAz $currBx $currBy $currBz $orig_dist $curr_dist]
 
 				# Calculate the microsopic pressure around one point as a sum of scalar products of edge vector and the force vector. 
 				# The particluar contribution is added to the array pressure_ks
