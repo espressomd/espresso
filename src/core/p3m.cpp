@@ -131,6 +131,8 @@ static void p3m_spread_force_grid(double* mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
+static int p3m_sanity_checks_system(void);
+
 /** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
 static int p3m_sanity_checks_boxl(void);
 
@@ -306,16 +308,15 @@ void   p3m_init() {
     p3m.params.r_cut    = 0.0;
     p3m.params.r_cut_iL = 0.0;
 
-
-
     if(this_node==0) 
-      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
+      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\nElectrostatics switched off!\n"););
 
-      fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: \n",this_node));
 
-    if (p3m_sanity_checks()) return;
+    if (p3m_sanity_checks()) {
+      return;
+    }
 
     P3M_TRACE(fprintf(stderr,"%d: p3m_init: starting\n",this_node));
 
@@ -1332,8 +1333,8 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
 static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L)
 {
-  /* rounded up 2000/n_charges timing force evaluations */
-  int int_num = (1999 + p3m.sum_qpart)/p3m.sum_qpart;
+  /* rounded up 5000/n_charges timing force evaluations */
+  int int_num = (5000 + p3m.sum_qpart)/p3m.sum_qpart;
   double int_time;
 
   /* broadcast p3m parameters for test run */
@@ -1440,8 +1441,8 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
 
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f time %f\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, int_time));
   /* print result */
-  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n",
-	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
+  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.2f\n",
+	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
   *log = strcat_alloc(*log, b);
   return int_time;
 }
@@ -1589,6 +1590,10 @@ int p3m_adaptive_tune(char **log) {
     }
   }
 
+  if (p3m_sanity_checks_system()) {
+    return ES_ERROR;
+  }
+  
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
@@ -1606,8 +1611,9 @@ int p3m_adaptive_tune(char **log) {
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
+    /* Medium-educated guess for the minimal mesh */
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0);
-    mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
+    mesh_density_max = 512 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     tune_mesh = 1;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1740,8 +1746,8 @@ int p3m_adaptive_tune(char **log) {
   P3M_TRACE(p3m_print());
 
   /* Tell the user about the outcome */
-  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n",
-	  mesh[0], cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  sprintf(b, "\nresulting parameters:\n%-4d %-4d %-4d %-3d %.5e %.5e %.5e %-8.2f\n",
+	  mesh[0], mesh[1], mesh[2], cao, r_cut_iL, alpha_L, accuracy, time_best);
   *log = strcat_alloc(*log, b);
   return ES_OK;
 }
@@ -1940,11 +1946,12 @@ int p3m_sanity_checks_boxl() {
   return ret;
 }
 
-
-
-
-int p3m_sanity_checks()
-{
+/**
+ * @brief General sanity checks independent of p3m parameters.
+ * 
+ * @return 0 if ok, 1 on error.
+ */
+int p3m_sanity_checks_system() {
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -1957,6 +1964,30 @@ int p3m_sanity_checks()
     ret = 1;
   }
 
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
+    ret = 1;
+  }
+  
+  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
+      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
+	  ret = 1;
+	}
+  }
+    
+  return ret;
+}
+
+
+int p3m_sanity_checks()
+{
+  int ret = 0;
+
+  if (p3m_sanity_checks_system())
+    ret = 1;
+  
   if (p3m_sanity_checks_boxl()) ret = 1;
 
   if( p3m.params.mesh[0] == 0) {
@@ -1971,20 +2002,7 @@ int p3m_sanity_checks()
       runtimeErrorMsg() <<"P3M_init: alpha must be >0";
     ret = 1;
   }
-  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      runtimeErrorMsg() <<"P3M_init: node grid must be sorted, largest first";
-    ret = 1;
-  }
   
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-      (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-        runtimeErrorMsg() <<"P3M_init: Nonmetallic epsilon requires cubic box";
-	  ret = 1;
-	}
-  }
-  
-
   return ret;
 }
 
@@ -2090,10 +2108,9 @@ void p3m_calc_kspace_stress (double* stress) {
     if (p3m.sum_q2 > 0) {
         double* node_k_space_stress;
         double* k_space_stress;
-        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
-        int jx, jy, jz, i, ind = 0;
+        double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz, eps_0, kspace_eng=0.0;
+        int j[3], i, ind = 0;
         // ordering after fourier transform
-        const int x = 2, y = 0, z = 1;
         node_k_space_stress = (double*)Utils::malloc(9*sizeof(double));
         k_space_stress = (double*)Utils::malloc(9*sizeof(double));
 
@@ -2106,43 +2123,43 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-        for(jx=0; jx < fft.plan[3].new_mesh[0]; jx++) {
-            for(jy=0; jy < fft.plan[3].new_mesh[1]; jy++) {
-                for(jz=0; jz < fft.plan[3].new_mesh[2]; jz++) {
-                       kx = p3m.d_op[2][ jx + fft.plan[3].start[0] ];
-                       ky = p3m.d_op[0][ jy + fft.plan[3].start[1] ];
-                       kz = p3m.d_op[1][ jz + fft.plan[3].start[2] ];
-                    sqk = SQR(kx/box_l[x]) + SQR(ky/box_l[y]) + SQR(kz/box_l[z]);
+        for(j[0]=0; j[0] < fft.plan[3].new_mesh[RX]; j[0]++) {
+            for(j[1]=0; j[1] < fft.plan[3].new_mesh[RY]; j[1]++) {
+                for(j[2]=0; j[2] < fft.plan[3].new_mesh[RZ]; j[2]++) {
+                       kx = 2.0 * PI * p3m.d_op[RX][ j[KX] + fft.plan[3].start[KX] ]/box_l[RX];
+                       ky = 2.0 * PI * p3m.d_op[RY][ j[KY] + fft.plan[3].start[KY] ]/box_l[RY];
+                       kz = 2.0 * PI * p3m.d_op[RZ][ j[KZ] + fft.plan[3].start[KZ] ]/box_l[RZ];
+                       sqk = SQR(kx) + SQR(ky) + SQR(kz);
                     if (sqk == 0) {
                         node_k_space_energy = 0.0;
                         vterm = 0.0;
                     }
                     else {
-                        vterm = -2.0 * (1/sqk + SQR(PI/p3m.params.alpha));
-                        node_k_space_energy = p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
+                        vterm = -2.0 * (1/sqk + SQR(1.0/2.0/p3m.params.alpha));
+                        node_k_space_energy =  p3m.g_energy[ind] * ( SQR(p3m.rs_mesh[2*ind]) + SQR(p3m.rs_mesh[2*ind + 1]) );
                     }
                     ind++;
+                    node_k_space_stress[0] += node_k_space_energy * (1.0 + vterm*SQR(kx));     /* sigma_xx */
+                    node_k_space_stress[1] += node_k_space_energy * (vterm*kx*ky);  /* sigma_xy */
+                    node_k_space_stress[2] += node_k_space_energy * (vterm*kx*kz);  /* sigma_xz */
 
-                    node_k_space_stress[0] += node_k_space_energy * (1.0 + vterm*SQR(kx/box_l[x]));     /* sigma_xx */
-                    node_k_space_stress[1] += node_k_space_energy * (vterm*kx*ky/(box_l[x]*box_l[y]));  /* sigma_xy */
-                    node_k_space_stress[2] += node_k_space_energy * (vterm*kx*kz/(box_l[x]*box_l[z]));  /* sigma_xz */
+                    node_k_space_stress[3] += node_k_space_energy * (vterm*kx*ky);  /* sigma_yx */
+                    node_k_space_stress[4] += node_k_space_energy * (1.0 + vterm*SQR(ky));     /* sigma_yy */
+                    node_k_space_stress[5] += node_k_space_energy * (vterm*ky*kz);  /* sigma_yz */
 
-                    node_k_space_stress[3] += node_k_space_energy * (vterm*kx*ky/(box_l[x]*box_l[y]));  /* sigma_yx */
-                    node_k_space_stress[4] += node_k_space_energy * (1.0 + vterm*SQR(ky/box_l[y]));     /* sigma_yy */
-                    node_k_space_stress[5] += node_k_space_energy * (vterm*ky*kz/(box_l[y]*box_l[z]));  /* sigma_yz */
-
-                    node_k_space_stress[6] += node_k_space_energy * (vterm*kx*kz/(box_l[x]*box_l[z]));  /* sigma_zx */
-                    node_k_space_stress[7] += node_k_space_energy * (vterm*ky*kz/(box_l[y]*box_l[z]));  /* sigma_zy */
-                    node_k_space_stress[8] += node_k_space_energy * (1.0 + vterm*SQR(kz/box_l[z]));     /* sigma_zz */
+                    node_k_space_stress[6] += node_k_space_energy * (vterm*kx*kz);  /* sigma_zx */
+                    node_k_space_stress[7] += node_k_space_energy * (vterm*ky*kz);  /* sigma_zy */
+                    node_k_space_stress[8] += node_k_space_energy * (1.0 + vterm*SQR(kz));     /* sigma_zz */
                 }
             }
-        }
-        MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-        for (i = 0; i < 9; i++) {
-            stress[i] += k_space_stress[i] * force_prefac;
-        }
-//         fprintf(stderr, "sxx = %.5e, syy = %.5e, szz = %.5e\n", stress[0], stress[4], stress[8]);
-//         fprintf(stderr, "sxy = %.5e, sxz = %.5e, syz = %.5e\n", stress[1], stress[2], stress[5]);
+		}
+
+		MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+		if ( this_node == 0 ) { 
+			for (i = 0; i < 9; i++) {
+				stress[i] = k_space_stress[i] * force_prefac;
+			}
+		}
         free (node_k_space_stress);
         free (k_space_stress);
     }

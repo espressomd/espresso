@@ -27,23 +27,49 @@
 #ifndef _ERRORHANDLING_HPP
 #define _ERRORHANDLING_HPP
 
-#include "config.hpp"
 #include <string>
-#include <sstream>
-#include <list>
+#include <iosfwd>
+#include <vector>
 
+#include "config.hpp"
+
+#include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
 
-/** exit ungracefully, core dump if switched on. */
+/* Forward declaration of MpiCallbacks,
+ * so we don't have to include the header.
+ * It depends on mpi and can not be in cuda
+ * code.
+ */
+namespace Communication {
+class MpiCallbacks;
+}
+
+/**
+ * @brief exit ungracefully,
+ * core dump if switched on.
+ */
 void errexit();
+
+/**
+ * @brief check for runtime errors on all nodes.
+ * This has to be called on all nodes synchronously.
+ *
+ * @return the number of characters in the error messages of all nodes together.
+ */
+int check_runtime_errors();
+
+namespace ErrorHandling {
 
 /** register a handler for sigint that translates it into an runtime error. */
 void register_sigint_handler();
 
-/* NEW RUNTIME ERROR HANDLING. */
-
-// Functions to report runtime errors
-void initRuntimeErrorCollector();
+/**
+ * @brief Init error handling system.
+ *
+ * @param cb Callbacks system the error handler should be on.
+ */
+void init_error_handling(Communication::MpiCallbacks &callbacks);
 
 void _runtimeWarning(const char* msg, const char* function, const char* file, const int line);
 void _runtimeWarning(const std::string &msg, const char* function, const char* file, const int line);
@@ -52,21 +78,19 @@ void _runtimeWarning(const std::ostringstream &msg, const char* function, const 
 void _runtimeError(const char* msg, const char* function, const char* file, const int line);
 void _runtimeError(const std::string &msg, const char* function, const char* file, const int line);
 void _runtimeError(const std::ostringstream &msg, const char* function, const char* file, const int line);
-ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function);
+RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function);
 
 #define runtimeWarning(msg) \
- _runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+  ErrorHandling::_runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 #define runtimeError(msg) \
- _runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
+  ErrorHandling::_runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 
 #define runtimeErrorMsg() \
-  _runtimeErrorStream(__FILE__, __LINE__, __PRETTYFUNC__)
+  ErrorHandling::_runtimeErrorStream(__FILE__, __LINE__, __PRETTYFUNC__)
 
-/** check for runtime errors on all nodes. This has to be called on all nodes synchronously.
-    @return the number of characters in the error messages of all nodes together. */
-int check_runtime_errors();
+std::vector<RuntimeError>
+mpi_gather_runtime_errors();
 
-std::list<std::string> mpiRuntimeErrorCollectorGather();
-void mpiRuntimeErrorCollectorGatherSlave(int node, int parm);
+} /* ErrorHandling */
 
 #endif

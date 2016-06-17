@@ -1500,6 +1500,65 @@ requires assigning charges to the particles.  This is done using the
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ P3M 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double}
+	}[
+	]
+	\leavevmode \\
+	\object{
+		electrostatics
+	}{ P3M 
+	}{
+		bjerrum\textunderscore length=\arg{double}
+		r\textunderscore cut=\arg{double},
+		mesh=[\arg{int}, \arg{int}, \arg{int}],
+		cao=\arg{int},
+		alpha=\arg{double},
+		alpha=\arg{double},
+		epsilon=metallic | \arg{double},
+		inter=\arg{int},
+		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+	\end{features}
+\end{pysyntax}
+
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ P3M\textunderscore GPU
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double}
+	}[
+	]
+	\leavevmode \\
+	\object{
+		electrostatics
+	}{ P3M\textunderscore GPU
+	}{
+		bjerrum\textunderscore length=\arg{double}
+		r\textunderscore cut=\arg{double},
+		mesh=[\arg{int}, \arg{int}, \arg{int}],
+		cao=\arg{int},
+		alpha=\arg{double},
+		alpha=\arg{double},
+		epsilon=metallic | \arg{double},
+		inter=\arg{int},
+		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+	\end{features}
+\end{pysyntax}
+
 \begin{essyntax}
   inter coulomb \var{l_B} p3m [gpu] 
   \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
@@ -1513,7 +1572,7 @@ installed on your system. In \es{}, you can check if it is compiled in
 by checking for the feature \texttt{FFTW}.
 
 This command activates the P3M method to compute the electrostatic
-interactions between charged particles.  The different parameters are
+interactions between charged particles. P3M requires full periodicity (1 1 1).  The different parameters are
 described in more detail in \cite{deserno98a}.
 \begin{description}
 \item[\var{[gpu]}]
@@ -1627,6 +1686,24 @@ have the following meaning:
 \index{EwaldGPU method|mainindex}
 \index{interactions!EwaldGPU|mainindex}
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		EwaldGpu
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		accuracy=\arg{double},
+		precision=\arg{double},
+		K\textunderscore max=\arg{int} | [\arg{int}, \arg{int}, \arg{int}],
+		[alpha=\arg{double}],
+	}
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+		\required{EWALD_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   inter coulomb \var{l_B} ewaldgpu 
   \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{alpha}
@@ -1773,6 +1850,48 @@ The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"u
     \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		dielectric=1,
+		top=\arg{double},
+		mid=\arg{double},
+		bot=\arg{double}
+	}
+	\leavevmode \\
+	\object{ 
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		capacitor=1,
+		pot\textunderscore diff=\arg{double}
+	}[
+	]
+	\leavevmode\\
+	\object{ 
+		electrostatics
+	}{
+		\require{1}{MMM2D}
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		maxPWerror=\arg{double}, 
+		[far\textunderscore cut=\arg{double}],
+		dielectric\textunderscore contrast\textunderscore on=1,
+		delta\textunderscore mid\textunderscore top=\arg{double},
+		delta\textunderscore mid\textunderscore bot=\arg{double}
+	}[
+	]
+\end{pysyntax}
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
 number of slices of the cell system, which has to be tuned manually.
@@ -1825,6 +1944,20 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
 \begin{citebox}
   Please cite~\citewbibkey{mmm1d} when using MMM1D.
 \end{citebox}
+\begin{pysyntax}
+	\object{
+	electrostatics
+	}{
+	MMM1D
+	}{
+	bjerrum\textunderscore length=\arg{double},
+	[far\textunderscore switch\textunderscore radius=\arg{double},]
+	maxPWerror=\arg{double}
+	}	
+	\begin{features}
+		\required{ELECTROSTATICS} \required{PARTIAL_PERIODIC}
+	\end{features}
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1}
@@ -1850,6 +1983,22 @@ out the fastest one. If this takes too long, you can change the value
 of the setmd variable \keyword{timings}, which controls the number of
 test force calculations.
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		MMM1D\textunderscore GPU
+	}{
+		bjerrum\textunderscore length=\arg{double},
+		[far\textunderscore switch\textunderscore radius=\arg{double}],
+		[bessel\textunderscore cutoff=\arg{int}],
+		maxPWerror=\arg{double}
+	}
+	\begin{features}
+		\required{ELECTROSTATICS} \required{CUDA} \required{PARTIAL_PERIODIC}
+		\required{MMM1D_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   \variant{1}
   inter coulomb \var{l_B} mmm1dgpu \var{switch\_radius}
@@ -2094,6 +2243,7 @@ to $1.5$ and tune the other parameters for an accuracy of $10^{-3}$, use the com
 For details of the various methods and their parameters please refer to the Scafacos manual.
 Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
 to build Scafacos as a shared library.
+Scafacos can be used only once, either for coulomb or for dipolar interactions.
 
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
@@ -2452,6 +2602,38 @@ the minimum image convention, i.e. the interaction is effectively cut
 off at half a box length.
 
 The calculations are performed on the gpu in single precision. The implementation is optimized for large systems of several thousand particles. It makes use of one thread per particle. When there are fewer particles than the number of threads the gpu can execute simultaneously, the rest of the gpu remains idle. Hence, the method will perform poorly for small systems.
+
+\subsection{Scafacos}
+\index{Scafacos|mainindex}
+Espresso can use the methods from the Scafacos \emph{Scalable fast Coulomb solvers} library for dipoles, if the methods support dipolar calculations.
+The feature SCAFACOS\_DIPOLES has to be added to myconfig.hpp to activate this feature.
+At the time of this writing (Apr 2016) dipolar calculations are not part of the official Scafacos development branch.
+\begin{essyntax}
+  scafacos_methods
+  \begin{features}
+    \required{DIPOLES} 
+    \required{SCAFACOS_DIPOLES} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+This shows the methods available at the compile time of \es{}.
+That a method is listed there, does not imply that it supports dipolar calculations.
+\begin{essyntax}
+  inter magnetic \var{l_b} scafacos \var{method} \opt{\var{parameters}} \opt{tolerance_field \var{prec}}
+  \begin{features}
+    \required{DIPOLES}
+    \required{SCAFACOS_DIPOLES}
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
+\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
+are not set, and the method supports it, the open parameteres are tuned.
+For details of the various methods and their parameters please refer to the Scafacos manual.
+Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
+to build Scafacos as a shared library.
+Scafacos can be used only once, either for coulomb or for dipolar interactions.
 
 
 \section{Special interaction commands}

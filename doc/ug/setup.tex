@@ -122,12 +122,10 @@ set:
 \item[npt_p_ext] (double, \ro) Pressure for NPT simulations.
 \item[npt_p_inst] (double) Pressure calculated during an
   NPT_isotropic integration.
-\item[piston] (double, \ro) Mass off the box when using NPT_isotropic
+\item[npt_piston] (double, \ro) Mass off the box when using NPT_isotropic
   integrator.
 \item[periodicity] (bool[3]) Specifies periodicity for the three
-  directions. If the feature PARTIAL_PERIODIC is set, this variable
-  can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
-  readonly and gives the default setting (1,1,1).
+  directions. If the feature PARTIAL_PERIODIC is set, Espresso can be instructed to treat some dimensions as non-periodic. Per default espresso assumes periodicity in all directions which equals setting this variable to (1,1,1). A dimension is specified as non-periodic via setting the periodicity variable for this dimension to 0. E.g. Periodicity only in z-direction is obtained by (0,0,1). Caveat: Be aware of the fact that making a dimension non-periodic does not hinder particles from leaving the box in this direction. In this case for keeping particles in the simulation box a constraint has to be set.
 \item[skin] (double) Skin for the Verlet list.
 \item [temperature] (double, \ro) Temperature of the
   simulation.

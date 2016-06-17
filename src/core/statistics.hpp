@@ -318,12 +318,13 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, do
     This means the q=1 entries are sf[0]=S(1) and sf[1]=1. For q=7, there are no possible wave vectors,
     so sf[2*(7-1)]=sf[2*(7-1)+1]=0.
     
-    @param type   the type of the particles to be analyzed
-    @param order  the maximum wave vector length in 2PI/L
-    @param sf     pointer to hold the base of the array containing the result (size: 2*order^2).
+    @param p_types   list with types of particles to be analyzed
+    @param n_types   length of p_types
+    @param order     the maximum wave vector length in 2PI/L
+    @param sf        pointer to hold the base of the array containing the result (size: 2*order^2).
 */
 
-void calc_structurefactor(int type, int order, double **sf);
+void calc_structurefactor(int *p_types, int n_types, int order, double **sf);
 
 std::vector< std::vector<double> > modify_stucturefactor( int order, double *sf);
 

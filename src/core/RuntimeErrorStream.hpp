@@ -4,9 +4,9 @@
 #include <sstream>
 #include <string>
 
-class RuntimeErrorCollector;
-
 namespace ErrorHandling {
+
+class RuntimeErrorCollector;
 
 /** \brief Allows creating a runtime error messing by using the streaming operator */
 
@@ -28,6 +28,6 @@ class RuntimeErrorStream {
   std::ostringstream m_buff;
 };
 
-}
+} /* ErrorHandling */
 
 #endif

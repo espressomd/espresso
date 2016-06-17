@@ -68,6 +68,7 @@
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
 #include "actor/EwaldGPU_ShortRange.hpp"
+#include "scafacos.hpp" 
 
 #ifdef CONSTRAINTS
 #include "constraint.hpp"
@@ -218,6 +219,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
       if (elc_params.dielectric_contrast_on)
       ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
     break;
+#endif
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS: ret+=Scafacos::pair_energy(p1,p2,dist); break;
 #endif
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);

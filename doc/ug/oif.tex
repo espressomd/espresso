@@ -105,6 +105,7 @@ Prints information about whole framework, \eg all global variables, currently av
   nodes-file  \var{nodes.dat}
   triangles-file  \var{triangles.dat}
   \opt{stretch \var{x} \var{y} \var{z}}
+  \opt{mirror \var{x} \var{y} \var{z}}
   \opt{ks \var{ks\_value}}
   \opt{kslin \var{kslin\_value}}
   \opt{kb \var{kb\_value}} 
@@ -128,6 +129,7 @@ This command creates a template that will be used for all objects that share the
 \item[\var{nodes.dat}] input file, each line contains three real numbers. These are the $x, y, z$ coordinates of individual surface mesh nodes of the objects.
 \item[\var{triangles.dat}] input file, each line contains three integers. These are the ID numbers of the mesh nodes as they appear in \var{nodes.dat}. Note, the first node has ID 0.
 \item[\opt{stretch \var{x} \var{y} \var{z}}] coefficients by which the coordinates stored in \var{nodes.dat} will be stretched in the $x, y, z$ direction. The default values are 1.0 1.0 1.0.
+\item[\opt{mirror \var{x} \var{y} \var{z}}] whether the respective coordinate will be flipped around 0. Coefficients \(x, y, z\) must be either 0 or 1.  The reflection of only one coordinate is allowed so at most one number is 1, others are 0. For example \verb|mirror| \textit{0 1 0} results in flipping the spatial point $(x,y,z)$ to $(x,-y,z)$. The default value is 0 0 0.\\
 \item[\opt{ks \var{ks\_value}}] elastic modulus for hyperelastic stretching forces
 \item[\opt{kslin \var{kslin\_value}}] elastic modulus for linear stretching forces
 \item[\opt{kb \var{kb\_value}}] elastic modulus for bending forces
@@ -178,7 +180,7 @@ Using a previously defined template \var{tid}, this command creates a new object
 \item[origin \var{x} \var{y} \var{z}] center of the object will be at this point.
 \item[part-type \var{type}] can be any integer starting at 0. All particles of one object have the same \verb|part-type|. One can have more objects with the same type of particles, but this is not recommended, because the interactions between objects are set up using these types.
 \item[\opt{rotate \var{x} \var{y} \var{z}}] angles in radians, by which the object is initially rotated around the $x, y, z$ axis. Default values are 0.0 0.0 0.0.
-\item[\opt{mass \var{m}}] mass of one particle. Default value is 1.0
+\item[\opt{mass \var{m}}] this parameter refers to the mass of one particle (one mesh point of the triangulation). For the proper setting, the mass of the  whole membrane must be distributed to all mesh points. Default value is 1.0.
 \end{arguments}
 
 \subsection{\label{ssec:oif-mesh-analyze}Mesh analysis}

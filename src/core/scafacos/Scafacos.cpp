@@ -1,7 +1,8 @@
+
 #include "Scafacos.hpp"
 #include "errorhandling.hpp"
+#include <cassert>
 
-namespace Electrostatics {
 namespace Scafacos {
 
 #define handle_error(stmt) { const FCSResult res = stmt; if(res) runtimeError(fcs_result_get_message(res)); }
@@ -95,15 +96,32 @@ void Scafacos::set_r_cut(double r_cut) {
 }
 
 void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
-                   std::vector<double> &forces) {
+                   std::vector<double> &fields, std::vector<double> &potentials) {
   const int local_n_part = charges.size();
 
-  forces.resize(3*local_n_part);
+  fields.resize(3*local_n_part);
+  potentials.resize(local_n_part);
 
   handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
   
-  handle_error(fcs_run(handle, local_n_part, &(positions[0]), &(charges[0]), &(forces[0]), 0));
+  handle_error(fcs_run(handle, local_n_part, &(positions[0]), &(charges[0]), &(fields[0]), &(potentials[0])));
 }
+
+#ifdef SCAFACOS_DIPOLES
+void Scafacos::run_dipolar(std::vector<double> &dipoles, std::vector<double> &positions,
+                   std::vector<double> &fields, std::vector<double> &potentials) {
+  assert(dipoles.size()%3==0);
+  const int local_n_part = dipoles.size()/3;
+
+  fields.resize(6*local_n_part);
+  potentials.resize(3*local_n_part);
+
+  //handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
+  
+  handle_error(fcs_set_dipole_particles(handle, local_n_part,&(positions[0]),&(dipoles[0]), &(fields[0]),&(potentials[0])));
+  handle_error(fcs_run(handle, 0, NULL, NULL, NULL, NULL));
+}
+#endif
 
 void Scafacos::tune(std::vector<double> &charges, std::vector<double> &positions) {
   handle_error(fcs_tune(handle, charges.size(), &(positions[0]), &(charges[0])));  
@@ -114,9 +132,31 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
   boxa[0] = box_l[0];
   boxb[1] = box_l[1];
   boxc[2] = box_l[2];
-  
-  handle_error(fcs_set_common(handle, 0, boxa, boxb, boxc, off, periodicity, total_particles));
+  // Does scafacos calculate the near field part
+  // For charges, if the method supports it, Es calculates near field
+  int sr=0;
+  if (! dipolar() && has_near ) {
+    sr=0;
+  }
+  else
+  {
+   // Scafacos does near field calc
+   sr=1;
+  }
+  int d=dipolar();
+//  printf("Short range switch %d, dipolar=%d, has_near=%d\n",sr,d,has_near);
+  handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
+}
+
+void Scafacos::set_dipolar(bool d) {
+#ifndef SCAFACOS_DIPOLES
+  if (d) {
+    throw std::runtime_error("Dipolar extension not compiled in. Switch on via SCAFACOS_DIPOLES in myconfig.hpp");
+  }
+#endif
+m_dipolar =d;
 }
 
 }
-}
+
+

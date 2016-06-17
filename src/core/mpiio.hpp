@@ -25,7 +25,17 @@
 #ifndef _MPIIO_HPP
 #define _MPIIO_HPP
 
-#ifdef HAVE_MPI
+/** Constants which indicate what to output. To indicate the output of
+ *  multiple fields, OR the corresponding values.
+ *
+ */
+enum MPIIOOutputFields {
+  MPIIO_OUT_POS = 1,
+  MPIIO_OUT_VEL = 2,
+  MPIIO_OUT_TYP = 4,
+  MPIIO_OUT_BND = 8,
+};
+
 /** Parallel binary output using MPI-IO. To be called by all MPI
  * processes. Aborts ESPResSo if an error occurs.
  *
@@ -41,7 +51,5 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields);
  * \param fields Specifier which fields to read.
  */
 void mpi_mpiio_common_read(const char *filename, unsigned fields);
-
-#endif
 
 #endif

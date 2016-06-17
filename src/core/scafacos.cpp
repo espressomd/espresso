@@ -21,7 +21,7 @@
 
 #include "scafacos.hpp"
 
-#if defined(SCAFACOS) and defined(ELECTROSTATICS)
+#if defined(SCAFACOS) 
 
 #include <vector>
 
@@ -39,11 +39,10 @@
 #include "integrate.hpp"
 #include "tuning.hpp"
 #include "interaction_data.hpp"
-#include "electrostatics/scafacos/Scafacos.hpp"
+#include "scafacos/Scafacos.hpp"
 
 /** This file contains the c-like interface for Scafacos */
 
-namespace Electrostatics {
 namespace Scafacos {
 
 /** Get available scafacos methods */
@@ -56,16 +55,27 @@ struct ScafacosData {
   int update_particle_data();
   void update_particle_forces() const;
   /** Inputs */
-  std::vector<double> charges, positions;
+  std::vector<double> charges, positions,dipoles;
   /** Outputs */
-  std::vector<double> forces;
+  std::vector<double> fields,potentials;
 };
 
+static Scafacos *scafacos = 0;
+static ScafacosData particles;
 
 /** \brief Collect particle data in continous arrays as required by fcs */
 int ScafacosData::update_particle_data() {
   positions.clear();
-  charges.clear();
+  
+  if (! dipolar()) {
+    charges.clear();
+  }
+  else
+  {
+    #ifdef SCAFACOS_DIPOLES
+      dipoles.clear();
+    #endif
+  }
 
   for(int c = 0; c < local_cells.n; c++) {
     Cell const * cell = local_cells.cell[c];
@@ -76,11 +86,20 @@ int ScafacosData::update_particle_data() {
       positions.push_back(p[i].r.p[0]);
       positions.push_back(p[i].r.p[1]);
       positions.push_back(p[i].r.p[2]);
-      charges.push_back(p[i].p.q);
+      if (!dipolar()) {
+        charges.push_back(p[i].p.q);
+      }
+      else {
+        #ifdef SCAFACOS_DIPOLES
+          dipoles.push_back(p[i].r.dip[0]);
+          dipoles.push_back(p[i].r.dip[1]);
+          dipoles.push_back(p[i].r.dip[2]);
+        #endif
+      }
     }    
   }
   
-  return charges.size();
+  return positions.size()/3;
 }
 
 /** \brief Write forces back to particles */
@@ -94,18 +113,56 @@ void ScafacosData::update_particle_forces() const {
     const int np = cell->n;
     
     for(int i = 0; i < np; i++) {
-      p[i].f.f[0] += coulomb.prefactor*p[i].p.q*forces[it++];
-      p[i].f.f[1] += coulomb.prefactor*p[i].p.q*forces[it++];
-      p[i].f.f[2] += coulomb.prefactor*p[i].p.q*forces[it++];
+      if (!dipolar()) { 
+        p[i].f.f[0] += coulomb.prefactor*p[i].p.q*fields[it++];
+        p[i].f.f[1] += coulomb.prefactor*p[i].p.q*fields[it++];
+        p[i].f.f[2] += coulomb.prefactor*p[i].p.q*fields[it++];
+      } 
+      else
+      {
+        #ifdef SCAFACOS_DIPOLES
+	  // Indices
+	  // 3 "potential" values per particles (see below)
+	  int it_p=3*it;
+	  // 6 "field" values per particles (see below)
+	  int it_f=6*it;
+
+	  // The scafacos term "potential" here in fact refers to the magnetic field
+	  // So, the torques are given by m \times B
+	  double t[3];
+	  utils::cross_product(p[i].r.dip, &(potentials[it_p]),t);
+	  // The force is given by G m, where G is a matrix
+	  // which comes from teh "fields" output of scafacos like this
+	  // 0 1 2
+	  // 1 3 4
+	  // 2 4 5
+	  // where the numbers refer to indices in the "field" output from scafacos
+	  double f[3];
+	  f[0] = fields[it_f+0] *p[i].r.dip[0] +fields[it_f+1]*p[i].r.dip[1] +fields[it_f+2] *p[i].r.dip[2];
+	  f[1] = fields[it_f+1] *p[i].r.dip[0] +fields[it_f+3]*p[i].r.dip[1] +fields[it_f+4] *p[i].r.dip[2];
+	  f[2] = fields[it_f+2] *p[i].r.dip[0] +fields[it_f+4]*p[i].r.dip[1] +fields[it_f+5] *p[i].r.dip[2];
+
+	  // Add to particles
+	  for (int j=0;j<3;j++) {
+	    p[i].f.f[j]+=coulomb.Dprefactor *f[j];
+	    p[i].f.torque[j]+=coulomb.Dprefactor *t[j];
+	  }
+	  it++;
+	#endif
+      }
     }
  }
 
  /** Check that the particle number did not change */
- assert(it == forces.size());
+ if (!dipolar()) {  
+   assert(it == fields.size());
+ }
+ else 
+ {
+   assert(it = positions.size()/3);
+ }
 }
 
-static Scafacos *scafacos = 0;
-static ScafacosData particles;
 
 void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *force) {
   assert(scafacos);
@@ -118,15 +175,46 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist, double *
   }
 }
 
+double pair_energy(Particle* p1, Particle* p2, double dist) {
+  return coulomb.prefactor*p1->p.q*p2->p.q*scafacos->pair_energy(dist);
+}
+
 void add_long_range_force() {
   particles.update_particle_data();
   
   if(scafacos)
-    scafacos->run(particles.charges, particles.positions, particles.forces);
+  {
+    if (!dipolar()) {
+      scafacos->run(particles.charges, particles.positions, particles.fields,particles.potentials);
+    } 
+    else
+    {
+      #ifdef SCAFACOS_DIPOLES
+        scafacos->run_dipolar(particles.dipoles, particles.positions, particles.fields,particles.potentials);
+      #endif
+    }
+  }
   else
     runtimeError("Scafacos internal error.");
   
   particles.update_particle_forces();
+}
+
+double long_range_energy() {
+  if(scafacos) {
+    particles.update_particle_data();
+    if (!dipolar()) {
+      scafacos->run(particles.charges, particles.positions, particles.fields,particles.potentials);
+      return 0.5 * coulomb.prefactor * std::inner_product(particles.charges.begin(),particles.charges.end(),particles.potentials.begin(),0.0);
+    } 
+    else
+    {
+#ifdef SCAFACOS_DIPOLES
+      scafacos->run_dipolar(particles.charges, particles.positions, particles.fields,particles.potentials);
+      return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
+#endif	
+    }
+  }
 }
 
 /** Determine runtime for a specific cutoff */
@@ -190,7 +278,7 @@ void tune() {
   }
 }
 
-static void set_params_safe(const std::string &method, const std::string &params) {
+static void set_params_safe(const std::string &method, const std::string &params, bool dipolar_ia) {
   if(scafacos && (scafacos->method != method)) {
     delete scafacos;
     scafacos = 0;
@@ -200,6 +288,7 @@ static void set_params_safe(const std::string &method, const std::string &params
 
   scafacos->parse_parameters(params);
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
+  scafacos->set_dipolar(dipolar_ia);
   scafacos->set_common_parameters(box_l, per, n_part);
 
   on_coulomb_change();
@@ -229,25 +318,48 @@ double get_r_cut() {
   return 0.0;  
 }
 
-void set_parameters(const std::string &method, const std::string &params) {
+void set_parameters(const std::string &method, const std::string &params, bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not modify the buffer */
   MPI_Bcast(const_cast<char *>(&(*method.begin())), method.size(), MPI_CHAR, 0, comm_cart);
   MPI_Bcast(const_cast<char *>(&(*params.begin())), params.size(), MPI_CHAR, 0, comm_cart);
+  
+  #ifdef SCAFACOS_DIPOLES
+    bool d=dipolar_ia;
+    MPI_Bcast(&d,sizeof(bool), MPI_CHAR, 0, comm_cart);
+  #endif
 
-  set_params_safe(method, params);
+
+  set_params_safe(method, params,dipolar_ia);
+  #ifdef SCAFACOS_DIPOLES
+    set_dipolar(d);
+  #endif
+
+}
+
+
+
+bool dipolar() {
+  if (scafacos) return scafacos->dipolar();
+  runtimeErrorMsg() << "Scafacos not initialized";
+}
+
+void set_dipolar(bool d) {
+  if (scafacos){ 
+    scafacos->set_dipolar(d);
+  }
+  else
+    runtimeErrorMsg() << "Scafacos not initialized.";
 }
 
 }
-}
-
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
-  #if defined(SCAFACOS) and defined(ELECTROSTATICS)
-  using namespace Electrostatics::Scafacos;
+  #if defined(SCAFACOS) 
+  using namespace Scafacos;
   std::string method;
   std::string params;
 
@@ -257,7 +369,14 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   /** This requires C++11, otherwise this is undefined because std::string was not required to have conitnuous memory before. */
   MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
   MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
+  bool dip=false;
+  #ifdef SCAFACOS_DIPOLES 
+    MPI_Bcast(&dip,sizeof(bool), MPI_CHAR, 0, comm_cart);
+  #endif
     
-  set_params_safe(method, params);
+  set_params_safe(method, params,dip);
+  #ifdef SCAFACOS_DIPOLES 
+    set_dipolar(dip);
+  #endif
   #endif /* SCAFACOS */
 }

@@ -20,9 +20,6 @@
 EXTRA_DIST =
 CLEANFILES =
 AM_CPPFLAGS = -I$(top_srcdir)/src/core -I$(top_srcdir)/src -I$(builddir)/../core
-if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
-endif
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 lib_LTLIBRARIES = libEspressoTcl.la

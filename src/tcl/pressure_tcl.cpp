@@ -486,7 +486,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
   if(coulomb.method != COULOMB_NONE) {
     Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL);
     for(j=0; j<9; j++) {
-      sprintf(buffer, " %lf ", total_p_tensor.coulomb[j]);
+      sprintf(buffer, " %lf ", (p_tensor.n_coulomb==2 ? total_p_tensor.coulomb[j] + total_p_tensor.coulomb[j+9] : total_p_tensor.coulomb[j]) );
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
@@ -641,7 +641,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
     }
     else if( ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
-      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
+      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j] + (total_p_tensor.n_coulomb == 2 ? total_p_tensor.coulomb[9+j] : 0.0 );
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
