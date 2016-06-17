@@ -20,36 +20,29 @@
 import espressomd
 import unittest as ut
 import numpy as np
+from tests_common import *
 
-if "EWALD_GPU" in espressomd.features():
+if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features():
     from espressomd.electrostatics import EwaldGpu
 
     class ewald_GPU_test(ut.TestCase):
-        es = espressomd.System()
-        test_params = {}
-        test_params["bjerrum_length"] = 2
-        test_params["num_kx"] = 2
-        test_params["num_ky"] = 2
-        test_params["num_kz"] = 2
-        test_params["K_max"] = 10
-        test_params["time_calc_steps"] = 100
-        test_params["rcut"] = 0.9
-        test_params["accuracy"] = 1e-1
-        test_params["precision"] = 1e-2
-        test_params["alpha"] = 3.5
-
         def runTest(self):
-            ewald = EwaldGpu(bjerrum_length=self.test_params["bjerrum_length"], num_kx=self.test_params["num_kx"], num_ky=self.test_params["num_ky"], num_kz=self.test_params["num_kz"], rcut=self.test_params[
-                "rcut"], accuracy=self.test_params["accuracy"], precision=self.test_params["precision"], alpha=self.test_params["alpha"], time_calc_steps=self.test_params["time_calc_steps"], K_max=self.test_params["K_max"])
-            self.es.actors.add(ewald)
-            set_params = ewald._getParamsFromEsCore()
-            SAME = True
-            for i in self.test_params.keys():
-                if set_params[i] != self.test_params[i]:
-                    print "Parameter mismatch: ", i, set_params[i], self.test_params[i]
-                    SAME = False
-                    break
-                    return SAME
+            es = espressomd.System()
+            test_params = {}
+            test_params["bjerrum_length"] = 2
+            test_params["num_kx"] = 2
+            test_params["num_ky"] = 2
+            test_params["num_kz"] = 2
+            test_params["K_max"] = 10
+            test_params["time_calc_steps"] = 100
+            test_params["rcut"] = 0.9
+            test_params["accuracy"] = 1e-1
+            test_params["precision"] = 1e-2
+            test_params["alpha"] = 3.5
+    
+            ewald = EwaldGpu(**test_params)
+            es.actors.add(ewald)
+            self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
 
     if __name__ == "__main__":
         print("Features: ", espressomd.features())

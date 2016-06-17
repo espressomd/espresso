@@ -17,9 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.hpp"
+
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "config.hpp"
 #include "random.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
@@ -110,7 +111,6 @@ __device__ unsigned int getThreadIndex() {
  * @param *particle_seeds_device			Pointer to the particle rn seed storearray (Output)
 */
 __global__ void init_particle_force(float *particle_forces_device, float* particle_torques_device, CUDA_particle_seed *particle_seeds_device){
-
 
   unsigned int part_index = getThreadIndex();
 

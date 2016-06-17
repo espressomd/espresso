@@ -96,7 +96,7 @@ int cuda_get_device();
 
 int cuda_test_device_access();
 
-/** Gather unique list of CUDA devices from nodes 
+/** Gather unique list of CUDA devices on all nodes 
     @return vector of device on master, empty vector on other nodes.
 */
 

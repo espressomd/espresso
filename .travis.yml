@@ -44,7 +44,6 @@ install:
  - conda create --yes -n test python=2.7.9
  - source activate test
  - conda install --yes numpy cython pip
- - pip install codecov
 
 env:
   global:
@@ -65,6 +64,3 @@ compiler:
   - clang
 
 script: ./maintainer/travis/build_cmake.sh
-
-after_success:
- - codecov

@@ -83,14 +83,15 @@ set(tcl_tests  analysis.tcl
                p3m_magnetostatics.tcl 
                p3m_magnetostatics2.tcl 
                p3m_simple_noncubic.tcl 
+               p3m_stress_testcase.tcl
                pdb_parser.tcl 
                rotate-system.tcl 
                rotate-system-dipoles.tcl 
                rotation.tcl 
                rotation_per_particle.tcl 
-	       scafacos-dipoles.tcl
-	       scafacos-dipoles-non-periodic.tcl
-	       scafacos-dipoles-1d-and-2d-periodic.tcl
+               scafacos-dipoles.tcl
+               scafacos-dipoles-non-periodic.tcl
+               scafacos-dipoles-1d-and-2d-periodic.tcl
                sc_fluid_gpu.tcl 
                sd_ewald.tcl 
                sd_two_spheres.tcl 
