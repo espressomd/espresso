@@ -41,7 +41,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
         int n_elements()
         bool required()
 
-cdef extern from "script_interface/ScriptInterface.hpp":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
         Variant()
         Variant(const Variant&)

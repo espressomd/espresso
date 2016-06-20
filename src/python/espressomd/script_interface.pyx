@@ -1,5 +1,4 @@
 cdef class  PScriptInterface:
-
     def __init__(self):
         self.parameters = self.sip.all_parameters()
 
