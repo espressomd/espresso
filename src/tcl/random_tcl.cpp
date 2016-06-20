@@ -149,7 +149,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       }
     }
 
-#ifdef RANDOM_TRACE
+#ifdef RANDOM_DEBUG
     printf("Got "); 
         
     for(int i=0;i<n_nodes;i++) 
