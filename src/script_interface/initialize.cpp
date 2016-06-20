@@ -18,7 +18,7 @@
 */
 
 #include "initialize.hpp"
-#include "utils/Factory.hpp"
+#include "core/utils/Factory.hpp"
 #include "shapes/initialize.hpp"
 
 namespace ScriptInterface {

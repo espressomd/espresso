@@ -1,30 +1,30 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef __MPI_CALLBACKS
 #define __MPI_CALLBACKS
 
-#include <functional>
-#include <boost/mpi/communicator.hpp>
 #include "utils/NumeratedContainer.hpp"
+#include <boost/mpi/communicator.hpp>
+#include <functional>
 
 namespace Communication {
 
@@ -32,15 +32,13 @@ namespace Communication {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
- public:
+public:
   /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
   /** Type of the callback functions. */
-  typedef std::function<void (int, int)> function_type;
-  
-  MpiCallbacks(const boost::mpi::communicator &comm)
-      : m_comm(comm)
-  {
+  typedef std::function<void(int, int)> function_type;
+
+  MpiCallbacks() {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
@@ -66,7 +64,7 @@ class MpiCallbacks {
    * @return An integer id with which the callback can be called.
    **/
   int add(func_ptr_type fp);
-    
+
   /**
    * @brief Remove callback.
    *
@@ -76,7 +74,7 @@ class MpiCallbacks {
    * @param id Identifier of the calback to remove.
    */
   void remove(const int id);
-  
+
   /**
    * @brief call a callback.
    *
@@ -129,18 +127,19 @@ class MpiCallbacks {
    * Returns true if we are the master node
    * of this callback instance.
    */
-  bool is_root() const {
-    return m_comm.rank() == 0;
-  }
-  
+  bool is_root() const { return m_comm.rank() == 0; }
+
+  /**
+   * @brief Set the MPI communicator.
+   */
+  void set_communicator(boost::mpi::communicator const &comm) { m_comm = comm; }
+
   /**
    * @brief The boost mpi communicator used by this instance
    */
-  boost::mpi::communicator comm() const {
-    return m_comm;
-  }
-  
- private:
+  boost::mpi::communicator comm() const { return m_comm; }
+
+private:
   /**
    * @brief Id for the loop_abort. Has to be 0.
    */
@@ -159,27 +158,21 @@ class MpiCallbacks {
   void slave(int id, int par1, int par2) const;
 
   /**
-   * The MPI communicator used for the callbacks.   
+   * The MPI communicator used for the callbacks.
    */
   boost::mpi::communicator m_comm;
-  
+
   /**
    * Internal storage for the callback functions.
    */
   Utils::NumeratedContainer<function_type> m_callbacks;
-  
+
   /**
    * Mapping of function pointers to ids, so static callbacks can be
    * called by their pointer for backward compability.
    */
   std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };
-
-/**
- * @brief Initialize the callback singelton.
- * This sets the communicator to use.
- */
-void initialize_callbacks(boost::mpi::communicator &comm);
 
 /**
  * @brief Returns a reference to the global callback class instance.

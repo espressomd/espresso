@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2015,2016 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,25 +17,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef UTILS_PARALLEL_OBJECT_HPP
-#define UTILS_PARALLEL_OBJECT_HPP
+#ifndef UTILS_PARALLEL_PARALLEL_OBJECT_HPP
+#define UTILS_PARALLEL_PARALLEL_OBJECT_HPP
 
 #include "MpiCallbacks.hpp"
 
 namespace Utils {
+namespace Parallel {
+
 template <typename T> /* The type we are wrapping */
 class ParallelObject {
+public:
   ParallelObject() { Communication::mpiCallbacks().call(m_callback_id, 0, 0); }
+
   /**
    * Decay into wrapped type.
    */
-  operator &T() { return m_d; }
+  operator T &() { return m_d; }
 
 private:
+  /* Supported callback types. Currently we can only create new instances. */
   enum CallbackAction { CREATE };
 
   friend Communication::MpiCallbacks;
-  static void mpi_callback(int a, int b) {
+  static void mpi_callback(int action, int) {
     switch (action) {
     case CREATE:
       /* Create an instance */
@@ -51,9 +54,15 @@ private:
   T m_d;
 };
 
-  template<typename T>
-      ParallelObject::m_callback_id = Communication::mpiCallbacks().add(ParallelObject<T>::mpi_callback;
+/**
+ * @brief Callback id.
+ *
+ * Set up the static callback for object creation before main.
+ */
+template <typename T>
+int ParallelObject<T>::m_callback_id =
+    Communication::mpiCallbacks().add(ParallelObject<T>::mpi_callback);
 
-  } /* namespace Utils */
-
+} /* namespace Parallel */
+} /* namespace Utils */
 #endif
