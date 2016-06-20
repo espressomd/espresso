@@ -1503,7 +1503,8 @@ requires assigning charges to the particles.  This is done using the
 \begin{pysyntax}
 	\object{
 		electrostatics
-	}{ P3M
+	}{
+		P3M
 	}{
 		bjerrum_length = \arg{float},
 		accuracy = \arg{float}
@@ -1511,7 +1512,8 @@ requires assigning charges to the particles.  This is done using the
 	]
 	\object{
 		electrostatics
-	}{ P3M
+	}{
+		P3M
 	}{
 		bjerrum_length = \arg{float},
 		r_cut = \arg{float},
@@ -1532,7 +1534,8 @@ requires assigning charges to the particles.  This is done using the
 \begin{pysyntax}
 	\object{
 		electrostatics
-	}{ P3M_GPU
+	}{
+		P3M_GPU
 	}{
 		bjerrum_length = \arg{float},
 		accuracy = \arg{float}
@@ -2810,7 +2813,7 @@ Accordingly, the potential is replaced by $r \var{F_\mathrm{max}}$.
 Particles placed exactly on top of each other will be subject to a
 force of magnitude \var{F_\mathrm{max}} along the first coordinate axis.
 
-The force capping is switched off by setting $\var{F_\mathrm{max}}=nn0$.
+The force capping is switched off by setting $\var{F_\mathrm{max}}=0$.
 Note that force capping always applies to all Lennard-Jones, tabulated,
 Morse and Buckingham interactions regardless of the particle types.
 
