@@ -54,5 +54,5 @@ poly(N_P = 1, bond_length = 1.0, MPC=50, bond_id=0)
 for i in range(20):
     integrate.integrate(1000)
 
-    energies = system.ana.energy()
+    energies = system.analysis.energy()
     print energies

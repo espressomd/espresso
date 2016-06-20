@@ -131,7 +131,7 @@ print(system.actors)
 print("Simulate monovalent salt in a cubic simulation box {} at molar concentration {}."
       .format(box_l, mol_dens).strip())
 print("Interactions:\n")
-act_min_dist = system.ana.mindist(es)
+act_min_dist = system.analysis.mindist(es)
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -163,7 +163,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = system.ana.mindist(es)
+    act_min_dist = system.analysis.mindist(es)
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -210,7 +210,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-energies = system.ana.energy()
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -220,7 +220,7 @@ for i in range(0, int_n_times):
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
 
-    energies = system.ana.energy()
+    energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
 

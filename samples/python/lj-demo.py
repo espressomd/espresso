@@ -121,9 +121,9 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.ana.distto(0)
+system.analysis.distto(0)
 
-act_min_dist = system.ana.mindist()
+act_min_dist = system.analysis.mindist()
 system.max_num_cells = 2744
 
 mayavi = visualization.mayavi_live(system)
@@ -301,7 +301,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 # while (i < warm_n_times and act_min_dist < min_dist):
 #     integrate.integrate(warm_steps)
 #     # Warmup criterion
-#     act_min_dist = system.ana.mindist()
+#     act_min_dist = system.analysis.mindist()
 #     i += 1
 #
 # #   Increase LJ cap
@@ -318,7 +318,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 # system.non_bonded_inter.set_force_cap(lj_cap)
 
 # get initial observables
-pressure = system.ana.pressure()
+pressure = system.analysis.pressure()
 temperature = system.temperature
 
 # TODO: this is some terrible polynomial fit, replace it with a better expression
@@ -402,7 +402,7 @@ def main_loop():
     if controls.pressure == 0:
         controls.pressure = controls.min_press
 
-    pressure = system.ana.pressure()
+    pressure = system.analysis.pressure()
 
     
     # update the parameters set in the GUI
@@ -411,10 +411,10 @@ def main_loop():
         # reset Vkappa when target pressure has changed
         
         if old_pressure != controls.pressure:
-            system.ana.Vkappa('reset')
+            system.analysis.Vkappa('reset')
             old_pressure = controls.pressure
             
-        newVkappa = system.ana.Vkappa('read')['Vk1']
+        newVkappa = system.analysis.Vkappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0/(NPTGamma0*NPTGamma0*NPTInitPistonMass)
         pistonMass = limit_range(4.0/(NPTGamma0*NPTGamma0*newVkappa), NPTMinPistonMass, NPTMaxPistonMass)
         integrate.set_integrator_isotropic_npt(controls.pressure, pistonMass, cubic_box=True)
@@ -448,7 +448,7 @@ def main_loop():
     
     plt1_x_data = numpy.append(plt1_x_data[-plot_max_data_len+1:], system.time)
     if show_real_system_temperature:
-        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], 2./(3. * system.n_part)*system.ana.energy()["ideal"])
+        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], 2./(3. * system.n_part)*system.analysis.energy()["ideal"])
     else:
         plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], system.temperature)
     plt2_x_data = numpy.append(plt2_x_data[-plot_max_data_len+1:], system.time)
@@ -512,7 +512,7 @@ def calculate_kinetic_energy():
         tmp_kin_energy+=1./2.*numpy.linalg.norm(system.part[i].v)**2.0
     
     print("tmp_kin_energy={}".format(tmp_kin_energy))
-    print("system.ana.energy()['ideal']={}".format(system.ana.energy(system)["ideal"]))
+    print("system.analysis.energy()['ideal']={}".format(system.analysis.energy(system)["ideal"]))
     
 
 def rotate_scene():

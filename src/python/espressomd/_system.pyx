@@ -55,11 +55,11 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
-    ana =None
+    analysis =None
 
     def __init__(self):
         self.actors = Actors(_system=self)
-        self.ana=Analysis(self)
+        self.analysis=Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()

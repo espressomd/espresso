@@ -97,12 +97,12 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-system.ana.distto(0)
+system.analysis.distto(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.ana.mindist()
+act_min_dist = system.analysis.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -162,7 +162,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = system.ana.mindist()
+    act_min_dist = system.analysis.mindist()
     i += 1
 
 #   Increase LJ cap
@@ -203,7 +203,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-energies = system.ana.energy()
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -212,7 +212,7 @@ for i in range(0, int_n_times):
 
     integrate.integrate(int_steps)
 
-    energies = system.ana.energy()
+    energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
 

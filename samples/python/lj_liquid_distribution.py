@@ -117,7 +117,7 @@ for i in range(n_part):
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = system.ana.mindist()
+act_min_dist = system.analysis.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -149,7 +149,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = system.ana.mindist()
+    act_min_dist = system.analysis.mindist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -197,7 +197,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-energies = system.ana.energy()
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -207,16 +207,16 @@ for i in range(0, int_n_times):
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
 
-    r, dist = system.ana.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
+    r, dist = system.analysis.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
                                    r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins, 
                                    log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r
     distr_values += dist
 
-    energies = system.ana.energy()
+    energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-    linear_momentum = system.ana.analyze_linear_momentum()
+    linear_momentum = system.analysis.analyze_linear_momentum()
     print(linear_momentum)
 
 #   write observables
