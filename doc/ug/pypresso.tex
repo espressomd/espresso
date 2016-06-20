@@ -72,11 +72,11 @@
  }
 
 
-% Typeset a pypresso property (e.g. S.part[0].type)
+% Typeset a pypresso attributes (e.g. S.part[0].type)
 %  #1: library identifier, e.g. `espressomd.System()'
 %  #2: object name, e.g. `part[\arg{pid}]'
 %  #3: list of properties
-\cs_new_protected:Npn \pypresso_property:nnn #1#2#3
+\cs_new_protected:Npn \pypresso_attributes:nnn #1#2#3
  {
   % Split comma list
   \seq_set_from_clist:Nn \l_tmpa_seq { #3 }
@@ -125,7 +125,7 @@
 % Define pysyntax environment
 \NewDocumentEnvironment { pysyntax } { }
  {
-  % The special macros \arg, \object, \property are only defined
+  % The special macros \arg, \object, \attributes are only defined
   % inside.
   \protected \def \arg ##1
    {
@@ -139,9 +139,9 @@
    {
     \pypresso_object:nnnnn { ##1 } { ##2 } { ##3 } { ##4 } { ##5 }
    }
-  \NewDocumentCommand \property { m m m }
+  \NewDocumentCommand \attributes { m m m }
    {
-    \pypresso_property:nnn { ##1 } { ##2 } { ##3 }
+    \pypresso_attributes:nnn { ##1 } { ##2 } { ##3 }
    }
 
   % Place heading and put everything in a coffin
