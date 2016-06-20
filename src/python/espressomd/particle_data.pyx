@@ -1157,9 +1157,9 @@ cdef class ParticleList:
                         "pos attribute must be specified for new particle")
 
                 if len(np.array(kwargs["pos"]).shape) == 2:
-                    self._place_new_particles(kwargs)
+                    return self._place_new_particles(kwargs)
                 else:
-                    self._place_new_particle(kwargs)
+                    return self._place_new_particle(kwargs)
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args")
@@ -1214,6 +1214,8 @@ cdef class ParticleList:
 
         if P != {}:
             self[ids].update(P)
+        
+        return self[ids]
 
     # Iteration over all existing particles
     def __iter__(self):
