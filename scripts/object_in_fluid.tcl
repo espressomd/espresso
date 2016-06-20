@@ -662,6 +662,7 @@ proc oif_create_template { args } {
 	set mirror_X 0
 	set mirror_Y 0
 	set mirror_Z 0
+	set mirror_filename ""
 	set filenamenodes ""
 	set filenametriangles ""
     set ks 0.0
@@ -823,19 +824,42 @@ proc oif_create_template { args } {
 					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
 					break
 				}
-				set mirror_X [lindex $args $pos]
-				incr pos
-				if { $pos >= $n_args } { 
-					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
-					break
+				set mirror_filename [lindex $args $pos]
+				if {[string is double $mirror_filename] == 1} {
+					set mirror_X $mirror_filename
+					set mirror_filename ""
+					incr pos
+					if { $pos >= $n_args } { 
+						puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+						break
+					}
+					set mirror_Y [lindex $args $pos]
+					incr pos
+					if { $pos >= $n_args } { 
+						puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+						break
+					}
+					set mirror_Z [lindex $args $pos]
+				} else {
+					incr pos
+					if { $pos >= $n_args } { 
+						puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+						break
+					}
+					set mirror_X [lindex $args $pos]
+					incr pos
+					if { $pos >= $n_args } { 
+						puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+						break
+					}
+					set mirror_Y [lindex $args $pos]
+					incr pos
+					if { $pos >= $n_args } { 
+						puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+						break
+					}
+					set mirror_Z [lindex $args $pos]					
 				}
-				set mirror_Y [lindex $args $pos]
-				incr pos
-				if { $pos >= $n_args } { 
-					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
-					break
-				}
-				set mirror_Z [lindex $args $pos]
 				incr pos
 			}
 		    "check" {  
@@ -908,6 +932,7 @@ proc oif_create_template { args } {
 	puts "	kv:             $kv"
 	puts "	stretch: 	$stretch_X $stretch_Y $stretch_Z"
 	puts "	mirror: 	$mirror_X $mirror_Y $mirror_Z"
+	puts "	mirror filename: $mirror_filename"
 #--------------------------------------------------------------------------------------------
 #check whether mirroring will be done for one plane
 	if { $mirror_X != 0 && $mirror_X != 1 || $mirror_Y != 0 && $mirror_Y != 1 || $mirror_Z != 0 && $mirror_Z != 1 } { 
@@ -928,7 +953,7 @@ proc oif_create_template { args } {
 
 	# template must be stretched first
 	set mesh_nnodes 0
-
+	if {$mirror_filename != "" } {set fmirror [open "${mirror_filename}Nodes.dat" w]}
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_nodes($mesh_nnodes,0) [expr $stretch_X*[lindex $line 0]]
@@ -943,6 +968,9 @@ proc oif_create_template { args } {
 			}
 		    if { $mirror_Z == 1} {
 				set mesh_nodes($mesh_nnodes,2) [expr -1.0*$mesh_nodes($mesh_nnodes,2)]
+			}
+		    if {[expr $mirror_X + $mirror_Y + $mirror_Z] == 1} {
+				puts $fmirror "$mesh_nodes($mesh_nnodes,0) $mesh_nodes($mesh_nnodes,1) $mesh_nodes($mesh_nnodes,2)"
 			}
 
 			# mesh_nodes is a 2D-array with three coordinates for each node (each node is one line) 
@@ -961,6 +989,7 @@ proc oif_create_template { args } {
 		set temp_node [lreplace $temp_node 0 2]
 		}	    
 	}
+	close $fmirror
 
 #--------------------------------------------------------------------------------------------
 #reading triangles
@@ -976,6 +1005,7 @@ proc oif_create_template { args } {
 		lappend oif_template_starting_triangles [llength $oif_template_triangles] 
 	} else { lappend oif_template_starting_triangles 0 }
 
+	if {$mirror_filename != "" } {set fmirror [open "${mirror_filename}Triangles.dat" w]}
 	foreach line $data {
 		if { [llength $line] == 3 } {
 			set mesh_triangles($mesh_ntriangles,0) [lindex $line 0]
@@ -986,6 +1016,7 @@ proc oif_create_template { args } {
 				set tmp_index_Z $mesh_triangles($mesh_ntriangles,2)
 				set mesh_triangles($mesh_ntriangles,2) $mesh_triangles($mesh_ntriangles,1)
 				set mesh_triangles($mesh_ntriangles,1) $tmp_index_Z
+				puts $fmirror "$mesh_triangles($mesh_ntriangles,0) $mesh_triangles($mesh_ntriangles,1) $mesh_triangles($mesh_ntriangles,2)"
 			}    
 			incr mesh_ntriangles
 	        list temp_triangle
@@ -998,6 +1029,7 @@ proc oif_create_template { args } {
 	        # clear list
 		}
 	}
+	if {$mirror_filename != "" } { close $fmirror }
 
 #--------------------------------------------------------------------------------------------
 # check data extracted from input files:
