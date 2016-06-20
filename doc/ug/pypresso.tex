@@ -4,10 +4,11 @@
 \colorlet{parcolor}{blue}
 \colorlet{objcolor}{red}
 
-\def\underscoreletter{\catcode`\_=11}
-\def\hyphendot{\discretionary{}{.}{.}}
-
 \ExplSyntaxOn
+
+\cs_new:Npn \underscoreletter { \tex_catcode:D `\_ = 11 }
+\cs_new:Npn \hyphendot { \tex_discretionary:D {} {.} {.} }
+
 
 \coffin_new:N \l_pypresso_syntax_coffin
 
@@ -26,6 +27,7 @@
 
 \cs_new_protected:Npn \pypresso_object:nnnnn #1#2#3#4#5
  {
+  \par\noindent
   \seq_set_from_clist:Nn \l_tmpa_seq { #4 }
   \seq_set_from_clist:Nn \l_tmpb_seq { #5 }
   \tl_set:Nn \l_tmpa_tl { #2 }
