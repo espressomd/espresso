@@ -1,20 +1,20 @@
 /*
   Copyright (C) 2015,2016 The ESPResSo project
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef __SCRIPT_INTERFACE_PARAMETERS_HPP
@@ -26,60 +26,53 @@
 namespace ScriptInterface {
 
 /**
- * Possible parameter type. Corresponds to the template parameters of @type Variant.
+ * Possible parameter type. Corresponds to the template parameters of @type
+ * Variant.
  */
-enum class ParameterType { BOOL, INT, DOUBLE, STRING, INT_VECTOR, DOUBLE_VECTOR };
+enum class ParameterType {
+  BOOL,
+  INT,
+  DOUBLE,
+  STRING,
+  INT_VECTOR,
+  DOUBLE_VECTOR
+};
 
 /**
  * @brief Script interface parameter.
  *
  * Description of a Parameter that can be accessed from
- * the script side. 
+ * the script side.
  */
 class Parameter {
- public:
+public:
   enum { ARBITRARY_LENGTH = 0 };
   Parameter()
-      : m_type(ParameterType::BOOL),
-        m_n_elements(0),
-        m_required(false)
-  {}
+      : m_type(ParameterType::BOOL), m_n_elements(0), m_required(false) {}
 
   Parameter(ParameterType type, bool required)
-      : m_type(type),
-        m_n_elements(0),
-        m_required(required)
-  {}
-  
+      : m_type(type), m_n_elements(ARBITRARY_LENGTH), m_required(required) {}
+
   Parameter(ParameterType type, int n_elements, bool required)
-      : m_type(type),
-        m_n_elements(n_elements),
-        m_required(required)
-  {}
-  
+      : m_type(type), m_n_elements(n_elements), m_required(required) {}
+
   /**
    * The required type of the parameter.
    */
-  ParameterType type() const {
-    return m_type;
-  }
+  ParameterType type() const { return m_type; }
 
   /**
    * The required number of elements of this parameter,
    * if it is a vector type. Otherwise it is ignored.
    */
-  int n_elements() const {
-    return m_n_elements;
-  }
+  int n_elements() const { return m_n_elements; }
 
   /**
    * Whether the parameter is required.
    */
-  bool required() const {
-    return m_required;
-  }
-  
- private:  
+  bool required() const { return m_required; }
+
+private:
   ParameterType m_type;
   int m_n_elements;
   bool m_required;
@@ -88,4 +81,3 @@ class Parameter {
 } /* namespace ScriptInterface */
 
 #endif
-
