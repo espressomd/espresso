@@ -21,7 +21,6 @@ import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import lb
 import numpy as np

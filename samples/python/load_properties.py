@@ -21,7 +21,6 @@ import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
@@ -89,7 +88,7 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 #############################################################
 pickle.load(open("particle_save","r"))
 
-act_min_dist = analyze.mindist(es)
+act_min_dist = system.analysis.mindist()
 
 p3m=pickle.load(open("p3m_save","r"))
 print(p3m.get_params())
@@ -133,7 +132,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-energies = analyze.energy(system=system)
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -142,7 +141,7 @@ for i in range(0, int_n_times):
 
     integrate.integrate(int_steps)
 
-    energies = analyze.energy(system=system)
+    energies = system.analysis.energy()
     print(energies)
 
 # terminate program
