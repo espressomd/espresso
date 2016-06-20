@@ -19,12 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MPI_CALLBACKS
-#define __MPI_CALLBACKS
+#ifndef COMMUNICATION_MPI_CALLBACKS
+#define COMMUNICATION_MPI_CALLBACKS
+
+#include <functional>
+
+#include <boost/mpi/communicator.hpp>
 
 #include "utils/NumeratedContainer.hpp"
-#include <boost/mpi/communicator.hpp>
-#include <functional>
 
 namespace Communication {
 
@@ -137,7 +139,7 @@ public:
   /**
    * @brief The boost mpi communicator used by this instance
    */
-  boost::mpi::communicator comm() const { return m_comm; }
+  boost::mpi::communicator const& comm() const { return m_comm; }
 
 private:
   /**
@@ -160,7 +162,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator m_comm;
+  boost::mpi::communicator const& m_comm;
 
   /**
    * Internal storage for the callback functions.
@@ -176,7 +178,6 @@ private:
 
 /**
  * @brief Returns a reference to the global callback class instance.
- *
  */
 MpiCallbacks &mpiCallbacks();
 

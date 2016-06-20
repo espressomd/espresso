@@ -39,11 +39,10 @@ puts "- Testcase virtual-sites-rotation.tcl running on  [format %02d [setmd n_no
 puts "---------------------------------------------------------------"
 cellsystem nsquare -no_verlet_list
 
-set mass [expr rand() *20]
-set j1 [expr rand() * 20]
-set j2 [expr rand() * 20]
-set j3 [expr rand() * 20]
-
+set mass [expr 10. + abs([t_random] * 10)]
+set j1 [expr 10. + abs([t_random] * 10)]
+set j2 [expr 10. + abs([t_random] * 10)]
+set j3 [expr 10. + abs([t_random] * 10)]
 
 set kT 1.5
 set halfkT 0.75

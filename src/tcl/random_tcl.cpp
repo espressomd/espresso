@@ -131,7 +131,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     
     if (argc <= 1)
     {
-      std::iota(seeds.begin(), seeds.end(), 0);
+      std::iota(seeds.begin(), seeds.end(), 1);
       for(auto &seed: seeds)
       {
         sprintf(buffer, "%d ", seed); 
