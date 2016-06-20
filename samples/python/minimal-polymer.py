@@ -19,7 +19,6 @@
 #
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import interactions
 import numpy
@@ -55,5 +54,5 @@ poly(N_P = 1, bond_length = 1.0, MPC=50, bond_id=0)
 for i in range(20):
     integrate.integrate(1000)
 
-    energies = analyze.energy(system=system)
+    energies = system.ana.energy()
     print energies
