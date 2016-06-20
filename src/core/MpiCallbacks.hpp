@@ -122,6 +122,16 @@ class MpiCallbacks {
    * Make the slaves exit the MPI loop.
    */
   void abort_loop() const;
+
+  /**
+   * @brief Are we the master?
+   *
+   * Returns true if we are the master node
+   * of this callback instance.
+   */
+  bool is_root() const {
+    return m_comm.rank() == 0;
+  }
   
   /**
    * @brief The boost mpi communicator used by this instance
