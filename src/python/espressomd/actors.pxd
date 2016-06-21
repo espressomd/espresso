@@ -1,4 +1,4 @@
 cdef class Actor:
-    cdef _isactive
-    cdef _params
+    cdef public _isactive
+    cdef public _params
     cdef public system
