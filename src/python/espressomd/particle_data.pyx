@@ -28,7 +28,7 @@ from interactions import BondedInteractions
 from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step
 import collections
-from globals cimport max_seen_particle, time_step, smaller_time_step,n_part
+from globals cimport max_seen_particle, time_step, smaller_time_step, n_part
 
 PARTICLE_EXT_FORCE = 1
 
@@ -1096,8 +1096,6 @@ cdef class ParticleList:
             params[particle_number]["id"] = particle_number
             self.add(params[particle_number])
 
-
-    
     def __len__(self):
         return n_part
 
@@ -1195,7 +1193,6 @@ cdef class ParticleList:
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])
             return tf_array
-    
 
     def clear(self):
         remove_all_particles()
