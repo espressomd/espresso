@@ -113,6 +113,18 @@ cdef class ParticleHandle:
             return np.array([self.particle_data.r.p[0],
                              self.particle_data.r.p[1],
                              self.particle_data.r.p[2]])
+            
+    property pos_folded:
+        """Particle position (folded into central image)."""
+
+        def __set__(self):
+            raise Exception("setting a folded position is not implemented")
+
+        def __get__(self):
+            cdef double pos[3]
+            pos = self.pos
+            fold_position(pos, self.particle_data.l.i)
+            return pos
 
     # Velocity
     property v:
@@ -882,6 +894,19 @@ cdef class ParticleSlice:
             for i in range(len(self.id_selection)):
                 pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos
             return pos_array
+
+    property pos_folded:
+        """Particle position (folded into central image)."""
+
+        def __set__(self):
+            raise Exception("setting a folded position is not implemented")
+
+        def __get__(self):
+            pos_array = np.zeros((len(self.id_selection), 3))
+            for i in range(len(self.id_selection)):
+                pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos_folded
+            return pos_array
+
 
     # Velocity
     property v:
