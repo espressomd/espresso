@@ -21,7 +21,6 @@ import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 import numpy
@@ -129,12 +128,12 @@ dh = electrostatics.DH(
 system.actors.add(dh)
 print(system.actors)
 
-analyze.distto(system, 0)
+system.analysis.distto(0)
 
 print("Simulate {} monovalent salt in a cubic simulation box {} at molar concentration {}."
       .format(n_part, box_l, mol_dens).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist(es)
+act_min_dist = system.analysis.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -166,7 +165,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(es)
+    act_min_dist = system.analysis.mindist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -213,8 +212,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-#energies = es._espressoHandle.Tcl_Eval('analyze energy')
-energies = analyze.energy(system=system)
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -224,8 +222,7 @@ for i in range(0, int_n_times):
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
 
-#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
-    energies = analyze.energy(system=system)
+    energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
 

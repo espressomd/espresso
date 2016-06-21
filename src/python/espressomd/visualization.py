@@ -56,6 +56,8 @@ class mayavi_live:
 		This is called periodically in the GUI thread"""
 		if self.data is None:
 			return
+		
+		assert isinstance(threading.current_thread(), threading._MainThread)
 
 		f = mlab.gcf()
 		visual.set_viewer(f)
@@ -67,9 +69,9 @@ class mayavi_live:
 			self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
 
 		if not N_changed:
-			self.points.mlab_source.set(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+			self.points.mlab_source.set(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
 		else:
-			self.points.mlab_source.reset(x=coords[:,0], y=coords[:,1], z=coords[:,2], u=radii, v=radii, w=radii, scalars=types)
+			self.points.mlab_source.reset(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
 		if not self.running:
 			f.scene.reset_zoom()
 			self.running = True
@@ -96,17 +98,22 @@ class mayavi_live:
 		radii = numpy.empty(N)
 		bonds = []
 
-		for i in range(N):
-			coords[i,:] = self.system.part[i].pos
+		j = 0
+		for i in range(self.system.max_part+1):
+			if not self.system.part.exists(i):
+				continue
+			coords[j,:] = self.system.part[i].pos
 			t = self.system.part[i].type
-			types[i] = t +1
-			radii[i] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
+			types[j] = t +1
+			radii[j] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
 
 			bs = self.system.part[i].bonds
 			for b in bs:
 				t = b[0]
 				for p in b[1:]:
 					bonds.append((i,p,t))
+			j += 1
+		assert j == self.system.n_part
 		Nbonds = len(bonds)
 		bond_coords = numpy.empty((Nbonds,7))
 
@@ -137,12 +144,14 @@ class mayavi_live:
 	def process_gui_events(self):
 		"""Process GUI events, e.g. mouse clicks, in the Mayavi window.
 		Call this function as often as you can to get a smooth GUI experience."""
+		assert isinstance(threading.current_thread(), threading._MainThread)
 		self.gui.process_events()
 
 	def run_gui_event_loop(self):
 		"""Start the GUI event loop.
 		This function blocks until the Mayavi window is closed.
 		So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""
+		assert isinstance(threading.current_thread(), threading._MainThread)
 		self.gui.start_event_loop()
 
 	def register_callback(self, cb, interval=1000):

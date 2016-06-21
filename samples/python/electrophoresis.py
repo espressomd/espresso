@@ -19,7 +19,6 @@
 import espressomd
 from espressomd import code_info
 from espressomd import thermostat
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import interactions
 from espressomd import electrostatics
@@ -195,8 +194,6 @@ for i in range(4000):
     v_list.append(system.part[:n_monomers].v)
     pos_list.append(system.part[:n_monomers].pos)
     # other observales:
-    # energies = analyze.energy(system=system)
-    # linear_momentum = analyze.analyze_linear_momentum(system=system)
 
 print("\nSampling finished!\n")
 
