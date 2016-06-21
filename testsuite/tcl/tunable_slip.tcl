@@ -144,7 +144,7 @@ set int_loops                   3
 set tcl_precision     6
 
 # initialize random number generator
-set t_random_seed     [expr int(rand()*99999)^[pid]]
+set t_random_seed     [expr int([t_random]*99999)^[pid]]
 
 # external force
 set f_x    1.0

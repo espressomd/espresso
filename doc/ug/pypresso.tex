@@ -4,10 +4,10 @@
 \colorlet{parcolor}{blue}
 \colorlet{objcolor}{red}
 
-\def\underscoreletter{\catcode`\_=11}
-\def\hyphendot{\discretionary{}{.}{.}}
-
 \ExplSyntaxOn
+
+\cs_new:Npn \underscoreletter { \tex_catcode:D `\_ = 11 }
+\cs_new:Npn \hyphendot { \tex_discretionary:D {} {.} {.} }
 
 \coffin_new:N \l_pypresso_syntax_coffin
 
@@ -24,23 +24,46 @@
 %   \bool_set_false:N \l_pypresso_enable_bool
 %  }
 
+% Typeset a pypresso object
+%  #1: `from espressomd import #1'  Currently not used (remove?)
+%  #2: library identifier, e.g. `electrostatics'
+%  #3: object name, e.g. `P3M'
+%  #4: mandatory arguments
+%  #5: optional arguments
 \cs_new_protected:Npn \pypresso_object:nnnnn #1#2#3#4#5
  {
+  % Begin new entry
+  \par\noindent
+
+  % Split comma lists
   \seq_set_from_clist:Nn \l_tmpa_seq { #4 }
   \seq_set_from_clist:Nn \l_tmpb_seq { #5 }
+
+  % Make the dots in the library identifier, viable hyphenation points
+  % and trim spaces
   \tl_set:Nn \l_tmpa_tl { #2 }
   \tl_replace_all:Nnn \l_tmpa_tl { . } { \hyphendot }
   \tl_trim_spaces:N \l_tmpa_tl
+
+  % if there is a `from ... import` typeset it
   \tl_if_blank:nF { #1 }
    {
     from ~ \textcolor{ parcolor } { espressomd } ~
     import ~ \textcolor { objcolor } { #1 }\par
    }
+
+  % typeset library and object
   \textcolor{ parcolor }{ \tl_use:N \l_tmpa_tl \hyphendot }
   \textcolor{ objcolor }{ \tl_trim_spaces:n { #3 }  }
-  (\par
+
+  (
+   % Typeset mandatory arguments
+   \tl_if_blank:nF { #4 } { \par }
    \seq_use:Nnnn \l_tmpa_seq { ,\par } { ,\par } { ,\par }
-   \tl_if_blank:nF { #5 } { ,\par }
+
+   % Typeset optional arguments
+   \tl_if_blank:nF { #5 }
+    { \tl_if_blank:nF { #4 } { , } \par }
    \group_begin:
     \color{ optcolor }
     \seq_use:Nnnn \l_tmpb_seq { ,\par } { ,\par } { ,\par }
@@ -48,18 +71,33 @@
   )
  }
 
-\cs_new_protected:Npn \pypresso_property:nnn #1#2#3
+
+% Typeset a pypresso attributes (e.g. S.part[0].type)
+%  #1: library identifier, e.g. `espressomd.System()'
+%  #2: object name, e.g. `part[\arg{pid}]'
+%  #3: list of properties
+\cs_new_protected:Npn \pypresso_attributes:nnn #1#2#3
  {
+  % Split comma list
   \seq_set_from_clist:Nn \l_tmpa_seq { #3 }
+
+  % Make the dots in the library identifier, viable hyphenation points
+  % and trim spaces
   \tl_set:Nn \l_tmpa_tl { #1 }
   \tl_replace_all:Nnn \l_tmpa_tl { . } { \hyphendot }
   \tl_trim_spaces:N \l_tmpa_tl
+
+  % typeset library and object
   \textcolor{ parcolor }{ \tl_use:N \l_tmpa_tl \hyphendot }
   \textcolor{ objcolor }{ \tl_trim_spaces:n { #2 }  }
+
+  % Typeset properties with leading dot
   \par.
   \seq_use:Nnnn \l_tmpa_seq { \par. } { \par. } { \par. }
  }
 
+
+% Typeset the heading `Python Syntax'
 \cs_new_protected:Npn \pypresso_heading:
  {
   \bool_if:NT \l_pypresso_enable_bool
@@ -71,6 +109,8 @@
    }
  }
 
+
+% Setup fonts and catcodes for pypresso
 \cs_new_protected:Npn \pypresso_init:
  {
   \ttfamily
@@ -81,8 +121,12 @@
   \ignorespaces
  }
 
+
+% Define pysyntax environment
 \NewDocumentEnvironment { pysyntax } { }
  {
+  % The special macros \arg, \object, \attributes are only defined
+  % inside.
   \protected \def \arg ##1
    {
     \tl_set:Nn \l_tmpa_tl { ##1 }
@@ -95,16 +139,19 @@
    {
     \pypresso_object:nnnnn { ##1 } { ##2 } { ##3 } { ##4 } { ##5 }
    }
-  \NewDocumentCommand \property { m m m }
+  \NewDocumentCommand \attributes { m m m }
    {
-    \pypresso_property:nnn { ##1 } { ##2 } { ##3 }
+    \pypresso_attributes:nnn { ##1 } { ##2 } { ##3 }
    }
+
+  % Place heading and put everything in a coffin
   \pypresso_heading:
   \vcoffin_set:Nnw \l_pypresso_syntax_coffin { \linewidth - 1.5em - 1em - 1pt }
   \pypresso_init:
  }
  {
   \vcoffin_set_end:
+  % Place the coffin with that fancy rule
   \bool_if:NT \l_pypresso_enable_bool
    {
     \tex_noindent:D

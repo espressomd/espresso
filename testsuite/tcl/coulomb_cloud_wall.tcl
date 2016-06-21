@@ -64,14 +64,6 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 set methods {}
 set setups {}
 set accuracies {}
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] >=0 } then {
-    proc setup_scafacos_ewald {} {
-        inter coulomb 1.0 scafacos ewald ewald_r_cut 1.001 tolerance_field 1e-4
-    }
-    lappend methods "SCAFACOS_ewald"
-    lappend setups "setup_scafacos_ewald"
-    lappend accuracies 1e-3
-}
 
 if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] >=0} then {
     proc setup_scafacos_p3m {} {

@@ -49,7 +49,7 @@ cdef class NonBondedInteraction(object):
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
-            self._params = kwargs
+            self._params.update(kwargs)
 
             # Validation of parameters
             self.validate_params()
@@ -78,6 +78,9 @@ cdef class NonBondedInteraction(object):
             self._params = self._get_params_from_es_core()
 
         return self._params
+
+    def __str__(self):
+        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def set_params(self, **p):
         """Update parameters. Only given """
@@ -188,7 +191,7 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
                 raise Exception("Could not set Lennard Jones parameters")
 
         def default_params(self):
-            self._params = {
+            return {
                 "epsilon": 0.,
                 "sigma": 0.,
                 "cutoff": 0.,
@@ -257,7 +260,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
                                     self._params["b1"],
                                     self._params["b2"],
                                     0.0,
-                                    self._params["labmda"],
+                                    self._params["lambda"],
                                     self._params["delta"]):
                     raise Exception(
                         "Could not set Generic Lennard Jones parameters")
@@ -277,7 +280,7 @@ cdef class GenericLennardJonesInteraction(NonBondedInteraction):
                         "Could not set Generic Lennard Jones parameters")
 
         def default_params(self):
-            self._params = {
+            return {
                 "epsilon": 0.,
                 "sigma": 0.,
                 "cutoff": 0.,
@@ -433,6 +436,9 @@ cdef class BondedInteraction(object):
     def _set_params_in_es_core(self):
         raise Exception(
             "Subclasses of BondedInteraction must define the _set_params_in_es_core() method.")
+
+    def __str__(self):
+        return self.__class__.__name__ + "(" + str(self._params) + ")"
 
     def set_default_params(self):
         raise Exception(

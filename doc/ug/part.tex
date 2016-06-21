@@ -27,7 +27,7 @@
 \label{ssec:particleproperties}
 
 \begin{pysyntax}
-  \property{
+  \attributes{
     espressomd.System()
   }{
     part[\arg{pid}]
@@ -466,14 +466,40 @@ system.
   \end{features}
 \end{essyntax}
 
-This command will create \var{num\_polymers} polymer or
-polyelectrolyte chains with \var{monomers\_per\_chain} monomers per
+\begin{pysyntax}
+	\object{
+		espressomd
+	}{
+		polymer
+	}{
+		N_P = \arg{int},
+		MPC = \arg{int},
+		bond_length = \arg{float},
+		start_id = \arg{int},
+		start_pos = \arg{ndarray},
+		mode = 0 or 1 or 2,
+		shield = \arg{float},
+		max_tries = \arg{int},
+		val_poly = \arg{float},
+		charge_distance = \arg{int},
+		type_poly_neutral = \arg{int},
+		type_poly_charged = \arg{int},
+		bond_id = \arg{int},
+		angle = \arg{float},
+		angle2 = \arg{float},
+		pos2 = \arg{ndarray},
+		constraint = 0 or 1
+	}
+\end{pysyntax}
+
+This command will create \var{num\_polymers} N\_P polymer or
+polyelectrolyte chains with \var{monomers\_per\_chain} MPC monomers per
 chain. The length of the bond between two adjacent monomers will be
 set up to be \var{bond\_length}.
 
 \begin{arguments}
-\item[\var{num\_polymers}] Sets the number of polymer chains.
-\item[\var{monomers\_per\_chain}] Sets the number of monomers per
+\item[\var{num\_polymers}] N\_P Sets the number of polymer chains.
+\item[\var{monomers\_per\_chain}] MPC Sets the number of monomers per
   chain.
 \item[\var{bond\_length}] Sets the initial distance between two
   adjacent monomers. The distance during the course of the simulation
@@ -482,11 +508,11 @@ set up to be \var{bond\_length}.
   is based on Verlet algorithm and satisfy internal constraints for
   molecular models with internal constrains, using Lagrange
   multipliers.
-\item[\opt{start \var{pid}}] Sets the particle number of the
+\item[\opt{start \var{pid}}] start\_id Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
 
-\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of the
+\item[\opt{pos \var{x} \var{y} \var{z}}] start\_pos Sets the position of the
   first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
   a randomly chosen value)
   
@@ -494,10 +520,10 @@ set up to be \var{bond\_length}.
       \opt{\var{try_\mathrm{max}}}}}]
   Selects the setup mode:
   \begin{description}
-  \item[\keyword{RW} (Random walk)] The monomers are
+  \item[\keyword{RW} (Random walk)] mode = 1 The monomers are
     randomly placed by a random walk with a steps size of
     \var{bond_length}.
-  \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
+  \item[\keyword{PSAW} (Pruned self-avoiding walk)] mode = 2 The position of a
     monomer is randomly chosen in a distance of \var{bond\_length} to
     the previous monomer. If the position is closer to another
     particle than \var{shield}, the attempt is repeated up to
@@ -506,7 +532,7 @@ set up to be \var{bond\_length}.
     same. If you want a real self-avoiding walk, use the \keyword{SAW}
     mode.  However, \keyword{PSAW} is several orders of magnitude
     faster than \keyword{SAW}, especially for long chains.
-  \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
+  \item[\keyword{SAW} (Self-avoiding random walk)] mode = 0 The positions of
     the monomers are chosen as in the plain random walk. However, if
     this results in a chain that has a monomer that is closer to
     another particle than \var{shield}, a new attempt of setting up
@@ -524,22 +550,23 @@ set up to be \var{bond\_length}.
   types are set to $\var{typeid_\mathrm{charged}} =
   \var{typeid_\mathrm{neutral}}$. If charge is not set, it defaults to
   0.0.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Sets the stride
+\item[\opt{distance \var{d_\mathrm{charged}}}] charge\_distance Sets the stride
   between the indices of two charged monomers. This defaults defaults
   to 1, meaning that all monomers in the chain are charged.
-\item[\opt{types \var{typeid_\mathrm{neutral}}
+\item[\opt{types \var{typeid_\mathrm{neutral}} type\_poly\_neutral
+		type\_poly\_charged
     \var{typeid_\mathrm{charged}}}] Sets the type ids of the neutral
     and charged monomer types to be used with the \keyword{part}
     command. If only \var{typeid_\mathrm{neutral}} is defined,
     \var{typeid_\mathrm{charged}} defaults to $1$. If the option is
     omitted, both monomer types default to $0$.
-  \item[\opt{bond \var{bondid}}] Sets the type number of the bonded
+  \item[\opt{bond \var{bondid}}] bond\_id Sets the type number of the bonded
     interaction to be set up between the monomers. This defaults to
     $0$.  Any bonded interaction, no matter how many bonding-partners
     needed, is stored with the second particle in this bond. See
     chapter \ref{sec:inter-bonded}.
   \item[\opt{angle \var{\phi} [\var{\theta} [\var{x} \var{y}
-      \var{z}]]}] Allows for setting up helices or planar polymers:
+      \var{z}]]}] angle angle2 pos2 Allows for setting up helices or planar polymers:
     \var{\phi} and \var{theta} are the angles between adjacent bonds.
     \var{x}, \var{y} and \var{z} set the position of the second
     monomer of the first chain.
@@ -548,6 +575,7 @@ set up to be \var{bond\_length}.
 \end{arguments}
 
 \subsection{\texttt{counterions}: Setting up counterions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{counterions}
 \begin{essyntax}
   counterions
@@ -577,6 +605,7 @@ This command will create \var{N} counterions in the simulation box.
 
 \smallskip
 \subsection{\texttt{salt}: Setting up salt ions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{salt}
 \begin{essyntax}
   salt 
@@ -614,6 +643,7 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 
 \subsection{\texttt{diamond}: Setting up diamond polymer networks}
 \newescommand{diamond}
+
 \begin{essyntax}
   diamond 
   \var{a} \var{bond\_length} \var{monomers\_per\_chain} 
@@ -627,8 +657,31 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
   \end{features}
 \end{essyntax}
 
+ \begin{pycode}
+	from espressomd import diamond 
+\end{pycode}
+
+\begin{pysyntax}
+  \object{
+    diamond
+  }{
+    Diamond
+  }{
+    a=\arg{float},
+    bond_length=\arg{float},
+    MPC=\arg{int}
+  }[
+    N_CI=\arg{int},
+    val_nodes=\arg{float},
+    val_cM=\arg{float},
+    val_CI=\arg{float},
+    cM_dist=\arg{int},
+    nonet
+  ]
+\end{pysyntax}
+
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
-connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} in 
+connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} (MPC) in 
 a unit cell of length \var{a}. Chain monomers are placed at a mutual distance \var{bond\_length}
 along the vector connecting network nodes.
 The polymer is created starting from particle ID 0. Nodes are assigned type 0,
@@ -647,16 +700,16 @@ For inter-particle bonds interaction $0$ is taken which must be a two-particle b
 \item[\var{a}] Determines the size of the of the unit cell.
 \item[\var{bond\_length}] Specifies the bond length of the polymer
   chains connecting the 8 tetra-functional nodes.
-\item[\var{monomers\_per\_chain}] Sets the number of chain monomers
+\item[\var{monomers\_per\_chain}] (MPC) Sets the number of chain monomers
   between the functional nodes.
 \item[\opt{counterions \var{N_\mathrm{CI}}}] Adds \var{N_\mathrm{CI}}
   counterions to the system.
 \item[\opt{charges \var{val_\mathrm{node}} \var{val_\mathrm{monomer}}
     \var{val_\mathrm{CI}}}] Sets the charge of the nodes to
   \var{val_\mathrm{node}}, the charge of the connecting monomers to
-  \var{val_\mathrm{monomer}}, and the charge of the counterions to
+  \var{val_\mathrm{monomer}} (val\_cM), and the charge of the counterions to
   \var{val_\mathrm{CI}}.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Specifies the distance
+\item[\opt{distance \var{d_\mathrm{charged}}}] (cM\_dist) Specifies the distance
   between charged monomers along the interconnecting chains. If
   $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
   uncharged.

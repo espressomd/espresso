@@ -1804,25 +1804,25 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
 }
 
 int tclcommand_analyze_parse_structurefactor(Tcl_Interp *interp, int argc, char **argv) {
-    /* 'analyze { stucturefactor } <type> <order>' */
+    /* 'analyze { stucturefactor } <type_list> <order>' */
     /***********************************************************************************************************/
     char buffer[2 * TCL_DOUBLE_SPACE + 4];
+    IntList p;
     int i, type, order;
     double qfak, *sf;
-    if (argc < 2) {
-        Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze structurefactor <type> <order> [<chain_start> <n_chains> <chain_length>]",
+    
+    init_intlist(&p);
+    
+    if (argc < 2 || (!ARG0_IS_INTLIST(p)) || (!ARG1_IS_I(order))) {
+        Tcl_AppendResult(interp, "Usage: analyze structurefactor <type_list> <order> [<chain_start> <n_chains> <chain_length>]",
                 (char *) NULL);
         return (TCL_ERROR);
-    } else {
-        if (!ARG0_IS_I(type))
-            return (TCL_ERROR);
-        if (!ARG1_IS_I(order))
-            return (TCL_ERROR);
-        argc -= 2;
-        argv += 2;
     }
+    argc -= 2;
+    argv += 2;
+    
     updatePartCfg(WITHOUT_BONDS);
-    calc_structurefactor(type, order, &sf);
+    calc_structurefactor(p.e, p.max, order, &sf);
 
     qfak = 2.0 * PI / box_l[0];
     for (i = 0; i < order * order; i++) {

@@ -45,6 +45,7 @@ cdef int_list * create_int_list_from_python_object(obj):
     for i in range(len(obj)):
         il.e[i] = obj[i]
         print il.e[i]
+    il.n = len(obj)
     return il
 
 cdef check_type_or_throw_except(x, n, t, msg):
@@ -78,22 +79,21 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int n):
         numpyArray[i] = x[i]
     return numpyArray
 
-cdef check_range_or_except(x, v_min, incl_min, v_max, incl_max):
+cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     """Checks that x is in range [v_min,v_max] (inlude boundaries via inlc_min/incl_max = true) or throws a ValueError. v_min/v_max = 'inf' to disable limit """
+    x = D[name]
 
     # Array/list/tuple
     if hasattr(x, "__len__"):
         if (v_min != "inf" and ((incl_min and not all(v >= v_min for v in x))
-                                or not all(v > v_min for v in x))) or \
+                                or (not incl_min and not all(v > v_min for v in x)))) or \
            (v_max != "inf" and ((incl_max and not all(v <= v_max for v in x))
-                                or not all(v < v_max for v in x))):
-            raise ValueError("Some values in " + str(x) + "are out of range " +
-                             "[" if incl_min else "]" + str(v_min) + "," + str(v_max) + "]" if incl_max else "[")
+                                or (not incl_max and not all(v < v_max for v in x)))):
+            raise ValueError("In " + name + ": Some values in " + str(x) + "are out of range " +
+                             ("[" if incl_min else "]") + str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
     # Single Value
     else:
-        if (v_min != "inf" and ((incl_min and not x >= v_min)
-                                or not x > v_min)) or \
-           (v_max != "inf" and ((incl_max and not x <= v_max)
-                                or not x < v_max)):
-            raise ValueError("Value " + str(x) + "is out of range " + "[" if incl_min else "]" + str(
-                v_min) + "," + str(v_max) + "]" if incl_max else "[")
+        if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min)) or
+                v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
+            raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
+                             str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))

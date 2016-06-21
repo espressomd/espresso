@@ -32,14 +32,15 @@
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE RuntimeError test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include "../RuntimeErrorCollector.hpp"
 
 int main(int argc, char**argv) {
   boost::mpi::environment mpi_env(argc, argv);
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
 
 namespace Testing {

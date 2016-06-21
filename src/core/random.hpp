@@ -28,18 +28,8 @@
 */
 
 #include <random>
-
-/**
- * @bief Initialize PRNG with MPI rank as seed.
- */
-void init_random(void);
-
-/**
- * @brief Initialize PRNG with user-profiveded seed.
- *
- * @param seed seed
- */
-void init_random_seed(int seed);
+#include <string>
+#include <vector>
 
 namespace Random {
 extern std::mt19937 generator;
@@ -47,15 +37,39 @@ extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 
 /**
- * @brief Get a string representation of the state of the PRNG.
- */
-std::string get_state();
+ * @brief Set seed of random number generators on each node.
+ *
+ * @param seeds A vector of seeds, must be at least n_nodes long.
+ **/
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
 /**
- * @brief Set the state of the PRNG from a string representation.
+ * @brief Gets a string representation of the state of all
+ *        the nodes.
  */
-void set_state(const std::string &s);
-}
+std::string mpi_random_get_stat();
+
+/**
+ * @brief Set the seeds on all the node to the state representet
+ *        by the string.
+ * The string representation must be one that was returned by
+ * mpi_random_get_stat.
+ */
+void mpi_random_set_stat(const std::vector<std::string> &stat);
+
+/**
+ * @bief Initialize PRNG with MPI rank as seed.
+ */
+void init_random(void);
+
+/**
+ * @brief Initialize PRNG with user-provided seed.
+ *
+ * @param seed seed
+ */
+void init_random_seed(int seed);
+
+} /* Random */
 
 /**
  * @brief Draws a random real number from the uniform distribution in the range [0,1)

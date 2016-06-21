@@ -22,68 +22,20 @@ import espressomd
 import numpy as np
 
 from espressomd.magnetostatics import *
+from tests_common import *
+
 
 class MagnetostaticsInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
 
-    def paramsMatch(self, inParams, outParams):
-        """Check, if the parameters set and gotten back match.
-        Only check keys present in inParams.
-        """
-
-        # Delete the bjerrum_length from outparams, because
-        # it is calculated from the prefactor in some cases
-        # and therefore not necessarily in inparams.
-        if "bjerrum_length" in outParams:
-            del outParams["bjerrum"]
-
-        for k in inParams.keys():
-            if k not in outParams:
-                print(k, "missing from returned parameters")
-                return False
-            if outParams[k] != inParams[k]:
-                print("Mismatch in parameter ", k, inParams[k], outParams[k])
-                return False
-
-        return True
-
     def setUp(self):
         self.system.box_l = 10, 10, 10
-        self.system.part[0].pos = 0, 0, 0
-        self.system.part[1].pos = 0.1, 0.1, 0.1
-        self.system.part[0].dip = 1.3, 2.1, -6
-        self.system.part[1].dip = 4.3, 4.1, 7.5
-
-    def generateTestForMagnetostaticInteraction(_interClass, _params):
-        """Generates test cases for checking interaction parameters set and gotten back
-        from Es actually match. Only keys which are present  in _params are checked
-        1st: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
-        2nd: Name of the interaction property to set (i.e. "P3M")
-        """
-        params = _params
-        interClass = _interClass
-
-        def func(self):
-            # This code is run at the execution of the generated function.
-            # It will use the state of the variables in the outer function,
-            # which was there, when the outer function was called
-
-            # set Parameter
-            Inter = interClass(**params)
-            Inter.validate_params()
-            Inter._set_params_in_es_core()
-
-            # Read them out again
-            outParams = Inter.get_params()
-
-            self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
-                            params.__str__() + " vs. output parameters " + outParams.__str__())
-
-        return func
+        self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
+        self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
 
     if "DP3M" in espressomd.features():
-        test_DP3M = generateTestForMagnetostaticInteraction(DipolarP3M, dict(prefactor=1.0,
+        test_DP3M = generate_test_for_class(DipolarP3M, dict(prefactor=1.0,
                                                                              epsilon=0.0,
                                                                              inter=1000,
                                                                              mesh_off=[
@@ -96,9 +48,9 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
                                                                              accuracy=0.01))
 
     if "DIPOLAR_DIRECT_SUM" in espressomd.features():
-        test_DdsCpu = generateTestForMagnetostaticInteraction(
+        test_DdsCpu = generate_test_for_class(
             DipolarDirectSumCpu, dict(prefactor=3.4))
-        test_DdsRCpu = generateTestForMagnetostaticInteraction(
+        test_DdsRCpu = generate_test_for_class(
             DipolarDirectSumWithReplicaCpu, dict(prefactor=3.4, n_replica=2))
 
 if __name__ == "__main__":

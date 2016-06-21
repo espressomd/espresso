@@ -27,15 +27,16 @@
  *  and some constants...
  *
 */
+
+#include "config.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "config.hpp"
 #include "debug.hpp"
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
-
 #include <vector>
 #include <exception>
 
@@ -115,7 +116,7 @@ namespace Utils {
  * squaring to construct a efficient function.
  */
 template<unsigned n, typename T>
-T int_pow(T x) {
+inline T int_pow(T x) {
   switch(n) {
     case 0:
       return T(1);
