@@ -41,14 +41,11 @@
 
 namespace ScriptInterface {
 
+namespace {
 template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
 protected:
-  enum class CallbackAction {
-    SET_PARAMETER = 0,
-    SET_PARAMETERS = 1,
-    DELETE = 2
-  };
+  enum class CallbackAction { SET_PARAMETER, SET_PARAMETERS, DELETE };
   T m_p;
 
 private:
@@ -65,9 +62,14 @@ private:
                             0);
       m_p.set_parameters(parameters);
     } break;
+    case CallbackAction::DELETE: {
+      delete this;
+      break;
+    }
     }
   }
 };
+}
 
 template <typename T>
 class ParallelScriptInterface
@@ -85,7 +87,7 @@ public:
     std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     auto d = std::make_pair(name, value);
 
-    call(0, 0);
+    call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
     m_p.set_parameter(name, value);
@@ -93,7 +95,7 @@ public:
 
   void
   set_parameters(const std::map<std::string, Variant> &parameters) override {
-    call(1, 0);
+    call(static_cast<int>(CallbackAction::SET_PARAMETERS), 0);
 
     /* Copy parameters into a non-const buffer, needed by boost::mpi */
     std::map<std::string, Variant> p(parameters);

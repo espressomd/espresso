@@ -21,9 +21,6 @@
 
 #include "Wall.hpp"
 
-#include "MpiCallbacks.hpp"
-#include <iostream>
-
 using std::vector;
 using std::string;
 
@@ -31,27 +28,19 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Wall::all_parameters() const {
-  ParameterMap p;
-  p["normal"] = Parameter(ParameterType::DOUBLE_VECTOR, 3, true);
-  p["dist"] = Parameter(ParameterType::DOUBLE, true);
-
-  return p;
+  return ParameterMap{
+      {"normal", Parameter(ParameterType::DOUBLE_VECTOR, 3, true)},
+      {"dist", Parameter(ParameterType::DOUBLE, true)}};
 }
 
 VariantMap Wall::get_parameters() const {
-  VariantMap p;
-
-  p["normal"] = vector<double>(m_wall.n().begin(), m_wall.n().end());
-  p["dist"] = m_wall.d();
-
-  return p;
+  return VariantMap{
+      {"normal", vector<double>(m_wall.n().begin(), m_wall.n().end())},
+      {"dist", m_wall.d()}};
 }
 
 void Wall::set_parameter(const string &name,
                          const ScriptInterface::Variant &value) {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << ": name = " << name << std::endl;
-
   /* We need to tranform the vector<double> to a Vector3d for normal */
   if (name == "normal") {
     /* Get the variant as vector, and explicitly construct a Vector3d
