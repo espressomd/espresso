@@ -307,25 +307,6 @@ cdef class ParticleHandle:
                 return np.array([x[0], x[1], x[2]])
 
     # ROTATIONAL_INERTIA
-    IF ROTATIONAL_INERTIA == 1:
-        property rinertia:
-            """Rotational inertia"""
-
-            def __set__(self, _rinertia):
-                cdef double rinertia[3]
-                check_type_or_throw_except(
-                    _rinertia, 3, float, "Rotation_inertia has to be 3 floats")
-                for i in range(3):
-                    rinertia[i] = _rinertia[i]
-                if set_particle_rotational_inertia(self.id, rinertia) == 1:
-                    raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
-                return np.array([rinertia[0], rinertia[1], rinertia[2]])
-
 # Omega (angular velocity) body frame
         property omega_body:
             """Angular velocity in body frame"""
@@ -364,6 +345,25 @@ cdef class ParticleHandle:
                 cdef double x[3]
                 convert_torques_body_to_space( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
+
+    IF ROTATIONAL_INERTIA == 1:
+        property rinertia:
+            """Rotational inertia"""
+
+            def __set__(self, _rinertia):
+                cdef double rinertia[3]
+                check_type_or_throw_except(
+                    _rinertia, 3, float, "Rotation_inertia has to be 3 floats")
+                for i in range(3):
+                    rinertia[i] = _rinertia[i]
+                if set_particle_rotational_inertia(self.id, rinertia) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * rinertia = NULL
+                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Charge
     IF ELECTROSTATICS == 1:
