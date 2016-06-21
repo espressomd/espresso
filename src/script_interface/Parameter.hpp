@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __SCRIPT_INTERFACE_PARAMETERS_HPP
-#define __SCRIPT_INTERFACE_PARAMETERS_HPP
+#ifndef SCRIPT_INTERFACE_PARAMETERS_HPP
+#define SCRIPT_INTERFACE_PARAMETERS_HPP
 
 #include <map>
 #include <string>
@@ -35,7 +35,9 @@ enum class ParameterType {
   DOUBLE,
   STRING,
   INT_VECTOR,
-  DOUBLE_VECTOR
+  DOUBLE_VECTOR,
+  VECTOR3D,
+  VECTOR2D
 };
 
 /**
@@ -51,7 +53,19 @@ public:
       : m_type(ParameterType::BOOL), m_n_elements(0), m_required(false) {}
 
   Parameter(ParameterType type, bool required)
-      : m_type(type), m_n_elements(ARBITRARY_LENGTH), m_required(required) {}
+      : m_type(type), m_required(required) {
+    switch (type) {
+    case ParameterType::VECTOR2D:
+      m_n_elements = 2;
+      break;
+    case ParameterType::VECTOR3D:
+      m_n_elements = 3;
+      break;
+    default:
+      m_n_elements = ARBITRARY_LENGTH;
+      break;
+    }
+  }
 
   Parameter(ParameterType type, int n_elements, bool required)
       : m_type(type), m_n_elements(n_elements), m_required(required) {}

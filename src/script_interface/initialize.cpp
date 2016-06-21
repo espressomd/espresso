@@ -18,11 +18,15 @@
 */
 
 #include "initialize.hpp"
+#include "constraints/initialize.hpp"
 #include "core/utils/Factory.hpp"
 #include "shapes/initialize.hpp"
 
 namespace ScriptInterface {
 
-void initialize() { Shapes::initialize(); }
+void initialize() {
+  Shapes::initialize();
+  Constraints::initialize();
+}
 
 } /* namespace ScriptInterface */

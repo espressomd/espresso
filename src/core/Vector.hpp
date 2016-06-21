@@ -16,47 +16,56 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <cmath>
 #include <initializer_list>
+#include <iterator>
+
+#include <boost/serialization/array.hpp>
 
 template <int n, typename Scalar> class Vector {
 private:
-  Scalar d[n];
+  std::array<Scalar, n> d;
 
 public:
+  typedef typename std::array<Scalar, n>::iterator iterator;
+  typedef typename std::array<Scalar, n>::const_iterator const_iterator;
+  typedef typename std::array<Scalar, n>::reference reference;
+  typedef typename std::array<Scalar, n>::const_reference const_reference;
+
   Vector() {}
 
-  explicit Vector(Scalar const *a) {
-    for (int i = 0; i < n; i++)
-      d[i] = a[i];
+  template <typename Container> Vector(Container const &v) {
+    assert(v.size() == n);
+    std::copy(std::begin(v), std::end(v), d.begin());
   }
 
   Vector(std::initializer_list<Scalar> l) {
-    std::copy(l.begin(), l.begin() + n, d);
-  }
-
-  Scalar *begin() { return d; }
-
-  Scalar *end() { return d + n; }
-
-  Scalar const *begin() const { return d; }
-
-  Scalar const *end() const { return d + n; }
-
-  int size() const { return n; }
-
-  Vector(const Vector &rhs) { std::copy(rhs.d, rhs.d + n, d); }
-
-  Vector &operator=(const Vector &rhs) {
-    std::copy(rhs.d, rhs.d + n, d);
-
-    return *this;
+    assert(l.size() == n);
+    std::copy(std::begin(l), std::end(l), d.begin());
   }
 
   Scalar &operator[](int i) { return d[i]; }
 
   Scalar const &operator[](int i) const { return d[i]; }
+
+  iterator begin() { return d.begin(); }
+  const_iterator begin() const { return d.begin(); }
+
+  iterator end() { return d.end(); }
+  const_iterator end() const { return d.end(); }
+
+  reference front() { return d.front(); }
+  reference back() { return d.back(); }
+
+  const_reference front() const { return d.front(); }
+  const_reference back() const { return d.back(); }
 
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
@@ -95,6 +104,14 @@ public:
   inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a) const {
     return cross(this, a);
   }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &d;
+  }
 };
 
 typedef Vector<3, double> Vector3d;
+typedef Vector<2, double> Vector2d;
+
+#endif

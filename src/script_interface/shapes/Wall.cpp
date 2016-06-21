@@ -29,14 +29,12 @@ namespace Shapes {
 
 ParameterMap Wall::all_parameters() const {
   return ParameterMap{
-      {"normal", Parameter(ParameterType::DOUBLE_VECTOR, 3, true)},
+      {"normal", Parameter(ParameterType::VECTOR3D, 3, true)},
       {"dist", Parameter(ParameterType::DOUBLE, true)}};
 }
 
 VariantMap Wall::get_parameters() const {
-  return VariantMap{
-      {"normal", vector<double>(m_wall.n().begin(), m_wall.n().end())},
-      {"dist", m_wall.d()}};
+  return VariantMap{{"normal", m_wall.n()}, {"dist", m_wall.d()}};
 }
 
 void Wall::set_parameter(const string &name,
@@ -45,7 +43,7 @@ void Wall::set_parameter(const string &name,
   if (name == "normal") {
     /* Get the variant as vector, and explicitly construct a Vector3d
        from that. */
-    m_wall.set_normal(Vector3d(boost::get<vector<double>>(value).data()));
+    m_wall.set_normal(boost::get<Vector3d>(value));
   }
 
   SET_PARAMETER_HELPER("dist", m_wall.d());

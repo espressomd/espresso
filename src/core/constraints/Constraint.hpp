@@ -1,29 +1,20 @@
-#ifndef __CONSTRAINT_HPP
-#define __CONSTRAINT_HPP
-
-#include <string>
-
-#include "script_interface/ParallelScriptObject.hpp"
+#ifndef CONSTRAINTS_CONSTRAINT_HPP
+#define CONSTRAINTS_CONSTRAINT_HPP
 
 #include "energy.hpp"
-#include "interaction_data.hpp"
-#include "utils/ParallelFactory.hpp"
+#include "particle_data.hpp"
 
 namespace Constraints {
-struct Constraint : public ScriptInterface::ParallelScriptObject {
- public:
-  virtual void add_energy(Particle *p, const double *folded_pos, Observable_stat &energy) = 0;
-  virtual void add_force(Particle *p, const double *folded_pos) = 0;
+struct Constraint {
+public:
+  virtual void add_energy(Particle const *p, double const *folded_pos,
+                          Observable_stat &energy) const = 0;
+  virtual void add_force(Particle *p, double const *folded_pos) const = 0;
   /* Accumulated force excerted by the constraint */
-  double total_force[3];
+  mutable std::array<double, 3> total_force;
   /* Human readable name */
-  virtual const std::string name() const { return std::string("Constraint::"); }
   virtual ~Constraint() {}
 };
-
-typedef Utils::ParallelFactory<Constraint> Factory;
-void initialize_factory();
-
 }
 
 #endif

@@ -148,12 +148,20 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc,
 static boost::bimap<std::string, std::string> shapes_name_map =
     Utils::make_bimap<std::string, std::string>({{"wall", "Shapes::Wall"}});
 
+static boost::bimap<std::string, std::string> constraints_name_map =
+    Utils::make_bimap<std::string, std::string>(
+        {{"charged_rod", "Constraints::ChargedRod"}});
+
 static void tcl_register_commands(Tcl_Interp *interp) {
-  
   auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(
       interp, shapes_name_map);
 
   shapes->create_command("shapes");
+
+  auto *constraints = new ScriptInterface::Tcl::TclScriptInterfaceManager(
+      interp, constraints_name_map);
+
+  constraints->create_command("constraints");
 
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
