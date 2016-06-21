@@ -36,14 +36,16 @@ before_install:
  - chmod +x miniconda.sh
  - bash miniconda.sh -b -p $HOME/miniconda
  - export PATH=/home/travis/miniconda/bin:$PATH
- - conda update --yes conda
+ - conda config --set always_yes yes --set changeps1 no 
+ - conda update -q conda
+ - conda info -a
  - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang++"
  - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang"
 
 install:
- - conda create --yes -n test python=2.7.9
+ - conda create -q -n test python=2.7.9
  - source activate test
- - conda install --yes numpy cython pip
+ - conda install numpy cython pip
 
 env:
   global:
@@ -53,6 +55,6 @@ env:
     - myconfig=default
 
 compiler:
-  - gcc
+  - clang
 
 script: ./maintainer/travis/build_cmake.sh
