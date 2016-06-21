@@ -2,6 +2,7 @@ add_subdirectory(doxygen)
 add_subdirectory(logo)
 add_subdirectory(ug)
 add_subdirectory(dg)
+add_subdirectory(tutorials)
 
 find_program(PDFLATEX pdflatex)
 find_program(MAKEINDEX makeindex)
@@ -14,4 +15,4 @@ configure_file(latexit.sh.in
                @ONLY
               )
 
-add_custom_target(doc DEPENDS logo ug dg doxygen)
+add_custom_target(doc DEPENDS logo ug dg doxygen tutorials)
