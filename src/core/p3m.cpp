@@ -713,102 +713,107 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 template<int cao>
 static void P3M_assign_forces(double force_prefac, int d_rs) 
 {
-  Cell *cell;
-  Particle *p;
-  int i,c,np,i0,i1,i2;
-  double q;
+    Cell *cell;
+    Particle *p;
+    int i,c,np,i0,i1,i2;
+    double q;
 #ifdef ONEPART_DEBUG
-  double db_fsum=0.0; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */ 
+    double db_fsum=0.0; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */ 
 #endif
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt=0;
+    /* charged particle counter, charge fraction counter */
+    int cp_cnt=0;
 #ifdef P3M_STORE_CA_FRAC
-  int cf_cnt=0;
+    int cf_cnt=0;
 #else
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
+    /* distance to nearest mesh point */
+    double dist[3];
+    /* index for caf interpolation grid */
+    int arg[3];
 #endif
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
+    /* index, index jumps for rs_mesh array */
+    int q_ind = 0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i=0; i<np; i++) { 
-      if( (q=p[i].p.q) != 0.0 ) {
+    for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i=0; i<np; i++) { 
+            if( (q=p[i].p.q) != 0.0 ) {
 #ifdef P3M_STORE_CA_FRAC
-	q_ind = p3m.ca_fmp[cp_cnt];
-	for(i0=0; i0<cao; i0++) {
-	  for(i1=0; i1<cao; i1++) {
-	    for(i2=0; i2<cao; i2++) {
-	      p[i].f.f[d_rs] -= force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind]; 
-	      q_ind++;
-	      cf_cnt++;
-	    }
-	    q_ind += p3m.local_mesh.q_2_off;
-	  }
-	  q_ind += p3m.local_mesh.q_21_off;
-	}
-	cp_cnt++;
+                q_ind = p3m.ca_fmp[cp_cnt];
+                for(i0=0; i0<cao; i0++) {
+                    for(i1=0; i1<cao; i1++) {
+                        for(i2=0; i2<cao; i2++) {
+                            double f = force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind];
+#ifdef ONEPART_DEBUG
+                            if (p[i].p.identity==check_id)
+                                db_fsum -= f;
+#endif
+                            p[i].f.f[d_rs] -= f; 
+                            q_ind++;
+                            cf_cnt++;
+                        }
+                        q_ind += p3m.local_mesh.q_2_off;
+                    }
+                    q_ind += p3m.local_mesh.q_21_off;
+                }
+                cp_cnt++;
 #else
-	double pos;
-	int nmp;
-	double tmp0,tmp1;
-	double cur_ca_frac_val;
-	for(int d=0;d<3;d++) {
-	  /* particle position in mesh coordinates */
-	  pos    = ((p[i].r.p[d]-p3m.local_mesh.ld_pos[d])*p3m.params.ai[d]) - p3m.pos_shift;
-	  /* nearest mesh point */
-	  nmp  = (int)pos;
-	  /* 3d-array index of nearest mesh point */
-	  q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d]*q_ind;
+                double pos;
+                int nmp;
+                double tmp0,tmp1;
+                double cur_ca_frac_val;
+                for(int d=0;d<3;d++) {
+                    /* particle position in mesh coordinates */
+                    pos    = ((p[i].r.p[d]-p3m.local_mesh.ld_pos[d])*p3m.params.ai[d]) - p3m.pos_shift;
+                    /* nearest mesh point */
+                    nmp  = (int)pos;
+                    /* 3d-array index of nearest mesh point */
+                    q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d]*q_ind;
 
-	  if (p3m.params.inter == 0)
-	    /* distance to nearest mesh point */
-	    dist[d] = (pos-nmp)-0.5;
-	  else
-	    /* distance to nearest mesh point for interpolation */
-	    arg[d] = (int)((pos-nmp)*p3m.params.inter2);
-	}
+                    if (p3m.params.inter == 0)
+                        /* distance to nearest mesh point */
+                        dist[d] = (pos-nmp)-0.5;
+                    else
+                        /* distance to nearest mesh point for interpolation */
+                        arg[d] = (int)((pos-nmp)*p3m.params.inter2);
+                }
 
-	if (p3m.params.inter == 0) {
-	  for(i0=0; i0<cao; i0++) {
-	    tmp0 = p3m_caf(i0, dist[0],cao);
-	    for(i1=0; i1<cao; i1++) {
-	      tmp1 = tmp0 * p3m_caf(i1, dist[1],cao);
-	      for(i2=0; i2<cao; i2++) {
-		cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
-		q_ind++;
-	      }
-	      q_ind += p3m.local_mesh.q_2_off;
-	    }
-	    q_ind += p3m.local_mesh.q_21_off;
-	  }
-	} else {
-	  for(i0=0; i0<cao; i0++) {
-	    tmp0 = p3m.int_caf[i0][arg[0]];
-	    for(i1=0; i1<cao; i1++) {
-	      tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-	      for(i2=0; i2<cao; i2++) {
-		cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-		p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
-		q_ind++;
-	      }
-	      q_ind += p3m.local_mesh.q_2_off;
-	    }
-	    q_ind += p3m.local_mesh.q_21_off;
-	  }
-	}
+                if (p3m.params.inter == 0) {
+                    for(i0=0; i0<cao; i0++) {
+                        tmp0 = p3m_caf(i0, dist[0],cao);
+                        for(i1=0; i1<cao; i1++) {
+                            tmp1 = tmp0 * p3m_caf(i1, dist[1],cao);
+                            for(i2=0; i2<cao; i2++) {
+                                cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
+                                p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
+                                q_ind++;
+                            }
+                            q_ind += p3m.local_mesh.q_2_off;
+                        }
+                        q_ind += p3m.local_mesh.q_21_off;
+                    }
+                } else {
+                    for(i0=0; i0<cao; i0++) {
+                        tmp0 = p3m.int_caf[i0][arg[0]];
+                        for(i1=0; i1<cao; i1++) {
+                            tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
+                            for(i2=0; i2<cao; i2++) {
+                                cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
+                                p[i].f.f[d_rs] -= force_prefac*cur_ca_frac_val*p3m.rs_mesh[q_ind];
+                                q_ind++;
+                            }
+                            q_ind += p3m.local_mesh.q_2_off;
+                        }
+                        q_ind += p3m.local_mesh.q_21_off;
+                    }
+                }
 #endif
 
-	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,-db_fsum));
-      }
+                ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],d_rs,db_fsum));
+            }
+        }
     }
-  }
 }
 
 
@@ -1660,7 +1665,7 @@ int p3m_adaptive_tune(char **log) {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
-  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e\n", p3m.params.accuracy);
+  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e \n", p3m.params.accuracy, coulomb.bjerrum);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], p3m.sum_qpart, p3m.sum_q2);

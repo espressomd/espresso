@@ -99,6 +99,7 @@
 #include "angle_cossquare_tcl.hpp"
 #include "angledist_tcl.hpp"
 #include "dihedral_tcl.hpp"
+#include "drude_tcl.hpp"
 #include "endangledist_tcl.hpp"
 #include "fene_tcl.hpp"
 #include "overlap_tcl.hpp"
@@ -454,6 +455,10 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 #endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
+#ifdef DRUDE
+  case BONDED_IA_DRUDE:
+    return tclprint_to_result_drudeIA(interp, params);
+#endif
   case BONDED_IA_QUARTIC:
     return tclprint_to_result_quarticIA(interp, params);
 #ifdef ELECTROSTATICS
@@ -1099,6 +1104,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("quartic", tclcommand_inter_parse_quartic);
 #ifdef ELECTROSTATICS
   REGISTER_BONDED("bonded_coulomb", tclcommand_inter_parse_bonded_coulomb);  
+#endif
+#ifdef DRUDE
+  REGISTER_BONDED("drude", tclcommand_inter_parse_drude);
 #endif
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);

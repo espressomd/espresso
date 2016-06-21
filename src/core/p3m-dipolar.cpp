@@ -1878,7 +1878,7 @@ int dp3m_adaptive_tune(char **logger)
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "dipolar P3M tune parameters: Accuracy goal = %.5e\n", dp3m.params.accuracy);
+  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e\n", dp3m.params.accuracy, coulomb.Dbjerrum);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);

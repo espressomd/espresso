@@ -407,6 +407,12 @@ static void recalc_maximal_cutoff_bonded()
       if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
 	max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
        break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      if((bonded_ia_params[i].p.drude.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.drude.r_cut))
+	max_cut_bonded = bonded_ia_params[i].p.drude.r_cut;
+      break;
+#endif
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
@@ -771,6 +777,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL:
     return "HARMONIC_DUMBBELL";
+#endif
+#ifdef DRUDE
+  case BONDED_IA_DRUDE:
+    return "DRUDE";
 #endif
   case BONDED_IA_HARMONIC:
     return "HARMONIC";    
