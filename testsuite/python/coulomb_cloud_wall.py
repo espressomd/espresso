@@ -23,7 +23,6 @@ import espressomd
 import numpy as np
 from espressomd.electrostatics import *
 from espressomd.integrate import integrate
-import espressomd.analyze as analyze
 import espressomd.scafacos as scafacos
 
 
@@ -71,7 +70,7 @@ class CoulombCloudWall(ut.TestCase):
 
         # Energy
         if energy:
-            energy_abs_diff = abs(analyze.energy(
+            energy_abs_diff = abs(self.S.analysis.energy(
                 self.S)["total"] - self.reference_energy)
             print method_name, "energy difference", energy_abs_diff
             self.assertTrue(energy_abs_diff <= self.tolerance, "Absolte energy difference " +
@@ -112,7 +111,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
-        self.assertTrue(analyze.energy(self.S)["total"] == 0.0)
+        self.assertTrue(self.S.analysis.energy(self.S)["total"] == 0.0)
 
 
 if __name__ == "__main__":
