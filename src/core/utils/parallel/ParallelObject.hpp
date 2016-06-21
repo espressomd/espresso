@@ -22,16 +22,22 @@
 
 #include "MpiCallbacks.hpp"
 
+#include <iostream>
+
 namespace Utils {
 namespace Parallel {
 
 template <typename T> /* The type we are wrapping */
 class ParallelObject {
 public:
-  ParallelObject() { Communication::mpiCallbacks().call(m_callback_id, 0, 0); }
+  ParallelObject() { Communication::mpiCallbacks().call(&mpi_callback, 0, 0); }
+
+  static void register_callback() {
+    Communication::mpiCallbacks().add(&mpi_callback);
+  }
 
   /**
-   * Decay into wrapped type.
+   * @brief Decay into wrapped type.
    */
   operator T &() { return m_d; }
 
@@ -48,20 +54,8 @@ private:
       break;
     }
   }
-
-  static int m_callback_id;
-
   T m_d;
 };
-
-/**
- * @brief Callback id.
- *
- * Set up the static callback for object creation before main.
- */
-template <typename T>
-int ParallelObject<T>::m_callback_id =
-    Communication::mpiCallbacks().add(ParallelObject<T>::mpi_callback);
 
 } /* namespace Parallel */
 } /* namespace Utils */

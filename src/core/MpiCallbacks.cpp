@@ -20,10 +20,13 @@
 */
 
 #include <exception>
+#include <memory>
 
 #include <boost/mpi.hpp>
 
 #include "MpiCallbacks.hpp"
+
+#include "utils/make_unique.hpp"
 
 namespace Communication {
 
@@ -91,11 +94,21 @@ void MpiCallbacks::loop() const {
   }
 }
 
-/* We use a singelton callback class for now. */
-MpiCallbacks &mpiCallbacks() {
-  static MpiCallbacks m_global_callback;
-
-  return m_global_callback;
+namespace {
+std::unique_ptr<MpiCallbacks> m_global_callback;
 }
+
+std::vector<MpiCallbacks::func_ptr_type> &static_callbacks() {
+  static std::vector<MpiCallbacks::func_ptr_type> cbs;
+
+  return cbs;
+}
+
+void initialize_callbacks(boost::mpi::communicator const &comm) {
+  m_global_callback = Utils::make_unique<MpiCallbacks>(comm);
+}
+
+/* We use a singelton callback class for now. */
+MpiCallbacks &mpiCallbacks() { return *m_global_callback; }
 
 } /* namespace Communication */

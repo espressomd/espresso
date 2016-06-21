@@ -270,10 +270,17 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  mpiCallbacks().set_communicator(comm_cart);
+  Communication::initialize_callbacks(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);
+  }
+
+  std::cout << __PRETTY_FUNCTION__ << ": static_callbacks().size() =  " << Communication::static_callbacks().size() << std::endl;
+
+  for (auto const &cb : Communication::static_callbacks()) {
+    std::cout << __PRETTY_FUNCTION__ << ": adding " << cb << std::endl;
+    mpiCallbacks().add(cb);
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
@@ -287,8 +294,7 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
   comm_cart =
       boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
 
-  MPI_Comm_rank(comm_cart, &this_node);
->>>>>>> upstream/master
+  this_node = comm_cart.rank();
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {

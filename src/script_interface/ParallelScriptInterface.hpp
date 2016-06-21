@@ -37,16 +37,19 @@
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
 
+#include <iostream>
+
 namespace ScriptInterface {
 
 template <typename T>
 class ParallelScriptInterface : public ScriptInterfaceBase,
                                 public Communication::InstanceCallback,
-                                Utils::Parallel::ParallelObject<T> {
+                                public Utils::Parallel::ParallelObject<T> {
 public:
   const std::string name() const override { return m_p.name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
+    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     auto d = std::make_pair(name, value);
 
     call(SET_PARAMETER, 0);
@@ -62,6 +65,8 @@ public:
     /* Copy parameters into a non-const buffer, needed by boost::mpi */
     std::map<std::string, Variant> p(parameters);
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
+
+    m_p.set_parameters(p);
   }
 
   std::map<std::string, Parameter> all_parameters() const override {
@@ -73,7 +78,7 @@ public:
   }
 
 private:
-  enum CallbackAction { SET_PARAMETER, SET_PARAMETERS };
+  enum CallbackAction { SET_PARAMETER, SET_PARAMETERS, DELETE };
   T m_p;
 
   void mpi_slave(int action, int) override {

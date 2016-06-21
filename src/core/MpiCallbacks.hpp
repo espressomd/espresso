@@ -23,6 +23,7 @@
 #define COMMUNICATION_MPI_CALLBACKS
 
 #include <functional>
+#include <vector>
 
 #include <boost/mpi/communicator.hpp>
 
@@ -40,7 +41,7 @@ public:
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  MpiCallbacks() {
+  MpiCallbacks(boost::mpi::communicator const &comm) : m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
@@ -132,14 +133,9 @@ public:
   bool is_root() const { return m_comm.rank() == 0; }
 
   /**
-   * @brief Set the MPI communicator.
-   */
-  void set_communicator(boost::mpi::communicator const &comm) { m_comm = comm; }
-
-  /**
    * @brief The boost mpi communicator used by this instance
    */
-  boost::mpi::communicator const& comm() const { return m_comm; }
+  boost::mpi::communicator const &comm() const { return m_comm; }
 
 private:
   /**
@@ -162,7 +158,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator const& m_comm;
+  boost::mpi::communicator const &m_comm;
 
   /**
    * Internal storage for the callback functions.
@@ -175,6 +171,20 @@ private:
    */
   std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };
+
+/**
+ * @brief Vector of callbacks that are added before main.
+ *
+ * This contraption is necessary so we can add callbacks in
+ * static initializers before MPI or the callback mechanism
+ * is initialized
+ */
+std::vector<MpiCallbacks::func_ptr_type> &static_callbacks();
+
+/**
+ * @brief Initialize the global callback instance.
+ */
+void initialize_callbacks(boost::mpi::communicator const &comm);
 
 /**
  * @brief Returns a reference to the global callback class instance.

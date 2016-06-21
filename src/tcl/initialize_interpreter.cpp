@@ -1,52 +1,61 @@
 /*
   Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <tcl.h>
-#include <unistd.h>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdio>
+#include <tcl.h>
+#include <unistd.h>
 
-#include "initialize_interpreter.hpp"
-#include "global.hpp"
+#include "actor/HarmonicOrientationWell_tcl.hpp"
+#include "actor/HarmonicWell_tcl.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
 #include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
 #include "dpd_tcl.hpp"
+#include "electrokinetics_tcl.hpp"
+#include "external_potential_tcl.hpp"
 #include "galilei_tcl.hpp"
+#include "ghmc_tcl.hpp"
+#include "global.hpp"
 #include "global_tcl.hpp"
 #include "grid_tcl.hpp"
+#include "h5mdfile_tcl.hpp"
 #include "iccp3m_tcl.hpp"
-#include "integrate_tcl.hpp"
+#include "initialize_interpreter.hpp"
 #include "integrate_sd_tcl.hpp"
+#include "integrate_tcl.hpp"
 #include "interaction_data_tcl.hpp"
 #include "lb_tcl.hpp"
 #include "lees_edwards_tcl.hpp"
 #include "lj_tcl.hpp"
 #include "maggs_tcl.hpp"
 #include "metadynamics_tcl.hpp"
+#include "minimize_energy_tcl.hpp"
+#include "mpiio_tcl.hpp"
 #include "p3m-dipolar_tcl.hpp"
 #include "p3m_tcl.hpp"
 #include "polymer_tcl.hpp"
 #include "pressure_tcl.hpp"
 #include "random_tcl.hpp"
 #include "reaction_tcl.hpp"
+#include "rotate_system_tcl.hpp"
 #include "statistics_chain_tcl.hpp"
 #include "statistics_cluster_tcl.hpp"
 #include "statistics_correlation_tcl.hpp"
@@ -54,21 +63,11 @@
 #include "statistics_observable_tcl.hpp"
 #include "statistics_tcl.hpp"
 #include "thermostat_tcl.hpp"
-#include "virtual_sites_com_tcl.hpp"
-#include "ghmc_tcl.hpp"
-#include "external_potential_tcl.hpp"
 #include "tuning.hpp"
-#include "electrokinetics_tcl.hpp"
-#include "actor/HarmonicWell_tcl.hpp"
-#include "rotate_system_tcl.hpp"
-#include "actor/HarmonicOrientationWell_tcl.hpp"
-#include "minimize_energy_tcl.hpp"
-#include "h5mdfile_tcl.hpp"
-#include "mpiio_tcl.hpp"
+#include "virtual_sites_com_tcl.hpp"
 
-#include "script_interface/initialize.hpp"
-#include "utils/make_bimap.hpp"
 #include "script_interface/TclScriptInterfaceManager.hpp"
+#include "utils/make_bimap.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -81,43 +80,42 @@
 /** Implementation of the tcl command bin, which can be used
     to bin data into arbitrary bins. See \ref bin_tcl.cpp
 */
-int tclcommand_bin(ClientData data, Tcl_Interp *interp,
-		   int argc, char **argv);
+int tclcommand_bin(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Implementation of the Tcl command blockfile. Allows to read and write
     blockfile comfortably from Tcl. See \ref blockfile_tcl.cpp */
-int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv);
+int tclcommand_blockfile(ClientData data, Tcl_Interp *interp, int argc,
+                         char **argv);
 /** Implementation of the Tcl command h5mdfile. Allows to read and write
     h5mdfile comfortably from Tcl. See \ref h5mdfile_tcl.cpp */
-int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv);
-/** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.cpp */
-int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_h5mdfile(ClientData data, Tcl_Interp *interp, int argc,
+                        char **argv);
+/** replaces one of TCLs standart channels with a named pipe. See \ref
+ * channels_tcl.cpp */
+int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp,
+                                 int argc, char **argv);
 /** Implements the Tcl command code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. See \ref config_tcl.cpp */
-int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp, int argc,
+                         char **argv);
 /** Set the CUDA device to use or retrieve information
     available devices. See \ref cuda_init_tcl.cpp */
-int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
-		    int argc, char **argv);
+int tclcommand_cuda(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** VMD connection. See \ref imd_tcl.cpp */
-int tclcommand_imd(ClientData data, Tcl_Interp *interp,
-		   int argc, char **argv);
+int tclcommand_imd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** tcl procedure for nemd steering.
-    USAGE: nemd \<n_slabs\> \<n_exchange\>   
+    USAGE: nemd \<n_slabs\> \<n_exchange\>
     see also \ref tclcommand_nemd. See \ref nemd_tcl.cpp */
-int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
-		    int argc, char **argv);
+int tclcommand_nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Collision detection. See \ref collision_tcl.cpp */
-int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc,
+                            char **argv);
 /** Implementation of the tcl command "part". This command allows to
     modify particle data. See \ref particle_data_tcl.cpp */
-int tclcommand_part(ClientData data, Tcl_Interp *interp,
-		    int argc, char **argv);
+int tclcommand_part(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** The C implementation of the tcl function uwerr. See \ref uwerr_tcl.cpp */
-int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc,
+                     char *argv[]);
 /** callback for \ref timing_samples. See \ref tuning_tcl.cpp */
 int tclcallback_timings(Tcl_Interp *interp, void *data);
 
@@ -125,35 +123,38 @@ int tclcallback_timings(Tcl_Interp *interp, void *data);
 char *get_default_scriptsdir();
 
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
-int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc,
+                                char *argv[]);
 
 /** Tunes the skin */
-int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc,
+                         char *argv[]);
 
 /** Reads particles from pdb file, see \ref readpdb.cpp */
-int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc,
+                       char *argv[]);
 
 /****************************************
  * Registration functions
  *****************************************/
 
-#define REGISTER_COMMAND(name, routine)					\
+#define REGISTER_COMMAND(name, routine)                                        \
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
 /**
  * Map from the tcl names to class names, such that name_map.left provides
  * access by tcl names, and name.right by class names.
  */
-static boost::bimap<std::string, std::string> shapes_name_map = Utils::make_bimap<std::string, std::string>({ { "wall", "Shapes::Wall" } });
+static boost::bimap<std::string, std::string> shapes_name_map =
+    Utils::make_bimap<std::string, std::string>({{"wall", "Shapes::Wall"}});
 
-static void tcl_register_commands(Tcl_Interp* interp) {
-  /* Initialize ScriptInterface */
-  ScriptInterface::initialize();
-
-  auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(interp, shapes_name_map);
+static void tcl_register_commands(Tcl_Interp *interp) {
+  
+  auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(
+      interp, shapes_name_map);
 
   shapes->create_command("shapes");
-  
+
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
@@ -167,9 +168,9 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   /* in config_tcl.cpp */
   REGISTER_COMMAND("code_info", tclcommand_code_info);
   /* in interaction_data.cpp */
-  REGISTER_COMMAND("inter",tclcommand_inter);
+  REGISTER_COMMAND("inter", tclcommand_inter);
   /* in particle_data.cpp */
-  REGISTER_COMMAND("part",tclcommand_part);
+  REGISTER_COMMAND("part", tclcommand_part);
   /* in file binaryfile.cpp */
   REGISTER_COMMAND("writemd", tclcommand_writemd);
   REGISTER_COMMAND("readmd", tclcommand_readmd);
@@ -190,10 +191,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("t_random", tclcommand_t_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
-  /* in file h5mdfile_tcl.cpp */
-  #ifdef H5MD
-	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
-  #endif
+/* in file h5mdfile_tcl.cpp */
+#ifdef H5MD
+  REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
+#endif
   /* in mpiio_tcl.cpp */
   REGISTER_COMMAND("mpiio", tclcommand_mpiio);
   /* in constraint.cpp */
@@ -225,7 +226,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("observable", tclcommand_observable);
   /* in statistics_obsrvable.hpp */
   REGISTER_COMMAND("correlation", tclcommand_correlation);
-  /* in statistics_correlation.hpp */
+/* in statistics_correlation.hpp */
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
@@ -243,7 +244,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);
 #endif
-  /* from collision.cpp */
+/* from collision.cpp */
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
@@ -268,9 +269,10 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
-  
+
 #ifdef ROTATION
-  REGISTER_COMMAND("harmonic_orientation_well", tclcommand_HarmonicOrientationWell);
+  REGISTER_COMMAND("harmonic_orientation_well",
+                   tclcommand_HarmonicOrientationWell);
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
@@ -279,8 +281,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 }
 
-static void tcl_register_global_variables(Tcl_Interp *interp)
-{
+static void tcl_register_global_variables(Tcl_Interp *interp) {
   /* register all writeable TCL variables with their callback functions */
   register_global_callback(FIELD_BOXL, tclcallback_box_l);
   register_global_callback(FIELD_MAXNUMCELLS, tclcallback_max_num_cells);
@@ -298,17 +299,19 @@ static void tcl_register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_SD_RADIUS, tclcallback_sd_radius);
   register_global_callback(FIELD_SD_SEED, tclcallback_sd_seed);
   register_global_callback(FIELD_SD_RANDOM_STATE, tclcallback_sd_random_state);
-  register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
-  register_global_callback(FIELD_DPD_IGNORE_FIXED_PARTICLES, tclcallback_dpd_ignore_fixed_particles);
+  register_global_callback(FIELD_SD_RANDOM_PRECISION,
+                           tclcallback_sd_random_precision);
+  register_global_callback(FIELD_DPD_IGNORE_FIXED_PARTICLES,
+                           tclcallback_dpd_ignore_fixed_particles);
 
 #ifdef MULTI_TIMESTEP
-  register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
+  register_global_callback(FIELD_SMALLERTIMESTEP,
+                           tclcallback_smaller_time_step);
 #endif
   register_global_callback(FIELD_WARNINGS, tclcallback_warnings);
 }
 
-int tcl_appinit(Tcl_Interp *interp)
-{
+int tcl_appinit(Tcl_Interp *interp) {
   if (Tcl_Init(interp) == TCL_ERROR)
     return TCL_ERROR;
 
@@ -327,25 +330,24 @@ int tcl_appinit(Tcl_Interp *interp)
   char *scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)
     scriptdir = get_default_scriptsdir();
-  
+
   /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
 
   char cwd[1024];
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
-    fprintf(stderr,
-	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
-	    scriptdir);
+    fprintf(stderr, "\n\ncould not change to script dir %s, please check "
+                    "ESPRESSO_SCRIPTS.\n\n\n",
+            scriptdir);
     exit(1);
   }
   if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
     fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
-	    Tcl_GetStringResult(interp));
+            Tcl_GetStringResult(interp));
     exit(1);
   }
   if (chdir(cwd) != 0) {
-    fprintf(stderr,
-	    "\n\ncould not change back to execution dir %s ????\n\n\n",
-	    cwd);
+    fprintf(stderr, "\n\ncould not change back to execution dir %s ????\n\n\n",
+            cwd);
     exit(1);
   }
 
