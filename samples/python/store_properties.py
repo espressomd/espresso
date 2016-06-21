@@ -33,6 +33,8 @@ print("""
 
 Program Information:""")
 print(code_info.features())
+if not "ELECTROSTATICS" in code_info.features():
+    raise Exception("Sample script requires ELECTROSTATICS")
 
 dev = "cpu"
 
@@ -108,12 +110,11 @@ system.max_num_cells = 2744
 for i in range(n_part / 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-
+    
 # P3M setup after charge assigned
 #############################################################
 p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
 system.actors.add(p3m)
-
 
 #############################################################
 #  Warmup Integration                                       #
