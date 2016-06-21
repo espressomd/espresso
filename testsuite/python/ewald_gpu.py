@@ -22,10 +22,10 @@ import unittest as ut
 import numpy as np
 from tests_common import *
 
-if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features():
-    from espressomd.electrostatics import EwaldGpu
+class ewald_GPU_test(ut.TestCase):
+    if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features() and "EWALD_GPU" in espressomd.features():
+        from espressomd.electrostatics import EwaldGpu
 
-    class ewald_GPU_test(ut.TestCase):
         def runTest(self):
             es = espressomd.System()
             test_params = {}
