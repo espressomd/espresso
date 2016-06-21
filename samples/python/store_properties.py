@@ -165,9 +165,14 @@ transfer_rate {0.transfer_rate}
 ###########################################################
 import cPickle as pickle
 
-pickle.dump(system.part,open("particle_save","w"),-1)
-pickle.dump(p3m,open("p3m_save","w"),-1)
-pickle.dump(system,open("system_save","w"),-1)
+with open("particle_save","w") as particle_save:
+    pickle.dump(system.part, particle_save, -1)
+
+with open("p3m_save","w") as p3m_save:
+    pickle.dump(p3m, p3m_save, -1)
+
+with open("system_save","w") as system_save:
+    pickle.dump(system, system_save, -1)
 
 # terminate program
 print("\nFinished.")
