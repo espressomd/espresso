@@ -33,13 +33,11 @@ public:
   ParallelObject() { Communication::mpiCallbacks().call(&mpi_callback, 0, 0); }
 
   static void register_callback() {
-    Communication::mpiCallbacks().add(&mpi_callback);
+    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+              << __PRETTY_FUNCTION__
+              << "id = " << Communication::mpiCallbacks().add(&mpi_callback)
+              << std::endl;
   }
-
-  /**
-   * @brief Decay into wrapped type.
-   */
-  operator T &() { return m_d; }
 
 private:
   /* Supported callback types. Currently we can only create new instances. */
@@ -54,7 +52,6 @@ private:
       break;
     }
   }
-  T m_d;
 };
 
 } /* namespace Parallel */

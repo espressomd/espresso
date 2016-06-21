@@ -42,17 +42,50 @@
 namespace ScriptInterface {
 
 template <typename T>
-class ParallelScriptInterface : public ScriptInterfaceBase,
-                                public Communication::InstanceCallback,
-                                public Utils::Parallel::ParallelObject<T> {
+class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
+protected:
+  enum class CallbackAction {
+    SET_PARAMETER = 0,
+    SET_PARAMETERS = 1,
+    DELETE = 2
+  };
+  T m_p;
+
+private:
+  void mpi_slave(int action, int) override {
+    switch (CallbackAction(action)) {
+    case CallbackAction::SET_PARAMETER: {
+      std::pair<std::string, Variant> d;
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+      m_p.set_parameter(d.first, d.second);
+    } break;
+    case CallbackAction::SET_PARAMETERS: {
+      std::map<std::string, Variant> parameters;
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
+                            0);
+      m_p.set_parameters(parameters);
+    } break;
+    }
+  }
+};
+
+template <typename T>
+class ParallelScriptInterface
+    : public ScriptInterfaceBase,
+      public ParallelScriptInterfaceSlave<T>,
+      public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>> {
 public:
+  using ParallelScriptInterfaceSlave<T>::m_p;
+  using ParallelScriptInterfaceSlave<T>::call;
+  using typename ParallelScriptInterfaceSlave<T>::CallbackAction;
+
   const std::string name() const override { return m_p.name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
     std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     auto d = std::make_pair(name, value);
 
-    call(SET_PARAMETER, 0);
+    call(0, 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
     m_p.set_parameter(name, value);
@@ -60,7 +93,7 @@ public:
 
   void
   set_parameters(const std::map<std::string, Variant> &parameters) override {
-    call(SET_PARAMETERS, 0);
+    call(1, 0);
 
     /* Copy parameters into a non-const buffer, needed by boost::mpi */
     std::map<std::string, Variant> p(parameters);
@@ -75,26 +108,6 @@ public:
 
   std::map<std::string, Variant> get_parameters() const override {
     return m_p.get_parameters();
-  }
-
-private:
-  enum CallbackAction { SET_PARAMETER, SET_PARAMETERS, DELETE };
-  T m_p;
-
-  void mpi_slave(int action, int) override {
-    switch (action) {
-    case SET_PARAMETER: {
-      std::pair<std::string, Variant> d;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-      m_p.set_parameter(d.first, d.second);
-    } break;
-    case SET_PARAMETERS: {
-      std::map<std::string, Variant> parameters;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
-                            0);
-      m_p.set_parameters(parameters);
-    } break;
-    }
   }
 };
 

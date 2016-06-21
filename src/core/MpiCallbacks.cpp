@@ -28,11 +28,17 @@
 
 #include "utils/make_unique.hpp"
 
+#include "utils/parallel/ParallelObject.hpp"
+#include <iostream>
+
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {
   /** Can only be call from master */
   assert(m_comm.rank() == 0);
+
+  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
 
   /** Check if callback exists */
   if (m_callbacks.find(id) == m_callbacks.end()) {
@@ -48,6 +54,9 @@ void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
   /** If the function pointer is invalid, map.at will throw
       an out_of_range exception. */
   const int id = m_func_ptr_to_id.at(fp);
+
+  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
 
   call(id, par1, par2);
 }
@@ -74,6 +83,9 @@ int MpiCallbacks::add(func_ptr_type fp) {
 void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 
 void MpiCallbacks::slave(int id, int par1, int par2) const {
+  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
+
   m_callbacks[id](par1, par2);
 }
 
