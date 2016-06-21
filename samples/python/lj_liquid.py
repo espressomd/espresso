@@ -94,8 +94,6 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-print("FOLDED_POSITION", system.part[0].pos_folded)
-
 system.analysis.distto(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
