@@ -240,6 +240,7 @@ This option is useful for simulating periodical processes when objects flowing o
   \opt{origin}
   \opt{pos-bounds \var{bname}}
   \opt{approx-pos}
+  \opt{edge-statistics}
   \opt{volume}
   \opt{surface-area}
   \opt{velocity}
@@ -261,6 +262,7 @@ This command is used to output information about the properties of the object. S
 \item[\opt{origin}] - outputs the location of the center of the object
 \item[\opt{pos-bounds \var{bname}}] computes six extremal coordinates of the object. More precisely, runs through the all mesh points and remembers the minimal and maximal $x$-coordinate, $y$-coordinate and $z$-coordinate. If \var{bname} is one of these: \textit{z-min, z-max, x-min, x-max, y-min, y-max} then the procedure returns one number according to the value of \var{bname}. If \var{bname} is \var{all}, then the procedure returns a list of six numbers, namely \textit{x-min, x-max, y-min, y-max, z-min, z-max}.
 \item[\opt{approx-pos}] - outputs the approximate location of the center of the object. It is computed as average of 6 mesh points that have extremal $x$, $y$ and $z$ coordinates at the time of object loading.
+\item[\opt{edge-statistics}] - outputs the minimum, average and maximum edge length of the object and corresponding standard deviation 
 \item[\opt{volume}] - outputs the current volume of the object
 \item[\opt{surface-area}] - outputs the current surface of the object
 \item[\opt{velocity}] - outputs the current average velocity of the object. Runs over all mesh points and calculates their average velocity.
