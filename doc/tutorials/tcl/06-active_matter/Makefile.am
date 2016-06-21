@@ -16,32 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-BASENAME=01-lennard_jones
+BASENAME=06-active_matter
 EXTRA_DIST=$(BASENAME).pdf \
-	scripts/blockfile_read.tcl \
-	scripts/lj_functions.tcl \
-	scripts/msd.tcl \
-	scripts/rdf.tcl \
-	scripts/vacf.tcl \
-	scripts/lj_tutorial.tcl \
-	solutions/blockfile_read.tcl \
-	solutions/lj_functions.tcl \
-	solutions/msd.tcl \
-	solutions/rdf.tcl \
-	solutions/vacf.tcl \
-	solutions/vacf_vec.tcl \
-	solutions/lj_tutorial.tcl
+	EXERCISES/enhanced_diffusion.tcl \
+	EXERCISES/flow_field.tcl \
+	EXERCISES/rectification_geometry.tcl \
+	EXERCISES/rectification_simulation.tcl \
+	SOLUTIONS/enhanced_diffusion.tcl \
+	SOLUTIONS/flow_field.tcl \
+	SOLUTIONS/rectification_geometry.tcl \
+	SOLUTIONS/rectification_simulation.tcl \
+	SOLUTIONS/solutions.txt \
+	SOLUTIONS/tutorial_tests.tcl \
+	refs.bib \
+	FIGURES/enhanced.pdf \
+	FIGURES/flow_field.pdf \
+	FIGURES/friction.pdf \
+	FIGURES/friction.tex \
+	FIGURES/geometry.pdf \
+	FIGURES/geometry.tex \
+	FIGURES/pusher-puller.pdf \
+	FIGURES/pusher-puller.tex \
+	FIGURES/rectification.pdf \
+	FIGURES/rectify.pdf
 
 if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
-	figures/energy.pdf  \
-	figures/espresso-output.pdf \
-	figures/lennard-jones-potential.pdf \
-	figures/msd.pdf \
-	figures/rdf.pdf \
-	figures/vacf.pdf
+	FIGURES/enhanced.pdf \
+	FIGURES/flow_field.pdf \
+	FIGURES/friction.pdf \
+	FIGURES/geometry.pdf \
+	FIGURES/pusher-puller.pdf \
+	FIGURES/rectification.pdf \
+	FIGURES/rectify.pdf
 
 tutorial_FILES = \
 	$(tutorial_TEXFILES) \
@@ -51,9 +60,9 @@ tutorial_FILES = \
 
 doc: tutorials
 tutorials: $(BASENAME).pdf
-$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
+$(BASENAME).pdf: $(tutorial_FILES) ../../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
+	sh ../../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."
