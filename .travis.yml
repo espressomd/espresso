@@ -35,13 +35,17 @@ before_install:
  - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
  - chmod +x miniconda.sh
  - bash miniconda.sh -b -p $HOME/miniconda
+ - echo $PATH
  - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
+ - echo $PATH
  - export PATH=/home/travis/miniconda/bin:$PATH
+ - echo $PATH
  - conda config --set always_yes yes --set changeps1 no 
  - conda update -q conda
  - conda info -a
  - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang++"
  - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang"
+ - echo $PATH
 
 install:
  - conda create -q -n test python=2.7.9
