@@ -15,19 +15,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-BASENAME=07-electrokinetics
+
+BASENAME=01-lennard_jones
 EXTRA_DIST=$(BASENAME).pdf \
-	scripts/eof_analytical.tcl \
-	scripts/eof_electrokinetics.tcl \
-	scripts/plot.gp
+	scripts/blockfile_read.tcl \
+	scripts/lj_functions.tcl \
+	scripts/msd.tcl \
+	scripts/rdf.tcl \
+	scripts/vacf.tcl \
+	scripts/lj_tutorial.tcl \
+	solutions/blockfile_read.tcl \
+	solutions/lj_functions.tcl \
+	solutions/msd.tcl \
+	solutions/rdf.tcl \
+	solutions/vacf.tcl \
+	solutions/vacf_vec.tcl \
+	solutions/lj_tutorial.tcl
 
 if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
-	figures/latticeboltzmann-grid.pdf \
-	figures/profiles.pdf \
-	figures/schlitzpore_3d.pdf
+	figures/energy.pdf  \
+	figures/espresso-output.pdf \
+	figures/lennard-jones-potential.pdf \
+	figures/msd.pdf \
+	figures/rdf.pdf \
+	figures/vacf.pdf
 
 tutorial_FILES = \
 	$(tutorial_TEXFILES) \
@@ -37,9 +51,9 @@ tutorial_FILES = \
 
 doc: tutorials
 tutorials: $(BASENAME).pdf
-$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
+$(BASENAME).pdf: $(tutorial_FILES) ../../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(srcdir)/../common $(BASENAME)
+	sh ../../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."

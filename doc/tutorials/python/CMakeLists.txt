@@ -1,6 +1,6 @@
-
-# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2009,2010,2011,2012,2015,2016 The ESPResSo project
+# Copyright (C) 2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
 #
@@ -18,16 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-SUBDIRS=tcl # python
+### Here: add new directory
+# add_subdirectory(01-tutorial_name)
+# add_subdirectory(02-other_name)
 
-if DEVEL_SRC
 
-.PHONY: FORCE doc tutorials $(SUBDIRS)
-doc: tutorials
-tutorials: FORCE
-	for dir in $(SUBDIRS); do \
-		cd $$dir; $(MAKE) --print-directory $@; cd ..;\
-	done
-FORCE:
-
-endif
+### here: add the appropriate tutorial target after DEPENDS
+#add_custom_target(tutorials_py DEPENDS tutorials_py_01 tutorials_py_02
+#                                       tutorials_py_03                )
