@@ -632,18 +632,20 @@ cdef class ParticleHandle:
     IF EXCLUSIONS:
         property exclude:
             """Exclude particle from interaction"""
-
+            
             def __set__(self, _partners):
-                delete = 0
+                if isinstance(_partners, int):
+                    _partners = [_partners]
+                elif isinstance(_partners, tuple):
+                    if isinstance(_partners[0], list) or isinstance(_partners[0], np.ndarray):
+                        _partners = _partners[0]
                 if len(_partners) == 0:
                     return
-                if type(_partners[0]) == str:
-                    if _partners.pop(0) == "delete":
-                        delete = 1
                 for partner in _partners:
-                    check_type_or_throw_except(
-                        partner, 1, int, "PID of partner has to be an int")
-                    if change_exclusion(self.id, partner, delete) == 1:
+                    check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                    if self.id == partner:
+                        raise Exception("Cannot exclude of a particle with itself!\n->particle id %i, partner %i" %(self.id, partner))
+                    if change_exclusion(self.id, partner, 0) == 1:
                         raise Exception("set particle position first")
 
             def __get__(self):
@@ -655,6 +657,22 @@ cdef class ParticleHandle:
                 for i in range(num_partners[0]):
                     py_partners.append(partners[i])
                 return np.array(py_partners)
+
+        def add_exclusion(self, *_partners):
+            self.exclude = _partners
+
+        def delete_exclusion(self, *_partners):
+            for partner in _partners:
+                check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                if change_exclusion(self.id, partner, 1) == 1:
+                    raise Exception("set particle position first")
+
+        def delete_exclusions(self):
+            _partners = self.exclude
+            for partner in _partners:
+                check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                if change_exclusion(self.id, partner, 1) == 1:
+                    raise Exception("set particle position first")
 
     IF ENGINE:
         property swimming:
@@ -997,6 +1015,48 @@ cdef class ParticleSlice:
                         self.id_selection[i]).ext_force
 
                 return ext_f_array
+
+    IF EXCLUSIONS:
+        property exclude:
+            """Exclude particle from interaction"""
+            
+            def __set__(self, _partners):
+                if not isinstance(_partners, list):
+                    raise Exception("list object expected for exclusion partners")
+                if isinstance(_partners[0], list):
+                    for i in range(len(self.id_selection)):
+                        ParticleHandle(self.id_selection[i]).exclude = _partners[i]
+                elif isinstance(_partners[0], int):
+                    for i in range(len(self.id_selection)):
+                        ParticleHandle(self.id_selection[i]).exclude = _partners
+                else:
+                    raise TypeError("unexpected exclusion partner type")
+
+            def __get__(self):
+                _exclude_array = []
+                for i in range(len(self.id_selection)):
+                    _exclude_array.append(ParticleHandle(self.id_selection[i]).exclude)
+                return _exclude_array
+
+        def add_exclusion(self, _partners):
+            self.exclude = _partners
+
+        def delete_exclusion(self, _partners):
+            if not isinstance(_partners, list):
+                raise Exception("list object expected")
+            if isinstance(_partners[0], list):
+                for i in range(len(self.id_selection)):
+                    ParticleHandle(self.id_selection[i]).delete_exclusion(_partners[i])
+            if isinstance(_partners[0], int):
+                for i in range(len(self.id_selection)):
+                    ParticleHandle(self.id_selection[i]).delete_exclusion(_partners)
+            else:
+                raise TypeError("unexpected exclusion partner type")
+
+
+        def delete_exclusions(self):
+            for _id in self.id_selection:
+                ParticleHandle(_id).delete_exclusions()
 
     def __str__(self):
         res = ""
