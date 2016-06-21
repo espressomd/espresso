@@ -932,7 +932,7 @@ proc oif_create_template { args } {
 	puts "	kv:             $kv"
 	puts "	stretch: 	$stretch_X $stretch_Y $stretch_Z"
 	puts "	mirror: 	$mirror_X $mirror_Y $mirror_Z"
-	puts "	mirror filename: $mirror_filename"
+	puts "	mirror prefix: $mirror_filename"
 #--------------------------------------------------------------------------------------------
 #check whether mirroring will be done for one plane
 	if { $mirror_X != 0 && $mirror_X != 1 || $mirror_Y != 0 && $mirror_Y != 1 || $mirror_Z != 0 && $mirror_Z != 1 } { 
@@ -969,7 +969,7 @@ proc oif_create_template { args } {
 		    if { $mirror_Z == 1} {
 				set mesh_nodes($mesh_nnodes,2) [expr -1.0*$mesh_nodes($mesh_nnodes,2)]
 			}
-		    if {[expr $mirror_X + $mirror_Y + $mirror_Z] == 1} {
+		    if {$mirror_filename != "" } {
 				puts $fmirror "$mesh_nodes($mesh_nnodes,0) $mesh_nodes($mesh_nnodes,1) $mesh_nodes($mesh_nnodes,2)"
 			}
 
@@ -989,7 +989,7 @@ proc oif_create_template { args } {
 		set temp_node [lreplace $temp_node 0 2]
 		}	    
 	}
-	close $fmirror
+	if {$mirror_filename != "" } {close $fmirror}
 
 #--------------------------------------------------------------------------------------------
 #reading triangles
@@ -1016,13 +1016,15 @@ proc oif_create_template { args } {
 				set tmp_index_Z $mesh_triangles($mesh_ntriangles,2)
 				set mesh_triangles($mesh_ntriangles,2) $mesh_triangles($mesh_ntriangles,1)
 				set mesh_triangles($mesh_ntriangles,1) $tmp_index_Z
-				puts $fmirror "$mesh_triangles($mesh_ntriangles,0) $mesh_triangles($mesh_ntriangles,1) $mesh_triangles($mesh_ntriangles,2)"
 			}    
-			incr mesh_ntriangles
+			if {$mirror_filename != "" } {
+				puts $fmirror "$mesh_triangles($mesh_ntriangles,0) $mesh_triangles($mesh_ntriangles,1) $mesh_triangles($mesh_ntriangles,2)"
+			}
 	        list temp_triangle
-	        lappend temp_triangle [lindex $line 0]
-		lappend temp_triangle [lindex $line 1]
-		lappend temp_triangle [lindex $line 2]
+	        lappend temp_triangle $mesh_triangles($mesh_ntriangles,0)
+			lappend temp_triangle $mesh_triangles($mesh_ntriangles,1)
+			lappend temp_triangle $mesh_triangles($mesh_ntriangles,2)
+			incr mesh_ntriangles
 	        lappend oif_template_triangles $temp_triangle
 	        # update global variable
 	        set temp_triangle [lreplace $temp_triangle 0 2]
