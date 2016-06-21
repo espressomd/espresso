@@ -112,8 +112,8 @@ IF ELECTROSTATICS:
                 cao = params["cao"]
                 # Mesh can be specified as single int, but here, an array is needed
                 if not hasattr(params["mesh"],"__getitem__"):
-                  for i in range(3): 
-                    mesh[i]=params["mesh"]
+                    for i in range(3): 
+                        mesh[i]=params["mesh"]
                 else:
                     mesh = params["mesh"]
                 alpha = params["alpha"]
@@ -320,7 +320,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             int bessel_cutoff;
 
             float force_benchmark(SystemInterface &s);
-            
+
             void check_periodicity();
 
 
