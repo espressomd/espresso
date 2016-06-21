@@ -1665,7 +1665,7 @@ int p3m_adaptive_tune(char **log) {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
-  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e\n", p3m.params.accuracy);
+  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e \n", p3m.params.accuracy, coulomb.bjerrum);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], p3m.sum_qpart, p3m.sum_q2);
