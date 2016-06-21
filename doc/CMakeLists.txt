@@ -4,6 +4,7 @@ add_subdirectory(ug)
 add_subdirectory(dg)
 
 find_program(PDFLATEX pdflatex)
+find_program(BIBTEX bibtex)
 find_program(MAKEINDEX makeindex)
 
 set(abs_srcdir ${CMAKE_CURRENT_SOURCE_DIR})

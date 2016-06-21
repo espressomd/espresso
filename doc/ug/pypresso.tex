@@ -98,11 +98,14 @@
 
 
 % Typeset the heading `Python Syntax'
-\cs_new_protected:Npn \pypresso_heading:
+\cs_new_protected:Npn \pypresso_heading:n #1
  {
   \bool_if:NT \l_pypresso_enable_bool
    {
-    \minisec{Python ~ Syntax}
+    \refstepcounter { pysyntax_counter }
+    \phantomsection
+    \IfValueT{ #1 }{ \label {pysyntax:\detokenize{#1}} }
+    \minisec{Python ~ Syntax ~ \textup{(\arabic { pysyntax_counter })}}
     \nopagebreak
     \smallskip
     \nopagebreak
@@ -122,19 +125,33 @@
  }
 
 
+\newcounter { pysyntax_counter }
+\setcounter { pysyntax_counter } { 0 }
+
+
+\NewDocumentCommand \pyref { m }
+ {
+  \textit {
+   \textsf {
+    Python ~ Syntax ~ \textup { (\ref{pysyntax:\detokenize{#1}}) }
+   }
+  }
+ }
+
+
 % Define pysyntax environment
-\NewDocumentEnvironment { pysyntax } { }
+\NewDocumentEnvironment { pysyntax } { o }
  {
   % The special macros \arg, \object, \attributes are only defined
   % inside.
-  \protected \def \arg ##1
+  \cs_set_protected:Npn \arg ##1
    {
     \tl_set:Nn \l_tmpa_tl { ##1 }
     \tl_replace_all:Nnn \l_tmpa_tl { | } { \ensuremath{\vert} }
     \textnormal{ $\langle$ \tl_use:N \l_tmpa_tl $\rangle$ }
    }
-  \def \{ { \char`\{ }
-  \def \} { \char`\} }
+  \cs_set:Npn \{ { \char`\{ }
+  \cs_set:Npn \} { \char`\} }
   \NewDocumentCommand \object { O{} m m m O{} }
    {
     \pypresso_object:nnnnn { ##1 } { ##2 } { ##3 } { ##4 } { ##5 }
@@ -145,7 +162,7 @@
    }
 
   % Place heading and put everything in a coffin
-  \pypresso_heading:
+  \pypresso_heading:n { #1 }
   \vcoffin_set:Nnw \l_pypresso_syntax_coffin { \linewidth - 1.5em - 1em - 1pt }
   \pypresso_init:
  }
