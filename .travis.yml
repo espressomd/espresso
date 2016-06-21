@@ -45,7 +45,7 @@ before_install:
 install:
  - conda create -q -n test python=2.7.9
  - source activate test
- - conda install numpy cython pip
+ - conda install numpy cython pip vtk
 
 env:
   global:
