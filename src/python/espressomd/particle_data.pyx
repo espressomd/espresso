@@ -26,7 +26,7 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step
+from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
 import collections
 
 PARTICLE_EXT_FORCE = 1
@@ -1197,3 +1197,34 @@ cdef class ParticleList:
                 res += str(self[i]) + "\n"
         # Remove final newline
         return res[:-1]
+
+    def writevtk(self,fname,types='all'):
+        global box_l
+        if not hasattr(types,'__iter__'):
+            types = [types]
+
+        n = 0
+        for p in self:
+            for t in types:
+                if (p.type == t or t == "all"):
+                    n += 1
+
+        with open(fname, "w") as vtk:
+            vtk.write("# vtk DataFile Version 2.0\n")
+            vtk.write("particles\n")
+            vtk.write("ASCII\n")
+            vtk.write("DATASET UNSTRUCTURED_GRID\n")
+            vtk.write("POINTS {} floats\n".format(n))
+            for p in self:
+                for t in types:
+                    if (p.type == t or t == "all"):
+                        vtk.write("{} {} {}\n".format(*(p.pos % box_l)))
+
+            vtk.write("POINT_DATA {}\n".format(n))
+            vtk.write("SCALARS velocity float 3\n")
+            vtk.write("LOOKUP_TABLE default\n")
+            for p in self:
+                for t in types:
+                    if (p.type == t or t == "all"):
+                        vtk.write("{} {} {}\n".format(*p.v))
+
