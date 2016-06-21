@@ -745,7 +745,6 @@ cdef class ParticleHandle:
         """Delete the particle"""
         if remove_particle(self.id):
             raise Exception("Could not delete particle")
-        del ParticleList.key_dict["%i" % self.id]
         del self
 
     # Bond related methods
@@ -1046,7 +1045,6 @@ cdef class ParticleSlice:
 
 cdef class ParticleList:
     """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
-    key_dict = {}
     # Retrieve a particle
 
     def __getitem__(self, key):
@@ -1078,10 +1076,11 @@ cdef class ParticleList:
         # (rightly) does not support changing of the id after the particle
         # was created.
         pickle_attr = copy(particle_attributes)
-        for i in "director", "dip", "id":
-            pickle_attr.remove(i)
+        for i in ["director", "dip", "id"]:
+            if i in pickle_attr:
+                pickle_attr.remove(i)
         odict = {}
-        key_list = sorted(ParticleList.key_dict.values())
+        key_list = [p.id for p in self]
         for particle_number in key_list:
             pdict = {}
 
@@ -1152,7 +1151,6 @@ cdef class ParticleList:
 
         if P != {}:
             self[id].update(P)
-        ParticleList.key_dict["%i" % id] = id
 
     def _place_new_particles(self, P):
 
@@ -1171,7 +1169,6 @@ cdef class ParticleList:
                 mypos[i] = P["pos"][j][i]
             if place_particle(ids[j], mypos) == -1:
                 raise Exception("particle could not be set")
-            ParticleList.key_dict["%i" % ids[j]] = ids[j]
 
         del P["pos"]
 
