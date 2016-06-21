@@ -1,5 +1,5 @@
-# Copyright (C) 2016 The ESPResSo project
-# Copyright (C) 2014 Olaf Lenz
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -15,25 +15,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-BASENAME=03-object_in_fluid
+
+BASENAME=04-lattice_boltzmann
 EXTRA_DIST=$(BASENAME).pdf \
-	scripts/boundaries.tcl \
-	scripts/simulation.tcl \
-	scripts/input/cell_nodes.dat \
-	scripts/input/cell_triangles.dat \
-	scripts/input/sphere_nodes.dat \
-	scripts/input/sphere_triangles.dat
+    solutions/lb_stokes_force.tcl \
+	solutions/polymer_diffusion.tcl \
+	solutions/poisseuille.tcl \
+	solutions/single_particle_diffusion.tcl \
+	src/lb_stokes_force.tcl \
+	src/polymer_diffusion.tcl \
+	src/poisseuille.tcl \
+	src/single_particle_diffusion.tcl
 
 if DEVEL_SRC
-tutorial_TEXFILES=$(BASENAME).tex
+tutorial_TEXFILES=$(BASENAME).tex \
+				  latex/diffusion.tex \
+				  latex/dragforce.tex \
+				  latex/interface.tex \
+				  latex/intro.tex \
+				  latex/lb.tex \
+				  latex/poiseuille.tex
 
 tutorial_FIGURES = \
-	figures/1.png \
-	figures/2.png \
-	figures/3.png \
-	figures/channel.png \
-	figures/cylinder.png \
-	figures/rhomboid.png
+	figures/latticeboltzmann-grid.pdf  \
+	figures/latticeboltzmann-momentumexchange.pdf \
+	figures/schlitzpore_3d.pdf \
+	figures/diffusion/msd.pdf \
+	figures/poiseuille.pdf
 
 tutorial_FILES = \
 	$(tutorial_TEXFILES) \
@@ -43,9 +51,9 @@ tutorial_FILES = \
 
 doc: tutorials
 tutorials: $(BASENAME).pdf
-$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
+$(BASENAME).pdf: $(tutorial_FILES) ../../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(srcdir)/../common $(BASENAME)
+	sh ../../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."

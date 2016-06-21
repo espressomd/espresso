@@ -97,7 +97,7 @@ radius \var{r\_catch} around the position of the particle with number
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     distribution
   }{
@@ -186,7 +186,7 @@ of the currently identified properties.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     cylindrical_average
   }{
@@ -342,7 +342,7 @@ be used to shift the not separated molecules if needed.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     Vkappa
   }{
@@ -372,7 +372,7 @@ used can be retrieved. Likewise the option \keyword{set} enables you to set thos
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     rdf
   }{
@@ -416,7 +416,7 @@ The output corresponds to the blockfile format (see section
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     structure_factor
   }{
@@ -503,7 +503,7 @@ Returns the center of mass of particles of the given type.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     momentofinertiamatrix
   }{
@@ -526,7 +526,7 @@ eigenvectors of the matrix.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     gyration_tensor
   }{
@@ -660,7 +660,7 @@ volume is taken into account.
 \analyzeindex{system momentum}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_re
   }{
@@ -920,14 +920,14 @@ required once.
 \analyzeindex{end-to-end distance of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_re
   }{
-    system=\arg{system},
-    chain_start=\arg{int},
-    n_chains=\arg{int},
-    chain_length=\arg{int}
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
   }
 \end{pysyntax}
 \begin{essyntax}
@@ -947,7 +947,7 @@ stored configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{radius of gyration of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_rg
   }{
@@ -985,7 +985,7 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{hydrodynamic radius of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_rh
   }{
@@ -1108,7 +1108,7 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     rdfchain
   }{

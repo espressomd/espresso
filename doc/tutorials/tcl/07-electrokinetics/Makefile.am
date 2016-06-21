@@ -15,42 +15,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-BASENAME=06-active_matter
+BASENAME=07-electrokinetics
 EXTRA_DIST=$(BASENAME).pdf \
-	EXERCISES/enhanced_diffusion.tcl \
-	EXERCISES/flow_field.tcl \
-	EXERCISES/rectification_geometry.tcl \
-	EXERCISES/rectification_simulation.tcl \
-	SOLUTIONS/enhanced_diffusion.tcl \
-	SOLUTIONS/flow_field.tcl \
-	SOLUTIONS/rectification_geometry.tcl \
-	SOLUTIONS/rectification_simulation.tcl \
-	SOLUTIONS/solutions.txt \
-	SOLUTIONS/tutorial_tests.tcl \
-	refs.bib \
-	FIGURES/enhanced.pdf \
-	FIGURES/flow_field.pdf \
-	FIGURES/friction.pdf \
-	FIGURES/friction.tex \
-	FIGURES/geometry.pdf \
-	FIGURES/geometry.tex \
-	FIGURES/pusher-puller.pdf \
-	FIGURES/pusher-puller.tex \
-	FIGURES/rectification.pdf \
-	FIGURES/rectify.pdf
+	scripts/eof_analytical.tcl \
+	scripts/eof_electrokinetics.tcl \
+	scripts/plot.gp
 
 if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
-	FIGURES/enhanced.pdf \
-	FIGURES/flow_field.pdf \
-	FIGURES/friction.pdf \
-	FIGURES/geometry.pdf \
-	FIGURES/pusher-puller.pdf \
-	FIGURES/rectification.pdf \
-	FIGURES/rectify.pdf
+	figures/latticeboltzmann-grid.pdf \
+	figures/profiles.pdf \
+	figures/schlitzpore_3d.pdf
 
 tutorial_FILES = \
 	$(tutorial_TEXFILES) \
@@ -60,9 +37,9 @@ tutorial_FILES = \
 
 doc: tutorials
 tutorials: $(BASENAME).pdf
-$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
+$(BASENAME).pdf: $(tutorial_FILES) ../../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
+	sh ../../../latexit.sh $(srcdir):$(srcdir)/../../common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."

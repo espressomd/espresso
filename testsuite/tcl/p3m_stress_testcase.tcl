@@ -9,11 +9,10 @@ proc rotate_z {} {
 
 source "tests_common.tcl"
 
-require_feature "ELECTROSTATICS"
-require_feature "FFTW"
+require_feature "P3M"
 
 setmd time_step 0.01
-setmd skin 0.4
+setmd skin 0.0
 
 
 set fin [open "p3m_stress.data" "r"]
@@ -21,12 +20,10 @@ blockfile $fin read auto
 blockfile $fin read auto
 blockfile $fin read auto
 
-inter 0 0 lennard-jones 0.0 0.0 [expr double(1.0)*2**(1.0/6.0)]  0 0
-set eps 1e-7
+set eps 1e-6
 
 set bjerrum 2.0
-#156  6   4.19304e-01 1.03503e+01 9.86970e-09 1036 accuracy 1e-8 for this very system
-puts [inter coulomb $bjerrum p3m 4.19304 256 7 1.03503]
+puts [inter coulomb $bjerrum p3m 4.19304 64 7 1.03503]
 
 set N [setmd n_part]
 set vol [expr pow([lindex [setmd box_l] 0], 3)]
@@ -38,20 +35,12 @@ for { set k 0 } { $k < 9 } { incr k } {
 	set pc($k) [lindex $ptensor_coul [expr $k+1]]
 }
 
-#puts [format "%1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e" $pc(0) $pc(1) $pc(2) $pc(3) $pc(4) $pc(5) $pc(6) $pc(7) $pc(8)]
-#puts "rotate\n"
-
 rotate_z
 integrate 0
 set ptensor_coul [analyze stress_tensor coulomb]
 for { set k 0 } { $k < 9 } { incr k } {
 	set pc_2($k) [lindex $ptensor_coul [expr $k+1]]
 }
-#puts [format "%1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e %1.5e" $pc_2(0) $pc_2(1) $pc_2(2) $pc_2(3) $pc_2(4) $pc_2(5) $pc_2(6) $pc_2(7) $pc_2(8)]
-#6.70541e-01 -8.30360e-03 7.47335e-03 -8.30360e-03 6.94174e-01 1.00401e-02 7.47335e-03 1.00401e-02 -1.06683e+00
-#rotate
-#
-#6.94174e-01 8.30360e-03 -1.00401e-02 8.30360e-03 6.70541e-01 7.47335e-03 -1.00401e-02 7.47335e-03 -1.06683e+00
 
 # consistency check s_xx = s_2_yy
 #					s_xy = -s_2_xy
@@ -95,11 +84,11 @@ set p_trace [expr ($pc(0) + $pc(4) + $pc(8))/3.0]
 set p_trace_2 [expr ($pc_2(0) + $pc_2(4) + $pc_2(8))/3.0]
 
 if { [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0*$vol)) >10.0 * $eps ] } {
-	error "tensor trace and pressure deviate too much [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0 *$vol))]"
+    error "tensor trace and pressure deviate too much [expr abs($p_trace - $e_c/(3.0 * $vol))/abs($e_c/(3.0 *$vol))]"
 }
 
 if { [expr abs($p_trace - $p_trace_2) > $eps] } {
-	error "trace differs after rotation"
+    error "trace differs after rotation"
 }
 
 

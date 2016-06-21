@@ -220,7 +220,7 @@ void calc_long_range_energies()
 #ifdef SCAFACOS
         case COULOMB_SCAFACOS:
           assert(! Scafacos::dipolar());
-	  *energy.coulomb += Scafacos::long_range_energy(); break;
+	  energy.coulomb[1] += Scafacos::long_range_energy(); break;
 #endif	  
 	case COULOMB_MMM2D:
 		*energy.coulomb += MMM2D_far_energy();

@@ -281,7 +281,8 @@ void mpi_init(int *argc, char ***argv) {
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity) {
   MPI_Comm temp_comm;
-  MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid.data(), periodicity.data(), 0, &temp_comm);
+  MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
+                  const_cast<int *>(periodicity.data()), 0, &temp_comm);
   comm_cart =
       boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
 

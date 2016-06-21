@@ -13,6 +13,9 @@ def features():
     IF ENGINE == 1:
         f.append("ENGINE")
 
+    IF BD == 1:
+        f.append("BD")
+
     IF EVENT_DEBUG == 1:
         f.append("EVENT_DEBUG")
 
@@ -24,6 +27,9 @@ def features():
 
     IF CG_DNA == 1:
         f.append("CG_DNA")
+
+    IF GAUSSRANDOMCUT == 1:
+        f.append("GAUSSRANDOMCUT")
 
     IF GRID_DEBUG == 1:
         f.append("GRID_DEBUG")
@@ -55,8 +61,8 @@ def features():
     IF TK == 1:
         f.append("TK")
 
-    IF BOND_ANGLE_HARMONIC == 1:
-        f.append("BOND_ANGLE_HARMONIC")
+    IF MEMBRANE_COLLISION == 1:
+        f.append("MEMBRANE_COLLISION")
 
     IF GAY_BERNE == 1:
         f.append("GAY_BERNE")
@@ -72,6 +78,9 @@ def features():
 
     IF GAUSSIAN == 1:
         f.append("GAUSSIAN")
+
+    IF BOND_ANGLEDIST == 1:
+        f.append("BOND_ANGLEDIST")
 
     IF ESK_DEBUG == 1:
         f.append("ESK_DEBUG")
@@ -106,14 +115,20 @@ def features():
     IF EK_DEBUG == 1:
         f.append("EK_DEBUG")
 
-    IF VERLET_DEBUG == 1:
-        f.append("VERLET_DEBUG")
+    IF OIF_GLOBAL_FORCES == 1:
+        f.append("OIF_GLOBAL_FORCES")
 
     IF NPT == 1:
         f.append("NPT")
 
+    IF CUDA_DEBUG == 1:
+        f.append("CUDA_DEBUG")
+
     IF EK_DOUBLE_PREC == 1:
         f.append("EK_DOUBLE_PREC")
+
+    IF INTEG_DEBUG == 1:
+        f.append("INTEG_DEBUG")
 
     IF GHMC == 1:
         f.append("GHMC")
@@ -121,14 +136,11 @@ def features():
     IF DPD_MASS_LIN == 1:
         f.append("DPD_MASS_LIN")
 
-    IF STAT_DEBUG == 1:
-        f.append("STAT_DEBUG")
+    IF SCAFACOS_DIPOLES == 1:
+        f.append("SCAFACOS_DIPOLES")
 
-    IF OIF_LOCAL_FORCES == 1:
-        f.append("OIF_LOCAL_FORCES")
-
-    IF OIF_LOCAL_FORCES == 1:
-        f.append("OIF_GLOBAL_FORCES")
+    IF BOND_ANGLE_HARMONIC == 1:
+        f.append("BOND_ANGLE_HARMONIC")
 
     IF COMFORCE == 1:
         f.append("COMFORCE")
@@ -154,8 +166,17 @@ def features():
     IF EK_ELECTROSTATIC_COUPLING == 1:
         f.append("EK_ELECTROSTATIC_COUPLING")
 
+    IF _P3M_GPU_FLOAT == 1:
+        f.append("_P3M_GPU_FLOAT")
+
     IF BOND_ANGLEDIST_HARMONIC == 1:
         f.append("BOND_ANGLEDIST_HARMONIC")
+
+    IF GAUSSRANDOM == 1:
+        f.append("GAUSSRANDOM")
+
+    IF VERLET_DEBUG == 1:
+        f.append("VERLET_DEBUG")
 
     IF CATALYTIC_REACTIONS == 1:
         f.append("CATALYTIC_REACTIONS")
@@ -178,8 +199,8 @@ def features():
     IF LJ_ANGLE == 1:
         f.append("LJ_ANGLE")
 
-    IF ESR_DEBUG == 1:
-        f.append("ESR_DEBUG")
+    IF ESIF_DEBUG == 1:
+        f.append("ESIF_DEBUG")
 
     IF GHOST_FORCE_DEBUG == 1:
         f.append("GHOST_FORCE_DEBUG")
@@ -198,6 +219,9 @@ def features():
 
     IF CELL_DEBUG == 1:
         f.append("CELL_DEBUG")
+
+    IF SCAFACOS == 1:
+        f.append("SCAFACOS")
 
     IF LATTICE_DEBUG == 1:
         f.append("LATTICE_DEBUG")
@@ -244,8 +268,8 @@ def features():
     IF COMM_DEBUG == 1:
         f.append("COMM_DEBUG")
 
-    IF SMOOTH_STEP == 1:
-        f.append("SMOOTH_STEP")
+    IF H5MD == 1:
+        f.append("H5MD")
 
     IF LANGEVIN_PER_PARTICLE == 1:
         f.append("LANGEVIN_PER_PARTICLE")
@@ -271,8 +295,11 @@ def features():
     IF MASS == 1:
         f.append("MASS")
 
-    IF INTEG_DEBUG == 1:
-        f.append("INTEG_DEBUG")
+    IF AFFINITY == 1:
+        f.append("AFFINITY")
+
+    IF DIPOLAR_DIRECT_SUM == 1:
+        f.append("DIPOLAR_DIRECT_SUM")
 
     IF DP3M == 1:
         f.append("DP3M")
@@ -294,6 +321,12 @@ def features():
 
     IF VIRTUAL_SITES_DEBUG == 1:
         f.append("VIRTUAL_SITES_DEBUG")
+
+    IF ESR_DEBUG == 1:
+        f.append("ESR_DEBUG")
+
+    IF _P3M_GPU_DOUBLE == 1:
+        f.append("_P3M_GPU_DOUBLE")
 
     IF GHOSTS_HAVE_BONDS == 1:
         f.append("GHOSTS_HAVE_BONDS")
@@ -334,14 +367,17 @@ def features():
     IF SD == 1:
         f.append("SD")
 
-    IF BOND_ANGLEDIST == 1:
-        f.append("BOND_ANGLEDIST")
+    IF SMOOTH_STEP == 1:
+        f.append("SMOOTH_STEP")
 
     IF MAGGS_DEBUG == 1:
         f.append("MAGGS_DEBUG")
 
     IF THERMOSTAT_IGNORE_NON_VIRTUAL == 1:
         f.append("THERMOSTAT_IGNORE_NON_VIRTUAL")
+
+    IF STAT_DEBUG == 1:
+        f.append("STAT_DEBUG")
 
     IF DPD == 1:
         f.append("DPD")
@@ -420,6 +456,12 @@ def features():
 
     IF COLLISION_DETECTION == 1:
         f.append("COLLISION_DETECTION")
+
+    IF FLATNOISE == 1:
+        f.append("FLATNOISE")
+
+    IF OIF_LOCAL_FORCES == 1:
+        f.append("OIF_LOCAL_FORCES")
 
     IF TWIST_STACK == 1:
         f.append("TWIST_STACK")
