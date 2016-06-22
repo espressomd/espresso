@@ -318,7 +318,7 @@ class Analysis:
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
-                total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+                total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_intra += c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 p["non_bonded_intra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
@@ -504,13 +504,13 @@ class Analysis:
         cdef double total_non_bonded
         total_inter = 0
         total_intra = 0
-        total_non_bonded = 0
+        total_non_bonded = 0.
     
         for i in range(c_analyze.n_particle_types):
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 e["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
-                total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
+                total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
     #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
