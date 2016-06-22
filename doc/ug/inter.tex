@@ -2236,6 +2236,13 @@ Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fas
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+scafacos.available_methods()
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{pysyntax}
 This shows the methods available at the compile time of \es{}.
 Scafacos can be used as Coulomb solver for the system.
 \begin{essyntax}
@@ -2245,6 +2252,20 @@ Scafacos can be used as Coulomb solver for the system.
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ Scafacos 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		method_name=\arg{string},
+		method_params=\arg{dict},
+	}[
+	]
+	\begin{features}
+		\required{SCAFACOS}
+	\end{features}
+\end{pysyntax}
 Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
 \texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
 \var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver

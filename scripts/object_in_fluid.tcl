@@ -2718,6 +2718,7 @@ proc oif_object_analyze { args } {
 	set aff_K0 -1
 	set aff_Fd -1
 	set aff_file "aff-default.dat"
+	set edge_stat 0
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2758,6 +2759,10 @@ proc oif_object_analyze { args } {
 			"n-nodes" {  
 				incr pos
 				set n_nodes 1
+			}
+			"edge-statistics" {  
+				incr pos
+				set edge_stat 1
 			}
 			"affinity" {  
 				incr pos
@@ -3232,7 +3237,85 @@ proc oif_object_analyze { args } {
 		}
 		return $area
 	}
+	
+	if {$edge_stat != 0} {
+	    # calculates statistics of edges in triangulation
+		
+		set sum_lengths 0.0
+		set avg_length 0.0
+		set max_length 0.0
+		set min_length 1000.0
+		
+		# recover data of this object
+		set object [lindex $oif_objects $objectID]
+		set template_id [lindex $object 0]
+		set template [lindex $oif_templates $template_id]
+		set nnodes [lindex $template 0]
+		set nedges [lindex $template 1]
 
+		set start_id_of_nodes 0
+		set start_id_of_edges 0
+		for {set i 0} {$i < $template_id} {incr i} {
+		    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+		    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+		}
+		
+		# recover edges from this object's template
+		for {set i 0} {$i < $nedges} {incr i} {
+		    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+		    set mesh_edges($i,0) [lindex $edge_pair 0]
+		    set mesh_edges($i,1) [lindex $edge_pair 1]
+		}
+		
+		set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+			    
+		for { set i 0 } { $i < $nedges } { incr i } {
+		    # take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			set pA $mesh_edges($i,0)
+			set pB $mesh_edges($i,1)
+			    
+			# get the current position of the same two points
+			set currA [part [expr $start_id_of_particles + $pA] print pos]
+			set currAx [lindex $currA 0]
+			set currAy [lindex $currA 1]
+			set currAz [lindex $currA 2]
+			set currB [part [expr $start_id_of_particles + $pB] print pos]
+			set currBx [lindex $currB 0]
+			set currBy [lindex $currB 1]
+			set currBz [lindex $currB 2]
+
+			set curr_dist 0.0
+			set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			set curr_dist [expr sqrt($curr_dist)]
+		
+			set sum_lengths [expr ($sum_lengths + $curr_dist) ]
+		
+			set curr_edge_length($i) $curr_dist
+		
+			if {$max_length < $curr_dist} {
+				set max_length $curr_dist
+			}
+		
+			if {$min_length > $curr_dist} {
+				set min_length $curr_dist
+			}
+		}
+
+		set avg_length [expr ($sum_lengths / $nedges) ]
+
+		set sum_of_sq 0.0
+		for { set i 0 } { $i < $nedges } { incr i } {
+			set sum_of_sq [expr ($sum_of_sq + (($curr_edge_length($i) - $avg_length) * ($curr_edge_length($i) - $avg_length)))]
+		}
+		set sigma 0.0
+		set sigma [expr (sqrt($sum_of_sq / ($nedges-1)))]
+
+		set answer [list "avg_length:" $avg_length "min-length:" $min_length "max_length:" $max_length "sigma:" $sigma]
+		return $answer
+	}
+	
 	if { $pos_bounds != ""} {
 		set Zmin 10000000
 		set Zmax -10000000

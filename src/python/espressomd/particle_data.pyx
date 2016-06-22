@@ -26,8 +26,9 @@ cimport particle_data
 from interactions import BondedInteraction
 from interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step
+from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
 import collections
+from globals cimport max_seen_particle, time_step, smaller_time_step, n_part
 
 PARTICLE_EXT_FORCE = 1
 
@@ -113,6 +114,18 @@ cdef class ParticleHandle:
             return np.array([self.particle_data.r.p[0],
                              self.particle_data.r.p[1],
                              self.particle_data.r.p[2]])
+            
+    property pos_folded:
+        """Particle position (folded into central image)."""
+
+        def __set__(self, v):
+            raise Exception("setting a folded position is not implemented")
+
+        def __get__(self):
+            cdef double pos[3]
+            pos = self.pos
+            fold_position(pos, self.particle_data.l.i)
+            return pos
 
     # Velocity
     property v:
@@ -306,25 +319,6 @@ cdef class ParticleHandle:
                 return np.array([x[0], x[1], x[2]])
 
     # ROTATIONAL_INERTIA
-    IF ROTATIONAL_INERTIA == 1:
-        property rinertia:
-            """Rotational inertia"""
-
-            def __set__(self, _rinertia):
-                cdef double rinertia[3]
-                check_type_or_throw_except(
-                    _rinertia, 3, float, "Rotation_inertia has to be 3 floats")
-                for i in range(3):
-                    rinertia[i] = _rinertia[i]
-                if set_particle_rotational_inertia(self.id, rinertia) == 1:
-                    raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
-                return np.array([rinertia[0], rinertia[1], rinertia[2]])
-
 # Omega (angular velocity) body frame
         property omega_body:
             """Angular velocity in body frame"""
@@ -363,6 +357,25 @@ cdef class ParticleHandle:
                 cdef double x[3]
                 convert_torques_body_to_space( & (self.particle_data), x)
                 return np.array([x[0], x[1], x[2]])
+
+    IF ROTATIONAL_INERTIA == 1:
+        property rinertia:
+            """Rotational inertia"""
+
+            def __set__(self, _rinertia):
+                cdef double rinertia[3]
+                check_type_or_throw_except(
+                    _rinertia, 3, float, "Rotation_inertia has to be 3 floats")
+                for i in range(3):
+                    rinertia[i] = _rinertia[i]
+                if set_particle_rotational_inertia(self.id, rinertia) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * rinertia = NULL
+                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Charge
     IF ELECTROSTATICS == 1:
@@ -883,6 +896,19 @@ cdef class ParticleSlice:
                 pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos
             return pos_array
 
+    property pos_folded:
+        """Particle position (folded into central image)."""
+
+        def __set__(self, d):
+            raise Exception("setting a folded position is not implemented")
+
+        def __get__(self):
+            pos_array = np.zeros((len(self.id_selection), 3))
+            for i in range(len(self.id_selection)):
+                pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos_folded
+            return pos_array
+
+
     # Velocity
     property v:
         """Particle velocity"""
@@ -1095,6 +1121,9 @@ cdef class ParticleList:
             params[particle_number]["id"] = particle_number
             self.add(params[particle_number])
 
+    def __len__(self):
+        return n_part
+
     def add(self, *args, **kwargs):
 
         # Did we get a dictionary
@@ -1190,6 +1219,9 @@ cdef class ParticleList:
                 tf_array[i] = particle_exists(idx[i])
             return tf_array
 
+    def clear(self):
+        remove_all_particles()
+
     def __str__(self):
         res = ""
         for i in range(max_seen_particle + 1):
@@ -1197,3 +1229,34 @@ cdef class ParticleList:
                 res += str(self[i]) + "\n"
         # Remove final newline
         return res[:-1]
+
+    def writevtk(self,fname,types='all'):
+        global box_l
+        if not hasattr(types,'__iter__'):
+            types = [types]
+
+        n = 0
+        for p in self:
+            for t in types:
+                if (p.type == t or t == "all"):
+                    n += 1
+
+        with open(fname, "w") as vtk:
+            vtk.write("# vtk DataFile Version 2.0\n")
+            vtk.write("particles\n")
+            vtk.write("ASCII\n")
+            vtk.write("DATASET UNSTRUCTURED_GRID\n")
+            vtk.write("POINTS {} floats\n".format(n))
+            for p in self:
+                for t in types:
+                    if (p.type == t or t == "all"):
+                        vtk.write("{} {} {}\n".format(*(p.pos % box_l)))
+
+            vtk.write("POINT_DATA {}\n".format(n))
+            vtk.write("SCALARS velocity float 3\n")
+            vtk.write("LOOKUP_TABLE default\n")
+            for p in self:
+                for t in types:
+                    if (p.type == t or t == "all"):
+                        vtk.write("{} {} {}\n".format(*p.v))
+
