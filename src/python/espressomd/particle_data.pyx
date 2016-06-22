@@ -118,7 +118,7 @@ cdef class ParticleHandle:
     property pos_folded:
         """Particle position (folded into central image)."""
 
-        def __set__(self):
+        def __set__(self, v):
             raise Exception("setting a folded position is not implemented")
 
         def __get__(self):
@@ -899,7 +899,7 @@ cdef class ParticleSlice:
     property pos_folded:
         """Particle position (folded into central image)."""
 
-        def __set__(self):
+        def __set__(self, d):
             raise Exception("setting a folded position is not implemented")
 
         def __get__(self):
