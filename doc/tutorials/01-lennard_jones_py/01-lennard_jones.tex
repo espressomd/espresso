@@ -94,7 +94,7 @@ pagesize,                       % set the pagesize in a DVI document
 %\newcommand{\EScode}[1]{ \parbox{0.95\textwidth}{\texttt{#1}}}
 \usepackage{listings} 
 \lstset{numbers=left, numberstyle=\tiny, numbersep=5pt, showspaces=false, showstringspaces=false,postbreak=\space, breakindent=5pt, breaklines}
-\lstset{language=tcl, keywordstyle=\color{blue}\bfseries ,emphstyle=\color{green}, commentstyle=\color{red}\itshape }
+\lstset{language=python, keywordstyle=\color{blue}\bfseries ,emphstyle=\color{green}, commentstyle=\color{red}\itshape }
 \lstset{keywordsprefix=setmd}
 \lstset{keywords=[6]{thermostat,part,inter,integrate,rescale_velocities,code_info,save_sim,writepdb,analyze,uwerr}}
 
@@ -231,7 +231,7 @@ install \es{}.}
         \end{task}
     \end{minipage}}\vspace{1cm}
 
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
  from espressomd import code_info
  print(code_info.features())
  \end{lstlisting}
@@ -242,7 +242,7 @@ install \es{}.}
 \section{Short python Tutorial}\label{sec:python}
 The functionality of \es{} for python is provided via an importable module called
 \texttt{espressomd}.
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
@@ -254,7 +254,7 @@ For convenience we also import the \texttt{code\_info}, \texttt{thermostat} and
 The next first step would be to create an \es{} system handle to manipulate the
 crucial system parameters like \texttt{time\_step}, \texttt{skin} and the
 \texttt{box\_l} for example. 
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 system = espressomd.System()
 system.time_step = time_step
 system.skin = skin
@@ -264,7 +264,7 @@ system.box_l = [box_l_x, box_l_y, box_l_z]
 Once particles are added to the system, they can be accessed from the submodul
 \texttt{part}. It is possible to use common python iterators and slicing operations
 on this particle object:
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 for p in system.part:
     print(p.pos)
     print(p.v)
@@ -323,7 +323,7 @@ $r^{12}$ as the square of $r^6$.
   important \es{} command to address these parameters is \lstinline|setmd|
   
   {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python,numbers=none]
+\begin{lstlisting}
 system.time_step    = time_step
 system.skin         = skin
 \end{lstlisting}\vspace{0,2cm}
@@ -335,12 +335,12 @@ as well as NPT-isotropic (particle Number, Pressure, Temperature) ensembles. Som
 examples how to use the thermostats
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python, numbers=none]
+\begin{lstlisting}
 system.thermostat.turn_off()
 \end{lstlisting}}\vspace{0,2cm}
 \noindent This implies to use NVE ensemble
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python, numbers=none]
+\begin{lstlisting}
 system.thermostat.set_langevin(kT=1.0, gamma=0.5)
 \end{lstlisting}}\vspace{0,2cm}
 \noindent Use a langevin thermostat (NVT ensemble) with temperature set to 1.0 and damping coefficient to 0.5 
@@ -358,7 +358,7 @@ Interactions among those types can be defined through \emph{type} number
    position $(x,y,z)$
    
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python, numbers=none]
+\begin{lstlisting}
 system.part.add(id=0, type=0, pos=[x,y,z])
 \end{lstlisting}\vspace{0,2cm}
 }
@@ -366,7 +366,7 @@ system.part.add(id=0, type=0, pos=[x,y,z])
 \noindent it is also possible to read the information on the given particle
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{lstlisting}
 print(system.part[0])
 \end{lstlisting}\vspace{0,2cm}
 } 
@@ -377,7 +377,7 @@ print(system.part[0])
 LJ interaction among type 0 particles can be defined as follows
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python, numbers=none]
+\begin{lstlisting}
 lj1_eps     = 1.0
 lj1_sig     = 1.0
 lj1_cut     = 1.12246
@@ -416,7 +416,7 @@ Lennard-Jones Liquid Simulation.  Before we explain the script step by step, run
 
 We include necessary modules with \lstinline|import|.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
@@ -439,7 +439,7 @@ print(code_info.features())
 \subsubsection{System Setup}
 At first, we must configure the environment and set the needed parameters.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 # System parameters
 #############################################################
 n_part  = 108
@@ -551,7 +551,7 @@ langevin thermostat set to the target temperature.
 
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
@@ -593,15 +593,16 @@ system.thermostat.turn_off()
 simulation. To analyse our data after the simulation, we open some files for writing the data in. 
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 print("\nSampling\n")
 system.time_step = time_step
 
 en_fp   = open('data/energy.dat', 'w')
-conf_fp = open('data/part_conf.pickle', 'w')
 sys_fp  = open('data/sim_info.pickle', 'w')
 part_fp = open('data/part.pickle', 'w')
 msd_fp  = open('data/msd.dat', 'w')
+rdf_fp  = open('data/rdf.dat', 'w')
+
 en_fp.write("#\n#\n#\n# Pressure   Kinetic Potential   Temperature\n#\n")
 
 #start positions of all particles for MSD calculation on the fly
@@ -662,12 +663,12 @@ A simple way to estimate the error of an observable is to use the common standar
 deviation ($\sqrt(\sigma)$) and the standard error of the mean (SE) for $N$
 \emph{uncorrelated} samples:
 \begin{align}
-    \sigma  &= \langle x^2 - \langle x\rangle^2 \rangle
+    \sigma  &= \langle x^2 - \langle x\rangle^2 \rangle \\
     SE      &= \sqrt(\sigma)/\sqrt(N)
     \label{eq:variance}
 \end{align}
 
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 # Data arrays for simple error estimation
 etotal = np.zeros((sampling_iterations,))
 ptotal = np.zeros((sampling_iterations,))
@@ -708,7 +709,7 @@ The rdf is computed on the fly in the current script, the data is then written t
 
 In order to compute the rdf with \texttt{espressomd} one needs the following code
 fragments:
-\begin{lstlisting}[language=Python]
+\begin{lstlisting}
 # analyzing the radial distribution function
 # setting the parameters for the rdf
 r_bins = 30
@@ -748,36 +749,36 @@ rdf_fp.close()
 
 \newpage
 
-The velocity autocorrelation function (VACF) is an averaged time dependent correlation function of all particles' 
-velocities. 
-
-\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
-     \begin{task}  
-      The VACF $C(t)$ can 
-      be computed directly: $ C(t) = \langle {\mathbf v}_{i} (0) {\mathbf v}_{i} (t)
-      \rangle$  which can be estimated by $ C(t) = \frac {1} {N} \sum_{i=0}^{N}
-      {\mathbf v}_{i} (0) {\mathbf v}_{i} (t) $ where $N$ is the number of particles.
-        
-        Try to add this to \texttt{lj\_tutorial.py} by using the functionality of
-        numpy and python.
-     \end{task}
-
-\end{minipage}}
-\vspace{1cm}
-%\marginpar{Script anpassen, sodass kleineres dt, um bessere Aufl\"osung zwischen 0...50 zu erhalten}
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[width=10cm]{figures/vacf}
-\label{fig:vacf}
-\caption{The vacf.dat plot should be similar to this one}
-\end{center}
-\end{figure}
-
-\noindent We can see when time is larger than 50 the particles have already 'forgot' about their initial
-velocities. Sampling more in the time interval [0;50] will show the decay of VACF there.
-
-\newpage
+%The velocity autocorrelation function (VACF) is an averaged time dependent correlation function of all particles' 
+%velocities. 
+%
+%\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
+%     \begin{task}  
+%      The VACF $C(t)$ can 
+%      be computed directly: $ C(t) = \langle {\mathbf v}_{i} (0) {\mathbf v}_{i} (t)
+%      \rangle$  which can be estimated by $ C(t) = \frac {1} {N} \sum_{i=0}^{N}
+%      {\mathbf v}_{i} (0) {\mathbf v}_{i} (t) $ where $N$ is the number of particles.
+%        
+%        Try to add this to \texttt{lj\_tutorial.py} by using the functionality of
+%        numpy and python.
+%     \end{task}
+%
+%\end{minipage}}
+%\vspace{1cm}
+%%\marginpar{Script anpassen, sodass kleineres dt, um bessere Aufl\"osung zwischen 0...50 zu erhalten}
+%
+%\begin{figure}[ht]
+%\begin{center}
+%\includegraphics[width=10cm]{figures/vacf}
+%\label{fig:vacf}
+%\caption{The vacf.dat plot should be similar to this one}
+%\end{center}
+%\end{figure}
+%
+%\noindent We can see when time is larger than 50 the particles have already 'forgot' about their initial
+%velocities. Sampling more in the time interval [0;50] will show the decay of VACF there.
+%
+%\newpage
 
 \bibliographystyle{unsrt}
 \bibliography{refs}

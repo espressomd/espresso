@@ -64,7 +64,7 @@ equilibration_iterations= 20
 
 lj_eps = 1.0
 lj_sig = 1.0
-lj_cut = 2.5
+lj_cut = 2.5*lj_sig
 lj_cap = 20
 
 
@@ -77,7 +77,6 @@ if not os.path.exists('data') :
 
 system.time_step    = time_step
 system.skin         = skin
-
 
 system.box_l = [box_l, box_l, box_l]
 
@@ -139,7 +138,6 @@ print("\nSampling\n")
 system.time_step = time_step
 
 en_fp   = open('data/energy.dat', 'w')
-conf_fp = open('data/part_conf.pickle', 'w')
 sys_fp  = open('data/sim_info.pickle', 'w')
 part_fp = open('data/part.pickle', 'w')
 msd_fp  = open('data/msd.dat', 'w')
@@ -151,7 +149,6 @@ start_pos=system.part[:].pos
 
 # save system setup
 pickle.dump(system, sys_fp, -1)
-pickle.dump(system.part, conf_fp, -1)
 
 msd = np.zeros((sampling_iterations,))
 
@@ -185,16 +182,18 @@ for i in range(1, sampling_iterations + 1):
     etotal[i-1] = energies['total']
     ptotal[i-1] = pressure['total']
 
-####################################################
-# TODO:
-# For an efficient calculation of the MSD and VACF the correlator and
-# observable features are needed in python
-####################################################
+    ####################################################
+    # TODO:
+    # For an efficient calculation of the MSD and VACF the correlator and
+    # observable features are needed in python
+    ####################################################
     for j in range(n_part):
         msd[i-1] += 1.0/n_part * ( (start_pos[j,0] - system.part[j].pos[0])**2 +
                 (start_pos[j,1] - system.part[j].pos[1])**2 +
                 (start_pos[j,2] - system.part[j].pos[2])**2 )
     msd_fp.write("%i %1.5e\n" % (i, msd[i-1]) )
+
+print("\nMain sampling done\n")
 
 # calculate the variance of the total energy and total pressure using scipys statistic operations
 error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
@@ -212,5 +211,4 @@ sys_fp.close()
 msd_fp.close()
 en_fp.close()
 part_fp.close()
-conf_fp.close()
 rdf_fp.close()
