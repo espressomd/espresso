@@ -1192,6 +1192,8 @@ cdef class ParticleList:
         if P != {}:
             self[id].update(P)
 
+        return self[id]
+
     def _place_new_particles(self, P):
 
         if not "id" in P:
