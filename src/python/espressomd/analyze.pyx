@@ -317,16 +317,16 @@ class Analysis:
         for i in range(c_analyze.n_particle_types):
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
-                p["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
+                p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_intra += c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["nonBondedIntra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["nonBondedInter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = c_analyze.obsstat_nonbonded_intra(& c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
-        p["nonBondedIntra"] = total_intra
-        p["nonBondedInter"] = total_inter
-        p["nonBondedInter"] = total_inter
-        p["nonBonded"] = total_non_bonded
+        p["non_bonded_intra"] = total_intra
+        p["non_bonded_inter"] = total_inter
+        p["non_bonded_inter"] = total_inter
+        p["non_bonded"] = total_non_bonded
     
         # Electrostatics
         IF ELECTROSTATICS == 1:
@@ -398,18 +398,18 @@ class Analysis:
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
     
-                p["nonBonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+                p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
                 total_non_bonded += p["nonBonded", i, j]
     
-                p["nonBondedIntra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_intra += p["nonBondedIntra", i, j]
     
-                p["nonBondedInter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
-                total_non_bonded_inter += p["nonBondedInter", i, j]
+                p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                total_non_bonded_inter += p["non_bonded_inter", i, j]
     
-        p["nonBondedIntra"] = total_non_bonded_intra
-        p["nonBondedInter"] = total_non_bonded_inter
-        p["nonBonded"] = total_non_bonded
+        p["non_bonded_intra"] = total_non_bonded_intra
+        p["non_bonded_inter"] = total_non_bonded_inter
+        p["non_bonded"] = total_non_bonded
     
         # Electrostatics
         IF ELECTROSTATICS == 1:
@@ -509,7 +509,7 @@ class Analysis:
         for i in range(c_analyze.n_particle_types):
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
-                e["nonBonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
                 total_non_bonded = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
     #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
@@ -517,7 +517,7 @@ class Analysis:
     #        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
     #  e["nonBondedIntra"]=total_intra
     #  e["nonBondedInter"]=total_inter
-        e["nonBonded"] = total_non_bonded
+        e["non_bonded"] = total_non_bonded
     
         # Electrostatics
         IF ELECTROSTATICS == 1:
