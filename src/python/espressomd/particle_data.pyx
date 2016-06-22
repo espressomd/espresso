@@ -114,7 +114,7 @@ cdef class ParticleHandle:
             return np.array([self.particle_data.r.p[0],
                              self.particle_data.r.p[1],
                              self.particle_data.r.p[2]])
-            
+
     property pos_folded:
         """Particle position (folded into central image)."""
 
@@ -803,11 +803,12 @@ cdef class ParticleHandle:
                 raise Exception(
                     "1st element of Bond has to be of type BondedInteraction or int.")
 
-        # Check whether the bond has been added to the list of active bonded interactions
-        if bond[0]._bond_id==-1:
-          raise Exception("The bonded interaction has not yet been added to the list of active bonds in Espresso")
-        
-        
+        # Check whether the bond has been added to the list of active bonded
+        # interactions
+        if bond[0]._bond_id == -1:
+            raise Exception(
+                "The bonded interaction has not yet been added to the list of active bonds in Espresso")
+
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
             raise ValueError("The bond type", bond._bond_id, "does not exist.")
@@ -818,15 +819,14 @@ cdef class ParticleHandle:
                              bond[0]._bond_id], "partners.")
 
         # Type check on partners
-        for i in range(1,len(bond)):
+        for i in range(1, len(bond)):
             if not isinstance(bond[i], int):
-                if not isinstance(bond[i],ParticleHandle):
-                    raise ValueError("Bond partners have to be of type integer or ParticleHandle.")
-                else: 
+                if not isinstance(bond[i], ParticleHandle):
+                    raise ValueError(
+                        "Bond partners have to be of type integer or ParticleHandle.")
+                else:
                     # Put the particle id instead of the particle handle
-                    bond[i]=bond[i].id
-
-
+                    bond[i] = bond[i].id
 
     def add_bond(self, _bond):
         """Add a single bond to the particle"""
@@ -916,9 +916,9 @@ cdef class ParticleSlice:
         def __get__(self):
             pos_array = np.zeros((len(self.id_selection), 3))
             for i in range(len(self.id_selection)):
-                pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos_folded
+                pos_array[i, :] = ParticleHandle(
+                    self.id_selection[i]).pos_folded
             return pos_array
-
 
     # Velocity
     property v:
@@ -1214,7 +1214,7 @@ cdef class ParticleList:
 
         if P != {}:
             self[ids].update(P)
-        
+
         return self[ids]
 
     # Iteration over all existing particles
@@ -1243,9 +1243,9 @@ cdef class ParticleList:
         # Remove final newline
         return res[:-1]
 
-    def writevtk(self,fname,types='all'):
+    def writevtk(self, fname, types='all'):
         global box_l
-        if not hasattr(types,'__iter__'):
+        if not hasattr(types, '__iter__'):
             types = [types]
 
         n = 0
@@ -1275,9 +1275,8 @@ cdef class ParticleList:
 
     def pairs(self):
         """Generator returns all pairs of particles"""
-        for i in range(max_seen_particle+1):
-            for j in range(i+1,max_seen_particle+1,1):
+        for i in range(max_seen_particle + 1):
+            for j in range(i + 1, max_seen_particle + 1, 1):
                 if not (self.exists(i) and self.exists(j)):
                     continue
-                yield (self[i],self[j])
-
+                yield (self[i], self[j])
