@@ -54,7 +54,7 @@ install:
 # - conda create -q -n test python=2.7.9
  - ls
  - tree
- - source activate test
+# - source activate test
 # - conda install numpy cython pip vtk
 
 env:
@@ -65,7 +65,7 @@ env:
     - myconfig=default
 
 compiler:
-  - clang
+ - clang
 
 script:
  - junest -- ./maintainer/travis/build_cmake.sh
