@@ -2,59 +2,42 @@ language: cpp
 dist: trusty
 sudo: false
 
-cache: 
-  - apt
-  - ccache
+#cache: 
+#  - apt
+#  - ccache
 
 addons:
   apt:
-    sources:
-      - boost-latest 
-      - ubuntu-toolchain-r-test
-      - george-edison55-precise-backports
+#    sources:
+#      - boost-latest 
+#      - ubuntu-toolchain-r-test
+#      - george-edison55-precise-backports
     packages:
-      - ccache
-      - tcl-dev
-      - libhdf5-serial-dev 
-      - build-essential 
-      - pep8 
-      - cmake
-      - cmake-data
-      - libboost1.55-dev 
-      - libboost-test1.55-dev
-      - libboost-mpi1.55-dev
-      - libboost-serialization1.55-dev
-      - libopenmpi-dev
-      - openmpi-bin
-      - libfftw3-dev
-      - gcc-4.8
-      - g++-4.8
+#      - ccache
+#      - tcl-dev
+#      - libhdf5-serial-dev 
+#      - build-essential 
+#      - pep8 
+#      - cmake
+#      - cmake-data
+#      - libboost1.55-dev 
+#      - libboost-test1.55-dev
+#      - libboost-mpi1.55-dev
+#      - libboost-serialization1.55-dev
+#      - libopenmpi-dev
+#      - openmpi-bin
+#      - libfftw3-dev
+#      - gcc-4.8
+#      - g++-4.8
       - git
-      - tree
 
 before_install:
  - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
  - git clone git://github.com/fsquillace/junest ~/junest
  - PATH=~/junest/bin:$PATH
-
-# - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-# - chmod +x miniconda.sh
-# - bash miniconda.sh -b -p $HOME/miniconda
-# - export PATH=/home/travis/miniconda/bin:$PATH
-
-# - conda config --set always_yes yes --set changeps1 no 
-# - conda update -q conda
- - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk pep8
-
-
-
-
+ - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk pep8 cmake gcc fftw openmpi hdf5-openmpi boost boost-libs hdf5 hdf5-cpp-fortran python2-h5py tcl tk ccache
 
 install:
-# - conda create -q -n test python=2.7.9
- - ls
- - tree
-# - source activate test
 # - conda install numpy cython pip vtk
 
 env:
