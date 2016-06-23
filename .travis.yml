@@ -30,6 +30,7 @@ addons:
       - gcc-4.8
       - g++-4.8
       - git
+      - tree
 
 before_install:
  - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
@@ -51,6 +52,8 @@ before_install:
 
 install:
 # - conda create -q -n test python=2.7.9
+ - ls
+ - tree
  - source activate test
 # - conda install numpy cython pip vtk
 
