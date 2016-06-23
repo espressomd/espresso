@@ -88,7 +88,7 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-cmake_params="-DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
+#cmake_params="-DPYTHON_LIBRARY=/home/travis/miniconda/envs/test/lib/libpython2.7.so.1.0 $cmake_params"
 
 if $with_mpi; then
     cmake_params="-DWITH_MPI=ON $cmake_params"
@@ -128,7 +128,7 @@ else
 fi
 
 # Acticate anaconda environment
-cmd "source activate test"
+#cmd "source activate test"
 
 cmd "cmake $cmake_params $srcdir" || exit $?
 end "CONFIGURE"
