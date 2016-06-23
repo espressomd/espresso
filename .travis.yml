@@ -1,5 +1,5 @@
 language: cpp
-dist: xenial
+dist: trusty
 sudo: false
 
 cache: 
@@ -43,7 +43,7 @@ before_install:
 
 # - conda config --set always_yes yes --set changeps1 no 
 # - conda update -q conda
- - junest -f -- pacman --noconfirm -Sy cython pip numpy vtk
+ - junest -f -- pacman --noconfirm -Sy cython python-pip python-numpy vtk
 
 
 
