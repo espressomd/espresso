@@ -32,7 +32,7 @@ class H5mdCore
 {
     public:
         H5mdCore(std::string const&, std::string const&);
-        ~H5mdCore() {};
+        ~H5mdCore();
         int write_positions();
         int write_velocities();
         int write_forces();

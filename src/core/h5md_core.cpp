@@ -41,6 +41,21 @@ H5mdCore::H5mdCore(std::string const& filename, std::string const& python_script
 }
 
 
+H5mdCore::~H5mdCore()
+{
+    delete file;
+    delete group_particles;
+    delete group_particles_atoms;
+    delete group_particles_atoms_box;
+    delete group_particles_atoms_mass;
+    delete group_particles_atoms_position;
+    delete group_particles_atoms_force;
+    delete group_parameters;
+    delete group_parameters_vmd_structure;
+    delete group_parameters_files;
+}
+
+
 int H5mdCore::dump_script(std::string const& python_script_path)
 {
     // String array for storing the python script
