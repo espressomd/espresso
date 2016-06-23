@@ -29,28 +29,30 @@ addons:
       - libfftw3-dev
       - gcc-4.8
       - g++-4.8
+      - git
 
 before_install:
  - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
- - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
- - chmod +x miniconda.sh
- - bash miniconda.sh -b -p $HOME/miniconda
- - echo $PATH
- - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
- - echo $PATH
- - export PATH=/home/travis/miniconda/bin:$PATH
- - echo $PATH
- - conda config --set always_yes yes --set changeps1 no 
- - conda update -q conda
- - conda info -a
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang++"
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang"
- - echo $PATH
+ - git clone git://github.com/fsquillace/junest ~/junest
+ - PATH=~/junest/bin:$PATH
+
+# - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+# - chmod +x miniconda.sh
+# - bash miniconda.sh -b -p $HOME/miniconda
+# - export PATH=/home/travis/miniconda/bin:$PATH
+
+# - conda config --set always_yes yes --set changeps1 no 
+# - conda update -q conda
+ - junest -f -- pacman --noconfirm -Sy cython pip numpy vtk
+
+
+
+
 
 install:
- - conda create -q -n test python=2.7.9
+# - conda create -q -n test python=2.7.9
  - source activate test
- - conda install numpy cython pip vtk
+# - conda install numpy cython pip vtk
 
 env:
   global:
@@ -62,4 +64,5 @@ env:
 compiler:
   - clang
 
-script: ./maintainer/travis/build_cmake.sh
+script:
+ - junest -- ./maintainer/travis/build_cmake.sh
