@@ -44,7 +44,7 @@ before_install:
 
 # - conda config --set always_yes yes --set changeps1 no 
 # - conda update -q conda
- - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk
+ - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk pep8
 
 
 
