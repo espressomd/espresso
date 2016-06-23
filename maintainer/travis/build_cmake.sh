@@ -114,6 +114,8 @@ else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
 fi
 
+cmake_params="-DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DNUMPY_INCLUDE_DIR=/usr/lib64/python2.7/site-packages/numpy/core/include/numpy/ -DNUMPY_VERSION=1.11.0-1 $cmake_params"
+
 MYCONFIG_DIR=$srcdir/maintainer/jenkins/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
