@@ -58,8 +58,8 @@ H5mdCore::~H5mdCore()
 
 int H5mdCore::dump_script(std::string const& python_script_path)
 {
-    // String array for storing the python script
-    std::vector<std::string> script_string_array;
+    // String vector for storing the python script
+    std::vector<std::string> script_string_vector;
     // File stream for the python script
     std::fstream python_file;
     // String to temporarily store the current line of the python script
@@ -71,11 +71,11 @@ int H5mdCore::dump_script(std::string const& python_script_path)
         while (std::getline(python_file, line))
         {
             std::cout << line << std::endl;
-            script_string_array.push_back(line);
+            script_string_vector.push_back(line);
         }
         python_file.close();
     }
     // Create dataset for the dump
     // TODO: Make this running, currently the h5xx::create_dataset method wants fundamental types in the array
-    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_array)
+    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_vector)
 }
