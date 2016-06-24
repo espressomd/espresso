@@ -21,7 +21,7 @@
 
 #include "h5md_core.hpp"
 
-
+// Constructor for the H5mdCore class
 H5mdCore::H5mdCore(std::string const& filename, std::string const& python_script_path)
 {
     // Create a new h5xx file object.
@@ -41,8 +41,10 @@ H5mdCore::H5mdCore(std::string const& filename, std::string const& python_script
 }
 
 
+// Destructor of the H5mdCore class
 H5mdCore::~H5mdCore()
 {
+    // Delete all member objects
     delete file;
     delete group_particles;
     delete group_particles_atoms;
