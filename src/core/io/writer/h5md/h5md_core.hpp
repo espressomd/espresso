@@ -27,15 +27,18 @@
 #include <string>
 #include <h5xx/h5xx.hpp>
 
+namespace writer {
+namespace h5md {
 
-class H5mdCore
+    
+class File
 {
     public:
-        H5mdCore(std::string const&, std::string const&);
-        ~H5mdCore();
-        int write_positions();
-        int write_velocities();
-        int write_forces();
+        File(std::string const&, std::string const&);
+        ~File();
+        int WritePositions(std::vector<int>);
+        int WriteVelocities(std::vector<int>);
+        int WriteForces(std::vector<int>);
     private:
         int write_species();
         int dump_script(std::string const&);
@@ -51,4 +54,6 @@ class H5mdCore
         h5xx::group* group_parameters_files;
         h5xx::dataset* dataset_parameters_files_script;
 };
+} // namespace h5md
+} // namespace writer
 #endif //ESPRESSO_H5MD_CORE_HPP

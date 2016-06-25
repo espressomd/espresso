@@ -25,7 +25,6 @@ add_dependencies(EspressoConfig myconfig)
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.cpp config-version.cpp)
 add_dependencies(EspressoCore EspressoConfig)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary)
 
 if(SCAFACOS)
   target_link_libraries(EspressoCore Scafacos)
@@ -59,3 +58,5 @@ add_subdirectory(object-in-fluid)
 if(SCAFACOS_FOUND)
   add_subdirectory(scafacos)
 endif(SCAFACOS_FOUND)
+add_subdirectory(io)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary)

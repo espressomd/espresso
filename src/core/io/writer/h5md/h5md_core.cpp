@@ -21,8 +21,12 @@
 
 #include "h5md_core.hpp"
 
+
+namespace writer {
+namespace h5md {
+
 // Constructor for the H5mdCore class
-H5mdCore::H5mdCore(std::string const& filename, std::string const& python_script_path)
+File::File(std::string const& filename, std::string const& python_script_path)
 {
     // Create a new h5xx file object.
     file = new h5xx::file(filename, h5xx::file::out);
@@ -37,12 +41,12 @@ H5mdCore::H5mdCore(std::string const& filename, std::string const& python_script
     group_parameters_vmd_structure = new h5xx::group(*group_parameters, "vmd_structure");
     group_parameters_files = new h5xx::group(*group_parameters, "files");
     // Write the python script to the H5MD file
-    H5mdCore::dump_script(python_script_path);
+    File::dump_script(python_script_path);
 }
 
 
 // Destructor of the H5mdCore class
-H5mdCore::~H5mdCore()
+File::~File()
 {
     // Delete all member objects
     delete file;
@@ -57,27 +61,37 @@ H5mdCore::~H5mdCore()
     delete group_parameters_files;
 }
 
-
-int H5mdCore::dump_script(std::string const& python_script_path)
+// Method to write particle positions
+int File::WritePositions(std::vector<int>)
 {
-    // String vector for storing the python script
-    std::vector<std::string> script_string_vector;
-    // File stream for the python script
-    std::fstream python_file;
-    // String to temporarily store the current line of the python script
-    std::string line;
-    // Open the file
-    python_file.open(python_script_path, std::fstream::in);
-    if (python_file.is_open())
-    {
-        while (std::getline(python_file, line))
-        {
-            std::cout << line << std::endl;
-            script_string_vector.push_back(line);
-        }
-        python_file.close();
-    }
-    // Create dataset for the dump
-    // TODO: Make this running, currently the h5xx::create_dataset method wants fundamental types in the array
-    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_vector)
 }
+
+// Method to write particle velocities
+int File::WriteVelocities(std::vector<int>)
+{
+}
+//int H5mdCore::dump_script(std::string const& python_script_path)
+//{
+//    // String vector for storing the python script
+//    std::vector<std::string> script_string_vector;
+//    // File stream for the python script
+//    std::fstream python_file;
+//    // String to temporarily store the current line of the python script
+//    std::string line;
+//    // Open the file
+//    python_file.open(python_script_path, std::fstream::in);
+//    if (python_file.is_open())
+//    {
+//        while (std::getline(python_file, line))
+//        {
+//            std::cout << line << std::endl;
+//            script_string_vector.push_back(line);
+//        }
+//        python_file.close();
+//    }
+//    // Create dataset for the dump
+//    // TODO: Make this running, currently the h5xx::create_dataset method wants fundamental types in the array
+//    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_vector)
+//}
+} // namespace h5md
+} // namespace writer
