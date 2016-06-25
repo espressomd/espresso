@@ -702,8 +702,8 @@ class h5md(object):
                              groupname="observables/structure_factor/", datasetname="value", chunk=True):
             if timestep == -1:  # Time independent
                 for i in range(
-                        len(analyze.structure_factor(self.h5md.system, sf_type, sf_order))):
-                    self.h5md.WriteValueEspresso(timestep, -1, analyze.structure_factor(self.h5md.system, sf_type, sf_order)[
+                        len(analyze.structure_factor(self.h5md.system, [sf_type], sf_order)[0])):
+                    self.h5md.WriteValueEspresso(timestep, -1, np.transpose(analyze.structure_factor(self.h5md.system, [sf_type], sf_order))[
                                                  i], groupname + datasetname + "_" + str(i), (2,), (2,), 'f8', chunk, 'observable_time_independent', 1)
             if timestep >= 0:  # Time dependent
                 for i in range(

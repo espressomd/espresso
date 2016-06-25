@@ -65,16 +65,7 @@ set methods {}
 set setups {}
 set accuracies {}
 
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "ewald"] } then {
-    proc setup_scafacos_ewald {} {
-        inter coulomb 1.0 scafacos ewald ewald_r_cut 1.001 tolerance_field 1e-4
-    }
-    lappend methods "SCAFACOS_ewald"
-    lappend setups "setup_scafacos_ewald"
-    lappend accuracies 1e-3
-}
-
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] >=0} then {
     proc setup_scafacos_p3m {} {
         inter coulomb 1.0 scafacos p3m p3m_r_cut 1.001 p3m_grid 64 p3m_cao 7 p3m_alpha 2.70746
     }
@@ -83,7 +74,7 @@ if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p3m"] } then {
     lappend accuracies 1e-3
 }
 
-if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] } then {
+if { [ has_feature "SCAFACOS" ] && [lsearch [scafacos_methods] "p2nfft"] >=0 } then {
     proc setup_scafacos_p2nfft {} {
         inter coulomb 1.0 scafacos p2nfft p2nfft_r_cut 1.001 tolerance_field 1e-4
     }
@@ -127,6 +118,9 @@ if { ! [ llength $methods ] } {
 }
 puts "Methods to test: $methods"
 
+# Reference energy from p3m method.
+set reference_energy 148.94229549
+
 foreach method $methods setup $setups accuracy $accuracies {
     puts "Testing $method..."
     eval $setup
@@ -150,6 +144,16 @@ foreach method $methods setup $setups accuracy $accuracies {
 
         set rmsf [expr sqrt($rmsf / [setmd n_part])]
         puts [format "  rms_force_error=%e" $rmsf]
+	set E [analyze energy coulomb]
+	
+	# Compare energies. Eclude p3m-gpu which does not have energy calculation
+	if { $method != "P3M-GPU" } {
+	  set dE [expr abs($E-$reference_energy)]
+	  puts "Energy difference to ref. value $dE. Is $E, should be $reference_energy"
+	  if { $dE >1E-3 } {
+	    error_exit "Difference in energy too large." 
+	  }
+	}
         if { $rmsf > $accuracy } then {
             error [format \
                        "coulomb_cloud_wall: rms_force_error=%e larger than accuracy=%e" \

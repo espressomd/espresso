@@ -68,13 +68,6 @@
 #include <callgrind.h>
 #endif
 
-/************************************************
- * DEFINES
- ************************************************/
-
-/** Tag for communication in verlet fix: propagate_positions()  */
-#define REQ_INT_VERLET   400
-
 /*******************  variables  *******************/
 
 int    integ_switch     = INTEG_METHOD_NVT;
@@ -151,7 +144,7 @@ void integrator_sanity_checks()
   //char *errtext;
 
   if ( time_step < 0.0 ) {
-      runtimeErrorMsg() <<"time_step not set";
+      runtimeErrorMsg() << "time_step not set";
   }
 }
 
@@ -284,12 +277,12 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef LB
     transfer_momentum = 0;
     if (lattice_switch & LATTICE_LB && this_node == 0)
-      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
+      runtimeWarning("Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
+      runtimeWarning ("Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 
     force_calc();
@@ -350,10 +343,10 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef SD
     if (thermo_switch & THERMO_SD) {
-      fprintf(stderr,"Warning: Use integrate_sd to use Stokesian Dynamics Thermalizer.");
+      runtimeWarning("Use integrate_sd to use Stokesian Dynamics Thermalizer.");
     }
     if (thermo_switch & THERMO_BD) {
-      fprintf(stderr,"Warning: Use integrate_sd to use Brownian Dynamics Thermalizer.");
+      runtimeWarning("Use integrate_sd to use Brownian Dynamics Thermalizer.");
     }
 #endif
 

@@ -95,6 +95,23 @@ radius \var{r\_catch} around the position of the particle with number
 \label{analyze:distribution}
 \analyzeindex{particle distribution}
 
+\begin{pysyntax}
+  \object{
+    espressomd.analyze.Analysis(system)
+  }{
+    distribution
+  }{
+    system = \arg{system},
+    type_list_a = \arg{list of ints},
+    type_list_b = \arg{list of ints},
+    r_min = \arg{float},
+    r_max = \arg{float},
+    r_bins = \arg{int},
+    log_flag = \arg{int},
+    int_flag = \arg{int}
+  }
+\end{pysyntax}
+
 \begin{essyntax}
   analyze distribution \var{part\_type\_list\_a} \var{part\_type\_list\_b}
   \opt{\var{rmin} \opt{\var{rmax} \opt{\var{rbins} 
@@ -169,7 +186,7 @@ of the currently identified properties.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     cylindrical_average
   }{
@@ -325,7 +342,7 @@ be used to shift the not separated molecules if needed.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     Vkappa
   }{
@@ -355,7 +372,7 @@ used can be retrieved. Likewise the option \keyword{set} enables you to set thos
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     rdf
   }{
@@ -399,24 +416,24 @@ The output corresponds to the blockfile format (see section
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     structure_factor
   }{
     system = \arg{system},
-    sf_type = \arg{int},
+    sf_types = \arg{list of ints},
     sf_order = \arg{int}
   }
 \end{pysyntax}
 
 \begin{essyntax}
-  analyze structurefactor \var{type} \var{order}
+  analyze structurefactor \var{types} \var{order}
 \end{essyntax}
 
-Returns the spherically averaged structure factor $S(q)$ for particles
-of a given type \var{type}. The $S(q)$ is calculated for all possible
+Returns the spherically averaged structure factor $S(q)$ of particles
+specified in \var{types}. $S(q)$ is calculated for all possible
 wave vectors, $\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}$. Do
-not chose parameter \var{order} too large, because the number of
+not choose parameter \var{order} too large, because the number of
 calculations grows as $\var{order}^3$. 
 
 
@@ -486,7 +503,7 @@ Returns the center of mass of particles of the given type.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     momentofinertiamatrix
   }{
@@ -509,7 +526,7 @@ eigenvectors of the matrix.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     gyration_tensor
   }{
@@ -643,7 +660,7 @@ volume is taken into account.
 \analyzeindex{system momentum}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_re
   }{
@@ -903,14 +920,14 @@ required once.
 \analyzeindex{end-to-end distance of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_re
   }{
-    system=\arg{system},
-    chain_start=\arg{int},
-    n_chains=\arg{int},
-    chain_length=\arg{int}
+    system = \arg{system},
+    chain_start = \arg{int},
+    n_chains = \arg{int},
+    chain_length = \arg{int}
   }
 \end{pysyntax}
 \begin{essyntax}
@@ -930,7 +947,7 @@ stored configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{radius of gyration of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_rg
   }{
@@ -968,7 +985,7 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{hydrodynamic radius of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     calc_rh
   }{
@@ -1091,7 +1108,7 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze
+    espressomd.analyze.Analysis(system)
   }{
     rdfchain
   }{

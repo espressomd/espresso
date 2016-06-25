@@ -34,7 +34,7 @@ cdef extern from "particle_data.hpp":
     int n_particle_types
 
 cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(int type, int order, double ** sf)
+    cdef void calc_structurefactor(int *p_types, int n_types, int order, double **sf)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
 
 cdef extern from "statistics.hpp":
@@ -60,7 +60,6 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
-    cdef double mindist(int_list * set1, int_list * set2)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(int part_type)
     cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
@@ -117,3 +116,8 @@ cdef extern from "statistics.hpp":
     void calc_gyration_tensor(int p_type, vector[double] gt)
     void momentofinertiamatrix(int p_type, double* MofImatrix)
     void analyze_rdfchain(double r_min, double r_max, int r_bins, double **f1, double **f2, double **f3)
+
+cdef extern from "statistics.hpp":
+    void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
+                                double r_min, double r_max, int r_bins, int log_flag, 
+                                double *low, double *dist)

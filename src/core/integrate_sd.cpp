@@ -135,7 +135,7 @@ void integrator_sanity_checks_sd()
 
 /************************************************************/
 
-#ifdef SD
+#if defined(SD) || defined(BD)
 
 void integrate_sd(int n_steps)
 {
@@ -340,12 +340,12 @@ void integrate_sd(int n_steps)
 
 }
 
-#endif /* SD */
+//#endif /* SD */
 
 /* Privat functions */
 /************************************************************/
 
-#ifdef SD
+//#ifdef SD
 
 void propagate_pos_sd()
 {
