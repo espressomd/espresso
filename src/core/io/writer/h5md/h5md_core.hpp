@@ -30,15 +30,46 @@
 namespace writer {
 namespace h5md {
 
-    
+
+/**
+ * Class for writing H5MD files.
+**/    
 class File
 {
     public:
-        File(std::string const&, std::string const&);
+        /**
+         * Constructor of the "File" class.
+         * In the constructor the H5MD structure is initialized.
+         * @param filename Path to the .h5 file.
+         * @param python_script_path Path to the python simulation script.
+         */
+        File(std::string const& filename, std::string const& python_script_path);
+        /**
+         * Destructor of the "File" class.
+         * Deletes the member variables and closes the H5MD file.
+         */
         ~File();
-        int WritePositions(std::vector<int>);
-        int WriteVelocities(std::vector<int>);
-        int WriteForces(std::vector<int>);
+        /**
+         * Method to write the positions of the particles.
+         * @param ids Particle ids for which positions should be written.
+         */
+        int WritePositions(std::vector<int> ids);
+        /**
+         * Method to write the velocities of the particles.
+         * @see WritePositions()
+         */
+        int WriteVelocities(std::vector<int> ids);
+        /**
+         * Method to write the forces of the particles
+         * @see WritePositions()
+         */
+        int WriteForces(std::vector<int> ids);
+        /**
+         * Method to write the energy contributions to the H5MD file.
+         * @param names An optional vector of strings can be given to decide which
+         * energies should be written to the file.
+         */
+        int WriteEnergy(std::vector<std::string> names);
     private:
         int write_species();
         int dump_script(std::string const&);

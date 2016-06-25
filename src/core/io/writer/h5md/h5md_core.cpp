@@ -41,7 +41,8 @@ File::File(std::string const& filename, std::string const& python_script_path)
     group_parameters_vmd_structure = new h5xx::group(*group_parameters, "vmd_structure");
     group_parameters_files = new h5xx::group(*group_parameters, "files");
     // Write the python script to the H5MD file
-    File::dump_script(python_script_path);
+    // TODO: This method does not work yet.
+    //File::dump_script(python_script_path);
 }
 
 
@@ -59,39 +60,57 @@ File::~File()
     delete group_parameters;
     delete group_parameters_vmd_structure;
     delete group_parameters_files;
+    this.file.close();
 }
+
 
 // Method to write particle positions
-int File::WritePositions(std::vector<int>)
+int File::WritePositions(std::vector<int> ids)
 {
 }
 
+
 // Method to write particle velocities
-int File::WriteVelocities(std::vector<int>)
+int File::WriteVelocities(std::vector<int> ids)
 {
 }
-//int H5mdCore::dump_script(std::string const& python_script_path)
-//{
-//    // String vector for storing the python script
-//    std::vector<std::string> script_string_vector;
-//    // File stream for the python script
-//    std::fstream python_file;
-//    // String to temporarily store the current line of the python script
-//    std::string line;
-//    // Open the file
-//    python_file.open(python_script_path, std::fstream::in);
-//    if (python_file.is_open())
-//    {
-//        while (std::getline(python_file, line))
-//        {
-//            std::cout << line << std::endl;
-//            script_string_vector.push_back(line);
-//        }
-//        python_file.close();
-//    }
-//    // Create dataset for the dump
-//    // TODO: Make this running, currently the h5xx::create_dataset method wants fundamental types in the array
-//    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_vector)
-//}
+
+
+// Method to write particle velocities
+int File::WriteForces(std::vector<int> ids)
+{
+}
+
+
+// Method to write energy of the system
+int File::WriteEnergy(std::vector<std::string> names{"total", "nonbonded", "bonded"})
+{
+}
+
+/**
+int H5mdCore::dump_script(std::string const& python_script_path)
+{
+    // String vector for storing the python script
+    std::vector<std::string> script_string_vector;
+    // File stream for the python script
+    std::fstream python_file;
+    // String to temporarily store the current line of the python script
+    std::string line;
+    // Open the file
+    python_file.open(python_script_path, std::fstream::in);
+    if (python_file.is_open())
+    {
+        while (std::getline(python_file, line))
+        {
+            std::cout << line << std::endl;
+            script_string_vector.push_back(line);
+        }
+        python_file.close();
+    }
+    // Create dataset for the dump
+    // TODO: Make this running, currently the h5xx::create_dataset method wants fundamental types in the array
+    dataset_parameters_files_script = h5xx::create_dataset(*file, "parameters/files/script", script_string_vector)
+}
+*/
 } // namespace h5md
 } // namespace writer
