@@ -171,9 +171,9 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
   /* calculate the second derivative of the quaternion */
   
 #ifdef ROTATIONAL_INERTIA
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0]/p->p.rinertia[0];
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1]/p->p.rinertia[1];
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2]/p->p.rinertia[2];
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]*p->p.rinertia[1]-I[2]*p->p.rinertia[2]))/I[0]/p->p.rinertia[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]*p->p.rinertia[2]-I[0]*p->p.rinertia[0]))/I[1]/p->p.rinertia[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]*p->p.rinertia[0]-I[1]*p->p.rinertia[1]))/I[2]/p->p.rinertia[2];
 #else
   Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
@@ -367,9 +367,9 @@ void convert_torques_propagate_omega()
         double Wd[3];
 
 #ifdef ROTATIONAL_INERTIA
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0]/p[i].p.rinertia[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]/p[i].p.rinertia[1]; 
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2]/p[i].p.rinertia[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]*p[i].p.rinertia[1]-I[2]*p[i].p.rinertia[2]))/I[0]/p[i].p.rinertia[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]*p[i].p.rinertia[2]-I[0]*p[i].p.rinertia[0]))/I[1]/p[i].p.rinertia[1];
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]*p[i].p.rinertia[0]-I[1]*p[i].p.rinertia[1]))/I[2]/p[i].p.rinertia[2];
 #else
         Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
         Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
