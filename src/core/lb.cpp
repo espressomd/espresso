@@ -29,6 +29,7 @@
 
 #include <mpi.h>
 #include <cstdio>
+#include <iostream>
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -751,7 +752,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
 }
 
 
-int lb_lbfluid_print_vtk_velocity(char* filename) {
+int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vector<int> bb2) {
     FILE* fp = fopen(filename, "w");
 
     if(fp == NULL)
@@ -759,62 +760,79 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
         return 1;
     }
 
+    std::vector<int> bb_low;
+    std::vector<int> bb_high;
+
+    for(std::vector<int>::iterator val1 = bb1.begin(), val2 = bb2.begin(); val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2)
+    {
+        if(*val1 == -1 || *val2 == -1)
+        {
+            bb_low = {0, 0, 0};
+            if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+            bb_high = {lbpar_gpu.dim_x-1, lbpar_gpu.dim_y-1, lbpar_gpu.dim_z-1};
+#endif // LB_GPU
+            } else {
+#ifdef LB
+            bb_high = {lblattice.global_grid[0]-1, lblattice.global_grid[1]-1, lblattice.global_grid[2]-1};
+#endif // LB
+            }
+            break;
+        }
+
+        bb_low.push_back(std::min(*val1, *val2));
+        bb_high.push_back(std::max(*val1, *val2));
+    }
+
+    int pos[3];
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
         host_values = (LB_rho_v_pi_gpu*)Utils::malloc(size_of_values);
         lb_get_values_GPU(host_values);
         fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
-                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
-                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
                 "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-                lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
-                lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5,
+                bb_high[0]-bb_low[0]+1, bb_high[1]-bb_low[1]+1, bb_high[2]-bb_low[2]+1,
+                (bb_low[0]+0.5)*lbpar_gpu.agrid, (bb_low[1]+0.5)*lbpar_gpu.agrid, (bb_low[2]+0.5)*lbpar_gpu.agrid,
                 lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
-                lbpar_gpu.number_of_nodes);
-        for(int j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
-            /** print of the calculated phys values */
-            fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
-        }
+                (bb_high[0]-bb_low[0]+1) * (bb_high[1]-bb_low[1]+1) * (bb_high[2]-bb_low[2]+1) );
+        for(pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
+            for(pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
+                for(pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++)
+                {
+                    int j = lbpar_gpu.dim_y*lbpar_gpu.dim_x * pos[2] + lbpar_gpu.dim_x * pos[1] + pos[0];
+                    fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+                }
         free(host_values);
 #endif // LB_GPU
     } else {
 #ifdef LB
-        int pos[3];
         double u[3];
-        int gridsize[3];
-
-        gridsize[0] = box_l[0] / lbpar.agrid;
-        gridsize[1] = box_l[1] / lbpar.agrid;
-        gridsize[2] = box_l[2] / lbpar.agrid;
 
         fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
                 "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
                 "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
                 "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-                gridsize[0], gridsize[1], gridsize[2],
-                lblattice.agrid[0]*0.5, lblattice.agrid[1]*0.5, lblattice.agrid[2]*0.5,
+                bb_high[0]-bb_low[0]+1, bb_high[1]-bb_low[1]+1, bb_high[2]-bb_low[2]+1,
+                (bb_low[0]+0.5)*lblattice.agrid[0], (bb_low[1]+0.5)*lblattice.agrid[1], (bb_low[2]+0.5)*lblattice.agrid[2],
                 lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
-                gridsize[0]*gridsize[1]*gridsize[2]);
+                (bb_high[0]-bb_low[0]+1) * (bb_high[1]-bb_low[1]+1) * (bb_high[2]-bb_low[2]+1) );
 
-        for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-        {
-            for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-            {
-                for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+        for(pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
+            for(pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
+                for(pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++)
                 {
                     lb_lbnode_get_u(pos, u);
                     fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
                 }
-            }
-        }
 #endif // LB
     }
     fclose(fp);
 
 	return 0;
 }
-
 
 int lb_lbfluid_print_boundary(char* filename) {
     FILE* fp = fopen(filename, "w");
@@ -1818,8 +1836,10 @@ int lb_sanity_checks() {
 
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
-    lbfluid[0]    = (double**) Utils::malloc(2*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[0]    = (double**) Utils::malloc(lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*) Utils::malloc(lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1]    = (double**) Utils::malloc(lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1][0] = (double*) Utils::malloc(lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 }
 
 
@@ -1829,10 +1849,10 @@ static void lb_realloc_fluid() {
 
     LB_TRACE(printf("reallocating fluid\n"));
 
-    lbfluid[0]    = (double**) Utils::realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
-    lbfluid[1]    = (double **)lbfluid[0] + lbmodel.n_veloc;
-    lbfluid[1][0] = (double *)lbfluid[0][0] + lblattice.halo_grid_volume*lbmodel.n_veloc;
+    lbfluid[0]    = (double**) Utils::realloc(lbfluid[0],lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1]    = (double**) Utils::realloc(lbfluid[1],lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*) Utils::realloc(lbfluid[0][0],lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1][0] = (double*) Utils::realloc(lbfluid[1][0],lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 
     for (i=0; i<lbmodel.n_veloc; ++i) {
         lbfluid[0][i] = lbfluid[0][0] + i*lblattice.halo_grid_volume;
@@ -2075,6 +2095,8 @@ void lb_init() {
 void lb_release_fluid() {
     free(lbfluid[0][0]);
     free(lbfluid[0]);
+    free(lbfluid[1][0]);
+    free(lbfluid[1]);
     free(lbfields);
 }
 

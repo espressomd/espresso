@@ -2289,5 +2289,9 @@ bool particle_exists(int part) {
     if (particle_node[part]!=-1) 
         return true;
    return false;
-} 
+}
+
+#ifndef MASS
+constexpr double ParticleProperties::mass;
+#endif
 

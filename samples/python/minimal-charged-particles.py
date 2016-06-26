@@ -18,7 +18,6 @@
 #
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 import numpy
@@ -87,11 +86,11 @@ for i in range(n_part / 2 - 1):
 lj_cap = 20
 system.non_bonded_inter.set_force_cap(lj_cap)
 i = 0
-act_min_dist = analyze.mindist(system)
+act_min_dist = system.analysis.mindist()
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(system)
+    act_min_dist = system.analysis.mindist()
     i += 1
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
@@ -112,5 +111,5 @@ system.actors.add(p3m)
 for i in range(0, int_n_times):
     integrate.integrate(int_steps)
 
-    energies = analyze.energy(system=system)
+    energies = system.analysis.energy()
     print energies

@@ -353,6 +353,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
 
 int mmm1d_tune(char **log)
 {
+  if (MMM1D_sanity_checks()) return ES_ERROR;
   char buffer[32 + 2*ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */

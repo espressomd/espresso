@@ -35,7 +35,7 @@ NPT
 GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
-ENGINE                          implies ROTATION
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
 
 /* Rotation */
 ROTATION
@@ -100,6 +100,7 @@ SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
+BD
 SD 		      	        requires CUDA
 SD 		      	        requires ARPACK
 SD				implies BD
@@ -155,6 +156,7 @@ IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
+SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */

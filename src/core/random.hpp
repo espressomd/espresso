@@ -28,6 +28,34 @@
 */
 
 #include <random>
+#include <string>
+#include <vector>
+
+namespace Random {
+extern std::mt19937 generator;
+extern std::normal_distribution<double> normal_distribution;
+extern std::uniform_real_distribution<double> uniform_real_distribution;
+
+/**
+ * @brief Set seed of random number generators on each node.
+ *
+ * @param seeds A vector of seeds, must be at least n_nodes long.
+ **/
+void mpi_random_seed(int cnt, std::vector<int> &seeds);
+
+/**
+ * @brief Gets a string representation of the state of all
+ *        the nodes.
+ */
+std::string mpi_random_get_stat();
+
+/**
+ * @brief Set the seeds on all the node to the state representet
+ *        by the string.
+ * The string representation must be one that was returned by
+ * mpi_random_get_stat.
+ */
+void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /**
  * @bief Initialize PRNG with MPI rank as seed.
@@ -35,22 +63,21 @@
 void init_random(void);
 
 /**
- * @brief Initialize PRNG with user-profiveded seed.
+ * @brief Initialize PRNG with user-provided seed.
  *
  * @param seed seed
  */
 void init_random_seed(int seed);
 
-extern std::mt19937 generator;
-extern std::normal_distribution<double> normal_distribution;
-extern std::uniform_real_distribution<double> uniform_real_distribution;
+} /* Random */
 
 /**
- * @brief draws a random real number from the uniform distribution in the range [0,1)
+ * @brief Draws a random real number from the uniform distribution in the range [0,1)
 */
 
 inline double d_random() {
-	return uniform_real_distribution(generator); 
+  using namespace Random;
+  return uniform_real_distribution(generator); 
 }
 
 /**
@@ -59,15 +86,16 @@ inline double d_random() {
  * @param maxint range.
  */
 inline int i_random(int maxint){
-
-	std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
-	return uniform_int_dist(generator);
+  using namespace Random;
+  std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
+  return uniform_int_dist(generator);
 }
 
 /**
  * @brief draws a random number from the normal distribution with mean 0 and variance 1.
  */
 inline double gaussian_random(void){
+  using namespace Random;
   return normal_distribution(generator);
 }
 
@@ -75,12 +103,13 @@ inline double gaussian_random(void){
 /**
  * @brief Generator for cutoff Gaussian random numbers.
  *
- *Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
+ * Generates a Gaussian random number and generates a number between -2 sigma and 2 sigma in the form of a Gaussian with standard deviation sigma=1.118591404 resulting in 
  * an actual standard deviation of 1.
  *
  * @return Gaussian random number.
  */
 inline double gaussian_random_cut(void){
+  using namespace Random;
   const double random_number=1.042267973*normal_distribution(generator);
   
   if ( fabs(random_number) > 2*1.042267973 ) {

@@ -77,13 +77,13 @@ setmd skin 1.0
 setmd time_step 0.01
 
 set n 100
-set mass [expr rand() *20]
-set j1 [expr rand() * 20]
-set j2 [expr rand() * 20]
-set j3 [expr rand() * 20]
+set mass [expr [t_random] *20]
+set j1 [expr [t_random] * 20]
+set j2 [expr [t_random] * 20]
+set j3 [expr [t_random] * 20]
 
 for {set i 0} {$i<$n} {incr i} {
-  part $i pos [expr rand() *$box] [expr rand() * $box] [expr rand() * $box] rinertia $j1 $j2 $j3 mass $mass
+  part $i pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
 }
 
 set vx2 0.

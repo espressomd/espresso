@@ -5,6 +5,7 @@ add_dependencies(ImmersedBoundary EspressoConfig)
 if(CUDA)
   file(GLOB ImmersedBoundaryCuda_SRC *.cu)
   cuda_add_library(ImmersedBoundaryCuda SHARED ${ImmersedBoundaryCuda_SRC})
+  add_dependencies(ImmersedBoundaryCuda EspressoConfig)
 
   set_target_properties(ImmersedBoundaryCuda PROPERTIES MACOSX_RPATH TRUE)
   CUDA_ADD_CUFFT_TO_TARGET(ImmersedBoundaryCuda)

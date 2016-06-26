@@ -99,6 +99,43 @@ returns the wall runtime in seconds.
   \variant{1} minimize_energy \var{f_\mathrm{max}} \var{steps} \var{gamma} \var{maxdisplacement}
 \end{essyntax}
 
+\begin{pysyntax}
+  \object{
+    espressomd.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    espressomd.minimize_energy
+  }{
+    minimize
+  }{}
+  \object{
+    System.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    System.minimize_energy
+  }{
+    minimize
+  }{}
+\end{pysyntax}
+
+In Python the minimize\_energy functionality can be imported from \texttt{espressomd}
+as class \texttt{MinimizeEnergy}. Alternatively it is already part of the System
+class object and can be called from there (second variant). 
+
 This command runs a steepest descent energy minimization on the system.
 Please note that the behaviour is undefined if either a thermostat, Maggs electrostatics or Lattice-Boltzmann is activated.
 It runs a simple steepest descent algorithm:
