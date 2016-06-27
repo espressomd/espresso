@@ -1,5 +1,13 @@
 import numpy
+cimport numpy
 import os
+from libcpp cimport bool
+from espressomd.particle_data import ParticleHandle
+from particle_data cimport *
+from espressomd.interactions cimport *
+from espressomd._system cimport *
+from libcpp.vector cimport vector
+
 if not "ETS_TOOLKIT" in os.environ:
 	os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
@@ -17,12 +25,28 @@ output=vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-class mayavi_live:
+cdef class mayavi_live:
 	"""This class provides live visualization using Enthought Mayavi.
 	Use the update method to push your current simulation state after
 	integrating. If you run your integrate loop in a separate thread, 
 	you can call run_gui_event_loop in your main thread to be able to
 	interact with the GUI."""
+
+	cdef object system
+	cdef object points 
+	cdef object box 
+	cdef object arrows
+	cdef object data 
+	cdef int last_N 
+	cdef int last_Nbonds 
+	cdef double last_boxl[3] 
+	cdef bool running 
+	cdef double last_T 
+
+	cdef object gui 
+	cdef object timers 
+
+
 	def __init__(self, system):
 		"""Constructor.
 		**Arguments**
@@ -45,7 +69,7 @@ class mayavi_live:
 		self.last_Nbonds = 1
 		self.last_boxl = [0,0,0]
 		self.running = False
-		self.last_T = None
+		self.last_T = -1
 
 		# GUI window
 		self.gui = GUI()
@@ -91,37 +115,58 @@ class mayavi_live:
 			return
 		self.last_T = self.system.time
 		
-		N = self.system.n_part
-		coords = numpy.empty((N,3))
+		cdef int N = self.system.n_part
+		coords = numpy.zeros((N,3))
 		types = numpy.empty(N, dtype=int)
 		inter = NonBondedInteractions()
 		radii = numpy.empty(N)
-		bonds = []
+		cdef int i=0,j=0,k=0 
+		cdef int t 
+		cdef int partner
+		cdef particle p
+		cdef ia_parameters* ia
+		cdef vector[int] bonds
 
-		j = 0
+    # Using (additional) untyped variables and python constructs in the loop 
+    # will slow it down considerably. 
 		for i in range(self.system.max_part+1):
-			if not self.system.part.exists(i):
+			if not particle_exists(i):
 				continue
-			coords[j,:] = self.system.part[i].pos
-			t = self.system.part[i].type
+			get_particle_data(i,&p)
+			coords[j,:] = p.r.p
+			t = p.p.type
 			types[j] = t +1
-			radii[j] = inter[t,t].lennard_jones.get_params()['sigma'] * 0.5
+			radii[j] =get_ia_param(t,t).LJ_sig *0.5
 
-			bs = self.system.part[i].bonds
-			for b in bs:
-				t = b[0]
-				for p in b[1:]:
-					bonds.append((i,p,t))
+			# ITerate over bonds
+			k=0		
+			while k<p.bl.n:
+				# Bond type
+				t= p.bl.e[k]
+				k+=1
+				# Iterate over bond partners and store each connection
+				for l in range(bonded_ia_params[t].num):
+					bonds.push_back(i)
+					bonds.push_back(p.bl.e[k])
+					k+=1
 			j += 1
 		assert j == self.system.n_part
-		Nbonds = len(bonds)
-		bond_coords = numpy.empty((Nbonds,7))
+		cdef int Nbonds = bonds.size()/2
+		
+		bond_coords = numpy.zeros((Nbonds,7))
 
+		cdef int n
+		cdef particle p1,p2
+		cdef double bond_vec[3]
 		for n in range(Nbonds):
-			i,j,t = bonds[n]
-			bond_coords[n,:3] = self.system.part[i].pos
-			bond_coords[n,3:6] = self.system.part[j].pos - self.system.part[i].pos
-			bond_coords[n,6] = 0 # numeric bond IDs have been removed
+			i =bonds[2*n]
+			j =bonds[2*n+1]
+			get_particle_data(i,&p1)
+			get_particle_data(j,&p2)
+			bond_coords[n,:3] = p1.r.p 
+			get_mi_vector(bond_vec,p2.r.p,p1.r.p)
+			bond_coords[n,3:6] = bond_vec
+# Not needed			bond_coords[n,6] = 0 # numeric bond IDs have been removed
 
 		boxl = self.system.box_l
 
@@ -136,6 +181,7 @@ class mayavi_live:
 		self.last_N = N
 		self.last_Nbonds = Nbonds
 		self.last_boxl = boxl
+
 
 		# when drawing from the main thread, the timer never fires, but we can safely call draw ourselves
 		if isinstance(threading.current_thread(), threading._MainThread):
