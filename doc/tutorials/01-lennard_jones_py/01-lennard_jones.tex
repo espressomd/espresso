@@ -747,6 +747,40 @@ rdf_fp.close()
 \end{center}
 \end{figure}
 
+\section{Binary Lennard Jones liquid}
+In \es{} it is possible to simulate particles of various sizes, meaning different
+values of the Lennard Jones paramter $\sigma$. For this purpose there are different mixing
+rules that define how particles of different size and different ``affinity'', Lennard
+Jones $\epsilon$ interact. The most commonly used mixing rules are the
+Lorentz-Berthelot rules:
+\begin{align}
+	\sigma_{ij}		& = \frac{\sigma_{ii} + \sigma_{jj}}{2} \\
+	\epsilon_{ij}	& = \sqrt{\epsilon_{ii} \epsilon_{jj}} \,.
+\end{align}
+Here $\sigma_{ii}$ and $\epsilon_{ii}$ are the Lennard Jones paramter for the
+interactions between particles of type $i$ with themselves and $\sigma_{ij}$ and
+$\epsilon_{ij}$ the interaction parameters between those two species.
+
+\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
+    \begin{task}
+		Edit the \texttt{lj\_liquid.py} such that it simulates a binary liquid with
+		particles of different sizes (Lennard Jones $\sigma$s). 
+		Beware that every pairwise interaction needs to be declared!
+    \end{task}
+  \end{minipage}}\vspace{1cm}
+\paragraph{Notes} 
+\begin{itemize}
+	\item Beware that the system is quite dense already if you choose to use very big
+		particles for the second species, you can also vary the density.
+	\item When setting up the particles be sure about the desired composition of the
+		liquid (a good starting point might be a 50/50 mixture). 
+	\item Now you can also look at the radial distrubtion function between particles
+		of different species. Make sure you set up the files and analysis routines.
+	\item Of course you can also vary the $\epsilon$ parameter between both species. 
+	\item Note also, that there are many differnt mixing rules for the Lennard Jones
+		paramters, you can also choose your own. 
+\end{itemize}
+
 \newpage
 
 %The velocity autocorrelation function (VACF) is an averaged time dependent correlation function of all particles' 
