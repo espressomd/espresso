@@ -64,8 +64,16 @@
       `mode':\arg{``pusher''|``puller''},
       `dipole_length':\arg{float},
       `rotational_friction':\arg{float}\}}
+    delete()
   }
 \end{pysyntax}
+\begin{pysyntax}
+espressomd.System().part.clear()
+\end{pysyntax}
+\begin{pysyntax}
+len(Espressomd.System().part)
+\end{pysyntax}
+
 \begin{essyntax}
   part
   \var{pid}

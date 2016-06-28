@@ -50,7 +50,7 @@ cdef extern from "particle_data.hpp":
         double v[3]
 
     ctypedef struct particle_local "ParticleLocal":
-        pass
+        int i[3]
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -224,3 +224,6 @@ cdef class ParticleSlice:
     cdef particle particle_data
     cdef int update_particle_data(self,id) except -1
     cdef public id_selection
+
+cdef extern from "grid.hpp":
+    cdef inline void fold_position(double*, int*)
