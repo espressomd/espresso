@@ -60,13 +60,50 @@ File::~File()
     delete group_parameters;
     delete group_parameters_vmd_structure;
     delete group_parameters_files;
-    this.file.close();
+    this->file->close();
 }
 
 
 // Method to write particle positions
 int File::WritePositions(std::vector<int> ids)
 {
+    // Get number of local particles
+    int n_local_part = cells_get_n_particles();
+    // Keep static buffers in order not having to allocate them on every
+    // function call
+    particle_data_3d::extent_gen extent_particle_data_3d;
+    particle_data_3d pos(extent_particle_data_3d[1][1]);
+    particle_data_3d vel(extent_particle_data_3d[1][1]);
+    std::vector<int> id;
+    std::vector<int> type;
+    Cell *local_cell;
+
+    // Realloc static buffers if necessary
+    if (n_local_part > pos.size()) pos.resize(extent_particle_data_3d[n_local_part][3]);
+    if (n_local_part > vel.size()) vel.resize(extent_particle_data_3d[n_local_part][3]);
+    if (n_local_part > id.size()) id.resize(n_local_part);
+    if (n_local_part > type.size()) type.resize(n_local_part);
+
+    // Prepare data for writing
+    // loop over all local cells 
+    int particle_index = 0;
+    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    {
+        local_cell = local_cells.cell[cell_id];
+        for (int local_part_id = 0; local_part_id < local_cell->n; ++local_part_id)
+        {
+            auto current_particle = local_cell->part[local_part_id];
+            id[particle_index] = current_particle.p.identity;
+            type[particle_index] = current_particle.p.type;
+            pos[particle_index][0] = current_particle.r.p[0];
+            pos[particle_index][1] = current_particle.r.p[1];
+            pos[particle_index][2] = current_particle.r.p[2];
+            vel[particle_index][0] = current_particle.m.v[0];
+            vel[particle_index][1] = current_particle.m.v[1];
+            vel[particle_index][2] = current_particle.m.v[2];
+        }
+        particle_index++;
+    }
 }
 
 
@@ -83,9 +120,9 @@ int File::WriteForces(std::vector<int> ids)
 
 
 // Method to write energy of the system
-int File::WriteEnergy(std::vector<std::string> names{"total", "nonbonded", "bonded"})
-{
-}
+//int File::WriteEnergy(std::vector<std::string> names = {"total", "nonbonded", "bonded"})
+//{
+//}
 
 /**
 int H5mdCore::dump_script(std::string const& python_script_path)

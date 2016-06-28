@@ -25,11 +25,14 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "cells.hpp"
 #include <h5xx/h5xx.hpp>
 
 namespace writer {
 namespace h5md {
 
+typedef boost::multi_array<double,2> particle_data_3d;
+typedef particle_data_3d::index particle_boost_index;
 
 /**
  * Class for writing H5MD files.
