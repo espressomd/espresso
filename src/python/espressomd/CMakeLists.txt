@@ -32,6 +32,7 @@ add_custom_command(OUTPUT gen_pxiconfig.cpp
 include_directories(${CMAKE_BINARY_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
+include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 add_dependencies(gen_pxiconfig EspressoConfig)

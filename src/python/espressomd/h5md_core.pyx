@@ -4,3 +4,5 @@ cdef class PyH5mdCore:
         self.c_h5md = new File(filename, path_to_pythonscript)
     def __dealloc__(self):
         del self.c_h5md
+    def write_positions_sample(self):
+        self.c_h5md.WritePositions()

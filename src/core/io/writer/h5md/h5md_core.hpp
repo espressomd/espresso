@@ -25,6 +25,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <mpi.h>
 #include "cells.hpp"
 #include <h5xx/h5xx.hpp>
 
@@ -54,19 +55,18 @@ class File
         ~File();
         /**
          * Method to write the positions of the particles.
-         * @param ids Particle ids for which positions should be written.
          */
-        int WritePositions(std::vector<int> ids);
+        int WritePositions();
         /**
          * Method to write the velocities of the particles.
          * @see WritePositions()
          */
-        int WriteVelocities(std::vector<int> ids);
+        int WriteVelocities();
         /**
          * Method to write the forces of the particles
          * @see WritePositions()
          */
-        int WriteForces(std::vector<int> ids);
+        int WriteForces();
         /**
          * Method to write the energy contributions to the H5MD file.
          * @param names An optional vector of strings can be given to decide which
@@ -76,12 +76,15 @@ class File
     private:
         int write_species();
         int dump_script(std::string const&);
-        h5xx::file* file;
+        int max_n_part;
+        h5xx::file file;
         h5xx::group* group_particles;
         h5xx::group* group_particles_atoms;
         h5xx::group* group_particles_atoms_box;
         h5xx::group* group_particles_atoms_mass;
         h5xx::group* group_particles_atoms_position;
+        h5xx::group* group_particles_atoms_species;
+        h5xx::group* group_particles_atoms_image;
         h5xx::group* group_particles_atoms_force;
         h5xx::group* group_parameters;
         h5xx::group* group_parameters_vmd_structure;
