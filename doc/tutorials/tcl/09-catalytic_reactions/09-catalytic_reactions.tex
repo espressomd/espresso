@@ -12,7 +12,7 @@
   xleftmargin = 1em
 }
 \lstdefinelanguage{espresso}[]{TCL}{%
-  morekeywords={setmd,thermostat,constraint,inter,part,integrate,lbfluid,lbboundary,writevtk,reaction},
+  morekeywords={part,reaction,minimize_energy},
   deletekeywords={range}
 }
 \lstnewenvironment{espresso}[1][]%
@@ -25,8 +25,16 @@
 \newcommand\code{\lstinline}
 \newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
 \newcommand\codees{\lstinline[language=espresso]}
+\renewcommand\thefootnote{\fnsymbol{footnote}}
 \begin{document}
 \title{Catalytic Reactions Tutorial}
+\author{Henri Menke}
+\email[]{\texttt{henri@icp.uni-stuttgart.de}}
+\affiliation{Institute for Computational Physics,
+  Universit\"at Stuttgart,
+  Allmandring 3,
+  D-70569 Stuttgart,
+  Germany}
 \author{Joost de Graaf}
 \email[]{\texttt{jgraaf@icp.uni-stuttgart.de}}
 \affiliation{Institute for Computational Physics,
@@ -38,17 +46,15 @@
   University of Edinburgh,
   Scotland, Edinburgh EH9 3JL,
   United Kingdom}
-\author{Henri Menke}
-\email[]{\texttt{henri@icp.uni-stuttgart.de}}
-\affiliation{Institute for Computational Physics,
-  Universit\"at Stuttgart,
-  Allmandring 3,
-  D-70569 Stuttgart,
-  Germany}
 \date{\today}
 
 \begin{abstract}
-  Catalytic reactions
+  In this tutorial we explore how to simulation catalytic reactions
+  using \es.  We discuss the reaction scheme implemented in \es\ and
+  use one of them to study the enhancement of translational diffusion
+  of a colloid.  This should give a basic introduction on how to setup
+  simulations involving catalytic reaction in \es\ and ideally enable
+  you to conduct your own numerical experiments.
 \end{abstract}
 
 \maketitle
@@ -66,22 +72,7 @@ We may write a general reaction as
   \ch{!(reactants)(R) <=> !(products)(P)}
 \end{equation}
 where \ch{R} are the reactants and \ch{P} are the products.  The
-double headed arrow suggests that this reaction is in an equilibrium,
-i.e.~the rate of the forward reaction is the same as the rate of the
-back reaction and can also be zero.  A catalyzer shifts the free
-energy landscape in favour of one of the constituents \ch{R} or
-\ch{P}.  We choose \ch{P}, since it stands for the products and we
-want to enhance the forward reaction.
-\begin{equation}
-  \ch{!(reactants)(R) <=>>[ !(catalyzers)(C) ] !(products)(P)} \;.
-\end{equation}
-If the back reaction rate is tiny it eventually becomes negligible and
-the reaction only occurs in one direction.
-\begin{equation}
-  \label{eq:cat}
-  \ch{!(reactants)(R) ->[ !(catalyzers)(C) ] !(products)(P)} \;.
-\end{equation}
-
+double headed arrow suggests that this reaction is in an equilibrium.
 The equilibrium reation~\eqref{eq:equi} can be described by the
 equilbrium reaction constant
 \begin{equation}
@@ -101,18 +92,44 @@ differential equations
     \label{eq:diff-equi-b}
     \frac{d[\ch{P}]}{dt} &= - k_{\text{eq},-}[\ch{P}] + k_{\text{eq},+}[\ch{R}]  \;.
   \end{align}
-  In the case of excessive catalysis~\eqref{eq:cat} the back reaction
-  rate $k_{\text{eq},-}$ can be set to zero and the forward reaction
-  rate is enhanced $k_{\text{eq},+} \to k_{\text{ct}}$.  The rate
-  equations then coalesce to
-  \begin{equation}
-    \label{eq:diff-cat}
-    -\frac{d[\ch{R}]}{dt} = \frac{d[\ch{P}]}{dt} = k_{\text{ct}}[\ch{R}] \;.
-  \end{equation}
 \end{subequations}
 
-The reaction move is a stochastic process and takes place with a
-certain probability, depending on the reaction rate
+A catalyzer shifts the free energy landscape in favour of one of the
+constituents \ch{R} or \ch{P}.  We choose \ch{P}, since it stands for
+the products and we want to enhance the forward reaction.
+\begin{equation}
+  \ch{!(reactants)(R) <=>>[ !(catalyzers)(C) ] !(products)(P)} \;.
+\end{equation}
+If the back reaction rate is tiny it eventually becomes negligible and
+the reaction only occurs in one direction.
+\begin{equation}
+  \label{eq:cat}
+  \ch{!(reactants)(R) ->[ !(catalyzers)(C) ] !(products)(P)} \;.
+\end{equation}
+In the case of excessive catalysis~\eqref{eq:cat} the back reaction
+rate $k_{\text{eq},-}$ can be set to zero and the forward reaction
+rate is enhanced $k_{\text{eq},+} \to k_{\text{ct}}$.  The rate
+equations~\eqref{eq:diff} then reduce to
+\begin{equation}
+  \label{eq:diff-cat}
+  -\frac{d[\ch{R}]}{dt} = \frac{d[\ch{P}]}{dt} = k_{\text{ct}}[\ch{R}] \;.
+\end{equation}
+
+What we have discussed so far is a continuum model, as no actual
+particles are involved in the picture, only concentrations.  To
+simulate such a simple catalytic reaction with molecular dynamics we
+need to come up with a minimal model.  Phenomenologically, catalysis
+is triggered by a contact interaction, i.e.~the reactant has to touch
+the catalyzer.  \es{} only has point particles which means that
+contact will happen rarely.  To compensate for this, we define a
+\emph{reaction range} around the catalyzer inside which the conversion
+of a reactant to a product is feasible.  Next we have to think about
+how to implement \eqref{eq:diff-cat} is this picture.  Simply
+integration \eqref{eq:diff-cat} yields an exponential decay as a
+function of time.  The reaction move is a stochastic process and takes
+place with a certain probability, depending on the reaction rate.
+This probability is inversely proportional to the exponential decay.
+We assign
 \begin{equation}
   \label{eq:prob}
   P_{\text{move}} = 1 - \mathrm{e}^{-k\,\Delta t}
@@ -125,10 +142,10 @@ k_{\text{ct}} \}$ and the simulation time step $\Delta t$.
 There are two implementations of the reaction
 scheme~\eqref{eq:diff-equi-a},~\eqref{eq:diff-equi-b},
 and~\eqref{eq:diff-cat}, which we will refer to as \emph{number
-  conserving} and \emph{not number conserving}.  In the following we
+  conserving} and \emph{non-number-conserving}.  In the following we
 will find out what this actually means.
 
-\subsection{Not Number Conserving Scheme}
+\subsection{Non-Number-Conserving Scheme}
 
 In \es\ we assume the equilibrium constants in
 equations~\eqref{eq:diff} to be equal, i.e.~$k_{\text{eq},+} =
@@ -143,49 +160,63 @@ $k_{\text{ct}}$ and can be specified as an input parameter.
 \begin{figure}
   \centering
   \includegraphics{FIGURES/non-number-conserving}
-  \caption{Illustration of the \emph{not number conserving} scheme.
-    One the left and on the right hand side the same simulation is
-    depicted at time steps $t$ and $t+\Delta t$, respectively.  The
-    active reaction leads to a conversion of three particles in this
-    example, two of these in the bulk and one within the reaction
-    range of the catalyzer.  Even though $k_{\text{eq},+} =
-    k_{\text{eq},-} = k_{\text{eq}}$ in \es, we show them seperately
-    to emphasise that one is a forward and one is a back reaction.}
+  \caption{Illustration of the \emph{non-number-conserving} scheme.
+    Within a cut-off radius $r$ of the catalyzer (green), the reactant
+    particles (blue) can be converted into products (red); inert
+    particles (white) are left unaffected by the reactions taking
+    place. The catalytic conversion is indicated using the arrow
+    labeled $k_{\text{ct}}$, which shows the result of a conversion
+    event taking place in one time step $\Delta t$ (from left panel to
+    right panel). Outside of this region a homogeneous equilibrium
+    reaction takes place, that pushes the out-of-equilibrium
+    concentrations produced by the catalyzer back towards
+    equilibrium. This is indicated by the two arrows which cause
+    conversion of products into reactants with $k_{\text{eq},-}$ and
+    reactants into products with $k_{\text{eq},+}$.  Even though
+    $k_{\text{eq},+} = k_{\text{eq},-} = k_{\text{eq}}$ in \es, we
+    show them seperately to emphasise that one is a forward and one is
+    a back reaction.}
   \label{fig:nnc}
 \end{figure}
 
-FIG.~\ref{fig:nnc} shows the reaction scheme explained before
-pictorially.  Within one time step bulk reactions take place with the
-equilibrium constant.  These might occur in both directions.  Within
-the reaction range, determined by $r$, the equilibrium reactions are
-also allowed to take place, but additionally the forward reaction is
-catalysed.  From this we already see, that it does not make sense to
-set $k_{\text{eq}} > k_{\text{ct}}$.  This would basically shadow the
-effect of the catalyzer in contrast to the equilibrium reactions in
-bulk.
+Figure~\ref{fig:nnc} shows the reaction scheme explained before
+pictorially.  Within the reaction range, determined by $r$, the
+equilibrium reactions are also allowed to take place, but additionally
+the forward reaction is catalysed.  Within one time step bulk
+reactions take place with the equilibrium constant.  These might occur
+in both directions and push the the out-of-equilibrium concentrations
+produced by the catalyzer back towards equilibrium.  From this we
+already see, that it does not make sense to set $k_{\text{eq}} >
+k_{\text{ct}}$.  This would basically shadow the effect of the
+catalyzer in contrast to the equilibrium reactions in bulk.
 
-By looking at the sketch in FIG.~\ref{fig:nnc} and carefully following
-the discussion of the scheme above, we may now have understood why the
-scheme is called \emph{not number conserving}.  The problem is, that
-forward and backward reaction are not balanced.  Even though the
-overall number of particles is conserved the number of particles per
-species is not.  This is evident from the sketch, where we have two
-reactants and one product before the reaction and one reactant and two
-products after the reaction.  This issue can be rectified in the
-\emph{number conserving} scheme.
+By looking at the sketch in figure~\ref{fig:nnc} and carefully
+following the discussion of the scheme above, we may now have
+understood why the scheme is called \emph{non-number-conserving}.  The
+problem is, that forward and backward reaction are not balanced.  Even
+though the overall number of particles is conserved the number of
+particles per species is not.  This is especially peculiar, if the any
+of the species swapped around are charged, because the electrostatic
+algorithms break down for non-neutral boxes.  Not only that
+``teleporting'' charged particles disturbes the long-range
+interactions, but charge conservation is violated as well.  This is
+evident from the sketch, where we have two reactants and one product
+before the reaction and one reactant and two products after the
+reaction.  This issue can be rectified in the \emph{number-conserving}
+scheme.
 
-\subsection{Number Conserving Scheme}
+\subsection{Number-Conserving Scheme}
 
-The fix to the issue of lacking number conservation discussed above is
-simple.  We disallow bulk reactions of single particles\footnote{We
-  noticed that we set the equilibrium reaction rate $k_{\text{eq}} =
-  0$ in most cases anyway.} and allow a reaction inside the reaction
-range only in rectant-product pairs.  Simply exchanging the particles
-in the pair would not yield a large effect, which is why we introduce
-an additional notion of symmetry breaking.  Consider a Janus particles
-which is coated with \ch{Pt} on one hemisphere and with \ch{Au} on the
-other hemisphere.  Both surfaces enhance a reaction,
-here\cite{Gibbs_10,Wheat_10}
+The aforementioned number conservation issues can be addressed in the
+following way.  We disallow bulk reactions of single
+particles\footnote{We noticed that we set the equilibrium reaction
+  rate $k_{\text{eq}} = 0$ in most cases anyway.} and allow a reaction
+inside the reaction range involving only rectant-product pairs.
+Simply exchanging the particles in the pair would not yield a large
+effect, which is why we introduce an additional notion of symmetry
+breaking.  Consider a Janus particles which is coated with \ch{Pt} on
+one hemisphere and with \ch{Au} on the other hemisphere.  Both
+surfaces enhance a reaction, here\cite{Gibbs_10,Wheat_10}
 \begin{align}
   \label{eq:H2O2}
   \ch{
@@ -193,7 +224,7 @@ here\cite{Gibbs_10,Wheat_10}
     2 H^+ + 2 e^- + H2O2 &->[ Au ] 2 H2O
   }
 \end{align}
-This reaction is depicted in FIG.~\ref{fig:janus}.  The large arrow in
+This reaction is depicted in figure~\ref{fig:janus}.  The large arrow in
 the sketch points in the direction of movement induced by the
 reaction.  We refer to upper and lower hemisphere or half-space in the
 following, where upper and lower are to be seen with respect to the
@@ -213,13 +244,13 @@ orientation of the particle.  In the present case one might choose
 For simplicity in the simulation we abstract away all the reaction
 mechanism including the electron transport through the Janus particle
 and the proton transport around it.  We end up with a simple scheme,
-depicted in FIG.~\ref{fig:nc}.
+depicted in figure~\ref{fig:nc}.
 
 As already explained, reactions can only take place for
 reactant-product pairs.  The conversion is such that a reactant is
 converted to a product and a product is converted to a reactant.  This
 obviously ensures conservation of the particle number of each type,
-respectively.  To model a Janus particle as in FIG.~\ref{fig:janus} we
+respectively.  To model a Janus particle as in figure~\ref{fig:janus} we
 allow the exchange move to only take place for a chosen configuration.
 For the pair to be eligible for the reaction move, the following
 conditions have to be met:
@@ -231,31 +262,37 @@ conditions have to be met:
 \item The reactant has to reside in the lower half-space of the
   reaction range.
 \end{enumerate}
-This is again described pictorially in FIG.~\ref{fig:nc}.
+This is described pictorially in figure~\ref{fig:nc}.
 
 \begin{figure}
   \centering
   \includegraphics{FIGURES/number-conserving}
-  \caption{Illustration of the \emph{number conserving} scheme.  One
-    the left and on the right hand side the same simulation is
-    depicted at time steps $t$ and $t+\Delta t$, respectively.  The
-    active reaction leads to a conversion of one reactant-product pair
-    of particles in this example.  We can see, that only a well
-    positioned pair is converted.  The second reactant-product pair
-    within the reaction range is not viable for conversion.}
+  \caption{Illustration of the \emph{number-conserving} scheme.  The
+    cut-off range of $r$ around the catalzer (green) is subdivided
+    into two half-spaces in analogy to figure~\ref{fig:janus}.  A
+    reactant-product pair (blue and red connected by dotted line) can
+    be converted by swapping them around if the product (red) resided
+    in the upper half-space (silver background) and the corresponding
+    reactant (blue) resides in the lower half-space (gold background).
+    The catalytic reaction leads to a conversion of one
+    reactant-product pair of particles in this example, denoted by the
+    arrows annotated with $k_{\text{ct}}$.  We can see, that only a
+    well-positioned pair is converted.  The second reactant-product
+    pair within the reaction range is not viable for conversion.
+    Additionally, there are no bulk reactions.}
   \label{fig:nc}
 \end{figure}
 
 \subsection{Usage in \es}
 
-Capabilitiy for catalytic reactions can be enabled in \es\ by
-compiling with the equally named feature \code{CATALYTIC_REACTIONS}.
-The number conserving method additionally requires the \code{ROTATION}
-feature to give the particles an orientation vector.  In \es{} the
-orientation of the particle is defined by a quaternion; this in turn
-defines a rotation matrix that acts on the particle's initial
-orientation (along the z-axis), which then defines the particles
-current orientation~\cite{UG,Limbach_06,Arnold_13}.
+Catalytic reactions can be enabled in \es\ by compiling in the
+eponymous feature \code{CATALYTIC_REACTIONS}.  The number-conserving
+method additionally requires the \code{ROTATION} feature to give the
+particles an orientation vector.  In \es{} the orientation of the
+particle is defined by a quaternion; this in turn defines a rotation
+matrix that acts on the particle's initial orientation (along the
+z-axis), which then defines the particles current
+orientation~\cite{UG,Limbach_06,Arnold_13}.
 
 In \es\ particles are set up using the \codees{part} command.  It
 allows to set various options, such as the initial position
@@ -292,8 +329,8 @@ inside this overlap.  This can be prevented by setting
 \code{react_once on}.  That way the reaction rate is independent of
 the density of catalyzers.  Finally, the parameter \codees{swap}
 determines which scheme to use; \codees{swap off} uses the not number
-conserving scheme, \codees{swap on} uses the number conserving scheme.
-The name `swap' originates from the sketch FIG.~\ref{fig:nc}, because
+conserving scheme, \codees{swap on} uses the number-conserving scheme.
+The name `swap' originates from the sketch figure~\ref{fig:nc}, because
 it looks as if the particles are swapped.
 
 However, the \codees{swap} option does not really swap the particles,
@@ -324,23 +361,120 @@ the latter.
 $ cp myconfig-sample.hpp myconfig.hpp
 \end{bash}
 To run all the tutorials you need to uncomment the following \code{FEATURES}:
-\begin{bash}
-#define ELECTROSTATICS
+\begin{lstlisting}[language=c]
 #define ROTATION
 #define ROTATIONAL_INERTIA
-#define MASS
+#define LANGEVIN_PER_PARTICLE
 #define CATALYTIC_REACTIONS
-#define LB_GPU
 #define LENNARD_JONES
-#define VIRTUAL_SITES_RELATIVE
-\end{bash}
-Now you are ready to build \es{}.
+\end{lstlisting}
+Now you are ready to build \es.
 \begin{bash}
 $ make -j
 \end{bash}
 Next you can unpack the archive with the tutorial files in this
 directory. You will find two folders, one called `EXERCISES' and one
 called `SOLUTIONS'.
+
+
+\section{The Enhanced-Diffusion Tutorial}
+
+In the folder `EXERCISES' you will find the \code{reaction.tcl} file.
+It is a tutorial to demonstrate that our approach to catalytic
+reactions leads to enhanced diffusion of the catalyzer.  When you
+begin, the code is incomplete and will produce errors when evaluated
+in \es.  It needs your input to function properly.  A fully functional
+file exists in the `SOLUTIONS' folder, but we recommend that you try
+solving the exercises first.
+
+To start the exercises, go into the `EXERCISES' directory and invoke
+\es\ on the script
+\begin{bash}
+$ ./../build/Espresso reaction.tcl 0
+\end{bash}
+where the parameter \code{0} determines whether the reaction is
+enabled.  Here, 0/1 corresponds to reaction off/on, just like on your
+VCR.  At this stage, executing the above line will cause an error, as
+the exercise has not yet been completed.
+
+\subsection{Structure of the Simulation}
+
+Let's walk through the script.  It is best to open the file while
+reading this.
+
+First, we read the activity parameter from the command line and verify
+it.  Then we set up some general simulation parameters, such as box
+length, radius of the colloid, concentration of reactant and products,
+and the reaction rate.  Next, we setup the thermostat parameters, but
+do not enable it yet.
+
+Before we can set up the colloid and the small particles around, the
+first two exercises have to be completed.
+
+The script continues to setup interactions between the colloid and the
+smaller particles and, most importantly, the reaction.  The syntax for
+setting up a reaction is given above in the section ``Usage in \es''.
+
+Warmup is performed by the \codees{minimize_energy} routine.  It has
+several advantages over traditional force-capping warmup, which you
+will learn about when completing the associated exercise.
+
+Now the thermostat is enabled and the equilibration is performed.
+Finally, we perform five production runs in which we measure the
+mean-square displacement (MSD) and the angular velocity
+auto-correlation function (AVACF).
+
+You should have learned about everything that does not have to with
+catalytic reactions in previous tutorials.  If you are unfamiliar with
+any concept, it might be better to go back and complete the other
+tutorials first.
+
+\subsection{What to Expect}
+
+Once you have completed all the tasks in the exercise script, the time
+has come to run the actual simulation.  Run the script twice, once
+with the activity parameter set to 0 and once set to 1.  You will have
+two directories: \code{active-system} and \code{passive-system}.
+These contain MSD and AVACF data files numbered consecutively over the
+different runs.
+
+It is now your job to average over these five files.  You can do this
+in \code{gnuplot} or the scripting language of your choice.  The MSD
+files have five columns each.  The first two columns are time and
+samples, the last three are $x$, $y$, $z$.  The AVACF files have only
+three columns, where the first two are also time and samples and the
+third is the AVACF averaged over all spatial components.  For the MSD
+we still have to average over the three spatial dimensions.
+
+When we have extracted the mean (and recommendably the standard error)
+we can plot it over time to achieve plots like in
+figures~\ref{fig:msd} and~\ref{fig:avacf}.  We can clearly see, that
+the reaction facilitates enhanced translational diffusion while
+leaving the rotational diffusion unaffected.
+
+\begin{figure}[tb]
+  \centering
+  \leavevmode\hfill
+  \begin{minipage}[t]{.45\linewidth}
+    \centering
+    \includegraphics{FIGURES/msd}
+    \caption{Averaged MSD over five runs with standard error on the
+      error bars for both, the active and the passive system.  The
+      black lines serve as a guide to the eye and indicate the
+      dependence of the MSD on the time $t$.}
+    \label{fig:msd}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{.45\linewidth}
+    \centering
+    \includegraphics{FIGURES/avacf}
+    \caption{The AVACF for the same system as in
+      figure~\ref{fig:msd}. Note that the activity does not influence
+      the rotational behavior.}
+    \label{fig:avacf}
+  \end{minipage}
+  \hfill\null
+\end{figure}
 
 
 \section{Concluding Remarks}
