@@ -239,7 +239,7 @@ int dfft_init(double **data,
     /* FFT plan creation. 
        Attention: destroys contents of c_data/data and c_data_buf/data_buf. */
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"dfftw3_1d_wisdom_forw_n%d.file",
+    sprintf(wisdom_file_name,".dfftw3_1d_wisdom_forw_n%d.file",
 	    dfft.plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
@@ -265,7 +265,7 @@ int dfft_init(double **data,
   for(i=1;i<4;i++) {
     dfft.back[i].dir = FFTW_BACKWARD;
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"dfftw3_1d_wisdom_back_n%d.file",
+    sprintf(wisdom_file_name,".dfftw3_1d_wisdom_back_n%d.file",
 	    dfft.plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
