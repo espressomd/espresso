@@ -899,8 +899,8 @@ proc oif_create_template { args } {
 	if { $template_id == -1 } { set mandatory 0 }
 
 	if { $mandatory == 0 } { 
-		puts "error in oif_create_template: mandatory argument(s) missing"  
-		return
+		puts "error in oif_create_template: mandatory argument(s) missing. Exiting."
+		exit  
 	}
 
 #--------------------------------------------------------------------------------------------
@@ -1246,7 +1246,8 @@ proc oif_create_template { args } {
     lappend template $kal
     
     if { $ks != 0.0 && $kslin != 0.0} {
-        puts "oif_create_template: warning: You have set both linear and non-linear stretching! Only one of the values ks and kslin should be non-zero."
+        puts "oif_create_template: warning: You have set both linear and non-linear stretching! Only one of the values ks and kslin should be non-zero. Exiting."
+		exit
     }
     
     if { $ks == 0.0 && $ks_file == "" && $kslin == 0.0 && $kslin_file == "" && $kb == 0.0 && $kb_file == "" && $kal == 0.0 } {
@@ -1734,7 +1735,7 @@ proc oif_add_object { args } {
 
 	if { $mandatory == 0 } { 
 		puts "error in oif_add_object: mandatory argument(s) missing" 
-		return
+		exit
 	}
 
 #--------------------------------------------------------------------------------------------
@@ -2118,7 +2119,7 @@ proc oif_template_change { args } {
 
 	if { $mandatory == 0 } { 
 		puts "error in oif_template_change: mandatory argument(s) missing" 
-		return
+		exit
 	}
 	
 	set template [lindex $oif_templates $template_id]
@@ -2468,6 +2469,7 @@ proc oif_object_set { args } {
 			}
 		} else {
 			puts "Number of lines in $mesh_nodes_file is not the same as claimed number of mesh nodes for the current object."
+			exit
 		}
 	}
 
@@ -2919,7 +2921,7 @@ proc oif_object_analyze { args } {
 
 	if { $mandatory == 0 } { 
 		puts "error in oif_object_analyze: mandatory argument(s) missing" 
-		return
+		exit
 	}
 
 	if { $get_first_part_id == 1 } {
@@ -4456,7 +4458,7 @@ proc oif_mesh_analyze { args } {
 
 	if { $mandatory == 0 } { 
 		puts "error in oif_mesh_analyze: mandatory argument(s) missing" 
-		return
+		exit
 	}
 
 # checking the orientation 
