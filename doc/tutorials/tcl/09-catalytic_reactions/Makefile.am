@@ -31,6 +31,8 @@ if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
+	FIGURES/msd.pdf \
+	FIGURES/avacf.pdf \
 	FIGURES/janus-particle.pdf \
 	FIGURES/non-number-conserving.pdf \
 	FIGURES/number-conserving.pdf
@@ -43,9 +45,9 @@ tutorial_FILES = \
 
 doc: tutorials
 tutorials: $(BASENAME).pdf
-$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
+$(BASENAME).pdf: $(tutorial_FILES) ../../common/common.tex
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
+	sh ../../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."
