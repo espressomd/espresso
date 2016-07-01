@@ -40,6 +40,4 @@ proc save_sim {cfile parinfo range } {
  blockfile $cfile write bonds
  blockfile $cfile write random
  blockfile $cfile write seed
- blockfile $cfile write bitrandom
- blockfile $cfile write bitseed
 }
