@@ -904,8 +904,6 @@ proc save_sim {cfile parinfo range } {
  blockfile $cfile write bonds
  blockfile $cfile write random
  blockfile $cfile write seed
- blockfile $cfile write bitrandom
- blockfile $cfile write bitseed
 }
 \end{lstlisting}\vspace{0,2cm}
 }
@@ -951,12 +949,6 @@ This procedure saves all variables available in our programme to \lstinline|$cfi
 {seed 
 	{16838}
 }
-{bitrandom 
-	{0 147 2085679233 .... }
-}	
-{bitseed 
-	{16838}
-}
 ...
 \end{verbatim}
 \vspace{0,2cm}
@@ -968,11 +960,11 @@ variables, the second (tclvariable) all variables of the tcl
 script. In the third block we find the entire particle data we had
 told the \lstinline|save_sim| function to save (id: particle id, pos:
 position, v: velocity, : force, q: charge, type). \lstinline|save_sim|
-saves interactions, bonds, random, seed, bitrandom and bitseed.  In
+saves interactions, bonds, random and seed.  In
 our case the interaction is Lennard-Jones. The bonds block is empty
 because the particles are not bound to each other like, for example,
 in a polymer. The rest of the blocks contains information (random,
-seed, bitrandom and bitseed) to be able to restore the status of the
+seed) to be able to restore the status of the
 random generator as it was while writing these blocks.  What do we
 need that for? If we rerun the simulation we will get the same results
 after we have set our variables including the random generator

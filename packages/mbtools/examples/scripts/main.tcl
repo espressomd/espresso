@@ -301,7 +301,6 @@ for {set k $startk } { $k <  $int_n_times } { incr k} {
     blockfile $out write tclvariable all
     blockfile $out write interactions
     blockfile $out write random
-    blockfile $out write bitrandom
     blockfile $out write particles "id pos type p v f" all
     blockfile $out write bonds all
     blockfile $out write configs
