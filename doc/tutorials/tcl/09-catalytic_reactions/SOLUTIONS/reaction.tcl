@@ -177,6 +177,9 @@ puts "box: [setmd box_l], npart: [setmd n_part]\n"
 # Why are there two different cutoff lengths for the LJ interaction
 # catalyzer/product and catalyzer/reactant?
 
+## Answer 3 ##
+# To achieve the asymmetry necessary for self-propulsion.
+
 set eps 5.0
 set sig 1.0
 set shift [expr 0.25]
@@ -219,6 +222,13 @@ set warm_length 100
 ## Exercise 5 ##
 # Consult the User Guide for minimize_energy to find out the
 # difference to warmup with explicit force-capping.
+
+## Answer 5 ##
+# Force capping truncates the interaction at a maximum value of the
+# force, allowing for more controlled MD steps, until 'overlaps' have
+# been removed. Minimize_energy uses a steepest-descent method to
+# remove such overlapping configurations.
+
 minimize_energy $cap $warm_length [expr 1.0/20.0] 0.05
 
 ################################################################################
@@ -227,6 +237,12 @@ minimize_energy $cap $warm_length [expr 1.0/20.0] 0.05
 
 ## Exercise 6 ##
 # Why do we enable the thermostat only after warmup?
+
+## Answer 6 ##
+# Because of the use of minimize_energy. Had we instead used force
+# capping, a seperate integration loop with thermostating would have
+# been used to remove offending configurations.
+
 thermostat langevin $temp $frict_trans_colloid
 
 ################################################################################
