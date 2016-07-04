@@ -151,25 +151,27 @@ cdef class mayavi_live:
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
                     bonds.push_back(p.bl.e[k])
+                    bonds.push_back(t)
                     k+=1
             j += 1
         assert j == self.system.n_part
-        cdef int Nbonds = bonds.size()/2
+        cdef int Nbonds = bonds.size()/3
         
-        bond_coords = numpy.zeros((Nbonds,7))
+        bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n
         cdef particle p1,p2
         cdef double bond_vec[3]
         for n in range(Nbonds):
-            i =bonds[2*n]
-            j =bonds[2*n+1]
+            i =bonds[3*n]
+            j =bonds[3*n+1]
+            t =bonds[3*n+2]
             get_particle_data(i,&p1)
             get_particle_data(j,&p2)
             bond_coords[n,:3] = p1.r.p 
             get_mi_vector(bond_vec,p2.r.p,p1.r.p)
             bond_coords[n,3:6] = bond_vec
-# Not needed            bond_coords[n,6] = 0 # numeric bond IDs have been removed
+            bond_coords[n,6] = t
 
         boxl = self.system.box_l
 
