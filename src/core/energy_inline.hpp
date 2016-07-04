@@ -49,6 +49,7 @@
 #include "harmonic_dumbbell.hpp"
 #include "harmonic.hpp"
 #include "quartic.hpp"
+#include "umbrella.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
@@ -68,7 +69,7 @@
 #include "hydrogen_bond.hpp"
 #include "twist_stack.hpp"
 #include "actor/EwaldGPU_ShortRange.hpp"
-#include "scafacos.hpp" 
+#include "scafacos.hpp"
 
 #ifdef CONSTRAINTS
 #include "constraint.hpp"
@@ -221,8 +222,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
     break;
 #endif
 #ifdef SCAFACOS
-    case COULOMB_SCAFACOS: 
-      ret+=Scafacos::pair_energy(p1,p2,dist); 
+    case COULOMB_SCAFACOS:
+      ret+=Scafacos::pair_energy(p1,p2,dist);
       break;
 #endif
     case COULOMB_DH:
@@ -293,7 +294,7 @@ inline void add_bonded_energy(Particle *p1)
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
     n_partners = iaparams->num;
-    
+
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
@@ -358,17 +359,17 @@ inline void add_bonded_energy(Particle *p1)
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
-#endif 
+#endif
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */ 
+    /* the first case is not needed and should not be called */
     case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
-      break; 
+      break;
 #endif
 #ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
@@ -446,6 +447,11 @@ inline void add_bonded_energy(Particle *p1)
       }
       break;
 #endif
+#ifdef UMBRELLA
+    case BONDED_IA_UMBRELLA:
+      bond_broken = umbrella_pair_energy(p1,p2,iaparams,dx,&ret);
+      break;
+#endif
 #ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
@@ -492,16 +498,16 @@ inline void add_kinetic_energy(Particle *p1)
 #endif
 
   /* kinetic energy */
-  
+
 // #ifdef MULTI_TIMESTEP
 //   if (p1->p.smaller_timestep==1) {
 //     ostringstream msg;
 //     msg << "SMALL TIME STEP";
-//     energy.data.e[0] += SQR(smaller_time_step/time_step) * 
+//     energy.data.e[0] += SQR(smaller_time_step/time_step) *
 //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
 //   }
 //   else
-// #endif  
+// #endif
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
 
 #ifdef ROTATION
