@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -82,7 +82,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
-inline void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_tabulated_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				       double d[3], double dist, double force[3])
 {
   if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)){ 
@@ -347,7 +347,11 @@ inline void calc_angle_3body_tabulated_forces(Particle *p_mid, Particle *p_left,
 
   if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
   if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
+#ifdef TABANGLEMINUS
+  phi = acos(-cos_phi);
+#else
   phi = acos(cos_phi);
+#endif
 
   dU = bonded_tab_force_lookup(phi, iaparams);
 
@@ -386,7 +390,11 @@ inline int tab_angle_energy(Particle *p_mid, Particle *p_left,
   get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
   vl2 = sqrt(sqrlen(vec2));
   /* calculate phi */
+#ifdef TABANGLEMINUS
+  phi = acos( -scalar(vec1, vec2) / (vl1*vl2) );
+#else 
   phi = acos( scalar(vec1, vec2) / (vl1*vl2) );
+#endif
 
   *_energy = bonded_tab_energy_lookup(phi, iaparams);
 

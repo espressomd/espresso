@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -645,7 +645,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             }
           }
 
-          if ( lb_lbfluid_set_bulk_visc(vectarg) == 0 )
+          if ( lb_lbfluid_set_gamma_even(vectarg) == 0 )
           {
             argc-=(1+LB_COMPONENTS); argv+=(1+LB_COMPONENTS); 
           }
@@ -730,14 +730,49 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             }
             else if (ARG1_IS_S_EXACT("velocity")) 
             {
-              if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) 
+              argc -= 2;
+              argv += 2;
+
+              if ( argc == 1 )
               {
-                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                if ( lb_lbfluid_print_vtk_velocity(argv[0]) != 0 ) 
+                {
+                  Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc--;
+                argv++;
+              }
+              else if ( argc == 7 )
+              {
+                std::vector<int> bb;
+                for ( int i = 0; i < 6; ++i)
+                {
+                  int tmp;
+                  if ( !ARG0_IS_I(tmp) )
+                  {
+                    Tcl_AppendResult(interp, "Expecting 6 integers for the bounding box geometry in lbfluid print vtk velocity", (char *)NULL);
+                    return TCL_ERROR;
+                  }
+                  bb.push_back(tmp);
+                  argc--;
+                  argv++;
+                }
+                if ( lb_lbfluid_print_vtk_velocity(argv[0], std::vector<int>(bb.begin(),bb.begin()+3), std::vector<int>(bb.begin()+3,bb.end())) != 0 ) 
+                {
+                  Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                  return TCL_ERROR;
+                }
+
+                argc--;
+                argv++;
+              }
+              else
+              {
+                Tcl_AppendResult(interp, "Wrong number of arguments for lbfluid print vtk velocity", (char *)NULL);
                 return TCL_ERROR;
               }
-
-              argc -= 3;
-              argv += 3;
             }
             else if (ARG1_IS_S_EXACT("density")) 
             {
@@ -882,7 +917,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
   double double_return[19*LB_COMPONENTS];
   char double_buffer[TCL_DOUBLE_SPACE];
 
-  for (counter = 0; counter < 19; counter++) 
+  for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
   double_return[counter]=0;
 
   --argc; ++argv;
@@ -1012,7 +1047,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
       { 
         lb_lbnode_get_pop(coord, double_return);
 
-        for (counter = 0; counter < 19; counter++) 
+        for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
         {
           Tcl_PrintDouble(interp, double_return[counter], double_buffer);
           Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
@@ -1097,13 +1132,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
     {
       argc--; argv++;
 
-      if (argc!=19) 
+      if (argc!=19*LB_COMPONENTS) 
         {
-        Tcl_AppendResult(interp, "LB node set populations requires 19 doubles.", (char *)NULL);
+        Tcl_AppendResult(interp, "LB node set populations requires 19 doubles for each component.", (char *)NULL);
         return TCL_ERROR;
       }
 
-      for (counter = 0; counter < 19; counter++) 
+      for (counter = 0; counter < 19*LB_COMPONENTS; counter++) 
       {
         if (!ARG0_IS_D(double_return[counter])) 
         {

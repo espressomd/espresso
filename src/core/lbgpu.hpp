@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -77,7 +77,7 @@ typedef struct {
   float rho[LB_COMPONENTS];
   /** mu (LJ units) */
   float mu[LB_COMPONENTS];
-  /*viscosity (LJ) units */
+  /** viscosity (LJ) units */
   float viscosity[LB_COMPONENTS];
   /** relaxation rate of shear modes */
   float gamma_shear[LB_COMPONENTS];
@@ -86,6 +86,10 @@ typedef struct {
   /**      */
   float gamma_odd[LB_COMPONENTS];
   float gamma_even[LB_COMPONENTS];
+  /** flag determining whether gamma_shear, gamma_odd, and gamma_even are calculated
+   *  from gamma_shear in such a way to yield a TRT LB with minimized slip at
+   *  bounce-back boundaries */
+  bool is_TRT;
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
@@ -301,6 +305,7 @@ int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
 
 int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
+int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
 
 /*@{*/
 

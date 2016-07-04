@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -31,8 +31,6 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "errorhandling.hpp"
-
-using namespace std;
 
 /************************************************************/
 
@@ -90,9 +88,7 @@ inline int fene_pair_energy(Particle *p1, Particle *p2,
 
   /* check bond stretching */
   if(dr >= iaparams->p.fene.drmax) {
-      ostringstream msg;
-      msg <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
-      runtimeError(msg);
+    runtimeErrorMsg() <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
     return 1;
   }
 

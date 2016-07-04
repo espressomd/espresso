@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -80,9 +80,7 @@ void calc_trap_force()
   
 
   if ( !topo_part_info_synced ) {
-      ostringstream msg;
-      msg <<"can't calculate moltrap: must execute analyse set topo_part_sync first";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate moltrap: must execute analyse set topo_part_sync first";
     return;
   } else {
     
@@ -133,9 +131,7 @@ void get_local_trapped_mols (IntList *local_trapped_mols)
     for(i = 0; i < local_cells.cell[c]->n; i++) {
       mol = local_cells.cell[c]->part[i].p.mol_id;
       if ( mol >= n_molecules ) {
-      ostringstream msg;
-      msg <<"can't calculate molforces no such molecule as " << mol ;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate molforces no such molecule as " << mol ;
 	return;
       }
 
@@ -187,9 +183,7 @@ void calc_local_mol_info (IntList *local_trapped_mols)
     for(i = 0; i < np; i++) {
       mol = p[i].p.mol_id;
       if ( mol >= n_molecules ) {
-      ostringstream msg;
-      msg <<"can't calculate molforces no such molecule as " << mol;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"can't calculate molforces no such molecule as " << mol;
 	return;
       }
 
@@ -202,14 +196,14 @@ void calc_local_mol_info (IntList *local_trapped_mols)
 #endif
       }  
       if (fixed) {
-	topology[mol].mass += PMASS(p[i]);
+	topology[mol].mass += (p[i]).p.mass;
 	/* Unfold the particle */
         unfold_position(p[i].r.p, p[i].m.v, p[i].l.i);
 
 	for ( j = 0 ; j < 3 ; j++ ) {
 	  topology[mol].f[j] += p[i].f.f[j];
-	  topology[mol].com[j] += p[i].r.p[j]*PMASS(p[i]); 
-	  topology[mol].v[j] += p[i].m.v[j]*PMASS(p[i]); 
+	  topology[mol].com[j] += p[i].r.p[j]*(p[i]).p.mass; 
+	  topology[mol].v[j] += p[i].m.v[j]*(p[i]).p.mass; 
 	}
 	/* Fold the particle back */
 	fold_position(p[i].r.p,p[i].l.i);
@@ -246,7 +240,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   int *local_mols;
   MPI_Status status;
 
-  n_local_mols = (int *) malloc(n_nodes*sizeof(int));
+  n_local_mols = (int *) Utils::malloc(n_nodes*sizeof(int));
   sum_n_local_mols = 0;
 
   /* Everyone tells me how many trapped molecules are on their node */
@@ -257,7 +251,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i=1; i <n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  local_mols = (int *) malloc(sum_n_local_mols*sizeof(int));
+  local_mols = (int *) Utils::malloc(sum_n_local_mols*sizeof(int));
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
@@ -381,9 +375,7 @@ void calc_mol_info () {
 
   /* check to see if all the topology information has been synced to the various slave nodes */
   if ( !topo_part_info_synced ) {
-      ostringstream msg;
-      msg << "can't calculate molforces: must execute analyse set topo_part_sync first";
-      runtimeError(msg);
+      runtimeErrorMsg() << "can't calculate molforces: must execute analyse set topo_part_sync first";
     return;
   }
 

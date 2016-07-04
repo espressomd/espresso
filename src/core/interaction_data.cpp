@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -37,7 +37,7 @@
 #include "mmm2d.hpp"
 #include "maggs.hpp"
 #include "elc.hpp"
-#include "actor/EwaldgpuForce.hpp"
+#include "actor/EwaldGPU.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
 #include "ljangle.hpp"
@@ -46,6 +46,8 @@
 #include "gaussian.hpp"
 #include "buckingham.hpp"
 #include "soft_sphere.hpp"
+#include "object-in-fluid/affinity.hpp"
+#include "object-in-fluid/membrane_collision.hpp"
 #include "hat.hpp"
 #include "umbrella.hpp"
 #include "tab.hpp"
@@ -63,6 +65,8 @@
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
+#include "interaction_data.hpp"
+#include "actor/DipolarDirectSum.hpp"
 
 /****************************************
  * variables
@@ -103,6 +107,13 @@ double max_cut_bonded;
 /** maximal cutoff of type-independent short range ia, mainly
     electrostatics and DPD*/
 double max_cut_global;
+/** Everything which is in the global cutoff except real space cutoffs
+    of dipolar and Coulomb mehtods */
+double max_cut_global_without_coulomb_and_dipolar;
+
+// Real space cutoff of long range methods 
+double coulomb_cutoff;
+double dipolar_cutoff;
 
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
@@ -237,6 +248,23 @@ void initialize_ia_params(IA_parameters *params) {
     params->soft_n =
     params->soft_offset = 0.0;
   params->soft_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef AFFINITY
+  params->affinity_type = 
+  params->affinity_kappa = 
+  params->affinity_r0 =
+  params->affinity_Kon =
+  params->affinity_Koff =
+  params->affinity_maxBond =
+  params->affinity_cut = INACTIVE_CUTOFF;
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    params->membrane_a =
+    params->membrane_n =
+    params->membrane_offset = 0.0;
+    params->membrane_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef HAT
@@ -438,14 +466,11 @@ static void recalc_maximal_cutoff_bonded()
   }
 }
 
-static void recalc_global_maximal_nonbonded_cutoff()
-{
-  /* user defined minimal global cut. This makes sure that data of
-   pairs of particles with a distance smaller than this are always
-   available on the same node (through ghosts). Required for example
-   for the relative virtual sites algorithm. */
-  max_cut_global = min_global_cut;
 
+
+double calc_electrostatics_cutoff()
+{
+// Electrostatics cutoff
 #ifdef ELECTROSTATICS
   /* Cutoff for the real space electrostatics.
      Note that the box length may have changed,
@@ -454,38 +479,35 @@ static void recalc_global_maximal_nonbonded_cutoff()
   switch (coulomb.method) {
 #ifdef P3M 
   case COULOMB_ELC_P3M:
-    if (max_cut_global < elc_params.space_layer)
-      max_cut_global = elc_params.space_layer;
-    // fall through
+    return std::max(elc_params.space_layer,p3m.params.r_cut_iL* box_l[0]);
   case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
+  case COULOMB_P3M: 
     /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut = p3m.params.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
-  }
+    return p3m.params.r_cut_iL* box_l[0];
 #endif
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU:
-    if (max_cut_global < ewaldgpu_params.rcut)
-        max_cut_global = ewaldgpu_params.rcut;
-  break;
+    return ewaldgpu_params.rcut;
 #endif
   case COULOMB_DH:
-    if (max_cut_global < dh_params.r_cut)
-      max_cut_global = dh_params.r_cut;
-    break;
+      return dh_params.r_cut;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
-    if (max_cut_global < rf_params.r_cut)
-      max_cut_global = rf_params.r_cut;
-    break;
+    return rf_params.r_cut;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+      return  Scafacos::get_r_cut();
+#endif
   default:
-	  break;
+    break;
   }
 #endif /*ifdef ELECTROSTATICS */
-  
+return 0;
+}
+
+
+double calc_dipolar_cutoff()
+{
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -493,16 +515,30 @@ static void recalc_global_maximal_nonbonded_cutoff()
     // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut = dp3m.params.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
+    return dp3m.params.r_cut_iL* box_l[0];
   }
 #endif /*ifdef DP3M */
+  // Note: Dipolar calculation via scafacos
+  // There doesn't seem to be short range delegation for dipolar methods
+  // in Scafacos, so no cutoff is contributed
   default:
       break;
   }       
 #endif
+return 0;
+}
+
+
+static void recalc_global_maximal_nonbonded_and_long_range_cutoff()
+{
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+   max_cut_global = min_global_cut;
+
+  
+
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
@@ -518,6 +554,19 @@ static void recalc_global_maximal_nonbonded_cutoff()
   }
 #endif
 
+// global cutoff without dipolar and coulomb methods is needed
+// for more selective additoin of particle pairs to verlet lists
+max_cut_global_without_coulomb_and_dipolar=max_cut_global;
+
+
+
+  // Electrostatics and magnetostatics
+  coulomb_cutoff= calc_electrostatics_cutoff();
+  max_cut_global =std::max(max_cut_global,coulomb_cutoff);
+  
+  dipolar_cutoff= calc_dipolar_cutoff();
+  max_cut_global =std::max(max_cut_global,dipolar_cutoff);
+
 }
 
 static void recalc_maximal_cutoff_nonbonded()
@@ -526,7 +575,7 @@ static void recalc_maximal_cutoff_nonbonded()
 
   CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded\n", this_node));
 
-  recalc_global_maximal_nonbonded_cutoff();
+  recalc_global_maximal_nonbonded_and_long_range_cutoff();
 
   CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded: max_cut_global = %f\n", this_node, max_cut_global));
 
@@ -597,6 +646,16 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->soft_cut;
 #endif
 
+#ifdef AFFINITY
+      if (max_cut_current < data->affinity_cut)
+	max_cut_current = data->affinity_cut;
+#endif
+        
+#ifdef MEMBRANE_COLLISION
+      if (max_cut_current < data->membrane_cut)
+    max_cut_current = data->membrane_cut;
+#endif
+
 #ifdef HAT
       if (max_cut_current < data->HAT_r)
 	max_cut_current = data->HAT_r;
@@ -661,10 +720,12 @@ static void recalc_maximal_cutoff_nonbonded()
       data_sym->particlesInteract =
 	data->particlesInteract = (max_cut_current > 0.0);
       
-      /* take into account any electrostatics */
-      if (max_cut_global > max_cut_current)
-	max_cut_current = max_cut_global;
+      /* Bigger cutoffs are chosen due to dpd and the like. 
+         Coulomb and dipolar interactions are handled in the Verlet lists
+	 separately. */
 
+      max_cut_current =std::max(max_cut_current,max_cut_global_without_coulomb_and_dipolar);
+      
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
 
@@ -729,18 +790,12 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
-  case BONDED_IA_STRETCHING_FORCE:
-    return "STRETCHING_FORCE";
-  case BONDED_IA_AREA_FORCE_LOCAL:
-    return "AREA_FORCE_LOCAL";
-  case BONDED_IA_AREA_FORCE_GLOBAL:
-    return "AREA_FORCE_GLOBAL";
-  case BONDED_IA_BENDING_FORCE:
-    return "BENDING_FORCE";
-  case BONDED_IA_VOLUME_FORCE:
-    return "VOLUME_FORCE";
-  case BONDED_IA_STRETCHLIN_FORCE:
-    return "STRETCHLIN_FORCE";
+  case BONDED_IA_OIF_GLOBAL_FORCES:
+    return "OIF_GLOBAL_FORCES";
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return "OIF_LOCAL_FORCES";
+  case BONDED_IA_OIF_OUT_DIRECTION:
+    return "oif_out_direction";
   case BONDED_IA_CG_DNA_BASEPAIR:
     return "CG_DNA_BASEPAIR";
   case BONDED_IA_CG_DNA_STACKING:
@@ -773,7 +828,7 @@ void realloc_ia_params(int nsize)
   if (nsize <= n_particle_types)
     return;
 
-  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
+  new_params = (IA_parameters *) Utils::malloc(nsize*nsize*sizeof(IA_parameters));
   if (ia_params) {
     /* if there is an old field, copy entries and delete */
     for (i = 0; i < nsize; i++)
@@ -828,7 +883,7 @@ void make_bond_type_exist(int type)
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+  bonded_ia_params = (Bonded_ia_parameters *)Utils::realloc(bonded_ia_params,
 						     ns*sizeof(Bonded_ia_parameters));
   /* set bond types not used as undefined */
   for (i = n_bonded_ia; i < ns; i++)
@@ -871,6 +926,19 @@ int interactions_sanity_checks()
   return state;
 }
 
+
+#ifdef DIPOLES
+void set_dipolar_method_local(DipolarInteraction method)
+{
+#ifdef DIPOLAR_DIRECT_SUM
+if ((coulomb.Dmethod == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU))
+{
+ deactivate_dipolar_direct_sum_gpu();
+}
+#endif
+coulomb.Dmethod = method;
+}
+#endif
 
 #ifdef ELECTROSTATICS
 
@@ -943,12 +1011,14 @@ int dipolar_set_Dbjerrum(double bjerrum)
       dp3m_set_bjerrum();
       break;
 #endif
+    case DIPOLAR_SCAFACOS: ;
+      // Fall through 
     default:
         break;
     }
  
     mpi_bcast_coulomb_params();
-    coulomb.Dmethod = DIPOLAR_NONE;
+    set_dipolar_method_local(DIPOLAR_NONE);
     mpi_bcast_coulomb_params();
 
   }

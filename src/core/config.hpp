@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,8 +29,17 @@
     the documentation of the features.
  */
 
+#ifdef HAVE_CONFIG_H
 /* Include the defines created by configure. */
 #include <acconfig.hpp>
+#else
+#include <cmake_config.hpp>
+#endif
+
+/* If nvcc is used we disable c++11 support. */
+#if defined(__CUDACC__) && defined(HAVE_CXX11)
+#undef HAVE_CXX11
+#endif
 
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
@@ -114,6 +123,14 @@ extern const char* ESPRESSO_VERSION;
 /** Tiny length cutoff */
 #ifndef TINY_LENGTH_VALUE
 #define TINY_LENGTH_VALUE 0.0001
+#endif
+/** Tiny oif elasticity cutoff */
+#ifndef TINY_OIF_ELASTICITY_COEFFICIENT
+#define TINY_OIF_ELASTICITY_COEFFICIENT 1e-10
+#endif
+/** Small oif membrane collision cutoff */
+#ifndef SMALL_OIF_MEMBRANE_CUTOFF
+#define SMALL_OIF_MEMBRANE_CUTOFF 0.05
 #endif
 
 /** maximal number of iterations in the RATTLE algorithm before it bails out. */

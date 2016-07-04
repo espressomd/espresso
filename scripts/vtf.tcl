@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -239,7 +239,6 @@ proc writevcf { file args } {
     set folded 0
     set short 0
     set pids "all"
-    set userdata 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -290,8 +289,8 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file [part $pid print pos]
 		}
-		if { [llength $userdata] } then {
-		    puts $file [ lindex $userdata $pid ]
+		if { [info exists userdata] } then {
+		    puts $file " [ lindex $userdata $pid ]"
 		} else {
 		    puts $file ""
 		}
@@ -305,8 +304,8 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file "[vtfpid $pid] [part $pid print pos]"
 		}
-		if { [llength $userdata] } then {
-		    puts $file [ lindex $userdata $pid ]
+		if { [info exists userdata] } then {
+		    puts $file " [ lindex $userdata $pid ]"
 		} else {
 		    puts $file ""
 		}

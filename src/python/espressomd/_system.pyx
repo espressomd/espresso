@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,7 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 
+cimport integrate
 import interactions
 from actors import Actors
 cimport cuda_init
@@ -29,21 +30,53 @@ import cuda_init
 import code_info
 from thermostat import Thermostat
 from cellsystem import CellSystem
+from minimize_energy import MinimizeEnergy
+from polymer import Polymer
+from analyze import Analysis
+from galilei import GalileiTransform
 
+import sys
+
+setable_properties = ["box_l", "max_num_cells", "min_num_cells",
+                      "node_grid", "npt_piston", "npt_p_diff",
+                      "periodicity", "skin", "time",
+                      "time_step", "timings"]
 
 cdef class System:
+    # NOTE: every attribute has to be declared at the class level.
+    # This means that methods cannot define an attribute by using
+    # `self.new_attr = somevalue` without declaring it inside this
+    # indentation level, either as method, property or reference.
     doge = 1
-    part = particle_data.particleList()
-    nonBondedInter = interactions.NonBondedInteractions()
-    bondedInter = interactions.BondedInteractions()
-    actors = Actors()
-    cellSystem = CellSystem()
+    part = particle_data.ParticleList()
+    non_bonded_inter = interactions.NonBondedInteractions()
+    bonded_inter = interactions.BondedInteractions()
+    cell_system = CellSystem()
     thermostat = Thermostat()
+    minimize_energy = MinimizeEnergy()
+    polymer = Polymer()
+    actors = None
+    analysis =None
+    galilei = GalileiTransform()
 
-#    def __init__(self):
+    def __init__(self):
+        self.actors = Actors(_system=self)
+        self.analysis=Analysis(self)
+
 #        self.part = particle_data.particleList()
-#        self.nonBondedInter = interactions.NonBondedInteractions()
-#        self.bondedInter = interactions.BondedInteractions()
+#        self.non_bonded_inter = interactions.NonBondedInteractions()
+#        self.bonded_inter = interactions.BondedInteractions()
+
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict = {}
+        for property_ in setable_properties:
+            odict[property_] = System.__getattribute__(self, property_)
+        return odict
+
+    def __setstate__(self, params):
+        for property_ in params.keys():
+            System.__setattr__(self, property_, params[property_])
 
     property box_l:
         def __set__(self, _box_l):
@@ -200,7 +233,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_NPTISO_PISTON)
 
         def __get__(self):
-            global npt_piston
             return nptiso.piston
 
     property npt_p_diff:
@@ -210,7 +242,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_NPTISO_PDIFF)
 
         def __get__(self):
-            global npt_p_diff
             return nptiso.p_diff
 
     property periodicity:
@@ -233,7 +264,6 @@ cdef class System:
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
-            global periodic
             periodicity = np.zeros(3)
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
@@ -246,20 +276,18 @@ cdef class System:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(28)
+            mpi_bcast_parameter(29)
+            integrate.skin_set = True
 
         def __get__(self):
-            global skin
             return skin
 
     property temperature:
         def __get__(self):
-            global temperature
             return temperature
 
     property thermo_switch:
         def __get__(self):
-            global thermo_switch
             return thermo_switch
 
     property time:
@@ -273,6 +301,17 @@ cdef class System:
         def __get__(self):
             global sim_time
             return sim_time
+
+    property smaller_time_step:
+        def __set__(self, double _smaller_time_step):
+            IF MULTI_TIMESTEP:
+                global smaller_time_step
+                if _smaller_time_step <= 0:
+                    raise ValueError("Smaller time step must be positive")
+                mpi_set_smaller_time_step(_smaller_time_step)
+
+        def __get__(self):
+            return smaller_time_step
 
     property time_step:
         def __set__(self, double _time_step):
@@ -293,7 +332,6 @@ cdef class System:
             mpi_set_time_step(_time_step)
 
         def __get__(self):
-            global time_step
             return time_step
 
     property timings:
@@ -305,83 +343,85 @@ cdef class System:
                 timing_samples = _timings
 
         def __get__(self):
-            global timing_samples
             return timing_samples
 
     property transfer_rate:
         def __get__(self):
-            global transfer_rate
             return transfer_rate
 
     property max_cut_nonbonded:
         def __get__(self):
-            global max_cut_nonbonded
             return max_cut_nonbonded
 
     property verlet_reuse:
         def __get__(self):
-            global verlet_reuse
             return verlet_reuse
 
     property lattice_switch:
         def __get__(self):
-            global lattice_switch
             return lattice_switch
 
     property dpd_tgamma:
         def __get__(self):
-            global dpd_tgamma
             return dpd_tgamma
 
     property dpd_tr_cut:
         def __get__(self):
-            global dpd_tr_cut
             return dpd_tr_cut
 
     property dpd_twf:
         def __get__(self):
-            global dpd_twf
             return dpd_twf
 
     property dpd_wf:
         def __get__(self):
-            global dpd_wf
             return dpd_wf
-
-    property adress_vars:
-        def __get__(self):
-            global adress_vars
-            return np.array([
-                adress_vars[0],
-                adress_vars[1],
-                adress_vars[2],
-                adress_vars[3],
-                adress_vars[4],
-                adress_vars[5],
-                adress_vars[6]
-            ])
 
     property max_cut_bonded:
         def __get__(self):
-            global max_cut_bonded
             return max_cut_bonded
 
-    def changeVolumeAndRescaleParticles(dNew, dir="xyz"):
+    __seed = None
+    property seed:
+        def __set__(self, _seed):
+            cdef vector[int] seed_array
+            self.__seed = _seed
+            if(isinstance(_seed, int) and self.n_nodes == 1):
+                seed_array.resize(1)
+                seed_array[0] = int(_seed)
+                mpi_random_seed(0, seed_array)
+            elif(hasattr(_seed, "__iter__")):
+                if(len(_seed) < self.n_nodes or len(_seed) > self.n_nodes):
+                    raise ValueError(
+                        "The list needs to contain one seed value per node")
+                seed_array.resize(len(_seed))
+                for i in range(len(_seed)):
+                    seed_array[i] = int(_seed[i])
+
+                mpi_random_seed(self.n_nodes, seed_array)
+            else:
+                raise ValueError(
+                    "The seed has to be an integer or a list of integers with one integer per node")
+
+        def __get__(self):
+            return self.__seed
+
+    def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates
-           changeVolumeAndRescaleParticles(dNew, dir="xyz")
-           dNew: new length, dir=coordinate tow work on, "xyz" for isotropic
+           change_volume_and_rescale_particles(d_new, dir="xyz")
+           d_new: new length, dir=coordinate tow work on, "xyz" for isotropic
         """
-        if dNew < 0:
+        if d_new < 0:
             raise ValueError("No negative lengths")
         if dir == "xyz":
-            dNew = dNew**(1. / 3.)
-            rescale_boxl(3, dNew)
+            d_new = d_new**(1. / 3.)
+            rescale_boxl(3, d_new)
         elif dir == "x":
-            rescale_boxl(0, dNew)
+            rescale_boxl(0, d_new)
         elif dir == "y":
-            rescale_boxl(1, dNew)
+            rescale_boxl(1, d_new)
         elif dir == "z":
-            rescale_boxl(2, dNew)
+            rescale_boxl(2, d_new)
         else:
             raise ValueError(
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')

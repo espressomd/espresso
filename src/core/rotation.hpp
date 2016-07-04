@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -100,5 +100,16 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 }
 
 #endif
+
+/** Rotate the particle p around the NORMALIZED axis a by amount phi */
+void rotate_particle(Particle* p, double* a, double phi);
+
+inline void normalize_quaternion(double* q) {
+  double tmp=sqrt(q[0]*q[0] +q[1]*q[1] +q[2]*q[2] +q[3]*q[3]); 
+  q[0]/=tmp;
+  q[1]/=tmp;
+  q[2]/=tmp;
+  q[3]/=tmp;
+}
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,6 +23,9 @@
  */
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
@@ -32,6 +35,8 @@
 #include "comfixed_tcl.hpp"
 #include "rattle_tcl.hpp"
 #include "mol_cut_tcl.hpp"
+#include "actor/DipolarDirectSum_tcl.hpp" 
+
 
 // for the force caps
 #include "lj.hpp"
@@ -62,6 +67,8 @@
 #include "morse_tcl.hpp"
 #include "dpd_tcl.hpp"
 #include "soft_sphere_tcl.hpp"
+#include "object-in-fluid/affinity_tcl.hpp"
+#include "object-in-fluid/membrane_collision_tcl.hpp"
 #include "steppot_tcl.hpp"
 #include "tab_tcl.hpp"
 #include "tunable_slip_tcl.hpp"
@@ -76,6 +83,9 @@
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
 #include "actor/Ewaldgpu_tcl.hpp"
+#ifdef SCAFACOS
+#include "scafacos.hpp"
+#endif
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -98,12 +108,9 @@
 #include "bonded_coulomb_tcl.hpp"
 #include "subt_lj_tcl.hpp"
 #include "umbrella_tcl.hpp"
-#include "tcl/object-in-fluid/area_force_local_tcl.hpp"
-#include "tcl/object-in-fluid/area_force_global_tcl.hpp"
-#include "tcl/object-in-fluid/volume_force_tcl.hpp"
-#include "tcl/object-in-fluid/stretching_force_tcl.hpp"
-#include "tcl/object-in-fluid/stretchlin_force_tcl.hpp"
-#include "tcl/object-in-fluid/bending_force_tcl.hpp"
+#include "tcl/object-in-fluid/oif_global_forces_tcl.hpp"
+#include "tcl/object-in-fluid/oif_local_forces_tcl.hpp"
+#include "tcl/object-in-fluid/out_direction_tcl.hpp"
 #ifdef TWIST_STACK
 #include "twist_stack_tcl.hpp"
 #endif
@@ -124,6 +131,87 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /********************************************************************************/
 /*                                 electrostatics                               */
 /********************************************************************************/
+
+#ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv) {
+  std::list<std::string> methods = Scafacos::available_methods();
+  
+  for(auto &m: methods) {
+    Tcl_AppendResult(interp, m.c_str(), " ", 0);
+  }
+
+  return TCL_OK;
+}
+template <bool dipolar>
+int tclcommand_inter_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
+  if(argc < 1)
+    return TCL_ERROR;
+
+  // Scafacos can be used either for charges or for dipoles, not for both.
+  if (dipolar) {
+    if (coulomb.method==COULOMB_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for charges.";
+      return TCL_ERROR;
+    }
+  }
+  else 
+  {
+    #ifdef SCAFACOS_DIPOLES
+    if (coulomb.Dmethod==DIPOLAR_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for dipoles.";
+      return TCL_ERROR;
+    }
+    #endif
+  }
+
+
+
+
+
+  
+  const std::string method(argv[0]);
+  
+  std::stringstream params;
+
+  if(argc > 1) {
+    for(int i = 1; i < argc; i++) {
+      params << std::string(argv[i]);
+      if(i != (argc-1))
+        params << ",";
+    }
+  }
+
+  // Coulomb ia
+  if (! dipolar)
+  {
+    coulomb.method  = COULOMB_SCAFACOS;
+  }
+  else
+  // Dipolar interaction
+  {
+    #ifdef SCAFACOS_DIPOLES
+      coulomb.Dmethod  = DIPOLAR_SCAFACOS;
+    #else
+      runtimeErrorMsg() << "Dipolar support for SCAFACOS not compiled in. Activate via SCAFACOS_DIPOLES in myconfig.hpp.";
+    #endif
+  }
+
+  mpi_bcast_coulomb_params();
+  Scafacos::set_parameters(method, params.str(),dipolar);
+
+
+  
+  return TCL_OK;
+}
+
+int tclprint_to_result_scafacos(Tcl_Interp *interp) {
+  std::string p = Scafacos::get_parameters();
+  Tcl_AppendResult(interp, "scafacos ", 0);
+  Tcl_AppendResult(interp, p.c_str(), 0);
+  return TCL_OK;
+}
+
+#endif
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -211,6 +299,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
+  #ifdef SCAFACOS
+  REGISTER_COULOMB("scafacos", tclcommand_inter_parse_scafacos<false>);
+  #endif
+  
   /* fallback */
   coulomb.method  = COULOMB_NONE;
   coulomb.bjerrum = 0.0;
@@ -297,10 +389,17 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
 
   REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
+  
+#ifdef DIPOLAR_DIRECT_SUM
+  REGISTER_DIPOLAR("dds-gpu", tclcommand_inter_magnetic_parse_dds_gpu);
+#endif
 
+#ifdef SCAFACOS_DIPOLES
+  REGISTER_DIPOLAR("scafacos", tclcommand_inter_parse_scafacos<true>);
+#endif
 
   /* fallback */
-  coulomb.Dmethod  = DIPOLAR_NONE;
+  set_dipolar_method_local(DIPOLAR_NONE);
   coulomb.Dbjerrum = 0.0;
 
   mpi_bcast_coulomb_params();
@@ -328,21 +427,15 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   switch (params->type) {
   case BONDED_IA_FENE:
     return tclprint_to_result_feneIA(interp, params);
-  case BONDED_IA_STRETCHING_FORCE:						
-    return tclprint_to_result_stretchingforceIA(interp, params);
-  case BONDED_IA_STRETCHLIN_FORCE:						
-    return tclprint_to_result_stretchlinforceIA(interp, params);
-  case BONDED_IA_AREA_FORCE_LOCAL:					
-	return tclprint_to_result_areaforcelocalIA(interp, params);
-  case BONDED_IA_BENDING_FORCE:						
-	return tclprint_to_result_bendingforceIA(interp, params);
-#ifdef AREA_FORCE_GLOBAL
-  case BONDED_IA_AREA_FORCE_GLOBAL:						
-	return tclprint_to_result_areaforceglobalIA(interp, params);
+  case BONDED_IA_OIF_LOCAL_FORCES:
+	return tclprint_to_result_oiflocalforcesIA(interp, params);
+#ifdef MEMBRANE_COLLISION
+  case BONDED_IA_OIF_OUT_DIRECTION:
+    return tclprint_to_result_oifoutdirectionIA(interp, params);
 #endif
-#ifdef VOLUME_FORCE
-  case BONDED_IA_VOLUME_FORCE:						
-	return tclprint_to_result_volumeforceIA(interp, params);
+#ifdef OIF_GLOBAL_FORCES
+  case BONDED_IA_OIF_GLOBAL_FORCES:						
+	return tclprint_to_result_oifglobalforcesIA(interp, params);
 #endif
       
 #ifdef IMMERSED_BOUNDARY
@@ -487,6 +580,14 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
   if (data->soft_cut > 0.0) tclprint_to_result_softIA(interp,i,j);
 #endif
 
+#ifdef AFFINITY
+  if (data->affinity_cut > 0.0) tclprint_to_result_affinityIA(interp,i,j);
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    if (data->membrane_cut > 0.0) tclprint_to_result_membraneIA(interp,i,j);
+#endif
+
 #ifdef HAT
   if (data->HAT_r > 0.0) tclprint_to_result_hatIA(interp,i,j);
 #endif
@@ -569,6 +670,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
 #endif
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS: tclprint_to_result_scafacos(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -604,6 +708,12 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
     break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
   case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+#ifdef DIPOLAR_DIRECT_SUM
+  case DIPOLAR_DS_GPU: tclprint_to_result_dds_gpu(interp); break;
+#endif
+#ifdef SCAFACOS_DIPOLES
+    case DIPOLAR_SCAFACOS: tclprint_to_result_scafacos(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -809,6 +919,14 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("soft-sphere", tclcommand_inter_parse_soft);
 #endif
 
+#ifdef AFFINITY
+    REGISTER_NONBONDED("affinity", tclcommand_inter_parse_affinity);
+#endif
+      
+#ifdef MEMBRANE_COLLISION
+    REGISTER_NONBONDED("membrane", tclcommand_inter_parse_membrane);
+#endif
+
 #ifdef HAT
     REGISTER_NONBONDED("hat", tclcommand_inter_parse_hat);
 #endif
@@ -960,15 +1078,12 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
   REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
-  REGISTER_BONDED("stretching_force", tclcommand_inter_parse_stretching_force);
-  REGISTER_BONDED("stretchlin_force", tclcommand_inter_parse_stretchlin_force);
-  REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
-  REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
-#ifdef AREA_FORCE_GLOBAL
-  REGISTER_BONDED("area_force_global", tclcommand_inter_parse_area_force_global);
+  REGISTER_BONDED("oif_local_forces", tclcommand_inter_parse_oif_local_forces);
+#ifdef OIF_GLOBAL_FORCES
+  REGISTER_BONDED("oif_global_forces", tclcommand_inter_parse_oif_global_forces);
 #endif
-#ifdef VOLUME_FORCE
-  REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
+#ifdef MEMBRANE_COLLISION
+  REGISTER_BONDED("oif_out_direction", tclcommand_inter_parse_oif_out_direction);
 #endif
   // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
@@ -1075,7 +1190,6 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
       Tcl_AppendResult(interp, "DIPOLES not compiled (see config.hpp)", (char *) NULL);
     #endif
   }
-  
   
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *) NULL);

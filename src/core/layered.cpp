@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -145,7 +145,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
 
     /* always sending/receiving 1 cell per time step */
     for(c = 0; c < n; c++) {
-      comm->comm[c].part_lists = (ParticleList**)malloc(sizeof(ParticleList *));
+      comm->comm[c].part_lists = (ParticleList**)Utils::malloc(sizeof(ParticleList *));
       comm->comm[c].n_part_lists = 1;
       comm->comm[c].mpi_comm = comm_cart;
     }
@@ -263,7 +263,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
     if (n != 0) {
       /* two cells: from and to */
       for(c = 0; c < n; c++) {
-	comm->comm[c].part_lists = (ParticleList**)malloc(2*sizeof(ParticleList *));
+	comm->comm[c].part_lists = (ParticleList**)Utils::malloc(2*sizeof(ParticleList *));
 	comm->comm[c].n_part_lists = 2;
 	comm->comm[c].mpi_comm = comm_cart;
 	comm->comm[c].node = this_node;
@@ -320,9 +320,7 @@ void layered_topology_init(CellPList *old)
 
   /* check node grid. All we can do is 1x1xn. */
   if (node_grid[0] != 1 || node_grid[1] != 1) {
-      ostringstream msg;
-      msg <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"selected node grid is not suitable for layered cell structure (needs 1x1x"<< n_nodes << " grid";
     node_grid[0] = node_grid[1] = 1;
     node_grid[2] = n_nodes;
   }
@@ -331,9 +329,7 @@ void layered_topology_init(CellPList *old)
     if (max_range > 0) {
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
-      ostringstream msg;
-      msg <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered: maximal interaction range " << max_range << " larger than local box length " << local_box_l[2];
 	n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -355,9 +351,7 @@ void layered_topology_init(CellPList *old)
   layer_h_i = 1/layer_h;
 
   if (layer_h < max_range) {
-      ostringstream msg;
-      msg <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered: maximal interaction range " << max_range << " larger than layer height " << layer_h;
   }
 
   /* check wether node is top and/or bottom */
@@ -539,9 +533,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     }
     else {
       if (flag) {
-      ostringstream msg;
-      msg <<"layered_exchange_and_sort_particles: particle moved more than one cell";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"layered_exchange_and_sort_particles: particle moved more than one cell";
 
 	/* sort left over particles into border cells */
 	CELL_TRACE(fprintf(stderr, "%d: emergency sort\n", this_node));
@@ -583,11 +575,7 @@ void layered_calculate_ia()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_bonded_force(p1);
-#ifdef CONSTRAINTS
-      add_constraints_forces(p1);
-#endif
-      add_external_potential_forces(p1);
+      add_single_particle_force(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {
@@ -638,13 +626,7 @@ void layered_calculate_energies()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_energy(p1);
-
-      add_bonded_energy(p1);
-#ifdef CONSTRAINTS
-      add_constraints_energy(p1);
-#endif
-      add_external_potential_energy(p1);
+      add_single_particle_energy(p1);
 
       /* cell itself and bonded / constraints */
       for(j = i+1; j < npl; j++) {

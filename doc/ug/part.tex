@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -26,9 +26,8 @@
 \subsection{Defining particle properties}
 \label{ssec:particleproperties}
 
-\PythonSyntaxOn
 \begin{pysyntax}
-  \property{
+  \attributes{
     espressomd.System()
   }{
     part[\arg{pid}]
@@ -57,6 +56,7 @@
     exclude=\arg{list of ints},
     temp=\arg{float},
     gamma=\arg{float},
+    gamma_rot=\arg{float},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
       `f_swim':\arg{float},
@@ -64,9 +64,16 @@
       `mode':\arg{``pusher''|``puller''},
       `dipole_length':\arg{float},
       `rotational_friction':\arg{float}\}}
+    delete()
   }
 \end{pysyntax}
-\PythonSyntaxOff
+\begin{pysyntax}
+espressomd.System().part.clear()
+\end{pysyntax}
+\begin{pysyntax}
+len(Espressomd.System().part)
+\end{pysyntax}
+
 \begin{essyntax}
   part
   \var{pid}
@@ -93,6 +100,7 @@
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
+  \require{2,9}{\opt{gamma\_rot \var{grot}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
@@ -228,9 +236,11 @@ set first because of the spatial decomposition.
   different diffusion constants. Caution: this has no influence on any
   other thermostat then the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
-  rotational degrees of freedom are integrated (value of 1) or not
-  (0). If set to zero, the content of the torque and omega variables
-  are meaningless. The default is 1.
+  rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
+  If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
+  are meaningless. 
+  Rotation of a particular axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
+  To enable rotation around all axis, use a value of 2+4+8=14. This is also the default.
 \item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the
   four solvation coupling constants for the two components of a
   Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
@@ -298,8 +308,8 @@ set first because of the spatial decomposition.
   \noindent
   \fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
       Please note that even though swimming is interoperable with the
-      CPU version of LB it is only supported on \emph{less than three}
-      Open MPI nodes, i.e.\ $\text{\keyword{n_nodes}} \leq 1$.%
+      CPU version of LB it is only supported on \emph{one} Open MPI
+      node, i.e.\ $\text{\keyword{n_nodes}} = 1$.%
     }}
 \end{arguments}
 
@@ -464,14 +474,40 @@ system.
   \end{features}
 \end{essyntax}
 
-This command will create \var{num\_polymers} polymer or
-polyelectrolyte chains with \var{monomers\_per\_chain} monomers per
+\begin{pysyntax}
+	\object{
+		espressomd
+	}{
+		polymer
+	}{
+		N_P = \arg{int},
+		MPC = \arg{int},
+		bond_length = \arg{float},
+		start_id = \arg{int},
+		start_pos = \arg{ndarray},
+		mode = 0 or 1 or 2,
+		shield = \arg{float},
+		max_tries = \arg{int},
+		val_poly = \arg{float},
+		charge_distance = \arg{int},
+		type_poly_neutral = \arg{int},
+		type_poly_charged = \arg{int},
+		bond_id = \arg{int},
+		angle = \arg{float},
+		angle2 = \arg{float},
+		pos2 = \arg{ndarray},
+		constraint = 0 or 1
+	}
+\end{pysyntax}
+
+This command will create \var{num\_polymers} N\_P polymer or
+polyelectrolyte chains with \var{monomers\_per\_chain} MPC monomers per
 chain. The length of the bond between two adjacent monomers will be
 set up to be \var{bond\_length}.
 
 \begin{arguments}
-\item[\var{num\_polymers}] Sets the number of polymer chains.
-\item[\var{monomers\_per\_chain}] Sets the number of monomers per
+\item[\var{num\_polymers}] N\_P Sets the number of polymer chains.
+\item[\var{monomers\_per\_chain}] MPC Sets the number of monomers per
   chain.
 \item[\var{bond\_length}] Sets the initial distance between two
   adjacent monomers. The distance during the course of the simulation
@@ -480,11 +516,11 @@ set up to be \var{bond\_length}.
   is based on Verlet algorithm and satisfy internal constraints for
   molecular models with internal constrains, using Lagrange
   multipliers.
-\item[\opt{start \var{pid}}] Sets the particle number of the
+\item[\opt{start \var{pid}}] start\_id Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
 
-\item[\opt{pos \var{x} \var{y} \var{z}}] Sets the position of the
+\item[\opt{pos \var{x} \var{y} \var{z}}] start\_pos Sets the position of the
   first monomer in the chain to \var{x}, \var{y}, \var{z} (defaults to
   a randomly chosen value)
   
@@ -492,10 +528,10 @@ set up to be \var{bond\_length}.
       \opt{\var{try_\mathrm{max}}}}}]
   Selects the setup mode:
   \begin{description}
-  \item[\keyword{RW} (Random walk)] The monomers are
+  \item[\keyword{RW} (Random walk)] mode = 1 The monomers are
     randomly placed by a random walk with a steps size of
     \var{bond_length}.
-  \item[\keyword{PSAW} (Pruned self-avoiding walk)] The position of a
+  \item[\keyword{PSAW} (Pruned self-avoiding walk)] mode = 2 The position of a
     monomer is randomly chosen in a distance of \var{bond\_length} to
     the previous monomer. If the position is closer to another
     particle than \var{shield}, the attempt is repeated up to
@@ -504,7 +540,7 @@ set up to be \var{bond\_length}.
     same. If you want a real self-avoiding walk, use the \keyword{SAW}
     mode.  However, \keyword{PSAW} is several orders of magnitude
     faster than \keyword{SAW}, especially for long chains.
-  \item[\keyword{SAW} (Self-avoiding random walk)] The positions of
+  \item[\keyword{SAW} (Self-avoiding random walk)] mode = 0 The positions of
     the monomers are chosen as in the plain random walk. However, if
     this results in a chain that has a monomer that is closer to
     another particle than \var{shield}, a new attempt of setting up
@@ -522,22 +558,23 @@ set up to be \var{bond\_length}.
   types are set to $\var{typeid_\mathrm{charged}} =
   \var{typeid_\mathrm{neutral}}$. If charge is not set, it defaults to
   0.0.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Sets the stride
+\item[\opt{distance \var{d_\mathrm{charged}}}] charge\_distance Sets the stride
   between the indices of two charged monomers. This defaults defaults
   to 1, meaning that all monomers in the chain are charged.
-\item[\opt{types \var{typeid_\mathrm{neutral}}
+\item[\opt{types \var{typeid_\mathrm{neutral}} type\_poly\_neutral
+		type\_poly\_charged
     \var{typeid_\mathrm{charged}}}] Sets the type ids of the neutral
     and charged monomer types to be used with the \keyword{part}
     command. If only \var{typeid_\mathrm{neutral}} is defined,
     \var{typeid_\mathrm{charged}} defaults to $1$. If the option is
     omitted, both monomer types default to $0$.
-  \item[\opt{bond \var{bondid}}] Sets the type number of the bonded
+  \item[\opt{bond \var{bondid}}] bond\_id Sets the type number of the bonded
     interaction to be set up between the monomers. This defaults to
     $0$.  Any bonded interaction, no matter how many bonding-partners
     needed, is stored with the second particle in this bond. See
     chapter \ref{sec:inter-bonded}.
   \item[\opt{angle \var{\phi} [\var{\theta} [\var{x} \var{y}
-      \var{z}]]}] Allows for setting up helices or planar polymers:
+      \var{z}]]}] angle angle2 pos2 Allows for setting up helices or planar polymers:
     \var{\phi} and \var{theta} are the angles between adjacent bonds.
     \var{x}, \var{y} and \var{z} set the position of the second
     monomer of the first chain.
@@ -546,6 +583,7 @@ set up to be \var{bond\_length}.
 \end{arguments}
 
 \subsection{\texttt{counterions}: Setting up counterions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{counterions}
 \begin{essyntax}
   counterions
@@ -575,6 +613,7 @@ This command will create \var{N} counterions in the simulation box.
 
 \smallskip
 \subsection{\texttt{salt}: Setting up salt ions}
+\warning{This feature will not be ported to the python interface.}
 \newescommand{salt}
 \begin{essyntax}
   salt 
@@ -612,6 +651,7 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 
 \subsection{\texttt{diamond}: Setting up diamond polymer networks}
 \newescommand{diamond}
+
 \begin{essyntax}
   diamond 
   \var{a} \var{bond\_length} \var{monomers\_per\_chain} 
@@ -625,8 +665,31 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
   \end{features}
 \end{essyntax}
 
+ \begin{pycode}
+	from espressomd import diamond 
+\end{pycode}
+
+\begin{pysyntax}
+  \object{
+    diamond
+  }{
+    Diamond
+  }{
+    a=\arg{float},
+    bond_length=\arg{float},
+    MPC=\arg{int}
+  }[
+    N_CI=\arg{int},
+    val_nodes=\arg{float},
+    val_cM=\arg{float},
+    val_CI=\arg{float},
+    cM_dist=\arg{int},
+    nonet
+  ]
+\end{pysyntax}
+
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
-connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} in 
+connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} (MPC) in 
 a unit cell of length \var{a}. Chain monomers are placed at a mutual distance \var{bond\_length}
 along the vector connecting network nodes.
 The polymer is created starting from particle ID 0. Nodes are assigned type 0,
@@ -645,16 +708,16 @@ For inter-particle bonds interaction $0$ is taken which must be a two-particle b
 \item[\var{a}] Determines the size of the of the unit cell.
 \item[\var{bond\_length}] Specifies the bond length of the polymer
   chains connecting the 8 tetra-functional nodes.
-\item[\var{monomers\_per\_chain}] Sets the number of chain monomers
+\item[\var{monomers\_per\_chain}] (MPC) Sets the number of chain monomers
   between the functional nodes.
 \item[\opt{counterions \var{N_\mathrm{CI}}}] Adds \var{N_\mathrm{CI}}
   counterions to the system.
 \item[\opt{charges \var{val_\mathrm{node}} \var{val_\mathrm{monomer}}
     \var{val_\mathrm{CI}}}] Sets the charge of the nodes to
   \var{val_\mathrm{node}}, the charge of the connecting monomers to
-  \var{val_\mathrm{monomer}}, and the charge of the counterions to
+  \var{val_\mathrm{monomer}} (val\_cM), and the charge of the counterions to
   \var{val_\mathrm{CI}}.
-\item[\opt{distance \var{d_\mathrm{charged}}}] Specifies the distance
+\item[\opt{distance \var{d_\mathrm{charged}}}] (cM\_dist) Specifies the distance
   between charged monomers along the interconnecting chains. If
   $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
   uncharged.
@@ -770,7 +833,16 @@ Examples of use:\\
   copy_particles set {1 2} set {3 4}
   copy_particles range 1 4
 \end{tclcode}
-All these examples do the same - making exact copies of particles 1 through 4.
+All these examples do the same---making exact copies of particles 1 through 4.
+
+\noindent
+\fbox{\parbox{\linewidth-2\fboxsep-2\fboxrule}{%
+    Please note that \keyword{copy_particles} only works if only
+    fundamental particle properties are used, such as \keyword{pos},
+    \keyword{type}, etc.\ as the \keyword{copy_particles} procedure
+    only possesses parsers for these.  Other properties, such as
+    \keyword{quatu} cannot be parsed and will thus lead to an error.%
+  }}
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}
 \newescommand{constraint}
@@ -808,7 +880,8 @@ All these examples do the same - making exact copies of particles 1 through 4.
   \variant{6}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
-  radius \var{rad} length \var{length} 
+  radius \var{rad} \opt{outer_radius \var{rad_S}} 
+  \opt{smoothing_radius \var{rad_S}} length \var{length} 
   type \var{id} 
 
   \variant{7}
@@ -917,7 +990,7 @@ with a dipole moment.
 
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
-\var{d} from the origin. The force acts in direction of the normal. 
+\var{d} from the origin (in the direction of the normal vector). The force acts in direction of the normal. 
 Note that the \var{d} describes the distance from the origin in units
 of the normal vector so that the product of $d$ and $n$ is a point on the
 surface. Therefore negative distances are quite common!
@@ -953,10 +1026,17 @@ Variant \variant{6} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program. The argument \codebox{radius \var{rad}} 
-can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
-to obtain a pore with a conical shape and corresponding opening radii.
-The first radius is in the direction opposite to the axis vector.
+normalized in the program. Optionally the outer radius of the pore can
+be specified. By default this is (numerical) infinity and thus results in 
+an infinite wall with one pore. The argument \codebox{radius \var{rad}} can 
+be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}} to obtain a 
+pore with a conical shape and corresponding opening radii. The first radius 
+is in the direction opposite to the axis vector. The same applies for 
+\codebox{outer_radius \var{orad}} which can be replaced  with 
+\codebox{outer_radii \var{orad1} \var{orad2}}. Per default sharp edges are
+replaced by circles of unit radius. The radius of this smoothing can be set
+with the optional keyword \codebox{smoothing_radius}.
+
 
 Variant \variant{7} creates a stomatocyte shaped boundary. This command
 should be used with care. The position can be any point in the simulation
@@ -1053,10 +1133,10 @@ constraint  \opt{\var{num}}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
 
-\subsection{\texttt{harmonic_force}: Creating a harmonic trap}
- \newescommand{harmonic-force}
+\subsection{\texttt{harmonic_well}: Creating a harmonic trap}
+ \newescommand{harmonic-well}
  \begin{essyntax}
-   harmonic_force \{ \var{x} \var{y} \var{z} \} \var{k}
+   harmonic_well \{ \var{x} \var{y} \var{z} \} \var{k}
   \begin{features}
     \required{CUDA}
   \end{features}
@@ -1192,9 +1272,8 @@ Please note:
   distance from the non-virtual particle, the id of the non-virtual
   particle and a quaternion which defines the vector from non-virtual
   particle to virtual site in the non-virtual particle's body-fixed
-  frame. The first two are saved in the virtual site's
-  vs\_relative-attribute, while the latter is saved in the quaternion
-  attribute. Take care, not to overwrite these after using
+  frame. This information is saved in the virtual site's
+  vs\_relative-attribute. Take care, not to overwrite these after using
   vs\_auto\_relate.
 \item Virtual sites can not be placed relative to other virtual sites,
   as the order in which the positions of virtual sites are updated is
@@ -1206,10 +1285,10 @@ Please note:
 \item In case you know the correct quaternions, you can also setup a
   virtual site using
   \begin{essyntaxbox}
-    part \var{v} virtual 1 quat \var{q} vs_relative \var{n} \var{d}
+    part \var{v} virtual 1 vs_relative \var{n} \var{d} \var{q}
   \end{essyntaxbox}
-  where n is the id of the non-virtual particle and d is its distance
-  from the virtual site.
+  where n is the id of the non-virtual particle, d is its distance
+  from the virtual site, and q are the quaternions.
 \item In a simulation on more than one CPU, the effective cell size
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to
@@ -1250,12 +1329,22 @@ part gc
 \alt{\var{type} \asep \alt{\alt{find \asep delete \asep
 status \asep number} \var{type}}}
 \end{essyntax}
+\begin{pycode}
+from espressomd import grand_canonical
+grand_canonical.setup([_type])
+grand_canonical.delete_particles(_type)
+grand_canonical.find_particle(_type)
+grand_canonical.number_of_particles(_type)
+\end{pycode}
 
 If you want \es to keep track of particle ids of a certain type you have to
 initialize the method by calling 
 \begin{essyntax}
 	part gc \var{type}
 \end{essyntax}
+\begin{pycode}
+grand_canonical.setup([_type])
+\end{pycode}
 After that \es will keep track of particle ids of that type. 
 When using the keyword \texttt{find} and a particle type, the
 command will return a randomly chosen particle id, for a particle of

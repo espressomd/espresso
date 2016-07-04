@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -356,8 +356,8 @@ void dp3m_init() {
          if(n==this_node) P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
     }
     
-    dp3m.send_grid = (double *) realloc(dp3m.send_grid, sizeof(double)*dp3m.sm.max);
-    dp3m.recv_grid = (double *) realloc(dp3m.recv_grid, sizeof(double)*dp3m.sm.max);
+    dp3m.send_grid = (double *) Utils::realloc(dp3m.send_grid, sizeof(double)*dp3m.sm.max);
+    dp3m.recv_grid = (double *) Utils::realloc(dp3m.recv_grid, sizeof(double)*dp3m.sm.max);
 
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();
@@ -374,10 +374,10 @@ void dp3m_init() {
 				 dp3m.local_mesh.dim,dp3m.local_mesh.margin,
 				 dp3m.params.mesh, dp3m.params.mesh_off,
 				 &dp3m.ks_pnum);
-    dp3m.ks_mesh = (double *) realloc(dp3m.ks_mesh, ca_mesh_size*sizeof(double));
+    dp3m.ks_mesh = (double *) Utils::realloc(dp3m.ks_mesh, ca_mesh_size*sizeof(double));
     
     for (n=0;n<3;n++)   
-       dp3m.rs_mesh_dip[n] = (double *) realloc(dp3m.rs_mesh_dip[n], ca_mesh_size*sizeof(double));
+       dp3m.rs_mesh_dip[n] = (double *) Utils::realloc(dp3m.rs_mesh_dip[n], ca_mesh_size*sizeof(double));
 
      P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[0] ADR=%p\n",this_node,dp3m.rs_mesh_dip[0]));
      P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[1] ADR=%p\n",this_node,dp3m.rs_mesh_dip[1]));
@@ -516,7 +516,7 @@ int dp3m_set_params(double r_cut, int mesh, int cao,
 		    double alpha, double accuracy)
 {
   if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
-    coulomb.Dmethod = DIPOLAR_P3M;
+    set_dipolar_method_local(DIPOLAR_P3M);
     
   if(r_cut < 0)
     return -1;
@@ -616,7 +616,7 @@ void dp3m_interpolate_dipole_assignment_function()
 
           for (i=0; i < dp3m.params.cao; i++) {
              /* allocate memory for interpolation array */
-             dp3m.int_caf[i] = (double *) realloc(dp3m.int_caf[i], sizeof(double)*(2*dp3m.params.inter+1));
+             dp3m.int_caf[i] = (double *) Utils::realloc(dp3m.int_caf[i], sizeof(double)*(2*dp3m.params.inter+1));
 
             /* loop over all interpolation points */
               for (j=-dp3m.params.inter; j<=dp3m.params.inter; j++)
@@ -1130,9 +1130,9 @@ double calc_surface_term(int force_flag, int energy_flag)
        n_local_part += local_cells.cell[c]->n;
 
      // We put all the dipolar momenta in a the arrays mx,my,mz according to the id-number of the particles   
-     mx = (double *) malloc(sizeof(double)*n_local_part);
-     my = (double *) malloc(sizeof(double)*n_local_part);
-     mz = (double *) malloc(sizeof(double)*n_local_part);
+     mx = (double *) Utils::malloc(sizeof(double)*n_local_part);
+     my = (double *) Utils::malloc(sizeof(double)*n_local_part);
+     mz = (double *) Utils::malloc(sizeof(double)*n_local_part);
     
      
      
@@ -1176,9 +1176,9 @@ double calc_surface_term(int force_flag, int energy_flag)
      if (force_flag) {
           //fprintf(stderr," number of particles= %d ",n_part);   
 
-          double *sumix = (double *) malloc(sizeof(double)*n_local_part);
-          double *sumiy = (double *) malloc(sizeof(double)*n_local_part);
-          double *sumiz = (double *) malloc(sizeof(double)*n_local_part);
+          double *sumix = (double *) Utils::malloc(sizeof(double)*n_local_part);
+          double *sumiy = (double *) Utils::malloc(sizeof(double)*n_local_part);
+          double *sumiz = (double *) Utils::malloc(sizeof(double)*n_local_part);
 	  
           for (i = 0; i < n_local_part; i++){
 	    sumix[i]=my[i]*a[2]-mz[i]*a[1];
@@ -1319,8 +1319,8 @@ void dp3m_realloc_ca_fields(int newsize)
 
    P3M_TRACE(fprintf(stderr,"%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",this_node,dp3m.ca_num,newsize));
    dp3m.ca_num = newsize;
-   dp3m.ca_frac = (double *)realloc(dp3m.ca_frac, dp3m.params.cao3*dp3m.ca_num*sizeof(double));
-   dp3m.ca_fmp  = (int *)realloc(dp3m.ca_fmp, dp3m.ca_num*sizeof(int));
+   dp3m.ca_frac = (double *)Utils::realloc(dp3m.ca_frac, dp3m.params.cao3*dp3m.ca_num*sizeof(double));
+   dp3m.ca_fmp  = (int *)Utils::realloc(dp3m.ca_fmp, dp3m.ca_num*sizeof(int));
   
 }
 
@@ -1333,7 +1333,7 @@ void dp3m_calc_meshift(void)
   int i;
   double dmesh;
      dmesh = (double)dp3m.params.mesh[0];
-     dp3m.meshift = (double *) realloc(dp3m.meshift, dp3m.params.mesh[0]*sizeof(double));
+     dp3m.meshift = (double *) Utils::realloc(dp3m.meshift, dp3m.params.mesh[0]*sizeof(double));
      for (i=0; i<dp3m.params.mesh[0]; i++) dp3m.meshift[i] = i - dround(i/dmesh)*dmesh;   
 }
 
@@ -1348,7 +1348,7 @@ void dp3m_calc_differential_operator()
   double dmesh;
 
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.d_op = (double *) realloc(dp3m.d_op, dp3m.params.mesh[0]*sizeof(double));
+  dp3m.d_op = (double *) Utils::realloc(dp3m.d_op, dp3m.params.mesh[0]*sizeof(double));
 
   for (i=0; i<dp3m.params.mesh[0]; i++) 
     dp3m.d_op[i] = (double)i - dround((double)i/dmesh)*dmesh;
@@ -1373,7 +1373,7 @@ void dp3m_calc_influence_function_force()
     size *= dfft.plan[3].new_mesh[i];
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  dp3m.g_force = (double *) realloc(dp3m.g_force, size*sizeof(double));
+  dp3m.g_force = (double *) Utils::realloc(dp3m.g_force, size*sizeof(double));
   fak1  = dp3m.params.mesh[0]*dp3m.params.mesh[0]*dp3m.params.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=dfft.plan[3].start[0]; n[0]<end[0]; n[0]++)
@@ -1455,7 +1455,7 @@ void dp3m_calc_influence_function_energy()
     size *= dfft.plan[3].new_mesh[i];
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  dp3m.g_energy = (double *) realloc(dp3m.g_energy, size*sizeof(double));
+  dp3m.g_energy = (double *) Utils::realloc(dp3m.g_energy, size*sizeof(double));
   fak1  = dp3m.params.mesh[0]*dp3m.params.mesh[0]*dp3m.params.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
   for(n[0]=dfft.plan[3].start[0]; n[0]<end[0]; n[0]++)
@@ -1618,7 +1618,7 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
   
   /* broadcast p3m parameters for test run */
   if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
-    coulomb.Dmethod = DIPOLAR_P3M;
+    set_dipolar_method_local(DIPOLAR_P3M);
   dp3m.params.r_cut_iL = r_cut_iL;
   dp3m.params.mesh[0]  = dp3m.params.mesh[1] = dp3m.params.mesh[2] = mesh;
   dp3m.params.cao      = cao;
@@ -1687,9 +1687,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao,
 
   /* check whether we are running P3M+DLC, and whether we leave a reasonable gap space */
   if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-      ostringstream msg;
-      msg <<"dipolar P3M: tuning when dlc needs to be fixed";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M: tuning when dlc needs to be fixed";
   }
 
   /* check whether this radius is too large, so that we would use less cells than allowed */
@@ -1880,7 +1878,7 @@ int dp3m_adaptive_tune(char **logger)
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "dipolar P3M tune parameters: Accuracy goal = %.5e\n", dp3m.params.accuracy);
+  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e\n", dp3m.params.accuracy, coulomb.Dbjerrum);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
@@ -2279,15 +2277,11 @@ int dp3m_sanity_checks_boxl() {
      for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(dp3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-        ostringstream msg;
-        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
       ret = 1;
     }
     if(dp3m.params.cao_cut[i] >= local_box_l[i]) {
-        ostringstream msg;
-        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
       ret = 1;
     }
   }
@@ -2302,57 +2296,41 @@ int dp3m_sanity_checks()
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"dipolar P3M requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M requires periodicity 1 1 1";
     ret = 1;
   }
   /*
   if (n_nodes != 1) {
-      ostringstream msg;
-      msg <<"dipolar P3M does not run in parallel";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M does not run in parallel";
     ret = 1;
   } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
-      msg <<"dipolar P3M at present requires the domain decomposition cell system";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M at present requires the domain decomposition cell system";
     ret = 1;
   }
   
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      ostringstream msg;
-      msg <<"dipolar P3M requires a cubic box";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M requires a cubic box";
     ret = 1;
   }
 
     if( (dp3m.params.mesh[0] != dp3m.params.mesh[1]) || (dp3m.params.mesh[1] != dp3m.params.mesh[2]) ) {
-    ostringstream msg;
-    msg <<"dipolar P3M requires a cubic mesh";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"dipolar P3M requires a cubic mesh";
     ret = 1;
   }
 
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
   if( dp3m.params.mesh[0] == 0) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: mesh size is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: mesh size is not yet set";
     ret = 1;
   }
   if( dp3m.params.cao == 0) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: cao is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: cao is not yet set";
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: node grid must be sorted, largest first";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: node grid must be sorted, largest first";
     ret = 1;
   }
   

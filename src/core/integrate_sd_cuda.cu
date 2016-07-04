@@ -1,6 +1,6 @@
 
 /*
-   Copyright (C) 2010,2011,2012 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2016 The ESPResSo project
 
    This file is part of ESPResSo.
 
@@ -1284,14 +1284,14 @@ real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,
   const int steps=1024*128; // with 1024 it should fit in L1
   unsigned int N=1024; // guess the number of coefficents we need, if more are needed -> realocate
   if (*coefficents==NULL){
-    *coefficents = (real *)malloc(N*sizeof(real));
+    *coefficents = (real *)Utils::malloc(N*sizeof(real));
   } else {
-    *coefficents = (real *)realloc(*coefficents,N*sizeof(real));
+    *coefficents = (real *)Utils::realloc(*coefficents,N*sizeof(real));
   }
   real * current_polynome=NULL;
   real * last_polynome=NULL;
-  last_polynome    = (real *) malloc(steps * sizeof(real));
-  current_polynome = (real *) malloc(steps * sizeof(real));
+  last_polynome    = (real *) Utils::malloc(steps * sizeof(real));
+  current_polynome = (real *) Utils::malloc(steps * sizeof(real));
   real x[steps];
   real weight_and_func[steps];
   real lambda_m=lambda_max-lambda_min;
@@ -1351,7 +1351,7 @@ real calculate_chebyshev_coefficents(real lambda_min, real lambda_max, real tol,
     } while (loop%miniloop);
     if (loop+miniloop > N){
       N*=2;
-      *coefficents=(real *)realloc(*coefficents,N*sizeof(real));
+      *coefficents=(real *)Utils::realloc(*coefficents,N*sizeof(real));
     }
   } while ((error > tol*totalsum/10 || loop < 20 ) && loop < sqrt(steps));
   if (loop >=steps/10 -1 ){
@@ -1617,7 +1617,7 @@ void sd_compute_mobility_matrix_wave_cpu(int kmax, real kmax2, matrix & mobility
   }
   if (mobility.wavespace == NULL){
     mobility.wavespace = new wavepart(mobility.ldd_short);
-    //mobility.wavespace = (wavepart *) malloc(sizeof(wavepart));
+    //mobility.wavespace = (wavepart *) Utils::malloc(sizeof(wavepart));
     //mobility.wavespace->wavepart();
   }
   mobility.wavespace->num      = vc;

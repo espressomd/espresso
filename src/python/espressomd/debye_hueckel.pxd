@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,9 +23,9 @@ cdef extern from "config.hpp":
 
 IF ELECTROSTATICS == 1:
     cdef extern from "debye_hueckel.hpp":
-        ctypedef struct Debye_hueckel_params:
+        ctypedef struct debye_hueckel_params:
             double kappa
             double r_cut
 
-        Debye_hueckel_params dh_params
+        debye_hueckel_params dh_params
         int dh_set_params(double kappa, double r_cut)

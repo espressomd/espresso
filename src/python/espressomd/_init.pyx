@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,16 +19,15 @@
 import sys
 
 cdef extern from "communication.hpp":
-    void mpi_init(int * argc=NULL, char ** *argv=NULL)
+    void mpi_init(int * argc, char ** *argv)
     int this_node
 
 cdef extern from "initialize.hpp":
     void on_program_start()
     void mpi_loop()
 
-# Here we make a minimalistic Tcl_Interp available
 # Main code
-mpi_init()
+mpi_init(NULL, NULL)
 
 # Main slave loop
 if this_node != 0:

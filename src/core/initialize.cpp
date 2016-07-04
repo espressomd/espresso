@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -30,7 +30,6 @@
 #include "statistics.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
-#include "polymer.hpp"
 #include "imd.hpp"
 #include "random.hpp"
 #include "communication.hpp"
@@ -66,6 +65,7 @@
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "scafacos.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -89,14 +89,10 @@ void on_program_start()
   EF_ALLOW_MALLOC_0 = 1;
 #endif
 
-  register_sigint_handler();
+  ErrorHandling::register_sigint_handler();
 
   if (this_node == 0) {
     /* master node */
-#ifdef FORCE_CORE
-    /* core should be the last exit handler (process dies) */
-    atexit(core);
-#endif
     atexit(mpi_stop);
   }
 #ifdef CUDA
@@ -106,8 +102,7 @@ void on_program_start()
   /*
     call the initialization of the modules here
   */
-  init_random();
-  init_bit_random();
+  Random::init_random();
 
   init_node_grid();
   /* calculate initial minimal number of cells (see tclcallback_min_num_cells) */
@@ -139,6 +134,7 @@ void on_program_start()
 #ifdef CATALYTIC_REACTIONS
   reaction.eq_rate=0.0;
   reaction.sing_mult=0;
+  reaction.swap=0;
 #endif
 
   /*
@@ -302,11 +298,7 @@ void on_coulomb_change()
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
-      fprintf (stderr, "P3M on the GPU requires a cubic box!\n");
-      errexit();
-    }
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha, box_l);
     MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
               sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     break;
@@ -331,7 +323,7 @@ void on_coulomb_change()
     break;
   default: break;
   }
-#endif  /* ifdef ELECTROSTATICS */
+#endif  /* ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
@@ -546,6 +538,10 @@ void on_temperature_change()
       lb_reinit_parameters_gpu();
     }
   }
+#endif
+
+#ifdef ELECTROSTATICS
+  recalc_coulomb_prefactor();
 #endif
 }
 

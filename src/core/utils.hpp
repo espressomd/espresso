@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,15 +27,16 @@
  *  and some constants...
  *
 */
+
+#include "config.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "config.hpp"
 #include "debug.hpp"
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
-
 #include <vector>
 #include <exception>
 
@@ -105,68 +106,75 @@ typedef struct {
 /* to enable us to make sure that freed pointers are invalidated, we normally try to use realloc.
    Unfortunately allocating zero bytes (which should be avoided) actually allocates 16 bytes, and
    reallocating to 0 also. To avoid this, we use our own malloc and realloc procedures. */
-#ifndef MEM_DEBUG
 
-#ifdef realloc
-#undef realloc
-#endif
-
-#ifdef malloc
-#undef malloc
-#endif
-
-/** used instead of realloc.
-    Makes sure that resizing to zero FREEs pointer */
-inline void *prealloc(void *old, int size) {
-  void *p;
-  if (size <= 0) {
-    free(old);
-    return NULL;
+namespace Utils {
+/**
+ * \brief Calculate integer powers.
+ * This functions calculates x^n, where
+ * n is a positive integer that is known
+ * at compile time. It uses exponentiation by
+ * squaring to construct a efficient function.
+ */
+template<unsigned n, typename T>
+inline T int_pow(T x) {
+  switch(n) {
+    case 0:
+      return T(1);
+    case 1:
+      return x;
+    default:
+      /** Even branch */
+      if(n % 2 == 0) {
+        return int_pow<n / 2, T>(x * x);
+      } else {
+        return x * int_pow<(n - 1)/2, T>(x * x);
+      }
   }
-  p = (void *)realloc(old, size);
-  if(p == NULL) {
+}
+
+  /** used instead of realloc.
+      Makes sure that resizing to zero FREEs pointer */
+template<typename T>
+inline T *realloc(T *old, size_t size) {
+  if (size <= 0) {
+    ::free(static_cast<void *>(old));
+    return nullptr;
+  }
+  
+  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
+  
+  if(p == nullptr) {
     fprintf(stderr, "Could not allocate memory.\n");
     errexit();
   }
   return p;
 }
 
-/** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
-inline void *pmalloc(int size)
+  /** used instead of malloc.
+      Makes sure that a zero size allocation returns a NULL pointer */
+inline void *malloc(size_t size)
 {
-  void *p;
   if (size <= 0) {
-    return NULL;
+    return nullptr;
   }
-  p = (void *)malloc(size);
-  if(p == NULL) {
+  
+  void *p = ::malloc(size);
+  
+  if(p == nullptr) {
     fprintf(stderr, "Could not allocate memory.\n");
     errexit();
   }
   return p;
 }
 
-/** use our own realloc which makes sure that realloc(0) is actually a free. */
-#define realloc prealloc
+/** Calculate signum of val, if supported by T */
+template <typename T>
+int sgn(T val) {
+  return (T(0) < val) - (val < T(0));
+}
+}
 
-/** use our own malloc which makes sure that malloc(0) returns NULL. */
-#define malloc pmalloc
-
-#endif
 /*@}*/
-
-/*************************************************************/
-/* mass helper macro                                         */
-/*************************************************************/
-
-#ifdef MASS
-/** macro for easy use of mass. If masses are not switched on, the particle mass is defined to 1,
-    so it should be compiled out in most cases. */
-#define PMASS(pt) (pt).p.mass
-#else
-#define PMASS(pt) 1
-#endif
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -187,7 +195,7 @@ extern int this_node;
 inline void alloc_intlist(IntList *il, int size)
 {
   il->max = size;
-  il->e = (int *) malloc(sizeof(int)*il->max);
+  il->e = (int *) Utils::malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList */
@@ -195,7 +203,7 @@ inline void realloc_intlist(IntList *il, int size)
 {
   if(size != il->max) {
     il->max = size;
-    il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+    il->e = (int *) Utils::realloc(il->e, sizeof(int)*il->max);
   }
 }
 
@@ -203,7 +211,7 @@ inline void realloc_intlist(IntList *il, int size)
 inline void alloc_grained_intlist(IntList *il, int size, int grain)
 {
   il->max = grain*((size + grain - 1)/grain);
-  il->e = (int *) malloc(sizeof(int)*il->max);
+  il->e = (int *) Utils::malloc(sizeof(int)*il->max);
 }
 
 /** Reallocate an \ref IntList, but only to multiples of grain. */
@@ -216,7 +224,7 @@ inline void realloc_grained_intlist(IntList *il, int size, int grain)
     il->max = grain*(((il->max + size + 1)/2 +
 		      grain - 1)/grain);
 
-  il->e = (int *) realloc(il->e, sizeof(int)*il->max);
+  il->e = (int *) Utils::realloc(il->e, sizeof(int)*il->max);
 }
 
 /** Check wether an \ref IntList contains the value c */
@@ -241,7 +249,7 @@ inline void init_doublelist(DoubleList *il)
 inline void alloc_doublelist(DoubleList *dl, int size)
 {
   dl->max = size;
-  dl->e = (double *) malloc(sizeof(double)*dl->max);
+  dl->e = (double *) Utils::malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList */
@@ -249,7 +257,7 @@ inline void realloc_doublelist(DoubleList *dl, int size)
 {
   if(size != dl->max) {
     dl->max = size;
-    dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+    dl->e = (double *) Utils::realloc(dl->e, sizeof(double)*dl->max);
   }
 }
 
@@ -257,7 +265,7 @@ inline void realloc_doublelist(DoubleList *dl, int size)
 inline void alloc_grained_doublelist(DoubleList *dl, int size, int grain)
 {
   dl->max = grain*((size + grain - 1)/grain);
-  dl->e = (double *) malloc(sizeof(double)*dl->max);
+  dl->e = (double *) Utils::malloc(sizeof(double)*dl->max);
 }
 
 /** Reallocate an \ref DoubleList, but only to multiples of grain. */
@@ -270,7 +278,7 @@ inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain)
     dl->max = grain*(((dl->max + size + 1)/2 +
 		      grain - 1)/grain);
 
-  dl->e = (double *) realloc(dl->e, sizeof(double)*dl->max);
+  dl->e = (double *) Utils::realloc(dl->e, sizeof(double)*dl->max);
 }
 /*@}*/
 
@@ -377,19 +385,20 @@ inline double AS_erfc_part(double d)
 */
 inline double sinc(double d)
 {
-#define epsi 0.1
+  constexpr double epsi = 0.1;
 
-#define c2 -0.1666666666667e-0
-#define c4  0.8333333333333e-2
-#define c6 -0.1984126984127e-3
-#define c8  0.2755731922399e-5
-
-  double PId = PI*d, PId2;
+  const double PId = PI*d;
 
   if (fabs(d)>epsi)
     return sin(PId)/PId;
   else {
-    PId2 = SQR(PId);
+    /** Coefficients of the Taylor expansion of sinc */
+    constexpr double c2 = -0.1666666666667e-0;
+    constexpr double c4 =  0.8333333333333e-2;
+    constexpr double c6 = -0.1984126984127e-3;
+    constexpr double c8 =  0.2755731922399e-5;
+    
+    const double PId2 = PId * PId;
     return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
   }
 }
@@ -637,7 +646,7 @@ inline int lu_decompose_matrix(double **A, int n, int *perms) {
   int i, j, k, ip;
   double max, sum, tmp;
 
-  double *scal = (double *)malloc(n*sizeof(double));
+  double *scal = (double *)Utils::malloc(n*sizeof(double));
 
   /* loop over rows and store implicit scaling factors */
   for (i=0; i<n; i++) {
@@ -798,13 +807,13 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
 inline int malloc_3d_grid(double ****grid, int dim[3])
 {
   int i,j;
-  *grid = (double***)malloc(sizeof(double **)*dim[0]);
+  *grid = (double***)Utils::malloc(sizeof(double **)*dim[0]);
   if(*grid==NULL) return 0;
   for(i=0;i<dim[0];i++) {
-    (*grid)[i] = (double**)malloc(sizeof(double *)*dim[1]);
+    (*grid)[i] = (double**)Utils::malloc(sizeof(double *)*dim[1]);
     if((*grid)[i]==NULL) return 0;
     for(j=0;j<dim[1];j++) {
-      (*grid)[i][j] = (double*)malloc(sizeof(double)*dim[2]);
+      (*grid)[i][j] = (double*)Utils::malloc(sizeof(double)*dim[2]);
       if((*grid)[i][j]==NULL) return 0;
     }
   }
@@ -938,12 +947,12 @@ inline double unfolded_distance(double pos1[3], int image_box1[3],
 inline char *strcat_alloc(char *left, const char *right)
 {
   if (!left) {
-    char *res = (char *)malloc(strlen(right) + 1);
+    char *res = (char *)Utils::malloc(strlen(right) + 1);
     strcpy(res, right);
     return res;
   }
   else {
-    char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
+    char *res = (char *)Utils::realloc(left, strlen(left) + strlen(right) + 1);
     strcat(res, right);
     return res;
   }
@@ -1174,6 +1183,11 @@ void vecsub(T const * const a, T const * const b, T * const c) {
   // Note the different signature for pointers here!
   for (unsigned int i = 0; i < 3; i++)
     c[i] = a[i] - b[i];
+}
+
+template<typename T>
+int sign(T value) {
+  return (T(0) < value) - (value < T(0));
 }
 
 }

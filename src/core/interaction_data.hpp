@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -42,10 +42,8 @@ enum BondedInteraction{
     BONDED_IA_FENE,
     /** Type of bonded interaction is a HARMONIC potential. */
     BONDED_IA_HARMONIC,
-#ifdef ROTATION
     /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
     BONDED_IA_HARMONIC_DUMBBELL,
-#endif
     /** Type of bonded interaction is a QUARTIC potential. */
     BONDED_IA_QUARTIC,
     /** Type of bonded interaction is a BONDED_COULOMB */
@@ -76,18 +74,12 @@ enum BondedInteraction{
     BONDED_IA_ANGLE_COSINE,
     /** Type of bonded interaction is a bond angle cosine potential. */
     BONDED_IA_ANGLE_COSSQUARE,
-    /** Type of bonded interaction is a hyperelastic stretching force. */
-    BONDED_IA_STRETCHING_FORCE,
-    /** Type of bonded interaction is a local area force. */
-    BONDED_IA_AREA_FORCE_LOCAL,
-    /** Type of bonded interaction is a bending force. */
-    BONDED_IA_BENDING_FORCE,
-    /** Type of bonded interaction is a bending force. */
-    BONDED_IA_VOLUME_FORCE,
-    /** Type of bonded interaction is a global area force. */
-    BONDED_IA_AREA_FORCE_GLOBAL,
-    /** Type of bonded interaction is a linear stretching force. */
-    BONDED_IA_STRETCHLIN_FORCE,
+    /** Type of bonded interaction: oif local forces. */
+    BONDED_IA_OIF_LOCAL_FORCES,
+    /** Type of bonded interaction: oif global forces. */
+    BONDED_IA_OIF_GLOBAL_FORCES,
+    /** Type of bonded interaction: determining outward direction of oif membrane. */
+    BONDED_IA_OIF_OUT_DIRECTION,
     /** Type of bonded interaction for cg DNA */
     BONDED_IA_CG_DNA_BASEPAIR,
     /** Type of bonded interaction for cg DNA */
@@ -148,6 +140,7 @@ enum OverlappedBondedInteraction{
 		COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
 		COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
                 COULOMB_EK, //< Coulomb method is electrokinetics
+                COULOMB_SCAFACOS, //< Coulomb method is scafacos
 	};
 
 #endif
@@ -161,7 +154,7 @@ enum OverlappedBondedInteraction{
    */
   /************************************************************/
   /*@{*/
-enum DipolarInteration{
+enum DipolarInteraction{
   /** dipolar interation switched off (NONE). */
     DIPOLAR_NONE = 0,
    /** dipolar method is P3M. */
@@ -173,9 +166,14 @@ enum DipolarInteration{
    /** Dipolar method is magnetic dipolar direct sum */
     DIPOLAR_DS,
    /** Dipolar method is direct sum plus DLC. */
-    DIPOLAR_MDLC_DS
-};
-   /*@}*/
+    DIPOLAR_MDLC_DS,
+   /** Direct summation on gpu */
+   DIPOLAR_DS_GPU,
+  /** Scafacos library */
+  DIPOLAR_SCAFACOS
+
+
+   };
 #endif 
 
 
@@ -187,7 +185,7 @@ enum DipolarInteration{
 /*@{*/
 enum ConstraintApplied{
 /** No constraint applied */
-    CONSTRAINT_NONE = 0,
+    CONSTRAINT_NONE =0,
 /** wall constraint applied */
     CONSTRAINT_WAL,
 /** spherical constraint applied */
@@ -217,7 +215,9 @@ enum ConstraintApplied{
 /** Constraint for a hollow cone boundary */
     CONSTRAINT_HOLLOW_CONE,
 /** Constraint for spherocylinder boundary */
-    CONSTRAINT_SPHEROCYLINDER
+    CONSTRAINT_SPHEROCYLINDER,
+/** Constraint for a voxel boundary */
+    CONSTRAINT_VOXEL
 };
 /*@}*/
 
@@ -369,6 +369,29 @@ typedef struct {
   double soft_cut;
   double soft_offset;
   /*@}*/
+#endif
+
+#ifdef AFFINITY
+  /** \name affinity potential */
+  /*@{*/
+  int affinity_type;
+  double affinity_kappa;
+  double affinity_r0;
+  double affinity_Kon;
+  double affinity_Koff;
+  double affinity_maxBond;
+  double affinity_cut;
+  /*@}*/
+#endif
+    
+#ifdef MEMBRANE_COLLISION
+    /** \name membrane collision potential */
+    /*@{*/
+    double membrane_a;
+    double membrane_n;
+    double membrane_cut;
+    double membrane_offset;
+    /*@}*/
 #endif
 
 #ifdef HAT
@@ -530,7 +553,7 @@ typedef struct {
  #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
-  DipolarInteration    Dmethod;
+  DipolarInteraction    Dmethod;
  #endif
 
 } Coulomb_parameters;
@@ -590,43 +613,31 @@ typedef struct {
     } Cg_dna_stacking_parameters;
 #endif
 
-/** Parameters for hyperelastic stretching_force */
-typedef struct {
-  double r0;
-  double ks;
-} Stretching_force_bond_parameters;
-
-
-/** Parameters for linear stretching_force */
-typedef struct {
-  double r0;
-  double kslin;
-} Stretchlin_force_bond_parameters;
-
-/** Parameters for area_force_local */
-typedef struct {
-  double A0_l;
-  double ka_l;
-} Area_force_local_bond_parameters;
-/** Parameters for area_force_global */
+/** Parameters for oif_global_forces */
 typedef struct {
   double A0_g;
   double ka_g;
-} Area_force_global_bond_parameters;
-
-/** Parameters for bending_force */
-typedef struct {
-   double phi0;
-   double kb;
-} Bending_force_bond_parameters;
-
-/** Parameters for volume_force */
-typedef struct {
   double V0;
   double kv;
-} Volume_force_bond_parameters;
-    
-    
+} Oif_global_forces_bond_parameters;
+
+/** Parameters for oif_local_forces */
+typedef struct {
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+} Oif_local_forces_bond_parameters;
+
+/** Parameters for oif_out_direction */
+typedef struct {
+
+} Oif_out_direction_bond_parameters;
+
 /** Parameters for harmonic bond Potential */
 typedef struct {
       double k;
@@ -842,12 +853,9 @@ typedef struct {
 /** Union in which to store the parameters of an individual bonded interaction */
 typedef union {
     Fene_bond_parameters fene;
-    Stretchlin_force_bond_parameters stretchlin_force;
-    Stretching_force_bond_parameters stretching_force;
-    Area_force_local_bond_parameters area_force_local;
-    Area_force_global_bond_parameters area_force_global;
-    Bending_force_bond_parameters bending_force;
-    Volume_force_bond_parameters volume_force;
+    Oif_global_forces_bond_parameters oif_global_forces;
+    Oif_local_forces_bond_parameters oif_local_forces;
+    Oif_out_direction_bond_parameters oif_out_direction;
     Harmonic_bond_parameters harmonic;
 #ifdef ROTATION
     Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
@@ -1098,6 +1106,18 @@ typedef struct {
 
 } Constraint_hollow_cone;
 
+/** Parameters for a VOXEL constraint. */
+typedef struct {
+
+  /** Voxel position. x y z*/
+  //double pos[3];
+  /** normal vector towards fluid. */
+  //double n[3];
+  
+  #define MAXLENGTH_VOXELFILE_NAME 256
+  char filename[MAXLENGTH_VOXELFILE_NAME]; 
+} Constraint_voxel;
+
 /** Parameters for a BOX constraint. */
 typedef struct {
   int value;
@@ -1140,6 +1160,7 @@ typedef struct {
     Constraint_slitpore slitpore;
     Constraint_stomatocyte stomatocyte;
     Constraint_hollow_cone hollow_cone;
+    Constraint_voxel voxel;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
@@ -1182,6 +1203,14 @@ extern double max_cut;
 extern double max_cut_nonbonded;
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
 extern double max_cut_bonded;
+/** Cutoff of coulomb real space part */
+extern double coulomb_cutoff;
+/** Cutoff of dipolar real space part */
+extern double dipolar_cutoff;
+
+
+
+
 /** Minimal global interaction cutoff. Particles with a distance
     smaller than this are guaranteed to be available on the same node
     (through ghosts).  */
@@ -1267,6 +1296,10 @@ const char *get_name_of_bonded_ia(BondedInteraction type);
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
+#endif
+
+#ifdef DIPOLES
+void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
 #endif

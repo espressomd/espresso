@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -64,12 +64,9 @@
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "minimize_energy.hpp"
 
-/************************************************
- * DEFINES
- ************************************************/
-
-/** Tag for communication in verlet fix: propagate_positions()  */
-#define REQ_INT_VERLET   400
+#ifdef VALGRIND_INSTRUMENTATION
+#include <callgrind.h>
+#endif
 
 /*******************  variables  *******************/
 
@@ -147,9 +144,7 @@ void integrator_sanity_checks()
   //char *errtext;
 
   if ( time_step < 0.0 ) {
-      ostringstream msg;
-      msg <<"time_step not set";
-      runtimeError(msg);
+      runtimeErrorMsg() << "time_step not set";
   }
 }
 
@@ -159,9 +154,7 @@ void integrator_npt_sanity_checks()
 {  
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     if (nptiso.piston <= 0.0) {
-        ostringstream msg;
-        msg <<"npt on, but piston mass not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt on, but piston mass not set";
     }
 
 #ifdef ELECTROSTATICS
@@ -174,9 +167,7 @@ void integrator_npt_sanity_checks()
       case COULOMB_P3M:   break;
 #endif /*P3M*/
       default: {
-        ostringstream msg;
-        msg <<"npt only works with P3M, Debye-Huckel or reaction field";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"npt only works with P3M, Debye-Huckel or reaction field";
       }
     }
 #endif /*ELECTROSTATICS*/
@@ -189,9 +180,7 @@ void integrator_npt_sanity_checks()
       case DIPOLAR_P3M: break;
 #endif /* DP3M */
       default: {
-        ostringstream msg;
-        msg <<"NpT does not work with your dipolar method, please use P3M.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"NpT does not work with your dipolar method, please use P3M.";
       }
     }
 #endif  /* ifdef DIPOLES */
@@ -288,12 +277,12 @@ void integrate_vv(int n_steps, int reuse_forces)
 #ifdef LB
     transfer_momentum = 0;
     if (lattice_switch & LATTICE_LB && this_node == 0)
-      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
+      runtimeWarning("Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-      if (warnings) fprintf (stderr, "Warning: Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
+      runtimeWarning ("Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
 
     force_calc();
@@ -333,6 +322,10 @@ void integrate_vv(int n_steps, int reuse_forces)
 
   n_verlet_updates = 0;
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_START_INSTRUMENTATION;
+#endif
+    
   /* Integration loop */
   for (int step=0; step<n_steps; step++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n", this_node, step));
@@ -350,10 +343,10 @@ void integrate_vv(int n_steps, int reuse_forces)
 
 #ifdef SD
     if (thermo_switch & THERMO_SD) {
-      fprintf(stderr,"Warning: Use integrate_sd to use Stokesian Dynamics Thermalizer.");
+      runtimeWarning("Use integrate_sd to use Stokesian Dynamics Thermalizer.");
     }
     if (thermo_switch & THERMO_BD) {
-      fprintf(stderr,"Warning: Use integrate_sd to use Brownian Dynamics Thermalizer.");
+      runtimeWarning("Use integrate_sd to use Brownian Dynamics Thermalizer.");
     }
 #endif
 
@@ -553,8 +546,15 @@ void integrate_vv(int n_steps, int reuse_forces)
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+    #ifdef COLLISION_DETECTION
+      handle_collisions();
+    #endif
   }
 
+#ifdef VALGRIND_INSTRUMENTATION
+  CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+    
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
@@ -625,9 +625,9 @@ void rescale_forces()
     np = cell->n;
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
-      p[i].f.f[0] *= scale/PMASS(p[i]);
-      p[i].f.f[1] *= scale/PMASS(p[i]);
-      p[i].f.f[2] *= scale/PMASS(p[i]);
+      p[i].f.f[0] *= scale/(p[i]).p.mass;
+      p[i].f.f[1] *= scale/(p[i]).p.mass;
+      p[i].f.f[2] *= scale/(p[i]).p.mass;
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
@@ -665,9 +665,9 @@ void rescale_forces_propagate_vel()
     for(i = 0; i < np; i++) {
       check_particle_force(&p[i]);
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
-      p[i].f.f[0] *= scale/PMASS(p[i]);
-      p[i].f.f[1] *= scale/PMASS(p[i]);
-      p[i].f.f[2] *= scale/PMASS(p[i]);
+      p[i].f.f[0] *= scale/(p[i]).p.mass;
+      p[i].f.f[1] *= scale/(p[i]).p.mass;
+      p[i].f.f[2] *= scale/(p[i]).p.mass;
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef VIRTUAL_SITES
@@ -680,13 +680,13 @@ void rescale_forces_propagate_vel()
 #endif
 #ifdef NPT
           if(integ_switch == INTEG_METHOD_NPT_ISO && ( nptiso.geometry & nptiso.nptgeom_dir[j] )) {
-            nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+            nptiso.p_vel[j] += SQR(p[i].m.v[j])*(p[i]).p.mass;
 #ifdef MULTI_TIMESTEP
             if (smaller_time_step > 0. && current_time_step_is_small==1)
               p[i].m.v[j] += p[i].f.f[j];
             else
 #endif
-              p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
+              p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/(p[i]).p.mass;
           }
           else
 #endif
@@ -765,10 +765,8 @@ void propagate_press_box_pos_and_rescale_npt()
         nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
 
-          ostringstream msg;
-          msg << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
+          runtimeErrorMsg() << "your choice of piston= "<< nptiso.piston << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
                  << " just caused the volume to become negative, decrease dt";
-          runtimeError(msg);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
 	scal[2] = 1;
       }
@@ -885,6 +883,11 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
+#endif
+
+        // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
@@ -900,8 +903,8 @@ void propagate_vel()
                 p[i].m.v[j] += p[i].f.f[j];
               else
 #endif
-                p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/PMASS(p[i]);
-              nptiso.p_vel[j] += SQR(p[i].m.v[j])*PMASS(p[i]);
+                p[i].m.v[j] += p[i].f.f[j] + friction_therm0_nptiso(p[i].m.v[j])/(p[i]).p.mass;
+              nptiso.p_vel[j] += SQR(p[i].m.v[j])*(p[i]).p.mass;
             }
             else
 #endif
@@ -917,9 +920,6 @@ void propagate_vel()
         ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-     propagate_omega_quat_particle(&p[i]);
 #endif
       }
     }
@@ -995,7 +995,13 @@ void propagate_vel_pos()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
- #ifdef VIRTUAL_SITES
+
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
+#endif
+
+       // Don't propagate translational degrees of freedom of vs
+#ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
      for(j=0; j < 3; j++){   
@@ -1020,9 +1026,6 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
-#endif
-#ifdef ROTATION
-      propagate_omega_quat_particle(&p[i]);
 #endif
 
 #ifdef LEES_EDWARDS
@@ -1117,6 +1120,8 @@ void force_and_velocity_display()
 #endif
 }
 
+/** @TODO: This needs to go!! */
+
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
 {
 
@@ -1125,27 +1130,21 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces)
 
   if ( recalc_forces ) {
   	if ( reuse_forces ) {
-      std::ostringstream msg;
-      msg <<"cannot reuse old forces and recalculate forces";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot reuse old forces and recalculate forces";
   	}
   	reuse_forces = -1;
   }
 
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
-    std::ostringstream msg;
-    msg <<"illegal number of steps (must be >0)";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"illegal number of steps (must be >0)";
     return ES_ERROR;
   }
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     if (max_cut == 0.0) {
-      std::ostringstream msg;
-      msg <<"cannot automatically determine skin, please set it manually";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
     skin = 0.4*max_cut;
@@ -1186,9 +1185,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
   nptiso.piston = piston;
 
   if ( nptiso.piston <= 0.0 ) {
-    std::ostringstream msg;
-    msg <<"You must set <piston> as well before you can use this integrator!\n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must set <piston> as well before you can use this integrator!\n";
     return ES_ERROR;
   }
   if ( xdir || ydir || zdir ) {
@@ -1246,10 +1243,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, in
 
 
   if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    std::ostringstream msg;
-    msg <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
-    msg <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!";
+    runtimeErrorMsg() <<"Cannot proceed with npt_isotropic, reverting to nvt integration... \n";
     integ_switch = INTEG_METHOD_NVT;
   	mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   	return (ES_ERROR);

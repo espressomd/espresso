@@ -12,6 +12,10 @@ start "BUILD"
 # DEFAULTS
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$build_procs" ] && build_procs=4
+[ -z "$make_params" ] && make_params=""
+
+make_params="-j $build_procs $make_params"
+
 outp myconfig build_procs
 
 # change into build dir
@@ -34,8 +38,6 @@ else
     echo "Copying $myconfig.hpp to $builddir/myconfig.hpp..."
     cp $myconfig_file $builddir/myconfig.hpp
 fi
-
-make_params="-j $build_procs"
 cmd "make $make_params" || exit $?
 
 popd

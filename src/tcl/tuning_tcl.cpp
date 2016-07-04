@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -55,3 +55,27 @@ int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, c
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
+
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]) {
+  if(argc != 5) {
+    puts("usage:");
+    return TCL_ERROR;
+  }
+
+  double min, max, tol;
+  int steps;
+  if(!(ARG_IS_D(1, min) && ARG_IS_D(2, max) && ARG_IS_D(3, tol) && ARG_IS_I(4, steps))) {
+    puts("usage:");
+    return TCL_ERROR;
+  }
+
+    tune_skin(min, max, tol, steps);
+  return TCL_OK;
+}
+
+
+
+
+
+
+

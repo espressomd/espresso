@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -46,7 +46,7 @@ void realloc_topology(int size)
     realloc_intlist(&topology[m].part, 0);
   }
   
-  topology = (Molecule*)realloc(topology, size*sizeof(Molecule));
+  topology = (Molecule*)Utils::realloc(topology, size*sizeof(Molecule));
 
   if (n_molecules < 0)
     n_molecules = 0;

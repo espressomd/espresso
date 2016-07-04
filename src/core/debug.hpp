@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,33 +29,6 @@
 */
 
 #include "config.hpp"
-
-#ifdef MEM_DEBUG
-#ifdef __GNUC__
-#define realloc(v,s) __realloc((v),(s),__FILE__, __LINE__)
-#define malloc(s) __malloc((s),__FILE__, __LINE__)
-#define free(v) __free((v),__FILE__, __LINE__)
-#else
-#define realloc(v,s) __realloc((v),(s), "no line info", 0)
-#define malloc(s) __malloc((s), "no line info", 0)
-#define free(v) __free((v),"no line info", 0)
-#endif
-
-/** memory allocation test routine */
-void *__realloc(void *old, unsigned int size, const char *where, int line);
-
-/** memory allocation test routine */
-void *__malloc(unsigned int size, const char *where, int line);
-
-/** memory allocation test routine */
-void __free(void *p, const char *where, int line);
-
-#endif
-
-#if defined FORCE_CORE || defined MPI_CORE
-/** this functions kills the task with SIGSEGV */
-void core();
-#endif
 
 /** this performs a lot of tests which will very likely detect corruptions of
     \ref local_particles and the cell structure.

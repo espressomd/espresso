@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -89,7 +89,6 @@ proc ::mbtools::utils::warmup { steps times args } {
 	    blockfile $out write tclvariable all
 	    blockfile $out write interactions
 	    blockfile $out write random
-	    blockfile $out write bitrandom
 	    blockfile $out write particles "id pos type p v f" all
 	    blockfile $out write bonds all
 	    blockfile $out write configs
@@ -180,7 +179,6 @@ proc ::mbtools::utils::nptwarmup { steps times iparms fparms args } {
 	    blockfile $out write tclvariable all
 	    blockfile $out write interactions
 	    blockfile $out write random
-	    blockfile $out write bitrandom
 	    blockfile $out write particles "id pos type p v f" all
 	    blockfile $out write bonds all
 	    blockfile $out write configs

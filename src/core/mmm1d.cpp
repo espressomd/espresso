@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -108,7 +108,7 @@ static double determine_minrad(double maxPWerror, int P)
 
 static void determine_bessel_radii(double maxPWerror, int maxP)
 {
-  bessel_radii = (double *)realloc(bessel_radii, sizeof(double)*maxP);
+  bessel_radii = (double *)Utils::realloc(bessel_radii, sizeof(double)*maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P-1] = determine_minrad(maxPWerror, P);
     //printf("cutoff %d %f\n", P, bessel_radii[P-1]);
@@ -152,16 +152,12 @@ int MMM1D_sanity_checks()
 {
   //char *errtxt;
   if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"MMM1D requires periodicity 0 0 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM1D requires periodicity 0 0 1";
     return 1;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
-      ostringstream msg;
-      msg <<"MMM1D requires n-square cellsystem";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MMM1D requires n-square cellsystem";
     return 1;
   }
   return 0;
@@ -357,6 +353,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
 
 int mmm1d_tune(char **log)
 {
+  if (MMM1D_sanity_checks()) return ES_ERROR;
   char buffer[32 + 2*ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */

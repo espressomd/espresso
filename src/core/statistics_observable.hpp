@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -86,6 +86,10 @@ int observable_calc_blocked_com_position(observable* self);
 int observable_calc_particle_currents(observable* self);
 int observable_calc_currents(observable* self);
 int observable_calc_dipole_moment(observable* self);
+#endif
+
+#ifdef DIPOLES
+int observable_calc_com_dipole_moment(observable* self);
 #endif
 
 #ifdef LB

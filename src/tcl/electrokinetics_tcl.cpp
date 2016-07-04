@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -67,6 +67,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float] [T #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bjerrum_length #float] [stencil <linkcentered|nonlinear|nodecentered>]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                [advection <on|off>] [fluid-coupling <friction|estatics>]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|boundary|pressure|lbforce|reaction_tags> vtk #string\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics print net_charge\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics node #int #int #int print <velocity>\n", (char *)NULL);
@@ -1589,6 +1590,72 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             Tcl_AppendResult(interp, "Unknown error setting electrokinetics stencil\n", (char *)NULL);
             return TCL_ERROR;
           }
+        }
+
+        argc--;
+        argv++;
+      }
+      else if(ARG0_IS_S("advection")) {
+        argc--;
+        argv++;
+
+        if(argc < 1)
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics advection <on|off>\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+
+        if(ARG0_IS_S("on")) {
+          if(ek_set_advection(true) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics advection\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("off")) {
+          if(ek_set_advection(false) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics advection\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics advection <on|off>\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+
+        argc--;
+        argv++;
+      }
+      else if(ARG0_IS_S("fluid-coupling")) {
+        argc--;
+        argv++;
+
+        if(argc < 1)
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics fluid-coupling <friction|estatics>\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+
+        if(ARG0_IS_S("friction")) {
+          if(ek_set_fluidcoupling(true) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics fluid-coupling\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("estatics")) {
+          if(ek_set_fluidcoupling(false) != 0) 
+          {
+            Tcl_AppendResult(interp, "Unknown error setting electrokinetics fluid-coupling\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else
+        {
+          Tcl_AppendResult(interp, "wrong usage of electrokinetics fluid-coupling <friction|estatics>\n", (char *)NULL);
+          return TCL_ERROR;
         }
 
         argc--;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012,2013,2014 The ESPResSo project
+  Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -60,9 +60,11 @@
 #include "tuning.hpp"
 #include "electrokinetics_tcl.hpp"
 #include "actor/HarmonicWell_tcl.hpp"
+#include "rotate_system_tcl.hpp"
 #include "actor/HarmonicOrientationWell_tcl.hpp"
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
+#include "mpiio_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -121,6 +123,9 @@ char *get_default_scriptsdir();
 /** Returns runtime of the integration loop in seconds. From tuning_tcl.cpp **/
 int tclcommand_time_integration(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
+/** Tunes the skin */
+int tclcommand_tune_skin(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+
 /** Reads particles from pdb file, see \ref readpdb.cpp */
 int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
@@ -166,13 +171,14 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("imd", tclcommand_imd);
   /* in file random.cpp */
   REGISTER_COMMAND("t_random", tclcommand_t_random);
-  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.cpp */
   REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in file h5mdfile_tcl.cpp */
   #ifdef H5MD
 	REGISTER_COMMAND("h5mdfile", tclcommand_h5mdfile);
   #endif
+  /* in mpiio_tcl.cpp */
+  REGISTER_COMMAND("mpiio", tclcommand_mpiio);
   /* in constraint.cpp */
   REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in external_potential.hpp */
@@ -224,6 +230,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+  REGISTER_COMMAND("rotate_system", tclcommand_rotate_system);
   REGISTER_COMMAND("lees_edwards_offset", tclcommand_lees_edwards_offset);
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
@@ -234,6 +241,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
   REGISTER_COMMAND("time_integration", tclcommand_time_integration);
+  REGISTER_COMMAND("tune_skin", tclcommand_tune_skin);
   REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 #if defined(SD) || defined(BD)
   /* from integrate_sd_tcl.cpp */
@@ -243,11 +251,15 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("harmonic_well", tclcommand_HarmonicWell);
+  
 #ifdef ROTATION
   REGISTER_COMMAND("harmonic_orientation_well", tclcommand_HarmonicOrientationWell);
 #endif
 #endif
   REGISTER_COMMAND("minimize_energy", tclcommand_minimize_energy);
+#if defined(SCAFACOS) and defined(ELECTROSTATICS)
+  REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
+#endif
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)
@@ -270,6 +282,8 @@ static void tcl_register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_SD_SEED, tclcallback_sd_seed);
   register_global_callback(FIELD_SD_RANDOM_STATE, tclcallback_sd_random_state);
   register_global_callback(FIELD_SD_RANDOM_PRECISION, tclcallback_sd_random_precision);
+  register_global_callback(FIELD_DPD_IGNORE_FIXED_PARTICLES, tclcallback_dpd_ignore_fixed_particles);
+
 #ifdef MULTI_TIMESTEP
   register_global_callback(FIELD_SMALLERTIMESTEP, tclcallback_smaller_time_step);
 #endif

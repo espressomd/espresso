@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -195,6 +195,13 @@ inline int MPI_Allgather(void *sbuf, int scount, MPI_Datatype sdtype,
 			   void *rbuf, int rcount, MPI_Datatype rdtype,
 			   MPI_Comm comm)
 { return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount, rdtype); }
+inline int MPI_Allgatherv(void *sbuf, int scount, MPI_Datatype sdtype,
+			   void *rbuf, int* rcount, int* displ, MPI_Datatype rdtype,
+			   MPI_Comm comm)
+{ return mpifake_sendrecv(sbuf, scount, sdtype, rbuf, rcount[0], rdtype); }
+
+
+
 inline int MPI_Scatter(void *sbuf, int scount, MPI_Datatype sdtype,
 			 void *rbuf, int rcount, MPI_Datatype rdtype,
 			 int root, MPI_Comm comm)

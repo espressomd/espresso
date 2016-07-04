@@ -1,0 +1,58 @@
+Solutions:
+
+enhanced_diffusion.tcl
+
+E1. Using the process id (pid) and the clock time in seconds, allows one
+    to obtain a reasonably unique value to seed with, even when you launch
+    multiple instances of a job in succession. The modulus is there to
+    ensure that the number adheres to ESPResSo's input requirements.
+E2. To determine the bulk diffusive properties of a single particle that
+    does not experience long-ranged interactions, one requires a box that
+    is at least larger than the short range interactions. In this case 
+    the box is still quite big.
+E3. See example script
+E4. See example script
+
+rectification_geometry.tcl
+
+E1. See example script
+E2. The 'clip' feature of paraview is particularly suited to the task.
+
+rectification_simulation.tcl
+
+E1. The Langevin thermostat has a limited range of stablitity, the choices
+    for the friction, time step, and temperature respect this range.
+E2. See example script
+E3. See example script
+E4. See example script
+E5. Rectification should be detectable when vel = 0.0 and vel = 5.0 are
+    compared. The time it takes to evaluate the script is rather long,
+    about 20 minutes. It is suggested that the student does one of the 
+    other excercises in the mean time. Visualization can be accomplished
+    using paraview. This can also be combined with the visualization you 
+    have of the boundaries from the rectification_geometry.tcl script.
+
+flow_field.tcl
+
+E1. See example script
+E2. See example script
+E3. See example script (needlessly convoluted)
+E4. The coupling point inherits an effective hydrodynamic size from
+    being interpolated on the lattice, roughly 0.5 (agrid = 1) for this
+    choice of friction coefficient. The mass and rotational interia do
+    not affect the result significantly, but can influence the stability
+    of the simulation. The force needs to be low, in order for the LB
+    algorithm to remain stable for these parameter choices.
+E5. The fluid coupling point needs to be away from the particle, otherwise
+    the force on the fluid couples directly back onto the particle and
+    this causes the speed to be negligible. A choice of around 1 agrid is 
+    recommended.
+E6. Three point coupling stencil for the interpolation of the particle and
+    forces onto the fluid. This prevents the particle from experiencing
+    too significant lattice artifacts.
+    No, the particle cannot rotate in the current setup, because the
+    temperature is set to zero and rotational_friction is not set for
+    the particle.
+E7. The flow lines are dipolar, because the swimmer is force free. The fact
+    that they are closed is due to the periodicity of the system. Flow-lines
+    are best visualized using paraview.

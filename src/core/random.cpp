@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  
     Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
@@ -18,208 +19,117 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include "utils.hpp"
-#include "global.hpp"
+
 #include "random.hpp"
 #include "communication.hpp"
 
-/** \file random.cpp A random generator. 
-    Be sure to run init_random() before you use any of the generators. */
+namespace Random {
+using std::string;
+using std::ostringstream;
+using std::istringstream;
+using std::vector;
 
-/* Stuff for Franks ran1-generator */
-long  idum = -1;
-long  idumInit = -1;
-long  iy=0;
-long  iv[NTAB_RANDOM];
+using Communication::mpiCallbacks;
 
-/* Stuff for Burkhards r250-generator */
-int bit_seed = -1;
-int rand_w_array[MERS_BIT_RANDOM];
-int random_pointer_1 = -1;
-int random_pointer_2 = -1;
+std::mt19937 generator;
+std::normal_distribution<double> normal_distribution(0,1);
+std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 
-/*----------------------------------------------------------------------*/
+/** Local functions */
+
+/**
+ * @brief Get a string representation of the state of the PRNG.
+ */
+string get_state() {
+  ostringstream os;
+  os << generator;
+  
+  return os.str();
+}
+
+/**
+ * @brief Set the state of the PRNG from a string representation.
+ */
+void set_state(const string &s) {
+  istringstream is(s);
+  is >> generator;
+}
+
+/** Communication */
+
+void mpi_random_seed_slave(int pnode, int cnt) {
+  int this_idum;
+  
+  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+  
+  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+
+  init_random_seed(this_idum);
+}
+
+void mpi_random_seed(int cnt, vector<int> &seeds) {
+  int this_idum;
+  mpi_call(mpi_random_seed_slave, -1, cnt);
+  
+  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+
+  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+
+  init_random_seed(this_idum);
+}
+
+void mpi_random_set_stat_slave(int, int) {
+  string msg;
+  mpiCallbacks().comm().recv(0, SOME_TAG, msg);
+
+  set_state(msg);
+}
+
+void mpi_random_set_stat(const vector<string> &stat) {
+  mpi_call(mpi_random_set_stat_slave, 0, 0);
+  
+  for(int i = 1; i < n_nodes; i++) {
+    mpiCallbacks().comm().send(i, SOME_TAG, stat[i]);
+  }
+
+  set_state(stat[0]);
+}
+
+void mpi_random_get_stat_slave(int, int) {
+  string state = get_state();
+
+  mpiCallbacks().comm().send(0, SOME_TAG, state);
+}
+
+string mpi_random_get_stat() {
+  string res = get_state();
+
+  mpi_call(mpi_random_get_stat_slave, 0, 0);
+   
+  for(int i = 1; i < n_nodes; i++) {
+    string tmp;
+    mpiCallbacks().comm().recv(i, SOME_TAG, tmp);
+    res.append(" ");
+    res.append(tmp);
+  }
+
+  return res;
+}
 
 void init_random(void)
 {
-  /* initializes the random number generator. You MUST NOT FORGET THIS! */
-  
-  unsigned long seed;
-  seed = (10*this_node+1)*1103515245 + 12345;
-  seed = (seed/65536) % 32768;
-  init_random_seed((long)seed);
+  /** Set the initial seed */
+  init_random_seed(1 + this_node);
+
+  /** Register callbacks */
+  mpiCallbacks().add(mpi_random_seed_slave);
+  mpiCallbacks().add(mpi_random_set_stat_slave);
+  mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
-/*----------------------------------------------------------------------*/
-
-void init_random_seed(long seed)
+void init_random_seed(int seed)
 {
-  /* initializes the random number generator. You MUST NOT FORGET THIS! */
-
-  int    j;
-  long   k;
-
-  /* This random generator is bad I know {why, Frank? It's the same as the
-     one in l_random!}, thats why its only {no, in l_random as well!} used
-     for the seed (see Num. Rec. 7.1.) */
-  if (seed < 1) {
-    fprintf(stderr,"The initial seed of the random number generator must be a positive integer!\n");
-    fprintf(stderr,"Using 0 will result in a plain 0-sequence, hence it's forbidden (you used: %ld)!\n",seed);
-    fflush(NULL); 
-    errexit();
-  }
-  idumInit = idum = seed;
-  RANDOM_TRACE(fprintf(stderr, "%d: Init random with seed %ld in 'random.c'\n",this_node,idum));
-  for (j = NTAB_RANDOM + 7;j >= 0; j--) {
-    k = (idum) / IQ;
-    idum = IA * (idum - k * IQ) - IR * k;
-    if (idum < 0) idum += IM;
-    if (j < NTAB_RANDOM) iv[j] = idum;
-  }
-  iy = iv[0];
+  generator.seed(seed);
 }
 
-/*----------------------------------------------------------------------*/
-
-void init_random_stat(RandomStatus my_stat) {
-  /* initializes the random number generator to a given status */
-  int i;
-
-  idum = my_stat.idum; iy = my_stat.iy;
-  for (i=0; i < NTAB_RANDOM; i++) iv[i] = my_stat.iv[i];
-}
-
-/*----------------------------------------------------------------------*/
-
-long print_random_idum(void) {
-  /* returns current 'idum' */
-  return(idum);
-}
-
-/*----------------------------------------------------------------------*/
-
-long print_random_seed(void) {
-  /* returns the seed originally used upon last initialize of the generator */
-  return(idumInit);
-}
-
-/*----------------------------------------------------------------------*/
-
-RandomStatus print_random_stat(void) {
-  /* returns current status of random number generator */
-  RandomStatus my_stat; int i;
-  
-  my_stat.idum = idum; my_stat.iy = iy;
-  for (i=0; i < NTAB_RANDOM; i++) my_stat.iv[i] = iv[i];
-  return(my_stat);
-}
-
-/*----------------------------------------------------------------------*/
-
-double bit_random_generator() {
-  /* Creates random numbers by XOR-ing two lines in a big matrix of linear independent rows/columns -> 'R250' 
-   It's extremely fast, but has some Triplett-Correlations. */
-  //  extern int rand_w_array[MERS_BIT_RANDOM];
-  //  extern int random_pointer_1;
-  //  extern int random_pointer_2;
-  double random_number;
-
-  rand_w_array[random_pointer_1] = rand_w_array[random_pointer_1] ^ rand_w_array[random_pointer_2];
-  random_number = FACTOR * rand_w_array[random_pointer_1];
-  ++random_pointer_1;
-  ++random_pointer_2;
-  if(random_pointer_1 == MERS_BIT_RANDOM)      random_pointer_1 = 0;
-  else if(random_pointer_2 == MERS_BIT_RANDOM) random_pointer_2 = 0;
-
-  return(random_number);
-}
-
-/*----------------------------------------------------------------------*/
-
-void init_bit_random(void) {
-  /* initializes the bit random number generator. You MUST NOT FORGET THIS! */
-  
-  unsigned long seed;
-  seed = (10*this_node+1)*1103515245 + 12345;
-  seed = (seed/65536) % 32768;
-  init_bit_random_generator((int)seed);
-}
-
-/*----------------------------------------------------------------------*/
-
-void init_bit_random_generator(int iseed) {
-  /* Initializes the matrix for the bit_random_generator with a random but linear independent bit-pattern */
-  //  extern double bit_random_generator();
-  //  extern int rand_w_array[MERS_BIT_RANDOM];
-  int i = 0;
-  int imask1 = 0;
-  int imask2 = 0;
-  double rmod = (double) iseed;
-  bit_seed = iseed;
-  random_pointer_1 = 0;
-  random_pointer_2 = MERS1;
-
-  /* Warm up the modulo generator */
-  for(i = 0; i < NWARM; ++i) {
-    rmod = MULTIPLY * rmod;
-    rmod = rmod - (double) ( (int) (rmod * FACTOR) ) * BIGFLOAT;
-    rmod = (double) ( (int) (rmod + 0.1) );
-  }
-
-  /* Put random numbers on the working array */
-  for(i = 0; i < MERS_BIT_RANDOM; ++i) {
-    rmod = MULTIPLY * rmod;
-    rmod = rmod - (double) ( (int) (rmod * FACTOR) ) * BIGFLOAT;
-    rand_w_array[i] = (int) (rmod + 0.1);
-    rmod = (double) ( rand_w_array[i] );
-  }
-
-  /* Ensure linear independence of the array/matrix */
-  imask1 = 1;
-  imask2 = BIGINTEGER;
-  for(i = NBIT - 2; i > 0; --i) {
-    rand_w_array[i] = ( rand_w_array[i] | imask1 ) & imask2;
-    imask2 = imask2 ^ imask1;
-    imask1 = imask1 * 2;
-  }
-  rand_w_array[0] = imask1;
-
-  /* Warm up */
-  for(i = 0; i < NWARM; ++i) bit_random_generator();
-}
-
-/*----------------------------------------------------------------------*/
-
-int print_bit_random_seed(void) {
-  /* returns the seed originally used upon last initialize of the generator */
-  return(bit_seed);
-}
-
-/*----------------------------------------------------------------------*/
-
-BitRandomStatus print_bit_random_stat(void) {
-  /* returns current status of the bit random number generator */
-  BitRandomStatus tmp_stat; int i;
-
-  tmp_stat.random_pointer_1 = random_pointer_1;
-  tmp_stat.random_pointer_2 = random_pointer_2;
-  for(i = 0; i < MERS_BIT_RANDOM; i++) tmp_stat.rand_w_array[i] = rand_w_array[i];
-  return(tmp_stat);
-}
-
-/*----------------------------------------------------------------------*/
-
-void init_bit_random_stat(BitRandomStatus tmp_stat) {
-  /* initializes the bit random number generator to a given status */
-  int i;
-
-  random_pointer_1 = tmp_stat.random_pointer_1;
-  random_pointer_2 = tmp_stat.random_pointer_2;
-  for(i = 0; i < MERS_BIT_RANDOM; i++) rand_w_array[i] = tmp_stat.rand_w_array[i];
-}
-
-/*----------------------------------------------------------------------*/
-
+} /* Random */

@@ -35,7 +35,7 @@ NPT
 GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
-ENGINE                          implies ROTATION
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
 
 /* Rotation */
 ROTATION
@@ -59,6 +59,8 @@ _P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
 /* Magnetostatics */
 DIPOLES
 DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM		requires CUDA
+DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
@@ -98,6 +100,7 @@ SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
+BD
 SD 		      	        requires CUDA
 SD 		      	        requires ARPACK
 SD				implies BD
@@ -129,8 +132,10 @@ GAY_BERNE	            implies ROTATION
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
-AREA_FORCE_GLOBAL
-VOLUME_FORCE
+OIF_LOCAL_FORCES
+OIF_GLOBAL_FORCES
+AFFINITY
+MEMBRANE_COLLISION
 
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
@@ -151,6 +156,7 @@ IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
+SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
@@ -163,6 +169,12 @@ BOND_ANGLE_HARMONIC             notest
 BOND_ANGLE_COSINE               notest
 BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
+
+// Shape of the noise in ther (Langevin) thermostat
+FLATNOISE                        requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
+GAUSSRANDOM                      requires not FLATNOISE and not GAUSSRANDOM_CUT
+GAUSSRANDOMCUT                   requires not GAUSSRANDOM and not FLATNOISE
+
 
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
@@ -206,7 +218,6 @@ STAT_DEBUG
 POLY_DEBUG
 MOLFORCES_DEBUG
 PTENSOR_DEBUG
-MEM_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
@@ -226,6 +237,6 @@ ONEPART_DEBUG
 CUDA external
 FFTW external
 TK   external
+H5MD external
+SCAFACOS external
 
-/*Else*/
-H5MD

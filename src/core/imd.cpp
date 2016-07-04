@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -204,7 +204,7 @@ int imd_trate(void *s, int32_t rate) {
 
 int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces) {
   int32_t size = HEADERSIZE+16*n;
-  char *buf = (char*)malloc(sizeof(char)*size);
+  char *buf = (char*)Utils::malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_MDCOMM, n);
@@ -217,7 +217,7 @@ int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces
 
 int imd_send_energies(void *s, const IMDEnergies *energies) {
   int32_t size = HEADERSIZE+sizeof(IMDEnergies);
-  char *buf = (char*)malloc(sizeof(char)*size);
+  char *buf = (char*)Utils::malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_ENERGIES, 1);
@@ -229,7 +229,7 @@ int imd_send_energies(void *s, const IMDEnergies *energies) {
 
 int imd_send_fcoords(void *s, int32_t n, const float *coords) {
   int32_t size = HEADERSIZE+12*n;
-  char *buf = (char*)malloc(sizeof(char)*size);
+  char *buf = (char*)Utils::malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_FCOORDS, n);

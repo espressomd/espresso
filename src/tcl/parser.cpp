@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,16 +24,17 @@
 
 #include "utils.hpp"
 #include "parser.hpp"
+#include "global.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include <list>
+#include <vector>
 #include <string>
 
 using namespace std;
 
 int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_intlist(il, il->n = tmp_argc);
   for (int i = 0 ; i < tmp_argc; i++) 
@@ -47,7 +48,7 @@ int parse_int_list(Tcl_Interp *interp, char *list, IntList *il) {
 
 int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
   int tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(interp, list, &tmp_argc, &tmp_argv);
   realloc_doublelist(dl, dl->n = tmp_argc);
   for  (int i = 0 ; i < tmp_argc; i++) 
@@ -60,25 +61,46 @@ int parse_double_list(Tcl_Interp *interp, char *list, DoubleList *dl) {
 }
 
 int gather_runtime_errors(Tcl_Interp *interp, int error_code) {
-  list<string> errors = mpiRuntimeErrorCollectorGather();
+  using ErrorHandling::RuntimeError;
+  
+  vector<RuntimeError> errors = ErrorHandling::mpi_gather_runtime_errors();
 
-  if (errors.size() == 0) return error_code;
+  if (errors.size() == 0) {
+    return error_code;
+  }
 
-  /* reset any results of the previous command, since we got an error
-     during evaluation, they are at best bogus. But any normal error
-     messages should be kept, they might help to track down the
-     problem.
-  */
-  if (error_code != TCL_ERROR)
-    Tcl_ResetResult(interp);
-  else
-    Tcl_AppendResult(interp, " ", (char *) NULL);
+  std::stringstream msg;
+  
+  msg << "background_errors ";
+  
+  for (const auto &it: errors) {
+    msg << "{ " << it.format() << "} ";
+  }
+  
+  /** Check if there was an error or only warnings. */
+  if(any_of(errors.begin(), errors.end(), [](const RuntimeError &e) {
+        return e.level() >= RuntimeError::ErrorLevel::ERROR;
+      })) {
+    /* reset any results of the previous command, since we got an error
+       during evaluation, they are at best bogus. But any normal error
+       messages should be kept, they might help to track down the
+       problem.
+    */
+    if (error_code != TCL_ERROR)
+      Tcl_ResetResult(interp);
+    else
+      Tcl_AppendResult(interp, " ", nullptr);
 
-  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
-
-  for (list<string>::const_iterator it = errors.begin();
-       it != errors.end(); ++it)
-    Tcl_AppendResult(interp, it->c_str(), (char*)NULL);
-
-  return TCL_ERROR;
+    Tcl_AppendResult(interp, msg.str().c_str(), nullptr);
+    
+    /** There was an actual error, bail out. */
+    return TCL_ERROR;
+  } else {
+    /** Show warnings only if requested */
+    if(warnings) {
+      std::cerr << msg.str() << std::endl;
+    }    
+    /** Only warnings */
+    return TCL_OK;
+  }
 }

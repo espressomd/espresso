@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group,
   
@@ -81,6 +81,9 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
       case CONSTRAINT_SPHEROCYLINDER: 
 	      calculate_spherocylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist, vec); 
         break;
+	  case LB_BOUNDARY_VOXEL: // needed for fluid calculation ???
+		  calculate_voxel_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.voxel, &dist, vec);
+        break;
     }
     
     if (dist<*mindist || n == 0) {
@@ -104,8 +107,8 @@ void lb_init_boundaries() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_GPU) && defined (LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
-    int *host_boundary_node_list= (int*)malloc(sizeof(int));
-    int *host_boundary_index_list= (int*)malloc(sizeof(int));
+    int *host_boundary_node_list= (int*)Utils::malloc(sizeof(int));
+    int *host_boundary_index_list= (int*)Utils::malloc(sizeof(int));
     size_t size_of_index;
     int boundary_number = -1; // the number the boundary will actually belong to.
   
@@ -120,7 +123,7 @@ void lb_init_boundaries() {
 
     if (ek_initialized)
     {
-      host_wallcharge_species_density = (ekfloat*) malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
+      host_wallcharge_species_density = (ekfloat*) Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
       for(n = 0; n < int(n_lb_boundaries); n++) {
         if(lb_boundaries[n].charge_density != 0.0) {
           charged_boundaries = 1;
@@ -138,9 +141,7 @@ void lb_init_boundaries() {
         }
       
       if(wallcharge_species == -1 && charged_boundaries) {
-          ostringstream msg;
-          msg <<"no charged species available to create wall charge\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"no charged species available to create wall charge\n";
       }
     }
 #endif
@@ -197,10 +198,13 @@ void lb_init_boundaries() {
                 calculate_spherocylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.spherocyl, &dist_tmp, dist_vec);
                 break;
 
+			  case LB_BOUNDARY_VOXEL:	// voxel data do not need dist
+				//calculate_voxel_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.voxel, &dist_tmp, dist_vec);
+				dist_tmp=1e99;
+				break;
+
               default:
-                ostringstream msg;
-                msg <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
-                runtimeError(msg);
+                runtimeErrorMsg() <<"lbboundary type "<< lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
             }
             
             if (dist > dist_tmp || n == 0) {
@@ -228,8 +232,8 @@ void lb_init_boundaries() {
 #endif
           if (dist <= 0 && boundary_number >= 0 && (n_lb_boundaries > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
-            host_boundary_node_list = (int *) realloc(host_boundary_node_list, size_of_index);
-            host_boundary_index_list = (int *) realloc(host_boundary_index_list, size_of_index);
+            host_boundary_node_list = (int *) Utils::realloc(host_boundary_node_list, size_of_index);
+            host_boundary_index_list = (int *) Utils::realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
             host_boundary_index_list[number_of_boundnodes] = boundary_number + 1; 
             number_of_boundnodes++;  
@@ -261,7 +265,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    float* boundary_velocity = (float *) malloc(3*(n_lb_boundaries+1)*sizeof(float));
+    float* boundary_velocity = (float *) Utils::malloc(3*(n_lb_boundaries+1)*sizeof(float));
 
     for (n=0; n<n_lb_boundaries; n++) {
       boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
@@ -346,10 +350,13 @@ void lb_init_boundaries() {
                 calculate_hollow_cone_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
                 break;
                 
+              case LB_BOUNDARY_VOXEL:	// voxel data do not need dist
+                dist_tmp=1e99;
+                //calculate_voxel_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.voxel, &dist_tmp, dist_vec);
+				break;
+                
               default:
-                ostringstream msg;
-                msg <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
-                runtimeError(msg);
+                runtimeErrorMsg() <<"lbboundary type " << lb_boundaries[n].type << " not implemented in lb_init_boundaries()\n";
             }
             
             if (dist_tmp<dist || n == 0) {
@@ -358,7 +365,7 @@ void lb_init_boundaries() {
             }
           }       
           
-    	    if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
+    	  if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
      	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }
@@ -368,6 +375,136 @@ void lb_init_boundaries() {
         }
       }
     } 
+    //printf("init voxels\n\n");
+    // SET VOXEL BOUNDARIES DIRECTLY 
+    int xxx,yyy,zzz=0;
+    char line[80];
+	for (n=0;n<n_lb_boundaries;n++) {
+		switch (lb_boundaries[n].type) {                
+			case LB_BOUNDARY_VOXEL:
+				//lbfields[get_linear_index(lb_boundaries[n].c.voxel.pos[0],lb_boundaries[n].c.voxel.pos[1],lb_boundaries[n].c.voxel.pos[2],lblattice.halo_grid)].boundary = n+1;
+				FILE *fp;
+				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d20_converted_noMirror.csv", "r");
+				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d80_converted_noMirror.csv", "r");
+				//fp=fopen("/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/NSvsLBM/geometry_files/bottleneck_fine_voxel_data_d80_converted.csv", "r");
+				fp=fopen(lb_boundaries[n].c.voxel.filename, "r");
+
+				while(fgets(line, 80, fp) != NULL)
+			   {
+				 /* get a line, up to 80 chars from fp,  done if NULL */
+				 sscanf (line, "%d %d %d", &xxx,&yyy,&zzz);
+				 //printf("%d %d %d\n", xxx,yyy,zzz);
+				 //lbfields[get_linear_index(xxx,yyy+30,zzz,lblattice.halo_grid)].boundary = n+1;
+				 lbfields[get_linear_index(xxx,yyy,zzz,lblattice.halo_grid)].boundary = n+1;
+			   }
+			   fclose(fp); 
+				
+				
+
+				break;
+
+			default:
+				break;
+		}
+	}
+	
+	// CHECK FOR BOUNDARY NEIGHBOURS AND SET FLUID NORMAL VECTOR 
+	//int neighbours = {0,0,0,0,0,0};
+	//int x=0,y=0,z=0;
+	//double nn[]={0.0,0.0,0.0,0.0,0.0,0.0};
+	//for (n=0;n<n_lb_boundaries;n++) {
+		//switch (lb_boundaries[n].type) {                
+			//case LB_BOUNDARY_VOXEL:
+				//x=lb_boundaries[n].c.voxel.pos[0];
+				//y=lb_boundaries[n].c.voxel.pos[1];
+				//z=lb_boundaries[n].c.voxel.pos[2];
+				//if(((x-1) >= 0) && (lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary == 0)) nn[0] = -1.0;//neighbours[0] = -1;
+				//if(((x+1) <= lblattice.grid[0]) && (lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary == 0)) nn[1] = 1.0;//neighbours[1] = 1;
+				////printf("%.0lf %.0lf ",nn[0],nn[1]);
+				//lb_boundaries[n].c.voxel.n[0] = nn[0]+nn[1];
+				////nn=0.0;
+				
+				//if(((y-1) >= 0) && (lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary == 0)) nn[2] = -1.0;//neighbours[2] = -1;
+				//if(((y+1) <= lblattice.grid[1]) && (lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary == 0)) nn[3] = 1.0;//neighbours[3] = 1;
+				////printf("%.0lf %.0lf ",nn[2],nn[3]);
+				//lb_boundaries[n].c.voxel.n[1] = nn[2]+nn[3];
+				////nn=0.0;
+				
+				//if(((z-1) >= 0) && (lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary == 0)) nn[4] = -1.0;//neighbours[4] = -1;
+				//if(((z+1) <= lblattice.grid[2]) && (lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary == 0)) nn[5] = 1.0;//neighbours[5]= 1;
+				////printf("%.0lf %.0lf ",nn[4],nn[5]);
+				//lb_boundaries[n].c.voxel.n[2] = nn[4]+nn[5];
+				//nn[0]=0.0,nn[1]=0.0,nn[2]=0.0,nn[3]=0.0,nn[4]=0.0,nn[5]=0.0;
+				
+				////printf("t %d pos: %.0lf %.0lf %.0lf, fluid normal %.0lf %.0lf %.0lf\n",n, x,y,z,lb_boundaries[n].c.voxel.normal[0],lb_boundaries[n].c.voxel.normal[1],lb_boundaries[n].c.voxel.normal[2]);
+				////printf("boundaries: %d %d %d %d %d %d\n",lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary,lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary);
+				//break;
+
+			//default:
+				//break;
+		//}
+	//}
+	
+	//// DO THE SAME FOR THE CONSTRAINTS: CONSTRAINTS MUST BE SET AND THE SAME AS LB_BOUNDARY !!!
+	//for(n=0;n<n_constraints;n++) {
+		//switch(constraints[n].type) {
+			//case CONSTRAINT_VOXEL: 
+				//x=constraints[n].c.voxel.pos[0];
+				//y=constraints[n].c.voxel.pos[1];
+				//z=constraints[n].c.voxel.pos[2];
+				//if(((x-1) >= 0) && (lbfields[get_linear_index(x-1,y,z,lblattice.halo_grid)].boundary == 0)) nn[0] = -1.0;//neighbours[0] = -1;
+				//if(((x+1) <= lblattice.grid[0]) && (lbfields[get_linear_index(x+1,y,z,lblattice.halo_grid)].boundary == 0)) nn[1] = 1.0;//neighbours[1] = 1;
+				////printf("%.0lf %.0lf ",nn[0],nn[1]);
+				//constraints[n].c.voxel.n[0] = nn[0]+nn[1];
+				////nn=0.0;
+				
+				//if(((y-1) >= 0) && (lbfields[get_linear_index(x,y-1,z,lblattice.halo_grid)].boundary == 0)) nn[2] = -1.0;//neighbours[2] = -1;
+				//if(((y+1) <= lblattice.grid[1]) && (lbfields[get_linear_index(x,y+1,z,lblattice.halo_grid)].boundary == 0)) nn[3] = 1.0;//neighbours[3] = 1;
+				////printf("%.0lf %.0lf ",nn[2],nn[3]);
+				//constraints[n].c.voxel.n[1] = nn[2]+nn[3];
+				////nn=0.0;
+				
+				//if(((z-1) >= 0) && (lbfields[get_linear_index(x,y,z-1,lblattice.halo_grid)].boundary == 0)) nn[4] = -1.0;//neighbours[4] = -1;
+				//if(((z+1) <= lblattice.grid[2]) && (lbfields[get_linear_index(x,y,z+1,lblattice.halo_grid)].boundary == 0)) nn[5] = 1.0;//neighbours[5]= 1;
+				////printf("%.0lf %.0lf ",nn[4],nn[5]);
+				//constraints[n].c.voxel.n[2] = nn[4]+nn[5];
+				//nn[0]=0.0,nn[1]=0.0,nn[2]=0.0,nn[3]=0.0,nn[4]=0.0,nn[5]=0.0;
+	
+				//break;
+			//default:
+				//break;		
+		//}	
+	//}
+
+    
+    //#ifdef VOXEL_BOUNDARIES
+    /*
+	for (z=0; z<lblattice.grid[2]+2; z++) {
+      for (y=0; y<lblattice.grid[1]+2; y++) {
+        for (x=0; x<lblattice.grid[0]+2; x++) {
+			lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;
+		}
+	  }
+	}
+	static const char filename[] = "/home/mgusenbauer/Daten/Copy/DUK/GentlePump/Optimierer/voxels/stl/data_final.csv";
+	FILE *file = fopen ( filename, "r" );
+	int coords[3];
+	printf("start new\n");
+	if ( file != NULL ){
+		char line [ 128 ]; // or other suitable maximum line size 
+		while ( fgets ( line, sizeof line, file ) != NULL ) {// read a line
+			//fputs ( line, stdout ); // write the line 
+			//coords = line.Split(' ').Select(n => Convert.ToInt32(n)).ToArray();
+			//printf("readline: %s\n",line);
+			int i;
+			sscanf(line, "%d %d %d", &coords[0],&coords[1],&coords[2]);
+			//printf("%d %d %d\n", coords[0],coords[1],coords[2]);
+			lbfields[get_linear_index(coords[0]+5,coords[1]+5,coords[2]+5,lblattice.halo_grid)].boundary = 0;
+		}
+		fclose ( file );
+	}
+	printf("end new\n");
+	*/
 #endif
   }
 }
@@ -375,7 +512,7 @@ void lb_init_boundaries() {
 int lbboundary_get_force(int no, double* f) {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
-  double* forces = (double *) malloc(3*n_lb_boundaries*sizeof(double));
+  double* forces = (double *) Utils::malloc(3*n_lb_boundaries*sizeof(double));
   
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
@@ -463,10 +600,11 @@ void lb_bounce_back() {
                 for (l=0; l<3; l++) {
                   lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
                 }
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k]+ population_shift;
               }
-              else
-                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+              else { 
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] = 0.0;
+	      }
             }
           }
         }

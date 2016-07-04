@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -48,7 +48,7 @@ int ljgen_set_params(int part_type_a, int part_type_b,
              )
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
+  
   if (!data) return ES_ERROR;
 
   data->LJGEN_eps    = eps;
@@ -84,39 +84,35 @@ void calc_ljgen_cap_radii()
   if( force_cap != -1.0){
     int i,j,cnt=0;
     IA_parameters *params;
-    double force=0.0, rad=0.0, step, frac;
-
+    
     for(i=0; i<n_particle_types; i++) {
       for(j=0; j<n_particle_types; j++) {
         params = get_ia_param(i,j);
+        FORCE_TRACE(fprintf(stderr, "calc_ljgen_cap_radii(), [%d, %d]: LJGEN_sig = %e, LJGEN_eps = %e, force_cap = %e, exponents (%d, %d)\n",
+                           i, j, params->LJGEN_sig, params->LJGEN_eps, force_cap, params->LJGEN_a1, params->LJGEN_a2));
+            
         if(force_cap > 0.0 && params->LJGEN_eps > 0.0) {
-    /* I think we have to solve this numerically... and very crude as well */
-    cnt=0;
-    rad = params->LJGEN_sig;
-    step = -0.1 * params->LJGEN_sig;
-    force=0.0;
-    
-    while(step != 0) {
-      frac = params->LJGEN_sig/rad;
-      force =  params->LJGEN_eps 
+          const double dx = params->LJGEN_cut / 100000.;
+          
+          for(double rad = params->LJGEN_cut; rad > 0.; rad -=dx) {                  
+            const double frac = params->LJGEN_sig/rad;
+            const double force =  params->LJGEN_eps 
 #ifdef LJGEN_SOFTCORE
-        * params->LJGEN_lambda
+                * params->LJGEN_lambda
 #endif
-        * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
-           - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
-      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-        step = - (step/2.0); 
-      }
-      if(fabs(force-force_cap) < 1.0e-6) step=0;
-      rad += step; cnt++;
-    } 
-          params->LJGEN_capradius = rad;
+                * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
+                   - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
+
+            if(fabs(force) < force_cap) {
+              params->LJGEN_capradius = rad;
+              break;
+            }
+          }
+        } else {
+          params->LJGEN_capradius = 0.0; 
         }
-        else {
-    params->LJGEN_capradius = 0.0; 
-        }
-        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-          this_node,i,j,rad,force,cnt));
+        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f\n",
+                            this_node,i,j,params->LJGEN_capradius));
       }
     }
   }

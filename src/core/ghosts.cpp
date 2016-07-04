@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -76,7 +76,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
-  comm->comm = (GhostCommunication*)malloc(num*sizeof(GhostCommunication));
+  comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
   }
@@ -142,7 +142,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   n_s_buffer = calc_transmit_size(gc, data_parts);
   if (n_s_buffer > max_s_buffer) {
     max_s_buffer = n_s_buffer;
-    s_buffer = (char*)realloc(s_buffer, max_s_buffer);
+    s_buffer = (char*)Utils::realloc(s_buffer, max_s_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will send %d\n", this_node, n_s_buffer));
 
@@ -277,7 +277,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
   n_r_buffer = calc_transmit_size(gc, data_parts);
   if (n_r_buffer > max_r_buffer) {
     max_r_buffer = n_r_buffer;
-    r_buffer = (char*)realloc(r_buffer, max_r_buffer);
+    r_buffer = (char*)Utils::realloc(r_buffer, max_r_buffer);
   }
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
@@ -448,10 +448,10 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
 	  memmove(&pt2->p, &pt1->p, sizeof(ParticleProperties));
 #ifdef GHOSTS_HAVE_BONDS
           realloc_intlist(&(pt2->bl), pt2->bl.n = pt1->bl.n);
-	  memmove(&pt2->bl.e, &pt1->bl.e, pt1->bl.n*sizeof(int));
+	  memmove(pt2->bl.e, pt1->bl.e, pt1->bl.n*sizeof(int));
 #ifdef EXCLUSIONS
           realloc_intlist(&(pt2->el), pt2->el.n = pt1->el.n);
-	  memmove(&pt2->el.e, &pt1->el.e, pt1->el.n*sizeof(int));
+	  memmove(pt2->el.e, pt1->el.e, pt1->el.n*sizeof(int));
 #endif
 #endif
         }
@@ -718,6 +718,7 @@ void invalidate_ghosts()
 	 particle array. */
       if( &(part[p]) == local_particles[part[p].p.identity] ) 
 	local_particles[part[p].p.identity] = NULL;
+      free_particle(part+p);
     }
     ghost_cells.cell[c]->n = 0;
   }

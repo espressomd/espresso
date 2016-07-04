@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -402,109 +402,43 @@ covariance $\mathrm{cov}(a,b)$ and $\chi$.
 \label{ssec:trandom}
 \begin{itemize}
  \item
-   Without further arguments,
+   Without further arguments (tcl only),
 \begin{code}
 t\_random
 \end{code}
-returns a random double between 0 and 1 using the 'ran1' random number
-generator from Numerical Recipes.
+
+returns a random double between 0 and 1 using the standard C++ Mersenne twister random number generator. For python please use the numpy random number generator. 
  \item
 \begin{code}
-t\_random int <n>
+t\_random int <n> (tcl only)
 \end{code}
-  returns a random integer between 0 and n-1.
+  returns a random integer between 0 and n-1. For python please use the numpy random number generator.
  \item
+ 
+To obtain the seeds of the random number generator (C++ Mersenne Twister) which is used in the C core of Espresso use the command
 \begin{code}
 t\_random seed
 \end{code}
-returns a tcl-list with the seeds of the random number generators on
-each of the 'n\_nodes' nodes, while
+\begin{pycode}
+system = espressomd.System()
+system.seed
+\end{pycode}
+which returns a list with the seeds of the random number generators on
+each of the 'n\_nodes' nodes if they were set by the user, while
 \begin{code}
 t\_random seed <seed(0)> ... <seed(n\_nodes-1)>
 \end{code}
+\begin{pycode}
+system = espressomd.System()
+system.seed=[seed(0), ... seed(n_nodes-1)]
+\end{pycode}
+
 sets those seeds to the new values respectively, re-initialising the
 random number generators on each node.  Note that this is
 automatically done on invoking Espresso, however due to that your
 simulation will always start with the same random sequence on any node
-unless you use this tcl-command to reset the sequences' seeds.
-\item Since internally the random number generators' random sequences
-  are not based on mere seeds but rather on whole random number
-  tables, to recover the exact state of the random number generators
-  at a given time during the simulation run (e. g. for saving a
-  checkpoint) requires knowledge of all these values. They can be
-  accessed by
-\begin{code}
-t\_random stat
-\end{code}
-which returns a tcl-list with all status informations for any node (e.
-g. 8 nodes $=>$ approx. 350 parameters). To overwrite those internally
-in Espresso (e. g. upon restoring a checkpoint) submit the whole list
-back using
-\begin{code}
-t\_random stat <status-list>
-\end{code}
-with \var{status-list} being the tcl-list mentioned above without any
-braces.  Be careful! A complete recovery of the current state of the
-simulation is only possible if you make sure to include a call to the
-\texttt{sort_particles} command after you saved the blockfile to make
-sure random numbers are applied in the same order.
+\textit{unless you seed your random number generator} at the beginning of the simulation.
 \end{itemize}
-The C implementation is t\_random
-
-\subsection{\texttt{The bit\_random command}}
-\label{ssec:bitrandom}
-\begin{itemize}
- \item
-  Without further arguments,
-\begin{code}
-bit\_random
-\end{code}
-returns a random double between 0 and 1 using the R250 generator
-XOR-ing a table of 250 linear independent integers.
- \item
-\begin{code}
-bit\_random seed
-\end{code}
-returns a tcl-list with the seeds of the random number generators on
-each of the 'n\_nodes' nodes, while
-\begin{code}
-bit\_random seed <seed(0)> ... <seed(n\_nodes-1)>
-\end{code}
-sets those seeds to the new values respectively, re-initialising the
-random number generators on each node.  Note that this is
-automatically done on invoking Espresso, however due to that your
-simulation will always start with the same random sequence on any node
-unless you use this tcl-command to reset the sequences' seeds.
-\item Since internally the random number generators' random sequences
-  are not based on mere seeds but an array of 250 linear independent
-  integers whose bits are used as matrix elements which are XOR-ed, to
-  recover the exact state of the random number generators at a given
-  time during the simulation run (e. g. for saving a checkpoint)
-  requires knowledge of all these values. They can be accessed by
-\begin{code}
-bit\_random stat
-\end{code}
-which returns a tcl-list with all status informations for any node (e.
-g. 8 nodes $=>$ approx. 2016 parameters). To overwrite those
-internally in Espresso (e. g. upon restoring a checkpoint) submit the
-whole list back using
-\begin{code}
-bit\_random stat <status-list>
-\end{code}
-with <status-list> being the tcl-list mentioned above without any
-braces.  Be careful! See \ref{ssec:trandom} for more information
-on how to recover of the current state, include the sequence the random
-numbers are applied.
-\item Note further that the bit-wise display of integers, as it is
-  used by this random number generator, is platform dependent. As long
-  as you stay on the same architecture this doesn't matter at all;
-  however, it wouldn't be wise to use a checkpoint including the state
-  of the R250 to restart the simulation on a different platform - most
-  likely, the integers will have a different bit-muster leading to a
-  completely different random matrix.  So, if you're using this random
-  number generator, always remain on the same platform!
-\end{itemize}
-
 
 \section{Checking for features of \es}
 

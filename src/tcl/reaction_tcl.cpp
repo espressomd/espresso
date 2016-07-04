@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,14 +32,14 @@
 #ifdef CATALYTIC_REACTIONS
 int tcl_command_reaction_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> ct_rate <k_ct> [eq_rate <k_eq>] [react_once <on|off>]\n");
+  sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> ct_rate <k_ct> [eq_rate <k_eq>] [react_once <on|off>] [swap <on|off>]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
 
 int tcl_command_reaction_print(Tcl_Interp * interp){
   char buffer[512];
-  sprintf(buffer, "{reactant_type %d} {catalyzer_type %d} {product_type %d} {range %f} {catalyzer rate %f} {equilibrium rate %f}\n",
+  sprintf(buffer, "{reactant_type %d} {catalyzer_type %d} {product_type %d} {range %f} {ct_rate %f} {eq_rate %f}",
     reaction.reactant_type,
     reaction.catalyzer_type,
     reaction.product_type,
@@ -47,9 +47,14 @@ int tcl_command_reaction_print(Tcl_Interp * interp){
     reaction.ct_rate,
     reaction.eq_rate);
   if ( reaction.sing_mult == 0 ) {
-    sprintf(buffer + strlen(buffer)," {react_once off}\n");
+    sprintf(buffer + strlen(buffer)," {react_once off}");
   } else {
-    sprintf(buffer + strlen(buffer)," {react_once on}\n");
+    sprintf(buffer + strlen(buffer)," {react_once on}");
+  }
+  if ( reaction.swap ) {
+    sprintf(buffer + strlen(buffer)," {swap on}");
+  } else {
+    sprintf(buffer + strlen(buffer)," {swap off}");
   }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
@@ -82,7 +87,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
      }
   }
 
-  if( argc!=11 && argc!=13 && argc!=15 && argc!=3) {
+  if( argc!=11 && argc!=13 && argc!=15 && argc!=17 && argc!=3) {
      return tcl_command_reaction_print_usage(interp);
   }
 
@@ -138,6 +143,21 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
       if (ARG_IS_S(1,"off")) reaction.sing_mult = 0;
     argc-=2;
 	  argv+=2;
+    }
+    else if (ARG_IS_S_EXACT(0,"swap")) {
+#ifndef ROTATION
+      char buffer[80];
+      sprintf(buffer, "WARNING: Parameter \"swap\" has no effect when ROTATION is not compiled in.");
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif
+      if (ARG_IS_S(1,"on"))
+        reaction.swap = 1;
+      else if (ARG_IS_S(1,"off"))
+        reaction.swap = 0;
+      else
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+      argv+=2;
     } else {
       return tcl_command_reaction_print_usage(interp);
     }

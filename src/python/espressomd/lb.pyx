@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,163 +17,172 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+import numpy as np
+from actors cimport Actor
+cimport cuda_init
+import cuda_init
+from globals cimport *
+from copy import deepcopy
 
-IF LB_GPU == 1:
-    # cimport global_variables
-    import numpy as np
-    cimport lb
+# Actor class
+####################################################
+cdef class HydrodynamicInteraction(Actor):
+    def _lb_init(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
-    cdef class LBparaHandle:
-        cdef int switch
-        cdef int checkpoint_binary
-        cdef char * checkpoint_filename
+# LBFluid main class
+####################################################
+IF LB_GPU or LB:
+    cdef class LBFluid(HydrodynamicInteraction):
 
-        def __init__(self, _dev):
-            if _dev == "gpu":
-                switch = 1
-                cython_lb_init(switch)
-            else:
-                switch = 0
-                cython_lb_init(switch)
+        # validate the given parameters on actor initalization
+        ####################################################
+        def validate_params(self):
+            default_params = self.default_params()
 
-        property tau:
-            def __set__(self, double p_tau):
-                if lb_lbfluid_set_tau(p_tau):
-                    raise Exception("lb_lbfluid_set_tau error")
+            IF SHANCHEN:
+                if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
+                    raise ValueError(
+                        "Density must be two positive double (ShanChen)")
+            ELSE:
+                if self._params["dens"] == default_params["dens"]:
+                    raise Exception("LB_FLUID density not set")
+                else:
+                    if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
+                        raise ValueError("Density must be one positive double")
 
-            def __get__(self):
-                raise Exception(
-                    "get friction c function not implemented in lb.c")
+        # list of valid keys for parameters
+        ####################################################
+        def valid_keys(self):
+            return "agrid", "dens", "fric", "ext_force", "visc", "tau"
 
-        property dens:
-            def __set__(self, double p_dens):
-                if lb_lbfluid_set_density(p_dens):
-                    raise Exception("lb_lbfluid_set_density error")
+        # list of esential keys required for the fluid
+        ####################################################
+        def required_keys(self):
+            return ["dens", "agrid", "visc", "tau"]
 
-            def __get__(self):
-                cdef double _p_dens
-                if lb_lbfluid_get_density( & _p_dens):
-                    raise Exception("lb_lbfluid_get_density error")
-                return _p_dens
+        # list of default parameters
+        ####################################################
+        def default_params(self):
+            IF SHANCHEN:
+                return {"agrid": -1.0,
+                        "dens": [-1.0, -1.0],
+                        "fric": [-1.0, -1.0],
+                        "ext_force": [0.0, 0.0, 0.0],
+                        "visc": [-1.0, -1.0],
+                        "bulk_visc": [-1.0, -1.0],
+                        "tau": -1.0}
+            ELSE:
+                return {"agrid": -1.0,
+                        "dens": -1.0,
+                        "fric": -1.0,
+                        "ext_force": [0.0, 0.0, 0.0],
+                        "visc": -1.0,
+                        "bulk_visc": -1.0,
+                        "tau": -1.0}
 
-        property visc:
-            def __set__(self, _visc):
-                if lb_lbfluid_set_visc(_visc):
-                    raise Exception("lb_lbfluid_set_visc error")
+        # function that calls wrapper functions which set the parameters at C-Level
+        ####################################################
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(1):
+                raise Exception("lb_set_lattice_switch error")
 
-            def __get__(self):
-                cdef double _p_visc
-                if lb_lbfluid_get_visc( & _p_visc):
-                    raise Exception("lb_lbfluid_get_visc error")
-                return _p_visc
+        def _set_params_in_es_core(self):
+            default_params = self.default_params()
 
-        property agrid:
-            def __set__(self, double _agrid):
-                if lb_lbfluid_set_agrid(_agrid):
-                    raise Exception("lb_lbfluid_set_agrid error")
+            if python_lbfluid_set_density(self._params["dens"]):
+                raise Exception("lb_lbfluid_set_density error")
 
-            def __get__(self):
-                cdef double _p_agrid
-                if lb_lbfluid_get_agrid( & _p_agrid):
-                    raise Exception("lb_lbfluid_get_agrid error")
-                return _p_agrid
+            if python_lbfluid_set_tau(self._params["tau"]):
+                raise Exception("lb_lbfluid_set_tau error")
 
-        property friction:
-            def __set__(self, double _friction):
-                IF LB == 1:
-                    if lb_lbfluid_set_friction(_friction):
-                        raise Exception("lb_lbfluid_set_friction error")
-                ELSE:
-                    pass
+            if python_lbfluid_set_visc(self._params["visc"]):
+                raise Exception("lb_lbfluid_set_visc error")
 
-            def __get__(self):
-                cdef double _p_friction
-                raise Exception(
-                    "get friction c function not implemented in lb.c")
-                # return lb_lbfluid_get_friction(&_p_friction)
-
-        property gamma_odd:
-            def __set__(self, double _gamma_odd):
-                if lb_lbfluid_set_gamma_odd(_gamma_odd):
-                    raise Exception("lb_lbfluid_set_gamma_odd error")
-
-            def __get__(self):
-                cdef double _p_gamma_odd
-                if lb_lbfluid_get_gamma_odd( & _p_gamma_odd):
-                    raise Exception("lb_lbfluid_get_gamma_odd error")
-                return _p_gamma_odd
-
-        property gamma_even:
-            def __set__(self, double _gamma_even):
-                if lb_lbfluid_set_gamma_even(_gamma_even):
-                    raise Exception("lb_lbfluid_set_gamma_even error")
-
-            def __get__(self):
-                cdef double _p_gamma_even
-                if lb_lbfluid_get_gamma_even( & _p_gamma_even):
-                    raise Exception("lb_lbfluid_get_gamma_even error")
-                return _p_gamma_even
-
-        property ext_force:
-            def __set__(self, _ext_force):
-                if lb_lbfluid_set_ext_force(_ext_force[0], _ext_force[1], _ext_force[2]):
-                    raise Exception("lb_lbfluid_set_ext_force error")
-
-            def __get__(self):
-                cdef double _p_ext_force[3]
-                if lb_lbfluid_get_ext_force( & _p_ext_force[0], & _p_ext_force[1], & _p_ext_force[2]):
-                    raise Exception("lb_lbfluid_get_ext_force error")
-                return np.array([_p_ext_force[0], _p_ext_force[1], _p_ext_force[2]])
-
-        property bulk_visc:
-            def __set__(self, double _bulk_visc):
-                if lb_lbfluid_set_bulk_visc(_bulk_visc):
+            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+                if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
                     raise Exception("lb_lbfluid_set_bulk_visc error")
 
-            def __get__(self):
-                cdef double _p_bulk_visc
-                if lb_lbfluid_get_bulk_visc( & _p_bulk_visc):
-                    raise Exception("lb_lbfluid_get_bulk_visc error")
-                return _p_bulk_visc
+            if python_lbfluid_set_agrid(self._params["agrid"]):
+                raise Exception("lb_lbfluid_set_agrid error")
 
-        property print_vtk_velocity:
-            def __set__(self, char * _filename):
-                if lb_lbfluid_print_vtk_velocity(_filename):
-                    raise Exception("lb_lbfluid_print_vtk_velocity error")
+            if not self._params["fric"] == default_params["fric"]:
+                if python_lbfluid_set_friction(self._params["fric"]):
+                    raise Exception("lb_lbfluid_set_friction error")
 
-        property print_vtk_boundary:
-            def __set__(self, char * _filename):
-                if lb_lbfluid_print_vtk_boundary(_filename):
-                    raise Exception("lb_lbfluid_print_vtk_boundary error")
+            if not self._params["ext_force"] == default_params["ext_force"]:
+                if python_lbfluid_set_ext_force(self._params["ext_force"]):
+                    raise Exception("lb_lbfluid_set_ext_force error")
 
-        property print_velocity:
-            def __set__(self, char * _filename):
-                if lb_lbfluid_print_velocity(_filename):
-                    raise Exception("lb_lbfluid_print_vtk_velocity error")
+        # function that calls wrapper functions which get the parameters from C-Level
+        ####################################################
+        def _get_params_from_es_core(self):
+            default_params = self.default_params()
 
-        property print_boundary:
-            def __set__(self, char * _filename):
-                if lb_lbfluid_print_boundary(_filename):
-                    raise Exception("lb_lbfluid_print_vtk_boundary error")
+            if python_lbfluid_get_density(self._params["dens"]):
+                raise Exception("lb_lbfluid_get_density error")
 
-        property checkpoint:
-            def __set__(self, char * checkpoint_filename):
-                self.checkpoint_filename = checkpoint_filename
-                if lb_lbfluid_save_checkpoint(checkpoint_filename, self.checkpoint_binary):
-                    raise Exception("lb_lbfluid_save_checkpoint error")
+            if python_lbfluid_get_tau(self._params["tau"]):
+                raise Exception("lb_lbfluid_set_tau error")
 
-            def __get__(self):
-                if lb_lbfluid_load_checkpoint(self.checkpoint_filename, self.checkpoint_binary):
-                    raise Exception("lb_lbfluid_load_checkpoint error")
+            if python_lbfluid_get_visc(self._params["visc"]):
+                raise Exception("lb_lbfluid_set_visc error")
 
-        property checkpoint_style:
-            def __set__(self, int _binary):
-                self.checkpoint_binary = _binary
+            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+                if python_lbfluid_get_bulk_visc(self._params["bulk_visc"]):
+                    raise Exception("lb_lbfluid_set_bulk_visc error")
 
-            def __get__(self):
-                return self.checkpoint_binary
+            if python_lbfluid_get_agrid(self._params["agrid"]):
+                raise Exception("lb_lbfluid_set_agrid error")
 
-    class DeviceList:
+            if not self._params["fric"] == default_params["fric"]:
+                if python_lbfluid_get_friction(self._params["fric"]):
+                    raise Exception("lb_lbfluid_set_friction error")
 
-        def __getitem__(self, _dev):
-            return LBparaHandle(_dev)
+            if not self._params["ext_force"] == default_params["ext_force"]:
+                if python_lbfluid_get_ext_force(self._params["ext_force"]):
+                    raise Exception("lb_lbfluid_set_ext_force error")
+
+            return self._params
+
+        # input/output function wrappers for whole LB fields
+        ####################################################
+        def print_vtk_velocity(self, path):
+            lb_lbfluid_print_vtk_velocity(path)
+        def print_vtk_boundary(self, path):
+            lb_lbfluid_print_vtk_boundary(path)
+        def print_velocity(self, path):
+            lb_lbfluid_print_velocity(path)
+        def print_boundary(self, path):
+            lb_lbfluid_print_boundary(path)
+        def save_checkpoint(self, path, binary):
+            lb_lbfluid_save_checkpoint(path, binary)
+        def load_checkpoint(self, path, binary):
+            lb_lbfluid_load_checkpoint(path, binary)
+        def lbnode_get_node_velocity(self, coord):
+            cdef double[3] double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_u(c_coord, double_return)
+            return double_return
+
+        # Activate Actor
+        ####################################################
+        def _activate_method(self):
+            self.validate_params()
+            self._set_lattice_switch()
+            self._set_params_in_es_core()
+
+
+
+
+
+IF LB_GPU:
+    cdef class LBFluid_GPU(LBFluid):
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(2):
+                raise Exception("lb_set_lattice_switch error")
+
+

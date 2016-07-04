@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -34,68 +34,11 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 
-#if defined FORCE_CORE || defined MPI_CORE
-int regular_exit = 0;
-#else
 int regular_exit = 1;
-#endif
-static int core_done = 0;
 
 #ifdef ONEPART_DEBUG
 int check_id =  ONEPART_DEBUG_ID ;
 #endif
-
-#ifdef MEM_DEBUG
-
-#undef realloc
-#undef malloc
-#undef free
-
-void *__realloc(void *old, unsigned int size, const char *where, int line)
-{
-  void *ret;
-  if (size == 0) {
-    fprintf(stderr, "%d: free %p at %s:%d\n", this_node, old, where, line);
-    free(old);
-    return NULL;
-  }
-
-  ret = realloc(old, size);
-  fprintf(stderr, "%d: realloc %p -> %p size %d at %s:%d\n", this_node, old, ret, size, where, line);
-  return ret;
-}
-
-void *__malloc(unsigned int size, const char *where, int line)
-{
-  void *ret;
-  if (size > 0)
-    ret = malloc(size);
-  else
-    ret = NULL;
-  fprintf(stderr, "%d: alloc %d -> %p at %s:%d\n", this_node, size, ret, where, line);
-  return ret;
-}
-
-void __free(void *p, const char *where, int line)
-{
-  fprintf(stderr, "%d: free %p at %s:%d\n", this_node, p, where, line);
-  free(p);
-}
-
-#endif
-
-void core()
-{
-  if (!core_done && !regular_exit) {
-    fprintf(stderr, "%d: forcing core dump on irregular exit (%d / %d) \n", this_node, core_done, regular_exit);
-    /* this produced a compiler warning and got thrown out by GCC: */
-    /* *(int *)0 = 0; */
-    abort();
-    /* doesn't work on AMD64 */
-    /* kill(getpid(), SIGSEGV); */
-    core_done = 1;
-  }
-}
 
 void check_particle_consistency()
 {
@@ -199,8 +142,8 @@ void check_particles()
   /* check the consistency of particle_nodes */
   /* to this aim the array is broadcasted temporarily */
   if (this_node != 0)
-    particle_node = (int*)malloc((max_seen_particle + 1)*sizeof(int));
-  is_here = (int*)malloc((max_seen_particle + 1)*sizeof(int));
+    particle_node = (int*)Utils::malloc((max_seen_particle + 1)*sizeof(int));
+  is_here = (int*)Utils::malloc((max_seen_particle + 1)*sizeof(int));
   memset(is_here, 0, (max_seen_particle + 1)*sizeof(int));
 
   MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, comm_cart);

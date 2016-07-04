@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -486,7 +486,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
   if(coulomb.method != COULOMB_NONE) {
     Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL);
     for(j=0; j<9; j++) {
-      sprintf(buffer, " %lf ", total_p_tensor.coulomb[j]);
+      sprintf(buffer, " %lf ", (p_tensor.n_coulomb==2 ? total_p_tensor.coulomb[j] + total_p_tensor.coulomb[j+9] : total_p_tensor.coulomb[j]) );
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);
@@ -641,7 +641,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
     }
     else if( ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
-      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
+      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j] + (total_p_tensor.n_coulomb == 2 ? total_p_tensor.coulomb[9+j] : 0.0 );
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.hpp)\n", (char *)NULL);
 #endif
@@ -742,7 +742,7 @@ int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, c
   }
 
   /* Allocate a doublelist of bins to keep track of stress profile */
-  TensorInBin = (DoubleList *)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin = (DoubleList *)Utils::malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   if ( TensorInBin ) {
   /* Initialize the stress profile */
     for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -29,6 +29,7 @@ cdef extern from "global.hpp":
 
 cdef extern from "communication.hpp":
     extern int n_nodes
+    void mpi_set_smaller_time_step(double smaller_time_step)
     void mpi_set_time_step(double time_step)
     void mpi_bcast_parameter(int p)
 
@@ -36,6 +37,7 @@ cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch
     extern double sim_time
+    extern double smaller_time_step
     extern double verlet_reuse
 
 cdef extern from "verlet.hpp":
@@ -127,6 +129,7 @@ cdef extern from "grid.hpp":
     double local_box_l[3]
     extern int node_grid[3]
     extern int periodic
+    extern double min_box_l
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
@@ -136,3 +139,19 @@ cdef extern from "npt.hpp":
         double p_diff
         double piston
     extern nptiso_struct nptiso
+
+cdef extern from "statistics.hpp":
+    extern int n_configs
+
+cdef extern from "reaction.hpp":
+    ctypedef struct  reaction_struct:
+        int reactant_type
+        int product_type
+        int catalyzer_type
+        double range
+        double ct_rate
+        double eq_rate
+        int sing_mult
+        int swap
+
+    cdef extern reaction_struct reaction

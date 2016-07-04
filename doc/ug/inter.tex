@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -458,6 +458,45 @@ implemented currently, which means that the potential is discontinuous
 at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
 used with great caution.
 
+\subsection{Membrane-collision interaction}
+\index{membrane-collision interaction|mainindex}
+\index{interactions!membrane-collision|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  membrane \var{a} \var{n} \var{d_\mathrm{cut}} \var{d_\mathrm{offset}}
+  \begin{features}
+    \required{MEMBRANE_COLLISION}
+  \end{features}
+\end{essyntax}
+This defines a membrane collision interaction between particles of the types
+\var{type1} and \var{type2}, where particle of \var{type1} belongs to one OIF or OIF-like 
+object and particle of \var{type2} belongs to another such object. 
+
+It is very similar 
+to soft-sphere interaction, but it takes into account the local outward 
+normal vectors on the surfaces of the two objects to determine 
+the direction for repulsion of objects (i.e. determine whether the two membranes are intersected). 
+It is inversely proportional to the distance 
+of nodes of membranes that are not crossed and saturating with growing distance 
+of nodes of crossed membranes. 
+
+In order to work with the OIF objects, both of them need to 
+be created using templates with keyword \var{normal}, because this implicitly 
+sets up the bonded out-direction interaction, which computes the outward normal vector. 
+
+The membrane-collision interaction 
+for non-intersected membranes is then defined by:
+\begin{equation}
+  V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{\var{offset}}\right)}},
+\end{equation}
+for $d<\var{d_\mathrm{cut}}$ and $V(d)=0$ above. 
+For intersected membranes, it is defined as $V(-d)$.
+There is no shift implemented currently, which means that the potential is discontinuous
+at $d=\var{d_\mathrm{cut}}$. Therefore energy calculations should be
+used with great caution.
+
+
 \subsection{Hat interaction}
 \index{hat interaction|mainindex}
 \index{interactions!hat|mainindex}
@@ -775,10 +814,10 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   }{
     HarmonicBond
   }{
-    r_0=\arg{double},
-    k=\arg{double}
+    r_0 = \arg{float},
+    k = \arg{float}
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -792,8 +831,8 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   }{
     FeneBond
   }{
-    k=\arg{double},
-    d_r_max=\arg{double}
+    k = \arg{float},
+    d_r_max = \arg{float}
   }[
   ]
 \end{pysyntax}
@@ -809,10 +848,10 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   }{
     setParams
   }{
-    k=\arg{double},
-    drmax=\arg{double},
+    k = \arg{float},
+    drmax = \arg{float},
   }[
-    r_0=\arg{double=0.}
+    r_0 = \arg{float=0.}
   ]
 \end{pysyntax}
 
@@ -838,10 +877,10 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
   }{
     HarmonicBond
   }{
-    k=\arg{double},
-    r_0=\arg{double},
+    k = \arg{float},
+    r_0 = \arg{float},
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -871,11 +910,11 @@ background error will be raised.
   }{
     HarmonicDumbbellBond
   }{
-    k1=\arg{double},
-    k2=\arg{double},
-    r_0=\arg{double},
+    k1 = \arg{float},
+    k2 = \arg{float},
+    r_0 = \arg{float},
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -967,13 +1006,12 @@ general tabulated potentials.
 \object{espressomd.interactions}{
 	RigidBond
 }{
-	r=\arg{double},
+	r = \arg{float},
 }[
-	ptol=\arg{double},
-	vtol=\arg{double}
+	ptol = \arg{float},
+	vtol = \arg{float}
 ]
 \end{pysyntax}
- \PythonSyntaxOff
 
 \begin{essyntax}
   inter \var{bondid}
@@ -1068,48 +1106,43 @@ elastic or rigid objects immersed in the LB fluid flow. Their mathematical formu
 were inspired by \cite{dupin07}. Details on how the bonds 
 can be used for modeling objects are described in section \ref{sec:oif}.
 
-\subsection{Stretching force}
-\index{stretching force|mainindex}
-\index{interactions!stretching force|mainindex}
-
+\subsection{OIF local forces}
+\index{oif local force|mainindex}
+\index{interactions!oif local force|mainindex}
 \begin{essyntax}
   inter \var{bondid}
-  stretching_force
-  \var{L^0_{AB}} \var{k_s}
+  oif_local_force
+  \var{L^0_{AB}} \var{k_s} \var{k_{slin}} \var{\phi} \var{k_b} \var{A_1} \var{A_2} \var{k_{al}}  
+     \begin{features}
+    \required{OIF_LOCAL_FORCES}
+  \end{features}
 \end{essyntax}
 This type of interaction is available for closed 3D immersed objects as well as 
 for 2D sheet flowing in the 3D flow. 
 
-For each edge of the mesh, \var{L_{AB}} is the current distance between point A 
+This interaction comprises three different concepts. The local elasticity of biological membranes can be captured by three different elastic moduli. Stretching of the membrane, bending of the membrane and local preservation of the surface area. Parameters ${L^0_{AB}},\ {k_s},\ {k_{slin}}$ define the stretching, parameters $\phi,\ k_b$ define the bending, and $A_1,\ A_2,\ k_{al}$ define the preservation of local area. They can be used all together, or, by setting any of $k_s, k_{slin}, k_b, k_{al}$ to zero, the corresponding modulus can be turned off.
+
+\subsubsection*{Stretching} For each edge of the mesh, \var{L_{AB}} is the current distance between point A 
 and point B. \var{L_{AB}^0} is the distance between these points in the relaxed 
 state, that is if the current edge has the length exactly \var{L_{AB}^0}, then 
 no forces are added. $\Delta \var{L_{AB}}$ is the deviation from the relaxed 
 state, that is $\Delta \var{L_{AB}} = \var{L_{AB}} - \var{L_{AB}^0}$. The 
 stretching force between A and B is calculated using 
 \begin{equation}
-\var{F_s(A,B)} = \var{k_s}\kappa(\lambda_{AB})\Delta \var{L_{AB}}\var{n_{AB}}.
+\var{F_s(A,B)} = (\var{k_s}\kappa(\lambda_{AB}) + \var{k_{slin}})\Delta \var{L_{AB}}\var{n_{AB}}.
 \end{equation}
 Here, \var{n_{AB}} is the unit vector pointing from \var{A} to \var{B}, \var{k_s} 
-is the stretching constant, $\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}$, and 
+is the constant for nonlinear stretching, \var{k_{slin}} 
+is the constant for linear stretching, $\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}$, and 
 $\kappa$ is a nonlinear function that resembles neo-Hookean behaviour
 \begin{equation}
 \kappa(\lambda_{AB}) = \frac{\lambda_{AB}^{0.5} + \lambda_{AB}^{-2.5}}
 {\lambda_{AB} + \lambda_{AB}^{-3}}.
 \end{equation}
-
+Typicaly, one wants either nonlinear or linear behaviour and therefore one of $k_s, k_{slin}$ is zero. But the interaction will work with both constants non-zero. 
 \begin{center}
   \includegraphics[width=8cm]{figures/stretching.png}
 \end{center}
-The stretching force acts between two particles and is symmetric. Therefore, if an interaction is defined by
-\begin{verbatim} 
-inter 1 stretching_force 2.0 4.0
-\end{verbatim}
-then the following two commands
-\begin{verbatim} 
-part 42 bond 1 43
-part 43 bond 1 42
-\end{verbatim}
-are equivalent.
 
 %\subsection{Linear stretching force}
 %\index{linear stretching force|mainindex}
@@ -1127,21 +1160,9 @@ are equivalent.
 %the same except $\kappa(\lambda_{AB}) = 1$. 
 
 
-\subsection{Bending force}
-\index{bending force|mainindex}
-\index{interactions!bending force|mainindex}
-
-\begin{essyntax}
-  inter \var{bondid}
-  bending_force
-  \var{\theta^0} \var{k_b}
-\end{essyntax}
-
+\subsubsection*{Bending}
 The tendency of an elastic object to maintain the resting shape is achieved by 
 prescribing the preferred angles between the neighbouring triangles of the mesh. 
-This type of interaction is available for closed 3D immersed objects as well as 
-for 2D sheet flowing in the 3D flow.
-
 
 Denote the angle between two triangles in the resting shape by $\theta^0$. For 
 closed immersed objects, one always has to set the inner angle. The deviation 
@@ -1160,40 +1181,10 @@ $\var{i}=2$.
   \includegraphics[width=8cm]{figures/bending.png}
 \end{center}
 
-Unlike the stretching force, the bending force is strictly asymmetric. After 
-creating the interaction
-\begin{verbatim} 
-inter 33 bending_force 0.7 4.0,
-\end{verbatim}
-it is important how the bond is created. Particles need to be mentioned in the 
-correct order. Command
-\begin{verbatim} 
-part 0 bond 33 1 2 3
-\end{verbatim}
-creates a bond related to the angle between the triangles 012 and 123. The particle 
-0 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3 to A2. 
-There are two rules that need to be fulfilled:
-\begin{itemize}
-\item there has to be an edge between particles 1 and 2
-\item orientation of the triangle 012, that is the normal vector 
-defined as a vector product $01 \times 02$, must point to the inside of the immersed 
-object.
-\end{itemize}
-Notice that also concave objects can be defined. If $\theta_0$ is larger than $\pi$, 
-then the inner angle is concave.
 
-\subsection{Local area conservation}
-\index{local area conservation|mainindex}
-\index{interactions!local area conservation|mainindex}
 
-\begin{essyntax}
-  inter \var{bondid}
-  area_force_local
-  \var{S^0_{ABC}} \var{k_{al}}
-\end{essyntax}
-This interaction conserves the area of the triangles in the triangulation. This 
-type of interaction is available for closed 3D immersed objects as well as for 2D 
-sheet flowing in the 3D flow.
+\subsubsection*{Local area conservation}
+This interaction conserves the area of the triangles in the triangulation. 
 
 The deviation of the triangle surface \var{S_{ABC}} is computed from the triangle 
 surface in the resting shape $\Delta \var{S_{ABC}} = \var{S_{ABC}} - \var{S_{ABC}^0}$. 
@@ -1203,30 +1194,50 @@ The area constraint assigns the following shrinking/expanding force to every ver
 \end{equation}
 where \var{k_{al}}  is the area constraint coefficient, and \var{w_{A}} is the unit 
 vector pointing from the centroid of triangle \var{ABC} to the vertex \var{A}. 
-Similarly the analogical forces are assigned to \var{B} and \var{C}. This interaction 
-is symmetric, therefore after defining the interaction
-\begin{verbatim} 
-inter 44 area_force_local 0.02 4.0
-\end{verbatim}
-the following commands are equivalent
-\begin{verbatim} 
-part 0 bond 44 1 2
-part 0 bond 44 2 1
-part 1 bond 44 0 2
-\end{verbatim}
+Similarly the analogical forces are assigned to \var{B} and \var{C}. 
 
-\subsection{Global area conservation}
-\index{global area conservation|mainindex}
-\index{interactions!global area conservation|mainindex}
+OIF local force is asymmetric. After creating the interaction
+\begin{verbatim} 
+inter 33 oif_local_force 1.0 0.5 0.0 1.7 0.6 0.2 0.3 1.1
+\end{verbatim}
+it is important how the bond is created. Particles need to be mentioned in the 
+correct order. Command
+\begin{verbatim} 
+part 0 bond 33 1 2 3
+\end{verbatim}
+creates a bond related to the triangles 012 and 123. The particle 
+0 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3 to A2. 
+There are two rules that need to be fulfilled:
+\begin{itemize}
+\item there has to be an edge between particles 1 and 2
+\item orientation of the triangle 012, that is the normal vector 
+defined as a vector product $01 \times 02$, must point to the inside of the immersed 
+object.
+\end{itemize}
+Then the stretching force is applied to particles 1 and 2, with the relaxed length being 1.0. The bending force is applied to preserve the angle between triangles 012 and 123 with relaxed angle 1.7 and finally, local area force is applied to both triangles 012 and 123 with relaxed area of triangle 012 being 0.2 and relaxed area of triangle 123 being 0.3.
+ 
+Notice that also concave objects can be defined. If $\theta_0$ is larger than $\pi$, 
+then the inner angle is concave.
+
+
+\subsection{OIF global forces}
+\index{oif global force|mainindex}
+\index{interactions!oif global force|mainindex}
 
 \begin{essyntax}
   inter \var{bondid}
-  area_force_global
-  \var{S^0} \var{k_{ag}}
+  oif_global_force
+  \var{S^0} \var{k_{ag}}   \var{V^0} \var{k_{v}}
+   \begin{features}
+    \required{OIF_GLOBAL_FORCES}
+  \end{features}
 \end{essyntax}
 This type of interaction is available solely for closed 3D immersed objects.
 
-The conservation of local area is sometimes too restrictive. Denote by \var{S} the 
+This interaction comprises two concepts: preservation of global surface and of volume of the object. Parameters $\var{S^0}, \var{k_{ag}}$ define preservation of the surface and parameters $  \var{V^0}, \var{k_{v}}$ define volume preservation. They can be used together, or, by setting any $k_{ag}$ or $k_{v}$ to zero, the corresponding modulus can be turned off.
+
+\subsubsection*{Global area conservation}
+Denote by \var{S} the 
 current surface of the immersed object, by \var{S_0} the surface in the relaxed 
 state and define $\Delta \var{S} = \var{S} - \var{S_0}$. The global area conservation 
 force is defined as
@@ -1237,19 +1248,8 @@ Here, the above mentioned force divided by 3 is added to all three particles.
 \begin{center}
   \includegraphics[width=8cm]{figures/arealocal.png}
 \end{center}
-Again, this interaction is symmetric, as is the area\_{}force\_{}local.
 
-\subsection{Volume conservation}
-\index{volume conservation|mainindex}
-\index{interactions!volume conservation|mainindex}
-
-\begin{essyntax}
-  inter \var{bondid}
-  volume_force
-  \var{V^0} \var{k_v}
-\end{essyntax}
-This type of interaction is available solely for closed 3D immersed objects.
-
+\subsubsection*{Volume conservation}
 The deviation of the objects volume \var{V} is computed from the volume in 
 the resting shape $\Delta \var{V} = \var{V} - \var{V^0}$. For each triangle the following 
 force is computed
@@ -1270,9 +1270,10 @@ The force \var{F_v(ABC)} is equally distributed to all three vertices $\var{A},\
 \begin{center}
   \includegraphics[width=8cm]{figures/volume.png}
 \end{center}
-This interaction is again symmetric. After the definition of the interaction by 
+
+This interaction is symmetric. After the definition of the interaction by 
 \begin{verbatim} 
-inter 22 volume_force 65.3 3.0
+inter 22 oif_global_force 65.3 3.0 57.0 2.0
 \end{verbatim}
 the order of vertices is crucial. By the following command the bonds are defined
 \begin{verbatim} 
@@ -1280,6 +1281,34 @@ part 0 bond 22 1 2
 \end{verbatim}
 Triangle 012 must have correct orientation, that is the normal vector defined by a 
 vector product $01\times02$. The orientation must point inside the immersed object.
+
+\subsection{Out direction}
+\index{out direction|mainindex}
+\index{interactions!out direction|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  oif\_out\_direction
+    \begin{features}
+    \required{MEMBRANE_COLLISION}
+  \end{features}
+\end{essyntax}
+This type of interaction is primarily for closed 3D immersed objects to compute the 
+input for membrane collision. After creating the interaction
+\begin{verbatim} 
+inter 66 oif_out_direction
+\end{verbatim}
+it is important how the bond is created. Particles need to be mentioned in the 
+correct order. Command
+\begin{verbatim} 
+part 0 bond 66 1 2 3
+\end{verbatim}
+calculates the outward normal vector of triangle defined by particles 1, 2, 3 
+(these should be selected in such a way that particle 0 lies approximately at 
+its centroid - for OIF objects, this is automatically handled by oif\_create\_template 
+command, see Section \ref{ssec:oif-create-template}). In order for the direction to be outward with respect to the 
+underlying object, the triangle 123 needs to be properly oriented (as 
+explained in the section on volume in oif\_global\_forces interaction). 
 
 
 \section{Bond-angle interactions}
@@ -1293,9 +1322,9 @@ vector product $01\times02$. The orientation must point inside the immersed obje
   }{
     Angle_Cosine
   }{
-    K=\arg{double}
+    K = \arg{float}
   }[
-    phi_0=\arg{double}
+    phi_0 = \arg{float}
   ]
 \end{pysyntax}
 
@@ -1471,6 +1500,37 @@ requires assigning charges to the particles.  This is done using the
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
+\begin{pysyntax}[P3M]
+	\object{
+		electrostatics
+	}{
+		P3M|P3M_GPU
+	}{
+		bjerrum_length = \arg{float},
+		accuracy = \arg{float}
+	}[
+	]
+	\object{
+		electrostatics
+	}{
+		P3M|P3M_GPU
+	}{
+		bjerrum_length = \arg{float},
+		r_cut = \arg{float},
+		mesh = \arg{array of 3 ints},
+		cao = \arg{int},
+		alpha = \arg{float},
+		alpha = \arg{float},
+		epsilon = metallic | \arg{float},
+		inter = \arg{int}
+	}[
+		mesh_off = \arg{array of 3 floats}
+        ]
+	\begin{features}
+		\required{ELECTROSTATICS}
+	\end{features}
+\end{pysyntax}
+
 \begin{essyntax}
   inter coulomb \var{l_B} p3m [gpu] 
   \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
@@ -1484,7 +1544,7 @@ installed on your system. In \es{}, you can check if it is compiled in
 by checking for the feature \texttt{FFTW}.
 
 This command activates the P3M method to compute the electrostatic
-interactions between charged particles.  The different parameters are
+interactions between charged particles. P3M requires full periodicity (1 1 1).  The different parameters are
 described in more detail in \cite{deserno98a}.
 \begin{description}
 \item[\var{[gpu]}]
@@ -1509,17 +1569,6 @@ using P3M! If you are not sure, read the following references
 
 \subsubsection{Tuning Coulomb P3M}
 \label{ssec:tunep3m}
-\begin{essyntax}
-  inter coulomb \var{l_B} p3m \alt{tune \asep tunev2} [gpu]
-  accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_\mathrm{cut}}}
-  \opt{mesh \var{mesh}}
-  \opt{cao \var{cao}}
-  \opt{alpha \var{\alpha}}
-  \begin{features}
-    \required{ELECTROSTATICS}
-  \end{features}
-\end{essyntax}
 
 It is not easy to calculate the various parameters of the P3M method
 such that the method provides the desired accuracy at maximum speed.
@@ -1533,6 +1582,13 @@ symmetric systems. For example, because of the nature of the P3M
 algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
 
+During execution the tuning routines report the tested parameter sets,
+the corresponding k-space and real-space errors and the timings needed
+for force calculations (the setmd variable \var{timings} controls the
+number of test force calculations).  Since the error depends on
+\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
+output is given in these units.
+
 The function employs the analytical expression of the error estimate
 for the P3M method \cite{hockney88} and its real space error
 \cite{kolafa92} to obtain sets of parameters that yield the desired
@@ -1540,10 +1596,24 @@ accuracy, then it measures how long it takes to compute the coulomb
 interaction using these parameter sets and chooses the set with the
 shortest run time.
 
+\subsubsection{Tuning with the TCL interface}
+\label{ssec:tunep3mTCL}
+
+\begin{essyntax}
+  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
+  accuracy \var{accuracy}\\
+  \opt{r_cut \var{r_\mathrm{cut}}}
+  \opt{mesh \var{mesh}}
+  \opt{cao \var{cao}}
+  \opt{alpha \var{\alpha}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
 The function will only automatically tune those parameters that are
 not set to a predetermined value using the optional parameters of the
 tuning command.
-
 The two tuning methods follow different methods for determining the
 optimal parameters. While the \keyword{tune} version tests different
 values on a grid in the parameter space, the \keyword{tunev2} version
@@ -1553,20 +1623,37 @@ systems \keyword{tunev2} is faster. The results of \keyword{tunev2}
 are always at least as good as the parameters from the \keyword{tune}
 version, and normally the obtained accuracy is much closer to the
 desired value.
-
-During execution the tuning routines report the tested parameter sets,
-the corresponding k-space and real-space errors and the timings needed
-for force calculations (the setmd variable \var{timings} controls the
-number of test force calculations).  Since the error depends on
-\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
-output is given in these units.
-
 Note that the previous setting of \var{r_\mathrm{cut}}, \var{cao} and
 \var{mesh} will be remembered.  If you want to retune your
 electrostatics, \eg after a major system change, you should use
 \begin{code}
   inter coulomb \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
+
+\subsubsection{Tuning with the Python Interface}
+\label{ssec:tunep3mPY}
+
+\begin{pysyntax}
+	\object{
+		electrostatics.P3M
+	}{
+		Tune
+    }{
+    }[
+        \arg{dict}
+    ]
+
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+	\end{features}
+\end{pysyntax}
+
+\keyword{Tune()} can be given a python dictionary that specifies the target parameters for 
+the tuning algorithm. If it doesn't contain \keyword{bjerrum_length} or
+\keyword{accuracy}, the previous values are used respectively. Other parameters are 
+retuned if not specified explicitly. Valid keys for the dictionary are given 
+in \pyref{P3M}.
 
 \subsubsection{Additional P3M parameters}
 
@@ -1598,6 +1685,25 @@ have the following meaning:
 \index{EwaldGPU method|mainindex}
 \index{interactions!EwaldGPU|mainindex}
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		EwaldGpu
+	}{
+		bjerrum_length = \arg{float},
+		accuracy = \arg{float},
+		precision = \arg{float},
+		K_max = \arg{int} | \arg{array of 3 ints},
+	}[
+		alpha = \arg{float}
+	]
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+		\required{EWALD_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   inter coulomb \var{l_B} ewaldgpu 
   \var{r_\mathrm{cut}} \alt{\var{K_\mathrm{cut}} \asep \{\var{K_\mathrm{cut,x}} \var{K_\mathrm{cut,y}} \var{K_\mathrm{cut,x}}\}} \var{alpha}
@@ -1652,35 +1758,39 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
-\PythonSyntaxOn
 \begin{pysyntax}
   \object{
     electrostatics
   }{
-    \require{1}{DH}
+    DH
   }{
-    bjerrum\textunderscore length=\arg{double},
-    kappa=\arg{double},
-    r\textunderscore cut=\arg{double}
+    bjerrum_length = \arg{float},
+    kappa = \arg{float},
+    r_cut = \arg{float}
   }
-  \leavevmode \\
+  \begin{features}
+      \required{ELECTROSTATICS}
+  \end{features}
   \object{
     electrostatics
     }{
-     \require{1,2}{CDH}
+     CDH
     }{
-      bjerrum\textunderscore length=\arg{double},
-      kappa=\arg{double},
-      r\textunderscore cut=\arg{double},
-      eps\textunderscore int=\arg{double},
-      eps\textunderscore ext=\arg{double},
-      r0=\arg{double},
-      r1=\arg{double},
-      alpha=\arg{double}
+      bjerrum_length = \arg{float},
+      kappa = \arg{float},
+      r_cut = \arg{float},
+      eps_int = \arg{float},
+      eps_ext = \arg{float},
+      r0 = \arg{float},
+      r1 = \arg{float},
+      alpha = \arg{float}
     }[
     ]
+    \begin{features}
+        \required{ELECTROSTATICS}
+        \required{COULOMB_DEBYE_HUECKEL}
+    \end{features}
 \end{pysyntax}
-\PythonSyntaxOff
 
 \begin{essyntax}
     \require{1}{\variant{1}
@@ -1746,6 +1856,48 @@ The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"u
     \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		MMM2D
+	}{
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		dielectric = 1,
+		top = \arg{float},
+		mid = \arg{float},
+		bot = \arg{float}
+	}[
+		far_cut = \arg{float}
+	]
+	\object{ 
+		electrostatics
+	}{
+		MMM2D
+	}{
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		capacitor = 1,
+		pot_diff = \arg{float}
+	}[
+		far_cut = \arg{float}
+	]
+	\object{ 
+		electrostatics
+	}{
+		MMM2D
+	}{
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		dielectric_contrast_on = 1,
+		delta_mid_top = \arg{float},
+		delta_mid_bot = \arg{float}
+	}[
+		far_cut = \arg{float}
+	]
+\end{pysyntax}
+
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
 number of slices of the cell system, which has to be tuned manually.
@@ -1798,6 +1950,21 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
 \begin{citebox}
   Please cite~\citewbibkey{mmm1d} when using MMM1D.
 \end{citebox}
+\begin{pysyntax}
+	\object{
+	electrostatics
+	}{
+	MMM1D
+	}{
+	bjerrum_length=\arg{float},
+	maxPWerror=\arg{float}
+	}[
+	far_switch_radius=\arg{float}
+	]
+	\begin{features}
+		\required{ELECTROSTATICS} \required{PARTIAL_PERIODIC}
+	\end{features}
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1}
@@ -1808,6 +1975,7 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
   inter coulomb \var{l_B} mmm1d tune \var{maximal\_pairwise\_error}
   \begin{features}
     \required{ELECTROSTATICS}
+    \required{PARTIAL_PERIODIC}
   \end{features}
 \end{essyntax}
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
@@ -1822,6 +1990,23 @@ out the fastest one. If this takes too long, you can change the value
 of the setmd variable \keyword{timings}, which controls the number of
 test force calculations.
 
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{
+		MMM1D_GPU
+	}{
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float}
+	}[
+		far_switch_radius = \arg{float},
+		bessel_cutoff = \arg{int}
+	]
+	\begin{features}
+		\required{ELECTROSTATICS} \required{CUDA} \required{PARTIAL_PERIODIC}
+		\required{MMM1D_GPU}
+	\end{features}
+\end{pysyntax}
 \begin{essyntax}
   \variant{1}
   inter coulomb \var{l_B} mmm1dgpu \var{switch\_radius}
@@ -1832,6 +2017,7 @@ test force calculations.
   \begin{features}
     \required{CUDA}
 	\required{ELECTROSTATICS}
+	\required{PARTIAL_PERIODIC}
 	\required{MMM1D_GPU}
   \end{features}
 \end{essyntax}
@@ -1987,6 +2173,107 @@ and can be seen as a spatially dependent prefactor to this epsilon.
 If left unchanged, this prefactor is $1.0$ for every site by
 default.
 
+\subsubsection{Adaptive permittivity with MEMD}
+\label{sec:adaptive-memd}
+
+In addition to setting the local permittivity manually as described in section~\ref{sec:dielectric-memd}, MEMD is capable of adapting the local permittivity at each lattice site, dependent on the concentration of surrounding charges. More information on this can be found in article~\cite{fahrenberger15b}, which you should cite if you use this algorithm.
+
+To achieve this, the local salt concentration around each lattice cell is measured and then mapped to an according dielectric permittivity using the empirical formula
+\begin{equation}
+	\varepsilon = \frac{78.5}{1+0.278\cdot C},
+	\label{eq:salt-map}
+\end{equation}
+where $C$ is the concentration in molar [M], or moles per liter [mol/l]. The algorithm averages over a volume of $7^3$ lattice cubes and expects a concentration in molar within the simulation. In more MD-friendly units, this would mean that the units expected by the formula correspond to a lattice size of roughly $0.6$ nanometers for MEMD. Any other length unit is possible but needs to be scaled by a prefactor. This is perfectly reasonable and will not break the algorithm, since the permittivity $\varepsilon$ is dimensionless. The scaling factor $S_\text{adaptive}$ is thus defined via the used MEMD lattice spacing $a_\text{used}$:
+\begin{equation}
+	S_\text{adaptive} \times a_\text{used} = 0.6\,\text{nm}
+	\label{eq:adaptive-scaling}
+\end{equation}
+
+To use MEMD with adaptive permittivity to calculate Coulomb interactions in the system, use the following command.
+
+\begin{essyntax}
+  inter coulomb \var{l_B}
+  memd adaptive \var{scaling}
+  parameters \var{f\_mass} \var{mesh}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+The keyword \keyword{adaptive} after the \keyword{inter coulomb} command will use the implementation with dielectric permittivity dependent on the local salt concentration.
+
+\begin{arguments}
+\item[\var{l_B}] is the bjerrum length of the background. It defines
+	the reference value $\varepsilon_\text{bg}$ via the formula 
+	\eqref{eq:bjerrum-length}. Since the permittivity in this case is set
+	adaptively, it essentially determined the temperature for the Coulomb
+	interaction. This is a global variable and for this particular algorithm
+	should most likely be set as the permittivity of pure water.
+\item[\var{scaling}] is the scaling of the used length unit to match the expected unit system. For more details see equation~\ref{eq:adaptive-scaling} and the paragraph before.
+\item[\var{f\_mass}] is the mass of the field degree of freedom and equals
+  to the square root of the inverted speed of light.
+\item[\var{mesh}] is the number of mesh points for the interpolation
+  of the electromagnetic field in one dimension.
+\end{arguments}
+
+It should be mentioned that this algorithm is not a black box and should be understood to a degree if used. Small changes in the parameters, especially the mesh size, can quickly lead to unphysical results. This is not only because of the retarded electrodynamics solution offered by the MEMD algorithm in general, but because of the sensitivity of the dielectric response to the volume over which the local salt concentration is sampled. If this volume is set too small, harsh changes in the local dielectric properties can occur and the algorithm may become unstable, or worse, produce incorrect electrostatic forces.
+
+The calculation of local permittivity will for the same parameters -- depending on your computer -- run roughly a factor of $2$ to $4$ longer than MEMD without temporally varying dielectric properties.
+
+\subsection{Scafacos}
+\index{Scafacos|mainindex}
+Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fast Coulomb solvers} library.
+\begin{essyntax}
+  scafacos_methods
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+\begin{pysyntax}
+scafacos.available_methods()
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{pysyntax}
+This shows the methods available at the compile time of \es{}.
+Scafacos can be used as Coulomb solver for the system.
+\begin{essyntax}
+  inter coulomb \var{l_b} scafacos \var{method} \opt{\var{parameters}} \opt{tolerance_field \var{prec}}
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ Scafacos 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		method_name=\arg{string},
+		method_params=\arg{dict},
+	}[
+	]
+	\begin{features}
+		\required{SCAFACOS}
+	\end{features}
+\end{pysyntax}
+Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
+\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
+are not set, and the method supports it, the open parameteres are tuned.
+To use the \texttt{ewald} solver from scafacos as electrostatics solver for your system, set its cutoff
+to $1.5$ and tune the other parameters for an accuracy of $10^{-3}$, use the command
+\begin{tclcode}
+  inter coulomb 1.0 scafacos ewald ewald_r_cut 1.5 tolerance_field 1e-3
+\end{tclcode}
+For details of the various methods and their parameters please refer to the Scafacos manual.
+Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
+to build Scafacos as a shared library.
+Scafacos can be used only once, either for coulomb or for dipolar interactions.
+
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
@@ -2002,11 +2289,11 @@ default.
   }{
     ELC
   }{
-    gap_size=\arg{double},
-    maxPWerror=\arg{double},
+    gap_size = \arg{float},
+    maxPWerror = \arg{float},
   }[
-    neutralize=\arg{bool},
-    far_cut=\arg{double}
+    neutralize = \arg{bool},
+    far_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -2303,7 +2590,7 @@ In periodic systems, this method should only be used if it is not possible to us
 DLC, because those methods have a far better accuracy and are much faster.
 In a non-periodic system, the DAWAANR-method gives the exact result.
 
-\subsection{Magnetic Dipolar Direct Sum (MDDS)}
+\subsection{Magnetic Dipolar Direct Sum (MDDS) on CPU}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
@@ -2324,7 +2611,60 @@ in all periodic directions is explicitly computed.
 As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
-  
+
+
+\subsection{Dipolar direct sum on gpu}
+\index{Dipolar direct sum on gpu|mainindex}
+
+\begin{essyntax}
+  inter magnetic \var{l_{B}} dds-gpu
+  \begin{features}
+    \required{DIPOLES}
+    \required{CUDA}
+  \end{features}
+\end{essyntax}
+
+This interaction calculates energies and forces between dipoles by
+explicitly summing over all pairs.  For the directions in which the
+system is periodic (as defined by \texttt{setmd periodic}), it applies
+the minimum image convention, i.e. the interaction is effectively cut
+off at half a box length.
+
+The calculations are performed on the gpu in single precision. The implementation is optimized for large systems of several thousand particles. It makes use of one thread per particle. When there are fewer particles than the number of threads the gpu can execute simultaneously, the rest of the gpu remains idle. Hence, the method will perform poorly for small systems.
+
+\subsection{Scafacos}
+\index{Scafacos|mainindex}
+Espresso can use the methods from the Scafacos \emph{Scalable fast Coulomb solvers} library for dipoles, if the methods support dipolar calculations.
+The feature SCAFACOS\_DIPOLES has to be added to myconfig.hpp to activate this feature.
+At the time of this writing (Apr 2016) dipolar calculations are not part of the official Scafacos development branch.
+\begin{essyntax}
+  scafacos_methods
+  \begin{features}
+    \required{DIPOLES} 
+    \required{SCAFACOS_DIPOLES} 
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+This shows the methods available at the compile time of \es{}.
+That a method is listed there, does not imply that it supports dipolar calculations.
+\begin{essyntax}
+  inter magnetic \var{l_b} scafacos \var{method} \opt{\var{parameters}} \opt{tolerance_field \var{prec}}
+  \begin{features}
+    \required{DIPOLES}
+    \required{SCAFACOS_DIPOLES}
+    \required{SCAFACOS}
+  \end{features}
+\end{essyntax}
+Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
+\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
+are not set, and the method supports it, the open parameteres are tuned.
+For details of the various methods and their parameters please refer to the Scafacos manual.
+Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
+to build Scafacos as a shared library.
+Scafacos can be used only once, either for coulomb or for dipolar interactions.
+
+
 \section{Special interaction commands}
 \label{sec:inter-other}
 

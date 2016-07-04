@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,14 +20,12 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 
 # Build rules for python libraries
 AM_CPPFLAGS = $(PYTHON_CPPFLAGS) \
-	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core
+	-I$(top_srcdir)/src -I$(top_srcdir)/src/core -I$(top_builddir)/src/core \
+	-I$(top_srcdir)/src/core/actor -I$(top_builddir)/scr/core/actor
 AM_LDFLAGS = $(PYTHON_LDFLAGS) -module -avoid-version -no-undefined
-LIBS =  $(top_builddir)/src/core/libEspresso.la \
-	@LIBS@
 
-if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/core/mpifake
-endif
+#CYTHON compile options e.g. debug
+AM_CYFLAGS = $(CYFLAGS)
 
 # Build rules for cython
 SUFFIXES = .pyx
@@ -35,6 +33,7 @@ SUFFIXES = .pyx
 EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py \
 	  system.py \
+	  visualization.py \
 	  highlander.py
 
 PYXFILES =  \
@@ -46,13 +45,21 @@ PYXFILES =  \
 	code_info.pyx \
 	cuda_init.pyx \
 	debye_hueckel.pyx \
+	electrokinetics.pyx \
 	electrostatic_extensions.pyx \
 	electrostatics.pyx \
 	integrate.pyx \
 	interactions.pyx \
+	lb.pyx \
+	magnetostatics.pyx \
+	magnetostatic_extensions.pyx \
 	particle_data.pyx \
+	reaction.pyx \
 	thermostat.pyx \
-	utils.pyx
+	utils.pyx \
+	h5md.pyx \
+	grand_canonical.pyx \
+	galilei.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -69,11 +76,21 @@ PXDFILES = \
 	integrate.pxd \
 	interactions.pxd \
 	lb.pxd \
+	magnetostatics.pxd \
+	magnetostatic_extensions.pxd \
+	p3m_common.pxd \
 	particle_data.pxd \
+	reaction.pxd \
 	_system.pxd \
 	_tcl.pxd \
 	thermostat.pxd \
-	utils.pxd
+	utils.pxd \
+	actors.pxd \
+	h5md.pxd \
+	grand_canonical.pxd \
+	galilei.pxd
+
+LIBS +=	$(top_builddir)/src/core/libEspresso.la
 
 if TCL
 LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
@@ -108,7 +125,7 @@ cython_verbose_ = $(cython_verbose_@AM_DEFAULT_V@)
 cython_verbose_0 = @echo "  CYTHON   $@";
 
 $(CPPFILES): %.cpp: %.pyx myconfig.pxi
-	$(cython_verbose)cython \
+	$(cython_verbose)cython $(CYFLAGS) --cplus \
 	  -I $(builddir) -I $(srcdir)/_espresso $< -o $@
 
 CLEANFILES += $(CPPFILES)
@@ -122,7 +139,7 @@ dummy_SOURCES = dummy.cpp
 # Also, like this, the .so-files are installed to the right place.
 LAFILES = $(PYXFILES:.pyx=.la)
 $(LAFILES): %.la: %.lo
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(pyexecdir) $< $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(abs_builddir) -L$(top_builddir)/src/core/.libs $(LIBS) -lEspresso -rpath $(pyexecdir) $<
 CLEANFILES += $(LAFILES)
 
 # create links to the ./libs/*.so in the dir
@@ -130,8 +147,17 @@ SOFILES = $(PYXFILES:.pyx=.so)
 all-local: $(SOFILES)
 CLEANFILES += $(SOFILES)
 
-$(SOFILES): %.so: %.la
+if DARWIN
+SOSUFFIX=dylib
+else
+SOSUFFIX=so
+endif
+
+$(SOFILES): %.so: %.la libEspresso.so
 	$(AM_V_GEN)test -L $@ || $(LN_S) @objdir@/$@ $@
+
+libEspresso.so:
+	$(AM_V_GEN)test -L $@ || $(LN_S) $(top_builddir)/src/core/.libs/libEspresso.$(SOSUFFIX) $@
 
 # build rule for myconfig.pxi
 # create gen_pxiconfig.cpp from features.def
@@ -139,7 +165,7 @@ gen_pxiconfig.cpp: $(srcdir)/gen_pxiconfig.py $(top_srcdir)/src/features.def
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_pxiconfig.py \
 	  $(top_srcdir)/src/features.def gen_pxiconfig.cpp
 
-gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src
+gen_pxiconfig_CPPFLAGS=-I$(top_srcdir)/src/core -I$(top_builddir)/src/core -I$(top_builddir)/src -DHAVE_CONFIG_H
 gen_pxiconfig: gen_pxiconfig.cpp $(top_builddir)/src/core/config.hpp $(top_builddir)/src/core/myconfig-final.hpp
 	$(AM_V_CXXLD)$(CXXLINK) $(gen_pxiconfig_CPPFLAGS) $<
 

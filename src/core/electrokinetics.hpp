@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -74,6 +74,8 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+  bool advection;
+  bool fluidcoupling_ideal_contribution;
 #ifdef EK_ELECTROSTATIC_COUPLING
   bool es_coupling;
   float *charge_potential_buffer;
@@ -156,7 +158,6 @@ int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_particle_potential( char* filename );
 #endif
 int ek_print_vtk_lbforce(char* filename);
-int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -179,6 +180,8 @@ int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
 int ek_set_stencil(int stencil);
+int ek_set_advection(bool advection);
+int ek_set_fluidcoupling(bool ideal_contribution);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
@@ -193,6 +196,7 @@ void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int
 #endif
 
 #ifdef EK_REACTION
+int ek_print_vtk_reaction_tags(char* filename);
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
                      float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, 

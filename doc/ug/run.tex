@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+% Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -99,6 +99,43 @@ returns the wall runtime in seconds.
   \variant{1} minimize_energy \var{f_\mathrm{max}} \var{steps} \var{gamma} \var{maxdisplacement}
 \end{essyntax}
 
+\begin{pysyntax}
+  \object{
+    espressomd.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    espressomd.minimize_energy
+  }{
+    minimize
+  }{}
+  \object{
+    System.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    System.minimize_energy
+  }{
+    minimize
+  }{}
+\end{pysyntax}
+
+In Python the minimize\_energy functionality can be imported from \texttt{espressomd}
+as class \texttt{MinimizeEnergy}. Alternatively it is already part of the System
+class object and can be called from there (second variant). 
+
 This command runs a steepest descent energy minimization on the system.
 Please note that the behaviour is undefined if either a thermostat, Maggs electrostatics or Lattice-Boltzmann is activated.
 It runs a simple steepest descent algorithm:
@@ -108,7 +145,24 @@ $$p_i = p_i + \min(\text{\var{gamma}} \times F_i, \text{\var{maxdisplacement}}),
 while the maximal force is bigger than \var{f_\mathrm{max}} or for at most \var{steps} times.
 The energy is relaxed by \var{gamma}, while the change per coordinate per step is limited to \var{maxdisplacement}.
 The combination of \var{gamma} and \var{maxdisplacement} can be used to get an poor man's adaptive update.
+Rotational degrees of freedom are treated similarly: each particle is rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local minimum in periodic boundary conditions.
+Translational and rotational coordinates that are fixed using the ``fix`` command or the ROTATION\_PER\_PARTICLE feature are not altered.
+
+\section{\texttt{tune_skin}: Tune the skin}
+\newescommand[tune-skin]{tune_skin}
+
+\begin{essyntax}
+  \variant{1} tune_skin \var{min} \var{max} \var{tol} \var{steps}
+\end{essyntax}
+
+Determines the fastest skin between \var{min} and \var{max} with tolerance \var{tol}
+by bisection. The integration time is determined by timing \var{steps} intergration.
+You should chose \var{steps} big engough so that multiple verlet updates occure even
+for the \var{max} skin, otherwise the timings are not meaningful. Please be aware that
+this command runs actual integrations and propagates the system. In a typical MD simulation
+it should be used after warmup and equilibration, in the same conditions where sampling
+is done.
 
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
@@ -122,6 +176,24 @@ Changes the volume of either a cubic simulation box to the new volume
 box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
+
+\section{\texttt{rotate_system}: Rotating the system around its center of mass}
+\newescommand[rotate-system]{rotate_system}
+
+\begin{essyntax}
+  \variant{1} rotate_system \var{phi} \var{theta} \var{alpha}
+\end{essyntax}
+
+Rotates the particle coordinates around the system's center of mass. This only makes sense for non-periodic boundaries, but no check is performed. 
+In addition to the particle positions, the command also rotates the particles themselves, if the ROTATION feature is activated. Hence, dipole moments as well as virtual sites based on the VS\_RELATIVE method will also be affected.
+The command only works on a single cpu.
+
+The rotation axis is given by the parameters \var{phi} and \var{theta} as
+\begin{equation}
+\vec{a} = (\sin \theta \cos \phi ; \sin \theta \sin \phi ; \cos \theta),
+\end{equation}
+and \var{alpha} denotes the rotation angle.
+
 
 \section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
 \newescommand[lees-edwards-offset]{lees_edwards_offset}
