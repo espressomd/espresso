@@ -36,6 +36,8 @@ from analyze import Analysis
 from galilei import GalileiTransform
 
 import sys
+cimport tuning
+
 
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
@@ -437,6 +439,15 @@ cdef class System:
        b=p2.pos
        get_mi_vector(res,a,b)
        return np.sqrt(res[0]**2+res[1]**2+res[2]**2)
+    
+    def tune_skin(self,min=None,max=None,tol=None,int_steps=None):
+        """Tunes the skin by running measuring the time for int_steps
+           integration steps and bisecting in the interval min..max upt ot an
+           interval of tol."""
+        
+        
+        tuning.tune_skin(min, max, tol, int_steps)
+        return self.skin
 
 
 
