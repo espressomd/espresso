@@ -1,6 +1,9 @@
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
+try:
+    import vtk
+    from vtk.util.numpy_support import vtk_to_numpy
+except:
+    pass
 
 def calculate_vtk_max_pointwise_difference(file1,file2,tol=1e-6):
     arrays = [0]*2
