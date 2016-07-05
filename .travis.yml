@@ -11,8 +11,8 @@ before_install:
 # - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
  - git clone git://github.com/fsquillace/junest ~/junest
  - PATH=~/junest/bin:$PATH
- - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk flake8 cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
-
+ - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
+ - junest -f pip install pep8
 #install:
 # - conda install numpy cython pip vtk
 
