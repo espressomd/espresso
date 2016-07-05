@@ -9,6 +9,10 @@ addons:
 
 before_install:
 # - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
+# since the build environment within travis didn't work for our pythontests
+# we first tried to use anaconda. This resulted in errors caused by a wrong
+# python version somewhere in the travis container. Then we gave junest a try.
+# Information on junest: http://fsquillace.github.io/junest-site/
  - git clone git://github.com/fsquillace/junest ~/junest
  - PATH=~/junest/bin:$PATH
  - junest -f -- pacman --noconfirm -Sy cython python-pip python2-pip python2-numpy vtk cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
