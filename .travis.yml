@@ -14,7 +14,7 @@ before_install:
  - junest -f -- pacman --noconfirm -Sy cython python-pip python2-pip python2-numpy vtk cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
 
 install:
-- junest -f -- yes | pip install pep8
+- yes | junest -f -- pip install pep8
 
 env:
   global:
