@@ -2,42 +2,18 @@ language: cpp
 dist: trusty
 sudo: false
 
-#cache: 
-#  - apt
-#  - ccache
-
 addons:
   apt:
-#    sources:
-#      - boost-latest 
-#      - ubuntu-toolchain-r-test
-#      - george-edison55-precise-backports
     packages:
-#      - ccache
-#      - tcl-dev
-#      - libhdf5-serial-dev 
-#      - build-essential 
-#      - pep8 
-#      - cmake
-#      - cmake-data
-#      - libboost1.55-dev 
-#      - libboost-test1.55-dev
-#      - libboost-mpi1.55-dev
-#      - libboost-serialization1.55-dev
-#      - libopenmpi-dev
-#      - openmpi-bin
-#      - libfftw3-dev
-#      - gcc-4.8
-#      - g++-4.8
       - git
 
 before_install:
- - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
+# - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
  - git clone git://github.com/fsquillace/junest ~/junest
  - PATH=~/junest/bin:$PATH
  - junest -f -- pacman --noconfirm -Sy cython python2-pip python2-numpy vtk pep8 cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
 
-install:
+#install:
 # - conda install numpy cython pip vtk
 
 env:
