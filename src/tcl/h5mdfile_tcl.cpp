@@ -645,10 +645,8 @@ int H5mdfile::H5_write_value(int argc, char **argv, Tcl_Interp *interp)
 	
 	if(H5Tis_variable_str(dataset_type_id)!=0)
 	{
-//		dset_data_string = static_cast<h5string*>(dset_data);
-//        dset_data_chars=static_cast<char *>(dset_data);
         dset_data_chars=(char**) dset_data;
-		dset_data_chars[index]=strdup(argv[3]);
+        dset_data_chars[index]=strdup(argv[3]);
 	}
 	return TCL_OK;
 }
@@ -674,7 +672,7 @@ int H5mdfile::get_dataset_dims(int argc, char **argv, Tcl_Interp *interp)
 }
 int H5mdfile::H5_Fflush(int argc, char **argv, Tcl_Interp *interp)
 {
-	H5Fflush(dataset_id, H5F_SCOPE_LOCAL);
+	H5Fflush(file_id, H5F_SCOPE_GLOBAL);
 	return TCL_OK;
 }
 #endif

@@ -51,16 +51,19 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
     h5mdfile H5Screate_simple type double dims 3 3
     h5mdfile H5Pset_chunk dims 3 3
     h5mdfile H5Dcreate2 "particles/atoms/box/edges"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "particles/atoms/box/edges"
     #assuming cuboid box
     for {set i 0 } {$i<3} {incr i} {
         h5mdfile H5_write_value value [lindex [setmd box_l] $i] index $i $i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5Dclose
     #mass   
     h5mdfile H5Screate_simple type double dims $h5md_num_part
     h5mdfile H5Pset_chunk dims $h5md_num_part
     h5mdfile H5Dcreate2 "particles/atoms/mass/value"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "particles/atoms/mass/value"
     if { [string first MASS [code_info]] != -1 } {
         set i 0
@@ -70,26 +73,40 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         }
         h5mdfile H5Dwrite
     }
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     # position
     h5mdfile H5Screate_simple type int dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "particles/atoms/position/step"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "particles/atoms/position/time"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 $h5md_num_part 3
     h5mdfile H5Pset_chunk dims 5 $h5md_num_part] 3
     h5mdfile H5Dcreate2 "particles/atoms/position/value"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # velocity
     h5mdfile H5Screate_simple type int dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "particles/atoms/velocity/step"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "particles/atoms/velocity/time"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 $h5md_num_part 3
     h5mdfile H5Pset_chunk dims 5 $h5md_num_part 3
     h5mdfile H5Dcreate2 "particles/atoms/velocity/value"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # force
     h5mdfile H5Screate_simple type int dims 0 
     h5mdfile H5Pset_chunk dims 1 
@@ -97,13 +114,19 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "particles/atoms/force/time"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 $h5md_num_part 3
     h5mdfile H5Pset_chunk dims 5 $h5md_num_part 3
     h5mdfile H5Dcreate2 "particles/atoms/force/value"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # species
     h5mdfile H5Screate_simple type int dims $h5md_num_part 
     h5mdfile H5Pset_chunk dims $h5md_num_part
     h5mdfile H5Dcreate2 "particles/atoms/species"
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # species and tcl script
     h5md_write_species
     dump_script_to_h5md 
@@ -114,6 +137,7 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
     h5mdfile H5Screate_simple type int dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
     h5mdfile H5Dcreate2 "parameters/vmd_structure/indexOfSpecies"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "parameters/vmd_structure/indexOfSpecies"
     set i 0
     foreach type $types {
@@ -121,10 +145,13 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     #name
     h5mdfile H5Screate_simple type str dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
     h5mdfile H5Dcreate2 "parameters/vmd_structure/name"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "parameters/vmd_structure/name"
     set i 0
     foreach type $types {
@@ -132,19 +159,25 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     #type
     h5mdfile H5Screate_simple type str dims [llength $types]
     h5mdfile H5Pset_chunk dims [llength $types]
     h5mdfile H5Dcreate2 "parameters/vmd_structure/type"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "parameters/vmd_structure/type"
     for {set i 0 } {$i < [llength $types] } {incr i} {
         h5mdfile H5_write_value value [lindex $names [expr $i%112]] index $i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     #write charge for vmd_structure
     h5mdfile H5Screate_simple type double dims $h5md_num_part
     h5mdfile H5Pset_chunk dims $h5md_num_part
     h5mdfile H5Dcreate2 "particles/atoms/charge"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "particles/atoms/charge"
     set i 0
     foreach p_id $h5md_p_ids {
@@ -152,6 +185,8 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     #bonds
     set froms ""
     set tos ""
@@ -173,20 +208,26 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         h5mdfile H5Screate_simple type int dims [llength $froms]
         h5mdfile H5Pset_chunk dims [llength $froms]
         h5mdfile H5Dcreate2 "parameters/vmd_structure/bond_from"
+        h5mdfile H5Sclose
         h5mdfile H5Dopen2 "parameters/vmd_structure/bond_from"
         for {set i 0 } {$i < [llength $froms] } {incr i} {
             h5mdfile H5_write_value value [lindex $froms $i] index $i
         }
         h5mdfile H5Dwrite
+        h5mdfile H5_free_memory
+        h5mdfile H5Dclose
 
         h5mdfile H5Screate_simple type int dims [llength $tos]
         h5mdfile H5Pset_chunk dims [llength $tos]
         h5mdfile H5Dcreate2 "parameters/vmd_structure/bond_to"
+        h5mdfile H5Sclose
         h5mdfile H5Dopen2 "parameters/vmd_structure/bond_to"
         for {set i 0 } {$i < [llength $tos] } {incr i} {
             h5mdfile H5_write_value value [lindex $tos $i] index $i
         }
         h5mdfile H5Dwrite
+        h5mdfile H5_free_memory
+        h5mdfile H5Dclose
     }
     h5mdfile H5_Fflush
 }
@@ -212,6 +253,9 @@ proc h5md_write_positions { args } {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation step (assumes that time_step hasnt changed)
     h5mdfile H5Dopen2 "particles/atoms/position/step"
     set offset [h5mdfile get_dataset_dims]
@@ -220,6 +264,9 @@ proc h5md_write_positions { args } {
     h5mdfile H5Screate_simple type int dims 1 
     h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation time
     h5mdfile H5Dopen2 "particles/atoms/position/time"
     set offset [h5mdfile get_dataset_dims]
@@ -228,7 +275,9 @@ proc h5md_write_positions { args } {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
-    #h5mdfile H5_Fflush
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 
@@ -249,6 +298,9 @@ proc h5md_write_velocities {} {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation step (assumes that time_step hasnt changed)
     h5mdfile H5Dopen2 "particles/atoms/velocity/step"
     set offset [h5mdfile get_dataset_dims]
@@ -257,6 +309,9 @@ proc h5md_write_velocities {} {
     h5mdfile H5Screate_simple type int dims 1 
     h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation time
     h5mdfile H5Dopen2 "particles/atoms/velocity/time"
     set offset [h5mdfile get_dataset_dims]
@@ -265,6 +320,9 @@ proc h5md_write_velocities {} {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 
@@ -285,6 +343,9 @@ proc h5md_write_forces {} {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation step (assumes that time_step hasnt changed)
     h5mdfile H5Dopen2 "particles/atoms/force/step"
     set offset [h5mdfile get_dataset_dims]
@@ -293,6 +354,9 @@ proc h5md_write_forces {} {
     h5mdfile H5Screate_simple type int dims 1 
     h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation time
     h5mdfile H5Dopen2 "particles/atoms/force/time"
     set offset [h5mdfile get_dataset_dims]
@@ -301,6 +365,9 @@ proc h5md_write_forces {} {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 proc h5md_write_species {} {
@@ -314,6 +381,9 @@ proc h5md_write_species {} {
         incr i
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 # Initialize a user defined one dimensional observable, first argument is name of observable
@@ -322,9 +392,11 @@ proc h5md_observable1D_init { args } {
     h5mdfile H5Screate_simple type int dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "observables/[lindex $args 0]/step"
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "observables/[lindex $args 0]/time"
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1
     h5mdfile H5Dcreate2 "observables/[lindex $args 0]/value"
@@ -340,6 +412,9 @@ proc h5md_observable1D_write { args } {
     h5mdfile H5Screate_simple type int dims 1 
     h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation time
     h5mdfile H5Dopen2 "observables/[lindex $args 0]/time"
     set offset [h5mdfile get_dataset_dims]
@@ -348,6 +423,10 @@ proc h5md_observable1D_write { args } {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
+    # Write actual data
     h5mdfile H5Dopen2 "observables/[lindex $args 0]/value"
     set offset [h5mdfile get_dataset_dims]
     h5mdfile H5Dextend dims [expr [lindex $offset 0]+1]
@@ -355,6 +434,9 @@ proc h5md_observable1D_write { args } {
     h5mdfile H5Screate_simple type double dims 1
     h5mdfile H5_write_value value [lindex $args 1] index 0
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 
@@ -365,12 +447,15 @@ proc h5md_observable2D_init { name } {
     h5mdfile H5Screate_simple type int dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "observables/$name/step"
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 
     h5mdfile H5Pset_chunk dims 1 
     h5mdfile H5Dcreate2 "observables/$name/time"
+    h5mdfile H5Sclose
     h5mdfile H5Screate_simple type double dims 0 $h5md_num_part
     h5mdfile H5Pset_chunk dims 5 $h5md_num_part
     h5mdfile H5Dcreate2 "observables/$name/value"
+    h5mdfile H5Sclose
 }
 
 
@@ -389,6 +474,9 @@ proc h5md_observable2D_write { name } {
         incr j
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation step (assumes that time_step hasnt changed)
     h5mdfile H5Dopen2 "observables/$name/step"
     set offset [h5mdfile get_dataset_dims]
@@ -397,6 +485,9 @@ proc h5md_observable2D_write { name } {
     h5mdfile H5Screate_simple type int dims 1 
     h5mdfile H5_write_value value [expr int([setmd time]/[setmd time_step])] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
     # Write simulation time
     h5mdfile H5Dopen2 "observables/$name/time"
     set offset [h5mdfile get_dataset_dims]
@@ -405,13 +496,15 @@ proc h5md_observable2D_write { name } {
     h5mdfile H5Screate_simple type double dims 1 
     h5mdfile H5_write_value value [setmd time] index 0 
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
+    h5mdfile H5Sclose
 }
 
 
 
 # Close all h5md groups and datasets and free memory at the end
 proc h5md_close {} {
-    h5mdfile H5Dclose
     h5mdfile H5Fclose
     h5mdfile H5_free_memory
 }
@@ -441,21 +534,27 @@ proc dump_script_to_h5md {} {
     h5mdfile H5Screate_simple type str dims [llength $script]
     h5mdfile H5Pset_chunk dims 1
     h5mdfile H5Dcreate2 "parameters/files/script"
+    h5mdfile H5Sclose
     h5mdfile H5Dopen2 "parameters/files/script"
     for { set index 0 } { $index < [llength $script] } { incr index } {
         h5mdfile H5_write_value value [lindex $script $index] index $index
     }
     h5mdfile H5Dwrite
+    h5mdfile H5_free_memory
+    h5mdfile H5Dclose
     ### write command line arguments to seperate dataset
     if { $::argc > 0 } {
         h5mdfile H5Screate_simple type str dims $::argc
         h5mdfile H5Pset_chunk dims 1
         h5mdfile H5Dcreate2 "parameters/files/arguments"
+        h5mdfile H5Sclose
         h5mdfile H5Dopen2 "parameters/files/arguments"
         for { set index 0 } { $index < $::argc } { incr index } {
             h5mdfile H5_write_value value [lindex $::argv $index] index $index
         }
         h5mdfile H5Dwrite
+        h5mdfile H5_free_memory
+        h5mdfile H5Dclose
     }
     set which [info globals]
     foreach ixx {quiet tcl_version argv argv0 tcl_interactive auto_oldpath errorCode  
@@ -468,6 +567,7 @@ proc dump_script_to_h5md {} {
         h5mdfile H5Screate_simple type str dims [llength $which] 2
         h5mdfile H5Pset_chunk dims [llength $which] 1
         h5mdfile H5Dcreate2 "parameters/files/tclvariables"
+        h5mdfile H5Sclose
         h5mdfile H5Dopen2 "parameters/files/tclvariables"
         for { set i 0 } { $i < [llength $which] } { incr i } {
             if {[array exists ::[lindex $which $i] ]==0 } {
@@ -478,5 +578,7 @@ proc dump_script_to_h5md {} {
             }
         }
         h5mdfile H5Dwrite
+        h5mdfile H5_free_memory
+        h5mdfile H5Dclose
     }
 }
