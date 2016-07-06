@@ -32,9 +32,8 @@
 namespace writer {
 namespace h5md {
 
-typedef boost::multi_array<double,2> particle_data_3d;
-typedef particle_data_3d::index particle_boost_index;
 
+typedef boost::multi_array<double,2> particle_data_3d;
 /**
  * Class for writing H5MD files.
 **/    
@@ -54,19 +53,9 @@ class File
          */
         ~File();
         /**
-         * Method to write the positions of the particles.
+         * Method to write to the datasets
          */
-        int WritePositions();
-        /**
-         * Method to write the velocities of the particles.
-         * @see WritePositions()
-         */
-        int WriteVelocities();
-        /**
-         * Method to write the forces of the particles
-         * @see WritePositions()
-         */
-        int WriteForces();
+        int Write();
         /**
          * Method to write the energy contributions to the H5MD file.
          * @param names An optional vector of strings can be given to decide which

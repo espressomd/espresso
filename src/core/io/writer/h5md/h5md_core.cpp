@@ -44,7 +44,7 @@ File::File(std::string const& filename, std::string const& python_script_path)
     group_parameters_vmd_structure = new h5xx::group(*group_parameters, "vmd_structure");
     group_parameters_files = new h5xx::group(*group_parameters, "files");
     // Write the python script to the H5MD file
-    // TODO: This method does not work yet.
+    // TODO: This method does not work yet because writing std::string s is not yet supported directly
     //File::dump_script(python_script_path);
 }
 
@@ -67,7 +67,7 @@ File::~File()
 
 
 // Method to write particle positions
-int File::WritePositions()
+int File::Write()
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -115,18 +115,6 @@ int File::WritePositions()
         }
         particle_index++;
     }
-}
-
-
-// Method to write particle velocities
-int File::WriteVelocities()
-{
-}
-
-
-// Method to write particle velocities
-int File::WriteForces()
-{
 }
 
 
