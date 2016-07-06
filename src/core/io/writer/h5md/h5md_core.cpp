@@ -70,15 +70,11 @@ File::~File()
 int File::Write()
 {
     int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    printf("Rank: %d.\n", rank);
     // Get number of local particles
     int n_local_part = cells_get_n_particles();
     printf("n_local_part: %d.\n", n_local_part);
     // Get the number of particles on all other nodes
     int pref = 1;
-    MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    printf("pref: %d\n", pref);
     // Keep static buffers in order not having to allocate them on every
     // function call
     particle_data_3d pos(boost::extents[1][1]);
