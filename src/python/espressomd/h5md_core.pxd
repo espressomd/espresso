@@ -1,4 +1,3 @@
-#
 #  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 #  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #  Max-Planck-Institute for Polymer Research, Theory Group
@@ -23,6 +22,4 @@ from libcpp.string cimport string
 cdef extern from "h5md_core.hpp" namespace "writer::h5md":
     cdef cppclass File:
         File(const string, const string) except +
-        int WritePositions()
-        #int WriteVelocities()
-        #int WriteForces()
+        int Write()
