@@ -41,7 +41,7 @@ public:
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  MpiCallbacks(boost::mpi::communicator const &comm) : m_comm(comm) {
+  explicit MpiCallbacks(boost::mpi::communicator &comm) : m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
@@ -129,6 +129,10 @@ public:
    */
   boost::mpi::communicator const &comm() const { return m_comm; }
 
+  /**
+   * @brief Set the mpi communicator for this instance.
+   */
+  void set_comm(boost::mpi::communicator &comm) { m_comm = comm; }
 private:
   /**
    * @brief Id for the loop_abort. Has to be 0.
@@ -150,7 +154,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator const &m_comm;
+  boost::mpi::communicator &m_comm;
 
   /**
    * Internal storage for the callback functions.
