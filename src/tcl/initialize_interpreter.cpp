@@ -65,6 +65,7 @@
 #include "minimize_energy_tcl.hpp"
 #include "h5mdfile_tcl.hpp"
 #include "mpiio_tcl.hpp"
+#include "timer_tcl.hpp"
 
 #ifdef TK
 #include <tk.h>
@@ -260,6 +261,7 @@ static void tcl_register_commands(Tcl_Interp* interp) {
 #if defined(SCAFACOS) and defined(ELECTROSTATICS)
   REGISTER_COMMAND("scafacos_methods", tclcommand_scafacos_methods);
 #endif
+  REGISTER_COMMAND("timer", tclcommand_timer);
 }
 
 static void tcl_register_global_variables(Tcl_Interp *interp)

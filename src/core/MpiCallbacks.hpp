@@ -90,7 +90,7 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  void call(int id, int par1, int par2) const;
+  void call(int id, int par1 = 0, int par2 = 0) const;
 
   /**
    * @brief call a callback.
@@ -104,7 +104,7 @@ public:
    * @param par1 First parameter to pass to the callback.
    * @param par2 Second parameter to pass to the callback.
    */
-  void call(func_ptr_type fp, int par1, int par2) const;
+  void call(func_ptr_type fp, int par1 = 0, int par2 = 0) const;
 
   /**
    * @brief Mpi slave loop.
@@ -133,6 +133,7 @@ public:
    * @brief Set the mpi communicator for this instance.
    */
   void set_comm(boost::mpi::communicator &comm) { m_comm = comm; }
+
 private:
   /**
    * @brief Id for the loop_abort. Has to be 0.
@@ -194,8 +195,19 @@ public:
     mpiCallbacks().add(callback);
   }
 
+  explicit CallbackAdder(MpiCallbacks::func_ptr_type callback) {
+    mpiCallbacks().add(callback);
+  }
+
   explicit CallbackAdder(
       std::initializer_list<MpiCallbacks::function_type> il) {
+    for (auto it : il) {
+      mpiCallbacks().add(it);
+    }
+  }
+
+  explicit CallbackAdder(
+      std::initializer_list<MpiCallbacks::func_ptr_type> il) {
     for (auto it : il) {
       mpiCallbacks().add(it);
     }
