@@ -22,6 +22,9 @@
 #ifndef __RUNING_AVERAGE_HPP
 #define __RUNING_AVERAGE_HPP
 
+#include <cmath>
+#include <limits>
+
 namespace Utils {
 namespace Statistics {
 
@@ -32,19 +35,29 @@ namespace Statistics {
 template<typename Scalar>
 class RunningAverage {
 public:
-  RunningAverage() : m_n(0), m_new_var(0.0) {};
+  RunningAverage() : m_n(0), m_new_var(0.0), m_min(std::numeric_limits<double>::max()), m_max(-std::numeric_limits<double>::max()) {};
   void add_sample(Scalar s) {
     m_n++;
 
     if(m_n == 1) {
       m_old_avg = m_new_avg = s;
       m_old_var = 0.0;
+      m_min = 10000000.0;
+      m_max = s;
     } else {
       m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
       m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
 
       m_old_avg = m_new_avg;
       m_old_var = m_new_var;
+
+      if(s<m_min) {
+	m_min=s;	  
+      }
+      
+      if(s>m_max) {
+	m_max=s;
+      }
     }
   }
 
@@ -71,15 +84,28 @@ public:
     else
       return 0.0;
   }
+  
   /** Standard deviation of the samples */
   Scalar sig() const {
     return std::sqrt(var());
   }
 
+  /** Minimum */
+  Scalar min() const {
+    return m_min;
+  }
+
+  /** Minimum */
+  Scalar max() const {
+    return m_max;
+  }
+  
+  
  private:
   int m_n;
   Scalar m_old_avg, m_new_avg;
   Scalar m_old_var, m_new_var;
+  Scalar m_min, m_max;
 };
 
 }

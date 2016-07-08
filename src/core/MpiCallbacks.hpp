@@ -23,6 +23,7 @@
 #define COMMUNICATION_MPI_CALLBACKS
 
 #include <functional>
+#include <initializer_list>
 
 #include <boost/mpi/communicator.hpp>
 
@@ -40,7 +41,7 @@ public:
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  MpiCallbacks(boost::mpi::communicator const& comm) : m_comm(comm) {
+  MpiCallbacks(boost::mpi::communicator const &comm) : m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
@@ -126,7 +127,7 @@ public:
   /**
    * @brief The boost mpi communicator used by this instance
    */
-  boost::mpi::communicator const& comm() const { return m_comm; }
+  boost::mpi::communicator const &comm() const { return m_comm; }
 
 private:
   /**
@@ -149,7 +150,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator const& m_comm;
+  boost::mpi::communicator const &m_comm;
 
   /**
    * Internal storage for the callback functions.
@@ -167,13 +168,35 @@ private:
  * @brief Initialize the callback singelton.
  * This sets the communicator to use.
  */
-  void initialize_callbacks(boost::mpi::communicator const& comm);
+void initialize_callbacks(boost::mpi::communicator const &comm);
 
 /**
  * @brief Returns a reference to the global callback class instance.
  *
  */
 MpiCallbacks &mpiCallbacks();
+
+/**
+ * @brief Convenience class to register a static callback
+ * automatically before main.
+ *
+ * To use decalare a static CallbackAdder member of your class
+ * and initialize it with an static callback function or a lambda,
+ * or a initializer list thereof.
+ */
+class CallbackAdder {
+public:
+  explicit CallbackAdder(MpiCallbacks::function_type const &callback) {
+    mpiCallbacks().add(callback);
+  }
+
+  explicit CallbackAdder(
+      std::initializer_list<MpiCallbacks::function_type> il) {
+    for (auto it : il) {
+      mpiCallbacks().add(it);
+    }
+  }
+};
 
 } /* namespace Communication */
 
