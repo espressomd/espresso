@@ -27,7 +27,7 @@
 \label{ssec:particleproperties}
 
 \begin{pysyntax}
-  \property{
+  \attributes{
     espressomd.System()
   }{
     part[\arg{pid}]
@@ -64,8 +64,16 @@
       `mode':\arg{``pusher''|``puller''},
       `dipole_length':\arg{float},
       `rotational_friction':\arg{float}\}}
+    delete()
   }
 \end{pysyntax}
+\begin{pysyntax}
+espressomd.System().part.clear()
+\end{pysyntax}
+\begin{pysyntax}
+len(Espressomd.System().part)
+\end{pysyntax}
+
 \begin{essyntax}
   part
   \var{pid}
@@ -111,7 +119,7 @@
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
     \required[3]{EXTERNAL_FORCES}
-    \required[4]{EXCLUSION}
+    \required[4]{EXCLUSIONS}
     \required[5]{MASS}
     \required[6]{DIPOLES}
     \required[7]{VIRTUAL\_SITES\_COM}
@@ -467,23 +475,27 @@ system.
 \end{essyntax}
 
 \begin{pysyntax}
-	\object{espressomd}{polymer}{
-		N\textunderscore P = \arg{int},
+	\object{
+		espressomd
+	}{
+		polymer
+	}{
+		N_P = \arg{int},
 		MPC = \arg{int},
-		bond\textunderscore length = \arg{double},
-		start\textunderscore id = \arg{int},
-		start\textunderscore pos = \arg{ndarray},
+		bond_length = \arg{float},
+		start_id = \arg{int},
+		start_pos = \arg{ndarray},
 		mode = 0 or 1 or 2,
-		shield = \arg{double},
-		max\textunderscore tries = \arg{int},
-		val\textunderscore poly = \arg{double},
-		charge\textunderscore distance = \arg{int},
-		type\textunderscore poly\textunderscore neutral = \arg{int}, 
-		type\textunderscore poly\textunderscore charged = \arg{int},
-		bond\textunderscore id = \arg{int}, 
-		angle = \arg{double} , 
-		angle2 = \arg{double}, 
-		pos2 = \arg{ndarray}, 
+		shield = \arg{float},
+		max_tries = \arg{int},
+		val_poly = \arg{float},
+		charge_distance = \arg{int},
+		type_poly_neutral = \arg{int},
+		type_poly_charged = \arg{int},
+		bond_id = \arg{int},
+		angle = \arg{float},
+		angle2 = \arg{float},
+		pos2 = \arg{ndarray},
 		constraint = 0 or 1
 	}
 \end{pysyntax}
@@ -658,7 +670,22 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 \end{pycode}
 
 \begin{pysyntax}
-	diamond.Diamond(a=\arg{double},bond_length=\arg{double}, MPC=\arg{int}, [N_CI=\arg{int}, val_nodes=\arg{double}, val_cM=\arg{double}, val_CI=\arg{double}, cM_dist=\arg{int}, nonet] )
+  \object{
+    diamond
+  }{
+    Diamond
+  }{
+    a=\arg{float},
+    bond_length=\arg{float},
+    MPC=\arg{int}
+  }[
+    N_CI=\arg{int},
+    val_nodes=\arg{float},
+    val_cM=\arg{float},
+    val_CI=\arg{float},
+    cM_dist=\arg{int},
+    nonet
+  ]
 \end{pysyntax}
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes

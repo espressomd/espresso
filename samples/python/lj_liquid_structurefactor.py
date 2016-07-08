@@ -79,8 +79,8 @@ structurefactor_order = 20
 
 structurefactor_file = open("pylj_liquid_structurefactor.dat", "w")
 structurefactor_file.write("# k\tS(k)\n")
-structurefactor_bins = len(analyze.structure_factor(
-    system, [0], structurefactor_order)[0])
+structurefactor_bins = len(system.analysis.structure_factor(
+    [0], structurefactor_order)[0])
 structurefactor_k = numpy.zeros(structurefactor_bins)
 structurefactor_Sk = numpy.zeros(structurefactor_bins)
 
@@ -113,12 +113,12 @@ for i in range(n_part):
             type=1, id=i, pos=numpy.random.random(3) * system.box_l)
 
 
-analyze.distto(system, 0)
+system.analysis.distto(0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist(system)
+act_min_dist = system.analysis.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -150,7 +150,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(system)
+    act_min_dist = system.analysis.mindist()
 #  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
@@ -198,8 +198,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
-#energies = es._espressoHandle.Tcl_Eval('analyze energy')
-energies = analyze.energy(system=system)
+energies = system.analysis.energy()
 print(energies)
 
 j = 0
@@ -209,18 +208,15 @@ for i in range(0, int_n_times):
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     integrate.integrate(int_steps)
 
-    structurefactor_k, structurefactor_Sk = analyze.structure_factor(
+    structurefactor_k, structurefactor_Sk = system.analysis.structure_factor(
         system, structurefactor_type_list, structurefactor_order)
 
-#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
-    energies = analyze.energy(system=system)
+    energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-    linear_momentum = analyze.analyze_linear_momentum(system=system)
+    linear_momentum = system.analysis.analyze_linear_momentum()
     print(linear_momentum)
-    # print(analyze.calc_rh(system,0,3,5))
-    # print(analyze.calc_rg(system,0,3,5))
-    # print(analyze.calc_re(system,0,3,5))
+    # print(system.analysis.calc_rh(0,3,5))
 
 #   write observables
 #    set energies [analyze energy]

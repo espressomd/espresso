@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+include "myconfig.pxi"
 from utils cimport *
 
 cdef int _integrate(int nSteps, int recalc_forces, int reuse_forces):
@@ -51,6 +52,8 @@ def set_integrator_nvt():
 
 
 def set_integrator_isotropic_npt(ext_pressure=0.0, piston=0.0, xdir=0, ydir=0, zdir=0, cubic_box=False):
+    IF NPT != 1:
+        raise Exception("NPT is not compiled in")
     check_type_or_throw_except(
         ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
     check_type_or_throw_except(

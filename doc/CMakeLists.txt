@@ -2,8 +2,10 @@ add_subdirectory(doxygen)
 add_subdirectory(logo)
 add_subdirectory(ug)
 add_subdirectory(dg)
+add_subdirectory(tutorials)
 
 find_program(PDFLATEX pdflatex)
+find_program(BIBTEX bibtex)
 find_program(MAKEINDEX makeindex)
 
 set(abs_srcdir ${CMAKE_CURRENT_SOURCE_DIR})
@@ -14,4 +16,4 @@ configure_file(latexit.sh.in
                @ONLY
               )
 
-add_custom_target(doc DEPENDS logo ug dg doxygen)
+add_custom_target(doc DEPENDS logo ug dg doxygen tutorials)
