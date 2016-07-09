@@ -100,7 +100,7 @@ len(Espressomd.System().part)
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
-  \require{2,9}{\opt{gamma\_rot \var{grot}}}
+  \require{2,9}{\opt{gamma\_rot \alt{\var{grot} \asep \var{grotx}\fmark{14} \var{groty}\fmark{14} \var{grotz}\fmark{14}}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
@@ -129,6 +129,7 @@ len(Espressomd.System().part)
     \required[11]{SHANCHEN}
     \required[12]{ENGINE}
     \required[13]{LB \MakeLowercase{\textrm{or}} LB_GPU}
+    \required[14]{ROTATIONAL_INERTIA}
   \end{features}
 \end{essyntax}
 
