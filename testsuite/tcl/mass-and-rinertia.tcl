@@ -70,7 +70,11 @@ set box 10
 setmd box_l $box $box $box
 set kT 1.5
 set halfkT 0.75
-thermostat langevin $kT 1
+set gamma_rot_1 [expr [t_random] * 20]
+set gamma_rot_2 [expr [t_random] * 20]
+set gamma_rot_3 [expr [t_random] * 20]
+#thermostat langevin $kT 1
+thermostat langevin $kT 1 $gamma_rot_1 $gamma_rot_2 $gamma_rot_3
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
