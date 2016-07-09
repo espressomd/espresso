@@ -97,6 +97,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set gamma(1) 2.0
     set temp(0) 2.5
     set temp(1) 2.0
+    set gamma_rot_1(0) [expr [t_random] * 20]
+    set gamma_rot_2(0) [expr [t_random] * 20]
+    set gamma_rot_3(0) [expr [t_random] * 20]
+    set gamma_rot_1(1) [expr [t_random] * 20]
+    set gamma_rot_2(1) [expr [t_random] * 20]
+    set gamma_rot_3(1) [expr [t_random] * 20]
 
     set box 10
     setmd box_l $box $box $box
@@ -119,9 +125,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         for {set k 0} {$k<2} {incr k} {
             part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
             switch $test_case {
-                1 {part [expr $i + $k*$n] gamma $gamma($k)}
+                1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
-                3 {part [expr $i + $k*$n] gamma $gamma($k) temp $temp($k)}
+                3 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
             }
         }
     }

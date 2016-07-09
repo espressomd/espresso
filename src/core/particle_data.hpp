@@ -152,7 +152,11 @@ struct ParticleProperties {
   double gamma;
   /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+#else
+  double gamma_rot[3];
+#endif
 #endif
 #endif
 
@@ -705,7 +709,11 @@ int set_particle_temperature(int part, double T);
 */
 int set_particle_gamma(int part, double gamma);
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma);
+#else
+int set_particle_gamma_rot(int part, double gamma[3]);
+#endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
