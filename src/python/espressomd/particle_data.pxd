@@ -153,7 +153,12 @@ cdef extern from "particle_data.hpp":
         void pointer_to_temperature(particle * p, double * & res)
 
         int set_particle_gamma(int part, double gamma)
+        IF ROTATIONAL_INERTIA == 1:
+            int set_particle_gamma_rot(int part, double gamma[3])
+        ELSE:
+            int set_particle_gamma_rot(int part, double gamma)
         void pointer_to_gamma(particle * p, double * & res)
+        void pointer_to_gamma_rot(particle * p, double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(particle * P, int * & res1, double * & res2, double * & res3)
