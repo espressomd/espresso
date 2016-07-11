@@ -145,6 +145,14 @@ public:
       set_parameter(it.first, it.second);
     }
   }
+
+  /**
+   * @brief Call a method on the object.
+   *
+   * If not overriden by the implementation,
+   * this does nothing.
+   */
+  virtual void call_method(const std::string &, const VariantMap &) {}
 };
 
 } /* namespace ScriptInterface */

@@ -25,12 +25,12 @@
 #include <utility>
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/serialization/array.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/serialization/array.hpp>
 
 #include "ScriptInterface.hpp"
 
@@ -46,7 +46,12 @@ namespace {
 template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
 protected:
-  enum class CallbackAction { SET_PARAMETER, SET_PARAMETERS, DELETE };
+  enum class CallbackAction {
+    SET_PARAMETER,
+    SET_PARAMETERS,
+    CALL_METHOD,
+    DELETE
+  };
   T m_p;
 
 private:
@@ -63,6 +68,20 @@ private:
                             0);
       m_p.set_parameters(parameters);
     } break;
+    case CallbackAction::CALL_METHOD: {
+      /* Name of the method to call */
+      std::string name;
+      /* Parameters for the method */
+      VariantMap parameters;
+
+      /* Broadcast method name and parameters */
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), name, 0);
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
+                            0);
+
+      /* Forward to the local instance. */
+      m_p.call_method(name, parameters);
+    }
     case CallbackAction::DELETE: {
       delete this;
       break;
@@ -111,6 +130,11 @@ public:
 
   std::map<std::string, Variant> get_parameters() const override {
     return m_p.get_parameters();
+  }
+
+  void call_method(const std::string &name,
+                   const VariantMap &parameters) override {
+    call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
   }
 };
 
