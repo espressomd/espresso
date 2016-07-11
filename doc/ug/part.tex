@@ -64,8 +64,16 @@
       `mode':\arg{``pusher''|``puller''},
       `dipole_length':\arg{float},
       `rotational_friction':\arg{float}\}}
+    delete()
   }
 \end{pysyntax}
+\begin{pysyntax}
+espressomd.System().part.clear()
+\end{pysyntax}
+\begin{pysyntax}
+len(Espressomd.System().part)
+\end{pysyntax}
+
 \begin{essyntax}
   part
   \var{pid}
@@ -111,7 +119,7 @@
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
     \required[3]{EXTERNAL_FORCES}
-    \required[4]{EXCLUSION}
+    \required[4]{EXCLUSIONS}
     \required[5]{MASS}
     \required[6]{DIPOLES}
     \required[7]{VIRTUAL\_SITES\_COM}

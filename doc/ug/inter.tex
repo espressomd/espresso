@@ -1500,11 +1500,11 @@ requires assigning charges to the particles.  This is done using the
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
-\begin{pysyntax}
+\begin{pysyntax}[P3M]
 	\object{
 		electrostatics
 	}{
-		P3M
+		P3M|P3M_GPU
 	}{
 		bjerrum_length = \arg{float},
 		accuracy = \arg{float}
@@ -1513,7 +1513,7 @@ requires assigning charges to the particles.  This is done using the
 	\object{
 		electrostatics
 	}{
-		P3M
+		P3M|P3M_GPU
 	}{
 		bjerrum_length = \arg{float},
 		r_cut = \arg{float},
@@ -1528,39 +1528,6 @@ requires assigning charges to the particles.  This is done using the
         ]
 	\begin{features}
 		\required{ELECTROSTATICS}
-	\end{features}
-\end{pysyntax}
-
-\begin{pysyntax}
-	\object{
-		electrostatics
-	}{
-		P3M_GPU
-	}{
-		bjerrum_length = \arg{float},
-		accuracy = \arg{float}
-	}[
-	]
-	\object{
-		electrostatics
-	}{
-		P3M_GPU
-	}{
-		bjerrum_length = \arg{float}
-		r_cut = \arg{float},
-		mesh = \arg{array of 3 ints},
-		cao = \arg{int},
-		alpha = \arg{float},
-		alpha = \arg{float},
-		epsilon = metallic | \arg{float},
-		inter = \arg{int},
-	}[
-		mesh_off = \arg{array of 3 floats}
-	]
-
-	\begin{features}
-		\required{ELECTROSTATICS}
-		\required{CUDA}
 	\end{features}
 \end{pysyntax}
 
@@ -1602,17 +1569,6 @@ using P3M! If you are not sure, read the following references
 
 \subsubsection{Tuning Coulomb P3M}
 \label{ssec:tunep3m}
-\begin{essyntax}
-  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
-  accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_\mathrm{cut}}}
-  \opt{mesh \var{mesh}}
-  \opt{cao \var{cao}}
-  \opt{alpha \var{\alpha}}
-  \begin{features}
-    \required{ELECTROSTATICS}
-  \end{features}
-\end{essyntax}
 
 It is not easy to calculate the various parameters of the P3M method
 such that the method provides the desired accuracy at maximum speed.
@@ -1626,6 +1582,13 @@ symmetric systems. For example, because of the nature of the P3M
 algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
 
+During execution the tuning routines report the tested parameter sets,
+the corresponding k-space and real-space errors and the timings needed
+for force calculations (the setmd variable \var{timings} controls the
+number of test force calculations).  Since the error depends on
+\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
+output is given in these units.
+
 The function employs the analytical expression of the error estimate
 for the P3M method \cite{hockney88} and its real space error
 \cite{kolafa92} to obtain sets of parameters that yield the desired
@@ -1633,10 +1596,24 @@ accuracy, then it measures how long it takes to compute the coulomb
 interaction using these parameter sets and chooses the set with the
 shortest run time.
 
+\subsubsection{Tuning with the TCL interface}
+\label{ssec:tunep3mTCL}
+
+\begin{essyntax}
+  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
+  accuracy \var{accuracy}\\
+  \opt{r_cut \var{r_\mathrm{cut}}}
+  \opt{mesh \var{mesh}}
+  \opt{cao \var{cao}}
+  \opt{alpha \var{\alpha}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
 The function will only automatically tune those parameters that are
 not set to a predetermined value using the optional parameters of the
 tuning command.
-
 The two tuning methods follow different methods for determining the
 optimal parameters. While the \keyword{tune} version tests different
 values on a grid in the parameter space, the \keyword{tunev2} version
@@ -1646,20 +1623,37 @@ systems \keyword{tunev2} is faster. The results of \keyword{tunev2}
 are always at least as good as the parameters from the \keyword{tune}
 version, and normally the obtained accuracy is much closer to the
 desired value.
-
-During execution the tuning routines report the tested parameter sets,
-the corresponding k-space and real-space errors and the timings needed
-for force calculations (the setmd variable \var{timings} controls the
-number of test force calculations).  Since the error depends on
-\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
-output is given in these units.
-
 Note that the previous setting of \var{r_\mathrm{cut}}, \var{cao} and
 \var{mesh} will be remembered.  If you want to retune your
 electrostatics, \eg after a major system change, you should use
 \begin{code}
   inter coulomb \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
+
+\subsubsection{Tuning with the Python Interface}
+\label{ssec:tunep3mPY}
+
+\begin{pysyntax}
+	\object{
+		electrostatics.P3M
+	}{
+		Tune
+    }{
+    }[
+        \arg{dict}
+    ]
+
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+	\end{features}
+\end{pysyntax}
+
+\keyword{Tune()} can be given a python dictionary that specifies the target parameters for 
+the tuning algorithm. If it doesn't contain \keyword{bjerrum_length} or
+\keyword{accuracy}, the previous values are used respectively. Other parameters are 
+retuned if not specified explicitly. Valid keys for the dictionary are given 
+in \pyref{P3M}.
 
 \subsubsection{Additional P3M parameters}
 
@@ -2236,6 +2230,13 @@ Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fas
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+scafacos.available_methods()
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{pysyntax}
 This shows the methods available at the compile time of \es{}.
 Scafacos can be used as Coulomb solver for the system.
 \begin{essyntax}
@@ -2245,6 +2246,20 @@ Scafacos can be used as Coulomb solver for the system.
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ Scafacos 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		method_name=\arg{string},
+		method_params=\arg{dict},
+	}[
+	]
+	\begin{features}
+		\required{SCAFACOS}
+	\end{features}
+\end{pysyntax}
 Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
 \texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
 \var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
