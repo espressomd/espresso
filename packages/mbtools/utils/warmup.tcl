@@ -89,7 +89,6 @@ proc ::mbtools::utils::warmup { steps times args } {
 	    blockfile $out write tclvariable all
 	    blockfile $out write interactions
 	    blockfile $out write random
-	    blockfile $out write bitrandom
 	    blockfile $out write particles "id pos type p v f" all
 	    blockfile $out write bonds all
 	    blockfile $out write configs
@@ -180,7 +179,6 @@ proc ::mbtools::utils::nptwarmup { steps times iparms fparms args } {
 	    blockfile $out write tclvariable all
 	    blockfile $out write interactions
 	    blockfile $out write random
-	    blockfile $out write bitrandom
 	    blockfile $out write particles "id pos type p v f" all
 	    blockfile $out write bonds all
 	    blockfile $out write configs

@@ -39,6 +39,23 @@ cdef class ElectrostaticInteraction(actors.Actor):
         coulomb.method = COULOMB_NONE
         mpi_bcast_coulomb_params()
 
+    def Tune(self,subsetTuneParams=None):
+        
+        #Override default parmas with subset given by user
+        tuneParams=self.default_params()
+        if not subsetTuneParams==None:        
+            for k in subsetTuneParams.iterkeys():
+                if k not in self.valid_keys():
+                    raise ValueError(k + " is not a valid parameter")
+            tuneParams.update(subsetTuneParams)
+
+        #If param is 'required', it was set before, so don't change it
+        #Do change it if it's given to Tune() by user
+        for param in tuneParams.iterkeys():
+            if not param in self.required_keys() or (not subsetTuneParams==None and param in subsetTuneParams.keys()):
+                self._params[param]=tuneParams[param]
+        self._set_params_in_es_core()
+        self._tune()
 
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
@@ -179,12 +196,12 @@ IF P3M == 1:
             return ["bjerrum_length"]
 
         def default_params(self):
-            return {"cao": -1,
+            return {"cao": 0,
                     "inter": -1,
                     "r_cut": -1,
-                    "alpha": -1,
-                    "accuracy": 0,
-                    "mesh": [-1, -1, -1],
+                    "alpha": 0,
+                    "accuracy": -1,
+                    "mesh": [0, 0, 0],
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True}
@@ -268,16 +285,15 @@ IF P3M == 1:
                 return ["bjerrum_length"]
 
             def default_params(self):
-                return {"cao": -1,
+                return {"cao": 0,
                         "inter": -1,
                         "r_cut": -1,
-                        "accuracy": 0.,
-                        "mesh": [-1, -1, -1],
+                        "alpha": 0,
+                        "accuracy": -1,
+                        "mesh": [0, 0, 0],
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
-                        "tune": True,
-                        "box": [-1, -1, -1],
-                        "alpha": -1}
+                        "tune": True}
 
             def _get_params_from_es_core(self):
                 params = {}
@@ -298,7 +314,7 @@ IF P3M == 1:
 
             def _activate_method(self):
                 coulomb.method = COULOMB_P3M_GPU
-                python_p3m_gpu_init(self._params)
+                #python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
                     self._tune()
 
@@ -311,6 +327,7 @@ IF P3M == 1:
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
+
 
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
     cdef class EwaldGpu(ElectrostaticInteraction):
