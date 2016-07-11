@@ -625,7 +625,7 @@ cdef class ParticleHandle:
             property gamma_rot:
                 """Friction coefficient per particle in Langevin"""
     
-                def __set__(self, gamma_rot):
+                def __set__(self, _gamma_rot):
                     check_type_or_throw_except(
                         _gamma_rot, 1, float, "gamma_rot has to be a float")
                     if set_particle_gamma_rot(self.id, _gamma_rot) == 1:
