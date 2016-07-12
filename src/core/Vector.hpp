@@ -41,12 +41,12 @@ public:
 
   Vector() {}
 
-  template <typename Container> Vector(Container const &v) {
+  template <typename Container> explicit Vector(Container const &v) {
     assert(v.size() == n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  Vector(std::initializer_list<Scalar> l) {
+  explicit Vector(std::initializer_list<Scalar> l) {
     assert(l.size() == n);
     std::copy(std::begin(l), std::end(l), d.begin());
   }

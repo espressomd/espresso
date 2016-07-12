@@ -61,13 +61,18 @@ private:
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
       m_p.set_parameter(d.first, d.second);
-    } break;
+
+      break;
+    }
     case CallbackAction::SET_PARAMETERS: {
       std::map<std::string, Variant> parameters;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
                             0);
+
       m_p.set_parameters(parameters);
-    } break;
+
+      break;
+    }
     case CallbackAction::CALL_METHOD: {
       /* Name of the method to call */
       std::string name;
@@ -81,6 +86,8 @@ private:
 
       /* Forward to the local instance. */
       m_p.call_method(name, parameters);
+
+      break;
     }
     case CallbackAction::DELETE: {
       delete this;
