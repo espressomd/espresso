@@ -2837,7 +2837,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
     REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
 #ifdef CONFIGTEMP
-    REGISTER_ANALYSIS_WARN("configtemp", tclcommand_analyze_parse_and_print_configtemp)
+    REGISTER_ANALYSIS("configtemp", tclcommand_analyze_parse_and_print_configtemp);
 #endif
     else {
         /* the default */

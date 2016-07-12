@@ -20,25 +20,16 @@
 */
 
 #include <exception>
-#include <memory>
 
 #include <boost/mpi.hpp>
 
 #include "MpiCallbacks.hpp"
-
-#include "utils/make_unique.hpp"
-
-#include "utils/parallel/ParallelObject.hpp"
-#include <iostream>
 
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {
   /** Can only be call from master */
   assert(m_comm.rank() == 0);
-
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
 
   /** Check if callback exists */
   if (m_callbacks.find(id) == m_callbacks.end()) {
@@ -54,9 +45,6 @@ void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
   /** If the function pointer is invalid, map.at will throw
       an out_of_range exception. */
   const int id = m_func_ptr_to_id.at(fp);
-
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
 
   call(id, par1, par2);
 }
@@ -83,9 +71,6 @@ int MpiCallbacks::add(func_ptr_type fp) {
 void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 
 void MpiCallbacks::slave(int id, int par1, int par2) const {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << ": id = " << id << std::endl;
-
   m_callbacks[id](par1, par2);
 }
 
@@ -94,9 +79,9 @@ void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
 void MpiCallbacks::loop() const {
   for (;;) {
     int request[3];
-    /* Communicate callback id and parameters */
+    /** Communicate callback id and parameters */
     boost::mpi::broadcast(m_comm, request, 3, 0);
-
+    /** id == 0 is loop_abort. */
     if (request[0] == LOOP_ABORT) {
       break;
     } else {
@@ -106,21 +91,12 @@ void MpiCallbacks::loop() const {
   }
 }
 
-namespace {
-std::unique_ptr<MpiCallbacks> m_global_callback;
-}
-
-std::vector<MpiCallbacks::func_ptr_type> &static_callbacks() {
-  static std::vector<MpiCallbacks::func_ptr_type> cbs;
-
-  return cbs;
-}
-
-void initialize_callbacks(boost::mpi::communicator const &comm) {
-  m_global_callback = Utils::make_unique<MpiCallbacks>(comm);
-}
-
 /* We use a singelton callback class for now. */
-MpiCallbacks &mpiCallbacks() { return *m_global_callback; }
+MpiCallbacks &mpiCallbacks() {
+  static boost::mpi::communicator world;
+  static MpiCallbacks *m_global_callback = new MpiCallbacks(world);
+
+  return *m_global_callback;
+}
 
 } /* namespace Communication */

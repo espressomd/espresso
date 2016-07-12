@@ -270,7 +270,11 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  Communication::initialize_callbacks(comm_cart);
+  /*
+   * Set the communicator for the callback mechanism
+   *  to the new cartesian comm.
+   */
+  Communication::mpiCallbacks().set_comm(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);

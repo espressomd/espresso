@@ -1,22 +1,22 @@
 /*
   Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef _LJGEN_H
 #define _LJGEN_H
@@ -67,17 +67,17 @@ inline void add_ljgen_pair_force(const Particle * const p1, const Particle * con
     /* normal case: resulting force/energy smaller than capping. */
     if((ia_params->LJGEN_capradius == 0) || (r_off > ia_params->LJGEN_capradius)) {
       frac = ia_params->LJGEN_sig/r_off;
-      fac   = ia_params->LJGEN_eps 
+      fac   = ia_params->LJGEN_eps
 #ifdef LJGEN_SOFTCORE
-        * ia_params->LJGEN_lambda
+        * ia_params->LJGEN_lambda * (dist - ia_params->LJGEN_offset)/r_off
 #endif
-	      * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+	      * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1)
 	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ (r_off * dist);
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
-      
-      
+
+
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Gen-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -89,17 +89,17 @@ inline void add_ljgen_pair_force(const Particle * const p1, const Particle * con
       int numfac = 0;
       if (p1->p.configtemp) numfac+=1;
       if (p2->p.configtemp) numfac+=1;
-      configtemp[0] += numfac*SQR(ia_params->LJGEN_eps * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+      configtemp[0] += numfac*SQR(ia_params->LJGEN_eps * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1)
         - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2)) / r_off);
-      configtemp[1] += numfac* ia_params->LJGEN_eps * (-ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * (ia_params->LJGEN_a1-1) * pow(frac, ia_params->LJGEN_a1) 
+      configtemp[1] += numfac* ia_params->LJGEN_eps * (-ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * (ia_params->LJGEN_a1-1) * pow(frac, ia_params->LJGEN_a1)
         + ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * (ia_params->LJGEN_a2-1) * pow(frac, ia_params->LJGEN_a2)) / (SQR(r_off));
 #endif
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
-      fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+      fac   = ia_params->LJGEN_eps
+	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1)
 	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ (ia_params->LJGEN_capradius * dist);
       for(j=0;j<3;j++)
@@ -109,26 +109,26 @@ inline void add_ljgen_pair_force(const Particle * const p1, const Particle * con
     /* this should not happen! */
     else {
       LJ_TRACE(fprintf(stderr, "%d: Lennard-Jones-Generic warning: Particles id1=%d id2=%d exactly on top of each other\n",this_node,p1->p.identity,p2->p.identity));
-      
+
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
-      fac   = ia_params->LJGEN_eps 
+      fac   = ia_params->LJGEN_eps
 #ifdef LJGEN_SOFTCORE
         * ia_params->LJGEN_lambda
 #endif
-        * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+        * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1)
 	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ ia_params->LJGEN_capradius;
-      
+
       force[0] += fac * ia_params->LJGEN_capradius;
     }
-    
+
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
-    
+
     LJ_TRACE(fprintf(stderr,"%d: LJGEN: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
 		     this_node,p1->p.identity,p2->p.identity,dist,fac*d[0],fac*d[1],fac*d[2]));
   }
-} 
+}
 
 /** calculate Lennard jones energy between particle p1 and p2. */
 inline double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -153,7 +153,7 @@ inline double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
 #ifdef LJGEN_SOFTCORE
         * ia_params->LJGEN_lambda
 #endif
-        *(ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+        *(ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1)
 	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
@@ -164,7 +164,7 @@ inline double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
 #ifdef LJGEN_SOFTCORE
         * ia_params->LJGEN_lambda
 #endif
-        *( ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+        *( ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1)
 	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
@@ -172,7 +172,7 @@ inline double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
     else {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1)
 	       - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
@@ -186,4 +186,4 @@ void calc_ljgen_cap_radii();
 #endif
 
 /* LJGEN_H */
-#endif 
+#endif

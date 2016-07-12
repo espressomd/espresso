@@ -120,19 +120,20 @@ namespace Utils {
  * at compile time. It uses exponentiation by
  * squaring to construct a efficient function.
  */
-template <unsigned n, typename T> T int_pow(T x) {
-  switch (n) {
-  case 0:
-    return T(1);
-  case 1:
-    return x;
-  default:
-    /** Even branch */
-    if (n % 2 == 0) {
-      return int_pow<n / 2, T>(x * x);
-    } else {
-      return x * int_pow<(n - 1) / 2, T>(x * x);
-    }
+template<unsigned n, typename T>
+inline T int_pow(T x) {
+  switch(n) {
+    case 0:
+      return T(1);
+    case 1:
+      return x;
+    default:
+      /** Even branch */
+      if(n % 2 == 0) {
+        return int_pow<n / 2, T>(x * x);
+      } else {
+        return x * int_pow<(n - 1)/2, T>(x * x);
+      }
   }
 }
 

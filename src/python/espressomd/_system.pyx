@@ -32,6 +32,8 @@ from thermostat import Thermostat
 from cellsystem import CellSystem
 from minimize_energy import MinimizeEnergy
 from polymer import Polymer
+from analyze import Analysis
+from galilei import GalileiTransform
 
 import sys
 
@@ -54,9 +56,12 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
+    analysis =None
+    galilei = GalileiTransform()
 
     def __init__(self):
         self.actors = Actors(_system=self)
+        self.analysis=Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()

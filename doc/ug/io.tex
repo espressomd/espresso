@@ -427,7 +427,7 @@ to the file \lit{data.dat}.
   \variant{3} blockfile \var{channel} read auto 
   \variant{4} blockfile \var{channel} read \alt{particles \asep
     interactions \asep bonds \asep variable \asep seed \asep random
-    \asep bitrandom \asep configs}
+    \asep configs}
 \end{essyntax}
 
 Variants \variant{1} and \variant{2} are the low-level block-reading
@@ -442,7 +442,7 @@ Variant \variant{3} reads in one block and does the following:
   this procedure takes over (\var{tag} is the first expression in the
   block). For most block types, at least all mentioned above, \ie
   \keyword{particles}, \keyword{interactions}, \keyword{bonds},
-  \keyword{seed}, \keyword{random}, \keyword{bitrandom},
+  \keyword{seed}, \keyword{random},
   \keyword{configs}, and \keyword{variable}, the corresponding
   procedure will overwrite the current information with the
   information from the block.
@@ -481,7 +481,6 @@ set out [open "|gzip -c - > checkpoint.block.gz" "w"]
 blockfile $out write variable all
 blockfile $out write interactions
 blockfile $out write random
-blockfile $out write bitrandom
 blockfile $out write particles "id pos type q v f" all
 blockfile $out write bonds all
 blockfile $out write configs
