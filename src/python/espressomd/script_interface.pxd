@@ -40,7 +40,6 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
         ParameterType type()
         int n_elements()
         bool required()
-
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
         Variant()

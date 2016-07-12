@@ -87,8 +87,7 @@ void EspressoSystemInterface::gatherParticles() {
       for (i = 0; i < np; i++) {
 
         if (needsR())
-          R.push_back({p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]});
-
+          R.push_back(Vector3d{p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]});
 #ifdef ELECTROSTATICS
         if (needsQ())
           Q.push_back(p[i].p.q);
@@ -158,5 +157,5 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuEnd() {
 unsigned int EspressoSystemInterface::npart() { return m_npart; }
 
 SystemInterface::Vector3 EspressoSystemInterface::box() {
-  return {box_l[0], box_l[1], box_l[2]};
+  return Vector3d{box_l[0], box_l[1], box_l[2]};
 }

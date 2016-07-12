@@ -56,6 +56,9 @@ protected:
 
 private:
   void mpi_slave(int action, int) override {
+    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+              << __PRETTY_FUNCTION__ << ": action = " << action << std::endl;
+
     switch (CallbackAction(action)) {
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;

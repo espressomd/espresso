@@ -280,13 +280,6 @@ void mpi_init(int *argc, char ***argv) {
     mpiCallbacks().add(slave_callbacks[i]);
   }
 
-  std::cout << __PRETTY_FUNCTION__ << ": static_callbacks().size() =  " << Communication::static_callbacks().size() << std::endl;
-
-  for (auto const &cb : Communication::static_callbacks()) {
-    std::cout << __PRETTY_FUNCTION__ << ": adding " << cb << std::endl;
-    mpiCallbacks().add(cb);
-  }
-
   ErrorHandling::init_error_handling(mpiCallbacks());
 }
 
