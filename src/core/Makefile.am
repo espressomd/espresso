@@ -31,6 +31,7 @@ lib_LTLIBRARIES = libEspresso.la
 libEspresso_la_SOURCES = \
 	config-features.cpp \
 	cells.cpp cells.hpp \
+  cluster_analysis.cpp cluster_analysis.hpp \
 	collision.cpp collision.hpp \
 	communication.cpp communication.hpp \
 	comfixed.cpp comfixed.hpp \
