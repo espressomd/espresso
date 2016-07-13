@@ -23,6 +23,8 @@
  *  For more information on the domain decomposition,
  *  see \ref grid.hpp "grid.h".
 */
+
+#include "debug.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -32,6 +34,7 @@
 #include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
+
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>

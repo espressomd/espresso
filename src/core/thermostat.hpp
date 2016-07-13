@@ -26,6 +26,7 @@
 
 #include <cmath>
 #include "utils.hpp"
+#include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "global.hpp"

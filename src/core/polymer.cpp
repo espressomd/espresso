@@ -30,20 +30,22 @@
        Based upon 'polymer.tcl' by BAM (20.02.2003).
 */
 
-#include "polymer.hpp"
-#include "communication.hpp"
-#include "constraint.hpp"
-#include "global.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "random.hpp"
-#include "utils.hpp"
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#include "communication.hpp"
+#include "constraint.hpp"
+#include "debug.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "polymer.hpp"
+#include "random.hpp"
+#include "utils.hpp"
 
 /*************************************************************
  * Functions                                                 *
@@ -902,9 +904,8 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
     if (k == max_try - 1)
       break;
     else
-      ii =
-          0; /* Get out if max_try is about to be reached, preventing dangling
-                unchecked bond suggestions. */
+      ii = 0; /* Get out if max_try is about to be reached, preventing dangling
+                 unchecked bond suggestions. */
     if (crossL < 2 * N_P) {
       for (i = 0; i < 2 * N_P;
            i++) { /* If crosslinks violated the rules & had to be removed,
@@ -954,14 +955,12 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
       }
       free(bonds[2 * i]);
       if (link[2 * i] >= 0)
-        free(links[2 *
-                   i]); /* else crash(); because links[2*i]   has never been
-                           malloc()ed then */
+        free(links[2 * i]); /* else crash(); because links[2*i]   has never been
+                               malloc()ed then */
       free(bonds[2 * i + 1]);
       if (link[2 * i + 1] >= 0)
-        free(
-            links[2 * i + 1]); /* else crash(); because links[2*i+1] has never
-                                  been malloc()ed then */
+        free(links[2 * i + 1]); /* else crash(); because links[2*i+1] has never
+                                   been malloc()ed then */
     }
     free(bond);
     free(bonds);

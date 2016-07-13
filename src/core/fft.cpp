@@ -36,6 +36,7 @@ void *fftw_malloc(size_t n);
 #include "communication.hpp"
 #include "grid.hpp"
 #include "fft-common.hpp"
+#include "debug.hpp"
 
 /************************************************
  * variables

@@ -1,7 +1,7 @@
 #include <cstring>
 #include "utils.hpp"
 
-inline char *strcat_alloc(char *left, const char *right) {
+char *strcat_alloc(char *left, const char *right) {
   if (!left) {
     char *res = (char *)Utils::malloc(strlen(right) + 1);
     strcpy(res, right);

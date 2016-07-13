@@ -914,7 +914,7 @@ inline double distance2vec(double pos1[3], double pos2[3], double vec[3]) {
 
 /** extend a string with another one. Like strcat, just automatically
     increases the string space */
-inline char *strcat_alloc(char *left, const char *right);
+char *strcat_alloc(char *left, const char *right);
 
 /*@}*/
 
