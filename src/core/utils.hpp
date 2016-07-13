@@ -272,27 +272,6 @@ inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain) {
 /*************************************************************/
 /*@{*/
 
-<<<<<<< Updated upstream
-/** Calculates the maximum of 'double'-typed a and b, returning 'double'. */
-inline double dmax(double a, double b) { return (a > b) ? a : b; }
-
-/** Calculates the minimum of 'double'-typed a and b, returning 'double'. */
-inline double dmin(double a, double b) { return (a < b) ? a : b; }
-
-/** Calculates the maximum of 'int'-typed a and b, returning 'int'. */
-inline int imax(int a, int b) { return (a > b) ? a : b; }
-
-/** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
-inline int imin(int a, int b) { return (a < b) ? a : b; }
-
-/** Check if a value is NaN. isnan() is only available in C++11 and C99, but not
- * in C++98. **/
-#ifndef isnan
-#define isnan(a) (a != a)
-#endif
-
-=======
->>>>>>> Stashed changes
 /** Calculates the remainder of a division */
 inline double drem_down(double a, double b) { return a - floor(a / b) * b; }
 
@@ -875,7 +854,7 @@ inline void print_block(double *data, int start[3], int size[3], int dim[3],
   for (b = 0; b < divide; b++) {
     start1 = b * block1 + start[1];
     for (i0 = start[0] + size[0] - 1; i0 >= start[0]; i0--) {
-      for (i1 = start1; i1 < imin(start1 + block1, start[1] + size[1]); i1++) {
+      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]); i1++) {
         for (i2 = start[2]; i2 < start[2] + size[2]; i2++) {
           tmp = data[num + (element * (i2 + dim[2] * (i1 + dim[1] * i0)))];
           if (tmp < 0)
