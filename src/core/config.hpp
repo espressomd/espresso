@@ -46,7 +46,6 @@
 #define MPICH_SKIP_MPICXX
 
 #include "config-features.hpp"
-#include "myconfig-final.hpp"
 
 extern const char *ESPRESSO_VERSION;
 
