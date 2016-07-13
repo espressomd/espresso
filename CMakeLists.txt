@@ -28,7 +28,7 @@ enable_language(CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 ######################################################################
-# User input options                                                   
+# User input options
 ######################################################################
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
@@ -90,7 +90,7 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
   endif(CUDA_FOUND)
-endif(WITH_CUDA)     
+endif(WITH_CUDA)
 
 find_package(PythonInterp)
 
