@@ -29,7 +29,7 @@
  of code that should be executed iff the respective *_DEBUG macro is defined.
 */
 
-#include <cmath>
+#include "config.hpp"
 
 /** this performs a lot of tests which will very likely detect corruptions of
     \ref local_particles and the cell structure.
@@ -288,10 +288,4 @@ extern int check_id;
 #else
 /** Equals { cmd } iff LB_DEBUG is set. */
 #define LB_TRACE(cmd)
-#endif
-
-#ifdef NAN_DEBUG
-#define NANCHECK(expr) std::isnan(expr)
-#else
-#define NANCHECK(expr) false
 #endif
