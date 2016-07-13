@@ -9,7 +9,7 @@ void ClusterStructure::clear() {
 }
 
 // Analyze the cluster structure of the given particles
-void ClusterStructure::analyze_pair(NeighborCriterion* nd)
+void ClusterStructure::analyze_pair()
 {
   // clear data structs
   clear();
@@ -33,8 +33,11 @@ ClusterStructure::ad_pair(Particle& p1, Particle& p2) {
  //   * None of them belongs to a cluster: Give them both a new cluster id
  //   * Both belong to different clusters: Mark the clusters as identical 
  //   * so that they can be put together later
-
-   if (nc->are_neighbors(p1,p2)) {
+  if (! nc) {
+    runtimeErrorMsg() << "No cluster criterion defined"; 
+    return
+  }
+  if (nc->are_neighbors(p1,p2)) {
      if // None belongs to a cluster
      ((cluster_id.find(p1.p.identity)==cluster_id.end()) && (cluster_id.find(p2.p.identity)==cluster_id.end())
     {  
@@ -119,6 +122,16 @@ ClusterStructure& cluster_analysis() {
   return cluster_structure;
 }
 
+void ClusterStructure::set_criterion(NeighborCriterion c) {
+  if (nc)
+  {
+    delete nc;
+    nc=0;
+  }
+  nc=c
+}
+
+   
 
  
 

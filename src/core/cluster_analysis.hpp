@@ -39,13 +39,16 @@ class ClusterStructure {
   void clear();
   // Analyze the cluster structure for energy and sistance-based
   // criteria
-  void analyze_pairs(NeighborCriterion* nd);
+  void analyze_pairs();
   // Analyze cluster strcutre based on the presence of a bond as criterion
   void analyze_bonds(NeighborCriterion* nd);
   // Count a pair of particles
   void count(Particle& p1, Particle& p2);
   // Merge clusters which turned out to be one and the same
   void merge_clusters();
+  // Neighbor criterion
+  NeighborCriterion* nc;
+  void set_criterion(NeighborCriterion* c);
  private:
   // Follow a chain of cluster identities
   inline int find_id_for(int x);
