@@ -887,14 +887,14 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add)
 
 inline void check_particle_force(Particle *part) {
   for (int i=0; i< 3; i++) {
-    if (isnan(part->f.f[i])) {
+    if (std::isnan(part->f.f[i])) {
       runtimeErrorMsg() << "force on particle "<< part->p.identity << " was NAN.";
     }
   }
 
 #ifdef ROTATION
   for (int i=0; i< 3; i++) {
-    if (isnan(part->f.torque[i])) {
+    if (std::isnan(part->f.torque[i])) {
       runtimeErrorMsg() << "torque on particle "<< part->p.identity << " was NAN.";
     }
   }
