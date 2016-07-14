@@ -24,5 +24,5 @@ cdef class H5mdCore:
         self.c_h5md = new File(filename, path_to_pythonscript)
     def __dealloc__(self):
         del self.c_h5md
-    def write(self):
-        self.c_h5md.Write()
+    def write(self, what):
+        self.c_h5md.Write(what)
