@@ -32,13 +32,15 @@ from thermostat import Thermostat
 from cellsystem import CellSystem
 from minimize_energy import MinimizeEnergy
 from polymer import Polymer
+from analyze import Analysis
+from galilei import GalileiTransform
 
 import sys
 
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
-                      "time_step", "timings", "seed"]
+                      "time_step", "timings"]
 
 cdef class System:
     # NOTE: every attribute has to be declared at the class level.
@@ -54,9 +56,12 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
+    analysis =None
+    galilei = GalileiTransform()
 
     def __init__(self):
         self.actors = Actors(_system=self)
+        self.analysis=Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -376,7 +381,7 @@ cdef class System:
         def __get__(self):
             return max_cut_bonded
 
-    __seed=None
+    __seed = None
     property seed:
         def __set__(self, _seed):
             cdef vector[int] seed_array

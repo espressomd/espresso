@@ -86,7 +86,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_load_checkpoint(char * filename, int binary)
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
-
+        int lb_lbnode_get_u(int * coord, double * double_return)
 
     ###############################################
     #
@@ -203,9 +203,12 @@ IF LB_GPU or LB:
         # get pointers
         c_ext_force = p_ext_force
         # call c-function
-        if(lb_lbfluid_set_ext_force(1, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
-            raise Exception(
-                "lb_fluid_set_ext_force error at C-level interface")
+        IF SHANCHEN:
+            if(lb_lbfluid_set_ext_force(1, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
+                raise Exception("lb_fluid_set_ext_force error at C-level interface")
+        ELSE:
+            if(lb_lbfluid_set_ext_force(0, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
+                raise Exception("lb_fluid_set_ext_force error at C-level interface")
 
         return 0
 
@@ -320,72 +323,4 @@ IF LB_GPU or LB:
         p_ext_force = c_ext_force
 
         return 0
-
-###############################################
-
-IF LB_GPU:
-    cdef extern from "lbgpu.hpp":
-        ctypedef struct LB_parameters_gpu:
-            float rho
-            float mu
-            float viscosity
-            float gamma_shear
-            float gamma_bulk
-            float gamma_odd
-            float gamma_even
-            bool is_TRT
-            float friction
-            int lb_couple_switch
-            float lb_coupl_pref
-            float lb_coupl_pref2
-            float bulk_viscosity
-            float agrid
-            float tau
-            float time_step
-            unsigned int dim_x
-            unsigned int dim_y
-            unsigned int dim_z
-            unsigned int number_of_nodes
-            unsigned int number_of_particles
-            int fluct
-            int calc_val
-            int external_force
-            float ext_force[3]
-            unsigned int your_seed
-            unsigned int reinit
-
-        IF SHANCHEN:
-            ctypedef struct LB_parameters_gpu:
-                float rho[2]
-                float mu[2]
-                float viscosity[2]
-                float gamma_shear[2]
-                float gamma_bulk[2]
-                float gamma_odd[2]
-                float gamma_even[2]
-                bool is_TRT
-                float friction[2]
-                int lb_couple_switch
-                float lb_coupl_pref[2]
-                float lb_coupl_pref2[2]
-                float bulk_viscosity[2]
-                float agrid
-                float tau
-                float time_step
-                unsigned int dim_x
-                unsigned int dim_y
-                unsigned int dim_z
-                unsigned int number_of_nodes
-                unsigned int number_of_particles
-                int fluct
-                int calc_val
-                int external_force
-                float ext_force[3*2]
-                unsigned int your_seed
-                unsigned int reinit
-                float gamma_mobility[2]
-                float mobility[2]
-                float coupling[4]
-                int remove_momentum
-
 

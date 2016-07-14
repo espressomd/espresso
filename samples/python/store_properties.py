@@ -21,7 +21,6 @@ import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import analyze
 from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
@@ -34,6 +33,8 @@ print("""
 
 Program Information:""")
 print(code_info.features())
+if not "ELECTROSTATICS" in code_info.features():
+    raise Exception("Sample script requires ELECTROSTATICS")
 
 dev = "cpu"
 
@@ -95,12 +96,11 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
 
-analyze.distto(system, 0)
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
-act_min_dist = analyze.mindist(es)
+act_min_dist = system.analysis.mindist()
 print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
@@ -110,12 +110,11 @@ system.max_num_cells = 2744
 for i in range(n_part / 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-
+    
 # P3M setup after charge assigned
 #############################################################
 p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
 system.actors.add(p3m)
-
 
 #############################################################
 #  Warmup Integration                                       #
@@ -137,7 +136,7 @@ i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
     integrate.integrate(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(es)
+    act_min_dist = system.analysis.mindist()
     i += 1
 
 #   Increase LJ cap
@@ -166,9 +165,14 @@ transfer_rate {0.transfer_rate}
 ###########################################################
 import cPickle as pickle
 
-pickle.dump(system.part,open("particle_save","w"),-1)
-pickle.dump(p3m,open("p3m_save","w"),-1)
-pickle.dump(system,open("system_save","w"),-1)
+with open("particle_save","w") as particle_save:
+    pickle.dump(system.part, particle_save, -1)
+
+with open("p3m_save","w") as p3m_save:
+    pickle.dump(p3m, p3m_save, -1)
+
+with open("system_save","w") as system_save:
+    pickle.dump(system, system_save, -1)
 
 # terminate program
 print("\nFinished.")

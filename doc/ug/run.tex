@@ -100,22 +100,36 @@ returns the wall runtime in seconds.
 \end{essyntax}
 
 \begin{pysyntax}
-	\object{
-		espressomd.minimize_energy
-	}{ init 
-	}{ f\textunderscore max = \arg{double},
-	   gamma			    = \arg{double}, 
-	   max\textunderscore steps = \arg{double},
-	   max\textunderscore displacement = \arg{double} 
-   }\\
-   \object{espressomd.minimize_energy}{minimize}{}\\
-   \object{System.minimize_energy}{init
-	}{ f\textunderscore max = \arg{double},
-	   gamma			    = \arg{double}, 
-	   max\textunderscore steps = \arg{double},
-	   max\textunderscore displacement = \arg{double} 
-   }\\
-   \object{System.minimize_energy}{minimize}{}
+  \object{
+    espressomd.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    espressomd.minimize_energy
+  }{
+    minimize
+  }{}
+  \object{
+    System.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    System.minimize_energy
+  }{
+    minimize
+  }{}
 \end{pysyntax}
 
 In Python the minimize\_energy functionality can be imported from \texttt{espressomd}

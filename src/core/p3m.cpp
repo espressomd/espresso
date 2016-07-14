@@ -364,8 +364,6 @@ void   p3m_init() {
   
     /* k-space part: */
     p3m_calc_differential_operator();
-    p3m_calc_influence_function_force();
-    p3m_calc_influence_function_energy();
 
     p3m_count_charged_particles();
 
@@ -1134,153 +1132,218 @@ void p3m_calc_differential_operator()
   }
 }
 
-void p3m_calc_influence_function_force()
+namespace {
+
+template<int cao>
+inline double perform_aliasing_sums_force(int n[3], double numerator[3])
 {
-    int i, n[3], ind;
-    int end[3];
-    int size = 1;
-    double fak1,fak2,fak3;
-    double nominator[3] = {0.0, 0.0, 0.0}, denominator = 0.0;
+  using Utils::int_pow;
+  
+  int i;
+  double denominator = 0.0;
+  /* lots of temporary variables... */
+  double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
+  double limit = 30;
 
-    p3m_calc_meshift();
+  for(i = 0; i < 3; i++)
+    numerator[i] = 0.0;
 
-    for(i=0;i<3;i++) {
-        size *= fft.plan[3].new_mesh[i];
-        end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
+  f1 = SQR(PI/(p3m.params.alpha));
+
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX]*mx;
+    sx  = int_pow<2*cao>(sinc(nmx/(double)p3m.params.mesh[RX]));
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      nmy = p3m.meshift_y[n[KY]] + p3m.params.mesh[RY]*my;
+      sy  = sx*int_pow<2*cao>(sinc(nmy/(double)p3m.params.mesh[RY]));
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ]*mz;
+        sz  = sy*int_pow<2*cao>(sinc(nmz/(double)p3m.params.mesh[RZ]));
+
+        nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
+        expo         =  f1*nm2;
+        f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+
+        numerator[RX] += f2*nmx/box_l[RX];
+        numerator[RY] += f2*nmy/box_l[RY];
+        numerator[RZ] += f2*nmz/box_l[RZ];
+
+        denominator  += sz;
+      }
     }
-    p3m.g_force = (double *) Utils::realloc(p3m.g_force, size*sizeof(double));
-
-    for(n[0]=fft.plan[3].start[0]; n[0]<end[0]; n[0]++) {
-        for(n[1]=fft.plan[3].start[1]; n[1]<end[1]; n[1]++) {
-            for(n[2]=fft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
-                ind = (n[2]-fft.plan[3].start[2])
-                    + fft.plan[3].new_mesh[2] * ((n[1]-fft.plan[3].start[1])
-                    + (fft.plan[3].new_mesh[1]*(n[0]-fft.plan[3].start[0])));
-
-                if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
-                    p3m.g_force[ind] = 0.0;
-                }
-                else {
-                    denominator = p3m_perform_aliasing_sums_force(n,nominator);
-
-                    fak1 =  p3m.d_op[RX][n[KX]]*nominator[RX]/box_l[RX] + p3m.d_op[RY][n[KY]]*nominator[RY]/box_l[RY] + p3m.d_op[RZ][n[KZ]]*nominator[RZ]/box_l[RZ];
-                    fak2 = SQR(p3m.d_op[RX][n[KX]]/box_l[RX])+SQR(p3m.d_op[RY][n[KY]]/box_l[RY])+SQR(p3m.d_op[RZ][n[KZ]]/box_l[RZ]);
-
-                    fak3 = fak1/(fak2 * SQR(denominator));
-                    p3m.g_force[ind] = 2*fak3/(PI);
-                }
-            }
-        }
-    }
+  }
+  return denominator;
 }
 
 
-double p3m_perform_aliasing_sums_force(int n[3], double numerator[3])
+template<int cao>
+void calc_influence_function_force()
 {
-    int i;
-    double denominator = 0.0;
-    /* lots of temporary variables... */
-    double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
-    double limit = 30;
+  int i, n[3], ind;
+  int end[3];
+  int size = 1;
+  double fak1,fak2,fak3;
+  double nominator[3] = {0.0, 0.0, 0.0};
 
-    for(i = 0; i < 3; i++)
-        numerator[i] = 0.0;
+  p3m_calc_meshift();
 
-    f1 = SQR(PI/(p3m.params.alpha));
+  for(i=0;i<3;i++) {
+    size *= fft.plan[3].new_mesh[i];
+    end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
+  }
+  p3m.g_force = (double *) Utils::realloc(p3m.g_force, size*sizeof(double));
 
-    for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-        nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX]*mx;
-        sx  = pow(sinc(nmx/(double)p3m.params.mesh[RX]),2.0*p3m.params.cao);
-        for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-            nmy = p3m.meshift_y[n[KY]] + p3m.params.mesh[RY]*my;
-            sy  = sx*pow(sinc(nmy/(double)p3m.params.mesh[RY]),2.0*p3m.params.cao);
-            for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-                nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ]*mz;
-                sz  = sy*pow(sinc(nmz/(double)p3m.params.mesh[RZ]),2.0*p3m.params.cao);
+  for(n[0]=fft.plan[3].start[0]; n[0]<end[0]; n[0]++) {
+    for(n[1]=fft.plan[3].start[1]; n[1]<end[1]; n[1]++) {
+      for(n[2]=fft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
+        ind = (n[2]-fft.plan[3].start[2])
+            + fft.plan[3].new_mesh[2] * ((n[1]-fft.plan[3].start[1])
+                                         + (fft.plan[3].new_mesh[1]*(n[0]-fft.plan[3].start[0])));
 
-                nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
-                expo         =  f1*nm2;
-                f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
-
-                numerator[RX] += f2*nmx/box_l[RX];
-                numerator[RY] += f2*nmy/box_l[RY];
-                numerator[RZ] += f2*nmz/box_l[RZ];
-
-                denominator  += sz;
-            }
+        if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
+          p3m.g_force[ind] = 0.0;
         }
+        else {
+          const double denominator = perform_aliasing_sums_force<cao>(n,nominator);
+
+          fak1 =  p3m.d_op[RX][n[KX]]*nominator[RX]/box_l[RX] + p3m.d_op[RY][n[KY]]*nominator[RY]/box_l[RY] + p3m.d_op[RZ][n[KZ]]*nominator[RZ]/box_l[RZ];
+          fak2 = SQR(p3m.d_op[RX][n[KX]]/box_l[RX])+SQR(p3m.d_op[RY][n[KY]]/box_l[RY])+SQR(p3m.d_op[RZ][n[KZ]]/box_l[RZ]);
+
+          fak3 = fak1/(fak2 * SQR(denominator));
+          p3m.g_force[ind] = 2*fak3/(PI);
+        }
+      }
     }
-    return denominator;
+  }
 }
 
-void p3m_calc_influence_function_energy()
-{
-    int i,n[3],ind;
-    int end[3]; int start[3];
-    int size=1;
+} /* namespace */
 
-    p3m_calc_meshift();
-
-    for(i = 0; i < 3; i++) {
-      size *= fft.plan[3].new_mesh[i];
-      end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
-      start[i] = fft.plan[3].start[i];
-    }
-
-    p3m.g_energy = (double *) Utils::realloc(p3m.g_energy, size*sizeof(double));
-    ind = 0;
-
-
-
-   for(n[0]=start[0]; n[0]<end[0]; n[0]++) {
-        for(n[1]=start[1]; n[1]<end[1]; n[1]++) {
-            for(n[2]=start[2]; n[2]<end[2]; n[2]++) {
-                ind = (n[2]-start[2])
-                    + fft.plan[3].new_mesh[2] * (n[1]-start[1])
-                    + fft.plan[3].new_mesh[2] * fft.plan[3].new_mesh[1]*(n[0]-start[0]);
-                if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
-                    p3m.g_energy[ind] = 0.0;
-                }
-
-                else 
-		  p3m.g_energy[ind] = p3m_perform_aliasing_sums_energy(n)/PI;
-            }
-        }
-    }
+void p3m_calc_influence_function_force() {
+  switch(p3m.params.cao) {
+    case 1:
+      calc_influence_function_force<1>();
+      break;
+    case 2:
+      calc_influence_function_force<2>();
+      break;
+    case 3:
+      calc_influence_function_force<3>();
+      break;
+    case 4:
+      calc_influence_function_force<4>();
+      break;
+    case 5:
+      calc_influence_function_force<5>();
+      break;
+    case 6:
+      calc_influence_function_force<6>();
+      break;
+    case 7:
+      calc_influence_function_force<7>();
+      break;      
+  }
 }
 
-double p3m_perform_aliasing_sums_energy(int n[3])
+namespace {
+
+template<int cao>
+inline double perform_aliasing_sums_energy(int n[3])
 {
-    double numerator=0.0, denominator=0.0;
-    /* lots of temporary variables... */
-    double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
-    double limit = 30;
+  using Utils::int_pow;
+  double numerator=0.0, denominator=0.0;
+  /* lots of temporary variables... */
+  double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
+  double limit = 30;
 
-    f1 = SQR(PI/(p3m.params.alpha));
+  f1 = SQR(PI/(p3m.params.alpha));
 
-    for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-        nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX]*mx;
-        sx  = pow(sinc(nmx/(double)p3m.params.mesh[RX]),2.0*p3m.params.cao);
-        for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-            nmy = p3m.meshift_y[n[KY]] + p3m.params.mesh[RY]*my;
-            sy  = sx*pow(sinc(nmy/(double)p3m.params.mesh[RY]),2.0*p3m.params.cao);
-            for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-                nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ]*mz;
-                sz  = sy*pow(sinc(nmz/(double)p3m.params.mesh[RZ]),2.0*p3m.params.cao);
-                /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
-                nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
-                expo         =  f1*nm2;
-                f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX]*mx;
+    sx  = int_pow<2*cao>(sinc(nmx/(double)p3m.params.mesh[RX]));
+    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      nmy = p3m.meshift_y[n[KY]] + p3m.params.mesh[RY]*my;
+      sy  = sx*int_pow<2*cao>(sinc(nmy/(double)p3m.params.mesh[RY]));
+      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ]*mz;
+        sz  = sy*int_pow<2*cao>(sinc(nmz/(double)p3m.params.mesh[RZ]));
+        /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
+        nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
+        expo         =  f1*nm2;
+        f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-                numerator += f2;
-                denominator  += sz;
-            }
-        }
+        numerator += f2;
+        denominator  += sz;
+      }
     }
+  }
 
-    return numerator/SQR(denominator);
+  return numerator/SQR(denominator);
 }
 
+
+template<int cao>
+void calc_influence_function_energy()
+{
+  int i,n[3],ind;
+  int end[3]; int start[3];
+  int size=1;
+
+  p3m_calc_meshift();
+
+  for(i = 0; i < 3; i++) {
+    size *= fft.plan[3].new_mesh[i];
+    end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
+    start[i] = fft.plan[3].start[i];
+  }
+
+  p3m.g_energy = (double *) Utils::realloc(p3m.g_energy, size*sizeof(double));
+  ind = 0;
+
+  for(n[0]=start[0]; n[0]<end[0]; n[0]++) {
+    for(n[1]=start[1]; n[1]<end[1]; n[1]++) {
+      for(n[2]=start[2]; n[2]<end[2]; n[2]++) {
+        ind = (n[2]-start[2])
+            + fft.plan[3].new_mesh[2] * (n[1]-start[1])
+            + fft.plan[3].new_mesh[2] * fft.plan[3].new_mesh[1]*(n[0]-start[0]);
+        if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
+          p3m.g_energy[ind] = 0.0;
+        }
+
+        else 
+          p3m.g_energy[ind] = perform_aliasing_sums_energy<cao>(n)/PI;
+      }
+    }
+  }
+}
+
+} /* namespace */
+
+void p3m_calc_influence_function_energy() {
+  switch(p3m.params.cao) {
+    case 1:
+      calc_influence_function_energy<1>();
+      break;
+    case 2:
+      calc_influence_function_energy<2>();
+      break;
+    case 3:
+      calc_influence_function_energy<3>();
+      break;
+    case 4:
+      calc_influence_function_energy<4>();
+      break;
+    case 5:
+      calc_influence_function_energy<5>();
+      break;
+    case 6:
+      calc_influence_function_energy<6>();
+      break;
+    case 7:
+      calc_influence_function_energy<7>();
+      break;      
+  }
+}
 
 
 /************************************************
@@ -1597,7 +1660,7 @@ int p3m_adaptive_tune(char **log) {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
-  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e\n", p3m.params.accuracy);
+  sprintf(b, "P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e \n", p3m.params.accuracy, coulomb.bjerrum);
   *log = strcat_alloc(*log, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], p3m.sum_qpart, p3m.sum_q2);

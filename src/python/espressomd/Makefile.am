@@ -59,8 +59,8 @@ PYXFILES =  \
 	utils.pyx \
 	h5md.pyx \
 	grand_canonical.pyx \
-	reaction_ensemble.pyx
-
+	reaction_ensemble.pyx \
+	galilei.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -89,8 +89,8 @@ PXDFILES = \
 	actors.pxd \
 	h5md.pxd \
 	grand_canonical.pxd \
-	reaction_ensemble.pxd
-
+	reaction_ensemble.pxd \
+	galilei.pxd
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
 
