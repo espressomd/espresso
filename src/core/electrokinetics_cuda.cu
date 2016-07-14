@@ -3863,9 +3863,9 @@ int ek_neutralize_system(int species) {
       thrust::plus<float>());
 
 #ifdef EK_BOUNDARIES
-  compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / double(ek_parameters.number_of_nodes - ek_parameters.number_of_boundary_nodes);
+  compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes - ek_parameters.number_of_boundary_nodes);
 #else
-  compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / double(ek_parameters.number_of_nodes);
+  compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes);
 #endif
 
 #endif // EK_ELECTROSTATIC_COUPLING
