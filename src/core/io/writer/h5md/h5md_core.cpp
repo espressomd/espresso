@@ -127,6 +127,7 @@ File::File(std::string const &filename, std::string const &script_path)
         // Array for max. dimensions of the dataspaces.
         boost::array<hsize_t, 3> maxdims = {H5S_UNLIMITED, H5S_UNLIMITED,
                                             H5S_UNLIMITED};
+        boost::array<hsize_t, 3> maxdims_box = {3,3,3};
         boost::array<hsize_t, 1> maxdims_single = {H5S_UNLIMITED};
         // Sample multi_array for dataset creations.
         double_array_3d tmp_3d(boost::extents[0][n_part][3]);
@@ -139,6 +140,7 @@ File::File(std::string const &filename, std::string const &script_path)
         hsize_t chunk_dims_1d = n_part;
         hsize_t chunk_dims_1d_single = 1;
         boost::array<hsize_t, 3> dims_3d = {0, static_cast<hsize_t>(n_part), 3};
+        boost::array<hsize_t, 3> dims_3d_box = {1,3,3};
         boost::array<hsize_t, 3> dims_1d = {0, static_cast<hsize_t>(n_part), 1};
         boost::array<hsize_t, 1> dims_1d_single = {0};
         // Ensure the H5MD structure is present in the file
@@ -148,37 +150,19 @@ File::File(std::string const &filename, std::string const &script_path)
                                                    "atoms");
         this->_group_particles_atoms_box = h5xx::group(
                 this->_group_particles_atoms, "box");
-        h5xx::write_attribute(_group_particles_atoms_box, "dimension", 3);
-        h5xx::write_attribute(_group_particles_atoms_box, "boundary",
+        h5xx::write_attribute(this->_group_particles_atoms_box, "dimension", 3);
+        h5xx::write_attribute(this->_group_particles_atoms_box, "boundary",
                               "periodic");
+        this->_dataspace_particles_atoms_box_edges = h5xx::dataspace
+                (dims_3d_box,maxdims_box);
         this->_dataset_particles_atoms_box_edges =
-                h5xx::create_dataset(this->_group_particles_atoms_box, "edges",
-                                     tmp_3d);
-        // XXXXXXXXXXXX
-        // particles -- atoms -- mass
-        this->_group_particles_atoms_mass =
-                h5xx::group(this->_group_particles_atoms, "mass");
-        this->_dataspace_particles_atoms_mass_value = h5xx::dataspace(dims_1d,
-                                                                      maxdims);
-        this->_dataset_particles_atoms_mass_value =
-                h5xx::create_dataset(this->_group_particles_atoms_mass,
-                                     "value", tmp_1d,
-                                     h5xx::policy::storage::chunked(1,
-                                                                    &chunk_dims_1d));
-        this->_dataspace_particles_atoms_mass_time = h5xx::dataspace(dims_1d,
-                                                                     maxdims);
-        this->_dataset_particles_atoms_mass_time =
-                h5xx::create_dataset(this->_group_particles_atoms_mass,
-                                     "time", tmp_1d,
-                                     h5xx::policy::storage::chunked(1,
-                                                                    &chunk_dims_1d));
-        this->_dataspace_particles_atoms_mass_step = h5xx::dataspace(dims_1d,
-                                                                     maxdims);
-        this->_dataset_particles_atoms_mass_step =
-                h5xx::create_dataset(this->_group_particles_atoms_mass,
-                                     "step", int_tmp_1d,
-                                     h5xx::policy::storage::chunked(1,
-                                                                    &chunk_dims_1d));
+                h5xx::dataset(this->_group_particles_atoms_box, "edges",
+                              this->type_int,
+                              this->_dataspace_particles_atoms_box_edges,
+                              h5xx::policy::storage::contiguous());
+        FILE* out=stderr;
+        H5Eprint1(out);
+        // TODO: Write the box vectors to the dataset.
         //XXXXXXXX
         // particles -- atoms -- position
         this->_group_particles_atoms_position =
@@ -208,30 +192,36 @@ File::File(std::string const &filename, std::string const &script_path)
                               this->_dataspace_particles_atoms_position_step,
                                      h5xx::policy::storage::chunked(1,
                                                                     &chunk_dims_1d_single));
-        /*// particles -- atoms -- velocity
-        this->_group_particles_atoms_velocity =
+        // particles -- atoms -- velocity
+        /*this->_group_particles_atoms_velocity =
                 h5xx::group(this->_group_particles_atoms, "velocity");
-        this->_dataspace_particles_atoms_velocity_time = h5xx::dataspace(
+        this->_dataspace_particles_atoms_velocity_value = h5xx::dataspace(
                 dims_3d, maxdims);
-        this->_dataset_particles_atoms_velocity_value =
-                h5xx::create_dataset(this->_group_particles_atoms_velocity,
-                                     "value", tmp_3d,
-                                     h5xx::policy::storage::chunked(3,
-                                                                    chunk_dims_3d));
+        this->_dataset_particles_atoms_velocity_value = h5xx::dataset(
+                this->_group_particles_atoms_velocity,
+                "value", this->type_double,
+                this->_dataspace_particles_atoms_velocity_value,
+                h5xx::policy::storage::chunked(3, chunk_dims_3d));
+        this->_dataspace_particles_atoms_velocity_value = h5xx::dataspace(
+                dims_3d, maxdims);
         this->_dataspace_particles_atoms_velocity_time = h5xx::dataspace(
-                dims_1d, maxdims);
+                dims_1d_single, maxdims_single);
         this->_dataset_particles_atoms_velocity_time =
-                h5xx::create_dataset(this->_group_particles_atoms_velocity,
-                                     "time", tmp_1d,
-                                     h5xx::policy::storage::chunked(1,
-                                                                    chunk_dims_1d));
+                h5xx::dataset(this->_group_particles_atoms_velocity,
+                              "time", this->type_double,
+                              this->_dataspace_particles_atoms_velocity_time,
+                              h5xx::policy::storage::chunked(1,
+                                                             &chunk_dims_1d_single));
         this->_dataspace_particles_atoms_velocity_step = h5xx::dataspace(
-                dims_3d, maxdims);
+                dims_1d_single, maxdims_single);
         this->_dataset_particles_atoms_velocity_step =
-                h5xx::create_dataset(this->_group_particles_atoms_velocity,
-                                     "step", int_tmp_1d,
+                h5xx::dataset(this->_group_particles_atoms_velocity,
+                                     "step", this->type_int,
+                              this->_dataspace_particles_atoms_velocity_step,
                                      h5xx::policy::storage::chunked(1,
-                                                                    chunk_dims_1d));
+                                                                    &chunk_dims_1d_single));
+        //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        /*
         // particles -- atoms -- force
         this->_group_particles_atoms_force =
                 h5xx::group(this->_group_particles_atoms, "force");
@@ -302,24 +292,26 @@ File::File(std::string const &filename, std::string const &script_path)
 // Method to write particle positions
 void File::Write(int what)
 {
+    std::cout << what << std::endl;
+    this->_write_positions();
+    //this->_write_velocities();
+}
+
+
+void File::_write_species()
+{
     // Get number of local particles
     int n_local_part = cells_get_n_particles();
     // Get the number of particles on all other nodes
     int pref = 1;
     MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    // Keep static buffers in order not having to allocate them on every
-    // function call
-    double_array_3d pos(boost::extents[1][n_local_part][3]);
-    double_array_3d vel(boost::extents[1][n_local_part][3]);
     std::vector<int> id;
     std::vector<int> type;
     Cell *local_cell;
-
-    id.reserve(n_local_part);
     type.reserve(n_local_part);
 
     // Prepare data for writing
-    // loop over all local cells 
+    // loop over all local cells
     int particle_index = 0;
     for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
     {
@@ -329,16 +321,37 @@ void File::Write(int what)
         {
             auto current_particle = local_cell->part[local_part_id];
             // store the particle ids
-            id.push_back(current_particle.p.identity);
             type.push_back(current_particle.p.type);
+            particle_index++;
+        }
+    }
+    //TODO: implement the actual write to the dataset.
+}
+
+
+void File::_write_positions()
+{
+    // Get number of local particles
+    int n_local_part = cells_get_n_particles();
+    // Get the number of particles on all other nodes
+    int pref = 1;
+    MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    double_array_3d pos(boost::extents[1][n_local_part][3]);
+    Cell *local_cell;
+    // Prepare data for writing
+    // loop over all local cells
+    int particle_index = 0;
+    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    {
+        local_cell = local_cells.cell[cell_id];
+        for (int local_part_id = 0;
+             local_part_id < local_cell->n; ++local_part_id)
+        {
+            auto current_particle = local_cell->part[local_part_id];
             // store folded particle positions
             pos[0][particle_index][0] = current_particle.r.p[0];
             pos[0][particle_index][1] = current_particle.r.p[1];
             pos[0][particle_index][2] = current_particle.r.p[2];
-            // store the particles velocities
-            vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-            vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-            vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
             particle_index++;
         }
     }
@@ -387,18 +400,17 @@ void File::Write(int what)
                   &dims_single);
     dataspace_pos_time_id = H5Dget_space
             (this->_dataset_particles_atoms_position_time
-                                            .hid());
+                     .hid());
     H5Sselect_hyperslab(dataspace_pos_time_id, H5S_SELECT_SET, &offset_single,
                         NULL,
                         &count_single,
                         NULL);
     hsize_t dataspace_simple_pos_time_id = H5Screate_simple(1, &count_single,
-                                                       this->max_dims_single);
-    double sim_time_data= sim_time;
+                                                            this->max_dims_single);
     H5Dwrite(this->_dataset_particles_atoms_position_time.hid(),
              this->_dataset_particles_atoms_position_time.get_type(),
              dataspace_simple_pos_time_id, dataspace_pos_time_id, H5P_DEFAULT,
-             &sim_time_data);
+             &sim_time);
     H5Sclose(dataspace_simple_pos_time_id);
     H5Sclose(dataspace_pos_time_id);
 
@@ -431,6 +443,127 @@ void File::Write(int what)
 }
 
 
+void File::_write_velocities()
+{
+    // Get number of local particles
+    int n_local_part = cells_get_n_particles();
+    // Get the number of particles on all other nodes
+    int pref = 1;
+    MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    double_array_3d vel(boost::extents[1][n_local_part][3]);
+    std::vector<int> id;
+    std::vector<int> type;
+    Cell *local_cell;
+
+    id.reserve(n_local_part);
+    type.reserve(n_local_part);
+
+    // Prepare data for writing
+    // loop over all local cells
+    int particle_index = 0;
+    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    {
+        local_cell = local_cells.cell[cell_id];
+        for (int local_part_id = 0;
+             local_part_id < local_cell->n; ++local_part_id)
+        {
+            auto current_particle = local_cell->part[local_part_id];
+            // store the particle ids
+            id.push_back(current_particle.p.identity);
+            type.push_back(current_particle.p.type);
+            // store the particles velocities
+            vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
+            vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
+            vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
+            particle_index++;
+        }
+    }
+    // TODO: Until now the h5xx does not support dataset extending, so we
+    //       have to use the lower level hdf5 library functions.
+    // Get the ID of the dataspace.
+    hid_t dataspace_pos_id = H5Dget_space
+            (this->_dataset_particles_atoms_velocity_value.hid());
+    hsize_t dims[3];
+    // Get the current dimensions of the dataspace.
+    H5Sget_simple_extent_dims(dataspace_pos_id, dims, NULL);
+    // Close the dataspace.
+    H5Sclose(dataspace_pos_id);
+    // The offset
+    hsize_t offset[3] = {dims[0], 0, 0};
+    hsize_t count[3] = {1, static_cast<hsize_t>(n_local_part), 3};
+    dims[0] += 1;
+    // Extend the dataset for another timestep.
+    H5Dset_extent(this->_dataset_particles_atoms_velocity_value.hid(), dims);
+    // Refresh the dataset after extension.
+    dataspace_pos_id = H5Dget_space(this->_dataset_particles_atoms_velocity_value.hid());
+    // Select the region in the dataspace.
+    H5Sselect_hyperslab(dataspace_pos_id, H5S_SELECT_SET, offset, NULL, count,
+                        NULL);
+    // Create a temporary dataspace for the current velocitys.
+    hsize_t dataspace_simple_pos_id = H5Screate_simple(3, count,
+                                                       this->max_dims);
+    // Finally write the data to the dataset.
+    H5Dwrite(this->_dataset_particles_atoms_velocity_value.hid(),
+             this->_dataset_particles_atoms_velocity_value.get_type(),
+             dataspace_simple_pos_id, dataspace_pos_id, H5P_DEFAULT,
+             vel.origin());
+    H5Sclose(dataspace_simple_pos_id);
+    H5Sclose(dataspace_pos_id);
+
+    // Write the md time to the velocity -- time dataset.
+    hsize_t dims_single;
+    hid_t dataspace_pos_time_id = H5Dget_space
+            (this->_dataset_particles_atoms_velocity_time.hid());
+    H5Sget_simple_extent_dims(dataspace_pos_time_id, &dims_single, NULL);
+    H5Sclose(dataspace_pos_time_id);
+    hsize_t offset_single = dims_single;
+    hsize_t count_single = 1;
+    dims_single += 1;
+    H5Dset_extent(this->_dataset_particles_atoms_velocity_time.hid(),
+                  &dims_single);
+    dataspace_pos_time_id = H5Dget_space
+            (this->_dataset_particles_atoms_velocity_time
+                     .hid());
+    H5Sselect_hyperslab(dataspace_pos_time_id, H5S_SELECT_SET, &offset_single,
+                        NULL,
+                        &count_single,
+                        NULL);
+    hsize_t dataspace_simple_pos_time_id = H5Screate_simple(1, &count_single,
+                                                            this->max_dims_single);
+    H5Dwrite(this->_dataset_particles_atoms_velocity_time.hid(),
+             this->_dataset_particles_atoms_velocity_time.get_type(),
+             dataspace_simple_pos_time_id, dataspace_pos_time_id, H5P_DEFAULT,
+             &sim_time);
+    H5Sclose(dataspace_simple_pos_time_id);
+    H5Sclose(dataspace_pos_time_id);
+
+    // Write the md step to the velocity -- step dataset.
+    hid_t dataspace_pos_step_id = H5Dget_space
+            (this->_dataset_particles_atoms_velocity_step.hid());
+    H5Sget_simple_extent_dims(dataspace_pos_step_id, &dims_single, NULL);
+    H5Sclose(dataspace_pos_step_id);
+    offset_single = dims_single;
+    count_single = 1;
+    dims_single += 1;
+    H5Dset_extent(this->_dataset_particles_atoms_velocity_step.hid(),
+                  &dims_single);
+    dataspace_pos_step_id = H5Dget_space
+            (this->_dataset_particles_atoms_velocity_step
+                     .hid());
+    H5Sselect_hyperslab(dataspace_pos_step_id, H5S_SELECT_SET, &offset_single,
+                        NULL,
+                        &count_single,
+                        NULL);
+    hsize_t dataspace_simple_pos_step_id = H5Screate_simple(1, &count_single,
+                                                            this->max_dims_single);
+    int sim_step_data= (int)std::round(sim_time/time_step);
+    H5Dwrite(this->_dataset_particles_atoms_velocity_step.hid(),
+             this->_dataset_particles_atoms_velocity_step.get_type(),
+             dataspace_simple_pos_step_id, dataspace_pos_step_id, H5P_DEFAULT,
+             &sim_step_data);
+    H5Sclose(dataspace_simple_pos_step_id);
+    H5Sclose(dataspace_pos_step_id);
+}
 // Method to write energy of the system
 //int File::WriteEnergy(std::vector<std::string> names = {"total", "nonbonded", "bonded"})
 //{

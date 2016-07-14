@@ -72,24 +72,29 @@ class File
     void WriteEnergy(std::vector<std::string> names);
     private:
     /**
-     * Method which uses the low level hdf5 library functions to write to a
-     * dataset.
-     * @param An integer denoting what shall be written to the dataset. 0:
-     * positions, 1: velocities, 2: forces.
-     * @param A boost::multiarray containing the three-dimensional data.
+     * Method which uses the low level hdf5 library functions to write the
+     * particles positions to a dataset.
      */
-    void _write_time_dependent(int what);
+    void _write_positions();
+    /**
+     * Method which uses the low level hdf5 library functions to write the
+     * particle velocities to a dataset.
+     */
+    void _write_velocities();
+    /**
+     * Method to write the particle species(ESPResSo particle types).
+     */
+    void _write_species();
     /**
      * Method to check if the H5MD structure is present in the file.
      * @param filename The Name of the hdf5-file to check.
      * @return TRUE if H5MD structure is present, FALSE else.
      */
     bool _check_for_H5MD_structure(std::string const &filename);
-
+    /**
+     * Variable for the H5MD structure check if @see _check_for_H5MD_structure.
+     */
     bool _has_H5MD_structure = false;
-
-    int _write_species();
-
     int _dump_script(std::string const &);
     hsize_t max_dims[3] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
     hsize_t max_dims_single[1] = {H5S_UNLIMITED};
@@ -104,6 +109,7 @@ class File
     h5xx::group _group_particles_atoms_box;
     h5xx::attribute _attribute_particles_atoms_box_dimension;
     h5xx::attribute _attribute_particles_atoms_box_boundary;
+    h5xx::dataspace _dataspace_particles_atoms_box_edges;
     h5xx::dataset _dataset_particles_atoms_box_edges;
     // particles -- atoms -- mass
     h5xx::group _group_particles_atoms_mass;
