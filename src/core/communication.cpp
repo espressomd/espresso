@@ -44,6 +44,7 @@
 #include "energy.hpp"
 #include "external_potential.hpp"
 #include "forces.hpp"
+#include "forcecap.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
 #include "global.hpp"
