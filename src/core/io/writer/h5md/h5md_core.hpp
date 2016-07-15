@@ -42,10 +42,7 @@ namespace h5md {
 
 
 typedef boost::multi_array<double,3> double_array_3d;
-typedef boost::multi_array<double,1> double_array_1d;
-typedef boost::multi_array<int,1> int_array_1d;
 typedef boost::multi_array<int,3> int_array_3d;
-typedef boost::multi_array<char, 1> char_array_1d;
 
 
 /**

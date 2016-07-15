@@ -19,6 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#include <core/bmhtf-nacl.hpp>
 #include "h5md_core.hpp"
 
 
@@ -30,7 +31,8 @@ namespace h5md
 // Constructor for the H5mdCore class
 File::File(std::string const &filename, std::string const &script_path)
 {
-    FILE* out=stderr;
+    // Get number of local particles
+    this->n_local_part = cells_get_n_particles();
     // Check if a file with given filename exists.
     bool file_exists = check_file_exists(filename);
     // If it exists, check for the H5MD structure.
@@ -126,20 +128,24 @@ File::File(std::string const &filename, std::string const &script_path)
         this->type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
         this->type_int = h5xx::datatype(H5T_NATIVE_INT);
         // Array for max. dimensions of the dataspaces.
-        boost::array<hsize_t, 3> maxdims = {H5S_UNLIMITED, H5S_UNLIMITED,
+        const std::vector<hsize_t> maxdims = {H5S_UNLIMITED, H5S_UNLIMITED,
                                             H5S_UNLIMITED};
-        boost::array<hsize_t, 1> maxdims_single = {H5S_UNLIMITED};
+        const std::vector<hsize_t> maxdims_single = {H5S_UNLIMITED};
         // Sample multi_array for dataset creations.
-        hsize_t chunk_dims_3d[3] = {1, static_cast<hsize_t>(n_part), 3};
-        hsize_t chunk_dims_1d[3] = {1, static_cast<hsize_t>(n_part), 1};
+        const std::vector<hsize_t> chunk_dims_3d = {1, static_cast<hsize_t>
+        (n_part), 3};
+        const std::vector<hsize_t> chunk_dims_1d = {1, static_cast<hsize_t>
+        (n_part), 1};
         hsize_t chunk_dims_1d_single = 1;
-        boost::array<hsize_t, 3> dims_3d = {0, static_cast<hsize_t>(n_part), 3};
-        boost::array<hsize_t, 3> dims_1d = {0, static_cast<hsize_t>(n_part), 1};
+        const std::vector<hsize_t> dims_3d = {0, static_cast<hsize_t>
+        (n_part), 3};
+        const std::vector<hsize_t> dims_1d_single = {0};
         boost::multi_array<double, 2> box_vec(boost::extents[3][3]);
+
         box_vec[0][0]=box_l[0]; box_vec[0][1]=0.0; box_vec[0][2]=0.0;
         box_vec[1][0]=0.0; box_vec[1][1]=box_l[1]; box_vec[1][2]=0.0;
         box_vec[2][0]=0.0; box_vec[2][1]=0.0; box_vec[2][2]=box_l[2];
-        boost::array<hsize_t, 1> dims_1d_single = {0};
+
         // Ensure the H5MD structure is present in the file
         // particles -- atoms -- box -- edges
         this->group_particles = h5xx::group(this->h5md_file, "particles");
@@ -164,7 +170,7 @@ File::File(std::string const &filename, std::string const &script_path)
                 this->group_particles_atoms_position,
                 "value", this->type_double,
                 this->dataspace_particles_atoms_position_value,
-                h5xx::policy::storage::chunked(3, chunk_dims_3d));
+                h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
         this->dataspace_particles_atoms_position_value = h5xx::dataspace(
                 dims_3d, maxdims);
         this->dataspace_particles_atoms_position_time = h5xx::dataspace(
@@ -192,7 +198,7 @@ File::File(std::string const &filename, std::string const &script_path)
                 this->group_particles_atoms_velocity,
                 "value", this->type_double,
                 this->dataspace_particles_atoms_velocity_value,
-                h5xx::policy::storage::chunked(3, chunk_dims_3d));
+                h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
         this->dataspace_particles_atoms_velocity_value = h5xx::dataspace(
                 dims_3d, maxdims);
         this->dataspace_particles_atoms_velocity_time = h5xx::dataspace(
@@ -220,7 +226,7 @@ File::File(std::string const &filename, std::string const &script_path)
                 this->group_particles_atoms_force,
                 "value", this->type_double,
                 this->dataspace_particles_atoms_force_value,
-                h5xx::policy::storage::chunked(3, chunk_dims_3d));
+                h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
         this->dataspace_particles_atoms_force_value = h5xx::dataspace(
                 dims_3d, maxdims);
         this->dataspace_particles_atoms_force_time = h5xx::dataspace(
@@ -248,7 +254,7 @@ File::File(std::string const &filename, std::string const &script_path)
                 this->group_particles_atoms_image,
                 "value", this->type_int,
                 this->dataspace_particles_atoms_image_value,
-                h5xx::policy::storage::chunked(3, chunk_dims_3d));
+                h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
         this->dataspace_particles_atoms_image_value = h5xx::dataspace(
                 dims_3d, maxdims);
         this->dataspace_particles_atoms_image_time = h5xx::dataspace(
@@ -267,22 +273,21 @@ File::File(std::string const &filename, std::string const &script_path)
                               this->dataspace_particles_atoms_image_step,
                               h5xx::policy::storage::chunked(1,
                                                              &chunk_dims_1d_single));
-       /*
-        // particles -- atoms -- species
-        this->dataspace_particles_atoms_species = h5xx::dataspace(dims_1d,
-                                                                   maxdims);
+
+        //particles -- atoms -- species
+        this->dataspace_particles_atoms_species = h5xx::dataspace
+                (chunk_dims_1d);
         this->dataset_particles_atoms_species =
                 h5xx::create_dataset(this->group_particles_atoms, "species",
-                                     int_tmp_1d);
+                                     this->type_int, this->dataspace_particles_atoms_species);
+        WriteSpecies();
         // particles -- atoms -- parameters
         this->group_parameters = h5xx::group(this->h5md_file, "parameters");
         this->group_parameters_vmd_structure = h5xx::group(
                 this->group_parameters, "vmd_structure");
         this->group_parameters_files = h5xx::group(this->group_parameters,
                                                     "files");
-        this->dataset_parameters_files_script =
-                h5xx::create_dataset(this->group_parameters_files, "script",
-                                     char_tmp_1d);*/
+
     }
 }
 
@@ -290,22 +295,17 @@ File::File(std::string const &filename, std::string const &script_path)
 // Method to write particle positions
 void File::Write(int what)
 {
-    std::cout << what << std::endl;
-    this->WriteTimedependent3D(100);
+    this->WriteTimedependent3D(what);
 }
 
 
 void File::WriteSpecies()
 {
-    // Get number of local particles
-    int n_local_part = cells_get_n_particles();
     // Get the number of particles on all other nodes
     int pref = 1;
     MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    std::vector<int> id;
-    std::vector<int> type;
+    int_array_3d type_data(boost::extents[1][this->n_local_part][1]);
     Cell *local_cell;
-    type.reserve(n_local_part);
 
     // Prepare data for writing
     // loop over all local cells
@@ -317,19 +317,16 @@ void File::WriteSpecies()
              local_part_id < local_cell->n; ++local_part_id)
         {
             auto current_particle = local_cell->part[local_part_id];
-            // store the particle ids
-            type.push_back(current_particle.p.type);
+            type_data[0][particle_index][0] = current_particle.p.type;
             particle_index++;
         }
     }
-    //TODO: implement the actual write to the dataset.
+    h5xx::write_dataset(this->dataset_particles_atoms_species, type_data);
 }
 
 
 void File::WriteTimedependent3D(int what)
 {
-    // Get number of local particles
-    this->n_local_part = cells_get_n_particles();
     // Get the number of particles on all other nodes
     int pref = 1;
     MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
