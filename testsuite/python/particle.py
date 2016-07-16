@@ -119,9 +119,14 @@ class ParticleProperties(ut.TestCase):
             "omega_body", np.array([4., 72., 1.]))
         test_torque_lab = generateTestForVectorProperty(
             "torque_lab", np.array([4., 72., 3.7]))
-        # The tested value has to be nromalized!
+        # The tested value has to be normalized!
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
+        if "ROTATIONAL_INERTIA" in espressomd.features():
+            test_gamma_rot = generateTestForVectorProperty(
+            "gamma_rot", np.array([5., 10., 0.33]))
+        else:
+            test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
     if "ELECTROSTATICS" in espressomd.features():
