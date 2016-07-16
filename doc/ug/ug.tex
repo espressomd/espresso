@@ -34,7 +34,7 @@ index=totoc,                    % add the index to the TOC
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage[backref]{hyperref}  % automatically creates links when
+\usepackage[hidelinks,backref]{hyperref}  % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
@@ -55,7 +55,9 @@ index=totoc,                    % add the index to the TOC
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing}
 %\usepackage{showframe}          % Turn this on when debugging the
-                                % margin etc.
+\usepackage{listings}
+
+% margin etc.
 
 % For building the distribution docs, disable todo boxes.
 \ifdefined\todosoff

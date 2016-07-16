@@ -624,6 +624,9 @@ proc oif_create_template { args } {
 	set stretch_X 1.0
 	set stretch_Y 1.0
 	set stretch_Z 1.0
+	set mirror_X 0
+	set mirror_Y 0
+	set mirror_Z 0
 	set filenamenodes ""
 	set filenametriangles ""
     set ks 0.0
@@ -779,6 +782,27 @@ proc oif_create_template { args } {
 				set stretch_Z [lindex $args $pos]
 				incr pos
 			}
+			"mirror" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_X [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_Y [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: expecting 3 coefficients for mirroring the object"
+					break
+				}
+				set mirror_Z [lindex $args $pos]
+				incr pos
+			}
 		    "check" {  
 				incr pos
 				if { $pos >= $n_args } { 
@@ -848,6 +872,17 @@ proc oif_create_template { args } {
 	puts "	kag:            $kag"
 	puts "	kv:             $kv"
 	puts "	stretch: 	$stretch_X $stretch_Y $stretch_Z"
+	puts "	mirror: 	$mirror_X $mirror_Y $mirror_Z"
+#--------------------------------------------------------------------------------------------
+#check whether mirroring will be done for one plane
+	if { $mirror_X != 0 && $mirror_X != 1 || $mirror_Y != 0 && $mirror_Y != 1 || $mirror_Z != 0 && $mirror_Z != 1 } { 
+		puts "error: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting."
+		exit
+	}
+	if { [expr $mirror_X + $mirror_Y + $mirror_Z] > 1 } { 
+		puts "error: flipping allowed only for one axis. Exiting."
+		exit
+	}
 #--------------------------------------------------------------------------------------------
 #reading nodes
 	# read the number of lines in nodes files
@@ -864,15 +899,25 @@ proc oif_create_template { args } {
 			set mesh_nodes($mesh_nnodes,0) [expr $stretch_X*[lindex $line 0]]
 			set mesh_nodes($mesh_nnodes,1) [expr $stretch_Y*[lindex $line 1]]
 			set mesh_nodes($mesh_nnodes,2) [expr $stretch_Z*[lindex $line 2]]
+			#flipping the triangle orientation because of the mirroring
+		    if { $mirror_X == 1} {
+				set mesh_nodes($mesh_nnodes,0) [expr -1.0*$mesh_nodes($mesh_nnodes,0)]
+			}
+		    if { $mirror_Y == 1} {
+				set mesh_nodes($mesh_nnodes,1) [expr -1.0*$mesh_nodes($mesh_nnodes,1)]
+			}
+		    if { $mirror_Z == 1} {
+				set mesh_nodes($mesh_nnodes,2) [expr -1.0*$mesh_nodes($mesh_nnodes,2)]
+			}
 
 			# mesh_nodes is a 2D-array with three coordinates for each node (each node is one line) 
 		        # node $X coordinate y is accessed by $mesh_nodes($X,1)
-			incr mesh_nnodes
 		        
-	        list temp_node
-	        lappend temp_node [expr $stretch_X*[lindex $line 0]]
-		lappend temp_node [expr $stretch_Y*[lindex $line 1]]
-		lappend temp_node [expr $stretch_Z*[lindex $line 2]]
+        list temp_node
+        lappend temp_node $mesh_nodes($mesh_nnodes,0)
+		lappend temp_node $mesh_nodes($mesh_nnodes,1)
+		lappend temp_node $mesh_nodes($mesh_nnodes,2)
+		incr mesh_nnodes
 	        
 		# update global variable
 		lappend oif_template_nodes $temp_node
@@ -901,8 +946,13 @@ proc oif_create_template { args } {
 			set mesh_triangles($mesh_ntriangles,0) [lindex $line 0]
 			set mesh_triangles($mesh_ntriangles,1) [lindex $line 1]
 			set mesh_triangles($mesh_ntriangles,2) [lindex $line 2]
+			#flipping the triangle orientation because of the mirroring
+		    if {[expr $mirror_X + $mirror_Y + $mirror_Z] == 1} {
+				set tmp_index_Z $mesh_triangles($mesh_ntriangles,2)
+				set mesh_triangles($mesh_ntriangles,2) $mesh_triangles($mesh_ntriangles,1)
+				set mesh_triangles($mesh_ntriangles,1) $tmp_index_Z
+			}    
 			incr mesh_ntriangles
-		        
 	        list temp_triangle
 	        lappend temp_triangle [lindex $line 0]
 		lappend temp_triangle [lindex $line 1]
@@ -2159,7 +2209,7 @@ proc oif_object_set { args } {
 	set mesh_nodes_file ""
 	set origin 0
 	set kill_motion 0
-	set un_kill_motion 1
+	set un_kill_motion 0
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
     while { $pos < $n_args } {
@@ -2649,6 +2699,7 @@ proc oif_object_analyze { args } {
 
 	set objectID -1
 	set center_location 0
+	set center_location_folded 0
 	set pos_bounds ""
 	set volume -1
 	set surface -1
@@ -2657,6 +2708,7 @@ proc oif_object_analyze { args } {
 	set velocity 0
 	set affinity ""
 	set approx_pos -1
+	set diameter -1
 	set get_first_part_id 0
 	set n_nodes 0
 	set aff_type -1
@@ -2666,6 +2718,7 @@ proc oif_object_analyze { args } {
 	set aff_K0 -1
 	set aff_Fd -1
 	set aff_file "aff-default.dat"
+	set edge_stat 0
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2674,6 +2727,10 @@ proc oif_object_analyze { args } {
 			"origin" {  
 				incr pos
 				set center_location 1
+			}
+			"origin-folded" {  
+				incr pos
+				set center_location_folded 1
 			}
 			"approx-pos" {  
 				incr pos
@@ -2687,6 +2744,10 @@ proc oif_object_analyze { args } {
 				incr pos
 				set volume 0.0
 			}
+			"diameter" {  
+				incr pos
+				set diamater 0.0
+			}
 			"surface-area" {  
 				incr pos
 				set surface 0.0
@@ -2698,6 +2759,10 @@ proc oif_object_analyze { args } {
 			"n-nodes" {  
 				incr pos
 				set n_nodes 1
+			}
+			"edge-statistics" {  
+				incr pos
+				set edge_stat 1
 			}
 			"affinity" {  
 				incr pos
@@ -2811,6 +2876,37 @@ proc oif_object_analyze { args } {
 		set coords [list $centerX $centerY $centerZ]
 		return $coords
 	}
+	
+	if { $center_location_folded == 1 } {
+       set centerX 0
+       set centerY 0
+       set centerZ 0
+       set firstPartId [lindex $oif_object_starting_particles $objectID]
+       set nnode [lindex $oif_nparticles $objectID]
+       for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+           set coords [part $iii print pos]
+           set centerX [expr $centerX + [lindex $coords 0]]
+           set centerY [expr $centerY + [lindex $coords 1]]
+           set centerZ [expr $centerZ + [lindex $coords 2]]
+       }
+       set centerX [expr $centerX/$nnode]
+       set centerY [expr $centerY/$nnode]
+       set centerZ [expr $centerZ/$nnode]
+       set coords [list $centerX $centerY $centerZ]
+
+       set foldX [expr floor(1.0*[lindex $coords 0]/(1.0*[lindex [setmd box_l] 0]))]
+       set foldY [expr floor(1.0*[lindex $coords 1]/(1.0*[lindex [setmd box_l] 1]))]
+       set foldZ [expr floor(1.0*[lindex $coords 2]/(1.0*[lindex [setmd box_l] 2]))]
+       # these gives how many times is the origin folded in all three directions
+
+       set posX [expr [lindex $coords 0] - $foldX*[lindex [setmd box_l] 0]]
+       set posY [expr [lindex $coords 1] - $foldY*[lindex [setmd box_l] 1]]
+       set posZ [expr [lindex $coords 2] - $foldZ*[lindex [setmd box_l] 2]]
+
+       set coordsFolded [list $posX $posY $posZ]
+       return $coordsFolded
+   }
+	
 
 	if { $aff_type % 10 == 2 } {
 		set fout [open $aff_file a]
@@ -3071,6 +3167,30 @@ proc oif_object_analyze { args } {
 		}
 		return $volume
 	}
+	
+	if {$diameter != -1} {
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		set max_distance 0
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			for { set jjj [expr $iii + 1]} { $jjj < [expr $firstPartId + $nnode] } { incr jjj } {
+				set P1 [part $iii print pos]
+				set P2 [part $jjj print pos]
+				set P10 [lindex $P1 0]
+				set P11 [lindex $P1 1]
+				set P12 [lindex $P1 2]
+				set P20 [lindex $P2 0]
+				set P21 [lindex $P2 1]
+				set P22 [lindex $P2 2]
+				set control_distance [expr sqrt(($P10 - $P20)*($P10 - $P20) + ($P11 - $P21)*($P11 - $P21) + ($P12 - $P22)*($P12 - $P22))]
+				if {$max_distance < $control_distance} {
+					set max_distance $control_distance
+				}
+			}
+				
+		}
+		return $diameter
+	}
 
 	if {$surface != -1} {
 		set firstPartId [lindex $oif_object_starting_particles $objectID]
@@ -3117,7 +3237,85 @@ proc oif_object_analyze { args } {
 		}
 		return $area
 	}
+	
+	if {$edge_stat != 0} {
+	    # calculates statistics of edges in triangulation
+		
+		set sum_lengths 0.0
+		set avg_length 0.0
+		set max_length 0.0
+		set min_length 1000.0
+		
+		# recover data of this object
+		set object [lindex $oif_objects $objectID]
+		set template_id [lindex $object 0]
+		set template [lindex $oif_templates $template_id]
+		set nnodes [lindex $template 0]
+		set nedges [lindex $template 1]
 
+		set start_id_of_nodes 0
+		set start_id_of_edges 0
+		for {set i 0} {$i < $template_id} {incr i} {
+		    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+		    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+		}
+		
+		# recover edges from this object's template
+		for {set i 0} {$i < $nedges} {incr i} {
+		    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+		    set mesh_edges($i,0) [lindex $edge_pair 0]
+		    set mesh_edges($i,1) [lindex $edge_pair 1]
+		}
+		
+		set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+			    
+		for { set i 0 } { $i < $nedges } { incr i } {
+		    # take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			set pA $mesh_edges($i,0)
+			set pB $mesh_edges($i,1)
+			    
+			# get the current position of the same two points
+			set currA [part [expr $start_id_of_particles + $pA] print pos]
+			set currAx [lindex $currA 0]
+			set currAy [lindex $currA 1]
+			set currAz [lindex $currA 2]
+			set currB [part [expr $start_id_of_particles + $pB] print pos]
+			set currBx [lindex $currB 0]
+			set currBy [lindex $currB 1]
+			set currBz [lindex $currB 2]
+
+			set curr_dist 0.0
+			set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			set curr_dist [expr sqrt($curr_dist)]
+		
+			set sum_lengths [expr ($sum_lengths + $curr_dist) ]
+		
+			set curr_edge_length($i) $curr_dist
+		
+			if {$max_length < $curr_dist} {
+				set max_length $curr_dist
+			}
+		
+			if {$min_length > $curr_dist} {
+				set min_length $curr_dist
+			}
+		}
+
+		set avg_length [expr ($sum_lengths / $nedges) ]
+
+		set sum_of_sq 0.0
+		for { set i 0 } { $i < $nedges } { incr i } {
+			set sum_of_sq [expr ($sum_of_sq + (($curr_edge_length($i) - $avg_length) * ($curr_edge_length($i) - $avg_length)))]
+		}
+		set sigma 0.0
+		set sigma [expr (sqrt($sum_of_sq / ($nedges-1)))]
+
+		set answer [list "avg_length:" $avg_length "min-length:" $min_length "max_length:" $max_length "sigma:" $sigma]
+		return $answer
+	}
+	
 	if { $pos_bounds != ""} {
 		set Zmin 10000000
 		set Zmax -10000000

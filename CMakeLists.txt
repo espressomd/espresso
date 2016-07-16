@@ -37,7 +37,6 @@ endif(NOT CMAKE_BUILD_TYPE)
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
-option(WITH_MPI    "Build a mpi parallel version of ESPResSo" ON)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
@@ -85,8 +84,8 @@ if (WITH_CUDA)
     else()
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30")
-  
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
+
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
@@ -146,9 +145,9 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi)
+find_package(Boost REQUIRED mpi serialization)
 include_directories(${Boost_INCLUDE_DIRS})
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
+list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 #######################################################################
 # Testing 
@@ -158,10 +157,11 @@ if(WITH_TESTS)
   enable_testing()
   find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    set(WITH_UNIT_TESTS 1)
+    set(WITH_UNIT_TESTS ON)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
+  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################
@@ -169,8 +169,8 @@ endif(WITH_TESTS)
 #######################################################################
 
 find_package(MPI REQUIRED)
-list(APPEND CMAKE_CXX_FLAGS ${MPI_COMPILE_FLAGS})
-list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 

@@ -1,10 +1,13 @@
-set(py_tests  bondedInteractions.py  
-              electrostaticInteractions.py  
+set(py_tests  bondedInteractions.py
+              cellsystem.py
+              coulomb_cloud_wall.py
+              electrostaticInteractions.py
+              engine_langevin.py
+              engine_lb.py
+              ewald_gpu.py
+              magnetostaticInteractions.py
               nonBondedInteractions.py
-              cellsystem.py          
-              ewald_gpu.py                  
               p3m_gpu.py
-              magnetostaticInteractions.py  
               particle.py
 )
 

@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS=00-building_espresso 01-lennard_jones 02-charged_system 03-object_in_fluid 04-lattice_boltzmann 05-raspberry_electrophoresis 06-active_matter 07-electrokinetics 08-visualization
+
+SUBDIRS=tcl # python
 
 if DEVEL_SRC
 

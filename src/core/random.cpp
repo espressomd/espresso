@@ -24,30 +24,112 @@
 #include "communication.hpp"
 
 namespace Random {
+using std::string;
+using std::ostringstream;
+using std::istringstream;
+using std::vector;
+
+using Communication::mpiCallbacks;
+
 std::mt19937 generator;
 std::normal_distribution<double> normal_distribution(0,1);
 std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 
-std::string get_state() {
-  std::ostringstream os;
+/** Local functions */
+
+/**
+ * @brief Get a string representation of the state of the PRNG.
+ */
+string get_state() {
+  ostringstream os;
   os << generator;
   
   return os.str();
 }
 
-void set_state(const std::string &s) {
-  std::istringstream is(s);
+/**
+ * @brief Set the state of the PRNG from a string representation.
+ */
+void set_state(const string &s) {
+  istringstream is(s);
   is >> generator;
 }
+
+/** Communication */
+
+void mpi_random_seed_slave(int pnode, int cnt) {
+  int this_idum;
+  
+  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+  
+  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+
+  init_random_seed(this_idum);
+}
+
+void mpi_random_seed(int cnt, vector<int> &seeds) {
+  int this_idum;
+  mpi_call(mpi_random_seed_slave, -1, cnt);
+  
+  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
+
+  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+
+  init_random_seed(this_idum);
+}
+
+void mpi_random_set_stat_slave(int, int) {
+  string msg;
+  mpiCallbacks().comm().recv(0, SOME_TAG, msg);
+
+  set_state(msg);
+}
+
+void mpi_random_set_stat(const vector<string> &stat) {
+  mpi_call(mpi_random_set_stat_slave, 0, 0);
+  
+  for(int i = 1; i < n_nodes; i++) {
+    mpiCallbacks().comm().send(i, SOME_TAG, stat[i]);
+  }
+
+  set_state(stat[0]);
+}
+
+void mpi_random_get_stat_slave(int, int) {
+  string state = get_state();
+
+  mpiCallbacks().comm().send(0, SOME_TAG, state);
+}
+
+string mpi_random_get_stat() {
+  string res = get_state();
+
+  mpi_call(mpi_random_get_stat_slave, 0, 0);
+   
+  for(int i = 1; i < n_nodes; i++) {
+    string tmp;
+    mpiCallbacks().comm().recv(i, SOME_TAG, tmp);
+    res.append(" ");
+    res.append(tmp);
+  }
+
+  return res;
 }
 
 void init_random(void)
 {
-  init_random_seed(this_node);
+  /** Set the initial seed */
+  init_random_seed(1 + this_node);
+
+  /** Register callbacks */
+  mpiCallbacks().add(mpi_random_seed_slave);
+  mpiCallbacks().add(mpi_random_set_stat_slave);
+  mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
 void init_random_seed(int seed)
 {
-  using Random::generator;
   generator.seed(seed);
 }
+
+} /* Random */

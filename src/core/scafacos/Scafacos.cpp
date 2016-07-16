@@ -150,10 +150,11 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
 
 void Scafacos::set_dipolar(bool d) {
 #ifndef SCAFACOS_DIPOLES
-  throw std::runtime_error("Dipolar extension not compiled in. Switch on via SCAFACOS_DIPOLES in myconfig.hpp");
-#else
-  m_dipolar =d;
+  if (d) {
+    throw std::runtime_error("Dipolar extension not compiled in. Switch on via SCAFACOS_DIPOLES in myconfig.hpp");
+  }
 #endif
+m_dipolar =d;
 }
 
 }

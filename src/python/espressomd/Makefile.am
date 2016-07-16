@@ -33,6 +33,7 @@ SUFFIXES = .pyx
 EXTRA_DIST = gen_pxiconfig.py
 PYFILES = __init__.py \
 	  system.py \
+	  visualization.py \
 	  highlander.py
 
 PYXFILES =  \
@@ -57,7 +58,8 @@ PYXFILES =  \
 	thermostat.pyx \
 	utils.pyx \
 	h5md.pyx \
-	grand_canonical.pyx
+	grand_canonical.pyx \
+	galilei.pyx
 
 PXDFILES = \
 	_espresso/globals.pxd \
@@ -85,7 +87,8 @@ PXDFILES = \
 	utils.pxd \
 	actors.pxd \
 	h5md.pxd \
-	grand_canonical.pxd
+	grand_canonical.pxd \
+	galilei.pxd
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
 

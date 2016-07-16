@@ -26,17 +26,6 @@
 
 #include "parser.hpp"
 
-/** Constants which indicate what to output. To indicate the output of
- *  multiple fields, OR the corresponding values.
- *
- */
-enum MPIIOOutputFields {
-  MPIIO_OUT_POS = 1,
-  MPIIO_OUT_VEL = 2,
-  MPIIO_OUT_TYP = 4,
-  MPIIO_OUT_BND = 8,
-};
-
 /** MPI-IO Tcl command. First argument is a file name (not a Tcl channel),
  *  second argument the direction ("read" or "write") and all further arguments
  *  are the fields to dump, namely: "pos", "v", "types", "bonds"

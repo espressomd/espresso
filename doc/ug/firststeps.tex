@@ -87,8 +87,22 @@ mpirun -n \var{n\_nodes} Espresso \var{script}
 \end{code}
 where \var{n\_nodes} is the number of prcessors to be used.
 
+
 \section{Running \es}
 
+\subsection{Python}
+\es is implemented as a Python module.
+This means that you need to write a python script for any task you want to
+perform with \es. In this chapter, the basic structure of the interface will be explained. For a practical introduction, see the tutorials, which are also part of the \es distribution.
+To use \es, you need to import the espressomd module in your Python script. To this end, the folder containing the python module needs to be in the Python search path. The module is located in the src/python folder under the build directory.
+A convenient way to run python with the correct path is to use the pypresso script located in the build directory. 
+\begin{verbatim}
+pypresso simulation.py
+\end{verbatim}
+
+
+
+\subsection{Tcl (deprecated)}
 \es is implemented as an extension to the Tcl scripting language.
 This means that you need to write a script for any task you want to
 perform with \es. To learn about the Tcl script language and
@@ -101,7 +115,86 @@ both scripts in the presented order.  If you want to learn about the
 Tcl language in greater detail, there is an excellent tutorial
 \footnote{\url{http://www.tcl.tk/man/tcl8.5/tutorial/tcltutorial.html}}.
 
-\section{Creating the first simulation script}
+
+\section{Python: Basic concepts}
+In this section, a brief overview is given over the most important components of the Python interface and their usage is illustrated by short examples.
+The interface is contained in the espressomd Python module, which needs to be imported, before anything \es related can be done.
+\begin{lstlisting}[language=python]
+import espressomd
+\end{lstlisting}
+Access to the simulation system is provided via the System class. As a first step, an instance of the class needs to be created
+\begin{lstlisting}[language=python]
+system=espressomd.System()
+\end{lstlisting}
+Note that only one instance of the System class can be created, due to limitations in the simulation core.
+Properties of the System class are used to access the parameters concerning the simulation system as a whole, \eg, the box geometry and the time step
+\begin{lstlisting}[language=python]
+system.box_l =(10.0,10.0,15.0)
+print system.time_step
+\end{lstlisting}
+
+
+The particles in the simulation are accessed via the ParticleList class. It is used to retrieve individual particles of the simulation as well as for adding particles.
+An instance of the class is provided as the part attribute of the System class.
+Individual particles can be retrieved by their numerical id by using angular brackets
+\begin{lstlisting}[language=python]
+p=system.part[0]
+\end{lstlisting}
+It is also possible to loop over all particles
+\begin{lstlisting}[language=python]
+for p in system.part:
+    ...
+\end{lstlisting}
+Particles are added via the add method
+\begin{lstlisting}[language=python]
+p=system.part.add(id=1,pos=(3.0,0.5,1.0),q=1)
+\end{lstlisting}
+An individual particle is represented by an instance of ParticleHandle.
+The properties of the particle are implemented as Python properties:
+\begin{lstlisting}[language=python]
+p=system.part[0]
+p.pos=(0,0,0)
+print p.id,p.pos
+system.part[0].q=-1
+\end{lstlisting}
+Properties of several particles can be accessed by using Python ranges
+\begin{lstlisting}[language=python]
+v=system.part[:].v
+\end{lstlisting}
+
+Interactions between particles fall in three categories:
+\begin{itemize}
+\item Non-bonded interactions are short-ranged interactions between \emph{all} pairs of particles of specified types. An example is the Lennard-Jones interaction mimicking overlap repulsion and van der Wals attraction. 
+\item Bonded interactions act only between two specific particles. An example is the harmonic bond between adjacent particles in a polymer chain.
+\item Long-range interactions act between all particles with specific properties in the entire system. An example is the coulomb interaction.
+\end{itemize}
+
+Non-bonded interactions are represented as subclasses of NonBondedInteraction, \eg LennardJonesInteraction. Instances of these classes for a given pair of particle types are accessed via the non_bonded_inter attribute of the System class. Parameters are set as follows
+\begin{lstlisting}[language=python]
+system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=1,sigma=1,cutoff=1.5,shift="auto")
+\end{lstlisting}
+
+
+Bonded interactions are represented by subclasses of BondedInteraction. To set up a bonded interaction, first an instance of the appropriate class is created with the desired parameters. Then, the bonded interaction is registered with the simulation core. Finally, the bond can be added to particles using the add_bond()-method of ParticleHandle with the instance of the bond class and the id of the bond partner particle. 
+\begin{lstlisting}[language=python]
+from interactions import HarmonicBond
+harmonic=HarmonicBond(k=1,r_0=1)
+system.bonded_inter.add(harmonic)
+system.part[0].add_bond((harmonic,1))
+system.part[1].add_bond((harmonic,2))
+\end{lstlisting}
+
+Long-range interactions are subclasses of Actor. They are used by first creating an instance of the desired actor and then adding it to the system.
+To activate the P3M electrostatics solver, execute
+\begin{lstlisting}[language=python]
+from electrostatics import P3M
+p3m=P3M(accuracy=1E-3, bjerrum_length=1)
+system.actors.add(p3m)
+\end{lstlisting}
+
+\todo{Integrator, once the interface for that is clear}
+
+\section{Tcl: Creating the first simulation script}
 
 This section introduces some of the features of \es by constructing
 step by step a simulation script for a simple salt crystal.  We cannot
@@ -370,7 +463,7 @@ annealing. The possibility to perform non--standard simulations without the need
 of modifications to the simulation core was one of the main reasons why we
 decided to use a script language for controlling the simulation core.
 
-\section{\texttt{tutorial.tcl}}
+\section{Tcl: \texttt{tutorial.tcl}}
 
 In the directory \texttt{samples/} of the es{} sources, you will find
 a well documented simulation script \texttt{tutorial.tcl}, which takes

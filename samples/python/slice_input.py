@@ -21,8 +21,6 @@ import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 import numpy as np
 
 print("""
@@ -66,7 +64,7 @@ n_part = 10
 
 id_list = np.arange(n_part)
 pos_list = np.random.random((n_part,3)) * system.box_l
-type_list = np.ones(n_part)
+type_list = np.ones(n_part, dtype=int)
 
 system.part.add(id=id_list ,pos=pos_list, type=type_list)
 
@@ -87,13 +85,15 @@ print("F\n%s"%system.part[:].f)
 system.part[:2].f=[[3,4,5],[4,5,6]]
 print("F_NEW\n%s"%system.part[:].f)
 
-print("MASS\n%s"%system.part[:].mass)
-system.part[:2].mass=[2,3]
-print("MASS_NEW\n%s"%system.part[:].mass)
+if "MASS" in code_info.features():
+    print("MASS\n%s"%system.part[:].mass)
+    system.part[:2].mass=[2,3]
+    print("MASS_NEW\n%s"%system.part[:].mass)
 
-print("Q\n%s"%system.part[:].q)
-system.part[::2].q=np.ones(n_part/2)
-system.part[1::2].q=-np.ones(n_part/2)
-print("Q_NEW\n%s"%system.part[:].q)
+if "ELECTROSTATICS" in code_info.features():
+    print("Q\n%s"%system.part[:].q)
+    system.part[::2].q=np.ones(n_part/2)
+    system.part[1::2].q=-np.ones(n_part/2)
+    print("Q_NEW\n%s"%system.part[:].q)
 
 

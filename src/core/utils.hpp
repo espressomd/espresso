@@ -27,15 +27,16 @@
  *  and some constants...
  *
 */
+
+#include "config.hpp"
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "config.hpp"
 #include "debug.hpp"
 #include "lees_edwards.hpp"
 #include "errorhandling.hpp"
-
 #include <vector>
 #include <exception>
 
@@ -107,6 +108,30 @@ typedef struct {
    reallocating to 0 also. To avoid this, we use our own malloc and realloc procedures. */
 
 namespace Utils {
+/**
+ * \brief Calculate integer powers.
+ * This functions calculates x^n, where
+ * n is a positive integer that is known
+ * at compile time. It uses exponentiation by
+ * squaring to construct a efficient function.
+ */
+template<unsigned n, typename T>
+inline T int_pow(T x) {
+  switch(n) {
+    case 0:
+      return T(1);
+    case 1:
+      return x;
+    default:
+      /** Even branch */
+      if(n % 2 == 0) {
+        return int_pow<n / 2, T>(x * x);
+      } else {
+        return x * int_pow<(n - 1)/2, T>(x * x);
+      }
+  }
+}
+
   /** used instead of realloc.
       Makes sure that resizing to zero FREEs pointer */
 template<typename T>
@@ -360,19 +385,20 @@ inline double AS_erfc_part(double d)
 */
 inline double sinc(double d)
 {
-#define epsi 0.1
+  constexpr double epsi = 0.1;
 
-#define c2 -0.1666666666667e-0
-#define c4  0.8333333333333e-2
-#define c6 -0.1984126984127e-3
-#define c8  0.2755731922399e-5
-
-  double PId = PI*d, PId2;
+  const double PId = PI*d;
 
   if (fabs(d)>epsi)
     return sin(PId)/PId;
   else {
-    PId2 = SQR(PId);
+    /** Coefficients of the Taylor expansion of sinc */
+    constexpr double c2 = -0.1666666666667e-0;
+    constexpr double c4 =  0.8333333333333e-2;
+    constexpr double c6 = -0.1984126984127e-3;
+    constexpr double c8 =  0.2755731922399e-5;
+    
+    const double PId2 = PId * PId;
     return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
   }
 }
