@@ -26,13 +26,11 @@
 
 #include "config.hpp"
 
-#if defined(SCAFACOS) 
 
 #include <list>
 #include <string>
 
 #include "particle_data.hpp"
-#endif /* SCAFACOS */
 
 namespace Scafacos {
 #if defined(SCAFACOS) 
@@ -49,8 +47,6 @@ std::string get_parameters();
 /** Set parameters */
 void set_parameters(const std::string &method, const std::string &params, bool dipolar);
 double get_r_cut();
-std::list<std::string> available_methods();
-#endif /* SCAFACOS */
 
 /** Is scafacos used for dipolar interactions */
 bool dipolar();
@@ -58,6 +54,9 @@ bool dipolar();
 /** Choose whether scafacos is used for dipolar interactions */
 void set_dipolar(bool d);
 
+#endif /* SCAFACOS */
+
+std::list<std::string> available_methods();
 }
 
 /** Parameter callback */

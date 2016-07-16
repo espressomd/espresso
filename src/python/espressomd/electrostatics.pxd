@@ -35,6 +35,9 @@ cdef extern from "EspressoSystemInterface.hpp":
 
 
 IF ELECTROSTATICS:
+    cdef extern from "communication.hpp":
+        void mpi_bcast_coulomb_params()
+
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
@@ -51,7 +54,8 @@ IF ELECTROSTATICS:
                 COULOMB_P3M_GPU, \
                 COULOMB_MMM1D_GPU, \
                 COULOMB_EWALD_GPU, \
-                COULOMB_EK
+                COULOMB_EK, \
+                COULOMB_SCAFACOS
 
         int coulomb_set_bjerrum(double bjerrum)
 
@@ -106,7 +110,12 @@ IF ELECTROSTATICS:
                 cdef double alpha
                 cdef double box[3]
                 cao = params["cao"]
-                mesh = params["mesh"]
+                # Mesh can be specified as single int, but here, an array is needed
+                if not hasattr(params["mesh"],"__getitem__"):
+                    for i in range(3): 
+                        mesh[i]=params["mesh"]
+                else:
+                    mesh = params["mesh"]
                 alpha = params["alpha"]
                 box = params["box"]
                 p3m_gpu_init(cao, mesh, alpha, box)
@@ -123,8 +132,7 @@ IF ELECTROSTATICS:
             cdef char * log = NULL
             cdef int response
             response = p3m_adaptive_tune(& log)
-            if response:
-                print log
+            print log
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -312,7 +320,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             int bessel_cutoff;
 
             float force_benchmark(SystemInterface &s);
-            
+
             void check_periodicity();
 
 

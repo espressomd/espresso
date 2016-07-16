@@ -125,9 +125,7 @@ set:
 \item[npt_piston] (double, \ro) Mass off the box when using NPT_isotropic
   integrator.
 \item[periodicity] (bool[3]) Specifies periodicity for the three
-  directions. If the feature PARTIAL_PERIODIC is set, this variable
-  can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
-  readonly and gives the default setting (1,1,1).
+  directions. If the feature PARTIAL_PERIODIC is set, Espresso can be instructed to treat some dimensions as non-periodic. Per default espresso assumes periodicity in all directions which equals setting this variable to (1,1,1). A dimension is specified as non-periodic via setting the periodicity variable for this dimension to 0. E.g. Periodicity only in z-direction is obtained by (0,0,1). Caveat: Be aware of the fact that making a dimension non-periodic does not hinder particles from leaving the box in this direction. In this case for keeping particles in the simulation box a constraint has to be set.
 \item[skin] (double) Skin for the Verlet list.
 \item [temperature] (double, \ro) Temperature of the
   simulation.
@@ -918,6 +916,15 @@ system.
 
 \subsection{Particle motion and rotation}
 
+\begin{pysyntax}
+  \object{
+      espressomd.galilei
+  }{
+      kill_particle_motion
+  }{
+      rotation = 0 or 1
+  }
+\end{pysyntax}
 \begin{essyntax}
   kill_particle_motion \require{1}{\opt{rotation}}
   \begin{features}
@@ -931,6 +938,15 @@ been compiled in.
 
 \subsection{Forces and torques acting on the particles}
 
+\begin{pysyntax}
+  \object{
+      espressomd.galilei
+  }{
+      kill_particle_forces
+  }{
+      torques = 0 or 1
+  }
+\end{pysyntax}
 \begin{essyntax}
   kill_particle_forces \require{1}{\opt{torques}}
   \begin{features}
@@ -943,6 +959,13 @@ ROTATION has been compiled in.
 
 \subsection{The centre of mass of the system}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      system_CMS
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   system_CMS
 \end{essyntax}
@@ -951,6 +974,13 @@ factor in the density fluctuations of the Lattice-Boltzman fluid.
 
 \subsection{The centre-of-mass velocity}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      system_CMS_velocity
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   system_CMS_velocity
 \end{essyntax}
@@ -958,6 +988,13 @@ Returns the velocity of the center of mass of the whole system.
 
 \subsection{The Galilei transform}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      galilei_transform
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   galilei_transform
 \end{essyntax}

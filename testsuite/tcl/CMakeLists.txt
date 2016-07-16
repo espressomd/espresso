@@ -83,11 +83,15 @@ set(tcl_tests  analysis.tcl
                p3m_magnetostatics.tcl 
                p3m_magnetostatics2.tcl 
                p3m_simple_noncubic.tcl 
+               p3m_stress_testcase.tcl
                pdb_parser.tcl 
                rotate-system.tcl 
                rotate-system-dipoles.tcl 
                rotation.tcl 
                rotation_per_particle.tcl 
+               scafacos-dipoles.tcl
+               scafacos-dipoles-non-periodic.tcl
+               scafacos-dipoles-1d-and-2d-periodic.tcl
                sc_fluid_gpu.tcl 
                sd_ewald.tcl 
                sd_two_spheres.tcl 
@@ -102,18 +106,18 @@ add_custom_target(tcl_tests
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 
-if(WITH_MPI)
-    include(ProcessorCount)
-    ProcessorCount(NP)
-    math(EXPR NP "${NP}/2 + 1")
-endif(WITH_MPI)
+if(NOT DEFINED TEST_NP)
+  include(ProcessorCount)
+  ProcessorCount(NP)
+  math(EXPR TEST_NP "${NP}/2 + 1")
+endif()
 
 if(WITH_TCL)
   foreach(testfile ${tcl_tests})
     get_filename_component(basename ${testfile} NAME_WE)
     set(TEST_EXECUTABLE ${PYTHON_EXECUTABLE} test_wrapper.py ${CMAKE_BINARY_DIR}/Espresso)
-    if(WITH_MPI AND (EXISTS ${MPIEXEC}))
-      add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NP} ${TEST_EXECUTABLE} ${testfile})
+    if(EXISTS ${MPIEXEC})
+      add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NP} ${TEST_EXECUTABLE} ${testfile})
     else()
       add_test(${basename} ${TEST_EXECUTABLE} ${testfile})
     endif()

@@ -17,9 +17,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.hpp"
+
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
-#include "config.hpp"
 #include "random.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
@@ -111,7 +112,6 @@ __device__ unsigned int getThreadIndex() {
 */
 __global__ void init_particle_force(float *particle_forces_device, float* particle_torques_device, CUDA_particle_seed *particle_seeds_device){
 
-
   unsigned int part_index = getThreadIndex();
 
   if(part_index<global_part_vars_device.number_of_particles){
@@ -192,8 +192,16 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef ENGINE
     if ( host_v_cs )               cudaFreeHost(host_v_cs);
 #endif
+#if (defined DIPOLES || defined ROTATION)
+     if ( particle_torques_host )  cudaFreeHost(particle_torques_host);
+#endif
 #ifdef SHANCHEN
-    if ( fluid_composition_host )  cudaFreeHost(fluid_composition_host); 
+    if ( fluid_composition_host )  cudaFreeHost(fluid_composition_host);
+    if ( fluid_composition_device )  cudaFree(fluid_composition_device);
+#endif
+
+#ifdef ROTATION
+    if ( particle_torques_device )  cudaFree(particle_torques_device);
 #endif
 
     if ( global_part_vars_host.number_of_particles ) {
@@ -206,7 +214,7 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef ENGINE
       cuda_safe_mem(cudaHostAlloc((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs), cudaHostAllocWriteCombined));
 #endif
-#if (defined DIPOLES || defined ROTATION) 
+#if (defined DIPOLES || defined ROTATION)
       cudaHostAlloc((void**)&particle_torques_host, global_part_vars_host.number_of_particles * 3*sizeof(float), cudaHostAllocWriteCombined);
 #endif
 
@@ -219,13 +227,14 @@ void gpu_change_number_of_part_to_comm() {
 #ifdef ENGINE
       cuda_safe_mem(cudaMallocHost((void**)&host_v_cs, global_part_vars_host.number_of_particles * sizeof(CUDA_v_cs)));
 #endif
-#ifdef ROTATION
+#if (defined DIPOLES || defined ROTATION)
       cuda_safe_mem(cudaMallocHost((void**)&particle_torques_host, global_part_vars_host.number_of_particles * 3*sizeof(float)));
 #endif
 #ifdef SHANCHEN
       cuda_safe_mem(cudaMallocHost((void**)&fluid_composition_host, global_part_vars_host.number_of_particles * sizeof(CUDA_fluid_composition)));
 #endif
-#endif // __CUDA_ARCH__      
+#endif // __CUDA_ARCH__
+
       cuda_safe_mem(cudaMalloc((void**)&particle_forces_device, 3 * global_part_vars_host.number_of_particles * sizeof(float)));
 #ifdef ROTATION
       cuda_safe_mem(cudaMalloc((void**)&particle_torques_device, 3 * global_part_vars_host.number_of_particles * sizeof(float)));

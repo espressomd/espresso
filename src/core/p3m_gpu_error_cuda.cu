@@ -6,93 +6,56 @@
 #include "p3m_gpu_error.hpp"
 #include "cuda_utils.hpp"
 
-#define PI 3.14159265358979323846264338328
-
-#define SQR(A) ((A)*(A))
+#include "p3m_gpu_common.hpp"
 
 /** @TODO: Extend to hight order. This comes from some 1/sin expansion in Hockney/Eastwood */
 
-__device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao)
+template<int cao>
+__device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i)
 {
-  double c, res=0.0;
-  c = SQR(cos(PI*mesh_i*(double)n));
+  const double c = sqr(cos(PI*mesh_i*n));
 
   switch (cao) {
-  case 1 : { 
-    res = 1; 
-    break; }
-  case 2 : { 
-    res = (1.0+c*2.0)/3.0; 
-    break; }
-  case 3 : { 
-    res = (2.0+c*(11.0+c*2.0))/15.0; 
-    break; }
-  case 4 : { 
-    res = (17.0+c*(180.0+c*(114.0+c*4.0)))/315.0; 
-    break; }
-  case 5 : { 
-    res = (62.0+c*(1072.0+c*(1452.0+c*(247.0+c*2.0))))/2835.0; 
-    break; }
-  case 6 : { 
-    res = (1382.0+c*(35396.0+c*(83021.0+c*(34096.0+c*(2026.0+c*4.0)))))/155925.0; 
-    break; }
-  case 7 : { 
-    res = (21844.0+c*(776661.0+c*(2801040.0+c*(2123860.0+c*(349500.0+c*(8166.0+c*4.0))))))/6081075.0; 
-    break; }
+    case 1 :
+      return 1; 
+    case 2 :
+      return (1.0+c*2.0)/3.0; 
+    case 3 :
+      return (2.0+c*(11.0+c*2.0))/15.0; 
+    case 4 :
+      return (17.0+c*(180.0+c*(114.0+c*4.0)))/315.0; 
+    case 5 :
+      return (62.0+c*(1072.0+c*(1452.0+c*(247.0+c*2.0))))/2835.0; 
+    case 6 :
+      return (1382.0+c*(35396.0+c*(83021.0+c*(34096.0+c*(2026.0+c*4.0)))))/155925.0; 
+    case 7 :
+      return (21844.0+c*(776661.0+c*(2801040.0+c*(2123860.0+c*(349500.0+c*(8166.0+c*4.0))))))/6081075.0; 
   }
-  
-  return res;
+
+  return 0.0;
 }
 
-
-__device__ static inline double csinc(double d)
+template<int cao>
+__global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi, double alpha_L, double * he_q)
 {
-#define epsi 0.1
-
-#define c2 -0.1666666666667e-0
-#define c4  0.8333333333333e-2
-#define c6 -0.1984126984127e-3
-#define c8  0.2755731922399e-5
-
-  double PId = PI*d, PId2;
-
-  if (fabs(d)>epsi)
-    return sin(PId)/PId;
-  else {
-    PId2 = SQR(PId);
-    return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
-  }
-}
-
-
-__global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi, int cao, double alpha_L, double * he_q)
-{
-  int nx = -mesh.x/2 + blockDim.x*blockIdx.x + threadIdx.x;
-  int ny = -mesh.y/2 + blockDim.y*blockIdx.y + threadIdx.y;
-  int nz = -mesh.z/2 + blockDim.z*blockIdx.z + threadIdx.z;
+  const int nx = -mesh.x/2 + blockDim.x*blockIdx.x + threadIdx.x;
+  const int ny = -mesh.y/2 + blockDim.y*blockIdx.y + threadIdx.y;
+  const int nz = -mesh.z/2 + blockDim.z*blockIdx.z + threadIdx.z;
 
   if( (nx >= mesh.x/2) || (ny >= mesh.y/2) || (nz >= mesh.z/2))
     return;
 
-  int lind = ( (nx + mesh.x/2) * mesh.y*mesh.z + (ny + mesh.y/2) * mesh.z + (nz + mesh.z/2));
-
-  double alpha_L_i = 1./alpha_L;
-  double n2, cs;
-  double U2, ex, ex2;
+  const int lind = (nx + mesh.x/2) * mesh.y*mesh.z + (ny + mesh.y/2) * mesh.z + (nz + mesh.z/2);
 
   if((nx!=0) || (ny!=0) || (nz!=0)) {
-    n2 = SQR(nx) + SQR(ny) + SQR(nz);
+    const double alpha_L_i = 1./alpha_L;
+    const double n2 = sqr(nx) + sqr(ny) + sqr(nz);
+    const double cs = p3m_analytic_cotangent_sum<cao>(nz,meshi.z)*p3m_analytic_cotangent_sum<cao>(nx,meshi.x) * p3m_analytic_cotangent_sum<cao>(ny,meshi.y);
+    const double ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
+    const double ex2 = sqr( ex );
+    const double U2 = int_pow<2*cao>(csinc(meshi.x*nx)*csinc(meshi.y*ny)*csinc(meshi.z*nz));
 
-    cs = p3m_analytic_cotangent_sum(nz,meshi.z,cao)*p3m_analytic_cotangent_sum(nx,meshi.x,cao) * p3m_analytic_cotangent_sum(ny,meshi.y,cao);
-
-    ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
-
-    ex2 = SQR( ex );
-
-    U2 = pow((double)csinc(meshi.x*nx)*csinc(meshi.y*ny)*csinc(meshi.z*nz), 2.0*cao);
-
-    he_q[lind] = ex2/n2  -  SQR(U2*ex/cs) / n2;
-    
+    he_q[lind] = ex2/n2  -  sqr(U2*ex/cs) / n2;    
   } else {
     he_q[lind] = 0;
   }
@@ -127,11 +90,11 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi, int ca
 	for(int mz = -1; mz <= 1; mz++) {
 	  nmz = nz + mz*mesh.z;
 
-	  n2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+	  n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
 	  ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
 
-	  ex2 = SQR( ex );
+	  ex2 = sqr( ex );
 
 	  U2 = pow((double)csinc(meshi.x*nmx)*csinc(meshi.y*nmy)*csinc(meshi.z*nmz), 2.0*cao);
 
@@ -183,11 +146,11 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi, int 
 	for(int mz = -1; mz <= 1; mz++) {
 	  nmz = nz + mz*mesh.z;
 
-	  n2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+	  n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
 	  ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
 
-	  ex2 = SQR( ex );
+	  ex2 = sqr( ex );
 
 	  U2 = pow((double)csinc(meshi.x*nmx)*csinc(meshi.y*nmy)*csinc(meshi.z*nmz), 2.0*cao);
 
@@ -242,11 +205,11 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi, int 
 	for(int mz = -1; mz <= 1; mz++) {
 	  nmz = nz + mz*mesh.z;
 
-	  n2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
+	  n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
 	  ex = exp(-(PI*alpha_L_i)*(PI*alpha_L_i)*n2);
 
-	  ex2 = SQR( ex );
+	  ex2 = sqr( ex );
 
 	  U2 = pow((double)csinc(meshi.x*nmx)*csinc(meshi.y*nmy)*csinc(meshi.z*nmz), 2.0*cao);
 
@@ -268,58 +231,68 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi, int 
       }
     }
 
-    he_q[lind] = (alias1  -  SQR(alias2) / (0.5*(alias3*alias4 + alias5*alias6)));
+    he_q[lind] = (alias1  -  sqr(alias2) / (0.5*(alias3*alias4 + alias5*alias6)));
     
   } else {
     he_q[lind] = 0;
   }
 }
 
-
-static double *he_q = 0;
-static size_t he_q_size = 0;
-
-void p3m_gpu_error_reset() {
-  if(he_q != 0)
-    cudaFree(he_q);
-  he_q_size = 0;
-}
-
 double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart, double sum_q2, double alpha_L, double *box) {
-  double he_q_final;
-  size_t mesh_size = mesh[0]*mesh[1]*mesh[2];
+  static thrust::device_vector<double> he_q;
+  
+  const size_t mesh_size = mesh[0]*mesh[1]*mesh[2];
 
-  if(mesh_size >= he_q_size) {
-    p3m_gpu_error_reset();
-    cudaMalloc(&he_q, mesh_size*sizeof(double));
-    he_q_size = mesh_size;
+  if(mesh_size > he_q.size()) {
+    he_q.resize(mesh_size);
   }
   
-  dim3 grid(max(1, mesh[0]/8 + 1),max(1, mesh[1]/8 + 1),max(1, mesh[2]/8 + 1));
+  dim3 grid(max(1, mesh[0]/8 + 1),
+            max(1, mesh[1]/8 + 1),
+            max(1, mesh[2]/8 + 1));
+  
   dim3 block(8,8,8);
   
-  int3 mesh3;
+  int3 mesh3;  
   mesh3.x = mesh[0];
   mesh3.y = mesh[1];
   mesh3.z = mesh[2];
+  
   double3 meshi;
-
   meshi.x = 1./mesh[0];
   meshi.y = 1./mesh[1];
   meshi.z = 1./mesh[2];
-  
-  KERNELCALL(p3m_k_space_error_gpu_kernel_ik,grid,block,(mesh3, meshi, cao, alpha_L, he_q));
 
-  cudaError_t err;
+  // printf("mesh %d %d %d, grid %d %d %d\n",
+  //        mesh3.x, mesh3.y, mesh3.z,
+  //        grid.x, grid.y, grid.z);
 
-  err = cudaGetLastError();
- 
-  if (err != cudaSuccess) { 
-    printf("CUDA error: %s, %s line %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
-    return 0;
+
+  switch(cao) {
+    case 1:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 2:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<2>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 3:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<3>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 4:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<4>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 5:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<5>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 6:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<6>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
+    case 7:
+      KERNELCALL(p3m_k_space_error_gpu_kernel_ik<7>,grid,block,(mesh3, meshi, alpha_L,  thrust::raw_pointer_cast(he_q.data())));
+      break;
   }
-
-  he_q_final = thrust::reduce(thrust::device_ptr<double>(he_q), thrust::device_ptr<double>(he_q + mesh_size),  0.0,  thrust::plus<double>());
-
+  
+  const double he_q_final = thrust::reduce(he_q.begin(), he_q.end());
+  
   return 2.0*prefactor*sum_q2*sqrt( he_q_final / npart) / (box[1]*box[2]);
 }

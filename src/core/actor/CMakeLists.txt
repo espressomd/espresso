@@ -8,6 +8,7 @@ set_target_properties(Actor PROPERTIES MACOSX_RPATH TRUE)
 if(CUDA)
   file(GLOB ActorCuda_SRC *.cu)
   cuda_add_library(ActorCuda SHARED ${ActorCuda_SRC})
+  add_dependencies(ActorCuda EspressoConfig)
 
   add_dependencies(Actor ActorCuda)
   set_target_properties(ActorCuda PROPERTIES MACOSX_RPATH TRUE)

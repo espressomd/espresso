@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -25,12 +25,23 @@
 #include <cstdlib>
 #include <csignal>
 #include <iostream>
+#include <memory>
+
 #include "utils.hpp"
 #include "errorhandling.hpp"
-#include "communication.hpp"
+
+#include "MpiCallbacks.hpp"
 #include "RuntimeErrorCollector.hpp"
 
 using namespace std;
+
+namespace ErrorHandling {
+
+/* Forward declarations */
+
+void mpi_gather_runtime_errors_slave(int node, int parm);
+
+/* Definitions */
 
 static void sigint_handler(int sig) {
   /* without this exit handler the nodes might exit asynchronously
@@ -47,23 +58,31 @@ static void sigint_handler(int sig) {
   /* we use runtime_error to indicate that sig was called;
    * upon next call of mpi_gather_runtime_errors all nodes 
    * will clean up and exit. */
-  ostringstream msg;
-  msg <<"caught signal "<< sig ;
-  runtimeError(msg);
+  runtimeErrorMsg() << "caught signal " << sig;
 }
 
 void register_sigint_handler() {
   signal(SIGINT, sigint_handler);
 }
 
-/* NEW RUNTIME ERROR HANDLING. */
+namespace {
+/** RuntimeErrorCollector instance.
+ *  This is a weak pointer so we don't
+ *  leak on repeated calls of @f init_error_handling.
+ */
+unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
-/** list that contains the runtime error messages */
-RuntimeErrorCollector *runtimeErrorCollector = NULL;
+/** The callback loop we are on. */
+Communication::MpiCallbacks *m_callbacks = nullptr;
+}
 
-void
-initRuntimeErrorCollector() {
-  runtimeErrorCollector = new RuntimeErrorCollector(MPI_COMM_WORLD);
+/** Initialize the error collection system. */
+void init_error_handling(Communication::MpiCallbacks &cb) {
+  m_callbacks = &cb;
+  
+  m_callbacks->add(mpi_gather_runtime_errors_slave);
+  
+  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(new RuntimeErrorCollector(m_callbacks->comm()));
 }
 
 void _runtimeWarning(const std::string &msg, 
@@ -82,44 +101,43 @@ void _runtimeWarning(const std::ostringstream &msg,
 }
 
 void _runtimeError(const std::string &msg, 
-                     const char* function, const char* file, const int line) {
+                   const char* function, const char* file, const int line) {
   runtimeErrorCollector->error(msg, function, file, line);
 }
 
 void _runtimeError(const char* msg, 
-                     const char* function, const char* file, const int line) {
+                   const char* function, const char* file, const int line) {
   runtimeErrorCollector->error(msg, function, file, line);
 }
 
 void _runtimeError(const std::ostringstream &msg, 
-                     const char* function, const char* file, const int line) {
+                   const char* function, const char* file, const int line) {
   runtimeErrorCollector->error(msg, function, file, line);
 }
 
-ErrorHandling::RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
-  return ErrorHandling::RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
+RuntimeErrorStream _runtimeErrorStream(const std::string &file, const int line, const std::string &function) {
+  return RuntimeErrorStream(*runtimeErrorCollector, file, line, function);
 }
 
-int check_runtime_errors() {
-  return runtimeErrorCollector->count();
-}
-
-list<string>
-mpiRuntimeErrorCollectorGather() {
+vector<RuntimeError>
+mpi_gather_runtime_errors() {
   // Tell other processors to send their erros
-  mpi_call(mpiRuntimeErrorCollectorGatherSlave, -1, 0);
+  m_callbacks->call(mpi_gather_runtime_errors_slave, -1, 0);
   return runtimeErrorCollector->gather();
 }
 
-void
-mpiRuntimeErrorCollectorGatherSlave(int node, int parm) {
+void mpi_gather_runtime_errors_slave(int node, int parm) {
   runtimeErrorCollector->gatherSlave();
 }
 
+} /* ErrorHandling */
+
 void errexit() {
-#ifdef FORCE_CORE
-  core();
-#endif
-  mpi_abort();
+  ErrorHandling::m_callbacks->comm().abort(1);
   exit(1);
+}
+
+int check_runtime_errors() {
+  using namespace ErrorHandling;
+  return runtimeErrorCollector->count(RuntimeError::ErrorLevel::ERROR);
 }
