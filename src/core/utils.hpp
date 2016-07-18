@@ -116,7 +116,7 @@ namespace Utils {
  * squaring to construct a efficient function.
  */
 template<unsigned n, typename T>
-T int_pow(T x) {
+inline T int_pow(T x) {
   switch(n) {
     case 0:
       return T(1);

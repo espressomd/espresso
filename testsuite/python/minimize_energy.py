@@ -3,7 +3,6 @@ import unittest as ut
 import espressomd._system as es
 import numpy as np
 from espressomd.interactions import *
-from espressomd import analyze
 import espressomd
 
 #from espressomd import minimize_energy
@@ -38,7 +37,7 @@ class test_minimize_energy(ut.TestCase):
         minimize.minimize()
         minimize.minimize()
 
-        energy = analyze.energy(system=self.system) 
+        energy = self.system.ana.energy() 
 
         assert( energy["total"] == 0 )
 

@@ -9,11 +9,10 @@ proc rotate_z {} {
 
 source "tests_common.tcl"
 
-require_feature "ELECTROSTATICS"
-require_feature "FFTW"
+require_feature "P3M"
 
 setmd time_step 0.01
-setmd skin 0.4
+setmd skin 0.0
 
 
 set fin [open "p3m_stress.data" "r"]
@@ -21,7 +20,6 @@ blockfile $fin read auto
 blockfile $fin read auto
 blockfile $fin read auto
 
-inter 0 0 lennard-jones 0.0 0.0 [expr double(1.0)*2**(1.0/6.0)]  0 0
 set eps 1e-6
 
 set bjerrum 2.0
