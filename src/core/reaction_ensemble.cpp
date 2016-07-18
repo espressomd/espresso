@@ -205,7 +205,6 @@ int make_reaction_attempt(single_reaction* current_reaction, double** changed_pa
 		}
 
 	}
-
 	//create or hide particles of types with noncorresponding replacement types
 	for(int i=std::min(current_reaction->len_product_types,current_reaction->len_educt_types);i< std::max(current_reaction->len_product_types,current_reaction->len_educt_types);i++ ) {
 		if(current_reaction->len_product_types<current_reaction->len_educt_types){
@@ -228,12 +227,11 @@ int make_reaction_attempt(single_reaction* current_reaction, double** changed_pa
 					p_id= create_particle(current_reaction->product_types[i]);
 				}
 				*p_ids_created_particles=(int*) realloc(*p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
-				*p_ids_created_particles[len_p_ids_created_particles]=p_id;
+				(*p_ids_created_particles)[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
 		}
 	}
-
 
 	*_len_changed_particles_properties=len_changed_particles_properties;
 	*_len_p_ids_created_particles=len_p_ids_created_particles;
@@ -535,7 +533,7 @@ int create_particle(int desired_type){
 			set_particle_q(p_id, charge);
 			//set velocities
 			set_particle_v(p_id,vel);
-			double d_min=distto(pos_vec,p_id); //TODO also catch constraints with an IFDEF CONSTRAINTS here, but only interesting, when doing MD/ HMC
+			double d_min=distto(pos_vec,p_id); //TODO also catch constraints with an IFDEF CONSTRAINTS here, but only interesting, when doing MD/ HMC because then the system might explode easily here due to high forces
 			insert_tries+=1;
 			if(d_min>current_reaction_system.exclusion_radius)
 				particle_inserted_too_close_to_another_one=false;
@@ -1948,7 +1946,6 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	double* changed_particles_properties=NULL;
 	int len_changed_particles_properties=0;
 	int number_of_saved_properties=3; //save p_id, charge and type of the educt particle, only thing we need to hide the particle and recover it
-
 	make_reaction_attempt(current_reaction, &changed_particles_properties, &len_changed_particles_properties, &p_ids_created_particles, &len_p_ids_created_particles, &hidden_particles_properties, &len_hidden_particles_properties);
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
@@ -1956,11 +1953,12 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	//calculate boltzmann factor
 	double ln_bf;
+	double pKa;
 	if(current_reaction->nu_bar > 0){ //deprotonation of monomer
-		double pKa = -log10(current_reaction->equilibrium_constant);
+		pKa = -log10(current_reaction->equilibrium_constant);
 		ln_bf= (E_pot_new - E_pot_old)- 1.0/beta*log(10)*(constant_pH-pKa) ;
 	}else{ //protonation of monomer (yields neutral monomer)
-		double pKa = -(-log10(current_reaction->equilibrium_constant)); //additional minus, since in this case 1/Ka is stored in the equilibrium constant
+		pKa = -(-log10(current_reaction->equilibrium_constant)); //additional minus, since in this case 1/Ka is stored in the equilibrium constant
 		
 		ln_bf= (E_pot_new - E_pot_old)+ 1.0/beta*log(10)*(constant_pH-pKa);
 	}
