@@ -15,7 +15,6 @@ addons:
     packages:
       - ccache
       - tcl-dev
-      - libhdf5-serial-dev 
       - libhdf5-mpi-dev
       - build-essential 
       - pep8 
