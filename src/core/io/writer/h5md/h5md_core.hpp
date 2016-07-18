@@ -119,7 +119,7 @@ class File
     h5xx::attribute attribute_particles_atoms_box_boundary;
     h5xx::dataset dataset_particles_atoms_box_edges;
     // particles -- atoms -- mass
-    h5xx::group _group_particles_atoms_mass;
+    h5xx::group group_particles_atoms_mass;
     h5xx::dataspace dataspace_particles_atoms_mass_value;
     h5xx::dataset dataset_particles_atoms_mass_value;
     h5xx::dataspace dataspace_particles_atoms_mass_time;

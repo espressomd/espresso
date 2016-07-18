@@ -57,14 +57,14 @@ File::File(std::string const &filename, std::string const &script_path)
         this->dataset_particles_atoms_box_edges = h5xx::dataset(
                 this->group_particles_atoms_box, "edges");
         // particles -- atoms -- mass
-        this->_group_particles_atoms_mass = h5xx::group(
+        this->group_particles_atoms_mass = h5xx::group(
                 this->group_particles_atoms, "mass");
         this->dataset_particles_atoms_mass_value = h5xx::dataset(
-                this->_group_particles_atoms_mass, "value");
+                this->group_particles_atoms_mass, "value");
         this->dataset_particles_atoms_mass_time = h5xx::dataset(
-                this->_group_particles_atoms_mass, "time");
+                this->group_particles_atoms_mass, "time");
         this->dataset_particles_atoms_mass_step = h5xx::dataset(
-                this->_group_particles_atoms_mass, "step");
+                this->group_particles_atoms_mass, "step");
         // particles -- atoms -- position
         this->group_particles_atoms_position = h5xx::group(
                 this->group_particles_atoms, "position");
@@ -161,6 +161,34 @@ File::File(std::string const &filename, std::string const &script_path)
                                      "edges", box_vec);
         h5xx::write_dataset(this->dataset_particles_atoms_box_edges,
                             box_vec);
+        // particles -- atoms -- mass
+        this->group_particles_atoms_mass =
+                h5xx::group(this->group_particles_atoms, "mass");
+        this->dataspace_particles_atoms_mass_value = h5xx::dataspace(
+                dims_3d, maxdims);
+        this->dataset_particles_atoms_mass_value = h5xx::dataset(
+                this->group_particles_atoms_mass,
+                "value", this->type_int,
+                this->dataspace_particles_atoms_mass_value,
+                h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
+        this->dataspace_particles_atoms_mass_value = h5xx::dataspace(
+                dims_3d, maxdims);
+        this->dataspace_particles_atoms_mass_time = h5xx::dataspace(
+                dims_1d_single, maxdims_single);
+        this->dataset_particles_atoms_mass_time =
+                h5xx::dataset(this->group_particles_atoms_mass,
+                              "time", this->type_double,
+                              this->dataspace_particles_atoms_mass_time,
+                              h5xx::policy::storage::chunked(1,
+                                                             &chunk_dims_1d_single));
+        this->dataspace_particles_atoms_mass_step = h5xx::dataspace(
+                dims_1d_single, maxdims_single);
+        this->dataset_particles_atoms_mass_step =
+                h5xx::dataset(this->group_particles_atoms_mass,
+                              "step", this->type_int,
+                              this->dataspace_particles_atoms_mass_step,
+                              h5xx::policy::storage::chunked(1,
+                                                             &chunk_dims_1d_single));
         // particles -- atoms -- position
         this->group_particles_atoms_position =
                 h5xx::group(this->group_particles_atoms, "position");
@@ -566,6 +594,10 @@ bool File::_check_for_H5MD_structure(std::string const &filename)
                                  h5xx::exists_group(h5mdfile,
                                                     "parameters/files")
         };
+        for (int i=0; i < 11; i++)
+        {
+            std::cout << "group " << groups_exist[i] << std::endl;
+        }
         // Only if all boolean are TRUE, groups_all_exist will be TRUE.
         bool groups_all_exist = std::all_of(std::begin(groups_exist),
                                             std::end(groups_exist),
@@ -574,7 +606,7 @@ bool File::_check_for_H5MD_structure(std::string const &filename)
                                                 return i;
                                             });
         // Check if all datasets are present in the file.
-        bool datasets_exist[18] = {
+        bool datasets_exist[17] = {
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/box/edges"),
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/mass/value"),
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/mass/time"),
@@ -593,8 +625,7 @@ bool File::_check_for_H5MD_structure(std::string const &filename)
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/species"),
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/image/value"),
                 h5xx::exists_dataset(h5mdfile, "particles/atoms/image/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/image/step"),
-                h5xx::exists_dataset(h5mdfile, "parameters/files/script")
+                h5xx::exists_dataset(h5mdfile, "particles/atoms/image/step")
         };
         // Only if all boolean are TRUE, datasets_all_exist will be TRUE.
         bool datasets_all_exist = std::all_of(std::begin(datasets_exist),
@@ -603,6 +634,12 @@ bool File::_check_for_H5MD_structure(std::string const &filename)
                                               {
                                                   return i;
                                               });
+        for (int i=0; i < 17; i++)
+        {
+            std::cout << "datasets " << groups_exist[i] << std::endl;
+        }
+        std::cout << "groups: " << groups_all_exist << " datasets: " <<
+                datasets_all_exist << std::endl;
         // Return the logical AND of the two boolean.
         return (groups_all_exist && datasets_all_exist);
     } else
