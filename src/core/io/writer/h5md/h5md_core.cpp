@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include <core/bmhtf-nacl.hpp>
+
 #include "h5md_core.hpp"
 
 

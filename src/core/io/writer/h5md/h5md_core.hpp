@@ -176,6 +176,7 @@ inline bool check_file_exists(const std::string &name)
     return f.good();
 };
 
+
 struct incompatible_h5mdfile : public std::exception {
     const char* what () const throw ()
     {
