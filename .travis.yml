@@ -27,8 +27,8 @@ addons:
       - libopenmpi-dev
       - openmpi-bin
       - libfftw3-dev
-      - gcc-4.9
-      - g++-4.9
+      - gcc-4.8
+      - g++-4.8
 
 before_install:
  - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
@@ -48,7 +48,7 @@ install:
 env:
   global:
     - CCACHE_CPP2=yes
-    - GVER=4.9
+    - GVER=4.8
   matrix:
     - myconfig=default
     - myconfig=maxset
