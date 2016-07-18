@@ -114,7 +114,7 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
-find_package(HDF5)
+find_package(HDF5 "1.8.12")
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})

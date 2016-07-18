@@ -93,8 +93,7 @@ aware whether your particles are representing atoms or billiard balls, so
 it cannot check if the chosen parameters make sense and it is the
 user's responsibility to make sure they do.
 
-On the other hand, flexibility of \es stems from the employment of Tcl
-at the steering level. Apart from the ability to modify the simulation
+On the other hand, flexibility of \es stems from the employment of a scripting language  at the steering level. Apart from the ability to modify the simulation
 and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without
 even touching the C-kernel.  For example, simple problem-specific
@@ -192,10 +191,11 @@ report so to the developers.
 \label{sec:structure}
 
 As already mentioned, \es consists of two components.
-The simulation engine is written in C for the sake
+The simulation engine is written in C and C++ for the sake
 of computational efficiency. The steering or control
 level is interfaced to the kernel via an interpreter 
-of the Tcl scripting language.
+of the Tcl and Python scripting languages.
+Please be aware that th TCL interface is going to be removed soon and new simulations should use Python as scripting language.
 
 The kernel performs all computationally demanding tasks. Before all,
 integration of Newton's equations of motion, including calculation of
@@ -206,26 +206,18 @@ modularized so that basic functions are accessed via a set of
 well-defined lean interfaces, hiding the details of the complex
 numerical algorithms.
 
-The Tcl interpreter contains several special commands as an extension
-to Tcl, which provide the interaction with the simulation
-engine. Thus, the user has at hand the full realm of Tcl commands and
-constructs plus a few commands to communicate with the simulation
-engine. The interfacing commands are designed so that they can both
-set properties of the system (set up particles, interactions,
-thermostat) and retrieve information about the already set-up
-entities. The standard Tcl constructs allow for a flexible
-decision-making in the course of the simulation. This can be for
-example exploited to check whether a simulation has reached the
-desired state.  With a certain overhead in efficiency, it can also be
+The scripting interface (Python or Tcl) are used to setup the system (particles, boundary onditions, interactions, ...), control the simulation, run analysis, and store and load results.
+The user has at hand the full rl3sibili5y and functionality of the scripting language. For instance, it is possible to use the SciPy package for analysis and PyPlot for plotting.
+With a certain overhead in efficiency, it can also be
 used to reject/accept new configurations in combined MD/MC schemes. In
-principle, any parameter which is accessible from the Tcl level can be
+principle, any parameter which is accessible from the scripting level can be
 changed at any moment of runtime.  In this way methods like
 thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the Tcl commands, their
+The focus of the user guide is documenting the scripting interfacce, its
 behaviour and use in the simulation. It only describes certain
 technical details of implementation which are necessary for
-understanding how the commands work.  Technical documentation of the
+understanding how the script interface works.  Technical documentation of the
 code and program structure is contained in the Developers' guide (see
 section~\ref{sec:dg}).
 
@@ -330,7 +322,7 @@ and use \es:
 \end{description}
 
 
-\section{Syntax description}
+\section{Tcl: Syntax description}
 \label{sec:syntax}
 
 
