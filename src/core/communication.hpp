@@ -516,7 +516,11 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
  * coefficient. */
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
+#else
+void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
+#endif // ROTATIONAL_INERTIA
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
