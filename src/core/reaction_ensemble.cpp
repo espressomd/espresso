@@ -500,7 +500,7 @@ int get_random_position_in_box (double* out_pos) {
 	} else if (current_reaction_system.box_has_wall_constraints==true) {
 		out_pos[0]=box_l[0]*d_random();
 		out_pos[1]=box_l[1]*d_random();	
-		out_pos[2]=current_reaction_system.slab_start_z+(current_reaction_system.slab_end_z-current_reaction_system.slab_end_z)*d_random();
+		out_pos[2]=current_reaction_system.slab_start_z+(current_reaction_system.slab_end_z-current_reaction_system.slab_start_z)*d_random();
 	}else{
 		//do it like this in the cubic case
 		out_pos[0]=box_l[0]*d_random();
@@ -725,6 +725,7 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
+		got_accepted=true;
 	}else{
 		//reject
 		//create particles again at the positions they were
