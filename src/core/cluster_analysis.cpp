@@ -1,5 +1,5 @@
 #include "cluster_analysis.hpp"
-#include "particle_data.hpp"
+#include "interaction_data.hpp"
 
 
 void ClusterStructure::clear() {
@@ -19,12 +19,12 @@ void ClusterStructure::analyze_pair()
     if (! local_particles[i]) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! local_particles[j]) continue;
-      count(*local_particles[i],*local_particles[j]); // maybe no *
+      add_pair(*local_particles[i],*local_particles[j]); // maybe no *
     }
   }
 }
 
-ClusterStructure::ad_pair(Particle& p1, Particle& p2) {
+ClusterStructure::add_pair(Particle& p1, Particle& p2) {
 // * check, if there's a neighbor
  //   * No: Then go on to the next particle
  // * Yes: Then if
