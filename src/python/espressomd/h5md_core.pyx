@@ -18,11 +18,21 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-cdef class H5mdCore:
+import sys
+
+cdef class H5md:
     cdef File* c_h5md
-    def __cinit__(self, filename, path_to_pythonscript):
-        self.c_h5md = new File(filename, path_to_pythonscript)
+    def __cinit__(self, filename):
+        self.c_h5md = new File(filename, sys.argv[0])
     def __dealloc__(self):
         del self.c_h5md
-    def write(self, what):
-        self.c_h5md.Write(what)
+    def write(self, position, velocity, force):
+        self.c_h5md.Write(position, velocity, force)
+    def write(self, position, velocity):
+        self.c_h5md.Write(position, velocity)
+    def write(self, position):
+        self.c_h5md.Write(position)
+    def write(self):
+        self.c_h5md.Write()
+    def close(self):
+        self.c_h5md.Close()

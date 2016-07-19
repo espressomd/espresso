@@ -19,7 +19,14 @@
 
 
 from libcpp.string cimport string
+from libcpp cimport bool
+
+
 cdef extern from "h5md_core.hpp" namespace "writer::h5md":
     cdef cppclass File:
         File(const string, const string) except +
-        int Write(int what) except +
+        int Write(bool position, bool velocity, bool force) except +
+        int Write(bool position, bool velocity) except +
+        int Write(bool position) except +
+        int Write() except +
+        void Close() except +
