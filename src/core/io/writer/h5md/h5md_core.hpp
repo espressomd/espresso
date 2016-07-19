@@ -44,7 +44,7 @@ namespace h5md {
 
 typedef boost::multi_array<double,3> double_array_3d;
 typedef boost::multi_array<int,3> int_array_3d;
-
+typedef char h5string[1000];
 
 /**
  * @brief Class for writing H5MD files.
@@ -60,7 +60,7 @@ class File
     File(std::string const &filename, std::string const &script_name);
     /*
      * @brief Method to perform the renaming of the temporary file from
-     * "filename" + "_tmp" to "filename".
+     * "filename" + "_tmp" to "filename" and close the file before renaming.
      */
     void Close();
     /**
@@ -72,8 +72,11 @@ class File
     /**
      * @brief Method to write the energy contributions to the H5MD file.
      * @param Boolean values for total, kinetic.
+     * \todo Implement this method.
      */
     void WriteEnergy(bool total = true, bool kinetic = true);
+
+
     private:
     bool check_file_exists(const std::string &name)
     {
@@ -102,6 +105,10 @@ class File
     template <typename T>
     void WriteDataset(T &data, h5xx::dataset& dataset,
                       h5xx::dataset& time, h5xx::dataset& step);
+    /*
+     * @brief Method to write the simulation script to the dataset.
+     */
+    void WriteScript(std::string const &filename);
     /**
      * @brief Variable for the H5MD structure check if @see check_for_H5MD_structure.
      */
@@ -114,6 +121,7 @@ class File
      * Because we change the name of the file automatically, its a member variable.
      */
     std::string user_filename;
+    boost::filesystem::path absolute_script_path;
     h5xx::file lastfile;
     h5xx::file h5md_file;
     /* datatypes */
@@ -174,6 +182,7 @@ class File
     h5xx::group group_parameters_vmd_structure;
     h5xx::group group_parameters_files;
     h5xx::dataspace dataspace_parameters_files_script;
+    h5xx::dataset dataset_parameters_files_script;
     hsize_t max_dims[3] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
     hsize_t max_dims_single[1] = {H5S_UNLIMITED};
 };

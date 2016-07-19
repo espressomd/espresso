@@ -31,7 +31,7 @@ namespace h5md {
 File::File(std::string const &filename, std::string const &script_name)
 {
     boost::filesystem::path script_path(script_name);
-    boost::filesystem::path absolute_script_path = boost::filesystem::canonical(script_path);
+    this->absolute_script_path = boost::filesystem::canonical(script_path);
     /* Store the filename in a member variable. */
     this->user_filename = filename;
     /* Get number of local particles. */
@@ -189,6 +189,8 @@ File::File(std::string const &filename, std::string const &script_name)
                            H5P_DEFAULT, H5P_DEFAULT);
         H5Ocopy(lastfile.hid(), "/parameters/files", this->h5md_file.hid(), "/parameters/vmd_structure",
                            H5P_DEFAULT, H5P_DEFAULT);
+        H5Ocopy(lastfile.hid(), "/parameters/files/script", this->h5md_file.hid(), "/parameters/vmd_structure/script",
+                H5P_DEFAULT, H5P_DEFAULT);
         this->group_parameters = h5xx::group(this->h5md_file, "parameters");
         this->group_parameters_vmd_structure = h5xx::group(this->group_parameters, "vmd_structure");
         this->group_parameters_files = h5xx::group(this->group_parameters, "files");
@@ -197,6 +199,8 @@ File::File(std::string const &filename, std::string const &script_name)
         throw incompatible_h5mdfile();
     } else
     {
+        this->WriteScript(filename);
+        std::cout << "survived WriteScript." << std::endl;
         /* Create a new h5xx file object. */
         this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
@@ -381,14 +385,13 @@ File::File(std::string const &filename, std::string const &script_name)
         this->dataset_particles_atoms_species =
                 h5xx::create_dataset(this->group_particles_atoms, "species",
                                      this->type_int, this->dataspace_particles_atoms_species);
-        WriteSpecies();
+        this->WriteSpecies();
         /* particles -- atoms -- parameters */
         this->group_parameters = h5xx::group(this->h5md_file, "parameters");
         this->group_parameters_vmd_structure = h5xx::group(
                 this->group_parameters, "vmd_structure");
         this->group_parameters_files = h5xx::group(this->group_parameters,
                                                     "files");
-
     }
 }
 
@@ -581,6 +584,48 @@ void File::WriteDataset(T &data, h5xx::dataset& dataset,
 }
 
 
+void File::WriteScript(std::string const &filename)
+{
+    /* First get the number of lines of the script. */
+    hsize_t dims[1] = {0};
+    std::string tmp;
+    std::ifstream scriptfile(this->absolute_script_path.string());
+    /* Write all the lines into the buffer */
+    std::vector<std::string> buffer;
+    while(std::getline(scriptfile, tmp)) {
+        buffer.push_back(tmp);
+        ++dims[0];
+    }
+    scriptfile.close();
+    std::vector<char*> cstrings;
+    for(size_t i = 0; i < buffer.size(); ++i) {
+        cstrings.push_back(const_cast<char*>(buffer[i].c_str()));
+    }
+    hid_t filetype, memtype, space, dset, file_id, group1_id, group2_id;
+    file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, H5T_VARIABLE);
+    memtype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(memtype, H5T_VARIABLE);
+    space = H5Screate_simple(1, dims, NULL);
+    /* Create the dataset. */
+    dset = H5Dcreate(group2_id, "script", filetype, space, H5P_DEFAULT, H5P_DEFAULT,
+                      H5P_DEFAULT);
+    /* Write data from buffer to dataset. */
+    H5Dwrite(dset, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, cstrings.data());
+    /* Clean up. */
+    H5Dclose(dset);
+    H5Sclose(space);
+    H5Tclose(filetype);
+    H5Tclose(memtype);
+    H5Gclose(group1_id);
+    H5Gclose(group2_id);
+    H5Fclose(file_id);
+}
+
+
 bool File::check_for_H5MD_structure(std::string const &filename)
 {
     if (h5xx::is_hdf5_file(filename))
@@ -651,7 +696,6 @@ bool File::check_for_H5MD_structure(std::string const &filename)
         return false;
     }
 }
-
 
 
 } /* namespace h5md */
