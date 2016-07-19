@@ -200,7 +200,6 @@ File::File(std::string const &filename, std::string const &script_name)
     } else
     {
         this->WriteScript(filename);
-        std::cout << "survived WriteScript." << std::endl;
         /* Create a new h5xx file object. */
         this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
@@ -414,7 +413,6 @@ void File::Close()
 }
 
 
-/* Method to write particle positions. */
 void File::Write(bool position, bool velocity, bool force)
 {
     this->WriteTimedependent3D(position, velocity, force);
