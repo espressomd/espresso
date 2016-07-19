@@ -46,9 +46,9 @@ File::File(std::string const &filename, std::string const &script_name)
     if (file_exists && this->has_H5MD_structure)
     {
         /*
-         * If the file exists and has a valid H5MD structure, lets create a new file with links to the old file.
+         * If the file exists and has a valid H5MD structure, lets create a new file and copy the hdf5 objects.
          * This has the advantage, that the new file can just be deleted if the simulation crashes at some point and we
-         * still have a valid trajectory.
+         * still have a valid trajectory, we can start from.
         */
         /* If the H5MD structure is present in the file, just open it. */
         std::string temp_name = filename + "_tmp";
