@@ -19,7 +19,7 @@
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
@@ -497,7 +497,11 @@ int get_random_position_in_box (double* out_pos) {
 		out_pos[0]+=current_reaction_system.cyl_x;
 		out_pos[1]+=current_reaction_system.cyl_y;
 		out_pos[2]=box_l[2]*d_random();
-	} else {
+	} else if (current_reaction_system.box_has_wall_constraints==true) {
+		out_pos[0]=box_l[0]*d_random();
+		out_pos[1]=box_l[1]*d_random();	
+		out_pos[2]=current_reaction_system.slab_start_z+(current_reaction_system.slab_end_z-current_reaction_system.slab_end_z)*d_random();
+	}else{
 		//do it like this in the cubic case
 		out_pos[0]=box_l[0]*d_random();
 		out_pos[1]=box_l[1]*d_random();

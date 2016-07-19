@@ -319,6 +319,20 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				}
 				current_reaction_system.box_is_cylindric_around_z_axis=true;
 			}
+			if( ARG1_IS_S("wall_constraints_in_z_direction")) {
+				provided_unknown_command=false;
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("start")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.slab_start_z);
+				}
+				argc-=1; argv+=1;
+				if(ARG1_IS_S("end")){
+					argc-=1; argv+=1;
+					ARG_IS_D(1,current_reaction_system.slab_end_z);
+				}
+				current_reaction_system.box_has_wall_constraints=true;
+			}			
 			
 			if(ARG1_IS_S("length_scales")){
 				provided_unknown_command=false;

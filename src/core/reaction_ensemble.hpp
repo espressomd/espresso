@@ -33,6 +33,9 @@ typedef struct reaction_system {
 	double cyl_radius;
 	double cyl_x;
 	double cyl_y;
+	bool box_has_wall_constraints;
+	double slab_start_z;
+	double slab_end_z;
 } reaction_system;
 
 extern reaction_system current_reaction_system;
