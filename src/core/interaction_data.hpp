@@ -1141,13 +1141,7 @@ typedef struct {
   double omega;
   double Prefactor;
 } SinusoidalField;
-
-/** Structure to specify a constraint. */
-typedef struct {
-  /** type of the constraint. */
-  ConstraintApplied type;
-
-  union {
+typedef union {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
@@ -1165,7 +1159,14 @@ typedef struct {
     Constraint_ext_magn_field emfield;
     //end ER
     Constraint_plane plane;
-  } c;
+  } ConstraintData;
+
+/** Structure to specify a constraint. */
+typedef struct {
+  /** type of the constraint. */
+  ConstraintApplied type;
+
+  ConstraintData c;
 
   /** particle representation of this constraint. Actually needed are only the identity,
       the type and the force. */
@@ -1301,5 +1302,25 @@ int virtual_set_params(int bond_type);
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
+
+inline 
+bool bond_exists(Particle* p, Particle* partner, int bond_type)
+{
+  // First check the bonds of p1
+  if (p->bl.e) {
+    int i = 0;
+    while(i < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[i]].num;
+      
+      if (p->bl.e[i] == bond_type &&
+          p->bl.e[i + 1] == partner->p.identity) {
+        // There's a bond, already. Nothing to do for these particles
+        return true;
+      }
+      i += size + 1;
+    }
+  }
+  return false;
+}
 
 #endif

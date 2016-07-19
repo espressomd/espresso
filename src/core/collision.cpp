@@ -17,13 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include "collision.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
-
+#include "particle_data.hpp"
 
 using namespace std;
 
@@ -148,24 +147,6 @@ void prepare_collision_queue()
 }
 
 
-bool bond_exists(Particle* p, Particle* partner, int bond_type)
-{
-  // First check the bonds of p1
-  if (p->bl.e) {
-    int i = 0;
-    while(i < p->bl.n) {
-      int size = bonded_ia_params[p->bl.e[i]].num;
-      
-      if (p->bl.e[i] == bond_type &&
-          p->bl.e[i + 1] == partner->p.identity) {
-        // There's a bond, already. Nothing to do for these particles
-        return true;
-      }
-      i += size + 1;
-    }
-  }
-  return false;
-}
 
 
 void queue_collision(int part1,int part2, double* point_of_collision) {
