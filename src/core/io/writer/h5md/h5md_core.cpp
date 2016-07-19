@@ -32,7 +32,6 @@ File::File(std::string const &filename, std::string const &script_name)
 {
     boost::filesystem::path script_path(script_name);
     boost::filesystem::path absolute_script_path = boost::filesystem::canonical(script_path);
-    std::cout << "path to script: " << absolute_script_path.string() << std::endl;
     /* Store the filename in a member variable. */
     this->user_filename = filename;
     /* Get number of local particles. */
