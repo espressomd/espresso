@@ -28,9 +28,8 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Wall::all_parameters() const {
-  return ParameterMap{
-      {"normal", Parameter(ParameterType::VECTOR3D, 3, true)},
-      {"dist", Parameter(ParameterType::DOUBLE, true)}};
+  return ParameterMap{{"normal", Parameter(ParameterType::VECTOR3D, true)},
+                      {"dist", Parameter(ParameterType::DOUBLE, true)}};
 }
 
 VariantMap Wall::get_parameters() const {
@@ -39,7 +38,6 @@ VariantMap Wall::get_parameters() const {
 
 void Wall::set_parameter(const string &name,
                          const ScriptInterface::Variant &value) {
-  /* We need to tranform the vector<double> to a Vector3d for normal */
   if (name == "normal") {
     /* Get the variant as vector, and explicitly construct a Vector3d
        from that. */

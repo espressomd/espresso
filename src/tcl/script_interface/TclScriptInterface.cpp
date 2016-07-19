@@ -6,29 +6,29 @@ using namespace std;
 
 /* Source: http://stackoverflow.com/a/6693088/3198615 */
 namespace std {
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-  std::ostringstream ss;
+  template <typename T>
+  std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
+    std::ostringstream ss;
 
-  std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-  ss << v.back();
+    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+    ss << v.back();
 
-  out << ss.str();
+    out << ss.str();
 
-  return out;
-}
+    return out;
+  }
 
-template <typename T, int n>
-std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
-  std::ostringstream ss;
+  template <typename T, int n>
+  std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
+    std::ostringstream ss;
 
-  std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-  ss << v.back();
+    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+    ss << v.back();
 
-  out << ss.str();
+    out << ss.str();
 
-  return out;
-}
+    return out;
+  }
 }
 
 namespace ScriptInterface {
