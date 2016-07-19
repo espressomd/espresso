@@ -99,6 +99,9 @@ if (WITH_PYTHON)
   find_package(PythonLibs REQUIRED)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} 
+                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -177,6 +180,10 @@ list(APPEND LIBRARIES ${MPI_LIBRARIES})
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
+if (NOT DEFINED LIBDIR)
+  set(LIBDIR "lib")
+endif(NOT DEFINED LIBDIR)
 
 set(SCRIPTDIR ${DATA}/scripts)
 
