@@ -92,10 +92,10 @@ if (WITH_CUDA)
   endif(CUDA_FOUND)
 endif(WITH_CUDA)     
 
-find_package(PythonInterp)
+find_package(PythonInterp 2)
 
 if (WITH_PYTHON)
-  find_package(Cython REQUIRED)
+  find_package(Cython 0.23 REQUIRED)
   find_package(PythonLibs REQUIRED)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
