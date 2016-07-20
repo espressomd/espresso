@@ -2,48 +2,23 @@ language: cpp
 dist: trusty
 sudo: false
 
-cache: 
-  - apt
-  - ccache
-
 addons:
   apt:
-    sources:
-      - boost-latest 
-      - ubuntu-toolchain-r-test
-      - george-edison55-precise-backports
     packages:
-      - ccache
-      - tcl-dev
-      - libhdf5-serial-dev 
-      - build-essential 
-      - pep8 
-      - cmake
-      - cmake-data
-      - libboost1.55-dev 
-      - libboost-test1.55-dev
-      - libboost-mpi1.55-dev
-      - libboost-serialization1.55-dev
-      - libopenmpi-dev
-      - openmpi-bin
-      - libfftw3-dev
-      - gcc-4.8
-      - g++-4.8
+      - git
 
 before_install:
- - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
- - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
- - chmod +x miniconda.sh
- - bash miniconda.sh -b -p $HOME/miniconda
- - export PATH=/home/travis/miniconda/bin:$PATH
- - conda update --yes conda
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang++"
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang"
+# - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
+# since the build environment within travis didn't work for our pythontests
+# we first tried to use anaconda. This resulted in errors caused by a wrong
+# python version somewhere in the travis container. Then we gave junest a try.
+# Information on junest: http://fsquillace.github.io/junest-site/
+ - git clone git://github.com/fsquillace/junest ~/junest
+ - PATH=~/junest/bin:$PATH
+ - junest -f -- pacman --noconfirm -Sy cython python-pip python2-pip python2-numpy vtk cmake gcc fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache base-devel python-numpy
 
 install:
- - conda create --yes -n test python=2.7.9
- - source activate test
- - conda install --yes numpy cython pip
+- yes | junest -f -- pip install pep8
 
 env:
   global:
@@ -51,16 +26,9 @@ env:
     - GVER=4.8
   matrix:
     - myconfig=default
-    - myconfig=maxset
-    - myconfig=maxset-gaussrandom
-    - myconfig=maxset-gaussrandomcut
-    - myconfig=molcut
-    - myconfig=rest1
-    - myconfig=rest2
-    - make_check=false myconfig=nocheck-maxset
 
 compiler:
-  - gcc
-  - clang
+ - clang
 
-script: ./maintainer/travis/build_cmake.sh
+script:
+ - junest -- ./maintainer/travis/build_cmake.sh
