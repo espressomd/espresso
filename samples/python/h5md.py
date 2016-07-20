@@ -1,7 +1,7 @@
 import espressomd
 import sys
 import numpy as np
-from espressomd.h5md_core import H5md
+from espressomd.h5md import H5md
 from espressomd import integrate
 
 system = espressomd.System()
@@ -13,7 +13,9 @@ for i in range(10):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=23)
 h5md = H5md("data.h5")
 integrate.integrate(1)
-h5md.write(True, True, True)
+h5md.write_positions()
 integrate.integrate(1)
-h5md.write(True, True, True)
+h5md.write_velocities()
+integrate.integrate(1)
+h5md.write_forces()
 h5md.close()

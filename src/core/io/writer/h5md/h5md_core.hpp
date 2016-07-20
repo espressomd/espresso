@@ -67,7 +67,7 @@ class File
      * @brief General method to write to the datasets which calls more specific write methods.
      * @param Boolean values for position, velocity, force and mass.
      */
-    void Write(bool position = true, bool velocity = true, bool force = true);
+    void Write(bool position, bool velocity, bool force);
 
     /**
      * @brief Method to write the energy contributions to the H5MD file.
