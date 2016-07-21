@@ -1,0 +1,14 @@
+# The purpose of this script is to configure pypresso with the additional
+# variable PYPRESSO_INSTALL. The script is executed only during install time.
+set(PYPRESSO_INSTALL 1)
+
+# cmake scripts don't inherit variables from their parents. Use configure_file
+# as a workaround.
+set(BINDIR @BINDIR@)
+set(LIBDIR @LIBDIR@)
+set(CMAKE_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@)
+set(PYTHON_EXECUTABLE @PYTHON_EXECUTABLE@)
+set(CMAKE_CURRENT_BINARY_DIR @CMAKE_CURRENT_BINARY_DIR@)
+set(PYTHON_INSTDIR @PYTHON_INSTDIR@)
+
+configure_file(@CMAKE_CURRENT_SOURCE_DIR@/pypresso.cmakein @CMAKE_INSTALL_PREFIX@/@BINDIR@/pypresso)
