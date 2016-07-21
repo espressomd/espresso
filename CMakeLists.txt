@@ -24,18 +24,32 @@ project(ESPResSo)
 
 enable_language(CXX)
 
+
+######################################################################
+# CMake internal vars 
+######################################################################
+
+# Allow to add paths outside of the build dir to RPATH, when installing
+# targets.
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-######################################################################
-# User input options                                                   
-######################################################################
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
+
+######################################################################
+# User input options                                                   
+######################################################################
+
+# XXX remove me
+set(CMAKE_INSTALL_PREFIX /home/rbardakcioglu/test)
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
@@ -177,6 +191,10 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 
+#######################################################################
+# Paths
+#######################################################################
+
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
@@ -184,6 +202,12 @@ endif(NOT DEFINED DATA)
 if (NOT DEFINED LIBDIR)
   set(LIBDIR "lib")
 endif(NOT DEFINED LIBDIR)
+
+if (NOT DEFINED BINDIR)
+  set(BINDIR "bin")
+endif(NOT DEFINED BINDIR)
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 
 set(SCRIPTDIR ${DATA}/scripts)
 

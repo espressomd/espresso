@@ -43,6 +43,7 @@ if(CUDA)
   cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
+  install(TARGETS EspressoCuda DESTINATION ${LIBDIR})
   add_dependencies(EspressoCuda EspressoConfig)
 
   set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
