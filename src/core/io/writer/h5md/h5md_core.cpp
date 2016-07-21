@@ -36,6 +36,9 @@ File::File(std::string const &filename, std::string const &script_name)
     this->user_filename = filename;
     /* Get number of local particles. */
     this->n_local_part = cells_get_n_particles();
+    if(!this->n_local_part > 0) {
+        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
+    } 
     /* Check if a file with given filename exists. */
     bool file_exists = this->check_file_exists(filename);
     /* If it exists, check for the H5MD structure. */
