@@ -24,6 +24,7 @@ addons:
       - libboost-test1.55-dev
       - libboost-mpi1.55-dev
       - libboost-serialization1.55-dev
+      - libboost-filesystem-dev
       - libopenmpi-dev
       - openmpi-bin
       - libfftw3-dev
