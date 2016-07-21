@@ -85,20 +85,25 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 
       for (i = 0; i < np; i++) {
-
-        if (needsR())
-          R.push_back(Vector3d{p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]});
+        if (needsR()) {
+          /* Either variant is ugly, but there seems to begin
+           * no better solution at the moment. */
+          R.emplace_back<std::initializer_list<double>>(
+              {p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]});
+        }
 #ifdef ELECTROSTATICS
         if (needsQ())
           Q.push_back(p[i].p.q);
 #endif
 #ifdef DIPOLES
         if (needsDip())
-          Dip.push_back({p[i].r.dip[0], p[i].r.dip[1], p[i].r.dip[2]});
+          Dip.emplace_back(
+              Vector3{p[i].r.dip[0], p[i].r.dip[1], p[i].r.dip[2]});
 #endif
 #ifdef ROTATION
         if (needsQuatu())
-          Quatu.push_back({p[i].r.quatu[0], p[i].r.quatu[1], p[i].r.quatu[2]});
+          Quatu.emplace_back(
+              Vector3{p[i].r.quatu[0], p[i].r.quatu[1], p[i].r.quatu[2]});
 #endif
       }
     }
@@ -126,7 +131,8 @@ SystemInterface::const_vec_iterator &EspressoSystemInterface::dipBegin() {
 }
 
 const SystemInterface::const_vec_iterator &EspressoSystemInterface::dipEnd() {
-  m_dip_end = Dip.end();  return m_dip_end;
+  m_dip_end = Dip.end();
+  return m_dip_end;
 }
 #endif
 
