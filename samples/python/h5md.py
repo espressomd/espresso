@@ -1,7 +1,7 @@
 import espressomd
 import sys
 import numpy as np
-from espressomd.h5md import H5md
+from espressomd.io.writer.h5md import H5md
 from espressomd import integrate
 
 system = espressomd.System()

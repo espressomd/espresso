@@ -1,0 +1,6 @@
+if (HDF5_FOUND)
+    SET(cython_SRC  ${cython_SRC} "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/writer/h5md.pyx" CACHE INTERNAL "cython_SRC" FORCE)
+    SET(cython_HEADER  ${cython_HEADER} "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/writer/h5md.pxd" CACHE INTERNAL "cython_HEADER" FORCE)
+    SET(cython_AUX  ${cython_AUX} "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/writer/__init__.py" CACHE INTERNAL "cython_AUX" FORCE)
+endif(HDF5_FOUND)
+SET(cython_AUX  ${cython_AUX} "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/writer/__init__.py" CACHE INTERNAL "cython_AUX" FORCE)
