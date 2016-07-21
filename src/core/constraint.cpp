@@ -24,38 +24,34 @@
 */
 
 #include "constraint.hpp"
+
+#ifdef CONSTRAINTS
+
 #include "energy_inline.hpp"
 #include "forces_inline.hpp"
+#include "interaction_data.hpp"
 #include "tunable_slip.hpp"
-#include <algorithm>
 
 // for the charged rod "constraint"
 #define C_GAMMA 0.57721566490153286060651209008
 
 int reflection_happened;
 
-#ifdef CONSTRAINTS
-
-int n_constraints = 0;
-Constraint *constraints = NULL;
+Constraints constraints;
 
 Constraint *generate_constraint() {
-  n_constraints++;
-  constraints = (Constraint *)Utils::realloc(
-      constraints, n_constraints * sizeof(Constraint));
-  memset(&constraints[n_constraints - 1], 0, sizeof(Constraint));
-  constraints[n_constraints - 1].type = CONSTRAINT_NONE;
-  constraints[n_constraints - 1].part_rep.p.identity = -n_constraints;
+  constraints.emplace_back();
 
-  return &constraints[n_constraints - 1];
+  return &(constraints.back());
 }
 
 void init_constraint_forces() {
   int n, i;
 
-  for (n = 0; n < n_constraints; n++)
-    for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f.f[i] = 0;
+  for (auto &c : constraints) {
+    for (int i = 0; i < 3; i++)
+      c.part_rep.f.f[i] = 0;
+  }
 }
 
 static double sign(double x) {
@@ -2183,7 +2179,7 @@ void calculate_voxel_dist(Particle *p1, double ppos[3], Particle *c_p,
   // double vec_cut[3];
   // double halfgrid = lbpar.agrid/2.0;
   ////printf("n %.0lf %.0lf %.0lf pos %.0lf %.0lf %.0lf \n",
-  ///c->n[0],c->n[1],c->n[2],c->pos[0],c->pos[1],c->pos[2]);
+  /// c->n[0],c->n[1],c->n[2],c->pos[0],c->pos[1],c->pos[2]);
 
   // c_dist=0.0;
   // c_dist_cut=0.0;
@@ -2213,7 +2209,7 @@ void calculate_voxel_dist(Particle *p1, double ppos[3], Particle *c_p,
   //}
 
   ////printf("c_dist %.2lf vec %.2lf %.2lf %.2lf\n", c_dist,
-  ///vec[0],vec[1],vec[2]);
+  /// vec[0],vec[1],vec[2]);
 
   ////*dist = -c_dist;//0.5 - c_dist;
   ////fac = *dist / c_dist;
@@ -2336,13 +2332,6 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
   p1->r.p[1] = p1->r.p[1] - 2 * vec[1];
   p1->r.p[2] = p1->r.p[2] - 2 * vec[2];
 
-  /*  This can show the folded position after reflection
-      memmove(folded_pos, p1->r.p, 3*sizeof(double));
-      memmove(img, p1->l.i, 3*sizeof(int));
-      fold_position(folded_pos, img);
-      printf("position after reflection %f %f %f\n",folded_pos[0],
-     folded_pos[1], folded_pos[2]); */
-
   /* vec seams to be the vector that points from the wall to the particle*/
   /* now normalize it */
   if (reflecting == 1) {
@@ -2365,9 +2354,10 @@ void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
 }
 
 void add_constraints_forces(Particle *p1) {
-  if (n_constraints == 0)
+  if (constraints.empty())
     return;
-  int n, j;
+
+  int j;
   double dist, vec[3], force[3], torque1[3], torque2[3];
 
   IA_parameters *ia_params;
@@ -2379,7 +2369,7 @@ void add_constraints_forces(Particle *p1) {
   memmove(img, p1->l.i, 3 * sizeof(int));
   fold_position(folded_pos, img);
 
-  for (n = 0; n < n_constraints; n++) {
+  for (int n = 0; n < constraints.size(); n++) {
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     dist = 0.;
     for (j = 0; j < 3; j++) {
@@ -2682,7 +2672,7 @@ void add_constraints_forces(Particle *p1) {
 }
 
 double add_constraints_energy(Particle *p1) {
-  int n, type;
+  int type;
   double dist, vec[3];
   double nonbonded_en, coulomb_en, magnetic_en;
   IA_parameters *ia_params;
@@ -2693,7 +2683,7 @@ double add_constraints_energy(Particle *p1) {
   memmove(folded_pos, p1->r.p, 3 * sizeof(double));
   memmove(img, p1->l.i, 3 * sizeof(int));
   fold_position(folded_pos, img);
-  for (n = 0; n < n_constraints; n++) {
+  for (int n = 0; n < constraints.size(); n++) {
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     nonbonded_en = 0.;
     coulomb_en = 0.;
@@ -2936,13 +2926,8 @@ void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p,
   double c22[2] = {box_l_x / 2 + c->pore_width / 2 - c->lower_smoothing_radius,
                    c->pore_mouth - c->pore_length + c->lower_smoothing_radius};
 
-  //  printf("c11 %f %f\n", c11[0], c11[1]);
-  //  printf("c12 %f %f\n", c12[0], c12[1]);
-  //  printf("c21 %f %f\n", c21[0], c21[1]);
-  //  printf("c22 %f %f\n", c22[0], c22[1]);
-
   if (ppos[2] > c->pore_mouth + c->channel_width / 2) {
-    //    printf("upper wall\n");
+
     // Feel the upper wall
     *dist = c->pore_mouth + c->channel_width - ppos[2];
     vec[0] = vec[1] = 0;

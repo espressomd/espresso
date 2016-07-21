@@ -27,15 +27,17 @@
  *  see also \ref interaction_data.hpp
  */
 
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
+#include "config.hpp"
 
 #ifdef CONSTRAINTS
 
-/** number of constraints. */
-extern int n_constraints;
-/** field containing constraints. */
-extern Constraint *constraints;
+#include <vector>
+
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
+
+typedef std::vector<Constraint> Constraints;
+extern Constraints constraints;
 
 extern int reflection_happened;
 
