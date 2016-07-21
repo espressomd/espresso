@@ -150,24 +150,23 @@ int constraint_collision(double *p1, double *p2) {
   memmove(folded_pos2, p2, 3 * sizeof(double));
   fold_position(folded_pos2, img);
 
-  for (i = 0; i < n_constraints; i++) {
-    c = &constraints[i];
-    switch (c->type) {
+  for (auto &c : constraints) {
+    switch (c.type) {
     case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1, folded_pos1, &part1, &c->c.wal, &d1, v);
-      calculate_wall_dist(&part2, folded_pos2, &part2, &c->c.wal, &d2, v);
+      calculate_wall_dist(&part1, folded_pos1, &part1, &c.c.wal, &d1, v);
+      calculate_wall_dist(&part2, folded_pos2, &part2, &c.c.wal, &d2, v);
       if (d1 * d2 <= 0.0)
         return 1;
       break;
     case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1, folded_pos1, &part1, &c->c.sph, &d1, v);
-      calculate_sphere_dist(&part2, folded_pos2, &part2, &c->c.sph, &d2, v);
+      calculate_sphere_dist(&part1, folded_pos1, &part1, &c.c.sph, &d1, v);
+      calculate_sphere_dist(&part2, folded_pos2, &part2, &c.c.sph, &d2, v);
       if (d1 * d2 < 0.0)
         return 1;
       break;
     case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1, folded_pos1, &part1, &c->c.cyl, &d1, v);
-      calculate_cylinder_dist(&part2, folded_pos2, &part2, &c->c.cyl, &d2, v);
+      calculate_cylinder_dist(&part1, folded_pos1, &part1, &c.c.cyl, &d1, v);
+      calculate_cylinder_dist(&part2, folded_pos2, &part2, &c.c.cyl, &d2, v);
       if (d1 * d2 < 0.0)
         return 1;
       break;
@@ -906,9 +905,8 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
     if (k == max_try - 1)
       break;
     else
-      ii =
-          0; /* Get out if max_try is about to be reached, preventing dangling
-                unchecked bond suggestions. */
+      ii = 0; /* Get out if max_try is about to be reached, preventing dangling
+                 unchecked bond suggestions. */
     if (crossL < 2 * N_P) {
       for (i = 0; i < 2 * N_P;
            i++) { /* If crosslinks violated the rules & had to be removed,
@@ -958,14 +956,12 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
       }
       free(bonds[2 * i]);
       if (link[2 * i] >= 0)
-        free(links[2 *
-                   i]); /* else crash(); because links[2*i]   has never been
-                           malloc()ed then */
+        free(links[2 * i]); /* else crash(); because links[2*i]   has never been
+                               malloc()ed then */
       free(bonds[2 * i + 1]);
       if (link[2 * i + 1] >= 0)
-        free(
-            links[2 * i + 1]); /* else crash(); because links[2*i+1] has never
-                                  been malloc()ed then */
+        free(links[2 * i + 1]); /* else crash(); because links[2*i+1] has never
+                                   been malloc()ed then */
     }
     free(bond);
     free(bonds);

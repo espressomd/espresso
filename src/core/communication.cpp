@@ -2187,19 +2187,13 @@ void mpi_bcast_constraint(int del_num) {
 
   if (del_num == -1) {
     /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
+    MPI_Bcast(&(constraints.back()), sizeof(Constraint), MPI_BYTE, 0,
               comm_cart);
   } else if (del_num == -2) {
     /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
+    constraints.clear();
   } else {
-    memmove(&constraints[del_num], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
+    constraints.erase(constraints.begin() + del_num);
   }
 
   on_constraint_change();
@@ -2209,22 +2203,14 @@ void mpi_bcast_constraint(int del_num) {
 void mpi_bcast_constraint_slave(int node, int parm) {
 #ifdef CONSTRAINTS
   if (parm == -1) {
-    n_constraints++;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
+    Constraint new_constraint;
+    MPI_Bcast(&new_constraint, sizeof(Constraint), MPI_BYTE, 0, comm_cart);
+
+    constraints.push_back(new_constraint);
   } else if (parm == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
+    constraints.clear();
   } else {
-    memmove(&constraints[parm], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
+    constraints.erase(constraints.begin() + parm);
   }
 
   on_constraint_change();
@@ -2851,18 +2837,20 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    /* here the setting actually happens, if the particle belongs to the local
-     * node */
+/* here the setting actually happens, if the particle belongs to the local
+ * node */
 #ifndef ROTATIONAL_INERTIA
     p->p.gamma_rot = gamma_rot;
 #else
-    for ( j = 0 ; j < 3 ; j++) p->p.gamma_rot[j] = gamma_rot[j];
+    for (j = 0; j < 3; j++)
+      p->p.gamma_rot[j] = gamma_rot[j];
 #endif
   } else {
 #ifndef ROTATIONAL_INERTIA
     MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 #else
-    for ( j = 0 ; j < 3 ; j++) MPI_Send(&(gamma_rot[j]), 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    for (j = 0; j < 3; j++)
+      MPI_Send(&(gamma_rot[j]), 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 #endif
   }
 
@@ -2877,15 +2865,14 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    /* here the setting happens for nonlocal nodes */
+/* here the setting happens for nonlocal nodes */
 #ifndef ROTATIONAL_INERTIA
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma_rot = s_buf;
 #else
-    for ( j = 0 ; j < 3 ; j++)
-    {
-    	MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    	p->p.gamma_rot[j] = s_buf;
+    for (j = 0; j < 3; j++) {
+      MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+      p->p.gamma_rot[j] = s_buf;
     }
 #endif
   }

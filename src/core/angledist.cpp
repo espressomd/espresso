@@ -25,6 +25,9 @@
 #include "angledist.hpp"
 
 #ifdef BOND_ANGLEDIST
+
+#include <algorithm>
+
 #include "communication.hpp"
 #include "constraint.hpp"
 #include "grid.hpp"
@@ -58,24 +61,20 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   double vec1[3], vec2[3], d2i = 0.0, dist2 = 0.0;
 
   double normal, folded_pos[3];
-  double pwdist[n_constraints], pwdistmin = 0.0;
-  Constraint_wall wall;
-  int j, k;
-  int img[3];
 
-  wall.d = 0;
+  int img[3];
 
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   const double dist1 = sqrlen(vec1);
   const double d1i = 1.0 / sqrt(dist1);
-  for (j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++)
     vec1[j] *= d1i;
   /* vector from p_mid to p_right */
   get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
   dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
-  for (j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++)
     vec2[j] *= d2i;
 
   const double phimn = iaparams->p.angledist.phimin;
@@ -88,35 +87,21 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   memmove(img, p_mid->l.i, 3 * sizeof(int));
   fold_position(folded_pos, img);
 
-  /* Calculates distance between p_mid and constraint */
-  for (k = 0; k < n_constraints; k++) {
-    pwdist[k] = 0.0;
-  }
-  for (k = 0; k < n_constraints; k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
+  double pwdistmin = std::numeric_limits<double>::infinity();
+  double pwdistmin_d = 0.0;
 
-      /* dist is distance of wall from origin */
-      wall = constraints[k].c.wal;
+  for (auto const &c : constraints) {
+    if (c.type == CONSTRAINT_WAL) {
+      Constraint_wall const &wall = c.c.wal;
 
-      /* check that constraint vector is normalised */
-      normal = 0.0;
-      for (j = 0; j < 3; j++)
-        normal += wall.n[j] * wall.n[j];
-      if (sqrt(normal) != 1.0) {
-        for (j = 0; j < 3; j++)
-          wall.n[j] = wall.n[j] / normal;
+      double dist = -wall.d;
+      for (int j = 0; j < 3; j++) {
+        dist += folded_pos[j] * wall.n[j];
       }
 
-      /* pwdist is distance of wall from p_mid */
-      pwdist[k] = -1.0 * constraints[k].c.wal.d;
-      for (j = 0; j < 3; j++) {
-        pwdist[k] += folded_pos[j] * constraints[k].c.wal.n[j];
-      }
-      if (k == 0) {
-        pwdistmin = pwdist[k];
-      }
-      if (pwdist[k] <= pwdistmin) {
-        pwdistmin = pwdist[k];
+      if (dist < pwdistmin) {
+        pwdistmin = dist;
+        pwdistmin_d = wall.d;
       }
     }
   }
@@ -124,7 +109,8 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   /*get phi0(z)*/
   if (pwdistmin <= distmn) {
     return phimn;
-  } else if (pwdistmin >= distmx && pwdistmin <= box_l[2] - wall.d - distmx) {
+  } else if (pwdistmin >= distmx &&
+             pwdistmin <= box_l[2] - pwdistmin_d - distmx) {
     return phimx;
   } else {
     const double drange = (pwdistmin - distmn) * PI / (distmx - distmn);
