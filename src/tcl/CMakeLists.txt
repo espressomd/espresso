@@ -17,5 +17,7 @@ add_definitions(-DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 add_executable(Espresso ${Espresso_SRC} ${MPI_SOURCE})
 # RPATH is set by root level CMakeLists.txt
+install(TARGETS Espresso DESTINATION ${BINDIR})
+
 target_link_libraries(Espresso EspressoCore ${LIBRARIES})
 
