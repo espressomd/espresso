@@ -122,17 +122,25 @@ end "BUILD"
 if $make_check; then
     start "TEST"
 
-    cmd "make check_tcl $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
+    make -k check
 
-    cmd "make check_unit_tests $make_params"
     ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
+
+    echo "make check returned $ec"
+
+# Did any test fail?
+    if [ $ec -ne 0 ]; then
+        echo "Checking for test logs."
+        TCL_LOG="$builddir/testsuite/tcl/Testing/Temporary/LastTest.log"
+        PYTHON_LOG="$builddir/testsuite/python/Testing/Temporary/LastTest.log"
+        UNIT_LOG="$builddir/testsuite/src/core/unit_tests/Testing/Temporary/LastTest.log"
+
+        for LOG in $TCL_LOG $PYTHON_LOG $UNIT_LOG; do
+                echo $LOG         
+		if [ -f $LOG ]; then
+			cat $LOG;
+		fi
+	done         
         exit $ec
     fi
 
