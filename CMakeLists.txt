@@ -119,7 +119,12 @@ if (FFTW3_FOUND)
 endif(FFTW3_FOUND)
 
 if (WITH_TCL)
-  find_package(TCL REQUIRED)
+  find_package(TCL)
+
+  if(NOT TCL_FOUND)
+	  message(FATAL_ERROR "TCL not found.")
+  endif()
+
   include_directories(${TCL_INCLUDE_PATH})
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
