@@ -15,7 +15,6 @@ addons:
     packages:
       - ccache
       - tcl-dev
-      - libhdf5-mpi-dev
       - build-essential 
       - pep8 
       - cmake
@@ -32,6 +31,8 @@ addons:
       - g++-4.8
 
 before_install:
+ - wget -qO- https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz | tar -xz &&
+   cd hdf5-${HDF5_VERSION} && ./configure --prefix=$HOME/hdf5 && make -j4 &> /dev/null && make install && cd ..;
  - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
  - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
  - chmod +x miniconda.sh
