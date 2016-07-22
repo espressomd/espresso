@@ -84,3 +84,7 @@ foreach(auxfile ${cython_AUX})
                     )
 endforeach(auxfile)
 
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
+	PATTERN "CMakeFiles/*" EXCLUDE PATTERN "*.cpp" EXCLUDE
+	PATTERN "*.cmake" EXCLUDE) 
+
