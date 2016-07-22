@@ -29,6 +29,9 @@ int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
 
 double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from tcl interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
 
+int accepted_configurational_MC_moves=0;
+int tried_configurational_MC_moves=0;
+
 //declaration of boring helper functions
 float factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types); //should only be used at when defining a new reaction
@@ -616,7 +619,8 @@ bool is_in_list(int value, int* list, int len_list){
 }
 
 bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer){
-	//this move is without wang_landau
+	
+	tried_configurational_MC_moves+=1;
 	int p_id;
 	double E_pot_old=calculate_current_potential_energy_of_system(0);
 
@@ -725,6 +729,7 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
+		accepted_configurational_MC_moves+=1;
 		got_accepted=true;
 	}else{
 		//reject

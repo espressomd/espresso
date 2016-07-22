@@ -348,6 +348,12 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 					ARG_IS_D(1,current_reaction_system.given_length_in_simulation_units);
 				}					
 			}
+			if(ARG1_IS_S("print_acceptance_rate")){
+				provided_unknown_command=false;
+				char buffer[3000];
+				sprintf(buffer, "acceptance rate for configurational moves is %f", (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves);
+				Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
+			}
 		}
 		///////////////////////////////////////////// Wang-Landau algorithm
 		if (ARG1_IS_S("wang_landau")){ // for performance reasons skip other tests

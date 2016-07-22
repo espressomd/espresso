@@ -40,6 +40,9 @@ typedef struct reaction_system {
 
 extern reaction_system current_reaction_system;
 
+extern int accepted_configurational_MC_moves;
+extern int tried_configurational_MC_moves;
+
 void set_cuboid_reaction_ensemble_volume();
 
 int do_reaction();
