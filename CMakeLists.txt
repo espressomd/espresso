@@ -29,10 +29,6 @@ enable_language(CXX)
 # CMake internal vars 
 ######################################################################
 
-# Allow to add paths outside of the build dir to RPATH, when installing
-# targets.
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -45,11 +41,8 @@ endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 ######################################################################
-# User input options                                                   
+# User input options
 ######################################################################
-
-# XXX remove me
-set(CMAKE_INSTALL_PREFIX /home/rbardakcioglu/test)
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
