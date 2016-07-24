@@ -32,3 +32,4 @@ compiler:
 
 script:
  - junest -- ./maintainer/travis/build_cmake.sh
+ - junest -- ./maintainer/travis/build.sh
