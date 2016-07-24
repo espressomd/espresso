@@ -142,19 +142,19 @@ end "BUILD"
 if $make_check; then
     start "TEST"
 
-    cmd "make check_python $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
-    
-     cmd "make check_tcl $make_params"
-     ec=$?
-     if [ $ec != 0 ]; then	
-         cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
-         exit $ec
-     fi
+#    cmd "make check_python $make_params"
+#    ec=$?
+#    if [ $ec != 0 ]; then	
+#        cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
+#        exit $ec
+#    fi
+#    
+#     cmd "make check_tcl $make_params"
+#     ec=$?
+#     if [ $ec != 0 ]; then	
+#         cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
+#         exit $ec
+#     fi
 
      cmd "make check_unit_tests $make_params"
      ec=$?
