@@ -28,8 +28,8 @@ env:
   matrix:
     - myconfig=default
 
-compiler:
- - clang
+#compiler:
+# - clang
 
 script:
  - junest -f -- rm /usr/bin/python
