@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cimport cellsystem
+cimport integrate
 from globals cimport *
+import numpy as np
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -92,4 +94,83 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
             s["use_verlet_lists"] = dd.use_vList
 
+        s["skin"] = skin
+        s["local_box_l"] = np.array([local_box_l[0], local_box_l[1], local_box_l[2]])
+        s["max_cut"] = max_cut
+        s["max_range"] = max_range
+        s["max_skin"] = max_skin
+        s["n_layers"] = n_layers
+        s["verlet_reuse"] = verlet_reuse
+        s["n_nodes"] = n_nodes
+        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
+        s["cell_grid"] = np.array([dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
+        s["cell_grid"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+        s["max_num_cells"] = max_num_cells
+        s["min_num_cells"] = min_num_cells
+
         return s
+
+
+    property max_num_cells:
+        def __set__(self, int _max_num_cells):
+            global max_num_cells
+            if _max_num_cells < min_num_cells:
+                raise ValueError(
+                    "max_num_cells must be >= min_num_cells (currently " + str(min_num_cells) + ")")
+            max_num_cells = _max_num_cells
+            mpi_bcast_parameter(FIELD_MAXNUMCELLS)
+
+        def __get__(self):
+            return max_num_cells
+
+    property min_num_cells:
+        def __set__(self, int _min_num_cells):
+            global min_num_cells
+            min = calc_processor_min_num_cells()
+            if _min_num_cells < min:
+                raise ValueError(
+                    "min_num_cells must be >= processor_min_num_cells (currently " + str(min) + ")")
+            if _min_num_cells > max_num_cells:
+                raise ValueError(
+                    "min_num_cells must be <= max_num_cells (currently " + str(max_num_cells) + ")")
+            min_num_cells = _min_num_cells
+            mpi_bcast_parameter(FIELD_MINNUMCELLS)
+
+        def __get__(self):
+            return min_num_cells
+
+
+    # setter deprecated
+    property node_grid:
+        def __set__(self, _node_grid):
+            global node_grid
+            if len(_node_grid) != 3:
+                raise ValueError("node_grid must be of length 3")
+            for i in range(3):
+                if _node_grid[i] <= 0:
+                    raise ValueError("node_grid must be > 0 in all directions")
+                node_grid[i] = _node_grid[i]
+            if _node_grid[0] * _node_grid[1] * _node_grid[2] != n_nodes:
+                raise ValueError(
+                    "node_grid does not fit n_nodes (" + str(n_nodes) + ")")
+            for i in range(3):
+                node_grid[i] = _node_grid[i]
+            mpi_bcast_parameter(FIELD_NODEGRID)
+
+        def __get__(self):
+            return np.array([node_grid[0], node_grid[1], node_grid[2]])
+
+
+    property skin:
+        def __set__(self, double _skin):
+            if _skin <= 0:
+                raise ValueError("Skin must be >= 0")
+            global skin
+            skin = _skin
+            mpi_bcast_parameter(29)
+            integrate.skin_set = True
+
+        def __get__(self):
+            return skin
+
+
