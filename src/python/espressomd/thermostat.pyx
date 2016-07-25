@@ -104,7 +104,7 @@ cdef class Thermostat:
 
     def set_npt(self, kT="", p_diff="", piston=""):
         """Sets the NPT thermostat with required parameters 'temperature' 'p_diff' 'piston'"""
-        if kT == "" or p_diff == "" or piston="":
+        if kT == "" or p_diff == "" or piston == "":
             raise ValueError(
                 "kT, p_diff and piston have to be given as keyword args")
         if not isinstance(kT, float) or not isinstance(p_diff, piston) or float(kT) < 0. or float(piston) < 0.:
