@@ -151,19 +151,19 @@ cmd "make" || exit $?
 end "BUILD"
 
 # CHECK
-if $make_check; then
-    start "TEST"
-
-    cmd "make check $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then
-        cat $srcdir/testsuite/runtest.log
-        exit $ec
-    fi
-
-    end "TEST"
-fi
-
-for i in `find . -name  "*.gcno"` ; do
-    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
-done
+#if $make_check; then
+#    start "TEST"
+#
+#    cmd "make check $make_params"
+#    ec=$?
+#    if [ $ec != 0 ]; then
+#        cat $srcdir/testsuite/runtest.log
+#        exit $ec
+#    fi
+#
+#    end "TEST"
+#fi
+#
+#for i in `find . -name  "*.gcno"` ; do
+#    (cd `dirname $i` ; gcov `basename $i` > coverage.log 2>&1 )
+#done
