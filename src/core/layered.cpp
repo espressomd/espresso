@@ -35,7 +35,7 @@
 #include "pressure.hpp"
 #include "energy.hpp"
 #include "energy_inline.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "domain_decomposition.hpp"
 
 /* Organization: Layers only in one direction.

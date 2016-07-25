@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "electrokinetics.hpp"

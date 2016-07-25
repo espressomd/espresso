@@ -20,6 +20,7 @@
 # It needs the variables
 
 # heed the environment variable "ESPRESSO_MYCONFIG"
+if(NOT MYCONFIG_FILE)
 if (ENV{ESPRESSO_MYCONFIG})
   set(MYCONFIG_FILE ENV{ESPRESSO_MYCONFIG})
 else()
@@ -33,6 +34,8 @@ else()
     set(MYCONFIG_FILE ${CMAKE_SOURCE_DIR}/src/core/myconfig-default.hpp)
   endif()
 endif()
+endif()
+
 configure_file(${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp COPYONLY)
 add_custom_target(myconfig DEPENDS ${CMAKE_BINARY_DIR}/src/core/myconfig-final.hpp)
 message(STATUS "Config file: ${MYCONFIG_FILE}")

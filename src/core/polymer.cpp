@@ -32,7 +32,7 @@
 
 #include "polymer.hpp"
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -150,33 +150,8 @@ int constraint_collision(double *p1, double *p2) {
   memmove(folded_pos2, p2, 3 * sizeof(double));
   fold_position(folded_pos2, img);
 
-  for (auto &c : constraints) {
-    switch (c.type) {
-    case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1, folded_pos1, &part1, &c.c.wal, &d1, v);
-      calculate_wall_dist(&part2, folded_pos2, &part2, &c.c.wal, &d2, v);
-      if (d1 * d2 <= 0.0)
-        return 1;
-      break;
-    case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1, folded_pos1, &part1, &c.c.sph, &d1, v);
-      calculate_sphere_dist(&part2, folded_pos2, &part2, &c.c.sph, &d2, v);
-      if (d1 * d2 < 0.0)
-        return 1;
-      break;
-    case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1, folded_pos1, &part1, &c.c.cyl, &d1, v);
-      calculate_cylinder_dist(&part2, folded_pos2, &part2, &c.c.cyl, &d2, v);
-      if (d1 * d2 < 0.0)
-        return 1;
-      break;
-    default:
-      if (warnings)
-        fprintf(stderr, "Warning: Only wall, cylinder and sphere constraints "
-                        "can be excluded from the polymer accessible "
-                        "volume.\n");
-      break;
-    }
+  for (auto &c : Constraints::constraints) {
+    ;
   }
   return 0;
 }

@@ -32,7 +32,7 @@
 #include <limits>
 
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
 #include "interaction_data.hpp"

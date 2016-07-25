@@ -38,7 +38,7 @@
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
 
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "utils.hpp"
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)

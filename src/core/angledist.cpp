@@ -29,7 +29,7 @@
 #include <algorithm>
 
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "grid.hpp"
 
 int angledist_set_params(int bond_type, double bend, double phimin,

@@ -28,11 +28,7 @@ namespace ScriptInterface {
 namespace Shapes {
 
 void initialize() {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << std::endl;
-  ParallelScriptInterface<Shapes::Wall>::register_callback();
-  Utils::Factory<ScriptInterfaceBase>::register_new<
-      ParallelScriptInterface<Shapes::Wall>>("Shapes::Wall");
+  Utils::Factory<ScriptInterfaceBase>::register_new<Wall>("Shapes::Wall");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -26,7 +26,6 @@
 #include "actor/HarmonicWell_tcl.hpp"
 #include "binary_file_tcl.hpp"
 #include "cells_tcl.hpp"
-#include "constraint_tcl.hpp"
 #include "domain_decomposition_tcl.hpp"
 #include "dpd_tcl.hpp"
 #include "electrokinetics_tcl.hpp"
@@ -204,9 +203,7 @@ static void tcl_register_commands(Tcl_Interp *interp) {
 #endif
   /* in mpiio_tcl.cpp */
   REGISTER_COMMAND("mpiio", tclcommand_mpiio);
-  /* in constraint.cpp */
-  REGISTER_COMMAND("constraint", tclcommand_constraint);
-  /* in external_potential.hpp */
+    /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in readpdb.cpp */
   REGISTER_COMMAND("readpdb", tclcommand_readpdb);

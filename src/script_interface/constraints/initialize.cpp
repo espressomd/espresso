@@ -18,7 +18,6 @@
 */
 
 #include "initialize.hpp"
-#include "ChargedRod.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
 
@@ -28,13 +27,13 @@ namespace ScriptInterface {
 namespace Constraints {
 
 void initialize() {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << std::endl;
-  ParallelScriptInterface<
-      ScriptInterface::Constraints::ChargedRod>::register_callback();
-  Utils::Factory<ScriptInterfaceBase>::register_new<
-      ParallelScriptInterface<ScriptInterface::Constraints::ChargedRod>>(
-      "Constraints::ChargedRod");
+  // std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+  //           << __PRETTY_FUNCTION__ << std::endl;
+  // ParallelScriptInterface<
+  //     ScriptInterface::Constraints::ChargedRod>::register_callback();
+  // Utils::Factory<ScriptInterfaceBase>::register_new<
+  //     ParallelScriptInterface<ScriptInterface::Constraints::ChargedRod>>(
+  //     "Constraints::ChargedRod");
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

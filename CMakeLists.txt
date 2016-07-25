@@ -44,6 +44,9 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 
+# Write compile commands to file, for various tools...
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")

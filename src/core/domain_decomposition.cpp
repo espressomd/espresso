@@ -32,7 +32,7 @@
 #include "forces.hpp"
 #include "pressure.hpp"
 #include "energy_inline.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "initialize.hpp"
 #include "external_potential.hpp"
 

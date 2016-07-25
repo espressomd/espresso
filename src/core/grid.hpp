@@ -266,9 +266,7 @@ inline void fold_coordinate(double pos[3], int image_box[3], int dir) {
     i. e. a previously folded position will be folded correctly.
 */
 inline void fold_position(double pos[3], double vel[3], int image_box[3]) {
-
-  int i;
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     fold_coordinate(pos, vel, image_box, i);
 }
 
@@ -280,8 +278,7 @@ inline void fold_position(double pos[3], double vel[3], int image_box[3]) {
     i. e. a previously folded position will be folded correctly.
 */
 inline void fold_position(double pos[3], int image_box[3]) {
-  int i;
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
 }
 

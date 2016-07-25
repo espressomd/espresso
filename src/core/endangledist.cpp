@@ -23,7 +23,7 @@
  *  Implementation of \ref endangledist.hpp
  */
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"

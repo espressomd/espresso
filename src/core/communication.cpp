@@ -122,9 +122,7 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave)                                                \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
-  CB(mpi_bcast_constraint_slave)                                               \
   CB(mpi_cap_forces_slave)                                                     \
-  CB(mpi_get_constraint_force_slave)                                           \
   CB(mpi_get_configtemp_slave)                                                 \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
@@ -2185,43 +2183,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
 #endif
 }
 
-/*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(int del_num) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new constraint */
-    MPI_Bcast(&(constraints.back()), sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
-  } else if (del_num == -2) {
-    /* delete all constraints */
-    constraints.clear();
-  } else {
-    constraints.erase(constraints.begin() + del_num);
-  }
-
-  on_constraint_change();
-#endif
-}
-
-void mpi_bcast_constraint_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  if (parm == -1) {
-    Constraint new_constraint;
-    MPI_Bcast(&new_constraint, sizeof(Constraint), MPI_BYTE, 0, comm_cart);
-
-    constraints.push_back(new_constraint);
-  } else if (parm == -2) {
-    constraints.clear();
-  } else {
-    constraints.erase(constraints.begin() + parm);
-  }
-
-  on_constraint_change();
-#endif
-}
-
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lbboundary(int del_num) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -2328,22 +2289,6 @@ void mpi_cap_forces_slave(int node, int parm) {
     check_tab_forcecap(force_cap);
   */
   on_short_range_ia_change();
-#endif
-}
-
-/*************** REQ_GET_CONSFOR ************/
-void mpi_get_constraint_force(int cons, double force[3]) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-#endif
-}
-
-void mpi_get_constraint_force_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
 #endif
 }
 
