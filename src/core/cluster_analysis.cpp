@@ -19,12 +19,12 @@ void ClusterStructure::analyze_pair()
     if (! local_particles[i]) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! local_particles[j]) continue;
-      count(*local_particles[i],*local_particles[j]); // maybe no *
+      add_pair(*local_particles[i],*local_particles[j]); // maybe no *
     }
   }
 }
 
-ClusterStructure::add_pair(Particle& p1, Particle& p2) {
+void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
 // * check, if there's a neighbor
  //   * No: Then go on to the next particle
  // * Yes: Then if
@@ -35,15 +35,14 @@ ClusterStructure::add_pair(Particle& p1, Particle& p2) {
  //   * so that they can be put together later
   if (! nc) {
     runtimeErrorMsg() << "No cluster criterion defined"; 
-    return
+    return;
   }
-  //if (nc->are_neighbors(p1,p2)) {
-  if (1>0) {
+  if (nc->are_neighbors(p1,p2)) {
      if // None belongs to a cluster
-     ((cluster_id.find(p1.p.identity)==cluster_id.end()) && (cluster_id.find(p2.p.identity)==cluster_id.end())
+     ((cluster_id.find(p1.p.identity)==cluster_id.end()) && (cluster_id.find(p2.p.identity)==cluster_id.end()))
     {  
       // Both particles belong to the same, new cluster
-      cid=get_next_free_cluster_id();
+      int cid=get_next_free_cluster_id();
 
       // assign the 
       cluster_id[p1.p.identity]=cid;
@@ -52,7 +51,7 @@ ClusterStructure::add_pair(Particle& p1, Particle& p2) {
     else if // j belongs to a cluster but i doesn't
       ((cluster_id.find(p1.p.identity)==cluster_id.end()) 
       && 
-      (cluster_id[p2.p.identity] !=cluster_id.end()))
+      (cluster_id.find(p2.p.identity) !=cluster_id.end()))
     {
      // Give p1 the same cluster id as p2
      cluster_id[p1.p.identity]=find_id_for(cluster_id[p2.p.identity]);
@@ -60,7 +59,7 @@ ClusterStructure::add_pair(Particle& p1, Particle& p2) {
     else if // i belongs to a cluster but j doesn't
       ((cluster_id.find(p2.p.identity)==cluster_id.end()) 
       && 
-      (cluster_id[p1.p.identity] !=cluster_id.end()))
+      (cluster_id.find(p1.p.identity) !=cluster_id.end()))
     {
      // give p2 the cluster id from p1
      cluster_id[p2.p.identity]=find_id_for(cluster_id[p1.p.identity]);
@@ -84,16 +83,17 @@ ClusterStructure::add_pair(Particle& p1, Particle& p2) {
     }
     // The case for both particles being in the same cluster does not need to be
     // treated.
+  }
 }
 
 void ClusterStructure::merge_clusters() {
   // Relabel particles according to the cluster identities map
   // Also create empty cluster objects for the final cluster id
-  for (auto it : cluster_ids) { 
+  for (auto it : cluster_id) { 
     // particle id is in it.first and cluster id in it.second
     // We change the cluster id according to the cluster identities
     // map
-    cid=find_id_for(it.second);
+    int cid=find_id_for(it.second);
     it.second =cid;
     // Empty cluster object
     if (clusters.find(cid)==clusters.end()) {
@@ -105,7 +105,7 @@ void ClusterStructure::merge_clusters() {
   // Now fill the cluster objects with particle ids
   // Iterate over particles, fill in the cluster map 
   // to each cluster particle the corresponding cluster id 
-  for (auto it : cluster_ids) {
+  for (auto it : cluster_id) {
     clusters[it.second].particles.push_back(it.first);
   }
 }
@@ -123,11 +123,13 @@ int ClusterStructure::find_id_for(int x)
 int ClusterStructure::get_next_free_cluster_id(){
   //iterate over cluster_id'
   int max_seen_cluster = 1;
-  for (auto num : cluster_ids){
-    if (max_seen_cluster <= clusters[num]) {
-      max_seen_cluster=clusters[num]+1;
+  for (auto it : clusters){
+    int cid=it.first;
+    if (max_seen_cluster <= cid ) {
+      max_seen_cluster=cid+1;
     }
   }
+  return max_seen_cluster;
 }
 
 
@@ -137,13 +139,13 @@ ClusterStructure& cluster_analysis() {
   return cluster_structure;
 }
 
-void ClusterStructure::set_criterion(NeighborCriterion* nc) {
+void ClusterStructure::set_criterion(NeighborCriterion* c) {
   if (nc)
   {
     delete nc;
     nc=0;
   }
-  nc=c
+  nc=c;
 }
 
    

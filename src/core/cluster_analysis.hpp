@@ -9,6 +9,14 @@
 #include <vector>
 #include <valarray>
 #include <map>
+#include "particle_data.hpp"
+#include "interaction_data.hpp"
+#include "energy_inline.hpp"
+
+class NeighborCriterion {
+  public: 
+    virtual bool are_neighbors(const Particle& p1, const Particle& p2) =0;
+};
 
 
 
@@ -18,13 +26,12 @@ class Cluster {
     /** Particles in the cluster */
     std::vector<int> particles;
     // add a particle (Makes a copy of the original)
-    void add_particle();
+    void add_particle(const Particle& p);
  };
 
 // add a particle (Makes a copy of the original)
 
-void Cluster::add_particle(Particle* p) {
-{
+void Cluster::add_particle(const Particle& p) {
  particles.push_back(p.p.identity);
 }
 
@@ -33,7 +40,7 @@ void Cluster::add_particle(Particle* p) {
 class ClusterStructure {
  public:
   // Container to hold the clusters
-  map<int,Cluster> clusters;
+  std::map<int,Cluster> clusters;
   // ID of cluster, a particle belongs to
   std::map<int, int> cluster_id;
   // Clusters that turn out to be the same (i.e., if two particles are
@@ -62,12 +69,6 @@ class ClusterStructure {
 };
 
 
-class NeighborCriterion {
-  public: 
-    //virtual bool are_neighbors(const Particle& p1, const Particle& p2) =0;
-    bool are_neighbors(const Particle& p1, const Particle& p2);
-};
-
 
 //take cut off value that is input data in Tcl simulation script
 // 
@@ -76,10 +77,10 @@ class DistanceCriterion : public NeighborCriterion {
     DistanceCriterion(double _cut_off) {
       cut_off=_cut_off;
     }
-    bool NeighborCriterion::are_neighbors(const Particle& p1, const Particle& p2) virtual {
+    virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
       double vec21[3];
-      return sqrt(distance2vec(p1->r.p, p2->r.p, vec21)) <= cut_off;
-    }
+      return sqrt(distance2vec(p1.r.p, p2.r.p, vec21)) <= cut_off;
+    };
     double get_cut_off() {
       return cut_off;
     }
@@ -92,14 +93,14 @@ class EnergyCriterion : public NeighborCriterion {
   public: 
     EnergyCriterion(double _cut_off) {
       cut_off=_cut_off;
-    }
-    bool NeighborCriterion::are_neighbors(const Particle& p1, const Particle& p2) virtual {
+    };
+    virtual bool are_neighbors(const Particle& p1, const Particle& p2)  {
       double vec21[3];
-      double dist_betw_part sqrt(distance2vec(p1->r.p, p2->r.p, vec21)) <= cut_off;
-      IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-      return (calc_non_bonded_pair_energy(p1, p2, ia_params,
-                       vec21, dist_betw_part)) >= cut_off;
-    }
+      double dist_betw_part =sqrt(distance2vec(p1.r.p, p2.r.p, vec21)) <= cut_off;
+      IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
+      return (calc_non_bonded_pair_energy(const_cast<Particle*>(&p1), const_cast<Particle*>(&p2), ia_params,
+                       vec21, dist_betw_part,dist_betw_part*dist_betw_part)) >= cut_off;
+    };
     double get_cut_off() {
       return cut_off;
     }
@@ -111,14 +112,14 @@ class BondCriterion : public NeighborCriterion {
   public: 
     BondCriterion(int _bond_type) {
        bond_type=_bond_type;
-    }
-    bool NeighborCriterion::are_neighbors(const Particle& p1, const Particle& p2) virtual {
+    };
+    virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
       double vec21[3];
-      return bond_exists(p1,p2,bond_type);
-    }
+      return bond_exists(&p1,&p2,bond_type);
+    };
     double get_bond_type() {
       return bond_type;
-    }
+    };
     private:
       double bond_type;
 };
