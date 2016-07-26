@@ -12,10 +12,12 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "energy_inline.hpp"
+#include <string>
 
 class NeighborCriterion {
   public: 
     virtual bool are_neighbors(const Particle& p1, const Particle& p2) =0;
+    virtual std::string name() =0;
 };
 
 
@@ -58,9 +60,10 @@ class ClusterStructure {
   // Merge clusters which turned out to be one and the same
   void merge_clusters();
   // Neighbor criterion
-  NeighborCriterion* nc;
   void set_criterion(NeighborCriterion* c);
+  NeighborCriterion* get_criterion() {return nc;};
  private:
+  NeighborCriterion* nc;
   // Follow a chain of cluster identities
   inline int find_id_for(int x);
   //
@@ -81,6 +84,7 @@ class DistanceCriterion : public NeighborCriterion {
       double vec21[3];
       return sqrt(distance2vec(p1.r.p, p2.r.p, vec21)) <= cut_off;
     };
+    virtual std::string name() { return "distance"; };
     double get_cut_off() {
       return cut_off;
     }
@@ -101,6 +105,7 @@ class EnergyCriterion : public NeighborCriterion {
       return (calc_non_bonded_pair_energy(const_cast<Particle*>(&p1), const_cast<Particle*>(&p2), ia_params,
                        vec21, dist_betw_part,dist_betw_part*dist_betw_part)) >= cut_off;
     };
+    virtual std::string name() { return "energy"; };
     double get_cut_off() {
       return cut_off;
     }
@@ -117,6 +122,7 @@ class BondCriterion : public NeighborCriterion {
       double vec21[3];
       return bond_exists(&p1,&p2,bond_type);
     };
+    virtual std::string name() { return "bond"; };
     double get_bond_type() {
       return bond_type;
     };
