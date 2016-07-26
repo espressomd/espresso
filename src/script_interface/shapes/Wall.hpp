@@ -22,24 +22,29 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_WALL_HPP
 #define SCRIPT_INTERFACE_SHAPES_WALL_HPP
 
-#include "ScriptInterface.hpp"
+#include "Shape.hpp"
+
 #include "core/shapes/Wall.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
 
-class Wall : public ScriptInterfaceBase {
+class Wall : public Shape {
 public:
+  Wall() : m_wall(new ::Shapes::Wall()) {}
+
   const std::string name() const override { return "Shapes::Wall"; }
 
   ParameterMap all_parameters() const override;
   VariantMap get_parameters() const override;
   void set_parameter(const std::string &name, const Variant &value) override;
 
-  ::Shapes::Wall const &wall() { return m_wall; }
+  const std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_wall;
+  }
 
 private:
-  ::Shapes::Wall m_wall;
+  std::shared_ptr<::Shapes::Wall> m_wall;
 };
 
 } /* namespace Shapes */

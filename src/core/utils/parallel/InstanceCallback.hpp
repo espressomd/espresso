@@ -59,9 +59,6 @@ public:
    * if needed.
    */
   void call(int a, int b) {
-    /* Call can only run on the master */
-    assert(Communication::mpiCallbacks().is_root());
-
     Communication::mpiCallbacks().call(m_callback_id, a, b);
   }
 

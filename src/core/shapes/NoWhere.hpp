@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
 
@@ -17,24 +19,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
+#ifndef SHAPES_NOWHERE_HPP
+#define SHAPES_NOWHERE_HPP
 
-#include "Constraint.hpp"
+#include <limits>
 
-#include <iostream>
+#include "Shape.hpp"
 
-namespace ScriptInterface {
-namespace Constraints {
+namespace Shapes {
 
-void initialize() {
-  ParallelScriptInterface<
-      ScriptInterface::Constraints::Constraint>::register_callback();
+/**
+ * @brief Dummy shape that is infinitly far away from everything.
+ *
+ */
+class NoWhere : public Shape {
+public:
+  int calculate_dist(const double *, double *dist, double *vec) const {
+    *dist = std::numeric_limits<double>::infinity();
 
-  Utils::Factory<ScriptInterfaceBase>::register_new<
-      ParallelScriptInterface<ScriptInterface::Constraints::Constraint>>(
-      "Constraints::Constraint");
-}
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
+    for (int i = 0; i < 3; i++) {
+      vec[i] = *dist;
+    }
+  }
+};
+
+} /* namespace Shapes */
+
+#endif

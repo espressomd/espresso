@@ -28,6 +28,41 @@
 #include "TclCommand.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
+/*
+ * Make operator<< work with the variant. The visitor
+ * that is actually invoked by boost lives in the boost
+ * namespace and finds these functions. The other possibility
+ * would be to define them in std and rely on ADL, but this is not legal
+ * because std::vector<T> is not a user defined type.
+ * (Works, though)
+ */
+namespace boost {
+  /* Source: http://stackoverflow.com/a/6693088/3198615 */
+  template <typename T>
+  std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
+    std::ostringstream ss;
+
+    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+    ss << v.back();
+
+    out << ss.str();
+
+    return out;
+  }
+
+  template <typename T, int n>
+  std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
+    std::ostringstream ss;
+
+    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+    ss << v.back();
+
+    out << ss.str();
+
+    return out;
+  }
+}
+
 namespace ScriptInterface {
 namespace Tcl {
 
@@ -60,6 +95,10 @@ public:
   void parse_from_string(std::list<std::string> &argv) override;
 
   const std::string name() const { return m_so->name(); }
+  std::shared_ptr<ScriptInterfaceBase> script_object() { return m_so; }
+  const std::shared_ptr<ScriptInterfaceBase> script_object() const {
+    return m_so;
+  }
 
 private:
   std::shared_ptr<ScriptInterfaceBase> m_so;

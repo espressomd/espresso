@@ -1,5 +1,7 @@
 /*
-  Copyright (C) 2015,2016 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+  Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
 
@@ -17,24 +19,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
+#ifndef SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
+#define SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
 
-#include "Constraint.hpp"
+#include "ScriptInterface.hpp"
+#include <memory>
 
-#include <iostream>
+namespace Shapes {
+class Shape;
+}
 
 namespace ScriptInterface {
-namespace Constraints {
+namespace Shapes {
 
-void initialize() {
-  ParallelScriptInterface<
-      ScriptInterface::Constraints::Constraint>::register_callback();
+class Shape : public ScriptInterfaceBase {
+public:
+  /**
+   * @brief Return the Shape that we are wrapping.
+   */
+  virtual const std::shared_ptr<::Shapes::Shape> shape() const = 0;
+};
 
-  Utils::Factory<ScriptInterfaceBase>::register_new<
-      ParallelScriptInterface<ScriptInterface::Constraints::Constraint>>(
-      "Constraints::Constraint");
-}
-} /* namespace Constraints */
+} /* namespace Shapes */
 } /* namespace ScriptInterface */
+
+#endif

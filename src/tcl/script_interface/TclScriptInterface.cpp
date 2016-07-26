@@ -4,33 +4,6 @@
 
 using namespace std;
 
-/* Source: http://stackoverflow.com/a/6693088/3198615 */
-namespace std {
-  template <typename T>
-  std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-    std::ostringstream ss;
-
-    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-    ss << v.back();
-
-    out << ss.str();
-
-    return out;
-  }
-
-  template <typename T, int n>
-  std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
-    std::ostringstream ss;
-
-    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-    ss << v.back();
-
-    out << ss.str();
-
-    return out;
-  }
-}
-
 namespace ScriptInterface {
 namespace Tcl {
 
@@ -124,7 +97,8 @@ void TclScriptInterface::parse_from_string(list<string> &argv) {
 
     case ParameterType::VECTOR2D:
       try {
-        values[si->first] = Vector2d(read_n_elements<double>(p.n_elements(), it, argv));
+        values[si->first] =
+            Vector2d(read_n_elements<double>(p.n_elements(), it, argv));
       } catch (std::exception &e) {
         ostringstream error;
         error << s << " expects " << p.n_elements()
@@ -135,7 +109,8 @@ void TclScriptInterface::parse_from_string(list<string> &argv) {
 
     case ParameterType::VECTOR3D:
       try {
-        values[si->first] = Vector3d(read_n_elements<double>(p.n_elements(), it, argv));
+        values[si->first] =
+            Vector3d(read_n_elements<double>(p.n_elements(), it, argv));
       } catch (std::exception &e) {
         ostringstream error;
         error << s << " expects " << p.n_elements()

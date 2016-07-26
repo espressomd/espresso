@@ -116,22 +116,9 @@ public:
 
 private:
   virtual int do_new(std::list<std::string> &argv) {
-    std::cout << __PRETTY_FUNCTION__ << ": argv[0] = " << argv.front()
-              << std::endl;
-    std::cout << __PRETTY_FUNCTION__
-              << ": m_name_map.size() = " << m_name_map.size() << std::endl;
-
-    for (auto it = m_name_map.begin(); it != m_name_map.end(); ++it) {
-      std::cout << __PRETTY_FUNCTION__ << ": " << it->left << " -> "
-                << it->right << std::endl;
-    }
-
     /* Get the internal name for the class to create.
      * will throw if it does not exists. */
     auto const &class_name = m_name_map.left.at(argv.front());
-
-    std::cout << __PRETTY_FUNCTION__ << ": class_name = " << class_name
-              << std::endl;
 
     /* Pop the name */
     argv.pop_front();
@@ -170,6 +157,7 @@ private:
     return id;
   }
 
+protected:
   Utils::NumeratedContainer<TclScriptInterface> m_om;
   boost::bimap<std::string, std::string> const &m_name_map;
 };

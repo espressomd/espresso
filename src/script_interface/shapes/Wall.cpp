@@ -28,12 +28,12 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Wall::all_parameters() const {
-  return ParameterMap{{"normal", Parameter(ParameterType::VECTOR3D, true)},
-                      {"dist", Parameter(ParameterType::DOUBLE, true)}};
+  return {{"normal", {ParameterType::VECTOR3D, true}},
+          {"dist", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap Wall::get_parameters() const {
-  return VariantMap{{"normal", m_wall.n()}, {"dist", m_wall.d()}};
+  return {{"normal", m_wall->n()}, {"dist", m_wall->d()}};
 }
 
 void Wall::set_parameter(const string &name,
@@ -41,10 +41,10 @@ void Wall::set_parameter(const string &name,
   if (name == "normal") {
     /* Get the variant as vector, and explicitly construct a Vector3d
        from that. */
-    m_wall.set_normal(boost::get<Vector3d>(value));
+    m_wall->set_normal(boost::get<Vector3d>(value));
   }
 
-  SET_PARAMETER_HELPER("dist", m_wall.d());
+  SET_PARAMETER_HELPER("dist", m_wall->d());
 }
 
 } /* namespace Shapes */

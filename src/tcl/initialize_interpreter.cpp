@@ -66,12 +66,9 @@
 #include "tuning.hpp"
 #include "virtual_sites_com_tcl.hpp"
 
+#include "script_interface/TclConstraintManager.hpp"
 #include "script_interface/TclScriptInterfaceManager.hpp"
 #include "utils/make_bimap.hpp"
-
-#ifdef TK
-#include <tk.h>
-#endif
 
 /****************************************
  * various forwards
@@ -148,17 +145,13 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc,
 static boost::bimap<std::string, std::string> shapes_name_map =
     Utils::make_bimap<std::string, std::string>({{"wall", "Shapes::Wall"}});
 
-static boost::bimap<std::string, std::string> constraints_name_map =
-    Utils::make_bimap<std::string, std::string>(
-        {{"charged_rod", "Constraints::ChargedRod"}});
-
 static void tcl_register_commands(Tcl_Interp *interp) {
   auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(
       interp, shapes_name_map);
   shapes->create_command("shapes");
 
-  auto *constraints = new ScriptInterface::Tcl::TclScriptInterfaceManager(
-      interp, constraints_name_map);
+  auto *constraints = new ScriptInterface::Tcl::TclConstraintManager(
+      interp, shapes_name_map);
   constraints->create_command("constraints");
 
   /* in cells.cpp */
@@ -203,7 +196,7 @@ static void tcl_register_commands(Tcl_Interp *interp) {
 #endif
   /* in mpiio_tcl.cpp */
   REGISTER_COMMAND("mpiio", tclcommand_mpiio);
-    /* in external_potential.hpp */
+  /* in external_potential.hpp */
   REGISTER_COMMAND("external_potential", tclcommand_external_potential);
   /* in readpdb.cpp */
   REGISTER_COMMAND("readpdb", tclcommand_readpdb);
