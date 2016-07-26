@@ -18,39 +18,63 @@
 */
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
-#include "virtual_sites_relative.hpp"
 #include "cluster_analysis.hpp"
+#include "parser.hpp"
+#include <sstream>
 
-//#include "virtual_sites.hpp"
-//#include "integrate.hpp"
-//#include "cells.hpp"
-//#include "communication.hpp" 
-//#include "parser.hpp" 
-
-#ifdef 
-
-//
-void tclcommand_parse_cluster_criterion() 
+int tclcommand_cluster_analysis(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
-// if criterion is distance
-cluster_analysis().set_criterion(new DistanceCriterion(cut_off));
-// if criterion is bond type
-cluster_analysis().set_criterion(new BondCriterion(bond_type));
-// if criterion is energy
-cluster_analysis().set_criterion(new EnergyCriterion());
+  // If no argumens are given, print status
+  if (argc==1) {
+      if (cluster_analysis().get_criterion()) {
+        Tcl_AppendResult(interp, cluster_analysis().get_criterion()->name().c_str(), (char*) NULL);
+      } else {
+        Tcl_AppendResult(interp, "off", (char*) NULL);
+      }        
+      return TCL_OK;
+    }
 
-}
+  argc--; argv++;
 
-void tclcommand_parse_cluster_analyze() {
-  cluster_analysis().analyze();
-}
-
-void tclcommand_cluster_print_result() {
-  auto ca = cluster_analysis();
-  for (cluster : ca.cluster) {
-    int ca.first = cluster_id;
-    int ca.second = cluster
-   //...print cluster
+  // Otherwise, we set parameters
+  if (ARG0_IS_S("off")) {
+    cluster_analysis().set_criterion(NULL);
+    return TCL_OK;
   }
+  if (ARG0_IS_S("distance")) {
+      if (argc != 2) {
+      	Tcl_AppendResult(interp, "The distnace criterion needs a distance as argument.", (char*) NULL);
+      	return TCL_ERROR;
+      }
+      double d;
+      if (!ARG_IS_D(1,d)) {
+        	Tcl_AppendResult(interp, "Need a distance as 1st arg.", (char*) NULL);
+        	return TCL_ERROR;
+      }
+      cluster_analysis().set_criterion(new DistanceCriterion(d));
+      argc -= 2; argv += 2;
+    }
+    else if (ARG0_IS_S("analyze_pair")) {
+      cluster_analysis().analyze_pair();
+      argc -= 1; argv += 1;
+      return TCL_OK;
+    }
+    else if (ARG0_IS_S("print")) {
+      std::stringstream res;
+      for (auto it : cluster_analysis().clusters) {
+        res << "{ "<<it.first<<" {";
+        Cluster cluster = it.second;
+        for (int pid : cluster.particles) {
+          res << " "<<pid<<" ";
+        }
+        res << "} } ";
+      }
+      argc -= 1; argv += 1;
+    	Tcl_AppendResult(interp, res.str().c_str(), (char*) NULL);
+      return TCL_OK;
+    }
+    else {
+    	Tcl_AppendResult(interp, "Unknown argument.", (char*) NULL);
+	    return TCL_ERROR;
+      }
 }
-
