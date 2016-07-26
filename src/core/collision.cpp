@@ -23,6 +23,7 @@
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
 #include "particle_data.hpp"
+#include "collision.hpp"
 
 using namespace std;
 
