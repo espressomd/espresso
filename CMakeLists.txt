@@ -24,18 +24,25 @@ project(ESPResSo)
 
 enable_language(CXX)
 
+
+######################################################################
+# CMake internal vars 
+######################################################################
+
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-######################################################################
-# User input options                                                   
-######################################################################
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
+
+######################################################################
+# User input options
+######################################################################
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
@@ -99,6 +106,9 @@ if (WITH_PYTHON)
   find_package(PythonLibs REQUIRED)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} 
+                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -109,7 +119,12 @@ if (FFTW3_FOUND)
 endif(FFTW3_FOUND)
 
 if (WITH_TCL)
-  find_package(TCL REQUIRED)
+  find_package(TCL)
+
+  if(NOT TCL_FOUND)
+	  message(FATAL_ERROR "TCL not found.")
+  endif()
+
   include_directories(${TCL_INCLUDE_PATH})
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
@@ -177,9 +192,23 @@ include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 add_definitions(-DH5XX_USE_MPI)
 
+#######################################################################
+# Paths
+#######################################################################
+
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
+if (NOT DEFINED LIBDIR)
+  set(LIBDIR "lib")
+endif(NOT DEFINED LIBDIR)
+
+if (NOT DEFINED BINDIR)
+  set(BINDIR "bin")
+endif(NOT DEFINED BINDIR)
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 
 set(SCRIPTDIR ${DATA}/scripts)
 

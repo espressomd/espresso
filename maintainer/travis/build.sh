@@ -133,7 +133,7 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-MYCONFIG_DIR=$srcdir/maintainer/jenkins/configs
+MYCONFIG_DIR=$srcdir/maintainer/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
 else
