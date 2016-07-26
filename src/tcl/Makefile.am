@@ -34,6 +34,7 @@ libEspressoTcl_la_SOURCES = \
 	cells_tcl.cpp \
 	cells_tcl.hpp \
 	channels_tcl.cpp \
+	cluster_analysis_tcl.cpp \
 	collision_tcl.cpp \
 	comfixed_tcl.cpp comfixed_tcl.hpp \
 	comforce_tcl.cpp comforce_tcl.hpp \

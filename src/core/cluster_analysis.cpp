@@ -19,7 +19,7 @@ void ClusterStructure::analyze_pair()
     if (! local_particles[i]) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! local_particles[j]) continue;
-      add_pair(*local_particles[i],*local_particles[j]); // maybe no *
+      count(*local_particles[i],*local_particles[j]); // maybe no *
     }
   }
 }
@@ -37,12 +37,15 @@ ClusterStructure::add_pair(Particle& p1, Particle& p2) {
     runtimeErrorMsg() << "No cluster criterion defined"; 
     return
   }
-  if (nc->are_neighbors(p1,p2)) {
+  //if (nc->are_neighbors(p1,p2)) {
+  if (1>0) {
      if // None belongs to a cluster
      ((cluster_id.find(p1.p.identity)==cluster_id.end()) && (cluster_id.find(p2.p.identity)==cluster_id.end())
     {  
       // Both particles belong to the same, new cluster
       cid=get_next_free_cluster_id();
+
+      // assign the 
       cluster_id[p1.p.identity]=cid;
       cluster_id[p2.p.identity]=cid;
     }
@@ -100,8 +103,9 @@ void ClusterStructure::merge_clusters() {
 
   
   // Now fill the cluster objects with particle ids
-  // Itterate over particles
-  for (auto id : cluster_ids) {
+  // Iterate over particles, fill in the cluster map 
+  // to each cluster particle the corresponding cluster id 
+  for (auto it : cluster_ids) {
     clusters[it.second].particles.push_back(it.first);
   }
 }
@@ -116,13 +120,24 @@ int ClusterStructure::find_id_for(int x)
  return x;
 }
 
+int ClusterStructure::get_next_free_cluster_id(){
+  //iterate over cluster_id'
+  int max_seen_cluster = 1;
+  for (auto num : cluster_ids){
+    if (max_seen_cluster <= clusters[num]) {
+      max_seen_cluster=clusters[num]+1;
+    }
+  }
+}
+
+
 ClusterStructure cluster_structure;
 
 ClusterStructure& cluster_analysis() {
   return cluster_structure;
 }
 
-void ClusterStructure::set_criterion(NeighborCriterion c) {
+void ClusterStructure::set_criterion(NeighborCriterion* nc) {
   if (nc)
   {
     delete nc;

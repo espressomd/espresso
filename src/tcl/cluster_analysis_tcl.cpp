@@ -36,15 +36,20 @@ void tclcommand_parse_cluster_criterion()
 cluster_analysis().set_criterion(new DistanceCriterion(cut_off));
 // if criterion is bond type
 cluster_analysis().set_criterion(new BondCriterion(bond_type));
+// if criterion is energy
+cluster_analysis().set_criterion(new EnergyCriterion());
+
 }
 
-void tclcommand_parse_cluster_analyyze() {
+void tclcommand_parse_cluster_analyze() {
   cluster_analysis().analyze();
 }
 
 void tclcommand_cluster_print_result() {
   auto ca = cluster_analysis();
   for (cluster : ca.cluster) {
+    int ca.first = cluster_id;
+    int ca.second = cluster
    //...print cluster
   }
 }
