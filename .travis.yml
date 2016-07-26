@@ -66,7 +66,6 @@ compiler:
 
 before_script:
   - wget -qO- https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz | tar -xz &&
-   cd hdf5-${HDF5_VERSION} && ./configure --prefix=$HOME/hdf5 && make -j4 &> /dev/null && make install && cd ..;
-  - PATH="$HOME/hdf5:$PATH"
+   cd hdf5-${HDF5_VERSION} && mkdir build && cd build && cmake .. -DHDF5_ENABLE_PARALLEL=ON && make -j4 &> /dev/null && make install && cd ..;
 
 script: ./maintainer/travis/build_cmake.sh
