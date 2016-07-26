@@ -77,9 +77,8 @@ foreach(cython_file ${cython_SRC})
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
-
       add_library(${basename} SHARED ${outputpath})
-      set_target_properties(${basename} PROPERTIES PREFIX "${CMAKE_CURRENT_BINARY_DIR}/${relpath}/")
+      set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
       set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
