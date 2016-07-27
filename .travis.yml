@@ -15,9 +15,8 @@ before_install:
 # Information on junest: http://fsquillace.github.io/junest-site/
  - git clone git://github.com/fsquillace/junest ~/junest
  - PATH=~/junest/bin:$PATH
- - junest -f -- pacman --noconfirm -Sy cython python-pip python2-pip python2-numpy vtk cmake fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache python-numpy base-devel
-# - junest -f -- ln -s /usr/bin/gcc-5 /usr/bin/gcc
-# - junest -f -- ln -s /usr/bin/g++-5 /usr/bin/g++
+ - junest -f -- pacman --noconfirm -Sy cython python-pip python2-pip python2-numpy vtk cmake fftw openmpi hdf5-openmpi boost  boost-libs hdf5 tcl tk ccache python-numpy base-devel gcc5
+ - junest -f -- ls -l /usr/bin/
  
 install:
 - yes | junest -f -- pip  install pep8
