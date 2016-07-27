@@ -24,9 +24,9 @@ install:
 - yes | junest -f -- pip2 install pep8
 
 env:
-  global:
-    - CCACHE_CPP2=yes
-    - GVER=4.8
+#  global:
+#    - CCACHE_CPP2=yes
+#    - GVER=4.8
   matrix:
     - myconfig=default
 
