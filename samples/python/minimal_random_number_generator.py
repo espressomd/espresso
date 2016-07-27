@@ -38,5 +38,5 @@ for i in range(len(rng_state_read1)):
 	rng_state.append(i)
 system.random_number_generator_state=rng_state
 rng_state_read2=system.random_number_generator_state
-print "random number generator state read 2", rng_state_read2, "should be ", rng_state
+print "random number generator state read 2", rng_state_read2,
 

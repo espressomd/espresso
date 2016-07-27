@@ -410,8 +410,10 @@ cdef class System:
         #sets the random number generator state in the core. this is of interest for deterministic checkpointing
         def __set__(self,rng_state):
             if(len(rng_state)== n_nodes*625):
-                rng_state=" ".join(map(str,rng_state))
-                mpi_random_set_stat(rng_state);
+                states=string_vec(n_nodes) 
+                for i in range(n_nodes):
+                        states[i]=" ".join(map(str,rng_state[i*625:(i+1)*625]))
+                mpi_random_set_stat(states);
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*625)>")
         def __get__(self):
