@@ -59,15 +59,15 @@ include_directories(${NUMPY_INCLUDE_DIR})
 add_custom_target(espressomd)
 
 foreach(cython_file ${cython_SRC})
-  get_filename_component(basename ${cython_file} NAME_WE)
-  file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
-  get_filename_component(relpath ${relpath} DIRECTORY)
-  string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
-  if("${basename}" STREQUAL "")
-      message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
-  else()
-      list(APPEND cython_generated_SRC "${basename}.cpp")
-      add_custom_command(OUTPUT ${outputpath}
+    get_filename_component(basename ${cython_file} NAME_WE)
+    file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
+    get_filename_component(relpath ${relpath} DIRECTORY)
+    string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
+    if("${basename}" STREQUAL "")
+        message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
+    else()
+        list(APPEND cython_generated_SRC "${basename}.cpp")
+        add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
@@ -77,16 +77,19 @@ foreach(cython_file ${cython_SRC})
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
-
-      add_library(${basename} SHARED ${outputpath})
-      set_target_properties(${basename} PROPERTIES PREFIX "${CMAKE_CURRENT_BINARY_DIR}/${relpath}/")
-      set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
-      if (APPLE)
-         set_target_properties(${basename} PROPERTIES SUFFIX ".so")
-      endif()
-      target_link_libraries(${basename} EspressoCore ${LIBRARIES})
-      add_dependencies(espressomd ${basename})
-  endif()
+        add_library(${basename} SHARED ${outputpath})
+        if("${relpath}" STREQUAL "")
+            set_target_properties(${basename} PROPERTIES PREFIX "${relpath}")
+        else()
+            set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+        endif()
+        set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
+        if (APPLE)
+            set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+        endif(APPLE)
+        target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+        add_dependencies(espressomd ${basename})
+    endif()
 endforeach()
 
 
