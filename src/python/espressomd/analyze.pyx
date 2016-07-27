@@ -107,7 +107,7 @@ class Analysis:
             raise Exception("Only one of id or pos may be specified\n" + __doc__)
     
         cdef double cpos[3]
-        if self._system.n_part == 0:
+        if len(self._system.part) == 0:
             raise Exception("no particles")
     
         # Get position
@@ -581,7 +581,7 @@ class Analysis:
         if number_of_chains < 0:
             raise ValueError('number_of_chains must be greater than zero')
         c_analyze.sortPartCfg()
-        if chain_start + chain_length * number_of_chains >= self._system.n_part:
+        if chain_start + chain_length * number_of_chains >= len(self._system.part):
             raise ValueError(
                 'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
         c_analyze.chain_start = chain_start

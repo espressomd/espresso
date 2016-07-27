@@ -22,6 +22,7 @@ from globals cimport *
 import numpy as np
 
 cimport integrate
+import integrate
 import interactions
 from actors import Actors
 cimport cuda_init
@@ -56,6 +57,7 @@ cdef class System:
     actors = None
     analysis =None
     galilei = GalileiTransform()
+    integrator = integrate.Integrator()
 
     def __init__(self):
         self.actors = Actors(_system=self)

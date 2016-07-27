@@ -94,6 +94,7 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
             s["use_verlet_lists"] = dd.use_vList
 
+
         s["skin"] = skin
         s["local_box_l"] = np.array([local_box_l[0], local_box_l[1], local_box_l[2]])
         s["max_cut"] = max_cut
@@ -104,7 +105,7 @@ cdef class CellSystem(object):
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
         s["cell_grid"] = np.array([dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
-        s["cell_grid"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+        s["cell_size"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
 
