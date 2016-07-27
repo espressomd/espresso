@@ -19,7 +19,6 @@
 import espressomd
 from espressomd import code_info
 from espressomd import thermostat
-from espressomd import integrate
 from espressomd import interactions
 from espressomd import electrostatics
 import sys
@@ -38,12 +37,12 @@ np.random.seed(42)
 
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
-system.periodic = [1,1,1]
+system.periodicity = [1,1,1]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # system.cell_system.set_n_square(use_verlet_lists=False)
-system.max_num_cells = 2744
+system.cell_system.max_num_cells = 2744
 
 # Non-bonded interactions
 ###############################################################
@@ -84,7 +83,7 @@ n_monomers = 20
 
 init_polymer_pos=np.dstack((np.arange(n_monomers),np.zeros(n_monomers),np.zeros(n_monomers)))[0]+np.array([system.box_l[0]/2-n_monomers/2, system.box_l[1]/2, system.box_l[2]/2])
 
-system.part.add(id=np.arange(n_monomers), pos=init_polymer_pos)
+system.part.add(pos=init_polymer_pos)
 
 
 system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
@@ -103,8 +102,8 @@ system.part[:n_monomers].q = -np.ones(n_monomers)
 # Create counterions
 ###################################################################
 system.part.add(pos=np.random.random((n_monomers,3)) * system.box_l,
-                q=np.ones(n_monomers),
-                type=np.ones(n_monomers))
+                q=1,
+                type=1)
 
 # Create ions
 ###############################################################
@@ -112,7 +111,7 @@ n_ions = 100
 
 system.part.add(pos=np.random.random((n_ions,3)) * system.box_l, 
                 q=np.hstack((np.ones(n_ions/2),-np.ones(n_ions/2))),
-                type=np.hstack((np.ones(n_ions/2),2*np.ones(n_ions/2))))
+                type=np.array(np.hstack((np.ones(n_ions/2),2*np.ones(n_ions/2))),dtype=int))
 
 
 # Sign charges to particles after the particle creation:
@@ -134,7 +133,7 @@ system.non_bonded_inter.set_force_cap(10)
 for i in range(1000):
     sys.stdout.write("\rWarmup: %03i"%i)
     sys.stdout.flush()
-    integrate.integrate(1)
+    system.integrator.run(steps=1)
     system.non_bonded_inter.set_force_cap(10*i)
 
 system.non_bonded_inter.set_force_cap(0)
@@ -170,7 +169,7 @@ print(system.actors)
 
 # Apply external Force
 #############################################################
-n_part = system.n_part
+n_part = len(system.part)
 system.part[:].ext_force = np.dstack((system.part[:].q * np.ones(n_part), np.zeros(n_part), np.zeros(n_part)))[0]
 
 # print(system.part[:].ext_force)
@@ -189,7 +188,7 @@ pos_list = []
 for i in range(4000):
     sys.stdout.write("\rSampling: %04i"%i)
     sys.stdout.flush()
-    integrate.integrate(1)
+    system.integrator.run(steps=1)
 
     v_list.append(system.part[:n_monomers].v)
     pos_list.append(system.part[:n_monomers].pos)
