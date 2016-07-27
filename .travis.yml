@@ -35,4 +35,4 @@ script:
  - junest -f -- rm /usr/bin/python
  - junest -f -- ln -s /usr/bin/python2 /usr/bin/python
  - junest -- ./maintainer/travis/build_cmake.sh
- - junest -- ./maintainer/travis/build.sh
+# - junest -- ./maintainer/travis/build.sh
