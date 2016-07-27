@@ -18,10 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
-from espressomd import interactions
-from espressomd import diamond
 import numpy
 import sys
 
@@ -30,17 +26,17 @@ import sys
 
 system = espressomd.System()
 
-system.time_step = 0.01
-system.skin = 0.4
-system.box_l = [100, 100, 100]
-system.thermostat.set_langevin(1.0, 1.0)
-system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
+# if no seed is provided espresso generates a seed
+print "seed ", system.seed
+rng_state_read1=system.random_number_generator_state
+print "random number generator state read 1", rng_state_read1
 
-fene = interactions.FeneBond(k=10, d_r_max=2)
-system.bonded_inter.add(fene)
+rng_state=[]
+for i in range(len(rng_state_read1)):
+	rng_state.append(i)
+system.random_number_generator_state=rng_state
+rng_state_read2=system.random_number_generator_state
+print "random number generator state read 2", rng_state_read2, "should be ", rng_state
 
-diamond.Diamond(a=20, bond_length=2, MPC=20)

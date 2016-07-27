@@ -40,7 +40,7 @@ import sys
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "random_number_generator_state"]
 
 cdef class System:
     # NOTE: every attribute has to be declared at the class level.
@@ -405,6 +405,18 @@ cdef class System:
 
         def __get__(self):
             return self.__seed
+
+    property random_number_generator_state:
+        #sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        def __set__(self,rng_state):
+            if(len(rng_state)== n_nodes*625):
+                rng_state=" ".join(map(str,rng_state))
+                mpi_random_set_stat(rng_state);
+            else:
+                raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*625)>")
+        def __get__(self):
+            rng_state=map(int, (mpi_random_get_stat().c_str()).split())
+            return rng_state
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates

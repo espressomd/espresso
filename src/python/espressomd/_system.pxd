@@ -27,4 +27,12 @@ cdef extern from "grid.hpp":
 cdef extern from "communication.hpp" namespace "Random":
         void mpi_random_seed(int cnt, vector[int] &seed)
 
+
+from libcpp.string cimport string  # import std::string as string
+from libcpp.vector cimport vector  # import std::vector as vector
+cdef extern from "random.hpp" namespace "Random":
+    string mpi_random_get_stat()
+    void mpi_random_set_stat(const vector[string] &stat)
+
+
 cdef bool skin_set
