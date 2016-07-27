@@ -42,10 +42,16 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
+
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
+add_custom_command(TARGET espressomd
+        PRE_BUILD
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
+        )
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
