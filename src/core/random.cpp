@@ -129,7 +129,8 @@ void init_random(void)
 
 void init_random_seed(int seed)
 {
-  generator.seed(seed);
+  std::seed_seq seeder{seed};
+  generator.seed(seeder);
 }
 
 } /* Random */
