@@ -25,10 +25,10 @@ project(ESPResSo)
 enable_language(CXX)
 
 set(PROJECT_VERSION "4.0-dev")
-string(REGEX REPLACE "^[1-9]+\\.([1-9]+).*$" "\\1" SOVERSION "${PROJECT_VERSION}")
-if (NOT ${SOVERSION} MATCHES "[1-9]+")
+string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
+if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
   message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
-endif (NOT ${SOVERSION} MATCHES "[1-9]+")
+endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 ######################################################################
 # CMake internal vars 
