@@ -17,10 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-file(GLOB cython_SRC *.pyx)
-file(GLOB cython_HEADER *.pxd)
-file(GLOB cython_AUX *.py)
-
 
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
@@ -52,6 +48,10 @@ add_custom_command(TARGET espressomd
         COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
         )
+
+file(GLOB cython_SRC *.pyx)
+file(GLOB cython_HEADER *.pxd)
+file(GLOB cython_AUX *.py)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
