@@ -118,7 +118,8 @@ for np in $processors; do
 	if test x@MPI_FAKE@ = "xyes"; then
 	  CMD="$ESPRESSO $srcdir/$testcase -quiet"
 	else
-	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase -quiet"
+#	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase -quiet"
+	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase"
 	fi
 	printf "%35s - " $testcase
 	echo "**************************************************" >> $TESTLOG
