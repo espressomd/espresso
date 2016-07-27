@@ -105,9 +105,9 @@ const Datafield fields[] = {
 #ifndef ROTATIONAL_INERTIA
   {&(langevin_gamma_rotation),  TYPE_DOUBLE, 1, "gamma_rot",1 },    /* 61 from thermostat.cpp */
 #else
-  {&(langevin_gamma_rotation[0]),  TYPE_DOUBLE, 1, "gamma_rot[0]",1 },    /* 61 from thermostat.cpp */
-  {&(langevin_gamma_rotation[1]),  TYPE_DOUBLE, 1, "gamma_rot[1]",1 },    /* 62 from thermostat.cpp */
-  {&(langevin_gamma_rotation[2]),  TYPE_DOUBLE, 1, "gamma_rot[2]",1 },    /* 63 from thermostat.cpp */
+  {&(langevin_gamma_rotation[0]),  TYPE_DOUBLE, 1, "gamma_rot_0",1 },    /* 61 from thermostat.cpp */
+  {&(langevin_gamma_rotation[1]),  TYPE_DOUBLE, 1, "gamma_rot_1",1 },    /* 62 from thermostat.cpp */
+  {&(langevin_gamma_rotation[2]),  TYPE_DOUBLE, 1, "gamma_rot_2",1 },    /* 63 from thermostat.cpp */
 #endif
   { NULL, 0, 0, NULL, 0 }
 };
