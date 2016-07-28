@@ -382,12 +382,8 @@ cdef class NonBondedInteractions:
                     else:
                         continue
                     
-                #inter_instance = getattr(NonBondedInteractionHandle(_type1, _type2), odict['type_name'])
                 del odict[_type1][_type2]['type_name']
-                print odict[_type1][_type2], inter_instance.__class__.__name__
-                inter_instance.set_params(**odict[_type1][_type2])
-    
-    
+                inter_instance.set_params(**odict[_type1][_type2])    
 
 
 cdef class BondedInteraction(object):
