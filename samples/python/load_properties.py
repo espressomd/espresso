@@ -65,6 +65,9 @@ with open("nonBondedInter_save", "r") as bond_save:
 print("Non-bonded interactions from checkpoint:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
+print("Force cap from checkpoint:")
+print(system.non_bonded_inter.get_force_cap())
+
 
 # Integration parameters
 #############################################################
