@@ -867,6 +867,46 @@ The command is implemented in parallel.
 \end{code}
 specifying the local pressure tensor in each bin.
 
+\subsection{Configurational temperature}
+\label{analyze:configtemp}
+\analyzeindex{configurational temperature}
+
+\begin{essyntax}
+  \require{1}{analyze configtemp}
+  \begin{features}
+  \required[1]{CONFIGTEMP}
+  \end{features}
+\end{essyntax}
+
+Estimates the temperature using the potential energy, instead of the kinetic
+energy (i.e., ``kinetic temperature'').  The configurational temperature has
+been shown a more stringent criterion to reproduce a canonical ensemble in
+certain cases \cite{allen06, bereau15}.  The configurational temperature,
+$T_{\rm conf}$, is estimated using first and second derivatives of the
+potential energy of the system
+\begin{equation}
+  \label{eq:configtemp}
+  \frac{1}{k_{\rm B}T_{\rm conf}} = - \frac{\langle \sum_i \nabla_i \cdot
+    \bf{F}_i \rangle}{\langle \sum_j F_j^2 \rangle}, 
+\end{equation}
+where $F_i$ is the force exerted on particle $i$, and angular brackets denote
+canonical averages.  Just like the conventional kinetic temperature, the
+configurational temperature can be estimated from a subsystem, e.g., a subset
+of particles in the box.  To activate the calculation of the configurational
+temperature for particle $i$, use
+\begin{code}
+  part i configtemp 1
+\end{code}
+The command \codebox{analyze configtemp} will return a list of two terms: the
+instantaneous values of the ($i$) denominator and ($ii$) numerator of the
+expression in Equation \ref{eq:configtemp}.  Due to the reliance on second
+derivatives of the potential energy (i.e., first derivative of the force), a
+limited set of interaction potentials have so far been implemented.
+
+\warning{Configurational temperature works only with the following
+  interactions: \codebox{harmonic}, \codebox{angle\_harmonic},
+  \codebox{dihedral}, \codebox{lennard-jones}, and \codebox{lj-gen}.}
+
 \section{Analyzing groups of particles (molecules)}
 \analyzeindex{topologies}
 \label{analyze:set}

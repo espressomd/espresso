@@ -44,7 +44,11 @@ double temperature = 0.0;
 /* Langevin friction coefficient gamma. */
 double langevin_gamma = 0.0;
 /* Friction coefficient gamma for rotation */
+#ifndef ROTATIONAL_INERTIA
 double langevin_gamma_rotation = 0.0;
+#else
+double langevin_gamma_rotation[3] = {0.0,0.0,0.0};
+#endif
 /* Langevin for translations */
 bool langevin_trans = true;
 /* Langevin for rotations */
@@ -62,7 +66,12 @@ int ghmc_nmd = 1;
 // phi parameter for partial momentum update step in GHMC
 double ghmc_phi = 0;
 
-double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
+double langevin_pref1, langevin_pref2;
+#ifndef ROTATIONAL_INERTIA
+double langevin_pref2_rotation;
+#else
+double langevin_pref2_rotation[3];
+#endif
 #ifdef MULTI_TIMESTEP
   double langevin_pref1_small, langevin_pref2_small;
   static double langevin_pref2_small_buffer;
@@ -70,7 +79,12 @@ double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
 
 /** buffers for the work around for the correlated random values which cool the system,
     and require a magical heat up whenever reentering the integrator. */
-static double langevin_pref2_buffer, langevin_pref2_rotation_buffer;
+static double langevin_pref2_buffer;
+#ifndef ROTATIONAL_INERTIA
+static double langevin_pref2_rotation_buffer;
+#else
+static double langevin_pref2_rotation_buffer[3];
+#endif
 
 #ifdef NPT
 double nptiso_pref1;
@@ -82,6 +96,7 @@ double nptiso_pref4;
 
 void thermo_init_langevin() 
 {
+  int j;
   langevin_pref1 = -langevin_gamma/time_step;
 #if defined (FLATNOISE)
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
@@ -105,10 +120,19 @@ void thermo_init_langevin()
 #endif
   
 #ifdef ROTATION 
+#ifndef ROTATIONAL_INERTIA
   if ( langevin_gamma_rotation == 0.0 )
   {
     langevin_gamma_rotation = langevin_gamma;
   }
+#else
+  if (( langevin_gamma_rotation[0] == 0.0 ) && (langevin_gamma_rotation[1] == 0.0) && (langevin_gamma_rotation[2] == 0.0))
+  for ( j = 0 ; j < 3 ; j++)
+  {
+    langevin_gamma_rotation[j] = langevin_gamma;
+  }
+#endif
+#ifndef ROTATIONAL_INERTIA
 #if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
@@ -116,6 +140,15 @@ void thermo_init_langevin()
 #else
 #error No Noise defined
 #endif
+#else
+#if defined (FLATNOISE)
+  for ( j = 0 ; j < 3 ; j++) langevin_pref2_rotation[j] = sqrt(24.0*temperature*langevin_gamma_rotation[j]/time_step);
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  for ( j = 0 ; j < 3 ; j++) langevin_pref2_rotation[j] = sqrt(2.0*temperature*langevin_gamma_rotation[j]/time_step);
+#else
+#error No Noise defined
+#endif
+#endif // ROTATIONAL_INERTIA
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_gamma_rotation=%f, langevin_pref2_rotation=%f",this_node, langevin_gamma_rotation,langevin_pref2_rotation));
 #endif
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",this_node,langevin_pref1,langevin_pref2));  
@@ -174,11 +207,20 @@ void thermo_init()
 
 void thermo_heat_up()
 {
+  int j;
   if(thermo_switch & THERMO_LANGEVIN) {
     langevin_pref2_buffer          = langevin_pref2;
-    langevin_pref2_rotation_buffer = langevin_pref2_rotation;
     langevin_pref2 *= sqrt(3);
+#ifndef ROTATIONAL_INERTIA
+    langevin_pref2_rotation_buffer = langevin_pref2_rotation;
     langevin_pref2_rotation *= sqrt(3);
+#else
+    for ( j = 0 ; j < 3 ; j++)
+    {
+    	langevin_pref2_rotation_buffer[j] = langevin_pref2_rotation[j];
+    	langevin_pref2_rotation[j] *= sqrt(3);
+    }
+#endif
 #ifdef MULTI_TIMESTEP
     langevin_pref2_small_buffer    = langevin_pref2_small;
     langevin_pref2_small          *= sqrt(3);
@@ -194,9 +236,17 @@ void thermo_heat_up()
 
 void thermo_cool_down()
 {
+  int j;
   if(thermo_switch & THERMO_LANGEVIN) {
-    langevin_pref2          = langevin_pref2_buffer;
+	langevin_pref2          = langevin_pref2_buffer;
+#ifndef ROTATIONAL_INERTIA
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
+#else
+    for ( j = 0 ; j < 3 ; j++)
+    {
+    	langevin_pref2_rotation[j] = langevin_pref2_rotation_buffer[j];
+    }
+#endif
 #ifdef MULTI_TIMESTEP
     langevin_pref2_small    = langevin_pref2_small_buffer;
 #endif

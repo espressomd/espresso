@@ -100,7 +100,7 @@ len(Espressomd.System().part)
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
-  \require{2,9}{\opt{gamma\_rot \var{grot}}}
+  \require{2,9}{\opt{gamma\_rot \alt{\var{grot} \asep \var{grotx}\fmark{14} \var{groty}\fmark{14} \var{grotz}\fmark{14}}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \require{12}{\opt{swimming \alt{\alt{v_swim \var{v\_swim} \asep
@@ -119,7 +119,7 @@ len(Espressomd.System().part)
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
     \required[3]{EXTERNAL_FORCES}
-    \required[4]{EXCLUSION}
+    \required[4]{EXCLUSIONS}
     \required[5]{MASS}
     \required[6]{DIPOLES}
     \required[7]{VIRTUAL\_SITES\_COM}
@@ -129,6 +129,7 @@ len(Espressomd.System().part)
     \required[11]{SHANCHEN}
     \required[12]{ENGINE}
     \required[13]{LB \MakeLowercase{\textrm{or}} LB_GPU}
+    \required[14]{ROTATIONAL_INERTIA}
   \end{features}
 \end{essyntax}
 
@@ -915,10 +916,6 @@ All these examples do the same---making exact copies of particles 1 through 4.
     \variant{11}
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
-  
-  \variant{12} 
-  constraint plane cell \var{x} \var{y} \var{z} 
-  type \var{id}
 
   \variant{13}
   constraint mindist_position \var{x} \var{y} \var{z}
@@ -934,9 +931,6 @@ All these examples do the same---making exact copies of particles 1 through 4.
   radius \var{rad} length \var{length} 
   direction \var{direction} 
   type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
-
-  \variant{16}
-  constraint mindist_position \var{x} \var{y} \var{z} 
 
   \begin{features}
     \required{CONSTRAINTS}
@@ -982,7 +976,7 @@ Flow. You also need to use the tunable_slip interaction (see
 
 Variants \variant{9} and \variant{10} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
-surface and applies to all charged particles.
+surface and applies to all charged particles. For \variant{10} the normal vector which is used in the implementation lies in z-direction.
 
 Variant \variant{11} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
@@ -1086,6 +1080,11 @@ non-initializing a direction of the constraint values of the positions
 have to be negative. For the tunable-slip boundary interactions you
 have to set \emph{two} constraints.
 
+Variant \variant{13} calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore, slitpore).
+Negative distances mean that the position is ``within'' the area that
+particles should not access. Helpful to find initial configurations.) 
+
 Variant \variant{14} creates a hollow-cone shaped boundary. The position can be any point in the simulation
 box, and the orientation of the (cylindrically symmetric) cone is
 given by a vector, which points in the direction of the symmetry axis, it
@@ -1094,16 +1093,13 @@ inner_radius \var{Ri}, width \var{w}, and opening_angle \var{alpha}, specify the
 
 Variant \variant{15} creates a spherocylinder, that is, a cylinder capped by a hemisphere on either side. The parameter length \var{length} specifies the length of the shaft, excluding the two hemispherical caps. 
 
-Variant \variant{16} calculates the smallest distance to all non-penetrable
-constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore, slitpore).
-Negative distances mean that the position is ``within'' the area that
-particles should not access. Helpful to find initial configurations.) 
+
 
 \minisec{Example}
-To create an infinite plane in $z$-direction at $z=20.0$ of type id 1,
+To create an infinite plane in $z$-direction at $z=20.0$ of type id 1 which is directed inwards to the origin (0,0,0),
 use:
 \begin{code}
-  constraint plane cell -10 -10 20 type 1
+  constraint wall normal 0 0 -1 dist -20 type 1
 \end{code}
 
 \subsection{Deleting a constraint}
