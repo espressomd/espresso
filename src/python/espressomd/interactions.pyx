@@ -367,9 +367,12 @@ cdef class NonBondedInteractions:
     
     def __getstate__(self):
         odict = NonBondedInteractionHandle(-1,-1).lennard_jones.user_interactions #contains info about ALL nonbonded interactions
+        odict['force_cap'] = self.get_force_cap()
         return odict
     
     def __setstate__(self, odict):
+        self.set_force_cap(odict['force_cap'])
+        del odict['force_cap']
         for _type1 in odict:
             for _type2 in odict[_type1]:
                 attrs = dir(NonBondedInteractionHandle(_type1, _type2))
