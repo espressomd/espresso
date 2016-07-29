@@ -34,6 +34,9 @@ system = espressomd.System()
 #See visualization_openGL.py for possible options
 visualizer = espressomd.visualizationOpenGL.openGLLive(system, {'periodic_images': [1,1,0]})
 
+for key, value in visualizer.specs.items():
+    print(str(key) + ":" + (30-len(key))*" " + str(value))
+
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
