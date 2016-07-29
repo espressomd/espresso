@@ -32,11 +32,20 @@ system = espressomd.System()
 
 #Init the visualizer, set specs by an optional dict (coloring, periodic images etc). 
 #See visualization_openGL.py for possible options
-visualizer = EspressoVisualizer(system)
+visualizer = espressomd.visualization_openGL.openGL_live(system, {'periodic_images': [1,1,0]})
 
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+
+#Register additional callback to run in main thread
+def muu():
+    print "muu"
+def foo():
+    print "foo"
+
+visualizer.registerCallback(foo,interval=500)
+visualizer.registerCallback(muu)
 
 def main():
     system.time_step = 0.00001
@@ -61,4 +70,4 @@ t.daemon = True
 t.start()
 
 #Start blocking visualizer
-visualizer.start()
+visualizer.runGuiEventLoop()
