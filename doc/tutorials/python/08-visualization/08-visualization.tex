@@ -148,7 +148,7 @@ Now, go to the line where \lstinline{main()} is called and replace it with the f
 t = Thread(target=main)
 t.daemon = True
 t.start()
-visualizer.runGuiEventLoop()
+visualizer.start()
 \end{lstlisting}
 While the simulation is running, you can move and zoom around with your mouse or explore the buttons in the toolbar to see how the graphical representation can be changed.\\
 
@@ -198,7 +198,7 @@ t = Thread(target=main)
 t.daemon = True
 t.start()
 visualizer.registerCallback(update_plot, interval=500)
-visualizer.runGuiEventLoop()
+visualizer.start()
 \end{lstlisting}
 
 \end{document}

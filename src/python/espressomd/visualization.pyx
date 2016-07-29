@@ -198,7 +198,7 @@ cdef class mayaviLive:
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.process_events()
 
-    def runGuiEventLoop(self):
+    def start(self):
         """Start the GUI event loop.
         This function blocks until the Mayavi window is closed.
         So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""

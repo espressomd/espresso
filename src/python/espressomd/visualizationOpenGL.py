@@ -92,7 +92,7 @@ class openGLLive:
         self.timers.append((int(interval), cb))
 
     #THE BLOCKING START METHOD
-    def runGuiEventLoop(self):
+    def start(self):
         self.initOpenGL()
         self.initEspressoVisualization()
         self.initCamera()

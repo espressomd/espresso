@@ -225,7 +225,7 @@ t = Thread(target=main_thread)
 t.daemon = True
 t.start()
 visualizer.registerCallback(update_plot, interval=2000)
-visualizer.runGuiEventLoop()
+visualizer.start()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")

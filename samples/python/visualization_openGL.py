@@ -73,4 +73,4 @@ t.daemon = True
 t.start()
 
 #Start blocking visualizer
-visualizer.runGuiEventLoop()
+visualizer.start()
