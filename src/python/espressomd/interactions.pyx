@@ -116,8 +116,7 @@ cdef class NonBondedInteraction(object):
         #update interaction dict when user sets interaction
         if self._part_types[0] not in self.user_interactions:
             self.user_interactions[self._part_types[0]] = {}
-        if self._part_types[1] not in self.user_interactions[self._part_types[0]]:
-            self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
+        self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
         new_params = self.get_params()
         for p_key in new_params:
             self.user_interactions[self._part_types[0]][self._part_types[1]][p_key] = new_params[p_key]
