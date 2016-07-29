@@ -8,7 +8,7 @@ import time
 #from pyface.timer.api import Timer
 
 
-class openGL_live:
+class openGLLive:
 
     def __init__(self, system, specs={}):
 

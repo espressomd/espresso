@@ -23,7 +23,7 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import integrate
 from espressomd import visualization
-from espressomd import visualization_openGL
+from espressomd import visualizationOpenGL
 import numpy
 from matplotlib import pyplot
 from threading import Thread
@@ -109,8 +109,8 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.max_num_cells = 2744
 
 #Switch between openGl/Mayavi
-visualizer = visualization.mayavi_live(system)
-#visualizer = visualization_openGL.openGL_live(system)
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualizationOpenGL.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
