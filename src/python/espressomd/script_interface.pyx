@@ -34,11 +34,10 @@ cdef class  PScriptInterface:
 
             type = self.parameters[name].type()
             
-            if <int> type == <int> INT_VECTOR\
-               or <int> type == <int> DOUBLE_VECTOR:
+            if <int> type in [<int> INT_VECTOR, <int> DOUBLE_VECTOR, <int> VECTOR2D, <int> VECTOR3D]:
                 n_elements = self.parameters[name].n_elements()
                 if not (len(kwargs[name]) == n_elements ):
-                    raise ValueError("Value of %s expected to be %i long" %(name, n_elements))
+                    raise ValueError("Value of %s expected to be %i elements" %(name, n_elements))
 
             self.sip.get().set_parameter(name, self.make_variant(type, kwargs[name]))
 

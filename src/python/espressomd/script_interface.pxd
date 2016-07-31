@@ -35,7 +35,7 @@ cdef extern from "Vector.hpp":
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass ParameterType:
-        bool operator==(ParameterType a, ParameterType b)
+        bool operator==(const ParameterType &a, const ParameterType &b)
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
     cdef ParameterType BOOL
