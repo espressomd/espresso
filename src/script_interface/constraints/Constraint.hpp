@@ -25,6 +25,7 @@
 #include "ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
+#include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
 #include <memory>
@@ -34,7 +35,9 @@ namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
+  Constraint()
+      : m_constraint(new ::Constraints::Constraint()),
+        m_shape(new Shapes::NoWhere()) {}
 
   const std::string name() const override { return "Constraints::Constraint"; }
 
@@ -45,7 +48,6 @@ public:
                           {"shape", m_shape->name()}};
 
     auto shape_parameters = m_shape->get_parameters();
-
     parameters.insert(shape_parameters.begin(), shape_parameters.end());
 
     return parameters;
@@ -54,10 +56,10 @@ public:
   ParameterMap all_parameters() const override {
     ParameterMap parameters{{"only_positive", {ParameterType::INT, true}},
                             {"penetrable", {ParameterType::INT, true}},
-                            {"type", {ParameterType::INT, true}}};
+                            {"type", {ParameterType::INT, true}},
+                            {"shape", {ParameterType::STRING, true}}};
 
     auto shape_parameters = m_shape->all_parameters();
-
     parameters.insert(shape_parameters.begin(), shape_parameters.end());
 
     return parameters;
@@ -65,8 +67,8 @@ public:
 
   void set_parameter(std::string const &name, Variant const &value) override {
     /* Shape is special, because in this case we have to create a new object.
-     * Also it has to be first.
-     */
+     * Also it has to be first, so we can set the other parameters in the
+     * new instance. */
     if (name == "shape") {
       auto const &shape_name = boost::get<std::string>(value);
 

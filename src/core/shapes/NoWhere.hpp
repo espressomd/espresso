@@ -40,6 +40,8 @@ public:
     for (int i = 0; i < 3; i++) {
       vec[i] = *dist;
     }
+
+    return 0;
   }
 };
 

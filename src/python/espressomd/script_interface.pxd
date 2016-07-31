@@ -20,13 +20,23 @@
 from libcpp.map cimport map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libcpp.memory cimport unique_ptr
+from libcpp.memory cimport shared_ptr
 from libcpp cimport bool
+
+cdef extern from "Vector.hpp":
+    cdef cppclass Vector3d:
+        Vector3d()
+        Vector3d(vector[double])
+        vector[double] as_vector();
+    cdef cppclass Vector2d:
+        Vector2d()
+        Vector2d(vector[double])
+        vector[double] as_vector();
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass ParameterType:
-        bool operator==(const ParameterType &a, const ParameterType &b)
-        
+        bool operator==(ParameterType a, ParameterType b)
+
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
     cdef ParameterType BOOL
     cdef ParameterType INT
@@ -34,13 +44,17 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType STRING
     cdef ParameterType INT_VECTOR
     cdef ParameterType DOUBLE_VECTOR
+    cdef ParameterType VECTOR3D
+    cdef ParameterType VECTOR2D
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
         ParameterType type()
         int n_elements()
         bool required()
+
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+    void initialize()
     cdef cppclass Variant:
         Variant()
         Variant(const Variant&)
@@ -61,10 +75,10 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameters(map[string, Variant] &parameters)
     
 cdef extern from "utils/Factory.hpp" namespace "Utils":
-    unique_ptr[T] factory_make[T](const string& name)
+    shared_ptr[T] factory_make[T](const string& name) except +
 
 cdef class PScriptInterface:
-    cdef ScriptInterfaceBase *sip
+    cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef Variant make_variant(self, ParameterType type, value)
 

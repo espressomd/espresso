@@ -52,7 +52,6 @@ public:
   }
 
   Scalar &operator[](int i) { return d[i]; }
-
   Scalar const &operator[](int i) const { return d[i]; }
 
   iterator begin() { return d.begin(); }
@@ -66,6 +65,12 @@ public:
 
   const_reference front() const { return d.front(); }
   const_reference back() const { return d.back(); }
+
+  operator std::array<Scalar, n> const &() const { return d; }
+
+  std::vector<Scalar> as_vector() const {
+    return std::vector<Scalar>(std::begin(d), std::end(d));
+  }
 
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
@@ -106,7 +111,7 @@ public:
   }
 
   template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  void serialize(Archive &ar, const unsigned int /* version */) {
     ar &d;
   }
 };

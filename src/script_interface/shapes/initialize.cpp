@@ -18,16 +18,16 @@
 */
 
 #include "initialize.hpp"
+#include "NoWhere.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "Wall.hpp"
 #include "utils/Factory.hpp"
-
-#include <iostream>
 
 namespace ScriptInterface {
 namespace Shapes {
 
 void initialize() {
+    Utils::Factory<ScriptInterfaceBase>::register_new<NoWhere>("Shapes::NoWhere");
   Utils::Factory<ScriptInterfaceBase>::register_new<Wall>("Shapes::Wall");
 }
 } /* namespace Shapes */

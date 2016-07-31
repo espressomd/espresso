@@ -23,7 +23,6 @@
 #define SCRIPT_INTERFACE_SHAPES_WALL_HPP
 
 #include "Shape.hpp"
-
 #include "core/shapes/Wall.hpp"
 
 namespace ScriptInterface {

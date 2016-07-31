@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -151,10 +152,11 @@ std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
  * Here the Base type is the template parameter of a free function, and
  * not part of a type, which works around partially missing template support
  * in cython.
+ * Also we use a shared_ptr as return type (should be unique_ptr), because
+ * in cython translation of c++ to python exceptions only works for functions
+ * whose return type can be copyed (unique_ptr can not).
  */
-template <class T>
-auto factory_make(const std::string &name) ->
-    typename Factory<T>::pointer_type {
+template <class T> std::shared_ptr<T> factory_make(const std::string &name) {
   return Factory<T>::make(name);
 }
 

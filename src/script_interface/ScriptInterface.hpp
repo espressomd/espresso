@@ -22,6 +22,7 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 
+#include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
 
 #endif
