@@ -30,6 +30,7 @@ namespace ScriptInterface {
  * Variant.
  */
 enum class ParameterType {
+  OBJECT,
   BOOL,
   INT,
   DOUBLE,

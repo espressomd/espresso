@@ -73,6 +73,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant get_parameter(const string &name)
         void set_parameter(const string &name, const Variant &value)
         void set_parameters(map[string, Variant] &parameters)
+        int id()
     
 cdef extern from "utils/Factory.hpp" namespace "Utils":
     shared_ptr[T] factory_make[T](const string& name) except +
@@ -81,4 +82,3 @@ cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef Variant make_variant(self, ParameterType type, value)
-

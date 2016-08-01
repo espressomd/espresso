@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __UTILS_ENUMERATED_CONTAINER_HPP
-#define __UTILS_ENUMERATED_CONTAINER_HPP
+#ifndef UTILS_ENUMERATED_CONTAINER_HPP
+#define UTILS_ENUMERATED_CONTAINER_HPP
 
 /** Keep a enumerated list of T objects, managed by the class.
 */

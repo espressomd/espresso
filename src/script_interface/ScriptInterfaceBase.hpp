@@ -29,8 +29,38 @@
 
 #include <boost/variant.hpp>
 
+#include "utils/NumeratedContainer.hpp"
+
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
+
+namespace Utils {
+template <typename T> class ObjectId {
+public:
+  /* Assign an id on construction */
+  ObjectId() : m_id(reg().add(static_cast<T *>(this))) {}
+
+  /* Remove id on destruction */
+  virtual ~ObjectId() { reg().remove(m_id); }
+
+  /**
+   * @brief Get indentifier for this instance.
+   */
+  int id() const { return m_id; }
+  /**
+   * @brief get instance by id.
+   */
+  static T *get_instance(int id) { return reg().at(id); }
+
+private:
+  const int m_id;
+  static Utils::NumeratedContainer<T *> &reg() {
+    static Utils::NumeratedContainer<T *> m_reg;
+
+    return m_reg;
+  }
+};
+} /* namespace Utils */
 
 namespace ScriptInterface {
 
@@ -84,7 +114,7 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  * @TODO Add extensive documentation.
  *
  */
-class ScriptInterfaceBase {
+class ScriptInterfaceBase : public Utils::ObjectId<ScriptInterfaceBase> {
 public:
   /**
    * @brief Name of the object.
@@ -94,6 +124,7 @@ public:
    *
    * @return Name of the object.
    */
+  // return boost::core::demangle(typeid(*this).name()) ?
   virtual const std::string name() const = 0;
 
   /**
