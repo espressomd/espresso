@@ -68,7 +68,6 @@ add_subdirectory(io)
 
 
 foreach(cython_file ${cython_SRC})
-  message("${cython_file}")
   get_filename_component(basename ${cython_file} NAME_WE)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
   get_filename_component(relpath ${relpath} DIRECTORY)
