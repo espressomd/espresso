@@ -76,7 +76,9 @@ foreach(cython_file ${cython_SRC})
                                  ${cython_HEADER}
                          )
       add_library(${basename} SHARED ${outputpath})
-      set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+      if(NOT "${relpath}" STREQUAL "")
+          set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+      endif()
       set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
@@ -94,7 +96,7 @@ foreach(auxfile ${cython_AUX})
   string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${filename})
   add_custom_command(TARGET espressomd
                      COMMAND ${CMAKE_COMMAND} -E
-                       copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
+                       copy ${auxfile} ${outputpath}
                     )
 endforeach(auxfile)
 
