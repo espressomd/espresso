@@ -19,12 +19,11 @@
 
 
 ### Here: add new directory
-# add_subdirectory(01-tutorial_name)
-# add_subdirectory(02-other_name)
 add_subdirectory(01-lennard_jones)
 add_subdirectory(02-charged_system)
+add_subdirectory(08-visualization)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials_py DEPENDS tutorials_py_01 tutorials_py_02)
+add_custom_target(tutorials_py DEPENDS tutorials_py_01 tutorials_py_02 tutorials_py_08)
 #                                       tutorials_py_03                )

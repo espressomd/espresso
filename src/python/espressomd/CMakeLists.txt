@@ -18,17 +18,6 @@
 #
 
 
-file(GLOB cython_SRC *.pyx)
-# Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to
-# be able to extend it in the subdirectories.
-SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
-file(GLOB cython_HEADER *.pxd)
-SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
-file(GLOB cython_AUX *.py)
-SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
-
-add_subdirectory(io)
-
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
@@ -39,10 +28,6 @@ add_custom_command(OUTPUT gen_pxiconfig.cpp
 include_directories(${CMAKE_BINARY_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
-if (HDF5_FOUND)
-    include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
-    include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
-endif(HDF5_FOUND)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 add_dependencies(gen_pxiconfig EspressoConfig)
@@ -57,6 +42,15 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
+add_custom_command(TARGET espressomd
+        PRE_BUILD
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
+        )
+
+file(GLOB cython_SRC *.pyx)
+file(GLOB cython_HEADER *.pxd)
+file(GLOB cython_AUX *.py)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -100,7 +94,7 @@ foreach(auxfile ${cython_AUX})
   string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${filename})
   add_custom_command(TARGET espressomd
                      COMMAND ${CMAKE_COMMAND} -E
-                       copy ${auxfile} ${outputpath}
+                       copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
                     )
 endforeach(auxfile)
 
