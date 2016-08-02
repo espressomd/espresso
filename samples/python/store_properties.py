@@ -174,5 +174,8 @@ with open("p3m_save","w") as p3m_save:
 with open("system_save","w") as system_save:
     pickle.dump(system, system_save, -1)
 
+with open("nonBondedInter_save", "w") as bond_save:
+    pickle.dump(system.non_bonded_inter, bond_save, -1)
+
 # terminate program
 print("\nFinished.")
