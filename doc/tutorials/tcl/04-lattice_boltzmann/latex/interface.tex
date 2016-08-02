@@ -3,31 +3,31 @@
 \section{The LB interface in \ES{}}
 \ES{} features two virtually independent implementations of LB. One implementation
 uses CPUs and one uses a GPU to perform the computational work. If in the first usage
-of the command { \tt lbfluid} the parameter {\tt gpu} is given as first
+of the command \texttt{lbfluid} the parameter \texttt{gpu} is given as first
 parameter, the GPU will be used.
 
-The LB lattice is a cubic lattice, with a lattice constant {\tt agrid} that
+The LB lattice is a cubic lattice, with a lattice constant \texttt{agrid} that
 is the same in all spacial directions. The chosen box length must be an integer multiple
-of {\tt agrid}. The LB lattice is shifted by 0.5 {\tt agrid} in all directions: the node
+of \texttt{agrid}. The LB lattice is shifted by 0.5 \texttt{agrid} in all directions: the node
 with integer coordinates $\left(0,0,0\right)$ is located at
 $\left(0.5a,0.5a,0.5a\right)$.
 The LB scheme and the MD scheme are not synchronized: In one
 LB time step typically several MD steps are performed. This allows to speed
-up the simulations and is adjusted with the parameter {\tt tau}.
-The LB parameter {\tt tau} must be an integer multiple of the MD timestep.
+up the simulations and is adjusted with the parameter \texttt{tau}.
+The LB parameter \texttt{tau} must be an integer multiple of the MD timestep.
 
 Even if MD features are not used a few MD parameters must be set, although they are irrelevant
-to the LB module. These is mainly {\tt skin}, but also the MD timestep has to be
-set as the command {\tt integrate} is used to propagate MD steps. LB steps are performed 
+to the LB module. These is mainly \texttt{skin}, but also the MD timestep has to be
+set as the command \texttt{integrate} is used to propagate MD steps. LB steps are performed 
 in regular intervals, such that the timestep $\tau$ for LB is recovered. 
 
 \ES{} has three main commands for the LB module: 
- {\tt lbfluid},  {\tt lbnode}, and  {\tt lbboundary}.
- {\tt lbfluid} is mainly used to set up parameters and does everything that
-concerns the whole fluid.  {\tt lbnode} involves readout and manipulation of
-single LB cells.  {\tt lbboundary} allows to set boundaries, currently only
+ \texttt{lbfluid},  \texttt{lbnode}, and  \texttt{lbboundary}.
+ \texttt{lbfluid} is mainly used to set up parameters and does everything that
+concerns the whole fluid.  \texttt{lbnode} involves readout and manipulation of
+single LB cells.  \texttt{lbboundary} allows to set boundaries, currently only
 the bounce back boundary method is implemented to model
-no-slip walls. Additionally the command  {\tt thermostat lb} is used to set
+no-slip walls. Additionally the command  \texttt{thermostat lb} is used to set
 the temperature. 
 
 
@@ -46,23 +46,23 @@ is 1, then it corresponds to a velocity of 1 in LB units.
 This is the maximum velocity of the discrete velocity set and therefore
 causes numerical instabilities like negative populations.
 
-\subsection*{The {\tt lbfluid} command}
-The {\tt lbfluid} command sets global parameters of the LBM. Every
-parameter is given in the form {\tt lbfluid name value}. 
-All parameters except for {\tt gamma\_odd} and  {\tt gamma\_even}
-are given in MD units. All parameters except for {\tt ext\_force} accept
+\subsection*{The \texttt{lbfluid} command}
+The \texttt{lbfluid} command sets global parameters of the LBM. Every
+parameter is given in the form \texttt{lbfluid name value}. 
+All parameters except for \texttt{gamma\_odd} and  \texttt{gamma\_even}
+are given in MD units. All parameters except for \texttt{ext\_force} accept
 one scalar floating point argument. \\
 \vspace{0,2cm}
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
-{\tt dens} & The density of the fluid.\\
-{\tt grid} & The lattice constant of the fluid. It is used to determine the number of LB nodes 
-per direction from {\tt box\_l}. {\em They have to be compatible.} \\
-{\tt visc} & The kinematic viscosity \\
-{\tt tau} & The time step of LB. It has to be equal or larger than the MD time step. \\
-{\tt friction} & The friction coefficient $\gamma$ for the coupling scheme. \\
-{\tt ext\_force} & An external force applied to every node with three components. \\
-{\tt gamma\_odd} & Relaxation parameter for the odd kinetic modes. \\
-{\tt gamma\_even} & Relaxation parameter for the even kinetic modes.
+\texttt{dens} & The density of the fluid.\\
+\texttt{grid} & The lattice constant of the fluid. It is used to determine the number of LB nodes 
+per direction from \texttt{box\_l}. {\em They have to be compatible.} \\
+\texttt{visc} & The kinematic viscosity \\
+\texttt{tau} & The time step of LB. It has to be equal or larger than the MD time step. \\
+\texttt{friction} & The friction coefficient $\gamma$ for the coupling scheme. \\
+\texttt{ext\_force} & An external force applied to every node with three components. \\
+\texttt{gamma\_odd} & Relaxation parameter for the odd kinetic modes. \\
+\texttt{gamma\_even} & Relaxation parameter for the even kinetic modes.
 \end{tabular} \\
 \vspace{0,2cm}
 
@@ -73,8 +73,8 @@ lbfluid grid 1.0 dens 10. visc .1 tau 0.01 friction 10.
 \end{lstlisting}
 \vspace{0,2cm}
 
-\subsection*{The {\tt lbnode} command}
-The {\tt lbnode} command allows to inspect and modify single LB nodes The
+\subsection*{The \texttt{lbnode} command}
+The \texttt{lbnode} command allows to inspect and modify single LB nodes The
 general syntax is:
 \vspace{0,2cm}
 \begin{lstlisting}[ numbers=none]
@@ -94,11 +94,11 @@ or modified. Print allows the following arguments: \\
 
 \vspace{0,8cm}
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
-  {\tt rho}\ & the density (scalar). \\
-  {\tt u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
-  {\tt pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
-  {\tt pi\_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
-  {\tt pop} & the 19 populations (check the order from the source code please).
+  \texttt{rho}\ & the density (scalar). \\
+  \texttt{u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
+  \texttt{pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
+  \texttt{pi\_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
+  \texttt{pop} & the 19 populations (check the order from the source code please).
 \end{tabular} \\
 \vspace{0,8cm}
 Example:
@@ -109,14 +109,14 @@ puts [ lbnode 0 0 0 print u ]
 \end{lstlisting}
 \vspace{0,2cm}
 prints the fluid velocity in node 0 0 0 to the screen.
-The command {\tt set} allows to change the density or fluid velocity in a single node. Setting
+The command \texttt{set} allows to change the density or fluid velocity in a single node. Setting
 the other quantities can easily be implemented.
 Example:
 \begin{lstlisting}[ numbers=none]
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{lstlisting}
-\subsection*{The {\tt lbboundary} command}
-The {\tt lbboundary} command allows to set boundary conditions for the LB fluid. In general
+\subsection*{The \texttt{lbboundary} command}
+The \texttt{lbboundary} command allows to set boundary conditions for the LB fluid. In general
 periodic boundary conditions are applied in all directions and only if LB boundaries
 are constructed finite geometries are used. This part of the LB implementation is still experimental,
 so please tell us about your experience with it. In general even the simple case of no-slip
@@ -125,8 +125,8 @@ point particle coupling not much experience exists. This means: Do research on t
 around with parameters and find out what happens. 
 
 
-The {\tt lbboundary} command is supposed to resemble exactly the constraint command of 
-\ES{}: Just replace the keyword {\tt constraint} with the word {\tt lbboundary} 
+The \texttt{lbboundary} command is supposed to resemble exactly the constraint command of 
+\ES{}: Just replace the keyword \texttt{constraint} with the word \texttt{lbboundary} 
 and \ES{} will create walls with the same shape as the corresponding constraint. Example:
 The commands
 \begin{lstlisting}[ numbers=none]
@@ -137,7 +137,7 @@ create a channel with walls parallel to the $yz$ plane with width 8.
 
 Currently only the so called \emph{link bounce back} method is implemented, where the effective
 hydrodynamic boundary is located midway between two nodes. This is the simplest and yet a 
-rather effective approach for boundary implementation. The {\tt lbboundary} command
+rather effective approach for boundary implementation. The \texttt{lbboundary} command
 checks for every LB node if it is inside the constraint or outside and flags it as a boundary
 node or not. 
 
