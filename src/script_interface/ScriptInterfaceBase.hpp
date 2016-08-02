@@ -34,11 +34,13 @@
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
 
+#include "utils/Factory.hpp"
+
 namespace Utils {
 template <typename T> class ObjectId {
 public:
   /* Assign an id on construction */
-  ObjectId() : m_id(reg().add(static_cast<T *>(this))) {}
+  ObjectId() : m_id(reg().add(std::weak_ptr<T>())) {}
 
   /* Remove id on destruction */
   virtual ~ObjectId() { reg().remove(m_id); }
@@ -50,12 +52,12 @@ public:
   /**
    * @brief get instance by id.
    */
-  static T *get_instance(int id) { return reg().at(id); }
+  static std::weak_ptr<T> &get_instance(int id) { return reg()[id]; }
 
 private:
   const int m_id;
-  static Utils::NumeratedContainer<T *> &reg() {
-    static Utils::NumeratedContainer<T *> m_reg;
+  static Utils::NumeratedContainer<std::weak_ptr<T>> &reg() {
+    static Utils::NumeratedContainer<std::weak_ptr<T>> m_reg;
 
     return m_reg;
   }
@@ -63,7 +65,6 @@ private:
 } /* namespace Utils */
 
 namespace ScriptInterface {
-
 /**
  * @brief Possible types for parameters.
  */
@@ -184,6 +185,25 @@ public:
    * this does nothing.
    */
   virtual void call_method(const std::string &, const VariantMap &) {}
+
+  /**
+   * @brief Get a new reference counten instance of a script interface.
+   */
+  static std::shared_ptr<ScriptInterfaceBase>
+  make_shared(std::string const &name) {
+    std::shared_ptr<ScriptInterfaceBase> sp =
+        Utils::Factory<ScriptInterfaceBase>::make(name);
+
+    /* Id of the newly created instance */
+    const int id = sp->id();
+
+    /* Now get a reference to the corresponding weak_ptr in ObjectId and update
+       it with our shared ptr, so that everybody uses the same ref count.
+    */
+    sp->get_instance(id) = sp;
+
+    return sp;
+  }
 };
 
 } /* namespace ScriptInterface */

@@ -45,11 +45,7 @@ public:
     VariantMap parameters{{"only_positive", m_constraint->only_positive()},
                           {"penetrable", m_constraint->penetrable()},
                           {"type", m_constraint->type()},
-                          {"shape", m_shape->name()}};
-
-    auto shape_parameters = m_shape->get_parameters();
-    parameters.insert(shape_parameters.begin(), shape_parameters.end());
-
+                          {"shape", m_shape->id()}};
     return parameters;
   }
 
@@ -57,11 +53,7 @@ public:
     ParameterMap parameters{{"only_positive", {ParameterType::INT, true}},
                             {"penetrable", {ParameterType::INT, true}},
                             {"type", {ParameterType::INT, true}},
-                            {"shape", {ParameterType::STRING, true}}};
-
-    auto shape_parameters = m_shape->all_parameters();
-    parameters.insert(shape_parameters.begin(), shape_parameters.end());
-
+                            {"shape", {ParameterType::OBJECT, true}}};
     return parameters;
   }
 
@@ -70,43 +62,27 @@ public:
      * Also it has to be first, so we can set the other parameters in the
      * new instance. */
     if (name == "shape") {
-      auto const &shape_name = boost::get<std::string>(value);
+      auto so = ScriptInterface::get_instance(value);
 
-      auto new_shape = std::dynamic_pointer_cast<Shapes::Shape>(
-          std::shared_ptr<ScriptInterfaceBase>(
-              Utils::Factory<ScriptInterfaceBase>::make(shape_name)));
-
-      if (new_shape != nullptr) {
-        m_shape = new_shape;
-
-        std::cout << __PRETTY_FUNCTION__ << " m_shape = " << m_shape.get()
-                  << std::endl;
-
-        std::cout << __PRETTY_FUNCTION__
-                  << " m_shape->shape() = " << m_shape->shape() << std::endl;
-
-        m_constraint->set_shape(m_shape->shape());
+      /* We are expecting a ScriptInterface::Shape here,
+       throw if not. That means the assigned object had the wrong type. */
+      auto shape = std::dynamic_pointer_cast<Shapes::Shape>(so);
+      if (shape != nullptr) {
+        m_constraint->set_shape(shape->shape());
       } else {
-        throw std::runtime_error("Unknown shape.");
+        throw std::runtime_error("Wrong type.");
       }
     }
 
     SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
     SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
     SET_PARAMETER_HELPER("type", m_constraint->type());
-
-    m_shape->set_parameter(name, value);
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() {
     return m_constraint;
   }
-
-  std::shared_ptr<Shapes::Shape> shape() { return m_shape; }
-
 private:
-  /* Script object for the shape */
-  std::shared_ptr<Shapes::Shape> m_shape;
   /* The actual constraint */
   std::shared_ptr<::Constraints::Constraint> m_constraint;
 };

@@ -3,6 +3,19 @@ cdef class  PScriptInterface:
         self.sip = factory_make[ScriptInterfaceBase](name)
         self.parameters = self.sip.get().all_parameters()
 
+    def __richcmp__(a, b, op):
+        if op == 2:
+            return a.sip == b.sip
+        else:
+            raise NotImplementedError
+
+    def id(self):
+        return self.sip.get().id()
+
+    cdef set_cip(self, shared_ptr[ScriptInterfaceBase] sip):
+        self.sip = sip
+        self.parameters = self.sip.get().all_parameters()
+
     cdef Variant make_variant(self, ParameterType type, value):
         if <int> type == <int> BOOL:
             return make_variant[bool](<bool> value)
@@ -39,8 +52,12 @@ cdef class  PScriptInterface:
                 if not (len(kwargs[name]) == n_elements ):
                     raise ValueError("Value of %s expected to be %i elements" %(name, n_elements))
 
-            self.sip.get().set_parameter(name, self.make_variant(type, kwargs[name]))
+            # Objects have to be translated to ids
+            if <int> type is <int> OBJECT:
+                id = kwargs[name].id()
+                self.sip.get().set_parameter(name, self.make_variant(type, id))
 
+            self.sip.get().set_parameter(name, self.make_variant(type, kwargs[name]))
 
     def get_parameter(self, name):
         cdef ParameterType type = self.parameters[name].type()
@@ -62,6 +79,8 @@ cdef class  PScriptInterface:
             return get[Vector3d](value).as_vector()
         if <int> type == <int> VECTOR2D:
             return get[Vector2d](value).as_vector()
+        if <int> type == <int> OBJECT:
+            return "ScriptObject<%d>" % get[int](value)
 
         raise Exception("Unkown type")
 

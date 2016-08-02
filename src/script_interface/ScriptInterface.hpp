@@ -25,4 +25,14 @@
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
 
+namespace ScriptInterface {
+
+  inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
+  const int id = boost::get<int>(value);
+
+  return ScriptInterfaceBase::get_instance(id).lock();
+}
+
+} /* namespace ScriptInterface */
+
 #endif

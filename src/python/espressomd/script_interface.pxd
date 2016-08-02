@@ -38,6 +38,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
         bool operator==(const ParameterType &a, const ParameterType &b)
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
+    cdef ParameterType OBJECT
     cdef ParameterType BOOL
     cdef ParameterType INT
     cdef ParameterType DOUBLE
@@ -82,3 +83,4 @@ cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef Variant make_variant(self, ParameterType type, value)
+    cdef set_cip(self, shared_ptr[ScriptInterfaceBase] sip)
