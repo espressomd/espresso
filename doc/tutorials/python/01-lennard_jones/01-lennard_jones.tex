@@ -124,169 +124,20 @@ research. We will cover the basics of \es, i.e.~how to set up and modify a
 physical system, how to run a simulation, and how to load, save and analyze the 
 data.
 
-The more advanced features and algorithms available in the \es{} package will 
-be described in additional tutorials in the future.
+The more advanced features and algorithms available in the \es{} package are 
+described in additional tutorials.
 
 \section{Background}
 Today's research on Soft Condensed Matter has brought the needs for having a 
 flexible, extensible, reliable and efficient (parallel) molecular simulation 
 package. For this reason \es{} (Extensible Simulation Package for Research on 
-Soft matter) \cite{esp_url} has been developed in Max Planck Institute for 
-Polymer Research, Mainz by the Group of PD Dr. Christian Holm 
-\cite{limbach2006ees}. The Espresso package is probably the most flexible and 
+Soft matter) \cite{esp_url} has been developed at Max Planck Institute for 
+Polymer Research, Mainz, and Institute for Computational Physics at the University of Stuttgart in  the group of Prof. Dr. Christian Holm\cite{limbach2006ees,arnold13a}. The Espresso package is probably the most flexible and 
 extensible simulation package in the market. It is specially developed for 
 coarse-grained molecular dynamics (MD) simulation of polyelectrolytes but not 
 necessarily limited to this. It can be used even in simulating granular media 
 for example. \es{} has been nominated for the Heinz-Billing-Preis for 
 Scientific Computing in 2003 \cite{arnold2003ees}.
-
-\section{Tutorial Outline}
-
-% 1) Prerequisits
-% 
-% 2) Physics of the systems
-% 
-% 3) Simulation setup and details
-% 
-% 4) Analysis
-% 
-% 5) Outlook: what else you can do with this system
-
-In this short tutorial, you will be introduced to the \es{} package as smooth 
-as possible with a minimal set of skills. We will guide you through the initial 
-steps of working with \es{} and help you to examine a simple physical system, a 
-Lennard-Jones liquid.
-
-After a brief introduction to \es{} in Section \ref{sec:espresso}, we provide 
-you with a short tutorial to the Tcl programming language which is used to 
-control simulations using \es{} in Section \ref{sec:tcl}. In Section \ref{sec:ljliquid}, we will 
-introduce you to the problem system studied in this tutorial and familiarize you with the necessary 
-background knowledge. Please note, however, that it is beyond the scope of this 
-tutorial to give a complete overview of the the area. We give a few 
-references that can give you more detailed information regarding MD.
-
-%In Section \ref{sec:vmd}, we demonstrate how to visualize simulation data with 
-%\emph{VMD\footnote{\texttt{http://www.ks.uiuc.edu/Research/vmd/}}} and how to 
-%analyze it with the aid of the functions provided by \es{}. At the end of this tutorial,
-%you will be able to compare your results to the ones obtained in the original 
-%investigations on the presented topic.
-
-%We conclude this basic tutorial with an outlook on the more advanced features 
-%of \es{} that will be detailed in future tutorials.
-
-%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%
-\section{First steps}\label{sec:espresso}
-
-  What is \es{}? It is not a coffee, indeed. It is an extensible, efficient 
-  Molecular Dynamics package specially powerful on simulating charged systems. 
-  In depth information about the package can be found in the relevant sources 
-  \cite{esp_url,arnold2003ees} and a recent paper \cite{limbach2006ees}.
-
-  From the users point of view, \es{} is driven by Tcl(/TK)\footnote{Tool
-  command language} \cite{tcl_url}, that the
-  user can interact with the package core via command line interface (CLI) or 
-  scripts by using Tcl scripting language\footnote{In short, a \emph{scripting language
-  } allows the user to write instructions that are carried out by an interpreter
-  without prior compiling. This enables the user to use \es{} for vastly
-  different applications without the need of different specialized executable files.}.
-  In a given \es{} script, some commands
-  are interpreted by the scripting language (Tcl), while others by the core
-  \es{} program written in C. However, all \es{} commands and directives in the
-  script are
-  transparent to the user, regardless of its implementation either on the C- or Tcl-level.
-
-  The above statements are also valid for the new interface, which will provied
-  access to the MD capabilities of \es{} via the python script language. 
-
-\emph{Note: This tutorial assumes that you already have a working \es{}
-installation on your system. If this is not the case, please go to
-\url{http://espressomd.org/} for information on how to obtain and
-install \es{}.}
-
-%\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
-%         \begin{task} 
-%             To start \es{}, simply type \texttt{Espresso} in the command 
-%             line shell. This will open the Command Line Interface (CLI) of
-%             \es{}. Upon issuing the \es{} command
-%             \lstinline|code\_info| you can see the options that are included in 
-%             your \es{} binary\footnote{\es{} provides many different features,
-%             some which are mutually exclusive. This is why not all features are
-%             activated by default, but instead have to be explicitly requested
-%             at compile time of the executable. Please consult the user's guide
-%             for details on this.}.
-%
-%             In order to use \es{} with python, execute \texttt{./pypresso} and
-%             import the \es{} Module(\texttt{espressomd}). 
-%
-%\end{task}
-%\end{minipage}}\vspace{1cm}
-
-\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
-         \begin{task} 
-             You can check the features, that are compiled in the \es{} core by
-             issueing \texttt{print(code\_info.features())} after having imported the 
-             \texttt{code\_info} Module:
-        \end{task}
-    \end{minipage}}\vspace{1cm}
-
-\begin{lstlisting}
- from espressomd import code_info
- print(code_info.features())
- \end{lstlisting}
-
-%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%
-\section{Short python Tutorial}\label{sec:python}
-The functionality of \es{} for python is provided via an importable module called
-\texttt{espressomd}.
-\begin{lstlisting}
-import espressomd
-from espressomd import thermostat
-from espressomd import code_info
-from espressomd import integrate
-\end{lstlisting}
-For convenience we also import the \texttt{code\_info}, \texttt{thermostat} and
-\texttt{integrate} submodules. 
-
-The next first step would be to create an \es{} system handle to manipulate the
-crucial system parameters like \texttt{time\_step}, \texttt{skin} and the
-\texttt{box\_l} for example. 
-\begin{lstlisting}
-system = espressomd.System()
-system.time_step = time_step
-system.skin = skin
-system.box_l = [box_l_x, box_l_y, box_l_z]
-\end{lstlisting}
-
-Once particles are added to the system, they can be accessed from the submodul
-\texttt{part}. It is possible to use common python iterators and slicing operations
-on this particle object:
-\begin{lstlisting}
-for p in system.part:
-    print(p.pos)
-    print(p.v)
-
-#copy all current positions
-cur_pos = system.part[:]
-\end{lstlisting}
-
-
-
-%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%
- \subsection{System setup}\label{sec:ljliquid}
-
-  An Espresso script is a python simulation script that drives 
-  the C-core of the package. It contains commands native to python - like those we
-  have already learned - plus special \es{} commands that execute procedures
-  specific to MD calculations. In this section we will review some very basic
-  commands
-   that will help you to understand the sample introductory script. An actual
-   script used for research is usually more complicated.
 
 \subsection{Lennard-Jones Potential}
 A pair of neutral atoms or molecules is subject to two distinct forces in the limit
@@ -312,70 +163,140 @@ $r^{12}$ as the square of $r^6$.
 
  \subsection{Units}
   Novice users must understand that Espresso has no fixed unit system. The unit 
-  system is set by user. Conventionally, reduced units are employed, in other 
+  system is set by the user. Conventionally, reduced units are employed, in other 
   words LJ units.
   \footnote{If we have charges there is additionally a concept of Bjerrum length, consult Espresso original paper for more details.} 
 
- \subsection{Simulation Parameters}
-  There are global parameters of the simulation system. Some of them are
-  dynamic, that is to say we can change on the fly, others are read only\footnote{For
-  more information on read-only variables consult the user's guide.}. One
-  important \es{} command to address these parameters is \lstinline|setmd|
-  
-  {\small\vspace{0,2cm}
+\section{First steps}\label{sec:espresso}
+
+  What is \es{}? It is not a coffee, indeed. It is an extensible, efficient 
+  Molecular Dynamics package specially powerful on simulating charged systems. 
+  In depth information about the package can be found in the relevant sources 
+  \cite{esp_url,arnold2003ees,limbach2006ees,arnold13a}.
+
+\es consists of two components.
+The simulation engine is written in C and C++ for the sake
+of computational efficiency. The steering or control
+level is interfaced to the kernel via an interpreter 
+of the Python scripting languages.
+
+The kernel performs all computationally demanding tasks. Before all,
+integration of Newton's equations of motion, including calculation of
+energies and forces. It also takes care of internal organization of
+data, storing the data about particles, communication between
+different processors or cells of the cell-system. 
+
+The scripting interface (Python) is used to setup the system (particles, boundary onditions, interactions, ...), control the simulation, run analysis, and store and load results.
+The user has at hand the full rl3sibili5y and functionality of the scripting language. For instance, it is possible to use the SciPy package for analysis and PyPlot for plotting.
+With a certain overhead in efficiency, it can also be
+used to reject/accept new configurations in combined MD/MC schemes. In
+principle, any parameter which is accessible from the scripting level can be
+changed at any moment of runtime.  In this way methods like
+thermodynamic integration become readily accessible.
+
+\emph{Note: This tutorial assumes that you already have a working \es{}
+installation on your system. If this is not the case, please consult the first chapters of the user's guide for installation instructions.}
+
+\vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
+         \begin{task} 
+             You can check the features, that are compiled in the \es{} core by
+             issueing \texttt{print(code\_info.features())} after having imported the 
+             \texttt{code\_info} Module:
+        \end{task}
+    \end{minipage}}\vspace{1cm}
+
 \begin{lstlisting}
-system.time_step    = time_step
-system.skin         = skin
-\end{lstlisting}\vspace{0,2cm}
-} 
+ from espressomd import code_info
+ print(code_info.features())
+ \end{lstlisting}
 
-\es{} needs to know which integrator to use for dynamics. One can use NVE (particle
-Number, Velocity, Energy) or NVT (particle Number, Velocity, Temperature)(Langevin)
-as well as NPT-isotropic (particle Number, Pressure, Temperature) ensembles. Some
-examples how to use the thermostats
 
+
+
+\section{Overview over a simulatino script}
+
+Typically, a simulatino script consists of the following parts
+\begin{itemize}
+\item System setup (box geometry, thermodynamic ensemble, integrator parameters)
+\item Placeing the particles
+\item Setup of interactions between particles
+\item Warmup (bringing the system into a state suitable for measurements)
+\item Integration loop (propagate the system in teim and record measurements)
+\end{itemize}
+In the following sections, it will be shown, how these steps can be taken. Once the basics are covered, we apply them to the simulation of the Lennard-Jones liquid.
+
+
+\subsection{System setup}
+The functionality of \es{} for
+python is provided via a python module called
+\texttt{espressomd}. At the beginning of the simulation script, it has to be imported.
+\begin{lstlisting}
+import espressomd
+from espressomd import integrate
+\end{lstlisting}
+For convenience we also import the \texttt{integrate} submodule. 
+
+The next step would be to create an instance of the System class. 
+This instance is used as a handle to the simulation system. It can be used to manipulate the
+crucial system parameters like the time step and the size of the simulatio box (\texttt{time\_step}, and \texttt{box\_l}). At any time, only one instance of the System class can exist.
+\begin{lstlisting}
+system = espressomd.System()
+system.time_step = time_step
+system.box_l = [box_l_x, box_l_y, box_l_z]
+\end{lstlisting}
+\subsection{Chosing the thermodynamic ensemble, thermostat}
+Simulations can be carried out in different thermodynamic ensembles such as NVE (particle
+Number, Velocity, Energy) or NVT (particle Number, Velocity, Temperature)
+as well as NPT-isotropic (particle Number, Pressure, Temperature). 
+The ensemble is maintained by a thermostat.
+In this tutorail, the NVE-ensemble will be maintained by means of the Langevin thermostat.
+
+In \es{}, the teermostat is set as follows:
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 system.thermostat.turn_off()
 \end{lstlisting}}\vspace{0,2cm}
-\noindent This implies to use NVE ensemble
+\noindent This results in an NVE ensemble.
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 system.thermostat.set_langevin(kT=1.0, gamma=0.5)
 \end{lstlisting}}\vspace{0,2cm}
-\noindent Use a langevin thermostat (NVT ensemble) with temperature set to 1.0 and damping coefficient to 0.5 
+\noindent Use a Langevin thermostat (NVT ensemble) with temperature set to 1.0 and damping coefficient to 0.5 
 
 
+\subsection{Placing and accessing particles}
+Particles in the simulation can be accessed via the \texttt{part}-property of the System class. Individual particles are referred to by an integer id, e.g., \texttt{system.part[0]]}. It is also possible to use common python iterators and slicing operations to access several particles at once.
+\begin{lstlisting}
+# access position of single particle
+print system.part[0].pos
 
-\subsection{Assigning Particle Properties}\label{sec:partprop}
-The power of the \es{} package lies in the flexible manipulation of particle
-data. Particles can be manipulated by the \lstinline|part| module which recognizes the unique particle 
-   id. Each particle must be a member of a group which is called \emph{type}. 
-Interactions among those types can be defined through \emph{type} number 
-   with \lstinline|inter| command.
-   \footnote{Note that, In most electrostatic algorithms, one does not need a type id for interaction specification.}
-   For example to place a \emph{particle id} 0 and \emph{type} 0 at given 
-   position $(x,y,z)$
-   
-{\small\vspace{0,2cm}
+# Iterate over particles
+for p in system.part:
+    print(p.pos)
+    print(p.v)
+
+#Obtain all particle positions
+cur_pos = system.part[:].pos
+\end{lstlisting}
+Particles can be grouped into several types, so that, e.g., a binary fluid can be simulated. Particle types are identified by integer ids, which are set via the particles' \texttt{type} attribute. If no type is specified, 0 is implied.
+
+Particles are added to the simulatino as follows
 \begin{lstlisting}
 system.part.add(id=0, type=0, pos=[x,y,z])
 \end{lstlisting}\vspace{0,2cm}
-}
+Here, \texttt{id} and \texttt{type} can be ommited, in which case an unused particle id is assigned automatically and type 0 is impied.
 
-\noindent it is also possible to read the information on the given particle
-
-{\small\vspace{0,2cm}
+Many objects in \es{} have a string representation, and thus can be displayed via python's \texttt{print} method:
 \begin{lstlisting}
-print(system.part[0])
+print system.part[0]
 \end{lstlisting}\vspace{0,2cm}
-} 
 
-\noindent which returns all properties of particle id 0.
 
-\subsection{Assigning Interactions}  
-LJ interaction among type 0 particles can be defined as follows
+\subsection{Setting up non-bonded interactions}
 
+Non-bonded interactions act between all particls of a given combination of particle types.
+In this tutorial, we use the Lennard-Jones non-bonded interaction.
+The interactaion of two particles of type 0 can be setup as follows:
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 lj1_eps     = 1.0
@@ -388,38 +309,39 @@ cutoff=lj_cut, shift=lj_shift)
 \end{lstlisting}
 }\vspace{0,2cm}
 
-%\section{Warmup}
+\subsection{Warmup}
+In many cases, including this tutorial, particles are initially placed randomly in the simulation box. It is therefore possible that particles overlap, i.e., that there is a huge repulsive force between them. In this case, integrating the equations of motion would not be numerically stable. Hence, it is necessary to remove this overlap.
+This is done by limiting the maximum force between two particles, integrating the equations of motion, and increasing the limit step by step.
+This is done as follows
+\begin{lstlisting}
+# Obtain minimum distance between particles
+act_min_dist = system.analysis.mindist()
+lj_cap=10
+while i < warm_n_time and act_min_dist < lj_sigma*0.9 :
+    # Set the force cap
+    system.non_bonded_inter.set_force_cap(lj_cap)
+    lj_cap += 1.0
+    # Integrate the equation of motion
+    integrate.integrate(100)
+    # Obtain minimum distance between particles
+    act_min_dist = system.analysis.mindist()
 
-%\section{Energy}
+# Disbale force cap
+system.non_bonded_inter.set_force_cap(0)
+\end{lstlistingg}
+In this code fragmetn, you can also see, how the analysis routines can be used to obtain information about the simulation system, and how to integrate the equation of motion.
 
-\subsection{Generating Data: Lennard-Jones Liquid Simulation }
+\section{Putting it all together: Lennard-Jones Liquid Simulation}
 
-%   Here we investigate static and dynamic properties of a Lennard-Jones Liquid.
-%   Espresso invokes integrator with \lstinline|integrate| command. The 
-%   only argument it needs is number of time steps to integrate.  Most of the 
-%   basic simulation parameters must be set before integration. For convenience 
-%   it is a general practice to write simulation data to a disk. Espresso 
-%   provides a powerful tool, called the \texttt{blockfile} structure/command
-%   set. 
-%   Basically, this tool writes different groups of
-%   data
-%   like particle information, variable information and other simulation related 
-%   information into logical blocks consecutively.\\
-   
-After we have shortly explained how you can use \es{}, we now come to the
+After we have briefly explained the use of \es{}, we now come to the
 Lennard-Jones Liquid Simulation.  Before we explain the script step by step, run the
 \texttt{lj\_tutorial.py}  with \texttt{pypresso} to get all generated files.
-   
- %  \marginpar{This whole part has to be explained in much more detail. The
-  % tutorial should explain all steps and contain important results and graphs.}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We include necessary modules with \lstinline|import|.
+\subsection{Iniialization}
+First, we include necessary modules with \lstinline|import|.
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 import espressomd
-from espressomd import thermostat
-from espressomd import code_info
 from espressomd import integrate
 
 from __future__ import print_function
@@ -434,14 +356,16 @@ print("""
 
 Program Information:""")
 print(code_info.features())
-\end{lstlisting}}\vspace{0,2cm}
+\end{lstlisting}\vspace{0,2cm}
 
 \subsubsection{System Setup}
 At first, we must configure the environment and set the needed parameters.
+It is good practice to define all simulation parameters as variables in a single location.
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 # System parameters
 #############################################################
+#Number of particles and density
 n_part  = 108
 density = 0.8442
 
@@ -493,7 +417,10 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 # Thermostat
 system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+\end{lstlsisting}
 
+\subsection{Particles}
+\begin{lstlisting}
 # Particle setup
 #############################################################
 
@@ -536,11 +463,9 @@ for i in range(n_part):
 \end{center}
 \end{figure}
 
-As it was said in \ref{sec:partprop} we had to set up the interactions between all groups separately. 
-After we have set the necessary environment we must warmup our system before we run the simulation. We set 
-particles at random positions so some particles can overlap. In this situation \es  will crash with an error:
-particle out of range. To take particles apart 
-we cap forces  by setting the Lennard-Jones force constant below a certain distance. 
+\subsection{Warmup}
+After we have set the necessary environment we must warmup our system before we run the simulation. We set particles at random positions so some particles can overlap. In this situation \es  will crash with an error:
+particle out of range. To remove the overlap between particles, we cap forces  by setting the Lennard-Jones force constant below a certain distance. 
 Therefore we use the \lstinline|set_force_cap| command. We do the procedure  \verb"warm_n_times" times 
 for \verb"warm_steps" steps and stop only if the minimal distance between particles is also larger than 
 \verb"min_dist", that was set earlier.  To turn 
@@ -589,8 +514,9 @@ system.thermostat.turn_off()
 
 \end{lstlisting}}\vspace{0,2cm}
 
+\subsection{Integrating the equaitons of motion, taking measurements}
 \noindent After we have set the necessary environment and warmed up our system, we can now start with the actual 
-simulation. To analyse our data after the simulation, we open some files for writing the data in. 
+simulation. To analyse our data after the simulation has completed, we open some files for writing the data in. 
 
 {\small\vspace{0,2cm}
 \begin{lstlisting}

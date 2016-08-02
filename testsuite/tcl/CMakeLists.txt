@@ -1,5 +1,6 @@
 set(tcl_tests  analysis.tcl
                angle.tcl
+               blockfile.tcl
                bonded_coulomb.tcl
                collision-detection-angular.tcl
                collision-detection-centers.tcl
