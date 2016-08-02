@@ -49,6 +49,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
+option(WITH_GSL "Build with GSL support" ON)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
@@ -148,6 +149,14 @@ if(WITH_SCAFACOS)
     set(SCAFACOS 1)
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
+
+if(WITH_GSL)
+  find_package(PkgConfig)
+  pkg_check_modules(GSL gsl)
+  if(GSL_FOUND)
+    set(GSL 1)
+  endif(GSL_FOUND)
+endif(WITH_GSL)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
