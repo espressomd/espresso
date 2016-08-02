@@ -21,6 +21,7 @@ from libcpp.map cimport map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
+from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
 cdef extern from "Vector.hpp":
@@ -75,7 +76,11 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameter(const string &name, const Variant &value)
         void set_parameters(map[string, Variant] &parameters)
         int id()
-    
+
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
+    shared_ptr[ScriptInterfaceBase] make_shared(const string& name)
+    weak_ptr[ScriptInterfaceBase] get_instance(int id)
+
 cdef extern from "utils/Factory.hpp" namespace "Utils":
     shared_ptr[T] factory_make[T](const string& name) except +
 
@@ -83,4 +88,4 @@ cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef Variant make_variant(self, ParameterType type, value)
-    cdef set_cip(self, shared_ptr[ScriptInterfaceBase] sip)
+    cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)

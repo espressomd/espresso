@@ -35,26 +35,21 @@ namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint()
-      : m_constraint(new ::Constraints::Constraint()),
-        m_shape(new Shapes::NoWhere()) {}
-
+  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
-    VariantMap parameters{{"only_positive", m_constraint->only_positive()},
-                          {"penetrable", m_constraint->penetrable()},
-                          {"type", m_constraint->type()},
-                          {"shape", m_shape->id()}};
-    return parameters;
+    return {{"only_positive", m_constraint->only_positive()},
+            {"penetrable", m_constraint->penetrable()},
+            {"type", m_constraint->type()},
+            {"shape", (m_shape == nullptr) ? -1 : m_shape->id()}};
   }
 
   ParameterMap all_parameters() const override {
-    ParameterMap parameters{{"only_positive", {ParameterType::INT, true}},
-                            {"penetrable", {ParameterType::INT, true}},
-                            {"type", {ParameterType::INT, true}},
-                            {"shape", {ParameterType::OBJECT, true}}};
-    return parameters;
+    return {{"only_positive", {ParameterType::INT, true}},
+            {"penetrable", {ParameterType::INT, true}},
+            {"type", {ParameterType::INT, true}},
+            {"shape", {ParameterType::OBJECT, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
@@ -62,12 +57,15 @@ public:
      * Also it has to be first, so we can set the other parameters in the
      * new instance. */
     if (name == "shape") {
+      std::cout << __PRETTY_FUNCTION__ << " id = " << boost::get<int>(value) << std::endl;
       auto so = ScriptInterface::get_instance(value);
 
       /* We are expecting a ScriptInterface::Shape here,
        throw if not. That means the assigned object had the wrong type. */
       auto shape = std::dynamic_pointer_cast<Shapes::Shape>(so);
       if (shape != nullptr) {
+        m_shape = so;
+
         m_constraint->set_shape(shape->shape());
       } else {
         throw std::runtime_error("Wrong type.");
@@ -82,9 +80,13 @@ public:
   std::shared_ptr<::Constraints::Constraint> constraint() {
     return m_constraint;
   }
+
 private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::Constraint> m_constraint;
+
+  /* Keep a reference to the shape */
+  std::shared_ptr<ScriptInterfaceBase> m_shape;
 };
 
 } /* namespace Constraints */
