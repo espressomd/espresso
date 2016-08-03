@@ -96,8 +96,12 @@ if (WITH_CUDA)
     else()
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
-
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 \
+                                            -gencode=arch=compute_30,code=sm_30 \
+                                            -gencode=arch=compute_35,code=sm_35 \
+                                            -gencode=arch=compute_50,code=sm_50 \
+                                            -gencode=arch=compute_52,code=sm_52 \
+                                            -gencode=arch=compute_52,code=compute_52")
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
@@ -138,9 +142,6 @@ find_package(HDF5 "1.8.12")
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRS})
-  # include the h5xx C++ library for h5md
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/h5xx)
 endif()
 
 if(WITH_SCAFACOS)
