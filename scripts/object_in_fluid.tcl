@@ -2790,6 +2790,8 @@ proc oif_object_analyze { args } {
 	set aff_K0 -1
 	set aff_Fd -1
 	set aff_file "aff-default.dat"
+	set avg_length -1
+
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2822,6 +2824,10 @@ proc oif_object_analyze { args } {
 			"surface-area" {  
 				incr pos
 				set surface 0.0
+			}
+			"edge-statistics" {  
+				incr pos
+				set avg_length 0.0
 			}
 			"first-particle-id" {  
 				incr pos
@@ -3045,6 +3051,94 @@ proc oif_object_analyze { args } {
 		close $fout
 		return $n_active_bonds
 	}
+
+	if {$avg_length != -1} {
+	    ##### counting average lenght of edges
+		#####################################################################
+		set global_dist 0.0
+		set average_dist 0.0
+		set max_dist 0.0
+		set min_dist 1000.0
+
+		
+		# recover data of this object
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set nedges [lindex $template 1]
+
+			set start_id_of_nodes 0
+			set start_id_of_edges 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+			}
+		
+		# recover edges from this object's template
+			for {set i 0} {$i < $nedges} {incr i} {
+			    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+			    set mesh_edges($i,0) [lindex $edge_pair 0]
+			    set mesh_edges($i,1) [lindex $edge_pair 1]
+			}
+		
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+			    
+			for { set i 0 } { $i < $nedges } { incr i } {
+			    # Take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			    set pA $mesh_edges($i,0)
+			    set pB $mesh_edges($i,1)
+			    
+			    # Get the current position of the same two points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+
+				set curr_dist 0.0
+				set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+				set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+				set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+				set curr_dist [expr sqrt($curr_dist)]
+		
+				set global_dist [expr ($global_dist + $curr_dist) ]
+		
+				set value_dist($i) $curr_dist
+		
+				if {$max_dist < $curr_dist} {
+					set max_dist $curr_dist
+				}
+		
+				if {$min_dist > $curr_dist} {
+					set min_dist $curr_dist
+				}
+			}
+
+		set average_dist [expr ($global_dist / $nedges) ]
+
+		set suma 0.0
+		for { set i 0 } { $i < $nedges } { incr i } {
+			set suma [expr ($suma + (($value_dist($i) - $average_dist) * ($value_dist($i) - $average_dist)))]
+		}
+		set sigma 0.0
+		set sigma [expr (sqrt($suma / $nedges))]
+
+		# average length of edges:
+#		puts "average length of edges:"
+#		puts "	average length: 	$average_dist"
+#		puts "	min: 	$min_dist"
+#		puts "	max: 	$max_dist"
+#		puts "	sigma: 	$sigma"
+						puts "here3"
+	
+		set result [list $average_dist $min_dist $max_dist $sigma]
+		return $result
+	}
+
 
 	if { $approx_pos == 1 } {
 		set appX 0
