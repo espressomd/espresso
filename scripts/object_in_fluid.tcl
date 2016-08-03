@@ -3058,7 +3058,7 @@ proc oif_object_analyze { args } {
 		set global_dist 0.0
 		set average_dist 0.0
 		set max_dist 0.0
-		set min_dist 1000.0
+		set min_dist 1000000.0
 
 		
 		# recover data of this object
@@ -3133,9 +3133,8 @@ proc oif_object_analyze { args } {
 #		puts "	min: 	$min_dist"
 #		puts "	max: 	$max_dist"
 #		puts "	sigma: 	$sigma"
-						puts "here3"
 	
-		set result [list $average_dist $min_dist $max_dist $sigma]
+		set result [list $min_dist $average_dist $max_dist $sigma]
 		return $result
 	}
 
