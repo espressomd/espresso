@@ -131,7 +131,7 @@ void init_random_seed(int seed)
 {
   std::seed_seq seeder{seed}; //come up with "sane" initialization to avoid too many zeros in the internal state of the Mersenne twister
   generator.seed(seeder);
-  generator.discard(1e6); //discard the first 1e6 random number generators to warm up the Mersenne-Twister PRNG
+  generator.discard(1e6); //discard the first 1e6 random numbers to warm up the Mersenne-Twister PRNG
 }
 
 } /* Random */
