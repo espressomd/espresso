@@ -141,6 +141,7 @@ endif()
 find_package(HDF5 "1.8.12")
 if(HDF5_FOUND)
   set(H5MD 1)
+  include_directories(${HDF5_INCLUDE_DIRS})
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
 endif()
 
