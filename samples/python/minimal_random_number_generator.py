@@ -38,5 +38,8 @@ for i in range(len(rng_state_read1)):
 	rng_state.append(i)
 system.random_number_generator_state=rng_state
 rng_state_read2=system.random_number_generator_state
-print "random number generator state read 2", rng_state_read2,
+print "random number generator state read 2", rng_state_read2
 
+system.set_random_state_PRNG()
+rng_state_read3=system.random_number_generator_state
+print "random number generator state read 3", rng_state_read3

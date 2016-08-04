@@ -92,6 +92,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       std::string tmp;
       
       /** Argument counter to check that the caller provided enough numbers. */      
+      int state_size=Random::get_state_size_of_generator();
       int n_args = 0;
       for(int node = 0; (node < n_nodes) && std::getline(iss, tmp, ' '); node++) {
         n_args++;
@@ -99,15 +100,15 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
 
         /** First one is handled different, because of the space */        
         states[node] = tmp;
-
-        for(int i = 0; (i < 624) && std::getline(iss, tmp, ' '); i++) {
+	
+        for(int i = 0; (i < state_size) && std::getline(iss, tmp, ' '); i++) {
           n_args++;
           states[node].append(" ");
           states[node].append(tmp);
         }
       }
 
-      if(n_args == n_nodes*625) {
+      if(n_args == n_nodes*(state_size+1)) {
         Random::mpi_random_set_stat(states);
         return TCL_OK;
       }
