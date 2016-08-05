@@ -25,7 +25,6 @@
 #include "ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
-#include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
 #include <memory>
