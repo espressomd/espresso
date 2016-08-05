@@ -469,20 +469,26 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
             auto current_particle = local_cell->part[local_part_id];
             /* store folded particle positions. */
             if (position)
-                pos[0][particle_index][0] = current_particle.r.p[0],
-                pos[0][particle_index][1] = current_particle.r.p[1],
+            {
+                pos[0][particle_index][0] = current_particle.r.p[0];
+                pos[0][particle_index][1] = current_particle.r.p[1];
                 pos[0][particle_index][2] = current_particle.r.p[2];
+                image[0][particle_index][0] = current_particle.l.i[0];
+                image[0][particle_index][1] = current_particle.l.i[1];
+                image[0][particle_index][2] = current_particle.l.i[2];
+            }
             if (velocity)
-                vel[0][particle_index][0] = current_particle.m.v[0] / time_step,
-                vel[0][particle_index][1] = current_particle.m.v[1] / time_step,
+            {
+                vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
+                vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
                 vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
+            }
             if (force)
-                f[0][particle_index][0] = current_particle.f.f[0],
-                f[0][particle_index][1] = current_particle.f.f[1],
+            {
+                f[0][particle_index][0] = current_particle.f.f[0];
+                f[0][particle_index][1] = current_particle.f.f[1];
                 f[0][particle_index][2] = current_particle.f.f[2];
-            image[0][particle_index][0] = current_particle.l.i[0];
-            image[0][particle_index][1] = current_particle.l.i[1];
-            image[0][particle_index][2] = current_particle.l.i[2];
+            }
             particle_index++;
         }
     }
@@ -491,6 +497,10 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
                      this->dataset_particles_atoms_position_value,
                      this->dataset_particles_atoms_position_time,
                      this->dataset_particles_atoms_position_step);
+        WriteDataset(image,
+        this->dataset_particles_atoms_image_value,
+                     this->dataset_particles_atoms_image_time,
+                     this->dataset_particles_atoms_image_step);
     if (velocity)
         WriteDataset(vel,
                      this->dataset_particles_atoms_velocity_value,
@@ -501,10 +511,6 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
                      this->dataset_particles_atoms_force_value,
                      this->dataset_particles_atoms_force_time,
                      this->dataset_particles_atoms_force_step);
-    WriteDataset(image,
-    this->dataset_particles_atoms_image_value,
-                 this->dataset_particles_atoms_image_time,
-                 this->dataset_particles_atoms_image_step);
 }
 
 
