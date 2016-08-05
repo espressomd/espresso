@@ -219,27 +219,29 @@ proc h5md_init { data_path {_h5md_p_ids ""} } {
         }
     }
     if { [llength $froms] >0 } {
-        h5mdfile H5Screate_simple type int dims [llength $froms]
-        h5mdfile H5Pset_chunk dims [llength $froms]
         h5mdfile H5Dcreate2 "parameters/vmd_structure/bond_from"
         h5mdfile H5Dopen2 "parameters/vmd_structure/bond_from"
+        h5mdfile H5_Tclose
+        h5mdfile H5Screate_simple type int dims [llength $froms]
+        h5mdfile H5Pset_chunk dims [llength $froms]
         for {set i 0 } {$i < [llength $froms] } {incr i} {
             h5mdfile H5_write_value value [lindex $froms $i] index $i
         }
         h5mdfile H5Dwrite
-        h5mdfile H5Sclose_simple
         h5mdfile H5Dclose
+        h5mdfile H5Sclose_simple
 
-        h5mdfile H5Screate_simple type int dims [llength $tos]
-        h5mdfile H5Pset_chunk dims [llength $tos]
         h5mdfile H5Dcreate2 "parameters/vmd_structure/bond_to"
         h5mdfile H5Dopen2 "parameters/vmd_structure/bond_to"
+        h5mdfile H5_Tclose
+        h5mdfile H5Screate_simple type int dims [llength $tos]
+        h5mdfile H5Pset_chunk dims [llength $tos]
         for {set i 0 } {$i < [llength $tos] } {incr i} {
             h5mdfile H5_write_value value [lindex $tos $i] index $i
         }
         h5mdfile H5Dwrite
-        h5mdfile H5Sclose_simple
         h5mdfile H5Dclose
+        h5mdfile H5Sclose_simple
     }
     h5mdfile H5_Fflush
 }
