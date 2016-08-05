@@ -22,12 +22,16 @@
  *
  *  Implementation of \ref overlap.hpp
  */
+
+#include "config.hpp"
+
+#ifdef OVERLAPPED
+
 #include "utils.hpp"
+#include "debug.hpp"
 #include "overlap.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
-
-#ifdef OVERLAPPED
 
 int overlapped_bonded_set_params(int bond_type, OverlappedBondedInteraction overlap_type,
 				 char * filename) 

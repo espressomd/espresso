@@ -1366,7 +1366,7 @@ double MMM2D_add_far(int f, int e)
 static int MMM2D_tune_far(double error)
 {
   double err;
-  double min_inv_boxl = dmin(ux, uy);
+  double min_inv_boxl = std::min(ux, uy);
   mmm2d_params.far_cut = min_inv_boxl;
   do {
     err = exp(-2*M_PI*mmm2d_params.far_cut*min_far)/min_far*
@@ -1412,7 +1412,7 @@ static int MMM2D_tune_near(double error)
   P = 2;
   exponent = M_PI*ux*box_l[1];
   T  = exp(exponent)/exponent;
-  pref = 8*ux*dmax(C_2PI*ux, 1);
+  pref = 8*ux*std::max(C_2PI*ux, 1.0);
   do {
     L = M_PI*ux*(P - 1);
     sum = 0;

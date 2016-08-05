@@ -28,11 +28,14 @@
 
 /************************************************************/
 
-#include "utils.hpp"
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
+
+#include "utils.hpp"
+#include "debug.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
 
 /// set the parameters for the bonded_coulomb potential
 int bonded_coulomb_set_params(int bond_type, double prefactor);
