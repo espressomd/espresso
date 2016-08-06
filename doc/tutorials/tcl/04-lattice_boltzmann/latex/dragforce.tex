@@ -14,7 +14,7 @@ spherical particles the drag force is given by Stokes' law:
 where $a$ is the radius of the sphere.
 
 In this task you will measure the drag force on falling objects with LB and
-\ES{}. In the sample script {\tt lb\_stokes\_force.tcl} a spherical object at rest
+\ES{}. In the sample script \texttt{lb\_stokes\_force.tcl} a spherical object at rest
 is centered in a square channel. Bounce back boundary conditions are assumed on
 the sphere. At the channel boundary the velocity is fixed by using appropriate
 boundary conditions. Within a few hundred or thousand  integration steps a
@@ -28,18 +28,18 @@ the input radius? Remember how the bounce back boundary condition work and how
 good spheres can be represented by them.
 
 \subsection*{Visualization of the flow field}
-The script produces {\tt vtk} files of the flow field. Visualize the flow field
-with {\tt paraview}. Open {\tt paraview} by typing it on the command line. Make
+The script produces \texttt{vtk} files of the flow field. Visualize the flow field
+with \texttt{paraview}. Open \texttt{paraview} by typing it on the command line. Make
 sure you are in the folder where the files are located. So the agenda is:
 \begin{itemize}
-	\item Click in the menu {\tt File}, {\tt Open...}
-	\item Choose the files with flow field {\tt fluid...vtk}
-	\item Click {\tt Apply}
-	\item Add a stream tracer filter {\tt Filters}, {\tt Alphabetical}, {\tt
-		Stream tracer}
-	\item Change the seed type from {\tt point source} to {\tt high resolution
+	\item Click in the menu \texttt{File}, \texttt{Open...}
+	\item Choose the files with flow field \texttt{fluid...vtk}
+	\item Click \texttt{Apply}
+	\item Add a stream tracer filter \texttt{Filters}, \texttt{Alphabetical},
+	        \texttt{Stream tracer}
+	\item Change the seed type from \texttt{point source} to \texttt{high resolution
 		line source}
-	\item Click {\tt Apply}
+	\item Click \texttt{Apply}
 	\item Rotate the visualization box to see the stream lines.
 	\item Use the play button in the bar below the menu bar to show the time
 		evolution.

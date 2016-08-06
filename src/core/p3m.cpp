@@ -1437,7 +1437,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
 		    mesh[0],mesh[1],mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
-  if(cao >= imin(mesh[0],imin(mesh[1],mesh[2])) || k_cut >= (dmin(min_box_l,min_local_box_l) - skin)) {
+  if(cao >= std::min(mesh[0],std::min(mesh[1],mesh[2])) || k_cut >= (std::min(min_box_l,min_local_box_l) - skin)) {
     sprintf(b, "%-4d %-3d cao too large for this mesh\n", mesh[0], cao);
     *log = strcat_alloc(*log, b);
     return -3;
@@ -1703,7 +1703,7 @@ int p3m_adaptive_tune(char **log) {
   
   if(p3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2.0) - skin;
+    r_cut_iL_max = std::min(min_local_box_l, min_box_l/2.0) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }

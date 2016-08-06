@@ -1108,7 +1108,7 @@ exit
 
 \end{minipage}}\vspace{1cm}
 
-\noindent {\bf Hint:} \texttt{analyze pressure} (without \texttt{total}) returns the pressure and
+\noindent \textbf{Hint:} \texttt{analyze pressure} (without \texttt{total}) returns the pressure and
 corresponding contributions to it.
 \newpage
 
@@ -1233,9 +1233,9 @@ velocities.
      \begin{task}  
       Run \texttt{vacf.tcl}, inspect 
       the code and plot the VACF from \texttt{data/vacf.dat}. The VACF $C(t)$ can 
-      be computed directly: \[ C(t) = \langle {\bf v}_{i} (0) {\bf v}_{i} 
-      (t) \rangle \] which can be estimated by \[ C(t) = \frac {1} {N} \sum_{i=0}^{N} {\bf v}_{i} (0) 
-      {\bf v}_{i} (t) \] where $N$ is the number of particles.
+      be computed directly: \[ C(t) = \langle \mathbf{v}_{i} (0) \mathbf{v}_{i} 
+      (t) \rangle \] which can be estimated by \[ C(t) = \frac {1} {N} \sum_{i=0}^{N} \mathbf{v}_{i} (0) 
+      \mathbf{v}_{i} (t) \] where $N$ is the number of particles.
         
         Try to modify \texttt{vacf.tcl} by using \texttt{vecsub} and 
         \texttt{veclen} and the tcl math functions.
@@ -1266,7 +1266,7 @@ The mean square displacement (MSD) is the average squared distance that a partic
       Run \texttt{msd.tcl}, inspect the code 
       and plot the MSD from \texttt{data/msd.dat}. The MSD can be simply computed 
       by: \[ \langle \Delta r(t) ^{2} \rangle  = \frac {1} {N} \sum_{i=0}^{N} 
-      \Delta {\bf r}_{i}(t)^{2} \] or \[ \langle \Delta r(t) ^{2} \rangle = 
+      \Delta \mathbf{r}_{i}(t)^{2} \] or \[ \langle \Delta r(t) ^{2} \rangle = 
       \frac {1} {N} \sum_{i=0}^{N} | r_{i}(t)-r_{i}(0) | ^{2} \]
      \end{task}
 

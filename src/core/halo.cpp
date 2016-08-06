@@ -25,12 +25,15 @@
  *
  */
 
+#include "config.hpp"
+
+#ifdef LATTICE
+
 #include "utils.hpp"
+#include "debug.hpp"
 #include "grid.hpp"
 #include "lattice.hpp"
 #include "halo.hpp"
-
-#ifdef LATTICE
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = { 0, NULL, NULL, sizeof(double), 0, 0, 0, 0, NULL };
