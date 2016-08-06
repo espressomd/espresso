@@ -36,7 +36,7 @@ File::File(std::string const &filename, std::string const &script_name)
     this->user_filename = filename;
     /* Get number of local particles. */
     this->n_local_part = cells_get_n_particles();
-    if(!this->n_local_part > 0) {
+    if(!(this->n_local_part > 0)) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     } 
     /* Check if a file with given filename exists. */
@@ -53,14 +53,12 @@ File::File(std::string const &filename, std::string const &script_name)
          * This has the advantage, that the new file can just be deleted if the simulation crashes at some point and we
          * still have a valid trajectory, we can start from.
         */
-        /* If the H5MD structure is present in the file, just open it. */
         std::string temp_name = filename + "_tmp";
         this->lastfile = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                      h5xx::file::out);
         this->h5md_file = h5xx::file(temp_name, MPI_COMM_WORLD, MPI_INFO_NULL,
                                      h5xx::file::out);
         /* particles -- atoms -- box -- edges */
-        /* Create a link to all the groups and datasets. */
         H5Ocopy(lastfile.hid(), "/particles", this->h5md_file.hid(), "/particles", H5P_DEFAULT,
                            H5P_DEFAULT);
         H5Ocopy(lastfile.hid(), "/particles/atoms", this->h5md_file.hid(), "/particles/atoms", H5P_DEFAULT,
