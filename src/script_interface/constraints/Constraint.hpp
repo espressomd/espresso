@@ -34,7 +34,9 @@ namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
+  Constraint() : m_constraint(new ::Constraints::Constraint()) {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+  }
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
@@ -56,7 +58,8 @@ public:
      * Also it has to be first, so we can set the other parameters in the
      * new instance. */
     if (name == "shape") {
-      std::cout << __PRETTY_FUNCTION__ << " id = " << boost::get<int>(value) << std::endl;
+      std::cout << __PRETTY_FUNCTION__ << " id = " << boost::get<int>(value)
+                << std::endl;
       auto so = ScriptInterface::get_instance(value);
 
       /* We are expecting a ScriptInterface::Shape here,

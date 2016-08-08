@@ -102,6 +102,3 @@ cdef class  PScriptInterface:
         for pair in self.parameters:
             odict[pair.first] = self.get_parameter(pair.first)
         return odict
-
-initialize()
-

@@ -190,7 +190,9 @@ public:
    * @brief Get a new reference counten instance of a script interface.
    *
    */
-  static std::shared_ptr<ScriptInterfaceBase> make_shared(std::string const &name) {
+  static std::shared_ptr<ScriptInterfaceBase>
+  make_shared(std::string const &name) {
+    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     std::shared_ptr<ScriptInterfaceBase> sp =
         Utils::Factory<ScriptInterfaceBase>::make(name);
 

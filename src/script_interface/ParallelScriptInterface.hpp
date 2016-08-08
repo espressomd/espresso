@@ -63,9 +63,13 @@ private:
   }
 
   void mpi_slave(int action, int id) override {
+    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+              << __PRETTY_FUNCTION__ << std::endl;
+
     switch (CallbackAction(action)) {
     case CallbackAction::SET_ID:
-      std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> " << m_p.id() << std::endl;
+      std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> "
+                << m_p.id() << std::endl;
       get_translation_table()[id] = m_p.id();
       break;
     case CallbackAction::SET_PARAMETER: {
@@ -120,12 +124,18 @@ public:
   using typename ParallelScriptInterfaceSlave<T>::CallbackAction;
 
   ParallelScriptInterface() {
-    call(static_cast<int>(CallbackAction::SET_PARAMETER), m_p.id());
+    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+              << __PRETTY_FUNCTION__ << std::endl;
+
+    call(static_cast<int>(CallbackAction::SET_ID), m_p.id());
   }
 
   const std::string name() const override { return m_p.name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
+    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+              << __PRETTY_FUNCTION__ << std::endl;
+
     auto d = std::make_pair(name, value);
 
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
