@@ -25,13 +25,18 @@
  *  for a particle pair.
  *  \ref forces.cpp
 */
+
+#include "config.hpp"
+
+#ifdef BUCKINGHAM
+
 #include "utils.hpp"
+#include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
 #include "forcecap.hpp"
 
-#ifdef BUCKINGHAM
 
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,

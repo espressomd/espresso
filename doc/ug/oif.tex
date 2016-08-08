@@ -141,8 +141,8 @@ This command creates a template that will be used for all objects that share the
 
 The four switches \verb|ks|, \verb|kslin|, \verb|kb| and \verb|kal| set elastic parameters for local interactions - \verb|ks| for hyperelastic edge stiffness, \verb|kslin| for linear edge stiffness, \verb|kb| for angle preservation stiffness and \verb|kal| for triangle surface preservation stiffness. This stiffness can be either uniform over the whole object, or non-uniform. In case of stretching modulus, we can have spring stiffness the same for all edges in the whole object, or we can choose the value for every edge of the object separately. Analogically, for \verb|kslin|, for \verb|kal| and \verb|kb|. Therefore, there are two options for setting \verb|ks|, \verb|kslin|, \verb|kal| and \verb|kb| stiffness. Here is the explanation for \verb|ks|:
 \begin{itemize}
-\item {\bf Uniform stiffness:} To set uniform hyperelastic stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
-\item {\bf Non-uniform stiffness:} To set non-uniform hyperelastic stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
+\item \textbf{Uniform stiffness:} To set uniform hyperelastic stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
+\item \textbf{Non-uniform stiffness:} To set non-uniform hyperelastic stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
 \verb|ks| \var{filename} \var{ksMin} \var{ksMax}
 This command reads the weights $weight_i$ for each edge and the stiffness for that edge is set to 
 $$
