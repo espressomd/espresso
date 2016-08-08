@@ -27,12 +27,15 @@
  *  \ref forces.cpp
 */
 
+#include "config.hpp"
+
+#ifdef HAT
+
 #include "utils.hpp"
+#include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
-
-#ifdef HAT
 
 ///
 int hat_set_params(int part_type_a, int part_type_b,

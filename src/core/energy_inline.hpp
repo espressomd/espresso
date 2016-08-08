@@ -26,50 +26,51 @@
 
 #include "config.hpp"
 
-#include "statistics.hpp"
-#include "thermostat.hpp"
-#include "p3m.hpp"
-#include "p3m-dipolar.hpp"
-#include "lj.hpp"
-#include "ljgen.hpp"
-#include "steppot.hpp"
-#include "hertzian.hpp"
-#include "gaussian.hpp"
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
-#include "soft_sphere.hpp"
+#include "dihedral.hpp"
+#include "fene.hpp"
+#include "gaussian.hpp"
+#include "gb.hpp"
+#include "harmonic.hpp"
+#include "harmonic_dumbbell.hpp"
 #include "hat.hpp"
+#include "hertzian.hpp"
+#include "lj.hpp"
+#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
-#include "ljangle.hpp"
-#include "tab.hpp"
+#include "ljgen.hpp"
 #include "overlap.hpp"
-#include "gb.hpp"
-#include "fene.hpp"
-#include "harmonic_dumbbell.hpp"
-#include "harmonic.hpp"
+#include "p3m-dipolar.hpp"
+#include "p3m.hpp"
 #include "quartic.hpp"
+#include "soft_sphere.hpp"
+#include "statistics.hpp"
+#include "steppot.hpp"
+#include "tab.hpp"
+#include "thermostat.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_coulomb.hpp"
 #endif
-#include "subt_lj.hpp"
+#include "actor/EwaldGPU_ShortRange.hpp"
 #include "angle.hpp"
-#include "angle_harmonic.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
+#include "angle_harmonic.hpp"
 #include "angledist.hpp"
 #include "debye_hueckel.hpp"
+#include "elc.hpp"
 #include "endangledist.hpp"
-#include "reaction_field.hpp"
+#include "hydrogen_bond.hpp"
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "morse.hpp"
-#include "elc.hpp"
-#include "hydrogen_bond.hpp"
-#include "twist_stack.hpp"
-#include "actor/EwaldGPU_ShortRange.hpp"
+#include "reaction_field.hpp"
 #include "scafacos.hpp"
+#include "subt_lj.hpp"
+#include "twist_stack.hpp"
 
 #ifdef CONSTRAINTS
 #include "constraint.hpp"
@@ -91,97 +92,99 @@
     @return the short ranged interaction energy between the two particles
 */
 inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
-                        IA_parameters *ia_params,
-                        double d[3], double dist, double dist2)
-{
+                                          IA_parameters *ia_params, double d[3],
+                                          double dist, double dist2) {
   double ret = 0;
 
 #ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return 0;
+  if (p1->p.mol_id == p2->p.mol_id)
+    return 0;
 #endif
 
 #ifdef MOL_CUT
-  //You may want to put a correction factor for smoothing function else then theta
-  if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return 0;
+  // You may want to put a correction factor for smoothing function else then
+  // theta
+  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 0)
+    return 0;
 #endif
 
 #ifdef LENNARD_JONES
   /* lennard jones */
-  ret += lj_pair_energy(p1,p2,ia_params,d,dist);
+  ret += lj_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
   /* Generic lennard jones */
-  ret += ljgen_pair_energy(p1,p2,ia_params,d,dist);
+  ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LJ_ANGLE
   /* Directional LJ */
-  ret += ljangle_pair_energy(p1,p2,ia_params,d,dist);
+  ret += ljangle_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
   /* smooth step */
-  ret += SmSt_pair_energy(p1,p2,ia_params,d,dist,dist2);
+  ret += SmSt_pair_energy(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 #ifdef HERTZIAN
   /* Hertzian potential */
-  ret += hertzian_pair_energy(p1,p2,ia_params,d,dist,dist2);
+  ret += hertzian_pair_energy(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 #ifdef GAUSSIAN
   /* Gaussian potential */
-  ret += gaussian_pair_energy(p1,p2,ia_params,d,dist,dist2);
+  ret += gaussian_pair_energy(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 #ifdef BMHTF_NACL
   /* BMHTF NaCl */
-  ret += BMHTF_pair_energy(p1,p2,ia_params,d,dist,dist2);
+  ret += BMHTF_pair_energy(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 #ifdef MORSE
   /* morse */
-  ret +=morse_pair_energy(p1,p2,ia_params,d,dist);
+  ret += morse_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef BUCKINGHAM
   /* lennard jones */
-  ret  += buck_pair_energy(p1,p2,ia_params,d,dist);
+  ret += buck_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef SOFT_SPHERE
   /* soft-sphere */
-  ret  += soft_pair_energy(p1,p2,ia_params,d,dist);
+  ret += soft_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef HAT
   /* hat */
-  ret  += hat_pair_energy(p1,p2,ia_params,d,dist);
+  ret += hat_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LJCOS2
   /* lennard jones */
-  ret += ljcos2_pair_energy(p1,p2,ia_params,d,dist);
+  ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef TABULATED
   /* tabulated */
-  ret += tabulated_pair_energy(p1,p2,ia_params,d,dist);
+  ret += tabulated_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef LJCOS
   /* lennard jones cosine */
-  ret += ljcos_pair_energy(p1,p2,ia_params,d,dist);
+  ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1,p2,ia_params,d,dist);
+  ret += gb_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef INTER_RF
-  ret += interrf_pair_energy(p1,p2,ia_params,dist);
+  ret += interrf_pair_energy(p1, p2, ia_params, dist);
 #endif
 
   return ret;
@@ -195,16 +198,15 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
     @param dist2     distance squared between p1 and p2.
 */
 inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
-                     double dist, double dist2)
-{
-  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+                                       double dist, double dist2) {
+  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   double ret = 0;
 #endif
 
   *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-    calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+      calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
@@ -213,41 +215,41 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       if (elc_params.dielectric_contrast_on)
-      ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
-    break;
+        ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
+      break;
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      ret+=Scafacos::pair_energy(p1,p2,dist);
+      ret += Scafacos::pair_energy(p1, p2, dist);
       break;
 #endif
     case COULOMB_DH:
-      ret = dh_coulomb_pair_energy(p1,p2,dist);
+      ret = dh_coulomb_pair_energy(p1, p2, dist);
       break;
     case COULOMB_RF:
-      ret = rf_coulomb_pair_energy(p1,p2,dist);
+      ret = rf_coulomb_pair_energy(p1, p2, dist);
       break;
     case COULOMB_INTER_RF:
-      //this is done above as interaction
+      // this is done above as interaction
       ret = 0;
       break;
     case COULOMB_MMM1D:
-      ret = mmm1d_coulomb_pair_energy(p1,p2,d,dist2,dist);
+      ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
       break;
     case COULOMB_MMM2D:
-      ret = mmm2d_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       break;
 #ifdef EWALD_GPU
     case COULOMB_EWALD_GPU:
-      ret = ewaldgpu_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = ewaldgpu_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
       break;
 #endif
-    default :
+    default:
       ret = 0.;
     }
     energy.coulomb[0] += ret;
@@ -256,40 +258,38 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef DIPOLES
   if (coulomb.Dmethod != DIPOLAR_NONE) {
-    //ret=0;
+    // ret=0;
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
-      //fall trough
+    // fall trough
     case DIPOLAR_P3M:
-      ret = dp3m_pair_energy(p1,p2,d,dist2,dist);
+      ret = dp3m_pair_energy(p1, p2, d, dist2, dist);
       break;
 #endif
     default:
-      ret=0;
+      ret = 0;
     }
     energy.dipolar[0] += ret;
   }
 #endif
-
 }
 
 /** Calculate bonded energies for one particle.
     @param p1 particle for which to calculate energies
 */
 
-inline void add_bonded_energy(Particle *p1)
-{
+inline void add_bonded_energy(Particle *p1) {
   Particle *p2, *p3 = NULL, *p4 = NULL;
 #ifdef TWIST_STACK
-  Particle *p5 = NULL,*p6 = NULL,*p7 = NULL,*p8 = NULL;
+  Particle *p5 = NULL, *p6 = NULL, *p7 = NULL, *p8 = NULL;
 #endif
   Bonded_ia_parameters *iaparams;
   int i, type_num, type, n_partners, bond_broken;
-  double ret=0, dx[3] = {0, 0, 0};
+  double ret = 0, dx[3] = {0, 0, 0};
 
   i = 0;
-  while(i<p1->bl.n) {
+  while (i < p1->bl.n) {
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -298,8 +298,9 @@ inline void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1]
-                        <<" (particles not stored on the same node)";
+      runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                        << " and " << p1->bl.e[i - 1]
+                        << " (particles not stored on the same node)";
       return;
     }
 
@@ -307,8 +308,10 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-        runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-2] << " and " << p1->bl.e[i-1]
-                          <<" (particles not stored on the same node)";
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p1->bl.e[i - 2] << " and "
+                          << p1->bl.e[i - 1]
+                          << " (particles not stored on the same node)";
         return;
       }
     }
@@ -317,22 +320,28 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-        runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity <<", "<< p1->bl.e[i-3] <<", "<< p1->bl.e[i-2]
-                          << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
+                          << " and " << p1->bl.e[i - 1]
+                          << " (particles not stored on the same node)";
         return;
       }
     }
 #ifdef TWIST_STACK
-    if(n_partners >= 7) {
+    if (n_partners >= 7) {
       p5 = local_particles[p1->bl.e[i++]];
       p6 = local_particles[p1->bl.e[i++]];
       p7 = local_particles[p1->bl.e[i++]];
       p8 = local_particles[p1->bl.e[i++]];
 
-      if(!p4 || !p5 || !p6 || !p7 || !p8) {
-	runtimeErrorMsg() << "bond broken between particles" <<
-            p1->p.identity << ", " << p1->bl.e[i-7] << ", " << p1->bl.e[i-6] << ", " << p1->bl.e[i-5] << ", " << p1->bl.e[i-4] << ", " << p1->bl.e[i-3] << ", " << p1->bl.e[i-2] << ", " << p1->bl.e[i-1] << " (particles not stored on the same node)";
-	return;
+      if (!p4 || !p5 || !p6 || !p7 || !p8) {
+        runtimeErrorMsg() << "bond broken between particles" << p1->p.identity
+                          << ", " << p1->bl.e[i - 7] << ", " << p1->bl.e[i - 6]
+                          << ", " << p1->bl.e[i - 5] << ", " << p1->bl.e[i - 4]
+                          << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]
+                          << ", " << p1->bl.e[i - 1]
+                          << " (particles not stored on the same node)";
+        return;
       }
     }
 #endif
@@ -340,7 +349,7 @@ inline void add_bonded_energy(Particle *p1)
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
-    switch(type) {
+    switch (type) {
     case BONDED_IA_FENE:
       bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
@@ -373,7 +382,8 @@ inline void add_bonded_energy(Particle *p1)
 #endif
 #ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
-      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8, iaparams, &ret);
+      bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8,
+                                            iaparams, &ret);
       break;
 #endif
 #ifdef HYDROGEN_BOND
@@ -413,25 +423,26 @@ inline void add_bonded_energy(Particle *p1)
 #endif
 #ifdef TABULATED
     case BONDED_IA_TABULATED:
-      switch(iaparams->p.tab.type) {
+      switch (iaparams->p.tab.type) {
       case TAB_BOND_LENGTH:
-	bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
-	break;
+        bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+        break;
       case TAB_BOND_ANGLE:
-	bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
-	break;
+        bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+        break;
       case TAB_BOND_DIHEDRAL:
-	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
-	break;
-      default :
-        runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-    return;
+        bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        break;
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: tabulated bond type of atom "
+                          << p1->p.identity << " unknown\n";
+        return;
       }
       break;
 #endif
 #ifdef OVERLAPPED
     case BONDED_IA_OVERLAPPED:
-      switch(iaparams->p.overlap.type) {
+      switch (iaparams->p.overlap.type) {
       case OVERLAP_BOND_LENGTH:
         bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
         break;
@@ -441,15 +452,16 @@ inline void add_bonded_energy(Particle *p1)
       case OVERLAP_BOND_DIHEDRAL:
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
-      default :
-        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom " << p1->p.identity << " unknown\n";
+      default:
+        runtimeErrorMsg() << "add_bonded_energy: overlapped bond type of atom "
+                          << p1->p.identity << " unknown\n";
         return;
       }
       break;
 #endif
 #ifdef UMBRELLA
     case BONDED_IA_UMBRELLA:
-      bond_broken = umbrella_pair_energy(p1,p2,iaparams,dx,&ret);
+      bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef BOND_VIRTUAL
@@ -458,25 +470,30 @@ inline void add_bonded_energy(Particle *p1)
       ret = 0;
       break;
 #endif
-    default :
-      runtimeErrorMsg() <<"add_bonded_energy: bond type ("<<type<<") of atom "<< p1->p.identity << " unknown\n";
+    default:
+      runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
+                        << ") of atom " << p1->p.identity << " unknown\n";
       return;
     }
 
     if (bond_broken) {
       switch (n_partners) {
       case 1: {
-        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
-    break;
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << " and " << p2->p.identity;
+        break;
       }
       case 2: {
-        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity << " and " << p3->p.identity;
-    break;
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p2->p.identity << " and "
+                          << p3->p.identity;
+        break;
       }
       case 3: {
-        runtimeErrorMsg() <<"bond broken between particles "<< p1->p.identity << ", " << p2->p.identity
-                          << ", " << p3->p.identity << " and " << p4->p.identity;
-    break;
+        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
+                          << ", " << p2->p.identity << ", " << p3->p.identity
+                          << " and " << p4->p.identity;
+        break;
       }
       }
       // bond broken, don't add whatever we find in the energy
@@ -487,47 +504,50 @@ inline void add_bonded_energy(Particle *p1)
   }
 }
 
-
 /** Calculate kinetic energies for one particle.
     @param p1 particle for which to calculate energies
 */
-inline void add_kinetic_energy(Particle *p1)
-{
+inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
-  if (ifParticleIsVirtual(p1)) return;
+  if (ifParticleIsVirtual(p1))
+    return;
 #endif
 
   /* kinetic energy */
 
-// #ifdef MULTI_TIMESTEP
-//   if (p1->p.smaller_timestep==1) {
-//     ostringstream msg;
-//     msg << "SMALL TIME STEP";
-//     energy.data.e[0] += SQR(smaller_time_step/time_step) *
-//       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
-//   }
-//   else
-// #endif
-  energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+  // #ifdef MULTI_TIMESTEP
+  //   if (p1->p.smaller_timestep==1) {
+  //     ostringstream msg;
+  //     msg << "SMALL TIME STEP";
+  //     energy.data.e[0] += SQR(smaller_time_step/time_step) *
+  //       (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*(*p1).p.mass;
+  //   }
+  //   else
+  // #endif
+  energy.data.e[0] +=
+      (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2])) * (*p1).p.mass;
 
 #ifdef ROTATION
 #ifdef ROTATION_PER_PARTICLE
-if (p1->p.rotation)
+  if (p1->p.rotation)
 #endif
-{
+  {
 #ifdef ROTATIONAL_INERTIA
-  /* the rotational part is added to the total kinetic energy;
-     Here we use the rotational inertia  */
+    /* the rotational part is added to the total kinetic energy;
+       Here we use the rotational inertia  */
 
-  energy.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
-		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
-		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
+    energy.data.e[0] += (SQR(p1->m.omega[0]) * p1->p.rinertia[0] +
+                         SQR(p1->m.omega[1]) * p1->p.rinertia[1] +
+                         SQR(p1->m.omega[2]) * p1->p.rinertia[2]) *
+                        time_step * time_step;
 #else
-  /* the rotational part is added to the total kinetic energy;
-     at the moment, we assume unit inertia tensor I=(1,1,1)  */
-  energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
+    /* the rotational part is added to the total kinetic energy;
+       at the moment, we assume unit inertia tensor I=(1,1,1)  */
+    energy.data.e[0] +=
+        (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2])) *
+        time_step * time_step;
 #endif
- }
+  }
 #endif
 }
 

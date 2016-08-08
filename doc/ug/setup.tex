@@ -783,19 +783,21 @@ The following limitations currently apply for the collision detection:
 \label{sec:Reactions}
 
 With the help of the feature \feature{CATALYTIC_REACTIONS}, one can
-define three particle types to act as reactant, catalyzer, and
-product. Using these reaction categories, we model the following
-chemical reaction system:
+define three particle types to act as reactant (e.g. $H_2O_2$), catalyzer (e.g. platinum), and
+products (e.g. $O_2$ and $H_2O$). Using these reaction categories, we model the following
+chemical reaction system which is not thermodynamically consistent but rather intended to simulate active swimmers and their propulsion:
 \begin{eqnarray}
 rt & \rightleftharpoons & pr ; \\
-rt & \xrightarrow{ct} & pr,
+rt & \xrightarrow{ct} & pr.
 \end{eqnarray}
-where the first line indicates that there is a reversible chemical
-reaction that converts the reactant particles (\var{rt}) into product
-(\var{pr}) particles, leading to an equilibrium state. The second line
-indicates that in the presence of a catalyst (\var{ct}) the forward
-reaction pathway is favored, i.e., conversion of reactants into
-products. The equilibrium reaction is described by the equilibrium
+The first line indicates that there is a reversible chemical
+reaction in the bulk that converts the reactant particles (\var{rt}) into product
+(\var{pr}) particles, leading to an equilibrium state. This reaction is intended to artificially recover the reactant (\var{rt}) particles in this model. In the case of $H_2O_2$ this is artificial since it does not spontaneously build up if oxygen is dissolved in water. The second line
+indicates that in the vicinity of a catalyst (\var{ct}) the forward
+reaction takes place, i.e., conversion of reactants into
+products. Of course the decompositon of a reactand into a product also takes place if there is no catalyst (since a catalyst has no effect on the chemical equilibrium) however the reaction is much faster than normally in the presence of a catalyst and the normal decomposition is neglected since it takes place so slowly. This is correct chemistry for waterperoxide since it spontaneously decomposes almost completely and much faster in the presence of a catalyst.
+
+The equilibrium reaction is described by the equilibrium
 constant
 \begin{equation}
 K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},

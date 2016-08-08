@@ -23,6 +23,9 @@ cdef class NonBondedInteraction(object):
 
     cdef public object _part_types
     cdef object _params
+    
+    #init dict to access all user defined nonbonded-inters via user_interactions[type1][type2][parameter]
+    user_interactions = {}
 
     def __init__(self, *args, **kwargs):
         """Represents an instance of a non-bonded interaction, such as lennard jones
@@ -109,6 +112,15 @@ cdef class NonBondedInteraction(object):
 
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._set_params_in_es_core()
+        
+        #update interaction dict when user sets interaction
+        if self._part_types[0] not in self.user_interactions:
+            self.user_interactions[self._part_types[0]] = {}
+        self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
+        new_params = self.get_params()
+        for p_key in new_params:
+            self.user_interactions[self._part_types[0]][self._part_types[1]][p_key] = new_params[p_key]
+        self.user_interactions[self._part_types[0]][self._part_types[1]]['type_name'] = self.type_name()
 
     def validate_params(self):
         return True
@@ -351,6 +363,29 @@ cdef class NonBondedInteractions:
 
     def get_force_cap(self):
         return force_cap
+    
+    def __getstate__(self):
+        odict = NonBondedInteractionHandle(-1,-1).lennard_jones.user_interactions #contains info about ALL nonbonded interactions
+        odict['force_cap'] = self.get_force_cap()
+        return odict
+    
+    def __setstate__(self, odict):
+        self.set_force_cap(odict['force_cap'])
+        del odict['force_cap']
+        for _type1 in odict:
+            for _type2 in odict[_type1]:
+                attrs = dir(NonBondedInteractionHandle(_type1, _type2))
+                for a in attrs:
+                    attr_ref = getattr(NonBondedInteractionHandle(_type1, _type2), a)
+                    type_name_ref = getattr(attr_ref, "type_name", None)
+                    if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
+                        inter_instance = attr_ref #found nonbonded inter, e.g. LennardJonesInteraction(_type1, _type2)
+                        break
+                    else:
+                        continue
+                    
+                del odict[_type1][_type2]['type_name']
+                inter_instance.set_params(**odict[_type1][_type2])    
 
 
 cdef class BondedInteraction(object):

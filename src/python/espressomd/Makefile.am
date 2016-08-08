@@ -87,7 +87,6 @@ PXDFILES = \
 	particle_data.pxd \
 	reaction.pxd \
 	_system.pxd \
-	_tcl.pxd \
 	thermostat.pxd \
 	utils.pxd \
 	actors.pxd \
@@ -96,11 +95,6 @@ PXDFILES = \
 	galilei.pxd
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
-
-if TCL
-LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
-PYXFILES += _tcl.pyx
-endif
 
 # Python files have to be copied to the build dir
 python-all:

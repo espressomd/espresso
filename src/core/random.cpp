@@ -1,27 +1,28 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  
+
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "random.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 
 namespace Random {
 using std::string;
@@ -32,8 +33,8 @@ using std::vector;
 using Communication::mpiCallbacks;
 
 std::mt19937 generator;
-std::normal_distribution<double> normal_distribution(0,1);
-std::uniform_real_distribution<double> uniform_real_distribution(0,1);
+std::normal_distribution<double> normal_distribution(0, 1);
+std::uniform_real_distribution<double> uniform_real_distribution(0, 1);
 
 /** Local functions */
 
@@ -43,7 +44,7 @@ std::uniform_real_distribution<double> uniform_real_distribution(0,1);
 string get_state() {
   ostringstream os;
   os << generator;
-  
+
   return os.str();
 }
 
@@ -59,10 +60,10 @@ void set_state(const string &s) {
 
 void mpi_random_seed_slave(int pnode, int cnt) {
   int this_idum;
-  
-  MPI_Scatter(NULL,1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
-  
-  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+
+  MPI_Scatter(NULL, 1, MPI_INT, &this_idum, 1, MPI_INT, 0, comm_cart);
+
+  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_idum));
 
   init_random_seed(this_idum);
 }
@@ -70,10 +71,10 @@ void mpi_random_seed_slave(int pnode, int cnt) {
 void mpi_random_seed(int cnt, vector<int> &seeds) {
   int this_idum;
   mpi_call(mpi_random_seed_slave, -1, cnt);
-  
-  MPI_Scatter(&seeds[0],1,MPI_INT,&this_idum,1,MPI_INT,0,comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n",this_node,this_idum));
+  MPI_Scatter(&seeds[0], 1, MPI_INT, &this_idum, 1, MPI_INT, 0, comm_cart);
+
+  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_idum));
 
   init_random_seed(this_idum);
 }
@@ -87,8 +88,8 @@ void mpi_random_set_stat_slave(int, int) {
 
 void mpi_random_set_stat(const vector<string> &stat) {
   mpi_call(mpi_random_set_stat_slave, 0, 0);
-  
-  for(int i = 1; i < n_nodes; i++) {
+
+  for (int i = 1; i < n_nodes; i++) {
     mpiCallbacks().comm().send(i, SOME_TAG, stat[i]);
   }
 
@@ -105,8 +106,8 @@ string mpi_random_get_stat() {
   string res = get_state();
 
   mpi_call(mpi_random_get_stat_slave, 0, 0);
-   
-  for(int i = 1; i < n_nodes; i++) {
+
+  for (int i = 1; i < n_nodes; i++) {
     string tmp;
     mpiCallbacks().comm().recv(i, SOME_TAG, tmp);
     res.append(" ");
@@ -116,8 +117,7 @@ string mpi_random_get_stat() {
   return res;
 }
 
-void init_random(void)
-{
+void init_random(void) {
   /** Set the initial seed */
   init_random_seed(1 + this_node);
 
@@ -127,9 +127,6 @@ void init_random(void)
   mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
-void init_random_seed(int seed)
-{
-  generator.seed(seed);
-}
+void init_random_seed(int seed) { generator.seed(seed); }
 
 } /* Random */

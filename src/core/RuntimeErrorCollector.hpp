@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _RUNTIMEERRORCOLLECTOR_HPP
-#define _RUNTIMEERRORCOLLECTOR_HPP
+#ifndef ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
+#define ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
 
 #include <vector>
 #include <string>
@@ -59,6 +59,7 @@ public:
    * @return Total number of messages.
    */
   int count() const;
+
   /**
    * \brief Number of Messages that have at least level level.
    *
