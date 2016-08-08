@@ -18,6 +18,7 @@
 */
 
 #include "config.hpp"
+#include "debug.hpp"
 
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
