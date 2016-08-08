@@ -9,6 +9,7 @@ set(py_tests  bondedInteractions.py
               nonBondedInteractions.py
               p3m_gpu.py
               particle.py
+			  tabulated.py
 )
 
 add_custom_target(python_tests
