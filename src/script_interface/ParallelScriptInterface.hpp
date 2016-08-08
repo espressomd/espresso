@@ -62,6 +62,8 @@ private:
     return m_translation_table;
   }
 
+  static int translate_id(int id) { return get_translation_table().at(id); }
+
   void mpi_slave(int action, int id) override {
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
@@ -75,6 +77,14 @@ private:
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+
+      if (m_p.all_parameters()[d.first].type() == ParameterType::OBJECT) {
+        std::cout << Communication::mpiCallbacks().comm().rank() << ": "
+                  << __PRETTY_FUNCTION__ << " mapping parameter " << d.first
+                  << ": " << boost::get<int>(d.second) << " -> ";
+        std::cout << translate_id(boost::get<int>(d.second)) << std::endl;
+      }
+
       m_p.set_parameter(d.first, d.second);
 
       break;
@@ -166,6 +176,17 @@ public:
   void call_method(const std::string &name,
                    const VariantMap &parameters) override {
     call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
+  }
+
+public:
+  static void register_new(std::string const &name) {
+    /* Register the object creation callback */
+    Utils::Parallel::ParallelObject<
+        ParallelScriptInterfaceSlave<T>>::register_callback();
+
+    /* Register with the factory */
+    Utils::Factory<ScriptInterfaceBase>::register_new<
+        ParallelScriptInterface<T>>(name);
   }
 };
 

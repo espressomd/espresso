@@ -29,12 +29,9 @@ namespace ScriptInterface {
 namespace Constraints {
 
 void initialize() {
-  ParallelScriptInterface<
-      ScriptInterface::Constraints::Constraint>::register_callback();
 
-  Utils::Factory<ScriptInterfaceBase>::register_new<
-      ParallelScriptInterface<ScriptInterface::Constraints::Constraint>>(
-      "Constraints::Constraint");
+  ParallelScriptInterface<ScriptInterface::Constraints::Constraint>::
+      register_new("Constraints::Constraint");
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

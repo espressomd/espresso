@@ -27,8 +27,8 @@ namespace ScriptInterface {
 namespace Shapes {
 
 void initialize() {
-  Utils::Factory<ScriptInterfaceBase>::register_new<NoWhere>("Shapes::NoWhere");
-  Utils::Factory<ScriptInterfaceBase>::register_new<Wall>("Shapes::Wall");
+  ParallelScriptInterface<ScriptInterface::Shapes::NoWhere>::register_new("Shapes::NoWhere");
+  ParallelScriptInterface<ScriptInterface::Shapes::Wall>::register_new("Shapes::Wall");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -62,13 +62,20 @@ public:
                 << std::endl;
       auto so = ScriptInterface::get_instance(value);
 
+      auto sop = so.get();
+
+      auto pshare_ptr =
+          dynamic_cast<ParallelScriptInterface<Shapes::Shape> *>(sop);
+
       /* We are expecting a ScriptInterface::Shape here,
        throw if not. That means the assigned object had the wrong type. */
-      auto shape = std::dynamic_pointer_cast<Shapes::Shape>(so);
+      // auto shape =
+      //     std::dynamic_pointer_cast<ParallelScriptInterface<Shapes::Shape>>(so);
+
       if (shape != nullptr) {
         m_shape = so;
 
-        m_constraint->set_shape(shape->shape());
+        // m_constraint->set_shape(shape->shape());
       } else {
         throw std::runtime_error("Wrong type.");
       }

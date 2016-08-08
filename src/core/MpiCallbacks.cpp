@@ -85,9 +85,12 @@ void MpiCallbacks::slave(int id, int par1, int par2) const {
     m_callbacks[id](par1, par2);
   } catch (std::exception &e) {
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << " id = " << id << " failed, aborting..." << std::endl;
+              << __PRETTY_FUNCTION__ << " id = " << id
+              << " failed, what(): " << e.what() << ", aborting... " << std::endl;
 
-    mpiCallbacks().comm().abort(253);
+        mpiCallbacks()
+            .comm()
+            .abort(253);
   }
 }
 
