@@ -321,6 +321,19 @@ and use \es:
   version 1.2).
 \end{description}
 
+\subsection{Installing Requirements on Ubuntu 16.04 LTS}
+\label{sec:installing_requirements}
+\index{installing_requirements}
+
+To make ESPResSo run on Ubuntu 16.04 LTS its dependencies can be installed with:
+\begin{code}
+  apt install build-essential cmake cython python-numpy tcl-dev
+  tk-dev libboost-all-dev openmpi-common
+\end{code}
+Optionally the ccmake utility can be installed for easier configuration:
+\begin{code}
+  apt install cmake-curses-gui
+\end{code}
 
 \section{Tcl: Syntax description}
 \label{sec:syntax}
