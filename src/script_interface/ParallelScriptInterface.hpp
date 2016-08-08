@@ -47,6 +47,7 @@ template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
 protected:
   enum class CallbackAction {
+    SET_ID,
     SET_PARAMETER,
     SET_PARAMETERS,
     CALL_METHOD,
@@ -55,8 +56,18 @@ protected:
   T m_p;
 
 private:
-  void mpi_slave(int action, int) override {
+  static std::map<int, int> &get_translation_table() {
+    static std::map<int, int> m_translation_table;
+
+    return m_translation_table;
+  }
+
+  void mpi_slave(int action, int id) override {
     switch (CallbackAction(action)) {
+    case CallbackAction::SET_ID:
+      std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> " << m_p.id() << std::endl;
+      get_translation_table()[id] = m_p.id();
+      break;
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
@@ -108,10 +119,13 @@ public:
   using ParallelScriptInterfaceSlave<T>::call;
   using typename ParallelScriptInterfaceSlave<T>::CallbackAction;
 
+  ParallelScriptInterface() {
+    call(static_cast<int>(CallbackAction::SET_PARAMETER), m_p.id());
+  }
+
   const std::string name() const override { return m_p.name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
-    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     auto d = std::make_pair(name, value);
 
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
