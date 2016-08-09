@@ -740,22 +740,16 @@ IF TABULATED == 1:
             return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
 
         def set_default_params(self):
-            self._params = {"type": 1, "filename": "", "npoints": 0, "minval": 0, "maxval": 1,
+            self._params = {"type": "bond", "filename": "", "npoints": 0, "minval": 0, "maxval": 1,
                             "invstepsize": 1}
 
         def _get_params_from_es_core(self):
-            return \
+           res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "filename": bonded_ia_params[self.bond_id].p.tab.filename,
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
-                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize}
-
-        def _set_params_in_es_core(self):
-            tabulated_bonded_set_params(
-                self._bond_id, self._params["type"], self._params["filename"])
-
     cdef class TabulatedNonBonded(NonBondedInteraction):
 
         cdef int state
@@ -793,6 +787,39 @@ IF TABULATED == 1:
                 return True
 
 
+                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize,
+                 "breakable": bonded_ia_params[self._bond_id].p.tab.breakable}
+           if res["type"] ==1: res["type"]="distance" 
+           if res["type"] ==2: res["type"]="angle" 
+           if res["type"] ==3: res["type"]="dihedral" 
+           return res
+
+        def _set_params_in_es_core(self):
+            if self._params["type"]=="distance": 
+                type_num=1
+            else: 
+                if self._params["type"]=="angle": 
+                    type_num=2
+                else:
+                    if self._params["type"]=="dihedral": 
+                        type_num=3
+                    else:
+                        raise ValueError("Tabulated type needs to be distance, angle, or diherdal")
+
+            res =tabulated_bonded_set_params(
+                  self._bond_id, <TabulatedBondedInteraction>type_num, self._params["filename"],self._params["breakable"])
+            msg=""
+            if res==1: msg="unknon bond type"
+            if res==3: msg="cannot open file"
+            if res==4: msg="file too short"
+            if msg==5: msg="file broken"
+            if msg==6: msg="parameter out of bound"
+            if res: 
+                raise Exception("Could not setup tabulated bond. "+msg)      
+            # Retrieve some params, Es calculates.
+            self._params=self._get_params_from_es_core()
+  
+  
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
 
