@@ -43,7 +43,8 @@ PARTICLE_EXT_TORQUE = 16
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        particle_attributes.append(d)
+        if not d in ["pos_folded"]:
+            particle_attributes.append(d)
 
 
 cdef class ParticleHandle:

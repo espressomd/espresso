@@ -52,8 +52,11 @@ lj_cap = 20
 system = espressomd.System()
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-#es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
+
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+
+
+
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
