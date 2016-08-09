@@ -648,9 +648,9 @@ class Tabulated(ut.TestCase):
 
         self.system.integrator.run(0)
 
-        energy = Analysis(self.system).energy()['nonBonded', 0, 0] + Analysis(self.system).energy()['nonBonded', 0, 1] + Analysis(self.system).energy()['nonBonded', 1, 1] 
+        energy = Analysis(self.system).energy()['non_bonded', 0, 0] + Analysis(self.system).energy()['non_bonded', 0, 1] + Analysis(self.system).energy()['non_bonded', 1, 1] 
 
-        pressure = Analysis(self.system).pressure()['nonBonded', 0, 0] + Analysis(self.system).pressure()['nonBonded', 0, 1] + Analysis(self.system).pressure()['nonBonded', 1, 1] 
+        pressure = Analysis(self.system).pressure()['non_bonded', 0, 0] + Analysis(self.system).pressure()['non_bonded', 0, 1] + Analysis(self.system).pressure()['non_bonded', 1, 1] 
 
         totenergy = Analysis(self.system).energy()["total"]
         totpressure = Analysis(self.system).pressure()["total"]
