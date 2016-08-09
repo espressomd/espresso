@@ -42,10 +42,6 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
   int request[3]{id, par1, par2};
   /** Send request to slaves */
   boost::mpi::broadcast(m_comm, request, 3, 0);
-
-#ifndef NDEBUG
-  boost::mpi::barrier(m_comm);
-#endif
 }
 
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
@@ -86,11 +82,10 @@ void MpiCallbacks::slave(int id, int par1, int par2) const {
   } catch (std::exception &e) {
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << " id = " << id
-              << " failed, what(): " << e.what() << ", aborting... " << std::endl;
+              << " failed, what(): " << e.what() << ", aborting... "
+              << std::endl;
 
-        mpiCallbacks()
-            .comm()
-            .abort(253);
+    mpiCallbacks().comm().abort(253);
   }
 }
 
@@ -108,9 +103,6 @@ void MpiCallbacks::loop() const {
       /** Call the callback */
       slave(request[0], request[1], request[2]);
     }
-#ifndef NDEBUG
-    boost::mpi::barrier(m_comm);
-#endif
   }
 }
 
