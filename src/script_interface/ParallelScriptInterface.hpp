@@ -42,10 +42,11 @@
 
 namespace ScriptInterface {
 
-namespace {
 template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
 protected:
+  ParallelScriptInterfaceSlave() : m_p(new T()) {}
+
   enum class CallbackAction {
     SET_ID,
     SET_PARAMETER,
@@ -53,7 +54,8 @@ protected:
     CALL_METHOD,
     DELETE
   };
-  T m_p;
+
+  std::shared_ptr<T> m_p;
 
 private:
   static std::map<int, int> &get_translation_table() {
@@ -71,21 +73,21 @@ private:
     switch (CallbackAction(action)) {
     case CallbackAction::SET_ID:
       std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> "
-                << m_p.id() << std::endl;
-      get_translation_table()[id] = m_p.id();
+                << m_p->id() << std::endl;
+      get_translation_table()[id] = m_p->id();
       break;
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
-      if (m_p.all_parameters()[d.first].type() == ParameterType::OBJECT) {
+      if (m_p->all_parameters()[d.first].type() == ParameterType::OBJECT) {
         std::cout << Communication::mpiCallbacks().comm().rank() << ": "
                   << __PRETTY_FUNCTION__ << " mapping parameter " << d.first
                   << ": " << boost::get<int>(d.second) << " -> ";
         std::cout << translate_id(boost::get<int>(d.second)) << std::endl;
       }
 
-      m_p.set_parameter(d.first, d.second);
+      m_p->set_parameter(d.first, d.second);
 
       break;
     }
@@ -94,7 +96,7 @@ private:
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
                             0);
 
-      m_p.set_parameters(parameters);
+      m_p->set_parameters(parameters);
 
       break;
     }
@@ -110,7 +112,7 @@ private:
                             0);
 
       /* Forward to the local instance. */
-      m_p.call_method(name, parameters);
+      m_p->call_method(name, parameters);
 
       break;
     }
@@ -121,11 +123,16 @@ private:
     }
   }
 };
-}
+
+class ParallelScriptInterfaceBase : public ScriptInterfaceBase {
+public:
+  virtual std::shared_ptr<ScriptInterfaceBase> const &
+  get_underlying_object() const = 0;
+};
 
 template <typename T>
 class ParallelScriptInterface
-    : public ScriptInterfaceBase,
+    : public ParallelScriptInterfaceBase,
       public ParallelScriptInterfaceSlave<T>,
       public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>> {
 public:
@@ -137,10 +144,15 @@ public:
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
 
-    call(static_cast<int>(CallbackAction::SET_ID), m_p.id());
+    call(static_cast<int>(CallbackAction::SET_ID), m_p->id());
   }
 
-  const std::string name() const override { return m_p.name(); }
+  std::shared_ptr<ScriptInterfaceBase> const &
+  get_underlying_object() const override {
+    return m_p;
+  };
+
+  const std::string name() const override { return m_p->name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
@@ -151,7 +163,7 @@ public:
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-    m_p.set_parameter(name, value);
+    m_p->set_parameter(name, value);
   }
 
   void
@@ -162,15 +174,15 @@ public:
     std::map<std::string, Variant> p(parameters);
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
 
-    m_p.set_parameters(p);
+    m_p->set_parameters(p);
   }
 
   std::map<std::string, Parameter> all_parameters() const override {
-    return m_p.all_parameters();
+    return m_p->all_parameters();
   }
 
   std::map<std::string, Variant> get_parameters() const override {
-    return m_p.get_parameters();
+    return m_p->get_parameters();
   }
 
   void call_method(const std::string &name,
