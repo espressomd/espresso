@@ -22,10 +22,13 @@
  *
  *  Implementation of \ref soft_sphere.hpp
  */
-#include "hat.hpp"
-#include "communication.hpp"
+
+#include "config.hpp"
 
 #ifdef HAT
+
+#include "hat.hpp"
+#include "communication.hpp"
 
 int hat_set_params(int part_type_a, int part_type_b,
 			   double Fmax, double r)

@@ -29,6 +29,7 @@
 /************************************************************/
 
 #include "utils.hpp"
+#include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
