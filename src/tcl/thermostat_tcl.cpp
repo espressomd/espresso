@@ -193,7 +193,7 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
 #ifndef ROTATIONAL_INERTIA
   if (temp < 0 || gammat < 0 || ((argc > 4) && (gammar < 0))) {
 #else
-  if (temp < 0 || gammat < 0 || ((argc > 5) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
+  if (temp < 0 || gammat < 0 || ((argc > 6) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
 #endif
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
