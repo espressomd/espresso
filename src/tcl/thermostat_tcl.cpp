@@ -107,15 +107,15 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp,
-         gammat = 0.0;
+         gammat = -1.0;
   bool trans = true,
        rot = true;
 #ifndef ROTATIONAL_INERTIA
-  double gammar = 0.0;
+  double gammar = -1.0;
   int arg_shift = 0;
 #else
   double gammar[3];
-  gammar[0] = gammar[1] = gammar[2] = 0;
+  gammar[0] = gammar[1] = gammar[2] = -1.0;
   int arg_shift = 2, j;
 #endif
   /* check number of arguments */
