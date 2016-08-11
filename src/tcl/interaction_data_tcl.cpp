@@ -394,6 +394,10 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("dds-gpu", tclcommand_inter_magnetic_parse_dds_gpu);
 #endif
 
+#ifdef BARNES_HUT
+  REGISTER_DIPOLAR("bh-gpu", tclcommand_inter_magnetic_parse_gpu_bh);
+#endif
+
 #ifdef SCAFACOS_DIPOLES
   REGISTER_DIPOLAR("scafacos", tclcommand_inter_parse_scafacos<true>);
 #endif

@@ -155,7 +155,7 @@ void energy_calc(double *result)
   calc_long_range_energies();
 
 #ifdef CUDA
-  copy_energy_from_GPU();
+  copy_energy_from_GPU(); // TODO
 #endif
   
   /* gather data */

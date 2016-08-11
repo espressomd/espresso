@@ -67,6 +67,7 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
+#include "actor/DipolarDirectSumBH.hpp"
 
 /****************************************
  * variables
@@ -935,10 +936,16 @@ if ((coulomb.Dmethod == DIPOLAR_DS_GPU) && (method != DIPOLAR_DS_GPU))
 {
  deactivate_dipolar_direct_sum_gpu();
 }
-#endif
+#endif // DIPOLAR_DIRECT_SUM
+#ifdef BARNES_HUT
+if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
+{
+ deactivate_dipolar_barnes_hut();
+}
 coulomb.Dmethod = method;
 }
-#endif
+#endif // BARNES_HUT
+#endif // DIPOLES
 
 #ifdef ELECTROSTATICS
 

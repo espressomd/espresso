@@ -23,6 +23,9 @@
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#ifdef BARNES_HUT
+#include "DipolarDirectSumBH_cuda.cuh"
+#endif
 
 // This debug header has to be the last thing to include, because it
 // #defines malloc to be something else (!!!) which will lead to
@@ -204,9 +207,40 @@ public:
 #endif
   };
 
+#ifdef BARNES_HUT
+  unsigned int bhnnodes() {
+    return m_bhnnodes;
+  };
+
+  BHBox boxl() {
+	  return m_boxl;
+  };
+
+  BHArrays arrl() {
+	  return m_arrl;
+  };
+
+  /*curandState rndStates() {
+	  return m_rndStates;
+  };*/
+
+  float *massGpuBegin(void) { return m_mass; };
+  float *rxGpuBegin(void) { return m_rx_gpu_begin; };
+  float *ryGpuBegin(void) { return m_ry_gpu_begin; };
+  float *rzGpuBegin(void) { return m_rz_gpu_begin; };
+  float *dipxGpuBegin(void) { return m_dipx_gpu_begin; };
+  float *dipyGpuBegin(void) { return m_dipy_gpu_begin; };
+  float *dipzGpuBegin(void) { return m_dipz_gpu_begin; };
+  int    blocksGpu(void) { return m_blocks; };
+#endif
+
 protected:
   static EspressoSystemInterface *m_instance;
+#ifndef BARNES_HUT
   EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+#else
+  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_rx_gpu_begin(0), m_ry_gpu_begin(0), m_rz_gpu_begin(0), m_dipx_gpu_begin(0), m_dipy_gpu_begin(0), m_dipz_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+#endif
   virtual ~EspressoSystemInterface() {}
 
   void gatherParticles();
@@ -253,6 +287,20 @@ protected:
 
   int m_gpu_npart;
   bool m_gpu;
+#ifdef BARNES_HUT
+  int m_blocks;
+  int m_bhnnodes; // Barnes-Hut tree build nodes
+  BHBox m_boxl;
+  BHArrays m_arrl;
+  //curandState* m_rndStates;
+  float *m_mass;
+  float *m_rx_gpu_begin;
+  float *m_ry_gpu_begin;
+  float *m_rz_gpu_begin;
+  float *m_dipx_gpu_begin;
+  float *m_dipy_gpu_begin;
+  float *m_dipz_gpu_begin;
+#endif
 
   float *m_r_gpu_begin;
   float *m_r_gpu_end;
