@@ -83,13 +83,10 @@ cdef extern from "thermostat.hpp":
     extern double nptiso_gammav
     extern double temperature
     extern int thermo_switch
-
-IF ROTATION:
-    IF ROTATIONAL_INERTIA:
-        cdef extern from "thermostat.hpp":
+    IF ROTATION:
+        IF ROTATIONAL_INERTIA:
             double langevin_gamma_rotation[3]
-    ELSE:
-        cdef extern from "thermostat.hpp":
+        ELSE:
             double langevin_gamma_rotation
 
 cdef extern from "dpd.hpp":
