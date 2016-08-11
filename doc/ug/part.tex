@@ -56,7 +56,7 @@
     exclude=\arg{list of ints},
     temp=\arg{float},
     gamma=\arg{float},
-    gamma_rot=\arg{float},
+    gamma_rot=\arg{float} | \arg{array of 3 floats},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
       `f_swim':\arg{float},
@@ -232,10 +232,26 @@ set first because of the spatial decomposition.
   thermostat then the Langevin thermostat.
 \item[\opt{gamma \var{g}}] If used in combination with the Langevin
   thermostat (as documented in section \ref{sec:thermostat}), sets the
-  frictional coefficient \var{T} individually for the particle with id
-  \var{pid}. This allows to simulate systems containing particles with
-  different diffusion constants. Caution: this has no influence on any
-  other thermostat then the Langevin thermostat.
+  translational frictional coefficient \var{g} individually for the
+  particle with id \var{pid}.This allows to simulate systems
+  containing particles with different diffusion constants.
+  If this parameter is skipped for a specific particle then
+  the corresponding value of the thermostat is applied.
+  Caution: this has no influence on any other thermostat than the
+  Langevin thermostat.
+\item[\opt{gamma\_rot \alt{\var{grot} \asep \var{grotx} \var{groty} \var{grotz}}}]
+  If used in combination with the Langevin thermostat
+  (as documented in section \ref{sec:thermostat}), sets the
+  rotational frictional coefficient(s) individually for the
+  particle with id \var{pid}. This allows to simulate systems
+  containing particles with different diffusion constants.
+  Feature ROTATIONAL\_INERTIA provides possibility to specify
+  different diagonal elements (\var{grotx}, \var{groty}, \var{grotz})
+  of the rotational frictional tensor in the particle body-fixed frames
+  of reference. If this parameter(s) is skipped for a specific particle
+  then the corresponding value(s) of the thermostat is applied.
+  Caution: this has no influence on any other thermostat
+  than the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
   rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
   If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
