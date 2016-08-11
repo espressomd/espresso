@@ -51,6 +51,7 @@ cdef class Thermostat:
             ELSE:
                 langevin_gamma_rotation = 0.
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
