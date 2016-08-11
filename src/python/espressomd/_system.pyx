@@ -122,7 +122,7 @@ cdef class System:
             property gamma_rotation:
                 def __get__(self):
                     return langevin_gamma_rotation
-    
+
     property integ_switch:
         def __get__(self):
             return integ_switch

@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+include "myconfig.pxi"
+
 cdef extern from "communication.hpp":
     void mpi_bcast_parameter(int p)
 
@@ -24,9 +26,7 @@ cdef extern from "global.hpp":
     int FIELD_THERMO_SWITCH
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
-
-IF ROTATION:
-    cdef extern from "global.hpp":
+    IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
     
 cdef extern from "thermostat.hpp":
@@ -35,11 +35,8 @@ cdef extern from "thermostat.hpp":
     double langevin_gamma
     int THERMO_OFF
     int THERMO_LANGEVIN
-
-IF ROTATION:
-    IF ROTATIONAL_INERTIA:
-        cdef extern from "thermostat.hpp":
+    IF ROTATION:
+        IF ROTATIONAL_INERTIA:
             double langevin_gamma_rotation[3]
-    ELSE:
-        cdef extern from "thermostat.hpp":
+        ELSE:
             double langevin_gamma_rotation
