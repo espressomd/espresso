@@ -75,7 +75,9 @@ set:
   DPD thermostat.
 \item[dpd_r_cut] (double, \ro) Cutoff for DPD thermostat.
 \item[dpd_ignore_fixed_particles] (int, \ro) Switches fixed particle DPD force calculation ON (0) or OFF (1 default).
-\item[gamma] (double, \ro) Friction constant for the
+\item[gamma] (double, \ro) Translational friction constant for the
+  Langevin thermostat.
+\item[gamma_rot] (double \asep double[3], \ro) Rotational friction constant for the
   Langevin thermostat.
 \item[integ_switch] (int, \ro) Internal switch which integrator to
   use.
@@ -218,7 +220,7 @@ the same temperature.
 \subsection{Langevin thermostat}
 
 \begin{essyntax}
-  thermostat langevin \var{temperature} \var{gamma\_trans} \opt{\var{gamma\_rotate}} \opt{on/off} \opt{on/off}
+  thermostat langevin \var{temperature} \var{gamma\_trans} \opt{\alt{\var{gamma\_rotate} \asep \var{gamma\_rotate\_x} \var{gamma\_rotate\_y} \var{gamma\_rotate\_z}}} \opt{on/off} \opt{on/off}
 \end{essyntax}
 
 \warning{The behavior of the Langevin Thermostat has changed in this version of \es{}. Before the term \var{gamma} was called the `friction coefficient', but was in fact the inverse relaxation time. The code has been modified such that this value is now a proper friction coefficient.
@@ -232,7 +234,8 @@ function of the particle velocities. By specifying \var{gamma\_trans} the diffus
 D = \frac{\var{temperature}}{\var{gamma\_trans}}.
 \end{equation}
 The relaxation time is given by \var{gamma\_trans}/MASS, with MASS the particle's mass. For a more detailed explanation,
-refer to \cite{grest86a}. In the near future an anisotropic diffusion coefficient tensor will be made available to simulate anisotropic colloids (rods, etc.) properly.
+refer to \cite{grest86a}. Feature \feature{ROTATIONAL_INERTIA} enables an anisotropic diffusion coefficient tensor through corresponding friction coefficients \var{gamma\_rotate\_x} \var{gamma\_rotate\_y} \var{gamma\_rotate\_z}.
+It helpts to simulate anisotropic colloids (rods, etc.) properly.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat. If only the first two arguments are specified then the diffusion coefficient for the rotation is set to the same value as that for the translation.

@@ -57,13 +57,8 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = 0;
 #endif
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-#ifndef ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-#else
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_X);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Y);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Z);
-#endif
+
   /* Langevin for translations */
   langevin_trans = true;
   /* Langevin for rotations */
@@ -213,13 +208,8 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-#ifndef ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-#else
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_X);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Y);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Z);
-#endif
+
   // TODO: mpi_bcast_parameter for langevin_trans and langevin_rotate ?
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
