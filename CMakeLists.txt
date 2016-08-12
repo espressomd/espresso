@@ -51,7 +51,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
-option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_CUDA   "Build with GPU support"  OFF)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
@@ -134,12 +134,36 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
-find_package(HDF5)
-if(HDF5_FOUND)
-  set(H5MD 1)
-  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRS})
+# If CMake version is less than 3.4, then use the custom FindHDF5P.cmake 
+# to find the parallel version of HDF5.
+# This is a workaround to the fact that the serial version of HDF5 is
+# preferred over the parallel version. We require parallel.
+# XXX
+if( CMAKE_MAJOR_VERSION EQUAL 2 
+  OR
+  (CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
+)
+  #XXX
+  message(STATUS "I wanna be here")
+  find_package(HDF5P "1.8.12")
+else()
+  # if the Cmake version is greaterequals 3.4, use the prefer parallel feature.
+  set(HDF5_PREFER_PARALLEL "Yes")
+  find_package(HDF5 "1.8.12")
 endif()
+
+if(HDF5_FOUND)
+  # We need the parallel version!
+  if(HDF5_IS_PARALLEL)
+    set(H5MD 1)
+    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+    include_directories(${HDF5_INCLUDE_DIRS})
+  else()
+    unset(HDF5_FOUND)
+    # XXX remove this message before commit
+    message(ERROR "HDF5 is serial!")
+  endif(HDF5_IS_PARALLEL)
+endif(HDF5_FOUND)
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
