@@ -91,6 +91,7 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 # Libraries
 ######################################################################
+include(FeatureSummary)
 
 if (WITH_CUDA)
   find_package(CUDA QUIET)
@@ -150,8 +151,10 @@ if(HDF5_FOUND)
     set(H5MD 1)
     list(APPEND LIBRARIES ${HDF5_LIBRARIES})
     include_directories(${HDF5_INCLUDE_DIRS})
+    add_feature_info(HDF5 ON "parallel")
   else()
      unset(HDF5_FOUND)
+     add_feature_info(HDF5 OFF "serial")
    endif(HDF5_IS_PARALLEL)
 endif(HDF5_FOUND)
 
