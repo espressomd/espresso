@@ -21,7 +21,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(ESPResSo)
-
 enable_language(CXX)
 
 set(PROJECT_VERSION "4.0-dev")
@@ -37,8 +36,17 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# If the version is smaller than 3.4, use custom find HDF5 module
+# else, use prefer parallel feature of default module.
+if(CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
+else()
+  set(HDF5_PREFER_PARALLEL 1)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 
@@ -134,35 +142,19 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
-# If CMake version is less than 3.4, then use the custom FindHDF5P.cmake 
-# to find the parallel version of HDF5.
-# This is a workaround to the fact that the serial version of HDF5 is
-# preferred over the parallel version. We require parallel.
-# XXX
-if( CMAKE_MAJOR_VERSION EQUAL 2 
-  OR
-  (CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
-)
-  #XXX
-  message(STATUS "I wanna be here")
-  find_package(HDF5P "1.8.12")
-else()
-  # if the Cmake version is greaterequals 3.4, use the prefer parallel feature.
-  set(HDF5_PREFER_PARALLEL "Yes")
-  find_package(HDF5 "1.8.12")
-endif()
 
+find_package(HDF5 "1.8.12")
 if(HDF5_FOUND)
   # We need the parallel version!
-  if(HDF5_IS_PARALLEL)
+  #if(HDF5_IS_PARALLEL)
     set(H5MD 1)
     list(APPEND LIBRARIES ${HDF5_LIBRARIES})
     include_directories(${HDF5_INCLUDE_DIRS})
-  else()
-    unset(HDF5_FOUND)
-    # XXX remove this message before commit
-    message(ERROR "HDF5 is serial!")
-  endif(HDF5_IS_PARALLEL)
+    #   else()
+    # unset(HDF5_FOUND)
+      #XXX remove this message before commit
+     #message(ERROR "HDF5 is serial!")
+     #endif(HDF5_IS_PARALLEL)
 endif(HDF5_FOUND)
 
 if(WITH_SCAFACOS)
