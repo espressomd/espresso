@@ -59,7 +59,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
-option(WITH_CUDA   "Build with GPU support"  OFF)
+option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
@@ -68,14 +68,25 @@ option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation marker
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
 
+
+######################################################################
+# Include modules
+######################################################################
+
 # Check which config file to use
 include(MyConfig)
+
+# CXX stuff
+include(RequireCXX11)
+include(CheckCXXSourceCompiles)
+
+# macros to manipulate feature summary
+include(FeatureSummary)
 
 ######################################################################
 # Pretty function
 ######################################################################
 
-include(CheckCXXSourceCompiles)
 
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    check_cxx_source_compiles("
@@ -91,7 +102,6 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 ######################################################################
 # Libraries
 ######################################################################
-include(FeatureSummary)
 
 if (WITH_CUDA)
   find_package(CUDA QUIET)
@@ -176,7 +186,6 @@ if(WITH_VALGRIND_INSTRUMENTATION)
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
-include(RequireCXX11)
 
 #######################################################################
 # Boost
