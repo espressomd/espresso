@@ -36,10 +36,10 @@
 #include <cmake_config.hpp>
 #endif
 
-/* If nvcc is used we disable c++11 support. */
-#if defined(__CUDACC__) && defined(HAVE_CXX11)
+/* If nvcc is used we disable c++11 support. Not the case starting from the version 7.0 of NVCC! */
+/*#if defined(__CUDACC__) && defined(HAVE_CXX11)
 #undef HAVE_CXX11
-#endif
+#endif*/
 
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
 #define OMPI_SKIP_MPICXX
