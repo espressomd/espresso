@@ -19,14 +19,11 @@
 
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
-#include "core/utils/Factory.hpp"
 #include "shapes/initialize.hpp"
 
 #include <iostream>
 
 namespace ScriptInterface {
-void mpi_initialize(int, int) { initialize(); }
-
 void initialize() {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 

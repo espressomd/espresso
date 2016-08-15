@@ -38,9 +38,7 @@ public:
   VariantMap get_parameters() const override;
   void set_parameter(const std::string &name, const Variant &value) override;
 
-  const std::shared_ptr<::Shapes::Shape> shape() const override {
-    return m_wall;
-  }
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_wall; }
 
 private:
   std::shared_ptr<::Shapes::Wall> m_wall;

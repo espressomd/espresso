@@ -34,8 +34,6 @@
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
 
-#include "utils/Factory.hpp"
-
 namespace Utils {
 template <typename T> class ObjectId {
 public:
@@ -187,25 +185,11 @@ public:
   virtual void call_method(const std::string &, const VariantMap &) {}
 
   /**
-   * @brief Get a new reference counten instance of a script interface.
+   * @brief Get a new reference counted instance of a script interface.
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name) {
-    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
-    std::shared_ptr<ScriptInterfaceBase> sp =
-        Utils::Factory<ScriptInterfaceBase>::make(name);
-
-    /* Id of the newly created instance */
-    const int id = sp->id();
-
-    /* Now get a reference to the corresponding weak_ptr in ObjectId and update
-       it with our shared ptr, so that everybody uses the same ref count.
-    */
-    sp->get_instance(id) = sp;
-
-    return sp;
-  }
+  make_shared(std::string const &name);
 };
 
 } /* namespace ScriptInterface */

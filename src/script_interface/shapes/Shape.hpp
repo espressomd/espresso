@@ -25,9 +25,7 @@
 #include "ScriptInterface.hpp"
 #include <memory>
 
-namespace Shapes {
-class Shape;
-}
+#include "core/shapes/Shape.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -37,7 +35,7 @@ public:
   /**
    * @brief Return the Shape that we are wrapping.
    */
-  virtual const std::shared_ptr<::Shapes::Shape> shape() const = 0;
+  virtual std::shared_ptr<::Shapes::Shape> shape() const = 0;
 };
 
 } /* namespace Shapes */

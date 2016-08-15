@@ -37,15 +37,18 @@
 #include "core/errorhandling.hpp"
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
-
-#include <iostream>
+#include "utils/Factory.hpp"
 
 namespace ScriptInterface {
 
 template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
 protected:
-  ParallelScriptInterfaceSlave() : m_p(new T()) {}
+  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>>;
+  ParallelScriptInterfaceSlave() : m_p(new T()) {
+    std::cout << __PRETTY_FUNCTION__ << " m_p->id() =  " << m_p->id()
+              << std::endl;
+  }
 
   enum class CallbackAction {
     SET_ID,
@@ -55,6 +58,7 @@ protected:
     DELETE
   };
 
+public:
   std::shared_ptr<T> m_p;
 
 private:
@@ -72,22 +76,26 @@ private:
 
     switch (CallbackAction(action)) {
     case CallbackAction::SET_ID:
-      std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> "
-                << m_p->id() << std::endl;
       get_translation_table()[id] = m_p->id();
       break;
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
+      /* If the parameter is a object we have to tranlate it first to a
+         local id.
+      */
       if (m_p->all_parameters()[d.first].type() == ParameterType::OBJECT) {
         std::cout << Communication::mpiCallbacks().comm().rank() << ": "
                   << __PRETTY_FUNCTION__ << " mapping parameter " << d.first
                   << ": " << boost::get<int>(d.second) << " -> ";
         std::cout << translate_id(boost::get<int>(d.second)) << std::endl;
-      }
 
-      m_p->set_parameter(d.first, d.second);
+        m_p->set_parameter(d.first,
+                           get_translation_table()[boost::get<int>(d.second)]);
+      } else {
+        m_p->set_parameter(d.first, d.second);
+      }
 
       break;
     }
@@ -126,8 +134,16 @@ private:
 
 class ParallelScriptInterfaceBase : public ScriptInterfaceBase {
 public:
-  virtual std::shared_ptr<ScriptInterfaceBase> const &
+  virtual std::shared_ptr<ScriptInterfaceBase>
   get_underlying_object() const = 0;
+
+  virtual bool operator==(ParallelScriptInterfaceBase const &rhs) {
+    return this->get_underlying_object() == rhs.get_underlying_object();
+  }
+
+  virtual bool operator!=(ParallelScriptInterfaceBase const &rhs) {
+    return !(*this == rhs);
+  }
 };
 
 template <typename T>
@@ -141,14 +157,10 @@ public:
   using typename ParallelScriptInterfaceSlave<T>::CallbackAction;
 
   ParallelScriptInterface() {
-    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << std::endl;
-
     call(static_cast<int>(CallbackAction::SET_ID), m_p->id());
   }
 
-  std::shared_ptr<ScriptInterfaceBase> const &
-  get_underlying_object() const override {
+  std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const override {
     return m_p;
   };
 
@@ -159,11 +171,32 @@ public:
               << __PRETTY_FUNCTION__ << std::endl;
 
     auto d = std::make_pair(name, value);
-
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-    m_p->set_parameter(name, value);
+
+    m_p->set_parameter(name, transform_object_parameter(name, value));
+  }
+
+  Variant transform_object_parameter(std::string const &name,
+                                     Variant const &value) const {
+    const int outer_id = boost::get<int>(value);
+
+    auto so_ptr = get_instance(outer_id).lock();
+
+    auto po_ptr =
+        std::dynamic_pointer_cast<ParallelScriptInterfaceBase>(so_ptr);
+
+    if (po_ptr != nullptr) {
+      auto underlying_object = po_ptr->get_underlying_object();
+      std::cout << __PRETTY_FUNCTION__ << " outer_id = " << outer_id
+                << ", inner_id = " << po_ptr->get_underlying_object()->id()
+                << std::endl;
+      return underlying_object->id();
+    } else {
+      throw std::runtime_error(
+          "Parameters passed to Parallel entities must also be parallel.");
+    }
   }
 
   void
@@ -173,6 +206,13 @@ public:
     /* Copy parameters into a non-const buffer, needed by boost::mpi */
     std::map<std::string, Variant> p(parameters);
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
+
+    /* Unwrap the object ids */
+    for (auto &it : p) {
+      if (all_parameters()[it.first].type() == ParameterType::OBJECT) {
+        it.second = transform_object_parameter(it.first, it.second);
+      }
+    }
 
     m_p->set_parameters(p);
   }
@@ -192,13 +232,15 @@ public:
 
 public:
   static void register_new(std::string const &name) {
-    /* Register the object creation callback */
-    Utils::Parallel::ParallelObject<
-        ParallelScriptInterfaceSlave<T>>::register_callback();
+    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
 
     /* Register with the factory */
     Utils::Factory<ScriptInterfaceBase>::register_new<
         ParallelScriptInterface<T>>(name);
+
+    /* Register the object creation callback */
+    Utils::Parallel::ParallelObject<
+        ParallelScriptInterfaceSlave<T>>::register_callback();
   }
 };
 

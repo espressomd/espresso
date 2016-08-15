@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import sys
-cimport script_interface
 
 cdef extern from "communication.hpp":
     void mpi_init(int * argc, char ** *argv)
@@ -28,7 +27,6 @@ cdef extern from "initialize.hpp":
     void mpi_loop()
 
 # Main code
-script_interface.initialize()
 mpi_init(NULL, NULL)
 
 # Main slave loop

@@ -43,7 +43,7 @@ public:
     return {{"only_positive", m_constraint->only_positive()},
             {"penetrable", m_constraint->penetrable()},
             {"type", m_constraint->type()},
-            {"shape", (m_shape == nullptr) ? -1 : m_shape->id()}};
+            {"shape", ScriptInterface::NOT_SET}};
   }
 
   ParameterMap all_parameters() const override {
@@ -54,30 +54,20 @@ public:
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    /* Shape is special, because in this case we have to create a new object.
-     * Also it has to be first, so we can set the other parameters in the
-     * new instance. */
     if (name == "shape") {
-      std::cout << __PRETTY_FUNCTION__ << " id = " << boost::get<int>(value)
+      std::shared_ptr<ScriptInterfaceBase> so_ptr = ScriptInterface::get_instance(value);
+      std::cout << __PRETTY_FUNCTION__ << " value = " << boost::get<int>(value)
                 << std::endl;
-      auto so = ScriptInterface::get_instance(value);
 
-      auto sop = so.get();
+      auto shape_ptr =
+          std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);
 
-      auto pshare_ptr =
-          dynamic_cast<ParallelScriptInterface<Shapes::Shape> *>(sop);
-
-      /* We are expecting a ScriptInterface::Shape here,
-       throw if not. That means the assigned object had the wrong type. */
-      // auto shape =
-      //     std::dynamic_pointer_cast<ParallelScriptInterface<Shapes::Shape>>(so);
-
-      if (shape != nullptr) {
-        m_shape = so;
-
-        // m_constraint->set_shape(shape->shape());
+      /* We are expecting a ScriptInterface::Shapes::Shape here,
+         throw if not. That means the assigned object had the wrong type. */
+      if (shape_ptr != nullptr) {
+        m_constraint->set_shape(shape_ptr->shape());
       } else {
-        throw std::runtime_error("Wrong type.");
+        throw std::runtime_error("shape parameter expects a Shapes::Shape");
       }
     }
 
@@ -94,8 +84,8 @@ private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::Constraint> m_constraint;
 
-  /* Keep a reference to the shape */
-  std::shared_ptr<ScriptInterfaceBase> m_shape;
+  // /* Keep a reference to the shape */
+  // std::shared_ptr<ScriptInterfaceBase> m_shape;
 };
 
 } /* namespace Constraints */

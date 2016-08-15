@@ -36,31 +36,34 @@
  * because std::vector<T> is not a user defined type.
  * (Works, though)
  */
-namespace boost {
-  /* Source: http://stackoverflow.com/a/6693088/3198615 */
-  template <typename T>
-  std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
-    std::ostringstream ss;
 
-    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-    ss << v.back();
+#warning move out of namespace std;
+namespace std {
 
-    out << ss.str();
+/* Source: http://stackoverflow.com/a/6693088/3198615 */
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
+  std::ostringstream ss;
 
-    return out;
-  }
+  std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+  ss << v.back();
 
-  template <typename T, int n>
-  std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
-    std::ostringstream ss;
+  out << ss.str();
 
-    std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
-    ss << v.back();
+  return out;
+}
 
-    out << ss.str();
+template <typename T, int n>
+std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
+  std::ostringstream ss;
 
-    return out;
-  }
+  std::copy(v.begin(), v.end() - 1, std::ostream_iterator<T>(ss, " "));
+  ss << v.back();
+
+  out << ss.str();
+
+  return out;
+}
 }
 
 namespace ScriptInterface {

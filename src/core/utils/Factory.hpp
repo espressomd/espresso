@@ -30,6 +30,8 @@
 #include <string>
 #include <type_traits>
 
+#include <iostream>
+
 namespace Utils {
 
 /**
@@ -98,6 +100,8 @@ public:
    * @brief Construct an instance by name.
    */
   static pointer_type make(const std::string &name) {
+    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << " &m_map = " << &m_map << std::endl;
     if (m_map.find(name) == m_map.end()) {
       throw std::domain_error("Class '" + name + "' not found.");
     }
@@ -126,7 +130,9 @@ public:
    * @param b Function to create an instance.
    */
   static void register_new(const std::string &name, const builder_type &b) {
+    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
     m_map[name] = b;
+    std::cout << __PRETTY_FUNCTION__ << " &m_map = " << &m_map << std::endl;
   }
 
   /**

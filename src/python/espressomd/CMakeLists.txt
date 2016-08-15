@@ -76,7 +76,6 @@ foreach(cython_file ${cython_SRC})
   endif()
 endforeach()
 
-
 foreach(auxfile ${cython_AUX})
   add_custom_command(TARGET espressomd
                      COMMAND ${CMAKE_COMMAND} -E

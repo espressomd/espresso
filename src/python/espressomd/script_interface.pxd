@@ -81,9 +81,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     shared_ptr[ScriptInterfaceBase] make_shared(const string& name)
     weak_ptr[ScriptInterfaceBase] get_instance(int id)
 
-cdef extern from "utils/Factory.hpp" namespace "Utils":
-    shared_ptr[T] factory_make[T](const string& name) except +
-
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters

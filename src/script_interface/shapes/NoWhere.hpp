@@ -37,11 +37,9 @@ public:
 
   ParameterMap all_parameters() const override { return {}; };
   VariantMap get_parameters() const override { return {}; };
-  void set_parameter(const std::string &name, const Variant &value) override {};
+  void set_parameter(const std::string &name, const Variant &value) override{};
 
-  const std::shared_ptr<::Shapes::Shape> shape() const override {
-    return m_nowhere;
-  }
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_nowhere; }
 
 private:
   std::shared_ptr<::Shapes::NoWhere> m_nowhere;
