@@ -1166,7 +1166,7 @@ int ELC_tune(double error)
 {
   double err;
   double h = elc_params.h, lz = box_l[2];
-  double min_inv_boxl = dmin(ux, uy);
+  double min_inv_boxl = std::min(ux, uy);
   
   if (elc_params.dielectric_contrast_on) {
     // adjust lz according to dielectric layer method
@@ -1244,7 +1244,7 @@ void ELC_init()
     // set the space_box 
     elc_params.space_box = elc_params.gap_size - 2*elc_params.space_layer;
     // reset minimal_dist for tuning
-    elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+    elc_params.minimal_dist = std::min(elc_params.space_box, elc_params.space_layer);
   }
 
   if (elc_params.far_calculated &&
@@ -1291,7 +1291,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     // set the space_box 
     elc_params.space_box = gap_size - 2*elc_params.space_layer;
     // reset minimal_dist for tuning
-    elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+    elc_params.minimal_dist = std::min(elc_params.space_box, elc_params.space_layer);
 
     //Constant potential parameter setup
     if (const_pot_on)

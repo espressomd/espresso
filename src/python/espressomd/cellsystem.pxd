@@ -16,11 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-cdef extern from "tcl.h":
-    # @TODO: this struct probably should be defined at some common module
-    cdef struct Tcl_Interp:
-        char * result
-        int errorLine
 
 # @TODO: shouldn't these global definitions be used via global_variables?
 cdef extern from "global.hpp":
@@ -28,7 +23,6 @@ cdef extern from "global.hpp":
 
 cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)
-    int mpi_gather_runtime_errors(Tcl_Interp * interp, int ret_state)
     void mpi_bcast_cell_structure(int cs)
     int n_nodes
 
