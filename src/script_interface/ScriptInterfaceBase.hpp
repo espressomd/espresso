@@ -185,11 +185,30 @@ public:
   virtual void call_method(const std::string &, const VariantMap &) {}
 
   /**
-   * @brief Get a new reference counted instance of a script interface.
+   * @brief Get a new reference counted instance of a script interface by name.
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
   make_shared(std::string const &name);
+
+  /**
+   * @brief Get a new reference counted instance of a script interface by type.
+   *
+   */
+  template <typename T> std::shared_ptr<T> static make_shared() {
+    std::shared_ptr<T> sp = std::make_shared<T>();
+    std::cout << __PRETTY_FUNCTION__ << ", id = " << sp->id() << std::endl;
+
+    /* Id of the newly created instance */
+    const int id = sp->id();
+
+    /* Now get a reference to the corresponding weak_ptr in ObjectId and update
+       it with our shared ptr, so that everybody uses the same ref count.
+    */
+    sp->get_instance(id) = std::static_pointer_cast<ScriptInterfaceBase>(sp);
+
+    return sp;
+  }
 };
 
 } /* namespace ScriptInterface */

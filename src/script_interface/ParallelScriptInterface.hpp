@@ -41,13 +41,25 @@
 
 namespace ScriptInterface {
 
+class ParallelScriptInterfaceSlaveBase {
+protected:
+  static std::map<int, int> &get_translation_table() {
+    static std::map<int, int> m_translation_table;
+
+    return m_translation_table;
+  }
+
+  static int translate_id(int id) { return get_translation_table().at(id); }
+};
+
 template <typename T>
-class ParallelScriptInterfaceSlave : public Communication::InstanceCallback {
+class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
+                                     private ParallelScriptInterfaceSlaveBase {
 protected:
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>>;
-  ParallelScriptInterfaceSlave() : m_p(new T()) {
+  ParallelScriptInterfaceSlave() : m_p(ScriptInterfaceBase::make_shared<T>()) {
     std::cout << __PRETTY_FUNCTION__ << " m_p->id() =  " << m_p->id()
-              << std::endl;
+              << ", m_p = " << m_p.get() << std::endl;
   }
 
   enum class CallbackAction {
@@ -62,14 +74,6 @@ public:
   std::shared_ptr<T> m_p;
 
 private:
-  static std::map<int, int> &get_translation_table() {
-    static std::map<int, int> m_translation_table;
-
-    return m_translation_table;
-  }
-
-  static int translate_id(int id) { return get_translation_table().at(id); }
-
   void mpi_slave(int action, int id) override {
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
@@ -77,6 +81,8 @@ private:
     switch (CallbackAction(action)) {
     case CallbackAction::SET_ID:
       get_translation_table()[id] = m_p->id();
+      std::cout << __PRETTY_FUNCTION__ << " mapping " << id << " -> "
+                << translate_id(id) << std::endl;
       break;
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
@@ -86,13 +92,14 @@ private:
          local id.
       */
       if (m_p->all_parameters()[d.first].type() == ParameterType::OBJECT) {
+        const int global_id = boost::get<int>(d.second);
+
         std::cout << Communication::mpiCallbacks().comm().rank() << ": "
                   << __PRETTY_FUNCTION__ << " mapping parameter " << d.first
-                  << ": " << boost::get<int>(d.second) << " -> ";
-        std::cout << translate_id(boost::get<int>(d.second)) << std::endl;
+                  << ": " << global_id << std::endl;
 
-        m_p->set_parameter(d.first,
-                           get_translation_table()[boost::get<int>(d.second)]);
+        const int local_id = translate_id(global_id);
+        m_p->set_parameter(d.first, local_id);
       } else {
         m_p->set_parameter(d.first, d.second);
       }
@@ -161,7 +168,7 @@ public:
   }
 
   std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const override {
-    return m_p;
+    return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   };
 
   const std::string name() const override { return m_p->name(); }
@@ -170,12 +177,12 @@ public:
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
 
-    auto d = std::make_pair(name, value);
+    auto d = std::make_pair(name, transform_object_parameter(name, value));
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
-    m_p->set_parameter(name, transform_object_parameter(name, value));
+    m_p->set_parameter(d.first, d.second);
   }
 
   Variant transform_object_parameter(std::string const &name,
@@ -186,6 +193,9 @@ public:
 
     auto po_ptr =
         std::dynamic_pointer_cast<ParallelScriptInterfaceBase>(so_ptr);
+
+    std::cout << __PRETTY_FUNCTION__ << " po_ptr = " << po_ptr.get()
+              << std::endl;
 
     if (po_ptr != nullptr) {
       auto underlying_object = po_ptr->get_underlying_object();

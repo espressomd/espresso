@@ -59,6 +59,8 @@ public:
       std::cout << __PRETTY_FUNCTION__ << " value = " << boost::get<int>(value)
                 << std::endl;
 
+      std::cout << __PRETTY_FUNCTION__ << " so_ptr = " << so_ptr.get() << std::endl;
+
       auto shape_ptr =
           std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);
 

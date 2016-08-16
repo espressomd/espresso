@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import sys
+cimport script_interface
 
 cdef extern from "communication.hpp":
     void mpi_init(int * argc, char ** *argv)
