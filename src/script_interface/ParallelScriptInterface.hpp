@@ -177,7 +177,13 @@ public:
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
 
-    auto d = std::make_pair(name, map_parallel_to_local_id(name, value));
+    std::pair<std::string, Variant> d(name, Variant());
+
+    if (all_parameters()[name].type() == ParameterType::OBJECT) {
+      d = std::make_pair(name, map_parallel_to_local_id(name, value));
+    } else {
+      d = std::make_pair(name, value);
+    }
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
