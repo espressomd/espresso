@@ -31,6 +31,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/array.hpp>
 
 #include "ScriptInterface.hpp"
 
