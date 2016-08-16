@@ -43,7 +43,8 @@ public:
     return {{"only_positive", m_constraint->only_positive()},
             {"penetrable", m_constraint->penetrable()},
             {"type", m_constraint->type()},
-            {"shape", ScriptInterface::NOT_SET}};
+            {"shape",
+             (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
   }
 
   ParameterMap all_parameters() const override {
@@ -55,11 +56,13 @@ public:
 
   void set_parameter(std::string const &name, Variant const &value) override {
     if (name == "shape") {
-      std::shared_ptr<ScriptInterfaceBase> so_ptr = ScriptInterface::get_instance(value);
+      std::shared_ptr<ScriptInterfaceBase> so_ptr =
+          ScriptInterface::get_instance(value);
       std::cout << __PRETTY_FUNCTION__ << " value = " << boost::get<int>(value)
                 << std::endl;
 
-      std::cout << __PRETTY_FUNCTION__ << " so_ptr = " << so_ptr.get() << std::endl;
+      std::cout << __PRETTY_FUNCTION__ << " so_ptr = " << so_ptr.get()
+                << std::endl;
 
       auto shape_ptr =
           std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);
@@ -68,6 +71,8 @@ public:
          throw if not. That means the assigned object had the wrong type. */
       if (shape_ptr != nullptr) {
         m_constraint->set_shape(shape_ptr->shape());
+        /* Store a reference */
+        m_shape = shape_ptr;
       } else {
         throw std::runtime_error("shape parameter expects a Shapes::Shape");
       }
@@ -86,8 +91,8 @@ private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::Constraint> m_constraint;
 
-  // /* Keep a reference to the shape */
-  // std::shared_ptr<ScriptInterfaceBase> m_shape;
+  /* Keep a reference to the shape */
+  std::shared_ptr<ScriptInterfaceBase> m_shape;
 };
 
 } /* namespace Constraints */

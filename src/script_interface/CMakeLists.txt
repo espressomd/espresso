@@ -3,6 +3,7 @@ file(GLOB_RECURSE EspressoScriptInterface_SRC
           )
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
+add_dependencies(EspressoScriptInterface EspressoConfig EspressoConfig)
 target_link_libraries(EspressoScriptInterface EspressoCore)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

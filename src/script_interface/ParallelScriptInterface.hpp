@@ -177,7 +177,7 @@ public:
     std::cout << Communication::mpiCallbacks().comm().rank() << ": "
               << __PRETTY_FUNCTION__ << std::endl;
 
-    auto d = std::make_pair(name, transform_object_parameter(name, value));
+    auto d = std::make_pair(name, map_parallel_to_local_id(name, value));
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
@@ -185,8 +185,13 @@ public:
     m_p->set_parameter(d.first, d.second);
   }
 
-  Variant transform_object_parameter(std::string const &name,
-                                     Variant const &value) const {
+  Variant map_local_to_parallel_id(std::string const &name,
+                                   Variant const &value) const {
+    return obj_map.at(name)->id();
+  }
+
+  Variant map_parallel_to_local_id(std::string const &name,
+                                   Variant const &value) {
     const int outer_id = boost::get<int>(value);
 
     auto so_ptr = get_instance(outer_id).lock();
@@ -194,14 +199,12 @@ public:
     auto po_ptr =
         std::dynamic_pointer_cast<ParallelScriptInterfaceBase>(so_ptr);
 
-    std::cout << __PRETTY_FUNCTION__ << " po_ptr = " << po_ptr.get()
-              << std::endl;
-
     if (po_ptr != nullptr) {
+      /* Store a pointer to the object to keep it alive */
+      obj_map[name] = po_ptr;
+
+      /* and return the id of the underlying object */
       auto underlying_object = po_ptr->get_underlying_object();
-      std::cout << __PRETTY_FUNCTION__ << " outer_id = " << outer_id
-                << ", inner_id = " << po_ptr->get_underlying_object()->id()
-                << std::endl;
       return underlying_object->id();
     } else {
       throw std::runtime_error(
@@ -220,7 +223,7 @@ public:
     /* Unwrap the object ids */
     for (auto &it : p) {
       if (all_parameters()[it.first].type() == ParameterType::OBJECT) {
-        it.second = transform_object_parameter(it.first, it.second);
+        it.second = map_parallel_to_local_id(it.first, it.second);
       }
     }
 
@@ -232,13 +235,25 @@ public:
   }
 
   std::map<std::string, Variant> get_parameters() const override {
-    return m_p->get_parameters();
+    auto p = m_p->get_parameters();
+
+    /* Wrap the object ids */
+    for (auto &it : p) {
+      if (all_parameters()[it.first].type() == ParameterType::OBJECT) {
+        it.second = map_local_to_parallel_id(it.first, it.second);
+      }
+    }
+
+    return p;
   }
 
   void call_method(const std::string &name,
                    const VariantMap &parameters) override {
     call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
   }
+
+private:
+  std::map<std::string, std::shared_ptr<ParallelScriptInterfaceBase>> obj_map;
 
 public:
   static void register_new(std::string const &name) {
