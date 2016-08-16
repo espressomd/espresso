@@ -31,7 +31,7 @@ if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 ######################################################################
-# CMake internal vars 
+# CMake internal vars
 ######################################################################
 
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
@@ -102,7 +102,7 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
   endif(CUDA_FOUND)
-endif(WITH_CUDA)     
+endif(WITH_CUDA)
 
 find_package(PythonInterp 2)
 

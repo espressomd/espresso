@@ -326,6 +326,7 @@ class NonBondedInteractionHandle(object):
     # Here, one line per non-bonded ia
     lennard_jones = None
     generic_lennard_jones = None
+    tabulated = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -339,6 +340,8 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
+        IF TABULATED==1:
+            self.tabulated=TabulatedNonBonded(_type1, _type2)
 
 
 cdef class NonBondedInteractions:
@@ -751,6 +754,42 @@ IF TABULATED == 1:
         def _set_params_in_es_core(self):
             tabulated_bonded_set_params(
                 self._bond_id, self._params["type"], self._params["filename"])
+
+    cdef class TabulatedNonBonded(NonBondedInteraction):
+
+        cdef int state
+
+        def __init__(self, *args, **kwargs):
+            self.state = -1
+            super(TabulatedNonBonded, self).__init__(*args, **kwargs)
+
+        def type_number(self):
+            return "TABULATED_NONBONDED"
+
+        def type_name(self):
+            return "TABULATED"
+
+        def valid_keys(self):
+            return "filename"
+
+        def required_keys(self):
+            return ["filename", ]
+
+        def set_default_params(self):
+            self._params={"filename" : ""}
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            return {
+                "filename": ia_params.TAB_filename}
+
+        def _set_params_in_es_core(self):
+            self.state = tabulated_set_params(self._part_types[0], self._part_types[1], self._params["filename"])
+
+        def is_active(self):
+            if self.state == 0:
+                return True
 
 
 IF TABULATED != 1:
