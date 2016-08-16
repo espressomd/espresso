@@ -23,16 +23,17 @@ cdef int _integrate(int nSteps, int recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)
 
+
 def handle_errors(msg):
     errors = mpi_gather_runtime_errors()
     for err in errors:
         print(err.format())
 
     for err in errors:
-    # Cast because cython does not support typed enums completely
-        if <int> err.level() == <int> ERROR:
+        # Cast because cython does not support typed enums completely
+        if < int > err.level() == <int > ERROR:
             raise Exception(msg)
-    
+
 
 def integrate(nSteps, recalc_forces=False, reuse_forces=False):
     """integrate(nSteps, recalc_forces=False, reuse_forces=False)"""
@@ -43,9 +44,10 @@ def integrate(nSteps, recalc_forces=False, reuse_forces=False):
         recalc_forces, 1, bool, "recalc_forces has to be a bool")
     check_type_or_throw_except(
         reuse_forces, 1, bool, "reuse_forces has to be a bool")
-    
+
     if (_integrate(nSteps, recalc_forces, reuse_forces)):
         handle_errors("Encoutered errors during integrate")
+
 
 def set_integrator_nvt():
     integrate_set_nvt()

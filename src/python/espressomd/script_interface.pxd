@@ -28,15 +28,15 @@ cdef extern from "Vector.hpp":
     cdef cppclass Vector3d:
         Vector3d()
         Vector3d(vector[double])
-        vector[double] as_vector();
+        vector[double] as_vector()
     cdef cppclass Vector2d:
         Vector2d()
         Vector2d(vector[double])
-        vector[double] as_vector();
+        vector[double] as_vector()
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass ParameterType:
-        bool operator==(const ParameterType &a, const ParameterType &b)
+        bool operator == (const ParameterType & a, const ParameterType & b)
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
     cdef ParameterType OBJECT
@@ -59,26 +59,26 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     void initialize()
     cdef cppclass Variant:
         Variant()
-        Variant(const Variant&)
-        Variant &operator=(const Variant&)
+        Variant(const Variant & )
+        Variant & operator = (const Variant &)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    Variant make_variant[T](const T& x)
-    
+    Variant make_variant[T](const T & x)
+
     cdef cppclass ScriptInterfaceBase:
         const string name()
         map[string, Variant] get_parameters()
-        map[string, Parameter] all_parameters() 
-        Variant get_parameter(const string &name)
-        void set_parameter(const string &name, const Variant &value)
-        void set_parameters(map[string, Variant] &parameters)
+        map[string, Parameter] all_parameters()
+        Variant get_parameter(const string & name)
+        void set_parameter(const string & name, const Variant & value)
+        void set_parameters(map[string, Variant] & parameters)
         int id()
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
-    shared_ptr[ScriptInterfaceBase] make_shared(const string& name)
+    shared_ptr[ScriptInterfaceBase] make_shared(const string & name)
     weak_ptr[ScriptInterfaceBase] get_instance(int id)
 
 cdef class PScriptInterface:

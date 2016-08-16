@@ -150,16 +150,22 @@ IF LB_GPU or LB:
         ####################################################
         def print_vtk_velocity(self, path):
             lb_lbfluid_print_vtk_velocity(path)
+
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(path)
+
         def print_velocity(self, path):
             lb_lbfluid_print_velocity(path)
+
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(path)
+
         def save_checkpoint(self, path, binary):
             lb_lbfluid_save_checkpoint(path, binary)
+
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(path, binary)
+
         def lbnode_get_node_velocity(self, coord):
             cdef double[3] double_return
             cdef int[3] c_coord
@@ -176,13 +182,8 @@ IF LB_GPU or LB:
             self._set_params_in_es_core()
 
 
-
-
-
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
-
-

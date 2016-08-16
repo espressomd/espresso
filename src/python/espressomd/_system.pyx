@@ -56,12 +56,12 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
-    analysis =None
+    analysis = None
     galilei = GalileiTransform()
 
     def __init__(self):
         self.actors = Actors(_system=self)
-        self.analysis=Analysis(self)
+        self.analysis = Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()
