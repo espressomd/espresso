@@ -60,7 +60,7 @@ int do_reaction(){
 //checks the reaction_ensemble struct for valid parameters
 int check_reaction_ensemble(){
 	int check_is_successfull =ES_OK;
-	if(current_reaction_system.standard_pressure_in_simulation_units<0){
+	if(current_reaction_system.standard_pressure_in_simulation_units<0 and not abs(constant_pH-(-10)) >0.00001){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
 		check_is_successfull=ES_ERROR;
 	}
@@ -1945,10 +1945,6 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
-	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
-	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
-		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
-	}
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
 	double* hidden_particles_properties=NULL;
@@ -2014,7 +2010,6 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 		reaction_is_accepted= 0;
 	}
 	//free
-	free(old_particle_numbers);
 	free(changed_particles_properties);
 	free(p_ids_created_particles);
 	free(hidden_particles_properties);
