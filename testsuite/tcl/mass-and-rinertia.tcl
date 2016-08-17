@@ -26,7 +26,8 @@ require_feature "ROTATIONAL_INERTIA"
 setmd skin 0
 setmd time_step 0.01
 thermostat langevin 0 1 
-set J "10 10 1"
+set J "10 10 10"
+
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
 for {set i 0} {$i <100} {incr i} {
   for {set k 0} {$k <3} {incr k} {
@@ -36,7 +37,6 @@ for {set i 0} {$i <100} {incr i} {
   }
   integrate 10
 }
-
 
 #Accelerated motion
 thermostat off
@@ -70,7 +70,11 @@ set box 10
 setmd box_l $box $box $box
 set kT 1.5
 set halfkT 0.75
-thermostat langevin $kT 1
+set gamma_rot_1 [expr [t_random] * 20]
+set gamma_rot_2 [expr [t_random] * 20]
+set gamma_rot_3 [expr [t_random] * 20]
+#thermostat langevin $kT 1
+thermostat langevin $kT 1 $gamma_rot_1 $gamma_rot_2 $gamma_rot_3
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0

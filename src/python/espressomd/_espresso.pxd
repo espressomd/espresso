@@ -21,10 +21,6 @@
 # Define no variables here, as all variables should become part of a
 # specific class.
 #
-cdef extern from "tcl.h":
-    cdef struct Tcl_Interp:
-        pass
 
 cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)
-    int mpi_gather_runtime_errors(Tcl_Interp * interp, int ret_state)

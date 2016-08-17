@@ -21,6 +21,10 @@
 #ifndef _LJ_H
 #define _LJ_H
 
+#include "config.hpp"
+
+#ifdef LENNARD_JONES
+
 /** \file lj.hpp
  *  Routines to calculate the lennard jones energy and/or  force 
  *  for a particle pair.
@@ -28,12 +32,12 @@
 */
 
 #include "utils.hpp"
+#include "debug.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "mol_cut.hpp"
 #include "forcecap.hpp"
 
-#ifdef LENNARD_JONES
 int ljforcecap_set_params(double ljforcecap);
 
 int lennard_jones_set_params(int part_type_a, int part_type_b,

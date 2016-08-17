@@ -72,7 +72,7 @@ static double far_error(int P, double minrad)
 {
   // this uses an upper bound to all force components and the potential
   double rhores = 2*M_PI*uz*minrad;
-  double pref = 4*uz*dmax(1, 2*M_PI*uz);
+  double pref = 4*uz*std::max(1.0, 2*M_PI*uz);
 
   return pref*K1(rhores*P)*exp(rhores)/rhores*(P - 1 + 1/rhores);
 }
@@ -82,7 +82,7 @@ static double determine_minrad(double maxPWerror, int P)
   // bisection to search for where the error is maxPWerror
   double rgranularity = MIN_RAD*box_l[2];
   double rmin = rgranularity;
-  double rmax = dmin(box_l[0], box_l[1]);
+  double rmax = std::min(box_l[0], box_l[1]);
   double errmin = far_error(P, rmin);
   double errmax = far_error(P, rmax);
   if (errmin < maxPWerror) {
@@ -91,7 +91,7 @@ static double determine_minrad(double maxPWerror, int P)
   }
   if (errmax > maxPWerror) {
     // make sure that this switching radius cannot be reached
-    return 2*dmax(box_l[0], box_l[1]);
+    return 2*std::max(box_l[0], box_l[1]);
   }
 
   while (rmax - rmin > rgranularity) {

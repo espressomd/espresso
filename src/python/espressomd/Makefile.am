@@ -48,11 +48,14 @@ PYXFILES =  \
 	electrokinetics.pyx \
 	electrostatic_extensions.pyx \
 	electrostatics.pyx \
+	galilei.pyx \
 	integrate.pyx \
 	interactions.pyx \
 	lb.pyx \
 	magnetostatics.pyx \
 	magnetostatic_extensions.pyx \
+	minimize_energy.pyx \
+	polymer.pyx \
 	particle_data.pyx \
 	reaction.pyx \
 	thermostat.pyx \
@@ -73,17 +76,18 @@ PXDFILES = \
 	electrostatic_extensions.pxd \
 	electrostatics.pxd \
 	_espresso.pxd \
+	galilei.pxd \
 	_init.pxd \
 	integrate.pxd \
 	interactions.pxd \
 	lb.pxd \
 	magnetostatics.pxd \
 	magnetostatic_extensions.pxd \
+	minimize_energy.pxd \
 	p3m_common.pxd \
 	particle_data.pxd \
 	reaction.pxd \
 	_system.pxd \
-	_tcl.pxd \
 	thermostat.pxd \
 	utils.pxd \
 	actors.pxd \
@@ -93,11 +97,6 @@ PXDFILES = \
 	galilei.pxd
 
 LIBS +=	$(top_builddir)/src/core/libEspresso.la
-
-if TCL
-LIBS +=	$(top_builddir)/src/tcl/libEspressoTcl4Py.la
-PYXFILES += _tcl.pyx
-endif
 
 # Python files have to be copied to the build dir
 python-all:

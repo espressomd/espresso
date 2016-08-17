@@ -221,8 +221,8 @@ Accordingly the transport properties  measured using Lees-Edwards are likely to 
 
 When the shear flow rate $\dot{\gamma}$ is non-zero, the Langevin thermostat will treat $v\_x_{folded}$ as being relative to a flow field which changes smoothly from $-\dot{\gamma}/2$ at the bottom of the periodic box to $\dot{\gamma}/2$ at the top.  
 This `laminar' thermostatting is provided mostly because it gives quite convenient equilibration of a flowing system.  In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (see \vref{sec:DPD}) once the initial heat-up has been carried out.  
-The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern {\it a priori}.  At high rates of dissipation, this can however lead to an artefactual  shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary.  
-This effect is removed using the modification proposed to the DPD thermostat by Chatterjee \cite{chatterjee2007} to allow treatment of systems with high dissipation rates, which is applied automatically if \feature{LEES_EDWARDS} is compiled in.  Chatterjee's modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in {\it y}.
+The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern \textit{a priori}.  At high rates of dissipation, this can however lead to an artefactual  shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary.  
+This effect is removed using the modification proposed to the DPD thermostat by Chatterjee \cite{chatterjee2007} to allow treatment of systems with high dissipation rates, which is applied automatically if \feature{LEES_EDWARDS} is compiled in.  Chatterjee's modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in \textit{y}.
 
 The function returns the old value of the offset.
 
@@ -373,7 +373,7 @@ by a few 100 MD time steps.
 
 \subsubsection{Details on usage and an example}
 
-The parallel tempering code has to be loaded explicitely by {\tt source
+The parallel tempering code has to be loaded explicitely by \texttt{source
   "scripts/parallel_tempering.tcl"} from the Espresso directory. To make use of the parallel
 tempering tool, one needs to implement three methods: the propagation, the energy calculation and
 an initialization routine for a configuration. A typical initialization routine will look roughly
@@ -391,7 +391,7 @@ proc init {id temp} {
 \end{verbatim}
 The last two lines are only necessary if each instance of \es{} handles more than one
 configuration, \eg if you have 300 temperatures, but only 10 \es{} processes
-(\ie {\tt -load 30}).  In this case, all
+(\ie \texttt{-load 30}).  In this case, all
 user provided routines need to save and restore the configurations. Saving the time is not
 necessary because the simulation tine across swaps is not meaningful anyways; it is however
 convenient for investigating the (temperature-)history of individual configurations.
@@ -444,7 +444,7 @@ parallel_tempering::main -connect $host -load 30 \
     -init init -swap swap -perform perform
 \end{verbatim}
 % make emacs happy: $
-Here, {\tt host} is a variable containing the TCP/IP hostname of the computer running the master
+Here, \texttt{host} is a variable containing the TCP/IP hostname of the computer running the master
 process. Note that the master process waits until enough processes have connected to start the
 simulation. In the example, there are 300 temperatures, and each process, including the master
 process, will deal with 30 of them. Therefore, 1 master and 9 slave processes are required. For a
@@ -460,7 +460,7 @@ for h in $HOSTS; do
   fi
 done
 \end{verbatim}
-where {\tt pt_test.tcl} passes the {\tt -connect} option on to {\tt parallel_tempering::main}.
+where \texttt{pt_test.tcl} passes the \texttt{-connect} option on to \texttt{parallel_tempering::main}.
 
 \subsubsection{Sharing data}
 
@@ -470,7 +470,7 @@ where {\tt pt_test.tcl} passes the {\tt -connect} option on to {\tt parallel_tem
 
 can be used at any time {\em by the master process} to specify additional data that is available on
 all processes of the parallel_tempering simulation. The data is accessible from all processes as
-{\tt parallel_tempering::shareddata}.
+\texttt{parallel_tempering::shareddata}.
 
 \section{Metadynamics}
 \newescommand[metadynamics]{metadynamics}

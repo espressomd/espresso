@@ -17,10 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-file(GLOB cython_SRC *.pyx)
-file(GLOB cython_HEADER *.pxd)
-file(GLOB cython_AUX *.py)
-
 
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
@@ -42,10 +38,20 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
+
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
+add_custom_command(TARGET espressomd
+        PRE_BUILD
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
+        )
+
+file(GLOB cython_SRC *.pyx)
+file(GLOB cython_HEADER *.pxd)
+file(GLOB cython_AUX *.py)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -83,4 +89,8 @@ foreach(auxfile ${cython_AUX})
                        copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
                     )
 endforeach(auxfile)
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
+	PATTERN "CMakeFiles" EXCLUDE PATTERN "*.cpp" EXCLUDE
+	PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE) 
 
