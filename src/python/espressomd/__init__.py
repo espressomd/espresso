@@ -22,13 +22,6 @@
 # Initialize MPI, start the main loop on the slaves
 import espressomd._init
 
-# Initialize the Tcl Interpreter if available
-try:
-    import espressomd._tcl
-    tcl = espressomd._tcl.TclInterpreter()
-except ImportError:
-    pass
-
 espressomd._init.setup()
 
 from espressomd.system import System
