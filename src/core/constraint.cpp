@@ -1125,30 +1125,6 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 //  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
-void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
-{
-  int i;
-  double c_dist_sqr,c_dist;
-  
-  c_dist_sqr=0.0;
-  for(i=0;i<3;i++) {
-    if(c->pos[i] >= 0) {
-      vec[i] = c->pos[i] - ppos[i];
-      c_dist_sqr += SQR(vec[i]);
-    }else{
-      vec[i] = 0.0;
-      c_dist_sqr += SQR(vec[i]);
-    }
-  }
-  c_dist = sqrt(c_dist_sqr);
-  *dist = c_dist;
-
-  
-  for(i=0;i<3;i++) {
-    vec[i] *= -1;
-  }
-}
-
 void calculate_stomatocyte_dist( Particle *p1, double ppos [3], 
                                  Particle *c_p, Constraint_stomatocyte *cons, 
                                  double *dist, double *vec )
@@ -2647,23 +2623,6 @@ void add_constraints_forces(Particle *p1)
       add_ext_magn_field_force(p1, &constraints[n].c.emfield);
       break;
 #endif
-    
-    case CONSTRAINT_PLANE:
-     if(checkIfInteraction(ia_params)) {
-	calculate_plane_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
-	if (dist > 0) {
-	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
-				       ia_params,vec,dist,dist*dist, force,
-				       torque1, torque2);
-#ifdef TUNABLE_SLIP
-	    add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
-#endif
-	}
-    else {
-        runtimeErrorMsg() <<"plane constraint " << n << " violated by particle " << p1->p.identity;
-	}
-     }
-      break;
     case CONSTRAINT_NONE:
       force[0] = force[1] = force[2] = 0.0;
       break;
@@ -2885,15 +2844,10 @@ double add_constraints_energy(Particle *p1)
     case CONSTRAINT_EXT_MAGN_FIELD:
       magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
       break;
-      //@TODO: implement energy of Plane, Slitpore
-  case CONSTRAINT_PLANE:
-    {
-        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
-    }
-      break;
+      //@TODO: implement energy of Slitpore
   case CONSTRAINT_SLITPORE:
     {
-        if (warnings) fprintf(stderr, "WARNING: energy calculated, but PLANE energy not implemented\n");
+        if (warnings) fprintf(stderr, "WARNING: energy calculated, but SLITPORE energy not implemented\n");
     }
       break;
   case CONSTRAINT_VOXEL: 

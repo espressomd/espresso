@@ -57,8 +57,6 @@ system = espressomd.System()
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-# system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
-print("TS",system.thermostat.get_ts())
 
 
 # warmup integration (with capped LJ potential)
@@ -174,6 +172,8 @@ with open("system_save","w") as system_save:
 with open("thermostat_save","w") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
+with open("nonBondedInter_save", "w") as bond_save:
+    pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program
 print("\nFinished.")

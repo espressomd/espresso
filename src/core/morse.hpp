@@ -27,13 +27,16 @@
  *  \ref forces.cpp
 */
 
+#include "config.hpp"
+
+#ifdef MORSE
+
+#include "debug.hpp"
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
 #include "forcecap.hpp"
-
-#ifdef MORSE
 
 int morse_set_params(int part_type_a, int part_type_b,
 		     double eps, double alpha,

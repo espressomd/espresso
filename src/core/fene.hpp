@@ -31,6 +31,7 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "errorhandling.hpp"
+#include "debug.hpp"
 
 /************************************************************/
 

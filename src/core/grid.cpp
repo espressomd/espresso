@@ -23,6 +23,8 @@
  *  For more information on the domain decomposition,
  *  see \ref grid.hpp "grid.h".
 */
+
+#include "debug.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -32,6 +34,7 @@
 #include "verlet.hpp"
 #include <cmath>
 #include <cstdio>
+
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
@@ -302,8 +305,8 @@ void calc_minimal_box_dimensions() {
   min_box_l = 2 * MAX_INTERACTION_RANGE;
   min_local_box_l = MAX_INTERACTION_RANGE;
   for (i = 0; i < 3; i++) {
-    min_box_l = dmin(min_box_l, box_l[i]);
-    min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
+    min_box_l = std::min(min_box_l, box_l[i]);
+    min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
   }
 }
 
