@@ -174,7 +174,6 @@ j = 0
 for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
-#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
     system.integrator.run(steps=int_steps)
 
     energies = system.analysis.energy()
@@ -206,7 +205,6 @@ for i in range(n_part):
 obs_file.close()
 set_file.close()
 end_file.close()
-# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")

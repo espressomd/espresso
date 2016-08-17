@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import integrate
 from espressomd import electrostatics
 import numpy
 
