@@ -36,11 +36,12 @@ from analyze import Analysis
 from galilei import GalileiTransform
 
 import sys
+import random #for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "random_number_generator_state"]
 
 cdef class System:
     # NOTE: every attribute has to be declared at the class level.
@@ -382,6 +383,22 @@ cdef class System:
             return max_cut_bonded
 
     __seed = None
+    
+    def _get_PRNG_state_size(self):
+        return get_state_size_of_generator()
+    
+    def set_random_state_PRNG(self):
+        _state_size_plus_one=self._get_PRNG_state_size()+1
+        states=string_vec(n_nodes)
+        rng = random.SystemRandom() #true RNG that uses os.urandom()
+        for i in range(self.n_nodes):
+            states_on_node_i=[]
+            for j in range(_state_size_plus_one+1):
+                states_on_node_i.append(rng.randint(0, sys.maxint))
+            states[i]=" ".join(map(str,states_on_node_i))
+        mpi_random_set_stat(states);
+        
+    
     property seed:
         def __set__(self, _seed):
             cdef vector[int] seed_array
@@ -405,6 +422,21 @@ cdef class System:
 
         def __get__(self):
             return self.__seed
+
+    property random_number_generator_state:
+        #sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        def __set__(self,rng_state):
+            _state_size_plus_one=self._get_PRNG_state_size()+1
+            if(len(rng_state)== n_nodes*_state_size_plus_one):
+                states=string_vec(n_nodes) 
+                for i in range(n_nodes):
+                        states[i]=" ".join(map(str,rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one]))
+                mpi_random_set_stat(states);
+            else:
+                raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+        def __get__(self):
+            rng_state=map(int, (mpi_random_get_stat().c_str()).split())
+            return rng_state
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates

@@ -142,7 +142,7 @@ on both the computer being used as well as the compiler. One thing that one need
 since the coupling force between the paricles and the fluid has already been applied to the fluid. Failing to reuse the old forces breaks momentum conservation, which is in general a problem. It is
 particularly problematic for bulk simulations as the system as a whole acquires a drift of the center of mass, causing errors in the calculation of velocities and diffusion coefficients.
 The correct way to restart
-an LB simulation is to first load in the particles with the correct forces, and use ``integrate {\it steps} reuse_forces'' upon the first
+an LB simulation is to first load in the particles with the correct forces, and use ``integrate \textit{steps} reuse_forces'' upon the first
 call to integrate. This causes the old forces to be reused and thus conserves momentum.
 
 \section{LB as a thermostat}

@@ -114,7 +114,7 @@ else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
 fi
 
-MYCONFIG_DIR=$srcdir/maintainer/jenkins/configs
+MYCONFIG_DIR=$srcdir/maintainer/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
 else

@@ -305,7 +305,13 @@ void init_particle(Particle *part)
   part->p.T = -1.0;
   part->p.gamma = -1.0;
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
   part->p.gamma_rot = -1.0;
+#else
+  part->p.gamma_rot[0] = -1.0;
+  part->p.gamma_rot[1] = -1.0;
+  part->p.gamma_rot[2] = -1.0;
+#endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -1132,7 +1138,11 @@ int set_particle_gamma(int part, double gamma)
   return ES_OK;
 }
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma_rot)
+#else
+int set_particle_gamma_rot(int part, double gamma_rot[3])
+#endif
 {
   int pnode;
 
@@ -2240,7 +2250,11 @@ void pointer_to_gamma(Particle *p, double*& res)
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
+#ifndef ROTATIONAL_INERTIA
   res=&(p->p.gamma_rot);
+#else
+  res=p->p.gamma_rot; // array [3]
+#endif
 }
 #endif
 
