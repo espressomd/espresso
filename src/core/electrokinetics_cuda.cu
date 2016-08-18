@@ -3807,6 +3807,18 @@ struct ek_charge_of_particle
   };
 
 };
+
+ekfloat ek_get_particle_charge () {
+  particle_data_gpu = gpu_get_particle_pointer();
+  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
+  ekfloat particle_charge = thrust::transform_reduce(
+      ptr,
+      ptr + lbpar_gpu.number_of_particles,
+      ek_charge_of_particle(),
+      0.0f,
+      thrust::plus<ekfloat>());
+  return particle_charge;
+}
 #endif
 
 ekfloat ek_calculate_net_charge() {
@@ -3825,6 +3837,9 @@ ekfloat ek_calculate_net_charge() {
 
   cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(ekfloat), 0, cudaMemcpyDeviceToHost ) );
 
+#ifdef EK_ELECTROSTATIC_COUPLING
+  charge += ek_get_particle_charge();
+#endif // EK_ELECTROSTATIC_COUPLING
 
   return charge;
 }
@@ -3845,30 +3860,17 @@ int ek_neutralize_system(int species) {
     compensating_species_density += ek_parameters.density[i] * ek_parameters.valency[i];
 
   compensating_species_density = ek_parameters.density[species_index] - compensating_species_density / ek_parameters.valency[species_index];
+
+#ifdef EK_ELECTROSTATIC_COUPLING
+  ekfloat particle_charge = ek_get_particle_charge();
+  compensating_species_density -= particle_charge / ek_parameters.valency[species_index]  / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes);
+#endif // EK_ELECTROSTATIC_COUPLING
+
 #else
   ekfloat charge = ek_calculate_net_charge();
 
   compensating_species_density = ek_parameters.density[species_index] - (charge / ek_parameters.valency[species_index]) / (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid * double(ek_parameters.number_of_nodes-ek_parameters.number_of_boundary_nodes));
-#endif
-
-#ifdef EK_ELECTROSTATIC_COUPLING
-  particle_data_gpu = gpu_get_particle_pointer();
-
-  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
-  ekfloat particle_charge = thrust::transform_reduce(
-      ptr,
-      ptr + lbpar_gpu.number_of_particles,
-      ek_charge_of_particle(),
-      0.0f,
-      thrust::plus<ekfloat>());
-
-#ifdef EK_BOUNDARIES
-  compensating_species_density -= particle_charge / ek_parameters.valency[species_index] / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) /  double(ek_parameters.number_of_nodes - ek_parameters.number_of_boundary_nodes);
-#else
-  compensating_species_density -= particle_charge / ek_parameters.valency[species_index]  / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes);
-#endif
-
-#endif // EK_ELECTROSTATIC_COUPLING
+#endif // EK_BOUNDARIES
 
   if(compensating_species_density < 0.0f)
     return 3;
