@@ -87,6 +87,17 @@ faster. See the subsection~\ref{sec:forcecap} for details.
     \required{TABULATED}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
+	\object{espressomd.non_bonded_inter[\var{type1},
+		\var{type2}]}
+		{tabulated}
+		{
+			filename=\arg{filename}
+		}
+\end{pysyntax}
 
 This defines an interaction between particles of the types \var{type1} and
 \var{type2} according to an arbitrary tabulated pair potential. \var{filename}
@@ -95,11 +106,11 @@ of the separation distance. The tabulated potential allows capping the force
 using \lit{inter forcecap}, see section~\ref{sec:forcecap}.
 
 At present the required file format is simply an ordered list separated by
-whitespace. The data reader first looks for a {\tt \#} character and begins
-reading from that point in the file. Anything before the {\tt \#} will be
+whitespace. The data reader first looks for a \texttt{\#} character and begins
+reading from that point in the file. Anything before the \texttt{\#} will be
 ignored.
 
-The first three parameters after the {\tt \#} specify the number of data points
+The first three parameters after the \texttt{\#} specify the number of data points
 $N_\mathrm{points}$ and the minimal and maximal tabulated separation distances
 $r_\mathrm{min}$ and $r_\mathrm{max}$. The number of data points obviously should
 be an integer, the two other can be arbitrary positive doubles. Take care when

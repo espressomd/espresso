@@ -39,15 +39,18 @@
  *  \ref forces.cpp
  */
 
+#include "config.hpp"
+
+#ifdef LJ_ANGLE
+
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
 #include "grid.hpp"
 #include "forcecap.hpp"
+#include "debug.hpp"
 
-
-#ifdef LJ_ANGLE
 #include <cmath>
 
 /** For the warmup you can cap the singularity of the directionnal LJ

@@ -603,6 +603,40 @@ cdef class ParticleHandle:
                 cdef double * gamma = NULL
                 pointer_to_gamma( & (self.particle_data), gamma)
                 return gamma[0]
+        IF ROTATION:
+            IF ROTATIONAL_INERTIA:
+                property gamma_rot:
+                    """Rotational friction coefficient per particle in Langevin"""
+    
+                    def __set__(self, _gamma_rot):
+                        cdef double gamma_rot[3]
+                        check_type_or_throw_except(
+                            _gamma_rot, 3, float, "Rotational friction has to be 3 floats")
+                        for i in range(3):
+                            gamma_rot[i] = _gamma_rot[i]
+                        if set_particle_gamma_rot(self.id, gamma_rot) == 1:
+                            raise Exception("set particle position first")
+        
+                    def __get__(self):
+                        self.update_particle_data()
+                        cdef double * gamma_rot = NULL
+                        pointer_to_gamma_rot(& (self.particle_data), gamma_rot)
+                        return np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+            ELSE:
+                property gamma_rot:
+                    """Friction coefficient per particle in Langevin"""
+        
+                    def __set__(self, _gamma_rot):
+                        check_type_or_throw_except(
+                            _gamma_rot, 1, float, "gamma_rot has to be a float")
+                        if set_particle_gamma_rot(self.id, _gamma_rot) == 1:
+                            raise Exception("set particle position first")
+        
+                    def __get__(self):
+                        self.update_particle_data()
+                        cdef double * gamma_rot = NULL
+                        pointer_to_gamma_rot( & (self.particle_data), gamma_rot)
+                        return gamma_rot[0]
 
         property temp:
             """Temperature per particle in Langevin"""

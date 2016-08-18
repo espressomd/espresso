@@ -28,7 +28,12 @@
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
 */
 
+#include "config.hpp"
+
+#ifdef TABULATED
+
 #include "utils.hpp"
+#include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
@@ -36,9 +41,6 @@
 
 /* should be changed to file containing force caps */
 #include "forcecap.hpp"
-
-
-#ifdef TABULATED
 
 /** Non-Bonded tabulated potentials:
     Reads tabulated parameters and force and energy tables from a file.

@@ -33,7 +33,7 @@
 
 #include "utils.hpp"
 #include "communication.hpp"
-
+#include "debug.hpp"
 
 void fft_common_pre_init(fft_data_struct *fft)
 {
@@ -294,8 +294,8 @@ int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
   for(i=0;i<3;i++) {
     last1[i] = first1[i] + mesh1[i] -1;
     last2[i] = first2[i] + mesh2[i] -1;
-    block[i  ] = imax(first1[i],first2[i]) - first1[i];
-    block[i+3] = (imin(last1[i], last2[i] ) - first1[i])-block[i]+1;
+    block[i  ] = std::max(first1[i],first2[i]) - first1[i];
+    block[i+3] = (std::min(last1[i], last2[i] ) - first1[i])-block[i]+1;
     size *= block[i+3];
   }
   return size;
@@ -365,7 +365,7 @@ void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element, in
   for(b=0;b<divide;b++) {
     start1 = b*block1;
     for(i0=mesh-1; i0>=0; i0--) {
-      for(i1=start1; i1<imin(start1+block1,mesh);i1++) {
+      for(i1=start1; i1<std::min(start1+block1,mesh);i1++) {
 	for(i2=0; i2<mesh;i2++) {
 	  if(i0>=st[0] && i0<en[0] && i1>=st[1] && 
 	     i1<en[1] && i2>=st[2] && i2<en[2]) my=1;

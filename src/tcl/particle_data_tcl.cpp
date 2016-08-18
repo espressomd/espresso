@@ -54,8 +54,22 @@ void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *inter
 
 #ifdef ROTATION
 void tclcommand_part_print_gamma_rot(Particle *part, char *buffer, Tcl_Interp *interp) {
+  int j;
+#ifndef ROTATIONAL_INERTIA
   Tcl_PrintDouble(interp, part->p.gamma_rot, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+#else
+  double gamma_rot[3];
+
+  for ( j = 0 ; j < 3 ; j++) gamma_rot[j]=part->p.gamma_rot[j];
+
+  Tcl_PrintDouble(interp, gamma_rot[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma_rot[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma_rot[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif // ROTATIONAL_INERTIA
 }
 #endif
 
@@ -2131,16 +2145,31 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_gamma_rot(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
+#ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+#else
+  double gamma_rot[3];
+#endif
 
+#ifndef ROTATIONAL_INERTIA
   *change = 1;
-
   if (argc < 1) {
     Tcl_AppendResult(interp, "gamma_rot requires 1 argument", (char *) NULL);
     return TCL_ERROR;
   }
+#else
+  *change = 3;
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "gamma_rot requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+#endif
   /* set temperature scaling factor */
+#ifndef ROTATIONAL_INERTIA
   if (! ARG_IS_D(0, gamma_rot))
+#else
+  if (! ARG_IS_D(0, gamma_rot[0]) || ! ARG_IS_D(1, gamma_rot[1]) || ! ARG_IS_D(2, gamma_rot[2]))
+#endif
     return TCL_ERROR;
 
   if (set_particle_gamma_rot(part_num, gamma_rot) == TCL_ERROR) {
