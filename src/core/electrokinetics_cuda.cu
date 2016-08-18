@@ -3919,23 +3919,10 @@ int ek_remove_total_momentum() {
     velocity[1]*fluid_mass,
     velocity[2]*fluid_mass
   };
-  //std::cout << "fluid_mass: " << fluid_mass << std::endl;
-  //std::cout << "particle_mass: " << particles_mass << std::endl;
-  //std::cout << "total_momentum: " << total_momentum[0] << " " << total_momentum[1] << " " << total_momentum[2] << std::endl;
-  //std::cout << "velocity: " << velocity[0] << " " << velocity[1] << " " << velocity[2] << std::endl;
 
   ek_particles_add_momentum( velocity );
-
-  ek_get_total_momentum(total_momentum);
-  //std::cout << "total_momentum: " << total_momentum[0] << " " << total_momentum[1] << " " << total_momentum[2] << std::endl;
-  
   ek_fluid_add_momentum( momentum_fluid );
-  //ek_fluid_add_momentum( velocity );
 
-  //ek_get_total_momentum(total_momentum);
-  //std::cout << "total_momentum: " << total_momentum[0] << " " << total_momentum[1] << " " << total_momentum[2] << std::endl;
-
-  //std::cout << "" << std::endl;
   return 0;
 }
 
@@ -3959,19 +3946,6 @@ __global__ void ek_fluid_add_momentum_kernel(
         node_f.force[(0+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[0] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
         node_f.force[(1+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[1] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
         node_f.force[(2+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[2] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
-
-        //ek_lbparameters->external_force = true;
-        //ek_lbparameters->ext_force[0+3*ii] += momentum[0] / ek_lbparameters->tau / number_of_nodes;
-        //ek_lbparameters->ext_force[1+3*ii] += momentum[1] / ek_lbparameters->tau / number_of_nodes;
-        //ek_lbparameters->ext_force[2+3*ii] += momentum[2] / ek_lbparameters->tau / number_of_nodes;
-
-        //node_f.force[(0+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[0]/number_of_nodes;
-        //node_f.force[(1+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[1]/number_of_nodes;
-        //node_f.force[(2+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[2]/number_of_nodes;
-
-        //node_f.force[(0+ii*3)*ek_parameters_gpu.number_of_nodes + index] += velocity[0] * d_v[index].rho[ii] * scale;
-        //node_f.force[(1+ii*3)*ek_parameters_gpu.number_of_nodes + index] += velocity[1] * d_v[index].rho[ii] * scale;
-        //node_f.force[(2+ii*3)*ek_parameters_gpu.number_of_nodes + index] += velocity[2] * d_v[index].rho[ii] * scale;
       }
     }
   }
