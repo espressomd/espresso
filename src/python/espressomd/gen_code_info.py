@@ -48,21 +48,21 @@ cfile.write("""
 include "myconfig.pxi"
 
 def features():
-  \"\"\"Returns list of features compiled into Espresso core\"\"\"
+    \"\"\"Returns list of features compiled into Espresso core\"\"\"
 
-  f=[]
+    f=[]
 """)
 
 template = """
-  IF {0} == 1:
-    f.append("{0}")
+    IF {0} == 1:
+        f.append("{0}")
 """
 
 for feature in defs.allfeatures:
     cfile.write(template.format(feature))
 
 cfile.write("""
-  return sorted(f)
+    return sorted(f)
 """)
 
 cfile.close()
