@@ -5,7 +5,7 @@ from espressomd import integrate
 import numpy
 from threading import Thread
 from math import *
-from espressomd.visualization import *
+from espressomd.visualizationOpenGL import *
 
 #Minimal interactive OpenGL visualization for ESPResSo
 
@@ -32,7 +32,7 @@ system = espressomd.System()
 
 #Init the visualizer, set specs by an optional dict (coloring, periodic images etc). 
 #See visualization_openGL.py for possible options
-visualizer = espressomd.visualization.openGLLive(system, {'periodic_images': [1,1,0]})
+visualizer = openGLLive(system, {'periodic_images': [1,1,0]})
 
 for key, value in visualizer.specs.items():
     print(str(key) + ":" + (30-len(key))*" " + str(value))
