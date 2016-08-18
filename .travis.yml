@@ -1,0 +1,11 @@
+language: generic
+sudo: required
+
+services: docker
+
+before_install:
+        - docker pull espressomd/travis-build:latest
+
+script:
+        - maintainer/travis/build_docker.sh
+ 
