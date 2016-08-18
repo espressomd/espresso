@@ -42,12 +42,10 @@ function cmd {
 [ -z "$insource" ] && insource="true"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && configure_params=""
-[ -z "$with_mpi" ] && with_mpi="true"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$myconfig" ] && myconfig="default"
-! $with_mpi && check_procs=1
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
 
@@ -58,11 +56,11 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    configure_params with_mpi with_fftw \
+    configure_params with_fftw \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+pep8 --filename=*.pyx/,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -88,12 +86,6 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-
-if $with_mpi; then
-    cmake_params="-DWITH_MPI=ON $cmake_params"
-else
-    cmake_params="-DWITH_MPI=OFF $cmake_params"
-fi
 
 if $with_fftw; then
     cmake_params="$cmake_params"
