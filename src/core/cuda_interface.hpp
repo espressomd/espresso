@@ -66,7 +66,7 @@ typedef struct {
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif
-  
+
   /** particle position given from md part*/
   float p[3];
   /** particle momentum struct velocity p.m->v*/
@@ -88,8 +88,12 @@ typedef struct {
   float q;
 #endif
 
+#ifdef MASS
+  float mass;
+#endif
+
   unsigned int fixed;
-  
+
 #ifdef IMMERSED_BOUNDARY
   bool isVirtual;
 #endif

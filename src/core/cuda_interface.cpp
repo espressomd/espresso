@@ -125,7 +125,11 @@ void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
 #endif
 
 #ifdef ELECTROSTATICS
-		particle_data_host[i+g].q = (float)part[i].p.q;
+                particle_data_host[i+g].q = (float)part[i].p.q;
+#endif
+
+#ifdef MASS
+                particle_data_host[i+g].mass = (float)part[i].p.mass;
 #endif
 
 #ifdef ROTATION
@@ -234,6 +238,10 @@ static void cuda_mpi_get_particles_slave(){
 
   #ifdef ELECTROSTATICS	 
             particle_data_host_sl[i+g].q = (float)part[i].p.q;
+  #endif
+
+  #ifdef MASS
+      particle_data_host_sl[i+g].mass = (float)part[i].p.mass;
   #endif
 
 #ifdef ROTATION
