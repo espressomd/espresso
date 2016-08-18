@@ -4,7 +4,6 @@ import espressomd
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd import visualization
-from espressomd import visualizationOpenGL
 import numpy
 from matplotlib import pyplot
 from threading import Thread

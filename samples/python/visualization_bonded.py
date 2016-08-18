@@ -5,7 +5,6 @@ from espressomd import thermostat
 from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
-from espressomd import visualizationOpenGL
 import numpy
 from threading import Thread
 
@@ -38,7 +37,7 @@ for i in range(n_part/2,n_part-1):
   system.part[i].add_bond((system.bonded_inter[1], system.part[i+1].id))
 
 visualizer = visualization.mayaviLive(system)
-#visualizer = visualizationOpenGL.openGLLive(system, {'bond_type_radius': [0.1]})
+#visualizer = visualization.openGLLive(system, {'bond_type_radius': [0.1]})
 
 def main():
     for i in range(0,int_n_times):

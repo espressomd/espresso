@@ -23,7 +23,6 @@ from espressomd import thermostat
 from espressomd import code_info
 from espressomd import integrate
 from espressomd import visualization
-from espressomd import visualizationOpenGL
 import numpy
 from matplotlib import pyplot
 from threading import Thread
@@ -110,7 +109,7 @@ system.max_num_cells = 2744
 
 #Switch between openGl/Mayavi
 visualizer = visualization.mayaviLive(system)
-#visualizer = visualizationOpenGL.openGLLive(system)
+#visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #

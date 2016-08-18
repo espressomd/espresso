@@ -5,8 +5,6 @@ from math import *
 import numpy as np
 import os
 import time
-#from pyface.timer.api import Timer
-
 
 class openGLLive:
 
