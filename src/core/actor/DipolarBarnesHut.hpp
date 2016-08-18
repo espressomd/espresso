@@ -19,7 +19,7 @@ typedef float dds_float;
 
 class DipolarBarnesHut : public Actor {
 public:
-  DipolarBarnesHut(SystemInterface &s) {
+  DipolarBarnesHut(EspressoSystemInterface &s) {
 
 	k = coulomb.Dbjerrum;
 
@@ -35,13 +35,13 @@ public:
 	fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
 			s.dipxGpuBegin(), s.dipyGpuBegin(), s.dipzGpuBegin(),
 			s.npart_gpu(), s.bhnnodes(), s.arrl(), s.boxl(), s.massGpuBegin());
-	init(s.blocksGpu());
+	initBH(s.blocksGpu());
 
   };
 
   virtual ~DipolarBarnesHut() {} // TODO: any memory cleanup?
 
-  void computeForces(SystemInterface &s) {
+  void computeForces(EspressoSystemInterface &s) {
     dds_float box[3];
     int per[3];
     for (int i=0;i<3;i++)
@@ -50,24 +50,24 @@ public:
      per[i] = (PERIODIC(i));
     }
 
-	cudaThreadSynchronize();
+	//cudaThreadSynchronize();
 
-	buildBox(s.blocksGpu());
-	cudaThreadSynchronize();
+	buildBoxBH(s.blocksGpu());
+	//cudaThreadSynchronize();
 
-	buildTree(s.blocksGpu());
-	cudaThreadSynchronize();
+	buildTreeBH(s.blocksGpu());
+	//cudaThreadSynchronize();
 
-	summarize(s.blocksGpu());
-	cudaThreadSynchronize();
+	summarizeBH(s.blocksGpu());
+	//cudaThreadSynchronize();
 
-	sort(s.blocksGpu());
-	cudaThreadSynchronize();
+	sortBH(s.blocksGpu());
+	//cudaThreadSynchronize();
 
-	force(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per);
-	cudaThreadSynchronize();
+	forceBH(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per);
+	//cudaThreadSynchronize();
   };
-  void computeEnergy(SystemInterface &s) {
+  void computeEnergy(EspressoSystemInterface &s) {
     dds_float box[3];
     int per[3];
     for (int i=0;i<3;i++)
@@ -75,22 +75,22 @@ public:
      box[i]=s.box()[i];
      per[i] = (PERIODIC(i));
     }
-    cudaThreadSynchronize();
+    //cudaThreadSynchronize();
 
-    buildBox(s.blocksGpu());
-    cudaThreadSynchronize();
+    buildBoxBH(s.blocksGpu());
+    //cudaThreadSynchronize();
 
-    buildTree(s.blocksGpu());
-    cudaThreadSynchronize();
+    buildTreeBH(s.blocksGpu());
+    //cudaThreadSynchronize();
 
-    summarize(s.blocksGpu());
-    cudaThreadSynchronize();
+    summarizeBH(s.blocksGpu());
+    //cudaThreadSynchronize();
 
-    sort(s.blocksGpu());
-    cudaThreadSynchronize();
+    sortBH(s.blocksGpu());
+    //cudaThreadSynchronize();
 
-    energy(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
-    cudaThreadSynchronize();
+    energyBH(s.blocksGpu(),k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
+    //cudaThreadSynchronize();
  };
 
 protected:

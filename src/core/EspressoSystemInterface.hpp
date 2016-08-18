@@ -24,7 +24,7 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #ifdef BARNES_HUT
-#include "DipolarDirectSumBH_cuda.cuh"
+#include "actor/DipolarBarnesHut_cuda.cuh"
 #endif
 
 // This debug header has to be the last thing to include, because it
@@ -239,7 +239,21 @@ protected:
 #ifndef BARNES_HUT
   EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
 #else
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_rx_gpu_begin(0), m_ry_gpu_begin(0), m_rz_gpu_begin(0), m_dipx_gpu_begin(0), m_dipy_gpu_begin(0), m_dipz_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  EspressoSystemInterface() : m_blocks(0), m_bhnnodes(0), m_gpu_npart(0), m_gpu(false), m_rx_gpu_begin(0), m_ry_gpu_begin(0), m_rz_gpu_begin(0), m_dipx_gpu_begin(0), m_dipy_gpu_begin(0), m_dipz_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
+  {
+	  m_arrl.err = 0;
+	  m_arrl.child = 0;
+	  m_arrl.count = 0;
+	  m_arrl.start = 0;
+	  m_arrl.sort = 0;
+	  m_mass = 0;
+	  m_boxl.maxx = 0;
+	  m_boxl.maxy = 0;
+	  m_boxl.maxz = 0;
+	  m_boxl.minx = 0;
+	  m_boxl.miny = 0;
+	  m_boxl.minz = 0;
+  };
 #endif
   virtual ~EspressoSystemInterface() {}
 

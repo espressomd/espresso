@@ -21,7 +21,7 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #ifdef BARNES_HUT
-#include "DipolarDirectSumBH_cuda.cuh"
+#include "actor/DipolarBarnesHut_cuda.cuh"
 #endif
 
 // These functions will split the paritlce data structure into individual arrays for each property
@@ -168,35 +168,93 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
 
 #ifdef BARNES_HUT
 
-  m_blocks = deviceProp.multiProcessorCount;
-  m_bhnnodes = n * 8;
-  if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;
-  while ((m_bhnnodes & (WARPSIZE - 1)) != 0) m_bhnnodes++;
-  m_bhnnodes--;
-  srand(time(NULL));
+  cudaDeviceProp deviceProp;
+  cudaGetDeviceProperties(&deviceProp, 0); // TODO: local MPI node "dev" value should be here
 
-  cuda_safe_mem(cudaMalloc((void **)&m_arrl.err, sizeof(int)));
-  cuda_safe_mem(cudaMalloc((void **)&m_arrl.child, sizeof(int) * (m_bhnnodes + 1) * 8));
-  cuda_safe_mem(cudaMalloc((void **)&m_arrl.count, sizeof(int) * (m_bhnnodes + 1)));
-  cuda_safe_mem(cudaMalloc((void **)&m_arrl.start, sizeof(int) * (m_bhnnodes + 1)));
-  cuda_safe_mem(cudaMalloc((void **)&m_arrl.sort, sizeof(int) * (m_bhnnodes + 1)));
-
-//  cuda_safe_mem(cudaMalloc((void**)&m_rndStates, sizeof(curandState) * blocks * 5 ));
-  cuda_safe_mem(cudaMalloc((void **)&m_mass, sizeof(float) * (m_bhnnodes + 1)));
-
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxx, sizeof(float) * m_blocks * 3));
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxy, sizeof(float) * m_blocks * 3));
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxz, sizeof(float) * m_blocks * 3));
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.minx, sizeof(float) * m_blocks * 3));
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.miny, sizeof(float) * m_blocks * 3));
-  cuda_safe_mem(cudaMalloc((void **)&m_boxl.minz, sizeof(float) * m_blocks * 3));
-
-  float *mass = new float [n];
-  for(int i = 0; i < cPar->nPart; i++) {
-  		mass[i] = 1.0f;
+  if ((n != m_gpu_npart) || (m_blocks == 0) || (m_bhnnodes == 0))
+  {
+	  m_blocks = deviceProp.multiProcessorCount;
+	  m_bhnnodes = n * 8;
+	  if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;
+	  while ((m_bhnnodes & (WARPSIZE - 1)) != 0) m_bhnnodes++;
+	  m_bhnnodes--;
+	  //srand(time(NULL));
   }
-  cuda_safe_mem(cudaMemcpy(m_mass, mass, sizeof(float) * cPar->nPart, cudaMemcpyHostToDevice))
-  delete[] mass;
+
+  if (m_arrl.err == 0) cuda_safe_mem(cudaMalloc((void **)&m_arrl.err, sizeof(int)));
+
+  if ((m_arrl.child == 0) || (n != m_gpu_npart))
+  {
+	  if (m_arrl.child != 0) cuda_safe_mem(cudaFree(m_arrl.child));
+	  cuda_safe_mem(cudaMalloc((void **)&m_arrl.child, sizeof(int) * (m_bhnnodes + 1) * 8));
+  }
+
+  if ((m_arrl.count == 0) || (n != m_gpu_npart))
+  {
+   if (m_arrl.count != 0) cuda_safe_mem(cudaFree(m_arrl.count));
+   cuda_safe_mem(cudaMalloc((void **)&m_arrl.count, sizeof(int) * (m_bhnnodes + 1)));
+  }
+
+  if ((m_arrl.start == 0) || (n != m_gpu_npart))
+  {
+   if (m_arrl.start != 0) cuda_safe_mem(cudaFree(m_arrl.start));
+   cuda_safe_mem(cudaMalloc((void **)&m_arrl.start, sizeof(int) * (m_bhnnodes + 1)));
+  }
+
+  if ((m_arrl.sort == 0) || (n != m_gpu_npart))
+  {
+   if (m_arrl.sort != 0) cuda_safe_mem(cudaFree(m_arrl.sort));
+   cuda_safe_mem(cudaMalloc((void **)&m_arrl.sort, sizeof(int) * (m_bhnnodes + 1)));
+  }
+
+  if ((m_mass == 0) || (n != m_gpu_npart))
+  {
+   if (m_mass != 0) cuda_safe_mem(cudaFree(m_mass));
+   cuda_safe_mem(cudaMalloc((void **)&m_mass, sizeof(float) * (m_bhnnodes + 1)));
+
+   float *mass = new float [n];
+   for(int i = 0; i < n; i++) {
+   		mass[i] = 1.0f;
+   }
+   cuda_safe_mem(cudaMemcpy(m_mass, mass, sizeof(float) * n, cudaMemcpyHostToDevice));
+   delete[] mass;
+  }
+
+  if ((m_boxl.maxx == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.maxx != 0) cuda_safe_mem(cudaFree(m_boxl.maxx));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxx, sizeof(float) * m_blocks * 3));
+  }
+
+  if ((m_boxl.maxy == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.maxy != 0) cuda_safe_mem(cudaFree(m_boxl.maxy));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxy, sizeof(float) * m_blocks * 3));
+  }
+
+  if ((m_boxl.maxz == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.maxz != 0) cuda_safe_mem(cudaFree(m_boxl.maxz));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxz, sizeof(float) * m_blocks * 3));
+  }
+
+  if ((m_boxl.minx == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.minx != 0) cuda_safe_mem(cudaFree(m_boxl.minx));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minx, sizeof(float) * m_blocks * 3));
+  }
+
+  if ((m_boxl.miny == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.miny != 0) cuda_safe_mem(cudaFree(m_boxl.miny));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.miny, sizeof(float) * m_blocks * 3));
+  }
+
+  if ((m_boxl.minz == 0) || (n != m_gpu_npart))
+  {
+   if (m_boxl.minz != 0) cuda_safe_mem(cudaFree(m_boxl.minz));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minz, sizeof(float) * m_blocks * 3));
+  }
 #endif // BARNES_HUT
 
 #ifndef BARNES_HUT

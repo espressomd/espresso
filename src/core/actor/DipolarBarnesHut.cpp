@@ -1,6 +1,5 @@
 #include "config.hpp"
 #include "grid.hpp"
-#include "DipolarBarnesHut_cuda.hpp"
 #include "DipolarBarnesHut.hpp"
 #include "../forces.hpp"
 #include "EspressoSystemInterface.hpp"

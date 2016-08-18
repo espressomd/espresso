@@ -29,12 +29,14 @@
  *
  */
 
-#include <cuda.h>
-#include <curand.h>
-#include <curand_kernel.h>
+//#include <cuda.h>
+//#include <curand.h>
+//#include <curand_kernel.h>
 #include <cstdio>
 #include <iostream>
 #include <time.h>
+
+typedef float dds_float ;
 
 #define SHARED_ARRAY_BH 512
 
@@ -79,23 +81,23 @@ struct BHArrays{
 
 void fillConstantPointers(float* rx, float* ry, float* rz,
 		float* dipx, float* dipy, float* dipz,
-		int nbodies, int nnodes, BHArrays arrl, BHBox boxl);
+		int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass);
 
-void init(int blocks);
+void initBH(int blocks);
 
 //void calcU(int blocks);
 
-void buildBox(int blocks);
+void buildBoxBH(int blocks);
 
-void buildTree(int blocks);
+void buildTreeBH(int blocks);
 
-void summarize(int blocks);
+void summarizeBH(int blocks);
 
-void sort(int blocks);
+void sortBH(int blocks);
 
-void force(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]);
+void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]);
 
-void energy(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
+void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
 
 //void integrate(int blocks);
 

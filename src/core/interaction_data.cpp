@@ -67,7 +67,7 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
-#include "actor/DipolarDirectSumBH.hpp"
+#include "actor/DipolarBarnesHut.hpp"
 
 /****************************************
  * variables

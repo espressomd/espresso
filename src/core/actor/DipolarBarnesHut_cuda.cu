@@ -22,6 +22,12 @@
 #include "thrust/reduce.h"
 #include "thrust/device_ptr.h"
 #include "cuda.h"
+//#include <cuda.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include "../cuda_utils.hpp"
+
+typedef float dds_float ;
 
 #ifdef BARNES_HUT
 
@@ -50,7 +56,7 @@ __constant__ volatile float epssqd, itolsqd;
 __device__ volatile int bottomd, maxdepthd, blkcntd;
 __device__ volatile float radiusd;
 
-__constant__ ConstParams devCParBH;
+//__constant__ ConstParams devCParBH;
 //__constant__ ChangableParams devChParBH;
 
 __constant__ volatile float* xd;
@@ -95,7 +101,7 @@ __constant__ volatile float *box_ld;
 
 //__constant__ curandState *rndStatesd;
 
-__device__ void dds_sumReduction(dds_float *input, dds_float *sum)
+__device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum)
 {
 	int tid = threadIdx.x;
 	for (int i = blockDim.x; i > 1; i /= 2)
@@ -617,7 +623,7 @@ void sortKernel()
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
 void forceCalculationKernel(dds_float pf,
-	     float *pos, float* dip, float *f, float* torque, dds_float box_l[3], int periodic[3])
+	     float *f, float* torque, dds_float box_l[3], int periodic[3])
 {
 	register int i, j, k, n, depth, base, sbase, diff, t;
 	register float px, py, pz, dx, dy, dz, tmp, fx, fy, fz, hx, hy, hz, ux, uy, uz;
@@ -861,7 +867,7 @@ void forceCalculationKernel(dds_float pf,
 __global__
 __launch_bounds__(THREADS5, FACTOR5)
 void energyCalculationKernel(dds_float pf,
-	     float *pos, float* dip, dds_float box_l[3], int periodic[3],dds_float* energySum)
+	     dds_float box_l[3], int periodic[3],dds_float* energySum)
 {
 	register int i, j, k, n, depth, base, sbase, diff, t;
 	register float px, py, pz, dx, dy, dz, tmp, fx, fy, fz, hx, hy, hz, ux, uy, uz;
@@ -1092,14 +1098,14 @@ void energyCalculationKernel(dds_float pf,
 				hz = 0.0f;
 			}
 
-			if (devCParBH.thermalBath == true) {
+			//if (devCParBH.thermalBath == true) {
 				//localState = rndStatesd[i];
 
 				//phy1d[i] += 2.5f * ((NZ - phy1d[i] * devCParBH.nyu) * devChParBH.dTimeCurrent
 				//		+ curand_normal(&localState) /* 3.0f * devCParBH.nyu*/ * devChParBH.sqrtdTime * devCParBH.qr);
 
 				//theta1d[i] += 2.5f * ((- NX * __sinf(phyd[i]) + NY * __cosf(phyd[i])
-				//	- theta1d[i] * devCParBH.nyu) * devChParBH.dTimeCurrent
+				//	- theta1d[i] * 	BH.nyu) * devChParBH.dTimeCurrent
 				//	+ curand_normal(&localState) /* 3.0f * devCParBH.nyu*/ * devChParBH.sqrtdTime * devCParBH.qr);
 
 				//x1d[i] += (fx - x1d[i] * devCParBH.eta) * devChParBH.dTimeCurrent
@@ -1114,7 +1120,7 @@ void energyCalculationKernel(dds_float pf,
 
 				//if(i % 100 == 0) printf("x1[%d] = %f, y1[%d] = %f, z1[%d] = %f\n", i, x1d[i], i, y1d[i], i, z1d[i]);
 				//printf("%d rnd %f\n", i, curand_normal(&localState));
-			} else {
+			//} else {
 				//phy1d[i] += 2.5f * (NZ - phy1d[i] * devCParBH.nyu) * devChParBH.dTimeCurrent;
 				//theta1d[i] += 2.5f * (- NX * __sinf(phyd[i]) + NY * __cosf(phyd[i])
 				//	- theta1d[i] * devCParBH.nyu) * devChParBH.dTimeCurrent;
@@ -1124,7 +1130,7 @@ void energyCalculationKernel(dds_float pf,
 				z1d[i] += (fz - z1d[i] * devCParBH.eta) * devChParBH.dTimeCurrent;*/
 				//if(i % 100 == 0) printf("x1[%d] = %f, y1[%d] = %f, z1[%d] = %f\n", i, x1d[i], i, y1d[i], i, z1d[i]);
 
-			}
+			//}
 		}
 	}
 	//rndStatesd[IND] = localState;
@@ -1135,7 +1141,7 @@ void energyCalculationKernel(dds_float pf,
     //globalRes[i]=sum;
     // Sum results within a block
     __syncthreads(); // Wait til all threads in block are done
-    dds_sumReduction(res,&(energySum[blockIdx.x]));
+    dds_sumReduction_BH(res,&(energySum[blockIdx.x]));
     //  if (threadIdx.x==0)
     //   printf("Block sum %d %f\n",blockIdx.x,energySum[blockIdx.x]);
 }
@@ -1271,7 +1277,7 @@ static void CudaTest(char *msg) {
 	}
 }
 
-void init(int blocks) {
+void initBH(int blocks) {
 	initializationKernel<<<blocks * FACTOR5, THREADS5>>>();
 	CudaTest("init kernel launch failed");
 
@@ -1295,31 +1301,32 @@ void init(int blocks) {
 	cudaThreadSynchronize();
 }*/
 
-void buildBox(int blocks) {
+void buildBoxBH(int blocks) {
+	cudaThreadSynchronize();
 	boundingBoxKernel<<<blocks * FACTOR1, THREADS1>>>();
 	CudaTest("kernel 1 launch failed");
 	cudaThreadSynchronize();
 }
 
-void buildTree(int blocks) {
+void buildTreeBH(int blocks) {
 	treeBuildingKernel<<<blocks * FACTOR2, THREADS2>>>();
 	CudaTest("kernel 2 launch failed");
 	cudaThreadSynchronize();
 }
 
-void summarize(int blocks) {
+void summarizeBH(int blocks) {
 	summarizationKernel<<<blocks * FACTOR3, THREADS3>>>();
 	CudaTest("kernel 3 launch failed");
 	cudaThreadSynchronize();
 }
 
-void sort(int blocks) {
+void sortBH(int blocks) {
 	sortKernel<<<blocks * FACTOR4, THREADS4>>>();
 	CudaTest("kernel 4 launch failed");
 	cudaThreadSynchronize();
 }
 
-void force(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
+void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
 	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
@@ -1335,7 +1342,7 @@ void force(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],
 	cudaFree(periodic_gpu);
 }
 
-void energy(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
+void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
 	dim3 grid(1,1,1);
@@ -1381,26 +1388,15 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	float epssq = 0.05f * 0.05f;
 	float itolsq = 1.0f / (0.5f * 0.5f);
 
-	if (cudaSuccess != cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice))
-		throw DeviceMemCpyToSymbolException("copying of nnodes to device failed\n");	//CudaTest("nnode copy to device failed");
-	if (cudaSuccess != cudaMemcpyToSymbol(nbodiesd, &nbodies, sizeof(int), 0, cudaMemcpyHostToDevice))
-		throw DeviceMemCpyToSymbolException("copying of nnodes to device failed\n");initializationKernel	//CudaTest("nnode copy to device failed");
-
-	if (cudaSuccess != cudaMemcpyToSymbol(epssqd, &epssq, sizeof(float), 0, cudaMemcpyHostToDevice))
-		throw DeviceMemCpyToSymbolException("copying of epssq to device failed\n");	//CudaTest("epssq copy to device failed");
-	if (cudaSuccess != cudaMemcpyToSymbol(itolsqd, &itolsq, sizeof(float), 0, cudaMemcpyHostToDevice))
-		throw DeviceMemCpyToSymbolException("copying of itolsq to device failed\n");	//CudaTest("itolsq copy to device failed");
-
-	if (cudaSuccess != cudaMemcpyToSymbol(errd, &(arrl.err), sizeof(void*), 0, cudaMemcpyHostToDevice))
-				throw DeviceMemCpyToSymbolException("copying of arrl.err to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(sortd, &(arrl.sort), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of arrl.err to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(childd, &(arrl.child), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of arrl.err to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(countd, &(arrl.count), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of arrl.err to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(startd, &(arrl.start), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of arrl.err to device failed\n");
+	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &nbodies, sizeof(int), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq, sizeof(float), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq, sizeof(float), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(errd, &(arrl.err), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(sortd, &(arrl.sort), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(childd, &(arrl.child), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(countd, &(arrl.count), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(startd, &(arrl.start), sizeof(void*), 0, cudaMemcpyHostToDevice));
 
 	// This part is not needed cause integrating is being made now outside the CUDA:
 
@@ -1430,38 +1426,24 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	if (cudaSuccess != cudaMemcpyToSymbol(z1d, &(devMatrixes.z1), sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.z1 to device failed\n");*/
 
-	if (cudaSuccess != cudaMemcpyToSymbol(xd, rx, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.x to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(yd, ry, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.y to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(zd, rz, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.z to device failed\n");
-
-	if (cudaSuccess != cudaMemcpyToSymbol(uxd, dipx, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.ux to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(uyd, dipy, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.uy to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(uzd, dipz, sizeof(float*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.uz to device failed\n");
+	cuda_safe_mem(cudaMemcpyToSymbol(xd, rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(yd, ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(zd, rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uxd, dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uyd, dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uzd, dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
 
 	/*if (cudaSuccess != cudaMemcpyToSymbol(rndStatesd, rndStates_par, sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.rndStates to device failed\n");*/
 
-	if (cudaSuccess != cudaMemcpyToSymbol(massd, &(mass), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of devMatrixes.mass to device failed\n");
+	cuda_safe_mem(cudaMemcpyToSymbol(massd, &(mass), sizeof(void*), 0, cudaMemcpyHostToDevice));
 
-	if (cudaSuccess != cudaMemcpyToSymbol(maxxd, &(boxl.maxx), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(maxyd, &(boxl.maxy), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(maxzd, &(boxl.maxz), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(minxd, &(boxl.minx), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(minyd, &(boxl.miny), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
-	if (cudaSuccess != cudaMemcpyToSymbol(minzd, &(boxl.minz), sizeof(void*), 0, cudaMemcpyHostToDevice))
-			throw DeviceMemCpyToSymbolException("copying of boxl.maxx to device failed\n");
+	cuda_safe_mem(cudaMemcpyToSymbol(maxxd, &(boxl.maxx), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(maxyd, &(boxl.maxy), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(maxzd, &(boxl.maxz), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(minxd, &(boxl.minx), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(minyd, &(boxl.miny), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(minzd, &(boxl.minz), sizeof(void*), 0, cudaMemcpyHostToDevice));
 }
 
 
