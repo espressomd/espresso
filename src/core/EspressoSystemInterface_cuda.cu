@@ -168,11 +168,11 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
 
 #ifdef BARNES_HUT
 
-  cudaDeviceProp deviceProp;
-  cudaGetDeviceProperties(&deviceProp, 0); // TODO: local MPI node "dev" value should be here
-
   if ((n != m_gpu_npart) || (m_blocks == 0) || (m_bhnnodes == 0))
   {
+	  cudaDeviceProp deviceProp;
+	  cudaGetDeviceProperties(&deviceProp, 0); // TODO: local MPI node "dev" value should be here
+
 	  m_blocks = deviceProp.multiProcessorCount;
 	  m_bhnnodes = n * 8;
 	  if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;

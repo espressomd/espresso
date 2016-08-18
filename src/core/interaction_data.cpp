@@ -943,8 +943,8 @@ if ((coulomb.Dmethod == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU))
  deactivate_dipolar_barnes_hut();
 }
 coulomb.Dmethod = method;
-}
 #endif // BARNES_HUT
+}
 #endif // DIPOLES
 
 #ifdef ELECTROSTATICS

@@ -239,7 +239,7 @@ protected:
 #ifndef BARNES_HUT
   EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
 #else
-  EspressoSystemInterface() : m_blocks(0), m_bhnnodes(0), m_gpu_npart(0), m_gpu(false), m_rx_gpu_begin(0), m_ry_gpu_begin(0), m_rz_gpu_begin(0), m_dipx_gpu_begin(0), m_dipy_gpu_begin(0), m_dipz_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
+  EspressoSystemInterface() : m_blocks(0), m_bhnnodes(0), m_gpu_npart(0), m_gpu(true), m_rx_gpu_begin(0), m_ry_gpu_begin(0), m_rz_gpu_begin(0), m_dipx_gpu_begin(0), m_dipy_gpu_begin(0), m_dipz_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
   {
 	  m_arrl.err = 0;
 	  m_arrl.child = 0;
@@ -253,6 +253,8 @@ protected:
 	  m_boxl.minx = 0;
 	  m_boxl.miny = 0;
 	  m_boxl.minz = 0;
+
+	  init();
   };
 #endif
   virtual ~EspressoSystemInterface() {}
