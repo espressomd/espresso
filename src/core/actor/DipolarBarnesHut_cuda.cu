@@ -1426,12 +1426,12 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	if (cudaSuccess != cudaMemcpyToSymbol(z1d, &(devMatrixes.z1), sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.z1 to device failed\n");*/
 
-	cuda_safe_mem(cudaMemcpyToSymbol(xd, rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(yd, ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(zd, rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(uxd, dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(uyd, dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(uzd, dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (rx)	cuda_safe_mem(cudaMemcpyToSymbol(xd, rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (ry)	cuda_safe_mem(cudaMemcpyToSymbol(yd, ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (rz)	cuda_safe_mem(cudaMemcpyToSymbol(zd, rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipx) cuda_safe_mem(cudaMemcpyToSymbol(uxd, dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipy) cuda_safe_mem(cudaMemcpyToSymbol(uyd, dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipz) cuda_safe_mem(cudaMemcpyToSymbol(uzd, dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
 
 	/*if (cudaSuccess != cudaMemcpyToSymbol(rndStatesd, rndStates_par, sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.rndStates to device failed\n");*/

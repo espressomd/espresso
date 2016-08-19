@@ -350,6 +350,9 @@ void calc_long_range_forces()
   case DIPOLAR_DS_GPU: 
     // Do nothing. It's an actor
     break;
+  case DIPOLAR_BH_GPU:
+      // Do nothing. It's an actor
+    break;
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS: 
     assert(Scafacos::dipolar());

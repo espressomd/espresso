@@ -32,10 +32,10 @@ public:
     if(!s.requestDipGpu())
       std::cerr << "DipolarDirectSum needs access to dipoles on GPU!" << std::endl;
 
-	fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
+	/*fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
 			s.dipxGpuBegin(), s.dipyGpuBegin(), s.dipzGpuBegin(),
 			s.npart_gpu(), s.bhnnodes(), s.arrl(), s.boxl(), s.massGpuBegin());
-	initBH(s.blocksGpu());
+	initBH(s.blocksGpu());*/
 
   };
 

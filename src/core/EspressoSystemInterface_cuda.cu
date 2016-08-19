@@ -265,7 +265,7 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     m_r_gpu_end = m_r_gpu_begin + 3*n;
 #else
   if(m_needsRGpu && ( (n != m_gpu_npart) || (m_rx_gpu_begin == 0) || (m_ry_gpu_begin == 0) || (m_rz_gpu_begin == 0) )) {
-    if(m_rx_gpu_begin != 0) cuda_safe_mem(cudaFree(m_rx_gpu_begin));
+	if(m_rx_gpu_begin != 0) cuda_safe_mem(cudaFree(m_rx_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_rx_gpu_begin, (m_bhnnodes + 1) * sizeof(float)));
     //m_rx_gpu_end = m_rx_gpu_begin + m_bhnnodes + 1;
 
@@ -322,6 +322,13 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     m_quatu_gpu_end = m_quatu_gpu_begin + 3*n;
   }
   m_gpu_npart = n;
+
+#ifdef BARNES_HUT
+  fillConstantPointers(this->rxGpuBegin(), this->ryGpuBegin(), this->rzGpuBegin(),
+  		this->dipxGpuBegin(), this->dipyGpuBegin(), this->dipzGpuBegin(),
+  		this->npart_gpu(), this->bhnnodes(), this->arrl(), this->boxl(), this->massGpuBegin());
+  initBH(this->blocksGpu());
+#endif
 }
 
 void EspressoSystemInterface::split_particle_struct() {
