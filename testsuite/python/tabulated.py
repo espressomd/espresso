@@ -22,7 +22,6 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import *
-from espressomd.integrate import integrate
 from espressomd.analyze import *
 import espressomd
 import sys
@@ -647,7 +646,7 @@ class Tabulated(ut.TestCase):
 
     def compare(self):
 
-        integrate(0)
+        self.system.integrator.run(0)
 
         energy = Analysis(self.system).energy()['nonBonded', 0, 0] + Analysis(self.system).energy()['nonBonded', 0, 1] + Analysis(self.system).energy()['nonBonded', 1, 1] 
 

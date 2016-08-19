@@ -145,7 +145,7 @@ cdef class CellSystem(object):
     property node_grid:
         def __set__(self, _node_grid):
             raise Exception('node_grid is not settable by the user.')
--
+
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
 

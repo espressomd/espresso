@@ -22,8 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.electrostatics import *
-from espressomd.integrate import integrate
-import espressomd.scafacos as scafacos
+from espressomd import scafacos
 
 
 class CoulombCloudWall(ut.TestCase):
@@ -39,7 +38,7 @@ class CoulombCloudWall(ut.TestCase):
     def setUp(self):
         self.S.box_l = (10, 10, 10)
         self.S.time_step = 0.01
-        self.S.skin = 0.4
+        self.S.cell_system.skin = 0.4
 
         #  Clear actors that might be left from prev tests
         if len(self.S.actors):
@@ -82,16 +81,16 @@ class CoulombCloudWall(ut.TestCase):
 
     if "P3M" in espressomd.features():
         def test_p3m(self):
-            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001,
+            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy = 1e-3,
                                   mesh=64, cao=7, alpha=2.70746, tune=False))
-            integrate(0)
+            self.S.integrator.run(0)
             self.compare("p3m", energy=True)
 
     if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features():
         def test_p3m_gpu(self):
-            self.S.actors.add(P3M_GPU(
-                bjerrum_length=1, r_cut=1.001, mesh=64, cao=7, alpha=2.70746, tune=False))
-            integrate(0)
+            self.S.actors.add(P3M_GPU(bjerrum_length=1, r_cut=1.001, accuracy = 1e-3,
+                                      mesh=64, cao=7, alpha=2.70746, tune=False))
+            self.S.integrator.run(0)
             self.compare("p3m_gpu", energy=False)
 
     if "SCAFACOS" in espressomd.features():
@@ -99,14 +98,14 @@ class CoulombCloudWall(ut.TestCase):
             def test_scafacos_p3m(self):
                 self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p3m", method_params={
                                   "p3m_r_cut": 1.001, "p3m_grid": 64, "p3m_cao": 7, "p3m_alpha": 2.70746}))
-                integrate(0)
+                S.integrator.run(0)
                 self.compare("scafacos_p3m", energy=True)
 
         if "p2nfft" in scafacos.available_methods():
             def test_scafacos_p2nfft(self):
                 self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={
                                   "p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
-                integrate(0)
+                self.S.integrator.run(0)
                 self.compare("scafacos_p2nfft", energy=True)
 
     def test_zz_deactivation(self):

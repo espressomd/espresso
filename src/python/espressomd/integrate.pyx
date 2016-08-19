@@ -43,7 +43,7 @@ cdef class Integrator:
             minimize_energy()
 
     def set_steepest_descent(self, *args, **kwargs):
-        req = ["fmax", "gamma", "max_displacement"]
+        req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
             if not key in req:
                 raise Exception("Set required parameter %s first." %key)
