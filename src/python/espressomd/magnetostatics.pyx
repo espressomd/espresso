@@ -257,3 +257,18 @@ IF DIPOLES == 1:
             if mdds_set_params(self._params["n_replica"]):
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
+    IF SCAFACOS_DIPOLES == 1:
+        class Scafacos(ScafacosConnector, MagnetostaticInteraction):
+            dipolar = True
+
+            # Explicit constructor needed due to multiple inheritance
+            def __init__(self, *args, **kwargs):
+                actors.Actor.__init__(self, *args, **kwargs)
+
+            def _activate_method(self):
+                coulomb.Dmethod = DIPOLAR_SCAFACOS
+                coulomb_set_Dbjerrum(self._params["bjerrum_length"])
+                self._set_params_in_es_core()
+
+            def default_params(self):
+                return {}
