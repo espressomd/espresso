@@ -17,11 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
-from espressomd import thermostat
 from espressomd import code_info
-from espressomd import integrate
 
 import cPickle as pickle
 import os 
@@ -76,7 +73,7 @@ if not os.path.exists('data') :
     os.mkdir('data')
 
 system.time_step    = time_step
-system.skin         = skin
+system.cell_system.skin         = skin
 
 system.box_l = [box_l, box_l, box_l]
 
@@ -112,7 +109,7 @@ Stop if minimal distance is larger than {}
 i = 0
 act_min_dist = system.analysis.mindist()
 while i < warm_n_time and act_min_dist < min_dist :
-    integrate.integrate(warm_steps)
+    system.integrator.run(warm_steps)
     act_min_dist = system.analysis.mindist()
     print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
     i+=1
@@ -126,7 +123,7 @@ print("\nWarm up finished\n")
 system.time_step = eq_tstep 
 
 for i in range(equilibration_iterations):
-    integrate.integrate(equilibration_interval)
+    system.integrator.run(equilibration_interval)
     energies = system.analysis.energy()
     print("eq run {} at time {}\n".format(i, system.time))
 
@@ -168,7 +165,7 @@ r_max  = system.box_l[0]/2.0
 avg_rdf=np.zeros((r_bins,))
 
 for i in range(1, sampling_iterations + 1):
-    integrate.integrate(sampling_interval)
+    system.integrator.run(sampling_interval)
     energies = system.analysis.energy()
     pressure = system.analysis.pressure()
 

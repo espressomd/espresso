@@ -1,8 +1,5 @@
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd import visualization
 import numpy
 from matplotlib import pyplot
@@ -27,7 +24,7 @@ lj_cap = 20
 #############################################################
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
@@ -66,7 +63,7 @@ for i in range(n_part):
 
 system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
-system.max_num_cells = 2744
+system.cell_system.max_num_cells = 2744
 
 #############################################################
 #  Warmup Integration                                       #
@@ -115,7 +112,7 @@ def main():
     global current_time
     for i in range(0, int_n_times):
         print("run %d at time=%f " % (i, system.time))
-        integrate.integrate(int_steps)
+        system.integrator.run(int_steps)
         energies[i] = (system.time, system.analysis.energy()['total'])
         current_time = i
         update_plot()
