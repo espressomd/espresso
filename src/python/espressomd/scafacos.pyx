@@ -30,6 +30,17 @@ IF SCAFACOS == 1:
             return res
 
         def _set_params_in_es_core(self):
+            # Verify that scafacos is not used for elecrostatics and dipoles
+            # at the same time
+            IF ELECTROSTATICS == 1:
+                if self.dipolar and coulomb.method ==COULOMB_SCAFACOS:
+                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
+
+            IF DIPOLES == 1:
+                if not self.dipolar and coulomb.Dmethod ==DIPOLAR_SCAFACOS:
+                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
+
+
             # Convert the parameter dictionary to a list of strings
             method_params = self._params["method_params"]
             param_string = ""
