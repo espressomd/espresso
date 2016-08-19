@@ -252,16 +252,15 @@ cdef class System:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
             periodicity = np.zeros(3)
-            for i in range(3):
-                if _periodic[i] != 1:
-                    raise ValueError(
-                        "Until we can handle conditional compilation, only periodicity [1,1,1] is supported in python interface")
+            if PARTIAL_PERIODIC != 1:
+                for i in range(3):
+                    if _periodic[i] != 1:
+                        raise ValueError(
+                            "Until we can handle conditional compilation, only periodicity [1,1,1] is supported in python interface")
             for i in range(3):
                 periodicity[i] = _periodic[i]
             periodic = 4 * _periodic[2] + 2 * _periodic[1] + _periodic[0]
             # first 3 bits of periodic determine the periodicity
-            # until we can handle contitional compilatio, periodic=7 is the
-            # only value which makes sense
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
