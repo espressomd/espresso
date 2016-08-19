@@ -53,6 +53,7 @@ file(GLOB cython_HEADER *.pxd)
 file(GLOB cython_AUX *.py)
 
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
+list(REMOVE_DUPLICATES cython_SRC)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
