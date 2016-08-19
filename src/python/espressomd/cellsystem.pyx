@@ -144,20 +144,8 @@ cdef class CellSystem(object):
     # setter deprecated
     property node_grid:
         def __set__(self, _node_grid):
-            global node_grid
-            if len(_node_grid) != 3:
-                raise ValueError("node_grid must be of length 3")
-            for i in range(3):
-                if _node_grid[i] <= 0:
-                    raise ValueError("node_grid must be > 0 in all directions")
-                node_grid[i] = _node_grid[i]
-            if _node_grid[0] * _node_grid[1] * _node_grid[2] != n_nodes:
-                raise ValueError(
-                    "node_grid does not fit n_nodes (" + str(n_nodes) + ")")
-            for i in range(3):
-                node_grid[i] = _node_grid[i]
-            mpi_bcast_parameter(FIELD_NODEGRID)
-
+            raise Exception('node_grid is not settable by the user.')
+-
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
 
