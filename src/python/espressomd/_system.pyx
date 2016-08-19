@@ -111,13 +111,11 @@ cdef class System:
                         pass
                     ELSE:
                         raise ValueError(
-                            "No PARTIAL_PERIODIC activated")
+                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
             for i in range(3):
                 periodicity[i] = _periodic[i]
             periodic = 4 * _periodic[2] + 2 * _periodic[1] + _periodic[0]
             # first 3 bits of periodic determine the periodicity
-            # until we can handle contitional compilatio, periodic=7 is the
-            # only value which makes sense
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
