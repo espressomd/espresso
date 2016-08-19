@@ -6,6 +6,18 @@ services: docker
 before_install:
         - docker pull espressomd/travis-build:latest
 
+
+env:
+  matrix:
+    - myconfig=default
+    - myconfig=maxset
+    - myconfig=maxset-gaussrandom
+    - myconfig=maxset-gaussrandomcut
+    - myconfig=molcut
+    - myconfig=rest1
+    - myconfig=rest2
+    - make_check=false myconfig=nocheck-maxset
+
 script:
         - maintainer/travis/build_docker.sh
  
