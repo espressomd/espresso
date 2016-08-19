@@ -50,18 +50,18 @@ cdef class CellSystem(object):
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def set_layered(self, nLayers=None):
-        """set_layered(nLayers=None)
-        Set the layerd cell system with nLayers layers"""
-        if nLayers:
-            if not isinstance(nLayers, int):
+    def set_layered(self, n_layers=None):
+        """set_layered(n_layers=None)
+        Set the layerd cell system with n_layers layers"""
+        if n_layers:
+            if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
 
-            if not nLayers > 0:
+            if not n_layers > 0:
                 raise ValueError("the number of layers has to be >0")
 
             global n_layers
-            n_layers = int(nLayers)
+            n_layers = int(n_layers)
             global determine_n_layers
             determine_n_layers = 0
 
@@ -86,7 +86,7 @@ cdef class CellSystem(object):
         s = {}
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["nLayers"] = n_layers
+            s["n_layers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
             s["use_verlet_lists"] = dd.use_vList
