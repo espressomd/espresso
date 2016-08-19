@@ -58,6 +58,12 @@ std::string mpi_random_get_stat();
 void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /**
+ * @brief
+ * Get the state size of the random number generator
+ */
+int get_state_size_of_generator();
+
+/**
  * @bief Initialize PRNG with MPI rank as seed.
  */
 void init_random(void);
