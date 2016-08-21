@@ -34,7 +34,7 @@ namespace Communication {
  * the instance: It is created in the constructor
  * and removed in the destructor.
  * Clients have to implement the mpi_slave function
- * which is the actual callback.
+ * on the slave nodes, which is the actual callback.
  */
 class InstanceCallback {
 public:
@@ -66,7 +66,7 @@ private:
   /* mpi_slave should be private because it is virtual,
    * but the callback system has to call it. */
   friend Communication::MpiCallbacks;
-  virtual void mpi_slave(int, int) = 0;
+  virtual void mpi_slave(int, int) {};
 
   /* Id of the encapsulated callback */
   int m_callback_id;

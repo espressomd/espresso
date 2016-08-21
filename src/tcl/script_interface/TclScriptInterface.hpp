@@ -85,7 +85,7 @@ public:
   TclScriptInterface(std::string const &name, Tcl_Interp *interp)
       : TclCommand(interp),
         /* Create a new c++ object */
-        m_so(Factory::make(name)) {}
+        m_so(ScriptInterfaceBase::make_shared(name)) {}
 
   /**
    * @brief Print parameters in Tcl formatting.
