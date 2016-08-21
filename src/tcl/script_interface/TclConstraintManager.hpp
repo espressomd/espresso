@@ -43,29 +43,34 @@ private:
     /* Construct the constraint */
     auto constraint = TclScriptInterface("Constraints::Constraint", interp());
 
-    std::cout << __PRETTY_FUNCTION__
-              << " constraint = " << constraint.script_object().get()
-              << std::endl;
+    /* Construct the shape */
+    auto shape = ScriptInterfaceBase::make_shared(class_name);
 
     /* Set the given shape */
-    constraint.script_object()->set_parameter("shape", class_name);
+    constraint.script_object()->set_parameter("shape", shape->id());
 
     /* Add to list and get an index. */
     return m_om.add(constraint);
   }
 
-  virtual std::string do_print(int id) const {
+  virtual std::string do_print(int id) const override {
     /* Look up the object to print */
     auto const &o = m_om[id];
 
-    auto const shape_name =
-        boost::get<std::string>(o.script_object()->get_parameter("shape"));
+    const int shape_id =
+        boost::get<int>(o.script_object()->get_parameter("shape"));
+
+    auto const shape = ScriptInterfaceBase::get_instance(shape_id).lock();
 
     /* Get the tcl name */
-    std::string tcl_name = m_name_map.right.at(shape_name);
+    std::string tcl_name = m_name_map.right.at(shape->name());
 
     /* Print the name and the parameters */
     auto params = o.script_object()->get_parameters();
+
+    /* Add parameters from the shape */
+    auto shape_params = shape->get_parameters();
+    params.insert(shape_params.begin(), shape_params.end());
 
     std::stringstream ss;
     for (auto const &p : params) {

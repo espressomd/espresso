@@ -68,9 +68,6 @@ public:
   const std::string name() const override { return m_p->name(); }
 
   void set_parameter(const std::string &name, const Variant &value) override {
-    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << std::endl;
-
     std::pair<std::string, Variant> d(name, Variant());
 
     if (all_parameters()[name].type() == ParameterType::OBJECT) {
