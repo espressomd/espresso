@@ -60,8 +60,8 @@ cdef class CellSystem(object):
             if not n_layers > 0:
                 raise ValueError("the number of layers has to be >0")
 
-            global n_layers
-            n_layers = int(n_layers)
+            global n_layers_
+            n_layers_ = int(n_layers)
             global determine_n_layers
             determine_n_layers = 0
 
@@ -100,7 +100,7 @@ cdef class CellSystem(object):
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
-        s["n_layers"] = n_layers
+        s["n_layers"] = n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])

@@ -76,7 +76,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 # Warmup Integration Loop
 i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
-    integrate.integrate(warm_steps)
+    system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.mindist()
     i += 1
