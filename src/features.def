@@ -157,7 +157,8 @@ IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
-SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
+SCAFACOS_DIPOLES                requires SCAFACOS
+SCAFACOS_DIPOLES                implies DIPOLES
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */

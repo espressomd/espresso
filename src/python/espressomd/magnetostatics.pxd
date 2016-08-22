@@ -9,7 +9,8 @@ IF DIPOLES == 1:
             DIPOLAR_MDLC_P3M,
             DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
             DIPOLAR_DS,
-            DIPOLAR_MDLC_DS
+            DIPOLAR_MDLC_DS,
+            DIPOLAR_SCAFACOS
 
         int dipolar_set_Dbjerrum(double bjerrum)
 

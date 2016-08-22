@@ -18,8 +18,11 @@
 #
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
 from globals cimport temperature
+from actors cimport *
+from actors import *
+from scafacos import ScafacosConnector
+
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):

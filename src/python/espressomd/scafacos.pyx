@@ -1,5 +1,8 @@
 from actors cimport *
 from libcpp.string cimport string  # import std::string
+from electrostatics cimport *
+from magnetostatics cimport *
+
 
 include "myconfig.pxi"
 
