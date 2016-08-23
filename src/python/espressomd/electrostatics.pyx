@@ -284,6 +284,9 @@ IF P3M == 1:
             def required_keys(self):
                 return ["bjerrum_length"]
 
+            def _deactivate_method(self):
+                coulomb.method = COULOMB_NONE
+
             def default_params(self):
                 return {"cao": 0,
                         "inter": -1,

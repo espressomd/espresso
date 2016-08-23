@@ -1083,6 +1083,33 @@ cdef class ParticleSlice:
                         self.id_selection[i]).ext_force
 
                 return ext_f_array
+    
+    IF ROTATION==1:
+        property torque_lab:
+            """Torque on particle in lab frame"""
+
+            def __set__(self, _t):
+                if len(np.array(_t).shape) == 1:
+                    for i in range(len(self.id_selection)):
+                        ParticleHandle(self.id_selection[
+                                       i]).torque_lab = _t
+                    return
+
+                if len(self.id_selection) != len(_t):
+                    raise Exception("Input list size (%i) does not match slice size (%i)" % (
+                        len(_t), len(self.id_selection)))
+
+                for i in range(len(self.id_selection)):
+                    ParticleHandle(self.id_selection[
+                                   i]).torque_lab = _t[i]
+
+            def __get__(self):
+                t = np.zeros((len(self.id_selection), 3))
+                for i in range(len(self.id_selection)):
+                    t[i, :] = ParticleHandle(
+                        self.id_selection[i]).torque_lab
+
+                return t 
 
     IF EXCLUSIONS:
         property exclude:

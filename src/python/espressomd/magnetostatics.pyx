@@ -20,7 +20,6 @@ include "myconfig.pxi"
 import numpy as np
 from globals cimport temperature
 from actors cimport *
-from actors import *
 from scafacos import ScafacosConnector
 
 
@@ -266,12 +265,15 @@ IF DIPOLES == 1:
 
             # Explicit constructor needed due to multiple inheritance
             def __init__(self, *args, **kwargs):
-                actors.Actor.__init__(self, *args, **kwargs)
+                Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
                 coulomb.Dmethod = DIPOLAR_SCAFACOS
-                coulomb_set_Dbjerrum(self._params["bjerrum_length"])
+                dipolar_set_Dbjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
+            
+            def _deactivate_method(self):
+                coulomb.Dmethod = DIPOLAR_NONE
 
             def default_params(self):
                 return {}
