@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
+#include <thrust/transform_reduce.h>
+#include <thrust/functional.h>
+#include <thrust/device_ptr.h>
 #include "constraint.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -86,7 +89,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
-  __device__ float charge_gpu = 0.0f;
+  __device__ ekfloat charge_gpu = 0.0f;
   EK_parameters *ek_parameters_gpu_pointer;
   LB_parameters_gpu *ek_lbparameters_gpu;
   CUDA_particle_data *particle_data_gpu;
@@ -3794,9 +3797,33 @@ int ek_set_ext_force( int species,
   return 0;
 }
 
-float ek_calculate_net_charge() {
-  float charge = 0.0f;
-  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(float), 0, cudaMemcpyHostToDevice) );
+
+#ifdef EK_ELECTROSTATIC_COUPLING
+struct ek_charge_of_particle
+{
+  __device__ ekfloat operator()(CUDA_particle_data particle)
+  {
+    return particle.q;
+  };
+
+};
+
+ekfloat ek_get_particle_charge () {
+  particle_data_gpu = gpu_get_particle_pointer();
+  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
+  ekfloat particle_charge = thrust::transform_reduce(
+      ptr,
+      ptr + lbpar_gpu.number_of_particles,
+      ek_charge_of_particle(),
+      0.0f,
+      thrust::plus<ekfloat>());
+  return particle_charge;
+}
+#endif
+
+ekfloat ek_calculate_net_charge() {
+  ekfloat charge = 0.0f;
+  cuda_safe_mem( cudaMemcpyToSymbol(charge_gpu, &charge, sizeof(ekfloat), 0, cudaMemcpyHostToDevice) );
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -3808,7 +3835,11 @@ float ek_calculate_net_charge() {
 
   KERNELCALL( ek_calculate_system_charge, dim_grid, threads_per_block, () );
 
-  cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(float), 0, cudaMemcpyDeviceToHost ) );
+  cuda_safe_mem( cudaMemcpyFromSymbol(&charge, charge_gpu, sizeof(ekfloat), 0, cudaMemcpyDeviceToHost ) );
+
+#ifdef EK_ELECTROSTATIC_COUPLING
+  charge += ek_get_particle_charge();
+#endif // EK_ELECTROSTATIC_COUPLING
 
   return charge;
 }
@@ -3822,18 +3853,24 @@ int ek_neutralize_system(int species) {
   if(ek_parameters.valency[species_index] == 0.0f)
     return 2;
 
-  float compensating_species_density = 0.0f;
+  ekfloat compensating_species_density = 0.0f;
 
 #ifndef EK_BOUNDARIES
   for(int i = 0; i < ek_parameters.number_of_species; i++)
     compensating_species_density += ek_parameters.density[i] * ek_parameters.valency[i];
 
   compensating_species_density = ek_parameters.density[species_index] - compensating_species_density / ek_parameters.valency[species_index];
+
+#ifdef EK_ELECTROSTATIC_COUPLING
+  ekfloat particle_charge = ek_get_particle_charge();
+  compensating_species_density -= particle_charge / ek_parameters.valency[species_index]  / (ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid) / double(ek_parameters.number_of_nodes);
+#endif // EK_ELECTROSTATIC_COUPLING
+
 #else
-  float charge = ek_calculate_net_charge();
+  ekfloat charge = ek_calculate_net_charge();
 
   compensating_species_density = ek_parameters.density[species_index] - (charge / ek_parameters.valency[species_index]) / (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid * double(ek_parameters.number_of_nodes-ek_parameters.number_of_boundary_nodes));
-#endif
+#endif // EK_BOUNDARIES
 
   if(compensating_species_density < 0.0f)
     return 3;
