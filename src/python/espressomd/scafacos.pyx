@@ -1,7 +1,7 @@
 from actors cimport *
 from libcpp.string cimport string  # import std::string
-from electrostatics cimport *
-from magnetostatics cimport *
+cimport electrostatics
+cimport magnetostatics
 
 
 include "myconfig.pxi"
@@ -36,11 +36,11 @@ IF SCAFACOS == 1:
             # Verify that scafacos is not used for elecrostatics and dipoles
             # at the same time
             IF ELECTROSTATICS == 1:
-                if self.dipolar and coulomb.method ==COULOMB_SCAFACOS:
+                if self.dipolar and <int>electrostatics.coulomb.method ==<int>electrostatics.COULOMB_SCAFACOS:
                     raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
 
             IF DIPOLES == 1:
-                if not self.dipolar and coulomb.Dmethod ==DIPOLAR_SCAFACOS:
+                if not self.dipolar and <int>magnetostatics.coulomb.Dmethod ==<int>magnetostatics.DIPOLAR_SCAFACOS:
                     raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
 
 
