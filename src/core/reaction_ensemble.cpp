@@ -1226,6 +1226,8 @@ bool achieved_desired_number_of_refinements_one_over_t ();
 void refine_wang_landau_parameter_one_over_t();
 
 bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer){
+	
+	tried_configurational_MC_moves+=1;
 	int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(old_state_index>=0){
 		if(current_wang_landau_system.histogram[old_state_index]>=0)
@@ -1358,6 +1360,8 @@ bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
+		accepted_configurational_MC_moves+=1;
+
 		got_accepted=true;
 		//modify wang_landau histogram and potential
 		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true){
