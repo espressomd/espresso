@@ -23,12 +23,10 @@ import numpy as np
 cimport utils
 from utils cimport *
 cimport particle_data
-from interactions import BondedInteraction
-from interactions import BondedInteractions
+from interactions import BondedInteraction, BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
+from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
-from globals cimport max_seen_particle, time_step, smaller_time_step, n_part
 
 PARTICLE_EXT_FORCE = 1
 
@@ -45,7 +43,8 @@ PARTICLE_EXT_TORQUE = 16
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        particle_attributes.append(d)
+        if not d in ["pos_folded"]:
+            particle_attributes.append(d)
 
 
 cdef class ParticleHandle:
@@ -1354,3 +1353,22 @@ cdef class ParticleList:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
 
+    property highest_particle_id:
+        def __get__(self):
+            return max_seen_particle
+
+    property n_part_types:
+        def __get__(self):
+            return n_particle_types
+
+    property n_rigidbonds:
+        def __get__(self):
+            return n_rigidbonds
+
+    # property max_part:
+    #     def __get__(self):
+    #         return max_seen_particle
+
+    # # property n_part:
+    #     def __get__(self):
+    #         return n_part

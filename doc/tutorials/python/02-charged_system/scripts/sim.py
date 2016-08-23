@@ -19,10 +19,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import thermostat
 from espressomd import electrostatics
 from espressomd import code_info
-from espressomd import integrate
 import numpy
 import cPickle as pickle
 
@@ -56,12 +54,12 @@ for i in xrange(n_part):
 
 # Simulation parameters
 system.time_step = 0.01
-system.skin = 0.3
+system.cell_system.skin = 0.3
 
 # Thermostat
 temp = 1.
 gamma = 1.
-thermostat.Thermostat().set_langevin(kT=temp, gamma=gamma)
+system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Lennard-Jones interactions
 lj_sig = 1.
@@ -105,7 +103,7 @@ for cap in xrange(20, 200, 20):
     print("t={0}, E={1}".format(system.time,
                                 system.analysis.energy()['total']))
     system.non_bonded_inter.set_force_cap(cap)
-    integrate.integrate(integ_steps)
+    system.integrator.run(integ_steps)
 system.non_bonded_inter.set_force_cap(0)
 
 # Pickle system properties
@@ -118,7 +116,7 @@ for i in xrange(int_n_times):
     temp = system.analysis.energy()['ideal'] / ((deg_free / 2.0) * n_part)
     print("t={0}, E={1}, T={2}".format(system.time,
                                        system.analysis.energy()['total'], temp))
-    integrate.integrate(integ_steps)
+    system.integrator.run(integ_steps)
 
     # Pickle particle data
     with open("config_{}".format(i), "w") as configfile:

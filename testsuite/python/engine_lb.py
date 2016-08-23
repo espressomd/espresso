@@ -4,7 +4,6 @@ import os
 import numpy as np
 import espressomd
 from espressomd import lb
-from espressomd import integrate
 
 if "ENGINE" in espressomd.features() and "LB" in espressomd.features():
     class SwimmerTest(ut.TestCase):
@@ -21,12 +20,12 @@ if "ENGINE" in espressomd.features() and "LB" in espressomd.features():
 
             S = espressomd.System()
 
-            if (S.n_nodes > 1):
+            if (S.cell_system.get_state()['n_nodes'] > 1):
                 print("NOTE: Ignoring testcase for n_nodes > 1")
                 return
 
             S.box_l = [boxl, boxl, boxl]
-            S.skin = 0.1
+            S.cell_system.skin = 0.1
             S.time_step = tstep
 
             S.part.add(id=0, pos=[6.0,3.0,2.0],
@@ -47,7 +46,7 @@ if "ENGINE" in espressomd.features() and "LB" in espressomd.features():
 
             #thermostat lb $temp
 
-            integrate.integrate(sampsteps)
+            S.integrator.run(sampsteps)
 
             if new_configuration:
                 lbm.print_vtk_velocity("engine_lb.vtk")
