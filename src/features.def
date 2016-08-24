@@ -59,9 +59,12 @@ _P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES
+BARNES_HUT
 DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM		requires CUDA
 DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
+BARNES_HUT		requires CUDA
+BARNES_HUT		implies DIPOLES
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE

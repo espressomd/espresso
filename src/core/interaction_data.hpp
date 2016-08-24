@@ -169,10 +169,10 @@ enum DipolarInteraction{
     DIPOLAR_MDLC_DS,
    /** Direct summation on gpu */
     DIPOLAR_DS_GPU,
-   /** Dipolar method is magnetic dipolar sum on GPU by Barnes-Hut method */
-    DIPOLAR_BH_GPU,
   /** Scafacos library */
-    DIPOLAR_SCAFACOS
+    DIPOLAR_SCAFACOS,
+    /** Dipolar method is magnetic dipolar sum on GPU by Barnes-Hut method */
+    DIPOLAR_BH_GPU
    };
 #endif 
 
