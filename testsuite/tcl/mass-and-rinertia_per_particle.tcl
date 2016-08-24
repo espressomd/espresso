@@ -27,7 +27,12 @@ puts "------------------------------------------------"
 puts "------------------------------------------------"
 
 proc test_mass-and-rinertia_per_particle {test_case} {
-    t_random seed 1
+    # make real random draw
+    set cmd "t_random seed"
+    for {set i 0} {$i < [setmd n_nodes]} { incr i } {
+	  lappend cmd [expr [pid] + $i] }
+    eval $cmd
+
     set gamma0 1.
     set gamma1 1. 
     
