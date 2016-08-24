@@ -40,7 +40,7 @@ public:
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  MpiCallbacks(boost::mpi::communicator const& comm) : m_comm(comm) {
+  explicit MpiCallbacks(boost::mpi::communicator const& comm) : m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
