@@ -159,9 +159,9 @@ cdef class NonBondedInteraction(object):
 
 # Lennard Jones
 
-cdef class LennardJonesInteraction(NonBondedInteraction):
+IF LENNARD_JONES == 1:
+    cdef class LennardJonesInteraction(NonBondedInteraction):
 
-    if LENNARD_JONES == 1:
         def validate_params(self):
             if self._params["epsilon"] < 0:
                 raise ValueError("Lennard-Jones eps has to be >=0")
@@ -221,10 +221,10 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
             return "epsilon", "sigma", "cutoff", "shift"
 
 # Generic Lennard Jones
+IF LENNARD_JONES_GENERIC == 1:
 
-cdef class GenericLennardJonesInteraction(NonBondedInteraction):
+    cdef class GenericLennardJonesInteraction(NonBondedInteraction):
 
-    if LENNARD_JONES_GENERIC == 1:
         def validate_params(self):
             if self._params["epsilon"] < 0:
                 raise ValueError("Generic Lennard-Jones eps has to be >=0")
@@ -336,7 +336,8 @@ class NonBondedInteractionHandle(object):
         self.type2 = _type2
 
         # Here, add one line for each nonbonded ia
-        self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF LENNARD_JONES:
+            self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
@@ -817,8 +818,8 @@ IF TABULATED != 1:
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
 
-class Subt_Lj(BondedInteraction):
-    IF LENNARD_JONES == 1:
+IF LENNARD_JONES == 1:
+    class Subt_Lj(BondedInteraction):
         def type_number(self):
             return BONDED_IA_SUBT_LJ
 
@@ -1096,7 +1097,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
-    int(BONDED_IA_SUBT_LJ):        Subt_Lj,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_OVERLAPPED): Overlapped,
@@ -1106,6 +1106,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
 }
+IF LENNARD_JONES:
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)]= Subt_Lj
 
 
 class BondedInteractions:
