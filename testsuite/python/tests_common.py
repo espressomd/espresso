@@ -46,7 +46,6 @@ except:
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.electrostatics import P3M, DH
 
 
 def params_match(inParams, outParams):
