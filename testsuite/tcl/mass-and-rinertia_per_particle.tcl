@@ -124,7 +124,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd skin 1.0
     setmd time_step 0.008
 
-    set n 150
+    set n 200
     set mass [expr [t_random] *20]
     set j1 [expr [t_random] * 20]
     set j2 [expr [t_random] * 20]
@@ -173,7 +173,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.1
+    set tolerance 0.12
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]
