@@ -217,7 +217,7 @@ double long_range_energy() {
     else
     {
 #ifdef SCAFACOS_DIPOLES
-      scafacos->run_dipolar(particles.charges, particles.positions, particles.fields,particles.potentials);
+      scafacos->run_dipolar(particles.dipoles, particles.positions, particles.fields,particles.potentials);
       return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
 #endif	
     }
