@@ -286,7 +286,7 @@ void tune() {
 }
 
 static void set_params_safe(const std::string &method, const std::string &params, bool dipolar_ia) {
-  if(scafacos && (scafacos->method != method)) {
+  if(scafacos) {
     delete scafacos;
     scafacos = 0;
   }
