@@ -100,14 +100,15 @@ class ParticleProperties(ut.TestCase):
     test_dihedral = generateTestForBondParams(
         0, Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
     
-    if "bond_angle" in espressomd.features():
+    if "BOND_ANGLE" in espressomd.features():
         test_angle_harm = generateTestForBondParams(
             0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
         test_angle_cos = generateTestForBondParams(
             0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
         test_angle_cossquare = generateTestForBondParams(
             0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
-    test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
+    if "LENNARD_JONES" in espressomd.features():
+        test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
 
 if __name__ == "__main__":
     print("Features: ", code_info.features())
