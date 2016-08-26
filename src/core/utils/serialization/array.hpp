@@ -8,7 +8,7 @@
 /* New versions of boost alrady containt this
  * function
  * */
-#if BOOST_VERSION < 1005600
+#if BOOST_VERSION < 105600
 
 namespace boost {
 namespace serialization {
