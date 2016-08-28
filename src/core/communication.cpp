@@ -28,6 +28,7 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/array.hpp>
 
 #include "communication.hpp"
 
