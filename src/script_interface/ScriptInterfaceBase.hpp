@@ -80,6 +80,7 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
  * remove_reference ensures that this also works with member access by reference
  * for example as returned by a function.
  */
+  
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
@@ -89,6 +90,11 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
 #define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value).data());     \
+  }
+
+#define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
+  if (name == PARAMETER_NAME) {                                                \
+    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value).data());     \
   }
 
 /**
@@ -128,12 +134,17 @@ public:
 
   /**
    * @brief get current parameters.
-   * This is not a reference on purpose becaue
-   * operator[] is not const in std::map.
-   *
    * @return Parameters set in class.
    */
-  virtual VariantMap get_parameters() const = 0;
+  virtual VariantMap get_parameters() const {
+    VariantMap values;
+
+    for (auto const &p : all_parameters()) {
+      values[p.first] = get_parameter(p.first);
+    }
+
+    return values;
+  }
 
   /**
    * @brief Get requiered and optional parameters for class
@@ -182,7 +193,7 @@ public:
    * If not overriden by the implementation,
    * this does nothing.
    */
-  virtual void call_method(const std::string &, const VariantMap &) {}
+  virtual Variant call_method(const std::string &, const VariantMap &) {}
 
   /**
    * @brief Get a new reference counted instance of a script interface by name.

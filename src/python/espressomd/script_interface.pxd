@@ -61,9 +61,10 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant()
         Variant(const Variant & )
         Variant & operator = (const Variant &)
+        int which()
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
-    T get[T](const Variant &)
+    T get[T](const Variant &) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     Variant make_variant[T](const T & x)
@@ -75,6 +76,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant get_parameter(const string & name)
         void set_parameter(const string & name, const Variant & value)
         void set_parameters(map[string, Variant] & parameters)
+        Variant call_method(const string & name, const map[string, Variant] & parameters)
         int id()
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
@@ -86,3 +88,4 @@ cdef class PScriptInterface:
     cdef map[string, Parameter] parameters
     cdef Variant make_variant(self, ParameterType type, value)
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
+    cdef variant_to_python_object(self, Variant value)

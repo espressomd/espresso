@@ -144,9 +144,11 @@ public:
     return p;
   }
 
-  void call_method(const std::string &name,
+ Variant call_method(const std::string &name,
                    const VariantMap &parameters) override {
-    call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
+   InstanceCallback::call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
+
+   return m_p->call_method(name, parameters);
   }
 
 private:

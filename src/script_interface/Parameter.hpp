@@ -30,15 +30,15 @@ namespace ScriptInterface {
  * Variant.
  */
 enum class ParameterType {
-  OBJECT,
-  BOOL,
+  BOOL = 0,
   INT,
   DOUBLE,
   STRING,
   INT_VECTOR,
   DOUBLE_VECTOR,
+  VECTOR2D,
   VECTOR3D,
-  VECTOR2D
+  OBJECT
 };
 
 /**

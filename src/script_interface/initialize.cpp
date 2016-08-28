@@ -21,11 +21,11 @@
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
 
-#include <iostream>
+#include "HelloWorld.hpp"
 
 namespace ScriptInterface {
 void initialize() {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  HelloWorld greeter;
 
   Shapes::initialize();
   Constraints::initialize();
