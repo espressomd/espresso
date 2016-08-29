@@ -19,38 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RHOMBOID_HPP
-#define __RHOMBOID_HPP
+#ifndef SCRIPT_INTERFACE_SHAPES_RHOMBOID_HPP
+#define SCRIPT_INTERFACE_SHAPES_RHOMBOID_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "core/shapes/Rhomboid.hpp"
 
+namespace ScriptInterface {
 namespace Shapes {
+
 class Rhomboid : public Shape {
 public:
-  Rhomboid() : m_pos({0.0, 0.0, 0.0}), m_a({0.0, 0.0, 0.0}), m_b({0.0, 0.0, 0.0}), 
-	           m_c({0.0, 0.0, 0.0}), m_direction(0.0) {}
+  Rhomboid() : m_rhomboid(new ::Shapes::Rhomboid()) {}
 
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  const std::string name() const override { return "Shapes::Rhomboid"; }
 
+  ParameterMap valid_parameters() const override;
+  VariantMap get_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
 
-  Vector3d const &pos() const { return m_pos; } 
-  Vector3d const &a() const { return m_a; } 
-  Vector3d const &b() const { return m_b; } 
-  Vector3d const &c() const { return m_c; } 
-  double const &direction() const { return m_direction; }
-  
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_rhomboid; }
+
 private:
-  /** corner of the rhomboid */
-  Vector3d m_pos;
-  /** edges adjacent to the corner */
-  Vector3d m_a;
-  Vector3d m_b;
-  Vector3d m_c;
-  /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
-  double m_direction;
+  std::shared_ptr<::Shapes::Rhomboid> m_rhomboid;
 };
-}
+
+} /* namespace Shapes */
+} /* namespace ScriptInterface */
 
 #endif
