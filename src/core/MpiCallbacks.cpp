@@ -25,6 +25,9 @@
 
 #include "MpiCallbacks.hpp"
 
+#include "utils/make_unique.hpp"
+#include "utils/serialization/array.hpp"
+
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {
@@ -36,9 +39,10 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
     throw std::out_of_range("Callback does not exists.");
   }
 
-  int request[3]{id, par1, par2};
+  std::array<int, 3> request{id, par1, par2};
+
   /** Send request to slaves */
-  boost::mpi::broadcast(m_comm, request, 3, 0);
+  boost::mpi::broadcast(m_comm, request, 0);
 }
 
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
@@ -78,9 +82,9 @@ void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
 
 void MpiCallbacks::loop() const {
   for (;;) {
-    int request[3];
+    std::array<int, 3> request;
     /** Communicate callback id and parameters */
-    boost::mpi::broadcast(m_comm, request, 3, 0);
+    boost::mpi::broadcast(m_comm, request, 0);
     /** id == 0 is loop_abort. */
     if (request[0] == LOOP_ABORT) {
       break;
@@ -93,10 +97,10 @@ void MpiCallbacks::loop() const {
 
 namespace {
 std::unique_ptr<MpiCallbacks> m_global_callback;
-}
+} /* namespace */
 
-void initialize_callbacks(boost::mpi::communicator const& comm) {
-  m_global_callback = std::unique_ptr<MpiCallbacks>(new MpiCallbacks(comm));
+void initialize_callbacks(boost::mpi::communicator const &comm) {
+  m_global_callback = Utils::make_unique<MpiCallbacks>(comm);
 }
 
 /* We use a singelton callback class for now. */

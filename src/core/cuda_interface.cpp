@@ -19,6 +19,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 
 #include "grid.hpp"
 #include "config.hpp"

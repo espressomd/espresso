@@ -28,6 +28,7 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/array.hpp>
 
 #include "communication.hpp"
 
@@ -44,6 +45,7 @@
 #include "energy.hpp"
 #include "external_potential.hpp"
 #include "forces.hpp"
+#include "forcecap.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
 #include "global.hpp"

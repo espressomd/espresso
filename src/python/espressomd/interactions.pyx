@@ -23,6 +23,9 @@ cdef class NonBondedInteraction(object):
 
     cdef public object _part_types
     cdef object _params
+    
+    #init dict to access all user defined nonbonded-inters via user_interactions[type1][type2][parameter]
+    user_interactions = {}
 
     def __init__(self, *args, **kwargs):
         """Represents an instance of a non-bonded interaction, such as lennard jones
@@ -109,6 +112,15 @@ cdef class NonBondedInteraction(object):
 
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._set_params_in_es_core()
+        
+        #update interaction dict when user sets interaction
+        if self._part_types[0] not in self.user_interactions:
+            self.user_interactions[self._part_types[0]] = {}
+        self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
+        new_params = self.get_params()
+        for p_key in new_params:
+            self.user_interactions[self._part_types[0]][self._part_types[1]][p_key] = new_params[p_key]
+        self.user_interactions[self._part_types[0]][self._part_types[1]]['type_name'] = self.type_name()
 
     def validate_params(self):
         return True
@@ -147,9 +159,9 @@ cdef class NonBondedInteraction(object):
 
 # Lennard Jones
 
-cdef class LennardJonesInteraction(NonBondedInteraction):
+IF LENNARD_JONES == 1:
+    cdef class LennardJonesInteraction(NonBondedInteraction):
 
-    if LENNARD_JONES == 1:
         def validate_params(self):
             if self._params["epsilon"] < 0:
                 raise ValueError("Lennard-Jones eps has to be >=0")
@@ -209,10 +221,10 @@ cdef class LennardJonesInteraction(NonBondedInteraction):
             return "epsilon", "sigma", "cutoff", "shift"
 
 # Generic Lennard Jones
+IF LENNARD_JONES_GENERIC == 1:
 
-cdef class GenericLennardJonesInteraction(NonBondedInteraction):
+    cdef class GenericLennardJonesInteraction(NonBondedInteraction):
 
-    if LENNARD_JONES_GENERIC == 1:
         def validate_params(self):
             if self._params["epsilon"] < 0:
                 raise ValueError("Generic Lennard-Jones eps has to be >=0")
@@ -314,6 +326,7 @@ class NonBondedInteractionHandle(object):
     # Here, one line per non-bonded ia
     lennard_jones = None
     generic_lennard_jones = None
+    tabulated = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -323,10 +336,13 @@ class NonBondedInteractionHandle(object):
         self.type2 = _type2
 
         # Here, add one line for each nonbonded ia
-        self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF LENNARD_JONES:
+            self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
+        IF TABULATED==1:
+            self.tabulated=TabulatedNonBonded(_type1, _type2)
 
 
 cdef class NonBondedInteractions:
@@ -351,6 +367,29 @@ cdef class NonBondedInteractions:
 
     def get_force_cap(self):
         return force_cap
+    
+    def __getstate__(self):
+        odict = NonBondedInteractionHandle(-1,-1).lennard_jones.user_interactions #contains info about ALL nonbonded interactions
+        odict['force_cap'] = self.get_force_cap()
+        return odict
+    
+    def __setstate__(self, odict):
+        self.set_force_cap(odict['force_cap'])
+        del odict['force_cap']
+        for _type1 in odict:
+            for _type2 in odict[_type1]:
+                attrs = dir(NonBondedInteractionHandle(_type1, _type2))
+                for a in attrs:
+                    attr_ref = getattr(NonBondedInteractionHandle(_type1, _type2), a)
+                    type_name_ref = getattr(attr_ref, "type_name", None)
+                    if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
+                        inter_instance = attr_ref #found nonbonded inter, e.g. LennardJonesInteraction(_type1, _type2)
+                        break
+                    else:
+                        continue
+                    
+                del odict[_type1][_type2]['type_name']
+                inter_instance.set_params(**odict[_type1][_type2])    
 
 
 cdef class BondedInteraction(object):
@@ -717,6 +756,42 @@ IF TABULATED == 1:
             tabulated_bonded_set_params(
                 self._bond_id, self._params["type"], self._params["filename"])
 
+    cdef class TabulatedNonBonded(NonBondedInteraction):
+
+        cdef int state
+
+        def __init__(self, *args, **kwargs):
+            self.state = -1
+            super(TabulatedNonBonded, self).__init__(*args, **kwargs)
+
+        def type_number(self):
+            return "TABULATED_NONBONDED"
+
+        def type_name(self):
+            return "TABULATED"
+
+        def valid_keys(self):
+            return "filename"
+
+        def required_keys(self):
+            return ["filename", ]
+
+        def set_default_params(self):
+            self._params={"filename" : ""}
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            return {
+                "filename": ia_params.TAB_filename}
+
+        def _set_params_in_es_core(self):
+            self.state = tabulated_set_params(self._part_types[0], self._part_types[1], self._params["filename"])
+
+        def is_active(self):
+            if self.state == 0:
+                return True
+
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
@@ -743,8 +818,8 @@ IF TABULATED != 1:
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
 
-class Subt_Lj(BondedInteraction):
-    IF LENNARD_JONES == 1:
+IF LENNARD_JONES == 1:
+    class Subt_Lj(BondedInteraction):
         def type_number(self):
             return BONDED_IA_SUBT_LJ
 
@@ -1022,7 +1097,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED): Tabulated,
-    int(BONDED_IA_SUBT_LJ):        Subt_Lj,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ENDANGLEDIST): Endangledist,
     int(BONDED_IA_OVERLAPPED): Overlapped,
@@ -1032,6 +1106,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
 }
+IF LENNARD_JONES:
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)]= Subt_Lj
 
 
 class BondedInteractions:

@@ -22,11 +22,15 @@
  *
  *  Implementation of \ref debye_hueckel.hpp
  */
-#include "utils.hpp"
-#include "debye_hueckel.hpp"
-#include "communication.hpp"
+
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
+
+#include "utils.hpp"
+#include "debug.hpp"
+#include "debye_hueckel.hpp"
+#include "communication.hpp"
 
 int dh_set_params(double kappa, double r_cut)
 {
