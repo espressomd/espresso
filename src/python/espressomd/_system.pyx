@@ -38,8 +38,8 @@ from galilei import GalileiTransform
 import sys
 
 setable_properties = ["box_l", "max_num_cells", "min_num_cells",
-                      "node_grid", "npt_piston", "npt_p_diff",
-                      "periodicity", "skin", "time",
+                      "min_global_cut","node_grid", "npt_piston",
+                       "npt_p_diff", "periodicity", "skin", "time",
                       "time_step", "timings"]
 
 cdef class System:
@@ -164,6 +164,14 @@ cdef class System:
     property max_skin:
         def __get__(self):
             return max_skin
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            global min_global_cut
+            min_global_cut = _min_global_cut
+            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+        def __get__(self):
+            return min_global_cut
 
     property n_layers:
         def __get__(self):

@@ -21,6 +21,7 @@ include "myconfig.pxi"
 cdef extern from "global.hpp":
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
+    int FIELD_MIN_GLOBAL_CUT
     int FIELD_NODEGRID
     int FIELD_NPTISO_PISTON
     int FIELD_NPTISO_PDIFF
@@ -75,7 +76,7 @@ cdef extern from "interaction_data.hpp":
     extern int n_particle_types
     extern double max_cut_nonbonded
     extern double max_cut_bonded
-
+    extern double min_global_cut
 
 cdef extern from "thermostat.hpp":
     double langevin_gamma
