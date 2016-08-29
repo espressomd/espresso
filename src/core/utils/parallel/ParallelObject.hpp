@@ -22,8 +22,6 @@
 
 #include "MpiCallbacks.hpp"
 
-#include <iostream>
-
 namespace Utils {
 namespace Parallel {
 
@@ -31,12 +29,7 @@ template <typename T> /* The type we are wrapping */
 class ParallelObject {
 public:
   ParallelObject() {
-    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << std::endl;
     Communication::mpiCallbacks().call(&mpi_callback, 0, 0);
-    std::cout
-        << "Communication::mpiCallbacks().call(&mpi_callback, 0, 0) returned."
-        << std::endl;
   }
 
   static void register_callback() {
@@ -49,8 +42,6 @@ private:
 
   friend Communication::MpiCallbacks;
   static void mpi_callback(int action, int) {
-    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << std::endl;
     switch (action) {
     case CREATE:
       /* Create an instance */

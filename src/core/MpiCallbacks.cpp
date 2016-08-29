@@ -28,9 +28,6 @@
 namespace Communication {
 
 void MpiCallbacks::call(int id, int par1, int par2) const {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << " id = " << id << std::endl;
-
   /** Can only be call from master */
   assert(m_comm.rank() == 0);
 
@@ -74,19 +71,7 @@ int MpiCallbacks::add(func_ptr_type fp) {
 void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 
 void MpiCallbacks::slave(int id, int par1, int par2) const {
-  std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-            << __PRETTY_FUNCTION__ << " id = " << id << std::endl;
-
-  try {
-    m_callbacks[id](par1, par2);
-  } catch (std::exception &e) {
-    std::cout << Communication::mpiCallbacks().comm().rank() << ": "
-              << __PRETTY_FUNCTION__ << " id = " << id
-              << " failed, what(): " << e.what() << ", aborting... "
-              << std::endl;
-
-    mpiCallbacks().comm().abort(253);
-  }
+  m_callbacks[id](par1, par2);
 }
 
 void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
