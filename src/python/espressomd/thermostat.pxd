@@ -31,3 +31,4 @@ cdef extern from "thermostat.hpp":
     double langevin_gamma
     int THERMO_OFF
     int THERMO_LANGEVIN
+    int THERMO_LB
