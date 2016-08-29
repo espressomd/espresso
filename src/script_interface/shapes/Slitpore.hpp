@@ -19,33 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __SLITPORE_HPP
-#define __SLITPORE_HPP
+#ifndef SCRIPT_INTERFACE_SHAPES_SLITPORE_HPP
+#define SCRIPT_INTERFACE_SHAPES_SLITPORE_HPP
 
 #include "Shape.hpp"
+#include "core/shapes/Slitpore.hpp"
 
+namespace ScriptInterface {
 namespace Shapes {
+
 class Slitpore : public Shape {
 public:
-  Slitpore() : m_pore_mouth(0.0), m_upper_smoothing_radius(0.0), m_lower_smoothing_radius(0.0), 
-	           m_channel_width(0.0), m_pore_width(0.0), m_pore_length(0.0) {}
+  Slitpore() : m_slitpore(new ::Shapes::Slitpore()) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  const std::string name() const override { return "Shapes::Slitpore"; }
 
-  double const &pore_mouth() const { return m_pore_mouth; }
-  double const &upper_smoothing_radius() const { return m_upper_smoothing_radius; }
-  double const &lower_smoothing_radius() const { return m_lower_smoothing_radius; }
-  double const &channel_width() const { return m_channel_width; }
-  double const &pore_width() const { return m_pore_width; }
-  double const &pore_length() const { return m_pore_length; }
+  ParameterMap valid_parameters() const override;
+  VariantMap get_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
+
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_slitpore; }
+
 private:
-  double m_pore_mouth;
-  double m_upper_smoothing_radius;
-  double m_lower_smoothing_radius;
-  double m_channel_width;
-  double m_pore_width;
-  double m_pore_length;
+  std::shared_ptr<::Shapes::Slitpore> m_slitpore;
 };
-};
+
+} /* namespace Shapes */
+} /* namespace ScriptInterface */
 
 #endif

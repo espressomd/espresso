@@ -33,25 +33,25 @@ namespace Shapes {
 int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   // the left circles
   double box_l_x = box_l[0];
-  double c11[2] = {box_l_x / 2 - pore_width / 2 - upper_smoothing_radius,
-                   pore_mouth - upper_smoothing_radius};
-  double c12[2] = {box_l_x / 2 - pore_width / 2 + lower_smoothing_radius,
-                   pore_mouth - pore_length + lower_smoothing_radius};
+  double c11[2] = {box_l_x / 2 - m_pore_width / 2 - m_upper_smoothing_radius,
+                   m_pore_mouth - m_upper_smoothing_radius};
+  double c12[2] = {box_l_x / 2 - m_pore_width / 2 + m_lower_smoothing_radius,
+                   m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
   // the right circles
-  double c21[2] = {box_l_x / 2 + pore_width / 2 + upper_smoothing_radius,
-                   pore_mouth - upper_smoothing_radius};
-  double c22[2] = {box_l_x / 2 + pore_width / 2 - lower_smoothing_radius,
-                   pore_mouth - pore_length + lower_smoothing_radius};
+  double c21[2] = {box_l_x / 2 + m_pore_width / 2 + m_upper_smoothing_radius,
+                   m_pore_mouth - m_upper_smoothing_radius};
+  double c22[2] = {box_l_x / 2 + m_pore_width / 2 - m_lower_smoothing_radius,
+                   m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
 
   //  printf("c11 %f %f\n", c11[0], c11[1]);
   //  printf("c12 %f %f\n", c12[0], c12[1]);
   //  printf("c21 %f %f\n", c21[0], c21[1]);
   //  printf("c22 %f %f\n", c22[0], c22[1]);
 
-  if (ppos[2] > pore_mouth + channel_width / 2) {
+  if (ppos[2] > m_pore_mouth + m_channel_width / 2) {
     //    printf("upper wall\n");
     // Feel the upper wall
-    *dist = pore_mouth + channel_width - ppos[2];
+    *dist = m_pore_mouth + m_channel_width - ppos[2];
     vec[0] = vec[1] = 0;
     vec[2] = -*dist;
     return 0;
@@ -60,7 +60,7 @@ int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) cons
   if (ppos[0] < c11[0] || ppos[0] > c21[0]) {
     // Feel the lower wall of the channel
     //    printf("lower wall\n");
-    *dist = ppos[2] - pore_mouth;
+    *dist = ppos[2] - m_pore_mouth;
     vec[0] = vec[1] = 0;
     vec[2] = *dist;
     return 0;
@@ -71,18 +71,18 @@ int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) cons
     if (ppos[0] < box_l_x / 2) {
       //    printf("upper smoothing left\n");
       *dist = sqrt(SQR(c11[0] - ppos[0]) + SQR(c11[1] - ppos[2])) -
-              upper_smoothing_radius;
-      vec[0] = -(c11[0] - ppos[0]) * (*dist) / (*dist + upper_smoothing_radius);
+              m_upper_smoothing_radius;
+      vec[0] = -(c11[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
-      vec[2] = -(c11[1] - ppos[2]) * (*dist) / (*dist + upper_smoothing_radius);
+      vec[2] = -(c11[1] - ppos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return 0;
     } else {
       //    printf("upper smoothing right\n");
       *dist = sqrt(SQR(c21[0] - ppos[0]) + SQR(c21[1] - ppos[2])) -
-              upper_smoothing_radius;
-      vec[0] = -(c21[0] - ppos[0]) * (*dist) / (*dist + upper_smoothing_radius);
+              m_upper_smoothing_radius;
+      vec[0] = -(c21[0] - ppos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
       vec[1] = 0;
-      vec[2] = -(c21[1] - ppos[2]) * (*dist) / (*dist + upper_smoothing_radius);
+      vec[2] = -(c21[1] - ppos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return 0;
     }
   }
@@ -91,13 +91,13 @@ int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) cons
     // Feel the pore wall
     if (ppos[0] < box_l_x / 2) {
       //    printf("pore left\n");
-      *dist = ppos[0] - (box_l_x / 2 - pore_width / 2);
+      *dist = ppos[0] - (box_l_x / 2 - m_pore_width / 2);
       vec[0] = *dist;
       vec[1] = vec[2] = 0;
       return 0;
     } else {
       //    printf("pore right\n");
-      *dist = (box_l_x / 2 + pore_width / 2) - ppos[0];
+      *dist = (box_l_x / 2 + m_pore_width / 2) - ppos[0];
       vec[0] = -*dist;
       vec[1] = vec[2] = 0;
       return 0;
@@ -107,7 +107,7 @@ int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) cons
   if (ppos[0] > c12[0] && ppos[0] < c22[0]) {
     //    printf("pore end\n");
     // Feel the pore end wall
-    *dist = ppos[2] - (pore_mouth - pore_length);
+    *dist = ppos[2] - (m_pore_mouth - m_pore_length);
     vec[0] = vec[1] = 0;
     vec[2] = *dist;
     return 0;
@@ -117,18 +117,18 @@ int Slitpore::calculate_dist(const double *ppos, double *dist, double *vec) cons
   if (ppos[0] < box_l_x / 2) {
     //    printf("lower smoothing left\n");
     *dist = -sqrt(SQR(c12[0] - ppos[0]) + SQR(c12[1] - ppos[2])) +
-            lower_smoothing_radius;
-    vec[0] = (c12[0] - ppos[0]) * (*dist) / (-*dist + lower_smoothing_radius);
+            m_lower_smoothing_radius;
+    vec[0] = (c12[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
-    vec[2] = (c12[1] - ppos[2]) * (*dist) / (-*dist + lower_smoothing_radius);
+    vec[2] = (c12[1] - ppos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     return 0;
   } else {
     //    printf("lower smoothing right\n");
     *dist = -sqrt(SQR(c22[0] - ppos[0]) + SQR(c22[1] - ppos[2])) +
-            lower_smoothing_radius;
-    vec[0] = (c22[0] - ppos[0]) * (*dist) / (-*dist + lower_smoothing_radius);
+            m_lower_smoothing_radius;
+    vec[0] = (c22[0] - ppos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
-    vec[2] = (c22[1] - ppos[2]) * (*dist) / (-*dist + lower_smoothing_radius);
+    vec[2] = (c22[1] - ppos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     return 0;
   }
 
