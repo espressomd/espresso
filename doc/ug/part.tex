@@ -46,7 +46,7 @@
     %director=\arg{},
     q=\arg{float},
     virtual=\arg{int $\geq$ 0},
-    vs_relative=\arg{tuple of int and float},
+    vs_relative=\arg{(particle_id, distance, quaternion},
     vs_auto_relate_to=\arg{int},
     dip=\arg{array of 3 floats},
     dipm=\arg{float},
@@ -67,12 +67,19 @@
     delete()
   }
 \end{pysyntax}
+
 \begin{pysyntax}
 espressomd.System().part.clear()
 \end{pysyntax}
 \begin{pysyntax}
+espressomd.System().part.pairs()
+\end{pysyntax}
+\begin{pysyntax}
 len(Espressomd.System().part)
 \end{pysyntax}
+\begin{pysyntax}
+for p in espressomd.System().part:
+}
 
 \begin{essyntax}
   part
