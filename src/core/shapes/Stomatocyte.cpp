@@ -25,7 +25,7 @@
 using namespace std;
 
 namespace Shapes {
-int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) {
+int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) const {
   // Parameters
 
   int io0, io1, io2, io3, io4, number;
@@ -41,18 +41,18 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) {
 
   // Set the three dimensions of the stomatocyte
 
-  a = outer_radius;
-  b = inner_radius;
-  c = layer_width;
+  a = m_outer_radius;
+  b = m_inner_radius;
+  c = m_layer_width;
   a = a * c;
   b = b * c;
 
   // Set the position and orientation of the stomatocyte
 
-  double stomatocyte_3D_position[3] = {position_x, position_y, position_z};
+  double stomatocyte_3D_position[3] = {m_position_x, m_position_y, m_position_z};
 
-  double stomatocyte_3D_orientation[3] = {orientation_x, orientation_y,
-                                          orientation_z};
+  double stomatocyte_3D_orientation[3] = {m_orientation_x, m_orientation_y,
+                                          m_orientation_z};
 
   // Set the point for which we want to know the distance
 
@@ -463,7 +463,7 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) {
 
   // Pass the values we obtained to ESPResSo
 
-  if (direction == -1) {
+  if (m_direction == -1) {
     // Apply force towards inside stomatocyte
 
     *dist = -distance;

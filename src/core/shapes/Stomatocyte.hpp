@@ -25,26 +25,47 @@
 #include "Shape.hpp"
 
 namespace Shapes {
-struct Stomatocyte : public Shape {
-  int calculate_dist(const double *ppos, double *dist, double *vec);
+class Stomatocyte : public Shape {
+public:
+  Stomatocyte() : m_position_x(0.0), m_position_y(0.0), m_position_z(0.0), 
+	              m_orientation_x(0.0), m_orientation_y(0.0), m_orientation_z(0.0), 
+				  m_direction(0.0), m_outer_radius(0.0), m_inner_radius(0.0),
+	              m_layer_width(0.0) {}
 
+  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+
+  double const &position_x() const { return m_position_x; }
+  double const &position_y() const { return m_position_y; }
+  double const &position_z() const { return m_position_z; }
+
+  double const &orientation_x() const { return m_orientation_x; }
+  double const &orientation_y() const { return m_orientation_y; }
+  double const &orientation_z() const { return m_orientation_z; }
+
+  double const &outer_radius() const { return m_outer_radius; }
+  double const &inner_radius() const { return m_inner_radius; }
+  double const &layer_width() const { return m_layer_width; }
+  
+  double const &direction() const { return m_direction; }
+
+private:
   /** Stomatocyte position. */
-  double position_x;
-  double position_y;
-  double position_z;
+  double m_position_x;
+  double m_position_y;
+  double m_position_z;
 
   /** Stomatocyte orientation. */
-  double orientation_x;
-  double orientation_y;
-  double orientation_z;
+  double m_orientation_x;
+  double m_orientation_y;
+  double m_orientation_z;
 
   /** Stomatocyte dimensions. */
-  double outer_radius;
-  double inner_radius;
-  double layer_width;
+  double m_outer_radius;
+  double m_inner_radius;
+  double m_layer_width;
 
   /** Inside/Outside (+1 outside -1 inside interaction direction)*/
-  double direction;
+  double m_direction;
 };
 };
 

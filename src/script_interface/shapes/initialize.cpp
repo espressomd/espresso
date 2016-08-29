@@ -28,7 +28,8 @@
 #include "HollowCone.hpp"
 #include "Pore.hpp"
 #include "Rhomboid.hpp"
-#initialize "Slitpore.hpp"
+#include "Slitpore.hpp"
+#include "Stomatocyte.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -43,6 +44,7 @@ void initialize() {
   ParallelScriptInterface<ScriptInterface::Shapes::Pore>::register_new("Shapes::Pore");
   ParallelScriptInterface<ScriptInterface::Shapes::Rhomboid>::register_new("Shapes::Rhomboid");
   ParallelScriptInterface<ScriptInterface::Shapes::Slitpore>::register_new("Shapes::Slitpore");
+  ParallelScriptInterface<ScriptInterface::Shapes::Stomatocyte>::register_new("Shapes::Stomatocyte");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
