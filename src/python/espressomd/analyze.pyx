@@ -853,9 +853,9 @@ class Analysis:
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
             _Vkappa["avk"] = avk
             if (_Vkappa["avk"] <= 0.0):
+                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
             else:
                 result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
                     (_Vkappa["Vk1"] / _Vkappa["avk"])**2
