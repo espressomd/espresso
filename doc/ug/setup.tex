@@ -161,6 +161,17 @@ set:
 \label{sec:thermostat}
 \newescommand{thermostat}
 
+\begin{pysyntax}
+  \attributes{
+    espressomd.System()
+  }{
+    thermostat
+  }{
+    turn_off(),
+    get_state()
+}
+\end{pysyntax}
+
 \begin{essyntax}
   \variant{1} thermostat
   \variant{2} thermostat off
@@ -216,6 +227,18 @@ the second moment of the distribution is the same and thus results in
 the same temperature.
 
 \subsection{Langevin thermostat}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_langevin
+  }{
+    kT=\arg{float},
+    gamma=\arg{float},
+    gamma_rotation=\arg{float or array of 3 floats}
+}
+\end{pysyntax}
 
 \begin{essyntax}
   thermostat langevin \var{temperature} \var{gamma\_trans} \opt{\var{gamma\_rotate}} \opt{on/off} \opt{on/off}
@@ -291,6 +314,18 @@ coefficients on a per-interaction basis.
 
 \subsubsection{Thermostat DPD}
 \index{label:DPDthermostat}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_dpd
+  }{
+    kT=\arg{float},
+    gamma=\arg{float},
+    r_cut=\arg{float}
+}
+\end{pysyntax}
 
 \begin{essyntax}
   thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
@@ -452,6 +487,20 @@ result in a factor $1$.
 
 \subsection{Isotropic NPT thermostat}
 \label{ssec:NPTthermostat}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_npt
+  }{
+    kT=\arg{float},
+    gamma0=\arg{float},
+    gammav=\arg{float}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
   \begin{features}
@@ -574,8 +623,34 @@ according to the needs of the used algorithms. For details on the
 internal organization, refer to section
 \vref{sec:internal-particle-organization}.
 
+\begin{pysyntax}
+  \attributes{
+    espressomd.System()
+  }{
+    cell_system
+  }{
+    skin=\arg{float}
+    max_num_cells=\arg{float}
+    min_num_cells=\arg{float}
+    get_state()
+}
+\end{pysyntax}
+
+
 \subsection{Domain decomposition}
 \index{domain decomposition}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_domain_decomposition
+  }{
+    use_verlet_lists=\arg{bool}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem domain_decomposition \opt{-no_verlet_list}
 \end{essyntax}
@@ -597,6 +672,18 @@ number of interactions is therefore of the order N instead of order
 $N^2$ if one has to calculate all pair interactions.
 
 \subsection{N-squared}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_n_square
+  }{
+    use_verlet_lists=\arg{bool}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem nsquare 
 \end{essyntax}
@@ -629,6 +716,18 @@ Therefore it is highly recommended that you use nsquared only with an
 odd number of nodes, if with multiple processors at all. 
 
 \subsection{Layered cell system}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_layered
+  }{
+    n_layers=\arg{int}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem layered \var{n\_layers}
 \end{essyntax}

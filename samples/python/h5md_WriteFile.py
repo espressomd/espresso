@@ -25,7 +25,7 @@ import numpy as np
 # Prepare system for h5-writing
 system = espressomd.System()
 system.time_step = 0.01
-system.skin      = 0.4
+system.cell_system.skin      = 0.4
 n_part=10
 n_time=5
 int_steps=10
