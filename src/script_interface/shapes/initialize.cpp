@@ -21,12 +21,14 @@
 #include "NoWhere.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "Wall.hpp"
+#include "Sphere.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
 void initialize() {
   ParallelScriptInterface<ScriptInterface::Shapes::NoWhere>::register_new("Shapes::NoWhere");
   ParallelScriptInterface<ScriptInterface::Shapes::Wall>::register_new("Shapes::Wall");
+  ParallelScriptInterface<ScriptInterface::Shapes::Sphere>::register_new("Shapes::Sphere");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

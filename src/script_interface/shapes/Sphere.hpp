@@ -19,38 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Sphere.hpp"
-#include <cmath>
+#ifndef SCRIPT_INTERFACE_SHAPES_SPHERE_HPP
+#define SCRIPT_INTERFACE_SHAPES_SPHERE_HPP
 
-using namespace std;
+#include "Shape.hpp"
+#include "core/shapes/Sphere.hpp"
 
-#define SQR(A) ((A) * (A))
-
+namespace ScriptInterface {
 namespace Shapes {
-int Sphere::calculate_dist(const double *ppos, double *dist, double *vec) const {
-  int i;
-  double fac, c_dist;
 
-  c_dist = 0.0;
-  for (i = 0; i < 3; i++) {
-    vec[i] = m_pos[i] - ppos[i];
-    c_dist += SQR(vec[i]);
-  }
-  c_dist = sqrt(c_dist);
+class Sphere : public Shape {
+public:
+  Sphere() : m_sphere(new ::Shapes::Sphere()) {}
 
-  if (m_direction == -1) {
-    /* apply force towards inside the sphere */
-    *dist = m_rad - c_dist;
-    fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
-      vec[i] *= fac;
-  } else {
-    /* apply force towards outside the sphere */
-    *dist = c_dist - m_rad;
-    fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
-      vec[i] *= -fac;
-  }
-  return 0;
-}
-}
+  const std::string name() const override { return "Shapes::Sphere"; }
+
+  ParameterMap valid_parameters() const override;
+  VariantMap get_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
+
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_sphere; }
+
+private:
+  std::shared_ptr<::Shapes::Sphere> m_sphere;
+};
+
+} /* namespace Shapes */
+} /* namespace ScriptInterface */
+
+#endif
