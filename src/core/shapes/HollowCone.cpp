@@ -38,17 +38,17 @@ int HollowCone::calculate_dist(const double *ppos, double *dist, double *vec) co
 
   // Set the dimensions of the hollow cone
 
-  r0 = inner_radius;
-  r1 = outer_radius;
-  w = width;
-  alpha = opening_angle;
+  r0 = m_inner_radius;
+  r1 = m_outer_radius;
+  w = m_width;
+  alpha = m_opening_angle;
 
   // Set the position and orientation of the hollow cone
 
-  double hollow_cone_3D_position[3] = {position_x, position_y, position_z};
+  double hollow_cone_3D_position[3] = {m_position_x, m_position_y, m_position_z};
 
-  double hollow_cone_3D_orientation[3] = {orientation_x, orientation_y,
-                                          orientation_z};
+  double hollow_cone_3D_orientation[3] = {m_orientation_x, m_orientation_y,
+                                          m_orientation_z};
 
   // Set the point for which we want to know the distance
 

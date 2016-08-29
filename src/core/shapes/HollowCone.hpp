@@ -25,28 +25,50 @@
 #include "Shape.hpp"
 
 namespace Shapes {
-  struct HollowCone : public Shape {
-    int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
-    /** Hollow cone position. */
-    double position_x;
-    double position_y;
-    double position_z;
+class HollowCone : public Shape {
 
-    /** Hollow cone orientation. */
-    double orientation_x;
-    double orientation_y;
-    double orientation_z;
+  HollowCone() : m_position_x(0.0), m_position_y(0.0), m_position_z(0.0), 
+		         m_orientation_x(0.0), m_orientation_y(0.0), m_orientation_z(0.0),
+				 m_outer_radius(0.0), m_inner_radius(0.0), m_width(0.0), 
+				 m_opening_angle(0.0), m_direction(0.0) {} 
 
-    /** Hollow cone dimensions. */
-    double outer_radius;
-    double inner_radius;
-    double width;
-    double opening_angle;
+  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
-    /** Inside/Outside (+1 outside -1 inside interaction direction)*/
-    double direction;
-  };
+  double const &posistion_x() const { return m_position_x; }
+  double const &posistion_y() const { return m_position_y; }
+  double const &posistion_z() const { return m_position_z; }
+
+  double const &orientation_x() const { return m_orientation_x; }
+  double const &orientation_y() const { return m_orientation_y; }
+  double const &orientation_z() const { return m_orientation_z; }
+
+  double const &outer_radius() const { return m_outer_radius; }
+  double const &inner_radius() const { return m_inner_radius; }
+  double const &width() const { return m_width; }
+  double const &opening_angle() const { return m_opening_angle; }
+  double const &direction() const { return m_direction; }
+
+private:
+/** Hollow cone position. */
+  double m_position_x;
+  double m_position_y;
+  double m_position_z;
+
+/** Hollow cone orientation. */
+  double m_orientation_x;
+  double m_orientation_y;
+  double m_orientation_z;
+
+/** Hollow cone dimensions. */
+  double m_outer_radius;
+  double m_inner_radius;
+  double m_width;
+  double m_opening_angle;
+
+/** Inside/Outside (+1 outside -1 inside interaction direction)*/
+  double m_direction;
+};
 };
 
 #endif
