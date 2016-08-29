@@ -34,9 +34,8 @@ namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint() : m_constraint(new ::Constraints::Constraint()) {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-  }
+  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
+  
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
@@ -58,11 +57,6 @@ public:
     if (name == "shape") {
       std::shared_ptr<ScriptInterfaceBase> so_ptr =
           ScriptInterface::get_instance(value);
-      std::cout << __PRETTY_FUNCTION__ << " value = " << boost::get<int>(value)
-                << std::endl;
-
-      std::cout << __PRETTY_FUNCTION__ << " so_ptr = " << so_ptr.get()
-                << std::endl;
 
       auto shape_ptr =
           std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);

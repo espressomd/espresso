@@ -29,9 +29,6 @@ ScriptInterfaceBase::make_shared(std::string const &name) {
   std::shared_ptr<ScriptInterfaceBase> sp =
       Utils::Factory<ScriptInterfaceBase>::make(name);
 
-  std::cout << __PRETTY_FUNCTION__ << " name = " << name
-            << ", id = " << sp->id() << std::endl;
-
   /* Id of the newly created instance */
   const int id = sp->id();
 
@@ -41,5 +38,11 @@ ScriptInterfaceBase::make_shared(std::string const &name) {
   sp->get_instance(id) = sp;
 
   return sp;
+}
+
+std::ostream &operator<<(std::ostream &out, OId const &oid) {
+  out << oid.id;
+
+  return out;
 }
 }

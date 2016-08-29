@@ -63,11 +63,25 @@ private:
 } /* namespace Utils */
 
 namespace ScriptInterface {
+
+struct OId {
+  OId() : id(-1) {}
+  explicit OId(int i) : id(i) {}
+
+  int id;
+
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned int /* version */) {
+    ar &id;
+  }
+};
+
+std::ostream &operator<<(std::ostream &out, OId const &oid);
 /**
  * @brief Possible types for parameters.
  */
 typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d>
+                       std::vector<double>, Vector2d, Vector3d, OId>
     Variant;
 
 /**
@@ -80,7 +94,7 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
  * remove_reference ensures that this also works with member access by reference
  * for example as returned by a function.
  */
-  
+
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
@@ -153,7 +167,7 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual ParameterMap all_parameters() const = 0;
+  virtual ParameterMap all_parameters() const { return {}; }
 
   /**
    * @brief Get single parameter.
@@ -171,7 +185,7 @@ public:
    * @param name Name of the parameter
    * @param value Set parameter to this value.
    */
-  virtual void set_parameter(const std::string &name, const Variant &value) = 0;
+  virtual void set_parameter(const std::string &name, const Variant &value){};
   /**
    * @brief Set multiple parameters.
    *
@@ -196,24 +210,26 @@ public:
   virtual Variant call_method(const std::string &, const VariantMap &) {}
 
   /**
-   * @brief Get a new reference counted instance of a script interface by name.
+   * @brief Get a new reference counted instance of a script interface by
+   * name.
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
   make_shared(std::string const &name);
 
   /**
-   * @brief Get a new reference counted instance of a script interface by type.
+   * @brief Get a new reference counted instance of a script interface by
+   * type.
    *
    */
   template <typename T> std::shared_ptr<T> static make_shared() {
     std::shared_ptr<T> sp = std::make_shared<T>();
-    std::cout << __PRETTY_FUNCTION__ << ", id = " << sp->id() << std::endl;
 
     /* Id of the newly created instance */
     const int id = sp->id();
 
-    /* Now get a reference to the corresponding weak_ptr in ObjectId and update
+    /* Now get a reference to the corresponding weak_ptr in ObjectId and
+       update
        it with our shared ptr, so that everybody uses the same ref count.
     */
     sp->get_instance(id) = std::static_pointer_cast<ScriptInterfaceBase>(sp);

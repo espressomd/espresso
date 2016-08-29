@@ -47,7 +47,11 @@ cdef class PScriptInterface:
         cdef map[string, Variant] parameters
 
         for name in kwargs:
-            parameters[name] = kwargs[name]
+            if isinstance(kwargs[name], PScriptInterface):
+                # Map python object do id
+                parameters[name] = OId(kwargs[name].id())
+            else:
+                parameters[name] = kwargs[name]
 
         return self.variant_to_python_object(self.sip.get().call_method(method, parameters))
 
@@ -73,8 +77,7 @@ cdef class PScriptInterface:
 
             # Objects have to be translated to ids
             if < int > type is < int > OBJECT:
-                id = kwargs[name].id()
-                parameters[name] = self.make_variant(INT, id)
+                parameters[name] = OId(kwargs[name].id())
             else:
                 parameters[name] = self.make_variant(type, kwargs[name])
 
@@ -100,7 +103,7 @@ cdef class PScriptInterface:
             return get[Vector2d](value).as_vector()
         if < int > type == <int > OBJECT:
             # Get the id and build a curresponding object
-            val = get[int](value)
+            val = get[OId](value).id
             if val >= 0:
                 pobj = PScriptInterface()
                 pobj.set_sip(get_instance(val).lock())
@@ -109,7 +112,6 @@ cdef class PScriptInterface:
                 return None
 
         raise Exception("Unkown type")
-
 
     def get_parameter(self, name):
         cdef ParameterType type = self.parameters[name].type()

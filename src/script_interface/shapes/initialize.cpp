@@ -22,15 +22,11 @@
 #include "ParallelScriptInterface.hpp"
 #include "Wall.hpp"
 
-#include "../HelloWorld.hpp"
-
 namespace ScriptInterface {
 namespace Shapes {
-
 void initialize() {
   ParallelScriptInterface<ScriptInterface::Shapes::NoWhere>::register_new("Shapes::NoWhere");
   ParallelScriptInterface<ScriptInterface::Shapes::Wall>::register_new("Shapes::Wall");
-  ParallelScriptInterface<ScriptInterface::HelloWorld>::register_new("Tutorial::HelloWorld");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

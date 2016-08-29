@@ -1,7 +1,7 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Max-Planck-Institute for Polymer Research, Theory Group
 
   This file is part of ESPResSo.
 
@@ -19,21 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
-#define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
+#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
+#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 
-#include "initialize.hpp"
-#include "ScriptInterfaceBase.hpp"
+#include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
-  enum { NOT_SET = -1 };
+namespace Constraints {
 
-  inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
-  const int id = boost::get<OId>(value).id;
+class Constraints : public ScriptInterfaceBase {
+public:
+  const std::string name() const override { return "Constraints::Constraint"; }
 
-  return ScriptInterfaceBase::get_instance(id).lock();
-}
+  Variant call_method(std::string const &method, VariantMap const &parameters);
+};
 
+} /* namespace Constraints */
 } /* namespace ScriptInterface */
 
 #endif

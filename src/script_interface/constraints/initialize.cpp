@@ -22,8 +22,7 @@
 #include "utils/Factory.hpp"
 
 #include "Constraint.hpp"
-
-#include <iostream>
+#include "Constraints.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -31,6 +30,9 @@ namespace Constraints {
 void initialize() {
   ParallelScriptInterface<ScriptInterface::Constraints::Constraint>::
       register_new("Constraints::Constraint");
+
+  ParallelScriptInterface<ScriptInterface::Constraints::Constraints>::
+    register_new("Constraints::Constraints");
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

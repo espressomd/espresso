@@ -21,12 +21,8 @@
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
 
-#include "HelloWorld.hpp"
-
 namespace ScriptInterface {
 void initialize() {
-  HelloWorld greeter;
-
   Shapes::initialize();
   Constraints::initialize();
 }

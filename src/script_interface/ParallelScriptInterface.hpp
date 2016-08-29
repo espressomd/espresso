@@ -89,7 +89,7 @@ public:
 
   Variant map_parallel_to_local_id(std::string const &name,
                                    Variant const &value) {
-    const int outer_id = boost::get<int>(value);
+    const int outer_id = boost::get<OId>(value).id;
 
     auto so_ptr = get_instance(outer_id).lock();
 
@@ -102,7 +102,7 @@ public:
 
       /* and return the id of the underlying object */
       auto underlying_object = po_ptr->get_underlying_object();
-      return underlying_object->id();
+      return OId(underlying_object->id());
     } else {
       throw std::runtime_error(
           "Parameters passed to Parallel entities must also be parallel.");
@@ -144,11 +144,19 @@ public:
     return p;
   }
 
- Variant call_method(const std::string &name,
-                   const VariantMap &parameters) override {
-   InstanceCallback::call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
+  Variant call_method(const std::string &name,
+                      const VariantMap &parameters) override {
+    InstanceCallback::call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
+    VariantMap p = parameters;
 
-   return m_p->call_method(name, parameters);
+    /* Unwrap the object ids */
+    for (auto &it : p) {
+      if (it.second.which() == static_cast<int>(ParameterType::OBJECT)) {
+        it.second = map_parallel_to_local_id(it.first, it.second);
+      }
+    }
+
+    return m_p->call_method(name, p);
   }
 
 private:
@@ -156,8 +164,6 @@ private:
 
 public:
   static void register_new(std::string const &name) {
-    std::cout << __PRETTY_FUNCTION__ << " name = " << name << std::endl;
-
     /* Register with the factory */
     Utils::Factory<ScriptInterfaceBase>::register_new<
         ParallelScriptInterface<T>>(name);

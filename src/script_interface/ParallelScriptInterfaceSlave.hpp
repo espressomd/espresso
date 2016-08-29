@@ -101,14 +101,14 @@ private:
       break;
     }
     case CallbackAction::CALL_METHOD: {
-      /* Name of the method and parameters */
-      std::pair<std::string, VariantMap> d;
+      /* Name of the method and para// meters */
+      // std::pair<std::string, VariantMap> d;
 
-      /* Broadcast method name and parameters */
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+      // /* Broadcast method name and parameters */
+      // boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
-      /* Forward to the local instance. */
-      m_p->call_method(d.first, d.second);
+      // /* Forward to the local instance. */
+      // m_p->call_method(d.first, d.second);
 
       break;
     }

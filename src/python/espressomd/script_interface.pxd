@@ -39,7 +39,6 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
         bool operator == (const ParameterType & a, const ParameterType & b)
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
-    cdef ParameterType OBJECT
     cdef ParameterType BOOL
     cdef ParameterType INT
     cdef ParameterType DOUBLE
@@ -48,6 +47,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType DOUBLE_VECTOR
     cdef ParameterType VECTOR3D
     cdef ParameterType VECTOR2D
+    cdef ParameterType OBJECT
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
@@ -67,6 +67,10 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+    cdef cppclass OId:
+        OId(int)
+        int id
+
     Variant make_variant[T](const T & x)
 
     cdef cppclass ScriptInterfaceBase:
