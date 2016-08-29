@@ -231,9 +231,10 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            #Setting default values before tuning
+            self._set_params_in_es_core()
             if self._params["tune"]:
                 self._tune()
-
             self._set_params_in_es_core()
 
     IF CUDA:
@@ -313,6 +314,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
+                self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
                 #python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
@@ -413,6 +415,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             return params
 
         def _activate_method(self):
+            self._set_params_in_es_core()
             coulomb.method = COULOMB_EWALD_GPU
             if not self._params["isTuned"]:
                 self._tune()
@@ -551,6 +554,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
                               "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
+            self._set_params_in_es_core()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
