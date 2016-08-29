@@ -26,8 +26,7 @@
 
 namespace Shapes {
   struct HollowCone : public Shape {
-    virtual const std::string name() const { return std::string("HollowCone"); }
-    int calculate_dist(const double *ppos, double *dist, double *vec);
+    int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
     /** Hollow cone position. */
     double position_x;
