@@ -33,58 +33,58 @@ int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec) cons
 
   d_real = 0.0;
   for (i = 0; i < 3; i++) {
-    d_real_vec[i] = ppos[i] - pos[i];
+    d_real_vec[i] = ppos[i] - m_pos[i];
     d_real += SQR(d_real_vec[i]);
   }
   d_real = sqrt(d_real);
 
   d_par = 0.;
   for (i = 0; i < 3; i++) {
-    d_par += (d_real_vec[i] * axis[i]);
+    d_par += (d_real_vec[i] * m_axis[i]);
   }
 
   for (i = 0; i < 3; i++) {
-    d_par_vec[i] = d_par * axis[i];
-    d_per_vec[i] = ppos[i] - (pos[i] + d_par_vec[i]);
+    d_par_vec[i] = d_par * m_axis[i];
+    d_per_vec[i] = ppos[i] - (m_pos[i] + d_par_vec[i]);
   }
 
   d_per = sqrt(SQR(d_real) - SQR(d_par));
   d_par = fabs(d_par);
 
-  if (direction == -1) {
+  if (m_direction == -1) {
     /*apply force towards inside cylinder */
-    d_per = rad - d_per;
-    d_par = length - d_par;
+    d_per = m_rad - d_per;
+    d_par = m_length - d_par;
     if (d_per < d_par) {
       *dist = d_per;
       for (i = 0; i < 3; i++) {
-        vec[i] = -d_per_vec[i] * d_per / (rad - d_per);
+        vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
       }
     } else {
       *dist = d_par;
       for (i = 0; i < 3; i++) {
-        vec[i] = -d_par_vec[i] * d_par / (length - d_par);
+        vec[i] = -d_par_vec[i] * d_par / (m_length - d_par);
       }
     }
   } else {
     /*apply force towards outside cylinder */
-    d_per = d_per - rad;
-    d_par = d_par - length;
+    d_per = d_per - m_rad;
+    d_par = d_par - m_length;
     if (d_par < 0) {
       *dist = d_per;
       for (i = 0; i < 3; i++) {
-        vec[i] = d_per_vec[i] * d_per / (d_per + rad);
+        vec[i] = d_per_vec[i] * d_per / (d_per + m_rad);
       }
     } else if (d_per < 0) {
       *dist = d_par;
       for (i = 0; i < 3; i++) {
-        vec[i] = d_par_vec[i] * d_par / (d_par + length);
+        vec[i] = d_par_vec[i] * d_par / (d_par + m_length);
       }
     } else {
       *dist = sqrt(SQR(d_par) + SQR(d_per));
       for (i = 0; i < 3; i++) {
-        vec[i] = d_per_vec[i] * d_per / (d_per + rad) +
-                 d_par_vec[i] * d_par / (d_par + length);
+        vec[i] = d_per_vec[i] * d_per / (d_per + m_rad) +
+                 d_par_vec[i] * d_par / (d_par + m_length);
       }
     }
   }

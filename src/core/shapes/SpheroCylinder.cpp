@@ -33,15 +33,15 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
   double ppos_local[3];
 
   for (i = 0; i < 3; i++) {
-    ppos_local[i] = ppos[i] - pos[i];
-    d += ppos_local[i] * axis[i];
+    ppos_local[i] = ppos[i] - m_pos[i];
+    d += ppos_local[i] * m_axis[i];
   }
 
-  if (abs(d) >= length) {
+  if (abs(d) >= m_length) {
     *dist = 0.0;
 
     for (i = 0; i < 3; i++) {
-      vec[i] = ppos_local[i] - length * axis[i] * Utils::sgn<double>(d);
+      vec[i] = ppos_local[i] - m_length * m_axis[i] * Utils::sgn<double>(d);
       *dist += vec[i] * vec[i];
     }
 
@@ -51,12 +51,12 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
       for (i = 0; i < 3; i++)
         vec[i] /= *dist;
 
-    *dist -= rad;
+    *dist -= m_rad;
 
     for (i = 0; i < 3; i++)
       vec[i] *= *dist;
 
-    *dist *= direction;
+    *dist *= m_direction;
   } else
     Cylinder::calculate_dist(ppos, dist, vec);
   return 0;

@@ -26,7 +26,9 @@
 #include "Shape.hpp"
 
 namespace Shapes {
-struct SpheroCylinder : public Cylinder {
+class SpheroCylinder : public Cylinder {
+public:
+  SpheroCylinder() : Cylinder() {} ; 
   int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 };
 };

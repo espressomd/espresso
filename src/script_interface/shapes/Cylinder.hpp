@@ -19,38 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __CYLINDER_HPP
-#define __CYLINDER_HPP
+#ifndef SCRIPT_INTERFACE_CYLINDER_WALL_HPP
+#define SCRIPT_INTERFACE_CYLINDER_WALL_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "core/shapes/Cylinder.hpp"
 
+namespace ScriptInterface {
 namespace Shapes {
+
 class Cylinder : public Shape {
 public:
-  Cylinder() : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_length(0.0), m_direction(1.0) {}
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  Cylinder() : m_cylinder(new ::Shapes::Cylinder()) {}
 
-Vector3d const &pos() const { return m_pos; }
-Vector3d const &axis() const { return m_axis; }
+  const std::string name() const override { return "Shapes::Cylinder"; }
 
-double const &rad() const { return m_rad; }
-double const &length() const { return m_length; }
-double const &direction() const { return m_direction; }
+  ParameterMap valid_parameters() const override;
+  VariantMap get_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
 
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_cylinder; }
 
-protected:
-  /** center of the cylinder. */
-  Vector3d m_pos;
-  /** Axis of the cylinder .*/
-  Vector3d m_axis;
-  /** cylinder radius. */
-  double m_rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double m_length;
-  /** cylinder direction. (+1 outside -1 inside interaction direction)*/
-  double m_direction;
+private:
+  std::shared_ptr<::Shapes::Cylinder> m_cylinder;
 };
-};
+
+} /* namespace Shapes */
+} /* namespace ScriptInterface */
 
 #endif
