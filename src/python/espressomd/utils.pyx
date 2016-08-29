@@ -97,3 +97,13 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                 v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
             raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
                              str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+
+cdef handle_errors(msg):
+    errors = mpi_gather_runtime_errors()
+    for err in errors:
+        print(err.format())
+
+    for err in errors:
+    # Cast because cython does not support typed enums completely
+        if <int> err.level() == <int> ERROR:
+            raise Exception(msg)

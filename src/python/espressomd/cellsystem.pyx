@@ -18,6 +18,7 @@
 #
 cimport cellsystem
 from globals cimport *
+from espressomd.utils cimport handle_errors
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -67,6 +68,7 @@ cdef class CellSystem(object):
             node_grid[0] = node_grid[1] = 1
             node_grid[2] = n_nodes
             mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
+            handle_errors("mpi_bcast_parameter failed")
         else:
             mpi_err = 0
 

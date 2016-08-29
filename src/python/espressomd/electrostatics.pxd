@@ -267,9 +267,12 @@ IF ELECTROSTATICS:
         cdef char *log = NULL 
         cdef int resp
         MMM1D_init();
+        handle_errors("MMM1D requires periodicity 0 0 1 and n-square cellsystem")
         if MMM1D_sanity_checks()==1:
             raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
+        handle_errors("MMM1D requires periodicity 0 0 1 and n-square cellsystem")
         resp=mmm1d_tune(&log)
+        handle_errors("MMM1D requires periodicity 0 0 1 and n-square cellsystem")
         if resp:
             print log
         return resp

@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from libcpp.string cimport string  # import std::string as string
-from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
 cdef extern from "config.hpp":
@@ -28,19 +26,3 @@ cdef extern from "integrate.hpp" nogil:
     cdef void integrate_set_nvt()
     cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
     cdef extern cbool skin_set
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
-    cdef cppclass ErrorLevel:
-        pass
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
-    cdef ErrorLevel WARNING
-    cdef ErrorLevel ERROR
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
-    cdef cppclass RuntimeError:
-        string format()
-        ErrorLevel level()
-
-cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError]mpi_gather_runtime_errors()
