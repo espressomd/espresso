@@ -197,7 +197,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 
@@ -233,7 +233,7 @@ for i in range(0, int_n_times):
 # rescale structure factor values and write out data
 structurefactor_Sk /= int_n_times
 
-for i in xrange(structurefactor_bins):
+for i in range(structurefactor_bins):
     structurefactor_file.write("{0}\t{1}\n".format(
         structurefactor_k[i], structurefactor_Sk[i]))
 structurefactor_file.close()

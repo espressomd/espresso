@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import espressomd
 import unittest as ut
 import numpy as np
@@ -45,5 +46,5 @@ class ewald_GPU_test(ut.TestCase):
             self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
 
     if __name__ == "__main__":
-        print("Features: ", espressomd.features())
+        print(("Features: ", espressomd.features()))
         ut.main()

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest as ut
 import numpy as np
 import espressomd
@@ -48,5 +49,5 @@ if "ENGINE" in espressomd.features():
             self.assertTrue(4.9e-4 < delta_pos_1 and delta_pos_1 < 5.1e-4)
 
     if __name__ == '__main__':
-        print("Features: ", espressomd.features())
+        print(("Features: ", espressomd.features()))
         ut.main()

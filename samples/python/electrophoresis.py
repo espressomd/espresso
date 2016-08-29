@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import code_info
 from espressomd import thermostat
@@ -24,7 +25,10 @@ from espressomd import interactions
 from espressomd import electrostatics
 import sys
 import numpy as np
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import os
 
 print(code_info.features())
@@ -163,7 +167,7 @@ pickle.dump(p3m,open("p3m_checkpoint","w"),-1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in p3m_params.keys():
+for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print(system.actors)
@@ -246,8 +250,8 @@ if float(np.version.version.split(".")[1]) >= 10:
 
     fit,_ = curve_fit(decay, c_length, cos_theta)
 
-    print c_length.shape, cos_theta.shape
-    print "PERSISTENCE LENGTH", fit[0]
+    print(c_length.shape, cos_theta.shape)
+    print("PERSISTENCE LENGTH", fit[0])
 
 # Plot Results
 ############################################################

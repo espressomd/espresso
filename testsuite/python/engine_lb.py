@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest as ut
 import tests_common
 import os
@@ -62,9 +63,9 @@ if "ENGINE" in espressomd.features() and "LB" in espressomd.features():
                     lbm.print_vtk_velocity("engine_lb_tmp.vtk")
                     different, difference = tests_common.calculate_vtk_max_pointwise_difference("engine_lb.vtk", "engine_lb_tmp.vtk",tol=2.0e-7)
                     os.remove("engine_lb_tmp.vtk")
-                    print("Maximum deviation to the reference point is: {}".format(difference))
+                    print(("Maximum deviation to the reference point is: {}".format(difference)))
                     self.assertTrue( different )
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
+    print(("Features: ", espressomd.features()))
     ut.main()

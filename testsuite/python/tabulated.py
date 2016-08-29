@@ -18,6 +18,7 @@
 #
 # Tests particle property setters/getters
 
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -664,7 +665,7 @@ class Tabulated(ut.TestCase):
         def test_tab(self):
             self.compare()
     else:
-        print "TABULATED feature inactive"
+        print("TABULATED feature inactive")
         sys.exit()
 
 
