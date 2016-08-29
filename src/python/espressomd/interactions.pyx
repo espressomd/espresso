@@ -23,8 +23,9 @@ cdef class NonBondedInteraction(object):
 
     cdef public object _part_types
     cdef object _params
-    
-    #init dict to access all user defined nonbonded-inters via user_interactions[type1][type2][parameter]
+
+    # init dict to access all user defined nonbonded-inters via
+    # user_interactions[type1][type2][parameter]
     user_interactions = {}
 
     def __init__(self, *args, **kwargs):
@@ -112,15 +113,17 @@ cdef class NonBondedInteraction(object):
 
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._set_params_in_es_core()
-        
-        #update interaction dict when user sets interaction
+
+        # update interaction dict when user sets interaction
         if self._part_types[0] not in self.user_interactions:
             self.user_interactions[self._part_types[0]] = {}
         self.user_interactions[self._part_types[0]][self._part_types[1]] = {}
         new_params = self.get_params()
         for p_key in new_params:
-            self.user_interactions[self._part_types[0]][self._part_types[1]][p_key] = new_params[p_key]
-        self.user_interactions[self._part_types[0]][self._part_types[1]]['type_name'] = self.type_name()
+            self.user_interactions[self._part_types[0]][
+                self._part_types[1]][p_key] = new_params[p_key]
+        self.user_interactions[self._part_types[0]][
+            self._part_types[1]]['type_name'] = self.type_name()
 
     def validate_params(self):
         return True
@@ -341,8 +344,8 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
-        IF TABULATED==1:
-            self.tabulated=TabulatedNonBonded(_type1, _type2)
+        IF TABULATED == 1:
+            self.tabulated = TabulatedNonBonded(_type1, _type2)
 
 
 cdef class NonBondedInteractions:
@@ -367,12 +370,14 @@ cdef class NonBondedInteractions:
 
     def get_force_cap(self):
         return force_cap
-    
+
     def __getstate__(self):
-        odict = NonBondedInteractionHandle(-1,-1).lennard_jones.user_interactions #contains info about ALL nonbonded interactions
+        # contains info about ALL nonbonded interactions
+        odict = NonBondedInteractionHandle(-1, -
+                                           1).lennard_jones.user_interactions
         odict['force_cap'] = self.get_force_cap()
         return odict
-    
+
     def __setstate__(self, odict):
         self.set_force_cap(odict['force_cap'])
         del odict['force_cap']
@@ -380,16 +385,19 @@ cdef class NonBondedInteractions:
             for _type2 in odict[_type1]:
                 attrs = dir(NonBondedInteractionHandle(_type1, _type2))
                 for a in attrs:
-                    attr_ref = getattr(NonBondedInteractionHandle(_type1, _type2), a)
+                    attr_ref = getattr(
+                        NonBondedInteractionHandle(_type1, _type2), a)
                     type_name_ref = getattr(attr_ref, "type_name", None)
                     if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
-                        inter_instance = attr_ref #found nonbonded inter, e.g. LennardJonesInteraction(_type1, _type2)
+                        # found nonbonded inter, e.g.
+                        # LennardJonesInteraction(_type1, _type2)
+                        inter_instance = attr_ref
                         break
                     else:
                         continue
-                    
+
                 del odict[_type1][_type2]['type_name']
-                inter_instance.set_params(**odict[_type1][_type2])    
+                inter_instance.set_params(**odict[_type1][_type2])
 
 
 cdef class BondedInteraction(object):
@@ -741,49 +749,54 @@ IF TABULATED == 1:
 
         def set_default_params(self):
             self._params = {"type": "bond", "filename": ""}
-        
+
         def _get_params_from_es_core(self):
-           res = \
+            res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "filename": bonded_ia_params[self._bond_id].p.tab.filename,
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
                  "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize}
-           if res["type"] ==1: res["type"]="distance" 
-           if res["type"] ==2: res["type"]="angle" 
-           if res["type"] ==3: res["type"]="dihedral" 
-           return res
+            if res["type"] == 1:
+                res["type"] = "distance"
+            if res["type"] == 2:
+                res["type"] = "angle"
+            if res["type"] == 3:
+                res["type"] = "dihedral"
+            return res
 
         def _set_params_in_es_core(self):
-            if self._params["type"]=="distance": 
-                type_num=1
-            else: 
-                if self._params["type"]=="angle": 
-                    type_num=2
+            if self._params["type"] == "distance":
+                type_num = 1
+            else:
+                if self._params["type"] == "angle":
+                    type_num = 2
                 else:
-                    if self._params["type"]=="dihedral": 
-                        type_num=3
+                    if self._params["type"] == "dihedral":
+                        type_num = 3
                     else:
-                        raise ValueError("Tabulated type needs to be distance, angle, or diherdal")
+                        raise ValueError(
+                            "Tabulated type needs to be distance, angle, or diherdal")
 
-            res =tabulated_bonded_set_params(
-                  self._bond_id, <TabulatedBondedInteraction>type_num, self._params["filename"])
-            msg=""
-            if res==1: msg="unknon bond type"
-            if res==3: msg="cannot open file"
-            if res==4: msg="file too short"
-            if msg==5: msg="file broken"
-            if msg==6: msg="parameter out of bound"
-            if res: 
-                raise Exception("Could not setup tabulated bond. "+msg)      
+            res = tabulated_bonded_set_params(
+                self._bond_id, < TabulatedBondedInteraction > type_num, self._params["filename"])
+            msg = ""
+            if res == 1:
+                msg = "unknon bond type"
+            if res == 3:
+                msg = "cannot open file"
+            if res == 4:
+                msg = "file too short"
+            if msg == 5:
+                msg = "file broken"
+            if msg == 6:
+                msg = "parameter out of bound"
+            if res:
+                raise Exception("Could not setup tabulated bond. " + msg)
             # Retrieve some params, Es calculates.
-            self._params=self._get_params_from_es_core()
-  
+            self._params = self._get_params_from_es_core()
 
-    
-    
-    
     cdef class TabulatedNonBonded(NonBondedInteraction):
 
         cdef int state
@@ -805,7 +818,7 @@ IF TABULATED == 1:
             return ["filename", ]
 
         def set_default_params(self):
-            self._params={"filename" : ""}
+            self._params = {"filename": ""}
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
@@ -814,7 +827,8 @@ IF TABULATED == 1:
                 "filename": ia_params.TAB_filename}
 
         def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0], self._part_types[1], self._params["filename"])
+            self.state = tabulated_set_params(self._part_types[0], self._part_types[
+                                              1], self._params["filename"])
 
         def is_active(self):
             if self.state == 0:
@@ -847,6 +861,7 @@ IF TABULATED != 1:
 
 IF LENNARD_JONES == 1:
     class Subt_Lj(BondedInteraction):
+
         def type_number(self):
             return BONDED_IA_SUBT_LJ
 
@@ -1134,7 +1149,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
 }
 IF LENNARD_JONES:
-    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)]= Subt_Lj
+    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
 
 
 class BondedInteractions:

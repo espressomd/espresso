@@ -37,7 +37,7 @@ from analyze import Analysis
 from galilei import GalileiTransform
 
 import sys
-import random #for true random numbers from os.urandom()
+import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "periodicity", "time",
                       "time_step", "timings"]
@@ -56,13 +56,13 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
-    analysis =None
+    analysis = None
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
 
     def __init__(self):
         self.actors = Actors(_system=self)
-        self.analysis=Analysis(self)
+        self.analysis = Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -126,7 +126,6 @@ cdef class System:
             periodicity[1] = int(periodic / 2) % 2
             periodicity[2] = int(periodic / 4) % 2
             return periodicity
-
 
     property time:
         def __set__(self, double _time):
@@ -195,28 +194,26 @@ cdef class System:
         def __get__(self):
             return lattice_switch
 
-
     property max_cut_bonded:
         def __get__(self):
             return max_cut_bonded
 
     __seed = None
-    
+
     def _get_PRNG_state_size(self):
         return get_state_size_of_generator()
-    
+
     def set_random_state_PRNG(self):
-        _state_size_plus_one=self._get_PRNG_state_size()+1
-        states=string_vec(n_nodes)
-        rng = random.SystemRandom() #true RNG that uses os.urandom()
+        _state_size_plus_one = self._get_PRNG_state_size() + 1
+        states = string_vec(n_nodes)
+        rng = random.SystemRandom()  # true RNG that uses os.urandom()
         for i in range(self.n_nodes):
-            states_on_node_i=[]
-            for j in range(_state_size_plus_one+1):
+            states_on_node_i = []
+            for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(rng.randint(0, sys.maxint))
-            states[i]=" ".join(map(str,states_on_node_i))
-        mpi_random_set_stat(states);
-        
-    
+            states[i] = " ".join(map(str, states_on_node_i))
+        mpi_random_set_stat(states)
+
     property seed:
         def __set__(self, _seed):
             cdef vector[int] seed_array
@@ -242,18 +239,21 @@ cdef class System:
             return self.__seed
 
     property random_number_generator_state:
-        #sets the random number generator state in the core. this is of interest for deterministic checkpointing
-        def __set__(self,rng_state):
-            _state_size_plus_one=self._get_PRNG_state_size()+1
-            if(len(rng_state)== n_nodes*_state_size_plus_one):
-                states=string_vec(n_nodes) 
+        # sets the random number generator state in the core. this is of
+        # interest for deterministic checkpointing
+        def __set__(self, rng_state):
+            _state_size_plus_one = self._get_PRNG_state_size() + 1
+            if(len(rng_state) == n_nodes * _state_size_plus_one):
+                states = string_vec(n_nodes)
                 for i in range(n_nodes):
-                        states[i]=" ".join(map(str,rng_state[i*_state_size_plus_one:(i+1)*_state_size_plus_one]))
-                mpi_random_set_stat(states);
+                    states[i] = " ".join(
+                        map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+
         def __get__(self):
-            rng_state=map(int, (mpi_random_get_stat().c_str()).split())
+            rng_state = map(int, (mpi_random_get_stat().c_str()).split())
             return rng_state
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
@@ -275,20 +275,18 @@ cdef class System:
         else:
             raise ValueError(
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
-    
+
     def volume(self):
-       """Return box volume"""
-       return self.box_l[0]*self.box_l[1]*self.box_l[2]
+        """Return box volume"""
+        return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
-    def distance(self,p1,p2):
-       """Return the distance between the particles, respecting periodic boundaries"""
-       cdef double[3] res,a,b
-       a=p1.pos
-       b=p2.pos
-       get_mi_vector(res,a,b)
-       return np.sqrt(res[0]**2+res[1]**2+res[2]**2)
-
-
+    def distance(self, p1, p2):
+        """Return the distance between the particles, respecting periodic boundaries"""
+        cdef double[3] res, a, b
+        a = p1.pos
+        b = p2.pos
+        get_mi_vector(res, a, b)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
 
 
 # lbfluid=lb.DeviceList()
