@@ -114,6 +114,16 @@ cdef class System:
         def __get__(self):
             return langevin_gamma
 
+    IF ROTATION:
+        IF ROTATIONAL_INERTIA:
+            property gamma_rotation:
+                def __get__(self):
+                    return np.array([langevin_gamma_rotation[0], langevin_gamma_rotation[1], langevin_gamma_rotation[2]])
+        ELSE:
+            property gamma_rotation:
+                def __get__(self):
+                    return langevin_gamma_rotation
+
     property integ_switch:
         def __get__(self):
             return integ_switch

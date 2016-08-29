@@ -57,13 +57,8 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = 0;
 #endif
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-#ifndef ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-#else
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_X);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Y);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Z);
-#endif
+
   /* Langevin for translations */
   langevin_trans = true;
   /* Langevin for rotations */
@@ -107,15 +102,15 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp,
-         gammat = 0.0;
+         gammat = -1.0;
   bool trans = true,
        rot = true;
 #ifndef ROTATIONAL_INERTIA
-  double gammar = 0.0;
+  double gammar = -1.0;
   int arg_shift = 0;
 #else
   double gammar[3];
-  gammar[0] = gammar[1] = gammar[2] = 0;
+  gammar[0] = gammar[1] = gammar[2] = -1.0;
   int arg_shift = 2, j;
 #endif
   /* check number of arguments */
@@ -191,9 +186,9 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   }
 
 #ifndef ROTATIONAL_INERTIA
-  if (temp < 0 || gammat < 0 || gammar < 0) {
+  if (temp < 0 || gammat < 0 || ((argc > 4) && (gammar < 0))) {
 #else
-  if (temp < 0 || gammat < 0 || gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0) {
+  if (temp < 0 || gammat < 0 || ((argc > 6) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
 #endif
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
@@ -213,13 +208,8 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-#ifndef ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-#else
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_X);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Y);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION_Z);
-#endif
+
   // TODO: mpi_bcast_parameter for langevin_trans and langevin_rotate ?
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
