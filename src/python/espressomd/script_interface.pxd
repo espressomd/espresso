@@ -76,7 +76,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     cdef cppclass ScriptInterfaceBase:
         const string name()
         map[string, Variant] get_parameters()
-        map[string, Parameter] all_parameters()
+        map[string, Parameter] valid_parameters()
         Variant get_parameter(const string & name)
         void set_parameter(const string & name, const Variant & value)
         void set_parameters(map[string, Variant] & parameters)

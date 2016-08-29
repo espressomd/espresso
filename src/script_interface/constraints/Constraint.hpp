@@ -46,7 +46,7 @@ public:
              (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
   }
 
-  ParameterMap all_parameters() const override {
+  ParameterMap valid_parameters() const override {
     return {{"only_positive", {ParameterType::INT, true}},
             {"penetrable", {ParameterType::INT, true}},
             {"type", {ParameterType::INT, true}},

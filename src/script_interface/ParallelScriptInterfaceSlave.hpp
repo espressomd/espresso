@@ -80,7 +80,7 @@ private:
       /* If the parameter is a object we have to tranlate it first to a
          local id.
       */
-      if (m_p->all_parameters()[d.first].type() == ParameterType::OBJECT) {
+      if (m_p->valid_parameters()[d.first].type() == ParameterType::OBJECT) {
         const int global_id = boost::get<int>(d.second);
         const int local_id = translate_id(global_id);
 

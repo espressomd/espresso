@@ -27,7 +27,7 @@ using std::string;
 namespace ScriptInterface {
 namespace Shapes {
 
-ParameterMap Wall::all_parameters() const {
+ParameterMap Wall::valid_parameters() const {
   return {{"normal", {ParameterType::VECTOR3D, true}},
           {"dist", {ParameterType::DOUBLE, true}}};
 }

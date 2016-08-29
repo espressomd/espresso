@@ -153,7 +153,7 @@ public:
   virtual VariantMap get_parameters() const {
     VariantMap values;
 
-    for (auto const &p : all_parameters()) {
+    for (auto const &p : valid_parameters()) {
       values[p.first] = get_parameter(p.first);
     }
 
@@ -167,7 +167,7 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual ParameterMap all_parameters() const { return {}; }
+  virtual ParameterMap valid_parameters() const { return {}; }
 
   /**
    * @brief Get single parameter.

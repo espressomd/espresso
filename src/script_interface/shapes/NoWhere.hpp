@@ -35,7 +35,7 @@ public:
 
   const std::string name() const override { return "Shapes::NoWhere"; }
 
-  ParameterMap all_parameters() const override { return {}; };
+  ParameterMap valid_parameters() const override { return {}; };
   VariantMap get_parameters() const override { return {}; };
   void set_parameter(const std::string &name, const Variant &value) override{};
 

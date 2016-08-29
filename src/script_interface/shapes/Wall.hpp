@@ -34,7 +34,7 @@ public:
 
   const std::string name() const override { return "Shapes::Wall"; }
 
-  ParameterMap all_parameters() const override;
+  ParameterMap valid_parameters() const override;
   VariantMap get_parameters() const override;
   void set_parameter(const std::string &name, const Variant &value) override;
 

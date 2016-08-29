@@ -47,7 +47,7 @@ string TclScriptInterface::print_to_string() const {
 }
 
 void TclScriptInterface::parse_from_string(list<string> &argv) {
-  ParameterMap p = m_so->all_parameters();
+  ParameterMap p = m_so->valid_parameters();
   std::map<std::string, Variant> values;
 
   for (list<string>::iterator it = argv.begin(); it != argv.end();) {

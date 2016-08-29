@@ -2,7 +2,7 @@ cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
             self.sip = make_shared(name)
-            self.parameters = self.sip.get().all_parameters()
+            self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()
             self.parameters = map[string, Parameter]()
@@ -21,7 +21,7 @@ cdef class PScriptInterface:
 
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
         self.sip = sip
-        self.parameters = self.sip.get().all_parameters()
+        self.parameters = self.sip.get().valid_parameters()
 
     cdef Variant make_variant(self, ParameterType type, value):
         if < int > type == <int > BOOL:
