@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 cimport numpy as np
 import numpy as np
+from cpython.version cimport PY_MAJOR_VERSION
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
@@ -98,3 +99,19 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                 v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
             raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
                              str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+
+def to_char_pointer(s):
+    if isinstance(s, unicode):
+        s = (<unicode>s).encode('utf8')
+    return s
+
+def to_unicode(s):
+    if type(s) is unicode:
+        return <unicode>s
+    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
+        # only accept byte strings in Python 2, not in Python 3
+        return (<bytes>s).decode('ascii')
+    elif isinstance(s, unicode):
+        return unicode(s)
+    else:
+        raise TypeError("Cannot convert to unicode")

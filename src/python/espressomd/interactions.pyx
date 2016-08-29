@@ -18,6 +18,7 @@
 #
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
+from . import utils
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
@@ -755,7 +756,7 @@ IF TABULATED == 1:
 
         def _set_params_in_es_core(self):
             tabulated_bonded_set_params(
-                self._bond_id, self._params["type"], self._params["filename"])
+                self._bond_id, self._params["type"], utils.to_char_pointer(self._params["filename"]))
 
     cdef class TabulatedNonBonded(NonBondedInteraction):
 
@@ -787,7 +788,7 @@ IF TABULATED == 1:
                 "filename": ia_params.TAB_filename}
 
         def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0], self._part_types[1], self._params["filename"])
+            self.state = tabulated_set_params(self._part_types[0], self._part_types[1], utils.to_char_pointer(self._params["filename"]))
 
         def is_active(self):
             if self.state == 0:

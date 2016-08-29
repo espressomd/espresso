@@ -24,6 +24,7 @@ from . cimport cuda_init
 from . import cuda_init
 from globals cimport *
 from copy import deepcopy
+from . import utils
 
 # Actor class
 ####################################################
@@ -150,17 +151,17 @@ IF LB_GPU or LB:
         # input/output function wrappers for whole LB fields
         ####################################################
         def print_vtk_velocity(self, path):
-            lb_lbfluid_print_vtk_velocity(path)
+            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
         def print_vtk_boundary(self, path):
-            lb_lbfluid_print_vtk_boundary(path)
+            lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
-            lb_lbfluid_print_velocity(path)
+            lb_lbfluid_print_velocity(utils.to_char_pointer(path))
         def print_boundary(self, path):
-            lb_lbfluid_print_boundary(path)
+            lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(path, binary)
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
         def load_checkpoint(self, path, binary):
-            lb_lbfluid_load_checkpoint(path, binary)
+            lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
         def lbnode_get_node_velocity(self, coord):
             cdef double[3] double_return
             cdef int[3] c_coord
