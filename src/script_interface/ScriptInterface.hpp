@@ -24,6 +24,7 @@
 
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
+#include "ParallelScriptInterface.hpp"
 
 namespace ScriptInterface {
   enum { NOT_SET = -1 };
@@ -33,6 +34,8 @@ namespace ScriptInterface {
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }
+
+
 
 } /* namespace ScriptInterface */
 
