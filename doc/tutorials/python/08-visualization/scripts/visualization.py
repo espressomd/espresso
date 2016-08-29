@@ -68,7 +68,8 @@ system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
 system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -120,13 +121,14 @@ def main():
         integrate.integrate(int_steps)
         energies[i] = (system.time, system.analysis.energy()['total'])
         current_time = i
-        mayavi.update()
+        visualizer.update()
 
 t = Thread(target=main)
 t.daemon = True
 t.start()
-mayavi.register_callback(update_plot, interval=500)
-mayavi.run_gui_event_loop()
+
+visualizer.register_callback(update_plot, interval=500)
+visualizer.start()
 
 # terminate program
 print("\nFinished.")
