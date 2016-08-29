@@ -16,24 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 from globals cimport *
 import numpy as np
 
-cimport integrate
-import interactions
-from actors import Actors
-cimport cuda_init
-import particle_data
-import cuda_init
-import code_info
-from thermostat import Thermostat
-from cellsystem import CellSystem
-from minimize_energy import MinimizeEnergy
-from polymer import Polymer
-from analyze import Analysis
-from galilei import GalileiTransform
+from . cimport integrate
+from . import interactions
+from .actors import Actors
+from . cimport cuda_init
+from . import particle_data
+from . import cuda_init
+from . import code_info
+from .thermostat import Thermostat
+from .cellsystem import CellSystem
+from .minimize_energy import MinimizeEnergy
+from .polymer import Polymer
+from .analyze import Analysis
+from .galilei import GalileiTransform
 
 import sys
 import random #for true random numbers from os.urandom()

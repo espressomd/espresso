@@ -18,10 +18,11 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -132,7 +133,7 @@ IF ELECTROSTATICS:
             cdef char * log = NULL
             cdef int response
             response = p3m_adaptive_tune(& log)
-            print log
+            print(log)
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -271,7 +272,7 @@ IF ELECTROSTATICS:
             raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
         resp=mmm1d_tune(&log)
         if resp:
-            print log
+            print(log)
         return resp
 
 IF ELECTROSTATICS:

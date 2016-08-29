@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 # Non-bonded interactions
 
@@ -1131,8 +1132,8 @@ class BondedInteractions:
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]
-        # print bondType
-        # print "  "
+        # print(bondType)
+        # print("  ")
 
         # And return an instance of it, which refers to the bonded interaction
         # id in Espresso

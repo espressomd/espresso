@@ -1,3 +1,4 @@
+from __future__ import print_function, absolute_import
 cdef extern from "particle_data.hpp":
 	int init_type_array(int type)
 	int delete_particle_of_type(int type)

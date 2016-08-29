@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 cimport numpy as np
 import numpy as np
 
@@ -44,7 +45,7 @@ cdef int_list * create_int_list_from_python_object(obj):
     alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-        print il.e[i]
+        print(il.e[i])
     il.n = len(obj)
     return il
 

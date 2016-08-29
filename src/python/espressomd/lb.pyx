@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
-cimport cuda_init
-import cuda_init
+from .actors cimport Actor
+from . cimport cuda_init
+from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 
