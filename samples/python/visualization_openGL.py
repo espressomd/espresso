@@ -5,7 +5,7 @@ from espressomd import integrate
 import numpy
 from threading import Thread
 from math import *
-from espressomd.visualization_openGL import *
+from espressomd.visualizationOpenGL import *
 
 #Minimal interactive OpenGL visualization for ESPResSo
 
@@ -32,11 +32,23 @@ system = espressomd.System()
 
 #Init the visualizer, set specs by an optional dict (coloring, periodic images etc). 
 #See visualization_openGL.py for possible options
-visualizer = EspressoVisualizer(system)
+visualizer = openGLLive(system, {'periodic_images': [1,1,0]})
+
+for key, value in visualizer.specs.items():
+    print(str(key) + ":" + (30-len(key))*" " + str(value))
 
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+
+#Register additional callback to run in main thread
+def muu():
+    print "muu"
+def foo():
+    print "foo"
+
+visualizer.registerCallback(foo,interval=500)
+visualizer.registerCallback(muu)
 
 def main():
     system.time_step = 0.00001

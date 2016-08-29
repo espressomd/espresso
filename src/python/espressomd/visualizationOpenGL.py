@@ -6,12 +6,13 @@ import numpy as np
 import os
 import time
 
-
-class EspressoVisualizer:
+class openGLLive:
 
     def __init__(self, system, specs={}):
 
-        #		'particle_coloring':			 'auto', 'charge', 'type'
+        #TODO: COMPLETE DESCRIPTION FOR SPECS
+
+        #		'particle_coloring':		 'auto', 'charge', 'type'
         #		'particle_type_colors':		 [r_t1,g_t1,b_t1],[r_t2,g_t2,b_t2],... ]
         #		'particle_charge_colors':	 [[r_lowq,g_lowq,b_lowq],[r_highq,g_highq,b_highq]]
         #		'particle_sizes':		     'auto', 'type'
@@ -25,10 +26,12 @@ class EspressoVisualizer:
         #       'bond_type_radius':			 [r_t1,r_t2,...]
         #       'bond_type_colors':			 [r_t1,g_t1,b_t1],[r_t2,g_t2,b_t2],... ]
         #       'LB':						 True/False
-        #		'light_pos':					 'auto', [x,y,z]
+        #		'light_pos':				 'auto', [x,y,z]
         #       'light_color':				 [r,g,b]
         #       'lightDecay':				 factor*[box_l] to light attenuation
         #       'particle_type_materials'
+
+        #USER FRIENDLY DICT WITH VISUALIZATION SPECIFICATIONS
 
         self.specs = {
             'window_size':				  [800, 800],
@@ -37,6 +40,11 @@ class EspressoVisualizer:
             'update_fps':				  30,
             'periodic_images':	   		  [0, 0, 0],
             'draw_box':		 	  		  True,
+            'quality_spheres':            15,
+            'quality_bonds':              15,
+            'quality_arrows':             15,
+            'close_cut_distance':         0.1,
+            'far_cut_distance':           5,
 
             'particle_coloring':   		  'auto',
             'particle_sizes':			  'auto',
@@ -75,8 +83,13 @@ class EspressoVisualizer:
         self.started = False
         self.keyboardManager = KeyboardManager()
         self.mouseManager = MouseManager()
-        # self.start()
+        self.timers = []
 
+    #CALLBACKS FOR THE MAIN THREAD
+    def registerCallback(self, cb, interval=1000):
+        self.timers.append((int(interval), cb))
+
+    #THE BLOCKING START METHOD
     def start(self):
         self.initOpenGL()
         self.initEspressoVisualization()
@@ -84,55 +97,62 @@ class EspressoVisualizer:
         self.initControls()
         self.initCallbacks()
 
-        # OpenGl Timers
+        #POST DISPLAY WITH 60FPS
         def timed_update_redraw(data):
             glutPostRedisplay()
-            glutTimerFunc(60, timed_update_redraw, -1)
+            glutTimerFunc(17, timed_update_redraw, -1)
 
-        def timed_update_keyboard(data):
-            #	self.keyboardManager.handleInput()
-            glutTimerFunc(60, timed_update_keyboard, -1)
-
+        #PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION CHANGE, CALL WITH 10FPS
         def timed_update_centerLight(data):
-            # Center Light Position
-            ldt = 0.5
+            ldt = 0.8
             cA = (self.particle_COM - self.smooth_light_pos) * \
                 0.1 - self.smooth_light_posV * 1.8
             self.smooth_light_posV += ldt * cA
             self.smooth_light_pos += ldt * self.smooth_light_posV
-            glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[
-                      0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
-            # Time again
-            glutTimerFunc(60, timed_update_centerLight, -1)
+            self.updateLightPos=True
+            glutTimerFunc(100, timed_update_centerLight, -1)
 
+        #AVERAGE PARTICLE COM ONLY EVERY 2sec
         def timed_update_particleCOM(data):
             self.particle_COM = np.average(self.particles['coords'], axis=0)
-            # Time again
             glutTimerFunc(2000, timed_update_particleCOM, -1)
 
         self.started = True
-        glutTimerFunc(60, timed_update_redraw, -1)
-        glutTimerFunc(60, timed_update_keyboard, -1)
+        glutTimerFunc(17, timed_update_redraw, -1)
         if self.specs['light_pos'] == 'auto':
             glutTimerFunc(2000, timed_update_particleCOM, -1)
             glutTimerFunc(60, timed_update_centerLight, -1)
+        #FOR MAC, BRING WINDOW TO FRONT
         os.system(
             '''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
+        #START THE BLOCKING MAIN LOOP
         glutMainLoop()
 
-    # Called from integration loop/thread
+    #CALLED FROM ESPRESSO INTEGRATION LOOP
+    #CHANGES OF ESPRESSO SYSTEM CAN ONLY HAPPEN HERE
     def update(self):
         if self.started:
-
+            
+            #IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
             self.elapsedTime += (time.time() - self.measureTimeBeforeIntegrate)
-
             if self.elapsedTime > 1.0 / self.specs['update_fps']:
                 self.elapsedTime = 0
                 self.updateParticles()
+                #KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES, ONLY SAVE TO CHANGE HERE
                 self.keyboardManager.handleInput()
 
             self.measureTimeBeforeIntegrate = time.time()
 
+            if self.triggerSetParticleDrag==True and self.dragId != -1:
+                self.system.part[self.dragId].ext_force = self.dragExtForce
+                self.triggerSetParticleDrag=False
+            elif self.triggerResetParticleDrag==True and self.dragId != -1:
+                self.system.part[self.dragId].ext_force = self.extForceOld
+                self.triggerResetParticleDrag=False
+                self.dragId = -1
+
+
+    #GET THE PARTICLE DATA
     def updateParticles(self):
         self.particles = {'coords':  	self.system.part[:].pos,
                           'types':   	self.system.part[:].type,
@@ -140,6 +160,7 @@ class EspressoVisualizer:
                           'charges': 	self.system.part[:].q
                           }
 
+    #GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def updateBonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
@@ -152,7 +173,9 @@ class EspressoVisualizer:
                     for p in b[1:]:
                         self.bonds.append([i, p, t])
 
+    #DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def draw(self):
+
         if self.specs['LB']:
             self.drawLBVel()
         if self.specs['draw_box']:
@@ -174,10 +197,8 @@ class EspressoVisualizer:
     def drawSystemParticles(self):
         coords = self.particles['coords']
         pIds = range(len(coords))
-#		pq = self.particles[:].q
-#		ptype = self.particles[:].type
         for pid in pIds:
-            pos = self.particles['coords'][pid]
+            pos = coords[pid]
             q = self.particles['charges'][pid]
             ptype = self.particles['types'][pid]
             ext_f = self.particles['ext_forces'][pid]
@@ -209,14 +230,12 @@ class EspressoVisualizer:
             elif self.specs['particle_coloring'] == 'type':
                 color = self.colorByType(q)
 
-#glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE)
-#glStencilFunc(GL_ALWAYS, pid+1,-1)
-            drawSphere(pos, radius, color, material)
+            drawSphere(pos, radius, color, material, self.specs['quality_spheres'])
             for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                 for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                     for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                         if imx != 0 or imy != 0 or imz != 0:
-                            redrawSphere(pos + (imx * self.imPos[0]+imy*self.imPos[1]+imz*self.imPos[2]), radius)
+                            redrawSphere(pos + (imx * self.imPos[0]+imy*self.imPos[1]+imz*self.imPos[2]), radius, self.specs['quality_spheres'])
 
             if self.specs['ext_force_arrows'] or pid == self.dragId:
                 if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
@@ -225,7 +244,7 @@ class EspressoVisualizer:
                     else:
                         sc = self.extForceArrowScaleByType(ptype)
                     if sc > 0:
-                        drawArrow(pos, np.array(ext_f) * sc, 0.25, [1, 1, 1])
+                        drawArrow(pos, np.array(ext_f) * sc, 0.25, [1, 1, 1], self.specs['quality_arrows'])
 
     def drawBonds(self):
         coords = self.particles['coords']
@@ -240,12 +259,12 @@ class EspressoVisualizer:
             bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
 
             if bondLen_sqr < box_l2_sqr:
-                drawCylinder(coords[b[0]], coords[b[1]], radius, col)
-                for dim in range(3):
-                    for im in range(-self.specs['periodic_images'][dim], self.specs['periodic_images'][dim] + 1):
-                        if im != 0:
-                            drawCylinder(coords[
-                                         b[0]] + im * self.imPos[dim], coords[b[1]] + im * self.imPos[dim], radius, col)
+                drawCylinder(coords[b[0]], coords[b[1]], radius, col, self.specs['quality_bonds'])
+                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                            if imx != 0 or imy != 0 or imz != 0:
+                                drawCylinder(coords[b[0]] + im * self.imPos[dim], coords[b[1]] + im * self.imPos[dim], radius, col, self.specs['quality_bonds'])
             else:
                 l = coords[b[0]] - coords[b[1]]
                 l0 = coords[b[0]]
@@ -265,17 +284,17 @@ class EspressoVisualizer:
                         hits += 1
                         if hits >= 2:
                             break
-                drawCylinder(coords[b[0]], s0, radius, col)
-                drawCylinder(coords[b[1]], s1, radius, col)
+                drawCylinder(coords[b[0]], s0, radius, col, self.specs['quality_bonds'])
+                drawCylinder(coords[b[1]], s1, radius, col, self.specs['quality_bonds'])
 
-                for dim in range(3):
-                    for im in range(-self.specs['periodic_images'][dim], self.specs['periodic_images'][dim] + 1):
-                        if im != 0:
-                            drawCylinder(
-                                coords[b[0]] + im * self.imPos[dim], s0 + im * self.imPos[dim], radius, col)
-                            drawCylinder(
-                                coords[b[1]] + im * self.imPos[dim], s1 + im * self.imPos[dim], radius, col)
+                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                            if imx != 0 or imy != 0 or imz != 0:
+                                drawCylinder(coords[b[0]] + im * self.imPos[dim], s0 + im * self.imPos[dim], radius, col, self.specs['quality_bonds'])
+                                drawCylinder(coords[b[1]] + im * self.imPos[dim], s1 + im * self.imPos[dim], radius, col, self.specs['quality_bonds'])
 
+    #HELPER TO DRAW PERIODIC BONDS
     def isInsideBox(self, p):
         eps = 1e-5
         for i in range(3):
@@ -283,17 +302,12 @@ class EspressoVisualizer:
                 return False
         return True
 
-# distToPlaned.append(np.dot(self.box_p[i]-l0,self.box_n[i])/np.dot(l,self.box_n))
-
+    #VOXELS FOR LB VELOCITIES
     def drawLBVel(self):
         grid = 10
         velRelax = 0.2
         cubeSize = grid * 0.25
         r = np.array([grid] * 3)
-
-#		for j in range(3):
-#			if lb_vel_range[j]==0:
-#				lb_vel_range[j]=1
 
         min_vel_new = np.array([1e100] * 3)
         max_vel_new = np.array([-1e100] * 3)
@@ -308,6 +322,7 @@ class EspressoVisualizer:
                     alpha = 0.1  # np.linalg.norm(col)
                     drawCube(c, cubeSize, col, alpha)
 
+    #USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR COLORS, MATERIALS ETC..
     def extForceArrowScaleByType(self, btype):
         return self.specs['ext_force_arrows_scale'][btype % len(self.specs['ext_force_arrows_scale'])]
 
@@ -326,6 +341,7 @@ class EspressoVisualizer:
     def colorByType(self, ptype):
         return self.specs['particle_type_colors'][ptype % len(self.specs['particle_type_colors'])]
 
+    #FADE PARTICE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP MINUSCOLOR (q=q_min)
     def colorByCharge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
@@ -335,12 +351,13 @@ class EspressoVisualizer:
 
             return self.specs['particle_charge_colors'][1] * c + (1 - c) * np.array([1, 1, 1, 1])
 
+    #ON INITIALIZATION, CHECK q_max/q_min
     def updateChargeColorRange(self):
         if len(self.particles['charges'][:])>0:
             self.minq = min(self.particles['charges'][:])
             self.maxq = max(self.particles['charges'][:])
 
-    # INITS
+    # INITS FOR GLUT FUNCTIONS
     def initCallbacks(self):
         # OpenGl Callbacks
         def display():
@@ -349,6 +366,10 @@ class EspressoVisualizer:
 
             self.camera.glLookAt()
             self.camera.rotateSystem()
+
+            if self.updateLightPos:
+                self.setLightPos()
+                self.updateLightPos=False
 
             self.draw()
 
@@ -369,47 +390,54 @@ class EspressoVisualizer:
 
         def motion(x, y):
             self.mouseManager.mouseMove(x, y)
-            glutPostRedisplay()
             return
 
+        #CALLED ION WINDOW POSITION/SIZE CHANGE
         def reshapeWindow(w, h):
             glViewport(0, 0, w, h)
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
             box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-            gluPerspective(40, 1.0*w/h, 0.1, 4.0 * box_diag)
+            gluPerspective(40, 1.0*w/h, self.specs['close_cut_distance'], self.specs['far_cut_distance'] * box_diag)
             glMatrixMode(GL_MODELVIEW)
             self.specs['window_size'][0] =1.0*w
             self.specs['window_size'][1] =1.0*h
             #glPushMatrix()
 
+        #TIMERS FOR registerCallback
+        def dummyTimer(index):
+            self.timers[index][1]()
+            glutTimerFunc(self.timers[index][0], dummyTimer, index)
 
         glutDisplayFunc(display)
         glutMouseFunc(mouse)
         glutKeyboardFunc(keyboardDown)
         glutKeyboardUpFunc(keyboardUp)
         glutReshapeFunc(reshapeWindow)
+        #TODO: ZOOM WITH MOUSEWHEEL
         # glutMouseWheelFunc(mouseWheel);
         glutMotionFunc(motion)
 
-    def resetParticleDrag(self, pos, pos_old):
-        if self.dragId != -1:
-            self.system.part[self.dragId].ext_force = self.extForceOld
+        index=0
+        for t in self.timers:
+            glutTimerFunc(t[0], dummyTimer, index)
+            index+=1
 
+    #CLICKED ON PARTICLE: DRAG; CLICKED ON BACKGROUND: CAMERA
     def mouseMotion(self, mousePos, mousePosOld):
 
         if self.dragId != -1:
             ppos = self.particles['coords'][self.dragId]
             viewport = glGetIntegerv(GL_VIEWPORT)
-            mouseWorld = gluUnProject(mousePos[0], viewport[
-                                      3] - mousePos[1], self.depth)
+            mouseWorld = gluUnProject(mousePos[0], viewport[3] - mousePos[1], self.depth)
 
-            f = self.specs['dragForce'] * \
-                (np.asarray(mouseWorld) - np.array(ppos))
-            self.system.part[self.dragId].ext_force = f
+            self.dragExtForce = self.specs['dragForce'] * (np.asarray(mouseWorld) - np.array(ppos))
+            self.triggerSetParticleDrag = True
+            #self.system.part[self.dragId].ext_force = f
         else:
             self.camera.rotateCamera(mousePos, mousePosOld)
 
+    #DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
     def setParticleDrag(self, pos, pos_old):
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -434,11 +462,23 @@ class EspressoVisualizer:
         self.dragId = pid
         if pid != -1:
             self.dragPosInitial = self.particles['coords'][self.dragId]
-            self.extForceOld = self.system.part[self.dragId].ext_force[:]
+            self.extForceOld = self.particles['ext_forces'][self.dragId][:]
             self.depth = depth
         self.specs['particle_coloring'] = oldColMode
         glEnable(GL_LIGHTING)
 
+    def resetParticleDrag(self, pos, pos_old):
+        if self.dragId != -1:
+            self.triggerResetParticleDrag = True
+
+    def IdToColorf(self, pid):
+        pid += 1
+        return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+
+    def fcolorToId(self, fcol):
+        return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+
+    #ALL THE INITS
     def initEspressoVisualization(self):
         self.maxq = 0
         self.minq = 0
@@ -446,14 +486,14 @@ class EspressoVisualizer:
         self.dragId = -1
         self.dragPosInitial = []
         self.extForceOld = []
+        self.dragExtForceOld = []
+        self.triggerResetParticleDrag=False
+        self.triggerSetParticleDrag=False
+
         self.depth = 0
 
         self.imPos = [np.array([self.system.box_l[0], 0, 0]), np.array(
             [0, self.system.box_l[1], 0]), np.array([0, 0, self.system.box_l[2]])]
-
-        self.testParams = {}
-        self.testParams['constAtt'] = 1.0
-        self.testParams['linAtt'] = 0.01
 
         self.lb_min_vel = np.array([-1e-6] * 3)
         self.lb_max_vel = np.array([1e-6] * 3)
@@ -469,12 +509,14 @@ class EspressoVisualizer:
         self.updateChargeColorRange()
         self.updateBonds()
 
+    #BOX PLANES (NORMAL, ORIGIN) FOR PERIODIC BONDS
     def boxSizeDependence(self):
         self.box_n = [np.array([1, 0, 0]), np.array([0, 1, 0]), np.array(
             [0, 0, 1]), np.array([-1, 0, 0]), np.array([0, -1, 0]), np.array([0, 0, -1])]
         self.box_p = [np.array([0, 0, 0]), np.array([0, 0, 0]), np.array([0, 0, 0]), np.array(
             self.system.box_l), np.array(self.system.box_l), np.array(self.system.box_l)]
 
+    #DEFAULT CONTROLS
     def initControls(self):
         self.mouseManager.registerButton(MouseButtonEvent(
             None, MouseFireEvent.FreeMotion, self.mouseMotion))
@@ -497,30 +539,33 @@ class EspressoVisualizer:
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'q', KeyboardFireEvent.Hold, self.camera.rotateSystemXL))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'y', KeyboardFireEvent.Hold, self.camera.rotateSystemYR))
+            'z', KeyboardFireEvent.Hold, self.camera.rotateSystemYR))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'c', KeyboardFireEvent.Hold, self.camera.rotateSystemYL))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'r', KeyboardFireEvent.Hold, self.camera.rotateSystemZR))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL))
+    
+    #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
+    def setLightPos(self): 
+        if self.specs['light_pos'] == 'auto':
+            glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
+        else:
+            glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
+
+    def triggerLightPosUpdate(self):
+        self.updateLightPos=True
 
     def initCamera(self):
         bl = self.system.box_l[0]
         bl2 = bl / 2.0
         box_center = np.array([bl2, bl2, bl2])
-        self.camera = Camera(camPos=np.array(
-            [bl * 1.3, bl * 1.3, bl * 2.5]), camRot=np.array([3.55, -0.4]), center=box_center)
+        self.camera = Camera(camPos=np.array([bl * 1.3, bl * 1.3, bl * 2.5]), camRot=np.array([3.55, -0.4]), center=box_center, updateLights=self.triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
-
-    def IdToColorf(self, pid):
-        pid += 1
-        return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
-
-    def fcolorToId(self, fcol):
-        return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+        self.updateLightPos=True
 
     def initOpenGL(self):
         glutInit(self.specs['name'])
@@ -536,17 +581,7 @@ class EspressoVisualizer:
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
-        # glEnable(GL_CULL_FACE)
-        # glCullFace(GL_FRONT_AND_BACK)
-
-        # Stencil Buffer for object recognition
-        # glEnable(GL_STENCIL_TEST)
-        #glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
-
-        # AntiAliasing
-        # glEnable(GL_LINE_SMOOTH)
-# glEnable(GL_POLYGON_SMOOTH)
-
+        
         # setup lighting
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
@@ -563,33 +598,9 @@ class EspressoVisualizer:
                  0] / 67. * 0.005 / self.specs['lightSize'])
         glEnable(GL_LIGHT0)
 
-        #lightOnePosition = [0.,6.,2.,1.]
-        # lightOneColor = [0.1,0.0,8.0,1.0] # greenish
-        #glLightfv(GL_LIGHT1, GL_POSITION, lightOnePosition)
-        #glLightfv(GL_LIGHT1, GL_DIFFUSE, lightOneColor)
-        #glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.1)
-        #glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.05)
-        # glEnable(GL_LIGHT1)
+#END OF MAIN CLASS 
 
-        # setup cameras
-#       box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-#        glMatrixMode(GL_PROJECTION)
-#        gluPerspective(40, 1.0*self.specs['window_size'][0]/self.specs['window_size'][1], 0.1, 4.0 * box_diag)
-#        glMatrixMode(GL_MODELVIEW)
-#        glPushMatrix()
-
-#OpenGLDraw, ControlManager
-
-no_mat = [0.0, 0.0, 0.0, 1.0]
-mat_ambient = [0.7, 0.7, 0.7, 1.0]
-mat_ambient_color = [0.8, 0.8, 0.2, 1.0]
-mat_diffuse = [0.1, 0.5, 0.8, 1.0]
-mat_specular = [1.0, 1.0, 1.0, 1.0]
-mat_emission = [0.3, 0.2, 0.2, 0.0]
-
-# OpenGL draw helpers
-
-
+#OPENGL DRAW WRAPPERS
 def setSolidMaterial(r, g, b, a=1.0, ambient=0.6, diffuse=1.0, specular=0.1):
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [
                  ambient * r, ambient * g, ambient * g, a])
@@ -599,13 +610,11 @@ def setSolidMaterial(r, g, b, a=1.0, ambient=0.6, diffuse=1.0, specular=0.1):
                  specular * r, specular * g, specular * g, a])
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 50)
 
-
 def setOutlineMaterial(r, g, b, a=1.0):
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,  [r, g, b, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,  [0, 0, 0, a])
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0, 0, 0, a])
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100)
-
 
 def drawBox(pos, size, color):
     setSolidMaterial(color[0], color[1], color[2], 1, 2, 1)
@@ -614,39 +623,19 @@ def drawBox(pos, size, color):
     glutWireCube(size)
     glPopMatrix()
 
-
-def drawSphere(pos, radius, color, material):
+def drawSphere(pos, radius, color, material, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
     setSolidMaterial(color[0], color[1], color[2], color[
                      3], material[0], material[1], material[2])
-    glutSolidSphere(radius, 10, 10)
+    glutSolidSphere(radius, quality, quality)
     glPopMatrix()
 
-
-def redrawSphere(pos, radius):
+def redrawSphere(pos, radius, quality):
     glPushMatrix()
     glTranslatef(pos[0], pos[1], pos[2])
-    glutSolidSphere(radius, 10, 10)
+    glutSolidSphere(radius, quality, quality)
     glPopMatrix()
-
-    # offset the wireframe
-# glEnable(GL_POLYGON_OFFSET_LINE)
-#	glPolygonOffset(-1,-1)
-    # draw the wireframe
-#	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-#	setOutlineMaterial(wireframeColor[0],wireframeColor[1],wireframeColor[2])
-#	glLineWidth(2.0)
-#	glutSolidSphere(radius-0.5,20,20)
-    # restore default polygon mode
-#	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-#	glDisable(GL_POLYGON_OFFSET_LINE)
-
-
-#	if wireframe:
-#		glLineWidth(wireframeThickness)
-#		setSolidMaterial(wireframeColor[0],wireframeColor[1],wireframeColor[2])
-#		glutWireSphere(radius,20,20)
 
 def drawCube(pos, size, color, alpha):
     setSolidMaterial(color[0], color[1], color[2], alpha)
@@ -655,7 +644,6 @@ def drawCube(pos, size, color, alpha):
     glutSolidCube(size)
     glPopMatrix()
 
-
 def calcAngle(d):
     z = np.array([0, 0, 1])
     l = np.linalg.norm(d)
@@ -663,8 +651,7 @@ def calcAngle(d):
     t = np.cross(z, d)
     return 180.0 / pi * acos(dot_z / l), t, l
 
-
-def drawCylinder(posA, posB, radius, color):
+def drawCylinder(posA, posB, radius, color, quality):
     setSolidMaterial(color[0], color[1], color[2])
     glPushMatrix()
 
@@ -681,12 +668,12 @@ def drawCylinder(posA, posB, radius, color):
     glTranslatef(posA[0], posA[1], posA[2])
     glRotatef(ax, rx, ry, 0.0)
     quadric = gluNewQuadric()
-    gluCylinder(quadric, radius, radius, length, 10, 10)
+    gluCylinder(quadric, radius, radius, length, quality, quality)
     # glutSolidCylinder(radius,radius,length,10,10)
     glPopMatrix()
 
 
-def drawArrow(pos, d, radius, color):
+def drawArrow(pos, d, radius, color, quality):
     setSolidMaterial(color[0], color[1], color[2])
     glPushMatrix()
     glPushMatrix()
@@ -703,7 +690,7 @@ def drawArrow(pos, d, radius, color):
     glRotatef(ax, rx, ry, 0.0)
     # glRotatef(angle,t[0],t[1],t[2]);
     quadric = gluNewQuadric()
-    gluCylinder(quadric, radius, radius, v, 10, 10)
+    gluCylinder(quadric, radius, radius, v, quality, quality)
 
     glPopMatrix()
     e = pos + d
@@ -711,11 +698,11 @@ def drawArrow(pos, d, radius, color):
     # glRotatef(angle,t[0],t[1],t[2]);
     glRotatef(ax, rx, ry, 0.0)
 
-    glutSolidCone(radius * 3, 3, 10, 10)
+    glutSolidCone(radius * 3, 3, quality, quality)
     glPopMatrix()
 
 
-# Mouse/Keyboard control and callback registration; Camera
+#MOUSE EVENT MANAGER
 class MouseFireEvent:
 
     ButtonPressed = 0
@@ -763,8 +750,6 @@ class MouseManager:
             if me.button == button and state == GLUT_UP:
                 me.callback(self.mousePos, self.mousePosOld)
 
-# if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
-
     def mouseMove(self, x, y):
         self.mousePosOld = self.mousePos
         self.mousePos = np.array([x, y])
@@ -776,6 +761,7 @@ class MouseManager:
 #				me.callback(self.mousePos,self.mousePosOld)
 
 
+#KEYBOARD EVENT MANAGER
 class KeyboardFireEvent:
 
     Pressed = 0
@@ -848,10 +834,10 @@ class KeyboardManager:
         if not button in self.keyStateOld.keys():
             self.keyStateOld[button] = 0
 
-
+#CAMERA
 class Camera:
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=3, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0])):
+    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=3, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
@@ -859,19 +845,24 @@ class Camera:
         self.camRot = camRot
         self.center = center
         self.camRotGlobal = np.array([0, 0, 0])
+        self.updateLights = updateLights
         self.calcCameraDirections()
 
     def moveForward(self):
         self.camPos += self.lookDir * self.moveSpeed
+        self.updateLights()
 
     def moveBackward(self):
         self.camPos -= self.lookDir * self.moveSpeed
+        self.updateLights()
 
     def moveLeft(self):
         self.camPos -= self.right * self.moveSpeed
+        self.updateLights()
 
     def moveRight(self):
         self.camPos += self.right * self.moveSpeed
+        self.updateLights()
 
     def rotateSystemXL(self):
         self.camRotGlobal[1] += self.globalRotSpeed
