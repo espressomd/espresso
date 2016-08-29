@@ -42,7 +42,30 @@ description of the method, please refer to the literature.
   \citewbibkey{lbgpu} if you use the GPU implementation.
 \end{citebox}
 
-
+\begin{pysyntax}
+    \object{
+        espressomd.lb
+    }{
+        LBFluid | LBFluid_GPU 
+    }{
+        agrid = \arg{int},
+        dens = \arg{float},
+        visc = \arg{float},
+        tau = \arg{float}
+    }[
+        bulk_viscosity = \arg{float},
+        ext_force = \arg{array of 3 floats},
+        friction = \arg{float},
+        \require{2}{couple = \arg{2pt} | \arg{3pt}},
+        gamma_odd = \arg{float},
+        gamma_even = \arg{float}
+    ]
+    \begin{features}
+        \required[1]{LB}
+        \required[2]{LB_GPU}
+    \end{features}
+\end{pysyntax}
+        
 \begin{essyntax}
   lbfluid
   \require{2}{\opt{gpu}}
