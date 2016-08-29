@@ -91,12 +91,13 @@ faster. See the subsection~\ref{sec:forcecap} for details.
   \begin{features}
     \required{TABULATED}
   \end{features}
-	\object{espressomd.non_bonded_inter[\var{type1},
-		\var{type2}]}
-		{tabulated}
-		{
-			filename=\arg{filename}
-		}
+  \object{
+    espressomd.non_bonded_inter[\var{type1},\var{type2}]
+  }{
+    tabulated
+  }{
+    filename=\arg{filename}
+  }
 \end{pysyntax}
 
 This defines an interaction between particles of the types \var{type1} and
@@ -854,8 +855,8 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
 \begin{pysyntax}
- \object{
-	 espressomd.System().bondedInter.add(FeneBond)
+  \object{
+    espressomd.System().bondedInter.add(FeneBond)
   }{
     setParams
   }{
@@ -1014,14 +1015,16 @@ general tabulated potentials.
 \label{sec:rattle}
 
 \begin{pysyntax}
-\object{espressomd.interactions}{
-	RigidBond
-}{
-	r = \arg{float},
-}[
-	ptol = \arg{float},
-	vtol = \arg{float}
-]
+  \object{
+    espressomd.interactions
+  }{
+    RigidBond
+  }{
+    r = \arg{float},
+  }[
+    ptol = \arg{float},
+    vtol = \arg{float}
+  ]
 \end{pysyntax}
 
 \begin{essyntax}
@@ -1065,15 +1068,17 @@ non-bonded tabulated potentials (see section \ref{sec:tabnonbonded}).
   \begin{features}
     \required{TABULATED}
   \end{features}
-	\object{espressomd.interactions.Tabulated
-		}
-    {
-			type=\arg{str},
-			filename=\arg{filename}
-		}
+  \object{
+    espressomd.interactions
+  }{
+    Tabulated
+  }{
+    type=\arg{str},
+    filename=\arg{filename}
+  }
 \end{pysyntax}
 
-The bonded interaction can be based on a distance, a bond angle or a dihedral angle. This is determined by the \textt{type} argument, which can be one of \texttt{distance}, \texttt{angle} or \texttt{dihedral}. The data is read from th file given by the \texttt{filename} argument.
+The bonded interaction can be based on a distance, a bond angle or a dihedral angle. This is determined by the \texttt{type} argument, which can be one of \texttt{distance}, \texttt{angle} or \texttt{dihedral}. The data is read from th file given by the \texttt{filename} argument.
 
 \subsubsection{Calculation of the force and energy}
 
