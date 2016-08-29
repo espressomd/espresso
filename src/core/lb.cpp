@@ -378,8 +378,6 @@ int lb_lbfluid_set_friction(double * p_friction)
 int lb_lbfluid_get_friction(double * p_friction)
 {
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_friction[ii] <= 0 )
-            return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_friction[ii] = (double)lbpar_gpu.friction[ii];
@@ -519,8 +517,6 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 
 int lb_lbfluid_get_density(double *p_dens) {
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_dens[ii] <= 0 )
-      return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_dens[ii] = (double)lbpar_gpu.rho[ii];
@@ -536,8 +532,6 @@ int lb_lbfluid_get_density(double *p_dens) {
 
 int lb_lbfluid_get_visc(double* p_visc){
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_visc[ii] <= 0 )
-      return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_visc[ii] = (double)lbpar_gpu.viscosity[ii];
