@@ -26,6 +26,7 @@
 #include "SpheroCylinder.hpp"
 #include "Maze.hpp"
 #include "HollowCone.hpp"
+#include "Pore.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -37,6 +38,7 @@ void initialize() {
   ParallelScriptInterface<ScriptInterface::Shapes::SpheroCylinder>::register_new("Shapes::SpheroCylinder");
   ParallelScriptInterface<ScriptInterface::Shapes::Maze>::register_new("Shapes::Maze");
   ParallelScriptInterface<ScriptInterface::Shapes::HollowCone>::register_new("Shapes::HollowCone");
+  ParallelScriptInterface<ScriptInterface::Shapes::Pore>::register_new("Shapes::Pore");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -26,21 +26,36 @@
 #include "Vector.hpp"
 
 namespace Shapes {
-struct Pore : public Shape {
+class Pore : public Shape {
+public:
+  Pore(): m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_rad_left(0.0), m_rad_right(0.0),
+	      m_smoothing_radius(0.0), m_length(0.0), m_outer_rad_left(0.0), m_outer_rad_right(0.0) {}
+
   int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
+  
+  Vector3d const &pos() const { return m_pos; }
+  Vector3d const &axis() const { return m_axis; }
+  double const &rad_left() const { return m_rad_left; }
+  double const &rad_right() const { return m_rad_right; }
+  double const &smoothing_radius() const { return m_smoothing_radius; }
+  double const &length() const { return m_length; }
+  double const &outer_rad_left() const { return m_outer_rad_left; }
+  double const &outer_rad_right() const { return m_outer_rad_right; }
+
+private:
   /** center of the cylinder. */
-  Vector3d pos;
+  Vector3d m_pos;
   /** Axis of the cylinder .*/
-  Vector3d axis;
+  Vector3d m_axis;
   /** cylinder radius. */
-  double rad_left;
-  double rad_right;
-  double smoothing_radius;
+  double m_rad_left;
+  double m_rad_right;
+  double m_smoothing_radius;
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
-  double length;
-  double outer_rad_left;
-  double outer_rad_right;
+  double m_length;
+  double m_outer_rad_left;
+  double m_outer_rad_right;
 };
 };
 

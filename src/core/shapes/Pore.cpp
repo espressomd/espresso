@@ -46,25 +46,25 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r,
       temp;
 
-  slope = (rad_right - rad_left) / 2. / (length - smoothing_radius);
+  slope = (m_rad_right - m_rad_left) / 2. / (m_length - m_smoothing_radius);
   slope2 =
-      (outer_rad_right - outer_rad_left) / 2. / (length - smoothing_radius);
+      (m_outer_rad_right - m_outer_rad_left) / 2. / (m_length - m_smoothing_radius);
 
   /* compute the position relative to the center of the pore */
   for (i = 0; i < 3; i++) {
-    c_dist[i] = ppos[i] - pos[i];
+    c_dist[i] = ppos[i] - m_pos[i];
   }
 
   /* compute the component parallel to the pore axis */
   z = 0.;
   for (i = 0; i < 3; i++) {
-    z += (c_dist[i] * axis[i]);
+    z += (c_dist[i] * m_axis[i]);
   }
 
   /* decompose the position into parallel and perpendicular to the axis */
   r = 0.;
   for (i = 0; i < 3; i++) {
-    z_vec[i] = z * axis[i];
+    z_vec[i] = z * m_axis[i];
     r_vec[i] = c_dist[i] - z_vec[i];
     r += r_vec[i] * r_vec[i];
   }
@@ -76,7 +76,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     norm += z_vec[i] * z_vec[i];
   norm = sqrt(norm);
   for (i = 0; i < 3; i++)
-    e_z[i] = axis[i];
+    e_z[i] = m_axis[i];
   norm = 0;
   for (i = 0; i < 3; i++)
     norm += r_vec[i] * r_vec[i];
@@ -86,39 +86,39 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
 
   /* c?_r/z and are the centers of the circles that are used to smooth
    * the entrance of the pore in cylindrical coordinates*/
-  c1_z = -(length - smoothing_radius);
-  c2_z = +(length - smoothing_radius);
+  c1_z = -(m_length - m_smoothing_radius);
+  c2_z = +(m_length - m_smoothing_radius);
   z_left = c1_z -
            Utils::sgn<double>(slope) *
-               sqrt(slope * slope / (1 + slope * slope)) * smoothing_radius;
+               sqrt(slope * slope / (1 + slope * slope)) * m_smoothing_radius;
   z_right = c2_z +
             Utils::sgn<double>(slope) *
-                sqrt(slope * slope / (1 + slope * slope)) * smoothing_radius;
+                sqrt(slope * slope / (1 + slope * slope)) * m_smoothing_radius;
 
-  c1_r = rad_left + slope * (z_left + length) +
-         sqrt(smoothing_radius * smoothing_radius - SQR(z_left - c1_z));
-  c2_r = rad_left + slope * (z_right + length) +
-         sqrt(smoothing_radius * smoothing_radius - SQR(z_right - c2_z));
-  c1_r = rad_left + smoothing_radius;
-  c2_r = rad_right + smoothing_radius;
+  c1_r = m_rad_left + slope * (z_left + m_length) +
+         sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_left - c1_z));
+  c2_r = m_rad_left + slope * (z_right + m_length) +
+         sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_right - c2_z));
+  c1_r = m_rad_left + m_smoothing_radius;
+  c2_r = m_rad_right + m_smoothing_radius;
 
-  double c1_or = outer_rad_left - smoothing_radius;
-  double c2_or = outer_rad_right - smoothing_radius;
+  double c1_or = m_outer_rad_left - m_smoothing_radius;
+  double c2_or = m_outer_rad_right - m_smoothing_radius;
 
   /* Check if we are in the region of the left wall */
   if (((r >= c1_r) && (r <= c1_or) && (z <= c1_z))) {
-    dist_vector_z = -z - length;
+    dist_vector_z = -z - m_length;
     dist_vector_r = 0;
-    *dist = -z - length;
+    *dist = -z - m_length;
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
   /* Check if we are in the region of the right wall */
   if (((r >= c2_r) && (r < c2_or) && (z >= c2_z))) {
-    dist_vector_z = -z + length;
+    dist_vector_z = -z + m_length;
     dist_vector_r = 0;
-    *dist = +z - length;
+    *dist = +z - m_length;
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
@@ -160,9 +160,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
 
   if (p1_z >= c1_z && p1_z <= c2_z && dist_vector_r >= 0) {
     temp = sqrt(dist_vector_r * dist_vector_r + dist_vector_z * dist_vector_z);
-    *dist = temp - smoothing_radius;
-    dist_vector_r -= dist_vector_r / temp * smoothing_radius;
-    dist_vector_z -= dist_vector_z / temp * smoothing_radius;
+    *dist = temp - m_smoothing_radius;
+    dist_vector_r -= dist_vector_r / temp * m_smoothing_radius;
+    dist_vector_z -= dist_vector_z / temp * m_smoothing_radius;
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
@@ -171,9 +171,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   if (p2_z >= c1_z && p2_z <= c2_z && dist_vector_r_o <= 0) {
     temp = sqrt(dist_vector_r_o * dist_vector_r_o +
                 dist_vector_z_o * dist_vector_z_o);
-    *dist = temp - smoothing_radius;
-    dist_vector_r_o -= dist_vector_r_o / temp * smoothing_radius;
-    dist_vector_z_o -= dist_vector_z_o / temp * smoothing_radius;
+    *dist = temp - m_smoothing_radius;
+    dist_vector_r_o -= dist_vector_r_o / temp * m_smoothing_radius;
+    dist_vector_z_o -= dist_vector_z_o / temp * m_smoothing_radius;
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r_o * e_r[i] - dist_vector_z_o * e_z[i];
     return 0;
@@ -183,9 +183,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   if (p1_z <= c1_z && r <= c1_r) {
     /* distance from the smoothing center */
     norm = sqrt((z - c1_z) * (z - c1_z) + (r - c1_r) * (r - c1_r));
-    *dist = norm - smoothing_radius;
-    dist_vector_r = (smoothing_radius / norm - 1) * (r - c1_r);
-    dist_vector_z = (smoothing_radius / norm - 1) * (z - c1_z);
+    *dist = norm - m_smoothing_radius;
+    dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c1_r);
+    dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c1_z);
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
@@ -194,9 +194,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   if (p2_z <= c1_z && r >= c1_or) {
     /* distance from the smoothing center */
     norm = sqrt((z - c1_z) * (z - c1_z) + (r - c1_or) * (r - c1_or));
-    *dist = norm - smoothing_radius;
-    dist_vector_r = (smoothing_radius / norm - 1) * (r - c1_or);
-    dist_vector_z = (smoothing_radius / norm - 1) * (z - c1_z);
+    *dist = norm - m_smoothing_radius;
+    dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c1_or);
+    dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c1_z);
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
@@ -204,9 +204,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   /* Check if we are in the range of the right smoothing circle */
   if (p1_z >= c2_z && r <= c2_r) {
     norm = sqrt((z - c2_z) * (z - c2_z) + (r - c2_r) * (r - c2_r));
-    *dist = norm - smoothing_radius;
-    dist_vector_r = (smoothing_radius / norm - 1) * (r - c2_or);
-    dist_vector_z = (smoothing_radius / norm - 1) * (z - c2_z);
+    *dist = norm - m_smoothing_radius;
+    dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c2_or);
+    dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c2_z);
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
@@ -214,9 +214,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   /* Check if we are in the range of the upper right smoothing circle */
   if (p2_z >= c2_z && r >= c2_or) {
     norm = sqrt((z - c2_z) * (z - c2_z) + (r - c2_or) * (r - c2_or));
-    *dist = norm - smoothing_radius;
-    dist_vector_r = (smoothing_radius / norm - 1) * (r - c2_or);
-    dist_vector_z = (smoothing_radius / norm - 1) * (z - c2_z);
+    *dist = norm - m_smoothing_radius;
+    dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c2_or);
+    dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c2_z);
     for (i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
