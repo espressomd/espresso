@@ -19,33 +19,32 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __SHAPES_MAZE_HPP
-#define __SHAPES_MAZE_HPP
+#ifndef SCRIPT_INTERFACE_SHAPES_MAZW_HPP
+#define SCRIPT_INTERFACE_SHAPES_MAZW_HPP
 
 #include "Shape.hpp"
+#include "core/shapes/Maze.hpp"
 
+namespace ScriptInterface {
 namespace Shapes {
+
 class Maze : public Shape {
 public:
-  Maze() : m_nsphere(0.0), m_dim(0.0), m_sphrad(0.0), m_cylrad(0.0) {}
+  Maze() : m_maze(new ::Shapes::Maze()) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  const std::string name() const override { return "Shapes::Maze"; }
 
-  double const &nsphere() const { return m_nsphere; }
-  double const &dim() const { return m_dim; }
-  double const &sphrad() const { return m_sphrad; }
-  double const &cylrad() const { return m_cylrad; }
+  ParameterMap valid_parameters() const override;
+  VariantMap get_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
+
+  std::shared_ptr<::Shapes::Shape> shape() const override { return m_maze; }
 
 private:
-  /** number of spheres. */
-  double m_nsphere;
-  /** dimension of the maze. */
-  double m_dim;
-  /** sphere radius. */
-  double m_sphrad;
-  /** cylinder (connecting the spheres) radius*/
-  double m_cylrad;
+  std::shared_ptr<::Shapes::Maze> m_maze;
 };
-};
+
+} /* namespace Shapes */
+} /* namespace ScriptInterface */
 
 #endif

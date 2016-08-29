@@ -31,8 +31,8 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   double diasph, fac, c_dist, sph_dist, cyl_dist, temp_dis;
   double sph_vec[3], cyl_vec[3];
 
-  dim = (int)this->dim;
-  diasph = box_l[0] / nsphere;
+  dim = (int)this->m_dim;
+  diasph = box_l[0] / m_nsphere;
 
   /* First determine the distance to the sphere */
   c_dist = 0.0;
@@ -42,7 +42,7 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
     c_dist += SQR(sph_vec[i]);
   }
   c_dist = sqrt(c_dist);
-  sph_dist = sphrad - c_dist;
+  sph_dist = m_sphrad - c_dist;
   fac = sph_dist / c_dist;
   for (i = 0; i < 3; i++)
     cyl_vec[i] = sph_vec[i];
@@ -72,7 +72,7 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   cyl_vec[min_axis] = 0.;
 
   c_dist = cyl_dist;
-  cyl_dist = cylrad - c_dist;
+  cyl_dist = m_cylrad - c_dist;
   fac = cyl_dist / c_dist;
   for (i = 0; i < 3; i++)
     cyl_vec[i] *= fac;
