@@ -40,5 +40,5 @@ class System(_system.System):
             else:
                 super(System, self).__setattr__(name, None)
 
-        for name, value in kwargs.items():
+        for name, value in list(kwargs.items()):
             super(System, self).__setattr__(name, value)

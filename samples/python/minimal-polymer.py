@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
@@ -55,4 +56,4 @@ for i in range(20):
     integrate.integrate(1000)
 
     energies = system.analysis.energy()
-    print energies
+    print(energies)

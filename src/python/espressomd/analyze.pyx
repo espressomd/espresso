@@ -17,23 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-cimport c_analyze
-cimport utils
-cimport particle_data
-import utils
-import code_info
-import particle_data
+from . cimport c_analyze
+from . cimport utils
+from . cimport particle_data
+from . import utils
+from . import code_info
+from . import particle_data
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
-from interactions import *
-from interactions cimport *
+from .interactions import *
+from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from _system import System
+from ._system import System
 
 
 class Analysis:
@@ -727,7 +728,7 @@ class Analysis:
     
     
     def angularmomentum(self, p_type=None):
-        print "p_type = ", p_type
+        print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int,   "p_type has to be an int")
     
@@ -853,9 +854,9 @@ class Analysis:
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
             _Vkappa["avk"] = avk
             if (_Vkappa["avk"] <= 0.0):
+                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
             else:
                 result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
                     (_Vkappa["Vk1"] / _Vkappa["avk"])**2

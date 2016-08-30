@@ -63,7 +63,7 @@ foreach(cython_file ${cython_SRC})
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${basename}.cpp
-                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}  --cplus ${CYTHON_FLAGS}
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso

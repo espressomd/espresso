@@ -18,6 +18,7 @@
 #
 
 # @TODO: shouldn't these global definitions be used via global_variables?
+from __future__ import print_function, absolute_import
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
 

@@ -163,7 +163,10 @@ transfer_rate {0.transfer_rate}
 
 # Pickle data
 ###########################################################
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 with open("particle_save","w") as particle_save:
     pickle.dump(system.part, particle_save, -1)

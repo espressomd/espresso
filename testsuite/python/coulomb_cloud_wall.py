@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -67,13 +68,13 @@ class CoulombCloudWall(ut.TestCase):
                 force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
             force_abs_diff /= len(self.S.part)
     
-            print method_name, "force difference", force_abs_diff
+            print(method_name, "force difference", force_abs_diff)
     
             # Energy
             if energy:
                 energy_abs_diff = abs(self.S.analysis.energy(
                     self.S)["total"] - self.reference_energy)
-                print method_name, "energy difference", energy_abs_diff
+                print(method_name, "energy difference", energy_abs_diff)
                 self.assertTrue(energy_abs_diff <= self.tolerance, "Absolte energy difference " +
                                 str(energy_abs_diff) + " too large for " + method_name)
             self.assertTrue(force_abs_diff <= self.tolerance, "Asbolute force difference " +

@@ -18,10 +18,11 @@
 #
 # Handling of interactions
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct ia_parameters "IA_parameters":

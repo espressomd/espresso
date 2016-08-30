@@ -114,8 +114,13 @@ if (WITH_PYTHON)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
-                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  else()
+    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  endif()
 endif(WITH_PYTHON)
 
 find_package(FFTW3)

@@ -18,5 +18,6 @@
 #
 # For C-extern Analysis
 
+from __future__ import print_function, absolute_import
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *

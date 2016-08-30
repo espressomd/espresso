@@ -25,7 +25,10 @@ from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 import numpy
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 print("""
@@ -133,7 +136,7 @@ transfer_rate {0.transfer_rate}
 
 print("P3M parameters:\n")
 p3m_params = p3m.get_params()
-for key in p3m_params.keys():
+for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print(system.actors)
@@ -148,7 +151,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 
