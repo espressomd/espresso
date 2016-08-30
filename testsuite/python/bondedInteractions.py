@@ -111,6 +111,11 @@ class ParticleProperties(ut.TestCase):
     if "LENNARD_JONES" in espressomd.features():
         test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
 
+    if "TABULATED" in espressomd.features():
+      test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance", "filename":"lj1.tab"})
+
+
+
 if __name__ == "__main__":
     print("Features: ", code_info.features())
     ut.main()

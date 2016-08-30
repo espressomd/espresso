@@ -140,8 +140,12 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 
   /* set number of interaction partners */
   if(tab_type == TAB_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
-  if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
-  if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
+  else if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
+  else if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
+  else {
+    runtimeError("Unsupported tabulated bond type.");
+    return 1;
+  }
 
   /* copy filename */
   size = strlen(filename);

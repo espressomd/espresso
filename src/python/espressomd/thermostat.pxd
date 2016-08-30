@@ -29,7 +29,10 @@ cdef extern from "global.hpp":
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
-    
+    IF NPT:
+        int FIELD_NPTISO_G0
+        int FIELD_NPTISO_GV
+
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
@@ -41,3 +44,11 @@ cdef extern from "thermostat.hpp":
             double langevin_gamma_rotation[3]
         ELSE:
             double langevin_gamma_rotation
+    int THERMO_NPT_ISO
+    int THERMO_DPD
+    int THERMO_INTER_DPD
+    IF ROTATIONAL_INERTIA:
+        double langevin_gamma_rotation[3]
+    ELSE:
+        double langevin_gamma_rotation
+
