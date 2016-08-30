@@ -38,10 +38,13 @@ public:
   VariantMap get_parameters() const override;
   void set_parameter(const std::string &name, const Variant &value) override;
 
-  std::shared_ptr<::Shapes::Shape> shape() const override { return m_spherocylinder; }
+  std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_spherocylinder;
+  }
 
 private:
-  std::shared_ptr<::Shapes::SpheroCylindercylinder};
+  std::shared_ptr<::Shapes::SpheroCylinder> m_spherocylinder;
+};
 
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
