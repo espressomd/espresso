@@ -42,15 +42,15 @@ public:
   Vector() {}
 
   template <typename Container> explicit Vector(Container const &v) {
-    assert(v.size() == n);
+    assert(std::distance(std::begin(v), std::end(v)) == n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(std::initializer_list<Scalar> l) {
+  Vector(std::initializer_list<Scalar> l) {
     assert(l.size() == n);
     std::copy(std::begin(l), std::end(l), d.begin());
   }
-  
+
   Scalar &operator[](int i) { return d[i]; }
   Scalar const &operator[](int i) const { return d[i]; }
 
