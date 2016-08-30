@@ -17,11 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import code_info
-from espressomd import integrate
 from espressomd import lb
 import numpy as np
 
@@ -36,7 +34,7 @@ print(code_info.features())
 
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.1
+system.cell_system.skin = 0.1
 box_l = 50
 system.box_l =[box_l, box_l, box_l]
 # system.periodic = [1,1,1]
@@ -54,7 +52,7 @@ print(lbf.get_params())
 f_list = []
 for i in range(10):
     f_list.append(system.part[0].f)
-    integrate.integrate(10)
+    system.integrator.run(steps=10)
     print(i)
 
 f_list=np.array(f_list)

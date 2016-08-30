@@ -27,9 +27,8 @@ from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
+from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
-from globals cimport max_seen_particle, time_step, smaller_time_step, n_part
 
 PARTICLE_EXT_FORCE = 1
 
@@ -46,7 +45,8 @@ PARTICLE_EXT_TORQUE = 16
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        particle_attributes.append(d)
+        if not d in ["pos_folded"]:
+            particle_attributes.append(d)
 
 
 cdef class ParticleHandle:
@@ -60,7 +60,7 @@ cdef class ParticleHandle:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
 
         if get_particle_data(self.id, & self.particle_data):
-            raise Exception("Error updating particle data")
+            raise Exception("Error updating particle data for id "+str(self.id))
         else:
             return 0
 
@@ -860,6 +860,12 @@ cdef class ParticleHandle:
                 raise Exception(
                     "1st element of Bond has to be of type BondedInteraction or int.")
 
+        # Check whether the bond has been added to the list of active bonded
+        # interactions
+        if bond[0]._bond_id == -1:
+            raise Exception(
+                "The bonded interaction has not yet been added to the list of active bonds in Espresso")
+
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
             raise ValueError("The bond type", bond._bond_id, "does not exist.")
@@ -870,9 +876,14 @@ cdef class ParticleHandle:
                              bond[0]._bond_id], "partners.")
 
         # Type check on partners
-        for y in bond[1:]:
-            if not isinstance(y, int):
-                raise ValueError("Partners have to be integer.")
+        for i in range(1, len(bond)):
+            if not isinstance(bond[i], int):
+                if not isinstance(bond[i], ParticleHandle):
+                    raise ValueError(
+                        "Bond partners have to be of type integer or ParticleHandle.")
+                else:
+                    # Put the particle id instead of the particle handle
+                    bond[i] = bond[i].id
 
     def add_bond(self, _bond):
         """Add a single bond to the particle"""
@@ -905,6 +916,13 @@ cdef class ParticleSlice:
     def __cinit__(self, slice_):
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
+        mask =np.empty(len(self.id_selection),dtype=np.bool)
+        cdef int i
+        for i in range(len(self.id_selection)-1,-1,-1):
+            mask[i]= particle_exists(i)
+        self.id_selection=self.id_selection[mask]
+
+
 
     cdef int update_particle_data(self, id) except -1:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
@@ -1250,9 +1268,9 @@ cdef class ParticleList:
                         "pos attribute must be specified for new particle")
 
                 if len(np.array(kwargs["pos"]).shape) == 2:
-                    self._place_new_particles(kwargs)
+                    return self._place_new_particles(kwargs)
                 else:
-                    self._place_new_particle(kwargs)
+                    return self._place_new_particle(kwargs)
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args")
@@ -1285,6 +1303,8 @@ cdef class ParticleList:
         if P != {}:
             self[id].update(P)
 
+        return self[id]
+
     def _place_new_particles(self, P):
 
         if not "id" in P:
@@ -1307,6 +1327,8 @@ cdef class ParticleList:
 
         if P != {}:
             self[ids].update(P)
+
+        return self[ids]
 
     # Iteration over all existing particles
     def __iter__(self):
@@ -1363,3 +1385,31 @@ cdef class ParticleList:
                 for t in types:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
+
+    property highest_particle_id:
+        def __get__(self):
+            return max_seen_particle
+
+    property n_part_types:
+        def __get__(self):
+            return n_particle_types
+
+    property n_rigidbonds:
+        def __get__(self):
+            return n_rigidbonds
+
+    # property max_part:
+    #     def __get__(self):
+    #         return max_seen_particle
+
+    # # property n_part:
+    #     def __get__(self):
+    #         return n_part
+
+    def pairs(self):
+        """Generator returns all pairs of particles"""
+        for i in range(max_seen_particle + 1):
+            for j in range(i + 1, max_seen_particle + 1, 1):
+                if not (self.exists(i) and self.exists(j)):
+                    continue
+                yield (self[i], self[j])

@@ -37,5 +37,8 @@ cdef extern from "random.hpp" namespace "Random":
     void mpi_random_set_stat(const vector[string] &stat)
     int get_state_size_of_generator()
 
+cdef extern from "utils.hpp":
+    void get_mi_vector(double* res,double* a, double* b)
+
 
 cdef bool skin_set
