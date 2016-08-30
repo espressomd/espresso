@@ -60,7 +60,7 @@ cdef class ParticleHandle:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
 
         if get_particle_data(self.id, & self.particle_data):
-            raise Exception("Error updating particle data")
+            raise Exception("Error updating particle data for id "+str(self.id))
         else:
             return 0
 
@@ -916,6 +916,13 @@ cdef class ParticleSlice:
     def __cinit__(self, slice_):
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
+        mask =np.empty(len(self.id_selection),dtype=np.bool)
+        cdef int i
+        for i in range(len(self.id_selection)-1,-1,-1):
+            mask[i]= particle_exists(i)
+        self.id_selection=self.id_selection[mask]
+
+
 
     cdef int update_particle_data(self, id) except -1:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
