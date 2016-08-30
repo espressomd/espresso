@@ -75,6 +75,7 @@ cdef extern from "interaction_data.hpp":
     extern int n_particle_types
     extern double max_cut_nonbonded
     extern double max_cut_bonded
+    extern double min_global_cut
 
 
 cdef extern from "thermostat.hpp":

@@ -38,7 +38,7 @@ from galilei import GalileiTransform
 import sys
 import random #for true random numbers from os.urandom()
 
-setable_properties = ["box_l", "max_num_cells", "min_num_cells",
+setable_properties = ["box_l", "min_global_cut", "max_num_cells", "min_num_cells",
                       "node_grid", "npt_piston", "npt_p_diff",
                       "periodicity", "skin", "time",
                       "time_step", "timings", "random_number_generator_state"]
@@ -147,6 +147,14 @@ cdef class System:
 
         def __get__(self):
             return max_num_cells
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            global min_global_cut
+            min_global_cut = _min_global_cut
+            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+        def __get__(self):
+            return min_global_cut
 
     property min_num_cells:
         def __set__(self, int _min_num_cells):

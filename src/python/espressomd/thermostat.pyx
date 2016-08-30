@@ -76,3 +76,22 @@ cdef class Thermostat:
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         return True
+
+    IF LB_GPU or LB:
+        def set_lb(self, kT=""):
+            """Sets the LB thermostat with required parameter 'temperature'"""
+
+            if kT == "":
+                raise ValueError(
+                    "kT has to be given as keyword arg")
+            if not isinstance(kT, float) or float(kT) < 0.:
+                raise ValueError("temperature must be non-negative")
+            global temperature
+            temperature = float(kT)
+            global thermo_switch
+            thermo_switch = (thermo_switch or THERMO_LB)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_bcast_parameter(FIELD_TEMPERATURE)
+            return True
+
+
