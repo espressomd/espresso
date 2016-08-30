@@ -30,6 +30,11 @@ cdef extern from "integrate.hpp" nogil:
     cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
     cdef extern cbool skin_set
 
+cdef inline int _integrate(int nSteps, int recalc_forces, int reuse_forces):
+    with nogil:
+        return python_integrate(nSteps, recalc_forces, reuse_forces)
+
+
 cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
     cdef cppclass ErrorLevel:
         pass
@@ -45,3 +50,12 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError]mpi_gather_runtime_errors()
+
+cdef extern from "minimize_energy.hpp":
+    cbool minimize_energy();
+    void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement);
+    cbool steepest_descent_step();
+
+# cdef class Integrator:
+#     cdef public _method
+#     cdef public _steepest_descent_params

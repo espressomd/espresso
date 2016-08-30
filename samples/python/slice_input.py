@@ -43,9 +43,9 @@ box_l = 10.0
 
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 
-system.max_num_cells = 2744
+system.cell_system.max_num_cells = 2744
 
 
 #############################################################

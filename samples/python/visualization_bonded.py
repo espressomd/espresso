@@ -2,7 +2,6 @@ from __future__ import print_function
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
-from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
 import numpy
@@ -12,7 +11,7 @@ n_part = 5
 
 system = espressomd.System()
 system.time_step = 0.01
-system.skin      = 0.4
+system.cell_system.skin      = 0.4
 system.thermostat.set_langevin(kT=1.0,gamma=1.0)
 
 # integration
@@ -40,5 +39,5 @@ mayavi = visualization.mayavi_live(system)
 j = 0
 for i in range(0,int_n_times):
   print(i)
-  integrate.integrate(int_steps)
+  system.integrator.run(int_steps)
   mayavi.update()

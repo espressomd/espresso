@@ -1,11 +1,10 @@
 from __future__ import print_function
 import espressomd
 import espressomd.lb
-from espressomd import integrate
 
 S = espressomd.System()
 S.box_l = [16, 16, 16]
-S.skin = 0.4
+S.cell_system.skin = 0.4
 S.time_step = 0.01
 
 print("Setup LB")
@@ -29,6 +28,7 @@ S.part.add(pos=[10,10,75])
 
 print("Integrate")
 for i in range(0,10):
+   S.integrator.run(100)
    integrate.integrate(100)
    print("P1: " + str(S.part[0].pos))
    print("P2: " + str(S.part[1].pos))

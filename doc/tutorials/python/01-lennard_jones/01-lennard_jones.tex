@@ -244,9 +244,7 @@ python is provided via a python module called
 \texttt{espressomd}. At the beginning of the simulation script, it has to be imported.
 \begin{lstlisting}
 import espressomd
-from espressomd import integrate
 \end{lstlisting}
-For convenience we also import the \texttt{integrate} submodule. 
 
 The next step would be to create an instance of the System class. 
 This instance is used as a handle to the simulation system. It can be used to manipulate the
@@ -336,7 +334,7 @@ while i < warm_n_time and act_min_dist < lj_sigma*0.9 :
     system.non_bonded_inter.set_force_cap(lj_cap)
     lj_cap += 1.0
     # Integrate the equation of motion
-    integrate.integrate(100)
+    system.integrator.run(100)
     # Obtain minimum distance between particles
     act_min_dist = system.analysis.mindist()
 
@@ -359,7 +357,6 @@ First, we include necessary modules with \lstinline|import|.
 {\small\vspace{0,2cm}
 \begin{lstlisting}
 import espressomd
-from espressomd import integrate
 
 from __future__ import print_function
 import cPickle as pickle
@@ -420,7 +417,7 @@ if not os.path.exists('data') :
     os.mkdir('data')
 
 system.time_step    = time_step
-system.skin         = skin
+system.cell_system.skin  = skin
 
 system.box_l = [box_l, box_l, box_l]
 
@@ -511,7 +508,7 @@ Stop if minimal distance is larger than {}
 i = 0
 act_min_dist = system.analysis.mindist()
 while i < warm_n_time and act_min_dist < min_dist :
-    integrate.integrate(warm_steps)
+    system.integrator.run(warm_steps)
     act_min_dist = system.analysis.mindist()
     print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
     i+=1
@@ -525,7 +522,7 @@ print("\nWarm up finished\n")
 system.time_step = eq_tstep 
 
 for i in range(equilibration_iterations):
-    integrate.integrate(equilibration_interval)
+    system.integrator.run(equilibration_interval)
     energies = system.analysis.energy()
     print("eq run {} at time {}\n".format(i, system.time))
 
@@ -565,7 +562,7 @@ msd = np.zeros((sampling_iterations,))
 pickle.dump(system.part, part_fp, -1)
 
 for i in range(1, sampling_iterations + 1):
-    integrate.integrate(sampling_interval)
+    system.integrator.run(sampling_interval)
     energies = system.analysis.energy()
     pressure = system.analysis.pressure()
 
@@ -668,7 +665,7 @@ avg_rdf=np.zeros((r_bins,))
 
 # calculate the rdf in the main sampling loop
 for i in range(1, sampling_iterations + 1):
-    integrate.integrate(sampling_interval)
+    system.integrator.run(sampling_interval)
     r, rdf = system.analysis.rdf(rdf_type="rdf", type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max, r_bins=r_bins)
     # system.analysis.rdf() return the bin positions as numpy array, here 'r'
     # and the corresponding value of the radial distribution function also as

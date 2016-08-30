@@ -115,7 +115,7 @@ scheme parameters:
 \begin{tclcode}
 # Simulation parameters
 system.time_step = 0.01
-system.skin = 0.3
+system.cell_system.skin = 0.3
 
 # Thermostat
 temp = 1.
@@ -184,7 +184,7 @@ for i in xrange(int_n_times):
     temp = system.analysis.energy()['ideal'] / ((3 / 2.0) * n_part)
     print("t={0}, E={1}, T={2}".format(system.time,
                                        system.analysis.energy()['total'], temp))
-    integrate.integrate(integ_steps)
+    system.integrator.run(integ_steps)
 \end{tclcode}
 
 This code block is the primary simulation loop and runs
@@ -228,7 +228,7 @@ for cap in xrange(20, 200, 20):
     print("t={0}, E={1}".format(system.time,
                                 system.analysis.energy()['total']))
     system.non_bonded_inter.set_force_cap(cap)
-    integrate.integrate(integ_steps)
+    system.integrator.run(integ_steps)
 system.non_bonded_inter.set_force_cap(0)
 \end{tclcode}
 
@@ -246,7 +246,7 @@ For later analysis of the simulation results, one will
 usually like to write out simulation data to configuration files.
 For this purpose one can use the \verb|cPickle| Python library to 
 write simulation data to a file in an easily parseable form.  We add the 
-following lines to the integration loop just after the \verb|integrate| line
+following lines to the integration loop just after the \verb|integrator.run| line
 in order to write out the system configuration files
 ``config\_0'' through ``config\_19'':
 

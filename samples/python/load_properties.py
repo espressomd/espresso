@@ -19,9 +19,7 @@
 from __future__ import print_function
 import espressomd._system as es
 import espressomd
-from espressomd import thermostat
 from espressomd import code_info
-from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 import numpy
@@ -74,7 +72,10 @@ print(system.non_bonded_inter.get_force_cap())
 
 # Integration parameters
 #############################################################
-thermostat.Thermostat().set_langevin(1.0, 1.0)
+with open("thermostat_save","r") as thermostat_save:
+    pickle.load(thermostat_save)
+
+
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -117,21 +118,11 @@ system.actors.add(p3m)
 
 # Check import
 #############################################################
-print("""
-ro variables:
-cell_grid     {0.cell_grid}
-cell_size     {0.cell_size} 
-local_box_l   {0.local_box_l} 
-max_cut       {0.max_cut}
-max_part      {0.max_part}
-max_range     {0.max_range} 
-max_skin      {0.max_skin}
-n_nodes       {0.n_nodes}
-n_part        {0.n_part}
-n_part_types  {0.n_part_types}
-periodicity   {0.periodicity}
-transfer_rate {0.transfer_rate}
-""".format(system))
+import pprint
+pprint.pprint(system.cell_system.get_state(), width=1)
+pprint.pprint(system.thermostat.get_state(), width=1)
+# pprint.pprint(system.part.__getstate__(), width=1)
+pprint.pprint(system.__getstate__(), width=1)
 
 
 print("P3M parameters:\n")
@@ -159,7 +150,7 @@ j = 0
 for i in range(0, int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
-    integrate.integrate(int_steps)
+    system.integrator.run(int_steps)
 
     energies = system.analysis.energy()
     print(energies)
