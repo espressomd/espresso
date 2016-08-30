@@ -1651,7 +1651,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao,
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
-  if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
+  if(cao >= mesh || k_cut >= std::min(min_box_l,min_local_box_l) - skin) {
     /* print result */
     sprintf(b,"%-4d %-3d  cao too large for this mesh\n", mesh, cao);
     *log = strcat_alloc(*log, b);
@@ -1912,7 +1912,7 @@ int dp3m_adaptive_tune(char **logger)
 
   if(dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
+    r_cut_iL_max = std::min(min_local_box_l, min_box_l/2) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }
@@ -1934,7 +1934,6 @@ int dp3m_adaptive_tune(char **logger)
     sprintf(b, "fixed cao %d\n", dp3m.params.cao);
     *logger = strcat_alloc(*logger, b);
   }
-
   *logger = strcat_alloc(*logger, "Dmesh cao Dr_cut_iL   Dalpha_L     Derr         Drs_err    Dks_err    time [ms]\n");
 
   /* mesh loop */

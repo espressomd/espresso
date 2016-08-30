@@ -26,6 +26,7 @@
 #define _PRESSURE_HPP
 
 #include "utils.hpp"
+#include "debug.hpp"
 #include "integrate.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"

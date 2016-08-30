@@ -50,7 +50,7 @@ public:
     assert(l.size() == n);
     std::copy(std::begin(l), std::end(l), d.begin());
   }
-
+  
   Scalar &operator[](int i) { return d[i]; }
   Scalar const &operator[](int i) const { return d[i]; }
 

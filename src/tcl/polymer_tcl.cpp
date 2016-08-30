@@ -1086,9 +1086,9 @@ int tclcommand_crosslink(ClientData data, Tcl_Interp *interp, int argc,
           return (TCL_ERROR);
         } else {
           if ((r_catch < 0.) ||
-              (r_catch > dmax(dmax(box_l[0], box_l[1]), box_l[2]))) {
+              (r_catch > std::max(std::max(box_l[0], box_l[1]), box_l[2]))) {
             sprintf(buffer, "Catching radius must be in [0,%f] (got: ",
-                    dmax(dmax(box_l[0], box_l[1]), box_l[2]));
+                    std::max(std::max(box_l[0], box_l[1]), box_l[2]));
             Tcl_AppendResult(interp, buffer, argv[i + 1], ")!", (char *)NULL);
             return (TCL_ERROR);
           }

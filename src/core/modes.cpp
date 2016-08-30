@@ -23,12 +23,15 @@
     Implementation of \ref modes.hpp "modes.h"
 */
 
+#include "config.hpp"
+
+#ifdef MODES
+
 #include "modes.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-
-#ifdef MODES
+#include "debug.hpp"
 
 /** fftw plan for calculating the 2d mode analysis */
 

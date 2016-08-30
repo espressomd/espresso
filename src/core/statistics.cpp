@@ -95,9 +95,9 @@ double mindist(IntList *set1, IntList *set2)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
           ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-        mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+        mindist = std::min(mindist, min_distance2(pt, partCfg[i].r.p));
   }
-  mindist = sqrt(mindist);
+  mindist = std::sqrt(mindist);
 
   return mindist;
 }
@@ -478,10 +478,10 @@ double distto(double p[3], int pid)
   for (i=0; i<n_part; i++) {
     if (pid != partCfg[i].p.identity) {
       get_mi_vector(d, p, partCfg[i].r.p);
-      mindist = dmin(mindist, sqrlen(d));
+      mindist = std::min(mindist, sqrlen(d));
     }
   }
-  return sqrt(mindist);
+  return std::sqrt(mindist);
 }
 
 void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result) {

@@ -123,7 +123,7 @@ system.actors.add(p3m)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in p3m_params.keys():
+for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print("\nSCRIPT--->Explicit tune call\n")
@@ -131,7 +131,7 @@ p3m._tune()
     
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in p3m_params.keys():
+for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 # elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
@@ -202,7 +202,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 

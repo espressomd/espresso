@@ -85,12 +85,9 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 
       for (i = 0; i < np; i++) {
-        if (needsR()) {
-          /* Either variant is ugly, but there seems to begin
-           * no better solution at the moment. */
-          R.emplace_back<std::initializer_list<double>>(
-              {p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]});
-        }
+        if (needsR())
+          R.push_back(Vector3(p[i].r.p));
+
 #ifdef ELECTROSTATICS
         if (needsQ())
           Q.push_back(p[i].p.q);

@@ -18,6 +18,7 @@
 #
 
 
+from __future__ import print_function, absolute_import
 cdef extern from "galilei.hpp":
 
     void local_kill_particle_motion(int rotation)

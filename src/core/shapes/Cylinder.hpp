@@ -28,16 +28,18 @@
 namespace Shapes {
 class Cylinder : public Shape {
 public:
-  Cylinder() : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_length(0.0), m_direction(1.0) {}
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  Cylinder()
+      : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_length(0.0),
+        m_direction(1.0), m_rad(0) {}
+  int calculate_dist(const double *ppos, double *dist,
+                     double *vec) const override;
 
-Vector3d const &pos() const { return m_pos; }
-Vector3d const &axis() const { return m_axis; }
+  Vector3d &pos() { return m_pos; }
+  Vector3d &axis() { return m_axis; }
 
-double const &rad() const { return m_rad; }
-double const &length() const { return m_length; }
-double const &direction() const { return m_direction; }
-
+  double &rad() { return m_rad; }
+  double &length() { return m_length; }
+  double &direction() { return m_direction; }
 
 protected:
   /** center of the cylinder. */

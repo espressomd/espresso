@@ -34,19 +34,19 @@ public:
 
   int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
-  double const &position_x() const { return m_position_x; }
-  double const &position_y() const { return m_position_y; }
-  double const &position_z() const { return m_position_z; }
+  double  &position_x()  { return m_position_x; }
+  double  &position_y()  { return m_position_y; }
+  double  &position_z()  { return m_position_z; }
 
-  double const &orientation_x() const { return m_orientation_x; }
-  double const &orientation_y() const { return m_orientation_y; }
-  double const &orientation_z() const { return m_orientation_z; }
+  double  &orientation_x()  { return m_orientation_x; }
+  double  &orientation_y()  { return m_orientation_y; }
+  double  &orientation_z()  { return m_orientation_z; }
 
-  double const &outer_radius() const { return m_outer_radius; }
-  double const &inner_radius() const { return m_inner_radius; }
-  double const &layer_width() const { return m_layer_width; }
+  double  &outer_radius()  { return m_outer_radius; }
+  double  &inner_radius()  { return m_inner_radius; }
+  double  &layer_width()  { return m_layer_width; }
   
-  double const &direction() const { return m_direction; }
+  double  &direction()  { return m_direction; }
 
 private:
   /** Stomatocyte position. */

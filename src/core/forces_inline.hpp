@@ -27,11 +27,6 @@
 #include "topology.hpp"
 #endif
 
-#include "constraints.hpp"
-#include "forces.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-
 #include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -42,9 +37,12 @@
 #include "collision.hpp"
 #include "comfixed.hpp"
 #include "comforce.hpp"
+#include "constraints.hpp"
+#include "dihedral.hpp"
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
+#include "forces.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
 #include "harmonic.hpp"
@@ -57,6 +55,8 @@
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
+#include "magnetic_non_p3m_methods.hpp"
+#include "mdlc_correction.hpp"
 #include "metadynamics.hpp"
 #include "molforces.hpp"
 #include "morse.hpp"
@@ -921,7 +921,7 @@ inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
 
 inline void check_particle_force(Particle *part) {
   for (int i = 0; i < 3; i++) {
-    if (isnan(part->f.f[i])) {
+    if (std::isnan(part->f.f[i])) {
       runtimeErrorMsg() << "force on particle " << part->p.identity
                         << " was NAN.";
     }
@@ -929,7 +929,7 @@ inline void check_particle_force(Particle *part) {
 
 #ifdef ROTATION
   for (int i = 0; i < 3; i++) {
-    if (isnan(part->f.torque[i])) {
+    if (std::isnan(part->f.torque[i])) {
       runtimeErrorMsg() << "torque on particle " << part->p.identity
                         << " was NAN.";
     }

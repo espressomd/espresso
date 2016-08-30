@@ -32,12 +32,12 @@ public:
 
   int calculate_dist(const double *ppos, double *dist, double *vec) const override;
 
-  double const &pore_mouth() const { return m_pore_mouth; }
-  double const &upper_smoothing_radius() const { return m_upper_smoothing_radius; }
-  double const &lower_smoothing_radius() const { return m_lower_smoothing_radius; }
-  double const &channel_width() const { return m_channel_width; }
-  double const &pore_width() const { return m_pore_width; }
-  double const &pore_length() const { return m_pore_length; }
+  double  &pore_mouth()  { return m_pore_mouth; }
+  double  &upper_smoothing_radius()  { return m_upper_smoothing_radius; }
+  double  &lower_smoothing_radius()  { return m_lower_smoothing_radius; }
+  double  &channel_width()  { return m_channel_width; }
+  double  &pore_width()  { return m_pore_width; }
+  double  &pore_length()  { return m_pore_length; }
 private:
   double m_pore_mouth;
   double m_upper_smoothing_radius;

@@ -29,12 +29,13 @@ class Maze : public Shape {
 public:
   Maze() : m_nsphere(0.0), m_dim(0.0), m_sphrad(0.0), m_cylrad(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  int calculate_dist(const double *ppos, double *dist,
+                     double *vec) const override;
 
-  double const &nsphere() const { return m_nsphere; }
-  double const &dim() const { return m_dim; }
-  double const &sphrad() const { return m_sphrad; }
-  double const &cylrad() const { return m_cylrad; }
+  double &nsphere() { return m_nsphere; }
+  double &dim() { return m_dim; }
+  double &sphrad() { return m_sphrad; }
+  double &cylrad() { return m_cylrad; }
 
 private:
   /** number of spheres. */

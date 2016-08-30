@@ -377,7 +377,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 }
 
 IA_parameters *get_ia_param_safe(int i, int j) {
-  make_particle_type_exist(imax(i, j));
+  make_particle_type_exist(std::max(i, j));
   return get_ia_param(i, j);
 }
 

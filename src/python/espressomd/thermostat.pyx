@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-cimport thermostat
+from __future__ import print_function, absolute_import
+from . cimport thermostat
+include "myconfig.pxi"
 
 cdef class Thermostat:
 
@@ -42,6 +44,15 @@ cdef class Thermostat:
         global langevin_gamma
         langevin_gamma = 0.
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        global langevin_gamma_rotation
+        IF ROTATION:
+            IF ROTATIONAL_INERTIA:
+                for i in range(3):
+                    langevin_gamma_rotation[i] = 0.
+            ELSE:
+                langevin_gamma_rotation = 0.
+            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)

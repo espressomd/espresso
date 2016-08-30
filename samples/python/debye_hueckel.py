@@ -211,7 +211,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 

@@ -163,7 +163,10 @@ transfer_rate {0.transfer_rate}
 
 # Pickle data
 ###########################################################
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 with open("particle_save","w") as particle_save:
     pickle.dump(system.part, particle_save, -1)
@@ -173,6 +176,9 @@ with open("p3m_save","w") as p3m_save:
 
 with open("system_save","w") as system_save:
     pickle.dump(system, system_save, -1)
+
+with open("nonBondedInter_save", "w") as bond_save:
+    pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program
 print("\nFinished.")

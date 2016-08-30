@@ -1,3 +1,4 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 cdef class Diamond:
     def __init__(self, *args, **kwargs):

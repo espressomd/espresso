@@ -25,7 +25,10 @@ from espressomd import integrate
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 import numpy
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 print("""
@@ -59,6 +62,16 @@ system = espressomd.System()
 with open("system_save", "r") as system_save:
     pickle.load(system_save)
 
+with open("nonBondedInter_save", "r") as bond_save:
+    pickle.load(bond_save)
+
+print("Non-bonded interactions from checkpoint:")
+print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
+
+print("Force cap from checkpoint:")
+print(system.non_bonded_inter.get_force_cap())
+
+
 # Integration parameters
 #############################################################
 thermostat.Thermostat().set_langevin(1.0, 1.0)
@@ -78,12 +91,16 @@ int_n_times = 10
 #############################################################
 # Interaction setup
 #############################################################
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
-system.non_bonded_inter.set_force_cap(lj_cap)
 
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
+if not system.non_bonded_inter[0, 0].lennard_jones.is_active():
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=lj_eps, sigma=lj_sig,
+        cutoff=lj_cut, shift="auto")
+    system.non_bonded_inter.set_force_cap(lj_cap)
+    print("Reset Lennard-Jones Interactions to:")
+    print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
+
+exit()
 
 # Import of particle properties and P3M parameters
 #############################################################
@@ -119,7 +136,7 @@ transfer_rate {0.transfer_rate}
 
 print("P3M parameters:\n")
 p3m_params = p3m.get_params()
-for key in p3m_params.keys():
+for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print(system.actors)
@@ -134,7 +151,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 

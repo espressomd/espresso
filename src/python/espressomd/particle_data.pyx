@@ -16,15 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
-cimport utils
-from utils cimport *
-cimport particle_data
-from interactions import BondedInteraction
-from interactions import BondedInteractions
+from . cimport utils
+from espressomd.utils cimport *
+from . cimport particle_data
+from .interactions import BondedInteraction
+from .interactions import BondedInteractions
 from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
 import collections

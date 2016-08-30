@@ -18,24 +18,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(ESPResSo)
 
 enable_language(CXX)
 
+set(PROJECT_VERSION "4.0-dev")
+string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
+if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
+  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
+
+######################################################################
+# CMake internal vars
+######################################################################
+
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-######################################################################
-# User input options
-######################################################################
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
+
+######################################################################
+# User input options
+######################################################################
 
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
@@ -88,6 +100,8 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
@@ -102,6 +116,14 @@ if (WITH_PYTHON)
   find_package(PythonLibs REQUIRED)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} 
+                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+                OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  else()
+    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  endif()
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -112,7 +134,12 @@ if (FFTW3_FOUND)
 endif(FFTW3_FOUND)
 
 if (WITH_TCL)
-  find_package(TCL REQUIRED)
+  find_package(TCL)
+
+  if(NOT TCL_FOUND)
+	  message(FATAL_ERROR "TCL not found.")
+  endif()
+
   include_directories(${TCL_INCLUDE_PATH})
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
@@ -182,9 +209,23 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
 
+#######################################################################
+# Paths
+#######################################################################
+
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
+if (NOT DEFINED LIBDIR)
+  set(LIBDIR "lib")
+endif(NOT DEFINED LIBDIR)
+
+if (NOT DEFINED BINDIR)
+  set(BINDIR "bin")
+endif(NOT DEFINED BINDIR)
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 
 set(SCRIPTDIR ${DATA}/scripts)
 

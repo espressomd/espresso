@@ -17,23 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd import interactions
 from espressomd import diamond
 import numpy
+import sys
 
 # System parameters
 #############################################################
 
 system = espressomd.System()
-
-
-# system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
-# if no seed is provided espresso generates a seed
-# print system.seed
-
 
 system.time_step = 0.01
 system.skin = 0.4

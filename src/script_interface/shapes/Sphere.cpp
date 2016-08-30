@@ -39,23 +39,9 @@ VariantMap Sphere::get_parameters() const {
 
 void Sphere::set_parameter(const string &name,
                          const ScriptInterface::Variant &value) {
-
   SET_PARAMETER_HELPER("pos", m_sphere->pos());
   SET_PARAMETER_HELPER("rad", m_sphere->rad());
   SET_PARAMETER_HELPER("direction", m_sphere->direction());
 }
-
-//int Sphere::calculate_dist(const double *ppos, double *dist, double *vec) const {
-//  int i;
-//
-//  *dist = -m_d;
-//  for (i = 0; i < 3; i++)
-//    *dist += ppos[i] * m_n[i];
-//
-//  for (i = 0; i < 3; i++)
-//    vec[i] = m_n[i] * *dist;
-//  return 0;
-//}
-
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

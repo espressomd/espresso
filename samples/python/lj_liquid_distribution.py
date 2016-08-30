@@ -196,7 +196,7 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print initial energies
+# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 
@@ -234,7 +234,7 @@ for i in range(0, int_n_times):
 #rescale distribution values and write out data
 distr_values /= int_n_times
 
-for i in xrange(distr_r_bins):
+for i in range(distr_r_bins):
     distr_file.write("{0}\t{1}\n".format(distr_r[i], distr_values[i]))
 distr_file.close()
 

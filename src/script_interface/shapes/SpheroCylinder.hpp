@@ -25,6 +25,8 @@
 #include "Shape.hpp"
 #include "core/shapes/SpheroCylinder.hpp"
 
+#include "Cylinder.hpp"
+
 namespace ScriptInterface {
 namespace Shapes {
 

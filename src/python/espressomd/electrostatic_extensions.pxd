@@ -18,10 +18,11 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
-from utils cimport *
-from electrostatics cimport *
+from espressomd._system cimport *
+from espressomd.utils cimport *
+from espressomd.electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 
