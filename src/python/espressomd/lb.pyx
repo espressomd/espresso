@@ -22,7 +22,6 @@ from actors cimport Actor
 cimport cuda_init
 import cuda_init
 from globals cimport *
-from copy import deepcopy
 
 # Actor class
 ####################################################

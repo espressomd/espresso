@@ -73,21 +73,11 @@ cdef extern from "pressure.hpp":
     cdef Observable_stat total_p_tensor
     cdef Observable_stat_non_bonded total_p_tensor_non_bonded
     cdef void update_pressure(int)
-    cdef void analyze_pressure_all(vector[string] & pressure_labels, vector[double] & pressures, int v_comp)
-    cdef double analyze_pressure(string pressure_to_calc, int v_comp)
-    cdef double analyze_pressure_pair(string pressure_to_calc, int type1, int type2, int v_comp)
-    cdef double analyze_pressure_single(string pressure_to_calc, int bond_or_type, int v_comp)
-    cdef void analyze_stress_tensor_all(vector[string] & stressTensorLabel, vector[double] & stressTensorValues, int v_comp)
-    cdef int analyze_stress_tensor(string pressure_to_calc, int v_comp, vector[double] & stress)
-    cdef int analyze_stress_pair(string pressure_to_calc, int type1, int type2, int v_comp, vector[double] & stress)
-    cdef int analyze_stress_single(string pressure_to_calc, int bond_or_type, int v_comp, vector[double] & stress)
     cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
     cdef Observable_stat_non_bonded total_energy_non_bonded
-
-cdef extern from "energy.hpp":
     cdef void master_energy_calc()
     cdef void init_energies(Observable_stat * stat)
 

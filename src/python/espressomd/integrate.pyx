@@ -23,17 +23,6 @@ cdef int _integrate(int nSteps, int recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)
 
-def handle_errors(msg):
-    errors = mpi_gather_runtime_errors()
-    for err in errors:
-        print(err.format())
-
-    for err in errors:
-    # Cast because cython does not support typed enums completely
-        if <int> err.level() == <int> ERROR:
-            raise Exception(msg)
-    
-
 def integrate(nSteps, recalc_forces=False, reuse_forces=False):
     """integrate(nSteps, recalc_forces=False, reuse_forces=False)"""
 
