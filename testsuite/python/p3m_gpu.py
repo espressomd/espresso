@@ -46,5 +46,5 @@ if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features()
             self.assertTrue(params_match(test_params,p3m._get_params_from_es_core()))
 
 if __name__ == "__main__":
-    print(("Features: ", espressomd.features()))
+    print("Features: ", espressomd.features())
     ut.main()

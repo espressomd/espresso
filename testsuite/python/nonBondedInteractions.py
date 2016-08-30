@@ -38,15 +38,15 @@ class Non_bonded_interactionsTests(ut.TestCase):
         inParams.
         """
         if inType != outType:
-            print(("Type mismatch:", inType, outType))
+            print("Type mismatch:", inType, outType)
             return False
 
         for k in list(inParams.keys()):
             if k not in outParams:
-                print((k, "missing from returned parameters"))
+                print(k, "missing from returned parameters")
                 return False
             if outParams[k] != inParams[k]:
-                print(("Mismatch in parameter ", k, inParams[k], outParams[k]))
+                print("Mismatch in parameter ", k, inParams[k], outParams[k])
                 return False
 
         return True
@@ -124,5 +124,5 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print(("Features: ", espressomd.features()))
+    print("Features: ", espressomd.features())
     ut.main()

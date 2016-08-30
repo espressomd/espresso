@@ -46,5 +46,5 @@ class ewald_GPU_test(ut.TestCase):
             self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
 
     if __name__ == "__main__":
-        print(("Features: ", espressomd.features()))
+        print("Features: ", espressomd.features())
         ut.main()

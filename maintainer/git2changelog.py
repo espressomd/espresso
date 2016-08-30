@@ -107,7 +107,7 @@ for line in fin:
         elif authorLine == prevAuthorLine:
             pass
         else:
-            print(("\n" + authorLine))
+            print("\n" + authorLine)
 
         # Assemble the actual commit message line(s) and limit the line length
         # to 80 characters.

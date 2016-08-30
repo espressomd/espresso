@@ -112,5 +112,5 @@ class ParticleProperties(ut.TestCase):
         test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
 
 if __name__ == "__main__":
-    print(("Features: ", code_info.features()))
+    print("Features: ", code_info.features())
     ut.main()

@@ -57,5 +57,5 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
             DipolarDirectSumWithReplicaCpu, dict(prefactor=3.4, n_replica=2))
 
 if __name__ == "__main__":
-    print(("Features: ", espressomd.features()))
+    print("Features: ", espressomd.features())
     ut.main()

@@ -56,10 +56,10 @@ def params_match(inParams, outParams):
 
     for k in list(inParams.keys()):
         if k not in outParams:
-            print((k, "missing from returned parameters"))
+            print(k, "missing from returned parameters")
             return False
         if outParams[k] != inParams[k]:
-            print(("Mismatch in parameter ", k, inParams[k], outParams[k]))
+            print("Mismatch in parameter ", k, inParams[k], outParams[k])
             return False
 
     return True
