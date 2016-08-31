@@ -808,7 +808,7 @@ IF TABULATED == 1:
                             "Tabulated type needs to be distance, angle, or diherdal")
 
             res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num, self._params["filename"])
+                self._bond_id, < TabulatedBondedInteraction > type_num, utils.to_char_pointer(self._params["filename"]))
             msg = ""
             if res == 1:
                 msg = "unknon bond type"
@@ -856,7 +856,7 @@ IF TABULATED == 1:
 
         def _set_params_in_es_core(self):
             self.state = tabulated_set_params(self._part_types[0], self._part_types[
-                                              1], self._params["filename"])
+                                              1], utils.to_char_pointer(self._params["filename"]))
 
         def is_active(self):
             if self.state == 0:
