@@ -1,59 +1,86 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <limits>
 #include <cmath>
+#include <limits>
 
 #define BOOST_TEST_MODULE Wall test
 #include <boost/test/included/unit_test.hpp>
 
 #include "shapes/Wall.hpp"
+#include "shapes/Sphere.hpp"
 
-BOOST_AUTO_TEST_CASE(name) {
-  Shapes::Wall w;
-
-  BOOST_CHECK(w.name() == "Shape::Wall");
+template <class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+almost_equal(T x, T y, int ulp) {
+  // the machine epsilon has to be scaled to the magnitude of the values used
+  // and multiplied by the desired precision in ULPs (units in the last place)
+  return std::abs(x - y) <
+             std::numeric_limits<T>::epsilon() * std::abs(x + y) * ulp
+         // unless the result is subnormal
+         || std::abs(x - y) < std::numeric_limits<T>::min();
 }
 
-/** Tests the generic setters and getters. */
-BOOST_AUTO_TEST_CASE(script_interface) {
-  Shapes::Wall w;    
-  std::map<std::string, Variant> test_parameters;
+bool check_distance_function(const Shapes::Shape &s) {
+  for (int i = 0; i < 100; i++)
+    for (int j = 0; j < 100; j++)
+      for (int k = 0; k < 100; k++) {
+        double pos[3] = {i * 0.1, j * 0.1, k * 0.1};
+        double dist[3];
+        double d;
 
-  /* Wall has parameters normal and dist */
-  std::vector<double> normal{0., 1., 0.};
-  test_parameters["normal"] = normal;
-  test_parameters["dist"] = 5.0;
-  
-  w.set_parameters(test_parameters);
+        s.calculate_dist(pos, &d, dist);
 
-  BOOST_CHECK(boost::get<double>(w.get_parameter("dist")) == 5.0);
+        /* trivial test */
+        if ((dist[0] * dist[0] + dist[1] * dist[1] + dist[2] * dist[2] -
+             d * d) > 1e-12) {
+          return false;
+        }
 
-  /* Get value as vector */
-  auto ret_normal = boost::get<std::vector<double> >(w.get_parameter("normal"));
-  /* Check if equal up to numerical precision (wall has normalized the vector,
-     so it need not be bitwise equal). */
-  for(int i = 0; i < 3; i++) {
-    BOOST_CHECK(std::abs(ret_normal[i] - normal[i]) <= std::numeric_limits<double>::epsilon());
-  }
+        /* check if the returned closest point really is on the surface */
+        for (int dim = 0; dim < 3; dim++)
+          pos[dim] -= dist[dim];
+
+        s.calculate_dist(pos, &d, dist);
+        if (std::abs(d) > 1e-12) {
+          return false;
+        }
+      }
+
+  return true;
+}
+
+BOOST_AUTO_TEST_CASE(dist_function) {
+  Shapes::Wall w;
+  w.set_normal(Vector3d{3., 5., 7.});
+  w.d() = 0.2;
+
+  BOOST_CHECK(check_distance_function(w));
+
+  Shapes::Sphere s;
+  s.pos() = Vector3d{1., 2., 3.};
+  s.rad() = 3.14158;
+  s.direction() = 1.0;
+
+  BOOST_CHECK(check_distance_function(s));
 }
 
 /* @TODO: Functional unit test of the distance function */
