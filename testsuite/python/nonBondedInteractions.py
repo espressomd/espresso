@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -40,7 +41,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
             print("Type mismatch:", inType, outType)
             return False
 
-        for k in inParams.keys():
+        for k in list(inParams.keys()):
             if k not in outParams:
                 print(k, "missing from returned parameters")
                 return False

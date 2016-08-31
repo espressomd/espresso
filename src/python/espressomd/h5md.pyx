@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function, absolute_import
 import h5py
 import sys
 import numpy as np
@@ -82,7 +83,7 @@ class h5md(object):
 
         # CREATE OR OPEN DATASET
         if feature != 1:
-            print "ERROR H5: Some necessary ESPResSo features for values used in h5-file are not activated"
+            print("ERROR H5: Some necessary ESPResSo features for values used in h5-file are not activated")
             sys.exit()
         try:
             self.dataset = self.h5_file.create_dataset(
@@ -885,7 +886,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
 
             # Read value
@@ -900,13 +901,13 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
                 self.h5md.system.time = self.h5md.value_dataset[timestep]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # time
@@ -917,13 +918,13 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
                 return self.h5md.value_dataset[timestep]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # Position
@@ -934,7 +935,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -947,7 +948,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].pos = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # velocity
@@ -958,7 +959,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -970,7 +971,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].v = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # force
@@ -981,7 +982,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -993,7 +994,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].f = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # bonds
@@ -1006,13 +1007,13 @@ class h5md(object):
                 self.h5md.value_dataset_to = self.h5md.h5_file[
                     "particles/atoms/bond_to/"][datasetname]
             except:
-                print "ERROR H5: No " + "particles/atoms/bonds_from_to/" + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + "particles/atoms/bonds_from_to/" + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
                 print("ERROR H5: Reading bonds not implemented yet")
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # species
@@ -1022,7 +1023,7 @@ class h5md(object):
             try:
                 self.h5md.value_dataset = self.h5md.h5_file[groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1033,7 +1034,7 @@ class h5md(object):
                     for i in range(self.h5md.value_dataset.shape[1]):
                         self.h5md.system.part[i].type = int(self.h5md.value_dataset[timestep, i][0])
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # id
@@ -1044,7 +1045,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1057,7 +1058,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].id = int(self.h5md.value_dataset[timestep, i][0])
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
 
         def mass(self, timestep=-1, groupname="particles/atoms/mass/",
@@ -1067,7 +1068,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1080,7 +1081,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].mass = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # omega_lab
@@ -1091,7 +1092,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1104,7 +1105,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].omega_lab = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # rinertia
@@ -1115,7 +1116,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1128,7 +1129,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].rinertia = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # omega_body
@@ -1139,7 +1140,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1152,7 +1153,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].omega_body = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # torque_lab
@@ -1163,7 +1164,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1176,7 +1177,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].torque_lab = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # quat
@@ -1187,7 +1188,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1200,7 +1201,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].quat = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # charge
@@ -1211,7 +1212,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1224,7 +1225,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].q = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # virtual
@@ -1235,7 +1236,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1248,7 +1249,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].virtual = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # vs_relative
@@ -1259,7 +1260,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1272,7 +1273,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].vs_relative = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # dipole
@@ -1283,7 +1284,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1296,7 +1297,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].dip = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # dipole_magnitude
@@ -1307,7 +1308,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1320,7 +1321,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].dipm = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # external force
@@ -1331,7 +1332,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1344,7 +1345,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].ext_force = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # external force particle fix
@@ -1355,7 +1356,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1368,7 +1369,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].fix = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # external torque
@@ -1379,7 +1380,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1392,7 +1393,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].ext_torque = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # gamma
@@ -1403,7 +1404,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1416,7 +1417,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].gamma = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # temperature
@@ -1427,7 +1428,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             try:
                 if len(self.h5md.value_dataset.shape) == 2:  # time independent
@@ -1439,7 +1440,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].temp = self.h5md.value_dataset[timestep, i][0]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
         
         # rotation
@@ -1450,7 +1451,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1463,7 +1464,7 @@ class h5md(object):
                         self.h5md.system.part[
                             i].rotation = self.h5md.value_dataset[timestep, i]
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
 
     # BOX
@@ -1474,7 +1475,7 @@ class h5md(object):
                 self.h5md.value_dataset = self.h5md.h5_file[
                     groupname][datasetname]
             except:
-                print "ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting"
+                print("ERROR H5: No " + groupname + datasetname + " dataset in h5-file exisiting")
                 sys.exit()
             # Try to read value from h5-file and write to ESPResSo
             try:
@@ -1489,7 +1490,7 @@ class h5md(object):
                         box_l_temp[i] = self.h5md.value_dataset[timestep, i, i]
                     self.h5md.system.box_l = box_l_temp
             except:
-                print "ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible"
+                print("ERROR H5: Access to dataset " + groupname + datasetname + " or writing to ESPResSo not possible")
                 sys.exit()
 
         def box_boundary(
