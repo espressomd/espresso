@@ -21,6 +21,7 @@ import numpy as np
 from globals cimport temperature
 from actors cimport *
 from scafacos import ScafacosConnector
+cimport scafacos
 
 
 IF DIPOLES == 1:
@@ -274,6 +275,8 @@ IF DIPOLES == 1:
             
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE
+                print "free scafacos"
+                scafacos.free_handle()
 
             def default_params(self):
                 return {}

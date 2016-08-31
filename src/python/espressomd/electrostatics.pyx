@@ -653,3 +653,7 @@ IF ELECTROSTATICS:
 
             def default_params(self):
                 return {}
+            
+            def _deactivate_method(self):
+                coulomb.method = COULOMB_NONE
+                scafacos.free_handle()

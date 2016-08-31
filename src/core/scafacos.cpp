@@ -361,7 +361,14 @@ void set_dipolar(bool d) {
     runtimeErrorMsg() << "Scafacos not initialized.";
 }
 
+void free_handle() {
+
+  if(scafacos) {
+    delete scafacos;
+    scafacos = 0;
+  }
 }
+} // namespace scafacos
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {

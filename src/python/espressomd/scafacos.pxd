@@ -11,3 +11,4 @@ IF SCAFACOS == 1:
         cdef void set_parameters(string & method_name, string & params, bool dipolar)
         cdef string get_parameters()
         cpdef list[string] available_methods()
+        cdef void free_handle()
