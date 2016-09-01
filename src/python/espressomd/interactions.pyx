@@ -191,7 +191,7 @@ IF LENNARD_JONES == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "epsilon": ia_params.LJ_eps,
                 "sigma": ia_params.LJ_sig,
@@ -254,7 +254,7 @@ IF LENNARD_JONES_GENERIC == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "epsilon": ia_params.LJGEN_eps,
                 "sigma": ia_params.LJGEN_sig,
@@ -779,6 +779,7 @@ IF TABULATED == 1:
             self._params = {"type": "bond", "filename": ""}
 
         def _get_params_from_es_core(self):
+            make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
                  "filename": utils.to_str(bonded_ia_params[self._bond_id].p.tab.filename),
@@ -850,7 +851,7 @@ IF TABULATED == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "filename": utils.to_str(ia_params.TAB_filename)}
 
@@ -994,6 +995,7 @@ IF OVERLAPPED == 1:
             self._params = {"overlap_type": 0, "filename": ""}
 
         def _get_params_from_es_core(self):
+            make_bond_type_exist(self._bond_id)
             return \
                 {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
                  "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
