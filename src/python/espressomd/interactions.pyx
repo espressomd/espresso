@@ -191,7 +191,7 @@ IF LENNARD_JONES == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "epsilon": ia_params.LJ_eps,
                 "sigma": ia_params.LJ_sig,
@@ -254,7 +254,7 @@ IF LENNARD_JONES_GENERIC == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
                 "epsilon": ia_params.LJGEN_eps,
                 "sigma": ia_params.LJGEN_sig,
@@ -779,9 +779,10 @@ IF TABULATED == 1:
             self._params = {"type": "bond", "filename": ""}
 
         def _get_params_from_es_core(self):
+            make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "filename": bonded_ia_params[self._bond_id].p.tab.filename,
+                 "filename": utils.to_str(bonded_ia_params[self._bond_id].p.tab.filename),
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
@@ -808,7 +809,7 @@ IF TABULATED == 1:
                             "Tabulated type needs to be distance, angle, or diherdal")
 
             res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num, self._params["filename"])
+                self._bond_id, < TabulatedBondedInteraction > type_num, utils.to_char_pointer(self._params["filename"]))
             msg = ""
             if res == 1:
                 msg = "unknon bond type"
@@ -850,13 +851,13 @@ IF TABULATED == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "filename": ia_params.TAB_filename}
+                "filename": utils.to_str(ia_params.TAB_filename)}
 
         def _set_params_in_es_core(self):
             self.state = tabulated_set_params(self._part_types[0], self._part_types[
-                                              1], self._params["filename"])
+                                              1], utils.to_char_pointer(self._params["filename"]))
 
         def is_active(self):
             if self.state == 0:
@@ -994,13 +995,14 @@ IF OVERLAPPED == 1:
             self._params = {"overlap_type": 0, "filename": ""}
 
         def _get_params_from_es_core(self):
+            make_bond_type_exist(self._bond_id)
             return \
                 {"bend": bonded_ia_params[self._bond_id].p.overlap.type,
-                 "phi0": bonded_ia_params[self._bond_id].p.overlap.filename}
+                 "phi0": utils.to_str(bonded_ia_params[self._bond_id].p.overlap.filename)}
 
         def _set_params_in_es_core(self):
             overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], self._params["filename"])
+                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
 
 ELSE:
     class Overlapped(BondedInteractionNotDefined):
