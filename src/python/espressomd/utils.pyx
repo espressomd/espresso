@@ -105,13 +105,12 @@ def to_char_pointer(s):
         s = (<unicode>s).encode('utf8')
     return s
 
-def to_unicode(s):
+def to_str(s):
     if type(s) is unicode:
         return <unicode>s
-    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
-        # only accept byte strings in Python 2, not in Python 3
+    elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
         return (<bytes>s).decode('ascii')
     elif isinstance(s, unicode):
         return unicode(s)
     else:
-        raise TypeError("Cannot convert to unicode")
+        return s
