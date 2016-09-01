@@ -94,7 +94,7 @@ with open(bondf) as f:
 
 # Print particles in blockfile format
 print("{particles {id type pos v}")
-for i in xrange(ntotalpart):
+for i in range(ntotalpart):
     print("\t{%i %i %r %r %r %r %r %r}" \
         % (id[i], type[i], pos[3*i], pos[3*i+1], pos[3*i+2], \
            vel[3*i], vel[3*i+1], vel[3*i+2]))
@@ -103,12 +103,12 @@ print("}")
 # Print bonds in blockfile format
 print("{bonds")
 addend = 0 # ntotal bonds of previous processors
-for rank in xrange(nproc):
+for rank in range(nproc):
     # The start and end indices for the boff array are determined via
     # pref. However, there are (nlocalpart + 1) boff entries per proc.
     start = pref[rank] + rank
     end = rank + (pref[rank + 1] if rank < nproc - 1 else ntotalpart)
-    for pid, i in enumerate(xrange(start, end)):
+    for pid, i in enumerate(range(start, end)):
         print("\t{%i { " % id[pref[rank] + pid], end="")
         # The start and end indices for the bond array are determined
         # via boff. However, boff does only *locally* store prefixes,
@@ -120,7 +120,7 @@ for rank in xrange(nproc):
             j += 1
             npartners = biaparams[bond_num]
             print("{%i" % bond_num, end="")
-            for _ in xrange(npartners):
+            for _ in range(npartners):
                 print(" %i" % bond[j], end="")
                 j += 1
             print("} ", end="")
