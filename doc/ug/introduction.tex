@@ -325,14 +325,29 @@ and use \es:
 \label{sec:installing_requirements}
 \index{installing_requirements}
 
-To make ESPResSo run on Ubuntu 16.04 LTS its dependencies can be installed with:
+To make ESPResSo run on Ubuntu 16.04 LTS, its dependencies can be installed with:
 \begin{code}
-  apt install build-essential cmake cython python-numpy tcl-dev
-  tk-dev libboost-all-dev openmpi-common
+  sudo apt install build-essential cmake cython python-numpy tcl-dev tk-dev libboost-all-dev openmpi-common
 \end{code}
 Optionally the ccmake utility can be installed for easier configuration:
 \begin{code}
-  apt install cmake-curses-gui
+  sudo apt install cmake-curses-gui
+\end{code}
+
+\subsection{Installing Requirements on Mac OS X}
+\label{sec:installing_requirements_mac}
+\index{installing_requirements_mac}
+
+To make ESPResSo run on Mac OS X 10.9 or higher, its dependencies can be installed using MacPorts.
+First, download the installer package appropriate for your Mac OS X version from \url{https://www.macports.org/install.php} and install it. Then, run the following commands:
+\begin{code}
+  sudo xcode-select --install
+  sudo xcodebuild -license accept
+  port selfupdate
+  port install cmake python27 python27-cython python27-numpy tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27
+  port select --set cython cython27
+  port select --set python python27
+  port select --set mpi openmpi-mp-fortran
 \end{code}
 
 \section{Tcl: Syntax description}

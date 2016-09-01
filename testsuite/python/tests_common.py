@@ -1,6 +1,10 @@
+from __future__ import print_function
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
+try:
+    import vtk
+    from vtk.util.numpy_support import vtk_to_numpy
+except:
+    pass
 
 def calculate_vtk_max_pointwise_difference(file1,file2,tol=1e-6):
     arrays = [0]*2
@@ -18,12 +22,31 @@ def calculate_vtk_max_pointwise_difference(file1,file2,tol=1e-6):
         return False, np.inf
 
 
+try:
+    import vtk
+    from vtk.util.numpy_support import vtk_to_numpy
+
+    def calculate_vtk_max_pointwise_difference(file1,file2,tol=1e-6):
+        arrays = [0]*2
+
+        reader = vtk.vtkStructuredPointsReader()
+        for i, fname in enumerate([file1, file2]):
+            reader.SetFileName(fname)
+            reader.Update()
+            data = reader.GetOutput().GetPointData()
+            arrays[i] = np.array([vtk_to_numpy(data.GetArray(n)) for n in range(data.GetNumberOfArrays())])
+
+        try:
+            return np.allclose(arrays[0],arrays[1],rtol=0,atol=tol), np.max(np.abs(arrays[0]-arrays[1]))
+        except:
+            return False, np.inf
+except:
+    pass
 
 # Tests particle property setters/getters
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.electrostatics import P3M, DH
 
 
 def params_match(inParams, outParams):
@@ -31,7 +54,7 @@ def params_match(inParams, outParams):
     Only check keys present in inParams.
     """
 
-    for k in inParams.keys():
+    for k in list(inParams.keys()):
         if k not in outParams:
             print(k, "missing from returned parameters")
             return False

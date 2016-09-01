@@ -1,4 +1,5 @@
-from actors cimport *
+from __future__ import print_function, absolute_import
+from espressomd.actors cimport *
 from libcpp.string cimport string  # import std::string
 
 include "myconfig.pxi"

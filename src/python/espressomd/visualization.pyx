@@ -1,9 +1,10 @@
+from __future__ import print_function, absolute_import, division
 import numpy
 cimport numpy
 import os
 from libcpp cimport bool
 from espressomd.particle_data import ParticleHandle
-from particle_data cimport *
+from espressomd.particle_data cimport *
 from espressomd.interactions cimport *
 from espressomd._system cimport *
 from libcpp.vector cimport vector
@@ -155,7 +156,7 @@ cdef class mayavi_live:
                     k+=1
             j += 1
         assert j == self.system.n_part
-        cdef int Nbonds = bonds.size()/3
+        cdef int Nbonds = bonds.size()//3
         
         bond_coords = numpy.empty((Nbonds,7))
 
