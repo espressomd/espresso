@@ -491,14 +491,16 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
         }
     }
     if (position)
+    {
         WriteDataset(pos,
                      this->dataset_particles_atoms_position_value,
                      this->dataset_particles_atoms_position_time,
                      this->dataset_particles_atoms_position_step);
         WriteDataset(image,
-        this->dataset_particles_atoms_image_value,
+                     this->dataset_particles_atoms_image_value,
                      this->dataset_particles_atoms_image_time,
                      this->dataset_particles_atoms_image_step);
+    }
     if (velocity)
         WriteDataset(vel,
                      this->dataset_particles_atoms_velocity_value,
