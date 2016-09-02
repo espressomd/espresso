@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
-from espressomd import integrate
 from espressomd import interactions
 from espressomd import diamond
 import numpy
@@ -31,9 +31,9 @@ import sys
 system = espressomd.System()
 
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
-system.thermostat.set_langevin(1.0, 1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(

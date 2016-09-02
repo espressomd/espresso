@@ -18,6 +18,7 @@
 #
 
 # @TODO: shouldn't these global definitions be used via global_variables?
+from __future__ import print_function, absolute_import
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
 
@@ -34,7 +35,7 @@ cdef extern from "cells.hpp":
 
 cdef extern from "layered.hpp":
     int determine_n_layers
-    int n_layers
+    int n_layers_ "n_layers"
     int determine_n_layers
 
 cdef extern from "grid.hpp":

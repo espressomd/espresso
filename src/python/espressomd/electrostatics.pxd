@@ -18,10 +18,11 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -132,7 +133,7 @@ IF ELECTROSTATICS:
             cdef char * log = NULL
             cdef int response
             response = p3m_adaptive_tune(& log)
-            print log
+            print(log)
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -271,7 +272,7 @@ IF ELECTROSTATICS:
             raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
         resp=mmm1d_tune(&log)
         if resp:
-            print log
+            print(log)
         return resp
 
 IF ELECTROSTATICS:
@@ -301,7 +302,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius = -1, int bessel_cutoff = -1);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror);
             void setup(SystemInterface &s);
             void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
             void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual = False);
@@ -314,7 +317,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
             bool need_tune;
 
             int pairs;
-            mmm1dgpu_real *dev_forcePairs, *dev_energyBlocks;
+            mmm1dgpu_real *dev_forcePairs;
+            mmm1dgpu_real *dev_energyBlocks;
 
             mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
             int bessel_cutoff;

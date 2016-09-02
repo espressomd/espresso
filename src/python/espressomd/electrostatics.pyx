@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 from cython.operator cimport dereference
 include "myconfig.pxi"
-cimport actors
-import actors
+from espressomd cimport actors
+from . import actors
 cimport globals
 import numpy as np
-from scafacos import *
-cimport scafacos
+from .scafacos import *
+from . cimport scafacos
 
 
 cdef class ElectrostaticInteraction(actors.Actor):
@@ -200,7 +201,7 @@ IF P3M == 1:
                     "inter": -1,
                     "r_cut": -1,
                     "alpha": 0,
-                    "accuracy": -1,
+                    "accuracy": 0,
                     "mesh": [0, 0, 0],
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
@@ -289,7 +290,7 @@ IF P3M == 1:
                         "inter": -1,
                         "r_cut": -1,
                         "alpha": 0,
-                        "accuracy": -1,
+                        "accuracy": 0,
                         "mesh": [0, 0, 0],
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
@@ -354,7 +355,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "num_ky": -1,
                     "num_kz": -1,
                     "alpha": -1,
-                    "accuracy": -1,
+                    "accuracy": 0,
                     "precision": -1,
                     "isTuned": False,
                     "isTunedFlag": False,
@@ -399,7 +400,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "precision"], self._params["K_max"], self._params["time_calc_steps"])
             resp = self.thisptr.adaptive_tune( & self.log, dereference(self.interface))
             if resp != 0:
-                print self.log
+                print(self.log)
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
@@ -627,13 +628,13 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = -1
                 self._params["const_pot_on"] = 1
 
-            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"])
+            print(MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"]))
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
-            print MMM2D_sanity_checks()
+            print(MMM2D_sanity_checks())
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):

@@ -17,13 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import LennardJonesInteraction
+from espressomd.interactions import *
 
-if "LENNARD_JONES_GENERIC" in espressomd.features():
-    from espressomd.interactions import GenericLennardJonesInteraction
 
 
 class Non_bonded_interactionsTests(ut.TestCase):
@@ -42,7 +41,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
             print("Type mismatch:", inType, outType)
             return False
 
-        for k in inParams.keys():
+        for k in list(inParams.keys()):
             if k not in outParams:
                 print(k, "missing from returned parameters")
                 return False
@@ -85,21 +84,22 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
         return func
 
-    test_lj1 = generateTestForNon_bonded_interaction(
-        0, 0, LennardJonesInteraction,
-        {"epsilon": 1., "sigma": 2., "cutoff": 3.,
+    if "LENNARD_JONES" in espressomd.features():
+        test_lj1 = generateTestForNon_bonded_interaction(
+            0, 0, LennardJonesInteraction,
+            {"epsilon": 1., "sigma": 2., "cutoff": 3.,
             "shift": 4., "offset": 5., "min": 7.},
-        "lennard_jones")
-    test_lj2 = generateTestForNon_bonded_interaction(
-        0, 0, LennardJonesInteraction,
-        {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
+            "lennard_jones")
+        test_lj2 = generateTestForNon_bonded_interaction(
+            0, 0, LennardJonesInteraction,
+            {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
             "shift": 4.1, "offset": 5.1, "min": 7.1},
-        "lennard_jones")
-    test_lj3 = generateTestForNon_bonded_interaction(
-        0, 0, LennardJonesInteraction,
-        {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
+            "lennard_jones")
+        test_lj3 = generateTestForNon_bonded_interaction(
+            0, 0, LennardJonesInteraction,
+            {"epsilon": 1.3, "sigma": 2.2, "cutoff": 3.4,
             "shift": 4.1, "offset": 5.1, "min": 7.1},
-        "lennard_jones")
+            "lennard_jones")
 
     if "LENNARD_JONES_GENERIC" in espressomd.features():
         test_ljgen1 = generateTestForNon_bonded_interaction(

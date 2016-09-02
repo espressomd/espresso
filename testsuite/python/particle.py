@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -122,11 +123,12 @@ class ParticleProperties(ut.TestCase):
         # The tested value has to be normalized!
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
-        if "ROTATIONAL_INERTIA" in espressomd.features():
-            test_gamma_rot = generateTestForVectorProperty(
-            "gamma_rot", np.array([5., 10., 0.33]))
-        else:
-            test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
+        if "LANGEVIN_PER_PARTICLE" in espressomd.features():
+            if "ROTATIONAL_INERTIA" in espressomd.features():
+                test_gamma_rot = generateTestForVectorProperty(
+                    "gamma_rot", np.array([5., 10., 0.33]))
+            else:
+                test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
     if "ELECTROSTATICS" in espressomd.features():
