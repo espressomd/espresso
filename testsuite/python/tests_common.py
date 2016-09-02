@@ -80,6 +80,7 @@ def generate_test_for_class(_interClass, _params):
         # set Parameter
         Inter = interClass(**params)
         Inter.validate_params()
+        Inter._set_params_in_es_core()
 
         # Read them out again
         outParams = Inter.get_params()

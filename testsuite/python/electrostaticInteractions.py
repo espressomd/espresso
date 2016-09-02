@@ -46,15 +46,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                                                      alpha=12,
                                                                      accuracy=0.01))
     
-        test_DH = generate_test_for_class(DH, dict(bjerrum_length=1.0,
-                                                                   kappa=2.3,
-                                                                   r_cut=2))
-        if "CDG" in espressomd.features():
+        if "COULOMB_DEBYE_HUECKEL" in espressomd.features():
             test_CDH = generate_test_for_class(CDH, dict(bjerrum_length=1.0,
                                                                          kappa=2.3,
                                                                          r_cut=2,
                                                                          r0=1,
-                                                                         r1=2,
+                                                                         r1=1.9,
                                                                          eps_int=0.8,
                                                                          eps_ext=1,
                                                                          alpha=2))
