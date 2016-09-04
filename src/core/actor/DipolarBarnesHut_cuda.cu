@@ -59,9 +59,9 @@ __device__ volatile float radiusd;
 //__constant__ ConstParams devCParBH;
 //__constant__ ChangableParams devChParBH;
 
-__constant__ volatile float* xd;
-__constant__ volatile float* yd;
-__constant__ volatile float* zd;
+__device__ __constant__ volatile float* xd;
+__device__ __constant__ volatile float* yd;
+__device__ __constant__ volatile float* zd;
 __constant__ volatile float* uxd;
 __constant__ volatile float* uyd;
 __constant__ volatile float* uzd;
@@ -234,11 +234,20 @@ __global__
 __launch_bounds__(THREADS1, FACTOR1)
 void boundingBoxKernel()
 {
+	printf("\n Trace boundingBoxKernel 1");
+
 	register int i, j, k, inc;
 	register float val, minx, maxx, miny, maxy, minz, maxz;
 	__shared__ volatile float sminx[THREADS1], smaxx[THREADS1], sminy[THREADS1], smaxy[THREADS1], sminz[THREADS1], smaxz[THREADS1];
 
+	printf("\n Trace boundingBoxKernel 2");
+
 	// initialize with valid data (in case #bodies < #threads)
+
+	printf("\n xd[0] = %e", xd[0]);
+
+	printf("\n Trace boundingBoxKernel 3");
+
 	minx = maxx = xd[0];
 	miny = maxy = yd[0];
 	minz = maxz = zd[0];
@@ -1284,7 +1293,7 @@ void initBH(int blocks) {
 	//cudaFuncSetCacheConfig(averageU, cudaFuncCachePreferL1);
 	//cudaFuncSetCacheConfig(averageUKernel, cudaFuncCachePreferL1);
 	//cudaFuncSetCacheConfig(calcUKernel, cudaFuncCachePreferShared);
-	//cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
+	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(boundingBoxKernel, cudaFuncCachePreferShared);
 	cudaFuncSetCacheConfig(treeBuildingKernel, cudaFuncCachePreferL1);
 	cudaFuncSetCacheConfig(summarizationKernel, cudaFuncCachePreferShared);
@@ -1348,16 +1357,33 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
+	printf("\n energyBH 1");
+
 	grid.x = blocks * FACTOR5;
 	block.x = THREADS5;
 
+	printf("\n energyBH 2");
+
 	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
+
+	printf("\n energyBH 3");
+
 	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
+
+	printf("\n energyBH 4");
+
 	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
+
+	printf("\n energyBH 5");
+
 	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
+
+	printf("\n energyBH 6");
 
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
+
+	printf("\n energyBH 7");
 
 	energyCalculationKernel<<<grid, block, THREADS5*sizeof(dds_float)>>>(k, box_l_gpu, periodic_gpu,energySum);
 	CudaTest("kernel 6 launch failed");
@@ -1368,9 +1394,13 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	block.x=grid.x; // TODO: redundant ?
 	grid.x=1; // TODO: redundant ?
 	//KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
+	printf("\n energyBH 8");
 	thrust::device_ptr<dds_float> t(energySum);
+	printf("\n energyBH 9");
 	float x=thrust::reduce(t,t+block.x);
-	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyDeviceToHost)); // TODO: wrong direction? Should be cudaMemcpyDeviceToHost!
+	printf("\n energyBH 10");
+	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
+	printf("\n energyBH 11");
 
 	cuda_safe_mem(cudaFree(energySum));
 	cuda_safe_mem(cudaFree(box_l_gpu));
@@ -1426,12 +1456,16 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	if (cudaSuccess != cudaMemcpyToSymbol(z1d, &(devMatrixes.z1), sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.z1 to device failed\n");*/
 
-	if (rx)	cuda_safe_mem(cudaMemcpyToSymbol(xd, rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (ry)	cuda_safe_mem(cudaMemcpyToSymbol(yd, ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (rz)	cuda_safe_mem(cudaMemcpyToSymbol(zd, rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipx) cuda_safe_mem(cudaMemcpyToSymbol(uxd, dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipy) cuda_safe_mem(cudaMemcpyToSymbol(uyd, dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipz) cuda_safe_mem(cudaMemcpyToSymbol(uzd, dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	printf("constant pointers 1");
+	if (rx)	{
+		printf("constant pointers 2");
+		cuda_safe_mem(cudaMemcpyToSymbol(xd, &rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	}
+	if (ry)	cuda_safe_mem(cudaMemcpyToSymbol(yd, &ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (rz)	cuda_safe_mem(cudaMemcpyToSymbol(zd, &rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipx) cuda_safe_mem(cudaMemcpyToSymbol(uxd, &dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipy) cuda_safe_mem(cudaMemcpyToSymbol(uyd, &dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	if (dipz) cuda_safe_mem(cudaMemcpyToSymbol(uzd, &dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
 
 	/*if (cudaSuccess != cudaMemcpyToSymbol(rndStatesd, rndStates_par, sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.rndStates to device failed\n");*/

@@ -19,18 +19,20 @@ typedef float dds_float;
 
 class DipolarBarnesHut : public Actor {
 public:
-  DipolarBarnesHut(EspressoSystemInterface &s) {
+  DipolarBarnesHut(SystemInterface &s) {
 
 	k = coulomb.Dbjerrum;
 
 	if(!s.requestFGpu())
-      std::cerr << "DipolarDirectSum needs access to forces on GPU!" << std::endl;
+      std::cerr << "DipolarBarnesHut needs access to forces on GPU!" << std::endl;
 
     if(!s.requestRGpu())
-      std::cerr << "DipolarDirectSum needs access to positions on GPU!" << std::endl;
+      std::cerr << "DipolarBarnesHut needs access to positions on GPU!" << std::endl;
 
     if(!s.requestDipGpu())
-      std::cerr << "DipolarDirectSum needs access to dipoles on GPU!" << std::endl;
+      std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!" << std::endl;
+
+    std::cout << "Trace DipolarBarnesHut init" << std::endl;
 
 	/*fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
 			s.dipxGpuBegin(), s.dipyGpuBegin(), s.dipzGpuBegin(),
@@ -39,11 +41,15 @@ public:
 
   };
 
-  virtual ~DipolarBarnesHut() {} // TODO: any memory cleanup?
+//virtual ~DipolarBarnesHut() {} // TODO: any memory cleanup?
 
-  void computeForces(EspressoSystemInterface &s) {
+  void computeForces(SystemInterface &s) {
     dds_float box[3];
     int per[3];
+
+    std::cout << "Trace computeForces 1" << std::endl;
+    printf("Trace computeForces 1");
+
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
@@ -64,12 +70,17 @@ public:
 	sortBH(s.blocksGpu());
 	//cudaThreadSynchronize();
 
+	std::cout << "Trace computeForces 2" << std::endl;
+	printf("Trace computeForces 2");
 	forceBH(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per);
 	//cudaThreadSynchronize();
   };
-  void computeEnergy(EspressoSystemInterface &s) {
+  void computeEnergy(SystemInterface &s) {
     dds_float box[3];
     int per[3];
+
+    std::cout << "Trace computeEnergy 1" << std::endl;
+
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
@@ -89,6 +100,7 @@ public:
     sortBH(s.blocksGpu());
     //cudaThreadSynchronize();
 
+    std::cout << "Trace computeEnergy 2" << std::endl;
     energyBH(s.blocksGpu(),k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
     //cudaThreadSynchronize();
  };

@@ -638,6 +638,8 @@ void EwaldgpuForce::computeForces(SystemInterface &s)
 
   setup(s);
 
+  printf("Trace EwaldgpuForce computeForces 1");
+
   //Resize box
   m_box_l[0] = s.box()[0];
   m_box_l[1] = s.box()[1];

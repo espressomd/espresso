@@ -715,7 +715,7 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
   case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
 #ifdef DIPOLAR_DIRECT_SUM
-  case DIPOLAR_DS_GPU: tclprint_to_result_dds_gpu(interp); break;
+  case DIPOLAR_DS_GPU: tclprint_to_result_dds_gpu(interp); break; // TODO: same for BH
 #endif
 #ifdef SCAFACOS_DIPOLES
     case DIPOLAR_SCAFACOS: tclprint_to_result_scafacos(interp); break;

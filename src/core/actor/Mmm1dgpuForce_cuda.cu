@@ -509,6 +509,8 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s)
 	}
 	setup(s);
 
+	printf("Trace Mmm1dgpuForce computeForces 1");
+
 	if (pairs < 0)
 	{
 		std::cerr << "MMM1D was not initialized correctly" << std::endl;
