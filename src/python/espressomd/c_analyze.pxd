@@ -23,8 +23,9 @@
 #
 
 
+from __future__ import print_function, absolute_import
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map

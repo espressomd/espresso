@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 import numpy
 import sys
@@ -29,17 +30,17 @@ system = espressomd.System()
 
 system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
 # if no seed is provided espresso generates a seed
-print "seed ", system.seed
+print("seed ", system.seed)
 rng_state_read1=system.random_number_generator_state
-print "random number generator state read 1", rng_state_read1
+print("random number generator state read 1", rng_state_read1)
 
 rng_state=[]
 for i in range(len(rng_state_read1)):
 	rng_state.append(i)
 system.random_number_generator_state=rng_state
 rng_state_read2=system.random_number_generator_state
-print "random number generator state read 2", rng_state_read2
+print("random number generator state read 2", rng_state_read2)
 
 system.set_random_state_PRNG()
 rng_state_read3=system.random_number_generator_state
-print "random number generator state read 3", rng_state_read3
+print("random number generator state read 3", rng_state_read3)

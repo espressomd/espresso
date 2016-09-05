@@ -18,11 +18,11 @@
 #
 # Tests particle property setters/getters
 
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import *
-from espressomd.integrate import integrate
 from espressomd.analyze import *
 import espressomd
 import sys
@@ -647,11 +647,11 @@ class Tabulated(ut.TestCase):
 
     def compare(self):
 
-        integrate(0)
+        self.system.integrator.run(0)
 
-        energy = Analysis(self.system).energy()['nonBonded', 0, 0] + Analysis(self.system).energy()['nonBonded', 0, 1] + Analysis(self.system).energy()['nonBonded', 1, 1] 
+        energy = Analysis(self.system).energy()['non_bonded', 0, 0] + Analysis(self.system).energy()['non_bonded', 0, 1] + Analysis(self.system).energy()['non_bonded', 1, 1] 
 
-        pressure = Analysis(self.system).pressure()['nonBonded', 0, 0] + Analysis(self.system).pressure()['nonBonded', 0, 1] + Analysis(self.system).pressure()['nonBonded', 1, 1] 
+        pressure = Analysis(self.system).pressure()['non_bonded', 0, 0] + Analysis(self.system).pressure()['non_bonded', 0, 1] + Analysis(self.system).pressure()['non_bonded', 1, 1] 
 
         totenergy = Analysis(self.system).energy()["total"]
         totpressure = Analysis(self.system).pressure()["total"]
@@ -664,7 +664,7 @@ class Tabulated(ut.TestCase):
         def test_tab(self):
             self.compare()
     else:
-        print "TABULATED feature inactive"
+        print("TABULATED feature inactive")
         sys.exit()
 
 

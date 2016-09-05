@@ -1,5 +1,6 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from highlander import ThereCanOnlyBeOne
+from .highlander import ThereCanOnlyBeOne
 
 
 cdef class Actor:
@@ -166,9 +167,9 @@ class Actors:
             raise ThereCanOnlyBeOne(actor)
 
     def __str__(self):
-        print "Active Actors:"
+        print("Active Actors:")
         for actor in Actors.active_actors:
-            print actor
+            print(actor)
         return ""
 
     def __getitem__(self, key):
