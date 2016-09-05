@@ -43,7 +43,7 @@ source "tests_common.tcl"
 set tcl_precision 14
 
 proc vectorsTheSame {a b} {
- set tol 3E-3
+ set tol 3E-2
  set diff [vecsub $a $b]
  if { [veclen $diff] > $tol } {
   return 0
@@ -137,12 +137,12 @@ for {set i 0} {$i<$n} {incr i} {
     error "Forces on particle don't match. $i  [vecsub [lindex $dawaanr_f $i] [vecscale $ratio_dawaanr_dds_gpu [lindex $ddsgpu_f $i]]]\n[lindex $dawaanr_f $i] [vecscale $ratio_dawaanr_dds_gpu [lindex $ddsgpu_f $i]]"
   }
   if { ! [vectorsTheSame [lindex $dawaanr_t $i] [vecscale $ratio_dawaanr_dds_gpu [lindex $ddsgpu_t $i]]] } {
-    error "torques on particle $i don't match.  [vecsub [lindex $dawaanr_t $i] [lindex $ddsgpu_t $i]] "
+    error "torques on particle $i don't match.  [vecsub [lindex $dawaanr_t $i] [vecscale $ratio_dawaanr_dds_gpu [lindex $ddsgpu_t $i]]] "
   }
 }
 
-if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.001 } {
-  error "Energies for dawaanr $dawaanr_e and dds_gpu $ddsgpu_e don't match."
+if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 } {
+  error "Energies for dawaanr $dawaanr_e and dds_gpu [expr $ratio_dawaanr_dds_gpu*$ddsgpu_e] don't match."
 }
 
 # Does the energy stay constant when swapping particles
@@ -155,7 +155,7 @@ for {set i 0} {$i<1000} {incr i} {
   eval "part $b pos $posa dip $dipa"
   integrate 0 recalc_forces
   set E [analyze energy total]
-  if { abs($E -$ddsgpu_e) > 1E-3 } {
+  if { abs($E -$ddsgpu_e) > 5E-2 } {
     error "energy mismatch: $E $ddsgpu_e"
   }
 }

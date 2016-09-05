@@ -373,7 +373,7 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, floa
   //KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
   thrust::device_ptr<dds_float> t(energySum);
   float x=thrust::reduce(t,t+block.x);
-  cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice)); // TODO: wrong direction? Should be cudaMemcpyDeviceToHost!
+  cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
   cuda_safe_mem(cudaFree(energySum));
   cuda_safe_mem(cudaFree(box_l_gpu));

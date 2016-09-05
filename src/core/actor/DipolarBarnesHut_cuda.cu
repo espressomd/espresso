@@ -234,19 +234,19 @@ __global__
 __launch_bounds__(THREADS1, FACTOR1)
 void boundingBoxKernel()
 {
-	printf("\n Trace boundingBoxKernel 1");
+	//printf("\n Trace boundingBoxKernel 1");
 
 	register int i, j, k, inc;
 	register float val, minx, maxx, miny, maxy, minz, maxz;
 	__shared__ volatile float sminx[THREADS1], smaxx[THREADS1], sminy[THREADS1], smaxy[THREADS1], sminz[THREADS1], smaxz[THREADS1];
 
-	printf("\n Trace boundingBoxKernel 2");
+	//printf("\n Trace boundingBoxKernel 2");
 
 	// initialize with valid data (in case #bodies < #threads)
 
-	printf("\n xd[0] = %e", xd[0]);
+	//printf("\n xd[0] = %e", xd[0]);
 
-	printf("\n Trace boundingBoxKernel 3");
+	//printf("\n Trace boundingBoxKernel 3");
 
 	minx = maxx = xd[0];
 	miny = maxy = yd[0];
@@ -636,6 +636,7 @@ void forceCalculationKernel(dds_float pf,
 {
 	register int i, j, k, n, depth, base, sbase, diff, t;
 	register float px, py, pz, dx, dy, dz, tmp, fx, fy, fz, hx, hy, hz, ux, uy, uz;
+	//register float energy;
 	register float ucx, ucy, ucz;
 	__shared__ volatile int pos[MAXDEPTH * THREADS5/WARPSIZE], node[MAXDEPTH * THREADS5/WARPSIZE];
 	__shared__ float dq[MAXDEPTH * THREADS5/WARPSIZE];
@@ -696,6 +697,8 @@ void forceCalculationKernel(dds_float pf,
 			fx = 0.0f;
 			fy = 0.0f;
 			fz = 0.0f;
+
+			//energy = 0.0f;
 
 			// initialize iteration stack, i.e., push root node onto stack
 			depth = j;
@@ -858,12 +861,13 @@ void forceCalculationKernel(dds_float pf,
 				hy = 0.0f;
 				hz = 0.0f;
 			}
-			atomicAdd(f+3*i+0, fx);
-			atomicAdd(torque+3*i+0,NX);
-			atomicAdd(f+3*i+1, fy);
-			atomicAdd(torque+3*i+1,NY);
-			atomicAdd(f+3*i+2, fz);
-			atomicAdd(torque+3*i+2,NZ);
+
+			atomicAdd(f+3*i+0, fx * pf);
+			atomicAdd(torque+3*i+0, NX * pf);
+			atomicAdd(f+3*i+1, fy * pf);
+			atomicAdd(torque+3*i+1, NY * pf);
+			atomicAdd(f+3*i+2, fz * pf);
+			atomicAdd(torque+3*i+2, NZ * pf);
 		}
 	}
 	//rndStatesd[IND] = localState;
@@ -993,8 +997,6 @@ void energyCalculationKernel(dds_float pf,
 								fz += -dz * (umd5  +  bb2d7)
 								+ 3.0f * (b * uz + b2 * ucz) * dd5;*/
 
-								sum += - ux * hx + uy * hy + uz * hz;
-
 								/*if (fx != fx || fy != fy || fz != fz) {	//nan
 									printf("NAN in particle iteraction (Before LJ)[%d] and meta:[%d]\n", i, n);
 									printf("x = %f, y = %f, z = %f,\n", px, py, pz);
@@ -1048,6 +1050,8 @@ void energyCalculationKernel(dds_float pf,
 				}
 				depth--;	// done with this level
 			}
+
+			sum += - (ux * hx + uy * hy + uz * hz);
 
 		//	fz += 0.7f;
 
@@ -1144,6 +1148,7 @@ void energyCalculationKernel(dds_float pf,
 	}
 	//rndStatesd[IND] = localState;
 
+	sum *= pf;
     sum /= 2.0f; // the self-consistent field energy
     // Save per thread result into block shared mem
     res[threadIdx.x] =sum;
@@ -1154,6 +1159,7 @@ void energyCalculationKernel(dds_float pf,
     //  if (threadIdx.x==0)
     //   printf("Block sum %d %f\n",blockIdx.x,energySum[blockIdx.x]);
 }
+
 
 /******************************************************************************/
 /*** advance bodies ***********************************************************/
@@ -1351,39 +1357,45 @@ void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3
 	cudaFree(periodic_gpu);
 }
 
+/*void integrate(int blocks) {
+	integrationKernel<<<blocks * FACTOR6, THREADS6>>>();
+	CudaTest("kernel 6 launch failed");
+	cudaThreadSynchronize();
+}*/
+
 void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E) {
 	dds_float* box_l_gpu;
 	int* periodic_gpu;
 	dim3 grid(1,1,1);
 	dim3 block(1,1,1);
 
-	printf("\n energyBH 1");
+	//printf("\n energyBH 1");
 
 	grid.x = blocks * FACTOR5;
 	block.x = THREADS5;
 
-	printf("\n energyBH 2");
+	//printf("\n energyBH 2");
 
 	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
 
-	printf("\n energyBH 3");
+	//printf("\n energyBH 3");
 
 	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
 
-	printf("\n energyBH 4");
+	//printf("\n energyBH 4");
 
 	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
 
-	printf("\n energyBH 5");
+	//printf("\n energyBH 5");
 
 	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
-	printf("\n energyBH 6");
+	//printf("\n energyBH 6");
 
 	dds_float *energySum;
 	cuda_safe_mem(cudaMalloc(&energySum,(int)(sizeof(dds_float)*grid.x)));
 
-	printf("\n energyBH 7");
+	//printf("\n energyBH 7");
 
 	energyCalculationKernel<<<grid, block, THREADS5*sizeof(dds_float)>>>(k, box_l_gpu, periodic_gpu,energySum);
 	CudaTest("kernel 6 launch failed");
@@ -1394,28 +1406,23 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	block.x=grid.x; // TODO: redundant ?
 	grid.x=1; // TODO: redundant ?
 	//KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
-	printf("\n energyBH 8");
+	//printf("\n energyBH 8");
 	thrust::device_ptr<dds_float> t(energySum);
-	printf("\n energyBH 9");
+	//printf("\n energyBH 9");
 	float x=thrust::reduce(t,t+block.x);
-	printf("\n energyBH 10");
+	//printf("\n energyBH 10");
 	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
-	printf("\n energyBH 11");
+	//printf("\n energyBH 11");
 
 	cuda_safe_mem(cudaFree(energySum));
 	cuda_safe_mem(cudaFree(box_l_gpu));
 	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
-/*void integrate(int blocks) {
-	integrationKernel<<<blocks * FACTOR6, THREADS6>>>();
-	CudaTest("kernel 6 launch failed");
-	cudaThreadSynchronize();
-}*/
-
 void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* dipy, float* dipz, int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass) {
-	// TODO: this should be moved to Espresso CLI parameters
-	float epssq = 0.05f * 0.05f;
+	// TODO: this should be moved to the Espresso CLI parameters
+	//float epssq = 0.05f * 0.05f;
+	float epssq = 10.0f * 10.0f;
 	float itolsq = 1.0f / (0.5f * 0.5f);
 
 	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));
@@ -1456,16 +1463,12 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	if (cudaSuccess != cudaMemcpyToSymbol(z1d, &(devMatrixes.z1), sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.z1 to device failed\n");*/
 
-	printf("constant pointers 1");
-	if (rx)	{
-		printf("constant pointers 2");
-		cuda_safe_mem(cudaMemcpyToSymbol(xd, &rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	}
-	if (ry)	cuda_safe_mem(cudaMemcpyToSymbol(yd, &ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (rz)	cuda_safe_mem(cudaMemcpyToSymbol(zd, &rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipx) cuda_safe_mem(cudaMemcpyToSymbol(uxd, &dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipy) cuda_safe_mem(cudaMemcpyToSymbol(uyd, &dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
-	if (dipz) cuda_safe_mem(cudaMemcpyToSymbol(uzd, &dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(xd, &rx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(yd, &ry, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(zd, &rz, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uxd, &dipx, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uyd, &dipy, sizeof(float*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(uzd, &dipz, sizeof(float*), 0, cudaMemcpyHostToDevice));
 
 	/*if (cudaSuccess != cudaMemcpyToSymbol(rndStatesd, rndStates_par, sizeof(void*), 0, cudaMemcpyHostToDevice))
 			throw DeviceMemCpyToSymbolException("copying of devMatrixes.rndStates to device failed\n");*/

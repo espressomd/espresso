@@ -13,11 +13,11 @@ void activate_dipolar_barnes_hut()
 if (dipolarBarnesHut)
   free(dipolarBarnesHut);
 
-std::cout << "Trace activate_dipolar_barnes_hut 1" << std::endl;
+//std::cout << "Trace activate_dipolar_barnes_hut 1" << std::endl;
 dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface);
 forceActors.push_back(dipolarBarnesHut);
 energyActors.push_back(dipolarBarnesHut);
-std::cout << "Trace activate_dipolar_barnes_hut 2" << std::endl;
+//std::cout << "Trace activate_dipolar_barnes_hut 2" << std::endl;
 
 coulomb.Dmethod = DIPOLAR_BH_GPU;
 }
@@ -26,12 +26,12 @@ void deactivate_dipolar_barnes_hut()
 {
 if (dipolarBarnesHut)
 {
-  std::cout << "Trace deactivate_dipolar_barnes_hut 1" << std::endl;
+  //std::cout << "Trace deactivate_dipolar_barnes_hut 1" << std::endl;
   forceActors.remove(dipolarBarnesHut);
   energyActors.remove(dipolarBarnesHut);
   delete(dipolarBarnesHut);
   dipolarBarnesHut=NULL;
-  std::cout << "Trace deactivate_dipolar_barnes_hut 2" << std::endl;
+  //std::cout << "Trace deactivate_dipolar_barnes_hut 2" << std::endl;
 
 }
 }

@@ -32,7 +32,7 @@ public:
     if(!s.requestDipGpu())
       std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!" << std::endl;
 
-    std::cout << "Trace DipolarBarnesHut init" << std::endl;
+    //std::cout << "Trace DipolarBarnesHut init" << std::endl;
 
 	/*fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
 			s.dipxGpuBegin(), s.dipyGpuBegin(), s.dipzGpuBegin(),
@@ -47,8 +47,8 @@ public:
     dds_float box[3];
     int per[3];
 
-    std::cout << "Trace computeForces 1" << std::endl;
-    printf("Trace computeForces 1");
+    //std::cout << "Trace computeForces 1" << std::endl;
+    //printf("Trace computeForces 1");
 
     for (int i=0;i<3;i++)
     {
@@ -70,8 +70,8 @@ public:
 	sortBH(s.blocksGpu());
 	//cudaThreadSynchronize();
 
-	std::cout << "Trace computeForces 2" << std::endl;
-	printf("Trace computeForces 2");
+	//std::cout << "Trace computeForces 2" << std::endl;
+	//printf("Trace computeForces 2");
 	forceBH(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per);
 	//cudaThreadSynchronize();
   };
@@ -79,7 +79,7 @@ public:
     dds_float box[3];
     int per[3];
 
-    std::cout << "Trace computeEnergy 1" << std::endl;
+    //std::cout << "Trace computeEnergy 1" << std::endl;
 
     for (int i=0;i<3;i++)
     {
@@ -100,7 +100,7 @@ public:
     sortBH(s.blocksGpu());
     //cudaThreadSynchronize();
 
-    std::cout << "Trace computeEnergy 2" << std::endl;
+    //std::cout << "Trace computeEnergy 2" << std::endl;
     energyBH(s.blocksGpu(),k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
     //cudaThreadSynchronize();
  };
