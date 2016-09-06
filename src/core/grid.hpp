@@ -185,7 +185,7 @@ void rescale_boxl(int dir, double d_new);
   *  @param b the vector to subtract
   *  @param res where to store the result
 */
-inline void get_mi_vector(double res[3], double a[3], double b[3])
+inline void get_mi_vector(double res[3], const double a[3], const double b[3])
 {
   int i;
 
