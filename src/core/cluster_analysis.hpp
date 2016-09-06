@@ -55,7 +55,7 @@ class ClusterStructure {
   // criteria
   void analyze_pair();
   // Analyze cluster strcutre based on the presence of a bond as criterion
-  void analyze_bonds(NeighborCriterion* nd);
+  void analyze_bonds();
   // Count a pair of particles
   void add_pair(Particle& p1, Particle& p2);
   // Merge clusters which turned out to be one and the same
@@ -84,7 +84,7 @@ class DistanceCriterion : public NeighborCriterion {
     virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
       double vec21[3];
       get_mi_vector(vec21,p1.r.p, p2.r.p); 
-      return (sqrlen(vec21)<= cut_off);
+      return (sqrt(sqrlen(vec21)<= cut_off));
     };
     virtual std::string name() { return "distance"; };
     double get_cut_off() {
@@ -121,7 +121,6 @@ class BondCriterion : public NeighborCriterion {
        bond_type=_bond_type;
     };
     virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
-      double vec21[3];
       return bond_exists(&p1,&p2,bond_type);
     };
     virtual std::string name() { return "bond"; };

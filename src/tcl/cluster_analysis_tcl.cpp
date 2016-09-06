@@ -54,17 +54,34 @@ int tclcommand_cluster_analysis(ClientData data, Tcl_Interp *interp, int argc, c
       cluster_analysis().set_criterion(new DistanceCriterion(d));
       argc -= 2; argv += 2;
     }
+  else if (ARG0_IS_S("bond")) {
+      if (argc != 2) {
+      	Tcl_AppendResult(interp, "The bond criterion needs a bond type as argument.", (char*) NULL);
+      	return TCL_ERROR;
+      }
+      int b;
+      if (!ARG_IS_I(1,b)) {
+        	Tcl_AppendResult(interp, "Need a bond type as 1st arg.", (char*) NULL);
+        	return TCL_ERROR;
+      }
+      cluster_analysis().set_criterion(new BondCriterion(b));
+      argc -= 2; argv += 2;
+    }
     else if (ARG0_IS_S("analyze_pair")) {
       cluster_analysis().analyze_pair();
+      argc -= 1; argv += 1;
+    }
+    else if (ARG0_IS_S("analyze_bond")) {
+      cluster_analysis().analyze_bonds();
       argc -= 1; argv += 1;
     }
     else if (ARG0_IS_S("print")) {
       std::stringstream res;
       for (auto it : cluster_analysis().clusters) {
-        res << "{ "<<it.first<<" {";
+        res << "{"<<it.first<<" {";
         Cluster cluster = it.second;
         for (int pid : cluster.particles) {
-          res << " "<<pid<<" ";
+          res << pid<<" ";
         }
         res << "} } ";
       }

@@ -16,6 +16,7 @@ void ClusterStructure::analyze_pair()
   
   // Iterate over pairs
   for (int i=0;i<=max_seen_particle;i++) {
+    //printf("%d\n",i);
     if (! local_particles[i]) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! local_particles[j]) continue;
@@ -25,7 +26,31 @@ void ClusterStructure::analyze_pair()
   merge_clusters();
 }
 
+void ClusterStructure::analyze_bonds() {
+//printf("Analyze_bond\n");
+for (int i=0;i<=max_seen_particle;i++) {
+  if (local_particles[i]) {
+    auto p=local_particles[i];
+    int j=0;
+    while (j<p->bl.n) {
+      int bond_type=p->bl.e[j];
+      int partners =bonded_ia_params[bond_type].num;
+      if (partners!=1) {
+        j+=1+partners;
+        continue;
+      }
+      // We are only here if bond has one partner
+      add_pair(*p,*(local_particles[p->bl.e[j+1]]));
+      j+=2; // Type id + one prtner
+    }
+  }
+}
+}
+
+
+
 void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
+//printf("Add_pair %d,%d\n",p1.p.identity,p2.p.identity);
 // * check, if there's a neighbor
  //   * No: Then go on to the next particle
  // * Yes: Then if
@@ -121,9 +146,14 @@ void ClusterStructure::merge_clusters() {
 
 int ClusterStructure::find_id_for(int x)
 {
+ int tmp;
  while (cluster_identities.find(x)!=cluster_identities.end())
  {
-  x =cluster_identities[x];
+  if (cluster_identities[x]==x) return x;
+  tmp =cluster_identities[x];
+  if (tmp >x) return x;
+  //printf("Replacing %d by %d\n",x,tmp);
+  x=tmp;
  }
  return x;
 }
