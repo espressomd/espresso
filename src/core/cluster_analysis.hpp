@@ -13,6 +13,7 @@
 #include "interaction_data.hpp"
 #include "energy_inline.hpp"
 #include <string>
+#include "grid.hpp"
 
 class NeighborCriterion {
   public: 
@@ -82,7 +83,8 @@ class DistanceCriterion : public NeighborCriterion {
     }
     virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
       double vec21[3];
-      return sqrt(distance2vec(p1.r.p, p2.r.p, vec21)) <= cut_off;
+      get_mi_vector(vec21,p1.r.p, p2.r.p); 
+      return (sqrlen(vec21)<= cut_off);
     };
     virtual std::string name() { return "distance"; };
     double get_cut_off() {

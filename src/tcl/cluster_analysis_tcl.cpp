@@ -57,7 +57,6 @@ int tclcommand_cluster_analysis(ClientData data, Tcl_Interp *interp, int argc, c
     else if (ARG0_IS_S("analyze_pair")) {
       cluster_analysis().analyze_pair();
       argc -= 1; argv += 1;
-      return TCL_OK;
     }
     else if (ARG0_IS_S("print")) {
       std::stringstream res;
@@ -76,5 +75,6 @@ int tclcommand_cluster_analysis(ClientData data, Tcl_Interp *interp, int argc, c
     else {
     	Tcl_AppendResult(interp, "Unknown argument.", (char*) NULL);
 	    return TCL_ERROR;
-      }
+    }
+  return gather_runtime_errors(interp,TCL_OK);
 }
