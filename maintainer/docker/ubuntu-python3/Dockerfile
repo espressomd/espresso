@@ -8,11 +8,10 @@ RUN apt-get update && apt-get install -y \
 	openmpi-bin \
 	libfftw3-dev \
 	libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
-	cython python python-numpy \
+	cython3 python3 python3-numpy \
 	tcl-dev \
 	git \
 	pep8 \
-	python-pyvtk \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 

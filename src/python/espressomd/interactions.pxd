@@ -55,6 +55,8 @@ cdef extern from "interaction_data.hpp":
         char TAB_filename[256]; 
 
     cdef ia_parameters * get_ia_param(int i, int j)
+    cdef ia_parameters * get_ia_param_safe(int i, int j)
+    cdef void make_bond_type_exist(int type)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,

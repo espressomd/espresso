@@ -3,14 +3,12 @@ sudo: required
 
 services: docker
 
-before_install:
-        - docker pull espressomd/travis-build:latest
-
-
 env:
   matrix:
     - myconfig=default
     - myconfig=maxset
+    - myconfig=maxset image=ubuntu-python3
+    - myconfig=maxset image=debian
     - myconfig=maxset-gaussrandom
     - myconfig=maxset-gaussrandomcut
     - myconfig=molcut
