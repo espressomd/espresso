@@ -155,7 +155,7 @@ cdef class mayaviLive:
                     k+=1
             j += 1
         assert j == self.system.n_part
-        cdef int Nbonds = bonds.size()/3
+        cdef int Nbonds = bonds.size()//3
         
         bond_coords = numpy.empty((Nbonds,7))
 
