@@ -26,7 +26,6 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include "shapes/Wall.hpp"
-#include "shapes/Sphere.hpp"
 
 template <class T>
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
@@ -74,13 +73,6 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   w.d() = 0.2;
 
   BOOST_CHECK(check_distance_function(w));
-
-  Shapes::Sphere s;
-  s.pos() = Vector3d{1., 2., 3.};
-  s.rad() = 3.14158;
-  s.direction() = 1.0;
-
-  BOOST_CHECK(check_distance_function(s));
 }
 
 /* @TODO: Functional unit test of the distance function */
