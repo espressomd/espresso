@@ -100,7 +100,7 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	if (writing) {
 	  /* set */
 	  /* parse in data */
-	  if (argc != 2 + fields[i].dimension) {
+	  if ((argc != 2 + fields[i].dimension) && (!fields[i].scalar_default_allowed)) {
 	    sprintf(buffer, "%d", fields[i].dimension);	  
 	    Tcl_AppendResult(interp, "\"", argv[1],
 			     "\" has dimension ",
@@ -114,13 +114,25 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  for (j = 0; j < fields[i].dimension; j++) {
 	    switch (fields[i].type) {
 	    case TYPE_INT:
-	      if (Tcl_GetInt(interp, argv[2 + j], databuf.intbuf + j) == TCL_ERROR)
-		return (TCL_ERROR);
+	      if (!fields[i].scalar_default_allowed)
+	      {
+	          if (Tcl_GetInt(interp, argv[2 + j], databuf.intbuf + j) == TCL_ERROR)
+	              return (TCL_ERROR);
+	      } else {
+	          if (Tcl_GetInt(interp, argv[2 + 0], databuf.intbuf + j) == TCL_ERROR)
+	              return (TCL_ERROR);
+	      }
 	      break;
 	    case TYPE_BOOL: {
 	      int dta;
-	      if (Tcl_GetInt(interp, argv[2 + j], &dta))
-		return (TCL_ERROR);
+	      if (!fields[i].scalar_default_allowed)
+	      {
+	          if (Tcl_GetInt(interp, argv[2 + j], &dta))
+	              return (TCL_ERROR);
+	      } else {
+	          if (Tcl_GetInt(interp, argv[2 + 0], &dta))
+	              return (TCL_ERROR);
+	      }
 	      if (dta) {
 		databuf.intbuf[0] |= (1L << j);
 	      } else {
@@ -129,8 +141,14 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	      break;
 	    }
 	    case TYPE_DOUBLE:
-	      if (Tcl_GetDouble(interp, argv[2 + j], databuf.doublebuf + j))
-		return (TCL_ERROR);
+	      if (!fields[i].scalar_default_allowed)
+	      {
+	          if (Tcl_GetDouble(interp, argv[2 + j], databuf.doublebuf + j))
+	              return (TCL_ERROR);
+	      } else {
+	          if (Tcl_GetDouble(interp, argv[2 + 0], databuf.doublebuf + j))
+	                            return (TCL_ERROR);
+	      }
 	      break;
 	    default: ;
 	    }

@@ -49,20 +49,26 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   temperature = 0;
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   /* langevin thermostat */
+#ifndef PARTICLE_ANISOTROPY
   langevin_gamma = 0;
+#else
+  for ( j = 0 ; j < 3 ; j++) langevin_gamma[j] = 0;
+#endif // PARTICLE_ANISOTROPY
   /* Friction coefficient gamma for rotation */
 #ifndef ROTATIONAL_INERTIA
   langevin_gamma_rotation = 0;
 #else
   for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = 0;
-#endif
+#endif // ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
   /* Langevin for translations */
   langevin_trans = true;
+  mpi_bcast_parameter(FIELD_LANGEVIN_TRANS_SWITCH);
   /* Langevin for rotations */
   langevin_rotate = true;
+  mpi_bcast_parameter(FIELD_LANGEVIN_ROT_SWITCH);
 
 #ifdef DPD
   /* dpd thermostat */
@@ -101,61 +107,103 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 
 int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
-  double temp,
-         gammat = -1.0;
+  double temp;
   bool trans = true,
        rot = true;
+  bool scalar_default = false;
+  int j;
+#ifndef PARTICLE_ANISOTROPY
+  double gammat = -1.0;
+  int arg_shift_1 = 0;
+#else
+  double gammat[3];
+  gammat[0] = gammat[1] = gammat[2] = -1.0;
+
+  int arg_shift_1 = 2;
+#endif // PARTICLE_ANISOTROPY
+
 #ifndef ROTATIONAL_INERTIA
   double gammar = -1.0;
-  int arg_shift = 0;
+  int arg_shift_2 = 0;
 #else
   double gammar[3];
   gammar[0] = gammar[1] = gammar[2] = -1.0;
-  int arg_shift = 2, j;
-#endif
+
+  int arg_shift_2 = 2;
+#endif // ROTATIONAL_INERTIA
+
   /* check number of arguments */
+#if (!defined(PARTICLE_ANISOTROPY) && !defined(ROTATIONAL_INERTIA))
   if (argc < 4)
   {
-#ifndef ROTATIONAL_INERTIA
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
 		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot> <on/off> <on/off>]\"", (char *)NULL);
-#else
-    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
-    		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot_x> <gamma_rot_y> <gamma_rot_z> <on/off> <on/off>]\"", (char *)NULL);
-#endif
     return (TCL_ERROR);
   }
+#else
+  if (argc < 6)
+  {
+      if (argc < 4)
+      {
+          Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
+              argv[0]," ",argv[1]," <temp> <gamma_trans_x> <gamma_trans_y> <gamma_trans_z> [<gamma_rot_x> <gamma_rot_y> <gamma_rot_z> <on/off> <on/off>]\"", (char *)NULL);
+          return (TCL_ERROR);
+      } else {
+          scalar_default = true;
+          arg_shift_1 = 0;
+      }
+  }
+#endif
 
   /* check argument types */
+#ifndef PARTICLE_ANISOTROPY
   if ( !ARG_IS_D(2, temp) || !ARG_IS_D(3, gammat)) 
   {
     Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs two DOUBLES", (char *)NULL);
     return (TCL_ERROR);
   }
+#else
+  if (!scalar_default)
+  {
+      if (!ARG_IS_D(2, temp) || !ARG_IS_D(3, (gammat[0])) || !ARG_IS_D(4, (gammat[1])) || !ARG_IS_D(5, (gammat[2])))
+      {
+          Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs DOUBLES", (char *)NULL);
+          return (TCL_ERROR);
+      }
+  } else {
+      if (!ARG_IS_D(2, temp) || !ARG_IS_D(3, (gammat[0])))
+      {
+          Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs DOUBLES", (char *)NULL);
+          return (TCL_ERROR);
+      } else {
+          gammat[1] = gammat[2] = gammat[0];
+      }
+  }
+#endif // PARTICLE_ANISOTROPY
 
-  if ((argc > 4) && (argc < (6 + arg_shift)))
+  if ((argc > 4 + arg_shift_1) && (argc < (6 + arg_shift_1 + arg_shift_2)))
   {
 #ifndef ROTATIONAL_INERTIA
     if ( !ARG_IS_D(4, gammar) )
 #else
-    if (! ARG_IS_D(4, gammar[0]) || ! ARG_IS_D(5, gammar[1]) || ! ARG_IS_D(6, gammar[2]))
-#endif
+    if (! ARG_IS_D(6, gammar[0]) || ! ARG_IS_D(7, gammar[1]) || ! ARG_IS_D(8, gammar[2]))
+#endif // ROTATIONAL_INERTIA
     {
-      Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs three DOUBLES", (char *)NULL);
+      Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs DOUBLES", (char *)NULL);
       return (TCL_ERROR);
     }
   }
 
-  if ((argc > (5 + arg_shift)) && (argc < (7 + arg_shift)))
+  if ((argc > (5 + arg_shift_1 + arg_shift_2)) && (argc < (7 + arg_shift_1 + arg_shift_2)))
   {
-    if ( !ARG_IS_S(5 + arg_shift, "on") && !ARG_IS_S(5 + arg_shift, "off") )
+    if ( !ARG_IS_S(5 + arg_shift_1 + arg_shift_2, "on") && !ARG_IS_S(5 + arg_shift_1 + arg_shift_2, "off") )
     {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
     }
     else
     {
-      if ( ARG_IS_S(5 + arg_shift, "on") )
+      if ( ARG_IS_S(5 + arg_shift_1 + arg_shift_2, "on") )
       {
         trans = true;
       }
@@ -166,15 +214,15 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-  if ((argc > (6 + arg_shift)) && (argc < (8 + arg_shift)))
+  if ((argc > (6 + arg_shift_1 + arg_shift_2)) && (argc < (8 + arg_shift_1 + arg_shift_2)))
   {
-    if ( !ARG_IS_S(6 + arg_shift, "on") && !ARG_IS_S(6 + arg_shift, "off") ) {
+    if ( !ARG_IS_S(6 + arg_shift_1 + arg_shift_2, "on") && !ARG_IS_S(6 + arg_shift_1 + arg_shift_2, "off") ) {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
     }
     else
     {
-      if ( ARG_IS_S(6 + arg_shift, "on") )
+      if ( ARG_IS_S(6 + arg_shift_1 + arg_shift_2, "on") )
       {
         rot = true;
       }
@@ -185,10 +233,14 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-#ifndef ROTATIONAL_INERTIA
+#if (!defined(PARTICLE_ANISOTROPY) && !defined(ROTATIONAL_INERTIA))
   if (temp < 0 || gammat < 0 || ((argc > 4) && (gammar < 0))) {
-#else
-  if (temp < 0 || gammat < 0 || ((argc > 6) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
+#elif (defined(PARTICLE_ANISOTROPY) && !defined(ROTATIONAL_INERTIA))
+  if (temp < 0 || gammat[0] < 0 || gammat[1] < 0 || gammat[2] < 0) {
+#elif (!defined(PARTICLE_ANISOTROPY) && defined(ROTATIONAL_INERTIA))
+if (temp < 0 || gammat < 0 || ((argc > 6) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
+#elif (defined(PARTICLE_ANISOTROPY) && defined(ROTATIONAL_INERTIA))
+  if (temp < 0 || gammat[0] < 0 || gammat[1] < 0 || gammat[2] < 0 || ((argc > 8) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
 #endif
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
@@ -196,21 +248,27 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
 
   /* broadcast parameters */
   temperature = temp;
+#ifndef PARTICLE_ANISOTROPY
   langevin_gamma = gammat;
+#else
+  for ( j = 0 ; j < 3 ; j++) langevin_gamma[j] = gammat[j];
+#endif
+
 #ifndef ROTATIONAL_INERTIA
   langevin_gamma_rotation = gammar;
 #else
   for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = gammar[j];
 #endif
+
   langevin_trans = trans;
   langevin_rotate = rot;
   thermo_switch = ( thermo_switch | THERMO_LANGEVIN );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+  mpi_bcast_parameter(FIELD_LANGEVIN_TRANS_SWITCH);
+  mpi_bcast_parameter(FIELD_LANGEVIN_ROT_SWITCH);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-
-  // TODO: mpi_bcast_parameter for langevin_trans and langevin_rotate ?
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
   fprintf(stderr,"         as of this version! Please consult the user's guide.\n");
@@ -425,8 +483,18 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
   if(thermo_switch & THERMO_LANGEVIN ) {
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ langevin ",buffer, (char *)NULL);
+#ifndef PARTICLE_ANISOTROPY
     Tcl_PrintDouble(interp, langevin_gamma, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+#else
+    Tcl_PrintDouble(interp, langevin_gamma[0], buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_gamma[1], buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_gamma[2], buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+#endif
+
 #ifndef ROTATIONAL_INERTIA
     Tcl_PrintDouble(interp, langevin_gamma_rotation, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
@@ -438,6 +506,7 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, langevin_gamma_rotation[2], buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
 #endif
+
     Tcl_AppendResult(interp," ", langevin_trans? "on": "off", (char *)NULL);
     Tcl_AppendResult(interp," ", langevin_rotate? "on": "off", " } ", (char *)NULL);
   }

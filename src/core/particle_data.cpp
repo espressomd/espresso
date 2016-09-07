@@ -303,7 +303,13 @@ void init_particle(Particle *part)
 
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
+#ifndef PARTICLE_ANISOTROPY
   part->p.gamma = -1.0;
+#else
+  part->p.gamma[0] = -1.0;
+  part->p.gamma[1] = -1.0;
+  part->p.gamma[2] = -1.0;
+#endif
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   part->p.gamma_rot = -1.0;
@@ -311,8 +317,8 @@ void init_particle(Particle *part)
   part->p.gamma_rot[0] = -1.0;
   part->p.gamma_rot[1] = -1.0;
   part->p.gamma_rot[2] = -1.0;
-#endif
-#endif
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
 #ifdef MULTI_TIMESTEP
@@ -1119,7 +1125,11 @@ int set_particle_temperature(int part, double T)
   return ES_OK;
 }
 
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma)
+#else
+int set_particle_gamma(int part, double gamma[3])
+#endif // PARTICLE_ANISOTROPY
 {
   int pnode;
   
@@ -1138,11 +1148,11 @@ int set_particle_gamma(int part, double gamma)
   return ES_OK;
 }
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma_rot)
 #else
 int set_particle_gamma_rot(int part, double gamma_rot[3])
-#endif
+#endif // PARTICLE_ANISOTROPY
 {
   int pnode;
 
@@ -2245,24 +2255,29 @@ void pointer_to_fix(Particle *p, int*& res)
 #ifdef LANGEVIN_PER_PARTICLE
 void pointer_to_gamma(Particle *p, double*& res)
 {
+#ifndef PARTICLE_ANISOTROPY
   res=&(p->p.gamma);
+#else
+  res=p->p.gamma; // array [3]
+#endif // PARTICLE_ANISTROPY
 }
+
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
   res=&(p->p.gamma_rot);
 #else
   res=p->p.gamma_rot; // array [3]
-#endif
+#endif // PARTICLE_ANISTROPY
 }
-#endif
+#endif // ROTATION
 
 void pointer_to_temperature(Particle *p, double*& res)
 {
   res=&(p->p.T);
 }
-#endif
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int*& res)

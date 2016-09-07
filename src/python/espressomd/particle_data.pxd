@@ -153,8 +153,13 @@ cdef extern from "particle_data.hpp":
         int set_particle_temperature(int part, double T)
         void pointer_to_temperature(particle * p, double * & res)
 
-        int set_particle_gamma(int part, double gamma)
+        IF PARTICLE_ANISOTROPY:
+            int set_particle_gamma(int part, double gamma[3])
+        ELSE:
+            int set_particle_gamma(int part, double gamma)
+        
         void pointer_to_gamma(particle * p, double * & res)
+        
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 int set_particle_gamma_rot(int part, double gamma[3])
