@@ -157,7 +157,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set oz2($k) 0.
     }
 
-    set loops 60
+    set loops 100
     puts "Thermalizing..."
     integrate 1200
     puts "Measuring..."
