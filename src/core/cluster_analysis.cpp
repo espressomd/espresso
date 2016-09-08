@@ -1,11 +1,18 @@
 #include "cluster_analysis.hpp"
 #include "interaction_data.hpp"
+#include <algorithm>
 
 
 void ClusterStructure::clear() {
  clusters.clear();
  cluster_id.clear();
  cluster_identities.clear();
+}
+
+inline bool ClusterStructure::part_of_cluster(const Particle& p)
+{
+ if (cluster_id.find(p.p.identity)==cluster_id.end()) return false;
+ return true;
 }
 
 // Analyze the cluster structure of the given particles
@@ -16,18 +23,17 @@ void ClusterStructure::analyze_pair()
   
   // Iterate over pairs
   for (int i=0;i<=max_seen_particle;i++) {
-    //printf("%d\n",i);
     if (! local_particles[i]) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! local_particles[j]) continue;
-      add_pair(*local_particles[i],*local_particles[j]); // maybe no *
+      add_pair(*local_particles[i],*local_particles[j]); 
     }
   }
   merge_clusters();
 }
 
 void ClusterStructure::analyze_bonds() {
-//printf("Analyze_bond\n");
+clear();
 for (int i=0;i<=max_seen_particle;i++) {
   if (local_particles[i]) {
     auto p=local_particles[i];
@@ -45,12 +51,12 @@ for (int i=0;i<=max_seen_particle;i++) {
     }
   }
 }
+merge_clusters();
 }
 
 
 
 void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
-//printf("Add_pair %d,%d\n",p1.p.identity,p2.p.identity);
 // * check, if there's a neighbor
  //   * No: Then go on to the next particle
  // * Yes: Then if
@@ -64,98 +70,99 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
     return;
   }
   if (nc->are_neighbors(p1,p2)) {
-//     printf("Neighbors: %d %d\n",p1.p.identity, p2.p.identity);
+     
      if // None belongs to a cluster
-     ((cluster_id.find(p1.p.identity)==cluster_id.end()) && (cluster_id.find(p2.p.identity)==cluster_id.end()))
+     ((!part_of_cluster(p1)) && (!part_of_cluster(p2)))
     {  
       // Both particles belong to the same, new cluster
       int cid=get_next_free_cluster_id();
-//      printf("New cluster of id %d particles %d %d\n",cid,p1.p.identity,p2.p.identity);
 
-      // assign the 
+      // assign the cluster_ids 
       cluster_id[p1.p.identity]=cid;
       cluster_id[p2.p.identity]=cid;
     }
-    else if // j belongs to a cluster but i doesn't
-      ((cluster_id.find(p1.p.identity)==cluster_id.end()) 
-      && 
-      (cluster_id.find(p2.p.identity) !=cluster_id.end()))
+    else if // p2 belongs to a cluster but p1 doesn't
+      (part_of_cluster(p2) && !part_of_cluster(p1))
     {
      // Give p1 the same cluster id as p2
-     cluster_id[p1.p.identity]=find_id_for(cluster_id[p2.p.identity]);
+     cluster_id[p1.p.identity]=find_id_for(cluster_id.at(p2.p.identity));
     }
     else if // i belongs to a cluster but j doesn't
-      ((cluster_id.find(p2.p.identity)==cluster_id.end()) 
-      && 
-      (cluster_id.find(p1.p.identity) !=cluster_id.end()))
+      (part_of_cluster(p1) && !part_of_cluster(p2))
     {
      // give p2 the cluster id from p1
-     cluster_id[p2.p.identity]=find_id_for(cluster_id[p1.p.identity]);
+     cluster_id[p2.p.identity]=find_id_for(cluster_id.at(p1.p.identity));
     }
     else if // Both belong to different clusters
-      (cluster_id[p1.p.identity] != cluster_id[p2.p.identity])
+      (part_of_cluster(p1) && part_of_cluster(p2) &&
+       cluster_id.at(p1.p.identity)!=cluster_id.at(p2.p.identity))
     {
-//       printf("Different clusters: %d %d\n",cluster_id[p1.p.identity],cluster_id[p2.p.identity]);
      // Clusters of p1 and p2 are one and the same. Add an identity to the list
-     // The lower number must be inserted as first value of tjhe pair
-     // because the substituions later have to be done in ascending order
-     if (cluster_id[p1.p.identity]<cluster_id[p2.p.identity])
+     // The higher number must be inserted as first value of tjhe pair
+     // because the substituions later have to be done in descending order
+     int cid1=find_id_for(cluster_id.at(p1.p.identity));
+     int cid2=find_id_for(cluster_id.at(p2.p.identity));
+     if (cid1>cid2)
      {
-       cluster_identities[find_id_for(cluster_id[p2.p.identity])] =find_id_for(cluster_id[p1.p.identity]);
+       cluster_identities[cid1] =cid2;
      }
-     else
+     else if (cid1<cid2) 
      {
-       cluster_identities[find_id_for(cluster_id[p1.p.identity])] =find_id_for(cluster_id[p2.p.identity]);
+       cluster_identities[cid2]=cid1;
      }
-     
+     // else do nothing. The clusters are already noted for merging.
      // Connected clusters will be merged later
     }
     // The case for both particles being in the same cluster does not need to be
     // treated.
   }
-//  printf("Add_pair: p %d c %d, p %d c %d\n",p1.p.identity,cluster_id[p1.p.identity],p2.p.identity,cluster_id[p2.p.identity]);
 }
 
 void ClusterStructure::merge_clusters() {
-//  printf("merge clusters\n");
   // Relabel particles according to the cluster identities map
   // Also create empty cluster objects for the final cluster id
+  std::map<int,int> to_be_changed;
   for (auto it : cluster_id) { 
     // particle id is in it.first and cluster id in it.second
     // We change the cluster id according to the cluster identities
     // map
     int cid=find_id_for(it.second);
-//    printf("Replace cluster id %d by %d\n",it.second,cid);
-    it.second =cid;
+    // We note the list of changes here, so we don't modify the map
+    // while iterating
+    to_be_changed[it.first]=cid;
     // Empty cluster object
     if (clusters.find(cid)==clusters.end()) {
       clusters[cid]=Cluster();
     }
   }
-
+  
+  // Now act on the changes marke in above iteration
+  for (auto it : to_be_changed) {
+   cluster_id[it.first]=it.second;
+  }
   
   // Now fill the cluster objects with particle ids
   // Iterate over particles, fill in the cluster map 
   // to each cluster particle the corresponding cluster id 
   for (auto it : cluster_id) {
-//    printf("%d, %d\n",it.first,it.second);
     clusters[it.second].particles.push_back(it.first);
+  }
+
+  // Sort particles ids in the cluters
+  for (auto c : clusters) {
+    std::sort(c.second.particles.begin(),c.second.particles.end());
   }
 }
 
 
 int ClusterStructure::find_id_for(int x)
 {
- int tmp;
- while (cluster_identities.find(x)!=cluster_identities.end())
+ int tmp=x;
+ while (cluster_identities.find(tmp)!=cluster_identities.end())
  {
-  if (cluster_identities[x]==x) return x;
-  tmp =cluster_identities[x];
-  if (tmp >x) return x;
-  //printf("Replacing %d by %d\n",x,tmp);
-  x=tmp;
+  tmp =cluster_identities[tmp];
  }
- return x;
+ return tmp;
 }
 
 int ClusterStructure::get_next_free_cluster_id(){
@@ -163,11 +170,11 @@ int ClusterStructure::get_next_free_cluster_id(){
   int max_seen_cluster = 0;
   for (auto it : cluster_id){
     int cid=it.second;
-    if (max_seen_cluster <= cid ) {
-      max_seen_cluster=cid+1;
+    if (max_seen_cluster < cid ) {
+      max_seen_cluster=cid;
     }
   }
-  return max_seen_cluster;
+  return max_seen_cluster+1;
 }
 
 

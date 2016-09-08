@@ -62,6 +62,7 @@ class ClusterStructure {
   void merge_clusters();
   // Neighbor criterion
   void set_criterion(NeighborCriterion* c);
+  bool part_of_cluster(const Particle& p);
   NeighborCriterion* get_criterion() {return nc;};
  private:
   NeighborCriterion* nc;
@@ -121,7 +122,7 @@ class BondCriterion : public NeighborCriterion {
        bond_type=_bond_type;
     };
     virtual bool are_neighbors(const Particle& p1, const Particle& p2) {
-      return bond_exists(&p1,&p2,bond_type);
+      return bond_exists(&p1,&p2,bond_type) || bond_exists(&p2,&p1,bond_type);
     };
     virtual std::string name() { return "bond"; };
     double get_bond_type() {
