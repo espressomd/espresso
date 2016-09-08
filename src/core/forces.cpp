@@ -58,7 +58,8 @@ void init_forces()
     cell = local_cells.cell[c];
     p  = cell->part;
     np = cell->n;
-    for (i = 0; i < np; i++) init_local_particle_force(&p[i]);
+    for (i = 0; i < np; i++)
+      init_local_particle_force(&p[i]);
   }
 
   /* initialize ghost forces with zero

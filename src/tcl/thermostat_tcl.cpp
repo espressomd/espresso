@@ -62,7 +62,6 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 #endif // ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
   /* Langevin for translations */
   langevin_trans = true;
   mpi_bcast_parameter(FIELD_LANGEVIN_TRANS_SWITCH);
