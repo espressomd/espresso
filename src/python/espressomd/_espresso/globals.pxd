@@ -80,10 +80,8 @@ cdef extern from "interaction_data.hpp":
 cdef extern from "thermostat.hpp":
     IF PARTICLE_ANISOTROPY:
         double langevin_gamma[3]
-        double langevin_gamma_rotation[3]
     ELSE:
         double langevin_gamma
-        double langevin_gamma_rotation
     extern double nptiso_gamma0
     extern double nptiso_gammav
     extern double temperature
