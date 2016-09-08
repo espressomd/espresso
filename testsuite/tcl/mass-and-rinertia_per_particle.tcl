@@ -34,7 +34,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd skin 0
     setmd time_step 0.01
     thermostat langevin 0 $gamma0 
-    set J "10 10 1"
+    set J "10 10 10"
 
     part deleteall
     part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 
@@ -70,7 +70,16 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             part 1 gamma $gamma1 temp 0.0
         }
     }
-
+    
+    # In case of an anisotropic body and after a correct nonzero values 
+    # definition (in the source code, "rotation.cpp") of the nonlinear 
+    # parts of Euler's rotational equations, it seems that exponential
+    # expected behaviour is a not correct assumption.
+    # At least, nonlinear differential equations do not give
+    # exponent-like behaviour (usually). Such anisotropic
+    # decelleration should be validated using other equations.
+    # This is why we've made a [set J "10 10 10"] above
+    # as a quick solution.
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
             if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*$i/10. /[lindex $J $k])) >0.01 ||
@@ -107,7 +116,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
-    setmd time_step 0.01
+    setmd time_step 0.005
 
     set n 100
     set mass [expr [t_random] *20]
@@ -136,13 +145,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
 
 
-    set loops 100
+    set loops 1000
     puts "Thermalizing..."
-    integrate 1000
+    integrate 10000
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
-        integrate 100
+        integrate 30
         # Get kinetic energy in each degree of freedom for all particles
         for {set p 0} {$p <$n} {incr p} {
             for {set k 0} {$k<2} {incr k} {

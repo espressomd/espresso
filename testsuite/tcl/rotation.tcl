@@ -29,7 +29,7 @@ puts "----------------------------------------------"
 puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
 
-set epsilon 5e-4
+set epsilon 1e-4
 thermostat off
 
 setmd time_step 0.001
@@ -52,10 +52,12 @@ if { [catch {
 	error "system has unwanted energy contribution, i.e. U_GB != U_total"
     }
     puts "energy before integration: [analyze energy]"
+    puts "kinetic energy before integration: [analyze energy kinetic]"
   
     integrate 50
 
     puts "energy after integration: [analyze energy]"
+    puts "kinetic energy after integration: [analyze energy kinetic]"
 
     # check the conservation of the total energy
     set toteng [analyze energy total]

@@ -19,48 +19,66 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
-
-
+if { [has_feature "SEMI_INTEGRATED"]} {
+    set si_flag 1
+} else {
+    set si_flag 0    
+}
 
 # Decelleration
 setmd skin 0
 setmd time_step 0.01
+set time_step_v 0.01
 thermostat langevin 0 1 
-set J "10 10 1"
+set J "10 10 10"
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
+# In case of an anisotropic body and after a correct nonzero values 
+# definition (in the source code, "rotation.cpp") of the nonlinear 
+# parts of Euler's rotational equations, it seems that exponential
+# expected behaviour is a not a fully precise assumption.
+# At least, nonlinear differential equations do not give
+# exponent-like behaviour (usually). Such anisotropic
+# decelleration should be validated using other equations.
+# This is why we've made a [set J "10 10 10"] above
+# as a quick solution.
 for {set i 0} {$i <100} {incr i} {
   for {set k 0} {$k <3} {incr k} {
-    if { abs([lindex [part 0 print omega_body] $k] -exp(-$i/10. /[lindex $J $k])) >0.01 } {
-      error_exit "Friction Deviation in omega too large. $i $k"
+    set obtained [lindex [part 0 print omega_body] $k]
+    set expected [expr exp(-$i*10*$time_step_v / [lindex $J $k])] 
+    if { abs([lindex [part 0 print omega_body] $k] -exp(-$i*10*$time_step_v / [lindex $J $k])) >0.01 } {
+      error_exit "Friction Deviation in omega too large. $i $k $obtained vs $expected"
     }
   }
   integrate 10
 }
 
-
 #Accelerated motion
+setmd time_step 0.001
+set time_step_v 0.001
+part delete
 thermostat off
 set T "1.4 0.01 -5.6"
 # Isotropic inertial moment, as the torque is applied in lab frame
 set J 7
-part 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia $J $J $J
+part 0 pos 0 0 0 omega_lab 0 0 0 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia $J $J $J
 
-for {set i 0} {$i <100} {incr i} {
-  for {set k 0} {$k <3} {incr k} {
-   set expected [expr $i/10. *[lindex $T $k] /$J]
-   if { abs([lindex [part 0 print omega_lab] $k] - $expected) >0.01 } {
+for {set i 0} {$i <1E5} {incr i} {
+    integrate 10
+    for {set k 0} {$k <3} {incr k} {
+        set expected [expr ($i+1)*10*$time_step_v * [lindex $T $k] /$J]
+        if { $si_flag } {
+            set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)/abs($expected)]
+        } else {
+            set delta [expr abs([lindex [part 0 print omega_lab] $k]-$expected)]
+        }
+   if { $delta > 0.01 } {
       error_exit "Acceleration: Deviation in omega too large. Step $i, coordinate $k, expected $expected, got [lindex [part 0 print omega_lab] $k]"
     }
   }
-  integrate 10
+#  integrate 10
 }
-part delete
-
-
-
-
-
-
+#part delete
+part deleteall
 
 # thermlization
 # Cchecks if every degree of freedom has 1/2 kT of energy, even when
@@ -74,7 +92,11 @@ thermostat langevin $kT 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
-setmd time_step 0.01
+if {$si_flag} {
+    setmd time_step 0.005
+} else {
+    setmd time_step 0.01
+}
 
 set n 100
 set mass [expr rand() *20]
@@ -94,9 +116,9 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 100
+set loops 300
 puts "Thermalizing..."
-integrate 1000
+integrate 4000
 puts "Measuring..."
 
 for {set i 0} {$i <$loops} {incr i} {

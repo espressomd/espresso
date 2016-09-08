@@ -25,6 +25,7 @@ puts "------------------------------------------------"
 
 require_feature THERMOSTAT_IGNORE_NON_VIRTUAL off
 require_feature "GHMC"
+require_feature "SEMI_INTEGRATED off"
 
 # we expect to stay in this confidence interval (times stddeviation)
 # 20 is a really small chance, but since we measure quite a lot,

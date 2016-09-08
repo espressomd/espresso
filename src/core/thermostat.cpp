@@ -26,6 +26,7 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include "rotation.hpp"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -174,6 +175,10 @@ void thermo_init()
 
 void thermo_heat_up()
 {
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+  double scale ;
   if(thermo_switch & THERMO_LANGEVIN) {
     langevin_pref2_buffer          = langevin_pref2;
     langevin_pref2_rotation_buffer = langevin_pref2_rotation;

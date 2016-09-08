@@ -153,6 +153,11 @@ void on_program_start()
 
 void on_integration_start()
 {
+
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
   INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
 		      this_node,reinit_thermo,resort_particles));
@@ -221,6 +226,21 @@ void on_integration_start()
   freePartCfg();
 
   on_observable_calc();
+
+#ifdef SEMI_INTEGRATED
+  for (c = 0; c < local_cells.n; c++) {
+	    cell = local_cells.cell[c];
+	    p  = cell->part;
+	    np = cell->n;
+	    for(i = 0; i < np; i++) {
+	      if (p[i].p.gamma <= 0.0) p[i].p.gamma = langevin_gamma;
+	      if (p[i].p.gamma_rot <= 0.0) p[i].p.gamma_rot = langevin_gamma_rotation;
+	      if (p[i].p.T < 0) p[i].p.T = temperature;
+	      //p[i].f.torque[0] = p[i].f.torque[1] = p[i].f.torque[2] = 0.0;
+	      //p[i].f.f[0] = p[i].f.f[1] = p[i].f.f[2] = 0.0;
+	    }
+	  }
+#endif
 }
 
 void on_observable_calc()
