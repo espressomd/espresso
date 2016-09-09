@@ -488,7 +488,7 @@ int delete_particle (int p_id) {
 int get_random_position_in_box (double* out_pos) {
 	if(current_reaction_system.box_is_cylindric_around_z_axis==true) {
 		//see http://mathworld.wolfram.com/DiskPointPicking.html
-		double random_radius=current_reaction_system.cyl_radius*sqrt(d_random());
+		double random_radius=current_reaction_system.cyl_radius*sqrt(d_random()); //for uniform disk point picking in cylinder
 		double phi=2.0*PI*d_random();
 		out_pos[0]=random_radius*cos(phi);
 		out_pos[1]=random_radius*sin(phi);
@@ -505,13 +505,28 @@ int get_random_position_in_box (double* out_pos) {
 		out_pos[1]=box_l[1]*d_random();	
 		out_pos[2]=current_reaction_system.slab_start_z+(current_reaction_system.slab_end_z-current_reaction_system.slab_start_z)*d_random();
 	}else{
-		//do it like this in the cubic case
+		//cubic case
 		out_pos[0]=box_l[0]*d_random();
 		out_pos[1]=box_l[1]*d_random();
 		out_pos[2]=box_l[2]*d_random();
 	
 	}
 } 
+
+int get_random_position_in_box_enhanced_proposal_of_small_radii (double* out_pos) {
+	double random_radius=current_reaction_system.cyl_radius*d_random(); //for enhanced proposal of small radii, needs correction within metropolis hasting algorithm, proposal density is p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii are proposed more often
+	double phi=2.0*PI*d_random();
+	out_pos[0]=random_radius*cos(phi);
+	out_pos[1]=random_radius*sin(phi);
+	while (pow(out_pos[0],2)+pow(out_pos[1],2)<=pow(current_reaction_system.exclusion_radius,2) or pow(out_pos[0],2)+pow(out_pos[1],2) > pow(current_reaction_system.cyl_radius,2)){
+		random_radius=current_reaction_system.cyl_radius*d_random();
+		out_pos[0]=random_radius*cos(phi);
+		out_pos[1]=random_radius*sin(phi);		
+	}
+	out_pos[0]+=current_reaction_system.cyl_x;
+	out_pos[1]+=current_reaction_system.cyl_y;
+	out_pos[2]=box_l[2]*d_random();
+}
 
 int create_particle(int desired_type){
 	//remark only works for cubic box
@@ -637,6 +652,8 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 	int p_id_s_changed_particles[particle_number_of_type];
 
 	//save old_position
+	double temp_pos[3];
+	get_random_position_in_box(temp_pos);
 	while(changed_particle_counter<particle_number_of_type){
 		if(changed_particle_counter==0){
 			find_particle_type(type, &p_id);
@@ -654,8 +671,6 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
-		double temp_pos[3];
-		get_random_position_in_box(temp_pos);
 		place_particle(p_id,temp_pos);
 		p_id_s_changed_particles[changed_particle_counter]=p_id;
 		changed_particle_counter+=1;
@@ -665,13 +680,14 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 	changed_particle_counter=0;
 	int max_tries=100*particle_number_of_type;//important for very dense systems
 	int attempts=0;
+	double new_pos[3];
 	while(changed_particle_counter<particle_number_of_type){
 		p_id=p_id_s_changed_particles[changed_particle_counter];
 		bool particle_inserted_too_close_to_another_one=true;
 		while(particle_inserted_too_close_to_another_one==true&& attempts<max_tries){
 			//change particle position
-			double new_pos[3];
 			get_random_position_in_box(new_pos);
+//			get_random_position_in_box_enhanced_proposal_of_small_radii(new_pos); //enhanced proposal of small radii
 			place_particle(p_id,new_pos);
 			double d_min=distto(new_pos,p_id);
 			if(d_min>current_reaction_system.exclusion_radius){
@@ -681,7 +697,7 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 		}
 		changed_particle_counter+=1;
 	}
-	if(attempts==max_tries){
+		if(attempts==max_tries){
 		//reversing
 		//create particles again at the positions they were
 		for(int i=0;i<particle_number_of_type;i++){
@@ -714,8 +730,8 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 			double pos_x=old_pos_polymer_particle[3*i]+random_direction_vector[0];
 			double pos_y=old_pos_polymer_particle[3*i+1]+random_direction_vector[1];
 			double pos_z=old_pos_polymer_particle[3*i+2]+random_direction_vector[2];
-			double new_pos[3]={pos_x, pos_y, pos_z};
-			place_particle(i,new_pos);
+			double new_pos_polymer_particle[3]={pos_x, pos_y, pos_z};
+			place_particle(i,new_pos_polymer_particle);
 		}
 		
 	}
@@ -724,8 +740,13 @@ bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, 
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	
 	double bf=1.0;
-	bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old)));
+	bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))); //Metropolis Algorithm since proposal density is symmetric
 	
+//	//correct for enhanced proposal of small radii by using the metropolis hastings algorithm for asymmetric proposal densities.
+//	double old_radius=sqrt(pow(particle_positions[0]-current_reaction_system.cyl_x,2)+pow(particle_positions[1]-current_reaction_system.cyl_y,2));
+//	double new_radius=sqrt(pow(new_pos[0]-current_reaction_system.cyl_x,2)+pow(new_pos[1]-current_reaction_system.cyl_y,2));
+//	bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius); //Metropolis-Hastings Algorithm for asymmetric proposal density
+
 	bool got_accepted=false;
 	if(d_random()<bf){
 		//accept
