@@ -37,7 +37,7 @@
 #include <cstring>
 
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -152,34 +152,12 @@ int constraint_collision(double *p1, double *p2) {
   memmove(folded_pos2, p2, 3 * sizeof(double));
   fold_position(folded_pos2, img);
 
-  for (i = 0; i < n_constraints; i++) {
-    c = &constraints[i];
-    switch (c->type) {
-    case CONSTRAINT_WAL:
-      calculate_wall_dist(&part1, folded_pos1, &part1, &c->c.wal, &d1, v);
-      calculate_wall_dist(&part2, folded_pos2, &part2, &c->c.wal, &d2, v);
-      if (d1 * d2 <= 0.0)
-        return 1;
-      break;
-    case CONSTRAINT_SPH:
-      calculate_sphere_dist(&part1, folded_pos1, &part1, &c->c.sph, &d1, v);
-      calculate_sphere_dist(&part2, folded_pos2, &part2, &c->c.sph, &d2, v);
-      if (d1 * d2 < 0.0)
-        return 1;
-      break;
-    case CONSTRAINT_CYL:
-      calculate_cylinder_dist(&part1, folded_pos1, &part1, &c->c.cyl, &d1, v);
-      calculate_cylinder_dist(&part2, folded_pos2, &part2, &c->c.cyl, &d2, v);
-      if (d1 * d2 < 0.0)
-        return 1;
-      break;
-    default:
-      if (warnings)
-        fprintf(stderr, "Warning: Only wall, cylinder and sphere constraints "
-                        "can be excluded from the polymer accessible "
-                        "volume.\n");
-      break;
-    }
+  for (auto &c : Constraints::constraints) {
+    c->calc_dist(folded_pos1, &d1, v);
+    c->calc_dist(folded_pos2, &d2, v);
+
+    if (d1 * d2 < 0.0)
+      return 1;
   }
   return 0;
 }
@@ -238,6 +216,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[0] = pos[0];
       poly[1] = pos[1];
       poly[2] = pos[2];
+
       max_cnt = std::max(cnt1, max_cnt);
       POLY_TRACE(printf("S"); fflush(NULL));
 
@@ -303,6 +282,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[3 * n] = pos[0];
       poly[3 * n + 1] = pos[1];
       poly[3 * n + 2] = pos[2];
+
       max_cnt = std::max(cnt1, max_cnt);
       POLY_TRACE(printf("M"); fflush(NULL));
 
@@ -413,7 +393,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
         poly[3 * n] = pos[0];
         poly[3 * n + 1] = pos[1];
         poly[3 * n + 2] = pos[2];
+
         max_cnt = std::max(cnt1, max_cnt);
+
         POLY_TRACE(printf("M"); fflush(NULL));
       }
       if (n > 0)
@@ -424,6 +406,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       free(poly);
       return (-2);
     } else
+
       max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
 
     /* actually creating current polymer in ESPResSo */
@@ -459,6 +442,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
     }
   }
   free(poly);
+
   return (std::max(max_cnt, cnt2));
 }
 
@@ -487,11 +471,13 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
       return (-3);
     part_id++;
     max_cnt = std::max(cnt1, max_cnt);
+
     POLY_TRACE(printf("C"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
     return (-1);
+
   return (std::max(max_cnt, cnt1));
 }
 
@@ -534,6 +520,7 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
     if (set_particle_type(part_id, type_pS) == ES_ERROR)
       return (-3);
     part_id++;
+
     max_cnt = std::max(cnt1, max_cnt);
     POLY_TRACE(printf("P"); fflush(NULL));
   }
@@ -573,12 +560,15 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
     if (set_particle_type(part_id, type_nS) == ES_ERROR)
       return (-3);
     part_id++;
+
     max_cnt = std::max(cnt1, max_cnt);
+
     POLY_TRACE(printf("N"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
     return (-2);
+
   return (std::max(max_cnt, cnt1));
 }
 
@@ -980,13 +970,13 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
   double pos[3], off = bond_length / sqrt(3);
   double dnodes[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
                          {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
-  int dchain[16]
-            [5] = {{0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
-                   {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
-                   {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
-                   {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
-                   {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
-                   {7, 3, +1, +1, -1}};
+  int dchain[16][5] = {
+      {0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
+      {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
+      {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
+      {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
+      {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
+      {7, 3, +1, +1, -1}};
 
   part_id = 0;
   /* place 8 tetra-functional nodes */

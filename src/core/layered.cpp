@@ -24,7 +24,7 @@
 #include "layered.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "domain_decomposition.hpp"
 #include "energy.hpp"
 #include "energy_inline.hpp"

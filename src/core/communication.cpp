@@ -124,9 +124,7 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave)                                                \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
-  CB(mpi_bcast_constraint_slave)                                               \
   CB(mpi_cap_forces_slave)                                                     \
-  CB(mpi_get_constraint_force_slave)                                           \
   CB(mpi_get_configtemp_slave)                                                 \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
@@ -264,6 +262,7 @@ void mpi_init(int *argc, char ***argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
   int reorder = 1;
+
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
@@ -271,7 +270,8 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  Communication::initialize_callbacks(comm_cart);
+
+  Communication::mpiCallbacks().set_comm(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);
@@ -288,7 +288,7 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
   comm_cart =
       boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
 
-  MPI_Comm_rank(comm_cart, &this_node);
+  this_node = comm_cart.rank();
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {
@@ -2182,57 +2182,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
 #endif
 }
 
-/*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(int del_num) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
-  } else if (del_num == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  } else {
-    memmove(&constraints[del_num], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  }
-
-  on_constraint_change();
-#endif
-}
-
-void mpi_bcast_constraint_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  if (parm == -1) {
-    n_constraints++;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
-  } else if (parm == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  } else {
-    memmove(&constraints[parm], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  }
-
-  on_constraint_change();
-#endif
-}
-
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lbboundary(int del_num) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -2339,22 +2288,6 @@ void mpi_cap_forces_slave(int node, int parm) {
     check_tab_forcecap(force_cap);
   */
   on_short_range_ia_change();
-#endif
-}
-
-/*************** REQ_GET_CONSFOR ************/
-void mpi_get_constraint_force(int cons, double force[3]) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-#endif
-}
-
-void mpi_get_constraint_force_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
 #endif
 }
 
@@ -2853,12 +2786,13 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    /* here the setting actually happens, if the particle belongs to the local
-     * node */
+/* here the setting actually happens, if the particle belongs to the local
+ * node */
 #ifndef ROTATIONAL_INERTIA
     p->p.gamma_rot = gamma_rot;
 #else
-    for ( j = 0 ; j < 3 ; j++) p->p.gamma_rot[j] = gamma_rot[j];
+    for (j = 0; j < 3; j++)
+      p->p.gamma_rot[j] = gamma_rot[j];
 #endif
   } else {
 #ifndef ROTATIONAL_INERTIA
@@ -2879,7 +2813,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    /* here the setting happens for nonlocal nodes */
+/* here the setting happens for nonlocal nodes */
 #ifndef ROTATIONAL_INERTIA
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma_rot = s_buf;

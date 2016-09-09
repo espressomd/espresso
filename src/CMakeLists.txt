@@ -28,6 +28,10 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
 
 add_subdirectory(core)
 
+if(WITH_SCRIPT_INTERFACE)
+  add_subdirectory(script_interface)
+endif()
+
 if(WITH_TCL)
   add_subdirectory(tcl)
 endif()

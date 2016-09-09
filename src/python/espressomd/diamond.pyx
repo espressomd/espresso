@@ -5,7 +5,8 @@ cdef class Diamond:
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:
-                raise ValueError("At least the following keys have to be given as keyword arguments: " +self.required_keys().__str__() + " got " + kwargs.__str__())
+                raise ValueError("At least the following keys have to be given as keyword arguments: " +
+                                 self.required_keys().__str__() + " got " + kwargs.__str__())
         for k in kwargs:
             if k in self.valid_keys():
                 self._params[k] = kwargs[k]
