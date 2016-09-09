@@ -26,10 +26,12 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
 #include <boost/variant.hpp>
 
 #include "utils/NumeratedContainer.hpp"
+#include "utils/serialization/array.hpp"
 
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
