@@ -15,7 +15,6 @@
     corresponding \ref tcl_features "Tcl-commands".
 */
 
-#define CUDA
 #define GAUSSRANDOM
 #define SEMI_INTEGRATED
 
