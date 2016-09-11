@@ -60,12 +60,12 @@ puts "\nput the particles in the box..."
 
 for {set i 0} {$i < $n_particle} {incr i} {
     # the for the real particeles
-    set posx [expr $box_l *[expr rand ()]]	
-    set posy [expr $box_l *[expr rand ()]]	
-    set posz [expr $box_l *[expr rand ()]]	
-    set costheta [expr 2*[expr rand()] - 1]
+    set posx [expr $box_l *[expr [t_random]]]	
+    set posy [expr $box_l *[expr [t_random]]]	
+    set posz [expr $box_l *[expr [t_random]]]	
+    set costheta [expr 2*[expr [t_random]] - 1]
     set sintheta [expr sin(acos($costheta))]
-    set phi [expr 2*3.1415926536*[expr rand()]] 
+    set phi [expr 2*3.1415926536*[expr [t_random]]] 
     set dipx [expr $sintheta*cos($phi)*$dipole_modulus]
     set dipy [expr $sintheta*sin($phi)*$dipole_modulus]
     set dipz [expr $costheta*$dipole_modulus]

@@ -28,7 +28,6 @@
 #include "tcl.h"
 #include "communication.hpp"
 
-
 /*----------------------------------------------------------------------*/
 
 /**  Implementation of the tcl-command
@@ -75,7 +74,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   else if ( ARG_IS_S(0,"stat") ) {
     if(argc == 1) {
-      Tcl_AppendResult(interp, mpi_random_get_stat().c_str(), nullptr);
+      Tcl_AppendResult(interp, Random::mpi_random_get_stat().c_str(), nullptr);
 
       return TCL_OK;
     } else {
@@ -93,6 +92,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       std::string tmp;
       
       /** Argument counter to check that the caller provided enough numbers. */      
+      int state_size=Random::get_state_size_of_generator();
       int n_args = 0;
       for(int node = 0; (node < n_nodes) && std::getline(iss, tmp, ' '); node++) {
         n_args++;
@@ -100,16 +100,16 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
 
         /** First one is handled different, because of the space */        
         states[node] = tmp;
-
-        for(int i = 0; (i < 624) && std::getline(iss, tmp, ' '); i++) {
+	
+        for(int i = 0; (i < state_size) && std::getline(iss, tmp, ' '); i++) {
           n_args++;
           states[node].append(" ");
           states[node].append(tmp);
         }
       }
 
-      if(n_args == n_nodes*625) {
-        mpi_random_set_stat(states);
+      if(n_args == n_nodes*(state_size+1)) {
+        Random::mpi_random_set_stat(states);
         return TCL_OK;
       }
       else {
@@ -132,7 +132,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     
     if (argc <= 1)
     {
-      std::iota(seeds.begin(), seeds.end(), 0);
+      std::iota(seeds.begin(), seeds.end(), 1);
       for(auto &seed: seeds)
       {
         sprintf(buffer, "%d ", seed); 
@@ -150,7 +150,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
       }
     }
 
-#ifdef RANDOM_TRACE
+#ifdef RANDOM_DEBUG
     printf("Got "); 
         
     for(int i=0;i<n_nodes;i++) 
@@ -159,7 +159,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     printf("as new seeds.\n");
 #endif
     
-    mpi_random_seed(n_nodes,seeds);
+    Random::mpi_random_seed(n_nodes,seeds);
     
     return(TCL_OK);
   }

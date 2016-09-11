@@ -16,10 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import electrostatics
 import numpy
 
@@ -41,7 +40,7 @@ lj_cap = 20
 #############################################################
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.box_l = [box_l, box_l, box_l]
 thermostat.Thermostat().set_langevin(1.0, 1.0)
 
@@ -87,11 +86,11 @@ for i in range(n_part / 2 - 1):
 lj_cap = 20
 system.non_bonded_inter.set_force_cap(lj_cap)
 i = 0
-act_min_dist = analyze.mindist(system)
+act_min_dist = system.analysis.mindist()
 while (i < warm_n_times and act_min_dist < min_dist):
-    integrate.integrate(warm_steps)
+    system.integrator.run(warm_steps)
     # Warmup criterion
-    act_min_dist = analyze.mindist(system)
+    act_min_dist = system.analysis.mindist()
     i += 1
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
@@ -110,7 +109,7 @@ system.actors.add(p3m)
 #############################################################
 
 for i in range(0, int_n_times):
-    integrate.integrate(int_steps)
+    system.integrator.run(int_steps)
 
-    energies = analyze.energy(system=system)
-    print energies
+    energies = system.analysis.energy()
+    print(energies)

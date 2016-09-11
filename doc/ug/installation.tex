@@ -45,13 +45,74 @@ activate and deactivate various features before compiling the code.
 Some of these features are not compatible with each other, and some of
 the features have a profound impact on the performance of the code.
 Therefore it is not possible to build a single binary that can satisfy
-all needs.  A user should always activate only those features that are
+all needs.  F or performance reasons a user should always activate only those features that are
 actually needed.  This means, however, that learning how to compile
-\es is a necessary evil.  The build system of \es uses the GNU
-autotools, which are developed since more than 20 years and allow to
+\es is a necessary evil.  
+The build system of \es uses either the GNU
+autotools or cmake to
 compile software easily on a wide range of platforms.
 
-\section{Running \texttt{configure}}
+\section{cmake}
+In order to build \es the first step is to create a build directory in which cmake can be executed. In cmake, the \emph{source directory} (that contains all the source
+files) is completely separated from the \emph{build directory} (where the files created by the build process are put). cmake is designed to not be executed in the source directory.
+Cmake will determine how to use and where to find
+the compiler, as well as the different libraries and tools required by
+the compilation process. By having multiple build directories you can build several
+variants of \es, each variant having different activated features, and
+for as many platforms as you want.
+
+\paragraph{Example}
+When the source directory is \codebox{srcdir} (\ie the files where
+unpacked to this directory), then the user can create a build directory
+\codebox{build} below that path by calling the \codebox{mkdir srcdir/build}. In the build direcotry cmake is to be executed, followed by a call of make. None of the files in the source directory is ever modified when by the build process.
+\begin{code}
+cd build
+cmake srcdir
+make
+Espresso
+\end{code}
+Afterwards Espresso can be run via calling Espresso from the command line.
+\subsection{ccmake}
+Optionally and for easier use the curses interface to cmake can be used to configure ESPResSo interactively. 
+\paragraph{Example}
+Alternatively to the previous example instead of \codebox{cmake}, the \codebox{ccmake} executable is called in the build direcotry to configure ESPResSo previous to its compilation followed by a call of make:
+\begin{code}
+cd build
+ccmake srcdir
+make
+Espresso
+\end{code}
+Fig.~\ref{fig:ccmake} shows the interactive ccmake UI.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/ccmake-example.png}
+  \caption{ccmake interface}
+  \label{fig:ccmake}
+\end{figure}
+
+
+\subsection{Options and Variables}
+The behaviour of \codebox{cmake} can be
+controlled by the means of options and variables in the CMakeLists.txt file. Also options are defined there.
+The following options are available:
+\begin{description}
+	\item WITH_PYTHON: Build python interface
+	\item WITH_TCL: Build tcl interface
+	\item WITH_CUDA: Build with GPU support
+        \item WITH_HDF5: Build with HDF5
+	\item WITH_TESTS: Enable tests
+	\item WITH_SCAFACOS: Build with Scafacos support
+	\item WITH_VALGRIND_INSTRUMENTATION: Build with valgrind instrumentation markers
+\end{description}
+When the value in the CMakeLists.txt file is set to ON the corresponding option is created if the value of the opition is set to OFF the corresponding option is not created. 
+These options can also be modified by calling cmake with the command line argument -D:
+\begin{code}
+cmake -D WITH_TCL=OFF srcdir 
+\end{code}
+In the rare event when working with cmake and you want to have a totally clean build (for example because you switched the compiler), remove the build directory and create a new one.
+\section{Autotools}
+\warning{Deprecated}
+\subsection{Running \texttt{configure}}
 \label{sec:configure}
 \index{configure}
 
@@ -76,7 +137,7 @@ installed.  Then you can call the script \codebox{bootstrap.sh} from
 the top level source directory, which will generate the
 \codebox{configure} script.
 
-\subsection{Source and build directories}
+\subsubsection{Source and build directories}
 \label{ssec:builddir}
 \index{build directory} \index{source directory}
 
@@ -105,7 +166,7 @@ make
 Espresso
 \end{code}
 
-\subsection{Options and Variables}
+\subsubsection{Options and Variables}
 \label{ssec:configureoptions}
 
 \index{configure options} The behaviour of \codebox{configure} can be
@@ -224,9 +285,6 @@ following targets are available:
   required only when there is an architecture-specific directory.\\
   \textbf{Example:} \verb!make install prefix=/usr/local!\\
   will install all files below \texttt{/usr/local}.
-\item[\texttt{uninstall}] Uninstalls \es, \ie removes all files that
-  were installed during \texttt{make install}. The variables are
-  identical to the variables of the \texttt{install}-target.
 \item[\texttt{ug\ \ }] Creates the User guide in the \texttt{doc/ug}
   subdirectory (only when using the development sources).
 \item[\texttt{dg\ \ }] Creates the Developers' guide in the

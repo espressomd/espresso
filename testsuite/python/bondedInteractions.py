@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import espressomd._system as es
@@ -45,7 +46,7 @@ class ParticleProperties(ut.TestCase):
         if inType != outType:
             return False
 
-        for k in inParams.keys():
+        for k in list(inParams.keys()):
             if k not in outParams:
                 return False
             if outParams[k] != inParams[k]:
@@ -99,13 +100,21 @@ class ParticleProperties(ut.TestCase):
 
     test_dihedral = generateTestForBondParams(
         0, Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
-    test_angle_harm = generateTestForBondParams(
-        0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
-    test_angle_cos = generateTestForBondParams(
-        0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
-    test_angle_cossquare = generateTestForBondParams(
-        0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
-    test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
+    
+    if "BOND_ANGLE" in espressomd.features():
+        test_angle_harm = generateTestForBondParams(
+            0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
+        test_angle_cos = generateTestForBondParams(
+            0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
+        test_angle_cossquare = generateTestForBondParams(
+            0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
+    if "LENNARD_JONES" in espressomd.features():
+        test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
+
+    if "TABULATED" in espressomd.features():
+      test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance", "filename":"lj1.tab"})
+
+
 
 if __name__ == "__main__":
     print("Features: ", code_info.features())

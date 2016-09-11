@@ -26,6 +26,7 @@
 
 #include <cmath>
 #include "utils.hpp"
+#include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
 #include "global.hpp"
@@ -87,7 +88,11 @@ extern double temperature;
 extern double langevin_gamma;
 
 /** Langevin friction coefficient gamma for the rotation. */
+#ifndef ROTATIONAL_INERTIA
 extern double langevin_gamma_rotation;
+#else
+extern double langevin_gamma_rotation[3];
+#endif
 
 /** Langevin for translations */
 extern bool langevin_trans;
@@ -372,8 +377,14 @@ inline void random_walk_vel(Particle *p, double dt)
 */
 inline void friction_thermo_langevin_rotation(Particle *p)
 {
+#ifndef ROTATIONAL_INERTIA
   extern double langevin_pref2_rotation;
-  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
+  double langevin_pref1_temp, langevin_pref2_temp;
+#else
+  extern double langevin_pref2_rotation[3];
+  double langevin_pref1_temp[3], langevin_pref2_temp[3];
+#endif
+  double langevin_temp_coeff;
 
   int j;
   double switch_rotate = 1.0;
@@ -383,8 +394,16 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   }
 
   // first, set defaults
+#ifndef ROTATIONAL_INERTIA
   langevin_pref1_temp = langevin_gamma_rotation;
   langevin_pref2_temp = langevin_pref2_rotation;
+#else
+  for ( j = 0 ; j < 3 ; j++)
+  {
+	  langevin_pref1_temp[j] = langevin_gamma_rotation[j];
+	  langevin_pref2_temp[j] = langevin_pref2_rotation[j];
+  }
+#endif
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -396,7 +415,7 @@ inline void friction_thermo_langevin_rotation(Particle *p)
 #else
 #error No Noise defined
 #endif
-
+#ifndef ROTATIONAL_INERTIA
     if(p->p.gamma_rot >= 0.)
     {
       langevin_pref1_temp = p->p.gamma_rot;
@@ -421,6 +440,30 @@ inline void friction_thermo_langevin_rotation(Particle *p)
       p->p.gamma_rot = langevin_gamma_rotation;
 #endif
     }
+#else
+    for ( j = 0 ; j < 3 ; j++)
+    if(p->p.gamma_rot[j] >= 0.)
+    {
+      langevin_pref1_temp[j] = p->p.gamma_rot[j];
+      // Is a particle-specific temperature also specified?
+      if(p->p.T >= 0.)
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma_rot[j]/time_step);
+      else
+        // Default temperature but particle-specific gamma
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*temperature*p->p.gamma_rot[j]/time_step);
+
+    } // particle specific gamma
+    else
+    {
+      langevin_pref1_temp[j] = langevin_gamma_rotation[j];
+      // No particle-specific gamma, but is there particle-specific temperature
+      if(p->p.T >= 0.)
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma_rotation[j]/time_step);
+      else
+        // Default values for both
+        langevin_pref2_temp[j] = langevin_pref2_rotation[j];
+    }
+#endif // ROTATIONAL_INERTIA
 #endif /* LANGEVIN_PER_PARTICLE */
 
 
@@ -433,11 +476,11 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   {
 #ifdef ROTATIONAL_INERTIA
 #ifndef SEMI_INTEGRATED
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
-#else
+    p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*noise;
+#else // SEMI_INTEGRATED
     p->f.torque[j] = 0;
 #endif // SEMI_INTEGATED
-#else
+#else // ROTATIONAL_INERTIA
     p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
 #endif // ROTATIONAL_INERTIA
   }

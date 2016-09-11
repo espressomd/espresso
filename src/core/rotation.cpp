@@ -56,11 +56,13 @@
 
 #ifdef ROTATION
 
+#ifndef ROTATIONAL_INERTIA
 /** moment of inertia. Currently we define the inertia tensor here to be constant.
     If it is not spherical the angular velocities have to be refined several times
     in the \ref convert_torques_propagate_omega. Also the kinetic energy in file
     \ref statistics.cpp is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
 static double I[3] = { 1, 1, 1};
+#endif
 
 /** \name Privat Functions */
 /************************************************************/
@@ -172,9 +174,9 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
   /* calculate the second derivative of the quaternion */
   
 #ifdef ROTATIONAL_INERTIA
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]*p->p.rinertia[1]-I[2]*p->p.rinertia[2]))/I[0]/p->p.rinertia[0];
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]*p->p.rinertia[2]-I[0]*p->p.rinertia[0]))/I[1]/p->p.rinertia[1];
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]*p->p.rinertia[0]-I[1]*p->p.rinertia[1]))/I[2]/p->p.rinertia[2];
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
 #else
   Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
@@ -355,9 +357,9 @@ void convert_torques_propagate_omega()
 #ifndef SEMI_INTEGRATED
 
 #ifdef ROTATIONAL_INERTIA
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2]/I[2];
+      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
+      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
+      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
 #else
       p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/I[0];
       p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
@@ -370,9 +372,9 @@ void convert_torques_propagate_omega()
         double Wd[3];
 
 #ifdef ROTATIONAL_INERTIA
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]*p[i].p.rinertia[1]-I[2]*p[i].p.rinertia[2]))/I[0]/p[i].p.rinertia[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]*p[i].p.rinertia[2]-I[0]*p[i].p.rinertia[0]))/I[1]/p[i].p.rinertia[1];
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]*p[i].p.rinertia[0]-I[1]*p[i].p.rinertia[1]))/I[2]/p[i].p.rinertia[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(p[i].p.rinertia[1]-p[i].p.rinertia[2]))/p[i].p.rinertia[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]))/p[i].p.rinertia[1];
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]))/p[i].p.rinertia[2];
 #else
         Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
         Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
@@ -634,24 +636,30 @@ void rotate_particle_3D(Particle* p, double* phi)
 /** Propagate the positions: random walk part.*/
 void random_walk_rot(Particle *p)
 {
-	double e_damp, sigma, sigma_coeff, rinertia_m, phi, theta, dphi_m, m_dphi;
+	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, phi, theta, dphi_m, m_dphi;
 	double dphi[3], u_dphi[3];
 
 #ifdef ROTATION_PER_PARTICLE
     if (!p->p.rotation) return;
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+#endif
 #if defined (FLATNOISE)
-		  sigma_coeff = 24.0*p->p.T/p->p.gamma_rot;
+		  sigma_coeff = 24.0*p->p.T/gamma_rot_m;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = 2.0*p->p.T/p->p.gamma_rot;
+		  sigma_coeff = 2.0*p->p.T/gamma_rot_m;
 #endif
 		  // WARNING: this method currently is implemented for ball particles only.
 		  // SEMI_INTEGRATED method is technically not compatible
 		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
 		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
-		  e_damp = exp(-p->p.gamma_rot*time_step/rinertia_m);
-		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*p->p.gamma_rot))*(-3+4*e_damp-e_damp*e_damp));
+
+		  e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
+		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*gamma_rot_m))*(-3+4*e_damp-e_damp*e_damp));
 		  phi = 2*PI*d_random();
 		  theta = PI*d_random();
 		  dphi_m = noise * sqrt(3 * sigma);
@@ -675,10 +683,10 @@ void random_walk_rot(Particle *p)
 void random_walk_rot_vel(Particle *p, double dt)
 {
 	int j;
-	double e_damp, sigma, sigma_coeff, rinertia_m, a[3];
+	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, a[3];
 
-#ifdef ROTATION_PER_PARTICLE
 	a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
 	if (!p->p.rotation) return;
 	if (!(p->p.rotation & 2)) a[0] = 0.0;
 	if (!(p->p.rotation & 4)) a[1] = 0.0;
@@ -694,14 +702,20 @@ void random_walk_rot_vel(Particle *p, double dt)
 		  // SEMI_INTEGRATED method is technically not compatible
 		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
 		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+#endif
 #if defined (FLATNOISE)
 		  sigma_coeff = 12.0*p->p.T/rinertia_m;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
 		  sigma_coeff = p->p.T/rinertia_m;
 #endif
-		  e_damp = exp(-2*p->p.gamma_rot*dt/rinertia_m);
+		  e_damp = exp(-2*gamma_rot_m*dt/rinertia_m);
 		  sigma = sigma_coeff*(1-e_damp);
 		  p->m.omega[j] += a[j] * sqrt(sigma) * noise;
+		  //printf("\n 2 %e %e %e",a[j], sqrt(sigma), noise);
 	  }
     }//j
 }

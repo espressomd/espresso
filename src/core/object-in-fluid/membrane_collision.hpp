@@ -48,7 +48,7 @@ inline double sigmoid_force_r(double a, double n, double r )
 }
 
 /** Calculate membrane-collision force between particle p1 and p2 */
-inline void add_membrane_collision_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+inline void add_membrane_collision_pair_force(const Particle *p1, const Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
 	/************************
@@ -76,6 +76,12 @@ inline void add_membrane_collision_pair_force(Particle *p1, Particle *p2, IA_par
             
             memmove(out1, p1->p.out_direction, 3*sizeof(double));
             memmove(out2, p2->p.out_direction, 3*sizeof(double));
+			// check whether out_direction was set
+			if ( fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) + fabs(out2[1]) + fabs(out2[2]) < SMALL_OIF_MEMBRANE_CUTOFF) 
+			{
+				fprintf(stderr, "membrane_collision.hpp: out_direction is not set. Probably, you have not used switch \" normal\" in your oif_create_template command. Exiting the process. \n");
+				errexit();
+			}
             
             // this is the direction in which the repulsive forces will be applied and its norm
             vector_subt(dir,out1,out2);

@@ -27,13 +27,21 @@ puts "------------------------------------------------"
 puts "------------------------------------------------"
 
 proc test_mass-and-rinertia_per_particle {test_case} {
-    set gamma0 1.0
-    set gamma1 1.0
+    # make real random draw
+    set cmd "t_random seed"
+    for {set i 0} {$i < [setmd n_nodes]} { incr i } {
+	  lappend cmd [expr [pid] + $i] }
+    eval $cmd
+
+    set gamma0 1.
+    set gamma1 1. 
     
     # Decelleration
     setmd skin 0
     setmd time_step 0.01
     thermostat langevin 0 $gamma0 
+    cellsystem nsquare 
+    #-no_verlet_lists
     set J "10 10 10"
 
     part deleteall
@@ -70,22 +78,18 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             part 1 gamma $gamma1 temp 0.0
         }
     }
-    
-    # In case of an anisotropic body and after a correct nonzero values 
-    # definition (in the source code, "rotation.cpp") of the nonlinear 
-    # parts of Euler's rotational equations, it seems that exponential
-    # expected behaviour is a not correct assumption.
-    # At least, nonlinear differential equations do not give
-    # exponent-like behaviour (usually). Such anisotropic
-    # decelleration should be validated using other equations.
-    # This is why we've made a [set J "10 10 10"] above
-    # as a quick solution.
+    setmd time 0
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*$i/10. /[lindex $J $k])) >0.01 ||
-                 abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*$i/10. /[lindex $J $k])) >0.01
+            set deviation0 [expr [lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])]
+            set deviation1 [expr [lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])]
+            set omega_sim_0 [expr [lindex [part 0 print omega_body] $k]]
+            set omega_th [expr exp(-$gamma0*[setmd time] /[lindex $J $k])]
+            if {
+                 abs($deviation0) >0.01 ||
+                 abs($deviation1) >0.01
             } {
-                error_exit "Friction Deviation in omega too large. $i $k"
+                error_exit "Friction Deviation in omega too large. $i $k $omega_sim_0 $omega_th"
             }
         }
         integrate 10
@@ -106,6 +110,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set gamma(1) 2.0
     set temp(0) 2.5
     set temp(1) 2.0
+    set gamma_rot_1(0) [expr [t_random] * 20]
+    set gamma_rot_2(0) [expr [t_random] * 20]
+    set gamma_rot_3(0) [expr [t_random] * 20]
+    set gamma_rot_1(1) [expr [t_random] * 20]
+    set gamma_rot_2(1) [expr [t_random] * 20]
+    set gamma_rot_3(1) [expr [t_random] * 20]
 
     set box 10
     setmd box_l $box $box $box
@@ -116,9 +126,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
-    setmd time_step 0.005
+    setmd time_step 0.008
 
-    set n 100
+    set n 200
     set mass [expr [t_random] *20]
     set j1 [expr [t_random] * 20]
     set j2 [expr [t_random] * 20]
@@ -128,9 +138,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         for {set k 0} {$k<2} {incr k} {
             part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
             switch $test_case {
-                1 {part [expr $i + $k*$n] gamma $gamma($k)}
+                1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
-                3 {part [expr $i + $k*$n] gamma $gamma($k) temp $temp($k)}
+                3 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
             }
         }
     }
@@ -144,14 +154,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set oz2($k) 0.
     }
 
-
-    set loops 1000
+    set loops 50
     puts "Thermalizing..."
-    integrate 10000
+    integrate 1000
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
-        integrate 30
+        integrate 100
         # Get kinetic energy in each degree of freedom for all particles
         for {set p 0} {$p <$n} {incr p} {
             for {set k 0} {$k<2} {incr k} {
@@ -167,7 +176,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.1
+    set tolerance 0.12
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]

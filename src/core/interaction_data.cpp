@@ -377,7 +377,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 }
 
 IA_parameters *get_ia_param_safe(int i, int j) {
-  make_particle_type_exist(imax(i, j));
+  make_particle_type_exist(std::max(i, j));
   return get_ia_param(i, j);
 }
 
@@ -870,6 +870,8 @@ void make_bond_type_exist(int type)
 	 bonded_ia_params[type].p.tab.npoints > 0 ) {
       free(bonded_ia_params[type].p.tab.f);
       free(bonded_ia_params[type].p.tab.e);
+      bonded_ia_params[type].p.tab.f = NULL;
+      bonded_ia_params[type].p.tab.e = NULL;
     }
 #endif 
 #ifdef OVERLAPPED
@@ -878,6 +880,9 @@ void make_bond_type_exist(int type)
       free(bonded_ia_params[type].p.overlap.para_a);
       free(bonded_ia_params[type].p.overlap.para_b);
       free(bonded_ia_params[type].p.overlap.para_c);
+      bonded_ia_params[type].p.overlap.para_a = NULL;
+      bonded_ia_params[type].p.overlap.para_b = NULL;
+      bonded_ia_params[type].p.overlap.para_c = NULL;
     }
 #endif
     return;

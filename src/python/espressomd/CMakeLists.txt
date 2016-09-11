@@ -17,10 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-file(GLOB cython_SRC *.pyx)
-file(GLOB cython_HEADER *.pxd)
-file(GLOB cython_AUX *.py)
-file(COPY ${cython_AUX} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
@@ -42,10 +38,22 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
+
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
+add_custom_command(OUTPUT code_info.pyx
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+
+file(GLOB cython_SRC *.pyx)
+file(GLOB cython_HEADER *.pxd)
+file(GLOB cython_AUX *.py)
+
+list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
+list(REMOVE_DUPLICATES cython_SRC)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -55,13 +63,14 @@ foreach(cython_file ${cython_SRC})
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${basename}.cpp
-                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}  --cplus ${CYTHON_FLAGS}
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
                          ${cython_file}
                          -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
+                                 ${cython_HEADER}
                          )
 
       add_library(${basename} SHARED ${basename}.cpp)
@@ -74,4 +83,16 @@ foreach(cython_file ${cython_SRC})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
+
+
+foreach(auxfile ${cython_AUX})
+  add_custom_command(TARGET espressomd
+                     COMMAND ${CMAKE_COMMAND} -E
+                       copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
+                    )
+endforeach(auxfile)
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
+	PATTERN "CMakeFiles" EXCLUDE PATTERN "*.cpp" EXCLUDE
+	PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE) 
 

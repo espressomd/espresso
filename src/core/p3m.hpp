@@ -48,7 +48,9 @@
  *  </ul>
  */
 
+#include "config.hpp"
 #include "utils.hpp"
+#include "debug.hpp"
 
 #include "p3m-common.hpp"
 #include "interaction_data.hpp"

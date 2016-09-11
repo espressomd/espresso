@@ -18,9 +18,7 @@
 */
 #include <algorithm>
 #include <cmath>
-#ifdef HAVE_CXX11
 #include <initializer_list>
-#endif
 
 /* @TODO: should have move semantics with c++11 for peformance reasons. */
 

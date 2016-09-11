@@ -18,10 +18,11 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -35,6 +36,9 @@ cdef extern from "EspressoSystemInterface.hpp":
 
 
 IF ELECTROSTATICS:
+    cdef extern from "communication.hpp":
+        void mpi_bcast_coulomb_params()
+
     IF P3M:
         from p3m_common cimport p3m_parameter_struct
     cdef extern from "interaction_data.hpp":
@@ -51,7 +55,8 @@ IF ELECTROSTATICS:
                 COULOMB_P3M_GPU, \
                 COULOMB_MMM1D_GPU, \
                 COULOMB_EWALD_GPU, \
-                COULOMB_EK
+                COULOMB_EK, \
+                COULOMB_SCAFACOS
 
         int coulomb_set_bjerrum(double bjerrum)
 
@@ -106,7 +111,12 @@ IF ELECTROSTATICS:
                 cdef double alpha
                 cdef double box[3]
                 cao = params["cao"]
-                mesh = params["mesh"]
+                # Mesh can be specified as single int, but here, an array is needed
+                if not hasattr(params["mesh"],"__getitem__"):
+                    for i in range(3): 
+                        mesh[i]=params["mesh"]
+                else:
+                    mesh = params["mesh"]
                 alpha = params["alpha"]
                 box = params["box"]
                 p3m_gpu_init(cao, mesh, alpha, box)
@@ -123,8 +133,7 @@ IF ELECTROSTATICS:
             cdef char * log = NULL
             cdef int response
             response = p3m_adaptive_tune(& log)
-            if response:
-                print log
+            print(log)
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -263,7 +272,7 @@ IF ELECTROSTATICS:
             raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
         resp=mmm1d_tune(&log)
         if resp:
-            print log
+            print(log)
         return resp
 
 IF ELECTROSTATICS:
@@ -293,7 +302,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius = -1, int bessel_cutoff = -1);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius);
+            Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror);
             void setup(SystemInterface &s);
             void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
             void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual = False);
@@ -306,13 +317,14 @@ IF ELECTROSTATICS and MMM1D_GPU:
             bool need_tune;
 
             int pairs;
-            mmm1dgpu_real *dev_forcePairs, *dev_energyBlocks;
+            mmm1dgpu_real *dev_forcePairs;
+            mmm1dgpu_real *dev_energyBlocks;
 
             mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
             int bessel_cutoff;
 
             float force_benchmark(SystemInterface &s);
-            
+
             void check_periodicity();
 
 

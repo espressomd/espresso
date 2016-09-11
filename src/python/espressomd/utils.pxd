@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 import numpy as np
 cimport numpy as np
 
@@ -42,4 +43,4 @@ cdef np.ndarray create_nparray_from_int_list(int_list * il)
 cdef np.ndarray create_nparray_from_double_list(double_list * dl)
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
 cdef check_type_or_throw_except(x, n, t, msg)
-cdef check_range_or_except(x, v_min, incl_min, v_max, incl_max)
+cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)

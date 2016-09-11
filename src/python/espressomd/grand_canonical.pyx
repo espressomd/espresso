@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from utils cimport *
+from __future__ import print_function, absolute_import
+from espressomd.utils cimport *
 cimport globals
 from globals cimport max_seen_particle
 

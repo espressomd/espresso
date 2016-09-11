@@ -140,8 +140,12 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 
   /* set number of interaction partners */
   if(tab_type == TAB_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
-  if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
-  if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
+  else if(tab_type == TAB_BOND_ANGLE)    bonded_ia_params[bond_type].num = 2;
+  else if(tab_type == TAB_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
+  else {
+    runtimeError("Unsupported tabulated bond type.");
+    return 1;
+  }
 
   /* copy filename */
   size = strlen(filename);
@@ -160,7 +164,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   */
   if(tab_type == TAB_BOND_ANGLE ) {
     if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
-	abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
+	std::abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
       fclose(fp);
       return 6;
     }
@@ -169,7 +173,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   /* check interval for angle and dihedral potentials */
   if(tab_type == TAB_BOND_DIHEDRAL ) {
     if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
-	abs(bonded_ia_params[bond_type].p.tab.maxval-(2*PI)) > 1e-5 ) {
+	std::abs(bonded_ia_params[bond_type].p.tab.maxval-(2*PI)) > 1e-5 ) {
       fclose(fp);
       return 6;
     }
