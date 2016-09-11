@@ -16,7 +16,6 @@ env:
     - myconfig=rest1
     - myconfig=rest2
     - make_check=false myconfig=nocheck-maxset
-    - myconfig=semiintegrated
 
 script:
         - maintainer/travis/build_docker.sh
