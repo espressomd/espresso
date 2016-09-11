@@ -115,8 +115,7 @@ inter magnetic 0
 
 integrate 0 recalc_forces
 
-#inter magnetic $pf_dds_gpu dds-gpu
-inter magnetic $pf_dds_gpu bh-gpu
+inter magnetic $pf_dds_gpu dds-gpu
 
 integrate 0 recalc_forces
 
