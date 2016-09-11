@@ -52,7 +52,7 @@ set j3 [expr 10. + abs([t_random] * 10)]
 
 set kT 1.5
 set halfkT 0.75
-thermostat langevin $kT 1 1
+thermostat langevin $kT 1 1 1 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 0.0
