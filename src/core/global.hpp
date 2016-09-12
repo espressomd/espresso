@@ -197,13 +197,7 @@ extern const Datafield fields[];
 /** index of \ref configtemp in \ref #fields */
 #define FIELD_CONFIGTEMP          60
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
-#ifndef ROTATIONAL_INERTIA
 #define FIELD_LANGEVIN_GAMMA_ROTATION 61
-#else
-#define FIELD_LANGEVIN_GAMMA_ROTATION_X 61
-#define FIELD_LANGEVIN_GAMMA_ROTATION_Y 62
-#define FIELD_LANGEVIN_GAMMA_ROTATION_Z 63
-#endif
 
 /*@}*/
 

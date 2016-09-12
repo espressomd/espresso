@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 import sys
-cimport script_interface
+from . cimport script_interface
 
 cdef extern from "communication.hpp":
     void mpi_init(int * argc, char ** *argv)

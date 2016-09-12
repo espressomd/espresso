@@ -1,8 +1,9 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-cimport reaction
-cimport globals
-cimport utils
-from highlander import ThereCanOnlyBeOne
+from . cimport reaction
+from . cimport globals
+from . cimport utils
+from .highlander import ThereCanOnlyBeOne
 
 IF CATALYTIC_REACTIONS:
     __reaction_is_initiated = False

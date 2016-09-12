@@ -63,7 +63,7 @@ subproblems that allow to (hopefully) fully understand the process.
 \subsection{Step 1: Diffusion of a single particle}
 Our first step is to investigate the diffusion of a single particle
 that is coupled to an LB fluid by the point coupling method.
-Take a look at the script {\tt single\_particle\_diffusion.tcl}.
+Take a look at the script \texttt{single\_particle\_diffusion.tcl}.
 The script takes the LB-friction coefficient as an argument. Start with
 an friction coefficient of 1.0:
 {\vspace{0,2cm}\small
@@ -78,8 +78,8 @@ thermalized.
 The random forces on the particle and
 within the LB fluid will cause the particle to move. The mean squared
 displacement is calculated during the simulation via a multiple-tau correlator. 
-Run the simulation script and plot the output data {\tt msd.dat} with {\tt
-gnuplot}.
+Run the simulation script and plot the output data \texttt{msd.dat} with
+\texttt{gnuplot}.
 What is different for short times than for long times?
 Plot the data with double logarithmic axes.
 {\vspace{0,2cm}\small
@@ -98,7 +98,7 @@ plot "msd.dat"
 
 Can you give an explanation for the quadratic time dependency for short
 times?
-Use a linear fit in {\tt gnuplot} for the long time regime to determine the 
+Use a linear fit in \texttt{gnuplot} for the long time regime to determine the 
 diffusion coefficient:
 {\vspace{0,2cm}\small
 \begin{lstlisting}[numbers=none]
@@ -177,7 +177,7 @@ walk should prevent that, but to be sure
 we perform some MD steps with a capped LJ potential, this means 
 forces above a certain threshold will be set to the threshold in order to prevent
 the system from exploding. To see how this is done, look at the script 
-{\tt polymer\_diffusion.tcl}.
+\texttt{polymer\_diffusion.tcl}.
 It contains a quite long warmup command so that also longer polymers
 are possible. You can probably make it shorter.
 

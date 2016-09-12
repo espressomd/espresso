@@ -221,7 +221,7 @@ void dd_create_cell_grid()
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
-  max_skin = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
+  max_skin = std::min(std::min(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
@@ -758,7 +758,8 @@ void dd_on_geometry_change(int flags) {
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
-  double min_cell_size = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
+
+  double min_cell_size = std::min(std::min(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change: max_range = %f, min_cell_size = %f, max_skin = %f\n", this_node, max_range, min_cell_size, max_skin));

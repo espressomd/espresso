@@ -71,7 +71,7 @@ for line in f:
         elif addr in allocated:
             del allocated[addr]
         else:
-            print(("\n" + addr + " freed at " + src + ", but never allocated\n"))
+            print("\n" + addr + " freed at " + src + ", but never allocated\n")
 
 print("\n")
 for (addr,info) in list(allocated.items()):

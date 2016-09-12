@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport utils
+from __future__ import print_function, absolute_import
+from . cimport utils
 include "myconfig.pxi"
-from actors import Actor
+from .actors import Actor
 
 IF DIPOLES == 1:
     class MagnetostaticExtension(Actor):

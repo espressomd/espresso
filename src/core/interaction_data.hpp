@@ -100,11 +100,11 @@ enum BondedInteraction {
 };
 
 /** Specify tabulated bonded interactions  */
-enum TabulatedBondedInteraction {
-  TAB_UNKNOWN = 0,
-  TAB_BOND_LENGTH,
-  TAB_BOND_ANGLE,
-  TAB_BOND_DIHEDRAL
+enum TabulatedBondedInteraction{
+    TAB_UNKNOWN = 0,
+    TAB_BOND_LENGTH = 1,
+    TAB_BOND_ANGLE = 2,
+    TAB_BOND_DIHEDRAL = 3
 };
 
 /** Specify overlapped bonded interactions  */
@@ -1126,14 +1126,6 @@ typedef struct {
 } Constraint_ext_magn_field;
 // end ER
 
-/** Parameters for a plane constraint which is needed for tunable-slip boundary
- * conditions. */
-typedef struct {
-  /** Position of the plain. Negative values mean non-existing in that
-   * direction. */
-  double pos[3];
-} Constraint_plane;
-
 typedef struct {
   double omega;
   double Prefactor;
@@ -1162,8 +1154,6 @@ struct Constraint {
     Constraint_voxel voxel;
     // ER
     Constraint_ext_magn_field emfield;
-    // end ER
-    Constraint_plane plane;
   } c;
 
   /** particle representation of this constraint. Actually needed are only the

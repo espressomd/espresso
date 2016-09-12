@@ -28,18 +28,17 @@
  *
 */
 
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <exception>
+#include <vector>
+
 #include "config.hpp"
 
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <exception>
-#include <vector>
-
 #include "utils/math/sqr.hpp"
 
 /*************************************************************/
@@ -120,20 +119,19 @@ namespace Utils {
  * at compile time. It uses exponentiation by
  * squaring to construct a efficient function.
  */
-template<unsigned n, typename T>
-inline T int_pow(T x) {
-  switch(n) {
-    case 0:
-      return T(1);
-    case 1:
-      return x;
-    default:
-      /** Even branch */
-      if(n % 2 == 0) {
-        return int_pow<n / 2, T>(x * x);
-      } else {
-        return x * int_pow<(n - 1)/2, T>(x * x);
-      }
+template <unsigned n, typename T> inline T int_pow(T x) {
+  switch (n) {
+  case 0:
+    return T(1);
+  case 1:
+    return x;
+  default:
+    /** Even branch */
+    if (n % 2 == 0) {
+      return int_pow<n / 2, T>(x * x);
+    } else {
+      return x * int_pow<(n - 1) / 2, T>(x * x);
+    }
   }
 }
 
@@ -274,24 +272,6 @@ inline void realloc_grained_doublelist(DoubleList *dl, int size, int grain) {
 /** \name Mathematical functions.                            */
 /*************************************************************/
 /*@{*/
-
-/** Calculates the maximum of 'double'-typed a and b, returning 'double'. */
-inline double dmax(double a, double b) { return (a > b) ? a : b; }
-
-/** Calculates the minimum of 'double'-typed a and b, returning 'double'. */
-inline double dmin(double a, double b) { return (a < b) ? a : b; }
-
-/** Calculates the maximum of 'int'-typed a and b, returning 'int'. */
-inline int imax(int a, int b) { return (a > b) ? a : b; }
-
-/** Calculates the minimum of 'int'-typed a and b, returning 'int'. */
-inline int imin(int a, int b) { return (a < b) ? a : b; }
-
-/** Check if a value is NaN. isnan() is only available in C++11 and C99, but not
- * in C++98. **/
-#ifndef isnan
-#define isnan(a) (a != a)
-#endif
 
 /** Calculates the remainder of a division */
 inline double drem_down(double a, double b) { return a - floor(a / b) * b; }
@@ -872,7 +852,8 @@ inline void print_block(double *data, int start[3], int size[3], int dim[3],
   for (b = 0; b < divide; b++) {
     start1 = b * block1 + start[1];
     for (i0 = start[0] + size[0] - 1; i0 >= start[0]; i0--) {
-      for (i1 = start1; i1 < imin(start1 + block1, start[1] + size[1]); i1++) {
+      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]);
+           i1++) {
         for (i2 = start[2]; i2 < start[2] + size[2]; i2++) {
           tmp = data[num + (element * (i2 + dim[2] * (i1 + dim[1] * i0)))];
           if (tmp < 0)
@@ -926,39 +907,6 @@ inline double distance2vec(double pos1[3], double pos2[3], double vec[3]) {
   return SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]);
 }
 
-/** returns the distance between the unfolded coordintes of two particles.
- *  \param pos1       Position of particle one.
- *  \param image_box1 simulation box index of particle one .
- *  \param pos2       Position of particle two.
- *  \param image_box2 simulation box index of particle two .
- *  \param box_l      size of simulation box.
-*/
-inline double unfolded_distance(double pos1[3], int image_box1[3],
-                                double pos2[3], int image_box2[3],
-                                double box_l[3]) {
-  double dist = 0;
-  double lpos1[3], lpos2[3];
-
-  /*unrolling the loop so can neatly add Lees-Edwards:
-   *compiler probably unrolls anyway*/
-  lpos1[0] = pos1[0] + image_box1[0] * box_l[0];
-  lpos2[0] = pos2[0] + image_box2[0] * box_l[0];
-#ifdef LEES_EDWARDS
-  lpos1[0] += image_box1[1] * lees_edwards_offset;
-  lpos2[0] += image_box2[1] * lees_edwards_offset;
-#endif
-  dist = SQR(lpos1[0] - lpos2[0]);
-
-  lpos1[1] = pos1[1] + image_box1[1] * box_l[1];
-  lpos2[1] = pos2[1] + image_box2[1] * box_l[1];
-  dist += SQR(lpos1[1] - lpos2[1]);
-
-  lpos1[2] = pos1[2] + image_box1[2] * box_l[2];
-  lpos2[2] = pos2[2] + image_box2[2] * box_l[2];
-  dist += SQR(lpos1[2] - lpos2[2]);
-
-  return sqrt(dist);
-}
 /*@}*/
 
 /*************************************************************/
@@ -968,17 +916,7 @@ inline double unfolded_distance(double pos1[3], int image_box1[3],
 
 /** extend a string with another one. Like strcat, just automatically
     increases the string space */
-inline char *strcat_alloc(char *left, const char *right) {
-  if (!left) {
-    char *res = (char *)Utils::malloc(strlen(right) + 1);
-    strcpy(res, right);
-    return res;
-  } else {
-    char *res = (char *)Utils::realloc(left, strlen(left) + strlen(right) + 1);
-    strcat(res, right);
-    return res;
-  }
-}
+char *strcat_alloc(char *left, const char *right);
 
 /*@}*/
 

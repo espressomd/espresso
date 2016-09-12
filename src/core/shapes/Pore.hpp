@@ -28,20 +28,22 @@
 namespace Shapes {
 class Pore : public Shape {
 public:
-  Pore(): m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_rad_left(0.0), m_rad_right(0.0),
-	      m_smoothing_radius(0.0), m_length(0.0), m_outer_rad_left(0.0), m_outer_rad_right(0.0) {}
+  Pore()
+      : m_pos({0.0, 0.0, 0.0}), m_axis({0.0, 0.0, 0.0}), m_rad_left(0.0),
+        m_rad_right(0.0), m_smoothing_radius(0.0), m_length(0.0),
+        m_outer_rad_left(0.0), m_outer_rad_right(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  int calculate_dist(const double *ppos, double *dist,
+                     double *vec) const override;
 
-  
-  Vector3d const &pos() const { return m_pos; }
-  Vector3d const &axis() const { return m_axis; }
-  double const &rad_left() const { return m_rad_left; }
-  double const &rad_right() const { return m_rad_right; }
-  double const &smoothing_radius() const { return m_smoothing_radius; }
-  double const &length() const { return m_length; }
-  double const &outer_rad_left() const { return m_outer_rad_left; }
-  double const &outer_rad_right() const { return m_outer_rad_right; }
+  Vector3d &pos() { return m_pos; }
+  Vector3d &axis() { return m_axis; }
+  double &rad_left() { return m_rad_left; }
+  double &rad_right() { return m_rad_right; }
+  double &smoothing_radius() { return m_smoothing_radius; }
+  double &length() { return m_length; }
+  double &outer_rad_left() { return m_outer_rad_left; }
+  double &outer_rad_right() { return m_outer_rad_right; }
 
 private:
   /** center of the cylinder. */

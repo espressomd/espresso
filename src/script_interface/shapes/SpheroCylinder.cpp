@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include SpheroCylinder.hpp"
+#include "SpheroCylinder.hpp"
 
 using std::vector;
 using std::string;
@@ -35,19 +35,19 @@ ParameterMap SpheroCylinder::valid_parameters() const {
 }
 
 VariantMap SpheroCylinder::get_parameters() const {
-  return {{"pos", m_spherocylinder->pos()}, {"axis", m_spherocylinder->axis()}, 
-	       {"length", m_spherocylinder->length()}, {"rad", m_spherocylinder->rad()};
-
+  return {{"pos", m_spherocylinder->pos()},
+          {"axis", m_spherocylinder->axis()},
+          {"length", m_spherocylinder->length()},
+          {"rad", m_spherocylinder->rad()}};
 }
 
 void SpheroCylinder::set_parameter(const string &name,
-                         const ScriptInterface::Variant &value) {
+                                   const ScriptInterface::Variant &value) {
 
   SET_PARAMETER_HELPER("pos", m_spherocylinder->pos());
   SET_PARAMETER_HELPER("axis", m_spherocylinder->axis());
   SET_PARAMETER_HELPER("length", m_spherocylinder->length());
   SET_PARAMETER_HELPER("rad", m_spherocylinder->rad());
-
 }
 
 } /* namespace Shapes */

@@ -18,6 +18,7 @@
 #
 
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 cdef extern from "polymer.hpp":

@@ -42,6 +42,7 @@ public:
   typedef std::function<void(int, int)> function_type;
 
   explicit MpiCallbacks(boost::mpi::communicator &comm) : m_comm(comm) {
+
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
@@ -130,7 +131,7 @@ public:
   boost::mpi::communicator const &comm() const { return m_comm; }
 
   /**
-   * @brief Set the mpi communicator for this instance.
+   * Set the MPI communicator for the callbacks.
    */
   void set_comm(boost::mpi::communicator &comm) { m_comm = comm; }
 

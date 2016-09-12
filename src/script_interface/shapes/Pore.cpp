@@ -34,15 +34,19 @@ ParameterMap Pore::valid_parameters() const {
           {"rad_right", {ParameterType::DOUBLE, true}},
           {"smoothing_radius", {ParameterType::DOUBLE, true}},
           {"length", {ParameterType::DOUBLE, true}},
-          {"outer_rad_left", {ParameterType::DOUBLE, true}}
-	      {"outer_rad_right", {ParameterType::DOUBLE, true}}};
+          {"outer_rad_left", {ParameterType::DOUBLE, true}},
+          {"outer_rad_right", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap Pore::get_parameters() const {
-  return {{"pos", m_pore->pos()}, {"axis", m_pore->axis()},
-          {"rad_left", m_pore->rad_left()}, {"rad_right", m_pore->rad_right()},
-          {"smoothing_radius", m_pore->smoothing_radius()}, {"length", m_pore->smoothing_radius()},
-          {"outer_rad_left", m_pore->outer_rad_left()}, {"outer_rad_right", m_pore->outer_rad_right()}};
+  return {{"pos", m_pore->pos()},
+          {"axis", m_pore->axis()},
+          {"rad_left", m_pore->rad_left()},
+          {"rad_right", m_pore->rad_right()},
+          {"smoothing_radius", m_pore->smoothing_radius()},
+          {"length", m_pore->smoothing_radius()},
+          {"outer_rad_left", m_pore->outer_rad_left()},
+          {"outer_rad_right", m_pore->outer_rad_right()}};
 }
 
 void Pore::set_parameter(const string &name,

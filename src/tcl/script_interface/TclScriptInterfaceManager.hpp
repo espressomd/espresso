@@ -66,6 +66,7 @@ public:
 
       break;
     }
+
     default: {
       int id;
       /* The first argument has either 'new' to create a new object,

@@ -30,20 +30,22 @@
        Based upon 'polymer.tcl' by BAM (20.02.2003).
 */
 
-#include "polymer.hpp"
-#include "communication.hpp"
-#include "constraints.hpp"
-#include "global.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "random.hpp"
-#include "utils.hpp"
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#include "communication.hpp"
+#include "constraints.hpp"
+#include "debug.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "polymer.hpp"
+#include "random.hpp"
+#include "utils.hpp"
 
 /*************************************************************
  * Functions                                                 *
@@ -89,7 +91,7 @@ double mindist4(double pos[3]) {
   int i;
 
   if (n_part == 0)
-    return (dmin(dmin(box_l[0], box_l[1]), box_l[2]));
+    return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
   partCfgMD = (Particle *)Utils::malloc(n_part * sizeof(Particle));
   mpi_get_particles(partCfgMD, NULL);
   for (i = 0; i < n_part; i++) {
@@ -99,7 +101,7 @@ double mindist4(double pos[3]) {
     dy -= dround(dy / box_l[1]) * box_l[1];
     dz = pos[2] - partCfgMD[i].r.p[2];
     dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = dmin(mindist, SQR(dx) + SQR(dy) + SQR(dz));
+    mindist = std::min(mindist, SQR(dx) + SQR(dy) + SQR(dz));
   }
   free(partCfgMD);
   if (mindist < 30000.0)
@@ -112,7 +114,7 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
   int i;
 
   if (n_add == 0)
-    return (dmin(dmin(box_l[0], box_l[1]), box_l[2]));
+    return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
   for (i = 0; i < n_add; i++) {
     dx = pos[0] - add[3 * i + 0];
     dx -= dround(dx / box_l[0]) * box_l[0];
@@ -120,7 +122,7 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
     dy -= dround(dy / box_l[1]) * box_l[1];
     dz = pos[2] - add[3 * i + 2];
     dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = dmin(mindist, SQR(dx) + SQR(dy) + SQR(dz));
+    mindist = std::min(mindist, SQR(dx) + SQR(dy) + SQR(dz));
   }
   if (mindist < 30000.0)
     return (sqrt(mindist));
@@ -151,7 +153,11 @@ int constraint_collision(double *p1, double *p2) {
   fold_position(folded_pos2, img);
 
   for (auto &c : Constraints::constraints) {
-    ;
+    c->calc_dist(folded_pos1, &d1, v);
+    c->calc_dist(folded_pos2, &d2, v);
+
+    if (d1 * d2 < 0.0)
+      return 1;
   }
   return 0;
 }
@@ -210,10 +216,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[0] = pos[0];
       poly[1] = pos[1];
       poly[2] = pos[2];
-      max_cnt = imax(cnt1, max_cnt);
+
+      max_cnt = std::max(cnt1, max_cnt);
       POLY_TRACE(printf("S"); fflush(NULL));
-      // POLY_TRACE(/* printf("placed Monomer 0 at
-      // (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
 
       poz[0] = pos[0];
       poz[1] = pos[1];
@@ -277,10 +282,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[3 * n] = pos[0];
       poly[3 * n + 1] = pos[1];
       poly[3 * n + 2] = pos[2];
-      max_cnt = imax(cnt1, max_cnt);
+
+      max_cnt = std::max(cnt1, max_cnt);
       POLY_TRACE(printf("M"); fflush(NULL));
-      // POLY_TRACE(/* printf("placed Monomer 1 at
-      // (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
 
       /* place remaining monomers */
       for (n = 2; n < MPC; n++) {
@@ -389,7 +393,9 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
         poly[3 * n] = pos[0];
         poly[3 * n + 1] = pos[1];
         poly[3 * n + 2] = pos[2];
-        max_cnt = imax(cnt1, max_cnt);
+
+        max_cnt = std::max(cnt1, max_cnt);
+
         POLY_TRACE(printf("M"); fflush(NULL));
       }
       if (n > 0)
@@ -400,7 +406,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       free(poly);
       return (-2);
     } else
-      max_cnt = imax(max_cnt, imax(cnt1, cnt2));
+
+      max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
 
     /* actually creating current polymer in ESPResSo */
     for (n = 0; n < MPC; n++) {
@@ -435,7 +442,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
     }
   }
   free(poly);
-  return (imax(max_cnt, cnt2));
+
+  return (std::max(max_cnt, cnt2));
 }
 
 int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
@@ -462,13 +470,15 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
     if (set_particle_type(part_id, type_CI) == ES_ERROR)
       return (-3);
     part_id++;
-    max_cnt = imax(cnt1, max_cnt);
+    max_cnt = std::max(cnt1, max_cnt);
+
     POLY_TRACE(printf("C"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
     return (-1);
-  return (imax(max_cnt, cnt1));
+
+  return (std::max(max_cnt, cnt1));
 }
 
 int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
@@ -510,7 +520,8 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
     if (set_particle_type(part_id, type_pS) == ES_ERROR)
       return (-3);
     part_id++;
-    max_cnt = imax(cnt1, max_cnt);
+
+    max_cnt = std::max(cnt1, max_cnt);
     POLY_TRACE(printf("P"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
@@ -549,13 +560,16 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
     if (set_particle_type(part_id, type_nS) == ES_ERROR)
       return (-3);
     part_id++;
-    max_cnt = imax(cnt1, max_cnt);
+
+    max_cnt = std::max(cnt1, max_cnt);
+
     POLY_TRACE(printf("N"); fflush(NULL));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
   if (cnt1 >= max_try)
     return (-2);
-  return (imax(max_cnt, cnt1));
+
+  return (std::max(max_cnt, cnt1));
 }
 
 double velocitiesC(double v_max, int part_id, int N_T) {
@@ -956,13 +970,13 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
   double pos[3], off = bond_length / sqrt(3);
   double dnodes[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
                          {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
-  int dchain[16]
-            [5] = {{0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
-                   {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
-                   {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
-                   {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
-                   {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
-                   {7, 3, +1, +1, -1}};
+  int dchain[16][5] = {
+      {0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
+      {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
+      {4, 7, +1, +1, +1}, {5, 0, +1, +1, -1}, {5, 3, +1, -1, +1},
+      {5, 4, -1, +1, +1}, {6, 0, -1, +1, +1}, {6, 2, +1, -1, +1},
+      {6, 4, +1, +1, -1}, {7, 0, +1, -1, +1}, {7, 2, -1, +1, +1},
+      {7, 3, +1, +1, -1}};
 
   part_id = 0;
   /* place 8 tetra-functional nodes */

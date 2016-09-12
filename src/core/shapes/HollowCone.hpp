@@ -37,19 +37,19 @@ public:
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
-  double const &posistion_x() const { return m_position_x; }
-  double const &posistion_y() const { return m_position_y; }
-  double const &posistion_z() const { return m_position_z; }
+  double &position_x() { return m_position_x; }
+  double &position_y() { return m_position_y; }
+  double &position_z() { return m_position_z; }
 
-  double const &orientation_x() const { return m_orientation_x; }
-  double const &orientation_y() const { return m_orientation_y; }
-  double const &orientation_z() const { return m_orientation_z; }
+  double &orientation_x() { return m_orientation_x; }
+  double &orientation_y() { return m_orientation_y; }
+  double &orientation_z() { return m_orientation_z; }
 
-  double const &outer_radius() const { return m_outer_radius; }
-  double const &inner_radius() const { return m_inner_radius; }
-  double const &width() const { return m_width; }
-  double const &opening_angle() const { return m_opening_angle; }
-  double const &direction() const { return m_direction; }
+  double &outer_radius() { return m_outer_radius; }
+  double &inner_radius() { return m_inner_radius; }
+  double &width() { return m_width; }
+  double &opening_angle() { return m_opening_angle; }
+  double &direction() { return m_direction; }
 
 private:
   /** Hollow cone position. */

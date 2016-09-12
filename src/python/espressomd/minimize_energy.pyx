@@ -18,7 +18,8 @@
 #
 # Minimize Energy
 
-cimport minimize_energy
+from __future__ import print_function, absolute_import
+from . cimport minimize_energy
 
 cdef class MinimizeEnergy(object):
     cdef object _params

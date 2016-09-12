@@ -72,6 +72,25 @@ make
 Espresso
 \end{code}
 Afterwards Espresso can be run via calling Espresso from the command line.
+\subsection{ccmake}
+Optionally and for easier use the curses interface to cmake can be used to configure ESPResSo interactively. 
+\paragraph{Example}
+Alternatively to the previous example instead of \codebox{cmake}, the \codebox{ccmake} executable is called in the build direcotry to configure ESPResSo previous to its compilation followed by a call of make:
+\begin{code}
+cd build
+ccmake srcdir
+make
+Espresso
+\end{code}
+Fig.~\ref{fig:ccmake} shows the interactive ccmake UI.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/ccmake-example.png}
+  \caption{ccmake interface}
+  \label{fig:ccmake}
+\end{figure}
+
+
 \subsection{Options and Variables}
 The behaviour of \codebox{cmake} can be
 controlled by the means of options and variables in the CMakeLists.txt file. Also options are defined there.
@@ -80,6 +99,7 @@ The following options are available:
 	\item WITH_PYTHON: Build python interface
 	\item WITH_TCL: Build tcl interface
 	\item WITH_CUDA: Build with GPU support
+        \item WITH_HDF5: Build with HDF5
 	\item WITH_TESTS: Enable tests
 	\item WITH_SCAFACOS: Build with Scafacos support
 	\item WITH_VALGRIND_INSTRUMENTATION: Build with valgrind instrumentation markers

@@ -35,11 +35,11 @@ public:
                      double *vec) const override;
 
 
-  Vector3d const &pos() const { return m_pos; } 
-  Vector3d const &a() const { return m_a; } 
-  Vector3d const &b() const { return m_b; } 
-  Vector3d const &c() const { return m_c; } 
-  double const &direction() const { return m_direction; }
+  Vector3d  &pos()  { return m_pos; } 
+  Vector3d  &a()  { return m_a; } 
+  Vector3d  &b()  { return m_b; } 
+  Vector3d  &c()  { return m_c; } 
+  double  &direction()  { return m_direction; }
   
 private:
   /** corner of the rhomboid */

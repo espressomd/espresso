@@ -38,20 +38,25 @@ ParameterMap HollowCone::valid_parameters() const {
           {"inner_radius", {ParameterType::DOUBLE, true}},
           {"width", {ParameterType::DOUBLE, true}},
           {"opening_angle", {ParameterType::DOUBLE, true}},
-          {"direction", {ParameterType::DOUBLE, true}}}
+          {"direction", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap HollowCone::get_parameters() const {
-  return {{"position_x", m_hollowcone->position_x()}, {"position_y", m_hollowcone->position_y()}, 
-          {"position_z", m_hollowcone->position_z()}, {"orientation_x", m_hollowcone->orientation_x()}, 
-          {"orientation_y", m_hollowcone->orientation_y()}, {"orientation_z", m_hollowcone->orientation_z()}, 
-          {"outer_radius", m_hollowcone->outer_radius()}, {"inner_radius", m_hollowcone->inner_radius()}, 
-          {"width", m_hollowcone->width()}, {"opening_angle", m_hollowcone->opening_angle()}, 
+  return {{"position_x", m_hollowcone->position_x()},
+          {"position_y", m_hollowcone->position_y()},
+          {"position_z", m_hollowcone->position_z()},
+          {"orientation_x", m_hollowcone->orientation_x()},
+          {"orientation_y", m_hollowcone->orientation_y()},
+          {"orientation_z", m_hollowcone->orientation_z()},
+          {"outer_radius", m_hollowcone->outer_radius()},
+          {"inner_radius", m_hollowcone->inner_radius()},
+          {"width", m_hollowcone->width()},
+          {"opening_angle", m_hollowcone->opening_angle()},
           {"direction", m_hollowcone->direction()}};
 }
 
 void HollowCone::set_parameter(const string &name,
-                         const ScriptInterface::Variant &value) {
+                               const ScriptInterface::Variant &value) {
 
   SET_PARAMETER_HELPER("position_x", m_hollowcone->position_x());
   SET_PARAMETER_HELPER("position_y", m_hollowcone->position_y());
