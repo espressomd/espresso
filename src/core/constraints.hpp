@@ -18,12 +18,11 @@ extern Constraints<std::vector<std::shared_ptr<Constraint>>> constraints;
 }
 
 inline void add_constraints_forces(Particle *p) {
-  double folded_position[3];
   int image[3];
 
-  fold_position(p->r.p, folded_position, image);
+  fold_position(p->r.p, image);
   for (auto const &c : Constraints::constraints) {
-    c->add_force(p, folded_position);
+    c->add_force(p, p->r.p);
   }
 }
 
@@ -32,12 +31,11 @@ inline void init_constraint_forces() {
 }
 
 inline void add_constraints_energy(Particle *p) {
-  double folded_position[3];
   int image[3];
 
-  fold_position(p->r.p, folded_position, image);
+  fold_position(p->r.p, image);
   for (auto const &c : Constraints::constraints) {
-    c->add_energy(p, folded_position, energy);
+    c->add_energy(p, p->r.p, energy);
   }
 }
 
