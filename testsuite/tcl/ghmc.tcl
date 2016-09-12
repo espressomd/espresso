@@ -74,13 +74,6 @@ if { [catch {
     	part $i pos [expr [t_random]*$box_l] [expr [t_random]*$box_l] [expr [t_random]*$box_l]
     }
 
-    # make real random draw
-    set cmd "t_random seed"
-    for {set i 0} {$i < [setmd n_nodes]} { incr i } {
-	lappend cmd [expr [pid] + $i] }
-    eval $cmd
-
-
     thermostat ghmc 1.0 10 0.0
     setmd time_step 0.01
     setmd skin 0.5
