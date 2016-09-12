@@ -31,6 +31,7 @@ setmd time_step 0.01
 set time_step_v 0.01
 thermostat langevin 0 1 
 set J "10 10 10"
+
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
 # In case of an anisotropic body and after a correct nonzero values 
 # definition (in the source code, "rotation.cpp") of the nonlinear 
@@ -88,7 +89,11 @@ set box 10
 setmd box_l $box $box $box
 set kT 1.5
 set halfkT 0.75
-thermostat langevin $kT 1
+set gamma_rot_1 [expr [t_random] * 20]
+set gamma_rot_2 [expr [t_random] * 20]
+set gamma_rot_3 [expr [t_random] * 20]
+#thermostat langevin $kT 1
+thermostat langevin $kT 1 $gamma_rot_1 $gamma_rot_2 $gamma_rot_3
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0
@@ -99,13 +104,13 @@ if {$si_flag} {
 }
 
 set n 100
-set mass [expr rand() *20]
-set j1 [expr rand() * 20]
-set j2 [expr rand() * 20]
-set j3 [expr rand() * 20]
+set mass [expr [t_random] *20]
+set j1 [expr [t_random] * 20]
+set j2 [expr [t_random] * 20]
+set j3 [expr [t_random] * 20]
 
 for {set i 0} {$i<$n} {incr i} {
-  part $i pos [expr rand() *$box] [expr rand() * $box] [expr rand() * $box] rinertia $j1 $j2 $j3 mass $mass
+  part $i pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
 }
 
 set vx2 0.

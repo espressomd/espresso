@@ -25,10 +25,14 @@
  *  for a particle pair.
  *  \ref forces.cpp
 */
-#include "utils.hpp"
-#include "interaction_data.hpp"
+
+#include "config.hpp"
 
 #ifdef LENNARD_JONES
+
+#include "debug.hpp"
+#include "utils.hpp"
+#include "interaction_data.hpp"
 
 /// set the parameters for the subtract LJ potential
 int subt_lj_set_params(int bond_type, double k, double r);

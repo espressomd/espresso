@@ -17,10 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import interactions
 import numpy
 
@@ -29,16 +28,12 @@ import numpy
 
 system = espressomd.System()
 
-
-system.seed=numpy.random.randint(low=1,high=2**31-1,size=system.n_nodes)
 #if no seed is provided espresso generates a seed
-print system.seed
-
 
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
-system.thermostat.set_langevin(1.0, 1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -48,10 +43,8 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-for i in range(50):
-    system.part.add(id=i, pos=[i, 0, 0])
-    if i > 0:
-        system.part[i].add_bond((fene, i - 1))
+poly = system.polymer
+poly(N_P = 1, bond_length = 1.0, MPC=50, bond_id=0)
 
 
 #############################################################
@@ -59,7 +52,7 @@ for i in range(50):
 #############################################################
 
 for i in range(20):
-    integrate.integrate(1000)
+    system.integrator.run(1000)
 
-    energies = analyze.energy(system=system)
-    print energies
+    energies = system.analysis.energy()
+    print(energies)

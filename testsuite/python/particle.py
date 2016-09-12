@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -76,7 +77,6 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.es.part[self.pid], propName, value)
-            print(propName, value, getattr(self.es.part[self.pid], propName))
             self.assertTrue(self.arraysNearlyEqual(getattr(self.es.part[
                             self.pid], propName), value), propName + ": value set and value gotten back differ.")
 
@@ -97,7 +97,6 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.es.part[self.pid], propName, value)
-            print(propName, value, getattr(self.es.part[self.pid], propName))
             self.assertTrue(getattr(self.es.part[
                             self.pid], propName) == value, propName + ": value set and value gotten back differ.")
 
@@ -108,7 +107,6 @@ class ParticleProperties(ut.TestCase):
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
 
-    print f1, f2
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
 
@@ -122,9 +120,15 @@ class ParticleProperties(ut.TestCase):
             "omega_body", np.array([4., 72., 1.]))
         test_torque_lab = generateTestForVectorProperty(
             "torque_lab", np.array([4., 72., 3.7]))
-        # The tested value has to be nromalized!
+        # The tested value has to be normalized!
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
+        if "LANGEVIN_PER_PARTICLE" in espressomd.features():
+            if "ROTATIONAL_INERTIA" in espressomd.features():
+                test_gamma_rot = generateTestForVectorProperty(
+                    "gamma_rot", np.array([5., 10., 0.33]))
+            else:
+                test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
     if "ELECTROSTATICS" in espressomd.features():
@@ -138,10 +142,15 @@ class ParticleProperties(ut.TestCase):
     if "VIRTUAL_SITES" in espressomd.features():
         test_virtual = generateTestForScalarProperty("virtual", 1)
     if "VIRTUAL_SITES_RELATIVE" in espressomd.features():
-        test_zz_vs_relative = generateTestForScalarProperty(
-            "vs_relative", ((0, 5.0)))
+        def test_zz_vs_relative(self):
+            self.es.part.add(id=0, pos=(0, 0, 0))
+            self.es.part.add(id=1, pos=(0, 0, 0))
+            self.es.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
+            res = self.es.part[1].vs_relative
+            self.assertTrue(res[0] == 0 and res[1] == 5.0 and
+                            self.arraysNearlyEqual(res[2], np.array((0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
+    #print("Features: ", espressomd.features())
     ut.main()

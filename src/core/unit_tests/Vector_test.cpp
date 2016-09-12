@@ -24,7 +24,8 @@
 */
 
 #define BOOST_TEST_MODULE Vector test
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include <algorithm>
 
@@ -37,7 +38,6 @@ const int test_numbers[] = TEST_NUMBERS;
 const int test_numbers_partial_norm2[] = TEST_NUMBERS_PARTIAL_NORM2;
 const int n_test_numbers = sizeof(test_numbers) / sizeof(int);
 
-#ifdef HAVE_CXX11
 template <int n>
 bool il_constructor() {
   bool pass = true;
@@ -50,7 +50,6 @@ bool il_constructor() {
     
   return pass;
 }
-#endif
 
 template<int n>
 bool default_constructor() {

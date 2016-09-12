@@ -99,9 +99,9 @@ enum BondedInteraction{
 /** Specify tabulated bonded interactions  */
 enum TabulatedBondedInteraction{
     TAB_UNKNOWN = 0,
-    TAB_BOND_LENGTH,
-    TAB_BOND_ANGLE,
-    TAB_BOND_DIHEDRAL
+    TAB_BOND_LENGTH = 1,
+    TAB_BOND_ANGLE = 2,
+    TAB_BOND_DIHEDRAL = 3
 };
 
 /** Specify overlapped bonded interactions  */
@@ -204,8 +204,6 @@ enum ConstraintApplied{
 /** External magnetic field constraint applied */
     CONSTRAINT_EXT_MAGN_FIELD,
 //end ER
-/** Constraint for tunable-lsip boundary conditions */
-    CONSTRAINT_PLANE,
 /** Constraint for tunable-lsip boundary conditions */
     CONSTRAINT_RHOMBOID,
 /** Constraint for a stomatocyte boundary */
@@ -1131,12 +1129,6 @@ typedef struct{
 } Constraint_ext_magn_field;
 //end ER
 
-/** Parameters for a plane constraint which is needed for tunable-slip boundary conditions. */
-typedef struct {
-  /** Position of the plain. Negative values mean non-existing in that direction. */
-  double pos[3];
-} Constraint_plane;
-
 typedef struct {
   double omega;
   double Prefactor;
@@ -1164,7 +1156,6 @@ typedef struct {
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
-    Constraint_plane plane;
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,

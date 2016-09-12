@@ -48,12 +48,14 @@
  * - Take a look at the bond input code. It's easy to understand.
  */
 
+#include "config.hpp"
+
 #include <string>
 #include <vector>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "config.hpp"
+#include <cstring>
 #include "initialize.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
@@ -61,7 +63,6 @@
 #include "cells.hpp"
 #include "utils.hpp"
 #include "mpiio.hpp"
-#include "../tcl/mpiio_tcl.hpp"
 
 #include <mpi.h>
 

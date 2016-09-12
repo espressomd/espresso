@@ -11,6 +11,7 @@ aclocal.m4
 autom4te.cache
 .deps/
 myconfig.h
+myconfig.hpp
 build/
 CMakeFiles
 
@@ -24,6 +25,7 @@ myconfig-sample.h
 testsuite/runtest.sh
 tools/es_mpiexec
 config/ltmain.sh
+src/python/espressomd/code_info.pyx
 
 # object files and executable
 *.o

@@ -105,6 +105,7 @@ Prints information about whole framework, \eg all global variables, currently av
   nodes-file  \var{nodes.dat}
   triangles-file  \var{triangles.dat}
   \opt{stretch \var{x} \var{y} \var{z}}
+  \opt{mirror \var{x} \var{y} \var{z}}
   \opt{ks \var{ks\_value}}
   \opt{kslin \var{kslin\_value}}
   \opt{kb \var{kb\_value}} 
@@ -128,6 +129,7 @@ This command creates a template that will be used for all objects that share the
 \item[\var{nodes.dat}] input file, each line contains three real numbers. These are the $x, y, z$ coordinates of individual surface mesh nodes of the objects.
 \item[\var{triangles.dat}] input file, each line contains three integers. These are the ID numbers of the mesh nodes as they appear in \var{nodes.dat}. Note, the first node has ID 0.
 \item[\opt{stretch \var{x} \var{y} \var{z}}] coefficients by which the coordinates stored in \var{nodes.dat} will be stretched in the $x, y, z$ direction. The default values are 1.0 1.0 1.0.
+\item[\opt{mirror \var{x} \var{y} \var{z}}] whether the respective coordinate will be flipped around 0. Coefficients \(x, y, z\) must be either 0 or 1.  The reflection of only one coordinate is allowed so at most one number is 1, others are 0. For example \verb|mirror| \textit{0 1 0} results in flipping the spatial point $(x,y,z)$ to $(x,-y,z)$. The default value is 0 0 0.\\
 \item[\opt{ks \var{ks\_value}}] elastic modulus for hyperelastic stretching forces
 \item[\opt{kslin \var{kslin\_value}}] elastic modulus for linear stretching forces
 \item[\opt{kb \var{kb\_value}}] elastic modulus for bending forces
@@ -139,8 +141,8 @@ This command creates a template that will be used for all objects that share the
 
 The four switches \verb|ks|, \verb|kslin|, \verb|kb| and \verb|kal| set elastic parameters for local interactions - \verb|ks| for hyperelastic edge stiffness, \verb|kslin| for linear edge stiffness, \verb|kb| for angle preservation stiffness and \verb|kal| for triangle surface preservation stiffness. This stiffness can be either uniform over the whole object, or non-uniform. In case of stretching modulus, we can have spring stiffness the same for all edges in the whole object, or we can choose the value for every edge of the object separately. Analogically, for \verb|kslin|, for \verb|kal| and \verb|kb|. Therefore, there are two options for setting \verb|ks|, \verb|kslin|, \verb|kal| and \verb|kb| stiffness. Here is the explanation for \verb|ks|:
 \begin{itemize}
-\item {\bf Uniform stiffness:} To set uniform hyperelastic stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
-\item {\bf Non-uniform stiffness:} To set non-uniform hyperelastic stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
+\item \textbf{Uniform stiffness:} To set uniform hyperelastic stiffness for all edges in the object, use \verb|ks| \var{ks\_value}
+\item \textbf{Non-uniform stiffness:} To set non-uniform hyperelastic stiffness, prepare a file \var{filename} with number of lines equal to the number of edges of the triangulation. Each line should contain a real number between 0 and 1, so called "weight". Then call
 \verb|ks| \var{filename} \var{ksMin} \var{ksMax}
 This command reads the weights $weight_i$ for each edge and the stiffness for that edge is set to 
 $$
@@ -178,7 +180,7 @@ Using a previously defined template \var{tid}, this command creates a new object
 \item[origin \var{x} \var{y} \var{z}] center of the object will be at this point.
 \item[part-type \var{type}] can be any integer starting at 0. All particles of one object have the same \verb|part-type|. One can have more objects with the same type of particles, but this is not recommended, because the interactions between objects are set up using these types.
 \item[\opt{rotate \var{x} \var{y} \var{z}}] angles in radians, by which the object is initially rotated around the $x, y, z$ axis. Default values are 0.0 0.0 0.0.
-\item[\opt{mass \var{m}}] mass of one particle. Default value is 1.0
+\item[\opt{mass \var{m}}] this parameter refers to the mass of one particle (one mesh point of the triangulation). For the proper setting, the mass of the  whole membrane must be distributed to all mesh points. Default value is 1.0.
 \end{arguments}
 
 \subsection{\label{ssec:oif-mesh-analyze}Mesh analysis}
@@ -238,6 +240,7 @@ This option is useful for simulating periodical processes when objects flowing o
   \opt{origin}
   \opt{pos-bounds \var{bname}}
   \opt{approx-pos}
+  \opt{edge-statistics}
   \opt{volume}
   \opt{surface-area}
   \opt{velocity}
@@ -259,6 +262,7 @@ This command is used to output information about the properties of the object. S
 \item[\opt{origin}] - outputs the location of the center of the object
 \item[\opt{pos-bounds \var{bname}}] computes six extremal coordinates of the object. More precisely, runs through the all mesh points and remembers the minimal and maximal $x$-coordinate, $y$-coordinate and $z$-coordinate. If \var{bname} is one of these: \textit{z-min, z-max, x-min, x-max, y-min, y-max} then the procedure returns one number according to the value of \var{bname}. If \var{bname} is \var{all}, then the procedure returns a list of six numbers, namely \textit{x-min, x-max, y-min, y-max, z-min, z-max}.
 \item[\opt{approx-pos}] - outputs the approximate location of the center of the object. It is computed as average of 6 mesh points that have extremal $x$, $y$ and $z$ coordinates at the time of object loading.
+\item[\opt{edge-statistics}] - outputs the minimum, average and maximum edge length of the object and corresponding standard deviation 
 \item[\opt{volume}] - outputs the current volume of the object
 \item[\opt{surface-area}] - outputs the current surface of the object
 \item[\opt{velocity}] - outputs the current average velocity of the object. Runs over all mesh points and calculates their average velocity.

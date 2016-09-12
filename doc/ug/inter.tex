@@ -87,6 +87,18 @@ faster. See the subsection~\ref{sec:forcecap} for details.
     \required{TABULATED}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
+  \object{
+    espressomd.non_bonded_inter[\var{type1},\var{type2}]
+  }{
+    tabulated
+  }{
+    filename=\arg{filename}
+  }
+\end{pysyntax}
 
 This defines an interaction between particles of the types \var{type1} and
 \var{type2} according to an arbitrary tabulated pair potential. \var{filename}
@@ -95,11 +107,11 @@ of the separation distance. The tabulated potential allows capping the force
 using \lit{inter forcecap}, see section~\ref{sec:forcecap}.
 
 At present the required file format is simply an ordered list separated by
-whitespace. The data reader first looks for a {\tt \#} character and begins
-reading from that point in the file. Anything before the {\tt \#} will be
+whitespace. The data reader first looks for a \texttt{\#} character and begins
+reading from that point in the file. Anything before the \texttt{\#} will be
 ignored.
 
-The first three parameters after the {\tt \#} specify the number of data points
+The first three parameters after the \texttt{\#} specify the number of data points
 $N_\mathrm{points}$ and the minimal and maximal tabulated separation distances
 $r_\mathrm{min}$ and $r_\mathrm{max}$. The number of data points obviously should
 be an integer, the two other can be arbitrary positive doubles. Take care when
@@ -814,10 +826,10 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   }{
     HarmonicBond
   }{
-    r_0=\arg{double},
-    k=\arg{double}
+    r_0 = \arg{float},
+    k = \arg{float}
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -831,8 +843,8 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   }{
     FeneBond
   }{
-    k=\arg{double},
-    d_r_max=\arg{double}
+    k = \arg{float},
+    d_r_max = \arg{float}
   }[
   ]
 \end{pysyntax}
@@ -843,15 +855,15 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
 \begin{pysyntax}
- \object{
-	 espressomd.System().bondedInter.add(FeneBond)
+  \object{
+    espressomd.System().bondedInter.add(FeneBond)
   }{
     setParams
   }{
-    k=\arg{double},
-    drmax=\arg{double},
+    k = \arg{float},
+    drmax = \arg{float},
   }[
-    r_0=\arg{double=0.}
+    r_0 = \arg{float=0.}
   ]
 \end{pysyntax}
 
@@ -877,10 +889,10 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
   }{
     HarmonicBond
   }{
-    k=\arg{double},
-    r_0=\arg{double},
+    k = \arg{float},
+    r_0 = \arg{float},
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -910,11 +922,11 @@ background error will be raised.
   }{
     HarmonicDumbbellBond
   }{
-    k1=\arg{double},
-    k2=\arg{double},
-    r_0=\arg{double},
+    k1 = \arg{float},
+    k2 = \arg{float},
+    r_0 = \arg{float},
   }[
-    r_cut=\arg{double}
+    r_cut = \arg{float}
   ]
 \end{pysyntax}
 
@@ -1003,14 +1015,16 @@ general tabulated potentials.
 \label{sec:rattle}
 
 \begin{pysyntax}
-\object{espressomd.interactions}{
-	RigidBond
-}{
-	r=\arg{double},
-}[
-	ptol=\arg{double},
-	vtol=\arg{double}
-]
+  \object{
+    espressomd.interactions
+  }{
+    RigidBond
+  }{
+    r = \arg{float},
+  }[
+    ptol = \arg{float},
+    vtol = \arg{float}
+  ]
 \end{pysyntax}
 
 \begin{essyntax}
@@ -1032,6 +1046,7 @@ In the python implementation the constrained bond distance is named r, the posit
 \index{tabulated bond interactions|mainindex}
 \index{interactions!tabulated bond|mainindex}
 
+\subsubsection{Tcl}
 \begin{essyntax}
     \variant{1} inter \var{bondid}
     tabulated bond \var{filename}
@@ -1040,7 +1055,6 @@ In the python implementation the constrained bond distance is named r, the posit
     \variant{3} inter \var{bondid}
     tabulated dihedral \var{filename}
 \end{essyntax}
-
 This creates a bond type with identificator \var{bondid} with a
 two-body bond length (variant \variant{1}), three-body angle (variant
 \variant{2}) or four-body dihedral (variant \variant{3}) tabulated
@@ -1048,14 +1062,34 @@ potential. The tabulated forces and energies have to be provided in a
 file \var{filename}, which is formatted identically as the files for
 non-bonded tabulated potentials (see section \ref{sec:tabnonbonded}).
 
+
+\subsubsection{Python}
+\begin{pysyntax}
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
+  \object{
+    espressomd.interactions
+  }{
+    Tabulated
+  }{
+    type=\arg{str},
+    filename=\arg{filename}
+  }
+\end{pysyntax}
+
+The bonded interaction can be based on a distance, a bond angle or a dihedral angle. This is determined by the \texttt{type} argument, which can be one of \texttt{distance}, \texttt{angle} or \texttt{dihedral}. The data is read from th file given by the \texttt{filename} argument.
+
+\subsubsection{Calculation of the force and energy}
+
 The potential is calculated as follows:
 \begin{itemize}
-\item Variant~\variant{1} is a two body interaction depending on the distance of
+\item Tcl: Variant~\variant{1}, Python: \texttt{type="distance"} is a two body interaction depending on the distance of
   two particles. The force acts in the direction of the connecting vector
   between the particles. The bond breaks above the tabulated range, but for
   distances smaller than the tabulated range, a linear extrapolation based on
   the first two tabulated force values is used.
-\item Variant~\variant{2} is a three-body angle interaction similar to the
+\item Tcl: Variant~\variant{2}, Python: \texttt{type="angle"} is a three-body angle interaction similar to the
   \texttt{angle} potential (see section~\ref{sec:angle}).  It is assumed that
   the potential is tabulated for all angles between 0 and $ \pi $, where 0
   corresponds to a stretched polymer, and just as for the tabulated pair
@@ -1065,7 +1099,7 @@ The potential is calculated as follows:
   the particle and the center particle $p_2$ in the plane defined by the three
   particles. The force on the center particle $p_2$ balances the other two
   forces.
-\item Variant~\variant{3} tabulates a torsional dihedral angle potential (see
+\item Tcl: Variant~\variant{3}, Python: \texttt{type="dihedral"} tabulates a torsional dihedral angle potential (see
   section~\ref{sec:dihedral}). It is assumed that the potential is tabulated for
   all angles between 0 and $2\pi$. \em{This potential is not tested yet! Use on
     own risk, and please report your findings and eventually necessary fixes.}
@@ -1322,9 +1356,9 @@ explained in the section on volume in oif\_global\_forces interaction).
   }{
     Angle_Cosine
   }{
-    K=\arg{double}
+    K = \arg{float}
   }[
-    phi_0=\arg{double}
+    phi_0 = \arg{float}
   ]
 \end{pysyntax}
 
@@ -1500,62 +1534,34 @@ requires assigning charges to the particles.  This is done using the
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
-\begin{pysyntax}
+\begin{pysyntax}[P3M]
 	\object{
 		electrostatics
-	}{ P3M 
-	}{ 
-		bjerrum\textunderscore length=\arg{double},
-		accuracy=\arg{double}
+	}{
+		P3M|P3M_GPU
+	}{
+		bjerrum_length = \arg{float},
+		accuracy = \arg{float}
 	}[
 	]
-	\leavevmode \\
 	\object{
 		electrostatics
-	}{ P3M 
 	}{
-		bjerrum\textunderscore length=\arg{double}
-		r\textunderscore cut=\arg{double},
-		mesh=[\arg{int}, \arg{int}, \arg{int}],
-		cao=\arg{int},
-		alpha=\arg{double},
-		alpha=\arg{double},
-		epsilon=metallic | \arg{double},
-		inter=\arg{int},
-		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
-	}
-	\begin{features}
-		\required{ELECTROSTATICS}
-	\end{features}
-\end{pysyntax}
-
-\begin{pysyntax}
-	\object{
-		electrostatics
-	}{ P3M\textunderscore GPU
-	}{ 
-		bjerrum\textunderscore length=\arg{double},
-		accuracy=\arg{double}
+		P3M|P3M_GPU
+	}{
+		bjerrum_length = \arg{float},
+		r_cut = \arg{float},
+		mesh = \arg{array of 3 ints},
+		cao = \arg{int},
+		alpha = \arg{float},
+		alpha = \arg{float},
+		epsilon = metallic | \arg{float},
+		inter = \arg{int}
 	}[
-	]
-	\leavevmode \\
-	\object{
-		electrostatics
-	}{ P3M\textunderscore GPU
-	}{
-		bjerrum\textunderscore length=\arg{double}
-		r\textunderscore cut=\arg{double},
-		mesh=[\arg{int}, \arg{int}, \arg{int}],
-		cao=\arg{int},
-		alpha=\arg{double},
-		alpha=\arg{double},
-		epsilon=metallic | \arg{double},
-		inter=\arg{int},
-		[mesh\textunderscore off=[\arg{double}, \arg{double}, \arg{double}]],
-	}
+		mesh_off = \arg{array of 3 floats}
+        ]
 	\begin{features}
 		\required{ELECTROSTATICS}
-		\required{CUDA}
 	\end{features}
 \end{pysyntax}
 
@@ -1572,7 +1578,7 @@ installed on your system. In \es{}, you can check if it is compiled in
 by checking for the feature \texttt{FFTW}.
 
 This command activates the P3M method to compute the electrostatic
-interactions between charged particles.  The different parameters are
+interactions between charged particles. P3M requires full periodicity (1 1 1).  The different parameters are
 described in more detail in \cite{deserno98a}.
 \begin{description}
 \item[\var{[gpu]}]
@@ -1597,17 +1603,6 @@ using P3M! If you are not sure, read the following references
 
 \subsubsection{Tuning Coulomb P3M}
 \label{ssec:tunep3m}
-\begin{essyntax}
-  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
-  accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_\mathrm{cut}}}
-  \opt{mesh \var{mesh}}
-  \opt{cao \var{cao}}
-  \opt{alpha \var{\alpha}}
-  \begin{features}
-    \required{ELECTROSTATICS}
-  \end{features}
-\end{essyntax}
 
 It is not easy to calculate the various parameters of the P3M method
 such that the method provides the desired accuracy at maximum speed.
@@ -1621,6 +1616,13 @@ symmetric systems. For example, because of the nature of the P3M
 algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
 
+During execution the tuning routines report the tested parameter sets,
+the corresponding k-space and real-space errors and the timings needed
+for force calculations (the setmd variable \var{timings} controls the
+number of test force calculations).  Since the error depends on
+\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
+output is given in these units.
+
 The function employs the analytical expression of the error estimate
 for the P3M method \cite{hockney88} and its real space error
 \cite{kolafa92} to obtain sets of parameters that yield the desired
@@ -1628,10 +1630,24 @@ accuracy, then it measures how long it takes to compute the coulomb
 interaction using these parameter sets and chooses the set with the
 shortest run time.
 
+\subsubsection{Tuning with the TCL interface}
+\label{ssec:tunep3mTCL}
+
+\begin{essyntax}
+  inter coulomb \var{l_B} p3m [gpu] \alt{tune \asep tunev2}
+  accuracy \var{accuracy}\\
+  \opt{r_cut \var{r_\mathrm{cut}}}
+  \opt{mesh \var{mesh}}
+  \opt{cao \var{cao}}
+  \opt{alpha \var{\alpha}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
 The function will only automatically tune those parameters that are
 not set to a predetermined value using the optional parameters of the
 tuning command.
-
 The two tuning methods follow different methods for determining the
 optimal parameters. While the \keyword{tune} version tests different
 values on a grid in the parameter space, the \keyword{tunev2} version
@@ -1641,20 +1657,37 @@ systems \keyword{tunev2} is faster. The results of \keyword{tunev2}
 are always at least as good as the parameters from the \keyword{tune}
 version, and normally the obtained accuracy is much closer to the
 desired value.
-
-During execution the tuning routines report the tested parameter sets,
-the corresponding k-space and real-space errors and the timings needed
-for force calculations (the setmd variable \var{timings} controls the
-number of test force calculations).  Since the error depends on
-\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
-output is given in these units.
-
 Note that the previous setting of \var{r_\mathrm{cut}}, \var{cao} and
 \var{mesh} will be remembered.  If you want to retune your
 electrostatics, \eg after a major system change, you should use
 \begin{code}
   inter coulomb \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
+
+\subsubsection{Tuning with the Python Interface}
+\label{ssec:tunep3mPY}
+
+\begin{pysyntax}
+	\object{
+		electrostatics.P3M
+	}{
+		Tune
+    }{
+    }[
+        \arg{dict}
+    ]
+
+	\begin{features}
+		\required{ELECTROSTATICS}
+		\required{CUDA}
+	\end{features}
+\end{pysyntax}
+
+\keyword{Tune()} can be given a python dictionary that specifies the target parameters for 
+the tuning algorithm. If it doesn't contain \keyword{bjerrum_length} or
+\keyword{accuracy}, the previous values are used respectively. Other parameters are 
+retuned if not specified explicitly. Valid keys for the dictionary are given 
+in \pyref{P3M}.
 
 \subsubsection{Additional P3M parameters}
 
@@ -1692,12 +1725,13 @@ have the following meaning:
 	}{
 		EwaldGpu
 	}{
-		bjerrum\textunderscore length=\arg{double},
-		accuracy=\arg{double},
-		precision=\arg{double},
-		K\textunderscore max=\arg{int} | [\arg{int}, \arg{int}, \arg{int}],
-		[alpha=\arg{double}],
-	}
+		bjerrum_length = \arg{float},
+		accuracy = \arg{float},
+		precision = \arg{float},
+		K_max = \arg{int} | \arg{array of 3 ints},
+	}[
+		alpha = \arg{float}
+	]
 	\begin{features}
 		\required{ELECTROSTATICS}
 		\required{CUDA}
@@ -1762,28 +1796,34 @@ If \var{K_\mathrm{cut}} and \var{r_\mathrm{cut}} are given by the user, then \ke
   \object{
     electrostatics
   }{
-    \require{1}{DH}
+    DH
   }{
-    bjerrum\textunderscore length=\arg{double},
-    kappa=\arg{double},
-    r\textunderscore cut=\arg{double}
+    bjerrum_length = \arg{float},
+    kappa = \arg{float},
+    r_cut = \arg{float}
   }
-  \leavevmode \\
+  \begin{features}
+      \required{ELECTROSTATICS}
+  \end{features}
   \object{
     electrostatics
     }{
-     \require{1,2}{CDH}
+     CDH
     }{
-      bjerrum\textunderscore length=\arg{double},
-      kappa=\arg{double},
-      r\textunderscore cut=\arg{double},
-      eps\textunderscore int=\arg{double},
-      eps\textunderscore ext=\arg{double},
-      r0=\arg{double},
-      r1=\arg{double},
-      alpha=\arg{double}
+      bjerrum_length = \arg{float},
+      kappa = \arg{float},
+      r_cut = \arg{float},
+      eps_int = \arg{float},
+      eps_ext = \arg{float},
+      r0 = \arg{float},
+      r1 = \arg{float},
+      alpha = \arg{float}
     }[
     ]
+    \begin{features}
+        \required{ELECTROSTATICS}
+        \required{COULOMB_DEBYE_HUECKEL}
+    \end{features}
 \end{pysyntax}
 
 \begin{essyntax}
@@ -1854,44 +1894,44 @@ The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"u
 	\object{
 		electrostatics
 	}{
-		\require{1}{MMM2D}
+		MMM2D
 	}{
-		bjerrum\textunderscore length=\arg{double},
-		maxPWerror=\arg{double}, 
-		[far\textunderscore cut=\arg{double}],
-		dielectric=1,
-		top=\arg{double},
-		mid=\arg{double},
-		bot=\arg{double}
-	}
-	\leavevmode \\
-	\object{ 
-		electrostatics
-	}{
-		\require{1}{MMM2D}
-	}{
-		bjerrum\textunderscore length=\arg{double},
-		maxPWerror=\arg{double}, 
-		[far\textunderscore cut=\arg{double}],
-		capacitor=1,
-		pot\textunderscore diff=\arg{double}
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		dielectric = 1,
+		top = \arg{float},
+		mid = \arg{float},
+		bot = \arg{float}
 	}[
+		far_cut = \arg{float}
 	]
-	\leavevmode\\
 	\object{ 
 		electrostatics
 	}{
-		\require{1}{MMM2D}
+		MMM2D
 	}{
-		bjerrum\textunderscore length=\arg{double},
-		maxPWerror=\arg{double}, 
-		[far\textunderscore cut=\arg{double}],
-		dielectric\textunderscore contrast\textunderscore on=1,
-		delta\textunderscore mid\textunderscore top=\arg{double},
-		delta\textunderscore mid\textunderscore bot=\arg{double}
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		capacitor = 1,
+		pot_diff = \arg{float}
 	}[
+		far_cut = \arg{float}
+	]
+	\object{ 
+		electrostatics
+	}{
+		MMM2D
+	}{
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float},
+		dielectric_contrast_on = 1,
+		delta_mid_top = \arg{float},
+		delta_mid_bot = \arg{float}
+	}[
+		far_cut = \arg{float}
 	]
 \end{pysyntax}
+
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
 number of slices of the cell system, which has to be tuned manually.
@@ -1950,10 +1990,11 @@ by calling the above command, where \var{induced} returns $E_{induced}$,
 	}{
 	MMM1D
 	}{
-	bjerrum\textunderscore length=\arg{double},
-	[far\textunderscore switch\textunderscore radius=\arg{double},]
-	maxPWerror=\arg{double}
-	}	
+	bjerrum_length=\arg{float},
+	maxPWerror=\arg{float}
+	}[
+	far_switch_radius=\arg{float}
+	]
 	\begin{features}
 		\required{ELECTROSTATICS} \required{PARTIAL_PERIODIC}
 	\end{features}
@@ -1987,13 +2028,14 @@ test force calculations.
 	\object{
 		electrostatics
 	}{
-		MMM1D\textunderscore GPU
+		MMM1D_GPU
 	}{
-		bjerrum\textunderscore length=\arg{double},
-		[far\textunderscore switch\textunderscore radius=\arg{double}],
-		[bessel\textunderscore cutoff=\arg{int}],
-		maxPWerror=\arg{double}
-	}
+		bjerrum_length = \arg{float},
+		maxPWerror = \arg{float}
+	}[
+		far_switch_radius = \arg{float},
+		bessel_cutoff = \arg{int}
+	]
 	\begin{features}
 		\required{ELECTROSTATICS} \required{CUDA} \required{PARTIAL_PERIODIC}
 		\required{MMM1D_GPU}
@@ -2222,6 +2264,13 @@ Espresso can use the electrostatics methods from the Scafacos \emph{Scalable fas
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+scafacos.available_methods()
+  \begin{features}
+    \required{ELECTROSTATICS} 
+    \required{SCAFACOS}
+  \end{features}
+\end{pysyntax}
 This shows the methods available at the compile time of \es{}.
 Scafacos can be used as Coulomb solver for the system.
 \begin{essyntax}
@@ -2231,6 +2280,20 @@ Scafacos can be used as Coulomb solver for the system.
     \required{SCAFACOS}
   \end{features}
 \end{essyntax}
+\begin{pysyntax}
+	\object{
+		electrostatics
+	}{ Scafacos 
+	}{ 
+		bjerrum\textunderscore length=\arg{double},
+		method_name=\arg{string},
+		method_params=\arg{dict},
+	}[
+	]
+	\begin{features}
+		\required{SCAFACOS}
+	\end{features}
+\end{pysyntax}
 Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
 \texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
 \var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
@@ -2260,11 +2323,11 @@ Scafacos can be used only once, either for coulomb or for dipolar interactions.
   }{
     ELC
   }{
-    gap_size=\arg{double},
-    maxPWerror=\arg{double},
+    gap_size = \arg{float},
+    maxPWerror = \arg{float},
   }[
-    neutralize=\arg{bool},
-    far_cut=\arg{double}
+    neutralize = \arg{bool},
+    far_cut = \arg{float}
   ]
 \end{pysyntax}
 

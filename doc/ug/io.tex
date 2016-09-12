@@ -96,12 +96,12 @@ some basic functions for writing simulation data to H5MD files.
 \begin{essyntax}
 h5md_init \var{/where/to/store/data/file} [\var{list\_of\_p\_ids}]
 \end{essyntax}
-The \codebox{h5md_init} command initializes the H5MD file and creates 
-groups and datasets according to the conventions of H5MD (see
-\url{http://nongnu.org/h5md/}). If a H5MD file already exists at the given
-path it will be opened and you can append data to it. The optional argument 
-\var{list\_of\_p\_ids} can be provided. In this case observables are written 
-for these particle ids only.
+The \codebox{h5md_init} command initializes the H5MD file and
+creates groups and datasets according to the conventions of H5MD (see
+\url{http://nongnu.org/h5md/}). In order to safely start from a
+checkpoint the init command automatically copies the old file to a new file
+with a "tmp" suffix. The optional argument \var{list\_of\_p\_ids} can be provided. In
+this case observables are written for these particle ids only.
 
 \subsection{\keyword{h5md_write_positions}: Write particle positions to H5MD
 file}
@@ -424,7 +424,7 @@ to the file \lit{data.dat}.
   \variant{3} blockfile \var{channel} read auto 
   \variant{4} blockfile \var{channel} read \alt{particles \asep
     interactions \asep bonds \asep variable \asep seed \asep random
-    \asep bitrandom \asep configs}
+    \asep configs}
 \end{essyntax}
 
 Variants \variant{1} and \variant{2} are the low-level block-reading
@@ -439,7 +439,7 @@ Variant \variant{3} reads in one block and does the following:
   this procedure takes over (\var{tag} is the first expression in the
   block). For most block types, at least all mentioned above, \ie
   \keyword{particles}, \keyword{interactions}, \keyword{bonds},
-  \keyword{seed}, \keyword{random}, \keyword{bitrandom},
+  \keyword{seed}, \keyword{random},
   \keyword{configs}, and \keyword{variable}, the corresponding
   procedure will overwrite the current information with the
   information from the block.
@@ -478,7 +478,6 @@ set out [open "|gzip -c - > checkpoint.block.gz" "w"]
 blockfile $out write variable all
 blockfile $out write interactions
 blockfile $out write random
-blockfile $out write bitrandom
 blockfile $out write particles "id pos type q v f" all
 blockfile $out write bonds all
 blockfile $out write configs
@@ -750,7 +749,7 @@ filenames including a running index (\texttt{data_0.vtk},
 \item[\var{filename}]
   Name of the file to export the particle positions into.
 \item[\opt{\alt{all \asep \var{type}}}] Specifies a list of particle
-  types which should be exportet. The default is
+  types which should be exported. The default is
   \keyword{all}. Alternatively, a list of type number can be
   given. Exporting the positions of all particles but in separate
   files might make sense if one wants to distinguish the different

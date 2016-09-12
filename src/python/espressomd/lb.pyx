@@ -16,13 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
-cimport cuda_init
-import cuda_init
+from .actors cimport Actor
+from . cimport cuda_init
+from . import cuda_init
 from globals cimport *
 from copy import deepcopy
+from . import utils
 
 # Actor class
 ####################################################
@@ -55,7 +57,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "gpu", "agrid", "dens", "fric", "ext_force", "visc", "tau"
+            return "agrid", "dens", "fric", "ext_force", "visc", "tau"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -84,9 +86,8 @@ IF LB_GPU or LB:
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
-        def _lb_init(self):
-            py_lattice_switch = 1
-            if lb_set_lattice_switch(py_lattice_switch):
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(1):
                 raise Exception("lb_set_lattice_switch error")
 
         def _set_params_in_es_core(self):
@@ -145,36 +146,45 @@ IF LB_GPU or LB:
                 if python_lbfluid_get_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
-            return self.params
+            return self._params
 
         # input/output function wrappers for whole LB fields
         ####################################################
         def print_vtk_velocity(self, path):
-            lb_lbfluid_print_vtk_velocity(path)
+            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
         def print_vtk_boundary(self, path):
-            lb_lbfluid_print_vtk_boundary(path)
+            lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
-            lb_lbfluid_print_velocity(path)
+            lb_lbfluid_print_velocity(utils.to_char_pointer(path))
         def print_boundary(self, path):
-            lb_lbfluid_print_boundary(path)
+            lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(path, binary)
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
         def load_checkpoint(self, path, binary):
-            lb_lbfluid_load_checkpoint(path, binary)
+            lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+        def lbnode_get_node_velocity(self, coord):
+            cdef double[3] double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_u(c_coord, double_return)
+            return double_return
 
         # Activate Actor
         ####################################################
         def _activate_method(self):
             self.validate_params()
+            self._set_lattice_switch()
             self._set_params_in_es_core()
-            self._lb_init()
 
 
 
 
-# IF LB_GPU:
-#     cdef class LBFluid_GPU(LBFluid):
-#         def _lb_init(self):
-#             py_lattice_switch = 2
-#             if lb_set_lattice_switch(py_lattice_switch):
-#                 raise Exception("lb_set_lattice_switch error")
+
+IF LB_GPU:
+    cdef class LBFluid_GPU(LBFluid):
+        def _set_lattice_switch(self):
+            if lb_set_lattice_switch(2):
+                raise Exception("lb_set_lattice_switch error")
+
+

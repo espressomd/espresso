@@ -75,7 +75,9 @@ set:
   DPD thermostat.
 \item[dpd_r_cut] (double, \ro) Cutoff for DPD thermostat.
 \item[dpd_ignore_fixed_particles] (int, \ro) Switches fixed particle DPD force calculation ON (0) or OFF (1 default).
-\item[gamma] (double, \ro) Friction constant for the
+\item[gamma] (double, \ro) Translational friction constant for the
+  Langevin thermostat.
+\item[gamma_rot] (double \asep double[3], \ro) Rotational friction constant for the
   Langevin thermostat.
 \item[integ_switch] (int, \ro) Internal switch which integrator to
   use.
@@ -125,9 +127,7 @@ set:
 \item[npt_piston] (double, \ro) Mass off the box when using NPT_isotropic
   integrator.
 \item[periodicity] (bool[3]) Specifies periodicity for the three
-  directions. If the feature PARTIAL_PERIODIC is set, this variable
-  can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
-  readonly and gives the default setting (1,1,1).
+  directions. If the feature PARTIAL_PERIODIC is set, Espresso can be instructed to treat some dimensions as non-periodic. Per default espresso assumes periodicity in all directions which equals setting this variable to (1,1,1). A dimension is specified as non-periodic via setting the periodicity variable for this dimension to 0. E.g. Periodicity only in z-direction is obtained by (0,0,1). Caveat: Be aware of the fact that making a dimension non-periodic does not hinder particles from leaving the box in this direction. In this case for keeping particles in the simulation box a constraint has to be set.
 \item[skin] (double) Skin for the Verlet list.
 \item [temperature] (double, \ro) Temperature of the
   simulation.
@@ -162,6 +162,17 @@ set:
 \section{\texttt{thermostat}: Setting up the thermostat}
 \label{sec:thermostat}
 \newescommand{thermostat}
+
+\begin{pysyntax}
+  \attributes{
+    espressomd.System()
+  }{
+    thermostat
+  }{
+    turn_off(),
+    get_state()
+}
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1} thermostat
@@ -219,8 +230,22 @@ the same temperature.
 
 \subsection{Langevin thermostat}
 
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_langevin
+  }{
+    kT=\arg{float},
+    gamma=\arg{float},
+    gamma_rotation=\arg{float or array of 3 floats}
+}
+\end{pysyntax}
+
 \begin{essyntax}
-  thermostat langevin \var{temperature} \var{gamma\_trans} \opt{\var{gamma\_rotate}} \opt{on/off} \opt{on/off}
+  thermostat langevin \var{temperature} \var{gamma\_trans} \\
+  \opt{\alt{\var{gamma\_rotate} \asep
+  \var{g\_rot\_x} \var{g\_rot\_y} \var{g\_rot\_z}}} \opt{on/off} \opt{on/off}
 \end{essyntax}
 
 \warning{The behavior of the Langevin Thermostat has changed in this version of \es{}. Before the term \var{gamma} was called the `friction coefficient', but was in fact the inverse relaxation time. The code has been modified such that this value is now a proper friction coefficient.
@@ -241,7 +266,9 @@ degrees of freedom are also coupled to the thermostat. If only the first two arg
 
 \warning{This is again a change, since originally it was set to 1/3 of the value of \var{gamma\_trans} for some (unclear) reason. If you want to reproduce this behavior, this can be simply done by setting the value of \var{gamma\_rotate} appropriately.}
 
-A separate rotational diffusion coefficient can be set by inputting \var{gamma\_rotate}. This also allows one to properly match the translational and rotational diffusion coefficients of a sphere. Finally, the two options \opt{on/off} allow one to switch the translational and rotational thermalization on or off separately, maintaining the frictional behavior. This can be useful, for instance, in high P{\'e}clet number active matter systems, where one only wants to thermalize the rotational degrees of freedom and translational motion is effected by the self-propulsion.
+A separate rotational diffusion coefficient can be set by inputting \var{gamma\_rotate}. This also allows one to properly match the translational and rotational diffusion coefficients of a sphere.
+Feature \feature{ROTATIONAL_INERTIA} enables an anisotropic rotational diffusion coefficient tensor through corresponding friction coefficients \var{g\_rot\_x} \var{g\_rot\_y} \var{g\_rot\_z}.
+Finally, the two options \opt{on/off} allow one to switch the translational and rotational thermalization on or off separately, maintaining the frictional behavior. This can be useful, for instance, in high P{\'e}clet number active matter systems, where one only wants to thermalize the rotational degrees of freedom and translational motion is effected by the self-propulsion.
 
 Using the Langevin thermostat, it is posible to set a temperature and
 a friction coefficient for every particle individually via the feature
@@ -293,6 +320,18 @@ coefficients on a per-interaction basis.
 
 \subsubsection{Thermostat DPD}
 \index{label:DPDthermostat}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_dpd
+  }{
+    kT=\arg{float},
+    gamma=\arg{float},
+    r_cut=\arg{float}
+}
+\end{pysyntax}
 
 \begin{essyntax}
   thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
@@ -454,6 +493,20 @@ result in a factor $1$.
 
 \subsection{Isotropic NPT thermostat}
 \label{ssec:NPTthermostat}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().thermostat
+  }{
+    set_npt
+  }{
+    kT=\arg{float},
+    gamma0=\arg{float},
+    gammav=\arg{float}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
   \begin{features}
@@ -576,8 +629,34 @@ according to the needs of the used algorithms. For details on the
 internal organization, refer to section
 \vref{sec:internal-particle-organization}.
 
+\begin{pysyntax}
+  \attributes{
+    espressomd.System()
+  }{
+    cell_system
+  }{
+    skin=\arg{float}
+    max_num_cells=\arg{float}
+    min_num_cells=\arg{float}
+    get_state()
+}
+\end{pysyntax}
+
+
 \subsection{Domain decomposition}
 \index{domain decomposition}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_domain_decomposition
+  }{
+    use_verlet_lists=\arg{bool}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem domain_decomposition \opt{-no_verlet_list}
 \end{essyntax}
@@ -599,6 +678,18 @@ number of interactions is therefore of the order N instead of order
 $N^2$ if one has to calculate all pair interactions.
 
 \subsection{N-squared}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_n_square
+  }{
+    use_verlet_lists=\arg{bool}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem nsquare 
 \end{essyntax}
@@ -631,6 +722,18 @@ Therefore it is highly recommended that you use nsquared only with an
 odd number of nodes, if with multiple processors at all. 
 
 \subsection{Layered cell system}
+
+\begin{pysyntax}
+  \object{
+    espressomd.System().cell_system
+  }{
+    set_layered
+  }{
+    n_layers=\arg{int}
+}
+\end{pysyntax}
+
+
 \begin{essyntax}
   cellsystem layered \var{n\_layers}
 \end{essyntax}
@@ -785,19 +888,21 @@ The following limitations currently apply for the collision detection:
 \label{sec:Reactions}
 
 With the help of the feature \feature{CATALYTIC_REACTIONS}, one can
-define three particle types to act as reactant, catalyzer, and
-product. Using these reaction categories, we model the following
-chemical reaction system:
+define three particle types to act as reactant (e.g. $H_2O_2$), catalyzer (e.g. platinum), and
+products (e.g. $O_2$ and $H_2O$). Using these reaction categories, we model the following
+chemical reaction system which is not thermodynamically consistent but rather intended to simulate active swimmers and their propulsion:
 \begin{eqnarray}
 rt & \rightleftharpoons & pr ; \\
-rt & \xrightarrow{ct} & pr,
+rt & \xrightarrow{ct} & pr.
 \end{eqnarray}
-where the first line indicates that there is a reversible chemical
-reaction that converts the reactant particles (\var{rt}) into product
-(\var{pr}) particles, leading to an equilibrium state. The second line
-indicates that in the presence of a catalyst (\var{ct}) the forward
-reaction pathway is favored, i.e., conversion of reactants into
-products. The equilibrium reaction is described by the equilibrium
+The first line indicates that there is a reversible chemical
+reaction in the bulk that converts the reactant particles (\var{rt}) into product
+(\var{pr}) particles, leading to an equilibrium state. This reaction is intended to artificially recover the reactant (\var{rt}) particles in this model. In the case of $H_2O_2$ this is artificial since it does not spontaneously build up if oxygen is dissolved in water. The second line
+indicates that in the vicinity of a catalyst (\var{ct}) the forward
+reaction takes place, i.e., conversion of reactants into
+products. Of course the decompositon of a reactand into a product also takes place if there is no catalyst (since a catalyst has no effect on the chemical equilibrium) however the reaction is much faster than normally in the presence of a catalyst and the normal decomposition is neglected since it takes place so slowly. This is correct chemistry for waterperoxide since it spontaneously decomposes almost completely and much faster in the presence of a catalyst.
+
+The equilibrium reaction is described by the equilibrium
 constant
 \begin{equation}
 K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
@@ -918,6 +1023,15 @@ system.
 
 \subsection{Particle motion and rotation}
 
+\begin{pysyntax}
+  \object{
+      espressomd.galilei
+  }{
+      kill_particle_motion
+  }{
+      rotation = 0 or 1
+  }
+\end{pysyntax}
 \begin{essyntax}
   kill_particle_motion \require{1}{\opt{rotation}}
   \begin{features}
@@ -931,6 +1045,15 @@ been compiled in.
 
 \subsection{Forces and torques acting on the particles}
 
+\begin{pysyntax}
+  \object{
+      espressomd.galilei
+  }{
+      kill_particle_forces
+  }{
+      torques = 0 or 1
+  }
+\end{pysyntax}
 \begin{essyntax}
   kill_particle_forces \require{1}{\opt{torques}}
   \begin{features}
@@ -943,6 +1066,13 @@ ROTATION has been compiled in.
 
 \subsection{The centre of mass of the system}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      system_CMS
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   system_CMS
 \end{essyntax}
@@ -951,6 +1081,13 @@ factor in the density fluctuations of the Lattice-Boltzman fluid.
 
 \subsection{The centre-of-mass velocity}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      system_CMS_velocity
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   system_CMS_velocity
 \end{essyntax}
@@ -958,6 +1095,13 @@ Returns the velocity of the center of mass of the whole system.
 
 \subsection{The Galilei transform}
 
+\begin{pysyntax}
+  \object{espressomd.galilei
+  }{
+      galilei_transform
+  }{
+  }
+\end{pysyntax}
 \begin{essyntax}
   galilei_transform
 \end{essyntax}

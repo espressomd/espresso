@@ -18,10 +18,11 @@
 #
 # Handling of interactions
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct ia_parameters "IA_parameters":
@@ -45,8 +46,17 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
+        int TAB_npoints;
+        int TAB_startindex;
+        double TAB_minval;
+        double TAB_minval2;
+        double TAB_maxval;
+        double TAB_stepsize;
+        char TAB_filename[256]; 
 
     cdef ia_parameters * get_ia_param(int i, int j)
+    cdef ia_parameters * get_ia_param_safe(int i, int j)
+    cdef void make_bond_type_exist(int type)
 
 cdef extern from "lj.hpp":
     cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -72,6 +82,12 @@ cdef extern from "ljgen.hpp":
                                   double shift, double offset,
                                   int a1, int a2, double b1, double b2,
                                   double cap_radius)
+
+
+IF TABULATED==1:
+    cdef extern from "tab.hpp":
+        int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
+
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:

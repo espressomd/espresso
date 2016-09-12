@@ -26,8 +26,6 @@ puts "-------------------------------------------"
 puts "- Testcase mmm1dgpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "-------------------------------------------"
 
-cellsystem nsquare
-
 set epsilon 1e-4
 thermostat off
 setmd time_step 0.01

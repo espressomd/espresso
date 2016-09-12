@@ -31,12 +31,14 @@ LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 NEMD
-NPT 
+NPT
 GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
-ENGINE                          implies ROTATION
 SEMI_INTEGRATED
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
+ENGINE                          requires not SEMI_INTEGRATED
+CONFIGTEMP
 
 /* Rotation */
 ROTATION
@@ -85,11 +87,12 @@ TUNABLE_SLIP                    implies DPD
 INTER_DPD
 
 /* Lattice-Boltzmann features */
-LB
+LB                              requires not SEMI_INTEGRATED
 LB_GPU                          requires CUDA
 LB_BOUNDARIES                   implies LB, CONSTRAINTS
 LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS         implies LB
+ELECTROKINETICS                 requires not SEMI_INTEGRATED
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
@@ -152,7 +155,7 @@ HYDROGEN_BOND
 COULOMB_DEBYE_HUECKEL 		requires ELECTROSTATICS
 
 /* Immersed-Boundary Bayreuth version */
-IMMERSED_BOUNDARY               
+IMMERSED_BOUNDARY
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
 IMMERSED_BOUNDARY               requires not SHANCHEN
@@ -207,7 +210,7 @@ P3M_DEBUG
 FFT_DEBUG
 RANDOM_DEBUG
 FORCE_DEBUG
-THERMO_DEBUG 
+THERMO_DEBUG
 LE_DEBUG
 LJ_DEBUG
 MORSE_DEBUG
@@ -215,7 +218,7 @@ ESR_DEBUG
 ESK_DEBUG
 FENE_DEBUG
 GHOST_FORCE_DEBUG
-STAT_DEBUG 
+STAT_DEBUG
 POLY_DEBUG
 MOLFORCES_DEBUG
 PTENSOR_DEBUG
@@ -240,4 +243,3 @@ FFTW external
 TK   external
 H5MD external
 SCAFACOS external
-
