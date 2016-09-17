@@ -106,12 +106,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set gamma(1) 2.0
     set temp(0) 2.5
     set temp(1) 2.0
-    set gamma_rot_1(0) [expr [t_random] * 20]
-    set gamma_rot_2(0) [expr [t_random] * 20]
-    set gamma_rot_3(0) [expr [t_random] * 20]
-    set gamma_rot_1(1) [expr [t_random] * 20]
-    set gamma_rot_2(1) [expr [t_random] * 20]
-    set gamma_rot_3(1) [expr [t_random] * 20]
+    set gamma_rot_1(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_2(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_3(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_1(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_2(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_3(1) [expr (0.2 + [t_random]) * 20]
 
     set box 10
     setmd box_l $box $box $box
@@ -125,10 +125,10 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd time_step 0.008
 
     set n 200
-    set mass [expr [t_random] *20]
-    set j1 [expr [t_random] * 20]
-    set j2 [expr [t_random] * 20]
-    set j3 [expr [t_random] * 20]
+    set mass [expr (0.2 + [t_random]) *20]
+    set j1 [expr (0.2 + [t_random]) * 20]
+    set j2 [expr (0.2 + [t_random]) * 20]
+    set j3 [expr (0.2 + [t_random]) * 20]
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
@@ -151,9 +151,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
 
 
-    set loops 50
+    set loops 100
     puts "Thermalizing..."
-    integrate 1000
+    integrate 1200
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
@@ -173,7 +173,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.12
+    set tolerance 0.13
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]
