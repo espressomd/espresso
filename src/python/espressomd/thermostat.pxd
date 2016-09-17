@@ -36,19 +36,19 @@ cdef extern from "global.hpp":
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
-    double langevin_gamma
+    #double langevin_gamma
     int THERMO_OFF
     int THERMO_LANGEVIN
+
     IF ROTATION:
         IF ROTATIONAL_INERTIA:
             double langevin_gamma_rotation[3]
         ELSE:
             double langevin_gamma_rotation
+    IF PARTICLE_ANISOTROPY:
+        double langevin_gamma[3]
+    ELSE:
+        double langevin_gamma
     int THERMO_NPT_ISO
     int THERMO_DPD
     int THERMO_INTER_DPD
-    IF ROTATIONAL_INERTIA:
-        double langevin_gamma_rotation[3]
-    ELSE:
-        double langevin_gamma_rotation
-

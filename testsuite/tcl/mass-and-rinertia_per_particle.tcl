@@ -19,6 +19,7 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
+require_feature "PARTICLE_ANISOTROPY"
 require_feature "LANGEVIN_PER_PARTICLE"
 
 puts "------------------------------------------------"
@@ -74,8 +75,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             puts "------------------------------------------------"
             puts "Test $test_case: both particle specific gamma and temperature"
             puts "------------------------------------------------"
-            part 0 gamma $gamma0 temp 0.0
-            part 1 gamma $gamma1 temp 0.0
+            part 0 gamma $gamma0 $gamma0 $gamma0 temp 0.0
+            part 1 gamma $gamma1 $gamma1 $gamma1 temp 0.0
         }
     }
     setmd time 0
@@ -102,16 +103,22 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     # mass and inertia tensor are active
 
     # 2 different langevin parameters for particles
-    set gamma(0) 1.0
-    set gamma(1) 2.0
     set temp(0) 2.5
     set temp(1) 2.0
-    set gamma_rot_1(0) [expr [t_random] * 20]
-    set gamma_rot_2(0) [expr [t_random] * 20]
-    set gamma_rot_3(0) [expr [t_random] * 20]
-    set gamma_rot_1(1) [expr [t_random] * 20]
-    set gamma_rot_2(1) [expr [t_random] * 20]
-    set gamma_rot_3(1) [expr [t_random] * 20]
+    
+    set gamma_tran_1(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_tran_2(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_tran_3(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_tran_1(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_tran_2(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_tran_3(1) [expr (0.2 + [t_random]) * 20]
+    
+    set gamma_rot_1(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_2(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_3(0) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_1(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_2(1) [expr (0.2 + [t_random]) * 20]
+    set gamma_rot_3(1) [expr (0.2 + [t_random]) * 20]
 
     set box 10
     setmd box_l $box $box $box
@@ -123,20 +130,20 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
     setmd time_step 0.008
-
     set n 200
-    set mass [expr [t_random] *20]
-    set j1 [expr [t_random] * 20]
-    set j2 [expr [t_random] * 20]
-    set j3 [expr [t_random] * 20]
-
+    # 0.2 is required to avoid infinitely small requirement [time_step < mass / gamma] and [j / gamma_rot]
+    set mass [expr (0.2 + [t_random]) *20]
+    set j1 [expr (0.2 + [t_random]) * 20]
+    set j2 [expr (0.2 + [t_random]) * 20]
+    set j3 [expr (0.2 + [t_random]) * 20]
+    
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
             part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
             switch $test_case {
-                1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
+                1 {part [expr $i + $k*$n] gamma $gamma_tran_1($k) $gamma_tran_2($k) $gamma_tran_3($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
-                3 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
+                3 {part [expr $i + $k*$n] gamma $gamma_tran_1($k) $gamma_tran_2($k) $gamma_tran_3($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
             }
         }
     }
@@ -150,8 +157,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set oz2($k) 0.
     }
 
-
-    set loops 50
+    set loops 100
     puts "Thermalizing..."
     integrate 1200
     puts "Measuring..."
@@ -173,7 +179,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.12
+    set tolerance 0.13
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]

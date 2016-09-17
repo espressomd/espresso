@@ -75,10 +75,15 @@ set:
   DPD thermostat.
 \item[dpd_r_cut] (double, \ro) Cutoff for DPD thermostat.
 \item[dpd_ignore_fixed_particles] (int, \ro) Switches fixed particle DPD force calculation ON (0) or OFF (1 default).
-\item[gamma] (double, \ro) Translational friction constant for the
-  Langevin thermostat.
+\item[gamma] (double \asep double[3], \ro) Friction constant for the
+  Langevin thermostat. Feature \feature{PARTICLE_ANISOTROPY} requires 3
+  values of the gamma corresponding to diagonal elements of the tensor.
+  If one value is specified then other diagonal elements are defined
+  equal to it automatically.
 \item[gamma_rot] (double \asep double[3], \ro) Rotational friction constant for the
-  Langevin thermostat.
+  Langevin thermostat. Feature \feature{ROTATIONAL_INERTIA}} requires 3
+  values of the gamma_rot corresponding to diagonal elements of the tensor.
+  If one is not specified then the translational gamma value is used.
 \item[integ_switch] (int, \ro) Internal switch which integrator to
   use.
 \item[lb_components] (int, \ro) Number of fluid components.
@@ -237,13 +242,14 @@ the same temperature.
     set_langevin
   }{
     kT=\arg{float},
-    gamma=\arg{float},
+    gamma=\arg{float or array of 3 floats},
     gamma_rotation=\arg{float or array of 3 floats}
 }
 \end{pysyntax}
 
 \begin{essyntax}
   thermostat langevin \var{temperature} \var{gamma\_trans} \\
+  \asep \var{g\_trans\_x} \var{g\_trans\_y} \var{g\_trans\_z} \\
   \opt{\alt{\var{gamma\_rotate} \asep
   \var{g\_rot\_x} \var{g\_rot\_y} \var{g\_rot\_z}}} \opt{on/off} \opt{on/off}
 \end{essyntax}
@@ -259,7 +265,8 @@ function of the particle velocities. By specifying \var{gamma\_trans} the diffus
 D = \frac{\var{temperature}}{\var{gamma\_trans}}.
 \end{equation}
 The relaxation time is given by \var{gamma\_trans}/MASS, with MASS the particle's mass. For a more detailed explanation,
-refer to \cite{grest86a}. In the near future an anisotropic diffusion coefficient tensor will be made available to simulate anisotropic colloids (rods, etc.) properly.
+refer to \cite{grest86a}. An anisotropic diffusion coefficient tensor is available to simulate anisotropic colloids (rods, etc.) properly.
+It can be enabled by the feature \feature{PARTICLE_ANISOTROPY}.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat. If only the first two arguments are specified then the diffusion coefficient for the rotation is set to the same value as that for the translation.

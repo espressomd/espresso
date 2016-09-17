@@ -48,8 +48,22 @@ void add_link(IntList *il, IntList *link, int l, int p, int size)
 
 #ifdef LANGEVIN_PER_PARTICLE
 void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *interp) {
+  int j;
+#ifndef PARTICLE_ANISOTROPY
   Tcl_PrintDouble(interp, part->p.gamma, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+#else
+  double gamma[3];
+
+  for ( j = 0 ; j < 3 ; j++) gamma[j]=part->p.gamma[j];
+
+  Tcl_PrintDouble(interp, gamma[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif // PARTICLE_ANISOTROPY
 }
 
 #ifdef ROTATION
@@ -71,7 +85,7 @@ void tclcommand_part_print_gamma_rot(Particle *part, char *buffer, Tcl_Interp *i
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif // ROTATIONAL_INERTIA
 }
-#endif
+#endif // ROTATION
 
 void tclcommand_part_print_T(Particle *part, char *buffer, Tcl_Interp *interp) {
   Tcl_PrintDouble(interp, part->p.T, buffer);
@@ -2121,18 +2135,49 @@ int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
+#ifndef PARTICLE_ANISOTROPY
   double gamma;
+#else
+  double gamma[3];
+  bool scalar_default = false;
+#endif // PARTICLE_ANISOTROPY
 
+#ifndef PARTICLE_ANISOTROPY
   *change = 1;
-
   if (argc < 1) {
     Tcl_AppendResult(interp, "gamma requires 1 argument", (char *) NULL);
     return TCL_ERROR;
   }
+#else
+  *change = 3;
+  if (argc < 3) {
+      if (argc < 1) {
+          Tcl_AppendResult(interp, "gamma requires 3 arguments", (char *) NULL);
+          return TCL_ERROR;
+      } else {
+          scalar_default = true;
+          *change = 1;
+      }
+  }
+#endif // PARTICLE_ANISOTROPY
   /* set temperature scaling factor */
+#ifndef PARTICLE_ANISOTROPY
   if (! ARG_IS_D(0, gamma))
-    return TCL_ERROR;
-
+#else
+  if (!scalar_default)
+  {
+      if (! ARG_IS_D(0, gamma[0]) || ! ARG_IS_D(1, gamma[1]) || ! ARG_IS_D(2, gamma[2]))
+#endif // PARTICLE_ANISOTROPY
+          return TCL_ERROR;
+#ifdef PARTICLE_ANISOTROPY
+  } else {
+      if (! ARG_IS_D(0, gamma[0])) {
+          return TCL_ERROR;
+      } else {
+          gamma[1] = gamma[2] = gamma[0];
+      }
+  }
+#endif // PARTICLE_ANISOTROPY
   if (set_particle_gamma(part_num, gamma) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     return TCL_ERROR;
@@ -2149,7 +2194,7 @@ int part_parse_gamma_rot(Tcl_Interp *interp, int argc, char **argv,
   double gamma_rot;
 #else
   double gamma_rot[3];
-#endif
+#endif // ROTATIONAL_INERTIA
 
 #ifndef ROTATIONAL_INERTIA
   *change = 1;
@@ -2163,13 +2208,13 @@ int part_parse_gamma_rot(Tcl_Interp *interp, int argc, char **argv,
     Tcl_AppendResult(interp, "gamma_rot requires 3 arguments", (char *) NULL);
     return TCL_ERROR;
   }
-#endif
+#endif // ROTATIONAL_INERTIA
   /* set temperature scaling factor */
 #ifndef ROTATIONAL_INERTIA
   if (! ARG_IS_D(0, gamma_rot))
 #else
   if (! ARG_IS_D(0, gamma_rot[0]) || ! ARG_IS_D(1, gamma_rot[1]) || ! ARG_IS_D(2, gamma_rot[2]))
-#endif
+#endif // ROTATIONAL_INERTIA
     return TCL_ERROR;
 
   if (set_particle_gamma_rot(part_num, gamma_rot) == TCL_ERROR) {

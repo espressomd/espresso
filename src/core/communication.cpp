@@ -2810,16 +2810,30 @@ void mpi_set_particle_temperature_slave(int pnode, int part) {
 }
 
 #ifdef LANGEVIN_PER_PARTICLE
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma) {
+#else
+void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
+#endif
+  int j;
   mpi_call(mpi_set_particle_gamma_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local
      * node */
+#ifndef PARTICLE_ANISOTROPY
     p->p.gamma = gamma;
+#else
+    for ( j = 0 ; j < 3 ; j++) p->p.gamma[j] = gamma[j];
+#endif
+
   } else {
+#ifndef PARTICLE_ANISOTROPY
     MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+#else
+    MPI_Send(gamma, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+#endif
   }
 
   on_particle_change();
@@ -2829,14 +2843,18 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma) {
 void mpi_set_particle_gamma_slave(int pnode, int part) {
 #ifdef LANGEVIN_PER_PARTICLE
   double s_buf = 0.;
+  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
+#ifndef PARTICLE_ANISOTROPY
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma = s_buf;
+#else
+    MPI_Recv(p->p.gamma, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+#endif
   }
-
   on_particle_change();
 #endif
 }
