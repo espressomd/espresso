@@ -41,7 +41,6 @@ public:
   void computeForces(SystemInterface &s) {
     dds_float box[3];
     int per[3];
-    std::cout << "Trace DDS computeForces 1" << std::endl;
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
