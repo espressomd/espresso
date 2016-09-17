@@ -22,6 +22,7 @@
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
+require_feature "BARNES_HUT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase coulomb_cloud_wall.tcl running on [format %02d [setmd n_nodes]] nodes:"
@@ -150,7 +151,7 @@ foreach method $methods setup $setups accuracy $accuracies {
 	if { $method != "P3M-GPU" } {
 	  set dE [expr abs($E-$reference_energy)]
 	  puts "Energy difference to ref. value $dE. Is $E, should be $reference_energy"
-	  if { $dE >1E-3 } {
+	  if { $dE / abs($reference_energy) > 6E-5 } {
 	    error_exit "Difference in energy too large." 
 	  }
 	}
