@@ -15,6 +15,7 @@ set(tcl_tests  analysis.tcl
                constraints_rhomboid.tcl 
                coulomb_cloud_wall.tcl 
                dawaanr-and-dds-gpu.tcl 
+               dawaanr-and-bh-gpu.tcl
                dh.tcl dielectric.tcl 
                dihedral.tcl dpd.tcl 
                ek_eof_one_species_x.tcl 
