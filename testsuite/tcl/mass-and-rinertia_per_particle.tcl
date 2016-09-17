@@ -122,7 +122,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
-    setmd time_step 0.008
+    setmd time_step 0.004
 
     set n 200
     set mass [expr [t_random] *20]
@@ -157,7 +157,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
-        integrate 100
+        integrate 90
         # Get kinetic energy in each degree of freedom for all particles
         for {set p 0} {$p <$n} {incr p} {
             for {set k 0} {$k<2} {incr k} {
@@ -173,7 +173,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.12
+    set tolerance 0.15
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]
