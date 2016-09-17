@@ -43,7 +43,7 @@ source "tests_common.tcl"
 set tcl_precision 14
 
 proc vectorsTheSame {a b} {
- set tol 3E-2
+ set tol 2E-1
  set diff [vecsub $a $b]
  if { [veclen $diff] > $tol } {
   return 0
@@ -141,7 +141,7 @@ for {set i 0} {$i<$n} {incr i} {
   }
 }
 
-if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 } {
+if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 * abs($dawaanr_e) } {
   error "Energies for dawaanr $dawaanr_e and dds_gpu [expr $ratio_dawaanr_dds_gpu*$ddsgpu_e] don't match."
 }
 
