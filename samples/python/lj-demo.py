@@ -124,7 +124,7 @@ system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
 system.cell_system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
+mayavi = visualization.mayaviLive(system)
 
 mayavi_rotation_angle = 45.
 mayavi_rotation_angle_step = 5.
@@ -559,11 +559,11 @@ def update_plot():
 
 t = Thread(target=main_thread)
 t.daemon = True
-mayavi.register_callback(update_plot, interval=1000)
+mayavi.registerCallback(update_plot, interval=1000)
 controls = Controls()
 t.start()
 if controls.midi_input is not None:
     t2 = Thread(target=midi_thread)
     t2.daemon = True
     t2.start()
-mayavi.run_gui_event_loop()
+mayavi.start()
