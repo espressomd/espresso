@@ -1423,7 +1423,8 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	// TODO: this should be moved to the Espresso CLI parameters
 	//float epssq = 0.05f * 0.05f;
 	//float epssq = 10.0f * 10.0f;
-	float epssq = 5.0f * 5.0f;
+	//float epssq = 5.0f * 5.0f;
+	float epssq = 10.0f * 10.0f;
 	float itolsq = 1.0f / (0.5f * 0.5f);
 
 	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));

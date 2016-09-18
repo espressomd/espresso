@@ -44,7 +44,7 @@ source "tests_common.tcl"
 set tcl_precision 14
 
 proc vectorsTheSame {a b} {
- set tol 2E-1
+ set tol 5E-2
  set diff [vecsub $a $b]
  if { [veclen $diff] > $tol } {
   return 0
