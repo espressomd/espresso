@@ -18,6 +18,7 @@ source "tests_common.tcl"
 require_feature "LB"
 require_feature "LB_BOUNDARIES"
 require_feature "EXTERNAL_FORCES"
+require_feature "SEMI_INTEGRATED off"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase lb_planar_embedded_particles.tcl running on [format %02d [setmd n_nodes]] nodes"

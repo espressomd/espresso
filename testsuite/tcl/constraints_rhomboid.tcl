@@ -131,7 +131,7 @@ if { [ catch {
     }
   }
   
-  if {$sum > 1.e-8} {
+  if {$sum / (25*3) > 1.e-2} {
     error "Combined particle trajectory deviation of [format %1.3E $sum] exceeds limit of 1.000E-08 after reflection on rhomboid."
   }
 

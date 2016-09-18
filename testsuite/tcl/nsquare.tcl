@@ -27,7 +27,7 @@ puts "----------------------------------------"
 
 cellsystem nsquare
 
-set epsilon 1e-4
+set epsilon 1e-1
 thermostat off
 
 setmd time_step 0.001

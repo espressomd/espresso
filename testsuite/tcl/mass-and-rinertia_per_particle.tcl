@@ -38,7 +38,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     
     # Decelleration
     setmd skin 0
-    setmd time_step 0.007
+    setmd time_step 0.01
     thermostat langevin 0 $gamma0 
     cellsystem nsquare 
     #-no_verlet_lists
@@ -79,13 +79,17 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
     setmd time 0
-
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])) >0.01 ||
-                 abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])) >0.01
+            set deviation0 [expr [lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])]
+            set deviation1 [expr [lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])]
+            set omega_sim_0 [expr [lindex [part 0 print omega_body] $k]]
+            set omega_th [expr exp(-$gamma0*[setmd time] /[lindex $J $k])]
+            if {
+                 abs($deviation0) >0.01 ||
+                 abs($deviation1) >0.01
             } {
-                error_exit "Friction Deviation in omega too large. $i $k"
+                error_exit "Friction Deviation in omega too large. $i $k $omega_sim_0 $omega_th"
             }
         }
         integrate 10
@@ -150,8 +154,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set oz2($k) 0.
     }
 
-
     set loops 100
+
     puts "Thermalizing..."
     integrate 1200
     puts "Measuring..."

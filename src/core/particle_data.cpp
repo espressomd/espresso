@@ -193,6 +193,9 @@ void init_particle(Particle *part)
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
   part->m.omega[2] = 0.0;
+  part->m.omega_0[0] = 0.0;
+  part->m.omega_0[1] = 0.0;
+  part->m.omega_0[2] = 0.0;
 #endif
 
   /* ParticleForce */
@@ -1027,6 +1030,31 @@ int set_particle_omega_lab(int part, double omega_lab[3])
 
   mpi_send_omega(pnode, part, omega);
   return ES_OK;
+}
+
+void set_particle_omega_lab_within_integr(Particle *particle, double omega_lab[3])
+{
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double omega[3],a[3];
+
+#ifdef ROTATION_PER_PARTICLE
+  if (!particle->p.rotation) return;
+  a[0] = a[1] = a[2] = 1.0;
+  if (!(particle->p.rotation & 2)) a[0] = 0.0;
+  if (!(particle->p.rotation & 4)) a[1] = 0.0;
+  if (!(particle->p.rotation & 8)) a[2] = 0.0;
+#endif
+
+  define_rotation_matrix(particle, A);
+
+  particle->m.omega[0] = a[0] * (A[0 + 3*0]*omega_lab[0] + A[0 + 3*1]*omega_lab[1] + A[0 + 3*2]*omega_lab[2]);
+  particle->m.omega[1] = a[1] * (A[1 + 3*0]*omega_lab[0] + A[1 + 3*1]*omega_lab[1] + A[1 + 3*2]*omega_lab[2]);
+  particle->m.omega[2] = a[2] * (A[2 + 3*0]*omega_lab[0] + A[2 + 3*1]*omega_lab[1] + A[2 + 3*2]*omega_lab[2]);
+
 }
 
 int set_particle_omega_body(int part, double omega[3])

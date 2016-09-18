@@ -111,7 +111,7 @@ add_custom_target(tcl_tests
 if(NOT DEFINED TEST_NP)
   include(ProcessorCount)
   ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
+  math(EXPR TEST_NP "1")
 endif()
 
 if(WITH_TCL)

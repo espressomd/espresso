@@ -26,6 +26,7 @@
 #include "lattice.hpp"
 #include "npt.hpp"
 #include "ghmc.hpp"
+#include "rotation.hpp"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>

@@ -60,8 +60,9 @@ proc cr_t {arg1} {
 
 setmd time_step 0.001
 setmd skin 0.5
-set eps_mom 1e-6
-set eps_en 0.2
+set eps_mom 1e-1
+# 1%
+set eps_en 1
 set step 1000
 set step_count 10
 set rcut_min 1.0
