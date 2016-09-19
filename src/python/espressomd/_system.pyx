@@ -128,7 +128,7 @@ cdef class System:
 
     property time:
         def __set__(self, double _time):
-            if _time <= 0:
+            if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
             global sim_time
             sim_time = _time
