@@ -56,7 +56,7 @@ cdef class PScriptInterface:
         return self.variant_to_python_object(self.sip.get().call_method(method, parameters))
 
 
-    def set_parameters(self, **kwargs):
+    def set_params(self, **kwargs):
         cdef ParameterType type
         cdef map[string, Variant] parameters
 
@@ -118,10 +118,21 @@ cdef class PScriptInterface:
         cdef Variant value = self.sip.get().get_parameter(name)
         return self.variant_to_python_object(value)
 
-    def get_parameters(self):
+    def get_params(self):
         odict = {}
         for pair in self.parameters:
             odict[pair.first] = self.get_parameter(pair.first)
         return odict
+
+class ScriptInterfaceHelper(PScriptInterface):
+
+    _so_name = None
+
+    def __init__(self,**kwargs):
+        super(ScriptInterfaceHelper,self).__init__(self._so_name)
+        self.set_params(**kwargs)
+
+    
+
 
 initialize()
