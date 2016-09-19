@@ -41,7 +41,7 @@ public:
   VariantMap get_parameters() const override {
     return {{"only_positive", m_constraint->only_positive()},
             {"penetrable", m_constraint->penetrable()},
-            {"type", m_constraint->type()},
+            {"particle_type", m_constraint->type()},
             {"shape",
              (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
   }
@@ -49,7 +49,7 @@ public:
   ParameterMap valid_parameters() const override {
     return {{"only_positive", {ParameterType::INT, true}},
             {"penetrable", {ParameterType::INT, true}},
-            {"type", {ParameterType::INT, true}},
+            {"particle_type", {ParameterType::INT, true}},
             {"shape", {ParameterType::OBJECT, true}}};
   }
 
@@ -74,7 +74,7 @@ public:
 
     SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
     SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
-    SET_PARAMETER_HELPER("type", m_constraint->type());
+    SET_PARAMETER_HELPER("particle_type", m_constraint->type());
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() {
