@@ -26,7 +26,7 @@ class TclConstraintManager : public TclScriptInterfaceManager {
 public:
   TclConstraintManager(Tcl_Interp *interp,
                        const boost::bimap<std::string, std::string> &name_map)
-      : TclScriptInterfaceManager(interp, name_map) {}
+      : TclScriptInterfaceManager(interp, name_map, /* optional_new */ true) {}
 
 private:
   /* We have to adapt here because constraints with different shapes are

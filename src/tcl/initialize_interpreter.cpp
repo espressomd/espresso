@@ -142,17 +142,21 @@ int tclcommand_readpdb(ClientData data, Tcl_Interp *interp, int argc,
  * Map from the tcl names to class names, such that name_map.left provides
  * access by tcl names, and name.right by class names.
  */
-static boost::bimap<std::string, std::string> shapes_name_map =
-    Utils::make_bimap<std::string, std::string>({{"wall", "Shapes::Wall"}});
+static auto shapes_name_map = Utils::make_bimap<std::string, std::string>(
+    {{"wall", "Shapes::Wall"},
+     {"sphere", "Shapes::Sphere"},
+     {"cylinder", "Shapes::Cylinder"}});
+
+static std::vector<std::unique_ptr<TclCommand>> tcl_commands;
 
 static void tcl_register_commands(Tcl_Interp *interp) {
-  auto *shapes = new ScriptInterface::Tcl::TclScriptInterfaceManager(
-      interp, shapes_name_map);
-  shapes->create_command("shapes");
+  tcl_commands.emplace_back(new ScriptInterface::Tcl::TclScriptInterfaceManager(
+      interp, shapes_name_map));
+  tcl_commands.back()->create_command("shapes");
 
-  auto *constraints = new ScriptInterface::Tcl::TclConstraintManager(
-      interp, shapes_name_map);
-  constraints->create_command("constraints");
+  tcl_commands.emplace_back(
+      new ScriptInterface::Tcl::TclConstraintManager(interp, shapes_name_map));
+  tcl_commands.back()->create_command("constraint");
 
   /* in cells.cpp */
   REGISTER_COMMAND("sort_particles", tclcommand_sort_particles);
