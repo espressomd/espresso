@@ -198,6 +198,7 @@ IF LENNARD_JONES == 1:
                 "cutoff": ia_params.LJ_cut,
                 "shift": ia_params.LJ_shift,
                 "offset": ia_params.LJ_offset,
+                "cap": ia_params.LJ_capradius,
                 "min": ia_params.LJ_min}
 
         def is_active(self):
@@ -216,7 +217,7 @@ IF LENNARD_JONES == 1:
                                         self._params["cutoff"],
                                         self._params["shift"],
                                         self._params["offset"],
-                                        0.0,
+                                        self._params["cap"],
                                         self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
@@ -227,13 +228,14 @@ IF LENNARD_JONES == 1:
                 "cutoff": 0.,
                 "shift": 0.,
                 "offset": 0.,
+                "cap": 0.,
                 "min": 0.}
 
         def type_name(self):
             return "LennardJones"
 
         def valid_keys(self):
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "cap", "min"
 
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift"
