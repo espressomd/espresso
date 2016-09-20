@@ -295,7 +295,7 @@ File::File(std::string const &filename, std::string const &script_name)
                 dims_3d, maxdims);
         this->dataset_particles_atoms_id_value = h5xx::dataset(
                 this->group_particles_atoms_id,
-                "value", this->type_double,
+                "value", this->type_int,
                 this->dataspace_particles_atoms_id_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_1d.data()));
         this->dataspace_particles_atoms_id_time = h5xx::dataspace(
