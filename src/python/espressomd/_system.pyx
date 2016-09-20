@@ -36,6 +36,7 @@ from .minimize_energy import MinimizeEnergy
 from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
+from .constraints import Constraints
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -60,6 +61,7 @@ cdef class System:
     analysis = None
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
+    constraints = Constraints()
 
     def __init__(self):
         self.actors = Actors(_system=self)
