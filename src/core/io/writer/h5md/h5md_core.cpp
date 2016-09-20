@@ -34,11 +34,10 @@ File::File(std::string const &filename, std::string const &script_name)
     this->absolute_script_path = boost::filesystem::canonical(script_path);
     /* Store the filename in a member variable. */
     this->user_filename = filename;
-    /* Get number of local particles. */
-    this->n_local_part = cells_get_n_particles();
-    if(!(this->n_local_part > 0)) {
+
+    if(!(cells_get_n_particles() 0)) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
-    } 
+    }
     /* Check if a file with given filename exists. */
     bool file_exists = this->check_file_exists(filename);
     /* If it exists, check for the H5MD structure. */
@@ -424,8 +423,9 @@ void File::WriteSpecies()
 {
     /* Get the number of particles on all other nodes. */
     int pref = 1;
-    MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    int_array_3d type_data(boost::extents[1][this->n_local_part][1]);
+    int nlocalpart = cells_get_n_particles();
+    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    int_array_3d type_data(boost::extents[1][nlocalpart][1]);
     Cell *local_cell;
 
     /* Prepare data for writing, loop over all local cells. */
@@ -450,11 +450,12 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
     /* Get the number of particles on all other nodes. */
     /* TODO: Writing is not yet working in parallel. */
     int pref = 1;
-    MPI_Exscan(&n_local_part, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    double_array_3d pos(boost::extents[1][n_local_part][3]);
-    double_array_3d vel(boost::extents[1][n_local_part][3]);
-    double_array_3d f(boost::extents[1][n_local_part][3]);
-    int_array_3d image(boost::extents[1][n_local_part][3]);
+    int nlocalpart = cells_get_n_particles();
+    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    double_array_3d pos(boost::extents[1][nlocalpart][3]);
+    double_array_3d vel(boost::extents[1][nlocalpart][3]);
+    double_array_3d f(boost::extents[1][nlocalpart][3]);
+    int_array_3d image(boost::extents[1][nlocalpart][3]);
     /* Prepare data for writing, loop over all local cells. */
     Cell *local_cell;
     int particle_index = 0;
@@ -518,6 +519,7 @@ template <typename T>
 void File::WriteDataset(T &data, h5xx::dataset& dataset,
                         h5xx::dataset& time, h5xx::dataset& step)
 {
+    int nlocalpart = cells_get_n_particles();
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     /* Get the ID of the dataspace. */
@@ -529,7 +531,7 @@ void File::WriteDataset(T &data, h5xx::dataset& dataset,
     H5Sclose(dataspace_local_id);
     // The offset is just set in the time dimension, which is the first one. */
     hsize_t offset[3] = {dims[0], 0, 0};
-    hsize_t count[3] = {1, static_cast<hsize_t>(this->n_local_part), 3};
+    hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), 3};
     dims[0] += 1;
     /* Extend the dataset for another timestep. */
     H5Dset_extent(dataset.hid(), dims);

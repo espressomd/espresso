@@ -114,10 +114,6 @@ class File
      */
     bool has_H5MD_structure = false;
     /**
-     * @brief Number of local particles.
-     */
-    int n_local_part;
-    /**
      * Because we change the name of the file automatically, its a member variable.
      */
     std::string user_filename;
