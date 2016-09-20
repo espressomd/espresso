@@ -35,7 +35,7 @@ File::File(std::string const &filename, std::string const &script_name)
     /* Store the filename in a member variable. */
     this->user_filename = filename;
 
-    if(!(cells_get_n_particles() 0)) {
+    if(!(cells_get_n_particles() > 0)) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
     /* Check if a file with given filename exists. */
