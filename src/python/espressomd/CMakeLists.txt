@@ -105,11 +105,10 @@ foreach(cython_file ${cython_SRC})
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
       endif()
-      target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+      target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
-
 
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)

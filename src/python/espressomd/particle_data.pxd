@@ -160,7 +160,7 @@ cdef extern from "particle_data.hpp":
                 int set_particle_gamma_rot(int part, double gamma[3])
             ELSE:
                 int set_particle_gamma_rot(int part, double gamma)
-    
+
             void pointer_to_gamma_rot(particle * p, double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
@@ -230,8 +230,8 @@ cdef class ParticleHandle(object):
 cdef class ParticleSlice:
 
     cdef particle particle_data
-    cdef int update_particle_data(self,id) except -1
+    cdef int update_particle_data(self, id) except -1
     cdef public id_selection
 
 cdef extern from "grid.hpp":
-    cdef inline void fold_position(double*, int*)
+    cdef inline void fold_position(double *, int*)

@@ -32,7 +32,7 @@
 #include "forces.hpp"
 #include "pressure.hpp"
 #include "energy_inline.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 
 Cell *local;
 CellPList me_do_ghosts;

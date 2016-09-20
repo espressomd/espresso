@@ -51,58 +51,6 @@ team. Use them at your own risk!
 */
 #include "parser.hpp"
 
-/** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader
-    to allow unique identification of binary packed MD data.
-*/
-#define MDMAGIC "MD01"
-
-/** The header of the binary file format. Magic is used to identify the file and should have
-    a value of \ref MDMAGIC ("MD01") without trailing 0. */
-struct MDHeader {
-  /** Magic Identifier. Must be \ref MDMAGIC ("MD01") without trailing 0. */
-  char magic[4];
-  /** Number of data rows contained in the following data. */
-  int  n_rows;
-};
-
-/** \name Field Codes.
-    Possible field codes to follow \ref MDHeader. */
-/*@{*/
-/** Row contains the x component of the position. */
-#define POSX  0
-/** Row contains the y component of the position. */
-#define POSY  1
-/** Row contains the z component of the position. */
-#define POSZ  2
-/** Row contains the x component of the velocity. */
-#define VX    3
-/** Row contains the y component of the velocity. */
-#define VY    4
-/** Row contains the z component of the velocity. */
-#define VZ    5
-/** Row contains the x component of the force. */
-#define FX    6
-/** Row contains the y component of the force. */
-#define FY    7
-/** Row contains the z component of the force. */
-#define FZ    8
-/** Row contains the mass. */
-#define MASSES 9
-/** Row contains the charge. */
-#define Q     10
-/** Row contains the type. */
-#define TYPE  11
- /** Row contains the x component of the magnetic moment. */
- #define MX    12
- /** Row contains the y component of the magnetic moment. */
- #define MY    13
- /** Row contains the z component of the magnetic moment. */
- #define MZ    14
-/** Row contains the solvation free energies (SHANCHEN) */
-#define SOLVATION 15
-
-/*@}*/
-
 /**************************************************************
  * functions
  **************************************************************/

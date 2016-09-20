@@ -208,7 +208,6 @@ struct ParticleProperties {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4];

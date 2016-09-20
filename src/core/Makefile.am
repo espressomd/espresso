@@ -36,7 +36,7 @@ libEspresso_la_SOURCES = \
 	comfixed.cpp comfixed.hpp \
 	comforce.hpp comforce.cpp \
 	config.hpp \
-	constraint.cpp constraint.hpp \
+	constraint.cpp constraints.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \

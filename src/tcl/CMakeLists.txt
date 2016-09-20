@@ -25,7 +25,7 @@ set_target_properties(Espresso PROPERTIES
 target_compile_definitions(Espresso PRIVATE
   -DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 add_dependencies(Espresso EspressoConfig)
-target_link_libraries(Espresso EspressoTcl EspressoCore ${LIBRARIES})
+target_link_libraries(Espresso EspressoTcl EspressoCore EspressoScriptInterface ${LIBRARIES})
 
 add_executable(Espresso_install main.cpp scriptsdir.cpp ${MPI_SOURCE})
 set_target_properties(Espresso_install PROPERTIES
@@ -33,5 +33,5 @@ set_target_properties(Espresso_install PROPERTIES
 target_compile_definitions(Espresso_install PRIVATE
   -DESPRESSO_SCRIPTS_DEFAULT="${CMAKE_INSTALL_PREFIX}/${DATA}/scripts")
 add_dependencies(Espresso_install EspressoConfig)
-target_link_libraries(Espresso_install EspressoTcl EspressoCore ${LIBRARIES})
+target_link_libraries(Espresso_install EspressoTcl EspressoCore EspressoScriptInterface ${LIBRARIES})
 install(TARGETS Espresso_install DESTINATION ${BINDIR})

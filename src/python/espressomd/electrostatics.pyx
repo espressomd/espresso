@@ -40,21 +40,21 @@ cdef class ElectrostaticInteraction(actors.Actor):
         coulomb.method = COULOMB_NONE
         mpi_bcast_coulomb_params()
 
-    def Tune(self,subsetTuneParams=None):
-        
-        #Override default parmas with subset given by user
-        tuneParams=self.default_params()
-        if not subsetTuneParams==None:        
+    def Tune(self, subsetTuneParams=None):
+
+        # Override default parmas with subset given by user
+        tuneParams = self.default_params()
+        if not subsetTuneParams == None:
             for k in subsetTuneParams.iterkeys():
                 if k not in self.valid_keys():
                     raise ValueError(k + " is not a valid parameter")
             tuneParams.update(subsetTuneParams)
 
-        #If param is 'required', it was set before, so don't change it
-        #Do change it if it's given to Tune() by user
+        # If param is 'required', it was set before, so don't change it
+        # Do change it if it's given to Tune() by user
         for param in tuneParams.iterkeys():
-            if not param in self.required_keys() or (not subsetTuneParams==None and param in subsetTuneParams.keys()):
-                self._params[param]=tuneParams[param]
+            if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
+                self._params[param] = tuneParams[param]
         self._set_params_in_es_core()
         self._tune()
 
@@ -325,7 +325,7 @@ IF P3M == 1:
             def _activate_method(self):
                 self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
-                #python_p3m_gpu_init(self._params)
+                # python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
                     self._tune()
 
@@ -408,7 +408,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             else:
                 self.thisptr.set_params_tune(self._params["accuracy"], self._params[
                     "precision"], self._params["K_max"], self._params["time_calc_steps"])
-            resp = self.thisptr.adaptive_tune( & self.log, dereference(self.interface))
+            resp = self.thisptr.adaptive_tune(& self.log, dereference(self.interface))
             if resp != 0:
                 print(self.log)
 
