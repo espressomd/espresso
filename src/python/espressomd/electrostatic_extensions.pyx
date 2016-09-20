@@ -65,9 +65,7 @@ IF ELECTROSTATICS and P3M:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
             if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
-                raise ValueError(
-                    "Choose a 3d electrostatics method prior to ELC")
-            handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
+                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()

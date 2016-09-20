@@ -107,3 +107,6 @@ cdef handle_errors(msg):
     # Cast because cython does not support typed enums completely
         if <int> err.level() == <int> ERROR:
             raise Exception(msg)
+
+    if not errors.empty() :
+        raise Exception(msg)
