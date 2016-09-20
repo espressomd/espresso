@@ -248,8 +248,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 "value", this->type_int,
                 this->dataspace_particles_atoms_mass_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-        this->dataspace_particles_atoms_mass_value = h5xx::dataspace(
-                dims_3d, maxdims);
         this->dataspace_particles_atoms_mass_time = h5xx::dataspace(
                 dims_1d_single, maxdims_single);
         this->dataset_particles_atoms_mass_time =
@@ -276,8 +274,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 "value", this->type_double,
                 this->dataspace_particles_atoms_position_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-        this->dataspace_particles_atoms_position_value = h5xx::dataspace(
-                dims_3d, maxdims);
         this->dataspace_particles_atoms_position_time = h5xx::dataspace(
                 dims_1d_single, maxdims_single);
         this->dataset_particles_atoms_position_time =
@@ -304,8 +300,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 "value", this->type_double,
                 this->dataspace_particles_atoms_velocity_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-        this->dataspace_particles_atoms_velocity_value = h5xx::dataspace(
-                dims_3d, maxdims);
         this->dataspace_particles_atoms_velocity_time = h5xx::dataspace(
                 dims_1d_single, maxdims_single);
         this->dataset_particles_atoms_velocity_time =
@@ -332,8 +326,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 "value", this->type_double,
                 this->dataspace_particles_atoms_force_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-        this->dataspace_particles_atoms_force_value = h5xx::dataspace(
-                dims_3d, maxdims);
         this->dataspace_particles_atoms_force_time = h5xx::dataspace(
                 dims_1d_single, maxdims_single);
         this->dataset_particles_atoms_force_time =
@@ -360,8 +352,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 "value", this->type_int,
                 this->dataspace_particles_atoms_image_value,
                 h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-        this->dataspace_particles_atoms_image_value = h5xx::dataspace(
-                dims_3d, maxdims);
         this->dataspace_particles_atoms_image_time = h5xx::dataspace(
                 dims_1d_single, maxdims_single);
         this->dataset_particles_atoms_image_time =
