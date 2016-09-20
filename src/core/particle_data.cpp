@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -305,7 +305,13 @@ void init_particle(Particle *part)
   part->p.T = -1.0;
   part->p.gamma = -1.0;
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
   part->p.gamma_rot = -1.0;
+#else
+  part->p.gamma_rot[0] = -1.0;
+  part->p.gamma_rot[1] = -1.0;
+  part->p.gamma_rot[2] = -1.0;
+#endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -350,15 +356,11 @@ int updatePartCfg(int bonds_flag)
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-      ostringstream msg;
-      msg <<"could not update positions of virtual sites in partcfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not update positions of virtual sites in partcfg";
     return 0;
   }
 #endif
@@ -1136,7 +1138,11 @@ int set_particle_gamma(int part, double gamma)
   return ES_OK;
 }
 #ifdef ROTATION
+#ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma_rot)
+#else
+int set_particle_gamma_rot(int part, double gamma_rot[3])
+#endif
 {
   int pnode;
 
@@ -1229,9 +1235,7 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-        ostringstream msg;
-        msg <<"invalid/unknown bonded interaction type " << bond[0];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"invalid/unknown bonded interaction type " << bond[0];
       return ES_ERROR;
     }
   }
@@ -2191,6 +2195,13 @@ void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3)
 }
 #endif
 
+#ifdef MULTI_TIMESTEP
+void pointer_to_smaller_timestep(Particle* p, int*&  res)
+{
+  res=&(p->p.smaller_timestep);
+}
+#endif
+
 
 #ifdef MASS
 void pointer_to_mass(Particle* p, double*&  res)
@@ -2239,7 +2250,11 @@ void pointer_to_gamma(Particle *p, double*& res)
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
+#ifndef ROTATIONAL_INERTIA
   res=&(p->p.gamma_rot);
+#else
+  res=p->p.gamma_rot; // array [3]
+#endif
 }
 #endif
 
@@ -2277,3 +2292,20 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
   res = p->p.rinertia;
 }
 #endif
+
+bool particle_exists(int part) {
+    if (!particle_node)
+        build_particle_node();
+    
+    if (part < 0 || part > max_seen_particle)
+        return false;
+    
+    if (particle_node[part]!=-1) 
+        return true;
+   return false;
+}
+
+#ifndef MASS
+constexpr double ParticleProperties::mass;
+#endif
+

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -36,6 +36,7 @@ void *fftw_malloc(size_t n);
 #include "communication.hpp"
 #include "grid.hpp"
 #include "fft-common.hpp"
+#include "debug.hpp"
 
 /************************************************
  * variables
@@ -244,7 +245,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* FFT plan creation. 
        Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf. */
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"fftw3_1d_wisdom_forw_n%d.file",
+    sprintf(wisdom_file_name,".fftw3_1d_wisdom_forw_n%d.file",
 	    fft.plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
@@ -270,7 +271,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   for(i=1;i<4;i++) {
     fft.back[i].dir = FFTW_BACKWARD;
     wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,"fftw3_1d_wisdom_back_n%d.file",
+    sprintf(wisdom_file_name,".fftw3_1d_wisdom_back_n%d.file",
 	    fft.plan[i].new_mesh[2]);
     if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);

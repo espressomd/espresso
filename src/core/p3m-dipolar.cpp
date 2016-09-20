@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1651,7 +1651,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao,
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
-  if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
+  if(cao >= mesh || k_cut >= std::min(min_box_l,min_local_box_l) - skin) {
     /* print result */
     sprintf(b,"%-4d %-3d  cao too large for this mesh\n", mesh, cao);
     *log = strcat_alloc(*log, b);
@@ -1687,9 +1687,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao,
 
   /* check whether we are running P3M+DLC, and whether we leave a reasonable gap space */
   if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-      ostringstream msg;
-      msg <<"dipolar P3M: tuning when dlc needs to be fixed";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M: tuning when dlc needs to be fixed";
   }
 
   /* check whether this radius is too large, so that we would use less cells than allowed */
@@ -1880,7 +1878,7 @@ int dp3m_adaptive_tune(char **logger)
   mpi_bcast_event(P3M_COUNT_DIPOLES);
 
   /* Print Status */
-  sprintf(b, "dipolar P3M tune parameters: Accuracy goal = %.5e\n", dp3m.params.accuracy);
+  sprintf(b, "Dipolar P3M tune parameters: Accuracy goal = %.5e Bjerrum Length = %.5e\n", dp3m.params.accuracy, coulomb.Dbjerrum);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
 	  box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
@@ -1914,7 +1912,7 @@ int dp3m_adaptive_tune(char **logger)
 
   if(dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
+    r_cut_iL_max = std::min(min_local_box_l, min_box_l/2) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }
@@ -1936,7 +1934,6 @@ int dp3m_adaptive_tune(char **logger)
     sprintf(b, "fixed cao %d\n", dp3m.params.cao);
     *logger = strcat_alloc(*logger, b);
   }
-
   *logger = strcat_alloc(*logger, "Dmesh cao Dr_cut_iL   Dalpha_L     Derr         Drs_err    Dks_err    time [ms]\n");
 
   /* mesh loop */
@@ -2279,15 +2276,11 @@ int dp3m_sanity_checks_boxl() {
      for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(dp3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-        ostringstream msg;
-        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than half of box dimension " << box_l[i];
       ret = 1;
     }
     if(dp3m.params.cao_cut[i] >= local_box_l[i]) {
-        ostringstream msg;
-        msg <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
-        runtimeError(msg);
+        runtimeErrorMsg() <<"dipolar P3M_init: k-space cutoff " << dp3m.params.cao_cut[i] << " is larger than local box dimension " << local_box_l[i];
       ret = 1;
     }
   }
@@ -2302,57 +2295,41 @@ int dp3m_sanity_checks()
   int ret = 0;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"dipolar P3M requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M requires periodicity 1 1 1";
     ret = 1;
   }
   /*
   if (n_nodes != 1) {
-      ostringstream msg;
-      msg <<"dipolar P3M does not run in parallel";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M does not run in parallel";
     ret = 1;
   } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
-      msg <<"dipolar P3M at present requires the domain decomposition cell system";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M at present requires the domain decomposition cell system";
     ret = 1;
   }
   
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      ostringstream msg;
-      msg <<"dipolar P3M requires a cubic box";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M requires a cubic box";
     ret = 1;
   }
 
     if( (dp3m.params.mesh[0] != dp3m.params.mesh[1]) || (dp3m.params.mesh[1] != dp3m.params.mesh[2]) ) {
-    ostringstream msg;
-    msg <<"dipolar P3M requires a cubic mesh";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"dipolar P3M requires a cubic mesh";
     ret = 1;
   }
 
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
   if( dp3m.params.mesh[0] == 0) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: mesh size is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: mesh size is not yet set";
     ret = 1;
   }
   if( dp3m.params.cao == 0) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: cao is not yet set";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: cao is not yet set";
     ret = 1;
   }
   if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-      ostringstream msg;
-      msg <<"dipolar P3M_init: node grid must be sorted, largest first";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"dipolar P3M_init: node grid must be sorted, largest first";
     ret = 1;
   }
   

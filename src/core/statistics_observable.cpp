@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -25,7 +25,6 @@
 #include "rotation.hpp"
 
 std::map<int,Observable*> observables;
-
 int observables_autoupdate = 0;
 
 Observable::Observable() {
@@ -103,9 +102,7 @@ int ObservableParticleVelocities::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -123,9 +120,7 @@ int ObservableParticleBodyVelocities::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -170,9 +165,7 @@ int ObservableParticleAngularMomentum::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -209,9 +202,7 @@ int ObservableParticleBodyAngularMomentum::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -243,9 +234,7 @@ int ObservableParticleCurrents::actual_calculate() {
   double charge;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -266,9 +255,7 @@ int ObservableCurrents::actual_calculate() {
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -292,9 +279,7 @@ int ObservableDipoleMoment::actual_calculate() {
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -319,9 +304,7 @@ int ObservableComDipoleMoment::actual_calculate() {
   double d[3] = {0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -345,9 +328,7 @@ int ObservableComVelocity::actual_calculate() {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -375,9 +356,7 @@ int ObservableBlockedComVelocity::actual_calculate() {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -411,9 +390,7 @@ int ObservableBlockedComPosition::actual_calculate() {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -443,9 +420,7 @@ int ObservableComPosition::actual_calculate() {
   double total_mass = 0;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -469,9 +444,7 @@ int ObservableComForce::actual_calculate() {
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -498,9 +471,7 @@ int ObservableBlockedComForce::actual_calculate() {
   unsigned int id;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -529,9 +500,7 @@ int ObservableDensityProfile::actual_calculate() {
   profile_data* pdata;
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   pdata=(profile_data*) container;
@@ -567,9 +536,7 @@ int ObservableForceDensityProfile::actual_calculate() {
   profile_data* pdata;
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   pdata=(profile_data*) container;
@@ -832,9 +799,7 @@ int ObservableRadialDensityProfile::actual_calculate() {
   IntList* ids;
   
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   radial_profile_data* pdata;
@@ -879,9 +844,7 @@ int ObservableRadialFluxDensityProfile::actual_calculate() {
   IntList* ids;
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   radial_profile_data* pdata;
@@ -966,9 +929,7 @@ int ObservableFluxDensityProfile::actual_calculate() {
   IntList* ids;
 
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   profile_data* pdata;
@@ -1022,9 +983,7 @@ int ObservableParticlePositions::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -1042,9 +1001,7 @@ int ObservableParticleForces::actual_calculate() {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   ids=(IntList*) container;
@@ -1061,9 +1018,7 @@ int ObservableParticleForces::actual_calculate() {
 
 int ObservableStressTensor::actual_calculate() {
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   observable_compute_stress_tensor(1,last_value,n);
@@ -1075,9 +1030,7 @@ int ObservableStressTensorAcfObs::actual_calculate() {
   double* A = last_value;
   double stress_tensor[9];
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   observable_compute_stress_tensor(1,stress_tensor,9);
@@ -1130,9 +1083,7 @@ int ObservableStructureFactor::actual_calculate() {
   twoPI_L = 2*PI/box_l[0];
   
   if (!sortPartCfg()) {
-    ostringstream msg;
-    msg <<"could not sort partCfg";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
 
@@ -1185,9 +1136,7 @@ int ObservableStructureFactorFast::actual_calculate() {
   const double twoPI_L = 2*PI/box_l[0];
   
   if (!sortPartCfg()) {
-    ostringstream msg;
-    msg <<"could not sort partCfg";
-    runtimeError(msg);
+    runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   
@@ -1309,9 +1258,7 @@ int ObservableStructureFactorFast::actual_calculate() {
       }
       break;
     default:
-      ostringstream msg;
-      msg <<"so many samples per order not yet implemented";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"so many samples per order not yet implemented";
       return -1;
     }
   }
@@ -1335,9 +1282,7 @@ int ObservableInteractsWith::actual_calculate() {
   ids1=params->ids1;
   ids2=params->ids2;
   if (!sortPartCfg()) {
-      ostringstream msg;
-      msg <<"could not sort partCfg";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"could not sort partCfg";
     return -1;
   }
   for ( i = 0; i<ids1->n; i++ ) {

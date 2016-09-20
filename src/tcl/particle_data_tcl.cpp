@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -54,8 +54,22 @@ void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *inter
 
 #ifdef ROTATION
 void tclcommand_part_print_gamma_rot(Particle *part, char *buffer, Tcl_Interp *interp) {
+  int j;
+#ifndef ROTATIONAL_INERTIA
   Tcl_PrintDouble(interp, part->p.gamma_rot, buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
+#else
+  double gamma_rot[3];
+
+  for ( j = 0 ; j < 3 ; j++) gamma_rot[j]=part->p.gamma_rot[j];
+
+  Tcl_PrintDouble(interp, gamma_rot[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma_rot[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, gamma_rot[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+#endif // ROTATIONAL_INERTIA
 }
 #endif
 
@@ -279,11 +293,11 @@ void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0. && part->p.smaller_timestep) {
     Tcl_PrintDouble(interp, part->m.v[0]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[1]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->m.v[2]/smaller_time_step, buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   } else 
 #endif
   {
@@ -2131,16 +2145,31 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 int part_parse_gamma_rot(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
+#ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+#else
+  double gamma_rot[3];
+#endif
 
+#ifndef ROTATIONAL_INERTIA
   *change = 1;
-
   if (argc < 1) {
     Tcl_AppendResult(interp, "gamma_rot requires 1 argument", (char *) NULL);
     return TCL_ERROR;
   }
+#else
+  *change = 3;
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "gamma_rot requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+#endif
   /* set temperature scaling factor */
+#ifndef ROTATIONAL_INERTIA
   if (! ARG_IS_D(0, gamma_rot))
+#else
+  if (! ARG_IS_D(0, gamma_rot[0]) || ! ARG_IS_D(1, gamma_rot[1]) || ! ARG_IS_D(2, gamma_rot[2]))
+#endif
     return TCL_ERROR;
 
   if (set_particle_gamma_rot(part_num, gamma_rot) == TCL_ERROR) {
@@ -2170,12 +2199,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		sprintf(buffer, "\nWrong type for the <type> parameter");
+		Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2198,12 +2227,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+			sprintf(buffer, "\nWrong type for the <type> parameter");
+			Tcl_AppendResult(interp, buffer, (char *)NULL);  
+			return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2226,12 +2255,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 			return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+			sprintf(buffer, "\nWrong type for the <type> parameter");
+			Tcl_AppendResult(interp, buffer, (char *)NULL);  
+			return (TCL_ERROR); 
+		}
 
 		if ( type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
@@ -2268,12 +2297,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 			return TCL_ERROR;
 		}
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		      sprintf(buffer, "\nWrong type for the <type> parameter");
+		      Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		      return (TCL_ERROR); 
+		}
 
 		int number;
 		if ( type < 0 ) {
@@ -2291,12 +2320,12 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 	} else if ( argc == 1 ) {
 		// initialize particle array for given type
 
-    if( !ARG_IS_I(0,type) )
-    { 
-      sprintf(buffer, "\nWrong type for the <type> parameter");
-      Tcl_AppendResult(interp, buffer, (char *)NULL);  
-      return (TCL_ERROR); 
-    }
+		if( !ARG_IS_I(0,type) )
+		{ 
+		      sprintf(buffer, "\nWrong type for the <type> parameter");
+		      Tcl_AppendResult(interp, buffer, (char *)NULL);  
+		      return (TCL_ERROR); 
+		}
 
 		if (type < 0 ) {
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);

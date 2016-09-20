@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
 #
@@ -107,7 +107,7 @@ for line in fin:
         elif authorLine == prevAuthorLine:
             pass
         else:
-            print(("\n" + authorLine))
+            print("\n" + authorLine)
 
         # Assemble the actual commit message line(s) and limit the line length
         # to 80 characters.

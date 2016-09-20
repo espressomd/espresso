@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import espressomd._system as es
@@ -45,7 +46,7 @@ class ParticleProperties(ut.TestCase):
         if inType != outType:
             return False
 
-        for k in inParams.keys():
+        for k in list(inParams.keys()):
             if k not in outParams:
                 return False
             if outParams[k] != inParams[k]:
@@ -54,7 +55,8 @@ class ParticleProperties(ut.TestCase):
         return True
 
     def setUp(self):
-        self.system.part[self.pid].pos = 0, 0, 0
+        if not self.system.part.exists(self.pid):
+            self.system.part.add(id=self.pid, pos=(0, 0, 0, 0))
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
         """Generates test cases for checking bond parameters set and gotten back
@@ -89,31 +91,29 @@ class ParticleProperties(ut.TestCase):
         0, HarmonicBond, {"r_0": 1.1, "k": 5.2})
     test_harmonic2 = generateTestForBondParams(
         0, HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
-    test_harmonic_dumbbell = generateTestForBondParams(
-        0, HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
-    test_harmonic_dumbbell2 = generateTestForBondParams(
-        0, HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5, "r_cut": 1.9})
+
+    if "ROTATION" in code_info.features():
+        test_harmonic_dumbbell = generateTestForBondParams(
+            0, HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
+        test_harmonic_dumbbell2 = generateTestForBondParams(
+            0, HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5, "r_cut": 1.9})
+
     test_dihedral = generateTestForBondParams(
         0, Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
-    test_angle_harm = generateTestForBondParams(
-        0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
-    test_angle_cos = generateTestForBondParams(
-        0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
-    test_angle_cossquare = generateTestForBondParams(
-        0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
-    test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
-    test_stretching_force = generateTestForBondParams(
-        0, StretchingForce, {"r0": 5.2, "ks": 3.2})
-    test_area_force_local = generateTestForBondParams(
-        0, AreaForceLocal, {"A0_l": 5.2, "ka_l": 3.2})
-    test_bending_force = generateTestForBondParams(
-        0, BendingForce, {"phi0": 5.2, "kb": 3.2})
-    test_volume_force = generateTestForBondParams(
-        0, VolumeForce, {"V0": 5.2, "kv": 3.2})
-    test_area_force_global = generateTestForBondParams(
-        0, AreaForceGlobal, {"A0_g": 5.2, "ka_g": 3.2})
-    test_stretchlin_force = generateTestForBondParams(
-        0, StretchlinForce, {"r0": 5.2, "kslin": 3.2})
+    
+    if "BOND_ANGLE" in espressomd.features():
+        test_angle_harm = generateTestForBondParams(
+            0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
+        test_angle_cos = generateTestForBondParams(
+            0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
+        test_angle_cossquare = generateTestForBondParams(
+            0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
+    if "LENNARD_JONES" in espressomd.features():
+        test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
+
+    if "TABULATED" in espressomd.features():
+      test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance", "filename":"lj1.tab"})
+
 
 
 if __name__ == "__main__":

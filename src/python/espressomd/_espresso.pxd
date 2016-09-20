@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 The ESPResSo project
+# Copyright (C) 2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,10 +21,7 @@
 # Define no variables here, as all variables should become part of a
 # specific class.
 #
-cdef extern from "tcl.h":
-    cdef struct Tcl_Interp:
-        pass
 
+from __future__ import print_function, absolute_import
 cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)
-    int mpi_gather_runtime_errors(Tcl_Interp * interp, int ret_state)

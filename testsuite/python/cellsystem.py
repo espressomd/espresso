@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,27 +18,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import FeneBond
 
 
 class CellSystem(ut.TestCase):
     S = espressomd.System()
 
-    def test_cellSystem(self):
-        self.S.cellSystem.setNsquare(useVerletLists=False)
-        s = self.S.cellSystem.getState()
-        self.assertEqual(s, {"useVerletLists": 0, "type": "nsquare"})
-        self.S.cellSystem.setLayered(nLayers=5)
-        s = self.S.cellSystem.getState()
-        self.assertEqual(s, {"type": "layered", "nLayers": 5})
+    def test_cell_system(self):
+        self.S.cell_system.set_n_square(use_verlet_lists=False)
+        s = self.S.cell_system.get_state()
+        self.assertEqual([s['use_verlet_lists'], s['type']], [0, "nsquare"])
+        self.S.cell_system.set_layered(n_layers=5)
+        s = self.S.cell_system.get_state()
+        self.assertEqual([s['type'], s['n_layers']], ["layered", 5])
 
-        self.S.cellSystem.setDomainDecomposition(useVerletLists=True)
-        s = self.S.cellSystem.getState()
+        self.S.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        s = self.S.cell_system.get_state()
+        
         self.assertEqual(
-            s, {"useVerletLists": 1, "type": "domainDecomposition"})
+            [s['use_verlet_lists'], s['type']], [1, "domain_decomposition"])
 
 
 if __name__ == "__main__":

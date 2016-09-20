@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2010,2011,2012,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -158,7 +158,6 @@ int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_particle_potential( char* filename );
 #endif
 int ek_print_vtk_lbforce(char* filename);
-int ek_print_vtk_reaction_tags(char* filename);
 int ek_lb_print_vtk_density(char* filename);
 int ek_lb_print_vtk_velocity(char* filename);
 int ek_init();
@@ -187,7 +186,7 @@ int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
 int ek_node_set_density(int species, int x, int y, int z, double density);
-float ek_calculate_net_charge(); 
+ekfloat ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 
 int ek_save_checkpoint(char* filename);
 int ek_load_checkpoint(char* filename);
@@ -197,6 +196,7 @@ void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int
 #endif
 
 #ifdef EK_REACTION
+int ek_print_vtk_reaction_tags(char* filename);
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 
                      float reaction_ct_rate, float reaction_fraction_0, float reaction_fraction_1, 

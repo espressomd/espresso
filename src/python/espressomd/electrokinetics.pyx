@@ -1,3 +1,4 @@
+from __future__ import print_function, absolute_import
 from libcpp cimport bool
 import numpy as np
 
@@ -14,7 +15,8 @@ IF ELECTROKINETICS == 1:
         int ek_print_vtk_potential(char * filename)
 
         int ek_print_vtk_lbforce(char * filename)
-        int ek_print_vtk_reaction_tags(char * filename)
+        IF EK_REACTION == 1:
+            int ek_print_vtk_reaction_tags(char * filename)
         int ek_lb_print_vtk_density(char * filename)
         int ek_lb_print_vtk_velocity(char * filename)
 
@@ -181,11 +183,11 @@ IF ELECTROKINETICS == 1:
     def print_lb_force_vtk(path):
         if ek_print_vtk_lbforce(path):
             raise Exception('EK output error', 'could not save lbforce VTK')
-
-    def print_reaction_tags_vtk(path):
-        if ek_print_vtk_reaction_tags(path):
-            raise Exception(
-                'EK output error', 'could not save reaction tags VTK')
+    IF EK_REACTION == 1:
+        def print_reaction_tags_vtk(path):
+            if ek_print_vtk_reaction_tags(path):
+                raise Exception(
+                    'EK output error', 'could not save reaction tags VTK')
 
     def print_lb_density_vtk(path):
         if ek_lb_print_vtk_density(path):

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -19,6 +19,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 
 #include "grid.hpp"
 #include "config.hpp"

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
+from .actors cimport Actor
 from globals cimport temperature
 
 IF DIPOLES == 1:
@@ -149,7 +150,7 @@ IF DP3M == 1:
             if resp:
                 raise Exception(
                     "failed to tune dipolar P3M parameters to required accuracy")
-            print log
+            print(log)
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,6 +26,7 @@
 #define _PRESSURE_HPP
 
 #include "utils.hpp"
+#include "debug.hpp"
 #include "integrate.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
@@ -108,7 +109,13 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
+	  force[0] = 0.0; force[1] = 0.0; force[2] = 0.0;
+	  p3m_add_pair_force(p1->p.q*p2->p.q, d, dist2, dist, force);
       virials.coulomb[0] += p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+	  for (k = 0; k<3; k++)
+		  for (l = 0; l<3; l++)
+			  p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+
       break;
 #endif
 
@@ -198,9 +205,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
         case TAB_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-      ostringstream msg;
-      msg <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-      runtimeError(msg);
+          runtimeErrorMsg() <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
 	  return;
       }
       break;
@@ -217,9 +222,7 @@ inline void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *
         case OVERLAP_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-          ostringstream msg;
-          msg <<"calc_bonded_force: overlapped bond type of atom " << p1->p.identity << " unknown\n";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"calc_bonded_force: overlapped bond type of atom " << p1->p.identity << " unknown\n";
           return;
       }
       break;
@@ -279,9 +282,7 @@ inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *
         calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       default:
-        ostringstream msg;
-        msg <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"calc_bonded_force: tabulated bond type of atom " << p1->p.identity << " unknown\n";
         return;
       }
       break;
@@ -321,9 +322,7 @@ inline void add_bonded_virials(Particle *p1)
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the cutoff, see calc_maximal_cutoff()
       if ((type_num==BONDED_IA_HARMONIC)&&(iaparams->p.harmonic.r_cut>0)) return;
-      ostringstream msg;
-      msg <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"bond broken between particles " << p1->p.identity << " and " << p1->bl.e[i-1] << " (particles not stored on the same node)";
       return;
     }
 
@@ -462,9 +461,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
         i = i + 4;
       }
       else {
-          ostringstream msg;
-          msg <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
-          runtimeError(msg);
+        runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
       }
     }
 #endif
@@ -479,9 +476,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     }
 #endif
     else {
-        ostringstream msg;
-        msg <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
-        runtimeError(msg);
+      runtimeErrorMsg() <<"add_three_body_bonded_stress: match not found for particle " << p1->p.identity << ".\n";
     }
   } 
 }

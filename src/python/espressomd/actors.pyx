@@ -1,5 +1,6 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from highlander import ThereCanOnlyBeOne
+from .highlander import ThereCanOnlyBeOne
 
 
 cdef class Actor:
@@ -9,9 +10,19 @@ cdef class Actor:
                        MagnetostaticInteraction=False,
                        MagnetostaticExtension=False,
                        HydrodynamicInteraction=False,
-                       ElectrostaticExtensions=False)
+                       ElectrostaticExtensions=False,
+                       Scafacos=True)
 
-    def __cinit__(self, *args, **kwargs):
+    # __getstate__ and __setstate__ define the pickle interaction
+    def __getstate__(self):
+        odict = self._params.copy()
+        return odict
+
+    def __setstate__(self, params):
+        self._params = params
+        self._set_params_in_es_core()
+
+    def __init__(self, *args, **kwargs):
         self._isactive = False
         self._params = self.default_params()
         self.system = None
@@ -28,6 +39,7 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
+        self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()
@@ -41,6 +53,11 @@ cdef class Actor:
     def _deactivate(self):
         self._deactivate_method()
         self._isactive = False
+        inter = self._get_interaction_type()
+        if not Actor.active_list[inter]:
+            raise Exception(
+                "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+        Actor.active_list[inter] = False
 
     def is_valid(self):
         """Check, if the data stored in the instance still matches what is in Espresso"""
@@ -83,11 +100,22 @@ cdef class Actor:
         # Put in values given by the user
         self._set_params_in_es_core()
 
+    def __str__(self):
+        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+
     def _get_interaction_type(self):
-        return self.__class__.__bases__[0].__name__
+        bases = self.class_lookup(self.__class__)
+        for i in range(len(bases)):
+            if bases[i].__name__ in Actor.active_list:
+                return bases[i].__name__
+
+    def class_lookup(self, cls):
+        c = list(cls.__bases__)
+        for base in c:
+            c.extend(self.class_lookup(base))
+        return c
 
     def is_active(self):
-        print self.__class__.__name__, self._isactive
         return self._isactive
 
     def valid_keys(self):
@@ -139,15 +167,24 @@ class Actors:
             raise ThereCanOnlyBeOne(actor)
 
     def __str__(self):
-        print "Active Actors:"
+        print("Active Actors:")
         for actor in Actors.active_actors:
-            print actor
+            print(actor)
         return ""
 
-    def get(self):
-        # for actor in Actors.activeActors:
-        #     print actor.__class__.__name__
-        return "%s" % Actors.active_actors
+    def __getitem__(self, key):
+        return self.active_actors[key]
 
-    def deactivate(self, actor):
+    def __len__(self):
+        return len(self.active_actors)
+
+    def __iter__(self):
+        for a in self.active_actors:
+            yield a
+
+    def __delitem__(self, idx):
+        actor = self[idx]
+        if not actor in self.active_actors:
+            raise Exception("Actor is not active")
         actor._deactivate()
+        self.active_actors.remove(actor)

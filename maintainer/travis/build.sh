@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -132,7 +133,7 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-MYCONFIG_DIR=$srcdir/maintainer/jenkins/configs
+MYCONFIG_DIR=$srcdir/maintainer/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
 else

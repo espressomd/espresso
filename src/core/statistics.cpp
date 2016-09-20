@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -48,7 +48,6 @@
 #include <string>
 #include <map>
 
-
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -96,9 +95,9 @@ double mindist(IntList *set1, IntList *set2)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, partCfg[i].p.type))) ||
           ((in_set & 2) && (!set1 || intlist_contains(set1, partCfg[i].p.type))))
-        mindist = dmin(mindist, min_distance2(pt, partCfg[i].r.p));
+        mindist = std::min(mindist, min_distance2(pt, partCfg[i].r.p));
   }
-  mindist = sqrt(mindist);
+  mindist = std::sqrt(mindist);
 
   return mindist;
 }
@@ -240,24 +239,6 @@ void predict_momentum_particles(double *result)
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * @param momentum Result for this processor (Output)
- */
-void momentum_calc(double *momentum) 
-{
-    double momentum_fluid[3] = { 0., 0., 0. };
-    double momentum_particles[3] = { 0., 0., 0. };
-
-    mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
-#ifdef LB
-    mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
-#endif
-
-    momentum[0] = momentum_fluid[0] + momentum_particles[0];
-    momentum[1] = momentum_fluid[1] + momentum_particles[1];
-    momentum[2] = momentum_fluid[2] + momentum_particles[2];
-
-}
 
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum calculation
@@ -274,60 +255,65 @@ std::vector<double> calc_linear_momentum(int include_particles, int include_lbfl
       linear_momentum[2] += momentum_particles[2];
     }
     if (include_lbfluid) {
-#ifdef LB
       double momentum_fluid[3] = { 0., 0., 0. };
-      mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+#ifdef LB
+      if(lattice_switch & LATTICE_LB) {
+        mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+      }
+#endif
+#ifdef LB_GPU
+      if(lattice_switch & LATTICE_LB_GPU) {
+        lb_calc_fluid_momentum_GPU(momentum_fluid);
+      }
+#endif
       linear_momentum[0] += momentum_fluid[0];
       linear_momentum[1] += momentum_fluid[1];
       linear_momentum[2] += momentum_fluid[2];
-#endif
     }
     return linear_momentum;
 }
 
-void centermass(int type, double *com)
+
+std::vector<double> centerofmass(int type)
 {
-  int i, j;
-  double M = 0.0;
-  com[0]=com[1]=com[2]=0.;
-   	
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if ((partCfg[j].p.type == type) || (type == -1)) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].r.p[i]*(partCfg[j]).p.mass;
-      }
-      M += (partCfg[j]).p.mass;
+    std::vector<double> com (3);
+    double mass = 0.0;
+    
+    updatePartCfg(WITHOUT_BONDS);
+    for (int i=0; i<n_part; i++) {
+        if ((partCfg[i].p.type == type) || (type == -1)) {
+            for (int j=0; j<3; j++) {
+                com[j] += partCfg[i].r.p[j]*(partCfg[i]).p.mass;
+            }
+            mass += (partCfg[i]).p.mass;
+        }
     }
-  }
-  
-  for (i=0; i<3; i++) {
-    com[i] /= M;
-  }
-  return;
+    for (int j=0; j<3; j++) com[j] /= mass;
+    return com;
 }
 
-void centermass_vel(int type, double *com)
+
+std::vector<double> centerofmass_vel(int type)
 {
-  /*center of mass velocity scaled with time_step*/
-  int i, j;
-  int count = 0;
-  com[0]=com[1]=com[2]=0.;
+    /*center of mass velocity scaled with time_step*/
+    std::vector<double> com_vel (3);
+    int i, j;
+    int count = 0;
 
-  updatePartCfg(WITHOUT_BONDS);
-  for (j=0; j<n_part; j++) {
-    if (type == partCfg[j].p.type) {
-      for (i=0; i<3; i++) {
-      	com[i] += partCfg[j].m.v[i];
-      }
-      count++;
+    updatePartCfg(WITHOUT_BONDS);
+    for (j=0; j<n_part; j++) {
+        if (type == partCfg[j].p.type) {
+            for (i=0; i<3; i++) {
+            	com_vel[i] += partCfg[j].m.v[i];
+            }
+            count++;
+        }
     }
-  }
 
-  for (i=0; i<3; i++) {
-    com[i] /= count;
-  }
-  return;
+    for (i=0; i<3; i++) {
+        com_vel[i] /= count;
+    }
+    return com_vel;
 }
 
 void angularmomentum(int type, double *com)
@@ -352,15 +338,15 @@ void angularmomentum(int type, double *com)
   return;
 }
 
-void  momentofinertiamatrix(int type, double *MofImatrix)
+void momentofinertiamatrix(int type, double* MofImatrix)
 {
   int i,j,count;
-  double p1[3],com[3],massi;
-
+  double p1[3],massi;
+  std::vector<double> com (3);
   count=0;
   updatePartCfg(WITHOUT_BONDS);
   for(i=0;i<9;i++) MofImatrix[i]=0.;
-  centermass(type, com);
+  com = centerofmass(type);
   for (j=0; j<n_part; j++) {
     if (type == partCfg[j].p.type) {
       count ++;
@@ -383,22 +369,22 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
   return;
 }
 
-void calc_gyration_tensor(int type, double **_gt)
+void calc_gyration_tensor(int type, std::vector<double>& gt)
 {
   int i, j, count;
-  double com[3];
+  std::vector<double> com (3);
   double eva[3],eve0[3],eve1[3],eve2[3];
-  double *gt=NULL, tmp;
+  double tmp;
   double Smatrix[9],p1[3];
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  *_gt = gt = (double*)Utils::realloc(gt,16*sizeof(double)); 
+  gt.resize(16);
 
   updatePartCfg(WITHOUT_BONDS);
 
   /* Calculate the position of COM */
-  centermass(type,com);
+  com = centerofmass(type);
 
   /* Calculate the gyration tensor Smatrix */
   count=0;
@@ -492,10 +478,10 @@ double distto(double p[3], int pid)
   for (i=0; i<n_part; i++) {
     if (pid != partCfg[i].p.identity) {
       get_mi_vector(d, p, partCfg[i].r.p);
-      mindist = dmin(mindist, sqrlen(d));
+      mindist = std::min(mindist, sqrlen(d));
     }
   }
-  return sqrt(mindist);
+  return std::sqrt(mindist);
 }
 
 void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result) {
@@ -652,6 +638,12 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
+void calc_rdf(std::vector<int> & p1_types, std::vector<int> & p2_types,
+	      double r_min, double r_max, int r_bins, std::vector<double> & rdf)
+{
+  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+           r_min, r_max, r_bins, &rdf[0]);
+}
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
@@ -703,6 +695,14 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
     bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
+}
+
+
+void calc_rdf_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                 double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+              r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -771,6 +771,13 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   }
   free(rdf_tmp);
 
+}
+
+void calc_rdf_intermol_av(std::vector<int> & p1_types, std::vector<int> & p2_types,
+                          double r_min, double r_max, int r_bins, std::vector<double> & rdf, int n_conf)
+{
+  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
+                       r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
@@ -843,15 +850,15 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 
 }
 
-void calc_structurefactor(int type, int order, double **_ff) {
-  int i, j, k, n, qi, p, order2;
+void calc_structurefactor(int *p_types, int n_types, int order, double **_ff) {
+  int i, j, k, n, qi, p, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff=NULL;
   
   order2 = order*order;
   *_ff = ff = (double*)Utils::realloc(ff,2*order2*sizeof(double));
   twoPI_L = 2*PI/box_l[0];
   
-  if ((type < 0) || (type > n_particle_types)) { fprintf(stderr,"WARNING: Type %i does not exist!",type); fflush(NULL); errexit(); }
+  if ((n_types < 0) || (n_types > n_particle_types)) { fprintf(stderr,"WARNING: Wrong number of particle types!"); fflush(NULL); errexit(); }
   else if (order < 1) { fprintf(stderr,"WARNING: parameter \"order\" has to be a whole positive number"); fflush(NULL); errexit(); }
   else {
     for(qi=0; qi<2*order2; qi++) {
@@ -864,11 +871,13 @@ void calc_structurefactor(int type, int order, double **_ff) {
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
 	    for(p=0; p<n_part; p++) {
-	      if (partCfg[p].p.type == type) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum+= cos(qr);
-		S_sum+= sin(qr);
-	      }
+	      for(t=0; t<n_types; t++) {
+		if (partCfg[p].p.type == p_types[t]) {
+		  qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		  C_sum+= cos(qr);
+		  S_sum+= sin(qr);
+		}
+              }
 	    }
 	    ff[2*n-2]+= C_sum*C_sum + S_sum*S_sum;
 	    ff[2*n-1]++;
@@ -878,7 +887,9 @@ void calc_structurefactor(int type, int order, double **_ff) {
     }
     n = 0;
     for(p=0; p<n_part; p++) {
-      if (partCfg[p].p.type == type) n++;
+      for(t=0; t<n_types; t++) {
+        if (partCfg[p].p.type == p_types[t]) n++;
+      }
     }
     for(qi=0; qi<order2; qi++) 
       if (ff[2*qi+1]!=0) ff[2*qi]/= n*ff[2*qi+1];
@@ -1403,9 +1414,7 @@ void analyze_activate(int ind) {
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
     if (place_particle(i, pos)==ES_ERROR) {
-        ostringstream msg;
-        msg <<"failed upon replacing particle " << i << "  in Espresso";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"failed upon replacing particle " << i << "  in Espresso";
     }
   }
 }

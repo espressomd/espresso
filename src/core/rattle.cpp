@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -147,9 +147,7 @@ void compute_pos_corr_vec(int *repeat_)
 	  cnt++;
 	  p2 = local_particles[p1->bl.e[k++]];
       if (!p2) {
-          ostringstream msg;
-          msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
 	    return;
 	  }
 
@@ -230,9 +228,7 @@ void correct_pos_shake()
        cnt++;
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
-       ostringstream msg;
-       msg <<"RATTLE failed to converge after " << cnt << " iterations";
-       runtimeError(msg);
+       runtimeErrorMsg() <<"RATTLE failed to converge after " << cnt << " iterations";
    }
 
    check_resort_particles();
@@ -301,9 +297,7 @@ void compute_vel_corr_vec(int *repeat_)
 	      {
 		p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
-            ostringstream msg;
-            msg <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
-            runtimeError(msg);
+            runtimeErrorMsg() <<"rigid bond broken between particles " << p1->p.identity << " and " << p1->bl.e[k-1] << " (particles not stored on the same node)";
 		  return;
 		}
 
@@ -445,9 +439,7 @@ void print_bond_len()
              {
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
            if (!p2) {
-           ostringstream msg;
-           msg <<"rigid bond broken between particles " << p[i].p.identity << " and " << p[i].bl.e[k-1] << " (particles not stored on the same node)";
-           runtimeError(msg);
+           runtimeErrorMsg() <<"rigid bond broken between particles " << p[i].p.identity << " and " << p[i].bl.e[k-1] << " (particles not stored on the same node)";
 		 return;
 	       }
 

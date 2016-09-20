@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,10 +23,14 @@
  */
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
 #include "interaction_data_tcl.hpp"
 #include "interaction_data.hpp"
 #include "communication.hpp"
 #include "global.hpp"
+#include "forcecap.hpp"
 
 #include "comforce_tcl.hpp"
 #include "comfixed_tcl.hpp"
@@ -80,6 +84,9 @@
 #include "reaction_field_tcl.hpp"
 #include "actor/Mmm1dgpu_tcl.hpp"
 #include "actor/Ewaldgpu_tcl.hpp"
+#ifdef SCAFACOS
+#include "scafacos.hpp"
+#endif
 
 // Magnetostatics
 #include "mdlc_correction_tcl.hpp"
@@ -125,6 +132,87 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 /********************************************************************************/
 /*                                 electrostatics                               */
 /********************************************************************************/
+
+#ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv) {
+  std::list<std::string> methods = Scafacos::available_methods();
+  
+  for(auto &m: methods) {
+    Tcl_AppendResult(interp, m.c_str(), " ", 0);
+  }
+
+  return TCL_OK;
+}
+template <bool dipolar>
+int tclcommand_inter_parse_scafacos(Tcl_Interp *interp, int argc, char ** argv) {
+  if(argc < 1)
+    return TCL_ERROR;
+
+  // Scafacos can be used either for charges or for dipoles, not for both.
+  if (dipolar) {
+    if (coulomb.method==COULOMB_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for charges.";
+      return TCL_ERROR;
+    }
+  }
+  else 
+  {
+    #ifdef SCAFACOS_DIPOLES
+    if (coulomb.Dmethod==DIPOLAR_SCAFACOS) {
+      runtimeErrorMsg() << "Scafacos already in use for dipoles.";
+      return TCL_ERROR;
+    }
+    #endif
+  }
+
+
+
+
+
+  
+  const std::string method(argv[0]);
+  
+  std::stringstream params;
+
+  if(argc > 1) {
+    for(int i = 1; i < argc; i++) {
+      params << std::string(argv[i]);
+      if(i != (argc-1))
+        params << ",";
+    }
+  }
+
+  // Coulomb ia
+  if (! dipolar)
+  {
+    coulomb.method  = COULOMB_SCAFACOS;
+  }
+  else
+  // Dipolar interaction
+  {
+    #ifdef SCAFACOS_DIPOLES
+      coulomb.Dmethod  = DIPOLAR_SCAFACOS;
+    #else
+      runtimeErrorMsg() << "Dipolar support for SCAFACOS not compiled in. Activate via SCAFACOS_DIPOLES in myconfig.hpp.";
+    #endif
+  }
+
+  mpi_bcast_coulomb_params();
+  Scafacos::set_parameters(method, params.str(),dipolar);
+
+
+  
+  return TCL_OK;
+}
+
+int tclprint_to_result_scafacos(Tcl_Interp *interp) {
+  std::string p = Scafacos::get_parameters();
+  Tcl_AppendResult(interp, "scafacos ", 0);
+  Tcl_AppendResult(interp, p.c_str(), 0);
+  return TCL_OK;
+}
+
+#endif
 
 int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
@@ -212,6 +300,10 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_COULOMB("ewaldgpu", tclcommand_inter_coulomb_parse_ewaldgpu);
   #endif
 
+  #ifdef SCAFACOS
+  REGISTER_COULOMB("scafacos", tclcommand_inter_parse_scafacos<false>);
+  #endif
+  
   /* fallback */
   coulomb.method  = COULOMB_NONE;
   coulomb.bjerrum = 0.0;
@@ -301,6 +393,10 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   
 #ifdef DIPOLAR_DIRECT_SUM
   REGISTER_DIPOLAR("dds-gpu", tclcommand_inter_magnetic_parse_dds_gpu);
+#endif
+
+#ifdef SCAFACOS_DIPOLES
+  REGISTER_DIPOLAR("scafacos", tclcommand_inter_parse_scafacos<true>);
 #endif
 
   /* fallback */
@@ -575,6 +671,9 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
 #ifdef EWALD_GPU
   case COULOMB_EWALD_GPU: tclprint_to_result_ewaldgpu(interp); break;
 #endif
+#ifdef SCAFACOS
+    case COULOMB_SCAFACOS: tclprint_to_result_scafacos(interp); break;
+#endif
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -612,6 +711,9 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
 #ifdef DIPOLAR_DIRECT_SUM
   case DIPOLAR_DS_GPU: tclprint_to_result_dds_gpu(interp); break;
+#endif
+#ifdef SCAFACOS_DIPOLES
+    case DIPOLAR_SCAFACOS: tclprint_to_result_scafacos(interp); break;
 #endif
   default: break;
   }

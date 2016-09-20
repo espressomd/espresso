@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -348,9 +348,7 @@ void lb_reinit_parameters_gpu() {
     for (dir=0;dir<3;dir++) {
     /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
-          ostringstream msg;
-          msg <<"Lattice spacing lbpar_gpu.agrid= "<< lbpar_gpu.agrid << " is incompatible with box_l[" << dir << "]=" << box_l[dir];
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice spacing lbpar_gpu.agrid= "<< lbpar_gpu.agrid << " is incompatible with box_l[" << dir << "]=" << box_l[dir];
       }
     }
     
@@ -416,25 +414,17 @@ void lb_GPU_sanity_checks()
 {
   if(this_node == 0){
     if (lbpar_gpu.agrid < 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann agrid not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann agrid not set";
     }
     if (lbpar_gpu.tau < 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann time step not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann time step not set";
     }
     for(int i=0;i<LB_COMPONENTS;i++){
       if (lbpar_gpu.rho[0] < 0.0) {
-          ostringstream msg;
-          msg <<"Lattice Boltzmann fluid density not set";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice Boltzmann fluid density not set";
       }
       if (lbpar_gpu.viscosity[0] < 0.0) {
-          ostringstream msg;
-          msg <<"Lattice Boltzmann fluid viscosity not set";
-          runtimeError(msg);
+          runtimeErrorMsg() <<"Lattice Boltzmann fluid viscosity not set";
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -50,6 +50,9 @@
  *  For more information see \ref verlet.cpp "verlet.c".
  */
 #include "particle_data.hpp"
+#include "interaction_data.hpp"
+#include "integrate.hpp"
+
 
 /************************************************
  * data types
@@ -103,5 +106,33 @@ void calculate_verlet_virials(int v_comp);
 /*@}*/
 
 
+
+
+/** Returns true if the particles are to be considered for short range 
+    interactions */
+inline bool verlet_list_criterion(const Particle* p1, const Particle* p2,double dist2)
+{
+  if (dist2 > SQR(max_cut +skin))
+    return false;
+
+    
+  // Within short-range distance (incl dpd and the like)
+  if(dist2 <= SQR(get_ia_param(p1->p.type, p2->p.type)->max_cut + skin))
+    return true;
+
+  // Within real space cutoff of electrostatics and both charged
+  #ifdef ELECTROSTATICS
+    if ((dist2 <= SQR(coulomb_cutoff + skin)) && (p1->p.q!=0) && (p2->p.q!=0))
+      return true;
+  #endif
+
+  // Within dipolar cutoff and both cary magnetic moments
+  #ifdef DIPOLES
+  if ((dist2 <= SQR(dipolar_cutoff+skin)) && (p1->p.dipm!=0) && (p2->p.dipm!=0))
+    return true;
+  #endif
+  
+  return false;
+}
 
 #endif

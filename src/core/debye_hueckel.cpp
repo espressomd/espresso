@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,11 +22,15 @@
  *
  *  Implementation of \ref debye_hueckel.hpp
  */
-#include "utils.hpp"
-#include "debye_hueckel.hpp"
-#include "communication.hpp"
+
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
+
+#include "utils.hpp"
+#include "debug.hpp"
+#include "debye_hueckel.hpp"
+#include "communication.hpp"
 
 int dh_set_params(double kappa, double r_cut)
 {

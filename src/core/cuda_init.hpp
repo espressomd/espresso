@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -96,7 +96,7 @@ int cuda_get_device();
 
 int cuda_test_device_access();
 
-/** Gather unique list of CUDA devices from nodes 
+/** Gather unique list of CUDA devices on all nodes 
     @return vector of device on master, empty vector on other nodes.
 */
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013,2014 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -25,7 +25,7 @@ endif
 
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspresso.la
+lib_LTLIBRARIES = libEspresso.la
 # List the sources of the Espresso binary here
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
@@ -36,7 +36,7 @@ libEspresso_la_SOURCES = \
 	comfixed.cpp comfixed.hpp \
 	comforce.hpp comforce.cpp \
 	config.hpp \
-	constraint.cpp constraint.hpp \
+	constraint.cpp constraints.hpp \
 	cuda_interface.cpp cuda_interface.hpp\
 	cuda_init.hpp cuda_init.cpp\
 	debug.cpp debug.hpp \
@@ -88,7 +88,10 @@ libEspresso_la_SOURCES = \
 	Ringbuffer.cpp Ringbuffer.hpp \
 	rotate_system.cpp rotate_system.hpp \
 	rotation.cpp rotation.hpp \
+	RuntimeError.cpp RuntimeError.hpp \
 	RuntimeErrorCollector.cpp RuntimeErrorCollector.hpp \
+	RuntimeErrorStream.cpp RuntimeErrorStream.hpp \
+	scafacos.cpp scafacos.hpp \
 	specfunc.cpp specfunc.hpp \
 	statistics.cpp statistics.hpp \
 	statistics_chain.cpp statistics_chain.hpp \
@@ -114,7 +117,9 @@ libEspresso_la_SOURCES = \
 	integrate_sd.hpp integrate_sd.cpp \
 	EspressoSystemInterface.hpp EspressoSystemInterface.cpp \
 	PdbParser.cpp PdbParser.hpp \
-	RunningAverage.cpp RunningAverage.hpp
+	utils/statistics/RunningAverage.hpp \
+	mpiio.cpp mpiio.hpp \
+	MpiCallbacks.cpp MpiCallbacks.hpp
 
 # nonbonded potentials and forces
 libEspresso_la_SOURCES += \
@@ -194,7 +199,7 @@ libEspresso_la_SOURCES += \
 	actor/HarmonicWell.cpp actor/HarmonicWell.hpp \
 	actor/HarmonicOrientationWell.cpp actor/HarmonicOrientationWell.hpp \
 	actor/Mmm1dgpuForce.cpp actor/Mmm1dgpuForce.hpp \
-	actor/EwaldgpuForce.cpp actor/EwaldgpuForce.hpp actor/EwaldgpuForce_ShortRange.hpp \
+	actor/EwaldGPU.cpp actor/EwaldGPU.hpp actor/EwaldGPU_ShortRange.hpp \
 	actor/DipolarDirectSum.cpp actor/DipolarDirectSum.hpp \
 	actor/mmm-common_cuda.hpp actor/specfunc_cuda.hpp
 
@@ -235,7 +240,7 @@ CUDA_SOURCE_FILES = \
 	integrate_sd_matrix.cu \
 	integrate_sd_cuda_device.cu \
 	actor/Mmm1dgpuForce_cuda.cu \
-	actor/EwaldgpuForce_cuda.cu \
+	actor/EwaldGPU_cuda.cu \
 	actor/HarmonicWell_cuda.cu \
 	immersed_boundary/ibm_cuda.cu \
 	actor/DipolarDirectSum_cuda.cu \
@@ -253,8 +258,8 @@ include ./actor/$(DEPDIR)/HarmonicWell_cuda.Plo
 include ./actor/$(DEPDIR)/HarmonicOrientationWell_cuda.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce.Plo
 include ./actor/$(DEPDIR)/Mmm1dgpuForce_cuda.Plo
-include ./actor/$(DEPDIR)/EwaldgpuForce.Plo
-include ./actor/$(DEPDIR)/EwaldgpuForce_cuda.Plo
+include ./actor/$(DEPDIR)/EwaldGPU.Plo
+include ./actor/$(DEPDIR)/EwaldGPU_cuda.Plo
 
 LOFILES = $(CUDA_SOURCE_FILES:.cu=.lo)
 
@@ -363,11 +368,6 @@ config-version.cpp: FORCE
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
-if MPI_FAKE
-libEspresso_la_SOURCES += mpifake/mpi.h mpifake/mpi.cpp
-# mpifake should come before any system includes
-AM_CPPFLAGS = -I$(srcdir)/mpifake
-endif
 
 .PHONY: FORCE
 FORCE:

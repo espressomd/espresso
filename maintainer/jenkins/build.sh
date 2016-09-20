@@ -30,7 +30,7 @@ if [ "$myconfig" = "default" ]; then
         rm $builddir/myconfig.hpp
     fi
 else
-    myconfig_file=$srcdir/maintainer/jenkins/configs/$myconfig.hpp
+    myconfig_file=$srcdir/maintainer/configs/$myconfig.hpp
     if [ ! -e "$myconfig_file" ]; then
         echo "$myconfig_file does not exist!"
         exit 1

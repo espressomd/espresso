@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport utils
+from __future__ import print_function, absolute_import
+from . cimport utils
 include "myconfig.pxi"
-from actors import Actor
+from .actors import Actor
 
 IF DIPOLES == 1:
     class MagnetostaticExtension(Actor):
@@ -33,10 +34,10 @@ IF DIPOLES == 1:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params["maxPWerror"], 0, False, "inf", True)
+                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params["gap_size"], 0, False, "inf", True)
+                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):

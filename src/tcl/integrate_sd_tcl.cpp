@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -121,7 +121,7 @@ int tclcommand_sd_test(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
 int tclcommand_integrate_sd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
-  #ifdef SD
+  #if defined(SD) || defined(BD)
   int  n_steps;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));

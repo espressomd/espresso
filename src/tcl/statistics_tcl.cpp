@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -52,6 +52,8 @@
 #include <vector>
 #include <string>
 #include <map>
+
+using std::ostringstream;
 
 /** Set the topology. See \ref topology_tcl.cpp */
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
@@ -116,7 +118,8 @@ static int tclcommand_analyze_parse_reference_point(Tcl_Interp *interp, int *arg
 
 void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, double given_max) {
     int i, j, p_count, dist_count, ind;
-    double min, max, bin_width, inv_bin_width, com[3], vel;
+    std::vector<double> com_vel (3);
+    double min, max, bin_width, inv_bin_width, vel;
     long distribution[bins];
     char buffer[2 * TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 256];
 
@@ -127,13 +130,13 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
         distribution[i] = 0;
     }
 
-    centermass_vel(type, com);
+    com_vel = centerofmass_vel(type);
 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             p_count++;
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 if (min > vel) {
                     min = vel;
                 }
@@ -160,7 +163,7 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type, int bins, 
     for (i = 0; i < n_part; i++) {
         if (partCfg[i].p.type == type) {
             for (j = 0; j < 3; j++) {
-                vel = partCfg[i].m.v[j] - com[j];
+                vel = partCfg[i].m.v[j] - com_vel[j];
                 ind = (int) ((vel - min) * inv_bin_width);
                 distribution[ind]++;
                 dist_count++;
@@ -1078,7 +1081,7 @@ static int tclcommand_analyze_parse_mindist(Tcl_Interp *interp, int argc, char *
 
 static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze centermass [<type>]' */
-    double com[3];
+    std::vector<double> com(3);
     char buffer[3 * TCL_DOUBLE_SPACE + 3];
     int p1;
 
@@ -1094,7 +1097,7 @@ static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, cha
         return (TCL_ERROR);
     }
 
-    centermass(p1, com);
+    com = centerofmass(p1);
 
     sprintf(buffer, "%f %f %f", com[0], com[1], com[2]);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
@@ -1232,7 +1235,7 @@ static int tclcommand_analyze_parse_momentofinertiamatrix(Tcl_Interp *interp, in
 static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv) {
     /* 'analyze gyration_tensor' */
     char buffer[6 * TCL_DOUBLE_SPACE + 10];
-    double *gt;
+    std::vector<double> gt;
     int type;
     /* parse arguments */
     if (argc == 0) {
@@ -1255,7 +1258,7 @@ static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc
         Tcl_AppendResult(interp, "usage: analyze gyration_tensor [<typeid>]", (char *) NULL);
         return (TCL_ERROR);
     }
-    calc_gyration_tensor(type, &gt);
+    calc_gyration_tensor(type, gt);
 
     Tcl_ResetResult(interp);
     sprintf(buffer, "%f", gt[3]); /* Squared Radius of Gyration */
@@ -1279,7 +1282,6 @@ static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc
     sprintf(buffer, "%f %f %f", gt[13], gt[14], gt[15]); /* Eigenvector of eva2 */
     Tcl_AppendResult(interp, buffer, " }", (char *) NULL);
 
-    free(gt);
     return (TCL_OK);
 }
 
@@ -1494,7 +1496,7 @@ static int tclcommand_analyze_parse_Vkappa(Tcl_Interp *interp, int argc, char **
         } else {
             Tcl_AppendResult(interp, "usage: analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }] ", (char *) NULL);
             return TCL_ERROR;
-        } else {
+        } else { // <- WTF?  Why is there a second `else'?
         Vkappa.Vk1 += box_l[0] * box_l[1] * box_l[2];
         Vkappa.Vk2 += SQR(box_l[0] * box_l[1] * box_l[2]);
         Vkappa.avk += 1.0;
@@ -1802,25 +1804,25 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
 }
 
 int tclcommand_analyze_parse_structurefactor(Tcl_Interp *interp, int argc, char **argv) {
-    /* 'analyze { stucturefactor } <type> <order>' */
+    /* 'analyze { stucturefactor } <type_list> <order>' */
     /***********************************************************************************************************/
     char buffer[2 * TCL_DOUBLE_SPACE + 4];
+    IntList p;
     int i, type, order;
     double qfak, *sf;
-    if (argc < 2) {
-        Tcl_AppendResult(interp, "Wrong # of args! Usage: analyze structurefactor <type> <order> [<chain_start> <n_chains> <chain_length>]",
+    
+    init_intlist(&p);
+    
+    if (argc < 2 || (!ARG0_IS_INTLIST(p)) || (!ARG1_IS_I(order))) {
+        Tcl_AppendResult(interp, "Usage: analyze structurefactor <type_list> <order> [<chain_start> <n_chains> <chain_length>]",
                 (char *) NULL);
         return (TCL_ERROR);
-    } else {
-        if (!ARG0_IS_I(type))
-            return (TCL_ERROR);
-        if (!ARG1_IS_I(order))
-            return (TCL_ERROR);
-        argc -= 2;
-        argv += 2;
     }
+    argc -= 2;
+    argv += 2;
+    
     updatePartCfg(WITHOUT_BONDS);
-    calc_structurefactor(type, order, &sf);
+    calc_structurefactor(p.e, p.max, order, &sf);
 
     qfak = 2.0 * PI / box_l[0];
     for (i = 0; i < order * order; i++) {
@@ -2436,30 +2438,25 @@ static int tclcommand_analyze_parse_mol(Tcl_Interp *interp, int argc, char **arg
 
 static int tclcommand_analyze_parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv) {
     char buffer[TCL_DOUBLE_SPACE];
-    double momentum[3] = {0., 0., 0.};
-
-    momentum_calc(momentum);
+    std::vector<double> momentum (3);
 
     if (argc == 0) {
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,1);
     } else if (ARG0_IS_S("particles")) {
-        mpi_gather_stats(4, momentum, NULL, NULL, NULL);
-        Tcl_PrintDouble(interp, momentum[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-        Tcl_PrintDouble(interp, momentum[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *) NULL);
+        momentum = calc_linear_momentum(1,0);
+    } else if (ARG0_IS_S("lbfluid")) {
+        momentum = calc_linear_momentum(0,1);
     } else {
         Tcl_AppendResult(interp, "unknown feature of: analyze momentum",
                 (char *) NULL);
         return TCL_ERROR;
     }
+    Tcl_PrintDouble(interp, momentum[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, momentum[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
 
     return TCL_OK;
 }
@@ -2840,7 +2837,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
     REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
     REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
 #ifdef CONFIGTEMP
-    REGISTER_ANALYSIS_WARN("configtemp", tclcommand_analyze_parse_and_print_configtemp)
+    REGISTER_ANALYSIS("configtemp", tclcommand_analyze_parse_and_print_configtemp);
 #endif
     else {
         /* the default */

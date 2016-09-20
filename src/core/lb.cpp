@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
   Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -29,6 +29,7 @@
 
 #include <mpi.h>
 #include <cstdio>
+#include <iostream>
 #include "utils.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -377,8 +378,6 @@ int lb_lbfluid_set_friction(double * p_friction)
 int lb_lbfluid_get_friction(double * p_friction)
 {
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_friction[ii] <= 0 )
-            return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_friction[ii] = (double)lbpar_gpu.friction[ii];
@@ -430,10 +429,8 @@ int lb_lbfluid_set_agrid(double p_agrid){
     for (int dir=0;dir<3;dir++) {
       /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
-          ostringstream msg;
-          msg <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
+          runtimeErrorMsg() <<"Lattice spacing p_agrid= " << p_agrid << " is incompatible with box_l[" << dir << "]="
                 << box_l[dir] << ", factor=" << tmp[dir] << " err= " << fabs(box_l[dir]-tmp[dir]*p_agrid);
-          runtimeError(msg);
       }
     }
     lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
@@ -520,8 +517,6 @@ int lb_lbfluid_set_ext_force(int component, double p_fx, double p_fy, double p_f
 
 int lb_lbfluid_get_density(double *p_dens) {
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_dens[ii] <= 0 )
-      return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_dens[ii] = (double)lbpar_gpu.rho[ii];
@@ -537,8 +532,6 @@ int lb_lbfluid_get_density(double *p_dens) {
 
 int lb_lbfluid_get_visc(double* p_visc){
   for (int ii=0;ii<LB_COMPONENTS;ii++){
-    if ( p_visc[ii] <= 0 )
-      return -1;
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
       p_visc[ii] = (double)lbpar_gpu.viscosity[ii];
@@ -753,7 +746,7 @@ int lb_lbfluid_print_vtk_density(char** filename) {
 }
 
 
-int lb_lbfluid_print_vtk_velocity(char* filename) {
+int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vector<int> bb2) {
     FILE* fp = fopen(filename, "w");
 
     if(fp == NULL)
@@ -761,62 +754,79 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
         return 1;
     }
 
+    std::vector<int> bb_low;
+    std::vector<int> bb_high;
+
+    for(std::vector<int>::iterator val1 = bb1.begin(), val2 = bb2.begin(); val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2)
+    {
+        if(*val1 == -1 || *val2 == -1)
+        {
+            bb_low = {0, 0, 0};
+            if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+            bb_high = {lbpar_gpu.dim_x-1, lbpar_gpu.dim_y-1, lbpar_gpu.dim_z-1};
+#endif // LB_GPU
+            } else {
+#ifdef LB
+            bb_high = {lblattice.global_grid[0]-1, lblattice.global_grid[1]-1, lblattice.global_grid[2]-1};
+#endif // LB
+            }
+            break;
+        }
+
+        bb_low.push_back(std::min(*val1, *val2));
+        bb_high.push_back(std::max(*val1, *val2));
+    }
+
+    int pos[3];
     if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
         size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
         host_values = (LB_rho_v_pi_gpu*)Utils::malloc(size_of_values);
         lb_get_values_GPU(host_values);
         fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\n"
-                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
-                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
+                "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
+                "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
                 "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-                lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
-                lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5,
+                bb_high[0]-bb_low[0]+1, bb_high[1]-bb_low[1]+1, bb_high[2]-bb_low[2]+1,
+                (bb_low[0]+0.5)*lbpar_gpu.agrid, (bb_low[1]+0.5)*lbpar_gpu.agrid, (bb_low[2]+0.5)*lbpar_gpu.agrid,
                 lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
-                lbpar_gpu.number_of_nodes);
-        for(int j=0; j<int(lbpar_gpu.number_of_nodes); ++j){
-            /** print of the calculated phys values */
-            fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
-        }
+                (bb_high[0]-bb_low[0]+1) * (bb_high[1]-bb_low[1]+1) * (bb_high[2]-bb_low[2]+1) );
+        for(pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
+            for(pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
+                for(pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++)
+                {
+                    int j = lbpar_gpu.dim_y*lbpar_gpu.dim_x * pos[2] + lbpar_gpu.dim_x * pos[1] + pos[0];
+                    fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+                }
         free(host_values);
 #endif // LB_GPU
     } else {
 #ifdef LB
-        int pos[3];
         double u[3];
-        int gridsize[3];
-
-        gridsize[0] = box_l[0] / lbpar.agrid;
-        gridsize[1] = box_l[1] / lbpar.agrid;
-        gridsize[2] = box_l[2] / lbpar.agrid;
 
         fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\n"
                 "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
                 "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
                 "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-                gridsize[0], gridsize[1], gridsize[2],
-                lblattice.agrid[0]*0.5, lblattice.agrid[1]*0.5, lblattice.agrid[2]*0.5,
+                bb_high[0]-bb_low[0]+1, bb_high[1]-bb_low[1]+1, bb_high[2]-bb_low[2]+1,
+                (bb_low[0]+0.5)*lblattice.agrid[0], (bb_low[1]+0.5)*lblattice.agrid[1], (bb_low[2]+0.5)*lblattice.agrid[2],
                 lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
-                gridsize[0]*gridsize[1]*gridsize[2]);
+                (bb_high[0]-bb_low[0]+1) * (bb_high[1]-bb_low[1]+1) * (bb_high[2]-bb_low[2]+1) );
 
-        for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-        {
-            for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-            {
-                for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+        for(pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
+            for(pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
+                for(pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++)
                 {
                     lb_lbnode_get_u(pos, u);
                     fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
                 }
-            }
-        }
 #endif // LB
     }
     fclose(fp);
 
 	return 0;
 }
-
 
 int lb_lbfluid_print_boundary(char* filename) {
     FILE* fp = fopen(filename, "w");
@@ -1119,9 +1129,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #endif // LB
     }
     else {
-        ostringstream msg;
-        msg <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"To load an LB checkpoint one needs to have already initialized the LB fluid with the same grid size.";
         return ES_ERROR;
     }
     return ES_OK;
@@ -1784,51 +1792,35 @@ int lb_sanity_checks() {
     int ret = 0;
 
     if (lbpar.agrid <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann agrid not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann agrid not set";
         ret = 1;
     }
     if (lbpar.tau <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann time step not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann time step not set";
         ret = 1;
     }
     if (lbpar.rho[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid density not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid density not set";
         ret = 1;
     }
     if (lbpar.viscosity[0] <= 0.0) {
-        ostringstream msg;
-        msg <<"Lattice Boltzmann fluid viscosity not set";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Lattice Boltzmann fluid viscosity not set";
         ret = 1;
     }
     if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-        ostringstream msg;
-        msg <<"LB requires domain-decomposition cellsystem";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires domain-decomposition cellsystem";
         ret = -1;
     }
     if (skin == 0.0) {
-        ostringstream msg;
-        msg <<"LB requires a positive skin";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires a positive skin";
         ret = 1;
     }
     if (dd.use_vList && skin>=lbpar.agrid/2.0) {
-        ostringstream msg;
-        msg <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing";
         ret = -1;
     }
     if (thermo_switch & ~THERMO_LB) {
-        ostringstream msg;
-        msg <<"LB must not be used with other thermostats";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"LB must not be used with other thermostats";
         ret = 1;
     }
     return ret;
@@ -1838,8 +1830,10 @@ int lb_sanity_checks() {
 
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
-    lbfluid[0]    = (double**) Utils::malloc(2*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[0]    = (double**) Utils::malloc(lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*) Utils::malloc(lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1]    = (double**) Utils::malloc(lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1][0] = (double*) Utils::malloc(lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 }
 
 
@@ -1849,10 +1843,10 @@ static void lb_realloc_fluid() {
 
     LB_TRACE(printf("reallocating fluid\n"));
 
-    lbfluid[0]    = (double**) Utils::realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
-    lbfluid[0][0] = (double*) Utils::realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
-    lbfluid[1]    = (double **)lbfluid[0] + lbmodel.n_veloc;
-    lbfluid[1][0] = (double *)lbfluid[0][0] + lblattice.halo_grid_volume*lbmodel.n_veloc;
+    lbfluid[0]    = (double**) Utils::realloc(lbfluid[0],lbmodel.n_veloc*sizeof(double *));
+    lbfluid[1]    = (double**) Utils::realloc(lbfluid[1],lbmodel.n_veloc*sizeof(double *));
+    lbfluid[0][0] = (double*) Utils::realloc(lbfluid[0][0],lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+    lbfluid[1][0] = (double*) Utils::realloc(lbfluid[1][0],lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 
     for (i=0; i<lbmodel.n_veloc; ++i) {
         lbfluid[0][i] = lbfluid[0][0] + i*lblattice.halo_grid_volume;
@@ -2055,9 +2049,7 @@ void lb_init() {
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
   
   if (lbpar.agrid <= 0.0) {
-      ostringstream msg;
-      msg <<"Lattice Boltzmann agrid not set when initializing fluid";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"Lattice Boltzmann agrid not set when initializing fluid";
   }
   
   if (check_runtime_errors()) return;
@@ -2097,6 +2089,8 @@ void lb_init() {
 void lb_release_fluid() {
     free(lbfluid[0][0]);
     free(lbfluid[0]);
+    free(lbfluid[1][0]);
+    free(lbfluid[1]);
     free(lbfields);
 }
 
@@ -3391,9 +3385,7 @@ void lb_calc_average_rho() {
 static int compare_buffers(double *buf1, double *buf2, int size) {
     int ret;
     if (memcmp(buf1,buf2,size)) {
-        ostringstream msg;
-        msg <<"Halo buffers are not identical";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"Halo buffers are not identical";
         ret = 1;
     } else {
         ret = 0;

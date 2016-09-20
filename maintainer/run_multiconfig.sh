@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (C) 2016 The ESPResSo project
 # Copyright (C) 2013,2014 Axel Arnold
 # Copyright (C) 2015 Florian Weik
 #

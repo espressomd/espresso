@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from _system cimport *
+from __future__ import print_function, absolute_import
+from espressomd._system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 from libcpp cimport bool
 
 include "myconfig.pxi"
@@ -50,7 +51,7 @@ cdef extern from "particle_data.hpp":
         double v[3]
 
     ctypedef struct particle_local "ParticleLocal":
-        pass
+        int i[3]
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -93,6 +94,10 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION_PER_PARTICLE == 1:
         int set_particle_rotation(int part, int rot)
+
+    IF MULTI_TIMESTEP:
+        int set_particle_smaller_timestep(int part, int small_timestep)
+        void pointer_to_smaller_timestep(particle * p, int * & res)
 
     IF MASS:
         int set_particle_mass(int part, double mass)
@@ -150,6 +155,13 @@ cdef extern from "particle_data.hpp":
 
         int set_particle_gamma(int part, double gamma)
         void pointer_to_gamma(particle * p, double * & res)
+        IF ROTATION:
+            IF ROTATIONAL_INERTIA:
+                int set_particle_gamma_rot(int part, double gamma[3])
+            ELSE:
+                int set_particle_gamma_rot(int part, double gamma)
+
+            void pointer_to_gamma_rot(particle * p, double * & res)
 
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(particle * P, int * & res1, double * & res2, double * & res3)
@@ -186,6 +198,8 @@ cdef extern from "particle_data.hpp":
 
     void remove_all_bonds_to(int part)
 
+    bool particle_exists(int part)
+
 cdef extern from "virtual_sites_relative.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         int vs_relate_to(int part_num, int relate_to)
@@ -211,3 +225,13 @@ cdef class ParticleHandle(object):
     cdef bint valid
     cdef particle particle_data
     cdef int update_particle_data(self) except -1
+
+
+cdef class ParticleSlice:
+
+    cdef particle particle_data
+    cdef int update_particle_data(self, id) except -1
+    cdef public id_selection
+
+cdef extern from "grid.hpp":
+    cdef inline void fold_position(double *, int*)

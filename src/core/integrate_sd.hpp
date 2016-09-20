@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -50,6 +50,8 @@ extern double sd_random_precision;
 #    error "CUDA is not given!"
 #    error "StokesDynamics requires CUDA"
 #  endif
+#endif
+
 #endif
 
 #define DIM (3)
@@ -117,5 +119,5 @@ int sd_set_particles_apart();
 int sd_test(int size, int type);
 
 /*@}*/
-#endif /* SD */
+//#endif /* SD */
 #endif

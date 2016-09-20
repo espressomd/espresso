@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+# Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2008 Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -71,7 +71,7 @@ for line in f:
         elif addr in allocated:
             del allocated[addr]
         else:
-            print(("\n" + addr + " freed at " + src + ", but never allocated\n"))
+            print("\n" + addr + " freed at " + src + ", but never allocated\n")
 
 print("\n")
 for (addr,info) in list(allocated.items()):

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -22,7 +22,7 @@
 
 #include "electrokinetics.hpp"
 
-#ifdef ELECTROKINETICS
+#ifdef EK_BOUNDARIES
 
 extern float* pdb_charge_lattice;
 extern int* pdb_boundary_lattice;

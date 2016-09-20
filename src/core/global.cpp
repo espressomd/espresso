@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -102,6 +102,11 @@ const Datafield fields[] = {
   {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4 },         /* 58 from integrate_sd.cpp */
   {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5 },         /* 59 from integrate.cpp */
   {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1 },         /* 60 from integrate.cpp */
+#ifndef ROTATIONAL_INERTIA
+  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1 },    /* 61 from thermostat.cpp */
+#else
+  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1 },    /* 61 from thermostat.cpp */
+#endif
   { NULL, 0, 0, NULL, 0 }
 };
 

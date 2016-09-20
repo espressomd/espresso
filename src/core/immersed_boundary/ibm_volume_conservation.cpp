@@ -18,6 +18,8 @@ bool VolumeInitDone = false;
 void CalcVolumes();
 void CalcVolumeForce();
 
+using std::ostringstream;
+
 /************
   IBM_VolumeConservation
 Calculate (1) volumes, (2) volume force and (3) add it to each virtual particle

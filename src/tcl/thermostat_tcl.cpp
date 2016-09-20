@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -44,14 +44,21 @@
 
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {
+  int j;
   /* set temperature to zero */
   temperature = 0;
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   /* langevin thermostat */
   langevin_gamma = 0;
   /* Friction coefficient gamma for rotation */
+#ifndef ROTATIONAL_INERTIA
   langevin_gamma_rotation = 0;
+#else
+  for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = 0;
+#endif
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
+
   /* Langevin for translations */
   langevin_trans = true;
   /* Langevin for rotations */
@@ -95,16 +102,27 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
 int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp,
-         gammat = 0.0,
-         gammar = 0.0;
+         gammat = -1.0;
   bool trans = true,
        rot = true;
-
+#ifndef ROTATIONAL_INERTIA
+  double gammar = -1.0;
+  int arg_shift = 0;
+#else
+  double gammar[3];
+  gammar[0] = gammar[1] = gammar[2] = -1.0;
+  int arg_shift = 2, j;
+#endif
   /* check number of arguments */
-  if (argc < 4) 
+  if (argc < 4)
   {
+#ifndef ROTATIONAL_INERTIA
     Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
 		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot> <on/off> <on/off>]\"", (char *)NULL);
+#else
+    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
+    		     argv[0]," ",argv[1]," <temp> <gamma_trans> [<gamma_rot_x> <gamma_rot_y> <gamma_rot_z> <on/off> <on/off>]\"", (char *)NULL);
+#endif
     return (TCL_ERROR);
   }
 
@@ -115,25 +133,29 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     return (TCL_ERROR);
   }
 
-  if (argc > 4 && argc < 6) 
+  if ((argc > 4) && (argc < (6 + arg_shift)))
   {
-    if ( !ARG_IS_D(4, gammar) ) 
+#ifndef ROTATIONAL_INERTIA
+    if ( !ARG_IS_D(4, gammar) )
+#else
+    if (! ARG_IS_D(4, gammar[0]) || ! ARG_IS_D(5, gammar[1]) || ! ARG_IS_D(6, gammar[2]))
+#endif
     {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs three DOUBLES", (char *)NULL);
       return (TCL_ERROR);
     }
   }
 
-  if (argc > 5 && argc < 7) 
+  if ((argc > (5 + arg_shift)) && (argc < (7 + arg_shift)))
   {
-    if ( !ARG_IS_S(5, "on") && !ARG_IS_S(5, "off") ) 
+    if ( !ARG_IS_S(5 + arg_shift, "on") && !ARG_IS_S(5 + arg_shift, "off") )
     {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
     }
     else
     {
-      if ( ARG_IS_S(5, "on") )
+      if ( ARG_IS_S(5 + arg_shift, "on") )
       {
         trans = true;
       }
@@ -144,15 +166,15 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-  if (argc > 6 && argc < 8) 
+  if ((argc > (6 + arg_shift)) && (argc < (8 + arg_shift)))
   {
-    if ( !ARG_IS_S(6, "on") && !ARG_IS_S(6, "off") ) {
+    if ( !ARG_IS_S(6 + arg_shift, "on") && !ARG_IS_S(6 + arg_shift, "off") ) {
       Tcl_AppendResult(interp, argv[0]," ",argv[1]," needs on/off", (char *)NULL);
       return (TCL_ERROR);
     }
     else
     {
-      if ( ARG_IS_S(6, "on") )
+      if ( ARG_IS_S(6 + arg_shift, "on") )
       {
         rot = true;
       }
@@ -163,7 +185,11 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     }
   }
 
-  if (temp < 0 || gammat < 0 || gammar < 0) {
+#ifndef ROTATIONAL_INERTIA
+  if (temp < 0 || gammat < 0 || ((argc > 4) && (gammar < 0))) {
+#else
+  if (temp < 0 || gammat < 0 || ((argc > 6) && (gammar[0] < 0 || gammar[1] < 0 || gammar[2] < 0))) {
+#endif
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
   }
@@ -171,13 +197,20 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   /* broadcast parameters */
   temperature = temp;
   langevin_gamma = gammat;
+#ifndef ROTATIONAL_INERTIA
   langevin_gamma_rotation = gammar;
+#else
+  for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = gammar[j];
+#endif
   langevin_trans = trans;
   langevin_rotate = rot;
   thermo_switch = ( thermo_switch | THERMO_LANGEVIN );
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
+  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
+
+  // TODO: mpi_bcast_parameter for langevin_trans and langevin_rotate ?
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
   fprintf(stderr,"         as of this version! Please consult the user's guide.\n");
@@ -394,12 +427,19 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp,"{ langevin ",buffer, (char *)NULL);
     Tcl_PrintDouble(interp, langevin_gamma, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+#ifndef ROTATIONAL_INERTIA
     Tcl_PrintDouble(interp, langevin_gamma_rotation, buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, langevin_trans, buffer);
+#else
+    Tcl_PrintDouble(interp, langevin_gamma_rotation[0], buffer);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, langevin_rotate, buffer);
-    Tcl_AppendResult(interp," ",buffer," } ", (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_gamma_rotation[1], buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, langevin_gamma_rotation[2], buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+#endif
+    Tcl_AppendResult(interp," ", langevin_trans? "on": "off", (char *)NULL);
+    Tcl_AppendResult(interp," ", langevin_rotate? "on": "off", " } ", (char *)NULL);
   }
     
 #ifdef DPD
@@ -468,6 +508,8 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp,"{ sd ",buffer, " } ", (char *)NULL);
     
   }
+#endif
+#ifdef BD
   if (thermo_switch & THERMO_BD){
     Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ bd ",buffer, " } ", (char *)NULL);

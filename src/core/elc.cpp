@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1166,7 +1166,7 @@ int ELC_tune(double error)
 {
   double err;
   double h = elc_params.h, lz = box_l[2];
-  double min_inv_boxl = dmin(ux, uy);
+  double min_inv_boxl = std::min(ux, uy);
   
   if (elc_params.dielectric_contrast_on) {
     // adjust lz according to dielectric layer method
@@ -1203,18 +1203,14 @@ int ELC_tune(double error)
 int ELC_sanity_checks()
 {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"ELC requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"ELC requires periodicity 1 1 1";
     return 1;
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to work. This is not the case for
      two parallel boundaries, which can only be treated by the constant potential code */
   if (elc_params.dielectric_contrast_on && (fabs(1.0 - elc_params.di_mid_top*elc_params.di_mid_bot) < ROUND_ERROR_PREC)
       && !elc_params.const_pot_on) {
-      ostringstream msg;
-      msg <<"ELC with two parallel metallic boundaries requires the capacitor option";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"ELC with two parallel metallic boundaries requires the capacitor option";
     return 1;
   }
 
@@ -1239,9 +1235,7 @@ void ELC_init()
     if (maxsl > .5*elc_params.h) maxsl = .5*elc_params.h;
     if (elc_params.space_layer > maxsl) {
       if (maxsl <= 0) {
-      ostringstream msg;
-      msg <<"P3M real space cutoff too large for ELC w/ dielectric contrast";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"P3M real space cutoff too large for ELC w/ dielectric contrast";
       }
       else
 	elc_params.space_layer = maxsl;
@@ -1250,15 +1244,13 @@ void ELC_init()
     // set the space_box 
     elc_params.space_box = elc_params.gap_size - 2*elc_params.space_layer;
     // reset minimal_dist for tuning
-    elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+    elc_params.minimal_dist = std::min(elc_params.space_box, elc_params.space_layer);
   }
 
   if (elc_params.far_calculated &&
       (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
-        msg <<"ELC auto-retuning failed, gap size too small";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"ELC auto-retuning failed, gap size too small";
     }
   }
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
@@ -1299,7 +1291,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     // set the space_box 
     elc_params.space_box = gap_size - 2*elc_params.space_layer;
     // reset minimal_dist for tuning
-    elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
+    elc_params.minimal_dist = std::min(elc_params.space_box, elc_params.space_layer);
 
     //Constant potential parameter setup
     if (const_pot_on)
@@ -1325,9 +1317,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   switch (coulomb.method) {
   case COULOMB_P3M_GPU:
   {
-      ostringstream msg;
-      msg <<"ELC tuning failed, ELC is not set up to work with the GPU P3M";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"ELC tuning failed, ELC is not set up to work with the GPU P3M";
       return ES_ERROR;
   }
   case COULOMB_ELC_P3M:
@@ -1348,9 +1338,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   else {
     elc_params.far_calculated = 1;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-        ostringstream msg;
-        msg <<"ELC tuning failed, gap size too small";
-        runtimeError(msg);
+        runtimeErrorMsg() <<"ELC tuning failed, gap size too small";
     }
   }
   mpi_bcast_coulomb_params();

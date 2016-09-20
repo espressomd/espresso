@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2010,2011 Florian Fahrenberger
   Copyright (C) 2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -409,60 +409,42 @@ int maggs_sanity_checks()
   FOR3D(d) if(node_grid[d] > max_node_grid) max_node_grid = node_grid[d];
 	
   if (maggs.bjerrum == 0.) {
-      ostringstream msg;
-      msg <<"MEMD: bjerrum length is zero.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: bjerrum length is zero.";
     ret = -1;
   }
   else if ( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      ostringstream msg;
-      msg <<"MEMD needs cubic box";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD needs cubic box";
     ret = -1;
   }
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-      ostringstream msg;
-      msg <<"MEMD requires periodicity 1 1 1";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires periodicity 1 1 1";
     ret = 1;
   }
   else if ( maggs.mesh%max_node_grid != 0 ) {
-      ostringstream msg;
-      msg <<"MEMD: meshsize is incompatible with number of processes";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: meshsize is incompatible with number of processes";
     ret = -1;
   }
   /*
   else if ( maggs_count_charged_particles() == 0 ) {
-  ostringstream msg;
-  msg <<"MEMD: No charges in the system.";
-  runtimeError(msg);
+  runtimeErrorMsg() <<"MEMD: No charges in the system.";
       ret = -1;
   }
   */
   else if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-      ostringstream msg;
-      msg <<"MEMD requires domain-decomposition cellsystem.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires domain-decomposition cellsystem.";
     ret = -1;
   }
   else if (dd.use_vList) {
-      ostringstream msg;
-      msg <<"MEMD requires no Verlet Lists.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD requires no Verlet Lists.";
     ret = -1;
   }
   /** check if speed of light parameter makes sense */
   else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
-      ostringstream msg;
-      msg <<"MEMD: Speed of light is set too high. Increase f_mass.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: Speed of light is set too high. Increase f_mass.";
     ret = -1;      
   }
   else if (maggs.a < skin) {
-      ostringstream msg;
-      msg <<"MEMD: Skin should be smaller than MEMD mesh size.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD: Skin should be smaller than MEMD mesh size.";
     ret = -1;
   }
 #ifdef EXTERNAL_FORCES
@@ -473,9 +455,7 @@ int maggs_sanity_checks()
     int np = cell->n;
     for(int i = 0; i < np; i++) {
       if ( (p[i].p.q != 0.0) & p[i].p.ext_flag & COORDS_FIX_MASK) {
-      ostringstream msg;
-      msg <<"MEMD does not work with fixed particles.";
-      runtimeError(msg);
+      runtimeErrorMsg() <<"MEMD does not work with fixed particles.";
 	ret = -1;
       }
     }
@@ -2358,7 +2338,7 @@ void maggs_calc_forces()
     np = cell->n;
     for(i=0; i<np; i++) { 
       q = p[i].p.q;
-      if( abs(q) > 1.0e-5 ) {
+      if( fabs(q) > 1.0e-5 ) {
 	FOR3D(d) {
 	  pos[d]   = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
 	  first[d] = (int) pos[d];

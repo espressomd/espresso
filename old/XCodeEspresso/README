@@ -1,6 +1,0 @@
-You can create a X-Code project environment of ESPResSo by executing
-"gen.sh" in this directory. This will create the folders "build" and
-the actual "XCodeEspresso.xcodeproj".  Remember: configure must still
-be run manually once before building Espresso with XCode.
-
-

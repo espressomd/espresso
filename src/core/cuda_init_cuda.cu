@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -143,6 +143,7 @@ int cuda_test_device_access() {
   }
   h = 0;
   err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaFree(d);
 
   if((h == 42) && (err == cudaSuccess))
     return ES_OK;

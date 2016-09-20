@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014 The ESPResSo project
+  Copyright (C) 2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -149,11 +149,11 @@ Mmm1dgpuForce::~Mmm1dgpuForce() {
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x)
 {
-	return pow(x,2);
+  return x*x;
 }
 __forceinline__ __device__ mmm1dgpu_real cbpow(mmm1dgpu_real x)
 {
-	return pow(x,3);
+  return x*x*x;
 }
 
 __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum)
@@ -356,13 +356,13 @@ __global__ void forcesKernel(const __restrict__ mmm1dgpu_real *r, const __restri
 			sum_r *= sqpow(uz);
 			sum_z *= sqpow(uz);
 
-			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z,2)));
-			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z+boxz,2)));
-			sum_r += rxy*cbpow(rsqrt(rxy2+pow(z-boxz,2)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z+boxz)));
+			sum_r += rxy*cbpow(rsqrt(rxy2+sqpow(z-boxz)));
 
-			sum_z += z*cbpow(rsqrt(rxy2+pow(z,2)));
-			sum_z += (z+boxz)*cbpow(rsqrt(rxy2+pow(z+boxz,2)));
-			sum_z += (z-boxz)*cbpow(rsqrt(rxy2+pow(z-boxz,2)));
+			sum_z += z*cbpow(rsqrt(rxy2+sqpow(z)));
+			sum_z += (z+boxz)*cbpow(rsqrt(rxy2+sqpow(z+boxz)));
+			sum_z += (z-boxz)*cbpow(rsqrt(rxy2+sqpow(z-boxz)));
 
 			if (rxy == 0) // particles at the same radial position only exert a force in z direction
 			{

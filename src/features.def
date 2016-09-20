@@ -31,11 +31,12 @@ LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 NEMD
-NPT 
+NPT
 GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
-ENGINE                          implies ROTATION
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
+CONFIGTEMP
 
 /* Rotation */
 ROTATION
@@ -100,6 +101,7 @@ SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
+BD
 SD 		      	        requires CUDA
 SD 		      	        requires ARPACK
 SD				implies BD
@@ -150,11 +152,12 @@ HYDROGEN_BOND
 COULOMB_DEBYE_HUECKEL 		requires ELECTROSTATICS
 
 /* Immersed-Boundary Bayreuth version */
-IMMERSED_BOUNDARY               
+IMMERSED_BOUNDARY
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
 IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
 IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
+SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
@@ -204,7 +207,7 @@ P3M_DEBUG
 FFT_DEBUG
 RANDOM_DEBUG
 FORCE_DEBUG
-THERMO_DEBUG 
+THERMO_DEBUG
 LE_DEBUG
 LJ_DEBUG
 MORSE_DEBUG
@@ -212,7 +215,7 @@ ESR_DEBUG
 ESK_DEBUG
 FENE_DEBUG
 GHOST_FORCE_DEBUG
-STAT_DEBUG 
+STAT_DEBUG
 POLY_DEBUG
 MOLFORCES_DEBUG
 PTENSOR_DEBUG
@@ -236,4 +239,4 @@ CUDA external
 FFTW external
 TK   external
 H5MD external
-
+SCAFACOS external

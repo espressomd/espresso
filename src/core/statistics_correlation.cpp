@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -100,13 +100,7 @@ int Correlation::get_correlation_time(double* correlation_time) {
       if (n_sweeps[k]==0)
         break;
       C_tau+=(result[k][j]/ (double) n_sweeps[k] - A_accumulated_average[j]*B_accumulated_average[j]/n_data/n_data)/(result[0][j]/n_sweeps[0])*dt*(tau[k]-tau[k-1]);
-//        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f deltat %f \n", 
-//            C_tau, 
-//            tau[k]*dt, 
-//            exp(-tau[k]*dt/C_tau)+2*sqrt(tau[k]*dt/n_data),
-//            result[k][j]/ (double) n_sweeps[k],
-//            dt*(tau[k]-tau[k-1])
-//            );
+//      C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
 
 //        if (C_tau < i*tau[k]*dt) {
         if (exp(-tau[k]*dt/C_tau)+2*sqrt(tau[k]*dt/n_data)
