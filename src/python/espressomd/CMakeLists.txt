@@ -44,16 +44,15 @@ add_custom_command(OUTPUT _espresso/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
+
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
-add_custom_command(TARGET espressomd
-        PRE_BUILD
-        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
+add_custom_command(OUTPUT code_info.pyx
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
-
 
 file(GLOB cython_SRC *.pyx)
 # Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to
@@ -66,16 +65,22 @@ SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
 
+list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
+list(REMOVE_DUPLICATES cython_SRC)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
+  if("${basename}" STREQUAL "code_info")
+      file(RELATIVE_PATH relpath ${CMAKE_CURRENT_BINARY_DIR} ${cython_file})
+  endif()
   get_filename_component(relpath ${relpath} DIRECTORY)
   if("${relpath}" STREQUAL "")
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${basename} ".cpp")
   else()
       string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
   endif()
+  message("${outputpath}")
   if("${basename}" STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()

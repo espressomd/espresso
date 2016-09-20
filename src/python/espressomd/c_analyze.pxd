@@ -23,8 +23,9 @@
 #
 
 
+from __future__ import print_function, absolute_import
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
@@ -116,6 +117,12 @@ cdef extern from "statistics.hpp":
     void calc_gyration_tensor(int p_type, vector[double] gt)
     void momentofinertiamatrix(int p_type, double* MofImatrix)
     void analyze_rdfchain(double r_min, double r_max, int r_bins, double **f1, double **f2, double **f3)
+
+cdef extern from "statistics.hpp":
+    int n_part
+    int n_part_conf
+    int n_configs
+    void analyze_append()
 
 cdef extern from "statistics.hpp":
     void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,

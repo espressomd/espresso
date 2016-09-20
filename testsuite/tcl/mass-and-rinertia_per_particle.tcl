@@ -27,13 +27,21 @@ puts "------------------------------------------------"
 puts "------------------------------------------------"
 
 proc test_mass-and-rinertia_per_particle {test_case} {
-    set gamma0 1.0
-    set gamma1 1.0
+    # make real random draw
+    set cmd "t_random seed"
+    for {set i 0} {$i < [setmd n_nodes]} { incr i } {
+	  lappend cmd [expr [pid] + $i] }
+    eval $cmd
+
+    set gamma0 1.
+    set gamma1 1. 
     
     # Decelleration
     setmd skin 0
-    setmd time_step 0.01
+    setmd time_step 0.007
     thermostat langevin 0 $gamma0 
+    cellsystem nsquare 
+    #-no_verlet_lists
     set J "10 10 10"
 
     part deleteall
@@ -70,11 +78,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             part 1 gamma $gamma1 temp 0.0
         }
     }
+    setmd time 0
 
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*$i/10. /[lindex $J $k])) >0.01 ||
-                 abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*$i/10. /[lindex $J $k])) >0.01
+            if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])) >0.01 ||
+                 abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])) >0.01
             } {
                 error_exit "Friction Deviation in omega too large. $i $k"
             }
@@ -113,13 +122,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
-    setmd time_step 0.01
+    setmd time_step 0.008
 
-    set n 100
-    set mass [expr [t_random] *20]
-    set j1 [expr [t_random] * 20]
-    set j2 [expr [t_random] * 20]
-    set j3 [expr [t_random] * 20]
+    set n 200
+    set mass [expr (0.2 + [t_random]) *20]
+    set j1 [expr (0.2 + [t_random]) * 20]
+    set j2 [expr (0.2 + [t_random]) * 20]
+    set j3 [expr (0.2 + [t_random]) * 20]
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
@@ -144,7 +153,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     set loops 100
     puts "Thermalizing..."
-    integrate 1000
+    integrate 1200
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
@@ -164,7 +173,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
 
-    set tolerance 0.1
+    set tolerance 0.15
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]

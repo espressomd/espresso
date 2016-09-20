@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests particle property setters/getters
+from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -37,22 +38,21 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
             self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
 
     if "DP3M" in espressomd.features():
-        test_DP3M = generate_test_for_class(DipolarP3M, dict(prefactor=1.0,
+        test_DP3M = generate_test_for_class(system, DipolarP3M, dict(prefactor=1.0,
                                                                              epsilon=0.0,
                                                                              inter=1000,
-                                                                             mesh_off=[
-                                                                                 0.5, 0.5, 0.5],
+                                                                             mesh_off=[0.5, 0.5, 0.5],
                                                                              r_cut=2.4,
-                                                                             mesh=[
-                                                                                 8, 8, 8],
+                                                                             mesh=[8, 8, 8],
                                                                              cao=1,
                                                                              alpha=12,
-                                                                             accuracy=0.01))
+                                                                             accuracy=0.01,
+                                                                             tune=False))
 
     if "DIPOLAR_DIRECT_SUM" in espressomd.features():
-        test_DdsCpu = generate_test_for_class(
+        test_DdsCpu = generate_test_for_class(system,
             DipolarDirectSumCpu, dict(prefactor=3.4))
-        test_DdsRCpu = generate_test_for_class(
+        test_DdsRCpu = generate_test_for_class(system,
             DipolarDirectSumWithReplicaCpu, dict(prefactor=3.4, n_replica=2))
 
 if __name__ == "__main__":

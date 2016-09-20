@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
+from .actors cimport Actor
 from globals cimport temperature
 
 IF DIPOLES == 1:
@@ -69,6 +70,9 @@ IF DIPOLES == 1:
         def _get_active_method_from_es_core(self):
             return coulomb.Dmethod
 
+        def _deactivate_method(self):
+            coulomb.Dmethod = DIPOLAR_NONE
+            mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
     cdef class DipolarP3M(MagnetostaticInteraction):
@@ -149,7 +153,7 @@ IF DP3M == 1:
             if resp:
                 raise Exception(
                     "failed to tune dipolar P3M parameters to required accuracy")
-            print log
+            print(log)
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -223,7 +227,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -250,7 +254,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()

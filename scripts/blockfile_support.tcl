@@ -415,7 +415,7 @@ proc blockfile_write_random {channel write random} {
 
 proc blockfile_read_auto_random {channel read auto} {
     set data [blockfile $channel read toend]
-    eval t_random stat [eval concat $data]
+    t_random stat [concat $data]
 
     return "random"
 }

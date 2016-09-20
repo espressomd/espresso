@@ -55,7 +55,7 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System()
-system.time_step = 0.01
+system.time_step = 0.001
 system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
@@ -67,7 +67,7 @@ warm_n_times = 30
 min_dist = 0.9
 
 # integration
-int_steps = 1000
+int_steps = 10
 int_n_times = 50000
 
 
@@ -107,7 +107,9 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
+#Switch between openGl/Mayavi
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -140,7 +142,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #   Increase LJ cap
     lj_cap = lj_cap + 10
     system.non_bonded_inter.set_force_cap(lj_cap)
-    mayavi.update()
+    visualizer.update()
 
 # Just to see what else we may get from the c code
 print("""
@@ -193,7 +195,7 @@ def main_loop():
     print("run %d at time=%f " % (i, system.time))
 
     integrate.integrate(int_steps)
-    mayavi.update()
+    visualizer.update()
 
     energies = system.analysis.energy()
     print(energies)
@@ -221,8 +223,8 @@ def update_plot():
 t = Thread(target=main_thread)
 t.daemon = True
 t.start()
-mayavi.register_callback(update_plot, interval=2000)
-mayavi.run_gui_event_loop()
+visualizer.registerCallback(update_plot, interval=2000)
+visualizer.start()
 
 # write end configuration
 end_file = open("pylj_liquid.end", "w")

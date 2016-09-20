@@ -22,5 +22,6 @@
 # specific class.
 #
 
+from __future__ import print_function, absolute_import
 cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)

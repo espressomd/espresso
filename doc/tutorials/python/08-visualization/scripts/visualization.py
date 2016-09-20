@@ -1,8 +1,6 @@
 from __future__ import print_function
 import espressomd._system as es
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd import visualization
 import numpy
 from matplotlib import pyplot
@@ -27,7 +25,7 @@ lj_cap = 20
 #############################################################
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 # warmup integration (with capped LJ potential)
@@ -66,9 +64,10 @@ for i in range(n_part):
 
 system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
-system.max_num_cells = 2744
+system.cell_system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -81,7 +80,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 # Warmup Integration Loop
 i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
-    integrate.integrate(warm_steps)
+    system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.mindist()
     i += 1
@@ -117,16 +116,17 @@ def main():
     global current_time
     for i in range(0, int_n_times):
         print("run %d at time=%f " % (i, system.time))
-        integrate.integrate(int_steps)
+        system.integrator.run(int_steps)
         energies[i] = (system.time, system.analysis.energy()['total'])
         current_time = i
-        mayavi.update()
+        visualizer.update()
 
 t = Thread(target=main)
 t.daemon = True
 t.start()
-mayavi.register_callback(update_plot, interval=500)
-mayavi.run_gui_event_loop()
+
+visualizer.register_callback(update_plot, interval=500)
+visualizer.start()
 
 # terminate program
 print("\nFinished.")

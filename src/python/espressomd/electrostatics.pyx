@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 from cython.operator cimport dereference
 include "myconfig.pxi"
-cimport actors
-import actors
+from espressomd cimport actors
+from . import actors
 cimport globals
 import numpy as np
-from scafacos import *
-cimport scafacos
+from .scafacos import *
+from . cimport scafacos
 
 
 cdef class ElectrostaticInteraction(actors.Actor):
@@ -200,7 +201,7 @@ IF P3M == 1:
                     "inter": -1,
                     "r_cut": -1,
                     "alpha": 0,
-                    "accuracy": -1,
+                    "accuracy": 0,
                     "mesh": [0, 0, 0],
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
@@ -214,10 +215,18 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                  "cao"], self._params["alpha"], self._params["accuracy"])
+            #Sets cdef vars and calls p3m_set_params() in core 
+            python_p3m_set_params(self._params["r_cut"],
+                        self._params["mesh"], self._params["cao"],
+                        self._params["alpha"], self._params["accuracy"])
+            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts 
+            #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
+            #         which resets r_cut if lb is zero. OK.
+            #Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
+            #Sets lb, bcast, resets vars to zero if lb=0
             coulomb_set_bjerrum(self._params["bjerrum_length"])
+            #Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
@@ -231,9 +240,10 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
+            #Setting default values before tuning
+            self._set_params_in_es_core()
             if self._params["tune"]:
                 self._tune()
-
             self._set_params_in_es_core()
 
     IF CUDA:
@@ -289,7 +299,7 @@ IF P3M == 1:
                         "inter": -1,
                         "r_cut": -1,
                         "alpha": 0,
-                        "accuracy": -1,
+                        "accuracy": 0,
                         "mesh": [0, 0, 0],
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
@@ -313,6 +323,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
+                self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
                 #python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
@@ -354,7 +365,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "num_ky": -1,
                     "num_kz": -1,
                     "alpha": -1,
-                    "accuracy": -1,
+                    "accuracy": 0,
                     "precision": -1,
                     "isTuned": False,
                     "isTunedFlag": False,
@@ -399,7 +410,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     "precision"], self._params["K_max"], self._params["time_calc_steps"])
             resp = self.thisptr.adaptive_tune( & self.log, dereference(self.interface))
             if resp != 0:
-                print self.log
+                print(self.log)
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
@@ -413,6 +424,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             return params
 
         def _activate_method(self):
+            self._set_params_in_es_core()
             coulomb.method = COULOMB_EWALD_GPU
             if not self._params["isTuned"]:
                 self._tune()
@@ -551,6 +563,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
                               "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _activate_method(self):
+            self._set_params_in_es_core()
             coulomb.method = COULOMB_MMM1D_GPU
             if self._params["tune"]:
                 self._tune()
@@ -627,13 +640,13 @@ IF ELECTROSTATICS:
                 self._params["delta_mid_bot"] = -1
                 self._params["const_pot_on"] = 1
 
-            print MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"])
+            print(MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"]))
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
             self._set_params_in_es_core()
             MMM2D_init()
-            print MMM2D_sanity_checks()
+            print(MMM2D_sanity_checks())
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):

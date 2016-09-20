@@ -56,27 +56,35 @@ void set_state(const string &s) {
   is >> generator;
 }
 
+/**
+ * @brief Get the state size of the PRNG
+ */
+int get_state_size_of_generator() {
+  return generator.state_size; // this only works for the mersenne twister
+                               // generator, other generators do not provide
+                               // this member variable
+}
+
 /** Communication */
 
 void mpi_random_seed_slave(int pnode, int cnt) {
-  int this_idum;
+  int this_seed;
 
-  MPI_Scatter(NULL, 1, MPI_INT, &this_idum, 1, MPI_INT, 0, comm_cart);
+  MPI_Scatter(NULL, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_idum));
-
-  init_random_seed(this_idum);
+  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
+  init_random_seed(this_seed);
 }
 
 void mpi_random_seed(int cnt, vector<int> &seeds) {
-  int this_idum;
+  int this_seed;
   mpi_call(mpi_random_seed_slave, -1, cnt);
 
-  MPI_Scatter(&seeds[0], 1, MPI_INT, &this_idum, 1, MPI_INT, 0, comm_cart);
+  MPI_Scatter(&seeds[0], 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_idum));
+  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
 
-  init_random_seed(this_idum);
+  init_random_seed(this_seed);
 }
 
 void mpi_random_set_stat_slave(int, int) {
@@ -127,6 +135,11 @@ void init_random(void) {
   mpiCallbacks().add(mpi_random_get_stat_slave);
 }
 
-void init_random_seed(int seed) { generator.seed(seed); }
+void init_random_seed(int seed)
+{
+  std::seed_seq seeder{seed}; //come up with "sane" initialization to avoid too many zeros in the internal state of the Mersenne twister
+  generator.seed(seeder);
+  generator.discard(1e6); //discard the first 1e6 random numbers to warm up the Mersenne-Twister PRNG
+}
 
 } /* Random */

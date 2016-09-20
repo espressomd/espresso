@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(ESPResSo)
 
@@ -61,6 +61,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
@@ -77,17 +78,11 @@ set(MYCONFIG_NAME "myconfig.hpp"
 # Check which config file to use
 include(MyConfig)
 
-# CXX stuff
-include(RequireCXX11)
-include(CheckCXXSourceCompiles)
-
-# macros to manipulate feature summary
-include(FeatureSummary)
-
 ######################################################################
 # Pretty function
 ######################################################################
 
+include(CheckCXXSourceCompiles)
 
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
    check_cxx_source_compiles("
@@ -117,6 +112,8 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
@@ -134,6 +131,11 @@ if (WITH_PYTHON)
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
                 -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  else()
+    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  endif()
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -154,20 +156,21 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
-
-find_package(HDF5 "1.8.12")
+if (WITH_HDF5)
+find_package(HDF5)
 if(HDF5_FOUND)
   # We need the parallel version!
   if(HDF5_IS_PARALLEL)
     set(H5MD 1)
     list(APPEND LIBRARIES ${HDF5_LIBRARIES})
     include_directories(${HDF5_INCLUDE_DIRS})
-    add_feature_info(HDF5 ON "parallel")
+    #add_feature_info(HDF5 ON "parallel")
   else()
-     unset(HDF5_FOUND)
-     add_feature_info(HDF5 OFF "serial")
-   endif(HDF5_IS_PARALLEL)
+    unset(HDF5_FOUND)
+    #add_feature_info(HDF5 OFF "serial")
+  endif(HDF5_IS_PARALLEL)
 endif(HDF5_FOUND)
+endif(WITH_HDF5)
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
@@ -187,6 +190,7 @@ if(WITH_VALGRIND_INSTRUMENTATION)
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
+include(RequireCXX11)
 
 #######################################################################
 # Boost
