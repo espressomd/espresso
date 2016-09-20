@@ -1185,8 +1185,8 @@ IF LENNARD_JONES:
 class BondedInteractions:
 
     """Represents the bonded interactions. Individual interactions can be accessed using
-    NonBondedInteractions[i], where i is the bond id. Will return an instance o
-    BondedInteractionHandle"""
+    NonBondedInteractions[i], where i is the bond id. Will return a bonded interaction 
+    from bonded_interaction_classes"""
 
     def __getitem__(self, key):
         if not isinstance(key, int):
@@ -1203,8 +1203,6 @@ class BondedInteractions:
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]
-        # print(bondType)
-        # print("  ")
 
         # And return an instance of it, which refers to the bonded interaction
         # id in Espresso
@@ -1238,3 +1236,20 @@ class BondedInteractions:
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
         self[n_bonded_ia] = bonded_ia
+    
+    def __getstate__(self):
+        params = {}
+        for i,bonded_instance in enumerate(self):
+            if hasattr(bonded_instance, 'params'):
+                params[i] = bonded_instance.params
+                params[i]['bond_type'] = bonded_instance.type_number()
+            else:
+                params[i] = None
+        return params
+
+    def __setstate__(self, params):
+        for i in params:
+            if params[i] != None:
+                bond_type = params[i]['bond_type']
+                del params[i]['bond_type']
+                self[i] = bonded_interaction_classes[bond_type](**params[i])
