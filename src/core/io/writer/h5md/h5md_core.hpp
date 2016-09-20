@@ -130,6 +130,14 @@ class File
     h5xx::attribute attribute_particles_atoms_box_dimension;
     h5xx::attribute attribute_particles_atoms_box_boundary;
     h5xx::dataset dataset_particles_atoms_box_edges;
+    /* particles -- atoms -- id */
+    h5xx::group group_particles_atoms_id;
+    h5xx::dataspace dataspace_particles_atoms_id_value;
+    h5xx::dataset dataset_particles_atoms_id_value;
+    h5xx::dataspace dataspace_particles_atoms_id_time;
+    h5xx::dataset dataset_particles_atoms_id_time;
+    h5xx::dataspace dataspace_particles_atoms_id_step;
+    h5xx::dataset dataset_particles_atoms_id_step;
     /* particles -- atoms -- mass */
     h5xx::group group_particles_atoms_mass;
     h5xx::dataspace dataspace_particles_atoms_mass_value;

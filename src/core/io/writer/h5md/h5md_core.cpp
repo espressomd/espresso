@@ -26,7 +26,6 @@
 namespace writer {
 namespace h5md {
 
-
 /* Constructor for the File class. */
 File::File(std::string const &filename, std::string const &script_name)
 {
@@ -70,6 +69,30 @@ File::File(std::string const &filename, std::string const &script_name)
         this->group_particles_atoms = h5xx::group(this->group_particles, "atoms");
         this->group_particles_atoms_box = h5xx::group(this->group_particles_atoms, "box");
         this->dataset_particles_atoms_box_edges = h5xx::dataset(this->group_particles_atoms_box, "edges");
+        /* particles -- atoms -- id */
+        H5Ocopy(lastfile.hid(), "/particles/atoms/id", this->h5md_file.hid(),
+                           "/particles/atoms/id",
+                           H5P_DEFAULT, H5P_DEFAULT);
+        H5Ocopy(lastfile.hid(), "/particles/atoms/id/value", this->h5md_file.hid(),
+                           "/particles/atoms/id/value",
+                           H5P_DEFAULT, H5P_DEFAULT);
+        H5Ocopy(lastfile.hid(), "/particles/atoms/id/time", this->h5md_file.hid(),
+                           "/particles/atoms/id/time",
+                           H5P_DEFAULT, H5P_DEFAULT);
+        H5Ocopy(lastfile.hid(), "/particles/atoms/id/step", this->h5md_file.hid(),
+                           "/particles/atoms/id/step",
+                           H5P_DEFAULT, H5P_DEFAULT);
+        this->group_particles_atoms_id = h5xx::group(
+                this->group_particles_atoms, "id");
+        this->dataset_particles_atoms_id_value = h5xx::dataset(
+                this->group_particles_atoms_id,
+                "value");
+        this->dataset_particles_atoms_id_time = h5xx::dataset(
+                this->group_particles_atoms_id,
+                "time");
+        this->dataset_particles_atoms_id_step = h5xx::dataset(
+                this->group_particles_atoms_id,
+                "step");
         /* particles -- atoms -- mass */
         H5Ocopy(lastfile.hid(), "/particles/atoms/mass", this->h5md_file.hid(), "/particles/atoms/mass",
                            H5P_DEFAULT, H5P_DEFAULT);
@@ -265,6 +288,32 @@ File::File(std::string const &filename, std::string const &script_name)
                               this->dataspace_particles_atoms_mass_step,
                               h5xx::policy::storage::chunked(1,
                                                              &chunk_dims_1d_single));
+        /* particles -- atoms -- id */
+        this->group_particles_atoms_id =
+                h5xx::group(this->group_particles_atoms, "id");
+        this->dataspace_particles_atoms_id_value = h5xx::dataspace(
+                dims_3d, maxdims);
+        this->dataset_particles_atoms_id_value = h5xx::dataset(
+                this->group_particles_atoms_id,
+                "value", this->type_double,
+                this->dataspace_particles_atoms_id_value,
+                h5xx::policy::storage::chunked(3, chunk_dims_1d.data()));
+        this->dataspace_particles_atoms_id_time = h5xx::dataspace(
+                dims_1d_single, maxdims_single);
+        this->dataset_particles_atoms_id_time =
+                h5xx::dataset(this->group_particles_atoms_id,
+                              "time", this->type_double,
+                              this->dataspace_particles_atoms_id_time,
+                              h5xx::policy::storage::chunked(1,
+                                                             &chunk_dims_1d_single));
+        this->dataspace_particles_atoms_id_step = h5xx::dataspace(
+                dims_1d_single, maxdims_single);
+        this->dataset_particles_atoms_id_step =
+                h5xx::dataset(this->group_particles_atoms_id,
+                                     "step", this->type_int,
+                              this->dataspace_particles_atoms_id_step,
+                                     h5xx::policy::storage::chunked(1,
+                                                                    &chunk_dims_1d_single));
         /* particles -- atoms -- position */
         this->group_particles_atoms_position =
                 h5xx::group(this->group_particles_atoms, "position");
@@ -422,9 +471,8 @@ void File::Write(bool position, bool velocity, bool force)
 void File::WriteSpecies()
 {
     /* Get the number of particles on all other nodes. */
-    int pref = 1;
     int nlocalpart = cells_get_n_particles();
-    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    int pref = 0;
     int_array_3d type_data(boost::extents[1][nlocalpart][1]);
     Cell *local_cell;
 
@@ -441,7 +489,13 @@ void File::WriteSpecies()
             particle_index++;
         }
     }
-    h5xx::write_dataset(this->dataset_particles_atoms_species, type_data);
+
+    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    std::vector<hsize_t> offset = {0, static_cast<size_t>(pref), 0};
+    std::vector<hsize_t> count = {1, static_cast<size_t>(nlocalpart), 1};
+    h5xx::slice slice(offset, count);
+
+    h5xx::write_dataset(this->dataset_particles_atoms_species, type_data, slice);
 }
 
 
@@ -449,13 +503,12 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
 {
     /* Get the number of particles on all other nodes. */
     /* TODO: Writing is not yet working in parallel. */
-    int pref = 1;
     int nlocalpart = cells_get_n_particles();
-    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     double_array_3d pos(boost::extents[1][nlocalpart][3]);
     double_array_3d vel(boost::extents[1][nlocalpart][3]);
     double_array_3d f(boost::extents[1][nlocalpart][3]);
     int_array_3d image(boost::extents[1][nlocalpart][3]);
+    int_array_3d id(boost::extents[1][nlocalpart][1]);
     /* Prepare data for writing, loop over all local cells. */
     Cell *local_cell;
     int particle_index = 0;
@@ -466,6 +519,8 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
              local_part_id < local_cell->n; ++local_part_id)
         {
             auto current_particle = local_cell->part[local_part_id];
+            id[0][particle_index][0] = current_particle.p.identity;
+
             /* store folded particle positions. */
             if (position)
             {
@@ -491,6 +546,11 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
             particle_index++;
         }
     }
+
+    WriteDataset(id, dataset_particles_atoms_id_value,
+                     dataset_particles_atoms_id_time,
+                     dataset_particles_atoms_id_step);
+
     if (position)
     {
         WriteDataset(pos,
@@ -520,6 +580,8 @@ void File::WriteDataset(T &data, h5xx::dataset& dataset,
                         h5xx::dataset& time, h5xx::dataset& step)
 {
     int nlocalpart = cells_get_n_particles();
+    int pref = 0;
+    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     /* Get the ID of the dataspace. */
@@ -529,9 +591,9 @@ void File::WriteDataset(T &data, h5xx::dataset& dataset,
     H5Sget_simple_extent_dims(dataspace_local_id, dims, NULL);
     /* Close the dataspace. */
     H5Sclose(dataspace_local_id);
-    // The offset is just set in the time dimension, which is the first one. */
-    hsize_t offset[3] = {dims[0], 0, 0};
-    hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), 3};
+    /* We will write the last timestep of all local particles. */
+    hsize_t offset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
+    hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
     dims[0] += 1;
     /* Extend the dataset for another timestep. */
     H5Dset_extent(dataset.hid(), dims);
@@ -595,43 +657,45 @@ void File::WriteDataset(T &data, h5xx::dataset& dataset,
 
 void File::WriteScript(std::string const &filename)
 {
-    /* First get the number of lines of the script. */
-    hsize_t dims[1] = {0};
-    std::string tmp;
-    std::ifstream scriptfile(this->absolute_script_path.string());
-    /* Write all the lines into the buffer */
-    std::vector<std::string> buffer;
-    while(std::getline(scriptfile, tmp)) {
-        buffer.push_back(tmp);
-        ++dims[0];
+    if (this_node == 0) {
+        /* First get the number of lines of the script. */
+        hsize_t dims[1] = {0};
+        std::string tmp;
+        std::ifstream scriptfile(this->absolute_script_path.string());
+        /* Write all the lines into the buffer */
+        std::vector<std::string> buffer;
+        while(std::getline(scriptfile, tmp)) {
+            buffer.push_back(tmp);
+            ++dims[0];
+        }
+        scriptfile.close();
+        std::vector<char*> cstrings;
+        for(size_t i = 0; i < buffer.size(); ++i) {
+            cstrings.push_back(const_cast<char*>(buffer[i].c_str()));
+        }
+        hid_t filetype, memtype, space, dset, file_id, group1_id, group2_id;
+        file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        filetype = H5Tcopy(H5T_FORTRAN_S1);
+        H5Tset_size(filetype, H5T_VARIABLE);
+        memtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(memtype, H5T_VARIABLE);
+        space = H5Screate_simple(1, dims, NULL);
+        /* Create the dataset. */
+        dset = H5Dcreate(group2_id, "script", filetype, space, H5P_DEFAULT, H5P_DEFAULT,
+                          H5P_DEFAULT);
+        /* Write data from buffer to dataset. */
+        H5Dwrite(dset, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, cstrings.data());
+        /* Clean up. */
+        H5Dclose(dset);
+        H5Sclose(space);
+        H5Tclose(filetype);
+        H5Tclose(memtype);
+        H5Gclose(group1_id);
+        H5Gclose(group2_id);
+        H5Fclose(file_id);
     }
-    scriptfile.close();
-    std::vector<char*> cstrings;
-    for(size_t i = 0; i < buffer.size(); ++i) {
-        cstrings.push_back(const_cast<char*>(buffer[i].c_str()));
-    }
-    hid_t filetype, memtype, space, dset, file_id, group1_id, group2_id;
-    file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, H5T_VARIABLE);
-    memtype = H5Tcopy(H5T_C_S1);
-    H5Tset_size(memtype, H5T_VARIABLE);
-    space = H5Screate_simple(1, dims, NULL);
-    /* Create the dataset. */
-    dset = H5Dcreate(group2_id, "script", filetype, space, H5P_DEFAULT, H5P_DEFAULT,
-                      H5P_DEFAULT);
-    /* Write data from buffer to dataset. */
-    H5Dwrite(dset, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, cstrings.data());
-    /* Clean up. */
-    H5Dclose(dset);
-    H5Sclose(space);
-    H5Tclose(filetype);
-    H5Tclose(memtype);
-    H5Gclose(group1_id);
-    H5Gclose(group2_id);
-    H5Fclose(file_id);
 }
 
 
