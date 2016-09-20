@@ -433,16 +433,26 @@ the same way.
 \subsection{Deleting  particles}
 \label{tcl:part:delete}
 
-\todo{What is the syntax of variant 3?}
+\begin{pysyntax}
+    \attributes{
+        espressomd
+    }{
+        System()
+    }{
+        part[\var{pid}].remove(),
+    }
+\end{pysyntax}
+
+
 \begin{essyntax}
   \variant{1} part \var{pid} delete
   \variant{2} part deleteall
 \end{essyntax}
 
-In variant \variant{1}, the particle \var{pid} is deleted
-and all bonds referencing it.  Variant \variant{2} will delete all
-particles currently present in the simulation. Variant \variant{3}
-will delete all currently defined exclusions.
+Particles can be easily deleted in Python using particle ids or 
+ranges of particle ids. In TCL variant \variant{1}, the particle \var{pid} 
+is deleted and all bonds referencing it. TCL variant \variant{2} will delete all
+particles currently present in the simulation.
 
 \subsection{Exclusions}
 
