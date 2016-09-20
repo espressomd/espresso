@@ -162,15 +162,15 @@ system.box_l = [box_l, box_l, box_l]
 \end{lstlisting}\vspace{0,2cm}
 }
 
-The parameter $box\_l$ set the size of the simulation box. In general, one should check for finite
+The parameter $box\_l$ sets the size of the simulation box. In general, one should check for finite
 size effects which can be surprisingly large in simulations using hydrodynamic interactions. They
 also generally scale as $box\_l^{-1}$ or $box\_l^{-3}$ depending on the transport mechanism
 which sometimes allows for the infinite box limit to be extrapolated to, instead of using an
-excessively large simulation box. As a rule of thumb, a box size five times greater than the characteristic
+excessively large simulation box. As a rule of thumb, the box size should be five times greater than the characteristic
 length scale of the object. 
 {\small\vspace{0,2cm}
 \begin{lstlisting}[numbers=none]
-system.time_step=time_step
+system.time_step = time_step
 \end{lstlisting}\vspace{0,2cm}
 }
 The parameter $time\_step$, which represents the time step used in the Verlet
@@ -195,26 +195,26 @@ The $periodicity$ parameter indicates that the system is periodic in all three
 dimensions. Note that the lattice-Boltzmann algorithm requires periodicity in all three directions (although
 this can be modified using boundaries, a topic not covered in this tutorial). 
 
-\section{Setting up the raspberry}
+\section{Setting up the Raspberry}
 
-The setting up of the raspberry is a non-trivial task. The main problem lies in creating a relatively
+Setting up the raspberry is a non-trivial task. The main problem lies in creating a relatively
 uniform distribution of beads on the surface of the colloid. In general one should take about 1 bead per grid
-point on the surface to ensure no holes in the surface. The behavior of the colloid can be further improved by placing
+point on the surface to ensure that there are no holes in the surface. The behavior of the colloid can be further improved by placing
 beads inside the colloid, though this is not done in this example script. In our example
 we first define a center of the colloid, a harmonic interaction causing the surface beads to be attracted
 to the center, and a Lennard-Jones interaction preventing the beads from entering the colloid. There is also a Lennard-Jones
 potential between the surface beads to get them to distribute evenly on the surface. 
 
-The beads are initialed at random positions on the surface of the colloid. The beads are then allowed to relax using
+The beads are initialized at random positions on the surface of the colloid. The beads are then allowed to relax using
 an integration loop where the forces between the beads are capped. The best way to ensure a relatively uniform distribution
 of the beads on the surface is to simply take a look at a VMD snapshot of the system after this integration. As can
 be seen in Fig.~\ref{fig:rasp_snapshot}.
 
 In order to make the colloid perfectly round we now adjust the beads positions to be exactly $radius\_col$ away
 from the central bead.
-Now that the beads make are in the shape of a raspberry the surface beads are virtualized. The central
+Now that the beads are arranged in the shape of a raspberry, the surface beads are virtualized. The central
 bead is also given an appropriate mass and moment of inertia tensor (note that the off-diagonal elements
-are zero in \es{}'s implementation). Lastly the central bead is given the total charge on the colloid. In principle
+are zero in \es{}'s implementation). Lastly the central bead is given the total electrostatic charge on the colloid. In principle
 one could also assign the charge to the surface beads, which might be more realistic, but would require more computational
 effort for calculating the electrostatic interactions.
 
@@ -225,7 +225,7 @@ of both signs are added to represent the salt in the solution. Between all of th
 version of the Lennard-Jones potential which approximates hard spheres or radius $\sigma$. The ions also have a WCA potential
 with the central bead of the colloid with an offset of around $radius\_col-\sigma +a_\mathrm{grid}/2$. This make
 the colloid appear as a hard sphere of radius roughly $radius\_col+a_\mathrm{grid}/2$ to the ions, which is roughly equal to the
-hydrodynamic radius of the colloid. After inserting the ions, a short integration is again performed with a force cap to
+hydrodynamic radius of the colloid. After inserting the ions, again a short integration is performed with a force cap to
 prevent strong overlaps between the ions.
 
 \section{Electrostatics}
@@ -240,22 +240,22 @@ Generally a Bjerrum length of $2$ is appropriate when using WCA interactions wit
 length in water is around $\SI{0.7}{nm}$.
 
 The external electric field is simulated by simply adding a constant force equal to the simulated field times the particle charge. Generally the electric field is set to $0.1$ in MD units
-which is the maximum field before the response becomes nonlinear. Smaller fields are also possible, but the required simulation time is considerably larger. Green-Kubo methods
-are also sometimes used, but these are generally only feasible in cases where is either no salt or a very low salt concentration.
+which is the maximum field before the response becomes nonlinear. Smaller fields are also possible, but the required simulation time is considerably larger. Sometimes, Green-Kubo methods
+are also used, but these are generally only feasible in cases where there is either no salt or a very low salt concentration.
 
 \section{Lattice-Boltzmann}
-The lattice-Boltzmann (LB) fluid can be easily create in \es{} with the help of the $LBFluid$ command.
+The lattice-Boltzmann (LB) fluid can be easily create in \es{} using the $LBFluid$ command.
 Before creating the LB fluid it is a good idea to set all of the particle velocities to zero via the $kill\_particle\_motion()$ command.
 This is necessary to set the total momentum of the system to zero. Failing to do so will lead to an unphysical drift of the system, which
 will change the values of the measured velocities.
 
 The important parameters for the LB fluid are the density, the viscosity, the time step and the friction. The time step should generally be comparable to the MD time step. While
-large time steps are possible, a time step of $0.01$ turns out to provide more reasonable values for the root mean squared particle velocities. The density, viscosity
+large time steps are possible, a time step of $0.01$ turns out to provide more reasonable values for the root mean squared particle velocities. Both density and viscosity
 should be around $1$, while the friction should be set around $20.$ The grid spacing should be comparable to the ions' size.
 {\small\vspace{0,2cm}
 \begin{lstlisting}[numbers=none]
 system.galilei.kill_particle_motion()
-lb=espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
+lb = espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
 \end{lstlisting}
 }
@@ -268,7 +268,7 @@ WCA potential ($R=0.5\sigma$). Using the following equation:
  \label{effectiveGammaEq}
 \end{equation}
 one can see that the set of parameters grid spacing $a=1\sigma$, fluid density $\rho=1$, a 
-kinematic viscosity is $\gamma=3 $ and a friction of $\Gamma_0=50$ leads to a hydrodynamic radius
+kinematic viscosity of $\gamma=3 $ and a friction of $\Gamma_0=50$ leads to a hydrodynamic radius
 of approximately $0.5\sigma$.
 
 The last step is to first turn off all other thermostats, followed by turning on the LB thermostat. The temperature is typically set to 1, which is equivalent to setting
@@ -282,7 +282,7 @@ system.thermostat.set_lb(kT=1.)
 }
 
 \section{Simulating Electrophoresis}
-The main simulation can now begin! The only important thing is to make sure the system has enough time to equilibrate. There are two separate equilibration times: 1) The time for the ion distribution to stabilize, and 2) The time
-needed for the fluid flow profile to equilibrate. The ion distribution equilibration is generally fast, and so the needed warmup time is largely determined by the fluid relaxation time which can be calculated via $\tau_\mathrm{relax} = \$box\_length^2/\nu$. This means for a box of size 48 with a kinematic viscosity of 3 as in our example script, the relaxation time is $\tau_\mathrm{relax} = 48^2/3 = 768 \tau_\mathrm{MD}$, or 76800 interation steps. In general it is a good idea to run for many relaxation times before starting to use the simulation results for averaging observables, to be on the safe side $10^6$ integration steps is a reasonable equilibration time. Please feel free to modify the provided script and try and get some interesting results!
+Now the main simulation can begin! The only important thing is to make sure the system has enough time to equilibrate. There are two separate equilibration times: 1) The time for the ion distribution to stabilize, and 2) The time
+needed for the fluid flow profile to equilibrate. In general, the ion distribution equilibrates fast, so the needed warmup time is largely determined by the fluid relaxation time, which can be calculated via $\tau_\mathrm{relax} = box\_length^2/\nu$. This means for a box of size 48 with a kinematic viscosity of 3 as in our example script, the relaxation time is $\tau_\mathrm{relax} = 48^2/3 = 768 \tau_\mathrm{MD}$, or 76800 integration steps. In general it is a good idea to run for many relaxation times before starting to use the simulation results for averaging observables. To be on the safe side $10^6$ integration steps is a reasonable equilibration time. Please feel free to modify the provided script and try and get some interesting results!
 \end{document}
 
