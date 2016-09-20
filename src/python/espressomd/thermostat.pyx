@@ -44,6 +44,8 @@ cdef class Thermostat:
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"], gamma_rotation=thmst["gamma_rotation"])
+            if thmst["type"] == "LB":
+                self.set_lb(kT=thmst["kT"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
@@ -73,6 +75,11 @@ cdef class Thermostat:
                 lang_dict["gamma_rotation"] = langevin_gamma_rotation
 
             thermo_list.append(lang_dict)
+        if thermo_switch & THERMO_LB:
+            lb_dict = {}
+            lb_dict["type"] = "LB"
+            lb_dict["kT"] = temperature
+            thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
@@ -158,6 +165,24 @@ cdef class Thermostat:
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         return True
+
+    IF LB_GPU or LB:
+        def set_lb(self, kT=""):
+            """Sets the LB thermostat with required parameter 'temperature'"""
+
+            if kT == "":
+                raise ValueError(
+                    "kT has to be given as keyword arg")
+            utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+            if float(kT) < 0.:
+                raise ValueError("temperature must be non-negative")
+            global temperature
+            temperature = float(kT)
+            global thermo_switch
+            thermo_switch = (thermo_switch or THERMO_LB)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_bcast_parameter(FIELD_TEMPERATURE)
+            return True
 
     IF NPT:
         def set_npt(self, kT="", gamma0="", gammav=""):

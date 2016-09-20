@@ -40,7 +40,7 @@ from .galilei import GalileiTransform
 import sys
 import random  # for true random numbers from os.urandom()
 
-setable_properties = ["box_l", "periodicity", "time",
+setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
 cdef class System:
@@ -196,6 +196,14 @@ cdef class System:
     property max_cut_bonded:
         def __get__(self):
             return max_cut_bonded
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            global min_global_cut
+            min_global_cut = _min_global_cut
+            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+        def __get__(self):
+            return min_global_cut
 
     __seed = None
 
