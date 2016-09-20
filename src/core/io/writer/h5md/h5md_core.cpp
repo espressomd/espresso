@@ -575,6 +575,7 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
 }
 
 
+/* data is assumed to be three dimensional */
 template <typename T>
 void File::WriteDataset(T &data, h5xx::dataset& dataset,
                         h5xx::dataset& time, h5xx::dataset& step)
