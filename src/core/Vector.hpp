@@ -26,7 +26,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <iterator>
-
+#include <vector>
 #include <boost/serialization/array.hpp>
 
 template <int n, typename Scalar> class Vector {
