@@ -47,6 +47,10 @@
 #include "EspressoSystemInterface.hpp"
 #include "interaction_data.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 struct P3MGpuData {
   /** Charge mesh */
   CUFFT_TYPE_COMPLEX *charge_mesh;
