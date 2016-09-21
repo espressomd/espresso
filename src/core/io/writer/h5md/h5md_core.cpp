@@ -650,39 +650,36 @@ void File::WriteScript(std::string const &filename)
 {
     if (this_node == 0) {
         /* First get the number of lines of the script. */
-        hsize_t dims[1] = {0};
+        hsize_t dims[1] = {1};
         std::string tmp;
         std::ifstream scriptfile(this->absolute_script_path.string());
-        /* Write all the lines into the buffer */
-        std::vector<std::string> buffer;
-        while(std::getline(scriptfile, tmp)) {
-            buffer.push_back(tmp);
-            ++dims[0];
-        }
-        scriptfile.close();
-        std::vector<char*> cstrings;
-        for(size_t i = 0; i < buffer.size(); ++i) {
-            cstrings.push_back(const_cast<char*>(buffer[i].c_str()));
-        }
-        hid_t filetype, memtype, space, dset, file_id, group1_id, group2_id;
+        /* Read the whole script into a buffer. */
+        scriptfile.seekg(0, std::ios::end);
+        auto filelen = scriptfile.tellg();
+        scriptfile.seekg(0);
+        std::vector<char> buffer;
+        buffer.reserve(filelen);
+        buffer.assign(std::istreambuf_iterator<char>(scriptfile),
+                      std::istreambuf_iterator<char>());
+
+        hid_t filetype, dtype, space, dset, file_id, group1_id, group2_id;
         file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        filetype = H5Tcopy(H5T_FORTRAN_S1);
-        H5Tset_size(filetype, H5T_VARIABLE);
-        memtype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(memtype, H5T_VARIABLE);
+
+        dtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype, filelen * sizeof(char));
+
         space = H5Screate_simple(1, dims, NULL);
         /* Create the dataset. */
-        dset = H5Dcreate(group2_id, "script", filetype, space, H5P_DEFAULT, H5P_DEFAULT,
+        dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
                           H5P_DEFAULT);
         /* Write data from buffer to dataset. */
-        H5Dwrite(dset, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, cstrings.data());
+        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
         /* Clean up. */
         H5Dclose(dset);
         H5Sclose(space);
-        H5Tclose(filetype);
-        H5Tclose(memtype);
+        H5Tclose(dtype);
         H5Gclose(group1_id);
         H5Gclose(group2_id);
         H5Fclose(file_id);
