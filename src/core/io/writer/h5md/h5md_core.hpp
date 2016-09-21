@@ -44,7 +44,6 @@ namespace h5md {
 
 typedef boost::multi_array<double,3> double_array_3d;
 typedef boost::multi_array<int,3> int_array_3d;
-typedef char h5string[1000];
 
 /**
  * @brief Class for writing H5MD files.
