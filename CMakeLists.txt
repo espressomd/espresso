@@ -19,7 +19,7 @@
 #
 
 cmake_minimum_required(VERSION 3.0)
-
+include(FeatureSummary)
 project(ESPResSo)
 
 enable_language(CXX)
@@ -172,10 +172,10 @@ if(HDF5_FOUND)
     set(H5MD 1)
     list(APPEND LIBRARIES ${HDF5_LIBRARIES})
     include_directories(${HDF5_INCLUDE_DIRS})
-    #add_feature_info(HDF5 ON "parallel")
+    add_feature_info(HDF5 WITH_HDF5 ON "parallel")
   else()
     unset(HDF5_FOUND)
-    #add_feature_info(HDF5 OFF "serial")
+    add_feature_info(HDF5 WITH_HDF5 OFF "serial")
   endif(HDF5_IS_PARALLEL)
 endif(HDF5_FOUND)
 endif(WITH_HDF5)
