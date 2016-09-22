@@ -26,6 +26,13 @@
 namespace writer {
 namespace h5md {
 
+static void backup_file(const std::string &from, const std::string& to)
+{
+    boost::filesystem::path pfrom(from), pto(to);
+    boost::filesystem::copy_file(pfrom, pto,
+        boost::filesystem::copy_option::overwrite_if_exists);
+}
+
 /* Constructor for the File class. */
 File::File(std::string const &filename, std::string const &script_name)
 {
@@ -40,48 +47,26 @@ File::File(std::string const &filename, std::string const &script_name)
     /* Check if a file with given filename exists. */
     bool file_exists = this->check_file_exists(filename);
     /* If it exists, check for the H5MD structure. */
-    if (file_exists)
-    {
-        this->has_H5MD_structure = check_for_H5MD_structure(filename);
-    }
-    if (file_exists && this->has_H5MD_structure)
+    bool has_H5MD_structure = file_exists && check_for_H5MD_structure(filename);
+
+    if (file_exists && has_H5MD_structure)
     {
         /*
-         * If the file exists and has a valid H5MD structure, lets create a new file and copy the hdf5 objects.
+         * If the file exists and has a valid H5MD structure, lets create a backup of it.
          * This has the advantage, that the new file can just be deleted if the simulation crashes at some point and we
          * still have a valid trajectory, we can start from.
         */
-        std::string temp_name = filename + "_tmp";
-        this->lastfile = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
-                                     h5xx::file::out);
-        this->h5md_file = h5xx::file(temp_name, MPI_COMM_WORLD, MPI_INFO_NULL,
+        backup_filename = filename + ".bak";
+        backup_file(filename, backup_filename);
+
+        this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                      h5xx::file::out);
         /* particles -- atoms -- box -- edges */
-        H5Ocopy(lastfile.hid(), "/particles", this->h5md_file.hid(), "/particles", H5P_DEFAULT,
-                           H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms", this->h5md_file.hid(), "/particles/atoms", H5P_DEFAULT,
-                           H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/box", this->h5md_file.hid(), "/particles/atoms/box",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/box/edges", this->h5md_file.hid(),
-                           "/particles/atoms/box/edges", H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles = h5xx::group(this->h5md_file, "particles");
         this->group_particles_atoms = h5xx::group(this->group_particles, "atoms");
         this->group_particles_atoms_box = h5xx::group(this->group_particles_atoms, "box");
         this->dataset_particles_atoms_box_edges = h5xx::dataset(this->group_particles_atoms_box, "edges");
         /* particles -- atoms -- id */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/id", this->h5md_file.hid(),
-                           "/particles/atoms/id",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/id/value", this->h5md_file.hid(),
-                           "/particles/atoms/id/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/id/time", this->h5md_file.hid(),
-                           "/particles/atoms/id/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/id/step", this->h5md_file.hid(),
-                           "/particles/atoms/id/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_id = h5xx::group(
                 this->group_particles_atoms, "id");
         this->dataset_particles_atoms_id_value = h5xx::dataset(
@@ -94,17 +79,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 this->group_particles_atoms_id,
                 "step");
         /* particles -- atoms -- mass */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/mass", this->h5md_file.hid(), "/particles/atoms/mass",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/mass/value", this->h5md_file.hid(),
-                           "/particles/atoms/mass/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/mass/time", this->h5md_file.hid(),
-                           "/particles/atoms/mass/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/mass/step", this->h5md_file.hid(),
-                           "/particles/atoms/mass/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_mass = h5xx::group(
                 this->group_particles_atoms, "mass");
         this->dataset_particles_atoms_mass_value = h5xx::dataset(
@@ -114,18 +88,6 @@ File::File(std::string const &filename, std::string const &script_name)
         this->dataset_particles_atoms_mass_step = h5xx::dataset(
                 this->group_particles_atoms_mass, "step");
         /* particles -- atoms -- position */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/position", this->h5md_file.hid(),
-                           "/particles/atoms/position",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/position/value", this->h5md_file.hid(),
-                           "/particles/atoms/position/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/position/time", this->h5md_file.hid(),
-                           "/particles/atoms/position/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/position/step", this->h5md_file.hid(),
-                           "/particles/atoms/position/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_position = h5xx::group(
                 this->group_particles_atoms, "position");
         this->dataset_particles_atoms_position_value = h5xx::dataset(
@@ -138,18 +100,6 @@ File::File(std::string const &filename, std::string const &script_name)
                 this->group_particles_atoms_position,
                 "step");
         /* particles -- atoms -- velocity */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/velocity", this->h5md_file.hid(),
-                           "/particles/atoms/velocity",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/velocity/value", this->h5md_file.hid(),
-                           "/particles/atoms/velocity/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/velocity/time", this->h5md_file.hid(),
-                           "/particles/atoms/velocity/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/velocity/step", this->h5md_file.hid(),
-                           "/particles/atoms/velocity/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_velocity = h5xx::group(
                 this->group_particles_atoms, "velocity");
         this->dataset_particles_atoms_velocity_value = h5xx::dataset(
@@ -159,17 +109,6 @@ File::File(std::string const &filename, std::string const &script_name)
         this->dataset_particles_atoms_velocity_step = h5xx::dataset(
                 this->group_particles_atoms_velocity, "step");
         /* particles -- atoms -- force */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/force", this->h5md_file.hid(), "/particles/atoms/force",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/force/value", this->h5md_file.hid(),
-                           "/particles/atoms/force/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/force/time", this->h5md_file.hid(),
-                           "/particles/atoms/force/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/force/step", this->h5md_file.hid(),
-                           "/particles/atoms/force/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_force = h5xx::group(
                 this->group_particles_atoms, "force");
         this->dataset_particles_atoms_force_value = h5xx::dataset(
@@ -179,17 +118,6 @@ File::File(std::string const &filename, std::string const &script_name)
         this->dataset_particles_atoms_force_step = h5xx::dataset(
                 this->group_particles_atoms_force, "step");
         /* particles -- atoms -- image */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/image", this->h5md_file.hid(), "/particles/atoms/image",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/image/value", this->h5md_file.hid(),
-                           "/particles/atoms/image/value",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/image/time", this->h5md_file.hid(),
-                           "/particles/atoms/image/time",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/particles/atoms/image/step", this->h5md_file.hid(),
-                           "/particles/atoms/image/step",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->group_particles_atoms_image = h5xx::group(
                 this->group_particles_atoms, "image");
         this->dataset_particles_atoms_image_value = h5xx::dataset(
@@ -199,26 +127,14 @@ File::File(std::string const &filename, std::string const &script_name)
         this->dataset_particles_atoms_image_step = h5xx::dataset(
                 this->group_particles_atoms_image, "step");
         /* particles -- atoms -- species */
-        H5Ocopy(lastfile.hid(), "/particles/atoms/species", this->h5md_file.hid(),
-                           "/particles/atoms/species",
-                           H5P_DEFAULT, H5P_DEFAULT);
         this->dataset_particles_atoms_species = h5xx::dataset(
                 this->group_particles_atoms, "species");
         /* particles -- atoms -- parameters */
-        H5Ocopy(lastfile.hid(), "/parameters", this->h5md_file.hid(), "/parameters",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/parameters/vmd_structure", this->h5md_file.hid(),
-                           "/parameters/vmd_structure",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/parameters/files", this->h5md_file.hid(), "/parameters/vmd_structure",
-                           H5P_DEFAULT, H5P_DEFAULT);
-        H5Ocopy(lastfile.hid(), "/parameters/files/script", this->h5md_file.hid(), "/parameters/vmd_structure/script",
-                H5P_DEFAULT, H5P_DEFAULT);
         this->group_parameters = h5xx::group(this->h5md_file, "parameters");
         this->group_parameters_vmd_structure = h5xx::group(this->group_parameters, "vmd_structure");
         this->group_parameters_files = h5xx::group(this->group_parameters, "files");
         return;
-    } else if (file_exists && !this->has_H5MD_structure) {
+    } else if (file_exists && !has_H5MD_structure) {
         throw incompatible_h5mdfile();
     } else
     {
@@ -290,7 +206,7 @@ File::File(std::string const &filename, std::string const &script_name)
         this->group_particles_atoms_id =
                 h5xx::group(this->group_particles_atoms, "id");
         this->dataspace_particles_atoms_id_value = h5xx::dataspace(
-                dims_3d, maxdims);
+                chunk_dims_1d, maxdims);
         this->dataset_particles_atoms_id_value = h5xx::dataset(
                 this->group_particles_atoms_id,
                 "value", this->type_int,
@@ -436,19 +352,7 @@ File::File(std::string const &filename, std::string const &script_name)
 
 void File::Close()
 {
-    if (this->lastfile.valid())
-    {
-        std::string lastfile_name = this->lastfile.name();
-        /* Close the h5xx::file object */
-        this->lastfile.close();
-        boost::filesystem::path lastfile_path(lastfile_name);
-        /* If we arrived at this point, removing the last file is save. */
-        boost::filesystem::remove(lastfile_path);
-        std::string h5mdfile_name = this->h5md_file.name();
-        boost::filesystem::path h5mdfile_path(h5mdfile_name);
-        boost::filesystem::path user_filename_path(this->user_filename);
-        boost::filesystem::rename(h5mdfile_path, user_filename_path);
-    }
+    boost::filesystem::remove(backup_filename);
 }
 
 
@@ -553,15 +457,19 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
                      this->dataset_particles_atoms_image_step);
     }
     if (velocity)
+    {
         WriteDataset(vel,
                      this->dataset_particles_atoms_velocity_value,
                      this->dataset_particles_atoms_velocity_time,
                      this->dataset_particles_atoms_velocity_step);
+    }
     if (force)
+    {
         WriteDataset(f,
                      this->dataset_particles_atoms_force_value,
                      this->dataset_particles_atoms_force_time,
                      this->dataset_particles_atoms_force_step);
+    }
 }
 
 
@@ -650,39 +558,36 @@ void File::WriteScript(std::string const &filename)
 {
     if (this_node == 0) {
         /* First get the number of lines of the script. */
-        hsize_t dims[1] = {0};
+        hsize_t dims[1] = {1};
         std::string tmp;
         std::ifstream scriptfile(this->absolute_script_path.string());
-        /* Write all the lines into the buffer */
-        std::vector<std::string> buffer;
-        while(std::getline(scriptfile, tmp)) {
-            buffer.push_back(tmp);
-            ++dims[0];
-        }
-        scriptfile.close();
-        std::vector<char*> cstrings;
-        for(size_t i = 0; i < buffer.size(); ++i) {
-            cstrings.push_back(const_cast<char*>(buffer[i].c_str()));
-        }
-        hid_t filetype, memtype, space, dset, file_id, group1_id, group2_id;
+        /* Read the whole script into a buffer. */
+        scriptfile.seekg(0, std::ios::end);
+        auto filelen = scriptfile.tellg();
+        scriptfile.seekg(0);
+        std::vector<char> buffer;
+        buffer.reserve(filelen);
+        buffer.assign(std::istreambuf_iterator<char>(scriptfile),
+                      std::istreambuf_iterator<char>());
+
+        hid_t filetype, dtype, space, dset, file_id, group1_id, group2_id;
         file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        filetype = H5Tcopy(H5T_FORTRAN_S1);
-        H5Tset_size(filetype, H5T_VARIABLE);
-        memtype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(memtype, H5T_VARIABLE);
+
+        dtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype, filelen * sizeof(char));
+
         space = H5Screate_simple(1, dims, NULL);
         /* Create the dataset. */
-        dset = H5Dcreate(group2_id, "script", filetype, space, H5P_DEFAULT, H5P_DEFAULT,
+        dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
                           H5P_DEFAULT);
         /* Write data from buffer to dataset. */
-        H5Dwrite(dset, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, cstrings.data());
+        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
         /* Clean up. */
         H5Dclose(dset);
         H5Sclose(space);
-        H5Tclose(filetype);
-        H5Tclose(memtype);
+        H5Tclose(dtype);
         H5Gclose(group1_id);
         H5Gclose(group2_id);
         H5Fclose(file_id);

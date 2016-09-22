@@ -44,7 +44,6 @@ namespace h5md {
 
 typedef boost::multi_array<double,3> double_array_3d;
 typedef boost::multi_array<int,3> int_array_3d;
-typedef char h5string[1000];
 
 /**
  * @brief Class for writing H5MD files.
@@ -110,15 +109,11 @@ class File
      */
     void WriteScript(std::string const &filename);
     /**
-     * @brief Variable for the H5MD structure check if @see check_for_H5MD_structure.
-     */
-    bool has_H5MD_structure = false;
-    /**
      * Because we change the name of the file automatically, its a member variable.
      */
     std::string user_filename;
+    std::string backup_filename;
     boost::filesystem::path absolute_script_path;
-    h5xx::file lastfile;
     h5xx::file h5md_file;
     /* datatypes */
     h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
