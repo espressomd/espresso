@@ -1,5 +1,5 @@
 file(GLOB_RECURSE EspressoScriptInterface_SRC
-          "*.cpp"
+          "*.?pp"
           )
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})

@@ -16,10 +16,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */ 
-#include "statistics_correlation.hpp"
+#include "Correlation.hpp"
 #include "particle_data.hpp"
 #include "integrate.hpp"
 #include <cstring>
+
+namespace Correlators {
 
 /* global variables */
 std::map<int,Correlation*> correlations;
@@ -125,7 +127,7 @@ Correlation::Correlation(double _dt,
     			    unsigned int _window_distance, 
     			    unsigned int _dim_A, unsigned int _dim_B, 
     			    unsigned int _dim_corr, 
-    			    Observable& _o_A, Observable& _o_B, 
+    			    ::Observables::Observable& _o_A, ::Observables::Observable& _o_B, 
     			    char* _corr_operation_name, 
     			    char* _compressA_name, char* _compressB_name, 
     			    void *_args) :
@@ -430,12 +432,12 @@ int Correlation::get_data() {
   if ( A_obs.calculate() != 0 )
     return 1;
   // copy the result:
-  memmove(A[0][newest[0]], A_obs.last_value, dim_A*sizeof(double));
+  memmove(A[0][newest[0]], &(A_obs.last_value[0]), dim_A*sizeof(double));
 
   if (!autocorrelation) {
     if ( B_obs.calculate() != 0 )
       return 2;
-    memmove(B[0][newest[0]], B_obs.last_value, dim_B*sizeof(double));
+    memmove(B[0][newest[0]], &(B_obs.last_value[0]), dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B
@@ -853,5 +855,7 @@ void autoupdate_correlations() {
     }
   }
 }
+} // Namespace Correlators
+
 
 

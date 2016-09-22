@@ -18,15 +18,18 @@
 */
 
 #include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "observables/initialize.hpp" 
+#include "ParallelScriptInterface.hpp"
+#include "utils/Factory.hpp"
+
+#include "ParticleVelocities.hpp"
 
 namespace ScriptInterface {
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Observables::initialize();
-}
+namespace Observables {
 
+void initialize() {
+  ParallelScriptInterface<ScriptInterface::Observables::ParticleVelocities>::
+    register_new("Observables::ParticleVelocities");
+
+}
+} /* namespace Obseravbles */
 } /* namespace ScriptInterface */

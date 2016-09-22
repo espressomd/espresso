@@ -59,7 +59,7 @@
 #include "lattice.hpp"
 #include "lb.hpp"
 #include "virtual_sites.hpp"
-#include "statistics_correlation.hpp"
+#include "correlators/Correlation.hpp"
 #include "ghmc.hpp"
 
 using std::ostringstream;

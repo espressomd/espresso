@@ -116,9 +116,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include "statistics_observable.hpp"
+#include "../observables/Observable.hpp"
 #include <map>
 
+
+namespace Correlators {
 #define MAXLINELENGTH 2048
 
 #define MIN(a,b) ((a)>(b)?(b):(a))
@@ -167,7 +169,7 @@ class Correlation {
     			    unsigned int _window_distance, 
     			    unsigned int _dim_A, unsigned int _dim_B, 
     			    unsigned int _dim_corr, 
-    			    Observable& _o_A, Observable& _o_B, 
+    			    ::Observables::Observable& _o_A, ::Observables::Observable& _o_B, 
     			    char* _corr_operation_name, 
     			    char* _compressA_name, char* _compressB_name, 
     			    void *_args);
@@ -271,8 +273,8 @@ class Correlation {
     char *corr_operation_name;
 
     // Functions producing observables A and B from the input data
-    Observable& A_obs;
-    Observable& B_obs;
+    ::Observables::Observable& A_obs;
+    ::Observables::Observable& B_obs;
     int A_obs_id;
     int B_obs_id;
 
@@ -357,4 +359,5 @@ int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned in
 
 int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
+} // Namespace correlators
 #endif

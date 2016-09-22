@@ -76,9 +76,9 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_correlation.hpp"
+#include "correlators/Correlation.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_observable.hpp"
+#include "observables/Observable.hpp"
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
@@ -1284,7 +1284,7 @@ void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
-  if (!correlations_autoupdate) {
+  if (!Correlators::correlations_autoupdate) {
     mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
     integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(
@@ -1296,7 +1296,7 @@ int mpi_integrate(int n_steps, int reuse_forces) {
       reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(
           fprintf(stderr, "%d: integration task %d done.\n", this_node, i));
-      autoupdate_correlations();
+      Correlators::autoupdate_correlations();
     }
   }
   return mpi_check_runtime_errors();

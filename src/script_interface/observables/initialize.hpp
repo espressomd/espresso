@@ -17,16 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "observables/initialize.hpp" 
+#ifndef SCRIPT_INTERFACE_OBSERVABLES_INITIALIZE_HPP
+#define SCRIPT_INTERFACE_OBSERVABLES_INITIALIZE_HPP
 
 namespace ScriptInterface {
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Observables::initialize();
-}
+namespace Observables {
 
+void initialize();
+
+} /* namespace Observables */
 } /* namespace ScriptInterface */
+
+#endif
