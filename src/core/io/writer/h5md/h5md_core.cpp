@@ -206,7 +206,7 @@ File::File(std::string const &filename, std::string const &script_name)
         this->group_particles_atoms_id =
                 h5xx::group(this->group_particles_atoms, "id");
         this->dataspace_particles_atoms_id_value = h5xx::dataspace(
-                dims_3d, maxdims);
+                chunk_dims_1d, maxdims);
         this->dataset_particles_atoms_id_value = h5xx::dataset(
                 this->group_particles_atoms_id,
                 "value", this->type_int,
