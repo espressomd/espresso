@@ -108,6 +108,19 @@ class File
      * @brief Method to write the simulation script to the dataset.
      */
     void WriteScript(std::string const &filename);
+
+    /**
+     * @brief Creates a new H5MD file.
+     * @param filename The filename
+     */
+    void createNewFile(const std::string& filename);
+
+    /**
+     * @brief Loads an existing H5MD file.
+     * @param filename The filename
+     */
+    void loadFile(const std::string& filename);
+
     /**
      * Because we change the name of the file automatically, its a member variable.
      */
