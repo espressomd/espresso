@@ -231,6 +231,7 @@ IF P3M == 1:
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
             python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                        "cao"], -1.0, self._params["accuracy"], self._params["inter"])
             resp = python_p3m_adaptive_tune()
@@ -240,8 +241,6 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            #Setting default values before tuning
-            self._set_params_in_es_core()
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()

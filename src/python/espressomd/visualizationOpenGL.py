@@ -164,7 +164,7 @@ class openGLLive:
     def updateBonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(self.system.max_part + 1):
+            for i in range(len(self.system.part)):
 
                 bs = self.system.part[i].bonds
                 for b in bs:
