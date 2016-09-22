@@ -175,6 +175,9 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 	double VOL_force[3];
 	double VOL_A, VOL_norm[3], VOL_dn, VOL_vv; 
 
+    double m1[3],m2[3],m3[3];
+    double m1_length,m2_length,m3_length,t,fac;
+
 	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
 	
@@ -293,37 +296,33 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					for(k=0;k<3;k++){
 						h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 					}
-					
-					aa=( area - iaparams->p.oif_global_forces.A0_g) / iaparams->p.oif_global_forces.A0_g;
+					//aa=( area - iaparams->p.oif_global_forces.A0_g) / iaparams->p.oif_global_forces.A0_g;
+					t = sqrt(area/iaparams->p.oif_global_forces.A0_g) - 1.0;
+			        vecsub(h,p11,m1);
+			        vecsub(h,p22,m2);
+			        vecsub(h,p33,m3);	
+			        
+			        m1_length = normr(m1);
+					m2_length = normr(m2);
+					m3_length = normr(m3);
+									
+			        fac = iaparams->p.oif_global_forces.ka_g*iaparams->p.oif_global_forces.A0_g*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+			
+					for(k=0; k<3; k++) {          // local area force for p1
+						force1[k] = fac*m1[k];
+					}    
+					for(k=0; k<3; k++) {          // local area force for p2
+						force2[k] = fac*m2[k];
+					}
+					for(k=0; k<3; k++) {          // local area force for p3
+						force3[k] = fac*m3[k];
+					}	
 
-					//aminusb(3,h,p11,rh);				// area_forces for each triangle node
-					vecsub(h,p11,rh);				// area_forces for each triangle node
-					hn=normr(rh);
-					for(k=0;k<3;k++) {
-						force1[k] =  iaparams->p.oif_global_forces.ka_g * aa * rh[k]/hn;
-						//(&part1)->f.f[k]+=force[k];
-					}
-					//aminusb(3,h,p22,rh);				// area_forces for each triangle node
-					vecsub(h,p22,rh);				// area_forces for each triangle node
-					hn=normr(rh);
-					for(k=0;k<3;k++) {
-						force2[k] =  iaparams->p.oif_global_forces.ka_g * aa * rh[k]/hn;
-						//(&part2)->f.f[k]+=force[k];
-					}
-					//aminusb(3,h,p33,rh);				// area_forces for each triangle node
-					vecsub(h,p33,rh);				// area_forces for each triangle node
-					hn=normr(rh);
-					for(k=0;k<3;k++) {
-						force3[k] =  iaparams->p.oif_global_forces.ka_g * aa * rh[k]/hn;
-						//(&part3)->f.f[k]+=force[k];
-					}
-	
 					for(k=0;k<3;k++) {
 						p1->f.f[k] += force1[k]; 
 						p2->f.f[k] += force2[k];
 						p3->f.f[k] += force3[k];
 					}
-
 				}
 				else{
 					j+=n_partners;
