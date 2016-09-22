@@ -24,7 +24,6 @@
 namespace Correlators {
 
 /* global variables */
-std::map<int,Correlation*> correlations;
 
 
 /* Error codes */
@@ -72,20 +71,20 @@ int correlations_autoupdate=0;
 
 
 int correlation_update(unsigned int no) {
-    return correlations.at(no)->get_data();
+//    return correlations.at(no)->get_data();
 }
 
 int correlation_update_from_file(unsigned int no) {
-  if (!correlations.at(no)->is_from_file)
-    return 1;
-  while ( ! correlations.at(no)->get_data()) {
-  }
-  return 0;
+//  if (!correlations.at(no)->is_from_file)
+//    return 1;
+//  while ( ! correlations.at(no)->get_data()) {
+//  }
+//  return 0;
 }
 
 
 
-int Correlation::get_correlation_time(double* correlation_time) {
+int Correlator::get_correlation_time(double* correlation_time) {
   // We calculate the correlation time for each dim_corr by normalizing the correlation,
   // integrating it and finding out where C(tau)=tau;
   double C_tau;
@@ -122,10 +121,10 @@ int Correlation::get_correlation_time(double* correlation_time) {
 }
 
 
-Correlation::Correlation() :
+Correlator::Correlator() :
 			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0) {};
 
-void Correlation::initialize() {
+void Correlator::initialize() {
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
   // Class members are assigned via the initializer list
@@ -183,7 +182,7 @@ void Correlation::initialize() {
 
   
   dim_A=A_obs->n_values();
-  dim_b=A_obs->n_values();
+  dim_B=A_obs->n_values();
 
   if (dim_A<1) {
     throw init_errors[6];
@@ -368,7 +367,7 @@ void Correlation::initialize() {
    initialized=1;
 }
 
-int Correlation::get_data() {
+int Correlator::get_data() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -494,7 +493,7 @@ void write_uint(FILE * fp, const unsigned int * data, unsigned int n, bool binar
     fprintf(fp,"%u\n",data[n-1]);
   }
 }
-int Correlation::write_data_to_file(const char * filename, bool binary) const {
+int Correlator::write_data_to_file(const char * filename, bool binary) const {
   FILE* fp=0;
   fp=fopen(filename, "w");
   if (!fp) {
@@ -559,7 +558,7 @@ int read_uint(FILE * fp, unsigned int * data, unsigned int n, bool binary){
   }
   return 0;
 }
-int Correlation::read_data_from_file(const char * filename, bool binary){
+int Correlator::read_data_from_file(const char * filename, bool binary){
   FILE* fp=0;
   fp=fopen(filename, "r");
   if (!fp) {
@@ -598,7 +597,7 @@ int Correlation::read_data_from_file(const char * filename, bool binary){
 }
 
 
-int Correlation::finalize() {
+int Correlator::finalize() {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -833,12 +832,12 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
 
 
 void autoupdate_correlations() {
-  for (unsigned i=0; i<correlations.size(); i++) {
-    if (correlations.at(i)->autoupdate && sim_time-correlations.at(i)->last_update>correlations.at(i)->dt*0.99999) {
-      correlations.at(i)->last_update=sim_time;
-      correlations.at(i)->get_data();
-    }
-  }
+//  for (unsigned i=0; i<correlations.size(); i++) {
+//    if (correlations.at(i)->autoupdate && sim_time-correlations.at(i)->last_update>correlations.at(i)->dt*0.99999) {
+//      correlations.at(i)->last_update=sim_time;
+//      correlations.at(i)->get_data();
+//    }
+//  }
 }
 } // Namespace Correlators
 

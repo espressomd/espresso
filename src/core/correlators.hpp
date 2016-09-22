@@ -1,5 +1,5 @@
 
-#include "correlators/Correlator.hpp"
+#include "correlators/Correlation.hpp"
 #include <vector>
 #include <memory>
 

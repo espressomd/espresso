@@ -140,7 +140,7 @@ void autoupdate_correlations();
  * entry of the hierarchic "past" For every new entry in is incremented and if tau_lin is reached, 
  * it starts again from the beginning. 
  */
-class Correlation {
+class Correlator {
   public:
     /**
      * The initialization procedure for the correlation object. All important parameters have to be speciefied
@@ -165,7 +165,7 @@ class Correlation {
      * @param _args: the parameters of the observables
      *
      */
-    Correlation();
+    Correlator();
     void initialize();
     /** Restore a correlation from a checkpoint - the observable has to be created first ordinary
     */
@@ -288,7 +288,6 @@ class Correlation {
 }; 
 
 extern int correlations_autoupdate;
-extern std::map<int,Correlation*> correlations;
 
 
 
