@@ -76,7 +76,7 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "correlators/Correlation.hpp"
+#include "correlators/Correlator.hpp"
 #include "statistics_fluid.hpp"
 #include "observables/Observable.hpp"
 #include "tab.hpp"

@@ -18,17 +18,21 @@
 */
 
 #include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
+#include "ParallelScriptInterface.hpp"
+#include "utils/Factory.hpp"
+
+#include "Correlator.hpp"
+#include "Correlators.hpp"
 
 namespace ScriptInterface {
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Observables::initialize();
-  Correlators::initialize();
-}
+namespace Correlators {
 
+void initialize() {
+  ParallelScriptInterface<ScriptInterface::Correlators::Correlators>::
+    register_new("Correlators::Correlators");
+
+  ParallelScriptInterface<ScriptInterface::Correlators::Correlator>::
+    register_new("Correlators::Correlator");
+}
+} /* namespace Correlators */
 } /* namespace ScriptInterface */

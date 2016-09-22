@@ -17,18 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
+#ifndef SCRIPT_INTERFACE_CORRELATORS_INITIALIZE_HPP
+#define SCRIPT_INTERFACE_CORRELATORS_INITIALIZE_HPP
 
 namespace ScriptInterface {
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Observables::initialize();
-  Correlators::initialize();
-}
+namespace Correlators {
 
+void initialize();
+
+} /* namespace Correlators */
 } /* namespace ScriptInterface */
+
+#endif

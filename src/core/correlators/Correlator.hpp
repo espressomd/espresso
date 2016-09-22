@@ -269,10 +269,10 @@ class Correlator {
 
     int initialized;
 
-    
-  private:  
     std::shared_ptr<::Observables::Observable> A_obs;
     std::shared_ptr<::Observables::Observable> B_obs;
+    
+  private:  
     unsigned int dim_A;              // dimensionality of A
     unsigned int dim_B;
     // Functions producing observables A and B from the input data

@@ -57,7 +57,7 @@
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
 #include "observables/Observable.hpp"
-#include "correlators/Correlation.hpp"
+#include "correlators/Correlator.hpp"
 #include "lb-boundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"

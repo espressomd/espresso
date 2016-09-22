@@ -53,7 +53,7 @@
 #include "rattle.hpp"
 #include "reaction.hpp"
 #include "rotation.hpp"
-#include "correlators/Correlation.hpp"
+#include "correlators/Correlator.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "verlet.hpp"

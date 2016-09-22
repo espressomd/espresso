@@ -33,10 +33,21 @@ namespace Correlators {
 
 class Correlators : public ScriptObjectRegistry<Correlator> {
   virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) {
-    ::Correlators::correlators.add(obj_ptr->correlator());
+    ::Correlators::correlators.push_back(obj_ptr->correlator());
   }
   virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) {
-    ::Correlators::correlators.remove(obj_ptr->correlator());
+//    auto it =std::find(
+//    ::Correlators::correlators.begin(),
+//    ::Correlators::correlators.end(),
+//    obj_ptr->correlator());
+//
+//    if (it!=::Correlators::correlators.end()) {
+//      ::Correlators::correlators.erase(it);
+//    }
+//    else
+//    { 
+//      throw "Could not find Correlator to remove";
+//    };
   };
   public:
   virtual const std::string name() const override {
