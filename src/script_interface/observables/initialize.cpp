@@ -22,6 +22,7 @@
 #include "utils/Factory.hpp"
 
 #include "ParticleVelocities.hpp"
+#include "Observables.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -29,6 +30,8 @@ namespace Observables {
 void initialize() {
   ParallelScriptInterface<ScriptInterface::Observables::ParticleVelocities>::
     register_new("Observables::ParticleVelocities");
+  ParallelScriptInterface<ScriptInterface::Observables::Observables>::
+    register_new("Observables::Observables");
 
 }
 } /* namespace Obseravbles */

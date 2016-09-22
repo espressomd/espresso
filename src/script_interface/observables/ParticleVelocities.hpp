@@ -34,8 +34,9 @@
 namespace ScriptInterface {
 namespace Observables {
 
-class ParticleVelocities : public Observable<::Observables::ParticleVelocities> {
+class ParticleVelocities : public Observable {
 public:
+  ParticleVelocities() : m_observable(new ::Observables::ParticleVelocities()) {};
   
   const std::string name() const override { return "Observables::ParticleVelocity"; }
 
@@ -50,7 +51,11 @@ public:
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", m_observable->ids);
   }
-
+  std::shared_ptr<::Observables::Observable> observable() {
+    return m_observable;
+  };
+  private:
+  std::shared_ptr<::Observables::ParticleVelocities> m_observable;
 };
 } /* namespace Observables */
 } /* namespace ScriptInterface */

@@ -19,46 +19,33 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
+#ifndef SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLES_HPP
+#define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLES_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/utils/Factory.hpp"
+#include "ScriptObjectRegistry.hpp"
+#include "Observable.hpp"
+#include "core/observables.hpp"
 
-#include <memory>
-
-
-#include "core/observables/Observable.hpp"
-#include "core/observables/Observable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
 
-typedef ::Observables::Observable CoreObs;
-
-class Observable : public ScriptInterfaceBase {
-public:
-  Observable() {};
-  
-  const std::string name() const override { return "Observables::Observable"; }
-
-  virtual std::shared_ptr<CoreObs> observable() =0;
-  virtual Variant call_method(std::string const &method,
-                                   VariantMap const &parameters) {
-    if (method == "calculate") {
-      observable()->calculate();
-      return observable()->last_value;
+class Observables : public ScriptObjectRegistry<Observable> {
+  virtual void add_in_core(std::shared_ptr<Observable> obj_ptr) {
+    ::Observables::observables.push_back(obj_ptr->observable());
+  }
+  virtual void remove_in_core(std::shared_ptr<Observable> obj_ptr) {
+    auto it =std::find(::Observables::observables.begin(), ::Observables::observables.end(), obj_ptr->observable());
+    if (it !=::Observables::observables.end())
+    {
+      ::Observables::observables.erase(it);
     }
-    if (method == "update") {
-      observable()->update();
-      return observable()->last_value;
-    }
-    if (method == "value") {
-      return observable()->last_value;
-    }
-
-    return {};
+  };
+  public:
+  virtual const std::string name() const override {
+    return "Observables::Observables"; 
   };
 };
 } /* namespace Observables */
