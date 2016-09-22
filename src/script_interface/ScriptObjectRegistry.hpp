@@ -19,31 +19,44 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
+#ifndef SCRIPT_INTERFACE_REGISTRY_HPP
+#define SCRIPT_INTERFACE_REGISTRY_HPP
 
 #include "ScriptInterface.hpp"
-#include "ScriptObjectRegistry.hpp"
-#include "Constraint.hpp"
-#include "core/constraints.hpp"
-
+#include <string>
 
 namespace ScriptInterface {
-namespace Constraints {
 
-class Constraints : public ScriptObjectRegistry<Constraint> {
-  virtual void add_in_core(std::shared_ptr<Constraint> obj_ptr) {
-    ::Constraints::constraints.add(obj_ptr->constraint());
-  }
-  virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) {
-    ::Constraints::constraints.remove(obj_ptr->constraint());
-  };
-  public:
-  virtual const std::string name() const override {
-    return "Constraints::Constraints"; 
+template<typename ManagedType>
+class ScriptObjectRegistry : public ScriptInterfaceBase {
+public:
+
+  virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) =0;
+  virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) =0;
+  virtual Variant call_method(std::string const &method,
+                                   VariantMap const &parameters) {
+    Variant par = parameters.at("object");
+  
+    auto so_ptr = ScriptInterface::get_instance(par);
+  
+    auto obj_ptr =
+        std::dynamic_pointer_cast<ManagedType>(
+            so_ptr);
+  
+    if (obj_ptr == nullptr)
+      throw std::runtime_error("Wrong type");
+  
+    if (method == "add") {
+      add_in_core(obj_ptr);
+    }
+     
+    if (method == "remove") {
+      remove_in_core(obj_ptr);
+    }
+  
+    return {};
   };
 };
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
-
+} // Namespace ScriptInterface
 #endif
+

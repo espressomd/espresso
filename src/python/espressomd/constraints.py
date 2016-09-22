@@ -14,7 +14,7 @@ class Constraints(ScriptInterfaceHelper):
                     "Either a Constraint object or key-value pairs for the parameters of a Constraint object need to be passed.")
         else:
             constraint = Constraint(**kwargs)
-        self.call_method("add", constraint=constraint)
+        self.call_method("add", object=constraint)
         return constraint
 
     def remove(self, constraint):

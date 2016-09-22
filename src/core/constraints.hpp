@@ -2,6 +2,7 @@
 #define CONSTRAINTS_HPP
 
 #include "config.hpp"
+#include "ObjectRegistry.hpp"
 
 #ifdef CONSTRAINTS
 
@@ -10,11 +11,11 @@
 
 #include "energy.hpp"
 #include "particle_data.hpp"
+#include "constraints/Constraint.hpp"
 
-#include "constraints/Constraints.hpp"
 
 namespace Constraints {
-extern Constraints<std::vector<std::shared_ptr<Constraint>>> constraints;
+extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
 }
 
 inline void add_constraints_forces(Particle *p) {
@@ -27,7 +28,9 @@ inline void add_constraints_forces(Particle *p) {
 }
 
 inline void init_constraint_forces() {
-  Constraints::constraints.reset_forces();
+  for (auto const &c : Constraints::constraints) {
+    c->reset_force();
+  }
 }
 
 inline void add_constraints_energy(Particle *p) {

@@ -1,12 +1,11 @@
-#ifndef CONSTRAINTS_CONSTRAINTS_HPP
-#define CONSTRAINTS_CONSTRAINTS_HPP
+#ifndef OBJECT_REGISTry_HPP
+#define OBJECT_REGISTRY_HPP
 
 #include <iterator>
 
-#include "Constraint.hpp"
 
-namespace Constraints {
-template <typename Container> class Constraints {
+
+template <typename Container> class ObjectRegistry {
 public:
   typedef Container container_type;
   typedef typename Container::iterator iterator;
@@ -27,17 +26,10 @@ public:
   const_iterator begin() const { return std::begin(m_container); }
   const_iterator end() const { return std::end(m_container); }
 
-  void reset_forces() {
-    for (auto c : m_container) {
-      c->reset_force();
-    }
-  }
-
   operator Container const &() { return m_container; }
 
 private:
   Container m_container;
 };
-}
 
 #endif
