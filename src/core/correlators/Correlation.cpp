@@ -122,30 +122,10 @@ int Correlation::get_correlation_time(double* correlation_time) {
 }
 
 
-Correlation::Correlation(double _dt, 
-    			    unsigned int _tau_lin, double _tau_max,
-    			    unsigned int _window_distance, 
-    			    unsigned int _dim_A, unsigned int _dim_B, 
-    			    unsigned int _dim_corr, 
-    			    ::Observables::Observable& _o_A, ::Observables::Observable& _o_B, 
-    			    char* _corr_operation_name, 
-    			    char* _compressA_name, char* _compressB_name, 
-    			    void *_args) :
-    			    dt(_dt),
-			    tau_lin(_tau_lin), 
-			    tau_max(_tau_max),
-    			    window_distance(_window_distance), 
-    			    dim_A(_dim_A), 
-			    dim_B(_dim_B), 
-    			    dim_corr(_dim_corr), 
-    			    A_obs(_o_A), 
-			    B_obs(_o_B), 
-			    corr_operation_name(_corr_operation_name), 
-    			    compressA_name(compressA_name), \
-			    compressB_name(_compressB_name), 
-    			    args(_args),
-			    //
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1) {
+Correlation::Correlation() :
+			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0) {};
+
+void Correlation::initialize() {
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
   // Class members are assigned via the initializer list
@@ -196,13 +176,15 @@ Correlation::Correlation(double _dt,
   }
 
   tau_max=tau_max;
-  hierarchy_depth = hierarchy_depth;
   
   if (window_distance<1) {
     throw init_errors[5];
   }
 
   
+  dim_A=A_obs->n_values();
+  dim_b=A_obs->n_values();
+
   if (dim_A<1) {
     throw init_errors[6];
   }
@@ -226,25 +208,25 @@ Correlation::Correlation(double _dt,
   
 
   // choose the correlation operation 
-  if (corr_operation_name==0) { 
+  if (corr_operation_name=="") { 
     throw init_errors[11]; // there is no reasonable default
-  } else if ( strcmp(corr_operation_name,"componentwise_product") == 0 ) {
+  } else if ( corr_operation_name=="componentwise_product")  {
     dim_corr = dim_A;
     corr_operation = &componentwise_product;
     args = NULL;
-  } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
+  } else if ( corr_operation_name=="complex_conjugate_product")  {
     dim_corr = dim_A;
     corr_operation = &complex_conjugate_product;
     args = NULL;
-  } else if ( strcmp(corr_operation_name,"tensor_product") == 0 ) {
+  } else if ( corr_operation_name=="tensor_product") {
     dim_corr = dim_A*dim_B;
     corr_operation = &tensor_product;
     args = NULL;
-  } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
+  } else if ( corr_operation_name=="square_distance_componentwise") {
     dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
     args = NULL;
-  } else if ( strcmp(corr_operation_name,"fcs_acf") == 0 ) {
+  } else if ( corr_operation_name=="fcs_acf")  {
     if (dim_A %3 )
        throw init_errors[18];
     dim_corr = dim_A/3;
@@ -252,7 +234,7 @@ Correlation::Correlation(double _dt,
 // square_distance will be removed -- will be replaced by strides and blocks
 //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
 //    corr_operation = &square_distance;
-  } else if ( strcmp(corr_operation_name,"scalar_product") == 0 ) {
+  } else if ( corr_operation_name=="scalar_product")  {
     dim_corr=1;
     corr_operation = &scalar_product;
     args = NULL;
@@ -262,20 +244,20 @@ Correlation::Correlation(double _dt,
   
   
   // Choose the compression function
-  if (compressA_name==0) { // this is the default
+  if (compressA_name=="") { // this is the default
     compressA_name=strdup("discard2");
     compressA=&compress_discard2;
-  } else if ( strcmp(compressA_name,"discard2") == 0 ) {
+  } else if ( compressA_name=="discard2")  {
     compressA=&compress_discard2;
-  } else if ( strcmp(compressA_name,"discard1") == 0 ) {
+  } else if ( compressA_name=="discard1") {
     compressA=&compress_discard1;
-  } else if ( strcmp(compressA_name,"linear") == 0 ) {
+  } else if ( compressA_name=="linear")  {
     compressA=&compress_linear;
   } else {
     throw init_errors[12];
   }
   
-  if (compressB_name==0) { 
+  if (compressB_name=="") { 
     if(autocorrelation) { // the default for autocorrelation
       compressB_name=strdup("none"); 
       compressB=&compress_do_nothing;
@@ -285,11 +267,11 @@ Correlation::Correlation(double _dt,
     } 
   } else if ( autocorrelation ) {
     throw init_errors[17];
-  } else if ( strcmp(compressB_name,"discard2") == 0 ) {
+  } else if ( compressB_name=="discard2")  {
     compressB=&compress_discard2;
-  } else if ( strcmp(compressB_name,"discard1") == 0 ) {
+  } else if ( compressB_name=="discard1")  {
     compressB=&compress_discard1;
-  } else if ( strcmp(compressB_name,"linear") == 0 ) {
+  } else if ( compressB_name=="linear") {
     compressB=&compress_linear;
   } else {
     throw init_errors[13];
@@ -381,6 +363,9 @@ Correlation::Correlation(double _dt,
     for (k=0; k < tau_lin/2; k++) {
       tau[tau_lin + 1 + (j-1)*tau_lin/2+k] = (k+(tau_lin/2)+1)*(1<<j); 
     }
+
+
+   initialized=1;
 }
 
 int Correlation::get_data() {
@@ -429,15 +414,15 @@ int Correlation::get_data() {
   newest[0] = ( newest[0] + 1 ) % (tau_lin +1); 
   n_vals[0]++;
 
-  if ( A_obs.calculate() != 0 )
+  if ( A_obs->calculate() != 0 )
     return 1;
   // copy the result:
-  memmove(A[0][newest[0]], &(A_obs.last_value[0]), dim_A*sizeof(double));
+  memmove(A[0][newest[0]], &(A_obs->last_value[0]), dim_A*sizeof(double));
 
   if (!autocorrelation) {
-    if ( B_obs.calculate() != 0 )
+    if ( B_obs->calculate() != 0 )
       return 2;
-    memmove(B[0][newest[0]], &(B_obs.last_value[0]), dim_B*sizeof(double));
+    memmove(B[0][newest[0]], &(B_obs->last_value[0]), dim_B*sizeof(double));
   }
 
   // Now we update the cumulated averages and variances of A and B

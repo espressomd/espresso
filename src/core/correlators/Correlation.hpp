@@ -118,6 +118,7 @@
 #include <cmath>
 #include "../observables/Observable.hpp"
 #include <map>
+#include <memory>
 
 
 namespace Correlators {
@@ -164,15 +165,8 @@ class Correlation {
      * @param _args: the parameters of the observables
      *
      */
-    Correlation(double _dt, 
-    			    unsigned int _tau_lin, double _tau_max,
-    			    unsigned int _window_distance, 
-    			    unsigned int _dim_A, unsigned int _dim_B, 
-    			    unsigned int _dim_corr, 
-    			    ::Observables::Observable& _o_A, ::Observables::Observable& _o_B, 
-    			    char* _corr_operation_name, 
-    			    char* _compressA_name, char* _compressB_name, 
-    			    void *_args);
+    Correlation();
+    void initialize();
     /** Restore a correlation from a checkpoint - the observable has to be created first ordinary
     */
     int read_data_from_file(const char * filename, bool binary);
@@ -231,8 +225,6 @@ class Correlation {
     unsigned int finalized;          // non-zero of correlation is finialized
     unsigned int hierarchy_depth;    // maximum level of data compression
     unsigned int tau_lin;            // number of frames in the linear correlation
-    unsigned int dim_A;              // dimensionality of A
-    unsigned int dim_B;
     unsigned int dim_corr;
     unsigned int t;                  // global time in number of frames
     double dt;                       // time interval at which samples arrive
@@ -262,25 +254,37 @@ class Correlation {
     double* B_accumulated_variance;    // all B**2 values are added up here
     unsigned int n_data;               // a counter to calculated averages and variances
 
-    // compressing functions
-    int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
-    int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
-    char *compressA_name;
-    char *compressB_name;
+    
+    
 
-    // correlation function
-    int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
-    char *corr_operation_name;
-
-    // Functions producing observables A and B from the input data
-    ::Observables::Observable& A_obs;
-    ::Observables::Observable& B_obs;
-    int A_obs_id;
-    int B_obs_id;
 
     int is_from_file;
     int autoupdate;
     double last_update;
+    
+    
+    std::string compressA_name;
+    std::string compressB_name;
+    std::string corr_operation_name;
+
+    int initialized;
+
+    
+  private:  
+    std::shared_ptr<::Observables::Observable> A_obs;
+    std::shared_ptr<::Observables::Observable> B_obs;
+    unsigned int dim_A;              // dimensionality of A
+    unsigned int dim_B;
+    // Functions producing observables A and B from the input data
+    int A_obs_id;
+    int B_obs_id;
+    
+    int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+    
+    // compressing functions
+    int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
+    int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
+    
 }; 
 
 extern int correlations_autoupdate;
