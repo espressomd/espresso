@@ -30,7 +30,7 @@ namespace ScriptInterface {
   enum { NOT_SET = -1 };
 
   inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
-  const int id = boost::get<OId>(value).id;
+    const auto id = boost::get<ObjectId>(value);
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }

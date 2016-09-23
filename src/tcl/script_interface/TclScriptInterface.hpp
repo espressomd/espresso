@@ -28,18 +28,8 @@
 #include "TclCommand.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
-/*
- * Make operator<< work with the variant. The visitor
- * that is actually invoked by boost lives in the boost
- * namespace and finds these functions. The other possibility
- * would be to define them in std and rely on ADL, but this is not legal
- * because std::vector<T> is not a user defined type.
- * (Works, though)
- */
-
 #warning move out of namespace std;
 namespace std {
-
 /* Source: http://stackoverflow.com/a/6693088/3198615 */
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {

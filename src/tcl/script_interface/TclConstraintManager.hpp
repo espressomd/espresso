@@ -57,8 +57,8 @@ private:
     /* Look up the object to print */
     auto const &o = m_om[id];
 
-    const int shape_id =
-        boost::get<int>(o.script_object()->get_parameter("shape"));
+    const auto shape_id =
+        boost::get<ObjectId>(o.script_object()->get_parameter("shape"));
 
     auto const shape = ScriptInterfaceBase::get_instance(shape_id).lock();
 

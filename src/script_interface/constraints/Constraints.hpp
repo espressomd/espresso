@@ -31,7 +31,7 @@ class Constraints : public ScriptInterfaceBase {
 public:
   const std::string name() const override { return "Constraints::Constraint"; }
 
-  Variant call_method(std::string const &method, VariantMap const &parameters);
+  Variant call_method(std::string const &method, VariantMap const &parameters) override;
 };
 
 } /* namespace Constraints */

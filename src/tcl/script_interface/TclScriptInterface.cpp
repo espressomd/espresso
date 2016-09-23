@@ -4,6 +4,16 @@
 
 using namespace std;
 
+namespace Utils {
+std::ostream &
+operator<<(std::ostream &out,
+           ObjectId<ScriptInterface::ScriptInterfaceBase> const &oid) {
+  out << oid.m_id;
+
+  return out;
+}
+}
+
 namespace ScriptInterface {
 namespace Tcl {
 
