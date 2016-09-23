@@ -16,6 +16,10 @@
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_cuda_interface.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 // ****** Kernel functions for internal use ********
 __global__ void ResetLBForces_Kernel(LB_node_force_gpu node_f, const LB_parameters_gpu *const paraP);
 __global__ void ParticleVelocitiesFromLB_Kernel(LB_nodes_gpu n_curr, const IBM_CUDA_ParticleDataInput *const particles_input, IBM_CUDA_ParticleDataOutput *const particles_output, LB_node_force_gpu node_f, const float *const lb_boundary_velocity, const LB_parameters_gpu *const para);
