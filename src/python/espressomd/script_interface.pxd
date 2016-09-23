@@ -75,12 +75,12 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
     cdef cppclass ScriptInterfaceBase:
         const string name()
-        map[string, Variant] get_parameters()
-        map[string, Parameter] valid_parameters()
-        Variant get_parameter(const string & name)
-        void set_parameter(const string & name, const Variant & value)
-        void set_parameters(map[string, Variant] & parameters)
-        Variant call_method(const string & name, const map[string, Variant] & parameters)
+        map[string, Variant] get_parameters() except +
+        map[string, Parameter] valid_parameters() except +
+        Variant get_parameter(const string & name) except +
+        void set_parameter(const string & name, const Variant & value) except +
+        void set_parameters(map[string, Variant] & parameters) except +
+        Variant call_method(const string & name, const map[string, Variant] & parameters) except +
         int id()
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":

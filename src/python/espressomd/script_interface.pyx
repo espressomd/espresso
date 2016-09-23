@@ -122,7 +122,10 @@ cdef class PScriptInterface:
     def get_params(self):
         odict = {}
         for pair in self.parameters:
-            odict[pair.first] = self.get_parameter(pair.first)
+            try:
+                odict[pair.first] = self.get_parameter(pair.first)
+            except:
+                pass
         return odict
 
 class ScriptInterfaceHelper(PScriptInterface):
