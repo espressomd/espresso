@@ -132,16 +132,16 @@ void Correlator::initialize() {
   
   // Input validation
   if (dt <= 0) {
-    throw init_errors[2];
+    throw std::runtime_error( init_errors[2]);
   }
 
   if ((dt-time_step)<-1e-6*time_step) {
-    throw init_errors[15];
+    throw std::runtime_error( init_errors[15]);
   }
 
   // check if dt is a multiple of the md timestep
   if ( std::abs(dt/time_step - round(dt/time_step)) > 1e-6 ) {
-    throw init_errors[16];
+    throw std::runtime_error( init_errors[16]);
   }
 
   // Time steps and intervals
@@ -154,17 +154,17 @@ void Correlator::initialize() {
   }
 
   if (tau_lin<2) {
-    throw init_errors[3];
+    throw std::runtime_error( init_errors[3]);
   }
 
   if (tau_lin%2) {
-    throw init_errors[14];
+    throw std::runtime_error( init_errors[14]);
   }
 
   tau_lin=tau_lin;
   
   if (tau_max <= dt) { 
-    throw init_errors[4];
+    throw std::runtime_error( init_errors[4]);
 
   } else { //set hierarchy depth which can  accommodate at least tau_max
     if ( (tau_max/dt) < tau_lin ) {
@@ -176,16 +176,13 @@ void Correlator::initialize() {
 
   tau_max=tau_max;
   
-  if (window_distance<1) {
-    throw init_errors[5];
-  }
 
   
   dim_A=A_obs->n_values();
   dim_B=A_obs->n_values();
 
   if (dim_A<1) {
-    throw init_errors[6];
+    throw std::runtime_error( init_errors[6]);
   }
 
   if (dim_B==0) {
@@ -193,22 +190,14 @@ void Correlator::initialize() {
   } else if (dim_B>0) {
     autocorrelation=0;
   } else {
-    throw init_errors[7];
-  }
-
-  if (A == 0) {
-    throw init_errors[9];
-  }
-
-  if (B == 0 && !autocorrelation) {
-    throw init_errors[10];
+    throw std::runtime_error( init_errors[7]);
   }
 
   
 
   // choose the correlation operation 
   if (corr_operation_name=="") { 
-    throw init_errors[11]; // there is no reasonable default
+    throw std::runtime_error( init_errors[11]); // there is no reasonable default
   } else if ( corr_operation_name=="componentwise_product")  {
     dim_corr = dim_A;
     corr_operation = &componentwise_product;
@@ -227,7 +216,7 @@ void Correlator::initialize() {
     args = NULL;
   } else if ( corr_operation_name=="fcs_acf")  {
     if (dim_A %3 )
-       throw init_errors[18];
+       throw std::runtime_error( init_errors[18]);
     dim_corr = dim_A/3;
     corr_operation = &fcs_acf;
 // square_distance will be removed -- will be replaced by strides and blocks
@@ -238,7 +227,7 @@ void Correlator::initialize() {
     corr_operation = &scalar_product;
     args = NULL;
   } else {
-    throw init_errors[11]; 
+    throw std::runtime_error( init_errors[11]); 
   }
   
   
@@ -253,7 +242,7 @@ void Correlator::initialize() {
   } else if ( compressA_name=="linear")  {
     compressA=&compress_linear;
   } else {
-    throw init_errors[12];
+    throw std::runtime_error( init_errors[12]);
   }
   
   if (compressB_name=="") { 
@@ -265,7 +254,7 @@ void Correlator::initialize() {
       compressB=compressA;
     } 
   } else if ( autocorrelation ) {
-    throw init_errors[17];
+    throw std::runtime_error( init_errors[17]);
   } else if ( compressB_name=="discard2")  {
     compressB=&compress_discard2;
   } else if ( compressB_name=="discard1")  {
@@ -273,7 +262,7 @@ void Correlator::initialize() {
   } else if ( compressB_name=="linear") {
     compressB=&compress_linear;
   } else {
-    throw init_errors[13];
+    throw std::runtime_error( init_errors[13]);
   }
  
 //  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
@@ -340,6 +329,15 @@ void Correlator::initialize() {
       }
     }
   }
+  
+  if (A == 0) {
+    throw std::runtime_error( init_errors[9]);
+  }
+
+  if (B == 0 && !autocorrelation) {
+    throw std::runtime_error( init_errors[10]);
+  }
+
 
   // allocate space for convenience pointer to the result
   result  = (double**)        Utils::malloc(n_result*sizeof(double*));

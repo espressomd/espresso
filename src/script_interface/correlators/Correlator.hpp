@@ -35,7 +35,7 @@ namespace Correlators {
 
 class Correlator : public ScriptInterfaceBase {
 public:
-  Correlator() : m_correlator(new ::Correlators::Correlator()) {}
+  Correlator() : m_correlator(new ::Correlators::Correlator()),m_obs1(nullptr),m_obs2(nullptr) {}
   
   const std::string name() const override { return "Correlators::Correlator"; }
 
@@ -47,17 +47,17 @@ public:
       {"compress1", m_correlator->compressA_name},
       {"compress2", m_correlator->compressB_name},
       {"corr_operation", m_correlator->corr_operation_name},
-      {"obs1", 
-             (m_obs1 != nullptr) ? m_obs1->id() : ScriptInterface::NOT_SET},
-      {"obs2", 
-             (m_obs2 != nullptr) ? m_obs2->id() : ScriptInterface::NOT_SET}
+//      {"obs1", 
+//             (m_obs1 != nullptr) ? m_obs1->id() : ScriptInterface::NOT_SET},
+//      {"obs2", 
+//             (m_obs2 != nullptr) ? m_obs2->id() : ScriptInterface::NOT_SET}
          };
   }
 
   ParameterMap valid_parameters() const override {
     return 
       {{"tau_lin", {ParameterType::INT, true}},
-      {"tau_max", {ParameterType::INT, true}},
+      {"tau_max", {ParameterType::DOUBLE, true}},
       {"dt", {ParameterType::DOUBLE, true}},
       {"obs1", {ParameterType::OBJECT, true}},
       {"obs2", {ParameterType::OBJECT, true}},
@@ -68,7 +68,7 @@ public:
 
   void set_parameter(std::string const &name, Variant const &value) override {
     if (m_correlator->initialized) {
-      throw "Correlator cannot be changed after initial setup";
+      throw std::runtime_error("Correlator cannot be changed after initial setup");
     }
     if ((name == "obs1") || (name=="obs2")) {
       std::shared_ptr<ScriptInterfaceBase> so_ptr =
@@ -96,14 +96,17 @@ public:
     }
 
     SET_PARAMETER_HELPER("tau_lin", m_correlator->tau_lin);
-    SET_PARAMETER_HELPER("tau_max", m_correlator->tau_lin);
+    SET_PARAMETER_HELPER("tau_max", m_correlator->tau_max);
     SET_PARAMETER_HELPER("dt", m_correlator->dt);
     SET_PARAMETER_HELPER("corr_operation", m_correlator->corr_operation_name);
     SET_PARAMETER_HELPER("compress1", m_correlator->compressA_name);
     SET_PARAMETER_HELPER("compress2", m_correlator->compressB_name);
-    m_correlator->initialize();
   
   }
+  virtual void set_parameters(const VariantMap& p) override {
+    ScriptInterfaceBase::set_parameters(p);
+    m_correlator->initialize();
+  };
 
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;

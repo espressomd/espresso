@@ -224,13 +224,12 @@ class Correlator {
     unsigned int autocorrelation;    // autocorrelation flag
     unsigned int finalized;          // non-zero of correlation is finialized
     unsigned int hierarchy_depth;    // maximum level of data compression
-    unsigned int tau_lin;            // number of frames in the linear correlation
+    int tau_lin;            // number of frames in the linear correlation
     unsigned int dim_corr;
     unsigned int t;                  // global time in number of frames
     double dt;                       // time interval at which samples arrive
     double tau_max;                  // maximum time, for which the correlation should be calculated
     int update_frequency;              // time distance between updates in MD timesteps 
-    unsigned int window_distance; 
 
     // Convenience pointers to our stored data
     // indices: A[level][tau_i][component]
