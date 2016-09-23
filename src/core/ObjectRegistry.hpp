@@ -1,12 +1,11 @@
-#ifndef CONSTRAINTS_CONSTRAINTS_HPP
-#define CONSTRAINTS_CONSTRAINTS_HPP
+#ifndef OBJECT_REGISTry_HPP
+#define OBJECT_REGISTRY_HPP
 
 #include <iterator>
 
-#include "Constraint.hpp"
 
-namespace Constraints {
-template <typename Container> class Constraints {
+
+template <typename Container> class ObjectRegistry {
 public:
   typedef Container container_type;
   typedef typename Container::iterator iterator;
@@ -38,6 +37,5 @@ public:
 private:
   Container m_container;
 };
-}
 
 #endif
