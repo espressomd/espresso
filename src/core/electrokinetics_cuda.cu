@@ -32,7 +32,6 @@
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
 
-#include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "electrokinetics.hpp"
@@ -40,6 +39,10 @@
 #include "fd-electrostatics.hpp"
 #include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
+
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */

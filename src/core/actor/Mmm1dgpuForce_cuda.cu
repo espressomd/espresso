@@ -19,6 +19,10 @@
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 #ifdef MMM1D_GPU
 
 // the code is mostly multi-GPU capable, but Espresso is not yet
