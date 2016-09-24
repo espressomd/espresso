@@ -21,6 +21,10 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 // These functions will split the paritlce data structure into individual arrays for each property
 
 // Position and charge

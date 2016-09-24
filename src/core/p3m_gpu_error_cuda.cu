@@ -8,6 +8,10 @@
 
 #include "p3m_gpu_common.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 /** @TODO: Extend to hight order. This comes from some 1/sin expansion in Hockney/Eastwood */
 
 template<int cao>

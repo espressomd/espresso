@@ -21,18 +21,14 @@
 /** \file endangledist.cpp
  *
  *  Implementation of \ref endangledist.hpp
-*/
-
-#include "config.hpp"
-
-#ifdef BOND_ENDANGLEDIST
-
+ */
 #include "communication.hpp"
-#include "constraint.hpp"
-#include "debug.hpp"
+#include "constraints.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "utils.hpp"
+
+#ifdef BOND_ENDANGLEDIST
 
 int endangledist_set_params(int bond_type, double bend, double phi0,
                             double distmin, double distmax) {
@@ -65,7 +61,7 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams,
   int j, k, img[3];
   double distwallmin = 0.0, normal = 0.0;
   double folded_pos_p1[3];
-  double pwdist[n_constraints];
+  double pwdist[constraints.size()];
   Constraint_wall wall;
 
   /*fprintf(stdout,"  Entering calc_pwdist:\n");*/
@@ -74,27 +70,11 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams,
   memmove(folded_pos_p1, p1->r.p, 3 * sizeof(double));
   memmove(img, p1->l.i, 3 * sizeof(int));
   fold_position(folded_pos_p1, img);
-  /*fprintf(stdout,"        p1= %9.6f %9.6f
-   * %9.6f\n",p1->r.p[0],p1->r.p[1],p1->r.p[2]);*/
-
-  /* Gets and tests wall data */
-  for (k = 0; k < n_constraints; k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
-      wall = constraints[k].c.wal;
-      /* check that constraint wall normal is normalised */
-      for (j = 0; j < 3; j++)
-        normal += wall.n[j] * wall.n[j];
-      if (sqrt(normal) != 1.0) {
-        for (j = 0; j < 3; j++)
-          wall.n[j] = wall.n[j] / normal;
-      }
-    }
-  }
 
   /* Calculate distance of end particle from closest wall */
-  for (k = 0; k < n_constraints; k++) {
-    if (constraints[k].type == CONSTRAINT_WAL) {
-      wall = constraints[k].c.wal;
+  for (auto const& constraint : constraints) {
+    if (constraint.type == CONSTRAINT_WAL) {
+      wall = constraint.c.wal;
       /* distwallmin is distance of closest wall from p1 */
       pwdist[k] = -1.0 * wall.d;
       for (j = 0; j < 3; j++) {
@@ -108,15 +88,9 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams,
           *clconstr = k;
         }
       }
-      /*fprintf(stdout,"  k=%d  clconstr=%d\n",k,*clconstr);*/
     }
   }
-  /*
-    if (distwallmin <= iaparams->p.endangledist.distmax) {
-    fprintf(stdout,"  clconstr=%d  distwallmin=%f
-  distmx=%f\n",*clconstr,distwallmin,distmx);
-  }
-  */
+
   return distwallmin;
 }
 
@@ -149,16 +123,6 @@ static double calc_pwangle(Particle *p1, Particle *p2,
     cosine = -TINY_COS_VALUE;
   phi = acos(cosine);
 
-  /*
-  fprintf(stdout,"Angle with wall 0=%f  ",(acos(scalar(vec,
-  constraints[0].c.wal.n)))*180.0/PI);
-  fprintf(stdout,"Angle with wall 1=%f  ",(acos(scalar(vec,
-  constraints[1].c.wal.n)))*180.0/PI);
-  fprintf(stdout,"dxy=%f  dz=%f
-  angle=%f\n",sqrt(vec[0]*vec[0]+vec[1]*vec[1]),vec[2],atan(sqrt(vec[0]*vec[0]+vec[1]*vec[1])/vec[2])*180.0/PI);
-  fprintf(stdout,"Angle with closest wall %d=%f  ",*constr,(acos(scalar(vec,
-  constraints[*constr].c.wal.n)))*180.0/PI);
-  */
   return phi;
 }
 #endif

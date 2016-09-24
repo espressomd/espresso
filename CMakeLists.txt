@@ -57,6 +57,9 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
 
+# Write compile commands to file, for various tools...
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
@@ -142,6 +145,11 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
+# If we build either interface turn on script interface
+if (WITH_PYTHON OR WITH_TCL)
+  set(WITH_SCRIPT_INTERFACE ON)
+endif()
+
 if (WITH_HDF5)
 find_package(HDF5)
 if(HDF5_FOUND)
@@ -188,10 +196,10 @@ if(WITH_TESTS)
   find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
+    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################

@@ -18,6 +18,7 @@
 */
 #include "config.hpp"
 #ifdef CUDA /* Terminates at end of file */
+#ifdef ELECTROKINETICS /* Terminates at end of file */
 
 #include <cuda.h>
 #include <cufft.h>
@@ -26,10 +27,11 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
+
 #include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
-#include "constraint.hpp"
+
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "electrokinetics.hpp"
@@ -38,7 +40,9 @@
 #include "lb-boundaries.hpp"
 #include "lbgpu.hpp"
 
-#ifdef ELECTROKINETICS /* Terminates at end of file */
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */
