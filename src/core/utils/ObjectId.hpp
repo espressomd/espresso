@@ -35,16 +35,12 @@ public:
   public:
     ObjectId() : m_id(-1) {}
 
-    int id() const { return m_id; }
-
     bool operator==(ObjectId const &rhs) const { return m_id == rhs.m_id; }
     bool operator!=(ObjectId const &rhs) const { return m_id != rhs.m_id; }
     bool operator<(ObjectId const &rhs) const { return m_id < rhs.m_id; }
 
   private:
     friend class AutoObjectId<T>;
-
-    friend std::ostream &operator<<(std::ostream &out, ObjectId const &oid);
 
     explicit ObjectId(unsigned i) : m_id(i) {}
 

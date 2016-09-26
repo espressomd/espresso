@@ -54,6 +54,24 @@ std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
 
   return out;
 }
+
+inline std::ostream &operator<<(
+    std::ostream &out,
+    Utils::AutoObjectId<ScriptInterface::ScriptInterfaceBase>::ObjectId const
+        &oid) {
+
+  auto so = ScriptInterface::ScriptInterfaceBase::get_instance(oid).lock();
+
+  out << "{";
+
+  for (auto const &it : so->get_parameters()) {
+    out << " " << it.first << " " << it.second;
+  }
+
+  out << " }";
+
+  return out;
+}
 }
 
 namespace ScriptInterface {
@@ -76,6 +94,10 @@ public:
       : TclCommand(interp),
         /* Create a new c++ object */
         m_so(ScriptInterfaceBase::make_shared(name)) {}
+
+  TclScriptInterface(std::shared_ptr<ScriptInterfaceBase> so,
+                     Tcl_Interp *interp)
+      : m_so(so), TclCommand(interp) {}
 
   /**
    * @brief Print parameters in Tcl formatting.

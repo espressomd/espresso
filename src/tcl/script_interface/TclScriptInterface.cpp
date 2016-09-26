@@ -4,16 +4,6 @@
 
 using namespace std;
 
-namespace Utils {
-std::ostream &
-operator<<(std::ostream &out,
-           ObjectId<ScriptInterface::ScriptInterfaceBase> const &oid) {
-  out << oid.m_id;
-
-  return out;
-}
-}
-
 namespace ScriptInterface {
 namespace Tcl {
 
@@ -49,9 +39,9 @@ std::vector<T> read_n_elements(int n_elements,
 string TclScriptInterface::print_to_string() const {
   ostringstream res;
 
-  for (auto &p : m_so->get_parameters()) {
-    res << p.first << " " << p.second << " ";
-  }
+  // for (auto &p : m_so->get_parameters()) {
+  //   res << p.first << " " << p.second << " ";
+  // }
 
   return res.str();
 }
