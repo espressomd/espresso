@@ -26,7 +26,7 @@ class TclConstraintManager : public TclScriptInterfaceManager {
 public:
   TclConstraintManager(Tcl_Interp *interp,
                        const boost::bimap<std::string, std::string> &name_map)
-      : TclScriptInterfaceManager(interp, name_map) {}
+      : TclScriptInterfaceManager(interp, name_map, /* optional_new */ true) {}
 
 private:
   /* We have to adapt here because constraints with different shapes are
@@ -57,8 +57,8 @@ private:
     /* Look up the object to print */
     auto const &o = m_om[id];
 
-    const int shape_id =
-        boost::get<int>(o.script_object()->get_parameter("shape"));
+    const auto shape_id =
+        boost::get<ObjectId>(o.script_object()->get_parameter("shape"));
 
     auto const shape = ScriptInterfaceBase::get_instance(shape_id).lock();
 
@@ -80,6 +80,16 @@ private:
     }
 
     return tcl_name + ss.str();
+  }
+
+  virtual void do_parse(int id, std::list<std::string> &argv) override {
+    auto constraint = m_om[id];
+
+    constraint.parse_from_string(argv);
+
+    auto const shape_id = constraint.script_object()->get_parameter("shape");
+    TclScriptInterface(ScriptInterface::get_instance(shape_id), interp())
+        .parse_from_string(argv);
   }
 };
 

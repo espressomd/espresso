@@ -22,10 +22,10 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
-#include "shapes/Shape.hpp"
+#include "script_interface/shapes/Shape.hpp"
 
 #include <memory>
 
@@ -35,7 +35,7 @@ namespace Constraints {
 class Constraint : public ScriptInterfaceBase {
 public:
   Constraint() : m_constraint(new ::Constraints::Constraint()) {}
-  
+
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
@@ -43,7 +43,7 @@ public:
             {"penetrable", m_constraint->penetrable()},
             {"particle_type", m_constraint->type()},
             {"shape",
-             (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
+                (m_shape != nullptr) ? m_shape->id() : ObjectId() }};
   }
 
   ParameterMap valid_parameters() const override {
