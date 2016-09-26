@@ -26,7 +26,6 @@
 #include <boost/serialization/access.hpp>
 
 #include "NumeratedContainer.hpp"
-
 namespace Utils {
 
 template <typename T> class AutoObjectId {

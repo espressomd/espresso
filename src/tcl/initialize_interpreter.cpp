@@ -147,7 +147,7 @@ static auto shapes_name_map = Utils::make_bimap<std::string, std::string>(
      {"sphere", "Shapes::Sphere"},
      {"cylinder", "Shapes::Cylinder"}});
 
-static std::vector<std::unique_ptr<TclCommand>> tcl_commands;
+static std::vector<TclCommand *> tcl_commands;
 
 static void tcl_register_commands(Tcl_Interp *interp) {
   tcl_commands.emplace_back(new ScriptInterface::Tcl::TclScriptInterfaceManager(
