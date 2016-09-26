@@ -81,6 +81,16 @@ private:
 
     return tcl_name + ss.str();
   }
+
+  virtual void do_parse(int id, std::list<std::string> &argv) override {
+    auto constraint = m_om[id];
+
+    constraint.parse_from_string(argv);
+
+    auto const shape_id = constraint.script_object()->get_parameter("shape");
+    TclScriptInterface(ScriptInterface::get_instance(shape_id), interp())
+        .parse_from_string(argv);
+  }
 };
 
 } /* namespace ScriptInterface */

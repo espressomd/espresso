@@ -100,8 +100,7 @@ public:
 
       /* Pass remaining arguments to the
        * object for parsing. */
-
-      m_om[id].parse_from_string(argv);
+      do_parse(id, argv);
 
       std::stringstream ss;
       ss << id;
@@ -123,6 +122,10 @@ public:
   }
 
 private:
+  virtual void do_parse(int id, std::list<std::string> &argv) {
+    m_om[id].parse_from_string(argv);
+  }
+
   virtual int do_new(std::list<std::string> &argv) {
     /* Get the internal name for the class to create.
      * will throw if it does not exists. */

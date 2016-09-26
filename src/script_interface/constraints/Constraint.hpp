@@ -22,10 +22,10 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
-#include "shapes/Shape.hpp"
+#include "script_interface/shapes/Shape.hpp"
 
 #include <memory>
 
