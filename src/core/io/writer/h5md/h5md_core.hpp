@@ -60,7 +60,7 @@ class File
     File(std::string const &filename, std::string const &script_name);
     /*
      * @brief Method to perform the renaming of the temporary file from
-     * "filename" + "_tmp" to "filename" and close the file before renaming.
+     * "filename" + ".bak" to "filename"
      */
     void Close();
 

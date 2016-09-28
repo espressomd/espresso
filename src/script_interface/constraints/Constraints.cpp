@@ -18,7 +18,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef CONSTRAINTS
 #include <stdexcept>
 
 #include "Constraint.hpp"
@@ -53,4 +52,3 @@ Variant Constraints::call_method(std::string const &method,
 }
 }
 }
-#endif

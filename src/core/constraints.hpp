@@ -3,7 +3,6 @@
 
 #include "config.hpp"
 
-#ifdef CONSTRAINTS
 
 #include <memory>
 #include <vector>
@@ -39,5 +38,4 @@ inline void add_constraints_energy(Particle *p) {
   }
 }
 
-#endif
 #endif

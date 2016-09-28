@@ -74,7 +74,6 @@ File::File(std::string const &filename, std::string const &script_name)
             */
             backup_filename = filename + ".bak";
             backup_file(filename, backup_filename);
-
             loadFile(filename);
         } else {
             throw incompatible_h5mdfile();
