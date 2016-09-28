@@ -1815,18 +1815,18 @@ void auto_exclusion(int distance)
 
 int init_gc(void){
 	if ( type_array == (TypeList *) NULL) {
-	//stores the number of currently available type_list's 
-	number_of_type_lists=10;
+		//stores the number of currently available type_list's 
+		number_of_type_lists=10;
 
-	Type.max_entry = 0;
-	Index.max_entry = 0;
+		Type.max_entry = 0;
+		Index.max_entry = 0;
 
-	type_array = (TypeList *) Utils::malloc(sizeof(TypeList) * number_of_type_lists);
-	if ( type_array == (TypeList *) 0 )
-		return ES_ERROR;
+		type_array = (TypeList *) Utils::malloc(sizeof(TypeList) * number_of_type_lists);
+		if ( type_array == (TypeList *) NULL )
+			return ES_ERROR;
 
-	GC_init = 1;
-	Type_array_init = 0;
+		GC_init = 1;
+		Type_array_init = 0;
 	}
 	return ES_OK;
 }

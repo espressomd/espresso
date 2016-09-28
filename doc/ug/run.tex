@@ -681,7 +681,7 @@ barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
 more details.
 
 \section{Reaction Ensemble}
-The reaction ensemble\cite{smith1994reaction} allows to simulate chemical reactions especially with varying particle numbers.  Therefore it is similar to the grand canonical ensemble however it applies some further restrictions since the particle numbers are not allowed to fluctuate arbitrarily. Arbitrary chemical reactions can be simulated with the reaction ensemble as long as you know the educts and products of the reaction as well as the equilibrium constant of the reaction. Currently only the version of the reaction ensemble at constant volume and constant temperature is implemented (the version at constant pressure and constant temperature is not implemented). Note that the method also only allows to obtain static observables since the particle dynamics are changed by the Monte Carlo moves of the method.
+The reaction ensemble\cite{smith1994reaction} allows to simulate chemical reactions especially with varying particle numbers.  Therefore it is similar to the grand canonical ensemble however it applies some further restrictions since the particle numbers are not allowed to fluctuate arbitrarily. Therefore it can be viewed as a grand canonical simulation scheme with inherent rejection sampling with respect to the fluctuations in the particle numbers. Arbitrary chemical reactions can be simulated with the reaction ensemble as long as you know the educts and products of the reaction as well as the equilibrium constant of the reaction. Currently only the version of the reaction ensemble at constant volume and constant temperature is implemented (the version at constant pressure and constant temperature is not implemented). Note that the method also only allows to obtain static observables since the particle dynamics are changed by the Monte Carlo moves of the method.
 Since you might be interested in thermodynamic properties of a reacting system you may use the Wang-Landau algorithm\cite{wang2001efficient} to obtain them. Here the 1/t Wang-Landau algorithm\cite{belardinelli2007fast} is implemented since it does not suffer from systematic errors.
 
 \begin{essyntax}
@@ -691,7 +691,7 @@ Since you might be interested in thermodynamic properties of a reacting system y
   \variant{4} reaction\_ensemble temperature\_reaction\_ensemble \var{temperature\_reaction\_ensemble}
   \variant{5} reaction\_ensemble exclusion\_radius
   \variant{6} reaction\_ensemble set\_default\_charge\_of\_type \var{type} \var{charge}
-  \variant{7} reaction\_ensemble set\_water\_type \var{type}
+  \variant{7} reaction\_ensemble water\_type \var{type}
   \variant{8} reaction\_ensemble length\_scales real \var{real\_length\_in\_meters} simulation \var{corresponding\_length\_in\_simulation\_units}
   \variant{9} reaction\_ensemble wang_landau add degree\_of\_association associated\_type \var{associated\_type} min \var{min\_value} max \var{max\_value} corresponding\_acid\_types \var{list\_of\_corresponding\_types}
   \variant{10} reaction\_ensemble wang\_landau add energy filename \var{energy\_boundary\_filename} delta \var{Delta\_E}
@@ -764,6 +764,10 @@ The Constant pH method from Reed and Reed (1992) is somewhat similar to some ext
 
 
 Required features: REACTION_ENSEMBLE
+
+\section{Grand Canonical Ensemble}
+Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

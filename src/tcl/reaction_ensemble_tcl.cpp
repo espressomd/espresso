@@ -65,8 +65,11 @@ int tclcommand_reaction_ensemble_print_status(Tcl_Interp *interp){
 }
 
 int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
-	single_reaction* new_reaction =(single_reaction *)malloc(sizeof(single_reaction));
-
+	single_reaction* new_reaction =(single_reaction *) malloc(sizeof(single_reaction));
+	//initialize values of educt/ products in reaction to reasonable value 
+	new_reaction->len_educt_types=0;
+	new_reaction->len_product_types=0;
+	
 	argc -= 1; argv += 1;
 	if(ARG1_IS_S("equilibrium_constant")){
 		ARG_IS_D(2, new_reaction->equilibrium_constant);
@@ -78,30 +81,34 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		int* educt_types=NULL;
 		int educt_type_counter=0;
 		while(ARG_IS_I(1,next_added_type)){
-			argc-=1; argv+=1;
 			educt_types=(int*) realloc(educt_types,sizeof(int)*(educt_type_counter+1));
 			educt_types[educt_type_counter]=next_added_type;
 			educt_type_counter+=1;
+			//check for terminus of string
+			if(argc<3) {
+				break;
+			}
+			argc-=1; argv+=1;
 		}
 		new_reaction->len_educt_types=educt_type_counter;
 		new_reaction->educt_types=educt_types;
-	}else{
-		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("educt_coefficients")){
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* educt_coefficients=NULL;
 		int educt_type_counter=0;
-		while(ARG_IS_I(1,next_added_type_coeff)){
-			argc-=1; argv+=1;
+		while(ARG_IS_I(1,next_added_type_coeff)&& argc>1){
 			educt_coefficients=(int*) realloc(educt_coefficients,sizeof(int)*(educt_type_counter+1));
 			educt_coefficients[educt_type_counter]=next_added_type_coeff;
 			educt_type_counter+=1;
+			//check for terminus of string
+			if(argc<3) {
+				break;
+			}
+			argc-=1; argv+=1;
 		}
 		new_reaction->educt_coefficients=educt_coefficients;
-	}else{
-		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_types")){
 		argc-=1; argv+=1;
@@ -109,22 +116,24 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 		int* product_types=NULL;
 		int product_type_counter=0;
 		while(ARG_IS_I(1,next_added_type)){
-			argc-=1; argv+=1;
 			product_types=(int*) realloc(product_types,sizeof(int)*(product_type_counter+1));
 			product_types[product_type_counter]=next_added_type;
 			product_type_counter+=1;
+			//check for terminus of string
+			if(argc<3) {
+				break;
+			}
+			argc-=1; argv+=1;
 		}
 		new_reaction->len_product_types=product_type_counter;
 		new_reaction->product_types=product_types;
-	}else{
-		return TCL_ERROR;
 	}
 	if(ARG1_IS_S("product_coefficients")){
 		argc-=1; argv+=1;
 		int next_added_type_coeff;
 		int* product_coefficients=NULL;
 		int product_type_counter=0;
-		while(ARG_IS_I(1,next_added_type_coeff)){
+		while(ARG_IS_I(1,next_added_type_coeff)&& argc>1){
 			product_coefficients=(int*) realloc(product_coefficients,sizeof(int)*(product_type_counter+1));
 			product_coefficients[product_type_counter]=next_added_type_coeff;
 			product_type_counter+=1;
@@ -136,19 +145,15 @@ int tclcommand_add_reaction(Tcl_Interp *interp, int argc, char **argv){
 			argc-=1; argv+=1;
 		}
 	
-		new_reaction->nu_bar=calculate_nu_bar(new_reaction->educt_coefficients, new_reaction-> len_educt_types,  new_reaction->product_coefficients, new_reaction->len_product_types);
-	
-	}else{
-		return TCL_ERROR;
 	}
 	
 	//if everything is fine:
+	new_reaction->nu_bar=calculate_nu_bar(new_reaction->educt_coefficients, new_reaction-> len_educt_types,  new_reaction->product_coefficients, new_reaction->len_product_types);
 	current_reaction_system.reactions=(single_reaction**) realloc(current_reaction_system.reactions,sizeof(single_reaction*)*(current_reaction_system.nr_single_reactions+1)); //enlarge current_reaction_system
 	current_reaction_system.reactions[current_reaction_system.nr_single_reactions]=new_reaction;
 	current_reaction_system.nr_single_reactions+=1;
-	
 	//assign different types an index in a growing list that starts at and is incremented by 1 for each new type
-	update_type_index(new_reaction->educt_types, new_reaction->len_educt_types, new_reaction->product_types, new_reaction->len_product_types); 
+	update_type_index(new_reaction->educt_types, new_reaction->len_educt_types, new_reaction->product_types, new_reaction->len_product_types);
 	return TCL_OK;
 }
 
@@ -294,6 +299,7 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 				provided_unknown_command=false;
 				//check for warter_type for making autodissociation of water possible in implicit water (langevin thermostat). If you work with explicit water do not provide this argument and simply provide the reaction as any other reaction is provided to the feature!
 				ARG_IS_I(2,current_reaction_system.water_type);
+				
 			}
 			if( ARG1_IS_S("standard_pressure_in_simulation_units")) {
 				provided_unknown_command=false;

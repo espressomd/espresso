@@ -229,13 +229,12 @@ int make_reaction_attempt(single_reaction* current_reaction, double** changed_pa
 				while (p_id == -1) {
 					p_id= create_particle(current_reaction->product_types[i]);
 				}
-				*p_ids_created_particles=(int*) realloc(*p_ids_created_particles,sizeof(int)*(len_p_ids_created_particles+1));
+				*p_ids_created_particles=(int*) realloc((*p_ids_created_particles),sizeof(int)*(len_p_ids_created_particles+1));
 				(*p_ids_created_particles)[len_p_ids_created_particles]=p_id;
 				len_p_ids_created_particles+=1;
 			}
 		}
 	}
-
 	*_len_changed_particles_properties=len_changed_particles_properties;
 	*_len_p_ids_created_particles=len_p_ids_created_particles;
 	*_len_hidden_particles_properties=len_hidden_particles_properties;
@@ -261,11 +260,11 @@ int generic_oneway_reaction(int reaction_id){
 	//find reacting molecules in educts and save their properties for later recreation if step is not accepted
 	//do reaction
 	//save old particle_numbers
-	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
+	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *(current_reaction_system.nr_different_types));
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
 	}
-	if(current_reaction_system.water_type>=0){
+	if(current_reaction_system.water_type>=0 && find_index_of_type(current_reaction_system.water_type) >=0){
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
@@ -305,10 +304,18 @@ int generic_oneway_reaction(int reaction_id){
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
+		
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
-			int p_id = (int) hidden_particles_properties[i];
-			delete_particle(p_id); //delete particle
+		//extract ids of to be deleted particles and sort them. needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
+		int to_be_deleted_hidden_ids[len_hidden_particles_properties];
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int p_id = (int) hidden_particles_properties[i*number_of_saved_properties];
+			to_be_deleted_hidden_ids[i]=p_id;
+		}
+		qsort(to_be_deleted_hidden_ids, len_hidden_particles_properties, sizeof(int), intcmp);
+		
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int status=delete_particle(to_be_deleted_hidden_ids[i]); //delete particle
 		}
 		reaction_is_accepted= 1;
 	} else {
@@ -364,10 +371,10 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 }
 
 
-bool _type_is_in_list(int type, int* list, int len_list){
+bool _int_is_in_list(int int_to_search_for, int* list, int len_list){
 	bool is_in_list=false;
 	for(int i=0;i<len_list;i++){
-		if(list[i]==type){
+		if(list[i]==int_to_search_for){
 			is_in_list=true;
 			break;
 		}
@@ -377,15 +384,17 @@ bool _type_is_in_list(int type, int* list, int len_list){
 
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
-	
 	if(current_reaction_system.type_index==NULL){
 		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
-		current_reaction_system.type_index[0]=educt_types[0];
+		if(len_educt_types>0)
+			current_reaction_system.type_index[0]=educt_types[0];
+		else
+			current_reaction_system.type_index[0]=product_types[0];
 		current_reaction_system.nr_different_types=1;
-		init_type_array(educt_types[0]); //make types known in espresso
+		init_type_array(current_reaction_system.type_index[0]); //make types known in espresso
 	}
 	for (int i =0; i<len_educt_types;i++){
-		bool educt_type_i_is_known=_type_is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
+		bool educt_type_i_is_known=_int_is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (educt_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=educt_types[i];
@@ -393,9 +402,8 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 			init_type_array(educt_types[i]); //make types known in espresso
 		}
 	}
-	
 	for (int i =0; i<len_product_types;i++){
-		bool product_type_i_is_known=_type_is_in_list(product_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
+		bool product_type_i_is_known=_int_is_in_list(product_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (product_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=product_types[i];
@@ -454,7 +462,7 @@ int hide_particle(int p_id, int previous_type){
 int delete_particle (int p_id) {
 	if (p_id == max_seen_particle) {
 		// last particle, just delete
-		remove_particle(p_id);
+		int status= remove_particle(p_id);
 	} else {
 		// otherwise, copy properties of last particle to particle with given pid, delete last particle
 		// this avoids that the particle identities get excessive
@@ -479,7 +487,7 @@ int delete_particle (int p_id) {
 		free_particle(&last_particle );
 
 		p_id=max_seen_particle;
-		remove_particle(p_id);
+		int status= remove_particle(p_id);
 	}
 	return 0;
 }
@@ -539,7 +547,6 @@ int create_particle(int desired_type){
 	vel[0]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[1]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 	vel[2]=pow(2*PI*current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-	
 	double charge= (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)];
 	bool particle_inserted_too_close_to_another_one=true;
 	int max_insert_tries=1000;
@@ -570,7 +577,6 @@ int create_particle(int desired_type){
 		//set charge
 		set_particle_q(p_id, charge);
 	}
-	
 	if(insert_tries>max_insert_tries){
 		printf("Error: Particle not inserted\n");
 		return -1;	
@@ -1109,7 +1115,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
 	}
-	if(current_reaction_system.water_type>=0){
+	if(current_reaction_system.water_type>=0 && find_index_of_type(current_reaction_system.water_type) >=0){
 		//set number of water molecules to typical value 55.5 mol/l
 		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
 		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
@@ -1191,10 +1197,18 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 		}
 
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
-			int p_id = (int) hidden_particles_properties[i];
-			delete_particle(p_id); //delete particle
+		//extract ids of to be deleted particles and sort them. needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
+		int to_be_deleted_hidden_ids[len_hidden_particles_properties];
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int p_id = (int) hidden_particles_properties[i*number_of_saved_properties];
+			to_be_deleted_hidden_ids[i]=p_id;
 		}
+		qsort(to_be_deleted_hidden_ids, len_hidden_particles_properties, sizeof(int), intcmp);
+		
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int status=delete_particle(to_be_deleted_hidden_ids[i]); //delete particle
+		}
+		
 		reaction_is_accepted= 1;
 	} else {
 		if(old_state_index>=0){
@@ -1998,11 +2012,20 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept
+		
 		//delete hidden educt_particles (remark: dont delete changed particles)
-		for(int i=0;i<len_hidden_particles_properties*number_of_saved_properties;i+=number_of_saved_properties) {
-			int p_id = (int) hidden_particles_properties[i];
-			delete_particle(p_id); //delete particle
+		//extract ids of to be deleted particles and sort them. needed since delete_particle changes particle p_ids. start deletion from the largest p_id onwards
+		int to_be_deleted_hidden_ids[len_hidden_particles_properties];
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int p_id = (int) hidden_particles_properties[i*number_of_saved_properties];
+			to_be_deleted_hidden_ids[i]=p_id;
 		}
+		qsort(to_be_deleted_hidden_ids, len_hidden_particles_properties, sizeof(int), intcmp);
+		
+		for(int i=0;i<len_hidden_particles_properties;i++) {
+			int status=delete_particle(to_be_deleted_hidden_ids[i]); //delete particle
+		}
+		
 		reaction_is_accepted= 1;
 	} else {
 		//reject
