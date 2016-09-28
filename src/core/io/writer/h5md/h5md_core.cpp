@@ -26,11 +26,29 @@
 namespace writer {
 namespace h5md {
 
+
 static void backup_file(const std::string &from, const std::string& to)
 {
     boost::filesystem::path pfrom(from), pto(to);
     boost::filesystem::copy_file(pfrom, pto,
         boost::filesystem::copy_option::overwrite_if_exists);
+}
+
+static std::vector<hsize_t>
+create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
+{
+    if (dim > 0)
+        return std::vector<hsize_t>{chunk_size, size, dim};
+    else
+        return std::vector<hsize_t>{size};
+}
+
+static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
+{
+    if (dim > 0)
+        return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+    else
+        return std::vector<hsize_t>{size};
 }
 
 
@@ -46,6 +64,7 @@ File::File(std::string const &filename, std::string const &script_name)
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
 
+    init_filestructure();
     if (check_file_exists(filename)) {
         if (check_for_H5MD_structure(filename)) {
             /*
@@ -65,82 +84,103 @@ File::File(std::string const &filename, std::string const &script_name)
     }
 }
 
+void File::init_filestructure()
+{
+    group_names = {
+        "particles",
+        "particles/atoms",
+        "particles/atoms/box",
+        "particles/atoms/mass",
+        "particles/atoms/id",
+        "particles/atoms/type",
+        "particles/atoms/position",
+        "particles/atoms/velocity",
+        "particles/atoms/force",
+        "particles/atoms/image",
+        "parameters",
+        "parameters/vmd_structure",
+        "parameters/files"
+    };
+
+    h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
+    h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
+    hsize_t npart = static_cast<hsize_t>(n_part);
+    dataset_descriptors = {
+        { "particles/atoms/box/edges"     , 0, 3    , type_double },
+        { "particles/atoms/mass/value"    , 1, npart, type_double },
+        { "particles/atoms/mass/time"     , 1, 1    , type_double },
+        { "particles/atoms/mass/step"     , 1, 1    , type_int },
+        { "particles/atoms/id/value"      , 1, npart, type_int },
+        { "particles/atoms/id/time"       , 1, 1    , type_double },
+        { "particles/atoms/id/step"       , 1, 1    , type_int },
+        { "particles/atoms/type/value"    , 1, npart, type_double },
+        { "particles/atoms/type/time"     , 1, 1    , type_double },
+        { "particles/atoms/type/step"     , 1, 1    , type_int },
+        { "particles/atoms/position/value", 3, npart, type_double },
+        { "particles/atoms/position/time" , 1, 1    , type_double },
+        { "particles/atoms/position/step" , 1, 1    , type_int },
+        { "particles/atoms/velocity/value", 3, npart, type_double },
+        { "particles/atoms/velocity/time" , 1, 1    , type_double },
+        { "particles/atoms/velocity/step" , 1, 1    , type_int },
+        { "particles/atoms/force/value"   , 3, npart, type_double },
+        { "particles/atoms/force/time"    , 1, 1    , type_double },
+        { "particles/atoms/force/step"    , 1, 1    , type_int },
+        { "particles/atoms/image/value"   , 1, npart, type_int },
+        { "particles/atoms/image/time"    , 1, 1    , type_double },
+        { "particles/atoms/image/step"   , 1, 1    , type_int },
+    };
+}
+
+void File::createGroups()
+{
+    for (const auto& path: group_names) {
+        auto i = path.find_last_of('/');
+
+        if (i == std::string::npos) {
+            groups[path] = h5xx::group(h5md_file, path);
+        } else {
+            auto basename = path.substr(i + 1);
+            auto father = path.substr(0, i);
+            groups[path] = h5xx::group(groups[father], basename);
+        }
+    }
+}
+
+void File::createDatasets(bool only_load)
+{
+    for (const auto& descr: dataset_descriptors) {
+        const std::string& path = descr.path;
+        auto i = path.find_last_of('/');
+
+        if (i != std::string::npos) {
+            auto basename = path.substr(i + 1);
+            auto father = path.substr(0, i);
+
+            if (only_load) {
+                datasets[path] = h5xx::dataset(groups[father],
+                                               basename);
+            } else {
+                auto dims = create_dims(descr.dim, descr.size);
+                auto cdims = create_dims(descr.dim, descr.size, 1);
+                auto maxdims = create_maxdims(descr.dim, descr.size);
+                auto storage = h5xx::policy::storage::chunked(cdims);
+                auto dataspace = h5xx::dataspace(dims, maxdims);
+                datasets[path] = h5xx::dataset(groups[father],
+                                               basename,
+                                               descr.type,
+                                               dataspace,
+                                               storage);
+            }
+        }
+    }
+}
+
 void File::loadFile(const std::string& filename)
 {
     this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
-    /* particles -- atoms -- box -- edges */
-    this->group_particles = h5xx::group(this->h5md_file, "particles");
-    this->group_particles_atoms = h5xx::group(this->group_particles, "atoms");
-    this->group_particles_atoms_box = h5xx::group(this->group_particles_atoms, "box");
-    this->dataset_particles_atoms_box_edges = h5xx::dataset(this->group_particles_atoms_box, "edges");
-    /* particles -- atoms -- id */
-    this->group_particles_atoms_id = h5xx::group(
-            this->group_particles_atoms, "id");
-    this->dataset_particles_atoms_id_value = h5xx::dataset(
-            this->group_particles_atoms_id,
-            "value");
-    this->dataset_particles_atoms_id_time = h5xx::dataset(
-            this->group_particles_atoms_id,
-            "time");
-    this->dataset_particles_atoms_id_step = h5xx::dataset(
-            this->group_particles_atoms_id,
-            "step");
-    /* particles -- atoms -- mass */
-    this->group_particles_atoms_mass = h5xx::group(
-            this->group_particles_atoms, "mass");
-    this->dataset_particles_atoms_mass_value = h5xx::dataset(
-            this->group_particles_atoms_mass, "value");
-    this->dataset_particles_atoms_mass_time = h5xx::dataset(
-            this->group_particles_atoms_mass, "time");
-    this->dataset_particles_atoms_mass_step = h5xx::dataset(
-            this->group_particles_atoms_mass, "step");
-    /* particles -- atoms -- position */
-    this->group_particles_atoms_position = h5xx::group(
-            this->group_particles_atoms, "position");
-    this->dataset_particles_atoms_position_value = h5xx::dataset(
-            this->group_particles_atoms_position,
-            "value");
-    this->dataset_particles_atoms_position_time = h5xx::dataset(
-            this->group_particles_atoms_position,
-            "time");
-    this->dataset_particles_atoms_position_step = h5xx::dataset(
-            this->group_particles_atoms_position,
-            "step");
-    /* particles -- atoms -- velocity */
-    this->group_particles_atoms_velocity = h5xx::group(
-            this->group_particles_atoms, "velocity");
-    this->dataset_particles_atoms_velocity_value = h5xx::dataset(
-            this->group_particles_atoms_velocity, "value");
-    this->dataset_particles_atoms_velocity_time = h5xx::dataset(
-            this->group_particles_atoms_velocity, "time");
-    this->dataset_particles_atoms_velocity_step = h5xx::dataset(
-            this->group_particles_atoms_velocity, "step");
-    /* particles -- atoms -- force */
-    this->group_particles_atoms_force = h5xx::group(
-            this->group_particles_atoms, "force");
-    this->dataset_particles_atoms_force_value = h5xx::dataset(
-            this->group_particles_atoms_force, "value");
-    this->dataset_particles_atoms_force_time = h5xx::dataset(
-            this->group_particles_atoms_force, "time");
-    this->dataset_particles_atoms_force_step = h5xx::dataset(
-            this->group_particles_atoms_force, "step");
-    /* particles -- atoms -- image */
-    this->group_particles_atoms_image = h5xx::group(
-            this->group_particles_atoms, "image");
-    this->dataset_particles_atoms_image_value = h5xx::dataset(
-            this->group_particles_atoms_image, "value");
-    this->dataset_particles_atoms_image_time = h5xx::dataset(
-            this->group_particles_atoms_image, "time");
-    this->dataset_particles_atoms_image_step = h5xx::dataset(
-            this->group_particles_atoms_image, "step");
-    /* particles -- atoms -- species */
-    this->dataset_particles_atoms_species = h5xx::dataset(
-            this->group_particles_atoms, "species");
-    /* particles -- atoms -- parameters */
-    this->group_parameters = h5xx::group(this->h5md_file, "parameters");
-    this->group_parameters_vmd_structure = h5xx::group(this->group_parameters, "vmd_structure");
-    this->group_parameters_files = h5xx::group(this->group_parameters, "files");
+    createGroups();
+    createDatasets(true);
 }
 
 void File::createNewFile(const std::string &filename)
@@ -149,210 +189,14 @@ void File::createNewFile(const std::string &filename)
     /* Create a new h5xx file object. */
     this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
-    /* Array for max. dimensions of the dataspaces. */
-    const std::vector<hsize_t> maxdims = {H5S_UNLIMITED, H5S_UNLIMITED,
-                                        H5S_UNLIMITED};
-    const std::vector<hsize_t> maxdims_single = {H5S_UNLIMITED};
-    /* Sample multi_array for dataset creations. */
-    const std::vector<hsize_t> chunk_dims_3d = {1, static_cast<hsize_t>
-    (n_part), 3};
-    const std::vector<hsize_t> chunk_dims_1d = {1, static_cast<hsize_t>
-    (n_part), 1};
-    hsize_t chunk_dims_1d_single = 1;
-    const std::vector<hsize_t> dims_3d = {0, static_cast<hsize_t>
-    (n_part), 3};
-    const std::vector<hsize_t> dims_1d_single = {0};
-    boost::multi_array<double, 2> box_vec(boost::extents[3][3]);
 
-    box_vec[0][0]=box_l[0]; box_vec[0][1]=0.0; box_vec[0][2]=0.0;
-    box_vec[1][0]=0.0; box_vec[1][1]=box_l[1]; box_vec[1][2]=0.0;
-    box_vec[2][0]=0.0; box_vec[2][1]=0.0; box_vec[2][2]=box_l[2];
+    createGroups();
+    createDatasets(false);
 
-    /* Ensure the H5MD structure is present in the file. */
-    /* particles -- atoms -- box -- edges */
-    this->group_particles = h5xx::group(this->h5md_file, "particles");
-    this->group_particles_atoms = h5xx::group(this->group_particles,
-                                               "atoms");
-    this->group_particles_atoms_box = h5xx::group(
-            this->group_particles_atoms, "box");
-    h5xx::write_attribute(this->group_particles_atoms_box, "dimension", 3);
-    h5xx::write_attribute(this->group_particles_atoms_box, "boundary",
-                          "periodic");
-    this->dataset_particles_atoms_box_edges =
-            h5xx::create_dataset(this->group_particles_atoms_box,
-                                 "edges", box_vec);
-    h5xx::write_dataset(this->dataset_particles_atoms_box_edges,
-                        box_vec);
-    /* particles -- atoms -- mass */
-    this->group_particles_atoms_mass =
-            h5xx::group(this->group_particles_atoms, "mass");
-    this->dataspace_particles_atoms_mass_value = h5xx::dataspace(
-            dims_3d, maxdims);
-    this->dataset_particles_atoms_mass_value = h5xx::dataset(
-            this->group_particles_atoms_mass,
-            "value", this->type_int,
-            this->dataspace_particles_atoms_mass_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-    this->dataspace_particles_atoms_mass_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_mass_time =
-            h5xx::dataset(this->group_particles_atoms_mass,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_mass_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_mass_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_mass_step =
-            h5xx::dataset(this->group_particles_atoms_mass,
-                          "step", this->type_int,
-                          this->dataspace_particles_atoms_mass_step,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    /* particles -- atoms -- id */
-    this->group_particles_atoms_id =
-            h5xx::group(this->group_particles_atoms, "id");
-    this->dataspace_particles_atoms_id_value = h5xx::dataspace(
-            chunk_dims_1d, maxdims);
-    this->dataset_particles_atoms_id_value = h5xx::dataset(
-            this->group_particles_atoms_id,
-            "value", this->type_int,
-            this->dataspace_particles_atoms_id_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_1d.data()));
-    this->dataspace_particles_atoms_id_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_id_time =
-            h5xx::dataset(this->group_particles_atoms_id,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_id_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_id_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_id_step =
-            h5xx::dataset(this->group_particles_atoms_id,
-                                 "step", this->type_int,
-                          this->dataspace_particles_atoms_id_step,
-                                 h5xx::policy::storage::chunked(1,
-                                                                &chunk_dims_1d_single));
-    /* particles -- atoms -- position */
-    this->group_particles_atoms_position =
-            h5xx::group(this->group_particles_atoms, "position");
-    this->dataspace_particles_atoms_position_value = h5xx::dataspace(
-            dims_3d, maxdims);
-    this->dataset_particles_atoms_position_value = h5xx::dataset(
-            this->group_particles_atoms_position,
-            "value", this->type_double,
-            this->dataspace_particles_atoms_position_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-    this->dataspace_particles_atoms_position_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_position_time =
-            h5xx::dataset(this->group_particles_atoms_position,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_position_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_position_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_position_step =
-            h5xx::dataset(this->group_particles_atoms_position,
-                                 "step", this->type_int,
-                          this->dataspace_particles_atoms_position_step,
-                                 h5xx::policy::storage::chunked(1,
-                                                                &chunk_dims_1d_single));
-    /* particles -- atoms -- velocity */
-    this->group_particles_atoms_velocity =
-            h5xx::group(this->group_particles_atoms, "velocity");
-    this->dataspace_particles_atoms_velocity_value = h5xx::dataspace(
-            dims_3d, maxdims);
-    this->dataset_particles_atoms_velocity_value = h5xx::dataset(
-            this->group_particles_atoms_velocity,
-            "value", this->type_double,
-            this->dataspace_particles_atoms_velocity_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-    this->dataspace_particles_atoms_velocity_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_velocity_time =
-            h5xx::dataset(this->group_particles_atoms_velocity,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_velocity_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_velocity_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_velocity_step =
-            h5xx::dataset(this->group_particles_atoms_velocity,
-                          "step", this->type_int,
-                          this->dataspace_particles_atoms_velocity_step,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    /* particles -- atoms -- force */
-    this->group_particles_atoms_force =
-            h5xx::group(this->group_particles_atoms, "force");
-    this->dataspace_particles_atoms_force_value = h5xx::dataspace(
-            dims_3d, maxdims);
-    this->dataset_particles_atoms_force_value = h5xx::dataset(
-            this->group_particles_atoms_force,
-            "value", this->type_double,
-            this->dataspace_particles_atoms_force_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-    this->dataspace_particles_atoms_force_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_force_time =
-            h5xx::dataset(this->group_particles_atoms_force,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_force_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_force_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_force_step =
-            h5xx::dataset(this->group_particles_atoms_force,
-                          "step", this->type_int,
-                          this->dataspace_particles_atoms_force_step,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    /* particles -- atoms -- image */
-    this->group_particles_atoms_image =
-            h5xx::group(this->group_particles_atoms, "image");
-    this->dataspace_particles_atoms_image_value = h5xx::dataspace(
-            dims_3d, maxdims);
-    this->dataset_particles_atoms_image_value = h5xx::dataset(
-            this->group_particles_atoms_image,
-            "value", this->type_int,
-            this->dataspace_particles_atoms_image_value,
-            h5xx::policy::storage::chunked(3, chunk_dims_3d.data()));
-    this->dataspace_particles_atoms_image_time = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_image_time =
-            h5xx::dataset(this->group_particles_atoms_image,
-                          "time", this->type_double,
-                          this->dataspace_particles_atoms_image_time,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-    this->dataspace_particles_atoms_image_step = h5xx::dataspace(
-            dims_1d_single, maxdims_single);
-    this->dataset_particles_atoms_image_step =
-            h5xx::dataset(this->group_particles_atoms_image,
-                          "step", this->type_int,
-                          this->dataspace_particles_atoms_image_step,
-                          h5xx::policy::storage::chunked(1,
-                                                         &chunk_dims_1d_single));
-
-    /* particles -- atoms -- species */
-    this->dataspace_particles_atoms_species = h5xx::dataspace
-            (chunk_dims_1d);
-    this->dataset_particles_atoms_species =
-            h5xx::create_dataset(this->group_particles_atoms, "species",
-                                 this->type_int, this->dataspace_particles_atoms_species);
-    this->WriteSpecies();
-    /* particles -- atoms -- parameters */
-    this->group_parameters = h5xx::group(this->h5md_file, "parameters");
-    this->group_parameters_vmd_structure = h5xx::group(
-            this->group_parameters, "vmd_structure");
-    this->group_parameters_files = h5xx::group(this->group_parameters,
-                                                "files");
+    std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+    h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
+    h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
+    h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
 }
 
 
@@ -362,45 +206,13 @@ void File::Close()
 }
 
 
-void File::Write(bool position, bool velocity, bool force)
+void File::Write(int write_dat)
 {
-    this->WriteTimedependent3D(position, velocity, force);
-}
-
-
-void File::WriteSpecies()
-{
-    /* Get the number of particles on all other nodes. */
-    int nlocalpart = cells_get_n_particles();
-    int pref = 0;
-    int_array_3d type_data(boost::extents[1][nlocalpart][1]);
-    Cell *local_cell;
-
-    /* Prepare data for writing, loop over all local cells. */
-    int particle_index = 0;
-    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
-    {
-        local_cell = local_cells.cell[cell_id];
-        for (int local_part_id = 0;
-             local_part_id < local_cell->n; ++local_part_id)
-        {
-            auto current_particle = local_cell->part[local_part_id];
-            type_data[0][particle_index][0] = current_particle.p.type;
-            particle_index++;
-        }
-    }
-
-    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    std::vector<hsize_t> offset = {0, static_cast<size_t>(pref), 0};
-    std::vector<hsize_t> count = {1, static_cast<size_t>(nlocalpart), 1};
-    h5xx::slice slice(offset, count);
-
-    h5xx::write_dataset(this->dataset_particles_atoms_species, type_data, slice);
-}
-
-
-void File::WriteTimedependent3D(bool position, bool velocity, bool force)
-{
+    bool write_typ = write_dat & W_TYPE;
+    bool write_pos = write_dat & W_POS;
+    bool write_vel = write_dat & W_V;
+    bool write_force = write_dat & W_F;
+    bool write_mass = write_dat & W_MASS;
     /* Get the number of particles on all other nodes. */
     /* TODO: Writing is not yet working in parallel. */
     int nlocalpart = cells_get_n_particles();
@@ -409,6 +221,8 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
     double_array_3d f(boost::extents[1][nlocalpart][3]);
     int_array_3d image(boost::extents[1][nlocalpart][3]);
     int_array_3d id(boost::extents[1][nlocalpart][1]);
+    int_array_3d typ(boost::extents[1][nlocalpart][1]);
+    double_array_3d mass(boost::extents[1][nlocalpart][1]);
     /* Prepare data for writing, loop over all local cells. */
     Cell *local_cell;
     int particle_index = 0;
@@ -420,9 +234,17 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
         {
             auto current_particle = local_cell->part[local_part_id];
             id[0][particle_index][0] = current_particle.p.identity;
+            if (write_typ)
+            {
+                typ[0][particle_index][0] = current_particle.p.type;
+            }
+            if (write_mass)
+            {
+                mass[0][particle_index][0] = current_particle.p.mass;
+            }
 
             /* store folded particle positions. */
-            if (position)
+            if (write_pos)
             {
                 pos[0][particle_index][0] = current_particle.r.p[0];
                 pos[0][particle_index][1] = current_particle.r.p[1];
@@ -431,13 +253,13 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
                 image[0][particle_index][1] = current_particle.l.i[1];
                 image[0][particle_index][2] = current_particle.l.i[2];
             }
-            if (velocity)
+            if (write_vel)
             {
                 vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
                 vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
                 vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
             }
-            if (force)
+            if (write_force)
             {
                 f[0][particle_index][0] = current_particle.f.f[0];
                 f[0][particle_index][1] = current_particle.f.f[1];
@@ -447,116 +269,116 @@ void File::WriteTimedependent3D(bool position, bool velocity, bool force)
         }
     }
 
-    WriteDataset(id, dataset_particles_atoms_id_value,
-                     dataset_particles_atoms_id_time,
-                     dataset_particles_atoms_id_step);
+    WriteDataset(id, "particles/atoms/id");
 
-    if (position)
+    if (write_typ)
     {
-        WriteDataset(pos,
-                     this->dataset_particles_atoms_position_value,
-                     this->dataset_particles_atoms_position_time,
-                     this->dataset_particles_atoms_position_step);
-        WriteDataset(image,
-                     this->dataset_particles_atoms_image_value,
-                     this->dataset_particles_atoms_image_time,
-                     this->dataset_particles_atoms_image_step);
+        WriteDataset(typ, "particles/atoms/type");
     }
-    if (velocity)
+    if (write_mass)
     {
-        WriteDataset(vel,
-                     this->dataset_particles_atoms_velocity_value,
-                     this->dataset_particles_atoms_velocity_time,
-                     this->dataset_particles_atoms_velocity_step);
+        WriteDataset(mass, "particles/atoms/mass");
     }
-    if (force)
+    if (write_pos)
     {
-        WriteDataset(f,
-                     this->dataset_particles_atoms_force_value,
-                     this->dataset_particles_atoms_force_time,
-                     this->dataset_particles_atoms_force_step);
+        WriteDataset(pos, "particles/atoms/position");
+        WriteDataset(image, "particles/atoms/image");
+    }
+    if (write_vel)
+    {
+        WriteDataset(vel, "particles/atoms/velocity");
+    }
+    if (write_force)
+    {
+        WriteDataset(f, "particles/atoms/force");
     }
 }
 
 
 /* data is assumed to be three dimensional */
 template <typename T>
-void File::WriteDataset(T &data, h5xx::dataset& dataset,
-                        h5xx::dataset& time, h5xx::dataset& step)
+void File::WriteDataset(T &data, const std::string& path)
 {
+    /* Until now the h5xx does not support dataset extending, so we
+       have to use the lower level hdf5 library functions. */
+    auto& dataset = datasets[path + "/value"];
+    auto& time = datasets[path + "/time"];
+    auto& step = datasets[path + "/step"];
+
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
     MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    /* Until now the h5xx does not support dataset extending, so we
-       have to use the lower level hdf5 library functions. */
-    /* Get the ID of the dataspace. */
-    hid_t dataspace_local_id = H5Dget_space(dataset.hid());
-    hsize_t dims[3];
+
+    hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
-    H5Sget_simple_extent_dims(dataspace_local_id, dims, NULL);
-    /* Close the dataspace. */
-    H5Sclose(dataspace_local_id);
+    hsize_t dims[3], maxdims[3];
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+
     /* We will write the last timestep of all local particles. */
     hsize_t offset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
     hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
-    dims[0] += 1;
     /* Extend the dataset for another timestep. */
+    dims[0] += 1;
     H5Dset_extent(dataset.hid(), dims);
+
     /* Refresh the dataset after extension. */
-    dataspace_local_id = H5Dget_space(dataset.hid());
+    ds = H5Dget_space(dataset.hid());
     /* Select the region in the dataspace. */
-    H5Sselect_hyperslab(dataspace_local_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
     /* Create a temporary dataspace for the current positions. */
-    hid_t dataspace_simple_local_id = H5Screate_simple(3, count, this->max_dims);
+    hid_t ds_new = H5Screate_simple(3, count, maxdims);
     /* Finally write the data to the dataset. */
     H5Dwrite(dataset.hid(),
              dataset.get_type(),
-             dataspace_simple_local_id, dataspace_local_id, H5P_DEFAULT,
+             ds_new,
+             ds, H5P_DEFAULT,
              data.origin());
-    H5Sclose(dataspace_simple_local_id);
-    H5Sclose(dataspace_local_id);
+    H5Sclose(ds);
+    H5Sclose(ds_new);
 
     /* Write the md time to the position -- time dataset. */
-    hsize_t dims_single;
-    hid_t dataspace_pos_time_id = H5Dget_space
-            (time.hid());
-    H5Sget_simple_extent_dims(dataspace_pos_time_id, &dims_single, NULL);
-    H5Sclose(dataspace_pos_time_id);
-    hsize_t offset_single = dims_single;
-    hsize_t count_single = 1;
-    dims_single += 1;
-    H5Dset_extent(time.hid(), &dims_single);
-    dataspace_pos_time_id = H5Dget_space(time.hid());
-    H5Sselect_hyperslab(dataspace_pos_time_id, H5S_SELECT_SET, &offset_single,
-                        NULL,
-                        &count_single,
-                        NULL);
-    hid_t dataspace_simple_pos_time_id = H5Screate_simple(1, &count_single, this->max_dims_single);
+    ds = H5Dget_space(time.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+
+    hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
+    hsize_t timecount[3] = {1, 1, 1};
+    dims[0] += 1;
+    H5Dset_extent(time.hid(), dims);
+
+    ds = H5Dget_space(time.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(3, timecount, maxdims);
     H5Dwrite(time.hid(),
              time.get_type(),
-             dataspace_simple_pos_time_id, dataspace_pos_time_id, H5P_DEFAULT,
+             ds_new,
+             ds, H5P_DEFAULT,
              &sim_time);
-    H5Sclose(dataspace_simple_pos_time_id);
-    H5Sclose(dataspace_pos_time_id);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 
     /* Write the md step to the position -- step dataset. */
-    hid_t dataspace_pos_step_id = H5Dget_space(step.hid());
-    H5Sget_simple_extent_dims(dataspace_pos_step_id, &dims_single, NULL);
-    H5Sclose(dataspace_pos_step_id);
-    offset_single = dims_single;
-    count_single = 1;
-    dims_single += 1;
-    H5Dset_extent(step.hid(), &dims_single);
-    dataspace_pos_step_id = H5Dget_space(step.hid());
-    H5Sselect_hyperslab(dataspace_pos_step_id, H5S_SELECT_SET, &offset_single, NULL, &count_single, NULL);
-    hid_t dataspace_simple_pos_step_id = H5Screate_simple(1, &count_single, this->max_dims_single);
-    int sim_step_data= (int)std::round(sim_time/time_step);
+    ds = H5Dget_space(step.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+
+    /* Same offset, count and dims as the time dataset */
+    dims[0] += 1;
+    H5Dset_extent(step.hid(), dims);
+
+    ds = H5Dget_space(step.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(1, timecount, maxdims);
+    int sim_step_data = (int)std::round(sim_time/time_step);
     H5Dwrite(step.hid(),
              step.get_type(),
-             dataspace_simple_pos_step_id, dataspace_pos_step_id, H5P_DEFAULT,
+             ds_new,
+             ds,
+             H5P_DEFAULT,
              &sim_step_data);
-    H5Sclose(dataspace_simple_pos_step_id);
-    H5Sclose(dataspace_pos_step_id);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 }
 
 
@@ -603,73 +425,17 @@ void File::WriteScript(std::string const &filename)
 
 bool File::check_for_H5MD_structure(std::string const &filename)
 {
-    if (h5xx::is_hdf5_file(filename))
-    {
-        h5xx::file h5mdfile(filename, h5xx::file::in);
-        /* Check if all groups are present in the file. */
-        bool groups_exist[11] = {h5xx::exists_group(h5mdfile, "particles"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/box"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/mass"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/position"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/velocity"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/force"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "particles/atoms/image"),
-                                 h5xx::exists_group(h5mdfile, "parameters"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "parameters/vmd_structure"),
-                                 h5xx::exists_group(h5mdfile,
-                                                    "parameters/files")
-        };
-        /* Only if all boolean are TRUE, groups_all_exist will be TRUE. */
-        bool groups_all_exist = std::all_of(std::begin(groups_exist),
-                                            std::end(groups_exist),
-                                            [](bool i)
-                                            {
-                                                return i;
-                                            });
-        /* Check if all datasets are present in the file. */
-        bool datasets_exist[17] = {
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/box/edges"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/mass/value"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/mass/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/mass/step"),
-                h5xx::exists_dataset(h5mdfile,
-                                     "particles/atoms/position/value"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/position/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/position/step"),
-                h5xx::exists_dataset(h5mdfile,
-                                     "particles/atoms/velocity/value"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/velocity/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/velocity/step"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/force/value"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/force/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/force/step"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/species"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/image/value"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/image/time"),
-                h5xx::exists_dataset(h5mdfile, "particles/atoms/image/step")
-        };
-        /* Only if all boolean are TRUE, datasets_all_exist will be TRUE. */
-        bool datasets_all_exist = std::all_of(std::begin(datasets_exist),
-                                              std::end(datasets_exist),
-                                              [](bool i)
-                                              {
-                                                  return i;
-                                              });
-        /* Return the logical AND of the two boolean. */
-        return (groups_all_exist && datasets_all_exist);
-    } else
-    {
-        return false;
-    }
+    h5xx::file h5mdfile(filename, h5xx::file::in);
+
+    for (const auto& gnam: group_names)
+        if (!h5xx::exists_group(h5mdfile, gnam))
+            return false;
+
+    for (const auto& ddesc: dataset_descriptors)
+        if (!h5xx::exists_dataset(h5mdfile, ddesc.path))
+            return false;
+
+    return true;
 }
 
 

@@ -25,5 +25,11 @@ from libcpp cimport bool
 cdef extern from "h5md_core.hpp" namespace "writer::h5md":
     cdef cppclass File:
         File(const string, const string) except +
-        int Write(bool position, bool velocity, bool force) except +
+        int Write(int write_data) except +
         void Close() except +
+
+        int W_POS
+        int W_V
+        int W_F
+        int W_TYPE
+        int W_MASS

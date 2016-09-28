@@ -26,6 +26,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <unordered_map>
 #include <mpi.h>
 #include <boost/filesystem.hpp>
 #include "cells.hpp"
@@ -62,11 +63,17 @@ class File
      * "filename" + "_tmp" to "filename" and close the file before renaming.
      */
     void Close();
+
+    enum WriteData { W_POS  = 1 << 0,
+                     W_V    = 1 << 1,
+                     W_F    = 1 << 2,
+                     W_TYPE = 1 << 3,
+                     W_MASS = 1 << 4 };
     /**
      * @brief General method to write to the datasets which calls more specific write methods.
      * @param Boolean values for position, velocity, force and mass.
      */
-    void Write(bool position, bool velocity, bool force);
+    void Write(int write_dat);
 
     /**
      * @brief Method to write the energy contributions to the H5MD file.
@@ -84,26 +91,17 @@ class File
     };
     /**
      * @brief Method to check if the H5MD structure is present in the file.
+     * Only call this on valid HDF5 files.
      * @param filename The Name of the hdf5-file to check.
      * @return TRUE if H5MD structure is present, FALSE else.
      */
     bool check_for_H5MD_structure(std::string const &filename);
-    /*
-     * @brief Method to write the particle types to the dataset.
-     */
-    void WriteSpecies();
-    /**
-     * @brief Method which prepares the data from the core for writing.
-     * @param Boolean values for position, velocity, force and mass.
-     */
-    void WriteTimedependent3D(bool position, bool velocity, bool force);
     /**
      * @brief Method that performs all the low-level stuff for writing the particle
      * positions to the dataset.
      */
     template <typename T>
-    void WriteDataset(T &data, h5xx::dataset& dataset,
-                      h5xx::dataset& time, h5xx::dataset& step);
+    void WriteDataset(T &data, const std::string& path);
     /*
      * @brief Method to write the simulation script to the dataset.
      */
@@ -122,81 +120,39 @@ class File
     void loadFile(const std::string& filename);
 
     /**
+     * @brief Initializes the necessary data to create the groups and datsets.
+     */
+    void init_filestructure();
+
+    /**
+     * @brief Creates the necessary HDF5 datasets.
+     * @param only_load Set this to true if you want to append to an existing file.
+     */
+    void createDatasets(bool only_load);
+
+    /**
+     * @brief Creates the necessary HDF5 groups.
+     */
+    void createGroups();
+
+    /**
      * Because we change the name of the file automatically, its a member variable.
      */
     std::string user_filename;
     std::string backup_filename;
     boost::filesystem::path absolute_script_path;
     h5xx::file h5md_file;
-    /* datatypes */
-    h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
-    h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
-    /* particles -- atoms -- box -- edges */
-    h5xx::group group_particles;
-    h5xx::group group_particles_atoms;
-    h5xx::group group_particles_atoms_box;
-    h5xx::attribute attribute_particles_atoms_box_dimension;
-    h5xx::attribute attribute_particles_atoms_box_boundary;
-    h5xx::dataset dataset_particles_atoms_box_edges;
-    /* particles -- atoms -- id */
-    h5xx::group group_particles_atoms_id;
-    h5xx::dataspace dataspace_particles_atoms_id_value;
-    h5xx::dataset dataset_particles_atoms_id_value;
-    h5xx::dataspace dataspace_particles_atoms_id_time;
-    h5xx::dataset dataset_particles_atoms_id_time;
-    h5xx::dataspace dataspace_particles_atoms_id_step;
-    h5xx::dataset dataset_particles_atoms_id_step;
-    /* particles -- atoms -- mass */
-    h5xx::group group_particles_atoms_mass;
-    h5xx::dataspace dataspace_particles_atoms_mass_value;
-    h5xx::dataset dataset_particles_atoms_mass_value;
-    h5xx::dataspace dataspace_particles_atoms_mass_time;
-    h5xx::dataset dataset_particles_atoms_mass_time;
-    h5xx::dataspace dataspace_particles_atoms_mass_step;
-    h5xx::dataset dataset_particles_atoms_mass_step;
-    /* particles -- atoms -- position */
-    h5xx::group group_particles_atoms_position;
-    h5xx::dataspace dataspace_particles_atoms_position_value;
-    h5xx::dataset dataset_particles_atoms_position_value;
-    h5xx::dataspace dataspace_particles_atoms_position_time;
-    h5xx::dataset dataset_particles_atoms_position_time;
-    h5xx::dataspace dataspace_particles_atoms_position_step;
-    h5xx::dataset dataset_particles_atoms_position_step;
-    /* particles -- atoms -- velocity */
-    h5xx::group group_particles_atoms_velocity;
-    h5xx::dataspace dataspace_particles_atoms_velocity_value;
-    h5xx::dataset dataset_particles_atoms_velocity_value;
-    h5xx::dataspace dataspace_particles_atoms_velocity_time;
-    h5xx::dataset dataset_particles_atoms_velocity_time;
-    h5xx::dataspace dataspace_particles_atoms_velocity_step;
-    h5xx::dataset dataset_particles_atoms_velocity_step;
-    /* particles -- atoms -- force */
-    h5xx::group group_particles_atoms_force;
-    h5xx::dataspace dataspace_particles_atoms_force_value;
-    h5xx::dataset dataset_particles_atoms_force_value;
-    h5xx::dataspace dataspace_particles_atoms_force_time;
-    h5xx::dataset dataset_particles_atoms_force_time;
-    h5xx::dataspace dataspace_particles_atoms_force_step;
-    h5xx::dataset dataset_particles_atoms_force_step;
-    /* particles -- atoms -- image */
-    h5xx::group group_particles_atoms_image;
-    h5xx::dataspace dataspace_particles_atoms_image_value;
-    h5xx::dataset dataset_particles_atoms_image_value;
-    h5xx::dataspace dataspace_particles_atoms_image_time;
-    h5xx::dataset dataset_particles_atoms_image_time;
-    h5xx::dataspace dataspace_particles_atoms_image_step;
-    h5xx::dataset dataset_particles_atoms_image_step;
-    /* particles -- atoms -- species */
-    h5xx::dataspace dataspace_particles_atoms_species;
-    h5xx::dataset dataset_particles_atoms_species;
-    /* particles -- atoms -- parameters */
-    h5xx::group group_parameters;
-    h5xx::group group_parameters_vmd_structure;
-    h5xx::group group_parameters_files;
-    h5xx::dataspace dataspace_parameters_files_script;
-    h5xx::dataset dataset_parameters_files_script;
-    hsize_t max_dims[3] = {H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
-    hsize_t max_dims_single[1] = {H5S_UNLIMITED};
+
+    struct DatasetDescriptor  {
+        std::string path;
+        hsize_t dim;
+        hsize_t size;
+        h5xx::datatype type;
+    };
+    std::vector<std::string> group_names;
+    std::vector<DatasetDescriptor> dataset_descriptors;
+    std::unordered_map<std::string, h5xx::group> groups;
+    std::unordered_map<std::string, h5xx::dataset> datasets;
 };
 
 
