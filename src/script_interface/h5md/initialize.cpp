@@ -19,18 +19,15 @@
 
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
-#include "h5md_core.hpp"
+#include "io/writer/h5md/h5md_core.hpp"
 #include "h5md.hpp"
 
 
 namespace ScriptInterface {
 namespace Writer {
-namespace H5md {
     void initialize() {
-        ParallelScriptInterface<ScriptInterface::Writer::H5md::H5md>::register_new(
+        ParallelScriptInterface<ScriptInterface::Writer::H5mdScript>::register_new(
             "Writer::H5md::File");
     }
-} /* namespace H5md */
 } /* namespace Writer */
 } /* namespace ScriptInterface */
-

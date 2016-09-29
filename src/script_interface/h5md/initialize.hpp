@@ -22,11 +22,9 @@
 
 namespace ScriptInterface {
 namespace Writer {
-namespace H5md {
 
     void initialize();
 
-} /* namespace H5md */
 } /* namespace Writer */
 } /* namespace ScriptInterface */
 

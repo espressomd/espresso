@@ -20,11 +20,14 @@
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "h5md/initialize.hpp"
 
 namespace ScriptInterface {
+
 void initialize() {
   Shapes::initialize();
   Constraints::initialize();
+  Writer::initialize();
 }
 
 } /* namespace ScriptInterface */

@@ -52,34 +52,33 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
 }
 
 
-/* Constructor for the File class. */
-File::File(std::string const &filename, std::string const &script_name)
+/* Initialize the file related variables after parameters have been set. */
+void File::InitFile()
 {
-    boost::filesystem::path script_path(script_name);
-    this->absolute_script_path = boost::filesystem::canonical(script_path);
-    /* Store the filename in a member variable. */
-    this->user_filename = filename;
+    boost::filesystem::path script_path(m_scriptname);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
 
     if(!(cells_get_n_particles() > 0)) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
 
     init_filestructure();
-    if (check_file_exists(filename)) {
-        if (check_for_H5MD_structure(filename)) {
+    if (check_file_exists(m_filename)) {
+        if (check_for_H5MD_structure(m_filename)) {
             /*
-             * If the file exists and has a valid H5MD structure, lets create a backup of it.
-             * This has the advantage, that the new file can just be deleted if the simulation crashes at some point and we
+             * If the file exists and has a valid H5MD structure, lets create a
+             * backup of it.  This has the advantage, that the new file can
+             * just be deleted if the simulation crashes at some point and we
              * still have a valid trajectory, we can start from.
             */
-            backup_filename = filename + ".bak";
-            backup_file(filename, backup_filename);
-            loadFile(filename);
+            m_backup_filename = m_filename + ".bak";
+            backup_file(m_filename, m_backup_filename);
+            load_file(m_filename);
         } else {
             throw incompatible_h5mdfile();
         }
     } else {
-        createNewFile(filename);
+        create_new_file(m_filename);
     }
 }
 
@@ -130,13 +129,13 @@ void File::init_filestructure()
     };
 }
 
-void File::createGroups()
+void File::create_groups()
 {
     for (const auto& path: group_names) {
         auto i = path.find_last_of('/');
 
         if (i == std::string::npos) {
-            groups[path] = h5xx::group(h5md_file, path);
+            groups[path] = h5xx::group(m_h5md_file, path);
         } else {
             auto basename = path.substr(i + 1);
             auto father = path.substr(0, i);
@@ -145,7 +144,7 @@ void File::createGroups()
     }
 }
 
-void File::createDatasets(bool only_load)
+void File::create_datasets(bool only_load)
 {
     for (const auto& descr: dataset_descriptors) {
         const std::string& path = descr.path;
@@ -174,23 +173,23 @@ void File::createDatasets(bool only_load)
     }
 }
 
-void File::loadFile(const std::string& filename)
+void File::load_file(const std::string& filename)
 {
-    this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
-    createGroups();
-    createDatasets(true);
+    create_groups();
+    create_datasets(true);
 }
 
-void File::createNewFile(const std::string &filename)
+void File::create_new_file(const std::string &filename)
 {
     this->WriteScript(filename);
     /* Create a new h5xx file object. */
-    this->h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
 
-    createGroups();
-    createDatasets(false);
+    create_groups();
+    create_datasets(false);
 
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
     h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
@@ -201,7 +200,7 @@ void File::createNewFile(const std::string &filename)
 
 void File::Close()
 {
-    boost::filesystem::remove(backup_filename);
+    boost::filesystem::remove(m_backup_filename);
 }
 
 
@@ -387,7 +386,7 @@ void File::WriteScript(std::string const &filename)
         /* First get the number of lines of the script. */
         hsize_t dims[1] = {1};
         std::string tmp;
-        std::ifstream scriptfile(this->absolute_script_path.string());
+        std::ifstream scriptfile(m_absolute_script_path.string());
         /* Read the whole script into a buffer. */
         scriptfile.seekg(0, std::ios::end);
         auto filelen = scriptfile.tellg();
