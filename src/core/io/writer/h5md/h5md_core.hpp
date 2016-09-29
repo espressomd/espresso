@@ -39,8 +39,8 @@ extern double time_step;
 extern double box_l[3];
 
 
-namespace writer {
-namespace h5md {
+namespace Writer {
+namespace H5md {
 
 
 typedef boost::multi_array<double,3> double_array_3d;
@@ -164,6 +164,6 @@ struct incompatible_h5mdfile : public std::exception {
 };
 
 
-} /* namespace h5md */
-} /* namespace writer */
+} /* namespace H5md */
+} /* namespace Writer */
 #endif /* ESPRESSO_H5MD_CORE_HPP */

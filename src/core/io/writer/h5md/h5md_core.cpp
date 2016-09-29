@@ -23,8 +23,8 @@
 #include "h5md_core.hpp"
 
 
-namespace writer {
-namespace h5md {
+namespace Writer {
+namespace H5md {
 
 
 static void backup_file(const std::string &from, const std::string& to)
@@ -438,5 +438,5 @@ bool File::check_for_H5MD_structure(std::string const &filename)
 }
 
 
-} /* namespace h5md */
-} /* namespace writer */
+} /* namespace H5md */
+} /* namespace Writer */

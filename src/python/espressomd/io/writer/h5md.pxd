@@ -22,7 +22,7 @@ from libcpp.string cimport string
 from libcpp cimport bool
 
 
-cdef extern from "h5md_core.hpp" namespace "writer::h5md":
+cdef extern from "h5md_core.hpp" namespace "Writer::H5md":
     cdef cppclass File:
         File(const string, const string) except +
         int Write(int write_data) except +
