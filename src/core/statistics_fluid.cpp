@@ -29,7 +29,7 @@
 #include "utils.hpp"
 #include "communication.hpp"
 #include "lb.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "statistics_fluid.hpp"
 
 #ifdef LB

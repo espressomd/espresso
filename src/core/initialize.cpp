@@ -58,7 +58,7 @@
 #include "metadynamics.hpp"
 #include "statistics_observable.hpp"
 #include "statistics_correlation.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
@@ -381,7 +381,7 @@ void on_lbboundary_change()
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries();
+      LBBoundaries::lb_init_boundaries();
     }
   }
 #endif
@@ -655,7 +655,7 @@ void on_lb_params_change_gpu(int field) {
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
 #ifdef LB_BOUNDARIES_GPU
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
   if (field == LBPAR_DENSITY) {

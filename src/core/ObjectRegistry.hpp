@@ -3,8 +3,6 @@
 
 #include <iterator>
 
-
-
 template <typename Container> class ObjectRegistry {
 public:
   typedef Container container_type;

@@ -54,7 +54,8 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
+#include "lbboundaries/LBBoundary.hpp"
 #include "lb.hpp"
 #include "lj.hpp"
 #include "ljangle.hpp"
@@ -2189,13 +2190,11 @@ void mpi_bcast_lbboundary(int del_num) {
 
   if (del_num == -1) {
     /* bcast new boundaries */
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries - 1], sizeof(LB_Boundary),
+    MPI_Bcast(&LBBoundaries::lbboundaries[LBBoundaries::lbboundaries.size() - 1], sizeof(LBBoundaries::LBBoundary),
               MPI_BYTE, 0, comm_cart);
   } else if (del_num == -2) {
     /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
+    LBBoundaries::lbboundaries.clear();
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (del_num == -3) {
@@ -2203,18 +2202,14 @@ void mpi_bcast_lbboundary(int del_num) {
   }
 #endif
   else {
-    memmove(&lb_boundaries[del_num], &lb_boundaries[n_lb_boundaries - 1],
-            sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
+    LBBoundaries::lbboundaries.erase(LBBoundaries::lbboundaries.begin()+del_num);
   }
 
   on_lbboundary_change();
 #endif
 }
 
-void mpi_bcast_lbboundary_slave(int node, int parm) {
+void mpi_bcast_lbboundary_slave(int node, int parm) { //TODO: C++ify
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 #if defined(LB_BOUNDARIES)
