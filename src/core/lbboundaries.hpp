@@ -58,7 +58,6 @@ int lbboundary_get_force(int no, double *f);
 
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 
-#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
@@ -74,4 +73,5 @@ void lb_bounce_back();
 
 }
 
+#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 #endif /* LB_BOUNDARIES_H */
