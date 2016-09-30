@@ -1,0 +1,153 @@
+#
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+from __future__ import print_function, absolute_import
+include "myconfig.pxi"
+from . import utils
+
+from cpython cimport bool
+import sys, inspect, os, re
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+
+# Checkpointing 
+cdef class Checkpointing(object):
+    cdef list checkpoint_objects
+    cdef calling_module
+    cdef str checkpoint_dir
+    cdef int counter #checkpoint index that is used when current checkpoint is stored
+    
+    def __init__(self, checkpoint_id, relative_checkpoint_path):
+        # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
+        if not re.compile(r"[^a-zA-Z0-9_\-]").search(relative_checkpoint_path):
+            raise ValueError("Invalid checkpoint id.")
+        
+        self.checkpoint_objects = []
+        frm = inspect.stack()[0]
+        self.calling_module = inspect.getmodule(frm[0])
+        
+        relative_checkpoint_path = os.path.join(relative_checkpoint_path, checkpoint_id)
+        self.checkpoint_dir = os.path.realpath(relative_checkpoint_path)
+        
+        if not os.path.isdir(self.checkpoint_dir):
+            os.makedirs(self.checkpoint_dir)
+        
+        # update checkpoint counter
+        while os.path.isfile(os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))):
+            self.counter += 1
+    
+    
+    def getattr_submodule(self, obj, name, default):
+        """Generalization of getattr(). getattr_submodule(object, "name1.sub1.sub2", None) will return attribute sub2 if available otherwise None."""
+        names = name.split('.')
+        
+        for i in xrange(len(names)-1):
+            obj = getattr(obj, names[i], default)
+        
+        return getattr(obj, names[-1], default)
+    
+    
+    def setattr_submodule(self, obj, name, value):
+        """Generalization of setattr(). setattr_submodule(object, "name1.sub1.sub2", value) will set attribute sub2 to value". Will raise exception if parent modules do not exist."""
+        names = name.split('.')
+        for i in xrange(len(names)-1):
+            obj = getattr(obj, names[i], None)
+        
+        if obj == None:
+            raise Exception("Cannot set attribute of non existing submodules.")
+        setattr(obj, names[-1], value)
+    
+    
+    def hasattr_submodule(self, obj, name):
+        """Generalization of hasattr(). hasattr_submodule(object, "name1.sub1.sub2") will return True if submodule sub1 has the attribute sub2."""
+        names = name.split('.')
+        for i in xrange(len(names)-1):
+            obj = getattr(obj, names[i], None)
+        
+        return hasattr(obj, names[-1])
+    
+    
+    def register(self, *args):
+        """Register python objects for checkpointing."""
+        for a in args:
+            if not isinstance(a, str):
+                raise ValueError("The object that should be checkpointed is identified with its name given as a string.")
+            
+            #if not a in dir(self.calling_module):
+            if not self.hasattr_submodule(self.calling_module, a):
+                raise KeyError("The given object '{}' was not found in the script.".format(a))
+            
+            if a in self.checkpoint_objects:
+                raise KeyError("The given object '{}' is already registered for checkpointing.".format(a))
+            
+            self.checkpoint_objects.append(a)
+    
+    
+    def unregister(self, *args):
+        """Unregister python objects for checkpointing."""
+        for a in args:
+            if not isinstance(a, str) or not a in self.checkpoint_objects:
+                raise KeyError("The given object '{}' was not registered for checkpointing yet.".format(a))
+            
+            self.checkpoint_objects.remove(a)
+    
+    
+    def get_registered_objects(self):
+        return self.checkpoint_objects
+    
+    
+    def has_checkpoints(self):
+        """Returns True if there are any checkpoints in the given checkpoint directory that match the given checkpoint id."""
+        return bool(self.counter)
+    
+    
+    def get_last_checkpoint_index(self):
+        if not self.has_checkpoints():
+            raise Exception("No checkpoints found. Cannot return index for last checkpoint.")
+        return self.counter-1
+    
+    
+    def save(self):
+        """Saves all registered python objects in the given checkpoint directory using cPickle."""
+        
+        #get attributes of registered objects
+        checkpoint_data = {}
+        for obj_name in self.checkpoint_objects:
+            checkpoint_data[obj_name] = self.getattr_submodule(self.calling_module, obj_name, None)
+        
+        #print(checkpoint_data)
+        filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))
+        with open(filename,"w") as checkpoint_file:
+            pickle.dump(checkpoint_data, checkpoint_file, -1)
+    
+    
+    def load(self, checkpoint_index=None):
+        """Loads the python objects using (c)Pickle and sets them in the calling module."""
+        if checkpoint_index == None:
+            checkpoint_index = self.get_last_checkpoint_index()
+        
+        filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
+        with open(filename,"r") as checkpoint_file:
+            checkpoint_data = pickle.load(checkpoint_file)
+        
+        for key in checkpoint_data:
+            self.setattr_submodule(self.calling_module, key, checkpoint_data[key])
