@@ -56,7 +56,7 @@ class File
          * Constructor without arguments (due to script_interface).
          * @brief Constructor of the "File" class.
         */
-        File() {};
+        File();
         /**
          * @brief Initialize the File object.
          */

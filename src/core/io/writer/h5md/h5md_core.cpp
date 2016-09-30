@@ -29,6 +29,9 @@ namespace H5md {
 
 static void backup_file(const std::string &from, const std::string& to)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     boost::filesystem::path pfrom(from), pto(to);
     boost::filesystem::copy_file(pfrom, pto,
         boost::filesystem::copy_option::overwrite_if_exists);
@@ -37,6 +40,9 @@ static void backup_file(const std::string &from, const std::string& to)
 static std::vector<hsize_t>
 create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     if (dim > 0)
         return std::vector<hsize_t>{chunk_size, size, dim};
     else
@@ -45,6 +51,9 @@ create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
 
 static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     if (dim > 0)
         return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
     else
@@ -52,38 +61,52 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
 }
 
 
+/* Constructor */
+File::File ()
+{
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+}
+
+
 /* Initialize the file related variables after parameters have been set. */
 void File::InitFile()
 {
-    boost::filesystem::path script_path(m_scriptname);
-    m_absolute_script_path = boost::filesystem::canonical(script_path);
-
-    if(!(cells_get_n_particles() > 0)) {
-        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
-    }
-
-    init_filestructure();
-    if (check_file_exists(m_filename)) {
-        if (check_for_H5MD_structure(m_filename)) {
-            /*
-             * If the file exists and has a valid H5MD structure, lets create a
-             * backup of it.  This has the advantage, that the new file can
-             * just be deleted if the simulation crashes at some point and we
-             * still have a valid trajectory, we can start from.
-            */
-            m_backup_filename = m_filename + ".bak";
-            backup_file(m_filename, m_backup_filename);
-            load_file(m_filename);
-        } else {
-            throw incompatible_h5mdfile();
-        }
-    } else {
-        create_new_file(m_filename);
-    }
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+//    boost::filesystem::path script_path(m_scriptname);
+//    m_absolute_script_path = boost::filesystem::canonical(script_path);
+//    if(!(cells_get_n_particles() > 0)) {
+//        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
+//    }
+//
+//    init_filestructure();
+//    if (check_file_exists(m_filename)) {
+//        if (check_for_H5MD_structure(m_filename)) {
+//            /*
+//             * If the file exists and has a valid H5MD structure, lets create a
+//             * backup of it.  This has the advantage, that the new file can
+//             * just be deleted if the simulation crashes at some point and we
+//             * still have a valid trajectory, we can start from.
+//            */
+//            m_backup_filename = m_filename + ".bak";
+//            backup_file(m_filename, m_backup_filename);
+//            load_file(m_filename);
+//        } else {
+//            throw incompatible_h5mdfile();
+//        }
+//    } else {
+//        create_new_file(m_filename);
+//    }
 }
 
 void File::init_filestructure()
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     group_names = {
         "particles",
         "particles/atoms",
@@ -131,6 +154,9 @@ void File::init_filestructure()
 
 void File::create_groups()
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     for (const auto& path: group_names) {
         auto i = path.find_last_of('/');
 
@@ -146,6 +172,9 @@ void File::create_groups()
 
 void File::create_datasets(bool only_load)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     for (const auto& descr: dataset_descriptors) {
         const std::string& path = descr.path;
         auto i = path.find_last_of('/');
@@ -175,6 +204,9 @@ void File::create_datasets(bool only_load)
 
 void File::load_file(const std::string& filename)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
     create_groups();
@@ -183,29 +215,39 @@ void File::load_file(const std::string& filename)
 
 void File::create_new_file(const std::string &filename)
 {
-    this->WriteScript(filename);
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+//    if (this_node == 0) this->WriteScript(filename);
     /* Create a new h5xx file object. */
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
 
     create_groups();
     create_datasets(false);
-
-    std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
-    h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
-    h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
-    h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
+    if (this_node == 0) {
+        std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+        h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
+        h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
+        h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
+    }
 }
 
 
 void File::Close()
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     boost::filesystem::remove(m_backup_filename);
 }
 
 
 void File::Write(int write_dat)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     bool write_typ = write_dat & W_TYPE;
     bool write_pos = write_dat & W_POS;
     bool write_vel = write_dat & W_V;
@@ -297,6 +339,9 @@ void File::Write(int write_dat)
 template <typename T>
 void File::WriteDataset(T &data, const std::string& path)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path + "/value"];
@@ -382,47 +427,51 @@ void File::WriteDataset(T &data, const std::string& path)
 
 void File::WriteScript(std::string const &filename)
 {
-    if (this_node == 0) {
-        /* First get the number of lines of the script. */
-        hsize_t dims[1] = {1};
-        std::string tmp;
-        std::ifstream scriptfile(m_absolute_script_path.string());
-        /* Read the whole script into a buffer. */
-        scriptfile.seekg(0, std::ios::end);
-        auto filelen = scriptfile.tellg();
-        scriptfile.seekg(0);
-        std::vector<char> buffer;
-        buffer.reserve(filelen);
-        buffer.assign(std::istreambuf_iterator<char>(scriptfile),
-                      std::istreambuf_iterator<char>());
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+    /* First get the number of lines of the script. */
+    hsize_t dims[1] = {1};
+    std::string tmp;
+    std::ifstream scriptfile(m_absolute_script_path.string());
+    /* Read the whole script into a buffer. */
+    scriptfile.seekg(0, std::ios::end);
+    auto filelen = scriptfile.tellg();
+    scriptfile.seekg(0);
+    std::vector<char> buffer;
+    buffer.reserve(filelen);
+    buffer.assign(std::istreambuf_iterator<char>(scriptfile),
+                  std::istreambuf_iterator<char>());
 
-        hid_t filetype, dtype, space, dset, file_id, group1_id, group2_id;
-        file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t filetype, dtype, space, dset, file_id, group1_id, group2_id;
+    file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        dtype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(dtype, filelen * sizeof(char));
+    dtype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(dtype, filelen * sizeof(char));
 
-        space = H5Screate_simple(1, dims, NULL);
-        /* Create the dataset. */
-        dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
-                          H5P_DEFAULT);
-        /* Write data from buffer to dataset. */
-        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
-        /* Clean up. */
-        H5Dclose(dset);
-        H5Sclose(space);
-        H5Tclose(dtype);
-        H5Gclose(group1_id);
-        H5Gclose(group2_id);
-        H5Fclose(file_id);
-    }
+    space = H5Screate_simple(1, dims, NULL);
+    /* Create the dataset. */
+    dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
+                      H5P_DEFAULT);
+    /* Write data from buffer to dataset. */
+    H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
+    /* Clean up. */
+    H5Dclose(dset);
+    H5Sclose(space);
+    H5Tclose(dtype);
+    H5Gclose(group1_id);
+    H5Gclose(group2_id);
+    H5Fclose(file_id);
 }
 
 
 bool File::check_for_H5MD_structure(std::string const &filename)
 {
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
     h5xx::file h5mdfile(filename, h5xx::file::in);
 
     for (const auto& gnam: group_names)

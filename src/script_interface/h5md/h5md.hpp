@@ -34,7 +34,7 @@ class H5mdScript : public ScriptInterfaceBase {
         H5mdScript() : m_h5md(new ::Writer::H5md::File()) {}
         // Returns the name of the class
         const std::string name() const override { 
-            return "Writer::H5md::File";
+            return "ScriptInterface::Writer::H5mdScript";
         };
         
         ParameterMap valid_parameters() const override {
@@ -51,6 +51,14 @@ class H5mdScript : public ScriptInterfaceBase {
             SET_PARAMETER_HELPER("filename", m_h5md->filename());
             SET_PARAMETER_HELPER("scriptname", m_h5md->scriptname());
         };
+
+        Variant call_method(const std::string &name,
+                            const VariantMap &parameters) override {
+            if (name == "init_file") m_h5md->InitFile();
+            else if (name == "write") m_h5md->Write(1);
+            else if (name == "close") m_h5md->Close();
+            return {};
+        }
     private:
         std::shared_ptr<::Writer::H5md::File> m_h5md;
 };

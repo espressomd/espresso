@@ -28,11 +28,11 @@ cdef class H5md:
     def __dealloc__(self):
         del self.c_h5md
     def write(self, arg):
-        cmap = {'t': self.c_h5md.W_TYPE,
-                'v': self.c_h5md.W_V,
-                'f': self.c_h5md.W_F,
-                'p': self.c_h5md.W_POS,
-                'm': self.c_h5md.W_MASS}
+        cmap = {'t': self.c_h5md.WriteData.W_TYPE,
+                'v': self.c_h5md.WriteData.W_V,
+                'f': self.c_h5md.WriteData.W_F,
+                'p': self.c_h5md.WriteData.W_POS,
+                'm': self.c_h5md.WriteData.W_MASS}
         if type(arg) is str:
             i = reduce(lambda a, b: a | b, map(lambda c: cmap[c], arg))
             self.c_h5md.Write(i)

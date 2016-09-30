@@ -27,9 +27,9 @@ cdef extern from "h5md_core.hpp" namespace "Writer::H5md":
         File(const string, const string) except +
         int Write(int write_data) except +
         void Close() except +
-
-        int W_POS
-        int W_V
-        int W_F
-        int W_TYPE
-        int W_MASS
+        cdef enum WriteData:
+            W_POS
+            W_V
+            W_F
+            W_TYPE
+            W_MASS
