@@ -215,8 +215,6 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            #Sets lb, bcast, resets vars to zero if lb=0
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
             #Sets cdef vars and calls p3m_set_params() in core 
             python_p3m_set_params(self._params["r_cut"],
                         self._params["mesh"], self._params["cao"],
@@ -226,6 +224,8 @@ IF P3M == 1:
             #         which resets r_cut if lb is zero. OK.
             #Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
+            #Sets lb, bcast, resets vars to zero if lb=0
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
             #Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
