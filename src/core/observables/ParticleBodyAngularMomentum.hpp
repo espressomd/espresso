@@ -1,5 +1,5 @@
-#ifndef OBSERVABLES_PARTICLEVELOCITIES_HPP
-#define OBSERVABLES_PARTICLEVELOCITIES_HPP
+#ifndef OBSERVABLES_PARTICLEBODYANGULARMOMENTUM_HPP
+#define OBSERVABLES_PARTICLEBODYANGULARMOMENTUM_HPP
 
 
 #include "PidObservable.hpp"
@@ -11,7 +11,7 @@
 namespace Observables {
 
 
-class ParticleVelocities : public PidObservable {
+class ParticleBodyAngularMomentum : public PidObservable {
 public:
     virtual int actual_calculate() override {
   if (!sortPartCfg()) {
@@ -22,12 +22,17 @@ public:
   for (int i = 0; i<ids.size(); i++ ) {
     if (ids[i] >= n_part)
       return 1;
-    last_value[3*i + 0] = partCfg[ids[i]].m.v[0]/time_step;
-    last_value[3*i + 1] = partCfg[ids[i]].m.v[1]/time_step;
-    last_value[3*i + 2] = partCfg[ids[i]].m.v[2]/time_step;
+#ifdef ROTATION
+
+    last_value[3*i + 0] = partCfg[ids[i]].m.omega[0];
+    last_value[3*i + 1] = partCfg[ids[i]].m.omega[1];
+    last_value[3*i + 2] = partCfg[ids[i]].m.omega[2];
+#endif
+
+
   }
   return 0;
-};
+}
 };
 
 } // Namespace Observables

@@ -700,6 +700,22 @@ int Correlator::finalize() {
 }
 
 
+void Correlator::start_auto_update() {
+      if(update_frequency > 0) {
+        correlations_autoupdate = 1;
+        autoupdate=1;
+        last_update=sim_time;
+      } else {
+        throw std::runtime_error("Could not start autoupdate: update frequency not set");
+      }
+}
+
+void Correlator::stop_auto_update() {
+  autoupdate=0;
+  // Todo
+  // Insert logic to determine if global correlations_auto_update can be set to 0
+}
+
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A) {
   if ( n_input != dim_A ) {
     return 5;

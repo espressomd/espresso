@@ -19,8 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_PARTICLEVELOCITIES_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_PARTICLEVELOCITIES_HPP
+#ifndef SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
+#define SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
+
 
 #include "ScriptInterface.hpp"
 #include "core/utils/Factory.hpp"
@@ -28,35 +29,69 @@
 #include <memory>
 
 #include "Observable.hpp" 
-#include "core/observables/Observable.hpp"
+#include "core/observables/PidObservable.hpp"
+#include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
+#include "core/observables/ParticleForces.hpp"
+#include "core/observables/ParticleBodyVelocities.hpp"
+#include "core/observables/ParticleAngularMomentum.hpp"
+#include "core/observables/ParticleBodyAngularMomentum.hpp"
+#include "core/observables/ParticleCurrents.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-class ParticleVelocities : public Observable {
+class PidObservable : public Observable {
 public:
-  ParticleVelocities() : m_observable(new ::Observables::ParticleVelocities()) {};
+  PidObservable() : m_observable(new ::Observables::PidObservable()) {};
   
-  const std::string name() const override { return "Observables::ParticleVelocity"; }
+  const std::string name() const override { return "Observables::PidObservable"; };
 
   VariantMap get_parameters() const override {
     return {{"ids", m_observable->ids}};
-  }
+  };
 
   ParameterMap valid_parameters() const override {
     return {{"ids", {ParameterType::INT_VECTOR, true}}};
-  }
+  };
 
   void set_parameter(std::string const &name, Variant const &value) override {
     SET_PARAMETER_HELPER("ids", m_observable->ids);
-  }
+  };
   std::shared_ptr<::Observables::Observable> observable() {
     return m_observable;
   };
   private:
-  std::shared_ptr<::Observables::ParticleVelocities> m_observable;
+  std::shared_ptr<::Observables::PidObservable> m_observable;
 };
+
+
+#define NEW_PID_OBSERVABLE(obs_name) \
+class obs_name : public PidObservable { \
+public: \
+  obs_name() : m_observable(new ::Observables::obs_name()) {}; \
+  \
+  const std::string name() const override { return "Observables::" #obs_name; } \
+  \
+  std::shared_ptr<::Observables::Observable> observable() { \
+    return m_observable; \
+  }; \
+  private: \
+  std::shared_ptr<::Observables::obs_name> m_observable; \
+};
+
+NEW_PID_OBSERVABLE(ParticlePositions);
+NEW_PID_OBSERVABLE(ParticleVelocities);
+NEW_PID_OBSERVABLE(ParticleForces);
+NEW_PID_OBSERVABLE(ParticleBodyVelocities);
+NEW_PID_OBSERVABLE(ParticleAngularMomentum);
+NEW_PID_OBSERVABLE(ParticleBodyAngularMomentum);
+NEW_PID_OBSERVABLE(ParticleCurrent);
+NEW_PID_OBSERVABLE(Current);
+
+
+
+
 } /* namespace Observables */
 } /* namespace ScriptInterface */
 

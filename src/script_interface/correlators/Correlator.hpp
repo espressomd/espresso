@@ -111,7 +111,32 @@ public:
   std::shared_ptr<::Correlators::Correlator> correlator() {
     return m_correlator;
   }
-
+  void check_if_initialized() {
+    if (!m_correlator->initialized)
+        throw std::runtime_error("The correlator has not yet been initialied.");
+  }
+  virtual Variant call_method(std::string const &method,
+                                   VariantMap const &parameters) {
+    check_if_initialized();
+    if (method=="update") {
+      if (m_correlator->autoupdate) {
+        throw std::runtime_error("auto_update is enable for the correlator. Cannot update manually");
+    }
+    if (m_correlator->get_data()) {
+      throw std::runtime_error("Correlator update failed");
+    }
+  }
+  if (method=="auto_update") {
+     if (parameters.find("set")!=parameters.end()) {
+      if (boost::get<int>(parameters.at("set")))
+         m_correlator->start_auto_update();
+       else
+         m_correlator->stop_auto_update();
+     } 
+     return m_correlator->autoupdate;
+     
+     }
+  }
 private:
   /* The actual correlator */
   std::shared_ptr<::Correlators::Correlator> m_correlator;

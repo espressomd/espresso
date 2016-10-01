@@ -230,6 +230,9 @@ class Correlator {
     double dt;                       // time interval at which samples arrive
     double tau_max;                  // maximum time, for which the correlation should be calculated
     int update_frequency;              // time distance between updates in MD timesteps 
+    void start_auto_update();
+    void stop_auto_update();
+
 
     // Convenience pointers to our stored data
     // indices: A[level][tau_i][component]
