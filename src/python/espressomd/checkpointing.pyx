@@ -155,3 +155,4 @@ cdef class Checkpointing(object):
         
         for key in checkpoint_data:
             self.setattr_submodule(self.calling_module, key, checkpoint_data[key])
+            self.checkpoint_objects.append(key)
