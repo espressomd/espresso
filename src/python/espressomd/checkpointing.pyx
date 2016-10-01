@@ -28,7 +28,7 @@ except ImportError:
     import pickle
 
 
-# Checkpointing 
+# Convenient Checkpointing for ESPResSo
 cdef class Checkpointing(object):
     cdef list checkpoint_objects
     cdef calling_module
@@ -115,6 +115,7 @@ cdef class Checkpointing(object):
     
     
     def get_registered_objects(self):
+        """Returns a list of all object names that are registered for checkpointing."""
         return self.checkpoint_objects
     
     
@@ -124,6 +125,7 @@ cdef class Checkpointing(object):
     
     
     def get_last_checkpoint_index(self):
+        """Returns the last index of the given checkpoint id. Will raise exception if no checkpoints are found."""
         if not self.has_checkpoints():
             raise Exception("No checkpoints found. Cannot return index for last checkpoint.")
         return self.counter-1
