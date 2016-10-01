@@ -17,10 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-include "myconfig.pxi"
-from . import utils
 
 from cpython cimport bool
+from collections import OrderedDict
 import sys, inspect, os, re
 
 try:
@@ -36,17 +35,20 @@ cdef class Checkpointing(object):
     cdef str checkpoint_dir
     cdef int counter #checkpoint index that is used when current checkpoint is stored
     
-    def __init__(self, checkpoint_id, relative_checkpoint_path):
+    def __init__(self, checkpoint_id=None, checkpoint_path="."):
         # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
-        if not re.compile(r"[^a-zA-Z0-9_\-]").search(relative_checkpoint_path):
+        if not isinstance(checkpoint_id, str) or bool(re.compile(r"[^a-zA-Z0-9_\-]").search(checkpoint_id)):
             raise ValueError("Invalid checkpoint id.")
+        
+        if not isinstance(checkpoint_path, str):
+            raise ValueError("Invalid checkpoint path.")
         
         self.checkpoint_objects = []
         frm = inspect.stack()[0]
         self.calling_module = inspect.getmodule(frm[0])
         
-        relative_checkpoint_path = os.path.join(relative_checkpoint_path, checkpoint_id)
-        self.checkpoint_dir = os.path.realpath(relative_checkpoint_path)
+        checkpoint_path = os.path.join(checkpoint_path, checkpoint_id)
+        self.checkpoint_dir = os.path.realpath(checkpoint_path)
         
         if not os.path.isdir(self.checkpoint_dir):
             os.makedirs(self.checkpoint_dir)
@@ -67,13 +69,14 @@ cdef class Checkpointing(object):
     
     
     def setattr_submodule(self, obj, name, value):
-        """Generalization of setattr(). setattr_submodule(object, "name1.sub1.sub2", value) will set attribute sub2 to value". Will raise exception if parent modules do not exist."""
+        """Generalization of setattr(). setattr_submodule(object, "name1.sub1.sub2", value) will set attribute sub2 to value. Will raise exception if parent modules do not exist."""
         names = name.split('.')
+        tmp_obj = obj
         for i in xrange(len(names)-1):
             obj = getattr(obj, names[i], None)
         
         if obj == None:
-            raise Exception("Cannot set attribute of non existing submodules.")
+            raise Exception("Cannot set attribute of non existing submodules: {}\nCheck the order you registered objects for checkpointing.".format(name))
         setattr(obj, names[-1], value)
     
     
@@ -130,11 +133,10 @@ cdef class Checkpointing(object):
         """Saves all registered python objects in the given checkpoint directory using cPickle."""
         
         #get attributes of registered objects
-        checkpoint_data = {}
+        checkpoint_data = OrderedDict()
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self.getattr_submodule(self.calling_module, obj_name, None)
         
-        #print(checkpoint_data)
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))
         with open(filename,"w") as checkpoint_file:
             pickle.dump(checkpoint_data, checkpoint_file, -1)
