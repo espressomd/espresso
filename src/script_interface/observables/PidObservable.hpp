@@ -37,6 +37,7 @@
 #include "core/observables/ParticleAngularMomentum.hpp"
 #include "core/observables/ParticleBodyAngularMomentum.hpp"
 #include "core/observables/ParticleCurrents.hpp"
+#include "core/observables/Current.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

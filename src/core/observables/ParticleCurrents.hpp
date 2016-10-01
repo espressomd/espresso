@@ -23,13 +23,14 @@ public:
     if (ids[i] >= n_part)
       return 1;
 #ifdef ELECTROSTATICS
-    charge = partCfg[ids[i]].p.q;
+    double charge = partCfg[ids[i]].p.q;
     last_value[3*i + 0] = charge * partCfg[ids[i]].m.v[0]/time_step;
     last_value[3*i + 1] = charge * partCfg[ids[i]].m.v[1]/time_step;
     last_value[3*i + 2] = charge * partCfg[ids[i]].m.v[2]/time_step;
  #endif
 };
   return 0;
+};
 };
 
 } // Namespace Observables
