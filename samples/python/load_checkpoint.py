@@ -11,11 +11,14 @@ system = espressomd.System() #necessary for using e.g. system.actors, since expl
 # test user variable
 print "\n### user variable test ###"
 print "myvar = {}".format(myvar)
+print "skin = {}".format(skin)
 
 # test "system"
 print "\n### system test ###"
+print "system.time = {}".format(system.time)
 print "system.box_l = {}".format(system.box_l)
 # system.cell_system not implemented yet, see sample script store_properties.py
+system.cell_system.skin = skin
 
 # test "system.non_bonded_inter"
 print "\n### system.non_bonded_inter test ###"
@@ -33,3 +36,16 @@ print "system.thermostat.get_state() = {}".format(system.thermostat.get_state())
 print "\n### p3m test ###"
 print "p3m.get_params() = {}".format(p3m.get_params())
 system.actors.add(p3m)
+
+# test registered objects
+# all objects that are registered when writing a checkpoint are automatically registered after loading this checkpoint
+print "\n### checkpoint register test ###"
+print "checkpoint.get_registered_objects() = {}".format(checkpoint.get_registered_objects())
+
+exit()
+# integrate system and finally save checkpoint
+print "\n### Integrate and save checkpoint ###"
+print "Integrating..."
+system.integrator.run(1000)
+checkpoint.save()
+print "Success!"

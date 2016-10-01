@@ -8,10 +8,11 @@ checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 
 # test for user data
 myvar = "some script variable"
-
 checkpoint.register("myvar")
-
 myvar = "updated value" #demo of how the register function works
+
+skin = 0.4
+checkpoint.register("skin")
 
 
 # test for "system"
@@ -19,7 +20,7 @@ box_l = 10.7437
 
 system = espressomd.System()
 system.time_step = 0.01
-system.cell_system.skin = 0.4
+system.cell_system.skin = skin
 system.box_l = [box_l, box_l, box_l]
 
 checkpoint.register("system")
