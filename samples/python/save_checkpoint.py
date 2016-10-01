@@ -11,6 +11,8 @@ myvar = "some script variable"
 
 checkpoint.register("myvar")
 
+myvar = "updated value" #demo of how the register function works
+
 
 # test for "system"
 box_l = 10.7437
