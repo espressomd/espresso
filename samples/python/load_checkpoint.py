@@ -2,8 +2,6 @@ import espressomd
 from espressomd import checkpointing
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
-
-
 checkpoint.load()
 
 system = espressomd.System() #necessary for using e.g. system.actors, since explicit checkpointing of actors is not implemented yet
@@ -42,10 +40,9 @@ system.actors.add(p3m)
 print "\n### checkpoint register test ###"
 print "checkpoint.get_registered_objects() = {}".format(checkpoint.get_registered_objects())
 
-exit()
+
 # integrate system and finally save checkpoint
-print "\n### Integrate and save checkpoint ###"
+print "\n### Integrate until user presses ctrl+c ###"
 print "Integrating..."
-system.integrator.run(1000)
-checkpoint.save()
-print "Success!"
+while True:
+    system.integrator.run(1000)

@@ -2,7 +2,7 @@ import espressomd
 from espressomd import electrostatics
 from espressomd import checkpointing
 
-import numpy
+import numpy, signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 
@@ -63,6 +63,8 @@ system.actors.add(p3m)
 
 checkpoint.register("p3m")
 
+#signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+checkpoint.register_signal(signal.SIGINT)
 
 
 checkpoint.save()
