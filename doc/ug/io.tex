@@ -247,7 +247,7 @@ to know that all registered objects saved in a checkpoint will be
 automatically re-registered after loading this checkpoint.
 
 \vspace{1em}
-In practical implements it might come in handy to check if there are any 
+In practical implementations it might come in handy to check if there are any 
 available checkpoints for a given checkpoint id. This can be done with
 \begin{pysyntax}
   \object{
@@ -273,6 +273,7 @@ Therefore one has to register the signal which should be caught with
     signum=\arg{int}
   }
 \end{pysyntax}
+
 The registered signals are associated with the \var{checkpoint\_id} and will 
 be automatically re-registered when the same checkpoint id is used later.
 
