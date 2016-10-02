@@ -21,6 +21,7 @@
 #include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
 #include "PidObservable.hpp"
+#include "ParamlessObservable.hpp"
 
 //#include "ParticleVelocities.hpp"
 //#include "ParticlePositions.hpp"
@@ -29,18 +30,29 @@ namespace ScriptInterface {
 namespace Observables {
 
 #define REGISTER(name) \
-  ParallelScriptInterface<ScriptInterface:: name >:: \
-    register_new("" #name "");
+  ParallelScriptInterface<ScriptInterface::Observables:: name >:: \
+    register_new("Observables::" #name "");
 
 
 void initialize() {
+// Manual registration:
 //  ParallelScriptInterface<ScriptInterface::Observables::ParticleVelocities>::
 //    register_new("Observables::ParticleVelocities");
-//  ParallelScriptInterface<ScriptInterface::Observables::Observables>::
-//    register_new("Observables::Observables");
-REGISTER(Observables::ParticleVelocities);
-REGISTER(Observables::ParticlePositions);
 
+REGISTER(StressTensor);
+REGISTER(StressTensorAcf);
+REGISTER(ParticlePositions);
+REGISTER(ParticleVelocities);
+REGISTER(ParticleForces);
+REGISTER(ParticleBodyVelocities);
+REGISTER(ParticleAngularMomentum);
+REGISTER(ParticleBodyAngularMomentum);
+REGISTER(ParticleCurrent);
+REGISTER(Current);
+REGISTER(DipoleMoment);
+REGISTER(MagneticDipoleMoment);
+
+#undef REGISTER
 
 }
 } /* namespace Obseravbles */

@@ -38,6 +38,8 @@
 #include "core/observables/ParticleBodyAngularMomentum.hpp"
 #include "core/observables/ParticleCurrents.hpp"
 #include "core/observables/Current.hpp"
+#include "core/observables/DipoleMoment.hpp"
+#include "core/observables/MagneticDipoleMoment.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -89,6 +91,8 @@ NEW_PID_OBSERVABLE(ParticleAngularMomentum);
 NEW_PID_OBSERVABLE(ParticleBodyAngularMomentum);
 NEW_PID_OBSERVABLE(ParticleCurrent);
 NEW_PID_OBSERVABLE(Current);
+NEW_PID_OBSERVABLE(DipoleMoment);
+NEW_PID_OBSERVABLE(MagneticDipoleMoment);
 
 
 
