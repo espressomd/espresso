@@ -155,12 +155,15 @@ struct ParticleProperties {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+  double vv_predcorr_langevin_pref1;
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+  double vv_predcorr_langevin_pref1_rot;
 #else
   double gamma_rot[3];
+  double vv_predcorr_langevin_pref1_rot[3];
 #endif
 #endif
 #endif

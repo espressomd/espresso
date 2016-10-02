@@ -672,6 +672,7 @@ void rescale_forces_propagate_vel() {
   Particle *p;
   int i, j, np, c;
   double scale;
+  double pref1_temp = 0;
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -712,6 +713,7 @@ void rescale_forces_propagate_vel() {
       if (ifParticleIsVirtual(&p[i]))
         continue;
 #endif
+
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
@@ -730,8 +732,21 @@ void rescale_forces_propagate_vel() {
                   friction_therm0_nptiso(p[i].m.v[j]) / (p[i]).p.mass;
           } else
 #endif
-            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j];
+
+          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+          if (thermo_switch & THERMO_LANGEVIN)
+          {
+#ifdef LANGEVIN_PER_PARTICLE
+              pref1_temp = p->p.vv_predcorr_langevin_pref1 * scale / (p[i]).p.mass;
+              p[i].m.v[j] = (p[i].m.v[j] * (1 - pref1_temp) + p[i].f.f[j]) / (1 - pref1_temp);
+#else
+              pref1_temp = vv_predcorr_langevin_pref1 * scale / (p[i]).p.mass;
+              p[i].m.v[j] = (p[i].m.v[j] * (1 - pref1_temp) + p[i].f.f[j]) / (1 - pref1_temp);
+#endif // LANGEVIN_PER_PARTICLE
+          } else {
+              p[i].m.v[j] += p[i].f.f[j];
+          }
+
 #ifdef EXTERNAL_FORCES
         }
 #endif

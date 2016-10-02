@@ -43,11 +43,14 @@ double temperature = 0.0;
 /* LANGEVIN THERMOSTAT */
 /* Langevin friction coefficient gamma. */
 double langevin_gamma = 0.0;
+double vv_predcorr_langevin_pref1 = -1.0;
 /* Friction coefficient gamma for rotation */
 #ifndef ROTATIONAL_INERTIA
 double langevin_gamma_rotation = -1.0;
+double vv_predcorr_langevin_pref1_rot = -1.0;
 #else
 double langevin_gamma_rotation[3] = {-1.0,-1.0,-1.0};
+double vv_predcorr_langevin_pref1_rot[3] = {-1.0,-1.0,-1.0};
 #endif
 /* Langevin for translations */
 bool langevin_trans = true;

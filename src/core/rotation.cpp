@@ -48,6 +48,13 @@
 #include "initialize.hpp"
 #include "cuda_interface.hpp"
 
+/*************************************************************
+ * Exported Variables                                        *
+ * ---------                                                 *
+ *************************************************************/
+
+int vv_predcorr_depth1_omega = 5;
+
 /****************************************************
  *                     DEFINES
  ***************************************************/
@@ -245,8 +252,13 @@ void convert_torques_propagate_omega()
 {
   Particle *p;
   Cell *cell;
-  int np;
+  int np,j;
   double tx, ty, tz;
+#ifdef ROTATIONAL_INERTIA
+  double pref1_temp[3];
+#else
+  double pref1_temp;
+#endif
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
 
@@ -353,18 +365,47 @@ void convert_torques_propagate_omega()
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
+      if ( thermo_switch & THERMO_LANGEVIN )
+      {
 #ifdef ROTATIONAL_INERTIA
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
+
+#ifdef LANGEVIN_PER_PARTICLE
+          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_predcorr_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
 #else
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/I[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/I[2];
+          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_predcorr_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
+#endif // LANGEVIN_PER_PARTICLE
+
+          for (j = 0; j < 3; j++)
+              p[i].m.omega[j] = (p[i].m.omega[j] * (1 - pref1_temp[j]) + p[i].f.torque[j] * time_step_half / p[i].p.rinertia[j]) / (1 - pref1_temp[j]);
+
+#else
+
+#ifdef LANGEVIN_PER_PARTICLE
+          pref1_temp = p[i].p.vv_predcorr_langevin_pref1_rot * time_step_half;
+#else
+          pref1_temp = p.vv_predcorr_langevin_pref1_rot * time_step_half;
+
+#endif // LANGEVIN_PER_PARTICLE
+
+          for (j = 0; j < 3; j++)
+              p[i].m.omega[j] = (p[i].m.omega[j] * (1 - pref1_temp / I[j]) + p[i].f.torque[j] * time_step_half / I[j]) / (1 - pref1_temp / I[j]);
+
+#endif // ROTATIONAL_INERTIA
+      } else  {
+#ifdef ROTATIONAL_INERTIA
+          p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
+          p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
+          p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
+#else
+          p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/I[0];
+          p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
+          p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/I[2];
 #endif
+      }
+
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
-      for(int times=0; times <= 5; times++)
+      for(int times=0; times <= vv_predcorr_depth1_omega; times++)
       { 
         double Wd[3];
 
@@ -378,9 +419,9 @@ void convert_torques_propagate_omega()
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
 
-        p[i].m.omega[0]+= time_step_half*Wd[0];
-        p[i].m.omega[1]+= time_step_half*Wd[1];
-        p[i].m.omega[2]+= time_step_half*Wd[2];
+        p[i].m.omega[0] += time_step_half*Wd[0];
+        p[i].m.omega[1] += time_step_half*Wd[1];
+        p[i].m.omega[2] += time_step_half*Wd[2];
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

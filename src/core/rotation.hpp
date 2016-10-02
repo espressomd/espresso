@@ -30,6 +30,14 @@
 #include "thermostat.hpp"
 #include "gb.hpp"
 
+/*************************************************************
+ * Exported Variables                                        *
+ * ---------                                                 *
+ *************************************************************/
+
+/** vv_predcorr_depth1_omega is a predictor-corrector number of iterations for a required precision of omega(t+time_step) calculation */
+extern int vv_predcorr_depth1_omega;
+
 /************************************************************* 
  * Functions                                                 *
  * ---------                                                 *

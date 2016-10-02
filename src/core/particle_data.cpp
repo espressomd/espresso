@@ -304,15 +304,20 @@ void init_particle(Particle *part)
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
   part->p.gamma = -1.0;
+  part->p.vv_predcorr_langevin_pref1 = -1.0;
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   part->p.gamma_rot = -1.0;
+  part->p.vv_predcorr_langevin_pref1_rot = -1.0;
 #else
   part->p.gamma_rot[0] = -1.0;
   part->p.gamma_rot[1] = -1.0;
   part->p.gamma_rot[2] = -1.0;
-#endif
-#endif
+  part->p.vv_predcorr_langevin_pref1_rot[0] = -1.0;
+  part->p.vv_predcorr_langevin_pref1_rot[1] = -1.0;
+  part->p.vv_predcorr_langevin_pref1_rot[2] = -1.0;
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
 #ifdef MULTI_TIMESTEP
