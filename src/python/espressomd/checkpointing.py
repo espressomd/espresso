@@ -18,9 +18,8 @@
 #
 from __future__ import print_function, absolute_import
 
-from cpython cimport bool
 from collections import OrderedDict
-import sys, inspect, os, re
+import sys, inspect, os, re, signal
 
 try:
     import cPickle as pickle
@@ -29,12 +28,7 @@ except ImportError:
 
 
 # Convenient Checkpointing for ESPResSo
-cdef class Checkpointing(object):
-    cdef list checkpoint_objects
-    cdef calling_module
-    cdef str checkpoint_dir
-    cdef int counter #checkpoint index that is used when current checkpoint is stored
-    
+class Checkpointing(object):
     def __init__(self, checkpoint_id=None, checkpoint_path="."):
         # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
         if not isinstance(checkpoint_id, str) or bool(re.compile(r"[^a-zA-Z0-9_\-]").search(checkpoint_id)):
@@ -44,7 +38,8 @@ cdef class Checkpointing(object):
             raise ValueError("Invalid checkpoint path.")
         
         self.checkpoint_objects = []
-        frm = inspect.stack()[0]
+        self. checkpoint_signals = []
+        frm = inspect.stack()[1]
         self.calling_module = inspect.getmodule(frm[0])
         
         checkpoint_path = os.path.join(checkpoint_path, checkpoint_id)
@@ -54,8 +49,13 @@ cdef class Checkpointing(object):
             os.makedirs(self.checkpoint_dir)
         
         # update checkpoint counter
+        self.counter = 0
         while os.path.isfile(os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))):
             self.counter += 1
+        
+        # init signals
+        for signum in self.read_signals():
+            self.register_signal(signum)
     
     
     def getattr_submodule(self, obj, name, default):
@@ -156,3 +156,48 @@ cdef class Checkpointing(object):
         for key in checkpoint_data:
             self.setattr_submodule(self.calling_module, key, checkpoint_data[key])
             self.checkpoint_objects.append(key)
+    
+    
+    def signal_handler(self, signum, frame):
+        """Will be called when a registered signal was sent."""
+        print("Checkpointing module caught signal {}. Write checkpoint and quit.".format(signum))
+        self.save()
+        exit(signum)
+    
+    
+    def read_signals(self):
+        """Reads all registered signals from the signal file and returns a list of integers."""
+        if not os.path.isfile(os.path.join(self.checkpoint_dir, "signals")):
+            return []
+        
+        with open(os.path.join(self.checkpoint_dir, "signals"), "r") as signal_file:
+            signals = signal_file.readline().strip().split()
+            signals = [int(i) for i in signals] #will raise exception if signal file contains invalid entries
+        return signals
+    
+    
+    def write_signal(self, signum=None):
+        """Writes the given signal integer signum to the signal file."""
+        if not isinstance(signum, int):
+            raise ValueError("Signal must be an integer number.")
+        
+        signals = self.read_signals()
+        
+        if not signum in signals:
+            signals.append(signum)
+            signals = " ".join(str(i) for i in signals)
+            with open(os.path.join(self.checkpoint_dir, "signals"), "w") as signal_file:
+                signal_file.write(signals)
+    
+    
+    def register_signal(self, signum=None):
+        """Register a signal that will trigger signal_handler()."""
+        if not isinstance(signum, int):
+            raise ValueError("Signal must be an integer number.")
+        
+        if signum in self.checkpoint_signals:
+            raise KeyError("The signal {} is already registered for checkpointing.".format(signum))
+        
+        signal.signal(signum, self.signal_handler)
+        self.checkpoint_signals.append(signum)
+        self.write_signal(signum)
