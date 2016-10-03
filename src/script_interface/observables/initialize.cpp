@@ -22,6 +22,8 @@
 #include "utils/Factory.hpp"
 #include "PidObservable.hpp"
 #include "ParamlessObservable.hpp"
+#include "ProfileObservable.hpp"
+
 
 //#include "ParticleVelocities.hpp"
 //#include "ParticlePositions.hpp"
@@ -51,6 +53,10 @@ REGISTER(ParticleCurrent);
 REGISTER(Current);
 REGISTER(DipoleMoment);
 REGISTER(MagneticDipoleMoment);
+REGISTER(DensityProfile);
+REGISTER(ForceDensityProfile);
+REGISTER(FluxDensityProfile);
+REGISTER(LBVelocityProfile);
 
 #undef REGISTER
 
