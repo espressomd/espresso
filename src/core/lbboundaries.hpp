@@ -44,7 +44,6 @@
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 namespace LBBoundaries {
-/*@}*/
 
 /** Initializes the constrains in the system.
  *  This function determines the lattice sited which belong to boundaries
@@ -57,7 +56,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 int lbboundary_get_force(int no, double *f);
 
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
-
+}
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
 #ifdef LB_BOUNDARIES
@@ -72,6 +71,5 @@ void lb_bounce_back();
 
 #endif /* LB_BOUNDARIES */
 
-}
 
 #endif /* LB_BOUNDARIES_H */

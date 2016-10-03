@@ -416,6 +416,7 @@ int lbboundary_get_force(int no, double *f) {
 #endif
   return 0;
 }
+} // namespace 
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
@@ -505,5 +506,9 @@ void lb_bounce_back() {
 #endif
 }
 
-#endif
 }
+#endif
+
+// This is here to get rid of the undefined ysmbol in the transition phase
+
+int n_lb_boundaries=0;

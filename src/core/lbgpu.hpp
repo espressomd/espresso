@@ -28,7 +28,7 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "statistics_observable.hpp"
+//include "statistics_observable.hpp"
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -304,8 +304,8 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkp
 int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
 
-int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
-int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
+//int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
+//int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
 
 /*@{*/
 
