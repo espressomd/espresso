@@ -116,7 +116,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include "../observables/Observable.hpp"
+#include "observables/Observable.hpp"
 #include <map>
 #include <memory>
 
@@ -271,8 +271,8 @@ class Correlator {
 
     int initialized;
 
-    std::shared_ptr<::Observables::Observable> A_obs;
-    std::shared_ptr<::Observables::Observable> B_obs;
+    std::shared_ptr<Observables::Observable> A_obs;
+    std::shared_ptr<Observables::Observable> B_obs;
     
   private:  
     unsigned int dim_A;              // dimensionality of A
