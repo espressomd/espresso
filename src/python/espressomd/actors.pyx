@@ -39,7 +39,7 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
-        self._set_params_in_es_core()
+        #self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()

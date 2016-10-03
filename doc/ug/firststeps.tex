@@ -177,7 +177,7 @@ system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=1,sigma=1,cutoff=1
 
 Bonded interactions are represented by subclasses of BondedInteraction. To set up a bonded interaction, first an instance of the appropriate class is created with the desired parameters. Then, the bonded interaction is registered with the simulation core. Finally, the bond can be added to particles using the add_bond()-method of ParticleHandle with the instance of the bond class and the id of the bond partner particle. 
 \begin{lstlisting}[language=python]
-from interactions import HarmonicBond
+from espressomd.interactions import HarmonicBond
 harmonic=HarmonicBond(k=1,r_0=1)
 system.bonded_inter.add(harmonic)
 system.part[0].add_bond((harmonic,1))
@@ -187,7 +187,7 @@ system.part[1].add_bond((harmonic,2))
 Long-range interactions are subclasses of Actor. They are used by first creating an instance of the desired actor and then adding it to the system.
 To activate the P3M electrostatics solver, execute
 \begin{lstlisting}[language=python]
-from electrostatics import P3M
+from espressomd.electrostatics import P3M
 p3m=P3M(accuracy=1E-3, bjerrum_length=1)
 system.actors.add(p3m)
 \end{lstlisting}

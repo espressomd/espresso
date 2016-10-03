@@ -2,16 +2,18 @@ from __future__ import print_function
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
+from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
 import numpy
+from threading import Thread
 
 box_l = 10
 n_part = 5
 
 system = espressomd.System()
 system.time_step = 0.01
-system.cell_system.skin      = 0.4
+system.skin      = 0.4
 system.thermostat.set_langevin(kT=1.0,gamma=1.0)
 
 # integration
@@ -34,10 +36,18 @@ for i in range(n_part/2):
 for i in range(n_part/2,n_part-1):
   system.part[i].add_bond((system.bonded_inter[1], system.part[i+1].id))
 
-mayavi = visualization.mayavi_live(system)
+#visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system, {'bond_type_radius': [0.1]})
 
-j = 0
-for i in range(0,int_n_times):
-  print(i)
-  system.integrator.run(int_steps)
-  mayavi.update()
+def main():
+    for i in range(0,int_n_times):
+        print(i)
+        integrate.integrate(int_steps)
+        visualizer.update()
+
+#Start simulation in seperate thread
+t = Thread(target=main)
+t.daemon = True
+t.start()
+
+visualizer.start()

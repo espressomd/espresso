@@ -46,12 +46,27 @@ class Analysis:
             raise TypeError("An instance of System is required as argument")
         self._system=system            
 
- 
-    
-#
-# Minimal distance between particles
-#
-    
+    #
+    # Append configs    
+    #
+
+    def append(self):
+        """Append configuration for averaged analysis
+          append()
+        """
+        if c_analyze.n_part == 0:
+            raise Exception("No particles to append!")
+        if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
+            raise Exception("All configurations stored must have the same length")
+        #sorPartCfg() has to be called before analyze_append()
+        if not c_analyze.sortPartCfg():
+            raise Exception("for analyze, store particles consecutively starting with 0.")
+
+        c_analyze.analyze_append()
+
+    #
+    # Minimal distance between particles
+    #
     
     def mindist(self, p1='default', p2='default'):
         """Minimal distance between particles
