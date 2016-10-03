@@ -58,7 +58,7 @@
 #include "metadynamics.hpp"
 #include "observables/Observable.hpp"
 #include "correlators/Correlator.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "lbboundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
