@@ -6,8 +6,8 @@ cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
 with_fftw=$with_fftw
-with_tcl=$with_tcl
-with_python_interface=$with_python_interface
+with_tcl=no
+with_python_interface=yes
 myconfig=$myconfig
 check_procs=$check_procs
 make_check=$make_check
