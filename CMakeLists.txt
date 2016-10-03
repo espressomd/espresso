@@ -49,8 +49,11 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-option(WITH_PYTHON "Build python interface"  ON)
-option(WITH_TCL    "Build tcl interface"     ON)
+#option(WITH_PYTHON "Build python interface"  ON)
+##option(WITH_TCL    "Build tcl interface"     ON)
+set(WITH_PYTHON yes)
+set(WITH_TCL no)
+
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
