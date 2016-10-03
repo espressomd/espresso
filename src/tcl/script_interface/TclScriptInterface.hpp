@@ -28,18 +28,8 @@
 #include "TclCommand.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
-/*
- * Make operator<< work with the variant. The visitor
- * that is actually invoked by boost lives in the boost
- * namespace and finds these functions. The other possibility
- * would be to define them in std and rely on ADL, but this is not legal
- * because std::vector<T> is not a user defined type.
- * (Works, though)
- */
-
 #warning move out of namespace std;
 namespace std {
-
 /* Source: http://stackoverflow.com/a/6693088/3198615 */
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
@@ -61,6 +51,24 @@ std::ostream &operator<<(std::ostream &out, const Vector<n, T> &v) {
   ss << v.back();
 
   out << ss.str();
+
+  return out;
+}
+
+inline std::ostream &operator<<(
+    std::ostream &out,
+    Utils::AutoObjectId<ScriptInterface::ScriptInterfaceBase>::ObjectId const
+        &oid) {
+
+  auto so = ScriptInterface::ScriptInterfaceBase::get_instance(oid).lock();
+
+  out << "{";
+
+  for (auto const &it : so->get_parameters()) {
+    out << " " << it.first << " " << it.second;
+  }
+
+  out << " }";
 
   return out;
 }
@@ -86,6 +94,10 @@ public:
       : TclCommand(interp),
         /* Create a new c++ object */
         m_so(ScriptInterfaceBase::make_shared(name)) {}
+
+  TclScriptInterface(std::shared_ptr<ScriptInterfaceBase> so,
+                     Tcl_Interp *interp)
+      : m_so(so), TclCommand(interp) {}
 
   /**
    * @brief Print parameters in Tcl formatting.
