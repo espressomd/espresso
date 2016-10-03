@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <map>
+#include "profiles.hpp"
 
 
 namespace Observables {
@@ -98,37 +99,6 @@ typedef struct {
 } iw_params;
 
 
-typedef struct { 
-  IntList* id_list;
-  double minx;
-  double maxx;
-  double miny;
-  double maxy;
-  double minz;
-  double maxz;
-  int xbins;
-  int ybins;
-  int zbins;
-  void* container;
-} profile_data;
-
-typedef struct {
-  IntList* id_list;
-  double minr;
-  double maxr;
-  double minphi;
-  double maxphi;
-  double minz;
-  double maxz;
-  double center[3];
-  double axis[3];
-  int phibins;
-  int rbins;
-  int zbins;
-  void* container;
-} radial_profile_data;
-
-
 void mpi_observable_lb_radial_velocity_profile_slave_implementation();
 
 
@@ -178,3 +148,4 @@ typedef struct {
 
 } // Namespace Observables
 #endif
+

@@ -1,6 +1,7 @@
 #ifndef OBSERVABLES_LBRADIALVELOCITYPROFILE
 #define OBSERVABLES_LBRADIALVELOCITYPROFILE
 
+#include "config.hpp"
 #include "Observable.hpp"
 
 namespace Observables {
@@ -35,7 +36,7 @@ namespace Observables {
 
 int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A);
 
-void observable_lb_radial_velocity_profile_slave_implementation() {
+void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
   radial_profile_data pdata;
   MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
   unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;

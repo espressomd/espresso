@@ -22,9 +22,9 @@ public:
     if (ids[i] >= n_part)
       return 1;
 #ifdef DIPOLES    
-    last_value[0] += charge * partCfg[ids[i]].r.dip[0];
-    last_value[1] += charge * partCfg[ids[i]].r.dip[1];
-    last_value[2] += charge * partCfg[ids[i]].r.dip[2];
+    last_value[0] += partCfg[ids[i]].r.dip[0];
+    last_value[1] += partCfg[ids[i]].r.dip[1];
+    last_value[2] += partCfg[ids[i]].r.dip[2];
 #endif
   }
   return 0;
