@@ -35,66 +35,15 @@
  *
  */
 
-#ifndef LB_BOUNDARIES_H
-#define LB_BOUNDARIES_H
+#ifndef LBBOUNDARIES_H
+#define LBBOUNDARIES_H
 
 #include "utils.hpp"
+#include "lbboundaries/LBBoundary.hpp"
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-/** wall constraint applied */
-#define LB_BOUNDARY_WAL 1
-/** spherical constraint applied */
-#define LB_BOUNDARY_SPH 2
-/** (finite) cylinder shaped constraint applied */
-#define LB_BOUNDARY_CYL 3
-/** a pore geometry */
-#define LB_BOUNDARY_POR 4
-/** rhomboid shaped constraint applied */
-#define LB_BOUNDARY_RHOMBOID 5
-/** stomatocyte shaped constraint applied */
-#define LB_BOUNDARY_STOMATOCYTE 6
-/** box shaped constraint (for electrokinetics reaction code) */
-#define LB_BOUNDARY_BOX 7
-/** hollow cone shaped constraint (for electrokinetics reaction code) */
-#define LB_BOUNDARY_HOLLOW_CONE 8
-/** spherocylinder constraint **/
-#define LB_BOUNDARY_SPHEROCYLINDER 9
-/** voxel data */
-#define LB_BOUNDARY_VOXEL 10
-
-// If we have several possible types of boundary treatment
-#define LB_BOUNDARY_BOUNCE_BACK 1
-
-/** Structure to specify a boundary. */
-typedef struct {
-  /** type of the boundary. */
-  int type;
-  double slip_pref;
-
-  union {
-    Constraint_wall wal;
-    Constraint_sphere sph;
-    Constraint_cylinder cyl;
-    Constraint_spherocylinder spherocyl;
-    Constraint_rhomboid rhomboid;
-    Constraint_pore pore;
-    Constraint_stomatocyte stomatocyte;
-    Constraint_box box;
-    Constraint_hollow_cone hollow_cone;
-    Constraint_voxel voxel;
-  } c;
-  double force[3];
-  double velocity[3];
-#ifdef EK_BOUNDARIES
-  float charge_density;
-  float net_charge;
-#endif
-} LB_Boundary;
-
-extern int n_lb_boundaries;
-extern LB_Boundary *lb_boundaries;
-
+namespace LBBoundaries {
 /*@}*/
 
 /** Initializes the constrains in the system.
@@ -107,6 +56,8 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 
 int lbboundary_get_force(int no, double *f);
 
+extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
 #ifdef LB_BOUNDARIES
@@ -118,6 +69,9 @@ int lbboundary_get_force(int no, double *f);
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
 void lb_bounce_back();
+
 #endif /* LB_BOUNDARIES */
+
+}
 
 #endif /* LB_BOUNDARIES_H */

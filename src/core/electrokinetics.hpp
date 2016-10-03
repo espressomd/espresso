@@ -21,7 +21,7 @@
 #define _ELECTROKINETICS_HPP
 
 #include "config.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 
 //note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
 //to compile when electrokinetics is not compiled in. This seemed more elegant than

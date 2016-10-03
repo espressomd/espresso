@@ -37,7 +37,7 @@
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
 #include "fd-electrostatics.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "lbgpu.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -63,9 +63,6 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
-  extern int n_lb_boundaries;
-  extern LB_Boundary *lb_boundaries;
-
   void lb_init_boundaries();
 #endif
   /* end of code duplication */
@@ -3977,7 +3974,7 @@ int ek_set_reaction( int reactant, int product0, int product1,
   return 0;
 }
 
-int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
+int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type ) //TODO use shape objects
 {
 
 #ifdef EK_BOUNDARIES
