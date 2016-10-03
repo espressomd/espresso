@@ -58,10 +58,7 @@ public:
   std::shared_ptr<T> m_p;
 
   ParallelScriptInterface() : m_p(ScriptInterfaceBase::make_shared<T>()) {
-    call(static_cast<int>(CallbackAction::SET_ID));
-
-    ObjectId global_id{m_p->id()};
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
+    call(static_cast<int>(CallbackAction::SET_ID), m_p->id());
   }
 
   std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const override {
@@ -92,7 +89,7 @@ public:
 
   Variant map_parallel_to_local_id(std::string const &name,
                                    Variant const &value) {
-    const auto outer_id = boost::get<ObjectId>(value);
+    const int outer_id = boost::get<OId>(value).id;
 
     auto so_ptr = get_instance(outer_id).lock();
 
@@ -105,7 +102,7 @@ public:
 
       /* and return the id of the underlying object */
       auto underlying_object = po_ptr->get_underlying_object();
-      return underlying_object->id();
+      return OId(underlying_object->id());
     } else {
       throw std::runtime_error(
           "Parameters passed to Parallel entities must also be parallel.");

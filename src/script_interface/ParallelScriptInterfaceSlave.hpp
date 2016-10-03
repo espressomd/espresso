@@ -38,24 +38,13 @@ namespace ScriptInterface {
 
 class ParallelScriptInterfaceSlaveBase {
 protected:
-  static std::map<ObjectId, ObjectId> &get_translation_table() {
-    static std::map<ObjectId, ObjectId> m_translation_table;
+  static std::map<int, int> &get_translation_table() {
+    static std::map<int, int> m_translation_table;
 
     return m_translation_table;
   }
 
-  /* If the variant encapsulates an object id we tranlate the
-     master id to a local one */
-  static void translate_id(Variant &v) {
-    try {
-      ObjectId global_id = boost::get<ObjectId>(v);
-      v = get_translation_table().at(global_id);
-      /* We catch only the bad_get exception, if the id does
-         not exsits .at throws out_of_range, which is a real
-         error and should be propagated. */
-    } catch (boost::bad_get &) {
-    }
-  }
+  static int translate_id(int id) { return get_translation_table().at(id); }
 };
 
 template <typename T>
@@ -78,15 +67,12 @@ public:
   std::shared_ptr<T> m_p;
 
 private:
-  void mpi_slave(int action, int) override {
+  void mpi_slave(int action, int id) override {
     switch (CallbackAction(action)) {
-    case CallbackAction::SET_ID: {
-      ObjectId global_id;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
-
-      get_translation_table()[global_id] = m_p->id();
+    case CallbackAction::SET_ID:
+      get_translation_table()[id] = m_p->id();
       break;
-    }
+
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
@@ -94,21 +80,21 @@ private:
       /* If the parameter is a object we have to tranlate it first to a
          local id.
       */
-      translate_id(d.second);
-      m_p->set_parameter(d.first, d.second);
+      if (m_p->valid_parameters()[d.first].type() == ParameterType::OBJECT) {
+        const int global_id = boost::get<int>(d.second);
+        const int local_id = translate_id(global_id);
+
+        m_p->set_parameter(d.first, local_id);
+      } else {
+        m_p->set_parameter(d.first, d.second);
+      }
+
       break;
     }
     case CallbackAction::SET_PARAMETERS: {
       std::map<std::string, Variant> parameters;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
                             0);
-
-      /* If the parameter is a object we have to tranlate it first to a
-         local id.
-      */
-      for (auto &p : parameters) {
-        translate_id(p.second);
-      }
 
       m_p->set_parameters(parameters);
 

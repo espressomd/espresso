@@ -58,7 +58,7 @@ public:
    * this can be implemented in the derived class
    * if needed.
    */
-  void call(int a = 0, int b = 0) {
+  void call(int a, int b) {
     Communication::mpiCallbacks().call(m_callback_id, a, b);
   }
 

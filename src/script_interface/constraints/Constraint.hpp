@@ -35,7 +35,7 @@ namespace Constraints {
 class Constraint : public ScriptInterfaceBase {
 public:
   Constraint() : m_constraint(new ::Constraints::Constraint()) {}
-
+  
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
@@ -43,7 +43,7 @@ public:
             {"penetrable", m_constraint->penetrable()},
             {"particle_type", m_constraint->type()},
             {"shape",
-                (m_shape != nullptr) ? m_shape->id() : ObjectId() }};
+             (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
   }
 
   ParameterMap valid_parameters() const override {
