@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_CORRELATORS_CORRELATORS_HPP
-#define SCRIPT_INTERFACE_CORRELATORS_CORRELATORS_HPP
+#ifndef SCRIPT_INTERFACE_CORRELATORS_AUTOUPDATECORRELATORS_HPP
+#define SCRIPT_INTERFACE_CORRELATORS_AUTOUPDATECORRELATORS_HPP
 
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
@@ -31,27 +31,27 @@
 namespace ScriptInterface {
 namespace Correlators {
 
-class Correlators : public ScriptObjectRegistry<Correlator> {
+class AutoUpdateCorrelators : public ScriptObjectRegistry<Correlator> {
   virtual void add_in_core(std::shared_ptr<Correlator> obj_ptr) {
-    ::Correlators::correlators.push_back(obj_ptr->correlator());
+    ::Correlators::auto_update_correlators.push_back(obj_ptr->correlator());
   }
   virtual void remove_in_core(std::shared_ptr<Correlator> obj_ptr) {
-//    auto it =std::find(
-//    ::Correlators::correlators.begin(),
-//    ::Correlators::correlators.end(),
-//    obj_ptr->correlator());
-//
-//    if (it!=::Correlators::correlators.end()) {
-//      ::Correlators::correlators.erase(it);
-//    }
-//    else
-//    { 
-//      throw "Could not find Correlator to remove";
-//    };
+    auto it =std::find(
+    ::Correlators::auto_update_correlators.begin(),
+    ::Correlators::auto_update_correlators.end(),
+    obj_ptr->correlator());
+
+    if (it!=::Correlators::auto_update_correlators.end()) {
+      ::Correlators::auto_update_correlators.erase(it);
+    }
+    else
+    { 
+      throw "Could not find Correlator to remove";
+    };
   };
   public:
   virtual const std::string name() const override {
-    return "Correlators::Correlators"; 
+    return "Correlators::AutoUpdateCorrelators"; 
   };
 };
 } /* namespace Correlators */

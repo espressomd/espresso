@@ -5,6 +5,6 @@
 
 namespace Correlators {
 
-extern std::vector<std::shared_ptr<Correlators::Correlator>> correlators;
+extern std::vector<std::shared_ptr<Correlators::Correlator>> auto_update_correlators;
 
 }

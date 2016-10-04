@@ -90,7 +90,7 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   double pwdistmin = std::numeric_limits<double>::infinity();
   double pwdistmin_d = 0.0;
 
-  for (auto const &c : constraints) {
+  for (auto const &c : Constraints::constraints) {
     if (c.type == CONSTRAINT_WAL) {
       Constraint_wall const &wall = c.c.wal;
 

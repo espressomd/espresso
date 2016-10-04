@@ -32,6 +32,8 @@ Observable::Observable() {
 int Observable::calculate() {
   int temp = 0;
   // Clear last value
+  int n=n_values();
+  last_value.resize(n);
   for (int i=0;i<last_value.size();i++)
     last_value[i]=0;
 

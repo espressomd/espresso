@@ -40,6 +40,9 @@
 #include "core/observables/Current.hpp"
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
+#include "core/observables/ComPosition.hpp" 
+#include "core/observables/ComForce.hpp" 
+#include "core/observables/ComVelocity.hpp" 
 
 namespace ScriptInterface {
 namespace Observables {
@@ -51,7 +54,7 @@ public:
   const std::string name() const override { return "Observables::PidObservable"; };
 
   VariantMap get_parameters() const override {
-    return {{"ids", m_observable->ids}};
+    return {{"ids", pid_observable()->ids}};
   };
 
   ParameterMap valid_parameters() const override {
@@ -59,13 +62,16 @@ public:
   };
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", m_observable->ids);
+    SET_PARAMETER_HELPER("ids", pid_observable()->ids);
   };
-  std::shared_ptr<::Observables::Observable> observable() {
+  virtual std::shared_ptr<::Observables::Observable> observable() const {
+    return m_observable;
+  };
+  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const {
     return m_observable;
   };
   private:
-  std::shared_ptr<::Observables::PidObservable> m_observable;
+  mutable std::shared_ptr<::Observables::PidObservable> m_observable;
 };
 
 
@@ -76,11 +82,14 @@ public: \
   \
   const std::string name() const override { return "Observables::" #obs_name; } \
   \
-  std::shared_ptr<::Observables::Observable> observable() { \
+  virtual std::shared_ptr<::Observables::Observable> observable() override { \
     return m_observable; \
   }; \
+  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const override {\
+    return m_observable;\
+  };\
   private: \
-  std::shared_ptr<::Observables::obs_name> m_observable; \
+  mutable std::shared_ptr<::Observables::obs_name> m_observable; \
 };
 
 NEW_PID_OBSERVABLE(ParticlePositions);
@@ -93,6 +102,9 @@ NEW_PID_OBSERVABLE(ParticleCurrent);
 NEW_PID_OBSERVABLE(Current);
 NEW_PID_OBSERVABLE(DipoleMoment);
 NEW_PID_OBSERVABLE(MagneticDipoleMoment);
+NEW_PID_OBSERVABLE(ComPosition);
+NEW_PID_OBSERVABLE(ComVelocity);
+NEW_PID_OBSERVABLE(ComForce);
 
 
 

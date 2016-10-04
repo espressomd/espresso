@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLES_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLES_HPP
+#ifndef SCRIPT_INTERFACE_OBSERVABLES_AUTOUPDATEOBSERVABLES_HPP
+#define SCRIPT_INTERFACE_OBSERVABLES_AUTOUPDATEOBSERVABLES_HPP
 
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
@@ -32,20 +32,20 @@ namespace ScriptInterface {
 namespace Observables {
 
 
-class Observables : public ScriptObjectRegistry<Observable> {
+class AutoUpdateObservables : public ScriptObjectRegistry<Observable> {
   virtual void add_in_core(std::shared_ptr<Observable> obj_ptr) {
-    ::Observables::observables.push_back(obj_ptr->observable());
+    ::Observables::auto_update_observables.push_back(obj_ptr->observable());
   }
   virtual void remove_in_core(std::shared_ptr<Observable> obj_ptr) {
-    auto it =std::find(::Observables::observables.begin(), ::Observables::observables.end(), obj_ptr->observable());
-    if (it !=::Observables::observables.end())
+    auto it =std::find(::Observables::auto_update_observables.begin(), ::Observables::auto_update_observables.end(), obj_ptr->observable());
+    if (it !=::Observables::auto_update_observables.end())
     {
-      ::Observables::observables.erase(it);
+      ::Observables::auto_update_observables.erase(it);
     }
   };
   public:
   virtual const std::string name() const override {
-    return "Observables::Observables"; 
+    return "Observables::AutoUpdateObservables"; 
   };
 };
 } /* namespace Observables */

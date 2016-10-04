@@ -20,6 +20,9 @@
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
+
+#include "AutoUpdateObservables.hpp" 
+
 #include "PidObservable.hpp"
 #include "ParamlessObservable.hpp"
 #include "ProfileObservable.hpp"
@@ -41,6 +44,8 @@ void initialize() {
 //  ParallelScriptInterface<ScriptInterface::Observables::ParticleVelocities>::
 //    register_new("Observables::ParticleVelocities");
 
+REGISTER(AutoUpdateObservables);
+
 REGISTER(StressTensor);
 REGISTER(StressTensorAcf);
 REGISTER(ParticlePositions);
@@ -53,6 +58,9 @@ REGISTER(ParticleCurrent);
 REGISTER(Current);
 REGISTER(DipoleMoment);
 REGISTER(MagneticDipoleMoment);
+REGISTER(ComPosition);
+REGISTER(ComVelocity);
+REGISTER(ComForce);
 REGISTER(DensityProfile);
 REGISTER(ForceDensityProfile);
 REGISTER(FluxDensityProfile);

@@ -1,3 +1,5 @@
+#ifndef OBSERVABLES_PROFIELS_HPP
+#define OBSERVABLES_PROFIELS_HPP
 typedef struct { 
   IntList* id_list;
   double minx;
@@ -28,4 +30,6 @@ typedef struct {
   void* container;
 } radial_profile_data;
 
+
+#endif
 

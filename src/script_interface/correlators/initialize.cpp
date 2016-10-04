@@ -22,14 +22,14 @@
 #include "utils/Factory.hpp"
 
 #include "Correlator.hpp"
-#include "Correlators.hpp"
+#include "AutoUpdateCorrelators.hpp"
 
 namespace ScriptInterface {
 namespace Correlators {
 
 void initialize() {
-  ParallelScriptInterface<ScriptInterface::Correlators::Correlators>::
-    register_new("Correlators::Correlators");
+  ParallelScriptInterface<ScriptInterface::Correlators::AutoUpdateCorrelators>::
+    register_new("Correlators::AutoUpdateCorrelators");
 
   ParallelScriptInterface<ScriptInterface::Correlators::Correlator>::
     register_new("Correlators::Correlator");

@@ -2,8 +2,8 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper
 
-class Correlator(ScriptInterfaceHelper):
-    _so_name = "Correlators::Correlator"
+class AutoUpdateCorrelators(ScriptInterfaceHelper):
+    _so_name = "Correlators::AutoUpdateCorrelators"
 
     def add(self, *args, **kwargs):
         if len(args) == 1:

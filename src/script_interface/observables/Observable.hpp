@@ -43,7 +43,9 @@ public:
   
   const std::string name() const override { return "Observables::Observable"; }
 
-  virtual std::shared_ptr<CoreObs> observable() =0;
+  virtual std::shared_ptr<CoreObs> observable() {
+    return m_observable;
+  }
   virtual Variant call_method(std::string const &method,
                                    VariantMap const &parameters) {
     if (method == "calculate") {
@@ -58,8 +60,10 @@ public:
       return observable()->last_value;
     }
 
-    return {};
+     return {};
   };
+  private:
+    std::shared_ptr<::Observables::Observable> m_observable;
 };
 } /* namespace Observables */
 } /* namespace ScriptInterface */
