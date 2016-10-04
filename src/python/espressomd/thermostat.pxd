@@ -44,6 +44,7 @@ cdef extern from "thermostat.hpp":
             double langevin_gamma_rotation[3]
         ELSE:
             double langevin_gamma_rotation
+    int THERMO_LB
     int THERMO_NPT_ISO
     int THERMO_DPD
     int THERMO_INTER_DPD
