@@ -32,9 +32,12 @@ static void backup_file(const std::string &from, const std::string& to)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
+    if (this_node == 0)
+    {
     boost::filesystem::path pfrom(from), pto(to);
     boost::filesystem::copy_file(pfrom, pto,
         boost::filesystem::copy_option::overwrite_if_exists);
+    }
 }
 
 static std::vector<hsize_t>
@@ -61,13 +64,6 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
 }
 
 
-/* Constructor */
-File::File ()
-{
-#ifdef H5MD_DEBUG
-    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
-}
 
 
 /* Initialize the file related variables after parameters have been set. */
@@ -92,7 +88,7 @@ void File::InitFile()
 //             * still have a valid trajectory, we can start from.
 //            */
 //            m_backup_filename = m_filename + ".bak";
-//            backup_file(m_filename, m_backup_filename);
+//            if (this_node == 0) backup_file(m_filename, m_backup_filename);
 //            load_file(m_filename);
 //        } else {
 //            throw incompatible_h5mdfile();
@@ -101,6 +97,8 @@ void File::InitFile()
 //        create_new_file(m_filename);
 //    }
 }
+
+
 
 void File::init_filestructure()
 {
@@ -209,6 +207,9 @@ void File::load_file(const std::string& filename)
 #endif
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                                  h5xx::file::out);
+#ifdef H5MD_DEBUG
+    std::cout << "Finished opening the h5 file on node " << this_node << std::endl;
+#endif
     create_groups();
     create_datasets(true);
 }
@@ -218,7 +219,7 @@ void File::create_new_file(const std::string &filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-//    if (this_node == 0) this->WriteScript(filename);
+    if (this_node == 0) this->WriteScript(filename);
     /* Create a new h5xx file object. */
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
@@ -239,7 +240,7 @@ void File::Close()
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    boost::filesystem::remove(m_backup_filename);
+    if (this_node == 0) boost::filesystem::remove(m_backup_filename);
 }
 
 
@@ -253,8 +254,8 @@ void File::Write(int write_dat)
     bool write_vel = write_dat & W_V;
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
+
     /* Get the number of particles on all other nodes. */
-    /* TODO: Writing is not yet working in parallel. */
     int nlocalpart = cells_get_n_particles();
     double_array_3d pos(boost::extents[1][nlocalpart][3]);
     double_array_3d vel(boost::extents[1][nlocalpart][3]);
@@ -263,6 +264,7 @@ void File::Write(int write_dat)
     int_array_3d id(boost::extents[1][nlocalpart][1]);
     int_array_3d typ(boost::extents[1][nlocalpart][1]);
     double_array_3d mass(boost::extents[1][nlocalpart][1]);
+
     /* Prepare data for writing, loop over all local cells. */
     Cell *local_cell;
     int particle_index = 0;
@@ -485,6 +487,13 @@ bool File::check_for_H5MD_structure(std::string const &filename)
     return true;
 }
 
+/* Constructor */
+File::File ()
+{
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+}
 
 } /* namespace H5md */
 } /* namespace Writer */

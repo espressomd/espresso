@@ -22,6 +22,13 @@
 
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
+
+#include "cells.hpp"
+#include "global.hpp"
+#include "MpiCallbacks.hpp"
+#include "utils/parallel/InstanceCallback.hpp"
+#include "cells.hpp"
+#include "global.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -29,8 +36,6 @@
 #include <unordered_map>
 #include <mpi.h>
 #include <boost/filesystem.hpp>
-#include "cells.hpp"
-#include "global.hpp"
 #include <h5xx/h5xx.hpp>
 
 

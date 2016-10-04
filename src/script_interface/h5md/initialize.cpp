@@ -27,7 +27,7 @@ namespace ScriptInterface {
 namespace Writer {
     void initialize() {
         ParallelScriptInterface<ScriptInterface::Writer::H5mdScript>::register_new(
-            "Writer::H5md::File");
+            "ScriptInterface::Writer::H5mdScript");
     }
 } /* namespace Writer */
 } /* namespace ScriptInterface */

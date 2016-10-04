@@ -19,38 +19,45 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
-#define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
+#ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
+#define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 
-
-#include "ScriptInterface.hpp"
-#include "io/writer/h5md/h5md_core.hpp"
-#include <string>
+#include "h5md.hpp"
 
 
 namespace ScriptInterface {
 namespace Writer {
 
-class H5mdScript : public ScriptInterfaceBase {
-    public:
 
-        H5mdScript() : m_h5md(new ::Writer::H5md::File()) {};
-        
-        const std::string name() const override
-        { 
-            return "ScriptInterface::Writer::H5mdScript"; 
-        };
-        
-        ParameterMap valid_parameters() const override;
-        void set_parameter(const std::string& name, const Variant& value) override;
-        VariantMap get_parameters() const override;
-        Variant call_method(const std::string& name,
-                            const VariantMap& parameters) override;       
+ParameterMap H5mdScript::valid_parameters() const
+{
+    return {{"filename", {ParameterType::STRING, true}},
+            {"scriptname", {ParameterType::STRING, true}}};
+}
 
-    private:
 
-        std::shared_ptr<::Writer::H5md::File> m_h5md;
-};
+void H5mdScript::set_parameter(const std::string& name, const Variant& value)
+{
+    SET_PARAMETER_HELPER("filename", m_h5md->filename());
+    SET_PARAMETER_HELPER("scriptname", m_h5md->scriptname());
+}
+
+
+VariantMap H5mdScript::get_parameters() const
+{
+    return {{"filename", m_h5md->filename()},
+            {"scriptname", m_h5md->scriptname()}};
+}
+
+
+Variant H5mdScript::call_method(const std::string& name, const VariantMap& parameters)
+{
+    if (name == "init_file") m_h5md->InitFile();
+    else if (name == "write") m_h5md->Write(1);
+    else if (name == "close") m_h5md->Close();
+    return {};
+}
+
 
 } /* namespace Writer */
 } /* namespace Scriptinterface */
