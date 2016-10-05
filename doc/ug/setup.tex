@@ -20,7 +20,7 @@
 \chapter{Setting up the system}
 \label{chap:setup}
 
-\section{\texttt{setmd}: Setting global variables.}
+\section{\texttt{setmd}: Setting global variables in TCL}
 \newescommand{setmd}
 
 \begin{essyntax}
@@ -158,6 +158,64 @@ set:
   the square root of the mobility. Sometimes higher accuracy can speedup the
   simulation.
 \end{globvar}
+
+
+\section{Setting global variables in Python}
+\label{sec:glob_vars_python}
+In analogy to the TCL interface global system variables can be read and 
+set in Python simply by accessing the attribute of the corresponding \es 
+Python object. Those variables that are already available in the Python 
+interface are listed in the following.
+
+\vspace{1em}
+Variables of the system class:
+\begin{pysyntax}
+  \attributes{
+    espressomd
+  }{
+    System()
+  }{
+    box_l=\arg{list of 3 floats},
+    periodicity=\arg{list of 3 ints},
+    time=\arg{float},
+    time_step=\arg{float},
+    timings=\arg{int},
+    transfer_rate,
+    max_cut_bonded,
+    max_cut_nonbonded,
+    min_global_cut=\arg{float}
+}
+\end{pysyntax}
+
+\vspace{1em}
+Variables of the cell system module:
+\begin{pysyntax}
+  \attributes{
+    espressomd.System()
+  }{
+    cell_system
+  }{
+    max_num_cells=\arg{int},
+    min_num_cells=\arg{int},
+    node_grid,
+    skin=\arg{float}
+}
+\end{pysyntax}
+
+\vspace{1em}
+Some variables like \var{n\_part} or \var{temperature} are no longer directly 
+available as attributes. In these cases they can be easily derived from the 
+corresponding Python objects like
+\begin{pycode}
+  n_part = len(espressomd.System().part[:].pos)
+\end{pycode}
+or by calling the corresponding \texttt{get\_state} methods like
+\begin{pycode}
+  temperature = espressomd.System().thermostat.get_state()[0]['kT']
+  gamma = espressomd.System().thermostat.get_state()[0]['gamma']
+  gamma_rot = espressomd.System().thermostat.get_state()[0]['gamma_rotation']
+\end{pycode}
+
 
 \section{\texttt{thermostat}: Setting up the thermostat}
 \label{sec:thermostat}
