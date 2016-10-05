@@ -37,6 +37,8 @@ from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
+from .correlators import AutoUpdateCorrelators
+from .observables import AutoUpdateObservables
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -62,6 +64,9 @@ cdef class System:
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
     constraints = Constraints()
+
+    auto_update_observables = AutoUpdateObservables()
+    auto_update_correlators = AutoUpdateCorrelators()
 
     def __init__(self):
         self.actors = Actors(_system=self)
