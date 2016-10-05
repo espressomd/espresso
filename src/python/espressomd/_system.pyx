@@ -37,6 +37,7 @@ from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
+from .lbboundaries import LBBoundaries
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -62,6 +63,7 @@ cdef class System:
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
     constraints = Constraints()
+    lbboundaries = LBBoundaries()
 
     def __init__(self):
         self.actors = Actors(_system=self)

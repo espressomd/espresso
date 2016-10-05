@@ -27,7 +27,6 @@
 
 #include "config.hpp"
 
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 #include <limits>
 
@@ -46,6 +45,7 @@
 
 namespace LBBoundaries {
 
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 
 void lbboundary_mindist_position(double pos[3], double *mindist,
@@ -379,7 +379,6 @@ void lb_init_boundaries() {
         break;
       }
     }
-
 #endif
   }
 }
@@ -388,7 +387,7 @@ int lbboundary_get_force(int no, double *f) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
   double *forces =
-      (double *)Utils::malloc(3 * n_lb_boundaries * sizeof(double));
+    (double *)Utils::malloc(3 * lbboundaries.size() * sizeof(double));
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
@@ -505,5 +504,5 @@ void lb_bounce_back() {
 #endif
 }
 
-}
 #endif
+}
