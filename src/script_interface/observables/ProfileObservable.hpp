@@ -46,19 +46,19 @@ public:
 
   VariantMap get_parameters() const override {
     return {
-      {"ids", m_observable->ids},
+      {"ids", profile_observable()->ids},
       
-      {"xbins", m_observable->xbins},
-      {"ybins", m_observable->ybins},
-      {"zbins", m_observable->zbins},
+      {"xbins", profile_observable()->xbins},
+      {"ybins", profile_observable()->ybins},
+      {"zbins", profile_observable()->zbins},
       
-      {"minx", m_observable->minx},
-      {"miny", m_observable->miny},
-      {"minz", m_observable->minz},
+      {"minx", profile_observable()->minx},
+      {"miny", profile_observable()->miny},
+      {"minz", profile_observable()->minz},
       
-      {"maxx", m_observable->maxx},
-      {"maxy", m_observable->maxy},
-      {"maxz", m_observable->maxz}
+      {"maxx", profile_observable()->maxx},
+      {"maxy", profile_observable()->maxy},
+      {"maxz", profile_observable()->maxz}
     };
   };
 
@@ -78,25 +78,28 @@ public:
   };
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", m_observable->ids);
+    SET_PARAMETER_HELPER("ids", profile_observable()->ids);
     
-    SET_PARAMETER_HELPER("xbins", m_observable->xbins);
-    SET_PARAMETER_HELPER("ybins", m_observable->ybins);
-    SET_PARAMETER_HELPER("zbins", m_observable->zbins);
+    SET_PARAMETER_HELPER("xbins", profile_observable()->xbins);
+    SET_PARAMETER_HELPER("ybins", profile_observable()->ybins);
+    SET_PARAMETER_HELPER("zbins", profile_observable()->zbins);
     
-    SET_PARAMETER_HELPER("minx", m_observable->minx);
-    SET_PARAMETER_HELPER("miny", m_observable->miny);
-    SET_PARAMETER_HELPER("minz", m_observable->minz);
+    SET_PARAMETER_HELPER("minx", profile_observable()->minx);
+    SET_PARAMETER_HELPER("miny", profile_observable()->miny);
+    SET_PARAMETER_HELPER("minz", profile_observable()->minz);
 
-    SET_PARAMETER_HELPER("maxx", m_observable->maxx);
-    SET_PARAMETER_HELPER("maxy", m_observable->maxy);
-    SET_PARAMETER_HELPER("maxz", m_observable->maxz);
+    SET_PARAMETER_HELPER("maxx", profile_observable()->maxx);
+    SET_PARAMETER_HELPER("maxy", profile_observable()->maxy);
+    SET_PARAMETER_HELPER("maxz", profile_observable()->maxz);
   };
   std::shared_ptr<::Observables::Observable> observable() {
     return m_observable;
   };
+  std::shared_ptr<::Observables::ProfileObservable> profile_observable() const {
+    return m_observable;
+  };
   private:
-  std::shared_ptr<::Observables::ProfileObservable> m_observable;
+    mutable std::shared_ptr<::Observables::ProfileObservable> m_observable;
 };
 
 
@@ -108,6 +111,9 @@ public: \
   const std::string name() const override { return "Observables::" #obs_name; } \
   \
   std::shared_ptr<::Observables::Observable> observable() { \
+    return m_observable; \
+  }; \
+  std::shared_ptr<::Observables::Observable> profile_observable() const { \
     return m_observable; \
   }; \
   private: \

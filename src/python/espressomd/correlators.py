@@ -24,6 +24,14 @@ class AutoUpdateCorrelators(ScriptInterfaceHelper):
 
 class Correlator(ScriptInterfaceHelper):
     _so_name = "Correlators::Correlator"
+    _so_bind_methods = ("update","auto_update","dim_corr","n_results")
+
+    def result():
+       res=self.call_method("get_correlation")
+       res.reshape((self.n_results(),self.dim_corr()))
+       return res
+
+
 
 
 

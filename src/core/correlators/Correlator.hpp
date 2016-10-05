@@ -213,6 +213,10 @@ class Correlator {
      * the correlation estimates have to be updated.
      *
      */
+
+
+     /** Return correlation result */
+     std::vector<double> get_correlation();
     
     
     
@@ -225,7 +229,7 @@ class Correlator {
     unsigned int finalized;          // non-zero of correlation is finialized
     unsigned int hierarchy_depth;    // maximum level of data compression
     int tau_lin;            // number of frames in the linear correlation
-    unsigned int dim_corr;
+    int dim_corr;
     unsigned int t;                  // global time in number of frames
     double dt;                       // time interval at which samples arrive
     double tau_max;                  // maximum time, for which the correlation should be calculated
@@ -240,7 +244,7 @@ class Correlator {
     double*** A;                     // input quantity 1
     double*** B;                     // input quantity 2
     double** result;                // output quantity
-    unsigned int n_result;           // the total number of result values
+    int n_result;           // the total number of result values
   
     // The actual allocated storage space
     unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau

@@ -716,6 +716,31 @@ void Correlator::stop_auto_update() {
   // Insert logic to determine if global correlations_auto_update can be set to 0
 }
 
+
+std::vector<double> Correlator::get_correlation() {
+       std::vector<double> res;
+       
+       // time + n_sweeps + corr_1...corr_n
+       int cols=2+dim_corr;
+       res.resize(n_result*cols);
+
+       for (int i=0;i<n_result; i++) {
+         res[cols*i +0]=tau[i]*dt;
+         res[cols*i +1]=n_sweeps[i];
+         for (int k=0;k<dim_corr;k++) {
+           if (n_sweeps[i]>0) {
+             res[cols*i+2+k] =result[i][k]/n_sweeps[i];
+           } 
+           else { 
+             res[cols*i+2+k] =0;
+           }
+         }
+       }
+       return res;
+}
+
+
+
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A) {
   if ( n_input != dim_A ) {
     return 5;
@@ -845,14 +870,7 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
 }
 
 
-void autoupdate_correlations() {
-//  for (unsigned i=0; i<correlations.size(); i++) {
-//    if (correlations.at(i)->autoupdate && sim_time-correlations.at(i)->last_update>correlations.at(i)->dt*0.99999) {
-//      correlations.at(i)->last_update=sim_time;
-//      correlations.at(i)->get_data();
-//    }
-//  }
-}
+
 } // Namespace Correlators
 
 

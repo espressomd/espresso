@@ -127,16 +127,15 @@ public:
     }
   }
   if (method=="auto_update") {
-     if (parameters.find("set")!=parameters.end()) {
-      if (boost::get<int>(parameters.at("set")))
-         m_correlator->start_auto_update();
-       else
-         m_correlator->stop_auto_update();
-     } 
      return m_correlator->autoupdate;
-     
-     }
   }
+  if (method=="finalize") m_correlator->finalize();
+  if (method=="get_correlation") {
+    return m_correlator->get_correlation();
+  }
+  if (method=="n_results") return m_correlator->n_result;
+  if (method=="dim_corr") return m_correlator->dim_corr;
+ }
 private:
   /* The actual correlator */
   std::shared_ptr<::Correlators::Correlator> m_correlator;
