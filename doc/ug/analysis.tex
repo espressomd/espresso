@@ -216,7 +216,7 @@ of the currently identified properties.
 
 \begin{pysyntax}
   \object{
-    espressomd.System.analsysis
+    espressomd.System.analysis
   }{
     cylindrical_average
   }{
@@ -404,13 +404,12 @@ used can be retrieved. Likewise the option \keyword{set} enables you to set thos
   }{
     rdf
   }{
-    
     rdf_type = \arg{string},
     type_list_a = \arg{list of ints},
     type_list_b = \arg{list of ints},
     r_min = \arg{float (0.0)},
     r_max = \arg{float},
-    r_bins = \arg{int (100)}
+    r_bins = \arg{int (100)},
     n_conf = \arg{int}
   }
 \end{pysyntax}
@@ -448,7 +447,6 @@ The output corresponds to the blockfile format (see section
   }{
     structure_factor
   }{
-    
     sf_types = \arg{list of ints},
     sf_order = \arg{int}
   }
@@ -544,7 +542,6 @@ Returns the center of mass of particles of the given type.
   }{
     momentofinertiamatrix
   }{
-    
     p_type = \arg{int}
   }
 \end{pysyntax}
@@ -567,7 +564,6 @@ eigenvectors of the matrix.
   }{
     gyration_tensor
   }{
-    
     p_type = \arg{int}
   }
 \end{pysyntax}
