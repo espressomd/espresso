@@ -135,6 +135,8 @@ public:
   }
   if (method=="n_results") return m_correlator->n_result;
   if (method=="dim_corr") return m_correlator->dim_corr;
+
+  return {};
  }
 private:
   /* The actual correlator */

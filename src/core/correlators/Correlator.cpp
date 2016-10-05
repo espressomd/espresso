@@ -122,11 +122,12 @@ int Correlator::get_correlation_time(double* correlation_time) {
 
 
 Correlator::Correlator() :
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0) {};
+			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0)
+           {};
 
 void Correlator::initialize() {
   unsigned int i,j,k;
-  unsigned int hierarchy_depth=0;
+  hierarchy_depth=0;
   // Class members are assigned via the initializer list
 
   
@@ -161,7 +162,6 @@ void Correlator::initialize() {
     throw std::runtime_error( init_errors[14]);
   }
 
-  tau_lin=tau_lin;
   
   if (tau_max <= dt) { 
     throw std::runtime_error( init_errors[4]);
@@ -174,17 +174,19 @@ void Correlator::initialize() {
     }
   }
 
-  tau_max=tau_max;
   
 
   
-  dim_A=A_obs->n_values();
-  dim_B=A_obs->n_values();
+  dim_A=0;
+  dim_B=0;
+  if (A_obs) dim_A=A_obs->n_values();
+  if (B_obs.get()) dim_B=B_obs->n_values();
 
   if (dim_A<1) {
     throw std::runtime_error( init_errors[6]);
   }
 
+  autocorrelation=1;
   if (dim_B==0) {
     dim_B = dim_A; 
   } else if (dim_B>0) {
@@ -470,6 +472,7 @@ int Correlator::get_data() {
   free(temp);
   return 0;
 }
+
 
 void write_double(FILE * fp, const double * data, unsigned int n, bool binary) {
   if (binary){
