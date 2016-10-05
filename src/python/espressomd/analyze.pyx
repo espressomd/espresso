@@ -385,12 +385,15 @@ class Analysis:
     
         # Total pressure
         cdef int i
-        cdef double tmp
-        tmp = 0
-        for i in range(c_analyze.total_p_tensor.data.n):
-            tmp += c_analyze.total_p_tensor.data.e[i]
+        tmp = np.zeros(9)
+        for i in range(9):
+            value = c_analyze.total_p_tensor.data.e[i]
+            for k in range(c_analyze.total_p_tensor.data.n/9):
+                value += c_analyze.total_p_tensor.data.e[9*k + i]
+            # I don't know, why the 1/2 is needed.
+            tmp[i]=value/2.
     
-        p["total"] = tmp
+        p["total"] = tmp.reshape((3,3))
     
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
@@ -415,10 +418,10 @@ class Analysis:
                 #      if checkIfParticlesInteract(i, j):
     
                 p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
-                total_non_bonded += p["nonBonded", i, j]
+                total_non_bonded += p["non_bonded", i, j]
     
                 p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
-                total_non_bonded_intra += p["nonBondedIntra", i, j]
+                total_non_bonded_intra += p["non_bonded_intra", i, j]
     
                 p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
@@ -528,7 +531,7 @@ class Analysis:
                 e["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
     #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
-    #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
+    #        e["non_bonded_intra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
     #  e["nonBondedIntra"]=total_intra
