@@ -48,13 +48,6 @@
 #include "initialize.hpp"
 #include "cuda_interface.hpp"
 
-/*************************************************************
- * Exported Variables                                        *
- * ---------                                                 *
- *************************************************************/
-
-int vv_predcorr_depth1_omega = 5;
-
 /****************************************************
  *                     DEFINES
  ***************************************************/
@@ -405,7 +398,7 @@ void convert_torques_propagate_omega()
 
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
-      for(int times=0; times <= vv_predcorr_depth1_omega; times++)
+      for(int times=0; times <= 5; times++)
       { 
         double Wd[3];
 
