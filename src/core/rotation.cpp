@@ -383,7 +383,7 @@ void convert_torques_propagate_omega()
 #ifdef LANGEVIN_PER_PARTICLE
           pref1_temp = p[i].p.vv_predcorr_langevin_pref1_rot * time_step_half;
 #else
-          pref1_temp = p.vv_predcorr_langevin_pref1_rot * time_step_half;
+          pref1_temp = vv_predcorr_langevin_pref1_rot * time_step_half;
 
 #endif // LANGEVIN_PER_PARTICLE
 
