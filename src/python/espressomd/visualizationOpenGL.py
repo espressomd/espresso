@@ -480,7 +480,10 @@ class openGLLive:
         return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def fcolorToId(self, fcol):
-        return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+        if (fcol==self.specs['background_color']).all():
+            return -1
+        else:
+            return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     #ALL THE INITS
     def initEspressoVisualization(self):
@@ -553,10 +556,13 @@ class openGLLive:
     
     #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def setLightPos(self): 
+#glPushMatrix()
+#        glLoadIdentity()
         if self.specs['light_pos'] == 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
         else:
             glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
+#        glPopMatrix()
 
     def triggerLightPosUpdate(self):
         self.updateLightPos=True
@@ -933,3 +939,4 @@ class Camera:
         glRotatef(self.camRotGlobal[1], 0, 1, 0)
         glRotatef(self.camRotGlobal[2], 0, 0, 1)
         glTranslatef(-self.center[0], -self.center[1], -self.center[2])
+        self.updateLights()
