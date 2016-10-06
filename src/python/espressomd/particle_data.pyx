@@ -112,9 +112,15 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return np.array([self.particle_data.r.p[0],
-                             self.particle_data.r.p[1],
-                             self.particle_data.r.p[2]])
+            cdef double ppos[3]
+            cdef int img[3]
+            for i in range(3):
+               img[i]=self.particle_data.l.i[i]
+               ppos[i]=self.particle_data.r.p[i]
+
+
+            unfold_position(ppos,img)
+            return np.array([ppos[0],ppos[1],ppos[2]])
 
     property pos_folded:
         """Particle position (folded into central image)."""
