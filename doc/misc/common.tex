@@ -114,5 +114,13 @@
   rulecolor=\color{framegray},
   showstringspaces=false            % 
 }
-\lstnewenvironment{pypresso}{%
-  \lstset{style=pypressostyle}}{}
+
+% Python environment
+\lstnewenvironment{pypresso}{\lstset{style=pypressostyle}}{}
+
+% Python for external files
+\newcommand\pypressoexternal[2][]{{
+\lstset{style=pypressostyle}\lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pypressoinline[1]{{\lstset{style=pypressostyle}\lstinline!#1!}}

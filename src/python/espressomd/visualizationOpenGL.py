@@ -159,6 +159,12 @@ class openGLLive:
                           'ext_forces': self.system.part[:].ext_force,
                           'charges': 	self.system.part[:].q
                           }
+    
+    #GET THE CONSTRAINT DATA
+    def updateConstraints(self):
+        self.constraintWalls = {'dist': self.system.part[:].pos,
+                                'normal':   	self.system.part[:].type
+        }
 
     #GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def updateBonds(self):
@@ -189,9 +195,7 @@ class openGLLive:
             self.drawBonds()
 
     def drawSystemBox(self):
-        box_l = self.system.box_l[0]
-        b2 = box_l / 2.0
-        drawBox([b2, b2, b2], box_l, [1 - self.specs['background_color'][0], 1 -
+        drawBox([0, 0, 0], self.system.box_l, [1 - self.specs['background_color'][0], 1 -
                                       self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
 
     def drawSystemParticles(self):
@@ -616,11 +620,33 @@ def setOutlineMaterial(r, g, b, a=1.0):
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0, 0, 0, a])
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100)
 
-def drawBox(pos, size, color):
+def drawBox(p0, s, color):
     setSolidMaterial(color[0], color[1], color[2], 1, 2, 1)
     glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])
-    glutWireCube(size)
+    glTranslatef(p0[0], p0[1], p0[2])
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(s[0], 0.0, 0.0);
+    glVertex3f(s[0], s[1], 0.0);
+    glVertex3f(0, s[1], 0.0);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0, 0.0, s[2]);
+    glVertex3f(s[0], 0.0, s[2]);
+    glVertex3f(s[0], s[1], s[2]);
+    glVertex3f(0, s[1], s[2]);
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, s[2]);
+    glVertex3f(s[0], 0.0, 0.0);
+    glVertex3f(s[0], 0.0, s[2]);
+    glVertex3f(s[0], s[1], 0.0);
+    glVertex3f(s[0], s[1], s[2]);
+    glVertex3f(0.0, s[1], 0.0);
+    glVertex3f(0.0, s[1], s[2]);
+    glEnd();
+    #glutWireCube(size)
     glPopMatrix()
 
 def drawSphere(pos, radius, color, material, quality):
