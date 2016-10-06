@@ -25,8 +25,8 @@ class Rhomboid(ScriptInterfaceHelper):
     _so_name = "Shapes::Rhomboid"
 
 
-class SlitPore(ScriptInterfaceHelper):
-    _so_name = "Shapes::SlitPore"
+class Slitpore(ScriptInterfaceHelper):
+    _so_name = "Shapes::Slitpore"
 
 
 class Sphere(ScriptInterfaceHelper):
@@ -35,6 +35,9 @@ class Sphere(ScriptInterfaceHelper):
 
 class SpheroCylinder(ScriptInterfaceHelper):
     _so_name = "Shapes::SpheroCylinder"
+
+class Stomatocyte(ScriptInterfaceHelper):
+    _so_name = "Shapes::Stomatocyte"
 
 
 class Wall(ScriptInterfaceHelper):

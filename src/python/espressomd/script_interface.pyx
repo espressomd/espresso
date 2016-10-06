@@ -1,3 +1,4 @@
+
 cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
@@ -71,7 +72,7 @@ cdef class PScriptInterface:
             # Check number of elements if applicable
             if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR, < int > VECTOR2D, < int > VECTOR3D]:
                 n_elements = self.parameters[name].n_elements()
-                if not (len(kwargs[name]) == n_elements):
+                if n_elements!=0 and not (len(kwargs[name]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
@@ -121,16 +122,35 @@ cdef class PScriptInterface:
     def get_params(self):
         odict = {}
         for pair in self.parameters:
-            odict[pair.first] = self.get_parameter(pair.first)
+            try:
+                odict[pair.first] = self.get_parameter(pair.first)
+            except:
+                pass
         return odict
 
 class ScriptInterfaceHelper(PScriptInterface):
 
     _so_name = None
+    _so_bind_methods =()
 
     def __init__(self,**kwargs):
         super(ScriptInterfaceHelper,self).__init__(self._so_name)
         self.set_params(**kwargs)
+        self.define_bound_methods()
+    
+    def generate_caller(self,method_name):
+        def template_method(**kwargs):
+           res=self.call_method(method_name,**kwargs)
+           return res
+
+        return template_method
+
+    def define_bound_methods(self):
+        for method_name in self._so_bind_methods:
+            setattr(self,method_name,self.generate_caller(method_name))
+       
+
+
 
     
 

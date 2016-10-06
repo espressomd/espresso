@@ -32,6 +32,7 @@ public:
   }
 
   void set_velocity(Vector3d velocity) { m_velocity = velocity; }
+  void reset_force() { m_force = Vector3d{0,0,0}; }
 
   Shapes::Shape const &shape() const { return *m_shape; }
   Vector3d &velocity() { return m_velocity; }

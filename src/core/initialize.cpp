@@ -56,8 +56,9 @@
 #include "lattice.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
-#include "statistics_observable.hpp"
-#include "statistics_correlation.hpp"
+#include "observables/Observable.hpp"
+#include "correlators/Correlator.hpp"
+#include "lbboundaries.hpp"
 #include "lbboundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"

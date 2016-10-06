@@ -20,12 +20,16 @@
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "observables/initialize.hpp" 
+#include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 
 namespace ScriptInterface {
 void initialize() {
   Shapes::initialize();
   Constraints::initialize();
+  Observables::initialize();
+  Correlators::initialize();
   LBBoundaries::initialize();
 }
 

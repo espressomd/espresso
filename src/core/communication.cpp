@@ -77,12 +77,13 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_correlation.hpp"
+#include "correlators.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_observable.hpp"
+#include "observables/Observable.hpp"
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "observables/LbRadialVelocityProfile.hpp"
 
 using namespace std;
 using Communication::mpiCallbacks;
@@ -1142,9 +1143,10 @@ void mpi_observable_lb_radial_velocity_profile() {
   mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
 #endif
 }
+
 void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part) {
 #ifdef LB
-  mpi_observable_lb_radial_velocity_profile_slave_implementation();
+  Observables::mpi_observable_lb_radial_velocity_profile_slave_implementation();
 #endif
 }
 
@@ -1284,7 +1286,7 @@ void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
-  if (!correlations_autoupdate) {
+  if (!Correlators::auto_update_enabled()) {
     mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
     integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(
@@ -1296,7 +1298,7 @@ int mpi_integrate(int n_steps, int reuse_forces) {
       reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(
           fprintf(stderr, "%d: integration task %d done.\n", this_node, i));
-      autoupdate_correlations();
+      Correlators::auto_update();
     }
   }
   return mpi_check_runtime_errors();

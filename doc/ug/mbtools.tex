@@ -444,7 +444,7 @@ top of this file you should declare a namespace for your analysis code
 and include all of the internal variables inside that namespace as
 follows;
 
-\begin{code}
+\begin{tclcode}
     namespace eval ::mbtools::analysis::myanalysis \{
 	variable av_myresult \\
 	variable av_myresult_i\\
@@ -456,14 +456,14 @@ follows;
 	namespace export printav_myanalysis\\
 	namespace export resetav_myanalisis\\
     \}\\
-  \end{code}
+\end{tclcode}
 
   Import your new file into the analysis package by adding a line like
   the following to the \codebox{analysis.tcl} file.
 
-\begin{code}
+\begin{tclcode}
     source [file join [file dirname [info script]] myanalysis.tcl]
-\end{code}
+\end{tclcode}
 
 You then need to implement the following essential functions within
 your new namespace.

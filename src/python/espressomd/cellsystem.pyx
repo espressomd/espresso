@@ -153,7 +153,7 @@ cdef class CellSystem(object):
 
     property skin:
         def __set__(self, double _skin):
-            if _skin <= 0:
+            if _skin < 0:
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin

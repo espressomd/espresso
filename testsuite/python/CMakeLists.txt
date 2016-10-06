@@ -7,6 +7,7 @@ set(py_tests  bondedInteractions.py
               ewald_gpu.py
               magnetostaticInteractions.py
               nonBondedInteractions.py
+              observables.py
               p3m_gpu.py
               particle.py
 	      tabulated.py

@@ -523,7 +523,7 @@ inline void add_kinetic_virials(Particle *p1,int v_comp)
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
 
 /** function to calculate stress tensor for the observables */
-int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
+int observable_compute_stress_tensor(int v_comp, double *A);
 
 void update_pressure(int v_comp);
 void analyze_pressure_all(std::vector<std::string> & pressure_labels, std::vector<double> & pressures, int v_comp);

@@ -49,8 +49,9 @@ class TclScriptInterfaceManager : public TclCommand {
 public:
   TclScriptInterfaceManager(
       Tcl_Interp *interp,
-      const boost::bimap<std::string, std::string> &name_map)
-      : TclCommand(interp), m_name_map(name_map) {}
+      const boost::bimap<std::string, std::string> &name_map,
+      bool optional_new = false)
+      : TclCommand(interp), m_name_map(name_map), m_optional_new(optional_new) {}
 
   virtual void parse_from_string(std::list<std::string> &argv) override {
     switch (argv.size()) {
@@ -78,6 +79,12 @@ public:
         argv.pop_front();
         id = do_new(argv);
 
+        /* If the 'new' is not required and the first argument is a valid name,
+         * create a new instance */
+      } else if (m_optional_new &&
+                 (m_name_map.left.find(argv.front()) != m_name_map.left.end())) {
+        /* There is no new to pop... */
+        id = do_new(argv);
       } else if (argv.front() == "delete") {
         /* Pop the 'delete' */
         argv.pop_front();
@@ -93,8 +100,7 @@ public:
 
       /* Pass remaining arguments to the
        * object for parsing. */
-
-      m_om[id].parse_from_string(argv);
+      do_parse(id, argv);
 
       std::stringstream ss;
       ss << id;
@@ -116,6 +122,10 @@ public:
   }
 
 private:
+  virtual void do_parse(int id, std::list<std::string> &argv) {
+    m_om[id].parse_from_string(argv);
+  }
+
   virtual int do_new(std::list<std::string> &argv) {
     /* Get the internal name for the class to create.
      * will throw if it does not exists. */
@@ -161,6 +171,7 @@ private:
 protected:
   Utils::NumeratedContainer<TclScriptInterface> m_om;
   boost::bimap<std::string, std::string> const &m_name_map;
+  bool m_optional_new;
 };
 
 } /* namespace Tcl */
