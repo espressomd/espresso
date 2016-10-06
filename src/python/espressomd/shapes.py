@@ -29,11 +29,11 @@ class SlitPore(ScriptInterfaceHelper):
     _so_name = "Shapes::SlitPore"
 
 
-class Shere(ScriptInterfaceHelper):
+class Sphere(ScriptInterfaceHelper):
     _so_name = "Shapes::Sphere"
 
 
-class SheroCylinder(ScriptInterfaceHelper):
+class SpheroCylinder(ScriptInterfaceHelper):
     _so_name = "Shapes::SpheroCylinder"
 
 

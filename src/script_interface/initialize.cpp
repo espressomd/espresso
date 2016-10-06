@@ -20,11 +20,13 @@
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "lbboundaries/initialize.hpp"
 
 namespace ScriptInterface {
 void initialize() {
   Shapes::initialize();
   Constraints::initialize();
+  LBBoundaries::initialize();
 }
 
 } /* namespace ScriptInterface */

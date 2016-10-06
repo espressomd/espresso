@@ -13,6 +13,7 @@ namespace LBBoundaries {
 class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
   virtual void add_in_core(std::shared_ptr<LBBoundary> obj_ptr) {
     ::LBBoundaries::lbboundaries.push_back(obj_ptr->lbboundary());
+    ::LBBoundaries::lb_init_boundaries();
   }
   virtual void remove_in_core(std::shared_ptr<LBBoundary> obj_ptr) {
     auto it = std::find(std::begin(::LBBoundaries::lbboundaries), std::end(::LBBoundaries::lbboundaries), obj_ptr->lbboundary());
