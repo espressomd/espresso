@@ -72,30 +72,30 @@ void File::InitFile()
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-//    boost::filesystem::path script_path(m_scriptname);
-//    m_absolute_script_path = boost::filesystem::canonical(script_path);
-//    if(!(cells_get_n_particles() > 0)) {
-//        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
-//    }
-//
-//    init_filestructure();
-//    if (check_file_exists(m_filename)) {
-//        if (check_for_H5MD_structure(m_filename)) {
-//            /*
-//             * If the file exists and has a valid H5MD structure, lets create a
-//             * backup of it.  This has the advantage, that the new file can
-//             * just be deleted if the simulation crashes at some point and we
-//             * still have a valid trajectory, we can start from.
-//            */
-//            m_backup_filename = m_filename + ".bak";
-//            if (this_node == 0) backup_file(m_filename, m_backup_filename);
-//            load_file(m_filename);
-//        } else {
-//            throw incompatible_h5mdfile();
-//        }
-//    } else {
-//        create_new_file(m_filename);
-//    }
+    boost::filesystem::path script_path(m_scriptname);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
+    if(!(cells_get_n_particles() > 0)) {
+        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
+    }
+
+    init_filestructure();
+    if (check_file_exists(m_filename)) {
+        if (check_for_H5MD_structure(m_filename)) {
+            /*
+             * If the file exists and has a valid H5MD structure, lets create a
+             * backup of it.  This has the advantage, that the new file can
+             * just be deleted if the simulation crashes at some point and we
+             * still have a valid trajectory, we can start from.
+            */
+            m_backup_filename = m_filename + ".bak";
+            if (this_node == 0) backup_file(m_filename, m_backup_filename);
+            load_file(m_filename);
+        } else {
+            throw incompatible_h5mdfile();
+        }
+    } else {
+        create_new_file(m_filename);
+    }
 }
 
 
