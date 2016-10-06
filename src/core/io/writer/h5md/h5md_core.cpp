@@ -21,11 +21,11 @@
 
 
 #include "h5md_core.hpp"
+#include "global.hpp" //for access to global variables
 
 
 namespace Writer {
 namespace H5md {
-
 
 static void backup_file(const std::string &from, const std::string& to)
 {
@@ -72,30 +72,30 @@ void File::InitFile()
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-//    boost::filesystem::path script_path(m_scriptname);
-//    m_absolute_script_path = boost::filesystem::canonical(script_path);
-//    if(!(cells_get_n_particles() > 0)) {
-//        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
-//    }
-//
-//    init_filestructure();
-//    if (check_file_exists(m_filename)) {
-//        if (check_for_H5MD_structure(m_filename)) {
-//            /*
-//             * If the file exists and has a valid H5MD structure, lets create a
-//             * backup of it.  This has the advantage, that the new file can
-//             * just be deleted if the simulation crashes at some point and we
-//             * still have a valid trajectory, we can start from.
-//            */
-//            m_backup_filename = m_filename + ".bak";
-//            if (this_node == 0) backup_file(m_filename, m_backup_filename);
-//            load_file(m_filename);
-//        } else {
-//            throw incompatible_h5mdfile();
-//        }
-//    } else {
-//        create_new_file(m_filename);
-//    }
+    boost::filesystem::path script_path(m_scriptname);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
+    if(!(cells_get_n_particles() > 0)) {
+        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
+    }
+
+    init_filestructure();
+    if (check_file_exists(m_filename)) {
+        if (check_for_H5MD_structure(m_filename)) {
+            /*
+             * If the file exists and has a valid H5MD structure, lets create a
+             * backup of it.  This has the advantage, that the new file can
+             * just be deleted if the simulation crashes at some point and we
+             * still have a valid trajectory, we can start from.
+            */
+            m_backup_filename = m_filename + ".bak";
+            if (this_node == 0) backup_file(m_filename, m_backup_filename);
+            load_file(m_filename);
+        } else {
+            throw incompatible_h5mdfile();
+        }
+    } else {
+        create_new_file(m_filename);
+    }
 }
 
 
@@ -311,6 +311,11 @@ void File::Write(int write_dat)
         }
     }
 
+    int n_part=max_seen_particle+1;
+    if(n_part > this->previous_n_part) {
+    	this->previous_n_part=n_part;
+    }
+
     WriteDataset(id, "particles/atoms/id");
 
     if (write_typ)
@@ -335,7 +340,6 @@ void File::Write(int write_dat)
         WriteDataset(f, "particles/atoms/force");
     }
 }
-
 
 /* data is assumed to be three dimensional */
 template <typename T>
@@ -365,6 +369,8 @@ void File::WriteDataset(T &data, const std::string& path)
     hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
     /* Extend the dataset for another timestep. */
     dims[0] += 1;
+    dims[1] =this->previous_n_part;
+
     H5Dset_extent(dataset.hid(), dims);
 
     /* Refresh the dataset after extension. */
