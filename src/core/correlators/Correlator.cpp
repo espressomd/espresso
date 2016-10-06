@@ -20,6 +20,7 @@
 #include "particle_data.hpp"
 #include "integrate.hpp"
 #include <cstring>
+#include "integrate.hpp"
 
 namespace Correlators {
 
@@ -470,6 +471,7 @@ int Correlator::get_data() {
     }
   }
   free(temp);
+  last_update=sim_time;
   return 0;
 }
 
