@@ -39,6 +39,7 @@ from .galilei import GalileiTransform
 from .constraints import Constraints
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
+from .lbboundaries import LBBoundaries
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -64,6 +65,7 @@ cdef class System:
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
     constraints = Constraints()
+    lbboundaries = LBBoundaries()
 
     auto_update_observables = AutoUpdateObservables()
     auto_update_correlators = AutoUpdateCorrelators()

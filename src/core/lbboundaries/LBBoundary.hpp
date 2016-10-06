@@ -8,6 +8,7 @@
 #include "Vector.hpp"
 
 namespace LBBoundaries {
+
 class LBBoundary {
 public:
   LBBoundary()
@@ -25,15 +26,17 @@ public:
     return m_shape->calculate_dist(pos, dist, vec);
   }
 
+
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {
     m_shape = shape;
   }
 
   void set_velocity(Vector3d velocity) { m_velocity = velocity; }
+  void reset_force() { m_force = Vector3d{0,0,0}; }
 
   Shapes::Shape const &shape() const { return *m_shape; }
-  Vector3d const &velocity() { return m_velocity; }
-  Vector3d const &force() { return m_force; }
+  Vector3d &velocity() { return m_velocity; }
+  Vector3d &force() { return m_force; }
 
 #ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
   void set_charge_density(float charge_density) { m_charge_density = charge_density; }
@@ -45,6 +48,8 @@ public:
 
 private:
   /** Private methods */
+  /* The actual boundary */
+  std::shared_ptr<::LBBoundaries::LBBoundary> m_constraint;
 
   /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape; //TODO: I dont like this being a pointer just to get around the virtual limitations

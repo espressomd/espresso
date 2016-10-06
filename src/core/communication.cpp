@@ -153,7 +153,6 @@ static int terminated = 0;
   CB(mpi_send_rotational_inertia_slave)                                        \
   CB(mpi_send_affinity_slave)                                                  \
   CB(mpi_send_out_direction_slave)                                             \
-  CB(mpi_bcast_lbboundary_slave)                                               \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_send_vs_relative_slave)                                               \
@@ -2185,65 +2184,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
 #endif
 }
 
-/*************** REQ_BCAST_LBBOUNDARY ************/
-void mpi_bcast_lbboundary(int del_num) {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new boundaries */
-    MPI_Bcast(&LBBoundaries::lbboundaries[LBBoundaries::lbboundaries.size() - 1], sizeof(LBBoundaries::LBBoundary),
-              MPI_BYTE, 0, comm_cart);
-  } else if (del_num == -2) {
-    /* delete all boundaries */
-    LBBoundaries::lbboundaries.clear();
-  }
-#if defined(LB_BOUNDARIES_GPU)
-  else if (del_num == -3) {
-    // nothing, GPU code just requires to call on_lbboundary_change()
-  }
-#endif
-  else {
-    LBBoundaries::lbboundaries.erase(LBBoundaries::lbboundaries.begin()+del_num);
-  }
-
-  on_lbboundary_change();
-#endif
-}
-
-void mpi_bcast_lbboundary_slave(int node, int parm) { //TODO: C++ify
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-
-#if defined(LB_BOUNDARIES)
-  if (parm == -1) {
-    n_lb_boundaries++;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries - 1], sizeof(LB_Boundary),
-              MPI_BYTE, 0, comm_cart);
-  } else if (parm == -2) {
-    /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-#if defined(LB_BOUNDARIES_GPU)
-  else if (parm == -3) {
-    // nothing, GPU code just requires to call on_lbboundary_change()
-  }
-#endif
-  else {
-    memmove(&lb_boundaries[parm], &lb_boundaries[n_lb_boundaries - 1],
-            sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-#endif
-
-  on_lbboundary_change();
-#endif
-}
 
 void mpi_cap_forces(double fc) {
   force_cap = fc;

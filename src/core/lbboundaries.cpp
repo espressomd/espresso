@@ -27,7 +27,6 @@
 
 #include "config.hpp"
 
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 #include <limits>
 
@@ -46,6 +45,7 @@
 
 namespace LBBoundaries {
 
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 
 void lbboundary_mindist_position(double pos[3], double *mindist,
@@ -243,11 +243,11 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 1] = 0.0f;
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
-    if (lbboundaries.size() || pdb_boundary_lattice)
+    if (lbboundaries.size() || pdb_boundary_lattice) {
       lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
                              host_boundary_node_list, host_boundary_index_list,
                              boundary_velocity);
-
+    }
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
@@ -379,7 +379,6 @@ void lb_init_boundaries() {
         break;
       }
     }
-
 #endif
   }
 }
@@ -388,7 +387,7 @@ int lbboundary_get_force(int no, double *f) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
   double *forces =
-      (double *)Utils::malloc(3 * n_lb_boundaries * sizeof(double));
+    (double *)Utils::malloc(3 * lbboundaries.size() * sizeof(double));
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)

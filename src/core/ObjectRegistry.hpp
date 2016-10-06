@@ -1,4 +1,4 @@
-#ifndef OBJECT_REGISTry_HPP
+#ifndef OBJECT_REGISTRY_HPP
 #define OBJECT_REGISTRY_HPP
 
 #include <iterator>
