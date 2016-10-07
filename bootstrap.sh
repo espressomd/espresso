@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 
-cd `dirname $0`
+echo The autotools-based build system has been removed. Please use cmake instead.
+echo See the user\'s guide for instructions.
 
-autoreconf -iv -Wall
-autoreconf -fv -Wall
