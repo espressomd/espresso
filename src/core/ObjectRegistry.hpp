@@ -2,6 +2,7 @@
 #define OBJECT_REGISTRY_HPP
 
 #include <iterator>
+#include <algorithm>
 
 template <typename Container> class ObjectRegistry {
 public:
