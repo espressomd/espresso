@@ -135,6 +135,7 @@ public:
   }
   if (method=="n_results") return m_correlator->n_result;
   if (method=="dim_corr") return m_correlator->dim_corr;
+  if (method=="hierarchy_depth") return m_correlator->hierarchy_depth;
 
   return {};
  }

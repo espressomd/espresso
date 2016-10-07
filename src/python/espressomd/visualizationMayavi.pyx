@@ -118,7 +118,7 @@ cdef class mayaviLive:
             return
         self.last_T = self.system.time
         
-        cdef int N = self.system.n_part
+        cdef int N = len(self.system.part)
         coords = numpy.zeros((N,3))
         types = numpy.empty(N, dtype=int)
         inter = NonBondedInteractions()
@@ -132,7 +132,7 @@ cdef class mayaviLive:
 
     # Using (additional) untyped variables and python constructs in the loop 
     # will slow it down considerably. 
-        for i in range(self.system.max_part+1):
+        for i in range(N):
             if not particle_exists(i):
                 continue
             get_particle_data(i,&p)
@@ -154,7 +154,7 @@ cdef class mayaviLive:
                     bonds.push_back(t)
                     k+=1
             j += 1
-        assert j == self.system.n_part
+        assert j == len(self.system.part)
         cdef int Nbonds = bonds.size()//3
         
         bond_coords = numpy.empty((Nbonds,7))

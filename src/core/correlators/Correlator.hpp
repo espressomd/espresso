@@ -227,7 +227,7 @@ class Correlator {
     void *args; // arbitrary additional arguments, which the correlation may need
     unsigned int autocorrelation;    // autocorrelation flag
     unsigned int finalized;          // non-zero of correlation is finialized
-    unsigned int hierarchy_depth;    // maximum level of data compression
+    int hierarchy_depth;    // maximum level of data compression
     int tau_lin;            // number of frames in the linear correlation
     int dim_corr;
     unsigned int t;                  // global time in number of frames

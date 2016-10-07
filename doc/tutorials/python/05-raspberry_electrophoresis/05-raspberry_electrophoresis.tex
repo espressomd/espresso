@@ -78,38 +78,20 @@ footinclude=false,              % footer does not belong to the text
 pagesize,                       % set the pagesize in a DVI document
 ]{scrartcl}
 
-\include{common}
-% \newcommand{\es}{ESPResSo}
-%% Grafikpakete
-\usepackage{graphicx}%
 \usepackage{siunitx}% To typeset numbers and units
 
-\usepackage{verbatim}
-
-% How to diplay ESPResSo commands in flowing text. Larger code segments
-% should be put inside boxes.
-\newcommand{\EScmd}[1]{\texttt{\textbf{#1}}}
-
-% The code block
-%\newcommand{\EScode}[1]{ \parbox{0.95\textwidth}{\texttt{#1}}}
-\usepackage{listings} 
-\lstset{numbers=left, numberstyle=\tiny, numbersep=5pt, showspaces=false, showstringspaces=false,postbreak=\space, breakindent=5pt, breaklines}
-\lstset{language=python, keywordstyle=\color{blue}\bfseries ,emphstyle=\color{green}, commentstyle=\color{red}\itshape }
-\lstset{keywordsprefix=setmd}
-\lstset{keywords=[6]{thermostat,part,inter,integrate,rescale_velocities,code_info,save_sim,writepdb,analyze,uwerr}}
+\include{common}
 
 \newtheorem{task}{Task}
 
 \begin{document}
-
-
+\esptitlehead
 \title{Tutorial: Raspberry Electrophoresis%
 \ifdefined\esversion%
 \thanks{For \es \esversion}%
 \fi%
 }
 \subtitle{\es Basics}
-\author{O.A. Hickey \and S. Raafatnia}
 \maketitle
 
 
@@ -127,7 +109,7 @@ A sample set of data is included in the file posVsTime\_sample.dat.
 
 \begin{figure}[]
 	\centering
-	\includegraphics[width=\linewidth]{figures/raspberry_snapshot}
+	\includegraphics[width=0.9\textwidth]{figures/raspberry_snapshot}
 	\caption{A snapshot of the simulation consisting of positive salt ions (yellow spheres), negative salt ions (grey spheres) and surface beads (blue spheres). There is also a central bead in the middle of the colloid bearing a large negative  charge.}
 	\label{fig:rasp_snapshot}
 \end{figure} 
@@ -137,7 +119,7 @@ The first thing with any \es{} project is to compile \es{} with all of the neces
 The following myconfig.hpp example contains all of the flags needed for running the accompanying Python script.
 Please compile \es{} using this myconfig.hpp before starting this tutorial.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 /* Necessary Flags for the ESPResSo Raspberry Tutorial */
 
 #define ELECTROSTATICS
@@ -149,17 +131,17 @@ Please compile \es{} using this myconfig.hpp before starting this tutorial.
 #define VIRTUAL_SITES_RELATIVE
 #define LB_GPU
 #define LENNARD_JONES
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 }
 \section{Global MD Variables}\label{sec:espresso}
 
   The first thing in any \es{} simulation is to set a few global simulation parameters:
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 system = espressomd.System()
 system.box_l = [box_l, box_l, box_l]
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 }
 
 The parameter $box\_l$ sets the size of the simulation box. In general, one should check for finite
@@ -169,27 +151,27 @@ which sometimes allows for the infinite box limit to be extrapolated to, instead
 excessively large simulation box. As a rule of thumb, the box size should be five times greater than the characteristic
 length scale of the object. 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 system.time_step = time_step
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 }
 The parameter $time\_step$, which represents the time step used in the Verlet
 integration, should generally be chosen to be as large as possible, while still producing the same numerical
 values of the physical properties being measured. In typical coarse-grained simulations as
 covered in this tutorial, this value turns out to be $time\_step=0.01$.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
-system.skin = skin
-\end{lstlisting}\vspace{0,2cm}
+\begin{pypresso}[numbers=none]
+system.cell_system.skin = skin
+\end{pypresso}\vspace{0,2cm}
 }
  The skin is used for constructing
 the Verlet lists and is purely an optimization parameter. Whatever value provides the fastest
 integration speed should be used. For the type of simulations covered in this tutorial, this value turns out
 to be $skin \approx 0.3$.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 system.periodicity = [1, 1, 1]
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 }
 The $periodicity$ parameter indicates that the system is periodic in all three
 dimensions. Note that the lattice-Boltzmann algorithm requires periodicity in all three directions (although
@@ -231,10 +213,10 @@ prevent strong overlaps between the ions.
 \section{Electrostatics}
 Electrostatics are simulated using the Particle-Particle Particle-Mesh (P3M) algorithm. In \es{} this can be added to the simulation rather trivially:
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 p3m = electrostatics.P3M(bjerrum_length=bjerrum, accuracy=0.001)
 system.actors.add(p3m)
-\end{lstlisting}
+\end{pypresso}
 }
 Generally a Bjerrum length of $2$ is appropriate when using WCA interactions with $\sigma=1$ since a typical ion has a radius of $\SI{0.35}{nm}$, while the Bjerrum
 length in water is around $\SI{0.7}{nm}$.
@@ -253,11 +235,11 @@ The important parameters for the LB fluid are the density, the viscosity, the ti
 large time steps are possible, a time step of $0.01$ turns out to provide more reasonable values for the root mean squared particle velocities. Both density and viscosity
 should be around $1$, while the friction should be set around $20.$ The grid spacing should be comparable to the ions' size.
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 system.galilei.kill_particle_motion()
 lb = espressomd.lb.LBFluid_GPU(dens=1., visc=3., agrid=1., tau=time_step, fric=20)
 system.actors.add(lb)
-\end{lstlisting}
+\end{pypresso}
 }
 
 A logical way of picking a specific set of parameters is to choose them such that the hydrodynamic radius of an ion roughly matches its physical radius determined by the
@@ -275,10 +257,10 @@ The last step is to first turn off all other thermostats, followed by turning on
 $k_\mathrm{B}T=1$ in molecular dynamics units.
 
 {\small\vspace{0,2cm}
-\begin{lstlisting}[numbers=none]
+\begin{pypresso}[numbers=none]
 system.thermostat.turn_off()
 system.thermostat.set_lb(kT=1.)
-\end{lstlisting}
+\end{pypresso}
 }
 
 \section{Simulating Electrophoresis}

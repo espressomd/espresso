@@ -235,3 +235,4 @@ cdef class ParticleSlice:
 
 cdef extern from "grid.hpp":
     cdef inline void fold_position(double *, int*)
+    void unfold_position(double pos[3], int image_box[3]) 

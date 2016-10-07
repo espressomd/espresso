@@ -269,7 +269,7 @@ IF ELECTROSTATICS:
         cdef int resp
         MMM1D_init();
         if MMM1D_sanity_checks()==1:
-            raise ValueError("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
+            handle_errors("MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
         resp=mmm1d_tune(&log)
         if resp:
             print(log)

@@ -375,7 +375,7 @@ void on_lbboundary_change()
 
 #ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
   }
 #endif
 
@@ -460,7 +460,7 @@ void on_boxl_change() {
   if(lattice_switch & LATTICE_LB) {
     lb_init();
 #ifdef LB_BOUNDARIES
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
 #endif
