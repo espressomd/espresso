@@ -1,0 +1,28 @@
+\input{../definitions_standalone}
+\begin{document}
+\begin{tikzpicture}
+	\pgfplotsset{
+		legend style = {
+		at={(1.0,0.0)},
+		anchor=south east
+		}}
+	\begin{loglogaxis}
+		[minor tick num=1,
+		axis x line=bottom,
+		axis y line = left,
+		xlabel = {simulation time},
+		xmin = 0.01,
+		xmax = 2000,
+		ylabel = {mean squared displacement}, 
+		ymin = 0.0001,
+		ymax = 4000,
+		]
+		\addplot+[color=paper_01, mark=x, mystyle1, only marks] file
+		{./msd_gamma1.dat}; 
+		\addplot+[color=paper_02, mystyle2, only marks] file {./msd_gamma2.dat};
+		\addplot+[color=paper_03, mystyle3, only marks] file {./msd_gamma4.0.dat};
+		\addplot+[color=paper_04, mystyle4, only marks] file {./msd_gamma10.0.dat};
+		\legend{LB-gamma=1.0, LB-gamma=2.0, LB-gamma=4.0, LB-gamma=10.0};
+	\end{loglogaxis}
+\end{tikzpicture}
+\end{document}
