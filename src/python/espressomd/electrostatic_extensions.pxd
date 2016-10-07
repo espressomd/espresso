@@ -67,5 +67,5 @@ IF ELECTROSTATICS and P3M:
         void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
-        cdef extern from "communication.hpp":
-            int mpi_iccp3m_init(int dummy)
+    cdef extern from "communication.hpp":
+        int mpi_iccp3m_init(int dummy)
