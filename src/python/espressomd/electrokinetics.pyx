@@ -66,17 +66,17 @@ IF ELECTROKINETICS:
 
             
         def _set_params_in_es_core(self):
-            if self._params["stencil"] = "linkcentered":
-                ek_set_stencil(0)
-            elif self._params["stencil"] = "nonlinear":
-                ek_set_stencil(1)
-            elif self._params["stencil"] = "nodecentered":
-                ek_set_stencil(2)
+            # if self._params["stencil"] = "linkcentered":
+            #     ek_set_stencil(0)
+            # elif self._params["stencil"] = "nonlinear":
+            #     ek_set_stencil(1)
+            # elif self._params["stencil"] = "nodecentered":
+            #     ek_set_stencil(2)
 
-            if self._params["fluid_coupling"] = "friction":
-                ek_set_fluidcoupling(True)
-            elif self._params["fluid_coupling"] = "estatics":
-                ek_set_fluidcoupling(False)
+            # if self._params["fluid_coupling"] = "friction":
+            #     ek_set_fluidcoupling(True)
+            # elif self._params["fluid_coupling"] = "estatics":
+            #     ek_set_fluidcoupling(False)
 
             ek_set_agrid(self._params["agrid"])
             ek_set_lb_density(self._parms["lb_density"])
@@ -122,8 +122,29 @@ IF ELECTROKINETICS:
         def add_reaction(self, shape):
             raise Exception("This method is not implemented yet.")
 
-        def add_boundary(self, shape)
+        def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
+
+
+# cdef class Species:
+#     """Creates a spicies object that is passed to the ek instance"""
+   
+#     def __getitem__(self, key):
+#         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+#             if len(key) == 3:
+#                 return SpecieRoutines(np.array(key))
+#         else: 
+#             raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," %key)
+
+# cdef class SpecieRoutines:
+
+#     def __init__(self, key=None, id=None):
+#         self.node = key
+
+#     def create(self, charge=None, concentration=None, D=None):
+#         if (charge == None) or (concentration == None) or (D == None):
+            
+        
 
 
 
@@ -131,8 +152,8 @@ IF ELECTROKINETICS:
 # ek = Electrokinetics(params)
 # system.actor.add(ek)
 
-# pos_ions = ek.Species(charge=+1, concentration=0.06, D=0.001)
-# neg_ions = ek.Species(charge=-1, concentration=0.07, D=0.001)
+# pos_ions = electrokinetics.Species(charge=+1, concentration=0.06, D=0.001)
+# neg_ions = electrokinetics.Species(charge=-1, concentration=0.07, D=0.001)
 
 # ek.add_species(pos_ions, neg_ions)
 

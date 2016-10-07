@@ -105,12 +105,12 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
 
 #define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
   if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value));     \
+    MEMBER_NAME = Vector3d(boost::get<Vector3d>(value));     \
   }
 
 #define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
   if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value));     \
+    MEMBER_NAME = Vector2d(boost::get<Vector2d>(value));     \
   }
 
 /**

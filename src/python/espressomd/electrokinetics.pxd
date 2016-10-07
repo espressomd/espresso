@@ -54,12 +54,12 @@ IF ELECTROKINETICS and CUDA:
             float valency[MAX_NUMBER_OF_SPECIES]
             float ext_force[3][MAX_NUMBER_OF_SPECIES]
             char* node_is_catalyst
-            IF EK_ELECTROSTATIC_COUPLING:
-                bool es_coupling
-                float *charge_potential_buffer
-                float *electric_field
-            IF EK_REACTION:
-                float* pressure
+            # IF EK_ELECTROSTATIC_COUPLING:
+            #     bool es_coupling
+            #     float *charge_potential_buffer
+            #     float *electric_field
+            # IF EK_REACTION:
+            #     float* pressure
 
         cdef extern EK_parameters ek_parameters
 
