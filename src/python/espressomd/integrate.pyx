@@ -38,7 +38,7 @@ cdef class Integrator:
                 reuse_forces, 1, bool, "reuse_forces has to be a bool")
 
             if (_integrate(steps, recalc_forces, reuse_forces)):
-                self.handle_errors("Encoutered errors during integrate")
+                handle_errors("Encoutered errors during integrate")
         elif self._method == "STEEPEST_DESCENT":
             minimize_energy_init(self._steepest_descent_params["f_max"], self._steepest_descent_params["gamma"], steps, self._steepest_descent_params["max_displacement"])
             minimize_energy()
@@ -72,13 +72,9 @@ cdef class Integrator:
         check_type_or_throw_except(
             zdir, 1, int, "NPT parameter zdir must be an int")
         if (integrate_set_npt_isotropic(ext_pressure, piston, xdir, ydir, zdir, cubic_box)):
-            self.handle_errors("Encoutered errors setting up the NPT integrator")
+            handle_errors("Encoutered errors setting up the NPT integrator")
 
             
-    cdef handle_errors(self, msg):
-        errors = mpi_gather_runtime_errors()
-        for err in errors:
-            print(err.format())
 
         for err in errors:
         # Cast because cython does not support typed enums completely
