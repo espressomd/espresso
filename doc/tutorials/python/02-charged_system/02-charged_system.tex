@@ -44,13 +44,26 @@ pagesize,                       % set the pagesize in a DVI document
 \section{Introduction}
 
 This tutorial introduces some of the basic features of \es\ for charged systems
-by constructing a simulation script for a simple salt crystal. We assume that
-the reader is familiar with the basic concepts of Python and MD simulations. The
+by constructing a simulation script for a simple salt crystal. In the subsequent task,
+we use to a more realistic force-field for a NaCl crystal. Finally, we introduce constraints
+and 2D-Electrostatics to simulate a molten salt in a parallel plate capacitor.
+We assume that the reader is familiar with the basic concepts of Python and MD simulations. The
 code pieces can be copied step by step into a python script file, which then can
-be run using \verb|pypresso <file>| from the \es build directory.
+be run using \verb|pypresso <file>| from the \es build directory. Note that you might 
+have to correct erroneous line breaks. Compile espresso with the following features 
+in your \emph{myconfig.hpp} to be set throughout the whole tutorial:
+
+\begin{pypresso}
+#define EXTERNAL_FORCES
+#define CONSTRAINTS
+#define MASS
+#define ELECTROSTATICS
+#define LENNARD_JONES
+\end{pypresso}
 
 \section{Basic set up}
 
+The script for the tutorial can be found in your build directory at \verb|\doc\tutorials\python\02-charged_system\nacl.py|.
 We start with setting up all the relevant simulation parameters in one place:
 
 \begin{pypresso}
@@ -90,7 +103,7 @@ readable as we will see later when we actually need the values. The parameters h
 equally sized, monovalent salt.
 
 The simulation engine itself is modified by changing the
-espressomd.System() properties. We create an instance \emph{system} and
+espressomd.System() properties. We create an instance \pypressoinline{system} and
 set the box length, periodicity and time step. The skin depth \pypressoinline{skin} 
 is a parameter for the link--cell system which tunes its
 performance, but shall not be discussed here. Further, we activate the Langevin thermostat
@@ -109,7 +122,7 @@ system.thermostat.set_langevin(kT=temp, gamma=gamma)
 \end{pypresso}
 
 We now fill this simulation box with particles at random positions, using type and charge from our dictionaries.
-Using the length of the particle list \emph{system.part} for the id, we make sure that our particles are numbered consecutively.
+Using the length of the particle list \pypressoinline{system.part} for the id, we make sure that our particles are numbered consecutively.
 The particle type is used to link non-bonded interactions to a certain group of particles.
 
 \begin{pypresso}
@@ -120,7 +133,7 @@ for i in range(n_ionpairs):
             type=types["Anion"],  
             pos=numpy.random.random(3) * box_l, 
             q=charges["Anion"])
-for i in range(n_ionpairs):
+for i in range(n_ionpairs):dd
     system.part.add(
             id=len(system.part), 
             type=types["Cation"], 
@@ -133,7 +146,7 @@ interactions between our particles. We already defined the Lennard-Jones paramet
 what is left is to specify the combination rule and to iterate over particle type pairs. For simplicity, 
 we implement only the \emph{Lorentz-Berthelot} rules. 
 We pass our interaction pair to \pypressoinline{system.non_bonded_inter[*,*]} and set the 
-pre-calculated LJ parameters \emph{epsilon}, \emph{sigma} and \emph{cutoff}. With \pypressoinline{shift="auto"},
+pre-calculated LJ parameters \pypressoinline{epsilon}, \pypressoinline{sigma} and \pypressoinline{cutoff}. With \pypressoinline{shift="auto"},
 we shift the interaction potential to the cutoff so that $U_{LJ}(r_{cutoff})=0$.
 
 \begin{pypresso}
@@ -166,8 +179,6 @@ for s in [["Anion", "Cation"],
         system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(epsilon = lj_eps, sigma = lj_sig, cutoff = lj_cut, shift = "auto")
 
 \end{pypresso}
-
-\newpage
 
 \section{Equilibration}
 
@@ -202,7 +213,7 @@ system.thermostat.set_langevin(kT=temp, gamma=gamma)
 system.non_bonded_inter.set_force_cap(0)
 \end{pypresso}
 
-\es\ uses so-called \emph{actors} for electrostatics, magnetostatics and
+\es\ uses so-called \pypressoinline{actors} for electrostatics, magnetostatics and
 hydrodynamics. This ensures that unphysical combinations of algorithms are
 avoided, for example simultaneous usage of two electrostatic interactions.
 Adding an actor to the system also activates the method and calls necessary
@@ -210,8 +221,6 @@ initialization routines. Here, we define a P$^3$M object with parameters Bjerrum
 length and rms force error . This automatically starts a
 tuning function which tries to find optimal parameters for P$^3$M and prints them
 to the screen:
-
-\newpage
 
 \begin{pypresso}
 print("\n--->Tuning Electrostatics")
@@ -303,11 +312,10 @@ configuration. The results are two NumPy arrays containing the $r$ and $g(r)$
 values. Finally we write the data into a file with standard python output routines.
 
 \begin{pypresso}
-rdf_fp = open('rdf.data', 'w')
-for i in range(rdf_bins):
-    rdf_fp.write("%1.5e %1.5e %1.5e\n" % 
-            (r[i], rdf_00[i], rdf_01[i]))
-rdf_fp.close()
+with open('rdf.data', 'w') as rdf_fp:
+    for i in range(rdf_bins):
+        rdf_fp.write("%1.5e %1.5e %1.5e\n" % 
+                (r[i], rdf_00[i], rdf_01[i]))
 print("\n--->Written rdf.data\n--->Done")
 \end{pypresso}
 
@@ -369,7 +377,10 @@ To make your life more easy, don't try to equilibrate randomly positioned partic
 but set them up in a crystal structure close to equilibrium. If you do it right,
 you don't even need the Lennard-Jones equilibration. 
 To speed things up, don't go further than 1000 particles and use a P$^3$M accuracy of $10^{-2}$.
-Your RDF should look like the plot in figure \ref{fig:nacl_units}.
+Your RDF should look like the plot in figure \ref{fig:nacl_units}. When you get stuck,
+you can look at the solution script \verb|\doc\tutorials\python\02-charged_system\nacl_units.py| 
+(or \verb|nacl_units_vis.py| with visualization).
+
 
 \begin{figure}[h]
   \centering
@@ -393,15 +404,12 @@ ELC subtracts the forces caused by the periodic images in the z-dimension. Anoth
 MMM2D, also available in \es.
 \paragraph{Electric Field}\mbox{}\\
 The simple geometry of the system allows us to treat an electric field in z-direction as a homogeneous force.
-Make sure that the feature for external forces is compiled in by defining \emph{EXTERNAL\_FORCES} in your myconfig.hpp.
 Note that we use inert walls here and don't take into account the dielectric contrast caused by metal electrodes.
 \paragraph{Parameters}\mbox{}\\
 For our molten NaCl, we use a temperature $100 \ \mathrm{K}$ above the melting point ($1198.3 \ \mathrm{K}$) 
 and an approximated density of $\rho = 1.1138 \ \mathrm{u \AA^{-3}}$ found in \\
 Janz, G. J., Thermodynamic and Transport Properties of Molten Salts: Correlation Equations for Critically Evaluated Density, Surface Tension,
 Electrical Conductance, and Viscosity Data, \emph{J. Phys. Chem. Ref. Data, 17}, Suppl. 2, 1988.\\
-
-\newpage
 
 Let's walk through the python script. We need additional imports for the wall shapes and the ELC algorithm:
 
@@ -545,7 +553,7 @@ print "After Minimization: E_total=", energy['total']
 \end{pypresso}
 
 As described, we use P$^3$M in combination with ELC to account for the 2D-periodicity. 
-ELC is also added to the \emph{actors} of the system and takes \emph{gap size} and \emph{maximum
+ELC is also added to the \pypressoinline{actors} of the system and takes \emph{gap size} and \emph{maximum
 pairwise errors} as arguments.
 
 \begin{pypresso}
@@ -628,6 +636,9 @@ print("\n--->Done")
 The resulting density plot is very noisy due to insufficient sampling, but should show a slight depletion of the smaller Na atoms
 at the walls. Now try to put in an electric field that represents an applied voltage of $15 \ \mathrm{V}$ between the walls and compare the results.
 The density data (see figure \ref{fig:nacl_confined}) should show strong layering at the walls, decaying towards the system center.
+The complete script is at \\
+\verb|\doc\tutorials\python\02-charged_system\nacl_units_confined.py|.\\
+In the interactive script \verb|nacl_units_confined_vis.py|, you can increase/decrease the electric field with the keys \emph{t/g} (at your own risk).
 
 \begin{figure}[tb]
   \centering
