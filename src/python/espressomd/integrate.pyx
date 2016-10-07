@@ -76,10 +76,6 @@ cdef class Integrator:
 
             
 
-        for err in errors:
-        # Cast because cython does not support typed enums completely
-            if <int> err.level() == <int> ERROR:
-                raise Exception(msg)
 
 
 
