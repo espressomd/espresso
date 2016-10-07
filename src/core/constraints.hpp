@@ -4,7 +4,6 @@
 #include "config.hpp"
 #include "ObjectRegistry.hpp"
 
-#ifdef CONSTRAINTS
 
 #include <memory>
 #include <vector>
@@ -17,6 +16,7 @@
 namespace Constraints {
 extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
 }
+#ifdef CONSTRAINTS
 
 inline void add_constraints_forces(Particle *p) {
   int image[3];
