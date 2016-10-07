@@ -36,7 +36,9 @@ from .minimize_energy import MinimizeEnergy
 from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
-from .constraints import Constraints
+if CONSTRAINTS == 1:
+    from .constraints import Constraints
+
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
 from .lbboundaries import LBBoundaries
@@ -64,7 +66,8 @@ cdef class System:
     analysis = None
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
-    constraints = Constraints()
+    if CONSTRAINTS == 1:
+        constraints = Constraints()
     lbboundaries = LBBoundaries()
 
     auto_update_observables = AutoUpdateObservables()

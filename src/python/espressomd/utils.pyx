@@ -116,7 +116,7 @@ def to_str(s):
 cdef handle_errors(msg):
     errors = mpi_gather_runtime_errors()
     for err in errors:
-        print(err.format())
+        err.print()
 
     for err in errors:
     # Cast because cython does not support typed enums completely

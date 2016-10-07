@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "config.hpp" 
-#ifdef CONSTRAINTS
 
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
@@ -30,13 +29,14 @@ namespace ScriptInterface {
 namespace Constraints {
 
 void initialize() {
+#ifdef CONSTRAINTS
   ParallelScriptInterface<ScriptInterface::Constraints::Constraints>::
     register_new("Constraints::Constraints");
 
   ParallelScriptInterface<ScriptInterface::Constraints::Constraint>::
     register_new("Constraints::Constraint");
+#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
 
-#endif
