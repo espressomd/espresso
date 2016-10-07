@@ -1,11 +1,14 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-import lb
+from .lb cimport HydrodynamicInteraction
+from .ekboundaries import EKBoundary
 import numpy as np
 
 IF ELECTROKINETICS:
 
     cdef class Electrokinetics(lb.HydrodynamicInteraction):
-        
+        species_list = []
+
         def validate_params(self):
             default_params = self.default_params()
             
@@ -20,7 +23,7 @@ IF ELECTROKINETICS:
             return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "bjerrum_length", "stencil", "advection", "fluid_coupling"
 
         def required_keys(self):
-            return ["agrid", "lb_density", "viscosity", "friction", "T", "bjerrum length"]
+            return ["agrid", "lb_density", "viscosity", "friction", "T", "bjerrum_length"]
 
         def default_params(self):
             return {"agrid": -1,
@@ -32,9 +35,9 @@ IF ELECTROKINETICS:
                     "friction": 0.0,
                     "T": -1,
                     "bjerrum_length": -1,
-                    "stencil": 0,
+                    "stencil": "linkcentered",
                     "advection": True,
-                    "fluid_coupling": True}
+                    "fluid_coupling": "friction"}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -66,20 +69,20 @@ IF ELECTROKINETICS:
 
             
         def _set_params_in_es_core(self):
-            # if self._params["stencil"] = "linkcentered":
-            #     ek_set_stencil(0)
-            # elif self._params["stencil"] = "nonlinear":
-            #     ek_set_stencil(1)
-            # elif self._params["stencil"] = "nodecentered":
-            #     ek_set_stencil(2)
+            if self._params["stencil"] == "linkcentered":
+                ek_set_stencil(0)
+            elif self._params["stencil"] == "nonlinear":
+                ek_set_stencil(1)
+            elif self._params["stencil"] == "nodecentered":
+                ek_set_stencil(2)
 
-            # if self._params["fluid_coupling"] = "friction":
-            #     ek_set_fluidcoupling(True)
-            # elif self._params["fluid_coupling"] = "estatics":
-            #     ek_set_fluidcoupling(False)
+            if self._params["fluid_coupling"] == "friction":
+                ek_set_fluidcoupling(True)
+            elif self._params["fluid_coupling"] == "estatics":
+                ek_set_fluidcoupling(False)
 
             ek_set_agrid(self._params["agrid"])
-            ek_set_lb_density(self._parms["lb_density"])
+            ek_set_lb_density(self._params["lb_density"])
             ek_set_viscosity(self._params["viscosity"])
             ek_set_friction(self._params["friction"])
             ek_set_T(self._params["T"])
@@ -91,7 +94,7 @@ IF ELECTROKINETICS:
 
             
         def set_density(self, species=None, density=None, node=None):
-            if spicies == None or density == None:
+            if species == None or density == None:
                 raise ValueError("species and density has to be set.")
             if not isinstance(int, species):
                 raise ValueError("species needs to be an integer.")
@@ -99,13 +102,15 @@ IF ELECTROKINETICS:
                 ek_set_density(species, density)
             else:
                 if not (isinstance(list, node) or isinstance(np.ndarray, node)):
-                    if len(coords) != 3:
-                        raise ValueError("coords has to be an array of length 3 of integers.")
+                    if len(node) != 3:
+                        raise ValueError("node has to be an array of length 3 of integers.")
                 ek_node_set_density(species, node[0], node[1], node[2], density)
 
                     
         def _activate_method(self):
             self._set_params_in_es_core()
+            for species in self.species_list:
+                species._activate_method()
             err = ek_init()
             if err == 2:
                 raise Exception('EK init failed', 'agrid incompatible with box size')
@@ -113,6 +118,12 @@ IF ELECTROKINETICS:
                 raise Exception('EK init failed', 'unknown error')
 
 
+        def add_species(self, species):
+            self.species_list.append(species)
+
+        def get_params(self):
+            self._params.update(self._get_params_from_es_core())
+            return self._params
 
 
         # TODO:
@@ -126,25 +137,106 @@ IF ELECTROKINETICS:
             raise Exception("This method is not implemented yet.")
 
 
-# cdef class Species:
-#     """Creates a spicies object that is passed to the ek instance"""
-   
-#     def __getitem__(self, key):
-#         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
-#             if len(key) == 3:
-#                 return SpecieRoutines(np.array(key))
-#         else: 
-#             raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," %key)
+class Species:
+    """Creates a spicies object that is passed to the ek instance"""
+    py_number_of_species = 0
+    id = -1
+    _params = {}
 
-# cdef class SpecieRoutines:
 
-#     def __init__(self, key=None, id=None):
-#         self.node = key
+    def __getitem__(self, key):
+        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if len(key) == 3:
+                return SpecieRoutines(np.array(key), self.id)
+        else: 
+            raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," %key)
 
-#     def create(self, charge=None, concentration=None, D=None):
-#         if (charge == None) or (concentration == None) or (D == None):
-            
+    def __init__(self, **kwargs):
+        Species.py_number_of_species += 1
+        self.id = Species.py_number_of_species
+        self._params = self.default_params()
+
+        # Check if all required keys are given
+        for k in self.required_keys():
+            if k not in kwargs:
+                raise ValueError(
+                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
+            self._params[k] = kwargs[k]
+
+        for k in kwargs:
+            if k in self.valid_keys():
+                self._params[k] = kwargs[k]
+            else:
+                raise KeyError("%s is not a vaild key" % k)
+
+    def valid_keys(self):
+        return "density", "D", "valency", "ext_force"
         
+    def required_keys(self):
+        return ["density", "D", "valency"]
+
+    def default_params(self):
+        return {"ext_force": [0, 0, 0]}
+
+    def _get_params_from_es_core(self):
+        return {"density": ek_parameters.density[ek_parameters.species_index[self.id]],
+                "D": ek_parameters.D[ek_parameters.species_index[self.id]],
+                "valency": ek_parameters.valency[ek_parameters.species_index[self.id]],
+                "ext_force": [ek_parameters.ext_force[0][ek_parameters.species_index[self.id]],
+                              ek_parameters.ext_force[1][ek_parameters.species_index[self.id]],
+                              ek_parameters.ext_force[2][ek_parameters.species_index[self.id]]]}
+        
+    def _set_params_in_es_core(self):
+        ek_set_D(self.id, self._params["D"])
+        ek_set_valency(self.id, self._params["valency"])
+        ek_set_density(self.id, self._params["density"])
+        ek_set_ext_force(self.id, self._params["ext_force"][0], self._params["ext_force"][1], self._params["ext_force"][2])
+
+    def _activate_method(self):
+        self._set_params_in_es_core()
+
+    def get_params(self):
+        self._params.update(self._get_params_from_es_core())
+        return self._params
+            
+    
+    
+
+
+
+cdef class SpecieRoutines:
+    cdef int node[3]
+    cdef int id
+
+    def __init__(self, key, id):
+        self.node = key
+        self.id = id
+
+    property density:
+        def __set__(self, value):
+            if isinstance(value, float) or isinstance(value, int):
+                if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                    raise Exception("Species has not been added to EK.")
+
+            else:
+                raise ValueError("Type of property is wrong. Expected: float.")
+        
+        def __get__(self):
+            cdef double density
+            if ek_node_print_density(self.id, self.node[0], self.node[1], self.node[2], &density) != 0:
+                raise Exception("Species has not been added to EK.")
+            return density
+            
+    property flux:
+        def __set__(self, value):
+            raise ValueError("Node flux is not settable.")
+        
+        def __get__(self):
+            cdef double flux[3]
+            if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
+                raise Exception("Species has not been added to EK.")
+
+            return np.array(flux[0], flux[1], flux[2])
 
 
 

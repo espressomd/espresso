@@ -19,6 +19,10 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
+from .actors cimport Actor
+
+cdef class HydrodynamicInteraction(Actor):
+    pass
 
 IF LB_GPU or LB:
 

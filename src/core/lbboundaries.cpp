@@ -71,6 +71,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
   }
 }
 
+
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
