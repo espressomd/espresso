@@ -74,7 +74,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
-  int n, x, y, z;
+  int x, y, z;
   // char *errtxt;
   double pos[3], dist, dist_tmp = 0.0, dist_vec[3];
 
@@ -110,7 +110,7 @@ void lb_init_boundaries() {
         charged_boundaries = 1;
       }
 
-      for (n = 0; n < int(ek_parameters.number_of_species); n++)
+      for (int n = 0; n < int(ek_parameters.number_of_species); n++)
         if (ek_parameters.valency[n] != 0.0) {
           wallcharge_species = n;
           break;
@@ -261,7 +261,7 @@ void lb_init_boundaries() {
 #endif
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
-  } else { //TODO: adapt to new lbboundary infrastructure
+  } else { 
 #if defined(LB) && defined(LB_BOUNDARIES)
     int node_domain_position[3], offset[3];
     int the_boundary = -1;
@@ -271,7 +271,7 @@ void lb_init_boundaries() {
     offset[1] = node_domain_position[1] * lblattice.grid[1];
     offset[2] = node_domain_position[2] * lblattice.grid[2];
 
-    for (n = 0; n < lblattice.halo_grid_volume; n++) {
+    for (int n = 0; n < lblattice.halo_grid_volume; n++) {
       lbfields[n].boundary = 0;
     }
 
@@ -287,57 +287,9 @@ void lb_init_boundaries() {
 
           dist = 1e99;
 
-          for (n = 0; n < n_lb_boundaries; n++) {
-            switch (lb_boundaries[n].type) {
-            case LB_BOUNDARY_WAL:
-              calculate_wall_dist((Particle *)NULL, pos, (Particle *)NULL,
-                                  &lb_boundaries[n].c.wal, &dist_tmp, dist_vec);
-              break;
-
-            case LB_BOUNDARY_SPH:
-              calculate_sphere_dist((Particle *)NULL, pos, (Particle *)NULL,
-                                    &lb_boundaries[n].c.sph, &dist_tmp,
-                                    dist_vec);
-              break;
-
-            case LB_BOUNDARY_CYL:
-              calculate_cylinder_dist((Particle *)NULL, pos, (Particle *)NULL,
-                                      &lb_boundaries[n].c.cyl, &dist_tmp,
-                                      dist_vec);
-              break;
-
-            case LB_BOUNDARY_RHOMBOID:
-              calculate_rhomboid_dist((Particle *)NULL, pos, (Particle *)NULL,
-                                      &lb_boundaries[n].c.rhomboid, &dist_tmp,
-                                      dist_vec);
-              break;
-
-            case LB_BOUNDARY_POR:
-              calculate_pore_dist((Particle *)NULL, pos, (Particle *)NULL,
-                                  &lb_boundaries[n].c.pore, &dist_tmp,
-                                  dist_vec);
-              break;
-
-            case LB_BOUNDARY_STOMATOCYTE:
-              calculate_stomatocyte_dist(
-                  (Particle *)NULL, pos, (Particle *)NULL,
-                  &lb_boundaries[n].c.stomatocyte, &dist_tmp, dist_vec);
-              break;
-
-            case LB_BOUNDARY_HOLLOW_CONE:
-              calculate_hollow_cone_dist(
-                  (Particle *)NULL, pos, (Particle *)NULL,
-                  &lb_boundaries[n].c.hollow_cone, &dist_tmp, dist_vec);
-              break;
-
-            case LB_BOUNDARY_VOXEL: // voxel data do not need dist
-              dist_tmp = 1e99;
-              break;
-
-            default:
-              runtimeErrorMsg() << "lbboundary type " << lb_boundaries[n].type
-                                << " not implemented in lb_init_boundaries()\n";
-            }
+	  int n = 0;
+	  for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it, ++n) {
+	    (**it).calc_dist(pos, &dist_tmp, dist_vec);
 
             if (dist_tmp < dist || n == 0) {
               dist = dist_tmp;
@@ -345,7 +297,7 @@ void lb_init_boundaries() {
             }
           }
 
-          if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
+          if (dist <= 0 && the_boundary >= 0 && LBBoundaries::lbboundaries.size() > 0) {
             lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
                 the_boundary + 1;
           } else {
@@ -356,6 +308,8 @@ void lb_init_boundaries() {
       }
     }
     // SET VOXEL BOUNDARIES DIRECTLY
+    
+    /* TODO implement as shape
     int xxx, yyy, zzz = 0;
     char line[80];
     for (n = 0; n < n_lb_boundaries; n++) {
@@ -365,7 +319,7 @@ void lb_init_boundaries() {
         fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
 
         while (fgets(line, 80, fp) != NULL) {
-          /* get a line, up to 80 chars from fp,  done if NULL */
+          // get a line, up to 80 chars from fp,  done if NULL 
           sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
 
           lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
@@ -379,6 +333,7 @@ void lb_init_boundaries() {
         break;
       }
     }
+    */
 #endif
   }
 }
@@ -415,7 +370,6 @@ int lbboundary_get_force(int no, double *f) {
 #endif
   return 0;
 }
-} // namespace 
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
@@ -471,7 +425,7 @@ void lb_bounce_back() {
                   lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.agrid *
                   lbpar.agrid * lbpar.rho[0] * 2 * lbmodel.c[i][l] *
                   lbmodel.w[i] *
-                  lb_boundaries[lbfields[k].boundary - 1].velocity[l] /
+		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
                   lbmodel.c_sound_sq;
             }
             if (x - lbmodel.c[i][0] > 0 &&
@@ -482,7 +436,7 @@ void lb_bounce_back() {
                 z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
               if (!lbfields[k - next[i]].boundary) {
                 for (l = 0; l < 3; l++) {
-                  lb_boundaries[lbfields[k].boundary - 1].force[l] +=
+		  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).force()[l] +=   //TODO
                       (2 * lbfluid[1][i][k] + population_shift) *
                       lbmodel.c[i][l];
                 }
@@ -505,9 +459,5 @@ void lb_bounce_back() {
 #endif
 }
 
-}
 #endif
-
-// This is here to get rid of the undefined ysmbol in the transition phase
-
-int n_lb_boundaries=0;
+} // namespace 
