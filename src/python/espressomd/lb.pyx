@@ -162,6 +162,10 @@ IF LB_GPU or LB:
             lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+       
+        # input/output function wrappers for LB nodes
+        ####################################################
+
         def lbnode_get_node_velocity(self, coord):
             cdef double[3] double_return
             cdef int[3] c_coord
@@ -169,6 +173,48 @@ IF LB_GPU or LB:
                 c_coord[i] = int(coord[i])
             lb_lbnode_get_u(c_coord, double_return)
             return double_return
+        
+        def lbnode_get_node_density(self, coord):
+            cdef double *double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_rho(c_coord, double_return)
+            return double_return[0]
+        
+        def lbnode_get_node_pi(self, coord):
+            cdef double[6] double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_pi(c_coord, double_return)
+            return double_return
+
+        def lbnode_get_node_pi_neq(self, coord):
+            cdef double[6] double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_pi_neq(c_coord, double_return)
+            return double_return
+
+        def lbnode_get_node_pop(self, coord):
+            cdef double[19] double_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_pop(c_coord, double_return)
+            return double_return
+
+        def lbnode_get_node_boundary(self, coord):
+            cdef int *int_return
+            cdef int[3] c_coord
+            for i in range(len(coord)):
+                c_coord[i] = int(coord[i])
+            lb_lbnode_get_boundary(c_coord, int_return)
+            return int_return[0]
+
+
 
         # Activate Actor
         ####################################################
@@ -186,5 +232,3 @@ IF LB_GPU:
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
-
-
