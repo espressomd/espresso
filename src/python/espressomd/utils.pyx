@@ -113,3 +113,15 @@ def to_str(s):
         return unicode(s)
     else:
         return s
+cdef handle_errors(msg):
+    errors = mpi_gather_runtime_errors()
+    for err in errors:
+        print(err.format())
+
+    for err in errors:
+    # Cast because cython does not support typed enums completely
+        if <int> err.level() == <int> ERROR:
+            raise Exception(msg)
+
+    if not errors.empty() :
+        raise Exception(msg)

@@ -21,6 +21,7 @@ include "myconfig.pxi"
 import numpy as np
 from .actors cimport Actor
 from globals cimport temperature
+from espressomd.utils cimport handle_errors
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
@@ -173,6 +174,7 @@ IF DP3M == 1:
             cdef char * log = NULL
             cdef int response
             response = dp3m_adaptive_tune( & log)
+            handle_errors("dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
 
         def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
