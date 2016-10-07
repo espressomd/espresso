@@ -45,8 +45,8 @@
 
 namespace LBBoundaries {
 
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 void lbboundary_mindist_position(double pos[3], double *mindist,
                                  double distvec[3], int *no) {
