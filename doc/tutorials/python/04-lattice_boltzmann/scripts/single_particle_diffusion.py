@@ -12,7 +12,10 @@ steps = 10
 time_step = 0.01
 runtime = loops*steps*time_step
 box_l = 16
-lb_friction = 10
+try:
+    lb_friction = float(sys.argv[1])
+except:
+    raise ValueError("Input argument cannot be transformed to float.")
 
 # System setup
 system = System()
@@ -55,5 +58,5 @@ corr = np.zeros((corrdata.shape[0],2))
 corr[:,0] = corrdata[:,0]
 corr[:,1] = (corrdata[:,2] + corrdata[:,3] + corrdata[:,4]) / 3
 
-np.savetxt("./msd.dat", corr)
+np.savetxt("./msd_"+str(lb_friction)+".dat", corr)
 

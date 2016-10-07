@@ -14,7 +14,7 @@ system.cell_system.skin = 0
 
 # Setup constants
 time_step = 0.01
-loops = 10000
+loops = 100000
 step_per_loop = 100
 try:
     mpc = int(sys.argv[1])
@@ -65,7 +65,7 @@ print("LB fluid warming finished.")
 
 # configure correlators
 com_pos = ComPosition(ids=(0,))
-c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=1000, dt=time_step,
+c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=3000, dt=time_step,
         corr_operation="square_distance_componentwise", compress1="discard1")
 system.auto_update_correlators.add(c)
 
@@ -86,5 +86,5 @@ savetxt("./msd_nom"+str(mpc)+".dat", corr)
 
 with open("./rh_out.dat","a") as datafile:
     rh = system.analysis.calc_rh(chain_start=0, number_of_chains=1, chain_length=mpc-1)
-    datafile.write(str(mpc)+ "    " + str(rh))
+    datafile.write(str(mpc)+ "    " + str(rh[0])+"\n")
 

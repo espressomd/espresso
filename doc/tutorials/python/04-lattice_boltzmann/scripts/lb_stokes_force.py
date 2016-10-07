@@ -10,52 +10,75 @@
 # in z direction. We create walls in the xz and yz plane at the box 
 # boundaries, where the velocity is fixed to $v. 
 #
-from espressomd import System, lb
+from espressomd import System, lb, lbboundaries, shapes
 import numpy as np
-
+import sys
 # System setup
 system = System()
 agrid = 1
-system.box_l = [64+2*agrid, 64+2*agrid, 64]
+radius = 5.5
+box_width = 64
+real_width = box_width+2*agrid
+box_length = 64
+system.box_l = [real_width, real_width, box_length]
 system.time_step = 0.1
-system.cell_system.skin = 0.4
+system.cell_system.skin = 0
 
 # The temperature is zero.
 system.thermostat.set_lb(kT=0)
 
 # LB Parameters
-v = 0.01 # The boundary speed 
+v = [0,0,0.01] # The boundary slip 
 kinematic_visc = 1.0
 
 
 
 
 # Invoke LB fluid
-lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=10)
+lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
 system.actors.add(lbf)
 
-# TODO
-# # Four walls make an infinite square channel along z direction
-# lbboundary wall normal -1. 0. 0. dist [ expr -(1+$box_width) ] velocity 0.00 0 $v 
-# lbboundary wall normal  1. 0. 0. dist 1. velocity 0. 0. $v
-# lbboundary wall normal  0 -1. 0. dist [ expr -(1+$box_width) ] velocity 0.00 0 $v 
-# lbboundary wall normal  0  1. 0. dist 1. velocity 0. 0. $v
+# Setup walls
+walls = [None] * 4
+walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[-1,0,0], 
+                                   dist = -(1+box_width)), velocity=v)
+walls[1] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[1,0,0], dist = 1),
+                                 velocity=v)
+walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[0,-1,0], 
+                                   dist = -(1+box_width)), velocity=v)
+walls[3] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[0,1,0], dist = 1),
+                                   velocity=v)
 
-radius = 5.5
-# TODO
-# lbboundary sphere center [ expr 0.5*($box_width+2*$agrid) ] [ expr 0.5*($box_width+2*$agrid) ] [ expr 0.5*$box_length ]\
-#      radius $radius direction +1
+for wall in walls:
+    system.lbboundaries.add(wall)
 
-lbf.print_vtk_boundary(boundary.vtk)
+# setup sphere without slip in the middle
+sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(radius=radius,
+                                 center = [real_width/2] * 2 + [box_length/2],
+                                 direction = 1))
 
-for i in range(30):
+system.lbboundaries.add(sphere)
+
+
+lbf.print_vtk_boundary("./boundary.vtk")
+
+
+for i in range(40):
     system.integrator.run(400)
     lbf.print_vtk_velocity("fluid%04i.vtk" %i)
+    sys.stdout.write("\rloop: %05i"%i)
+    sys.stdout.flush()
+def size(vector):
+    tmp = 0
+    for k in vector:
+        tmp+=k*k
+    return np.sqrt(tmp)
 
-    # TODO
-    # # print out force on the sphere
-    # puts [ lindex [  lbboundary force  4 ]  2 ]
 
-stokes_force = 6*np.pi*kinematic_visc*radius*v
+# get force that is exerted on the sphere
+force = sphere.get_params()["force"]
+print("Measured force: f=%f" %size(force))
+
+stokes_force = 6*np.pi*kinematic_visc*radius*size(v)
 print("Stokes' Law says: f=%f" %stokes_force)
 
