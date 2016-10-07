@@ -145,7 +145,7 @@ class File
         /**
          * Member variables.
          */
-	int previous_n_part=0;
+	int m_previous_n_part=0;
         std::string m_filename;
         std::string m_scriptname;
         std::string m_backup_filename;
