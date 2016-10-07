@@ -127,12 +127,19 @@ class Observables(ut.TestCase):
        self.assertTrue(self.arraysNearlyEqual(s,obs_data),"Stress tensor from analysis and observable StressTensorAcf did not agree")
 
     def test_com_position(self):
-        com=sum((self.es.part[:].mass*self.es.part[:].pos.T).T,0)/sum(self.es.part[:].mass)
+        if "MASS" in espressomd.features():
+            com=sum((self.es.part[:].mass*self.es.part[:].pos.T).T,0)/sum(self.es.part[:].mass)
+        else:
+            com=sum((self.es.part[:].pos.T).T,0)/len(self.es.part)
+            
         obs_data=ComPosition(ids=range(1000)).calculate()
         self.assertTrue(self.arraysNearlyEqual(com,obs_data),"Center of mass observable wrong value")
     
     def test_com_velocity(self):
-        com_vel=sum((self.es.part[:].mass*self.es.part[:].v.T).T,0)/sum(self.es.part[:].mass)
+        if "MASS" in espressomd.features():
+            com_vel=sum((self.es.part[:].mass*self.es.part[:].v.T).T,0)/sum(self.es.part[:].mass)
+        else:
+            com_vel=sum((self.es.part[:].v.T).T,0)/len(self.es.part)
         obs_data=ComVelocity(ids=range(1000)).calculate()
         self.assertTrue(self.arraysNearlyEqual(com_vel,obs_data),"Center of mass velocity observable wrong value")
 
