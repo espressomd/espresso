@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef CONSTRAINTS
+
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
@@ -36,3 +38,5 @@ void initialize() {
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
+
+#endif
