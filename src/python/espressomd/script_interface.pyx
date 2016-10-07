@@ -82,8 +82,6 @@ cdef class PScriptInterface:
             else:
                 parameters[name] = self.make_variant(type, kwargs[name])
 
-        for name in kwargs:
-            print(name,self.variant_to_python_object(parameters[name]))
         self.sip.get().set_parameters(parameters)
 
     cdef variant_to_python_object(self, Variant value):
