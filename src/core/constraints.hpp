@@ -19,11 +19,16 @@ extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
 }
 
 inline void add_constraints_forces(Particle *p) {
+  
+  // Copy position and image count so as not to modify particle when folding position
   int image[3];
+  double pos[3];
+  memcpy(pos,p->r.p,3*sizeof(double));
+  memcpy(image,p->l.i,3*sizeof(int));
 
-  fold_position(p->r.p, image);
+  fold_position(p->r.p, p->l.i);
   for (auto const &c : Constraints::constraints) {
-    c->add_force(p, p->r.p);
+    c->add_force(p, pos);
   }
 }
 
