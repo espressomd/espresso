@@ -2,20 +2,19 @@ from espressomd import System, interactions, lb, polymer
 from espressomd.observables import ComPosition
 from espressomd.correlators import Correlator
 
-import gc
 from numpy import savetxt, zeros
 import sys
 
-#gc.disable()
+# Setup constant
+time_step = 0.01
+loops = 50000
+step_per_loop = 100
+
 # System setup
 system = System()
 system.box_l = [32, 32, 32]
 system.cell_system.skin = 0
 
-# Setup constants
-time_step = 0.01
-loops = 100000
-step_per_loop = 100
 try:
     mpc = int(sys.argv[1])
 except:
@@ -65,7 +64,7 @@ print("LB fluid warming finished.")
 
 # configure correlators
 com_pos = ComPosition(ids=(0,))
-c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=3000, dt=time_step,
+c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=1500, dt=time_step,
         corr_operation="square_distance_componentwise", compress1="discard1")
 system.auto_update_correlators.add(c)
 

@@ -24,7 +24,7 @@ system.cell_system.skin = 0
 system.box_l = [box_l] * 3
 
 
-lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=1, tau=0.01, fric=lb_friction)
+lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=5, tau=0.01, fric=lb_friction)
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=1)
 
