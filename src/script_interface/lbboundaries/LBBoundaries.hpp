@@ -1,6 +1,7 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 
+#include "config.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
 #include "LBBoundary.hpp"

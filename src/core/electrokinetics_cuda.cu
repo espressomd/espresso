@@ -63,7 +63,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
-  void lb_init_boundaries();
+  void LBBoundaries::lb_init_boundaries();
 #endif
   /* end of code duplication */
 
@@ -2708,7 +2708,7 @@ int ek_init() {
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
 #ifdef EK_BOUNDARIES
-      lb_init_boundaries();
+      LBBoundaries::lb_init_boundaries();
       lb_get_boundary_force_pointer( &ek_lb_boundary_force );
       
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
@@ -3757,10 +3757,12 @@ int ek_set_density( int species, double density ) {
 
 int ek_set_D( int species, double D ) {
 
+
   ek_init_species( species );
   
   ek_parameters.D[ ek_parameters.species_index[ species ] ] = D;
   ek_parameters.d[ ek_parameters.species_index[ species ] ] = D / ( 1.0 + 2.0 * sqrt(2.0)) ;
+
   
   return 0;
 }

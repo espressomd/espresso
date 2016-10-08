@@ -55,12 +55,15 @@ public:
         throw std::runtime_error("shape parameter expects a Shapes::Shape");
       }
     }
-
     SET_PARAMETER_HELPER_VECTOR3D("velocity", m_lbboundary->velocity());
     SET_PARAMETER_HELPER_VECTOR3D("force", m_lbboundary->force());
 #ifdef EK_BOUNDARIES
-    SET_PARAMETER_HELPER("charge_density", m_lbboundary->charge_density());
-    SET_PARAMETER_HELPER("net_charge", m_lbboundary->net_charge());
+    if (name == "charge_density") {
+      m_lbboundary->set_charge_density(boost::get<double>(value));
+    }
+    if (name == "net_charge") {
+      m_lbboundary->set_net_charge(boost::get<double>(value));
+    }
 #endif
   }
     std::shared_ptr<::LBBoundaries::LBBoundary> lbboundary() {

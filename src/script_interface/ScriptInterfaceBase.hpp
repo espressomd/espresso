@@ -99,8 +99,7 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
 
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME =                                                              \
-        boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
+    MEMBER_NAME = boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
   }
 
 #define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \

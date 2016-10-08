@@ -42,8 +42,8 @@ public:
   void set_charge_density(float charge_density) { m_charge_density = charge_density; }
   void set_net_charge(float net_charge) { m_net_charge = net_charge; }
 
-  float charge_density() { return m_charge_density; }
-  float net_charge() { return m_net_charge; }
+  float &charge_density() { return m_charge_density; }
+  float &net_charge() { return m_net_charge; }
 #endif
 
 private:

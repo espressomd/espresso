@@ -22,8 +22,8 @@
 add_subdirectory(00-building_espresso)
 add_subdirectory(01-lennard_jones)
 add_subdirectory(02-charged_system)
-add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(04-lattice_boltzmann)
+add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 
