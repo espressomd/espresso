@@ -10,6 +10,14 @@ IF ELECTROKINETICS:
     cdef class Electrokinetics(lb.HydrodynamicInteraction):
         species_list = []
 
+        def __getitem__(self, key):
+            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+                if len(key) == 3:
+                    return ElectrokineticsRoutines(np.array(key))
+            else: 
+                raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0]," %key)
+
+
         def validate_params(self):
             default_params = self.default_params()
             
@@ -159,8 +167,36 @@ IF ELECTROKINETICS:
             raise Exception("This method is not implemented yet.")
 
 
+    cdef class ElectrokineticsRoutines:
+        cdef int node[3]
+
+        def __init__(self, key):
+            self.node[0] = key[0]
+            self.node[1] = key[1]
+            self.node[2] = key[2]
+
+        property velocity:
+            def __get__(self):
+                cdef double velocity[3]
+                ek_node_print_velocity(self.node[0], self.node[1], self.node[2], velocity)
+                return [velocity[0], velocity[1], velocity[2]]
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
+        property pressure:
+            def __get__(self):
+                cdef double pi[6]
+                lb_lbnode_get_pi(self.node, pi)
+                return np.array([[pi[0],pi[1],pi[3]],
+                                 [pi[1],pi[2],pi[4]],
+                                 [pi[3],pi[4],pi[5]]])
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
     class Species:
-        """Creates a spicies object that is passed to the ek instance"""
+        """Creates a species object that is passed to the ek instance"""
         py_number_of_species = 0
         id = -1
         _params = {}
@@ -263,17 +299,5 @@ IF ELECTROKINETICS:
     
                 return np.array(flux[0], flux[1], flux[2])
     
-    
-    
-# Suggested interface usage
-# ek = Electrokinetics(params)
-# system.actor.add(ek)
-
-# pos_ions = electrokinetics.Species(charge=+1, concentration=0.06, D=0.001)
-# neg_ions = electrokinetics.Species(charge=-1, concentration=0.07, D=0.001)
-
-# ek.add_species(pos_ions, neg_ions)
-
-# pos_ion[5,6,1].density = 0.08     #nodegrid 5,6,1
 
 

@@ -99,7 +99,7 @@ final]{scrartcl}
 \usepackage[pdftex,bookmarks]{hyperref}
 
 % Druckversion
-% für reine pdf-Dateien noch Option colorlinks hinzufgen, um Links farbig zumachen
+% reine pdf-Dateien noch Option colorlinks hinzufgen, um Links farbig zumachen
 % \usepackage[pdftex,bookmarks,bookmarksopen,citecolor={mycitecolor},%
 %  linkcolor={mylinkcolor},urlcolor={myurlcolor},breaklinks=true,%
 %  hypertexnames=false,hyperindex=true,encap,colorlinks]{hyperref} %
@@ -306,6 +306,8 @@ final]{scrartcl}
 \definecolor{codenumber}{rgb}{0.58,0,0.82}
 \definecolor{pblau}{rgb}{0.09375,0.19921875,0.4296875}
 
+
+
 \usepackage{listings}
 \lstset{
   basicstyle=\ttfamily,
@@ -334,12 +336,38 @@ final]{scrartcl}
   rulecolor=\color{codeframe},
   backgroundcolor=\color{codebg},
   mathescape=false,
-  language=tcl
+  language=python
 }
 %\lstset{numbers=left, numberstyle=\tiny, numbersep=5pt, showspaces=false, showstringspaces=false,postbreak=\space, breakindent=5pt, breaklines}
 %\lstset{basicstyle=\ttfamily,keywordstyle=\color{blue}\bfseries,emphstyle=\color{green}, commentstyle=\color{red}\itshape,columns=fullflexible }
 \lstset{keywordsprefix=setmd}
 \lstset{keywords=[6]{thermostat,part,inter,integrate,rescale_velocities,code_info,save_sim,writepdb,analyze,uwerr, lbnode, lb_boundary, lbfluid, constraint,electrokinetics}}
+
+
+%Python
+% \DefineVerbatimEnvironment{code}{Verbatim}%
+% {commandchars=\\\{\}}
+% \makeatletter
+% \newenvironment{pycode}
+% {%
+%   \addtolength{\linewidth}{-2em}% set the line length
+%   \@minipagetrue%%%DPC%%%
+%   \@tempswatrue%%%DPC%%%
+%   \hsize=\linewidth%
+%   \setbox0=\vbox\bgroup\verbatim
+% }{\endverbatim
+%   \unskip\setbox0=\lastbox%%%DPC%%%
+%   \egroup
+%   \par%
+%   \vspace{0.5\baselineskip}%
+%   \noindent\hspace{1em}%
+%   \codebox{\box0}%
+%   \vspace{0.5\baselineskip}%
+%   \par\noindent%
+% }
+% \makeatother
+
+
 
 \newcommand{\todo}[1]{{\color{BrickRed}\textbf{#1}}}
 
