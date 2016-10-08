@@ -118,6 +118,8 @@ IF ELECTROKINETICS and CUDA:
             int ek_tag_reaction_nodes( LB_Boundary* lbboundary, char reaction_type )
 
 
+    cdef extern from "lb.hpp":
+        int lb_lbfluid_print_vtk_boundary(char* filename)
         
 
 

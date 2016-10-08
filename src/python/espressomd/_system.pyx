@@ -42,6 +42,7 @@ if CONSTRAINTS == 1:
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
 from .lbboundaries import LBBoundaries
+from .ekboundaries import EKBoundaries
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -69,6 +70,7 @@ cdef class System:
     if CONSTRAINTS == 1:
         constraints = Constraints()
     lbboundaries = LBBoundaries()
+    ekboundaries = EKBoundaries()
 
     auto_update_observables = AutoUpdateObservables()
     auto_update_correlators = AutoUpdateCorrelators()

@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .lb cimport HydrodynamicInteraction
 from .ekboundaries import EKBoundary
+from . import utils
 import numpy as np
 
 IF ELECTROKINETICS:
@@ -125,6 +126,27 @@ IF ELECTROKINETICS:
             self._params.update(self._get_params_from_es_core())
             return self._params
 
+        def print_vtk_boundary(self, path):
+            lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
+            
+        def print_vtk_velocity(self, path):
+            ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
+
+        def print_vtk_density(self, path):
+            ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
+
+        def print_vtk_potential(self, path):
+            ek_print_vtk_potential(utils.to_char_pointer(path))
+
+        def print_vtk_lbforce(self, path):
+            ek_print_vtk_lbforce(utils.to_char_pointer(path))
+
+        def print_vtk_particle_potential(self, path):
+            IF EK_ELECTROSTATIC_COUPLING:
+                ek_print_vtk_particle_potential(utils.to_char_pointer(path))
+            ELSE:
+                raise Exception("'EK_ELECTROSTATIC_COUPLING' ist not active.")
+
 
         # TODO:
         def checkpoint(self):
@@ -199,8 +221,11 @@ class Species:
         self._params.update(self._get_params_from_es_core())
         return self._params
             
-    
-    
+    def print_vtk_density(self, path):
+        ek_print_vtk_density(self.id, utils.to_char_pointer(path))
+        
+    def print_vtk_flux(self, path):
+        ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
 
 

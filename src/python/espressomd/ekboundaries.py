@@ -7,18 +7,18 @@ class EKBoundaries(ScriptInterfaceHelper):
 
     def add(self, *args, **kwargs):
         if len(args) == 1:
-            if isinstance(args[0], LBBoundary):
-                lbboundary = args[0]
+            if isinstance(args[0], EKBoundary):
+                ekboundary = args[0]
             else:
                 raise TypeError(
                     "Either a EKBoundary object or key-value pairs for the parameters of a EKBoundary object need to be passed.")
         else:
-            lbboundary = LBBoundary(**kwargs)
-        self.call_method("add", object=lbboundary)
-        return lbboundary
+            ekboundary = EKBoundary(**kwargs)
+        self.call_method("add", object=ekboundary)
+        return ekboundary
 
-    def remove(self, lbboundary):
-        self.call_method("remove", lbboundary=lbboundary)
+    def remove(self, ekboundary):
+        self.call_method("remove", ekboundary=ekboundary)
 
 
 class EKBoundary(ScriptInterfaceHelper):
