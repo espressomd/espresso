@@ -175,12 +175,12 @@ IF LB_GPU or LB:
             return double_return
         
         def lbnode_get_node_density(self, coord):
-            cdef double *double_return
+            cdef double double_return
             cdef int[3] c_coord
             for i in range(len(coord)):
                 c_coord[i] = int(coord[i])
-            lb_lbnode_get_rho(c_coord, double_return)
-            return double_return[0]
+            lb_lbnode_get_rho(c_coord, &double_return)
+            return double_return
         
         def lbnode_get_node_pi(self, coord):
             cdef double[6] double_return
@@ -207,12 +207,12 @@ IF LB_GPU or LB:
             return double_return
 
         def lbnode_get_node_boundary(self, coord):
-            cdef int *int_return
+            cdef int int_return
             cdef int[3] c_coord
             for i in range(len(coord)):
                 c_coord[i] = int(coord[i])
-            lb_lbnode_get_boundary(c_coord, int_return)
-            return int_return[0]
+            lb_lbnode_get_boundary(c_coord, &int_return)
+            return int_return
 
 
 
