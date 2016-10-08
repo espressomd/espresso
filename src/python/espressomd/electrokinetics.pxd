@@ -120,7 +120,7 @@ IF ELECTROKINETICS and CUDA:
 
     cdef extern from "lb.hpp":
         int lb_lbfluid_print_vtk_boundary(char* filename)
-        
+        int lb_lbnode_get_pi(int* ind, double* p_pi)
 
 
     # def init_species(id, density, D, valency, ext_force):

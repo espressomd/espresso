@@ -80,122 +80,127 @@ For water at $300\U{K}$ with $\varepsilon_r = 78.54$ it is $l_B\approx0.7095\U{n
 
 \subsection{Setting up the slip pore system}
 
-The script for this simulation comes with this tutorial and is called \texttt{eof\_electrokinetics.tcl}. All used commands are documented in the User's Guide in the section called ``Electrokinetics''.
+The script for this simulation comes with this tutorial and is called \texttt{eof\_electrokinetics.py}. All used commands are documented in the User's Guide in the section called ``Electrokinetics''.
 
 We first set up a periodic simulation box of the desired dimensions. Note that the dimensions are of course given in simulation units.
 
 \begin{lstlisting}
+# Initializing espresso modules and the numpy package
+from espressomd import System, electrokinetics, shapes
+import numpy as np
+
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
 
-set box_x 6
-set box_y 6
-set width 50
+box_x = 6
+box_y = 6
+width = 50
 
-set padding 6
-set box_z [expr $width+2*$padding]
+padding = 1
+box_z = width + 2*padding
 
-setmd box_l $box_x $box_y $box_z
+system = System()
+system.box_l = [box_x, box_y, box_z]
 \end{lstlisting}
 
-We then store all the parameters we calculated in section~\ref{sec:units}. At this point, these parameters only reside in TCL variables. They will only be used by \ES{} once they are being passed to the respective initialization functions.
+We then store all the parameters we calculated in section~\ref{sec:units}. At this point, these parameters only reside in Python variables. They will only be used by \ES{} once they are being passed to the respective initialization functions.
 
-\begin{lstlisting}[firstnumber=13]
+\begin{lstlisting}[firstnumber=19]
 # Set the electrokinetic parameters
 
-set agrid 1.0
-set dt 0.2
-set kT 1.0
-set bjerrum_length 0.7095
-set D 0.006075
-set valency 1.0
-set viscosity_dynamic 79.53
-set density_water 26.15
-set sigma -0.05
-set ext_force 0.1
+agrid = 1.0
+dt = 0.2
+kT = 1.0
+bjerrum_length = 0.7095
+D = 0.006075
+valency = 1.0
+viscosity_dynamic = 79.53
+density_water = 26.15
+sigma = -0.05
+ext_force = 0.1
 \end{lstlisting}
 
 Before we initialize the actual electrokinetics algorithm, we need to set the time step and some other parameters that are not actually used, but would otherwise lead to error messages.
 
-\begin{lstlisting}[firstnumber=26]
+\begin{lstlisting}[firstnumber=32]
 # Set the simulation parameters
 
-setmd time_step $dt
-setmd skin 0.1
-thermostat off
-set integration_length 200000
+system.time_step = dt
+system.cell_system.skin = 0.2
+system.thermostat.turn_off()
+integration_length = int(2e5)
 \end{lstlisting}
 
-We can now initialize the electrokinetics algorithm. All functionality pertaining to this algorithm is available through the \texttt{electrkinetics} command. Please note that the fluid viscosity is specified as a kinematic viscosity, which is the dunamic viscosity divided by the fluid density. The kinematic viscosity is also required if you initialize the pure lattice-Boltzmann method.
+We can now set up the electrokinetics algorithm. All functionality pertaining to this algorithm is available through the \texttt{electrokinetics} submodule of \texttt{espressomd}. Please note that the fluid viscosity is specified as a kinematic viscosity, which is the dynamic viscosity divided by the fluid density. The kinematic viscosity is also required if you initialize the pure lattice-Boltzmann method.
 
-\begin{lstlisting}[firstnumber=33]
+\begin{lstlisting}[firstnumber=39]
 # Set up the (LB) electrokinetics fluid
-
-set viscosity_kinematic [expr $viscosity_dynamic/$density_water]
-electrokinetics agrid $agrid lb_density $density_water viscosity $viscosity_kinematic friction 1.0 T $kT bjerrum_length $bjerrum_length
+viscosity_kinematic = viscosity_dynamic / density_water
+ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = 1.0, T = kT, bjerrum_length = bjerrum_length)
 \end{lstlisting}
 
-The friction parameter in the previous initialization command is again not used but needs to be specified to pass the sanity check of the LB.
+The value of the friction parameter in the previous setup command is irrelevant, since we don't include any explicit particles in our simulation, but it's needed to pass the sanity check of the LB.
 
-Next, we initialize the individual ionic species. In this case, we only set up one species of positively charged counterions. The integer coming after the \texttt{electrkinetics} command denotes the species. Future commands issued with this number will change the species properties. The species' numbers do not have to be issued in succession.
+Next, we set up the individual ionic species. In this case, we only set up one species of positively charged counterions. After setting up the species, we have to add it to the electrokinetics instance. 
 
-\begin{lstlisting}[firstnumber=38]
+\begin{lstlisting}[firstnumber=45]
 # Set up the charged and neutral species
+density_counterions  = -2.0 * sigma / width
+counterions = electrokinetics.Species(density=density_counterions, D=D, valency=valency, ext_force=[ext_force, 0, 0])
 
-set density_counterions [expr -2.0*double($sigma)/double($width)]
-electrokinetics 1 density $density_counterions D $D valency $valency ext_force $ext_force 0 0
+ek.add_species(counterions)
 \end{lstlisting}
 
-The \texttt{electrokinetics boundary} command takes the keyword \texttt{charge\_density} and the numerical charge density in simulation units as the first two arguments. The syntax for the remaining arguments is the same as for the \texttt{lbboundary} command. Here we initialize two sets of boundaries. For each of the two sides a rhomboid shaped charged slice and an uncharged wall covering the whole padding region.
+The \texttt{EKBoundary} command takes the keyword \texttt{charge\_density} and the numerical charge density in simulation units as arguments. The \texttt{shape} keyword takes an instance of a shape, which is provided by the \texttt{shapes} submodule and is the same as for the \texttt{LBBoundary} command. Here we initialize two charged \texttt{Wall} boundaries. To initialize the boundaries, we have to add them to the \texttt{ekboundaries} instance of the system class. Finally, we initialize the electrokinetics algorithm with our setup by adding the electrokinetics instance as an actor to the system.
 
-\begin{lstlisting}[firstnumber=43]
-# Set up the charged boundaries
-
-electrokinetics boundary charge_density [expr $sigma/$agrid] rhomboid corner 0 0 [expr $padding-$agrid] c 0 0 $agrid b $box_x 0 0 a 0 $box_y 0 direction outside
-electrokinetics boundary charge_density [expr $sigma/$agrid] rhomboid corner 0 0 [expr $padding+$width] c 0 0 $agrid b $box_x 0 0 a 0 $box_y 0 direction outside
-
+\begin{lstlisting}[firstnumber=53]
 # Set up the walls confining the fluid
+ek_wall_left = electrokinetics.EKBoundary(charge_density=sigma/agrid, shape=shapes.Wall(normal=[0, 0, 1], dist=padding)) 
+ek_wall_right = electrokinetics.EKBoundary(charge_density=sigma/agrid, shape=shapes.Wall(normal=[0, 0, -1], dist=-(padding+width)))
 
-electrokinetics boundary charge_density 0.0 wall normal 0 0 1 d $padding 0 0 direction outside
-electrokinetics boundary charge_density 0.0 wall normal 0 0 -1 d -[expr $padding+$width] 0 0 direction outside
+system.ekboundaries.add(ek_wall_left)
+system.ekboundaries.add(ek_wall_right)
+
+system.actors.add(ek)
 \end{lstlisting}
 
-After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{electrokinetics node} command, to output local quantities. You can instead also use the \texttt{electrokinetics print} command to output the whole field at once in a Paraview compatible format.
+After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{species\[node\].quantity} command, to output local quantities. You can instead also use the \texttt{electrokinetics.print\_vtk\_quantity} command to output the whole field at once in a Paraview compatible format.
 
 Density and velocity are not the only fields available for output. Please refer to the User's Guide for all available options.
 
-\begin{lstlisting}[firstnumber=53]
+\begin{lstlisting}[firstnumber=66]
 # Integrate the system
+for i in range(100):
+    system.integrator.run(integration_length)
+    sys.stdout.write("\rintegration step: %03i"%i)
+    sys.stdout.flush()
 
-integrate $integration_length
+print("Integration finished.")
 
 # Output
+position_list = []
+density_list = []
+velocity_list = []
+pressure_xz_list = []
 
-set fp [open "eof_electrokinetics.dat" "w"]
-puts $fp "#position measured_density measured_velocity measured_pressure_xz"
+for i in range(int(box_z/agrid)):
+    if (i*agrid >= padding) and (i*agrid < box_z - padding):
+        position = i*agrid - padding - width/2.0 + agrid/2.0
+        position_list.append(position)
 
-for {set i 0} {$i < [expr $box_z/$agrid]} {incr i} {
-  if {[expr $i*$agrid] >= $padding && [expr $i*$agrid] < [expr $box_z - $padding] } {
-    set xvalue [expr $i*$agrid - $padding]
-    set position [expr $i*$agrid - $padding - $width/2.0 + $agrid/2.0]
+        # density
+        density_list.append(counterions[box_x/(2*agrid), box_y/(2*agrid), i].density)
 
-    # density
-    set measured_density [electrokinetics 1 node [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print density]
+        # velocity
+        velocity_list.append(ek[box_x/(2*agrid), box_y/(2*agrid), i].velocity[0])
 
-    # velocity
-    set measured_velocity [lindex [electrokinetics node [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print velocity] 0]
+        # xz component pressure tensor
+        pressure_xz_list.append(ek[box_x/(2*agrid), box_y/(2*agrid), i].pressure[0,2])
 
-    # xz component pressure tensor
-    set measured_pressure_xz [lindex [lbnode [expr int($box_x/(2*$agrid))] [expr int($box_y/(2*$agrid))] $i print pi_neq] 3]
-
-    puts $fp "$position $measured_density $measured_velocity $measured_pressure_xz"
-  }
-}
-
-close $fp
+np.savetxt("eof_electrokinetics.dat", np.column_stack((position_list, density_list, velocity_list, pressure_xz_list)), header="#position calculated_density calculated_velocity calculated_pressure_xz")
 \end{lstlisting}
 
-With this tutorial also came a Gnuplot script \texttt{plot.gp}. If everything went well, running this script with Gnuplot from a folder containing the output files \texttt{eof\_analytical.dat} and \texttt{eof\_electrokinetics.dat} should produce the result shown in Figure~\ref{fig:result}.
+With this tutorial also came a Python matplotlib script \texttt{plot.py}. If everything went well, running this script with Python from a folder containing the output files \texttt{eof\_analytical.dat} and \texttt{eof\_electrokinetics.dat} should produce the result shown in Figure~\ref{fig:result}.
 
 \begin{figure}[h]
   \begin{center}

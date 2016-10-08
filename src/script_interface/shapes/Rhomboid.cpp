@@ -28,7 +28,7 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Rhomboid::valid_parameters() const {
-  return {{"pos", {ParameterType::VECTOR3D, true}},
+  return {{"corner", {ParameterType::VECTOR3D, true}},
           {"a", {ParameterType::VECTOR3D, true}},
           {"b", {ParameterType::VECTOR3D, true}},
           {"c", {ParameterType::VECTOR3D, true}},
@@ -36,7 +36,7 @@ ParameterMap Rhomboid::valid_parameters() const {
 }
 
 VariantMap Rhomboid::get_parameters() const {
-  return {{"pos", m_rhomboid->pos()},
+  return {{"corner", m_rhomboid->pos()},
           {"a", m_rhomboid->a()},
           {"b", m_rhomboid->b()},
           {"c", m_rhomboid->c()},
@@ -46,7 +46,7 @@ VariantMap Rhomboid::get_parameters() const {
 void Rhomboid::set_parameter(const string &name,
                              const ScriptInterface::Variant &value) {
 
-  SET_PARAMETER_HELPER("pos", m_rhomboid->pos());
+  SET_PARAMETER_HELPER("corner", m_rhomboid->pos());
   SET_PARAMETER_HELPER("a", m_rhomboid->a());
   SET_PARAMETER_HELPER("b", m_rhomboid->b());
   SET_PARAMETER_HELPER("c", m_rhomboid->c());
