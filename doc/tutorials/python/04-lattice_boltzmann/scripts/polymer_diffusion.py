@@ -1,34 +1,44 @@
-from espressomd import System, interactions, lb
+from espressomd import System, interactions, lb, polymer
+from espressomd.observables import ComPosition
+from espressomd.correlators import Correlator
 
+import gc
+from numpy import savetxt, zeros
+import sys
+
+#gc.disable()
 # System setup
 system = System()
 system.box_l = [32, 32, 32]
-system.cell_system.skin = 0.2
+system.cell_system.skin = 0
 
-time_step = 0.1
-
+# Setup constants
+time_step = 0.01
+loops = 100000
+step_per_loop = 100
+try:
+    mpc = int(sys.argv[1])
+except:
+    raise ValueError("First argument cannot be transformed into integer!")
 # Lennard-Jones interaction
 system.non_bonded_inter[0,0].lennard_jones.set_params(
-    epsilon=1.0, sigma=1.0, r_cut=1.226,
-    shift=0.25, cutoff=0)
+    epsilon=1.0, sigma=1.0, 
+    shift=0.25, cutoff=1.226)# Fene Bond
 
-# Fene Bond
+# Fene interactio
 fene = interactions.FeneBond(k=7, d_r_max=2)
 system.bonded_inter.add(fene)
 
-# TODO
-# polymer 1 $nom 1. bond 0 mode PSAW
+# Setup polymer of part_id 0 with fene bond
+poly = system.polymer
+poly(N_P=1, MPC=mpc, bond_id=fene._bond_id, bond_length=1)
 
-# TODO
-# set com_pos [observable new com_position all]
 
-# TODO
-# set msd [correlation new obs1 $com_pos corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [setmd time_step] compress1 discard1]
 
 print("Warming up the polymer chain.")
 ## For longer chains (>100) an extensive 
 ## warmup is neccessary ...
-system.time_step 0.002
+system.time_step = 0.002
 system.thermostat.set_langevin(kT=1.0, gamma=10)
 
 for i in range(100):
@@ -45,7 +55,7 @@ system.thermostat.turn_off()
 
 system.part[:].v = [0,0,0]
 
-lbf = lb.LBFluid(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
+lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=5, tau=time_step, fric=5)
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=1)
 
@@ -53,26 +63,28 @@ print("Warming up the system with LB fluid.")
 system.integrator.run(1000)
 print("LB fluid warming finished.")
 
+# configure correlators
+com_pos = ComPosition(ids=(0,))
+c = Correlator(obs1 = com_pos, tau_lin=16, tau_max=3000, dt=time_step,
+        corr_operation="square_distance_componentwise", compress1="discard1")
+system.auto_update_correlators.add(c)
+
 print("Sampling started.")
-# TODO
-# correlation $msd autoupdate start
-for i in range(10000):
-    system.integrator.run(100)
+for i in range(loops):
+    system.integrator.run(step_per_loop)
+    system.analysis.append()
     sys.stdout.write("\rSampling: %05i"%i)
     sys.stdout.flush()
 
-# TODO
-# correlation $msd finalize
-# # write correlation data to file
-# set msd_out [open "./msd_nom${nom}.dat" "w"]
-# set number_of_datapoints [llength [correlation $msd print]]
-# for { set i 0 } { $i < $number_of_datapoints } { incr i } {
-# 	puts $msd_out "[lindex [lindex [correlation $msd print] $i] 0]\
-#  [expr 1./3.*([lindex [lindex [correlation $msd print] $i] 2]\
-#  +[lindex [lindex [correlation $msd print] $i] 3]\
-#  +[lindex [lindex [correlation $msd	print] $i] 4])]";
-#  }
-# close $msd_out
-# set rh_out [open "./rh_nom${nom}.dat" "w"]
-# puts $rh_out [analyze <rh> 0 1 $nom]
-# close $rh_out
+c.finalize()
+corrdata = c.result()
+corr = zeros((corrdata.shape[0],2))
+corr[:,0] = corrdata[:,0]
+corr[:,1] = (corrdata[:,2] + corrdata[:,3] + corrdata[:,4]) / 3
+
+savetxt("./msd_nom"+str(mpc)+".dat", corr)
+
+with open("./rh_out.dat","a") as datafile:
+    rh = system.analysis.calc_rh(chain_start=0, number_of_chains=1, chain_length=mpc-1)
+    datafile.write(str(mpc)+ "    " + str(rh[0])+"\n")
+

@@ -63,12 +63,12 @@ subproblems that allow to (hopefully) fully understand the process.
 \subsection{Step 1: Diffusion of a single particle}
 Our first step is to investigate the diffusion of a single particle
 that is coupled to an LB fluid by the point coupling method.
-Take a look at the script \texttt{single\_particle\_diffusion.tcl}.
+Take a look at the script \texttt{single\_particle\_diffusion.py}.
 The script takes the LB-friction coefficient as an argument. Start with
 an friction coefficient of 1.0:
 {\vspace{0,2cm}\small
 \begin{lstlisting}[numbers=none]
-/path/to/Espresso single_particle_diffusion.tcl 1.0
+/path/to/pypresso single\_particle\_diffusion.py 1.0
 \end{lstlisting}
 \vspace{0,2cm}
 }
@@ -78,16 +78,11 @@ thermalized.
 The random forces on the particle and
 within the LB fluid will cause the particle to move. The mean squared
 displacement is calculated during the simulation via a multiple-tau correlator. 
-Run the simulation script and plot the output data \texttt{msd.dat} with
-\texttt{gnuplot}.
-What is different for short times than for long times?
-Plot the data with double logarithmic axes.
-{\vspace{0,2cm}\small
-\begin{lstlisting}[numbers=none]
-set log
-plot "msd.dat"
-\end{lstlisting}\vspace{0,2cm}
-}
+Run the simulation script and plot the output data \texttt{msd\_1.0.dat}. To
+load the file into a numpy array, one can use \texttt{numpy.loadtxt}.
+Zoom in on the origin of the plot. What do you see for short times? What do you
+see on a longer time scale? Produce a double-logarithmic plot to assess the power
+law.
 \begin{figure}[h]
   \begin{center}
 	  \includegraphics{figures/diffusion/msd.pdf}
@@ -98,17 +93,8 @@ plot "msd.dat"
 
 Can you give an explanation for the quadratic time dependency for short
 times?
-Use a linear fit in \texttt{gnuplot} for the long time regime to determine the 
-diffusion coefficient:
-{\vspace{0,2cm}\small
-\begin{lstlisting}[numbers=none]
-f(x)=a*x+b
-fit [1:] f(x) 'msd.dat' via a,b
-\end{lstlisting}\vspace{0,2cm}
-}
-The square brackets in the fit command tell \lstinline{gnuplot}
-only to use the range right of $x=1$ for the fit. Choose the correct range by
-yourself by looking at the log-log-plot of the MSD.
+Use the function \texttt{curve\_fit} from the module \texttt{scipy.optimize} to
+produce a fit for the linear regime and determine the diffusion coefficient.
 
 %The file \lstinline|energy.dat| contains the kinetic energy of the
 %particle as a function of the elapsed simulation time. Investigate
@@ -118,8 +104,9 @@ yourself by looking at the log-log-plot of the MSD.
 
 Run the simulation again with different values for the friction
 coefficient, e.g. 1. 2. 4. 10. Calculate the diffusion
-coefficient for all cases and use gnuplot to make a plot of
-$D$ as a function of $\gamma$. What do you observe?
+coefficient for all cases and plot them as a function of $\gamma$. What relation
+do you observe?
+
 %The tiny helper script \lstinline|fit_lin.sh| 
 %(with argument \lstinline|msd_pos.dat|)
 %will help you with that. It contains
@@ -143,31 +130,40 @@ and additionally a bonded interaction between
 adjacent beads to hold the polymer together. You have already learned
 that the command
 {\vspace{0,2cm}\small
-\begin{lstlisting}[numbers=none]
-inter 0 0 lennard-jones 1. 1. 1.125 0.25 0. 
-\end{lstlisting}\vspace{0,2cm}
+\begin{pypresso}
+  s.non\_bonded\_inter[0,0].lennard\_jones.set\_params(
+      epsilon = 1.0, sigma = 1.0,
+      shift = 0.25, cutof = 1.226)
+\end{pypresso}\vspace{0,2cm}
 }
 creates a Lennard-Jones interaction with $\varepsilon=1.$, $\sigma=1.$,
 $r_\text{cut} = 1.125$ and $\varepsilon_\text{shift}=0.25$ between particles
 of type 0, which is the desired 
 repulsive interaction. The command
 {\vspace{0,2cm}\small
-\begin{lstlisting}[numbers=none]
-inter 0 FENE 7. 2. 
-\end{lstlisting}\vspace{0,2cm}
+\begin{pypresso}
+  from espressomd import interactions
+  fene = interactions.FeneBond(k = 7,d\_r\_max = 2)
+\end{pypresso}
+\vspace{0,2cm}
 }
-creates a FENE (see \ES{} manual for the details) bond interaction. Still \ES{}
+creates a \texttt{FeneBond} object (see \ES{} manual for the details). Still \ES{}
 does not know between which beads this interaction should be applied.
-This can be either be specified explicitly or done with the \lstinline|polymer|
-command. This creates a given number of beads, links them with the given
+This can be either be specified explicitly or done with the \texttt{polymer}
+module. This creates a given number of beads, links them with the given
 bonded interaction and places them following a certain algorithm. We will
 use the pruned self-avoiding walk: The monomers are set according 
 to a pruned self-avoiding walk (in 3D) with a
 fixed distance between adjacent bead positions. The syntax is:
 {\vspace{0,2cm}\small
-\begin{lstlisting}[numbers=none]
-polymer $N_polymers $N_monomers 1.0 types 0 mode PSAW bond 0 
-\end{lstlisting}\vspace{0,2cm}
+\begin{pypresso}
+  from espressomd import polymer
+  # mpc: monomers per chain
+  mpc = 30
+  poly = system.polymer(N\_P=1, MPC = mpc, bond\_id=fene.\_bond\_id,
+                        bond\_length = 1)
+\end{pypresso}
+\vspace{0,2cm}
 }
 Using a random walk to create a polymer causes trouble: The random walk may 
 cross itself (or closely approach itself) and the LJ potential is very
@@ -177,30 +173,28 @@ walk should prevent that, but to be sure
 we perform some MD steps with a capped LJ potential, this means 
 forces above a certain threshold will be set to the threshold in order to prevent
 the system from exploding. To see how this is done, look at the script 
-\texttt{polymer\_diffusion.tcl}.
+\texttt{polymer\_diffusion.py}.
 It contains a quite long warmup command so that also longer polymers
 are possible. You can probably make it shorter.
 
 It is called in the following way:
 {\vspace{0,2cm}\small
 \begin{lstlisting}[numbers=none]
-/path/to/Espresso polymer_diffusion.tcl $N_monomers  
+/path/to/pypresso polymer\_diffusion.py \$N\_monomers  
 \end{lstlisting}\vspace{0,2cm}
 }
 This allows to quickly change the number of monomers without editing 
-the script. Change the variable  \lstinline|vmd_output| to yes to 
-look at the diffusing polymer.
+the script.
 For the warmup a Langevin thermostat is used to keep the temperature constant.
-You will have to add the LB command by yourself.
 Furthermore we want to compute the diffusion constant of the polymer for
 different numbers of monomers. For this purpose we can again use the multiple
 tau correlator. Have a look at the \ES{} -script for the single particle diffusion
 and add the adapted commands for the polymer. Find out how many integration steps are
 necessary to capture the long-time diffusion regime of the polymer. The script
 already computes the time averaged hydrodynamic radius and stores it in a file
-\lstinline|rh_nomX.dat| where \lstinline|X| is the number of monomers.
+\texttt{rh\_nom\_xx.dat} where \texttt{xx} is the number of monomers.
 
-Run the script for different numbers of monomers and use gnuplot to calculate
+Run the script for different numbers of monomers and determine the evolution of
 the diffusion coefficient as a function of the chain length. Compare the results
 of your \ES{} simulations with the given Kirkwood-Zimm formula
-(eq.~\ref{kirkwood}).
+(eq.~\ref{kirkwood}). 

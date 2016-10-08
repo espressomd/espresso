@@ -1,13 +1,28 @@
 from espressomd import System, lb
+from espressomd.observables import ParticlePositions
+from espressomd.correlators import Correlator
+
 import numpy as np
+import sys
+
+# Constants
+
+loops = 400000
+steps = 10
+time_step = 0.01
+runtime = loops*steps*time_step
+box_l = 16
+try:
+    lb_friction = float(sys.argv[1])
+except:
+    raise ValueError("Input argument cannot be transformed to float.")
 
 # System setup
 system = System()
-system.time_step = 0.1
-system.cell_system.skin = 0.2
-system.box_l = [16, 16, 16]
+system.time_step = time_step
+system.cell_system.skin = 0
+system.box_l = [box_l] * 3
 
-lb_friction = 10
 
 lbf = lb.LBFluid_GPU(agrid=1, dens=1, visc=1, tau=0.01, fric=lb_friction)
 system.actors.add(lbf)
@@ -15,40 +30,33 @@ system.thermostat.set_lb(kT=1)
 
 system.part.add(pos=[0, 0, 0])
 
-# TODO
-# # define a position observable
-# set pos [observable new particle_positions all]
-# # mean square displacement of all particles
-# #set msd [correlation new obs1 $pos corr_operation square_distance_componentwise tau_lin 16 tau_max [expr $loops*$steps_per_loop*[setmd time_step]] dt [setmd time_step] compress1 discard1]
-# set msd [correlation new obs1 $pos corr_operation square_distance_componentwise tau_lin 16 tau_max 1000.0 dt [setmd time_step] compress1 discard1]
 
 ## perform a couple of steps to come to equilbrium
 print("Equilibrating the system.")
-system.integrator.run(1e3)
+system.integrator.run(1000)
 print("Equlibration finished.")
 
-# TODO
-# correlation $msd autoupdate start
+# Setup observable correlator
+pos = ParticlePositions(ids=(0,))
+c = Correlator(obs1=pos, tau_lin = 16, tau_max = 1000, dt = time_step,
+        corr_operation="square_distance_componentwise", compress1="discard1")
+system.auto_update_correlators.add(c)
 
 print("Sampling started.")
-for i in range(4e5):
-    system.integrator.run(10)
+for i in range(loops):
+    system.integrator.run(steps)
 
-    if i % 1e3 == 0:
+    if i % 1e2 == 0:
         sys.stdout.write("\rSampling: %05i"%i)
         sys.stdout.flush()
 
 print("Sampling finished.")
 
-# TODO
-# correlation $msd finalize
-# set msd_out [open "./msd_gamma${lb_friction}.dat" "w"]
-# set number_of_datapoints [llength [correlation $msd print]]
-# for { set i 0 } { $i < $number_of_datapoints } { incr i } {
-# 	puts $msd_out "[lindex [lindex [correlation $msd print] $i] 0]\
-#  [expr 1./3.*([lindex [lindex [correlation $msd print] $i] 2]\
-#  +[lindex [lindex [correlation $msd print] $i] 3]\
-#  +[lindex [lindex [correlation $msd	print] $i] 4])]";
-#  }
-#  close $msd_out
+c.finalize()
+corrdata = c.result()
+corr = np.zeros((corrdata.shape[0],2))
+corr[:,0] = corrdata[:,0]
+corr[:,1] = (corrdata[:,2] + corrdata[:,3] + corrdata[:,4]) / 3
+
+np.savetxt("./msd_"+str(lb_friction)+".dat", corr)
 
