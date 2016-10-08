@@ -68,7 +68,7 @@ The script takes the LB-friction coefficient as an argument. Start with
 an friction coefficient of 1.0:
 {\vspace{0,2cm}\small
 \begin{lstlisting}[numbers=none]
-/path/to/pypresso single\_particle\_diffusion.py 1.0
+/path/to/pypresso single_particle_diffusion.py 1.0
 \end{lstlisting}
 \vspace{0,2cm}
 }
@@ -131,7 +131,7 @@ adjacent beads to hold the polymer together. You have already learned
 that the command
 {\vspace{0,2cm}\small
 \begin{pypresso}
-  s.non\_bonded\_inter[0,0].lennard\_jones.set\_params(
+  s.non_bonded_inter[0,0].lennard_jones.set_params(
       epsilon = 1.0, sigma = 1.0,
       shift = 0.25, cutof = 1.226)
 \end{pypresso}\vspace{0,2cm}
@@ -143,7 +143,7 @@ repulsive interaction. The command
 {\vspace{0,2cm}\small
 \begin{pypresso}
   from espressomd import interactions
-  fene = interactions.FeneBond(k = 7,d\_r\_max = 2)
+  fene = interactions.FeneBond(k = 7,d_r_max = 2)
 \end{pypresso}
 \vspace{0,2cm}
 }
@@ -160,8 +160,8 @@ fixed distance between adjacent bead positions. The syntax is:
   from espressomd import polymer
   # mpc: monomers per chain
   mpc = 30
-  poly = system.polymer(N\_P=1, MPC = mpc, bond\_id=fene.\_bond\_id,
-                        bond\_length = 1)
+  poly = system.polymer(N_P=1, MPC = mpc, bond_id=fene._bond_id,
+                        bond_length = 1)
 \end{pypresso}
 \vspace{0,2cm}
 }
@@ -180,7 +180,7 @@ are possible. You can probably make it shorter.
 It is called in the following way:
 {\vspace{0,2cm}\small
 \begin{lstlisting}[numbers=none]
-/path/to/pypresso polymer\_diffusion.py \$N\_monomers  
+/path/to/pypresso polymer_diffusion.py $N_monomers  
 \end{lstlisting}\vspace{0,2cm}
 }
 This allows to quickly change the number of monomers without editing 
