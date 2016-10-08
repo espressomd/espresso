@@ -159,112 +159,112 @@ IF ELECTROKINETICS:
             raise Exception("This method is not implemented yet.")
 
 
-class Species:
-    """Creates a spicies object that is passed to the ek instance"""
-    py_number_of_species = 0
-    id = -1
-    _params = {}
-
-
-    def __getitem__(self, key):
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
-            if len(key) == 3:
-                return SpecieRoutines(np.array(key), self.id)
-        else: 
-            raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," %key)
-
-    def __init__(self, **kwargs):
-        Species.py_number_of_species += 1
-        self.id = Species.py_number_of_species
-        self._params = self.default_params()
-
-        # Check if all required keys are given
-        for k in self.required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
-            self._params[k] = kwargs[k]
-
-        for k in kwargs:
-            if k in self.valid_keys():
+    class Species:
+        """Creates a spicies object that is passed to the ek instance"""
+        py_number_of_species = 0
+        id = -1
+        _params = {}
+    
+    
+        def __getitem__(self, key):
+            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+                if len(key) == 3:
+                    return SpecieRoutines(np.array(key), self.id)
+            else: 
+                raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," %key)
+    
+        def __init__(self, **kwargs):
+            Species.py_number_of_species += 1
+            self.id = Species.py_number_of_species
+            self._params = self.default_params()
+    
+            # Check if all required keys are given
+            for k in self.required_keys():
+                if k not in kwargs:
+                    raise ValueError(
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
-            else:
-                raise KeyError("%s is not a vaild key" % k)
-
-    def valid_keys(self):
-        return "density", "D", "valency", "ext_force"
-        
-    def required_keys(self):
-        return ["density", "D", "valency"]
-
-    def default_params(self):
-        return {"ext_force": [0, 0, 0]}
-
-    def _get_params_from_es_core(self):
-        return {"density": ek_parameters.density[ek_parameters.species_index[self.id]],
-                "D": ek_parameters.D[ek_parameters.species_index[self.id]],
-                "valency": ek_parameters.valency[ek_parameters.species_index[self.id]],
-                "ext_force": [ek_parameters.ext_force[0][ek_parameters.species_index[self.id]],
-                              ek_parameters.ext_force[1][ek_parameters.species_index[self.id]],
-                              ek_parameters.ext_force[2][ek_parameters.species_index[self.id]]]}
-        
-    def _set_params_in_es_core(self):
-        ek_set_D(self.id, self._params["D"])
-        ek_set_valency(self.id, self._params["valency"])
-        ek_set_density(self.id, self._params["density"])
-        ek_set_ext_force(self.id, self._params["ext_force"][0], self._params["ext_force"][1], self._params["ext_force"][2])
-
-    def _activate_method(self):
-        self._set_params_in_es_core()
-
-    def get_params(self):
-        self._params.update(self._get_params_from_es_core())
-        return self._params
+    
+            for k in kwargs:
+                if k in self.valid_keys():
+                    self._params[k] = kwargs[k]
+                else:
+                    raise KeyError("%s is not a vaild key" % k)
+    
+        def valid_keys(self):
+            return "density", "D", "valency", "ext_force"
             
-    def print_vtk_density(self, path):
-        ek_print_vtk_density(self.id, utils.to_char_pointer(path))
-        
-    def print_vtk_flux(self, path):
-        ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
-
-
-
-cdef class SpecieRoutines:
-    cdef int node[3]
-    cdef int id
-
-    def __init__(self, key, id):
-        self.node = key
-        self.id = id
-
-    property density:
-        def __set__(self, value):
-            if isinstance(value, float) or isinstance(value, int):
-                if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+        def required_keys(self):
+            return ["density", "D", "valency"]
+    
+        def default_params(self):
+            return {"ext_force": [0, 0, 0]}
+    
+        def _get_params_from_es_core(self):
+            return {"density": ek_parameters.density[ek_parameters.species_index[self.id]],
+                    "D": ek_parameters.D[ek_parameters.species_index[self.id]],
+                    "valency": ek_parameters.valency[ek_parameters.species_index[self.id]],
+                    "ext_force": [ek_parameters.ext_force[0][ek_parameters.species_index[self.id]],
+                                  ek_parameters.ext_force[1][ek_parameters.species_index[self.id]],
+                                  ek_parameters.ext_force[2][ek_parameters.species_index[self.id]]]}
+            
+        def _set_params_in_es_core(self):
+            ek_set_D(self.id, self._params["D"])
+            ek_set_valency(self.id, self._params["valency"])
+            ek_set_density(self.id, self._params["density"])
+            ek_set_ext_force(self.id, self._params["ext_force"][0], self._params["ext_force"][1], self._params["ext_force"][2])
+    
+        def _activate_method(self):
+            self._set_params_in_es_core()
+    
+        def get_params(self):
+            self._params.update(self._get_params_from_es_core())
+            return self._params
+                
+        def print_vtk_density(self, path):
+            ek_print_vtk_density(self.id, utils.to_char_pointer(path))
+            
+        def print_vtk_flux(self, path):
+            ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
+    
+    
+    
+    cdef class SpecieRoutines:
+        cdef int node[3]
+        cdef int id
+    
+        def __init__(self, key, id):
+            self.node = key
+            self.id = id
+    
+        property density:
+            def __set__(self, value):
+                if isinstance(value, float) or isinstance(value, int):
+                    if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                        raise Exception("Species has not been added to EK.")
+    
+                else:
+                    raise ValueError("Type of property is wrong. Expected: float.")
+            
+            def __get__(self):
+                cdef double density
+                if ek_node_print_density(self.id, self.node[0], self.node[1], self.node[2], &density) != 0:
                     raise Exception("Species has not been added to EK.")
-
-            else:
-                raise ValueError("Type of property is wrong. Expected: float.")
-        
-        def __get__(self):
-            cdef double density
-            if ek_node_print_density(self.id, self.node[0], self.node[1], self.node[2], &density) != 0:
-                raise Exception("Species has not been added to EK.")
-            return density
+                return density
+                
+        property flux:
+            def __set__(self, value):
+                raise ValueError("Node flux is not settable.")
             
-    property flux:
-        def __set__(self, value):
-            raise ValueError("Node flux is not settable.")
-        
-        def __get__(self):
-            cdef double flux[3]
-            if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
-                raise Exception("Species has not been added to EK.")
-
-            return np.array(flux[0], flux[1], flux[2])
-
-
-
+            def __get__(self):
+                cdef double flux[3]
+                if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
+                    raise Exception("Species has not been added to EK.")
+    
+                return np.array(flux[0], flux[1], flux[2])
+    
+    
+    
 # Suggested interface usage
 # ek = Electrokinetics(params)
 # system.actor.add(ek)
