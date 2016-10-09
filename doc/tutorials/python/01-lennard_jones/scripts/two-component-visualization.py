@@ -1,3 +1,4 @@
+
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -16,6 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+
+# This is a modified version of the lj liquid script, which simulates
+# a two component lj liquid.
+# By switching the lj interaction between the two components
+# from atractive to purely repulsive, de-mixing can be achieved.
+
+# 1. Setup and equilibrate LJ liquid
 from __future__ import print_function
 import espressomd
 from espressomd import code_info
@@ -23,22 +32,29 @@ from espressomd import code_info
 import os 
 import numpy as np
 
-print("""
-=======================================================
-=                    lj_tutorial.py                   =
-=======================================================
 
-Program Information:""")
-print(code_info.features())
 
-# System parameters
-#############################################################
-n_part  = 500
+from espressomd.visualizationMayavi import *
+from threading import Thread
+import numpy
+
+
+
+
+
+
+
+
+
+
+
+
+n_part  = 200
 density = 0.8442
 
 skin        = 0.1
 time_step   = 0.01 
-eq_tstep    = 0.001
+eq_tstep    = 0.01
 temperature = 0.728
 
 box_l       = np.power(n_part/density, 1.0/3.0) 
@@ -48,11 +64,11 @@ warm_n_time = 2000
 min_dist    = 0.87
 
 # integration
-sampling_interval       = 100
+sampling_interval       = 10
 equilibration_interval  = 1000
 
-sampling_iterations     = 100
-equilibration_iterations= 5 
+sampling_iterations     = 10000
+equilibration_iterations= 10
 
 
 # Interaction parameters (Lennard Jones)
@@ -61,7 +77,12 @@ equilibration_iterations= 5
 lj_eps = 1.0
 lj_sig = 1.0
 lj_cut = 2.5*lj_sig
-lj_cap = 5 
+lj_cap = 20
+
+# This is the cutoff of the interaction between species 0 and 1.
+# By setting it to 2**(1./6.) *lj_sig, it can be made purely repulsive
+lj_cut_mixed =2.5 * lj_sig
+lj_cut_mixed =2**(1./6.) * lj_sig
 
 
 # System setup
@@ -76,9 +97,26 @@ system.cell_system.skin         = skin
 
 system.box_l = [box_l, box_l, box_l]
 
+
+# Here, lj interactions need to be setup for both components
+# as well as for the mixed case of component 0 interacting with
+# component 1.
+
+# component 0
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
+
+# component 1
+system.non_bonded_inter[1, 1].lennard_jones.set_params(
+    epsilon=lj_eps, sigma=lj_sig,
+    cutoff=lj_cut, shift="auto")
+
+# mixed case
+system.non_bonded_inter[0, 1].lennard_jones.set_params(
+    epsilon=lj_eps, sigma=lj_sig,
+    cutoff=lj_cut_mixed, shift="auto")
+
 system.non_bonded_inter.set_force_cap(lj_cap)
 
 print("LJ-parameters:")
@@ -94,6 +132,8 @@ volume = box_l * box_l * box_l
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    # Every 2nd particle should be of component 1 
+    if i%2==1: system.part[i].type=1
 
 #############################################################
 #  Warmup Integration                                       #
@@ -117,63 +157,17 @@ while i < warm_n_time and act_min_dist < min_dist :
 
 system.non_bonded_inter.set_force_cap(0)
 
-print("\nWarm up finished\n")
-
-system.time_step = eq_tstep 
-
-for i in range(equilibration_iterations):
-    system.integrator.run(equilibration_interval)
-    energies = system.analysis.energy()
-    print("eq run {} at time {}\n".format(i, system.time))
-
-print("\nEquilibration done\n")
-print("\nSampling\n")
-system.time_step = time_step
-# Record energy versus time
-en_fp   = open('data/energy.dat', 'w')
-
-# Record radial distribution function
-rdf_fp  = open('data/rdf.dat', 'w')
-
-en_fp.write("#\n#\n#\n# Time\ttotal energy\tkinetic energy\tlennard jones energy\ttemperature\n")
+def loop():
+    global system
+    system.integrator.run(100)
+    visualizer.update()
 
 
+#Start simulation in seperate thread
+visualizer = mayaviLive(system)
+t = Thread(target=loop)
+t.daemon = True
+t.start()
 
-# Data arrays for simple error estimation
-etotal = np.zeros((sampling_iterations,))
-
-# analyzing the radial distribution function
-# setting the parameters for the rdf
-r_bins = 50
-r_min  = 0.0
-r_max  = system.box_l[0]/2.0
-
-avg_rdf=np.zeros((r_bins,))
-
-for i in range(1, sampling_iterations + 1):
-    system.integrator.run(sampling_interval)
-    energies = system.analysis.energy()
-
-    r, rdf = system.analysis.rdf(rdf_type="rdf", type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max, r_bins=r_bins)
-    avg_rdf+= rdf/sampling_iterations
-
-    kinetic_temperature = energies['ideal']/( 1.5 * n_part)
-
-    en_fp.write("%f\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (system.time, energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
-
-    etotal[i-1] = energies['total']
-
-print("\nMain sampling done\n")
-
-# calculate the variance of the total energy using scipys statistic operations
-error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
-
-en_fp.write("#mean_energy energy_error %1.5e %1.5e\n" % (etotal.mean(), error_total_energy) )
-
-# write out the radial distribution data
-for i in range(r_bins):
-    rdf_fp.write("%1.5e %1.5e\n" % (r[i], avg_rdf[i]))
-
-
-en_fp.close()
-rdf_fp.close()
+#Start blocking visualizer
+visualizer.start()
