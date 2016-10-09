@@ -13,7 +13,7 @@ step_per_loop = 100
 # System setup
 system = System()
 system.box_l = [32, 32, 32]
-system.cell_system.skin = 0
+system.cell_system.skin = 0.4
 
 try:
     mpc = int(sys.argv[1])

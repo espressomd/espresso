@@ -66,15 +66,11 @@ def size(vector):
         tmp+=k*k
     return np.sqrt(tmp)
 
-for i in range(10):
-    system.integrator.run(40)
+for i in range(40):
+    system.integrator.run(400)
     lbf.print_vtk_velocity("fluid%04i.vtk" %i)
-    # sys.stdout.write("\rloop: %02i"%i)
-    # sys.stdout.flush()
-
-    force = sphere.get_params()["force"]
-    print("%i:Measured force: f=%f" %(i,size(force)))
-
+    sys.stdout.write("\rloop: %02i"%i)
+    sys.stdout.flush()
 
 
 print("\nIntegration finished.")

@@ -20,7 +20,7 @@ except:
 # System setup
 system = System()
 system.time_step = time_step
-system.cell_system.skin = 0
+system.cell_system.skin = 0.4
 system.box_l = [box_l] * 3
 
 
