@@ -31,7 +31,7 @@ system.integrator.run(5000)
 ## Part of the solution
 node_v_list = []
 for i in range(box_l):
-    node_v_list.append(lbf.lbnode_get_node_velocity([i, 0, 0])[1])
+    node_v_list.append(lbf[i, 0, 0].velocity[1])
 
 with open("lb_fluid_velocity.dat", "w") as f:
     for line in node_v_list:

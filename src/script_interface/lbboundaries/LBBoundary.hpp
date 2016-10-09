@@ -18,7 +18,7 @@ public:
 
   VariantMap get_parameters() const override {
     return {{"velocity", m_lbboundary->velocity()},
-	    {"force", m_lbboundary->force()},
+	    {"force", m_lbboundary->get_force()},
 #ifdef EK_BOUNDARIES
 	    {"charge_density", m_lbboundary->charge_density()},
 	    {"net_charge", m_lbboundary->net_charge()},
