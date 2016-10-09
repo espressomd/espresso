@@ -17,7 +17,7 @@ LB time step, several MD steps may be performed. This allows to speed
 up the simulations and is adjusted with the parameter \texttt{tau}.
 The LB parameter \texttt{tau} must be an integer multiple of the MD timestep.
 
-Even if MD features are not used, the System parameters \texttt{skin} and
+Even if MD features are not used, the System parameters \texttt{cell\_system.skin} and
 \texttt{time\_step} must be set. LB steps are performed 
 in regular intervals, such that the timestep $\tau$ for LB is recovered. 
 
@@ -86,17 +86,17 @@ The \texttt{LBFluid} class also provides a set of methods which can be used to
 sample data from the fluid nodes. For example 
 \vspace{0,2cm}
 \begin{pypresso}
-  lbf.lbnode_get_node_xxxx([X,Y,Z])
+  lbf[X,Y,Z].quantity
 \end{pypresso}
 \vspace{0,2cm}
-returns the propert xxxx of the node with $(X,Y,Z)$ coordinates. Note that the
+returns the quantity of the node with $(X,Y,Z)$ coordinates. Note that the
 indexing in every direction starts with 0. The possible properties are:
 \vspace{0,8cm}
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
   \texttt{velocity} & the fluid velocity (list of three floats) \\
   \texttt{pi} & the stress tensor (list of six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
   \texttt{pi\_neq} & the nonequilbrium part of the stress tensor, components as above. \\
-  \texttt{pop} & the 19 populations of the D3Q19 lattice.\\
+  \texttt{population} & the 19 populations of the D3Q19 lattice.\\
   \texttt{boundary} & The boundary index.\\
   \texttt{density}\ & the local density. 
 \end{tabular} \\
@@ -127,9 +127,7 @@ Boundaries are initialized by passing a shape object to the \texttt{LBBoundary}
 class. One way to initialize a wall is:
 \begin{pypresso}
   from espressomd import lbboundaries
-  wall = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[1,0,0],
-                                                   dist=1),
-                                 velocity = [0, 0, 0.01])
+  wall = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[1,0,0], dist=1), velocity = [0, 0, 0.01])
   s.lbboundaries.add(wall)
 \end{pypresso}
 Note that all used variables are inherited from previous examples. This will

@@ -160,7 +160,7 @@ is applied to every node. After 5000 LB updates the steady state should
 be reached.
 
 Task: Write a loop that prints the fluid velocity at the nodes (0,0,0) to (16,0,0)
-and the node position to a file. Use the \texttt{lbf.lbnode\_get\_node\_velocity()}
+and the node position to a file. Use the \texttt{lbf.[node].quantity}
 method for that. Hint: to write 
 to a file, first open a file and then use the \texttt{write()} method to write 
 into it. Do not forget to close the file afterwards. Example:

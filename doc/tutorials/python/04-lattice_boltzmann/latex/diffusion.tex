@@ -85,7 +85,7 @@ see on a longer time scale? Produce a double-logarithmic plot to assess the powe
 law.
 \begin{figure}[h]
   \begin{center}
-	  \includegraphics{figures/diffusion/msd.pdf}
+	  \includegraphics[width=0.7\textwidth]{figures/diffusion/msd.pdf}
   \end{center}
   \caption{Mean squared displacement of a single particle for different values
   of LB friction coefficient.}
@@ -127,11 +127,13 @@ with a bead-spring-model. For this we need a repulsive interaction
 between all beads, for which one usually takes a shifted and truncated
 Lennard-Jones (so called Weeks-Chandler-Anderson) interaction, 
 and additionally a bonded interaction between 
-adjacent beads to hold the polymer together. You have already learned
+adjacent beads to hold the polymer together.
+\pagebreak
+ You have already learned
 that the command
 {\vspace{0,2cm}\small
 \begin{pypresso}
-  s.non_bonded_inter[0,0].lennard_jones.set_params(
+  system.non_bonded_inter[0,0].lennard_jones.set_params(
       epsilon = 1.0, sigma = 1.0,
       shift = 0.25, cutof = 1.226)
 \end{pypresso}\vspace{0,2cm}
