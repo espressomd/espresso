@@ -9,8 +9,9 @@
 
 
 namespace LBBoundaries {
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 int lbboundary_get_force(void* lbb, double *f);
-
+#endif
 class LBBoundary {
 public:
   LBBoundary()
@@ -40,9 +41,13 @@ public:
   Vector3d &velocity() { return m_velocity; }
   Vector3d &force() { return m_force; }
   Vector3d get_force() {
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU) 
     double tmp_force[3];
     lbboundary_get_force(this, tmp_force);
     return Vector3d{tmp_force[0], tmp_force[1], tmp_force[2]};
+#else
+    throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
+#endif
   }
 
 #ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
