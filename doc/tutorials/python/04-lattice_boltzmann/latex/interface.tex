@@ -69,9 +69,9 @@ example.
 
   # initialize the System and set the necessary MD parameters for LB.
   s = system.System()
-  s.box\_l = [31, 41, 59]
-  s.time\_step = 0.01
-  s.cell\_system.skin = 0.4
+  s.box_l = [31, 41, 59]
+  s.time_step = 0.01
+  s.cell_system.skin = 0.4
 
   # Initialize and LBFluid with the minimum set of valid parameters.
   lbf = lb.LBFluid(agrid = 1, dens = 10, visc = .1, tau = 0.01)
@@ -86,7 +86,7 @@ The \texttt{LBFluid} class also provides a set of methods which can be used to
 sample data from the fluid nodes. For example 
 \vspace{0,2cm}
 \begin{pypresso}
-  lbf.lbnode\_get\_node\_xxxx([X,Y,Z])
+  lbf.lbnode_get_node_xxxx([X,Y,Z])
 \end{pypresso}
 \vspace{0,2cm}
 returns the propert xxxx of the node with $(X,Y,Z)$ coordinates. Note that the
