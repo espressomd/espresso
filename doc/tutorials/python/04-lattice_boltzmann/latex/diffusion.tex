@@ -160,8 +160,7 @@ fixed distance between adjacent bead positions. The syntax is:
   from espressomd import polymer
   # mpc: monomers per chain
   mpc = 30
-  poly = system.polymer(N\_P=1, MPC = mpc, bond\_id=fene.\_bond\_id,
-                        bond\_length = 1)
+  poly = polymer.Polymer(N_P=1, MPC = mpc, bond=fene, bond_length = 1)
 \end{pypresso}
 \vspace{0,2cm}
 }
