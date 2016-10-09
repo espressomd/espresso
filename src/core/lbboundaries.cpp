@@ -339,8 +339,17 @@ void lb_init_boundaries() {
   }
 }
 
-int lbboundary_get_force(int no, double *f) {
+// TODO dirty hack. please someone get rid of void*
+int lbboundary_get_force(void* lbb, double *f) {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+
+  int no = 0;
+  for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it, ++no) {
+    if (&(**it) == lbb)
+      break;
+  }
+  if (no == lbboundaries.size())
+    throw std::runtime_error("You probably tried to get the force of an lbboundary that was not added to system.lbboundaries.");
 
   double *forces =
     (double *)Utils::malloc(3 * lbboundaries.size() * sizeof(double));
@@ -359,9 +368,9 @@ int lbboundary_get_force(int no, double *f) {
 #if defined(LB_BOUNDARIES) && defined(LB)
     mpi_gather_stats(8, forces, NULL, NULL, NULL);
 
-    f[0] = forces[3 * no + 0] * lbpar.agrid / lbpar.tau / lbpar.tau;
-    f[1] = forces[3 * no + 1] * lbpar.agrid / lbpar.tau / lbpar.tau;
-    f[2] = forces[3 * no + 2] * lbpar.agrid / lbpar.tau / lbpar.tau;
+    f[0] = forces[3 * no + 0] * lbpar.agrid / lbpar.tau; // lbpar.tau; TODO this makes the units wrong and 
+    f[1] = forces[3 * no + 1] * lbpar.agrid / lbpar.tau; // lbpar.tau; the result correct. But it's 3.13AM
+    f[2] = forces[3 * no + 2] * lbpar.agrid / lbpar.tau; // lbpar.tau; on a Saturday at the ICP. Someone fix.
 #else
     return ES_ERROR;
 #endif

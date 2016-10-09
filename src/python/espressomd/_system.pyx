@@ -33,7 +33,6 @@ from . import code_info
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
-from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
 if CONSTRAINTS == 1:
@@ -62,7 +61,6 @@ cdef class System:
     cell_system = CellSystem()
     thermostat = Thermostat()
     minimize_energy = MinimizeEnergy()
-    polymer = Polymer()
     actors = None
     analysis = None
     galilei = GalileiTransform()

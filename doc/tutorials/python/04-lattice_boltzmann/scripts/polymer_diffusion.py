@@ -22,16 +22,16 @@ except:
 # Lennard-Jones interaction
 system.non_bonded_inter[0,0].lennard_jones.set_params(
     epsilon=1.0, sigma=1.0, 
-    shift=0.25, cutoff=1.226)# Fene Bond
+    shift=0.25, cutoff=1.226)
 
-# Fene interactio
+# Fene interaction
 fene = interactions.FeneBond(k=7, d_r_max=2)
 system.bonded_inter.add(fene)
 
-# Setup polymer of part_id 0 with fene bond
-poly = system.polymer
-poly(N_P=1, MPC=mpc, bond_id=fene._bond_id, bond_length=1)
 
+# Setup polymer of part_id 0 with fene bond
+
+poly = polymer.Polymer(N_P=1, MPC=mpc, bond=fene, bond_length=1)
 
 
 print("Warming up the polymer chain.")
@@ -61,6 +61,7 @@ system.thermostat.set_lb(kT=1)
 print("Warming up the system with LB fluid.")
 system.integrator.run(1000)
 print("LB fluid warming finished.")
+
 
 # configure correlators
 com_pos = ComPosition(ids=(0,))

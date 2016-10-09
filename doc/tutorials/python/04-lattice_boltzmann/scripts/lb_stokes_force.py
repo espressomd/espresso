@@ -21,8 +21,8 @@ box_width = 64
 real_width = box_width+2*agrid
 box_length = 64
 system.box_l = [real_width, real_width, box_length]
-system.time_step = 0.1
-system.cell_system.skin = 0
+system.time_step = 0.2
+system.cell_system.skin = 0.4
 
 # The temperature is zero.
 system.thermostat.set_lb(kT=0)
@@ -31,11 +31,8 @@ system.thermostat.set_lb(kT=0)
 v = [0,0,0.01] # The boundary slip 
 kinematic_visc = 1.0
 
-
-
-
 # Invoke LB fluid
-lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
+lbf = lb.LBFluid(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
 system.actors.add(lbf)
 
 # Setup walls
@@ -63,17 +60,24 @@ system.lbboundaries.add(sphere)
 lbf.print_vtk_boundary("./boundary.vtk")
 
 
-for i in range(40):
-    system.integrator.run(400)
-    lbf.print_vtk_velocity("fluid%04i.vtk" %i)
-    sys.stdout.write("\rloop: %05i"%i)
-    sys.stdout.flush()
 def size(vector):
     tmp = 0
     for k in vector:
         tmp+=k*k
     return np.sqrt(tmp)
 
+for i in range(10):
+    system.integrator.run(40)
+    lbf.print_vtk_velocity("fluid%04i.vtk" %i)
+    # sys.stdout.write("\rloop: %02i"%i)
+    # sys.stdout.flush()
+
+    force = sphere.get_params()["force"]
+    print("%i:Measured force: f=%f" %(i,size(force)))
+
+
+
+print("\nIntegration finished.")
 
 # get force that is exerted on the sphere
 force = sphere.get_params()["force"]
