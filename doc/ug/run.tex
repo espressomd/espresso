@@ -761,6 +761,14 @@ Required features: REACTION_ENSEMBLE
 
 \section{Grand Canonical Ensemble}
 Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities. These kinds of moves are perfect to include the autodissociation of water into the system.
+\subsection{How to add the water autodissociation to a simulation}
+In order to add the water autodissociation 2 H2O $<=>$ H3O+ +OH-  to a simulation add the following reactions to Espresso:
+\begin{itemize}
+\item $\emptyset -> H3O+ + OH-$ with reaction constant $K$
+\item $H3O+ + OH- -> \emptyset$ with reaction constant $1/K$,
+\end{itemize}
+where K is given implicitly as a function of the apparent dissociation constant $K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}$: $K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}$ with $\overline{\nu}=2$ for the dissociation reaction and where x is the value of the apparent dissociation constant that is converted from $\rm{mol^2/l^2}$ to a number density in $1/(\sigma^3)^2$, where $\sigma$ is the simulation length unit. If $\beta$ and $P^0$ are provided in simulation units this will make $K$ dimensionless. 
+As a test for the autodissociation of water a big simulation box can be set up and the autodissociation reaction can be performed. Then the box should fill with the correct number of protons and hydroxide ions (check for the number of protons and hydroxide ions in the given simulation volume and compare this to the expected value at pH 7). Further the $pK_w=14$ should be reproduced -also in the case of an initial excess of acid or base in the simulation box. Note that this only works for big enough volumes.
 
 %%% Local Variables: 
 %%% mode: latex
