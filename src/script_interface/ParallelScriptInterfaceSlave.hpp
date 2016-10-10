@@ -44,16 +44,17 @@ protected:
     return m_translation_table;
   }
 
-  /* If the variant encapsulates an object id we tranlate the
+  /* If the variant encapsulates an object id we translate the
      master id to a local one */
   static void translate_id(Variant &v) {
     try {
-      ObjectId global_id = boost::get<ObjectId>(v);
+      const ObjectId global_id = boost::get<ObjectId>(v);
       v = get_translation_table().at(global_id);
       /* We catch only the bad_get exception, if the id does
          not exsits .at throws out_of_range, which is a real
          error and should be propagated. */
     } catch (boost::bad_get &) {
+      ;
     }
   }
 };
