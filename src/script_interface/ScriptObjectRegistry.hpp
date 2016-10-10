@@ -27,36 +27,32 @@
 
 namespace ScriptInterface {
 
-template<typename ManagedType>
+template <typename ManagedType>
 class ScriptObjectRegistry : public ScriptInterfaceBase {
 public:
-
-  virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) =0;
-  virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) =0;
+  virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
+  virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual Variant call_method(std::string const &method,
-                                   VariantMap const &parameters) {
+                              VariantMap const &parameters) {
     Variant par = parameters.at("object");
-  
+
     auto so_ptr = ScriptInterface::get_instance(par);
-  
-    auto obj_ptr =
-        std::dynamic_pointer_cast<ManagedType>(
-            so_ptr);
-  
+
+    auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
+
     if (obj_ptr == nullptr)
       throw std::runtime_error("Wrong type");
-  
+
     if (method == "add") {
       add_in_core(obj_ptr);
     }
-     
+
     if (method == "remove") {
       remove_in_core(obj_ptr);
     }
-  
+
     return {};
   };
 };
 } // Namespace ScriptInterface
 #endif
-

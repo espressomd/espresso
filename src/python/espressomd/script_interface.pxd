@@ -67,9 +67,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    cdef cppclass OId:
-        OId(int)
-        int id
+    cdef cppclass ObjectId:
+        pass
 
     Variant make_variant[T](const T & x)
 
@@ -81,11 +80,11 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameter(const string & name, const Variant & value) except +
         void set_parameters(map[string, Variant] & parameters) except +
         Variant call_method(const string & name, const map[string, Variant] & parameters) except +
-        int id()
+        ObjectId id() except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     shared_ptr[ScriptInterfaceBase] make_shared(const string & name)
-    weak_ptr[ScriptInterfaceBase] get_instance(int id)
+    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id)
 
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
@@ -93,3 +92,6 @@ cdef class PScriptInterface:
     cdef Variant make_variant(self, ParameterType type, value)
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value)
+
+cdef class PObjectId:
+    cpdef ObjectId id
