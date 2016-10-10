@@ -19,7 +19,7 @@
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .water_type=-100, .standard_pressure_in_simulation_units=-10, .given_length_in_SI_units=-10, .given_length_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
@@ -39,7 +39,6 @@ bool all_educt_particles_exist(int reaction_id);
 int generic_oneway_reaction(int reaction_id);
 int find_index_of_type(int type);
 int replace(int p_id, int desired_type);
-double conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(double given_length_in_simulation_units, double given_length_in_SI_units);
 int create_particle(int desired_type);
 int vec_random(double* vecrandom, double desired_length);
 int hide_particle(int p_id, int previous_type);
@@ -66,10 +65,6 @@ int check_reaction_ensemble(){
 	}
 	if(current_reaction_system.temperature_reaction_ensemble<0){
 		printf("Temperatures cannot be negative. Please provide a temperature (in k_B T) to the simulation. Normally it should be 1.0. This will be used directly to calculate beta:=1/(k_B T) which occurs in the exp(-beta*E)");
-		check_is_successfull=ES_ERROR;
-	}
-	if(current_reaction_system.water_type>=0 &&(current_reaction_system.given_length_in_SI_units<0 || current_reaction_system.given_length_in_simulation_units <0)){
-		printf("Please provide a length scale in order to make use of the water_type (e.g. for autodissociation reactions). Use the length_scales argument of the reaction_ensemble command.\n");
 		check_is_successfull=ES_ERROR;
 	}
 	return check_is_successfull;
@@ -128,15 +123,8 @@ bool all_educt_particles_exist(int reaction_id) {
 		int current_number;
 		number_of_particles_with_type(current_reaction_system.reactions[reaction_id]->educt_types[i], &current_number);
 		if(current_number<current_reaction_system.reactions[reaction_id]->educt_coefficients[i]){
-			if(current_reaction_system.reactions[reaction_id]->educt_types[i]!=current_reaction_system.water_type) {
-				enough_particles=false;
-				break;
-			} else{
-				//if the current educt type is the water type, create the water molecules that are needed
-				for(int water_i=0; water_i<current_reaction_system.reactions[reaction_id]->educt_coefficients[i];water_i++){
-					create_particle(current_reaction_system.water_type);
-				}
-			}
+			enough_particles=false;
+			break;
 		}
 	}
 	return enough_particles;
@@ -263,13 +251,6 @@ int generic_oneway_reaction(int reaction_id){
 	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *(current_reaction_system.nr_different_types));
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
-	}
-	if(current_reaction_system.water_type>=0 && find_index_of_type(current_reaction_system.water_type) >=0){
-		//set number of water molecules to typical value 55.5 mol/l
-		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
-		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		double molar_concentration_of_water=55.5; //in mol per liter
-		old_particle_numbers[index_of_water_type]=int(conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(current_reaction_system.given_length_in_simulation_units, current_reaction_system.given_length_in_SI_units) *molar_concentration_of_water*volume);
 	}
 
 	int* p_ids_created_particles =NULL;
@@ -429,16 +410,6 @@ int find_index_of_type(int type){
 	return index;
 }
 
-double conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(double given_length_in_simulation_units, double given_length_in_SI_units){
-	//returns the factor to convert 1mol/l to x Particles per simulation volume
-	//calculation:1mol/l=x/Vges <=> x=1mol/l*V_ges = 1mol/l *V_{ges,sim}*[V]= conversion_factor*V_{ges,sim}, with conversion_factor=1mol/l *[V]=1000mol/m^3*[V], and [V]=sigma^3=(bjerrum_length_real/len_sim)^3
-	//returns the conversion factor for densities from mol/l to parts/vol in simulation units	
-	//the real length scale has to be given in meters (SI)
-	//an arbitrary example for arguments: given_length_in_simulation_units=bjerrum_length=2, given_length_in_SI_units=[expr 7.1 * pow(10, -10) ]; # (bjerrum length water room temp in 10^-10 m (Angstrom) )
-	double N_Avogadro = 6.02214129*pow(10, 23); // in units 1/mol
-	double conversion_factor= N_Avogadro *1000.0*pow(given_length_in_SI_units/given_length_in_simulation_units,3); //the factor 1000 comes from using liters
-	return conversion_factor;
-}
 
 int replace(int p_id, int desired_type){
 	int err_code_type=set_particle_type(p_id, desired_type);
@@ -1114,12 +1085,6 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	int* old_particle_numbers=(int*) calloc(1,sizeof(int) *current_reaction_system.nr_different_types);
 	for(int type_index=0;type_index<current_reaction_system.nr_different_types;type_index++){
 		number_of_particles_with_type(current_reaction_system.type_index[type_index], &(old_particle_numbers[type_index])); // here could be optimized by not going over all types but only the types that occur in the reaction
-	}
-	if(current_reaction_system.water_type>=0 && find_index_of_type(current_reaction_system.water_type) >=0){
-		//set number of water molecules to typical value 55.5 mol/l
-		//see https://de.wikipedia.org/wiki/Eigenschaften_des_Wassers#Ionenprodukt
-		int index_of_water_type=find_index_of_type(current_reaction_system.water_type);
-		old_particle_numbers[index_of_water_type]=int(conversion_factor_molar_concentration_to_number_concentration_per_simulation_box_volume(current_reaction_system.given_length_in_simulation_units, current_reaction_system.given_length_in_SI_units) *55.5*volume);
 	}
 	int* p_ids_created_particles =NULL;
 	int len_p_ids_created_particles=0;
