@@ -97,7 +97,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 
-energies = numpy.empty((int_steps,2))
+energies = numpy.empty((int_n_times,2))
 current_time = -1
 pyplot.xlabel("time")
 pyplot.ylabel("energy")
