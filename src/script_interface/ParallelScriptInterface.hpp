@@ -163,6 +163,10 @@ public:
       }
     }
 
+    auto d = std::make_pair(name, p);
+    /* Broadcast method name and parameters */
+    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+
     return m_p->call_method(name, p);
   }
 
