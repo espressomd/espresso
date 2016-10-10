@@ -38,6 +38,8 @@ public:
     bool operator!=(ObjectId const &rhs) const { return m_id != rhs.m_id; }
     bool operator<(ObjectId const &rhs) const { return m_id < rhs.m_id; }
 
+    int id() const { return m_id; }
+
   private:
     friend class AutoObjectId<T>;
 

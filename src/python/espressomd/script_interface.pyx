@@ -14,9 +14,6 @@ cdef class PScriptInterface:
         else:
             raise NotImplementedError
 
-    def id(self):
-        return self.sip.get().id()
-
     def _ref_count(self):
         return self.sip.use_count()
 
@@ -44,13 +41,18 @@ cdef class PScriptInterface:
 
         raise Exception("Unkown type")
 
+    def id(self):
+        oid = PObjectId()
+        oid.id = self.sip.get().id()
+        return oid
+
     def call_method(self, method, **kwargs):
         cdef map[string, Variant] parameters
 
         for name in kwargs:
             if isinstance(kwargs[name], PScriptInterface):
                 # Map python object do id
-                parameters[name] = OId(kwargs[name].id())
+                parameters[name] = kwargs[name].id()
             else:
                 parameters[name] = kwargs[name]
 
@@ -60,6 +62,7 @@ cdef class PScriptInterface:
     def set_params(self, **kwargs):
         cdef ParameterType type
         cdef map[string, Variant] parameters
+        cdef PObjectId oid
 
         for name in kwargs:
             try:
@@ -78,13 +81,15 @@ cdef class PScriptInterface:
 
             # Objects have to be translated to ids
             if < int > type is < int > OBJECT:
-                parameters[name] = OId(kwargs[name].id())
+                oid = kwargs[name].id()
+                parameters[name] = oid.id
             else:
                 parameters[name] = self.make_variant(type, kwargs[name])
 
         self.sip.get().set_parameters(parameters)
 
     cdef variant_to_python_object(self, Variant value):
+        cdef ObjectId oid
         cdef int type = value.which()
         if < int > type == <int > BOOL:
             return get[bool](value)
@@ -104,12 +109,12 @@ cdef class PScriptInterface:
             return get[Vector2d](value).as_vector()
         if < int > type == <int > OBJECT:
             # Get the id and build a curresponding object
-            val = get[OId](value).id
-            if val >= 0:
+            try:
+                oid = get[ObjectId](value)
                 pobj = PScriptInterface()
-                pobj.set_sip(get_instance(val).lock())
+                pobj.set_sip(get_instance(oid).lock())
                 return pobj
-            else:
+            except:
                 return None
 
         raise Exception("Unkown type")
@@ -129,7 +134,6 @@ cdef class PScriptInterface:
         return odict
 
 class ScriptInterfaceHelper(PScriptInterface):
-
     _so_name = None
     _so_bind_methods =()
 
@@ -150,9 +154,6 @@ class ScriptInterfaceHelper(PScriptInterface):
             setattr(self,method_name,self.generate_caller(method_name))
        
 
-
-
-    
 
 
 initialize()

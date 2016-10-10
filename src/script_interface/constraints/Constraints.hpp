@@ -22,11 +22,10 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 
-#include "ScriptInterface.hpp"
-#include "ScriptObjectRegistry.hpp"
 #include "Constraint.hpp"
+#include "ScriptObjectRegistry.hpp"
 #include "core/constraints.hpp"
-
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -38,9 +37,10 @@ class Constraints : public ScriptObjectRegistry<Constraint> {
   virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) {
     ::Constraints::constraints.remove(obj_ptr->constraint());
   };
-  public:
+
+public:
   virtual const std::string name() const override {
-    return "Constraints::Constraints"; 
+    return "Constraints::Constraints";
   };
 };
 } /* namespace Constraints */
