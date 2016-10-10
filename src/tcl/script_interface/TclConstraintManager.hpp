@@ -18,6 +18,7 @@
 */
 
 #include "TclScriptInterfaceManager.hpp"
+#include "script_interface/constraints/Constraints.hpp"
 
 namespace ScriptInterface {
 namespace Tcl {
@@ -26,7 +27,7 @@ class TclConstraintManager : public TclScriptInterfaceManager {
 public:
   TclConstraintManager(Tcl_Interp *interp,
                        const boost::bimap<std::string, std::string> &name_map)
-      : TclScriptInterfaceManager(interp, name_map) {}
+      : TclScriptInterfaceManager(interp, name_map, /* optional_new */ true) {}
 
 private:
   /* We have to adapt here because constraints with different shapes are
@@ -49,16 +50,30 @@ private:
     /* Set the given shape */
     constraint.script_object()->set_parameter("shape", shape->id());
 
+    /* Make new constraint aktive in the core */
+    ParallelScriptInterface<Constraints::Constraints>().call_method(
+        "add", {{"constraint", constraint.script_object()->id()}});
+
     /* Add to list and get an index. */
     return m_om.add(constraint);
+  }
+
+  virtual void do_delete(int id) override {
+    auto constraint = m_om[id];
+
+    /* Make constraint inaktive in the core */
+    ParallelScriptInterface<Constraints::Constraints>().call_method(
+        "remove", {{"constraint", constraint.script_object()->id()}});
+
+    m_om.remove(id);
   }
 
   virtual std::string do_print(int id) const override {
     /* Look up the object to print */
     auto const &o = m_om[id];
 
-    const int shape_id =
-        boost::get<int>(o.script_object()->get_parameter("shape"));
+    const auto shape_id =
+        boost::get<ObjectId>(o.script_object()->get_parameter("shape"));
 
     auto const shape = ScriptInterfaceBase::get_instance(shape_id).lock();
 
@@ -80,6 +95,16 @@ private:
     }
 
     return tcl_name + ss.str();
+  }
+
+  virtual void do_parse(int id, std::list<std::string> &argv) override {
+    auto constraint = m_om[id];
+
+    constraint.parse_from_string(argv);
+
+    auto const shape_id = constraint.script_object()->get_parameter("shape");
+    TclScriptInterface(ScriptInterface::get_instance(shape_id), interp())
+        .parse_from_string(argv);
   }
 };
 

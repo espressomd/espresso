@@ -28,27 +28,27 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Cylinder::valid_parameters() const {
-  return {{"pos", {ParameterType::VECTOR3D, true}},
+  return {{"center", {ParameterType::VECTOR3D, true}},
           {"axis", {ParameterType::VECTOR3D, true}},
           {"direction", {ParameterType::DOUBLE, true}},
-          {"rad", {ParameterType::DOUBLE, true}},
+          {"radius", {ParameterType::DOUBLE, true}},
           {"length", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap Cylinder::get_parameters() const {
-  return {{"pos", m_cylinder->pos()},
+  return {{"center", m_cylinder->pos()},
           {"axis", m_cylinder->axis()},
           {"direction", m_cylinder->direction()},
           {"length", m_cylinder->length()},
-          {"rad", m_cylinder->rad()}};
+          {"radius", m_cylinder->rad()}};
 }
 
 void Cylinder::set_parameter(const string &name,
                              const ScriptInterface::Variant &value) {
 
-  SET_PARAMETER_HELPER("pos", m_cylinder->pos());
+  SET_PARAMETER_HELPER("center", m_cylinder->pos());
   SET_PARAMETER_HELPER("axis", m_cylinder->axis());
-  SET_PARAMETER_HELPER("rad", m_cylinder->rad());
+  SET_PARAMETER_HELPER("radius", m_cylinder->rad());
   SET_PARAMETER_HELPER("length", m_cylinder->length());
   SET_PARAMETER_HELPER("direction", m_cylinder->direction());
 }

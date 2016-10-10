@@ -52,7 +52,6 @@
 
 #include <array>
 #include <mpi.h>
-
 #include <boost/mpi/communicator.hpp>
 
 #include "MpiCallbacks.hpp"

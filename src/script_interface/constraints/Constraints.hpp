@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -31,7 +31,7 @@ class Constraints : public ScriptInterfaceBase {
 public:
   const std::string name() const override { return "Constraints::Constraint"; }
 
-  Variant call_method(std::string const &method, VariantMap const &parameters);
+  Variant call_method(std::string const &method, VariantMap const &parameters) override;
 };
 
 } /* namespace Constraints */
