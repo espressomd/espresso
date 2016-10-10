@@ -94,7 +94,7 @@ public:
 
   Variant map_parallel_to_local_id(std::string const &name,
                                    Variant const &value) {
-    const int outer_id = boost::get<OId>(value).id;
+    const auto outer_id = boost::get<ObjectId>(value);
 
     auto so_ptr = get_instance(outer_id).lock();
 

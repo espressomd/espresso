@@ -38,8 +38,8 @@ namespace ScriptInterface {
 
 class ParallelScriptInterfaceSlaveBase {
 protected:
-  static std::map<int, int> &get_translation_table() {
-    static std::map<int, int> m_translation_table;
+  static std::map<ObjectId, ObjectId> &get_translation_table() {
+    static std::map<ObjectId, ObjectId> m_translation_table;
 
     return m_translation_table;
   }
@@ -80,7 +80,7 @@ public:
   std::shared_ptr<T> m_p;
 
 private:
-  void mpi_slave(int action, int id) override {
+  void mpi_slave(int action, int) override {
     switch (CallbackAction(action)) {
     case CallbackAction::SET_ID: {
       ObjectId global_id;
@@ -89,7 +89,7 @@ private:
       get_translation_table()[global_id] = m_p->id();
 
       break;
-
+    }
     case CallbackAction::SET_PARAMETER: {
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
@@ -97,15 +97,8 @@ private:
       /* If the parameter is a object we have to tranlate it first to a
          local id.
       */
-      if (m_p->valid_parameters()[d.first].type() == ParameterType::OBJECT) {
-        const int global_id = boost::get<OId>(d.second).id;
-        const int local_id = translate_id(global_id);
-
-        m_p->set_parameter(d.first, local_id);
-      } else {
-        m_p->set_parameter(d.first, d.second);
-      }
-
+      translate_id(d.second);
+      m_p->set_parameter(d.first, d.second);
       break;
     }
     case CallbackAction::SET_PARAMETERS: {
@@ -113,13 +106,11 @@ private:
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
                             0);
 
-      auto const valid_parameters = m_p->valid_parameters();
-
-      for (auto &it : parameters) {
-        if (valid_parameters.at(it.first).type() == ParameterType::OBJECT) {
-          const int global_id = boost::get<OId>(it.second).id;
-          it.second = translate_id(global_id);
-        }
+      /* If the parameter is a object we have to tranlate it first to a
+         local id.
+      */
+      for (auto &p : parameters) {
+        translate_id(p.second);
       }
 
       m_p->set_parameters(parameters);

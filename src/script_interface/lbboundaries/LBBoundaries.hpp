@@ -7,7 +7,6 @@
 #include "LBBoundary.hpp"
 #include "core/lbboundaries.hpp"
 
-
 namespace ScriptInterface {
 namespace LBBoundaries {
 
@@ -18,6 +17,7 @@ class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
     ::LBBoundaries::lb_init_boundaries();
 #endif
   }
+
   virtual void remove_in_core(std::shared_ptr<LBBoundary> obj_ptr) {
     auto it = std::find(std::begin(::LBBoundaries::lbboundaries), std::end(::LBBoundaries::lbboundaries), obj_ptr->lbboundary());
 

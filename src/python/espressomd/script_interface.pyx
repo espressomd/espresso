@@ -48,11 +48,13 @@ cdef class PScriptInterface:
 
     def call_method(self, method, **kwargs):
         cdef map[string, Variant] parameters
+        cdef PObjectId oid
 
         for name in kwargs:
             if isinstance(kwargs[name], PScriptInterface):
                 # Map python object do id
-                parameters[name] = kwargs[name].id()
+                oid = kwargs[name].id()
+                parameters[name] = oid.id
             else:
                 parameters[name] = kwargs[name]
 

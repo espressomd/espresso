@@ -14,17 +14,16 @@ class LBBoundary : public ScriptInterfaceBase {
 public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {}
 
-  const std::string name() const override { return  "LBBoundaries:LBBoundary"; }
+  const std::string name() const override { return "LBBoundaries:LBBoundary"; }
 
   VariantMap get_parameters() const override {
     return {{"velocity", m_lbboundary->velocity()},
-	    {"force", m_lbboundary->get_force()},
+            {"force", m_lbboundary->get_force()},
 #ifdef EK_BOUNDARIES
-	    {"charge_density", m_lbboundary->charge_density()},
-	    {"net_charge", m_lbboundary->net_charge()},
+            {"charge_density", m_lbboundary->charge_density()},
+            {"net_charge", m_lbboundary->net_charge()},
 #endif
-            {"shape",
-		(m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
+            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
   }
 
   ParameterMap valid_parameters() const override {
@@ -32,9 +31,9 @@ public:
             {"force", {ParameterType::VECTOR3D, true}},
 #ifdef EK_BOUNDARIES
             {"charge_density", {ParameterType::DOUBLE, true}},
-	    {"net_charge", {ParameterType::DOUBLE, true}},
+            {"net_charge", {ParameterType::DOUBLE, true}},
 #endif
-	    {"shape", {ParameterType::OBJECT, true}}};
+            {"shape", {ParameterType::OBJECT, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
@@ -55,8 +54,9 @@ public:
         throw std::runtime_error("shape parameter expects a Shapes::Shape");
       }
     }
-    SET_PARAMETER_HELPER_VECTOR3D("velocity", m_lbboundary->velocity());
-    SET_PARAMETER_HELPER_VECTOR3D("force", m_lbboundary->force());
+
+    SET_PARAMETER_HELPER("velocity", m_lbboundary->velocity());
+    SET_PARAMETER_HELPER("force", m_lbboundary->force());
 #ifdef EK_BOUNDARIES
     if (name == "charge_density") {
       m_lbboundary->set_charge_density(boost::get<double>(value));
@@ -66,7 +66,7 @@ public:
     }
 #endif
   }
-    std::shared_ptr<::LBBoundaries::LBBoundary> lbboundary() {
+  std::shared_ptr<::LBBoundaries::LBBoundary> lbboundary() {
     return m_lbboundary;
   }
 
@@ -77,7 +77,7 @@ private:
   /* Keep a reference to the shape */
   std::shared_ptr<ScriptInterfaceBase> m_shape;
 
-  }; // class LBBoundary
+}; // class LBBoundary
 } /* namespace LBBoundary */
 } /* namespace ScriptInterface */
 #endif
