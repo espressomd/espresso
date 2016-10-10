@@ -645,7 +645,7 @@ error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
 \end{pypresso}
 
 \newpage
-\section{Exercise 1: Binary Lennard-Jones Liquid}
+\section{Exercise: Binary Lennard-Jones Liquid}
 
 %In \es{} it is possible to simulate particles of various sizes, meaning different
 %values of the Lennard-Jones parameter $\sigma$. For this purpose there are different mixing
@@ -661,20 +661,27 @@ error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
 %
 A two-component Lennard Jones liquid can be simulated by placing particles of two types (0 and 1) into the system. 
 Depending on the Lennard-Jones parameters, the two components either mix or separate.
-\begin{task}
-\begin{itemize}
-\item Edit the \texttt{lj\_tutorial.py} file such that half of the particles are placed with \texttt{type=1}. Type 0 is implied for the remaining particles
-\item Specify Lennard-Jones interactions for interactions of type 0 particles with other type 0 particles, of type 1 particles with other type 1 particles, and of type 0 particles with type 1 particles (set parameters for \texttt{system.non\_bonded\_inter[i,j].lennard\_jones} where \texttt{i,j} can be \texttt{0,0}, \texttt{1,1}, and \texttt{0,1}).
-Use the same Lennard-Jones parameters for interactions within a component, but use a different \texttt{lj\_cut\_mixed} parameter for the cutoff in the Lennard-Jones interaction between particles of type 0 and particles of type 1. Set this parameter to $2^{\frac16}\sigma$ to get de-mixing or to $2.5\sigma$ to get mixing between the two components. 
-\item Record the radial distribution functions separately for particles of type 0 around particles of type 0, of type 1 around particles of type 1, and finally for particles of type 0 around particles of type 1. This can be done by changing the \texttt{type\_list} arguments of the \texttt{system.analysis.rdf()} command. You can record all three radial distribution functions in a single simulation. It is also possible to write them as several columns into a single file.
-\item Plot the radial distribution functions for all three combinations of particle types. The mixed case will differ significantly, depending on your choice of \texttt{lj\_cut\_mixed}. Explain these differences.
-\end{itemize}
-
-If you need a hint, look at the \texttt{two-component.py} script in the \texttt{scripts} directory. Run \texttt{two-component-visualization.py} to see a visualization.
-\end{task}
 
 
-\section{Exercise 2: Measuring the particles' mean square displacement}
+\vspace{1cm}\framebox{
+    \begin{minipage}{0.95\textwidth} 
+        \begin{task}
+            \mbox{} 
+            \begin{itemize}
+            \item Edit the \texttt{lj\_tutorial.py} file such that half of the particles are placed with \texttt{type=1}. Type 0 is implied for the remaining particles
+            \item Specify Lennard-Jones interactions for interactions of type 0 particles with other type 0 particles, of type 1 particles with other type 1 particles, and of type 0 particles with type 1 particles (set parameters for \texttt{system.non\_bonded\_inter[i,j].lennard\_jones} where \texttt{i,j} can be \texttt{0,0}, \texttt{1,1}, and \texttt{0,1}).
+            Use the same Lennard-Jones parameters for interactions within a component, but use a different \texttt{lj\_cut\_mixed} parameter for the cutoff in the Lennard-Jones interaction between particles of type 0 and particles of type 1. Set this parameter to $2^{\frac16}\sigma$ to get de-mixing or to $2.5\sigma$ to get mixing between the two components. 
+            \item Record the radial distribution functions separately for particles of type 0 around particles of type 0, of type 1 around particles of type 1, and finally for particles of type 0 around particles of type 1. This can be done by changing the \texttt{type\_list} arguments of the \texttt{system.analysis.rdf()} command. You can record all three radial distribution functions in a single simulation. It is also possible to write them as several columns into a single file.
+            \item Plot the radial distribution functions for all three combinations of particle types. The mixed case will differ significantly, depending on your choice of \texttt{lj\_cut\_mixed}. Explain these differences.
+            \end{itemize}
+
+            If you need a hint, look at the \texttt{two-component.py} script in your build directory under \texttt{doc/tutorials/python/01-lennard\_jones/}. Run \texttt{two-component-visualization.py} to see a visualization.
+        \end{task}
+    \end{minipage}
+}\vspace{1cm}
+
+
+\section{Exercise: Measuring the particles' mean square displacement}
 
 In this task, you will measure the particles' mean square displacement,
 \begin{equation}
@@ -720,20 +727,24 @@ corr.finalize()
 result=corr.result()
 \end{pypresso}
 
-\begin{task}
-Record the mean square displacement versus time for a Lennard-Jones liquid. Study its dependence on the density and on the friction parameter ($\gamma$) of the Langevin thermostat.
-\begin{itemize}
-\item Setup up and equilibrate the Lennard Jones liquid as explained in this tutorial
-\item Setup an observable for the particle positions of all particles in the system
-\item Set up a Correlator which records the square distance of the particles for different time intervals. Add it to the list of correlators to be updated automatically.
-\item Integrate the equations of motion
-\item Obtain the results from the correlator, average over all particles and all Cartesian coordinates (column three and above) and write the result to a file
-\item Plot the result
-\end{itemize}
+\vspace{1cm}\framebox{
+    \begin{minipage}{0.95\textwidth} 
+        \begin{task}
+            \mbox{} 
+            Record the mean square displacement versus time for a Lennard-Jones liquid. Study its dependence on the density and on the friction parameter ($\gamma$) of the Langevin thermostat.
+            \begin{itemize}
+            \item Setup up and equilibrate the Lennard Jones liquid as explained in this tutorial
+            \item Setup an observable for the particle positions of all particles in the system
+            \item Set up a Correlator which records the square distance of the particles for different time intervals. Add it to the list of correlators to be updated automatically.
+            \item Integrate the equations of motion
+            \item Obtain the results from the correlator, average over all particles and all Cartesian coordinates (column three and above) and write the result to a file
+            \item Plot the result
+            \end{itemize}
 
-If you need a hint, look at \texttt{msd.py} in the \texttt{scripts} directory.
-\end{task}
-
+            If you need a hint, look at \texttt{msd.py} in your build directory under \texttt{doc/tutorials/python/01\_lennard-jones/}.
+        \end{task}
+    \end{minipage}
+}\vspace{1cm}
 
 
 %The velocity autocorrelation function (VACF) is an averaged time dependent correlation function of all particles' 
