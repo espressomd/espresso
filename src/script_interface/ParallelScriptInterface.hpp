@@ -61,6 +61,7 @@ public:
     call(static_cast<int>(CallbackAction::SET_ID));
 
     ObjectId global_id{m_p->id()};
+
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
   }
 
@@ -78,6 +79,7 @@ public:
     } else {
       d = std::make_pair(name, value);
     }
+
     call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
 
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
@@ -105,6 +107,7 @@ public:
 
       /* and return the id of the underlying object */
       auto underlying_object = po_ptr->get_underlying_object();
+
       return underlying_object->id();
     } else {
       throw std::runtime_error(
@@ -118,7 +121,6 @@ public:
 
     /* Copy parameters into a non-const buffer, needed by boost::mpi */
     std::map<std::string, Variant> p(parameters);
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
 
     /* Unwrap the object ids */
     for (auto &it : p) {
@@ -126,6 +128,8 @@ public:
         it.second = map_parallel_to_local_id(it.first, it.second);
       }
     }
+
+    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
 
     m_p->set_parameters(p);
   }

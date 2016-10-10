@@ -49,6 +49,7 @@ protected:
   static void translate_id(Variant &v) {
     try {
       const ObjectId global_id = boost::get<ObjectId>(v);
+
       v = get_translation_table().at(global_id);
       /* We catch only the bad_get exception, if the id does
          not exsits .at throws out_of_range, which is a real
@@ -86,6 +87,7 @@ private:
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
 
       get_translation_table()[global_id] = m_p->id();
+
       break;
     }
     case CallbackAction::SET_PARAMETER: {
@@ -117,13 +119,17 @@ private:
     }
     case CallbackAction::CALL_METHOD: {
       /* Name of the method and para// meters */
-      // std::pair<std::string, VariantMap> d;
+      std::pair<std::string, VariantMap> d;
 
-      // /* Broadcast method name and parameters */
-      // boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+      /* Broadcast method name and parameters */
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
-      // /* Forward to the local instance. */
-      // m_p->call_method(d.first, d.second);
+      for (auto &p : d.second) {
+        translate_id(p.second);
+      }
+
+      /* Forward to the local instance. */
+      m_p->call_method(d.first, d.second);
 
       break;
     }
