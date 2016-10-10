@@ -158,10 +158,10 @@ from espressomd.correlators import Correlator
 
 # For short time spans, we record in linear time distances
 # for larger time spans, we record in larger and larger steps.
-# Use 10 linear measurements 10 time steps apart, each
+# Use 10 linear measurements 10 time steps apart, each.
 
 # The "square_distance_component_wise" correlation operation tells
-# the correlator how to calcualte a result from the measurements of the 
+# the correlator how to calculate a result from the measurements of the 
 # observables at different times
 
 corr=Correlator(obs1=part_pos,
@@ -190,7 +190,7 @@ result=corr.result()
 # using numpy's averaging function
 result[:,3]=np.average(result[:,3:],1)
 # And save the first three columns to a file
-np.savetxt("msd.dat",result[:,:3])
+np.savetxt("data/msd.dat",result[:,:3])
 
 # Plot the msd (third against first column of msd.dat) with your favorite 
 # plotting program and measure the diffusion coefficient by fitting

@@ -139,7 +139,7 @@ necessarily limited to this. It can be used even in simulating granular media
 for example. \es{} has been nominated for the Heinz-Billing-Preis for 
 Scientific Computing in 2003 \cite{arnold2003ees}.
 
-\subsection{The Lennard-Jones Potential}
+\subsection{The Lennard-Jones potential}
 
 A pair of neutral atoms or molecules is subject to two distinct forces in the limit
 of large separation and small separation: an attractive force at long ranges (van der
@@ -172,12 +172,12 @@ words LJ units.
 
 \section{Python versions}
 
-Espresso can be used both, with python 2 and python 3. In these tutorials, we use python 3 print syntax. If you are on python 2, issue the following command to actuvate it:
+Espresso can be used both, with python 2 and python 3. In these tutorials, we use python 3 print syntax. If you are on python 2, issue the following command to activate it:
 \begin{lstlisting}
 from __future__ import print_function
 \end{lstlisting}
 
-\section{First Steps}\label{sec:espresso}
+\section{First steps}\label{sec:espresso}
 
 What is \es{}? It is an extensible, efficient 
 Molecular Dynamics package specially powerful on simulating charged systems. 
@@ -231,21 +231,21 @@ print(espressomd.features())
 \end{pypresso}
 
 
-\section{Overview over a Simulation Script}
+\section{Overview over a simulation script}
 
 Typically, a simulation script consists of the following parts
 \begin{itemize}
 \item System setup (box geometry, thermodynamic ensemble, integrator parameters)
 \item Placing the particles
 \item Setup of interactions between particles
-\item Warmup (bringing the system into a state suitable for measurements)
+\item Warm up (bringing the system into a state suitable for measurements)
 \item Integration loop (propagate the system in time and record measurements)
 \end{itemize}
 In the following sections, it will be shown, how these steps can be taken. Once the basics are covered, we apply them to the simulation of the Lennard-Jones liquid.
 Note that only the core elements of the Lennard-Jones simulation script will be covered in this document. The full script can be found in \verb+scripts/lj_tutorial.py+ in the Lennard-Jones tutorial directory.
 
 
-\subsection{System Setup}
+\subsection{System setup}
 The functionality of \es{} for
 python is provided via a python module called
 \texttt{espressomd}. At the beginning of the simulation script, it has to be imported.
@@ -281,7 +281,7 @@ system.thermostat.turn_off()
 \noindent This results in an NVE ensemble.
 
 
-\subsection{Placing and Accessing Particles}
+\subsection{Placing and accessing particles}
 
 Particles in the simulation can be accessed via the \texttt{part}-property of the System class. Individual particles are referred to by an integer id, e.g., \texttt{system.part[0]}. It is also possible to use common python iterators and slicing operations to access several particles at once.
 \begin{pypresso}
@@ -311,7 +311,7 @@ print(system.part[0])
 \end{pypresso}\vspace{0,2cm}
 
 
-\subsection{Setting up Non-Bonded Interactions}
+\subsection{Setting up non-bonded interactions}
 
 Non-bonded interactions act between all particles of a given combination of particle types.
 In this tutorial, we use the Lennard-Jones non-bonded interaction.
@@ -353,7 +353,7 @@ system.non_bonded_inter.set_force_cap(0)
 In this code fragment, you can also see, how the analysis routines can be used to obtain information about the simulation system, and how to integrate the equation of motion.
 
 
-\section{Putting It All Together: Lennard-Jones Liquid Simulation}
+\section{Putting it all together: Lennard-Jones liquid simulation}
 
 After we have briefly explained the use of \es{}, we now come to the
 Lennard-Jones Liquid Simulation.  Before we explain the script step by step, run the
@@ -382,7 +382,7 @@ print(code_info.features())
 
 \end{pypresso}\vspace{0,2cm}
 
-\subsubsection{System Setup}
+\subsubsection{System setup}
 At first, we must configure the environment and set the needed parameters.
 It is good practice to define all simulation parameters as variables in a single location.
 {\small\vspace{0,2cm}
@@ -520,7 +520,7 @@ system.non_bonded_inter.set_force_cap(0)
 \end{pypresso}
 
 
-\subsection{Integrating the Equations of Motion, Taking Measurements}
+\subsection{Integrating the equations of motion, taking measurements}
 \noindent At this point, we have set the necessary environment and warmed up our system. As a last
 step before starting the actual simulation, we now open the files which we want to output data to
 during the simulation. Then the simulation is started.
@@ -548,7 +548,7 @@ r_max  = system.box_l[0]/2.0
 avg_rdf=np.zeros((r_bins,))
 \end{pypresso}}\vspace{0,2cm}
 
-In the energy.dat file we print out the values for kinetic
+In the \texttt{energy.dat} file we print out the values for kinetic
 and potential energies, temperature obtained with the analysis method 
 \lstinline|system.analysis.energy()|. See the code in the snippet above, which
 contains the main sampling loop of the script.
@@ -557,10 +557,7 @@ contains the main sampling loop of the script.
 obtained from kinetic energy and the number of degrees of freedom in the system. It
 should fluctuate around the preset temperature of the thermostat.
 
-
-\subsection{Main integration loop}
-
-Here, the equations of motion are integrated, and measurements are taken. The radial distribution function is averaged over several measurements, to reduce noise.
+Now, the equations of motion are integrated, and measurements are taken. The radial distribution function is averaged over several measurements, to reduce noise.
 \begin{pypresso}
 for i in range(1, sampling_iterations + 1):
     system.integrator.run(sampling_interval)
@@ -574,7 +571,7 @@ for i in range(1, sampling_iterations + 1):
     en_fp.write("%f\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (system.time, energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
 \end{pypresso}
 
-\subsection{Save the results}
+Finally, the results are saved.
 \begin{pypresso}
 print("\nMain sampling done\n")
 
@@ -595,8 +592,7 @@ The radial distribution function, saved here, (rdf) describes the distribution o
 the center of a fixed particle, as a function of the particle-particle distance. This of course assumes
 that the particle distribution is isotropic around the particles.
 From the rdf, one can see whether the system is in a liquid or crystal state.
-For the Lennard-Jones parameters used here, the system is in a liquid state, and particle interactions are significant, as can be seen from the fact that correlations are still visible at several diameters.
-
+For the Lennard-Jones parameters used here, the system is in a liquid state, and particle interactions are significant, as can be seen from the fact that correlations are still visible at a distance of several diameters.
 
 The rdf is computed on the fly in the current script, the data is then written to
 \texttt{data/rdf.dat}.
@@ -648,8 +644,8 @@ for i in range(1, sampling_iterations + 1):
 error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
 \end{pypresso}
 
-
-\section{Binary Lennard-Jones Liquid}
+\newpage
+\section{Exercise 1: Binary Lennard-Jones Liquid}
 
 %In \es{} it is possible to simulate particles of various sizes, meaning different
 %values of the Lennard-Jones parameter $\sigma$. For this purpose there are different mixing
@@ -665,15 +661,80 @@ error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
 %
 A two-component Lennard Jones liquid can be simulated by placing particles of two types (0 and 1) into the system. 
 Depending on the Lennard-Jones parameters, the two components either mix or separate.
+\begin{task}
 \begin{itemize}
-\item Edit the \texttt{lj\_tutorial.py} file such that half of the particles are placed with type 1. Type 0 is implied for the remaining particles
-\item Specify Lennard-Jones interactions for interactions of type 0 particles with other type 0 particles, of type 1 particles with other type 1 particles, and of type 0 particles with type 1 particles. Use the same parameters for interactions within a component, but use a different \texttt{lj\_cut\_mixed} parameter for the cutoff in the Lennard-Jones interaction between type 0 and type 1. Set this parameter to $2^{\frac16}\sigma$ to get de-mixing or to $2.5\sigma$ to get mixing between the two components
-\item Record the radial distribution functions separately for components 0 and 0, 1 and 1, and 0 and 1. This can be done by changing the \texttt{type\_list} arguments of the respective analysis command. You can record all three radial distribution functions in a single simulation. It is also possible to write them as several columns into a single file.
-\item Plot the radial distribution functions for all three combinations of particle types. The mixed case will differ significantly, depending on your choice of \texttt{lj\_cut\_mixed}.
+\item Edit the \texttt{lj\_tutorial.py} file such that half of the particles are placed with \texttt{type=1}. Type 0 is implied for the remaining particles
+\item Specify Lennard-Jones interactions for interactions of type 0 particles with other type 0 particles, of type 1 particles with other type 1 particles, and of type 0 particles with type 1 particles (set parameters for \texttt{system.non\_bonded\_inter[i,j].lennard\_jones} where \texttt{i,j} can be \texttt{0,0}, \texttt{1,1}, and \texttt{0,1}).
+Use the same Lennard-Jones parameters for interactions within a component, but use a different \texttt{lj\_cut\_mixed} parameter for the cutoff in the Lennard-Jones interaction between particles of type 0 and particles of type 1. Set this parameter to $2^{\frac16}\sigma$ to get de-mixing or to $2.5\sigma$ to get mixing between the two components. 
+\item Record the radial distribution functions separately for particles of type 0 around particles of type 0, of type 1 around particles of type 1, and finally for particles of type 0 around particles of type 1. This can be done by changing the \texttt{type\_list} arguments of the \texttt{system.analysis.rdf()} command. You can record all three radial distribution functions in a single simulation. It is also possible to write them as several columns into a single file.
+\item Plot the radial distribution functions for all three combinations of particle types. The mixed case will differ significantly, depending on your choice of \texttt{lj\_cut\_mixed}. Explain these differences.
 \end{itemize}
 
+If you need a hint, look at the \texttt{two-component.py} script in the \texttt{scripts} directory. Run \texttt{two-component-visualization.py} to see a visualization.
+\end{task}
 
-\newpage
+
+\section{Exercise 2: Measuring the particles' mean square displacement}
+
+In this task, you will measure the particles' mean square displacement,
+\begin{equation}
+\mathrm{msd}(t) =\langle (x(t_0+t) -x(t_0))^2\rangle,
+\end{equation}
+using a concept called ``observables and correlators``.
+An observable is an object which takes a measurement on the system. It can depend on parameters, such as the ids of the particles to be considered, which are specified, when the observable is instanced.
+\begin{pypresso}
+from espressomd.observables import *
+part_pos=ParticlePositions(ids=(0,1,2,3))
+\end{pypresso}
+A correlator is an object which takes results from observables at different times during the simulation, and using a correlation operation, calculates relationships between the observables' values at times $t$ and $t+\delta t$. This can be, e.g., a mean square displacement (expectation value of the square distance a particle has travelled in a certain time) or a velocity autocorrelation (expectation value of the product of the particles' velocities at different time intervals). A correlator for the mean square displacement is instanced as follows
+\begin{pypresso}
+from espressomd.correlators import *
+
+# The correlator works with the part_pos observable. Here, no second 
+# observableis needed
+
+# For short time spans, we record in linear time distances
+# for larger time spans, we record in larger and larger steps.
+# Use 10 linear measurements 10 time steps apart, each.
+
+# The "square_distance_component_wise" correlation operation tells
+# the correlator how to calculate a result from the measurements of the 
+# observables at different times
+
+corr=Correlator(obs1=part_pos,
+                tau_lin=10,dt=10*time_step,
+                tau_max=10000*time_step,
+                corr_operation="square_distance_componentwise")
+\end{pypresso}
+Espresso holds a list of correlators to be automatically updated during integration. The correlator is added to this list as follows
+\begin{pypresso}
+system.auto_update_correlators.add(corr)
+\end{pypresso}
+Now the equations of motions can be integrated. This has to be done for a time significantly longer than \texttt{tau\_max}, to obtain good results.
+Finally, the results can be obtained as follows
+\begin{pypresso}
+# The 1st column contains the time, the 2nd column the number of 
+# measurements, and the remaining columns the mean square displacement
+# for each particle and each Cartesian component
+corr.finalize()
+result=corr.result()
+\end{pypresso}
+
+\begin{task}
+Record the mean square displacement versus time for a Lennard-Jones liquid. Study its dependence on the density and on the friction parameter ($\gamma$) of the Langevin thermostat.
+\begin{itemize}
+\item Setup up and equilibrate the Lennard Jones liquid as explained in this tutorial
+\item Setup an observable for the particle positions of all particles in the system
+\item Set up a Correlator which records the square distance of the particles for different time intervals. Add it to the list of correlators to be updated automatically.
+\item Integrate the equations of motion
+\item Obtain the results from the correlator, average over all particles and all Cartesian coordinates (column three and above) and write the result to a file
+\item Plot the result
+\end{itemize}
+
+If you need a hint, look at \texttt{msd.py} in the \texttt{scripts} directory.
+\end{task}
+
+
 
 %The velocity autocorrelation function (VACF) is an averaged time dependent correlation function of all particles' 
 %velocities. 
