@@ -81,7 +81,7 @@ private:
          local id.
       */
       if (m_p->valid_parameters()[d.first].type() == ParameterType::OBJECT) {
-        const int global_id = boost::get<int>(d.second);
+        const int global_id = boost::get<OId>(d.second).id;
         const int local_id = translate_id(global_id);
 
         m_p->set_parameter(d.first, local_id);
@@ -95,6 +95,15 @@ private:
       std::map<std::string, Variant> parameters;
       boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
                             0);
+
+      auto const valid_parameters = m_p->valid_parameters();
+
+      for (auto &it : parameters) {
+        if (valid_parameters.at(it.first).type() == ParameterType::OBJECT) {
+          const int global_id = boost::get<OId>(it.second).id;
+          it.second = translate_id(global_id);
+        }
+      }
 
       m_p->set_parameters(parameters);
 
