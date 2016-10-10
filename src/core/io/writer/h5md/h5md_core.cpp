@@ -21,7 +21,6 @@
 
 
 #include "h5md_core.hpp"
-#include "global.hpp" //for access to global variables
 
 
 namespace Writer {
