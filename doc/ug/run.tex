@@ -716,7 +716,7 @@ Since you might be interested in thermodynamic properties of a reacting system y
 Note: if the commands are used they should be used in this order (except of the last two), since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
 \variant{1} prints the current reaction system and checks for some essential parameters.
 \variant{3} sets the pressure for the reaction\_ensemble algorithm
-\variant{4} sets the temperature for the reaction\_ensemble algorithm. This could in principle different from the temperature that is used in a MD thermostat. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves (default on).
+\variant{4} sets the temperature for the reaction\_ensemble algorithm. This could in principle be different from the temperature that is used in a MD thermostat. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves (default off).
 \variant{5} sets an exclusion radius. This is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore $\exp(-\beta E)$ gives these configurations aproximately zero contribution in the partition function.
 \variant{11} provides the counter\_ion\_type that gets moved by MC moves as well as optionally the ids of the monomers that correspond to a polymer that should be moved. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable \variant{11} is therefore optional. In the case of using an energy collective variable \variant{11} together with \var{counter\_ion\_type} has to be used. Also in this case \var{polymer\_start\_id} and \var{polymer\_start\_id} are optional, since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation.
 \variant{20-21} can be used to checkpoint the Wang-Landau histogram, potential, parameter and the number of executed trial moves.
@@ -731,11 +731,13 @@ Note: if the commands are used they should be used in this order (except of the 
 \item[\var{list\_product\_coefficients}] a list of the product coefficients of the reaction that correspond to the product types.
 \item[\var{desired\_pressure\_at\_which\_reactions\_occur}] the pressure in simulation units where the reactions should occur. This is an input parameter of the reaction ensemble.
 \item[\var{type}] a type id.
-\item[\var{charge}] a charge that corresponds to the previously given \var{type}.
+\item[\var{charge}] a charge that corresponds to the previously given \var{type}. Make sure to provide this for all types that occur in a reaction!
+%TODO: begin remove
 \item[\var{water\_type}] type id of ghost water particles that are only there to make the implementation easy.
   boundaries of the reaction coordinate interval.
 \item[\var{real\_length\_in\_meters}] an arbitrary lengh in meters
 \item[\var{corresponding\_length\_in\_simulation\_units}] corresponding length of \var{real\_length\_in\_meters} in simulation units
+%end remove
 \item[\var{associated\_type}] type id of the associated type when calculating the degree of association
 \item[\var{min\_value}] the minimum value of the range of the degree of association which should be sampled
 \item[\var{max\_value}] the maximum value of the range of the degree of association which should be sampled
@@ -766,7 +768,7 @@ The Constant pH method from Reed and Reed (1992) is somewhat similar to some ext
 Required features: REACTION_ENSEMBLE
 
 \section{Grand Canonical Ensemble}
-Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities.
+Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities. These kinds of moves are perfect to include the autodissociation of water into the system.
 
 %%% Local Variables: 
 %%% mode: latex
