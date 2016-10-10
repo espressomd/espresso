@@ -45,8 +45,14 @@ unit_test(RunningAverage_test RunningAverage_test.cpp)
 set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
 
+unit_test(ScriptInterface_test ScriptInterface_test.cpp)
+
+set(Wall_test_SRC Wall_test.cpp ../shapes/Wall.cpp)
+unit_test(Wall_test "${Wall_test_SRC}")
+unit_test(Factory_test Factory_test.cpp)
 unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
 
 set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
 unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
+
 

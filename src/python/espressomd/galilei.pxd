@@ -31,7 +31,6 @@ cdef extern from "galilei.hpp":
         double cms[3]
         double cms_vel[3]
 
-
     extern galilei_struct gal
 
 cdef extern from "communication.hpp":
@@ -40,4 +39,4 @@ cdef extern from "communication.hpp":
     void mpi_kill_particle_forces(int torque)
     void mpi_system_CMS()
     void mpi_system_CMS_velocity()
-    void mpi_galilei_transform() 
+    void mpi_galilei_transform()

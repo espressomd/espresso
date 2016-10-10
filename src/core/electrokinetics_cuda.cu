@@ -18,6 +18,7 @@
 */
 #include "config.hpp"
 #ifdef CUDA /* Terminates at end of file */
+#ifdef ELECTROKINETICS /* Terminates at end of file */
 
 #include <cuda.h>
 #include <cufft.h>
@@ -26,19 +27,22 @@
 #include <stdio.h>
 #include <sstream>
 #include <string>
+
 #include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
-#include "constraint.hpp"
+
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
 #include "fd-electrostatics.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "lbgpu.hpp"
 
-#ifdef ELECTROKINETICS /* Terminates at end of file */
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
 
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */
@@ -59,10 +63,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
 #define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
-  extern int n_lb_boundaries;
-  extern LB_Boundary *lb_boundaries;
-
-  void lb_init_boundaries();
+  void LBBoundaries::lb_init_boundaries();
 #endif
   /* end of code duplication */
 
@@ -2707,7 +2708,7 @@ int ek_init() {
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
 
 #ifdef EK_BOUNDARIES
-      lb_init_boundaries();
+      LBBoundaries::lb_init_boundaries();
       lb_get_boundary_force_pointer( &ek_lb_boundary_force );
       
       cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
@@ -3756,10 +3757,12 @@ int ek_set_density( int species, double density ) {
 
 int ek_set_D( int species, double D ) {
 
+
   ek_init_species( species );
   
   ek_parameters.D[ ek_parameters.species_index[ species ] ] = D;
   ek_parameters.d[ ek_parameters.species_index[ species ] ] = D / ( 1.0 + 2.0 * sqrt(2.0)) ;
+
   
   return 0;
 }
@@ -3973,7 +3976,7 @@ int ek_set_reaction( int reactant, int product0, int product1,
   return 0;
 }
 
-int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type )
+int ek_tag_reaction_nodes( LB_Boundary *boundary, char reaction_type ) //TODO use shape objects
 {
 
 #ifdef EK_BOUNDARIES

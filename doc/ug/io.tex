@@ -85,6 +85,233 @@ When using an LB fluid, you need to also write out the fluid nodes,
 see the \texttt{lbfluid} command for further details.
 
 
+\section{(Almost) generic checkpointing in Python}
+Referring to the previous section, generic checkpointing poses difficulties 
+in many ways. Fortunatelly, the Python checkpointing module presented in 
+this section provides a comfortable workflow for an almost generic 
+checkpointing.
+
+The idea is to let the user initially define which data is 
+of interest for checkpointing and thus solve the above mentioned problem. 
+Once this is done, checkpoints can then be saved simply by calling one
+save function.
+
+The checkpoint data can then later be restored easily by calling one load 
+function that will automatically process the checkpoint data by setting the 
+user variables and the checkpointed properties in \es.
+
+In addition, the checkpointing module is also able to catch 
+signals that are invoked for example when the simulation is aborted by the 
+user or by a timeout.
+
+\vspace{1em}
+The \es checkpointing module can be imported with
+\begin{pycode}
+    from espressomd import checkpointing 
+\end{pycode}
+
+\begin{pysyntax}
+  \object{
+    checkpointing
+  }{
+    Checkpointing
+  }{
+    checkpoint_id=\arg{str}
+  }[
+    checkpoint_path=\arg{str="."}
+  ]
+\end{pysyntax}
+
+\begin{arguments}
+\item[\var{checkpoint\_id}] Determines the identifier for a checkpoint. 
+Legal characters for an id are "0-9", "a-zA-Z", "-", "_".
+\item[\var{checkpoint\_path}] Specifies the relative or absolute path where 
+the checkpoints are stored.
+\end{arguments}
+
+For example,
+\begin{pycode}
+    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+\end{pycode}
+would create the new checkpoint with id ``mycheckpoint'' and all the 
+checkpointing data will be stored in the current directory.
+
+After the system and checkpointing user variables are 
+set up they can be registered for checkpointing:
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    register
+  }{
+    \arg{str}
+  }[
+    \arg{str},
+    \arg{...}
+  ]
+\end{pysyntax}
+\begin{arguments}
+\item[\var{str}] Name string of the \es object or user variable that should be 
+registered for checkpointing.
+\end{arguments}
+
+To give an example,
+\begin{pycode}
+    myvar = "some variable value"
+    skin = 0.4
+    checkpoint.register("myvar")
+    checkpoint.register("skin")
+    
+    system = espressomd.System()
+    # ... set system properties like box_l or timestep here ...
+    checkpoint.register("system")
+    
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    checkpoint.register("system.thermostat")
+    
+    # ... set system.non_bonded_inter here ...
+    checkpoint.register("system.non_bonded_inter")
+    
+    # ... add particles to the system with system.part.add(...) here ...
+    checkpoint.register("system.part")
+    
+    # ... set charges of particles here ...
+    from espressomd import electrostatics
+    p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    system.actors.add(p3m)
+    checkpoint.register("p3m")
+\end{pycode}
+
+will register the user variables \var{myvar} and \var{skin}, system 
+properties, a langevin thermostat, non-bonded interactions, particle 
+properties and a p3m object for checkpointing. It is important to note that 
+the checkpointing of \var{system} will only save basic system properties. This 
+excludes for example the system thermostat or the particle data. For this 
+reason one has to explicitly register \var{system.thermostat} and 
+\var{system.part} for checkpointing.
+
+Analogous to this, objects that have been registered for checkpointing 
+but are no longer needed in the next checkpoints can be unregistered with
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    unregister
+  }{
+    \arg{str}
+  }[
+    \arg{str},
+    \arg{...}
+  ]
+\end{pysyntax}
+
+\vspace{2em}
+A list of all registered object names can be generated with
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    get_registered_objects
+  }{
+  }
+\end{pysyntax}
+
+\vspace{2em}
+A new checkpoint with a consecutive index that contains the latest data of the 
+registered objects can then be created by calling
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    save
+  }{
+  }
+\end{pysyntax}
+
+\vspace{2em}
+An existing checkpoint can be loaded with 
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    load
+  }{
+  }[
+    checkpoint_index=\arg{int}
+  ]
+\end{pysyntax}
+
+If no \var{checkpoint\_index} is passed the last checkpoint will be loaded. 
+Concerning the procedure of registering objects for checkpointing it is good 
+to know that all registered objects saved in a checkpoint will be 
+automatically re-registered after loading this checkpoint.
+
+\vspace{1em}
+In practical implementations it might come in handy to check if there are any 
+available checkpoints for a given checkpoint id. This can be done with
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    has_checkpoints
+  }{
+  }
+\end{pysyntax}
+
+which returns a bool value.
+
+\vspace{1em}
+As mentioned in the introduction the checkpointing module also enables to 
+catch signals in order to save a checkpoint and quit the simulation. 
+Therefore one has to register the signal which should be caught with
+\begin{pysyntax}
+  \object{
+    checkpoint
+  }{
+    register_signal
+  }{
+    signum=\arg{int}
+  }
+\end{pysyntax}
+
+The registered signals are associated with the \var{checkpoint\_id} and will 
+be automatically re-registered when the same checkpoint id is used later.
+
+
+\vspace{2em}
+Following the example above, the next example loads the last checkpoint, 
+restores the state of all checkpointed objects and registers a signal.
+
+\begin{pycode}
+    import espressomd
+    from espressomd import checkpointing
+    import signal
+
+    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+    checkpoint.load()
+
+    system = espressomd.System()
+    system.cell_system.skin = skin
+    system.actors.add(p3m)
+
+    #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+    checkpoint.register_signal(signal.SIGINT)
+
+    # integrate system until user presses ctrl+c
+    while True:
+        system.integrator.run(1000)
+\end{pycode}
+
+The above example runs as long as the user interrupts by pressing ctrl+c. 
+In this case a new checkpoint is written and the simulation quits.
+
+It is perhaps surprising that one has to explicitly create \var{system} again. 
+But this is necessary as not all \es modules like \var{cell\_system} or 
+\var{actors} have implementations for checkpointing yet. By calling 
+\var{System()} these modules are created and can be easily initialized with 
+checkpointed user variables (like \var{skin}) or checkpointed \es submodules 
+(like \var{p3m}).
+
 
 \section{Writing H5MD-files}
 For large amounts of data it's a good idea to store it in the hdf5 (H5MD is
@@ -172,11 +399,11 @@ Closes the H5MD data file.
 
 \section{Writing H5MD-files with Python}
 To write data in a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
-\begin{pycode}
+\begin{pypresso}
 from espressomd import h5md
 system = espressomd.System()
 h5=h5md.h5md("File.h5",system)
-\end{pycode}
+\end{pypresso}
 The \texttt{h5md} class contains the sub-class \texttt{write_to_h5}, which contains all write commands such as \texttt{userdefined}. The sample python script ``h5md_WriteFile.py'' shows the usage of writing a hdf5-file.
 
 \subsection{\keyword{userdefined}: Write an arbitrary value}
@@ -928,9 +1155,9 @@ The PDB/PSF files created by \es via the command \lit{writepsf} and
 configuration.
 
 Then you can use the VMD console to execute the command
-\begin{code}
+\begin{tclcode}
   imd connect \var{host} \var{port}
-\end{code}
+\end{tclcode}
 where \var{host} is the host running the simulation and \var{port} is
 the port it listens to. Note that VMD crashes, if you do that without
 loading a structure file before.  For more information on how to use

@@ -42,6 +42,7 @@ def setup(type_list=None):
             raise ValueError(
                 "The system contains no particles. Create one particle with arbitrary type first!")
         init_type_array(type_id)
+        handle_errors("init_type_array -> updatePartCfg failed")
 
 
 def delete_particles(type_id=None):

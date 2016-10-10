@@ -1,20 +1,64 @@
 language: generic
-sudo: required
 
-services: docker
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=default
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=ubuntu-python3
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=debian
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=ubuntu-cuda make_check=false
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset
+      cache:
+        directories:
+        - /usr/local/Cellar/boost
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset image=python3
+      cache:
+        directories:
+        - /usr/local/Cellar/boost
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandom
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandomcut
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=molcut
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=rest1
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=rest2
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=nocheck-maxset make_check=false
 
-env:
-  matrix:
-    - myconfig=default
-    - myconfig=maxset
-    - myconfig=maxset image=ubuntu-python3
-    - myconfig=maxset image=debian
-    - myconfig=maxset-gaussrandom
-    - myconfig=maxset-gaussrandomcut
-    - myconfig=molcut
-    - myconfig=rest1
-    - myconfig=rest2
-    - make_check=false myconfig=nocheck-maxset
 
 script:
         - maintainer/travis/build_docker.sh

@@ -40,21 +40,21 @@ cdef class ElectrostaticInteraction(actors.Actor):
         coulomb.method = COULOMB_NONE
         mpi_bcast_coulomb_params()
 
-    def Tune(self,subsetTuneParams=None):
-        
-        #Override default parmas with subset given by user
-        tuneParams=self.default_params()
-        if not subsetTuneParams==None:        
+    def Tune(self, subsetTuneParams=None):
+
+        # Override default parmas with subset given by user
+        tuneParams = self.default_params()
+        if not subsetTuneParams == None:
             for k in subsetTuneParams.iterkeys():
                 if k not in self.valid_keys():
                     raise ValueError(k + " is not a valid parameter")
             tuneParams.update(subsetTuneParams)
 
-        #If param is 'required', it was set before, so don't change it
-        #Do change it if it's given to Tune() by user
+        # If param is 'required', it was set before, so don't change it
+        # Do change it if it's given to Tune() by user
         for param in tuneParams.iterkeys():
-            if not param in self.required_keys() or (not subsetTuneParams==None and param in subsetTuneParams.keys()):
-                self._params[param]=tuneParams[param]
+            if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
+                self._params[param] = tuneParams[param]
         self._set_params_in_es_core()
         self._tune()
 
@@ -215,6 +215,8 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
+            #Sets lb, bcast, resets vars to zero if lb=0
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
             #Sets cdef vars and calls p3m_set_params() in core 
             python_p3m_set_params(self._params["r_cut"],
                         self._params["mesh"], self._params["cao"],
@@ -224,13 +226,12 @@ IF P3M == 1:
             #         which resets r_cut if lb is zero. OK.
             #Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            #Sets lb, bcast, resets vars to zero if lb=0
-            coulomb_set_bjerrum(self._params["bjerrum_length"])
             #Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
+            coulomb_set_bjerrum(self._params["bjerrum_length"])
             python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                        "cao"], -1.0, self._params["accuracy"], self._params["inter"])
             resp = python_p3m_adaptive_tune()
@@ -240,8 +241,6 @@ IF P3M == 1:
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
-            #Setting default values before tuning
-            self._set_params_in_es_core()
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
@@ -325,7 +324,7 @@ IF P3M == 1:
             def _activate_method(self):
                 self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
-                #python_p3m_gpu_init(self._params)
+                # python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
                     self._tune()
 
@@ -408,7 +407,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             else:
                 self.thisptr.set_params_tune(self._params["accuracy"], self._params[
                     "precision"], self._params["K_max"], self._params["time_calc_steps"])
-            resp = self.thisptr.adaptive_tune( & self.log, dereference(self.interface))
+            resp = self.thisptr.adaptive_tune(& self.log, dereference(self.interface))
             if resp != 0:
                 print(self.log)
 

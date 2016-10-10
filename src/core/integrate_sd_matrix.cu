@@ -33,6 +33,10 @@
 
 #include <openssl/md5.h>
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 /// constructor for wave part
 /// _ldd_short : ldd_short of the matrix
 wavepart::wavepart(int _ldd_short):ldd_short(_ldd_short){

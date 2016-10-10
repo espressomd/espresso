@@ -19,15 +19,18 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
+from .actors cimport Actor
+
+cdef class HydrodynamicInteraction(Actor):
+    pass
 
 IF LB_GPU or LB:
 
-
-##############################################
-#
-# extern functions and structs
-#
-##############################################
+    ##############################################
+    #
+    # extern functions and structs
+    #
+    ##############################################
 
     cdef extern from "lb.hpp":
 
@@ -88,6 +91,11 @@ IF LB_GPU or LB:
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         int lb_lbnode_get_u(int * coord, double * double_return)
+        int lb_lbnode_get_rho(int * coord, double * double_return)
+        int lb_lbnode_get_pi(int * coord, double * double_return)
+        int lb_lbnode_get_pi_neq(int * coord, double * double_return)
+        int lb_lbnode_get_pop(int * coord, double * double_return)
+        int lb_lbnode_get_boundary(int * coord, int * int_return)
 
     ###############################################
     #
@@ -206,10 +214,12 @@ IF LB_GPU or LB:
         # call c-function
         IF SHANCHEN:
             if(lb_lbfluid_set_ext_force(1, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
-                raise Exception("lb_fluid_set_ext_force error at C-level interface")
+                raise Exception(
+                    "lb_fluid_set_ext_force error at C-level interface")
         ELSE:
             if(lb_lbfluid_set_ext_force(0, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
-                raise Exception("lb_fluid_set_ext_force error at C-level interface")
+                raise Exception(
+                    "lb_fluid_set_ext_force error at C-level interface")
 
         return 0
 
@@ -324,4 +334,3 @@ IF LB_GPU or LB:
         p_ext_force = c_ext_force
 
         return 0
-

@@ -19,20 +19,13 @@
 
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from . cimport utils
-from espressomd.utils cimport *
-from .utils import *
 from . cimport polymer
+import numpy as np
 
 cdef class Polymer(object):
     cdef object _params
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._params = self.default_params()
-        pass
-
-    def __call__(self, *args, **kwargs):
-        if len(args) == 0 and len(kwargs) == 0:
-            raise ValueError("Required Arguments missing " + self.required_keys().__str__() )
 
         for k in self.required_keys():
             if k not in kwargs:
@@ -43,8 +36,8 @@ cdef class Polymer(object):
         for k in kwargs:
             self._params[k] = kwargs[k]
 
-        print(self._params)
         self.validate_params()
+        bond_id = self._params["bond"]._bond_id
 
         cdef double start_pos[3];
         cdef double start_pos2[3];
@@ -52,34 +45,31 @@ cdef class Polymer(object):
             start_pos[i] = self._params["start_pos"][i]
             start_pos2[i] = self._params["pos2"][i]
 
-        return polymerC(self._params["N_P"], self._params["MPC"], self._params["bond_length"], self._params["start_id"], \
+        polymerC(self._params["N_P"], self._params["MPC"], self._params["bond_length"], self._params["start_id"], \
                  start_pos, self._params["mode"], self._params["shield"], self._params["max_tries"], \
                  self._params["val_poly"], self._params["charge_distance"], self._params["type_poly_neutral"], \
-                 self._params["type_poly_charged"], self._params["bond_id"], self._params["angle"], \
-                 self._params["angle2"], start_pos2, self._params["constraints"] )
+                 self._params["type_poly_charged"], bond_id, self._params["angle"], \
+                 self._params["angle2"], start_pos2, self._params["constraints"])
 
 
     def validate_params(self):
         default = self.default_params()
-        if self._params["N_P"] < 0 and  default["N_P"] != self._params["N_P"] :
+        if self._params["N_P"] <= 0:
             raise ValueError(
                     "N_P has to be a positive Integer" )
-        if self._params["MPC"] < 0 and default["N_P"] != self._params["N_P"]:
+        if self._params["MPC"] <= 1:
             raise ValueError(
-                    "MPC has to be a positive Integer" )
+                    "MPC has to be a positive Integer larger than 1" )
         if self._params["bond_length"] < 0 :
             raise ValueError(
                     "bond_length has to be a positive float" )
-        if self._params["bond_id"] < 0 and default["N_P"] != self._params["N_P"]:
-            raise ValueError(
-                    "bond_id has to be an existing bonded interaction id" )
-        if self._params["start_id"] < 0 and default["N_P"] != self._params["N_P"]:
+        if self._params["start_id"] < 0:
             raise ValueError(
                     "start_id has to be a positive Integer")
         if not isinstance(self._params["start_pos"], np.ndarray) or len(self._params["start_pos"]) != 3:
             raise ValueError(
                     "start_pos has to be an numpy array with 3 Elements" )
-        if not isinstance(self._params["mode"], int) and default["N_P"] != self._params["N_P"]:
+        if not isinstance(self._params["mode"], int):
             raise ValueError(
                     "mode has to be a positive Integer" )
         if self._params["shield"] < 0 and default["shield"] != self._params["shield"]:
@@ -112,10 +102,10 @@ cdef class Polymer(object):
         
 
     def required_keys(self):
-        return "N_P", "MPC", "bond_length", "bond_id"
+        return "N_P", "MPC", "bond_length", "bond"
 
     def valid_keys(self):
-        return "N_P", "MPC", "bond_length", "bond_id", "start_id", "start_pos", "mode", "shield", "max_tries", "val_poly", "charge_distance", "type_poly_neutral", "type_poly_charged", "angle", "angle2", "constraints"
+        return "N_P", "MPC", "bond_length", "bond", "start_id", "start_pos", "mode", "shield", "max_tries", "val_poly", "charge_distance", "type_poly_neutral", "type_poly_charged", "angle", "angle2", "constraints"
 
     def default_params(self):
         para=dict()
@@ -131,7 +121,6 @@ cdef class Polymer(object):
         para["charge_distance"] = 1
         para["type_poly_neutral"] = 0 
         para["type_poly_charged"] = 1
-        para["bond_id"] = 0
         para["angle"] = -1.0
         para["angle2"] = -1.0
         para["constraints"]=0 

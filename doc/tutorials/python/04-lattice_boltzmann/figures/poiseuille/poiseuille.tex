@@ -1,0 +1,26 @@
+\input{../definitions_standalone}
+\begin{document}
+\begin{tikzpicture}
+	\pgfplotsset{
+		legend style = {
+		at={(1.0,1.0)},
+		anchor=north east
+		}}
+	\begin{axis}
+		[minor tick num=1,
+		axis x line=bottom,
+		axis y line = left,
+		xlabel = {x position},
+		xmin = 0.0,
+		xmax = 16.0,
+		ylabel = {LB fluid velocity}, 
+		ymin = 0.0,
+		ymax = 0.02,
+		]
+		\addplot+[color=paper_01, mystyle1, only marks] file {./fluid_velocity.dat};
+		\addplot+[color=paper_02, samples=500, no marks, domain=1.5:13.5] 
+		{0.001/2.0*(12^2/4.0-(x-7.5)^2)};
+		\legend{data,analytical prediction};
+	\end{axis}
+\end{tikzpicture}
+\end{document}

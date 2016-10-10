@@ -112,9 +112,15 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return np.array([self.particle_data.r.p[0],
-                             self.particle_data.r.p[1],
-                             self.particle_data.r.p[2]])
+            cdef double ppos[3]
+            cdef int img[3]
+            for i in range(3):
+               img[i]=self.particle_data.l.i[i]
+               ppos[i]=self.particle_data.r.p[i]
+
+
+            unfold_position(ppos,img)
+            return np.array([ppos[0],ppos[1],ppos[2]])
 
     property pos_folded:
         """Particle position (folded into central image)."""
@@ -196,7 +202,7 @@ cdef class ParticleHandle:
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
             if change_particle_bond(self.id, NULL, 1):
-                raise Exception("Deleting existing bonds failed.")
+                handle_errors("Deleting existing bonds failed.")
 
             # And add the new ones
             for bond in bonds:
@@ -459,7 +465,7 @@ cdef class ParticleHandle:
             """Setup this particle as virtual site relative to the particle with the given id"""
             if isinstance(_relto, int):
                 if vs_relate_to(self.id, _relto):
-                    raise Exception("Vs_relative setup failed.")
+                    handle_errors("Vs_relative setup failed.")
             else:
                 raise ValueError(
                     "Argument of vs_auto_relate_to has to be of type int")
@@ -472,7 +478,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int")
             if vs_relate_to(self.id, _relto):
-                raise Exception("vs_relative setup failed.")
+                handle_errors("vs_relative setup failed.")
 
     IF DIPOLES:
         # Vector dipole moment
@@ -828,7 +834,7 @@ cdef class ParticleHandle:
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 0):
-            raise Exception("Adding the bond failed.")
+            handle_errors("Adding the bond failed.")
 
     def delete_verified_bond(self, bond):
         cdef int bond_info[5]
@@ -836,7 +842,7 @@ cdef class ParticleHandle:
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 1):
-            raise Exception("Deleting the bond failed.")
+            handle_errors("Deleting the bond failed.")
 
     def check_bond_or_throw_exception(self, bond):
         """Checks the validity of the given bond:
@@ -899,7 +905,7 @@ cdef class ParticleHandle:
 
     def delete_all_bonds(self):
         if change_particle_bond(self.id, NULL, 1):
-            raise Exception("Deleting all bonds failed.")
+            handle_errors("Deleting all bonds failed.")
 
     def update(self, P):
 
