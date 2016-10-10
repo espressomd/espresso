@@ -26,7 +26,6 @@
 namespace Writer {
 namespace H5md {
 
-
 static void backup_file(const std::string &from, const std::string& to)
 {
 #ifdef H5MD_DEBUG
@@ -188,7 +187,7 @@ void File::create_datasets(bool only_load)
                 auto dims = create_dims(descr.dim, descr.size);
                 auto cdims = create_dims(descr.dim, descr.size, 1);
                 auto maxdims = create_maxdims(descr.dim, descr.size);
-                auto storage = h5xx::policy::storage::chunked(cdims);
+                auto storage = h5xx::policy::storage::chunked(cdims).set(h5xx::policy::storage::fill_value(-10));
                 auto dataspace = h5xx::dataspace(dims, maxdims);
                 datasets[path] = h5xx::dataset(groups[father],
                                                basename,
@@ -311,6 +310,11 @@ void File::Write(int write_dat)
         }
     }
 
+    int n_part=max_seen_particle+1;
+    if(n_part > m_previous_n_part) {
+    	m_previous_n_part=n_part;
+    }
+
     WriteDataset(id, "particles/atoms/id");
 
     if (write_typ)
@@ -335,7 +339,6 @@ void File::Write(int write_dat)
         WriteDataset(f, "particles/atoms/force");
     }
 }
-
 
 /* data is assumed to be three dimensional */
 template <typename T>
@@ -365,6 +368,8 @@ void File::WriteDataset(T &data, const std::string& path)
     hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
     /* Extend the dataset for another timestep. */
     dims[0] += 1;
+    dims[1] =m_previous_n_part;
+
     H5Dset_extent(dataset.hid(), dims);
 
     /* Refresh the dataset after extension. */
