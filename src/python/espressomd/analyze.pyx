@@ -110,10 +110,20 @@ class Analysis:
     
     
     def distto(self, id=None, pos=None):
-        """"Distance to particle or point
-            distto(id=None,pos=None)
-            id: id of the particle
-            pos: position as array
+        """
+        Calculates the distance to a point or particle.
+
+        Parameters
+        ----------
+        id : int, optional
+            Calculate distance to particle with id `id`.
+        pos : array of floats, optional
+            Calculate distance to position `pos`.
+
+        Returns
+        -------
+        float
+            The calculated distance.
         """
     
         if id == None and pos == None:
@@ -146,9 +156,20 @@ class Analysis:
     
     
     def analyze_linear_momentum(self, include_particles=True, include_lbfluid=True):
-        """"Analyze the system's linear momentum
-            analyze_linear_momentum(include_particles=True, include_lbfluid=True)
-            one can calculate the linear momentum of particles and the lbfluid with this command
+        """
+        Calculates the systems linear momentum.
+
+        Parameters
+        ----------
+        include_particles : bool, optional
+            Include the particles contribution to the linear momentum. Default: True.
+        include_lbfluid : bool, optional
+            Include the Lattice Boltzmann fluid contribution to the linear momentum. Default: True.
+
+        Returns
+        -------
+        float
+            The linear momentum of the system.
         """
         return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
     
@@ -159,7 +180,18 @@ class Analysis:
     
     
     def centermass(self, part_type=None):
-        """Analyze the system's center of mass
+        """
+        Calculates the systems center of mass.
+
+        Parameters
+        ----------
+        part_type : int
+            Particle type for which to calculate the center of mass.    
+
+        Returns
+        -------
+        array of floats
+            The center of mass of the system.
         """
         return c_analyze.centerofmass(part_type)
     
@@ -170,11 +202,22 @@ class Analysis:
     
     
     def nbhood(self, pos=None, r_catch=None, plane='3d'):
-        """nbhood(pos=None, r_catch=None, plane = '3d'):
-           get all particles in neighborhood r_catch of pos and return their ids
-           in il. plane can be used to specify the distance in the xy, xz or yz
-           plane
-           nbhood(pos=None, r_catch=None, plane = '3d'):
+        """
+        Get all particles in a defined neighborhood.
+
+        Parameters
+        ----------
+        pos : array of floats
+            Reference position for the neighborhood.
+        r_catch : float
+            Radius of the region.
+        plane : {'xy', 'xz', 'yz'}
+            If given, `r_catch` is the distance to the respective plane.
+
+        Returns
+        -------
+        array of ints
+            The neighbouring particle ids.
         """
     
         cdef int planedims[3]

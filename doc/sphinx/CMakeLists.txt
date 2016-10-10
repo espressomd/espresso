@@ -33,7 +33,7 @@ if(SPHINX_FOUND)
             ${SPHINX_PYTHON_DIR}
         COMMAND
         ${SPHINX_EXECUTABLE}
-            -q -b html
+            -Q -b html
             -c "${SPHINX_BASE}"
             -d "${SPHINX_CACHE_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}"
