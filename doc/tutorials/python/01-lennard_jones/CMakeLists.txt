@@ -15,3 +15,5 @@ add_custom_command(
 # FIXME here: for the          XX  give it a proper number (01, 02...)
 add_custom_target(tutorials_py_01 DEPENDS ${BASENAME}.pdf)
 
+configure_file(scripts/lj_tutorial.py ${CMAKE_BINARY_DIR}/doc/tutorials/python/${BASENAME}/lj_tutorial.py COPYONLY)
+configure_file(scripts/msd.py ${CMAKE_BINARY_DIR}/doc/tutorials/python/${BASENAME}/msd.py COPYONLY)

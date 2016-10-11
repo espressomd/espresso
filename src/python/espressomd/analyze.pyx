@@ -385,12 +385,15 @@ class Analysis:
     
         # Total pressure
         cdef int i
-        cdef double tmp
-        tmp = 0
-        for i in range(c_analyze.total_p_tensor.data.n):
-            tmp += c_analyze.total_p_tensor.data.e[i]
+        tmp = np.zeros(9)
+        for i in range(9):
+            value = c_analyze.total_p_tensor.data.e[i]
+            for k in range(c_analyze.total_p_tensor.data.n/9):
+                value += c_analyze.total_p_tensor.data.e[9*k + i]
+            # I don't know, why the 1/2 is needed.
+            tmp[i]=value/2.
     
-        p["total"] = tmp
+        p["total"] = tmp.reshape((3,3))
     
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
@@ -415,10 +418,10 @@ class Analysis:
                 #      if checkIfParticlesInteract(i, j):
     
                 p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
-                total_non_bonded += p["nonBonded", i, j]
+                total_non_bonded += p["non_bonded", i, j]
     
                 p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
-                total_non_bonded_intra += p["nonBondedIntra", i, j]
+                total_non_bonded_intra += p["non_bonded_intra", i, j]
     
                 p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
@@ -468,7 +471,7 @@ class Analysis:
             c_stress_range[i] = stress_range[i]
     
         if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
-            raise Exception("Error while calculating local stress tensor")
+            handle_errors("Error while calculating local stress tensor")
         stress_tensor = create_nparray_from_double_list(local_stress_tensor)
         free(local_stress_tensor)
         return stress_tensor
@@ -489,6 +492,7 @@ class Analysis:
         if c_analyze.total_energy.init_status == 0:
             c_analyze.init_energies( & c_analyze.total_energy)
             c_analyze.master_energy_calc()
+            handle_errors("calc_long_range_energies failed")
     
         # Individual components of the pressur
     
@@ -528,7 +532,7 @@ class Analysis:
                 e["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_energy, i, j)[0]
     #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
-    #        e["nonBondedIntra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
+    #        e["non_bonded_intra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
     #        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
     #  e["nonBondedIntra"]=total_intra
@@ -623,6 +627,7 @@ class Analysis:
     
         # Used to take the WITHOUT_BONDS define
         c_analyze.updatePartCfg(0)
+        handle_errors("updatePartCfg failed")
         c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
     
         return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
@@ -659,6 +664,7 @@ class Analysis:
         cdef vector[int] p2_types = type_list_b
     
         c_analyze.updatePartCfg(0)
+        handle_errors("updatePartCfg failed")
         if rdf_type == 'rdf':
             c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
@@ -711,6 +717,7 @@ class Analysis:
         p2_types = create_int_list_from_python_object(type_list_b)
     
         c_analyze.updatePartCfg(0)
+        handle_errors("updatePartCfg failed")
         c_analyze.calc_part_distribution(p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
     
@@ -827,6 +834,7 @@ class Analysis:
     
         # Used to take the WITHOUT_BONDS define
         c_analyze.updatePartCfg(0)
+        handle_errors("updatePartCfg failed")
         c_analyze.analyze_rdfchain(r_min, r_max, r_bins, & f1, & f2, & f3)
     
         rdfchain = np.empty((r_bins, 4))

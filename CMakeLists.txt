@@ -58,8 +58,11 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-option(WITH_PYTHON "Build python interface"  ON)
-option(WITH_TCL    "Build tcl interface"     ON)
+#option(WITH_PYTHON "Build python interface"  ON)
+##option(WITH_TCL    "Build tcl interface"     ON)
+set(WITH_PYTHON yes)
+set(WITH_TCL no)
+
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
@@ -72,11 +75,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
   CACHE STRING "Default name of the local config file")
-
-
-######################################################################
-# Include modules
-######################################################################
 
 # Check which config file to use
 include(MyConfig)
@@ -132,7 +130,7 @@ if (WITH_PYTHON)
   find_package(NumPy REQUIRED)
   list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
-                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(PYTHON_VERSION_MAJOR EQUAL 2)
     set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
@@ -165,18 +163,11 @@ if (WITH_PYTHON OR WITH_TCL)
 endif()
 
 if (WITH_HDF5)
-find_package(HDF5 COMPONENTS C)
+find_package(HDF5)
 if(HDF5_FOUND)
-  # We need the parallel version!
-  if(HDF5_IS_PARALLEL)
-    set(H5MD 1)
-    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-    include_directories(${HDF5_INCLUDE_DIRS})
-    add_feature_info(HDF5 ON "parallel")
-  else()
-    unset(HDF5_FOUND)
-    add_feature_info(HDF5 OFF "serial")
-  endif(HDF5_IS_PARALLEL)
+  set(H5MD 1)
+  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+  include_directories(${HDF5_INCLUDE_DIRS})
 endif(HDF5_FOUND)
 endif(WITH_HDF5)
 

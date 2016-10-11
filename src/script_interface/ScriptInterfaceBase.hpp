@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2015,2016 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -23,67 +21,29 @@
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 
 #include <map>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <memory>
 
 #include <boost/variant.hpp>
 
-#include "utils/NumeratedContainer.hpp"
+#include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
 
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
 
-namespace Utils {
-template <typename T> class ObjectId {
-public:
-  /* Assign an id on construction */
-  ObjectId() : m_id(reg().add(std::weak_ptr<T>())) {}
-
-  /* Remove id on destruction */
-  virtual ~ObjectId() { reg().remove(m_id); }
-
-  /**
-   * @brief Get indentifier for this instance.
-   */
-  int id() const { return m_id; }
-  /**
-   * @brief get instance by id.
-   */
-  static std::weak_ptr<T> &get_instance(int id) { return reg()[id]; }
-
-private:
-  const int m_id;
-  static Utils::NumeratedContainer<std::weak_ptr<T>> &reg() {
-    static Utils::NumeratedContainer<std::weak_ptr<T>> m_reg;
-
-    return m_reg;
-  }
-};
-} /* namespace Utils */
-
 namespace ScriptInterface {
+class ScriptInterfaceBase;
 
-struct OId {
-  OId() : id(-1) {}
-  explicit OId(int i) : id(i) {}
+typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
 
-  int id;
-
-  template <typename Archive>
-  void serialize(Archive &ar, unsigned int /* version */) {
-    ar &id;
-  }
-};
-
-std::ostream &operator<<(std::ostream &out, OId const &oid);
 /**
  * @brief Possible types for parameters.
  */
 typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d, OId>
+                       std::vector<double>, Vector2d, Vector3d, ObjectId>
     Variant;
 
 /**
@@ -105,12 +65,12 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
 
 #define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
   if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value).data());     \
+    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value));            \
   }
 
 #define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
   if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value).data());     \
+    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value));            \
   }
 
 /**
@@ -135,7 +95,7 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  * @TODO Add extensive documentation.
  *
  */
-class ScriptInterfaceBase : public Utils::ObjectId<ScriptInterfaceBase> {
+class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
   /**
    * @brief Name of the object.
@@ -209,7 +169,9 @@ public:
    * If not overriden by the implementation,
    * this does nothing.
    */
-  virtual Variant call_method(const std::string &, const VariantMap &) {}
+  virtual Variant call_method(const std::string &, const VariantMap &) {
+    return true;
+  }
 
   /**
    * @brief Get a new reference counted instance of a script interface by
@@ -228,7 +190,7 @@ public:
     std::shared_ptr<T> sp = std::make_shared<T>();
 
     /* Id of the newly created instance */
-    const int id = sp->id();
+    const auto id = sp->id();
 
     /* Now get a reference to the corresponding weak_ptr in ObjectId and
        update

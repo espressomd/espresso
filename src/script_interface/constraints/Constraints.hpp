@@ -22,18 +22,27 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 
-#include "ScriptInterface.hpp"
+#include "Constraint.hpp"
+#include "ScriptObjectRegistry.hpp"
+#include "core/constraints.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
-class Constraints : public ScriptInterfaceBase {
+class Constraints : public ScriptObjectRegistry<Constraint> {
+  virtual void add_in_core(std::shared_ptr<Constraint> obj_ptr) {
+    ::Constraints::constraints.add(obj_ptr->constraint());
+  }
+  virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) {
+    ::Constraints::constraints.remove(obj_ptr->constraint());
+  };
+
 public:
-  const std::string name() const override { return "Constraints::Constraint"; }
-
-  Variant call_method(std::string const &method, VariantMap const &parameters);
+  virtual const std::string name() const override {
+    return "Constraints::Constraints";
+  };
 };
-
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
 

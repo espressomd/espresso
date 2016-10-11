@@ -31,6 +31,8 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "grid.hpp"
+#include <memory>
+#include "shapes/Wall.hpp"
 
 int angledist_set_params(int bond_type, double bend, double phimin,
                          double distmin, double phimax, double distmax) {
@@ -90,18 +92,17 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   double pwdistmin = std::numeric_limits<double>::infinity();
   double pwdistmin_d = 0.0;
 
-  for (auto const &c : constraints) {
-    if (c.type == CONSTRAINT_WAL) {
-      Constraint_wall const &wall = c.c.wal;
-
-      double dist = -wall.d;
+  for (auto const &c : Constraints::constraints) {
+    if (dynamic_cast<const Shapes::Wall*>(&(c->shape()))) {
+      const Shapes::Wall* wall =dynamic_cast<const Shapes::Wall*>(&(c->shape()));
+      double dist = -wall->d();
       for (int j = 0; j < 3; j++) {
-        dist += folded_pos[j] * wall.n[j];
+        dist += folded_pos[j] * (wall->n())[j];
       }
 
       if (dist < pwdistmin) {
         pwdistmin = dist;
-        pwdistmin_d = wall.d;
+        pwdistmin_d = wall->d();
       }
     }
   }

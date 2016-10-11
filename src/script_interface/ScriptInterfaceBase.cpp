@@ -30,7 +30,7 @@ ScriptInterfaceBase::make_shared(std::string const &name) {
       Utils::Factory<ScriptInterfaceBase>::make(name);
 
   /* Id of the newly created instance */
-  const int id = sp->id();
+  const auto id = sp->id();
 
   /* Now get a reference to the corresponding weak_ptr in ObjectId and update
      it with our shared ptr, so that everybody uses the same ref count.
@@ -40,9 +40,4 @@ ScriptInterfaceBase::make_shared(std::string const &name) {
   return sp;
 }
 
-std::ostream &operator<<(std::ostream &out, OId const &oid) {
-  out << oid.id;
-
-  return out;
-}
 }

@@ -19,6 +19,10 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
+from .actors cimport Actor
+
+cdef class HydrodynamicInteraction(Actor):
+    pass
 
 IF LB_GPU or LB:
 
@@ -87,6 +91,11 @@ IF LB_GPU or LB:
         int lb_set_lattice_switch(int py_switch)
         int lb_get_lattice_switch(int * py_switch)
         int lb_lbnode_get_u(int * coord, double * double_return)
+        int lb_lbnode_get_rho(int * coord, double * double_return)
+        int lb_lbnode_get_pi(int * coord, double * double_return)
+        int lb_lbnode_get_pi_neq(int * coord, double * double_return)
+        int lb_lbnode_get_pop(int * coord, double * double_return)
+        int lb_lbnode_get_boundary(int * coord, int * int_return)
 
     ###############################################
     #

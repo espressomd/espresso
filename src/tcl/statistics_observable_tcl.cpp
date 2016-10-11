@@ -26,9 +26,9 @@
 #include "pressure.hpp"
 
 /* forward declarations */
-int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
-int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
-int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
+int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values);
+int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs);
+int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs);
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list); 
   
@@ -104,8 +104,8 @@ int sf_print_usage(Tcl_Interp* interp);
 
 
 
-int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
-  profile_data* pdata=(profile_data*) obs->container;
+int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values, int groupsize, int shifted) {
+  profile_data* pdata=(profile_data*) obs.container;
   char buffer[TCL_DOUBLE_SPACE];
   double data;
   int linear_index;
@@ -169,8 +169,8 @@ int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, 
 //  Tcl_AppendResult(interp, "\n", (char *)NULL );
 }
 
-int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
-  radial_profile_data* pdata=(radial_profile_data*) obs->container;
+int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values, int groupsize, int shifted) {
+  radial_profile_data* pdata=(radial_profile_data*) obs.container;
   char buffer[TCL_DOUBLE_SPACE];
   double data;
   int linear_index;
@@ -233,7 +233,7 @@ int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int
   return TCL_OK;
 }
 
-int tclcommand_observable_tclcommand(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_tclcommand(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   int n_A;
   Observable_Tclcommand_Arg_Container* container;
   if (argc!=3) {
@@ -250,72 +250,72 @@ int tclcommand_observable_tclcommand(Tcl_Interp* interp, int argc, char** argv, 
   container->n_A = n_A;
   container->interp = interp;
 
-  obs->calculate=&observable_calc_tclcommand;
-  obs->update=0;
-  obs->n=n_A;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
-  obs->container=(void*) container;
+  obs.calculate=&observable_calc_tclcommand;
+  obs.update=0;
+  obs.n=n_A;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
+  obs.container=(void*) container;
           
   return TCL_OK;
 }
 
-int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_velocities;
-  obs->update=0;
-  obs->container=ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_velocities;
+  obs.update=0;
+  obs.container=ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_particle_body_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_body_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_body_velocities;
-  obs->update=0;
-  obs->container=ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_body_velocities;
+  obs.update=0;
+  obs.container=ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_particle_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_angular_momentum;
-  obs->update=0;
-  obs->container=ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_angular_momentum;
+  obs.update=0;
+  obs.container=ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_particle_body_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_body_angular_momentum(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_body_angular_momentum;
-  obs->update=0;
-  obs->container=ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_body_angular_momentum;
+  obs.update=0;
+  obs.container=ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp, blocksize;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
@@ -327,30 +327,30 @@ int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv
   }
   if (argc>0 && ARG0_IS_S("blocked")) {
     if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
-      obs->calculate=&observable_calc_blocked_com_velocity;
-      obs->update=0;
-      obs->container=ids;
-      obs->n=3*ids->n/blocksize;
-      obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+      obs.calculate=&observable_calc_blocked_com_velocity;
+      obs.update=0;
+      obs.container=ids;
+      obs.n=3*ids->n/blocksize;
+      obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
       *change=3+temp;
-      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs.n);
       return TCL_OK;
     } else {
       Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
       return TCL_ERROR;
     }
   } else /* if nonblocked com is to be taken */ {
-    obs->calculate=&observable_calc_com_velocity;
-    obs->update=0;
-    obs->container=ids;
-    obs->n=3;
-    obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+    obs.calculate=&observable_calc_com_velocity;
+    obs.update=0;
+    obs.container=ids;
+    obs.n=3;
+    obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
 }
 
-int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp, blocksize;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
@@ -362,31 +362,31 @@ int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv
   }
   if (argc>0 && ARG0_IS_S("blocked")) {
     if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
-      obs->calculate=&observable_calc_blocked_com_position;
-      obs->update=0;
-      obs->container=ids;
-      obs->n=3*ids->n/blocksize;
-      obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+      obs.calculate=&observable_calc_blocked_com_position;
+      obs.update=0;
+      obs.container=ids;
+      obs.n=3*ids->n/blocksize;
+      obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
       *change=3+temp;
-      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs.n);
       return TCL_OK;
     } else {
       Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
       return TCL_ERROR;
     }
   } else /* if nonblocked com is to be taken */ {
-    obs->calculate=&observable_calc_com_position;
-    obs->update=0;
-    obs->container=ids;
-    obs->n=3;
-    obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+    obs.calculate=&observable_calc_com_position;
+    obs.update=0;
+    obs.container=ids;
+    obs.n=3;
+    obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
 }
 
 
-int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp, blocksize;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
@@ -398,122 +398,122 @@ int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, i
   }
   if (argc>0 && ARG0_IS_S("blocked")) {
     if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
-      obs->calculate=&observable_calc_blocked_com_force;
-      obs->update=0;
-      obs->container=ids;
-      obs->n=3*ids->n/blocksize;
-      obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+      obs.calculate=&observable_calc_blocked_com_force;
+      obs.update=0;
+      obs.container=ids;
+      obs.n=3*ids->n/blocksize;
+      obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
       *change=3+temp;
-      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs.n);
       return TCL_OK;
     } else {
       Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
       return TCL_ERROR;
     }
   } else /* if nonblocked com is to be taken */ {
-    obs->calculate=&observable_calc_com_force;
-    obs->update=0;
-    obs->container=ids;
-    obs->n=3;
-    obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+    obs.calculate=&observable_calc_com_force;
+    obs.update=0;
+    obs.container=ids;
+    obs.n=3;
+    obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
     *change=1+temp;
     return TCL_OK;
   }
 }
 
-int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
      return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_positions;
-  obs->update=0;
-  obs->container=(void*)ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_positions;
+  obs.update=0;
+  obs.container=(void*)ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_particle_forces(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_particle_forces(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList* ids;
   int temp;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
      return TCL_ERROR;
-  obs->calculate=&observable_calc_particle_forces;
-  obs->update=0;
-  obs->container=(void*)ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.calculate=&observable_calc_particle_forces;
+  obs.update=0;
+  obs.container=(void*)ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
 
 
-int tclcommand_observable_stress_tensor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  obs->calculate=&observable_stress_tensor;
-  obs->update=0;
-  obs->container=(void*)NULL;
-  obs->n=9;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+int tclcommand_observable_stress_tensor(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
+  obs.calculate=&observable_stress_tensor;
+  obs.update=0;
+  obs.container=(void*)NULL;
+  obs.n=9;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1;
   return TCL_OK;
 }
 
 
-int tclcommand_observable_stress_tensor_acf_obs(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  obs->calculate=&observable_calc_stress_tensor_acf_obs;
-  obs->update=0;
-  obs->container=(void*)NULL;
-  obs->n=6;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+int tclcommand_observable_stress_tensor_acf_obs(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
+  obs.calculate=&observable_calc_stress_tensor_acf_obs;
+  obs.update=0;
+  obs.container=(void*)NULL;
+  obs.n=6;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1;
   return TCL_OK;
 }
 
 
-int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   profile_data* pdata;
-  obs->calculate=&observable_calc_density_profile;
-  obs->update=0;
-  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_density_profile;
+  obs.update=0;
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs.n, &pdata) != TCL_OK ) 
     return TCL_ERROR;
   if (pdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  obs->container=(void*)pdata;
-  obs->n=pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)pdata;
+  obs.n=pdata->xbins*pdata->ybins*pdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_force_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_force_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   profile_data* pdata;
-  obs->calculate=&observable_calc_force_density_profile;
-  obs->update=0;
-  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_force_density_profile;
+  obs.update=0;
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs.n, &pdata) != TCL_OK ) 
     return TCL_ERROR;
   if (pdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  obs->container=(void*)pdata;
-  obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)pdata;
+  obs.n=3*pdata->xbins*pdata->ybins*pdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
 
-int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   rdf_profile_data* pdata = (rdf_profile_data*) Utils::malloc(sizeof(rdf_profile_data));
-  obs->calculate=&observable_calc_rdf;
-  obs->update=0;
+  obs.calculate=&observable_calc_rdf;
+  obs.update=0;
   
   pdata->r_bins=100;
   pdata->r_min=0;
@@ -573,117 +573,117 @@ int tclcommand_observable_rdf(Tcl_Interp* interp, int argc, char** argv, int* ch
   memmove(pdata->p2_types, p2.e,p2.n*sizeof(int));
   pdata->n_p2     = p2.n;
   
-  obs->container=(void*)pdata;
-  obs->n=pdata->r_bins;
-  obs->last_value= (double*) Utils::malloc(obs->n * sizeof (double));
+  obs.container=(void*)pdata;
+  obs.n=pdata->r_bins;
+  obs.last_value= (double*) Utils::malloc(obs.n * sizeof (double));
   return TCL_OK;
 }
 
-int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
 #ifndef LB
   return TCL_ERROR;
 #else
   int temp;
   profile_data* pdata;
-  obs->calculate=&observable_calc_lb_velocity_profile;
-  obs->update=0;
-  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_lb_velocity_profile;
+  obs.update=0;
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs.n, &pdata) != TCL_OK ) 
     return TCL_ERROR;
-  obs->container=(void*)pdata;
-  obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)pdata;
+  obs.n=3*pdata->xbins*pdata->ybins*pdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #endif
 }
 
 
-int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   radial_profile_data* rpdata;
-  obs->calculate=&observable_calc_radial_density_profile;
-  obs->update=0;
-  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_radial_density_profile;
+  obs.update=0;
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs.n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
   if (rpdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  obs->container=(void*)rpdata;
-  obs->n=rpdata->rbins*rpdata->phibins*rpdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)rpdata;
+  obs.n=rpdata->rbins*rpdata->phibins*rpdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   radial_profile_data* rpdata;
-  obs->calculate=&observable_calc_radial_flux_density_profile;
-  obs->update=0;
-  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_radial_flux_density_profile;
+  obs.update=0;
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs.n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
   if (rpdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  obs->container=(void*)rpdata;
-  obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
+  obs.container=(void*)rpdata;
+  obs.n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
   rpdata->container=(double*)Utils::malloc(3*rpdata->id_list->n*sizeof(double));
   double* temptemp=(double*) rpdata->container;
   *temptemp=CONST_UNITITIALIZED;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   profile_data* pdata;
-  obs->calculate=&observable_calc_flux_density_profile;
-  obs->update=0;
-  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_flux_density_profile;
+  obs.update=0;
+  if (tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs.n, &pdata) != TCL_OK ) 
      return TCL_ERROR;
   if (pdata->id_list==0) {
     Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  obs->container=(void*)pdata;
-  obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)pdata;
+  obs.n=3*pdata->xbins*pdata->ybins*pdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 }
 
-int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
 #ifndef LB
   return TCL_ERROR;
 #else
   int temp;
   radial_profile_data* rpdata;
-  obs->calculate=&observable_calc_lb_radial_velocity_profile;
-  obs->update=0;
-  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) != TCL_OK ) 
+  obs.calculate=&observable_calc_lb_radial_velocity_profile;
+  obs.update=0;
+  if (tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs.n, &rpdata) != TCL_OK ) 
      return TCL_ERROR;
-  obs->container=(void*)rpdata;
-  obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)rpdata;
+  obs.n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #endif
 }
 
-int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
 #ifdef ELECTROSTATICS
   int temp;
   IntList* ids;
-  obs->calculate=&observable_calc_particle_currents;
-  obs->update=0;
+  obs.calculate=&observable_calc_particle_currents;
+  obs.update=0;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->container=(void*)ids;
-  obs->n=3*ids->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)ids;
+  obs.n=3*ids->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -693,17 +693,17 @@ int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char**
   
 }
 
-int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
 #ifdef ELECTROSTATICS
   int temp;
   IntList* ids;
-  obs->calculate=&observable_calc_currents;
-  obs->update=0;
+  obs.calculate=&observable_calc_currents;
+  obs.update=0;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->container=(void*)ids;
-  obs->n=3;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)ids;
+  obs.n=3;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -712,17 +712,17 @@ int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, in
 #endif
 } 
 
-int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
 #ifdef ELECTROSTATICS
   int temp;
   IntList* ids;
-  obs->calculate=&observable_calc_dipole_moment;
-  obs->update=0;
+  obs.calculate=&observable_calc_dipole_moment;
+  obs.update=0;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->container=(void*)ids;
-  obs->n=3;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)ids;
+  obs.n=3;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -731,17 +731,17 @@ int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** arg
 #endif
 }
 
-int tclcommand_observable_calc_com_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_calc_com_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
 #ifdef DIPOLES
   int temp;
   IntList* ids;
-  obs->calculate=&observable_calc_com_dipole_moment;
-  obs->update=0;
+  obs.calculate=&observable_calc_com_dipole_moment;
+  obs.update=0;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK )
     return TCL_ERROR;
-  obs->container=(void*)ids;
-  obs->n=3;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)ids;
+  obs.n=3;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   *change=1+temp;
   return TCL_OK;
 #else
@@ -750,16 +750,16 @@ int tclcommand_observable_calc_com_dipole_moment(Tcl_Interp* interp, int argc, c
 #endif
 }
 
-int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   //Tcl_AppendResult(interp, "Structure Factor not available yet!!", (char *)NULL);
   //return TCL_ERROR;
   int order;
   if (argc > 1 && ARG1_IS_I(order)) {
-    obs->calculate=&observable_calc_structure_factor;
+    obs.calculate=&observable_calc_structure_factor;
     //order_p=(int * )Utils::malloc(sizeof(int));
     observable_sf_params* params =(observable_sf_params*) Utils::malloc(sizeof(observable_sf_params));
     params->order=order;
-   obs->container=(void*) params;
+   obs.container=(void*) params;
    int order2,i,j,k,l,n ; 
    order2=order*order;
    l=0;
@@ -774,8 +774,8 @@ int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** 
        }
      }
    }
-   obs->n=l;
-   obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+   obs.n=l;
+   obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
    *change=2;
    return TCL_OK;
  } else { 
@@ -784,13 +784,13 @@ int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** 
  }
 }
 
-int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
-  observable_sf_params* params= (observable_sf_params*) obs->container;
+int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs.container;
   int order=params->order;
   int order2=order*order;
   char buffer[5 * TCL_DOUBLE_SPACE + 7];
   double qfak = 2.0 * PI / box_l[0];
-  double* data = obs->last_value;
+  double* data = obs.last_value;
   int l=0;
   for(int i=-order; i<=order; i++) {
     for(int j=-order; j<=order; j++) {
@@ -808,14 +808,14 @@ int tclcommand_observable_print_structure_factor_formatted(Tcl_Interp* interp, i
   return TCL_OK;
 }
 
-int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   int order;
   if (argc > 1 && ARG1_IS_I(order)) {
-    obs->calculate=&observable_calc_structure_factor_fast;
+    obs.calculate=&observable_calc_structure_factor_fast;
     //order_p=(int * )Utils::malloc(sizeof(int));
     observable_sf_params* params =(observable_sf_params*) Utils::malloc(sizeof(observable_sf_params));
     params->order=order;
-    obs->container=(void*) params;
+    obs.container=(void*) params;
     //params->num_k_vecs=order;
     *change=2;
     argc-=2;
@@ -852,8 +852,8 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
       Tcl_AppendResult(interp, "so many samples per order not yet implemented", (char*)NULL);
       return TCL_ERROR; 
     }
-    obs->n=params->order*vecs_per_k*2;
-    obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+    obs.n=params->order*vecs_per_k*2;
+    obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
     return TCL_OK;
   } else { 
     sf_print_usage(interp);
@@ -861,8 +861,8 @@ int tclcommand_observable_structure_factor_fast(Tcl_Interp* interp, int argc, ch
   }
 }
 
-int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
-  observable_sf_params* params= (observable_sf_params*) obs->container;
+int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values, int groupsize, int shifted) {
+  observable_sf_params* params= (observable_sf_params*) obs.container;
   int k_max = params->order * params->k_density;
   char buffer[3 * TCL_DOUBLE_SPACE + 5];
   double qfak = 2.0 * PI / box_l[0];
@@ -894,12 +894,12 @@ int tclcommand_observable_print_structure_factor_fast_formatted(Tcl_Interp* inte
   return TCL_OK;
 }
 
-int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   IntList *ids1, *ids2;
   int temp;
   double cutoff;
-  obs->calculate=&observable_calc_interacts_with;
-  obs->update=0;
+  obs.calculate=&observable_calc_interacts_with;
+  obs.update=0;
   ids1=(IntList*)Utils::malloc(sizeof(IntList));
   ids2=(IntList*)Utils::malloc(sizeof(IntList));
   iw_params* iw_params_p=(iw_params*) Utils::malloc(sizeof(iw_params));
@@ -929,13 +929,13 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   } 
   *change+=1;
   iw_params_p->cutoff=cutoff;
-  obs->container=(void*)iw_params_p;
-  obs->n=ids1->n; // number of ids from the 1st argument
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
+  obs.container=(void*)iw_params_p;
+  obs.n=ids1->n; // number of ids from the 1st argument
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
   return TCL_OK;
 }
 
-int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   int reference_observable;
   if (argc < 2) {
     Tcl_AppendResult(interp, "observable new average <reference_id>", (char *)NULL);
@@ -952,15 +952,15 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
   observable_average_container* container=(observable_average_container*)Utils::malloc(sizeof(observable_average_container));
   container->reference_observable = observables[reference_observable];
   container->n_sweeps = 0;
-  obs->n = container->reference_observable->n;
-  obs->last_value=(double*)Utils::malloc(obs->n*sizeof(double));
-  for (int i=0; i<obs->n; i++) 
-    obs->last_value[i] = 0;
+  obs.n = container->reference_observable->n;
+  obs.last_value=(double*)Utils::malloc(obs.n*sizeof(double));
+  for (int i=0; i<obs.n; i++) 
+    obs.last_value[i] = 0;
 
-  obs->container=container;
-  obs->update=&observable_update_average;
-  obs->calculate=0;
-  obs->type = AVERAGE;
+  obs.container=container;
+  obs.update=&observable_update_average;
+  obs.calculate=0;
+  obs.type = AVERAGE;
 
   return TCL_OK;
 }
@@ -1097,18 +1097,18 @@ int tcl_parse_radial_density_distribution(Tcl_Interp *interp, int argc, char **a
 }
 
 
-int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs ){
+int tcl_command_radial_density_distribution(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs ){
   int temp;
   *change = 0;
   radial_density_data *r_data = (radial_density_data *) Utils::malloc(sizeof(radial_density_data));
 	
-  if (!(tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs->n,  r_data) == TCL_OK)) {
+  if (!(tcl_parse_radial_density_distribution(interp, argc-1, argv+1, &temp, &obs.n,  r_data) == TCL_OK)) {
 		Tcl_AppendResult(interp, "Usage: radial_density_distribution type $type minr $minr maxr $maxr rbins $rbins ( start_point $X $Y $Z end_point $X $Y $Z | id_start_point $id id_end_point $id ) \n", (char *) NULL);
     return TCL_ERROR;
   }
-  obs->calculate = &observable_radial_density_distribution;
-  obs->container = (void *) r_data;
-  obs->last_value= (double *) Utils::malloc(sizeof(double) * obs->n);
+  obs.calculate = &observable_radial_density_distribution;
+  obs.container = (void *) r_data;
+  obs.last_value= (double *) Utils::malloc(sizeof(double) * obs.n);
   return TCL_OK;
 }
 
@@ -1143,19 +1143,19 @@ int tcl_parse_spatial_polymer_properties(Tcl_Interp* interp, int argc, char **ar
   return TCL_OK;
 }
 
-int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tcl_command_spatial_polymer_properties(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   int temp;
   *change = 0;
   spatial_polym_data *p_data = (spatial_polym_data *) Utils::malloc(sizeof(spatial_polym_data));
   p_data->npoly = 1;
 	
-  if (!(tcl_parse_spatial_polymer_properties(interp, argc-1, argv+1, &temp, &obs->n, p_data) == TCL_OK)){
+  if (!(tcl_parse_spatial_polymer_properties(interp, argc-1, argv+1, &temp, &obs.n, p_data) == TCL_OK)){
     Tcl_AppendResult(interp, "Usage: spatial_polymer_property (ids $id_list | types $type) N $Npoly\n", (char *) NULL);
     return TCL_ERROR;
   }
-  obs->calculate = &observable_spatial_polymer_properties;
-  obs->container = (void *) p_data;
-  obs->last_value= (double *) Utils::malloc(sizeof(double)*obs->n);
+  obs.calculate = &observable_spatial_polymer_properties;
+  obs.container = (void *) p_data;
+  obs.last_value= (double *) Utils::malloc(sizeof(double)*obs.n);
   return TCL_OK;
 }
 
@@ -1194,22 +1194,22 @@ int tcl_parse_persistence_length(Tcl_Interp* interp, int argc, char** argv, int 
   return TCL_OK;
 }
 
-int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tcl_command_persistence_length(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   *change = 0;
   spatial_polym_data *p_data = (spatial_polym_data *) Utils::malloc(sizeof(spatial_polym_data));
   p_data->npoly = 1;
   p_data->cut_off = 0;
-  if (!(tcl_parse_persistence_length(interp, argc-1, argv+1, change, &obs->n, p_data) == TCL_OK)){
+  if (!(tcl_parse_persistence_length(interp, argc-1, argv+1, change, &obs.n, p_data) == TCL_OK)){
     Tcl_AppendResult(interp, "Usage: persistence_length ids $id_list max_d $max_d cut_off $cut_off\n", (char *) NULL);
     return TCL_ERROR;
   }
-  if ( p_data->npoly - 2*p_data->cut_off < obs->n ) {
+  if ( p_data->npoly - 2*p_data->cut_off < obs.n ) {
     Tcl_AppendResult(interp, "Error using persistence length, can't compute the bond vector correlation for this set of Parameters!\n", (char *) NULL);
     return TCL_ERROR;
   }
-  obs->calculate = &observable_persistence_length;
-  obs->container = (void *) p_data;
-  obs->last_value= (double *) Utils::malloc(sizeof(double) * obs->n);
+  obs.calculate = &observable_persistence_length;
+  obs.container = (void *) p_data;
+  obs.last_value= (double *) Utils::malloc(sizeof(double) * obs.n);
   return TCL_OK;
 }
 
@@ -1273,7 +1273,7 @@ int tcl_parse_k_dist(Tcl_Interp* interp, int argc, char** argv, int *change, int
 }
 
 
-int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs){
   *change = 0;
   k_dist_data *k_data = (k_dist_data *) Utils::malloc(sizeof(k_dist_data));
   k_data->npoly = 1;
@@ -1282,21 +1282,21 @@ int tcl_command_k_dist(Tcl_Interp* interp, int argc, char** argv, int* change, o
   k_data->r_max = -1;
   k_data->n_bins = 1;
   k_data->k = 0;
-  if ( !(tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs->n, k_data) == TCL_OK)) {
+  if ( !(tcl_parse_k_dist(interp, argc-1, argv+1, change, &obs.n, k_data) == TCL_OK)) {
     Tcl_AppendResult(interp, "Usage: polymer_pair_correltion ids $id_list maxr $maxr minr $minr rbins $rbins k $k N $Npoly poly_len $poly_len\n", (char *) NULL) ;
     return TCL_ERROR;
   }
-  obs->calculate = &observable_polymer_k_distribution;
-  obs->container = (void *) k_data;
-  obs->last_value = (double *) Utils::malloc(sizeof(double) * obs->n);
-  for (int i = 0; i< obs->n; i++) 
-    obs->last_value[i] = 0.0;
+  obs.calculate = &observable_polymer_k_distribution;
+  obs.container = (void *) k_data;
+  obs.last_value = (double *) Utils::malloc(sizeof(double) * obs.n);
+  for (int i = 0; i< obs.n; i++) 
+    obs.last_value[i] = 0.0;
   return TCL_OK;
 }
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
-    observables[id]=(s_observable*)Utils::malloc(sizeof(observable)); \
+    observables[id]=(s_Observable&)Utils::malloc(sizeof(observable)); \
     observable_init(observables[id]); \
     observables[id]->obs_name = (char*)Utils::malloc((1+strlen(#name))*sizeof(char)); \
     strcpy(observables[id]->obs_name,#name); \
@@ -1342,7 +1342,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     for (id=0;id<n_observables;id++) 
       if ( observables+id == 0 ) break; 
     if (id==n_observables) 
-      observables=(observable**) Utils::realloc(observables, (n_observables+1)*sizeof(observable*)); 
+      observables=(Observable&*) Utils::realloc(observables, (n_observables+1)*sizeof(Observable&)); 
 
 
     REGISTER_OBSERVABLE(average, tclcommand_observable_average,id);
@@ -1753,16 +1753,16 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
     argc--;
   }
   if ( calculate && observable_calculate(obs) ) {
-    Tcl_AppendResult(interp, "\nFailed to compute observable ", obs->obs_name, "\n", (char *)NULL );
+    Tcl_AppendResult(interp, "\nFailed to compute observable ", obs.obs_name, "\n", (char *)NULL );
     return TCL_ERROR;
   }
   if (argc==0) {
-    for (int i = 0; i<obs->n; i++) {
-      Tcl_PrintDouble(interp, obs->last_value[i], buffer);
+    for (int i = 0; i<obs.n; i++) {
+      Tcl_PrintDouble(interp, obs.last_value[i], buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
     }
   } else if (argc>0 && ARG0_IS_S("formatted")) {
-    tclcommand_observable_print_formatted(interp, argc-1, argv+1, change, obs, obs->last_value);
+    tclcommand_observable_print_formatted(interp, argc-1, argv+1, change, obs, obs.last_value);
   } else {
     Tcl_AppendResult(interp, "Unknown argument to observable print: ", argv[0], "\n", (char *)NULL );
     return TCL_ERROR;
@@ -1770,33 +1770,33 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
   return TCL_OK;
 }
 
-int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
+int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs, double* values) {
 
-  if (obs->update == (&observable_update_average)) 
-      obs = ((observable_average_container*)obs->container)->reference_observable;
+  if (obs.update == (&observable_update_average)) 
+      obs = ((observable_average_container*)obs.container)->reference_observable;
 
   if (0) {
 #ifdef LB
-  } else if (obs->calculate == (&observable_calc_lb_velocity_profile)) {
+  } else if (obs.calculate == (&observable_calc_lb_velocity_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
 #endif
-  } else if (obs->calculate == (&observable_calc_density_profile)) {
+  } else if (obs.calculate == (&observable_calc_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
-  } else if (obs->calculate == (&observable_calc_force_density_profile)) {
+  } else if (obs.calculate == (&observable_calc_force_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
 #ifdef LB
-  } else if (obs->calculate == (&observable_calc_lb_radial_velocity_profile)) {
+  } else if (obs.calculate == (&observable_calc_lb_radial_velocity_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
 #endif
-  } else if (obs->calculate == (&observable_calc_radial_density_profile)) {
+  } else if (obs.calculate == (&observable_calc_radial_density_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
-  } else if (obs->calculate == (&observable_calc_radial_flux_density_profile)) {
+  } else if (obs.calculate == (&observable_calc_radial_flux_density_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
-  } else if (obs->calculate == (&observable_calc_flux_density_profile)) {
+  } else if (obs.calculate == (&observable_calc_flux_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
-  } else if (obs->calculate == (&observable_calc_structure_factor_fast)) {
+  } else if (obs.calculate == (&observable_calc_structure_factor_fast)) {
     return tclcommand_observable_print_structure_factor_fast_formatted(interp, argc, argv, change, obs, values, 3, 1);
-  } else if (obs->calculate == (&observable_calc_structure_factor)) {
+  } else if (obs.calculate == (&observable_calc_structure_factor)) {
     return tclcommand_observable_print_structure_factor_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else { 
     Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
@@ -1805,7 +1805,7 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 
 }
 
-int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, Observable& obs) {
   if ( observable_update(obs) ) {
     Tcl_AppendResult(interp, "\nFailed to update observable\n", (char *)NULL );
     return TCL_ERROR;
@@ -1818,8 +1818,8 @@ int sf_print_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
-int observable_calc_tclcommand(observable* self) {
-  Observable_Tclcommand_Arg_Container* container = (Observable_Tclcommand_Arg_Container*) self->container;
+int observable_calc_tclcommand(Observable& obs) {
+  Observable_Tclcommand_Arg_Container* container = (Observable_Tclcommand_Arg_Container*) obs.container;
   Tcl_Interp* interp = (Tcl_Interp*) container->interp;
   int error = Tcl_Eval(interp, container->command);
   if (error) {
@@ -1830,16 +1830,16 @@ int observable_calc_tclcommand(observable* self) {
   strcpy(string, result);
   char* token;
   int counter=0;
-  double* A=self->last_value;
+  double* A=obs.last_value;
   token = strtok(string, " ");
-  while ( token != NULL && counter < self->n) {
+  while ( token != NULL && counter < obs.n) {
     A[counter] = atof(token);
     token = strtok(NULL, " ");
     counter++;
   }
   delete[] string;
   Tcl_ResetResult(interp);
-  if (counter != self->n) {
+  if (counter != obs.n) {
       return 1;
   }
   return 0;

@@ -33,9 +33,15 @@ from . import code_info
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
-from .polymer import Polymer
 from .analyze import Analysis
 from .galilei import GalileiTransform
+if CONSTRAINTS == 1:
+    from .constraints import Constraints
+
+from .correlators import AutoUpdateCorrelators
+from .observables import AutoUpdateObservables
+from .lbboundaries import LBBoundaries
+from .ekboundaries import EKBoundaries
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -55,11 +61,17 @@ cdef class System:
     cell_system = CellSystem()
     thermostat = Thermostat()
     minimize_energy = MinimizeEnergy()
-    polymer = Polymer()
     actors = None
     analysis = None
     galilei = GalileiTransform()
     integrator = integrate.Integrator()
+    if CONSTRAINTS == 1:
+        constraints = Constraints()
+    lbboundaries = LBBoundaries()
+    ekboundaries = EKBoundaries()
+
+    auto_update_observables = AutoUpdateObservables()
+    auto_update_correlators = AutoUpdateCorrelators()
 
     def __init__(self):
         self.actors = Actors(_system=self)
