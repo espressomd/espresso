@@ -49,13 +49,19 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-option(WITH_PYTHON "Build python interface"  ON)
-option(WITH_TCL    "Build tcl interface"     ON)
+#option(WITH_PYTHON "Build python interface"  ON)
+##option(WITH_TCL    "Build tcl interface"     ON)
+set(WITH_PYTHON yes)
+set(WITH_TCL no)
+
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
+
+# Write compile commands to file, for various tools...
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -142,6 +148,11 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
+# If we build either interface turn on script interface
+if (WITH_PYTHON OR WITH_TCL)
+  set(WITH_SCRIPT_INTERFACE ON)
+endif()
+
 if (WITH_HDF5)
 find_package(HDF5)
 if(HDF5_FOUND)
@@ -175,7 +186,7 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization)
+find_package(Boost REQUIRED mpi serialization timer chrono system)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
@@ -188,10 +199,10 @@ if(WITH_TESTS)
   find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
+    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################

@@ -46,9 +46,9 @@ cdef int_list * create_int_list_from_python_object(obj):
     alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-        print(il.e[i])
     il.n = len(obj)
     return il
+
 
 cdef check_type_or_throw_except(x, n, t, msg):
     """Checks that x is of type t and that n values are given, otherwise throws ValueError with the message msg.
@@ -114,3 +114,15 @@ def to_str(s):
         return unicode(s)
     else:
         return s
+cdef handle_errors(msg):
+    errors = mpi_gather_runtime_errors()
+    for err in errors:
+        err.print()
+
+    for err in errors:
+    # Cast because cython does not support typed enums completely
+        if <int> err.level() == <int> ERROR:
+            raise Exception(msg)
+
+    if not errors.empty() :
+        raise Exception(msg)

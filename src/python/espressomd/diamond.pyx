@@ -1,11 +1,14 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
+from espressomd.utils cimport handle_errors
+
 cdef class Diamond:
     def __init__(self, *args, **kwargs):
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:
-                raise ValueError("At least the following keys have to be given as keyword arguments: " +self.required_keys().__str__() + " got " + kwargs.__str__())
+                raise ValueError("At least the following keys have to be given as keyword arguments: " +
+                                 self.required_keys().__str__() + " got " + kwargs.__str__())
         for k in kwargs:
             if k in self.valid_keys():
                 self._params[k] = kwargs[k]
@@ -58,6 +61,7 @@ cdef class Diamond:
 
     def _set_params_in_es_core(self):
         tmp_try = self.__set_params_in_es_core()
+        handle_errors("Failed changing bonds in diamondC")
         if(tmp_try == -3):
             raise Exception(
                 "Failed upon creating one of the monomers in Espresso!\nAborting...\n")

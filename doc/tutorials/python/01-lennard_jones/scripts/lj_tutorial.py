@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd
 from espressomd import code_info
 
-import cPickle as pickle
 import os 
 import numpy as np
 
@@ -34,26 +33,26 @@ print(code_info.features())
 
 # System parameters
 #############################################################
-n_part  = 108
+n_part  = 500
 density = 0.8442
 
 skin        = 0.1
-time_step   = 0.001 
-eq_tstep    = 0.0001
+time_step   = 0.01 
+eq_tstep    = 0.001
 temperature = 0.728
 
-box_l       = np.power(n_part/density, 1.0/3.0) + 2*skin
+box_l       = np.power(n_part/density, 1.0/3.0) 
 
 warm_steps  = 100
 warm_n_time = 2000
 min_dist    = 0.87
 
 # integration
-sampling_interval       = 10
+sampling_interval       = 100
 equilibration_interval  = 1000
 
-sampling_iterations     = 10000
-equilibration_iterations= 20
+sampling_iterations     = 100
+equilibration_iterations= 5 
 
 
 # Interaction parameters (Lennard Jones)
@@ -62,7 +61,7 @@ equilibration_iterations= 20
 lj_eps = 1.0
 lj_sig = 1.0
 lj_cut = 2.5*lj_sig
-lj_cap = 20
+lj_cap = 5 
 
 
 # System setup
@@ -128,37 +127,24 @@ for i in range(equilibration_iterations):
     print("eq run {} at time {}\n".format(i, system.time))
 
 print("\nEquilibration done\n")
-# Switch thermostat off NVE msd measurement
-system.thermostat.turn_off()
-
 print("\nSampling\n")
 system.time_step = time_step
-
+# Record energy versus time
 en_fp   = open('data/energy.dat', 'w')
-sys_fp  = open('data/sim_info.pickle', 'w')
-part_fp = open('data/part.pickle', 'w')
-msd_fp  = open('data/msd.dat', 'w')
+
+# Record radial distribution function
 rdf_fp  = open('data/rdf.dat', 'w')
-en_fp.write("#\n#\n#\n# Pressure   Kinetic Potential   Temperature\n#\n")
 
-#start positions of all particles for MSD calculation on the fly
-start_pos=system.part[:].pos
+en_fp.write("#\n#\n#\n# Time\ttotal energy\tkinetic energy\tlennard jones energy\ttemperature\n")
 
-# save system setup
-pickle.dump(system, sys_fp, -1)
 
-msd = np.zeros((sampling_iterations,))
 
 # Data arrays for simple error estimation
 etotal = np.zeros((sampling_iterations,))
-ptotal = np.zeros((sampling_iterations,))
-
-# save start particle configuration
-pickle.dump(system.part, part_fp, -1)
 
 # analyzing the radial distribution function
 # setting the parameters for the rdf
-r_bins = 30
+r_bins = 50
 r_min  = 0.0
 r_max  = system.box_l[0]/2.0
 
@@ -167,45 +153,27 @@ avg_rdf=np.zeros((r_bins,))
 for i in range(1, sampling_iterations + 1):
     system.integrator.run(sampling_interval)
     energies = system.analysis.energy()
-    pressure = system.analysis.pressure()
 
     r, rdf = system.analysis.rdf(rdf_type="rdf", type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max, r_bins=r_bins)
     avg_rdf+= rdf/sampling_iterations
 
     kinetic_temperature = energies['ideal']/( 1.5 * n_part)
 
-    en_fp.write("%i\t%1.5e\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (i, pressure['total'], energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
+    en_fp.write("%f\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (system.time, energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
 
     etotal[i-1] = energies['total']
-    ptotal[i-1] = pressure['total']
-
-    ####################################################
-    # TODO:
-    # For an efficient calculation of the MSD and VACF the correlator and
-    # observable features are needed in python
-    ####################################################
-    for j in range(n_part):
-        msd[i-1] += 1.0/n_part * ( (start_pos[j,0] - system.part[j].pos[0])**2 +
-                (start_pos[j,1] - system.part[j].pos[1])**2 +
-                (start_pos[j,2] - system.part[j].pos[2])**2 )
-    msd_fp.write("%i %1.5e\n" % (i, msd[i-1]) )
 
 print("\nMain sampling done\n")
 
-# calculate the variance of the total energy and total pressure using scipys statistic operations
+# calculate the variance of the total energy using scipys statistic operations
 error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
-error_total_pressure=np.sqrt(ptotal.var())/np.sqrt(sampling_iterations)
 
-en_fp.write("#mean_energy energy_error mean_pressure pressure_error\n#%1.5e %1.5e %1.5e %1.5e" \
-        % (etotal.mean(), error_total_energy, ptotal.mean(), error_total_pressure) )
+en_fp.write("#mean_energy energy_error %1.5e %1.5e\n" % (etotal.mean(), error_total_energy) )
 
 # write out the radial distribution data
 for i in range(r_bins):
     rdf_fp.write("%1.5e %1.5e\n" % (r[i], avg_rdf[i]))
 
 
-sys_fp.close()
-msd_fp.close()
 en_fp.close()
-part_fp.close()
 rdf_fp.close()

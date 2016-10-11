@@ -154,17 +154,23 @@ class openGLLive:
 
     #GET THE PARTICLE DATA
     def updateParticles(self):
-        self.particles = {'coords':  	self.system.part[:].pos,
+        self.particles = {'coords':  	self.system.part[:].pos_folded,
                           'types':   	self.system.part[:].type,
                           'ext_forces': self.system.part[:].ext_force,
                           'charges': 	self.system.part[:].q
                           }
+    
+    #GET THE CONSTRAINT DATA
+    def updateConstraints(self):
+        self.constraintWalls = {'dist': self.system.part[:].pos_folded,
+                                'normal':   	self.system.part[:].type
+        }
 
     #GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def updateBonds(self):
         if self.specs['draw_bonds']:
             self.bonds = []
-            for i in range(self.system.max_part + 1):
+            for i in range(len(self.system.part)):
 
                 bs = self.system.part[i].bonds
                 for b in bs:
@@ -189,9 +195,7 @@ class openGLLive:
             self.drawBonds()
 
     def drawSystemBox(self):
-        box_l = self.system.box_l[0]
-        b2 = box_l / 2.0
-        drawBox([b2, b2, b2], box_l, [1 - self.specs['background_color'][0], 1 -
+        drawBox([0, 0, 0], self.system.box_l, [1 - self.specs['background_color'][0], 1 -
                                       self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
 
     def drawSystemParticles(self):
@@ -476,7 +480,10 @@ class openGLLive:
         return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def fcolorToId(self, fcol):
-        return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+        if (fcol==self.specs['background_color']).all():
+            return -1
+        else:
+            return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     #ALL THE INITS
     def initEspressoVisualization(self):
@@ -549,10 +556,13 @@ class openGLLive:
     
     #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def setLightPos(self): 
+#glPushMatrix()
+#        glLoadIdentity()
         if self.specs['light_pos'] == 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
         else:
             glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
+#        glPopMatrix()
 
     def triggerLightPosUpdate(self):
         self.updateLightPos=True
@@ -616,11 +626,33 @@ def setOutlineMaterial(r, g, b, a=1.0):
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0, 0, 0, a])
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100)
 
-def drawBox(pos, size, color):
+def drawBox(p0, s, color):
     setSolidMaterial(color[0], color[1], color[2], 1, 2, 1)
     glPushMatrix()
-    glTranslatef(pos[0], pos[1], pos[2])
-    glutWireCube(size)
+    glTranslatef(p0[0], p0[1], p0[2])
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(s[0], 0.0, 0.0);
+    glVertex3f(s[0], s[1], 0.0);
+    glVertex3f(0, s[1], 0.0);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0, 0.0, s[2]);
+    glVertex3f(s[0], 0.0, s[2]);
+    glVertex3f(s[0], s[1], s[2]);
+    glVertex3f(0, s[1], s[2]);
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, s[2]);
+    glVertex3f(s[0], 0.0, 0.0);
+    glVertex3f(s[0], 0.0, s[2]);
+    glVertex3f(s[0], s[1], 0.0);
+    glVertex3f(s[0], s[1], s[2]);
+    glVertex3f(0.0, s[1], 0.0);
+    glVertex3f(0.0, s[1], s[2]);
+    glEnd();
+    #glutWireCube(size)
     glPopMatrix()
 
 def drawSphere(pos, radius, color, material, quality):
@@ -907,3 +939,4 @@ class Camera:
         glRotatef(self.camRotGlobal[1], 0, 1, 0)
         glRotatef(self.camRotGlobal[2], 0, 0, 1)
         glTranslatef(-self.center[0], -self.center[1], -self.center[2])
+        self.updateLights()
