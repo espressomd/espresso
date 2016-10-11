@@ -143,7 +143,7 @@ void File::init_filestructure()
         { "particles/atoms/force/value"   , 3, npart, type_double },
         { "particles/atoms/force/time"    , 1, 1    , type_double },
         { "particles/atoms/force/step"    , 1, 1    , type_int },
-        { "particles/atoms/image/value"   , 1, npart, type_int },
+        { "particles/atoms/image/value"   , 3, npart, type_int },
         { "particles/atoms/image/time"    , 1, 1    , type_double },
         { "particles/atoms/image/step"   , 1, 1    , type_int },
     };
@@ -345,7 +345,10 @@ template <typename T>
 void File::WriteDataset(T &data, const std::string& path)
 {
 #ifdef H5MD_DEBUG
+    /* Turn on hdf5 error messages */
+    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+    std::cout << "Dataset: " << path << std::endl;
 #endif
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
@@ -356,7 +359,8 @@ void File::WriteDataset(T &data, const std::string& path)
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
     MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
+    std::cout << "pref: " << pref << " rank: " 
+        << this_node << " nlocalpart: " << nlocalpart << std::endl;
     hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
     hsize_t dims[3], maxdims[3];
@@ -368,7 +372,7 @@ void File::WriteDataset(T &data, const std::string& path)
     hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
     /* Extend the dataset for another timestep. */
     dims[0] += 1;
-    dims[1] =m_previous_n_part;
+    dims[1] = m_previous_n_part;
 
     H5Dset_extent(dataset.hid(), dims);
 
@@ -500,5 +504,12 @@ File::File ()
 #endif
 }
 
+/* Desctructor */
+File::~File()
+{
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+}
 } /* namespace H5md */
 } /* namespace Writer */

@@ -48,3 +48,4 @@ inline void add_constraints_energy(Particle *p) {
 }
 
 #endif
+#endif
