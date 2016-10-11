@@ -33,7 +33,6 @@ namespace Writer {
 
 class H5mdScript : public ScriptInterfaceBase {
     public:
-
         H5mdScript() : m_h5md(new ::Writer::H5md::File()) {};
         
         const std::string name() const override
@@ -42,13 +41,13 @@ class H5mdScript : public ScriptInterfaceBase {
         };
         
         ParameterMap valid_parameters() const override;
-        void set_parameter(const std::string& name, const Variant& value) override;
+        void set_parameter(const std::string& name,
+                           const Variant& value) override;
         VariantMap get_parameters() const override;
         Variant call_method(const std::string& name,
-                            const VariantMap& parameters) override;       
+                            const VariantMap& parameters) override;
 
     private:
-
         std::shared_ptr<::Writer::H5md::File> m_h5md;
 };
 
