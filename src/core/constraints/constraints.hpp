@@ -7,7 +7,7 @@
 
 namespace Constraints {
 
-  class Constraints {};'
+  class Constraints {};
 
 
   extern std::vector<Constraint> constraints;
