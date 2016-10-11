@@ -73,33 +73,33 @@ else
     exit $ec
 fi
 
-if ! $insource; then
+if [ ! $insource ]; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
 fi
 
-if ! $insource ; then
+if [ ! $insource ]; then
     cd $builddir
 fi
 
 # CONFIGURE
 start "CONFIGURE"
 
-if $with_fftw; then
+if [ $with_fftw = "yes" ]; then
     cmake_params="$cmake_params"
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
 
-if $with_tcl; then
+if [ $with_tcl = "yes" ]; then
     cmake_params="-DWITH_TCL=ON $cmake_params"
 else
     cmake_params="-DWITH_TCL=OFF $cmake_params"
 fi
 
-if $with_python_interface; then
+if [ $with_python_interface = "yes" ]; then
     cmake_params="-DWITH_PYTHON=ON $cmake_params"
 else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
@@ -117,9 +117,6 @@ else
     echo "Copying $myconfig.hpp to $builddir/myconfig.hpp..."
     cp $myconfig_file $builddir/myconfig.hpp
 fi
-
-# Acticate anaconda environment
-cmd "source activate test"
 
 cmd "cmake $cmake_params $srcdir" || exit $?
 end "CONFIGURE"
