@@ -119,6 +119,7 @@
 #include "observables/Observable.hpp"
 #include <map>
 #include <memory>
+#include "utils.hpp" 
 
 
 namespace Correlators {

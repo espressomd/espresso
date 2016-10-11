@@ -5,7 +5,6 @@
 #include "PidObservable.hpp"
 #include "particle_data.hpp" 
 #include <vector>
-#include "integrate.hpp"  
 
 
 namespace Observables {

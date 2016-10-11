@@ -20,16 +20,13 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include "config.hpp"
-#include "utils.hpp"
+#include <vector>
+#include <stdexcept>
 
 
 namespace Observables {
 
 #define CONST_UNITITIALIZED 1e-23
-
-enum ObservableType { OBSERVABLE, AVERAGE, VARIANCE };
-
-struct s_observable;
 
 class Observable {
   public:
@@ -37,7 +34,7 @@ class Observable {
     int update();
     int calculate();
     virtual int actual_calculate() {
-      printf("Observable did not override actual_caucluate()\n");
+      throw std::runtime_error("Observable did not override actual_caucluate()\n");
     }; 
     virtual int actual_update() {};
 
@@ -45,7 +42,6 @@ class Observable {
     /* IO functions for observables */
     int write(char *filename, bool binary);
     int read(char *filename, bool binary);
-    ObservableType type;
     virtual int n_values() const {return 0;};
     std::vector<double> last_value;
 
