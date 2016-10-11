@@ -145,7 +145,7 @@ void File::init_filestructure()
         { "particles/atoms/force/step"    , 1, 1    , type_int },
         { "particles/atoms/image/value"   , 3, npart, type_int },
         { "particles/atoms/image/time"    , 1, 1    , type_double },
-        { "particles/atoms/image/step"   , 1, 1    , type_int },
+        { "particles/atoms/image/step"    , 1, 1    , type_int },
     };
 }
 
@@ -187,7 +187,8 @@ void File::create_datasets(bool only_load)
                 auto dims = create_dims(descr.dim, descr.size);
                 auto cdims = create_dims(descr.dim, descr.size, 1);
                 auto maxdims = create_maxdims(descr.dim, descr.size);
-                auto storage = h5xx::policy::storage::chunked(cdims).set(h5xx::policy::storage::fill_value(-10));
+                auto storage = h5xx::policy::storage::chunked(cdims).set(
+                        h5xx::policy::storage::fill_value(-10));
                 auto dataspace = h5xx::dataspace(dims, maxdims);
                 datasets[path] = h5xx::dataset(groups[father],
                                                basename,
@@ -310,9 +311,9 @@ void File::Write(int write_dat)
         }
     }
 
-    int n_part=max_seen_particle+1;
-    if(n_part > m_previous_n_part) {
-    	m_previous_n_part=n_part;
+    int n_part = max_seen_particle+1;
+    if (n_part > m_max_n_part) {
+    	m_max_n_part = n_part;
     }
 
     WriteDataset(id, "particles/atoms/id");
@@ -353,14 +354,10 @@ void File::WriteDataset(T &data, const std::string& path)
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path + "/value"];
-    auto& time = datasets[path + "/time"];
-    auto& step = datasets[path + "/step"];
 
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
     MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    std::cout << "pref: " << pref << " rank: " 
-        << this_node << " nlocalpart: " << nlocalpart << std::endl;
     hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
     hsize_t dims[3], maxdims[3];
@@ -372,15 +369,14 @@ void File::WriteDataset(T &data, const std::string& path)
     hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
     /* Extend the dataset for another timestep. */
     dims[0] += 1;
-    dims[1] = m_previous_n_part;
-
+    dims[1] = m_max_n_part;
     H5Dset_extent(dataset.hid(), dims);
 
     /* Refresh the dataset after extension. */
     ds = H5Dget_space(dataset.hid());
     /* Select the region in the dataspace. */
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
-    /* Create a temporary dataspace for the current positions. */
+    /* Create a temporary dataspace. */
     hid_t ds_new = H5Screate_simple(3, count, maxdims);
     /* Finally write the data to the dataset. */
     H5Dwrite(dataset.hid(),
@@ -390,49 +386,54 @@ void File::WriteDataset(T &data, const std::string& path)
              data.origin());
     H5Sclose(ds);
     H5Sclose(ds_new);
+    
+    if (this_node == 0)
+    {
+        auto& time = datasets[path + "/time"];
+        auto& step = datasets[path + "/step"];
+        /* Write the md time to the position -- time dataset. */
+        ds = H5Dget_space(time.hid());
+        H5Sget_simple_extent_dims(ds, dims, maxdims);
+        H5Sclose(ds);
 
-    /* Write the md time to the position -- time dataset. */
-    ds = H5Dget_space(time.hid());
-    H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
+        hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
+        hsize_t timecount[3] = {1, 1, 1};
+        dims[0] += 1;
+        H5Dset_extent(time.hid(), dims);
 
-    hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-    hsize_t timecount[3] = {1, 1, 1};
-    dims[0] += 1;
-    H5Dset_extent(time.hid(), dims);
+        ds = H5Dget_space(time.hid());
+        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+        ds_new = H5Screate_simple(3, timecount, maxdims);
+        H5Dwrite(time.hid(),
+                 time.get_type(),
+                 ds_new,
+                 ds, H5P_DEFAULT,
+                 &sim_time);
+        H5Sclose(ds_new);
+        H5Sclose(ds);
 
-    ds = H5Dget_space(time.hid());
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-    ds_new = H5Screate_simple(3, timecount, maxdims);
-    H5Dwrite(time.hid(),
-             time.get_type(),
-             ds_new,
-             ds, H5P_DEFAULT,
-             &sim_time);
-    H5Sclose(ds_new);
-    H5Sclose(ds);
+        /* Write the md step to the position -- step dataset. */
+        ds = H5Dget_space(step.hid());
+        H5Sget_simple_extent_dims(ds, dims, maxdims);
+        H5Sclose(ds);
 
-    /* Write the md step to the position -- step dataset. */
-    ds = H5Dget_space(step.hid());
-    H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
+        /* Same offset, count and dims as the time dataset */
+        dims[0] += 1;
+        H5Dset_extent(step.hid(), dims);
 
-    /* Same offset, count and dims as the time dataset */
-    dims[0] += 1;
-    H5Dset_extent(step.hid(), dims);
-
-    ds = H5Dget_space(step.hid());
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-    ds_new = H5Screate_simple(1, timecount, maxdims);
-    int sim_step_data = (int)std::round(sim_time/time_step);
-    H5Dwrite(step.hid(),
-             step.get_type(),
-             ds_new,
-             ds,
-             H5P_DEFAULT,
-             &sim_step_data);
-    H5Sclose(ds_new);
-    H5Sclose(ds);
+        ds = H5Dget_space(step.hid());
+        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+        ds_new = H5Screate_simple(1, timecount, maxdims);
+        int sim_step_data = (int)std::round(sim_time/time_step);
+        H5Dwrite(step.hid(),
+                 step.get_type(),
+                 ds_new,
+                 ds,
+                 H5P_DEFAULT,
+                 &sim_step_data);
+        H5Sclose(ds_new);
+        H5Sclose(ds);
+    }
 }
 
 
