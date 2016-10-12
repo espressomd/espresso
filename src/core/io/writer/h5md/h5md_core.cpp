@@ -78,7 +78,11 @@ void File::InitFile()
     }
 
     init_filestructure();
-    if (check_file_exists(m_filename)) {
+    bool fileexists = check_file_exists(m_filename);
+    /* Perform a barrier synchronization. Otherwise one process might already
+     * create the file while another still checks for its existence. */
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
             /*
              * If the file exists and has a valid H5MD structure, lets create a
@@ -219,19 +223,17 @@ void File::create_new_file(const std::string &filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    if (this_node == 0) this->WriteScript(filename);
+    this->WriteScript(filename);
     /* Create a new h5xx file object. */
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
 
     create_groups();
     create_datasets(false);
-    if (this_node == 0) {
-        std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
-        h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
-        h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
-        h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
-    }
+    std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+    h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
+    h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
+    h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
 }
 
 
@@ -468,7 +470,8 @@ void File::WriteScript(std::string const &filename)
     dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
                       H5P_DEFAULT);
     /* Write data from buffer to dataset. */
-    H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
+    if (this_node == 0)
+        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
     /* Clean up. */
     H5Dclose(dset);
     H5Sclose(space);
