@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
 	libfftw3-dev \
 	libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
 	python python-numpy python-pyvtk \
-	tcl-dev \
 	git \
 	pep8 \
 	python-pip \

@@ -32,9 +32,6 @@ if(WITH_SCRIPT_INTERFACE)
   add_subdirectory(script_interface)
 endif()
 
-if(WITH_TCL)
-  add_subdirectory(tcl)
-endif()
 
 if(WITH_PYTHON)
   add_subdirectory(python)

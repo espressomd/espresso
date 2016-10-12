@@ -8,7 +8,6 @@ RUN zypper -n --gpg-auto-import-keys refresh \
   fftw3-devel \
   boost-devel libboost_serialization1_54_0 libboost_mpi1_54_0  libboost_filesystem1_54_0 libboost_test1_54_0 \
   python python-numpy python-PyVTK \
-  tcl-devel \
   git \
   python-pep8 \
   python-pip \
