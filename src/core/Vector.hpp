@@ -30,7 +30,7 @@
 
 #include <boost/serialization/array.hpp>
 
-template <int n, typename Scalar> class Vector {
+template <size_t n, typename Scalar> class Vector {
 private:
   std::array<Scalar, n> d;
 
@@ -67,6 +67,8 @@ public:
   const_reference front() const { return d.front(); }
   const_reference back() const { return d.back(); }
 
+  static constexpr size_t size() { return n; }
+
   operator std::array<Scalar, n> const &() const { return d; }
 
   std::vector<Scalar> as_vector() const {
@@ -85,23 +87,22 @@ public:
   inline Scalar norm(void) const { return sqrt(norm2()); }
 
   inline void normalize(void) {
-    Scalar N = norm();
-    if (norm() > 0) {
+    const auto N = norm();
+    if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
   }
 
-  inline void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
-                    Vector<3, Scalar> &c) const {
+  static void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
+                    Vector<3, Scalar> &c) {
     c[0] = a[1] * b[2] - a[2] * b[1];
     c[1] = a[2] * b[0] - a[0] * b[2];
     c[2] = a[0] * b[1] - a[1] * b[0];
-    return;
   }
 
-  inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a,
-                                 const Vector<3, Scalar> &b) const {
+  static Vector<3, Scalar> cross(const Vector<3, Scalar> &a,
+                                 const Vector<3, Scalar> &b) {
     Vector<3, Scalar> c;
     cross(a, b, c);
     return c;
