@@ -44,7 +44,7 @@ template <int n> bool il_constructor() {
   bool pass = true;
   Vector<n, int> v(TEST_NUMBERS);
 
-  pass &= v.size() == n;
+  pass &= (v.size() == n);
 
   for (int i = 0; i < std::min(n_test_numbers, n); i++)
     pass &= v[i] == test_numbers[i];
@@ -69,8 +69,7 @@ template <int n> bool norm2() {
   return v.norm2() == test_numbers_partial_norm2[n - 1];
 }
 
-BOOST_AUTO_TEST_CASE(test_constructor) {
-#ifdef HAVE_CXX11
+BOOST_AUTO_TEST_CASE(initializer_list_constructor_test) {
   BOOST_CHECK(il_constructor<1>());
   BOOST_CHECK(il_constructor<2>());
   BOOST_CHECK(il_constructor<3>());
@@ -81,8 +80,13 @@ BOOST_AUTO_TEST_CASE(test_constructor) {
   BOOST_CHECK(il_constructor<8>());
   BOOST_CHECK(il_constructor<9>());
   BOOST_CHECK(il_constructor<10>());
-#endif
+}
 
+BOOST_AUTO_TEST_CASE(size_test) {
+  static_assert(Vector<5, int>::size() == 5, "Size is not constexpr");
+}
+
+BOOST_AUTO_TEST_CASE(default_constructor_test) {
   BOOST_CHECK(default_constructor<1>());
   BOOST_CHECK(default_constructor<2>());
   BOOST_CHECK(default_constructor<3>());
@@ -95,7 +99,7 @@ BOOST_AUTO_TEST_CASE(test_constructor) {
   BOOST_CHECK(default_constructor<10>());
 }
 
-BOOST_AUTO_TEST_CASE(test_norm2) {
+BOOST_AUTO_TEST_CASE(norm2_test) {
   BOOST_CHECK(norm2<1>());
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
@@ -103,3 +107,41 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<5>());
   BOOST_CHECK(norm2<6>());
 }
+
+BOOST_AUTO_TEST_CASE(front_back) {
+  Vector<9, int> v(TEST_NUMBERS);
+
+  BOOST_CHECK(v.front() == test_numbers[0]);
+  BOOST_CHECK(v.back() == test_numbers[8]);
+}
+
+BOOST_AUTO_TEST_CASE(iterators) {
+  Vector<9, int> v(TEST_NUMBERS);
+
+  int i = 0;
+  for (auto it = v.begin(); it != v.end(); ++it) {
+    BOOST_CHECK(*it == test_numbers[i++]);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(range_loop) {
+  Vector<9, int> v(TEST_NUMBERS);
+
+  auto it = v.begin();
+  for (auto &j : v) {
+    BOOST_CHECK(*it == j);
+    ++it;
+  }
+
+  BOOST_CHECK(it == v.end());
+}
+
+BOOST_AUTO_TEST_CASE(decay_to_array) {
+  Vector<42, int> v;
+  std::array<int, 42> const& a = v;
+
+  for(size_t i = 0; i < v.size(); i++)
+    BOOST_CHECK(v[i] == a[i]);
+
+}
+
