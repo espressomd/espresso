@@ -354,6 +354,8 @@ void File::WriteDataset(T &data, const std::string& path)
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path + "/value"];
+    auto& time = datasets[path + "/time"];
+    auto& step = datasets[path + "/step"];
 
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
@@ -386,54 +388,52 @@ void File::WriteDataset(T &data, const std::string& path)
              data.origin());
     H5Sclose(ds);
     H5Sclose(ds_new);
-    
+
+    /* Write the md time to the position -- time dataset. */
+    ds = H5Dget_space(time.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+
+    hsize_t timeoffset[3] = {dims[0], 0, 0};
+    hsize_t timecount[3] = {0, 0, 0};
+    /* Only master node writes time and timestep */
     if (this_node == 0)
-    {
-        auto& time = datasets[path + "/time"];
-        auto& step = datasets[path + "/step"];
-        /* Write the md time to the position -- time dataset. */
-        ds = H5Dget_space(time.hid());
-        H5Sget_simple_extent_dims(ds, dims, maxdims);
-        H5Sclose(ds);
+        timecount[0] = timecount[1] = timecount[2] = 1;
+    dims[0] += 1;
+    H5Dset_extent(time.hid(), dims);
 
-        hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-        hsize_t timecount[3] = {1, 1, 1};
-        dims[0] += 1;
-        H5Dset_extent(time.hid(), dims);
+    ds = H5Dget_space(time.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(3, timecount, maxdims);
+    H5Dwrite(time.hid(),
+             time.get_type(),
+             ds_new,
+             ds, H5P_DEFAULT,
+             &sim_time);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 
-        ds = H5Dget_space(time.hid());
-        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-        ds_new = H5Screate_simple(3, timecount, maxdims);
-        H5Dwrite(time.hid(),
-                 time.get_type(),
-                 ds_new,
-                 ds, H5P_DEFAULT,
-                 &sim_time);
-        H5Sclose(ds_new);
-        H5Sclose(ds);
+    /* Write the md step to the position -- step dataset. */
+    ds = H5Dget_space(step.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
 
-        /* Write the md step to the position -- step dataset. */
-        ds = H5Dget_space(step.hid());
-        H5Sget_simple_extent_dims(ds, dims, maxdims);
-        H5Sclose(ds);
+    /* Same offset, count and dims as the time dataset */
+    dims[0] += 1;
+    H5Dset_extent(step.hid(), dims);
 
-        /* Same offset, count and dims as the time dataset */
-        dims[0] += 1;
-        H5Dset_extent(step.hid(), dims);
-
-        ds = H5Dget_space(step.hid());
-        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-        ds_new = H5Screate_simple(1, timecount, maxdims);
-        int sim_step_data = (int)std::round(sim_time/time_step);
-        H5Dwrite(step.hid(),
-                 step.get_type(),
-                 ds_new,
-                 ds,
-                 H5P_DEFAULT,
-                 &sim_step_data);
-        H5Sclose(ds_new);
-        H5Sclose(ds);
-    }
+    ds = H5Dget_space(step.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(1, timecount, maxdims);
+    int sim_step_data = (int)std::round(sim_time/time_step);
+    H5Dwrite(step.hid(),
+             step.get_type(),
+             ds_new,
+             ds,
+             H5P_DEFAULT,
+             &sim_step_data);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 }
 
 
