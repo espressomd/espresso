@@ -78,7 +78,11 @@ void File::InitFile()
     }
 
     init_filestructure();
-    if (check_file_exists(m_filename)) {
+    bool fileexists = check_file_exists(m_filename);
+    /* Perform a barrier synchronization. Otherwise one process might already
+     * create the file while another still checks for its existence. */
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
             /*
              * If the file exists and has a valid H5MD structure, lets create a
@@ -219,19 +223,17 @@ void File::create_new_file(const std::string &filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    if (this_node == 0) this->WriteScript(filename);
+    this->WriteScript(filename);
     /* Create a new h5xx file object. */
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
 
     create_groups();
     create_datasets(false);
-    if (this_node == 0) {
-        std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
-        h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
-        h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
-        h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
-    }
+    std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+    h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
+    h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
+    h5xx::write_dataset(datasets["particles/atoms/box/edges"], boxvec);
 }
 
 
@@ -354,6 +356,8 @@ void File::WriteDataset(T &data, const std::string& path)
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path + "/value"];
+    auto& time = datasets[path + "/time"];
+    auto& step = datasets[path + "/step"];
 
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
@@ -386,54 +390,52 @@ void File::WriteDataset(T &data, const std::string& path)
              data.origin());
     H5Sclose(ds);
     H5Sclose(ds_new);
-    
+
+    /* Write the md time to the position -- time dataset. */
+    ds = H5Dget_space(time.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+
+    hsize_t timeoffset[3] = {dims[0], 0, 0};
+    hsize_t timecount[3] = {0, 0, 0};
+    /* Only master node writes time and timestep */
     if (this_node == 0)
-    {
-        auto& time = datasets[path + "/time"];
-        auto& step = datasets[path + "/step"];
-        /* Write the md time to the position -- time dataset. */
-        ds = H5Dget_space(time.hid());
-        H5Sget_simple_extent_dims(ds, dims, maxdims);
-        H5Sclose(ds);
+        timecount[0] = timecount[1] = timecount[2] = 1;
+    dims[0] += 1;
+    H5Dset_extent(time.hid(), dims);
 
-        hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-        hsize_t timecount[3] = {1, 1, 1};
-        dims[0] += 1;
-        H5Dset_extent(time.hid(), dims);
+    ds = H5Dget_space(time.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(3, timecount, maxdims);
+    H5Dwrite(time.hid(),
+             time.get_type(),
+             ds_new,
+             ds, H5P_DEFAULT,
+             &sim_time);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 
-        ds = H5Dget_space(time.hid());
-        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-        ds_new = H5Screate_simple(3, timecount, maxdims);
-        H5Dwrite(time.hid(),
-                 time.get_type(),
-                 ds_new,
-                 ds, H5P_DEFAULT,
-                 &sim_time);
-        H5Sclose(ds_new);
-        H5Sclose(ds);
+    /* Write the md step to the position -- step dataset. */
+    ds = H5Dget_space(step.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
 
-        /* Write the md step to the position -- step dataset. */
-        ds = H5Dget_space(step.hid());
-        H5Sget_simple_extent_dims(ds, dims, maxdims);
-        H5Sclose(ds);
+    /* Same offset, count and dims as the time dataset */
+    dims[0] += 1;
+    H5Dset_extent(step.hid(), dims);
 
-        /* Same offset, count and dims as the time dataset */
-        dims[0] += 1;
-        H5Dset_extent(step.hid(), dims);
-
-        ds = H5Dget_space(step.hid());
-        H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-        ds_new = H5Screate_simple(1, timecount, maxdims);
-        int sim_step_data = (int)std::round(sim_time/time_step);
-        H5Dwrite(step.hid(),
-                 step.get_type(),
-                 ds_new,
-                 ds,
-                 H5P_DEFAULT,
-                 &sim_step_data);
-        H5Sclose(ds_new);
-        H5Sclose(ds);
-    }
+    ds = H5Dget_space(step.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
+    ds_new = H5Screate_simple(1, timecount, maxdims);
+    int sim_step_data = (int)std::round(sim_time/time_step);
+    H5Dwrite(step.hid(),
+             step.get_type(),
+             ds_new,
+             ds,
+             H5P_DEFAULT,
+             &sim_step_data);
+    H5Sclose(ds_new);
+    H5Sclose(ds);
 }
 
 
@@ -468,7 +470,8 @@ void File::WriteScript(std::string const &filename)
     dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
                       H5P_DEFAULT);
     /* Write data from buffer to dataset. */
-    H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
+    if (this_node == 0)
+        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
     /* Clean up. */
     H5Dclose(dset);
     H5Sclose(space);
