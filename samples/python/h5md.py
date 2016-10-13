@@ -10,8 +10,8 @@ system.cell_system.skin = 0.4
 
 for i in range(1000):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=23)
-system.integrator.run(steps=100)
-h5 = h5md.H5md(filename="bla.h5", write_pos=True, write_vel=True)
-print h5._print_params()
+system.integrator.run(steps=10)
+h5 = h5md.H5md(filename="bla.h5", write_pos=True, write_vel=True
+               write_force=True, write_type=True, write_mass=False)
 h5.write()
 h5.close()
