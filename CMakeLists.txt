@@ -163,7 +163,7 @@ if (WITH_PYTHON OR WITH_TCL)
 endif()
 
 if (WITH_HDF5)
-find_package(HDF5)
+find_package(HDF5 COMPONENTS C)
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
