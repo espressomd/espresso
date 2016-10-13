@@ -1218,78 +1218,66 @@ ELSE:
 
 print("checking OIF_GLOBAL_FORCES")
 print(OIF_GLOBAL_FORCES)
-IF OIF_GLOBAL_FORCES == 1:                             # OIFERROR: why some classes need directive?
-    class Oif_Global_Forces(BondedInteraction):
-        def type_number(self):
-            return BONDED_IA_OIF_GLOBAL_FORCES
+class OifGlobalForces(BondedInteraction):
+    def type_number(self):
+        return BONDED_IA_OIF_GLOBAL_FORCES
 
-        def type_name(self):
-            return "OIF_GLOBAL_FORCES"
+    def type_name(self):
+        return "OIF_GLOBAL_FORCES"
 
-        def valid_keys(self):
-            return "A0_g", "ka_g", "V0", "kv"
+    def valid_keys(self):
+        return "A0_g", "ka_g", "V0", "kv"
 
-        def required_keys(self):
-            return "A0_g", "ka_g", "V0", "kv"
+    def required_keys(self):
+        return "A0_g", "ka_g", "V0", "kv"
 
-        def set_default_params(self):
-            self._params = {"A0_g": 1., "ka_g": 0., "V0": 1., "kv": 0.}
+    def set_default_params(self):
+        self._params = {"A0_g": 1., "ka_g": 0., "V0": 1., "kv": 0.}
 
-        def _get_params_from_es_core(self):
-            return \
-                {"A0_g": bonded_ia_params[self._bond_id].p.oif_global_forces.A0_g,
-                "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
-                "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
-                "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
+    def _get_params_from_es_core(self):
+        return \
+            {"A0_g": bonded_ia_params[self._bond_id].p.oif_global_forces.A0_g,
+            "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
+            "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
+            "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
 
-        def _set_params_in_es_core(self):
-            oif_global_forces_set_params(
-                self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
-ELSE:
-    class Oif_Global_Forces(BondedInteractionNotDefined):
-        name = "OIF_GLOBAL_FORCES"
+    def _set_params_in_es_core(self):
+        oif_global_forces_set_params(
+            self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
 
+class OifLocalForces(BondedInteraction):
 
-# IF OIF_LOCAL_FORCES == 1:                     # OIFERROR: why some classes need directive?
+    def type_number(self):
+        return BONDED_IA_OIF_LOCAL_FORCES
 
-    print("ahoj")
+    def type_name(self):
+        return "OIF_LOCAL_FORCES"
 
-    class Oif_Local_Forces(BondedInteraction):
+    def valid_keys(self):
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
-        def type_number(self):
-            return BONDED_IA_OIF_LOCAL_FORCES
+    def required_keys(self):
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
 
-        def type_name(self):
-            return "OIF_LOCAL_FORCES"
+    def set_default_params(self):
+        self._params = {"r0": 1., "ks": 0., "kslin": 0.,
+                    "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
-        def valid_keys(self):
-            return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+    def _get_params_from_es_core(self):
+        return \
+            {"r0": bonded_ia_params[self._bond_id].p.oif_local_forces.r0,
+            "ks": bonded_ia_params[self._bond_id].p.oif_local_forces.ks,
+            "kslin": bonded_ia_params[self._bond_id].p.oif_local_forces.kslin,
+            "phi0": bonded_ia_params[self._bond_id].p.oif_local_forces.phi0,
+            "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
+            "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
+            "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
+            "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
 
-        def required_keys(self):
-            return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
-
-        def set_default_params(self):
-            self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"r0": bonded_ia_params[self._bond_id].p.oif_local_forces.r0,
-                "ks": bonded_ia_params[self._bond_id].p.oif_local_forces.ks,
-                "kslin": bonded_ia_params[self._bond_id].p.oif_local_forces.kslin,
-                "phi0": bonded_ia_params[self._bond_id].p.oif_local_forces.phi0,
-                "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
-                "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
-                "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-                "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
-
-        def _set_params_in_es_core(self):
-            oif_local_forces_set_params(
-                self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
-#ELSE:
-#    class Oif_Local_Forces(BondedInteractionNotDefined):
-#        name = "OIF_LOCAL_FORCES"
+    def _set_params_in_es_core(self):
+        oif_local_forces_set_params(
+            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
@@ -1304,8 +1292,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_HARMONIC): Angle_Harmonic,
     int(BONDED_IA_ANGLE_COSINE): Angle_Cosine,
     int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
-    int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
-    int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
+    int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
+    int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
