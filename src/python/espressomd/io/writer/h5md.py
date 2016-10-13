@@ -4,6 +4,23 @@ import sys
 
 class H5md():
     def __init__(self, **kwargs):
+        """Initialize a H5md object.
+
+        Parameters
+        ----------
+        filename : str
+                   Name of the trajectory file.
+        write_pos : bool, optional
+                    If positions should be written.
+        write_vel : bool, optional
+                    If velocities should be written.
+        write_force : bool, optional
+                      If forces should be written.
+        write_type : bool, optional
+                     If types should be written.
+        write_mass : bool, optional
+                     If masses should be written.
+        """
         self.valid_params = ['filename',]
         if not ('filename' in kwargs):
             raise ValueError("'filename' parameter missing.")
@@ -28,13 +45,20 @@ class H5md():
                                       scriptname=sys.argv[0])
         self.h5md_instance.call_method("init_file")
 
-    def _print_params(self):
-        return self.h5md_instance.get_params()
 
+    def get_params(self):
+        """Get the parameters from the scriptinterface.
+        """
+        return self.h5md_instance.get_params()
+    
 
     def write(self):
+        """Calls the H5md write method.
+        """
         self.h5md_instance.call_method("write")
     
 
     def close(self):
+        """Close the H5md file.
+        """
         self.h5md_instance.call_method("close")
