@@ -88,6 +88,22 @@ IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
 
+IF MEMBRANE_COLLISION==1:
+    cdef extern from "object-in-fluid/membrane_collision.hpp":
+        cdef int membrane_collision_set_params(double membrane_a, 
+                                               double membrane_n, 
+                                               double membrane_cut, 
+                                               double membrane_offset)
+
+IF AFFINITY==1:
+    cdef extern from "object-in-fluid/affinity.hpp":
+        cdef int affinity_set_params(int affinity_type, 
+                                     double affinity_kappa, 
+                                     double affinity_r0, 
+                                     double affinity_Kon,
+                                     double affinity_Koff,
+                                     double affinity_maxBond,
+                                     double affinity_cut)
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
