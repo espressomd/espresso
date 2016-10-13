@@ -1216,8 +1216,6 @@ ELSE:
     class Angle_Cossquare(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
 
-print("checking OIF_GLOBAL_FORCES")
-print(OIF_GLOBAL_FORCES)
 class OifGlobalForces(BondedInteraction):
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
@@ -1244,6 +1242,7 @@ class OifGlobalForces(BondedInteraction):
     def _set_params_in_es_core(self):
         oif_global_forces_set_params(
             self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
+
 
 
 class OifLocalForces(BondedInteraction):
