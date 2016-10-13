@@ -72,17 +72,18 @@ void File::InitFile()
     H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
+    boost::filesystem::path script_path(m_scriptname);
+    m_absolute_script_path = boost::filesystem::canonical(script_path);
     if(!(cells_get_n_particles() > 0)) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
-    if (m_scriptname != "NULL")
-    {
-        boost::filesystem::path script_path(m_scriptname);
-        m_absolute_script_path = boost::filesystem::canonical(script_path);
-    }
 
     init_filestructure();
-    if (check_file_exists(m_filename)) {
+    bool fileexists = check_file_exists(m_filename);
+    /* Perform a barrier synchronization. Otherwise one process might already
+     * create the file while another still checks for its existence. */
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
             /*
              * If the file exists and has a valid H5MD structure, lets create a
@@ -106,7 +107,6 @@ void File::InitFile()
 void File::init_filestructure()
 {
 #ifdef H5MD_DEBUG
-    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     group_names = {
@@ -175,7 +175,6 @@ void File::create_groups()
 void File::create_datasets(bool only_load)
 {
 #ifdef H5MD_DEBUG
-    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     for (const auto& descr: dataset_descriptors) {
@@ -209,7 +208,6 @@ void File::create_datasets(bool only_load)
 void File::load_file(const std::string& filename)
 {
 #ifdef H5MD_DEBUG
-    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
@@ -226,7 +224,7 @@ void File::create_new_file(const std::string &filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    if (this_node == 0 and m_scriptname != "NULL") this->WriteScript(filename);
+    this->WriteScript(filename);
     /* Create a new h5xx file object. */
     m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
                              h5xx::file::out);
@@ -359,6 +357,8 @@ void File::WriteDataset(T &data, const std::string& path)
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path + "/value"];
+    auto& time = datasets[path + "/time"];
+    auto& step = datasets[path + "/step"];
 
     int nlocalpart = cells_get_n_particles();
     int pref = 0;
@@ -391,51 +391,28 @@ void File::WriteDataset(T &data, const std::string& path)
              data.origin());
     H5Sclose(ds);
     H5Sclose(ds_new);
-    
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node << std::endl;
-#endif
-    auto& time = datasets[path + "/time"];
-    auto& step = datasets[path + "/step"];
+
     /* Write the md time to the position -- time dataset. */
     ds = H5Dget_space(time.hid());
-    int num_dimensions = H5Sget_simple_extent_dims(ds, dims, maxdims);
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node
-        << ", num_dimension: " << num_dimensions << std::endl;
-#endif
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
     H5Sclose(ds);
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node
-        << std::endl;
-#endif
-    hsize_t timeoffset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-    hsize_t timecount[3] = {1, 1, 1};
+
+    hsize_t timeoffset[3] = {dims[0], 0, 0};
+    hsize_t timecount[3] = {0, 0, 0};
+    /* Only master node writes time and timestep */
+    if (this_node == 0)
+        timecount[0] = timecount[1] = timecount[2] = 1;
     dims[0] += 1;
-    int status = H5Dset_extent(time.hid(), dims);
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node
-        << ", STATUS: " << status << std::endl;
-#endif
+    H5Dset_extent(time.hid(), dims);
+
     ds = H5Dget_space(time.hid());
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
     ds_new = H5Screate_simple(3, timecount, maxdims);
-    if (this_node == 0) {
-    status = H5Dwrite(time.hid(),
+    H5Dwrite(time.hid(),
              time.get_type(),
              ds_new,
              ds, H5P_DEFAULT,
              &sim_time);
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node
-        << ", STATUS: " << status << std::endl;
-#endif
-    }
     H5Sclose(ds_new);
     H5Sclose(ds);
 
@@ -452,19 +429,12 @@ void File::WriteDataset(T &data, const std::string& path)
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
     ds_new = H5Screate_simple(1, timecount, maxdims);
     int sim_step_data = (int)std::round(sim_time/time_step);
-    if (this_node == 0) {
-    status = H5Dwrite(step.hid(),
+    H5Dwrite(step.hid(),
              step.get_type(),
              ds_new,
              ds,
              H5P_DEFAULT,
              &sim_step_data);
-#ifdef H5MD_DEBUG
-    std::cout << "Line " << __LINE__   
-        << ": Called " << __func__ << " on node " << this_node
-        << ", STATUS: " << status << std::endl;
-#endif
-    }
     H5Sclose(ds_new);
     H5Sclose(ds);
 }
@@ -501,7 +471,8 @@ void File::WriteScript(std::string const &filename)
     dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
                       H5P_DEFAULT);
     /* Write data from buffer to dataset. */
-    H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
+    if (this_node == 0)
+        H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
     /* Clean up. */
     H5Dclose(dset);
     H5Sclose(space);
