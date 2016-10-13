@@ -89,7 +89,9 @@ class File
          */
         void WriteEnergy(bool total = true, bool kinetic = true);
         std::string &filename() { return m_filename; };
-        std::string &scriptname() { return m_scriptname ;};
+        std::string &scriptname() { return m_scriptname; };
+        // Returns the int that describes which data should be written to the dataset.
+        int &what() { return m_what; };
 
     private:
         bool check_file_exists(const std::string &name)
@@ -149,8 +151,9 @@ class File
     	int m_max_n_part = 0;
         std::string m_filename;
         std::string m_scriptname;
+        int m_what;
         std::string m_backup_filename;
-        boost::filesystem::path m_absolute_script_path;
+        boost::filesystem::path m_absolute_script_path = "NULL";
         h5xx::file m_h5md_file;
 
         struct DatasetDescriptor  {

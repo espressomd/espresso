@@ -32,7 +32,8 @@ namespace Writer {
 ParameterMap H5mdScript::valid_parameters() const
 {
     return {{"filename", {ParameterType::STRING, true}},
-            {"scriptname", {ParameterType::STRING, true}}};
+            {"scriptname", {ParameterType::STRING, true}},
+            {"what", {ParameterType::INT, true}}};
 }
 
 
@@ -40,20 +41,22 @@ void H5mdScript::set_parameter(const std::string& name, const Variant& value)
 {
     SET_PARAMETER_HELPER("filename", m_h5md->filename());
     SET_PARAMETER_HELPER("scriptname", m_h5md->scriptname());
+    SET_PARAMETER_HELPER("what", m_h5md->what());
 }
 
 
 VariantMap H5mdScript::get_parameters() const
 {
     return {{"filename", m_h5md->filename()},
-            {"scriptname", m_h5md->scriptname()}};
+            {"scriptname", m_h5md->scriptname()},
+            {"what", m_h5md->what()}};
 }
 
 
 Variant H5mdScript::call_method(const std::string& name, const VariantMap& parameters)
 {
     if (name == "init_file") m_h5md->InitFile();
-    else if (name == "write") m_h5md->Write(1);
+    else if (name == "write") m_h5md->Write(m_h5md->what());
     else if (name == "close") m_h5md->Close();
     return {};
 }
