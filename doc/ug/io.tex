@@ -398,23 +398,44 @@ Closes the H5MD data file.
 
 
 \section{Writing H5MD-files with Python}
-To write data in a hdf5-file, first an object of the class \texttt{H5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
+To write data in a hdf5-file, first an object of the class \texttt{H5md} has to
+be created and linked to the respective hdf5-file. This may, for example, look
+like:
 \begin{pycode}
 from espressomd.io.writer import h5md
+# add particles here
 system = espressomd.System()
-h5=h5md.H5md("File.h5")
+h5=h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 \end{pycode}
-At the initialization of the H5md object a temporary filename with the suffic "_tmp" will be used and to ensure a valid trajectory in case of a crashed simulation. Therefore the class method "close()" has to be called at the end of the simulation to perform the deletion of the old file and a renaming of the output file to the given filename.
-Note that you have first to add all your particles to the system, since the dataset structure in the hdf5 file depends on that number.
-
-To write data to the hdf5 file, currently three methods are implemented for writing positions, velocities and forces:
+If a file with the given filename exists and has a valid H5MD structures it
+will be backed up to a file with suffix ".bak". This file will be removed by
+the close() method of the class which has to be called at the end of the
+simulation to close the file. The current implementation allows to write the
+following properties: positions, velocities, forces, types, and masses of the
+particles. In order to write any property, you have to set the respective
+boolean flag as an option to the H5md class. Currently available:
+\begin{itemize}
+    \item write_pos
+    \item write_vel
+    \item write_force
+    \item write_type
+    \item write_mass.
+\end{itemize}
+In simulations with varying numbers of particles (MC or reactions), the
+size of the dataset will be adapted if the maximum number of particles
+increases but will not be decreased. Instead a negative fill value will 
+be written to the trajectory for the id. If you have a parallel simulation
+please keep in mind that the sequence of particles in general changes
+from timestep to timestep. Therefore you have to always use the dataset
+for the ids to track which position/velocity/force/type/mass entry belongs
+to which particle.
+To write data to the hdf5 file, simply call the H5md objects write method
+without any arguments.
 \begin{pycode}
-h5.write_positions()
-h5.write_velocities()
-h5.write_forces()
+h5.write()
 \end{pycode}
-Until now, the code only works for single-core simulations, but since the implementation is in-core, there will be a multi-core support soon.
-
+After the last write call, you have to call the close() method to remove
+the backup file and to close the datasets etc.
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
 \newescommand{blockfile}
