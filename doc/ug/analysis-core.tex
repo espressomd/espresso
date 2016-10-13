@@ -245,8 +245,8 @@ system:
 		specified. The observable will not calculate the actual persistence length
 		but the correlation function of the bond angles. 
 		\begin{equation}
-			\mathrm{Obs}(i) =\mathrm{Norm\_const} \langle \sum_j \frac{\vec{r}_j
-			\vec{r}_{j+i}}{|\vec{r}_j||\vec{r}_{i+j}|}\rangle 
+			\mathrm{Obs}(i) =\mathrm{Norm\_const} \langle \sum_j \frac{(\vec{r}_j - \vec{r}_{j+1})
+			(\vec{r}_{j+i}-\vec{r}_{j+i+1})}{|\vec{r}_j-\vec{r}_{j+1}||\vec{r}_{i+j}-\vec{r}_{i+j+1}|}\rangle 
 		\end{equation}
 	\item \lit{polymer_pair_correlation} \var{ids <id\_list> maxr <maxr> minr <minr>
 		k <k>}\verb!\!\\
