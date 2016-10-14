@@ -252,10 +252,10 @@ IF MEMBRANE_COLLISION == 1:
             cdef ia_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "membrane_a": ia_params.MC_a,
-                "membrane_n": ia_params.MC_n,
-                "membrane_cut": ia_params.MC_cut,
-                "membrane_offset": ia_params.MC_offset}
+                "membrane_a": ia_params.membrane_a,
+                "membrane_n": ia_params.membrane_n,
+                "membrane_cut": ia_params.membrane_cut,
+                "membrane_offset": ia_params.membrane_offset}
 
         def is_active(self):
             return (self._params["membrane_a"] > 0)
@@ -309,13 +309,13 @@ IF AFFINITY == 1:
             cdef ia_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "affinity_type": ia_params.AFF_type,
-                "affinity_kappa": ia_params.AFF_kappa,
-                "affinity_r0": ia_params.AFF_r0,
-                "affinity_Kon": ia_params.AFF_Kon,
-                "affinity_Koff": ia_params.AFF_Koff,
-                "affinity_maxBond": ia_params.AFF_maxBond,
-                "affinity_cut": ia_params.AFF_cut}
+                "affinity_type": ia_params.affinity_type,
+                "affinity_kappa": ia_params.affinity_kappa,
+                "affinity_r0": ia_params.affinity_r0,
+                "affinity_Kon": ia_params.affinity_Kon,
+                "affinity_Koff": ia_params.affinity_Koff,
+                "affinity_maxBond": ia_params.affinity_maxBond,
+                "affinity_cut": ia_params.affinity_cut}
 
         def is_active(self):
             return (self._params["affinity_kappa"] > 0)

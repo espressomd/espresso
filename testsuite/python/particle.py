@@ -149,6 +149,12 @@ class ParticleProperties(ut.TestCase):
             res = self.es.part[1].vs_relative
             self.assertTrue(res[0] == 0 and res[1] == 5.0 and
                             self.arraysNearlyEqual(res[2], np.array((0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
+    if "AFFINITY" in espressomd.features():
+        test_bond_site = generateTestForVectorProperty(
+            "bond_site", np.array([0.5, 5.5, 3]))
+    if "MEMBRANE_COLLISION" in espressomd.features():
+        test_out_direction = generateTestForVectorProperty(
+            "out_direction", np.array([0.5, 5.5, 3]))
 
 
 if __name__ == "__main__":

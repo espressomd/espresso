@@ -413,7 +413,7 @@ cdef class ParticleHandle:
                     _bond_site, 3, float, "bond_site has to be 3 floats")
                 for i in range(3):
                     bond_site[i] = _bond_site[i]
-                if set_particle_bond_site(self.id, bond_site) == 1:
+                if set_particle_affinity(self.id, bond_site) == 1:
                     raise Exception("set particle position first")
 
             def __get__(self):

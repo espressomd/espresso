@@ -137,11 +137,11 @@ cdef extern from "particle_data.hpp":
 
     IF MEMBRANE_COLLISION:
         int set_particle_out_direction(int part, double out_direction[3])
-        void pointer_to_out_direction(particle  p, double  & res)
+        void pointer_to_out_direction(particle*  p, double*& res)
         
     IF AFFINITY:
-        int set_particle_bond_site(int part, double bond_site[3])
-        void pointer_to_bond_site(particle  p, double  & res)
+        int set_particle_affinity(int part, double bond_site[3])
+        void pointer_to_bond_site(particle*  p, double*& res)
 
     IF MASS == 1:
         void pointer_to_mass(particle * p, double * & res)

@@ -54,17 +54,17 @@ cdef extern from "interaction_data.hpp":
         double TAB_maxval;
         double TAB_stepsize;
         char TAB_filename[256]; 
-        int AFF_type;
-        double AFF_kappa;
-        double AFF_r0;
-        double AFF_Kon;
-        double AFF_Koff;
-        double AFF_maxBond;
-        double AFF_cut;
-        double MC_a;
-        double MC_n;
-        double MC_cut;
-        double MC_offset;
+        int affinity_type;
+        double affinity_kappa;
+        double affinity_r0;
+        double affinity_Kon;
+        double affinity_Koff;
+        double affinity_maxBond;
+        double affinity_cut;
+        double membrane_a;
+        double membrane_n;
+        double membrane_cut;
+        double membrane_offset;
 
 
     cdef ia_parameters * get_ia_param(int i, int j)

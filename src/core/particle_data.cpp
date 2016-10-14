@@ -2293,6 +2293,20 @@ void pointer_to_rotational_inertia(Particle *p, double*& res)
 }
 #endif
 
+#ifdef AFFINITY
+void pointer_to_bond_site(Particle* p, double*& res) {
+  res =p->p.bond_site;
+}
+#endif
+
+#ifdef MEMBRANE_COLLISION
+void pointer_to_out_direction(Particle* p, double*& res) {
+ res = p->p.out_direction;
+}
+#endif
+
+
+
 bool particle_exists(int part) {
     if (!particle_node)
         build_particle_node();
