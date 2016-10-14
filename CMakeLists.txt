@@ -164,7 +164,7 @@ endif()
 
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
-find_package(HDF5 COMPONENTS C)
+find_package(HDF5 "1.8" COMPONENTS C)
 if(HDF5_IS_PARALLEL)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
