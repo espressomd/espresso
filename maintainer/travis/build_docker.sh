@@ -31,14 +31,13 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip3 install numpy
 			pip3 install pep8
 			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
-			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) -DPYTHON_LIBRARY=$(python3-config --prefix)/lib/libpython${PYTHON_VERSION}.dylib -DPYTHON_INCLUDE_DIR=$(python3-config --prefix)/include/python${PYTHON_VERSION}m $cmake_params"
+			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
 		*)
 			brew install python
 			pip install cython
 			pip install numpy
 			pip install pep8
-			export cmake_params="-DPYTHON_LIBRARY=$(python-config --prefix)/lib/libpython2.7.dylib -DPYTHON_INCLUDE_DIR=$(python-config --prefix)/include/python2.7 $cmake_params"
 		;;
 	esac
 	brew install openmpi
