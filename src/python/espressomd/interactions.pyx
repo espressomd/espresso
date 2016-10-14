@@ -252,34 +252,34 @@ IF MEMBRANE_COLLISION == 1:
             cdef ia_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "membrane_a": ia_params.membrane_a,
-                "membrane_n": ia_params.membrane_n,
-                "membrane_offset": ia_params.membrane_offset,
-                "membrane_cut": ia_params.membrane_cut}
+                "membrane_a": ia_params.MC_a,
+                "membrane_n": ia_params.MC_n,
+                "membrane_cut": ia_params.MC_cut,
+                "membrane_offset": ia_params.MC_offset}
 
         def is_active(self):
-            return True   
+            return (self._params["membrane_a"] > 0)
 
         def _set_params_in_es_core(self):
             if membrane_collision_set_params(self._part_types[0], self._part_types[1],
                                         self._params["membrane_a"],
                                         self._params["membrane_n"],
-                                        self._params["membrane_offset"],
-                                        self._params["membrane_cut"]):
+                                        self._params["membrane_cut"],
+                                        self._params["membrane_offset"]):
                 raise Exception("Could not set Membrane Collision parameters")
 
         def default_params(self):
             return {
                 "membrane_a": 0.,
                 "membrane_n": 1.,
-                "membrane_offset": 0.,
-                "membrane_cut": 0.}
+                "membrane_cut": 0.,
+                "membrane_offset": 0.}
 
         def type_name(self):
             return "MembraneCollision"
 
         def valid_keys(self):
-            return "membrane_a", "membrane_n", "membrane_offset", "membrane_cut"
+            return "membrane_a", "membrane_n", "membrane_cut", "membrane_offset"
 
         def required_keys(self):
             return "membrane_a", "membrane_n", "membrane_cut"
@@ -309,16 +309,17 @@ IF AFFINITY == 1:
             cdef ia_parameters * ia_params
             ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
             return {
-                "affinity_type": ia_params.affinity_type,
-                "affinity_kappa": ia_params.affinity_kappa,
-                "affinity_r0": ia_params.affinity_r0,
-                "affinity_Kon": ia_params.affinity_Kon,
-                "affinity_Koff": ia_params.affinity_Koff,
-                "affinity_maxBond": ia_params.affinity_maxBond,
-                "affinity_cut": ia_params.affinity_cut}
+                "affinity_type": ia_params.AFF_type,
+                "affinity_kappa": ia_params.AFF_kappa,
+                "affinity_r0": ia_params.AFF_r0,
+                "affinity_Kon": ia_params.AFF_Kon,
+                "affinity_Koff": ia_params.AFF_Koff,
+                "affinity_maxBond": ia_params.AFF_maxBond,
+                "affinity_cut": ia_params.AFF_cut}
 
         def is_active(self):
-            return True   
+            return (self._params["affinity_kappa"] > 0)
+
 
         def _set_params_in_es_core(self):
             if affinity_set_params(self._part_types[0], self._part_types[1],
@@ -333,7 +334,7 @@ IF AFFINITY == 1:
 
         def default_params(self):
             return {
-                "affinity_type": 1,
+                "affinity_type": 0,
                 "affinity_kappa": 0.,
                 "affinity_r0": 0.,
                 "affinity_Kon": 0.,

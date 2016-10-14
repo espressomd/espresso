@@ -46,6 +46,7 @@ cdef extern from "interaction_data.hpp":
         double LJGEN_b2
         double LJGEN_lambda
         double LJGEN_softrad
+        
         int TAB_npoints;
         int TAB_startindex;
         double TAB_minval;
@@ -53,17 +54,17 @@ cdef extern from "interaction_data.hpp":
         double TAB_maxval;
         double TAB_stepsize;
         char TAB_filename[256]; 
-        int affinity_type;
-        double affinity_kappa;
-        double affinity_r0;
-        double affinity_Kon;
-        double affinity_Koff;
-        double affinity_maxBond;
-        double affinity_cut;
-        double membrane_a;
-        double membrane_n;
-        double membrane_cut;
-        double membrane_offset;
+        int AFF_type;
+        double AFF_kappa;
+        double AFF_r0;
+        double AFF_Kon;
+        double AFF_Koff;
+        double AFF_maxBond;
+        double AFF_cut;
+        double MC_a;
+        double MC_n;
+        double MC_cut;
+        double MC_offset;
 
 
     cdef ia_parameters * get_ia_param(int i, int j)
@@ -102,20 +103,15 @@ IF TABULATED==1:
 
 IF MEMBRANE_COLLISION==1:
     cdef extern from "object-in-fluid/membrane_collision.hpp":
-        cdef int membrane_collision_set_params(double membrane_a, 
-                                               double membrane_n, 
-                                               double membrane_cut, 
-                                               double membrane_offset)
+        cdef int membrane_collision_set_params(int part_type_a, int part_type_b,
+                                               double a, double n, 
+                                               double cut, double offset)
 
 IF AFFINITY==1:
     cdef extern from "object-in-fluid/affinity.hpp":
-        cdef int affinity_set_params(int affinity_type, 
-                                     double affinity_kappa, 
-                                     double affinity_r0, 
-                                     double affinity_Kon,
-                                     double affinity_Koff,
-                                     double affinity_maxBond,
-                                     double affinity_cut)
+        cdef int affinity_set_params(int part_type_a, int part_type_b,
+                                     int afftype, double kappa, double r0, 
+                                     double Kon, double Koff, double maxBond, double cut)
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:
