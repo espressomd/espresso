@@ -926,8 +926,7 @@ cdef class ParticleSlice:
     def __iter__(self):
         cdef int i
         for i in self.id_selection:
-            if particle_exists(i):
-                yield ParticleHandle(i)
+            yield ParticleHandle(i)
 
 
     cdef int update_particle_data(self, id) except -1:
