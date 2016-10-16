@@ -51,6 +51,7 @@ add_custom_command(OUTPUT code_info.pyx
 file(GLOB cython_SRC *.pyx)
 file(GLOB cython_HEADER *.pxd)
 file(GLOB cython_AUX *.py)
+file(COPY MDA_ESP DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
