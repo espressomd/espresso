@@ -1,7 +1,7 @@
-//method according to smith94x
-//so far only implemented for the ensemble at constant volume and temperature
-//NOTE: a reaction here is one trial move to dissociate one acid molecule to its dissociated form 
-//so if the reaction is accepted then there is one more dissociated ion pair H+ and A-
+//method according to smith94x for the reaction ensemble at constant volume and temperature, for the reaction ensemble at constant pressure additionally employ a barostat!
+//NOTE: a chemical reaction consists of a forward and backward reaction. Here both reactions have to be defined seperately.
+//The extent of the reaction is here chosen to be +1.
+//If the reaction trial move for a dissociation of HA is accepted then there is one more dissociated ion pair H+ and A-
 //NOTE: generic_oneway_reaction does not break bonds for simple reactions. as long as there are no reactions like 2A -->B where one of the reacting A particles occurs in the polymer (think of bond breakages if the monomer in the polymer gets deleted in the reaction). This constraint is not of fundamental reason, but there would be a need for a rule for such "collision" reactions (a reaction like the one above).
 //NOTE: paricle types have to start at one and have to increase by one for every type otherwise the function hide_particle cannot work correctly. Through adding 100 in the function hide_particle we ensure that the function works correctly if the particle types are monotonically increasing and if the largest particle type is smaller than 100.
 
@@ -19,7 +19,7 @@
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //initialize watertype to negative number, for checking wether it has been assigned, the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
@@ -47,6 +47,7 @@ int intcmp(const void *aa, const void *bb);
 void free_wang_landau();
 void remove_bins_that_have_not_been_sampled();
 double average_int_list(int* int_number_list, int len_int_nr_list);
+bool is_in_list(int value, int* list, int len_list);
 
 int do_reaction(){
 	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
@@ -352,17 +353,6 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 }
 
 
-bool _int_is_in_list(int int_to_search_for, int* list, int len_list){
-	bool is_in_list=false;
-	for(int i=0;i<len_list;i++){
-		if(list[i]==int_to_search_for){
-			is_in_list=true;
-			break;
-		}
-	}
-	return is_in_list;
-}
-
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
 	if(current_reaction_system.type_index==NULL){
@@ -375,7 +365,7 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 		init_type_array(current_reaction_system.type_index[0]); //make types known in espresso
 	}
 	for (int i =0; i<len_educt_types;i++){
-		bool educt_type_i_is_known=_int_is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
+		bool educt_type_i_is_known=is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (educt_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=educt_types[i];
@@ -384,7 +374,7 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 		}
 	}
 	for (int i =0; i<len_product_types;i++){
-		bool product_type_i_is_known=_int_is_in_list(product_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
+		bool product_type_i_is_known=is_in_list(product_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
 		if (product_type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=product_types[i];

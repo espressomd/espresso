@@ -762,7 +762,7 @@ Required features: REACTION_ENSEMBLE
 \section{Grand Canonical Ensemble}
 Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities. These kinds of moves are perfect to include the autodissociation of water into the system.
 \subsection{How to add the water autodissociation to a simulation}
-In order to add the water autodissociation 2 H2O $<=>$ H3O+ +OH-  to a simulation add the following reactions to Espresso:
+In order to add the water autodissociation 2 H2O $<=>$ H3O+ +OH-  to a simulation add the following reactions to Espresso ($\emptyset$ (read ex nihilo) means that the reaction has no educts, respectively products. Therefore if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an educt, then particles are created ex nihilo. Do not provide educts or products if they are $\emptyset$.):
 \begin{itemize}
 \item $\emptyset -> H3O+ + OH-$ with reaction constant $K$
 \item $H3O+ + OH- -> \emptyset$ with reaction constant $1/K$,
