@@ -43,8 +43,8 @@ typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
  * @brief Possible types for parameters.
  */
 typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d, ObjectId>
-    Variant;
+                       std::vector<double>, Vector2d, Vector3d,
+                       ObjectId> Variant;
 
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
@@ -61,16 +61,6 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
         boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value));            \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value));            \
   }
 
 /**

@@ -93,6 +93,8 @@ cdef class PScriptInterface:
     cdef variant_to_python_object(self, Variant value):
         cdef ObjectId oid
         cdef int type = value.which()
+        cdef shared_ptr[ScriptInterfaceBase] ptr
+
         if < int > type == <int > BOOL:
             return get[bool](value)
         if < int > type == <int > INT:
@@ -113,9 +115,13 @@ cdef class PScriptInterface:
             # Get the id and build a curresponding object
             try:
                 oid = get[ObjectId](value)
-                pobj = PScriptInterface()
-                pobj.set_sip(get_instance(oid).lock())
-                return pobj
+                ptr = get_instance(oid).lock()
+                if ptr != shared_ptr[ScriptInterfaceBase]():
+                    pobj = PScriptInterface()
+                    pobj.set_sip(ptr)
+                    return pobj
+                else:
+                    return None
             except:
                 return None
 
