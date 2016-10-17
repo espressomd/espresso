@@ -42,9 +42,11 @@ typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
 /**
  * @brief Possible types for parameters.
  */
-typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d,
-                       ObjectId> Variant;
+
+typedef boost::make_recursive_variant<
+    bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    Vector2d, Vector3d, ObjectId,
+    std::vector<boost::recursive_variant_>>::type Variant;
 
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the

@@ -38,7 +38,8 @@ enum class ParameterType {
   DOUBLE_VECTOR,
   VECTOR2D,
   VECTOR3D,
-  OBJECT
+  OBJECT,
+  VECTOR
 };
 
 /**
