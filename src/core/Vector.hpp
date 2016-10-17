@@ -43,12 +43,18 @@ public:
   Vector() {}
 
   template <typename Container> explicit Vector(Container const &v) {
-    assert(std::distance(std::begin(v), std::end(v)) == n);
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
+  template <typename InputIterator>
+  Vector(InputIterator const& begin, InputIterator const& end) {
+    assert(std::distance(begin, end) <= n);
+    std::copy(begin, end, d.begin());
+  }
+
   Vector(std::initializer_list<Scalar> l) {
-    assert(l.size() == n);
+    assert(l.size() <= n);
     std::copy(std::begin(l), std::end(l), d.begin());
   }
 
