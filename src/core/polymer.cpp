@@ -191,7 +191,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       if (posed != NULL) {
         /* if position of 1st monomer is given */
         if (p > 0) {
-          free(posed);
+          // pointer was given externally, why delete it here?????
+          //free(posed);
           posed = NULL;
         } else {
           pos[0] = posed[0];
@@ -276,7 +277,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
         }
       }
       if (posed2 != NULL && p > 0) {
-        free(posed2);
+        // posed2 is an external pointer why delete it here???
+        // free(posed2);
         posed2 = NULL;
       }
       poly[3 * n] = pos[0];
