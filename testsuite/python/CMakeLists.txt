@@ -1,4 +1,3 @@
-message("h5py: ${PY_H5PY}")
 set(py_tests  bondedInteractions.py
               cellsystem.py
               coulomb_cloud_wall.py
