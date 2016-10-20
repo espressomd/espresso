@@ -306,9 +306,12 @@ void File::Write(int write_dat)
             }
             if (write_force)
             {
-                f[0][particle_index][0] = current_particle.f.f[0];
-                f[0][particle_index][1] = current_particle.f.f[1];
-                f[0][particle_index][2] = current_particle.f.f[2];
+                /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
+                 * world force. */
+                double fac = current_particle.p.mass / (0.5 * time_step * time_step);
+                f[0][particle_index][0] = current_particle.f.f[0] * fac;
+                f[0][particle_index][1] = current_particle.f.f[1] * fac;
+                f[0][particle_index][2] = current_particle.f.f[2] * fac;
             }
             particle_index++;
         }
