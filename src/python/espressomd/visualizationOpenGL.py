@@ -154,7 +154,7 @@ class openGLLive:
 
     #GET THE PARTICLE DATA
     def updateParticles(self):
-        self.particles = {'coords':  	self.system.part[:].pos,
+        self.particles = {'coords':  	self.system.part[:].pos_folded,
                           'types':   	self.system.part[:].type,
                           'ext_forces': self.system.part[:].ext_force,
                           'charges': 	self.system.part[:].q
@@ -162,7 +162,7 @@ class openGLLive:
     
     #GET THE CONSTRAINT DATA
     def updateConstraints(self):
-        self.constraintWalls = {'dist': self.system.part[:].pos,
+        self.constraintWalls = {'dist': self.system.part[:].pos_folded,
                                 'normal':   	self.system.part[:].type
         }
 

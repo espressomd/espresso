@@ -22,7 +22,6 @@
 namespace Observables {
 
 Observable::Observable() {
-  type = OBSERVABLE;
   last_update = 0;
   autoupdate = 0;
   autoupdate_dt = 0;

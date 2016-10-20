@@ -18,9 +18,9 @@
 */ 
 #include "Correlator.hpp"
 #include "particle_data.hpp"
-#include "integrate.hpp"
 #include <cstring>
 #include "integrate.hpp"
+#include "utils.hpp" 
 
 namespace Correlators {
 

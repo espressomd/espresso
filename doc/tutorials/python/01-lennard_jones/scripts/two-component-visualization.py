@@ -1,3 +1,4 @@
+
 #
 # Copyright (C) 2013,2014,2015,2016 The ESPResSo project
 #
@@ -18,31 +19,25 @@
 #
 
 
-# This is a modified version of the lj liquid script, which calculates the 
-# mean saure displacement versus time. 
-
-# 1. Setup up and equilibrate the Lennard Jones liquid
-# 2. Setup an observable for the particle positions
-# 3. Set up a "Correlator" which records the square distance of the particles
-#    for different time intervals
-# 4. Integrate equations of motion
-# 5. Print the result from the correlator
-
-
-
-
+# This is a modified version of the lj liquid script, which simulates
+# a two component lj liquid.
+# By switching the lj interaction between the two components
+# from atractive to purely repulsive, de-mixing can be achieved.
 
 # 1. Setup and equilibrate LJ liquid
 from __future__ import print_function
 import espressomd
 from espressomd import code_info
 
-import cPickle as pickle
 import os 
 import numpy as np
 
+from espressomd import visualization
+from threading import Thread
+
+
 n_part  = 200
-density = 0.8442
+density = 0.4442
 
 skin        = 0.1
 time_step   = 0.01 
@@ -71,6 +66,11 @@ lj_sig = 1.0
 lj_cut = 2.5*lj_sig
 lj_cap = 20
 
+# This is the cutoff of the interaction between species 0 and 1.
+# By setting it to 2**(1./6.) *lj_sig, it can be made purely repulsive
+lj_cut_mixed =2.5 * lj_sig
+lj_cut_mixed =2**(1./6.) * lj_sig
+
 
 # System setup
 #############################################################
@@ -84,9 +84,26 @@ system.cell_system.skin         = skin
 
 system.box_l = [box_l, box_l, box_l]
 
+
+# Here, lj interactions need to be setup for both components
+# as well as for the mixed case of component 0 interacting with
+# component 1.
+
+# component 0
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
+
+# component 1
+system.non_bonded_inter[1, 1].lennard_jones.set_params(
+    epsilon=lj_eps, sigma=lj_sig,
+    cutoff=lj_cut, shift="auto")
+
+# mixed case
+system.non_bonded_inter[0, 1].lennard_jones.set_params(
+    epsilon=lj_eps, sigma=lj_sig,
+    cutoff=lj_cut_mixed, shift="auto")
+
 system.non_bonded_inter.set_force_cap(lj_cap)
 
 print("LJ-parameters:")
@@ -102,6 +119,8 @@ volume = box_l * box_l * box_l
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    # Every 2nd particle should be of component 1 
+    if i%2==1: system.part[i].type=1
 
 #############################################################
 #  Warmup Integration                                       #
@@ -125,74 +144,17 @@ while i < warm_n_time and act_min_dist < min_dist :
 
 system.non_bonded_inter.set_force_cap(0)
 
-print("\nWarm up finished\n")
 
-system.time_step = eq_tstep 
+def loop():
+    while True:
+        system.integrator.run(100)
+        visualizer.update()
 
-for i in range(equilibration_iterations):
-    system.integrator.run(equilibration_interval)
-    energies = system.analysis.energy()
-    print("eq run {} at time {}\n".format(i, system.time))
+visualizer = visualization.mayaviLive(system)
+#Start simulation in seperate thread
+t = Thread(target=loop)
+t.daemon = True
+t.start()
 
-print("\nEquilibration done\n")
-
-system.time_step = time_step
-
-
-
-
-# 2. Setup an observable for the particle positions
-from espressomd.observables import ParticlePositions
-# We pass the ids of the particles to be tracked to the observable.
-# Here this is 0..n_part
-part_pos=ParticlePositions(ids=range(n_part))
-
-
-
-
-# 3. Define a correlator recording the square distances the particles have traveled
-# in various time intervals
-from espressomd.correlators import Correlator
-# The correlator works with the part_pos observable. Here, no second 
-# observableis needed
-
-# For short time spans, we record in linear time distances
-# for larger time spans, we record in larger and larger steps.
-# Use 10 linear measurements 10 time steps apart, each.
-
-# The "square_distance_component_wise" correlation operation tells
-# the correlator how to calculate a result from the measurements of the 
-# observables at different times
-
-corr=Correlator(obs1=part_pos,
-                tau_lin=10,dt=10*time_step,
-                tau_max=10000*time_step,
-                corr_operation="square_distance_componentwise")
-
-# We want the correlator to take measurements and calculate results 
-# automatically during the integration
-system.auto_update_correlators.add(corr)
-
-# 4. Integrate the equations of motion
-# Note that a longer integration would be needed to achieve good quality 
-# results. This will run for ~5 minutes.
-system.integrator.run(100000)
-
-
-# 5. Save the result of the correlation to a file
-# The 1st column contains the time, the 2nd column the number of 
-# measurements, and the remaining columns the mean square displacement
-# for each particle and each Cartesian component
-corr.finalize()
-result=corr.result()
-
-# We average over all particls and coordinaes and store id in the 3rd column
-# using numpy's averaging function
-result[:,3]=np.average(result[:,3:],1)
-# And save the first three columns to a file
-np.savetxt("data/msd.dat",result[:,:3])
-
-# Plot the msd (third against first column of msd.dat) with your favorite 
-# plotting program and measure the diffusion coefficient by fitting
-# <x^2> =2Dt
-
+#Start blocking visualizer
+visualizer.start()
