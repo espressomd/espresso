@@ -136,6 +136,26 @@ for {set i 0} {$i <100} {incr i} {
   integrate 10
 }
 
+# Validation of J[0]
+setmd time_step 0.001
+# Unstable omega component should be larger than other components.
+set unstable_omega 5.76
+part 0 omega_body $unstable_omega -0.043 0.15 ext_torque [lindex $T 0] [lindex $T 1] [lindex $T 2] rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2]
+
+set L_0_body [L_body 0]
+set L_0_lab [convert_vec_body_to_space 0 $L_0_body]
+
+for {set i 0} {$i <100} {incr i} {
+   set L_body [L_body 0]
+   set L_lab [convert_vec_body_to_space 0 $L_body]
+   for {set k 0} {$k<3} {incr k} {
+       if { abs([lindex $L_lab $k] - [lindex $L_0_lab $k]) > 4E-3 } {
+        error_exit "Inertial motion around unstable axis J0: Deviation in angular momentum is too large. Step $i, coordinate $k, expected [lindex $L_0_lab $k], got [lindex $L_lab $k]"
+    }
+   }
+  integrate 10
+}
+
 part delete
 
 exit 0
