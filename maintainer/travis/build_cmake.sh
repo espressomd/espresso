@@ -41,7 +41,7 @@ function cmd {
 # handle environment variables
 [ -z "$insource" ] && insource="true"
 [ -z "$srcdir" ] && srcdir=`pwd`
-[ -z "$cmake_params" ] && configure_params=""
+[ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
@@ -56,7 +56,7 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    configure_params with_fftw \
+    cmake_params with_fftw \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
