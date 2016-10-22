@@ -22,35 +22,39 @@ from espressomd import *
 from espressomd import electrostatics
 import numpy
 
+system = espressomd.System()
+
 print("\n--->Setup system")
 
 # System parameters
-n_part = 200
+n_ppside = 10
+n_part = int(n_ppside**3)
 n_ionpairs = n_part/2
-density = 0.7
-time_step = 0.01
-temp = 1.0
-gamma = 1.0
-l_bjerrum = 1.0
+density = 1.5736
+time_step = 0.001823
+temp = 298.0
+gamma = 4.55917
+#l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
+l_bjerrum = 130878.0 / temp
 
-num_steps_equilibration = 1000
-num_configs = 100
-integ_steps_per_config = 1000
+num_steps_equilibration = 3000
+num_configs = 50
+integ_steps_per_config = 500
 
 # Particle parameters
-types       = {"Anion":          0, "Cation": 1}
-numbers     = {"Anion": n_ionpairs, "Cation": n_ionpairs}
-charges     = {"Anion":       -1.0, "Cation": 1.0}
-lj_sigmas   = {"Anion":        1.0, "Cation": 1.0}
-lj_epsilons = {"Anion":        1.0, "Cation": 1.0}
+types       = {"Cl":          0, "Na": 1}
+numbers     = {"Cl": n_ionpairs, "Na": n_ionpairs}
+charges     = {"Cl":       -1.0, "Na": 1.0}
+lj_sigmas   = {"Cl":       3.85, "Na": 2.52}
+lj_epsilons = {"Cl":     192.45, "Na": 17.44}
 
-WCA_cut = 2.**(1. / 6.)
-lj_cuts     = {"Anion":  WCA_cut * lj_sigmas["Anion"], 
-               "Cation": WCA_cut * lj_sigmas["Cation"]}
+lj_cuts     = {"Cl":  3.0 * lj_sigmas["Cl"], 
+               "Na": 3.0 * lj_sigmas["Na"]}
+
+masses      = {"Cl":        35.453, "Na": 22.99}
 
 # Setup System
-system = espressomd.System()
-box_l = (n_part / density)**(1. / 3.)
+box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
 system.time_step = time_step
@@ -58,10 +62,20 @@ system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Place particles
-for i in range(n_ionpairs):
-    system.part.add(id=len(system.part), type=types["Anion"],  pos=numpy.random.random(3) * box_l, q=charges["Anion"])
-for i in range(n_ionpairs):
-    system.part.add(id=len(system.part), type=types["Cation"], pos=numpy.random.random(3) * box_l, q=charges["Cation"])
+q = 1
+l = box_l / n_ppside
+for i in range(n_ppside):
+    for j in range(n_ppside):
+        for k in range(n_ppside):
+            p = numpy.array([i,j,k])*l
+            if q < 0:
+                system.part.add(id=len(system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
+            else:
+                system.part.add(id=len(system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
+                
+            q *= -1
+        q *= -1
+    q *= -1
 
 def combination_rule_epsilon(rule, eps1, eps2):
     if rule=="Lorentz":
@@ -76,7 +90,7 @@ def combination_rule_sigma(rule, sig1, sig2):
         return ValueError("No combination rule defined")
 
 # Lennard-Jones interactions parameters 
-for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
+for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
         lj_sig = combination_rule_sigma("Berthelot",lj_sigmas[s[0]], lj_sigmas[s[1]])
         lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
         lj_eps = combination_rule_epsilon("Lorentz", lj_epsilons[s[0]],lj_epsilons[s[1]])
@@ -85,49 +99,30 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 
-print("\n--->Lennard Jones Equilibration")
-max_sigma = max(lj_sigmas.values())
-min_dist = 0.0
-cap = 10.0
-#Warmup Helper: Cold, highly damped system
-system.thermostat.set_langevin(kT=temp*0.1, gamma=gamma*50.0)
-#Warmup Helper: Reduced time_step
-#system.time_step = time_step*0.1
-
-while min_dist < max_sigma:
-    #Warmup Helper: Cap max. force, increase slowly for overlapping particles
-    min_dist = system.analysis.mindist([types["Anion"],types["Cation"]],[types["Anion"],types["Cation"]])
-    cap += min_dist
-#print min_dist, cap
-    system.non_bonded_inter.set_force_cap(cap)
-    system.integrator.run(10)
-
-#Don't forget to reset thermostat, timestep and force cap
-system.time_step = time_step
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.non_bonded_inter.set_force_cap(0)
-
 print("\n--->Tuning Electrostatics")
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-3)
+#p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2, mesh=[84,84,84], cao=6)
+p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
 system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(num_steps_equilibration/100):
-    temp_measured = system.analysis.energy()['ideal'] / ((3.0 / 2.0) * n_part)
+    energy = system.analysis.energy()
+    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
-                                       system.analysis.energy()['total'],
-                                       system.analysis.energy()['coulomb'],
+                                       energy['total'],
+                                       energy['coulomb'],
                                        temp_measured))
     system.integrator.run(100)
 
 print("\n--->Integration")
 system.time = 0.0
 for i in range(num_configs):
-    temp_measured = system.analysis.energy()['ideal'] / ((3.0 / 2.0) * n_part)
+    energy = system.analysis.energy()
+    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
-                                       system.analysis.energy()['total'],
-                                       system.analysis.energy()['coulomb'],
+                                       energy['total'],
+                                       energy['coulomb'],
                                        temp_measured))
     system.integrator.run(integ_steps_per_config)
 
@@ -137,19 +132,26 @@ for i in range(num_configs):
 
 print("\n--->Analysis")
 # Calculate the averaged rdfs
-rdf_bins = 100
+rdf_bins = 500
 r_min  = 0.0
 r_max  = system.box_l[0]/2.0
 r,rdf_00 = system.analysis.rdf(rdf_type='<rdf>', 
-                            type_list_a=[types["Anion"]],
-                            type_list_b=[types["Anion"]], 
+                            type_list_a=[types["Cl"]],
+                            type_list_b=[types["Cl"]], 
+                            r_min=r_min,
+                            r_max=r_max, 
+                            r_bins=rdf_bins)
+
+r,rdf_11 = system.analysis.rdf(rdf_type='<rdf>', 
+                            type_list_a=[types["Na"]],
+                            type_list_b=[types["Na"]], 
                             r_min=r_min,
                             r_max=r_max, 
                             r_bins=rdf_bins)
 
 r,rdf_01 = system.analysis.rdf(rdf_type='<rdf>', 
-                            type_list_a=[types["Anion"]],
-                            type_list_b=[types["Cation"]], 
+                            type_list_a=[types["Cl"]],
+                            type_list_b=[types["Na"]], 
                             r_min=r_min,
                             r_max=r_max, 
                             r_bins=rdf_bins)
@@ -157,7 +159,9 @@ r,rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
 # Write out the data
 rdf_fp = open('rdf.data', 'w')
 for i in range(rdf_bins):
-    rdf_fp.write("%1.5e %1.5e %1.5e\n" % (r[i], rdf_00[i], rdf_01[i]))
+    rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_00[i], rdf_01[i], rdf_11[i]))
 rdf_fp.close()
 print("\n--->Written rdf.data")
 print("\n--->Done")
+
+
