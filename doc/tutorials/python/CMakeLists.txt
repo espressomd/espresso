@@ -19,6 +19,7 @@
 
 
 ### Here: add new directory
+add_subdirectory(00-building_espresso)
 add_subdirectory(01-lennard_jones)
 add_subdirectory(02-charged_system)
 add_subdirectory(05-raspberry_electrophoresis)
@@ -26,5 +27,5 @@ add_subdirectory(08-visualization)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials_py DEPENDS tutorials_py_01 tutorials_py_02 tutorials_py_05 tutorials_py_08)
+add_custom_target(tutorials_py DEPENDS tutorials_py_00 tutorials_py_01 tutorials_py_02 tutorials_py_05 tutorials_py_08)
 #                                       tutorials_py_03                )
