@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <numeric>
 
 #include "../Vector.hpp"
 
