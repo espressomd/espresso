@@ -33,7 +33,7 @@ cdef extern from "reaction_ensemble.hpp":
 
 
 
-#///////////////////////////////////////////// Wang-Landau algorithm
+#///////////////////////////////////////////// Wang-Landau reaction ensemble algorithm
 
     ctypedef struct collective_variable:
         double CV_minimum
@@ -82,7 +82,11 @@ cdef extern from "reaction_ensemble.hpp":
 
     int write_wang_landau_checkpoint(char* identifier)
     int load_wang_landau_checkpoint(char* identifier)
-   
+
+#///////////////////////////////////////////// Constant-pH ensemble
+    cdef extern double constant_pH
+    int do_reaction_constant_pH()
+
 
 cdef class ReactionEnsemble:
     cdef _params

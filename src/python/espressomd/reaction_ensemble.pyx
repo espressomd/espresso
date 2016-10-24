@@ -155,10 +155,13 @@ IF REACTION_ENSEMBLE:
                     print "Product coefficients"
                     for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
                         print current_reaction_system.reactions[single_reaction_i].product_coefficients[i]
+                    print "Equilibrium constant"
+                    print current_reaction_system.reactions[single_reaction_i].equilibrium_constant
                     
             print "Reaction ensemble temperature:", current_reaction_system.temperature_reaction_ensemble
             print "Exclusion radius:", current_reaction_system.exclusion_radius
             check_reaction_ensemble()
+            
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):
             for k in kwargs:
@@ -278,7 +281,11 @@ IF REACTION_ENSEMBLE:
         def do_reaction_wang_landau(self):
             do_reaction_wang_landau()
 
-        #//////////////constant pH interface missing
-#        def do_reaction_constant_pH(self):    
+        #//////////////////////////constant pH ensemble
+        def set_constant_pH(self,pH):
+            constant_pH=pH
+        
+        def do_reaction_constant_pH(self):
+            do_reaction_constant_pH()
         
 

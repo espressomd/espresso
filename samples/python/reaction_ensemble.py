@@ -34,7 +34,7 @@ dev = "cpu"
 
 # System parameters
 #############################################################
-box_l = 10
+box_l = 35
 
 # Integration parameters
 #############################################################
@@ -58,7 +58,7 @@ system.box_l = [box_l, box_l, box_l]
 #type 1 = A-
 #type 2 = H+
 
-N0 = 5 # number of titratable units
+N0 = 50 # number of titratable units
 K_diss=0.0088
 
 system.part.add(id=np.arange(N0) ,pos=np.random.random((N0,3)) * system.box_l, type=1)
@@ -71,8 +71,11 @@ RE.add(equilibrium_constant=1.0/K_diss, educt_types=[1,2], educt_coefficients=[1
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
 
-print("poss", system.part[:].pos)
-while True:
+#RE.set_constant_pH(0)
+
+for i in range(1000):
 	RE.reaction()
-	print("HA", grand_canonical.number_of_particles(type_id=0), "A-", grand_canonical.number_of_particles(type_id=1), "H+", grand_canonical.number_of_particles(type_id=2))
+	#RE.do_reaction_constant_pH()
+	if(i%100==0):
+		print("HA", grand_canonical.number_of_particles(type_id=0), "A-", grand_canonical.number_of_particles(type_id=1), "H+", grand_canonical.number_of_particles(type_id=2))
 
