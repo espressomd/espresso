@@ -235,7 +235,7 @@ int generic_oneway_reaction(int reaction_id){
 	
 	//generic one way reaction
 	//A+B+...+G +... --> K+...X + Z +...
-	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles
+	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles, however both ways to describe the reaction are equivalent in the thermodynamic limit
 	//further it is crucial for the function in which order you provide the educt and product types since particles will be replaced correspondingly!
 	
 	if (all_educt_particles_exist(reaction_id) ==false ) {
@@ -1049,7 +1049,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 
 	//generic one way reaction
 	//A+B+...+G +... --> K+...X + Z +...
-	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles
+	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles, however both ways to describe the reaction are equivalent in the thermodynamic limit
 	//further it is crucial for the function in which order you provide the educt and product types since particles will be replaced correspondingly!
 	if (all_educt_particles_exist(reaction_id) ==false ) {
 		//makes sure, no incomplete reaction is performed -> only need to consider rollback of complete reactions
@@ -1255,7 +1255,7 @@ bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_
 		if(changed_particle_counter==0){
 			find_particle_type(type, &p_id);
 		}else{
-			//determine a p_id you have not touched yet
+			//determine a p_id you have not touched yet. Especially needed in canonical monte carlo move, since particle type is not changed here.
 			while(is_in_list(p_id,p_id_s_changed_particles,changed_particle_counter)){
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
@@ -1447,7 +1447,7 @@ bool do_HMC_move_wang_landau(){
 		bf=-10; //this makes the reaction get rejected, since the new state is not in Gamma while the old sate was in Gamma
 	}
 	
-//	//avoid becoming trapped
+//	//experimental: avoid becoming trapped with Wang-Landau and continous moves
 //	if(number_of_times_in_the_same_bin>100 && bf>=0){
 //		bf=10;
 //		//XXX Debug
@@ -1485,13 +1485,13 @@ bool do_HMC_move_wang_landau(){
 		}
 	}
 	
-	//avoid becoming trapped
-	if(get_flattened_index_wang_landau_of_current_state()==last_bin_index and last_bin_index>=0) {
-		number_of_times_in_the_same_bin+=1;
-	}else{
-		number_of_times_in_the_same_bin=0;
-		last_bin_index=get_flattened_index_wang_landau_of_current_state();
-	}
+//	//experimental: avoid becoming trapped with Wang-Landau and continous moves (see above)
+//	if(get_flattened_index_wang_landau_of_current_state()==last_bin_index and last_bin_index>=0) {
+//		number_of_times_in_the_same_bin+=1;
+//	}else{
+//		number_of_times_in_the_same_bin=0;
+//		last_bin_index=get_flattened_index_wang_landau_of_current_state();
+//	}
 	
 	return got_accepted;
 }
@@ -1541,7 +1541,7 @@ int do_reaction_wang_landau(){
 		write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
 		
 //		//remove holes from the sampling range for improved convergence
-//		//be aware that this check also limits the maximal difference in degeneracies that you can sample
+//		//be aware that this check also limits the maximal difference in Wang-Landau potentials that you can sample
 //		if(current_wang_landau_system.wang_landau_parameter==current_wang_landau_system.initial_wang_landau_parameter){
 //			if(average_int_list(current_wang_landau_system.histogram,current_wang_landau_system.len_histogram)>minimum_average_of_hisogram_before_removal_of_unused_bins)
 //				remove_bins_that_have_not_been_sampled();
@@ -1926,7 +1926,7 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 	
 	//generic one way reaction
 	//A+B+...+G +... --> K+...X + Z +...
-	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles
+	//you need to use 2A --> B instead of A+A --> B since in the last case you assume distinctness of the particles, however both ways to describe the reaction are equivalent in the thermodynamic limit
 	//further it is crucial for the function in which order you provide the educt and product types since particles will be replaced correspondingly!
 	
 	if (all_educt_particles_exist(reaction_id) ==false ) {
