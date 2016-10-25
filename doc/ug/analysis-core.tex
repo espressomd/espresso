@@ -233,14 +233,21 @@ system:
 		<Npoly>} \\
 		Calculates the mean charge along \verb!Npoly! weak polyelectrolytes of the \emph{same}
 		length. The particles can be specified as a list of particle ids or through
-		the particle type. 
+		the particle type. The result will be the average charge during the
+		simulation in dependence of the monomer ranking number, \ie{} its position on
+		the chain. 
 	\item \lit{persistence_length} \var{ids <id\_list> max\_d <max\_d> cut\_off
 		<cut\_off>} \\
-		Calculates the persistence length of the given polymer specified through the
+		Calculates the persistence length based on the bond vector angle correlation of the given polymer specified through the
 		\verb!id_list!. \verb!max_d! is the maximum distance (in terms of particles) for
 		which the correlation is computed. With \verb!cut_off! the number of
 		particles at the polymer ends that are ignored for the calculation, can be
-		specified. 
+		specified. The observable will not calculate the actual persistence length
+		but the correlation function of the bond angles. 
+		\begin{equation}
+			\mathrm{Obs}(i) =\mathrm{Norm\_const} \langle \sum_j \frac{(\vec{r}_j - \vec{r}_{j+1})
+			(\vec{r}_{j+i}-\vec{r}_{j+i+1})}{|\vec{r}_j-\vec{r}_{j+1}||\vec{r}_{i+j}-\vec{r}_{i+j+1}|}\rangle 
+		\end{equation}
 	\item \lit{polymer_pair_correlation} \var{ids <id\_list> maxr <maxr> minr <minr>
 		k <k>}\verb!\!\\
 		\var{rbins <rbins> N <Npoly> poly\_len <poly\_len>} \\
@@ -252,6 +259,11 @@ system:
 		\verb!Npoly! and their length through \verb!poly_len!. The distribution is
 		calculated for distances between \verb!minr! and \verb!maxr! with
 		\verb!rbins!. 
+		\begin{equation}
+			\mathrm{Obs}(r) = \mathrm{Norm\_const} \langle \sum_{j=0,
+			j+=k}^{j<\mathrm{poly\_len} - k} \delta(r - |\vec{r}_j -
+			\vec{r}_{j+k}|)\rangle
+		\end{equation}
       \end{itemize}
 The tclcommand observable is a helpful tool, that allows to make the 
 analysis framework much more versatile, by allowing
