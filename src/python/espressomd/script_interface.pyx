@@ -1,8 +1,9 @@
+from espressomd.utils import to_char_pointer
 
 cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
-            self.sip = make_shared(name.encode('UTF-8'))
+            self.sip = make_shared(to_char_pointer(name))
             self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()
@@ -29,7 +30,7 @@ cdef class PScriptInterface:
         if < int > type == <int > DOUBLE:
             return make_variant[double]( < double > value)
         if < int > type == <int > STRING:
-            return make_variant[string](value.encode('UTF-8'))
+            return make_variant[string](to_char_pointer(value))
         if < int > type == <int > INT_VECTOR:
             return make_variant[vector[int] ]( < vector[int] > value)
         if < int > type == <int > DOUBLE_VECTOR:
