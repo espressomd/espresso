@@ -29,7 +29,7 @@ cdef class PScriptInterface:
         if < int > type == <int > DOUBLE:
             return make_variant[double]( < double > value)
         if < int > type == <int > STRING:
-            return make_variant[string]( < string > value.encode('UTF-8'))
+            return make_variant[string](value.encode('UTF-8'))
         if < int > type == <int > INT_VECTOR:
             return make_variant[vector[int] ]( < vector[int] > value)
         if < int > type == <int > DOUBLE_VECTOR:
