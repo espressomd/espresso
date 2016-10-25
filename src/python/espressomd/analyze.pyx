@@ -389,7 +389,7 @@ class Analysis:
         for i in range(9):
             value = c_analyze.total_p_tensor.data.e[i]
             for k in range(c_analyze.total_p_tensor.data.n/9):
-                value += c_analyze.total_p_tensor.data.e[9*k + i]
+                value += c_analyze.total_p_tensor.data.e[int(9*k + i)]
             # I don't know, why the 1/2 is needed.
             tmp[i]=value/2.
     

@@ -2,7 +2,7 @@
 cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
-            self.sip = make_shared(name)
+            self.sip = make_shared(name.encode('UTF-8'))
             self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()
