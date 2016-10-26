@@ -130,7 +130,8 @@ int load_wang_landau_checkpoint(char* identifier);
 
 /////////////////////////////////////////////  Constant-pH Reactions
 int do_reaction_constant_pH();
-extern double constant_pH;
+double extern constant_pH;
+void set_pH(double pH);
 
 
 #endif /* ifdef REACTION_H */

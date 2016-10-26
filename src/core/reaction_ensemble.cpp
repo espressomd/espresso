@@ -1885,6 +1885,9 @@ int load_wang_landau_checkpoint(char* identifier){
 /////////////////////////////////////////////
 int generic_oneway_reaction_constant_pH(int reaction_id);
 double constant_pH=-10;
+void set_pH(double pH){
+	constant_pH=pH;
+}
 
 int do_reaction_constant_pH(){
 	
@@ -1963,7 +1966,6 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 		ln_bf= (E_pot_new - E_pot_old)+ 1.0/beta*log(10)*(constant_pH-pKa);
 	}
 	double bf=exp(-beta*ln_bf);
-	
 	int reaction_is_accepted=0;
 	if ( d_random() < bf ) {
 		//accept

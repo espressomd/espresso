@@ -71,11 +71,12 @@ RE.add(equilibrium_constant=1.0/K_diss, educt_types=[1,2], educt_coefficients=[1
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
 
-#RE.set_constant_pH(0)
+#RE.set_pH_core(2)
 
-for i in range(1000):
+#XXX not working yet
+for i in range(10000):
 	RE.reaction()
-	#RE.do_reaction_constant_pH()
+#	RE.do_reaction_constant_pH()
 	if(i%100==0):
 		print("HA", grand_canonical.number_of_particles(type_id=0), "A-", grand_canonical.number_of_particles(type_id=1), "H+", grand_canonical.number_of_particles(type_id=2))
 

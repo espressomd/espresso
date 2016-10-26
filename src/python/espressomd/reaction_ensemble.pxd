@@ -23,12 +23,21 @@ cdef extern from "reaction_ensemble.hpp":
         double standard_pressure_in_simulation_units
         double temperature_reaction_ensemble
         double exclusion_radius
+        double volume
+        bool box_is_cylindric_around_z_axis
+        double cyl_radius
+        double cyl_x
+        double cyl_y
+        bool box_has_wall_constraints
+        double slab_start_z
+        double slab_end_z
 
     cdef extern reaction_system current_reaction_system
     int do_reaction()
     int find_index_of_type(int type)
     int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types)
     int update_type_index(int* educt_types, int len_educt_types , int* product_types, int len_product_types)
+    void set_cuboid_reaction_ensemble_volume()
     int check_reaction_ensemble()
 
 
@@ -85,6 +94,7 @@ cdef extern from "reaction_ensemble.hpp":
 
 #///////////////////////////////////////////// Constant-pH ensemble
     cdef extern double constant_pH
+    void set_pH(double pH)
     int do_reaction_constant_pH()
 
 

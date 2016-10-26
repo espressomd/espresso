@@ -47,6 +47,9 @@ IF REACTION_ENSEMBLE:
 
         def _set_params_in_es_core(self):
             current_reaction_system.temperature_reaction_ensemble = self._params["temperature"]
+            #setting a volume is a side effect, sets the default volume of the reaction ensemble as the volume of the cuboid simulation box. this volume can be altered by the command "reaction ensemble volume <volume>" if one wants to simulate e.g. in a system with constraint (e.g. cuboid box with cylinder constraint, so that the particles are only contained in the volume of the cylinder)
+            if(current_reaction_system.volume<0):
+                set_cuboid_reaction_ensemble_volume()
             current_reaction_system.standard_pressure_in_simulation_units = self._params["standard_pressure"]
             current_reaction_system.exclusion_radius = self._params["exclusion_radius"]
 
@@ -276,15 +279,16 @@ IF REACTION_ENSEMBLE:
             def __set__(self, bool fix_polymer):
                 current_wang_landau_system.fix_polymer=fix_polymer
             def __get__(self):
-                    return current_wang_landau_system.fix_polymer
+                return current_wang_landau_system.fix_polymer
+
+        def set_pH_core(self,pH):
+                 set_pH(pH)
 
         def do_reaction_wang_landau(self):
             do_reaction_wang_landau()
 
         #//////////////////////////constant pH ensemble
-        def set_constant_pH(self,pH):
-            constant_pH=pH
-        
+                
         def do_reaction_constant_pH(self):
             do_reaction_constant_pH()
         
