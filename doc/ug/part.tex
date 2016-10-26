@@ -46,7 +46,7 @@
     %director=\arg{},
     q=\arg{float},
     virtual=\arg{int $\geq$ 0},
-    vs_relative=\arg{tuple of int and float},
+    vs_relative=\arg{(particle_id, distance, quaternion},
     vs_auto_relate_to=\arg{int},
     dip=\arg{array of 3 floats},
     dipm=\arg{float},
@@ -56,7 +56,7 @@
     exclude=\arg{list of ints},
     temp=\arg{float},
     gamma=\arg{float},
-    gamma_rot=\arg{float},
+    gamma_rot=\arg{float} | \arg{array of 3 floats},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
       `f_swim':\arg{float},
@@ -67,12 +67,21 @@
     delete()
   }
 \end{pysyntax}
+
 \begin{pysyntax}
 espressomd.System().part.clear()
 \end{pysyntax}
 \begin{pysyntax}
+espressomd.System().part.pairs()
+\end{pysyntax}
+\begin{pysyntax}
 len(Espressomd.System().part)
 \end{pysyntax}
+\begin{pysyntax}
+for p in espressomd.System().part: ...
+\end{pysyntax}
+
+
 
 \begin{essyntax}
   part
@@ -232,10 +241,26 @@ set first because of the spatial decomposition.
   thermostat then the Langevin thermostat.
 \item[\opt{gamma \var{g}}] If used in combination with the Langevin
   thermostat (as documented in section \ref{sec:thermostat}), sets the
-  frictional coefficient \var{T} individually for the particle with id
-  \var{pid}. This allows to simulate systems containing particles with
-  different diffusion constants. Caution: this has no influence on any
-  other thermostat then the Langevin thermostat.
+  translational frictional coefficient \var{g} individually for the
+  particle with id \var{pid}.This allows to simulate systems
+  containing particles with different diffusion constants.
+  If this parameter is skipped for a specific particle then
+  the corresponding value of the thermostat is applied.
+  Caution: this has no influence on any other thermostat than the
+  Langevin thermostat.
+\item[\opt{gamma\_rot \alt{\var{grot} \asep \var{grotx} \var{groty} \var{grotz}}}]
+  If used in combination with the Langevin thermostat
+  (as documented in section \ref{sec:thermostat}), sets the
+  rotational frictional coefficient(s) individually for the
+  particle with id \var{pid}. This allows to simulate systems
+  containing particles with different diffusion constants.
+  Feature \feature{ROTATIONAL\_INERTIA} provides possibility to specify
+  different diagonal elements (\var{grotx}, \var{groty}, \var{grotz})
+  of the rotational frictional tensor in the particle body-fixed frames
+  of reference. If this parameter(s) is skipped for a specific particle
+  then the corresponding value(s) of the thermostat is applied.
+  Caution: this has no influence on any other thermostat
+  than the Langevin thermostat.
 \item[\opt{rotation \var{rot}}] Specifies whether a particle's
   rotational degrees of freedom along the different axes in the particle's body-fixed frame are integrated or not.
   If set to zero, rotation is disabled entirely, and the content of the torque and omega variables
@@ -356,9 +381,9 @@ determining the translational diffusion tensor of an anisotropic
 particle via the velocity auto-correlation (Green-Kubo) method.
 
 \minisec{Example}
-\begin{code}
+\begin{tclcode}
 part 40 print id pos q bonds
-\end{code}
+\end{tclcode}
 will return a list like
 \begin{tclcode}
 40 8.849 1.8172 1.4677 1.0 {}
@@ -408,16 +433,26 @@ the same way.
 \subsection{Deleting  particles}
 \label{tcl:part:delete}
 
-\todo{What is the syntax of variant 3?}
+\begin{pysyntax}
+    \attributes{
+        espressomd
+    }{
+        System()
+    }{
+        part[\var{pid}].remove(),
+    }
+\end{pysyntax}
+
+
 \begin{essyntax}
   \variant{1} part \var{pid} delete
   \variant{2} part deleteall
 \end{essyntax}
 
-In variant \variant{1}, the particle \var{pid} is deleted
-and all bonds referencing it.  Variant \variant{2} will delete all
-particles currently present in the simulation. Variant \variant{3}
-will delete all currently defined exclusions.
+Particles can be easily deleted in Python using particle ids or 
+ranges of particle ids. In TCL variant \variant{1}, the particle \var{pid} 
+is deleted and all bonds referencing it. TCL variant \variant{2} will delete all
+particles currently present in the simulation.
 
 \subsection{Exclusions}
 
@@ -666,9 +701,9 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
   \end{features}
 \end{essyntax}
 
- \begin{pycode}
+ \begin{pypresso}
 	from espressomd import diamond 
-\end{pycode}
+\end{pypresso}
 
 \begin{pysyntax}
   \object{
@@ -1098,9 +1133,9 @@ Variant \variant{15} creates a spherocylinder, that is, a cylinder capped by a h
 \minisec{Example}
 To create an infinite plane in $z$-direction at $z=20.0$ of type id 1 which is directed inwards to the origin (0,0,0),
 use:
-\begin{code}
+\begin{tclcode}
   constraint wall normal 0 0 -1 dist -20 type 1
-\end{code}
+\end{tclcode}
 
 \subsection{Deleting a constraint}
 \begin{essyntax}
@@ -1186,9 +1221,9 @@ center of a molecule, perform the following steps in that order
   The lists of particles in a molecule comprise the non-virtual
   particles as well as the virtual site. The id of this molecule is
   its index in this list. For example,
-  \begin{code}
+  \begin{tclcode}
     analyze set \{0 1 2 3 4\} \{0 5 6 7 8\} \{1 9 10 11\}
-  \end{code}
+  \end{tclcode}
   declares three molecules, of which the first two consist of three
   particles and a virtual site each (particles 1--4 and 5--8,
   respectively). The third molecule has type 1 and consists of two
@@ -1325,22 +1360,22 @@ part gc
 \alt{\var{type} \asep \alt{\alt{find \asep delete \asep
 status \asep number} \var{type}}}
 \end{essyntax}
-\begin{pycode}
+\begin{pypresso}
 from espressomd import grand_canonical
 grand_canonical.setup([_type])
 grand_canonical.delete_particles(_type)
 grand_canonical.find_particle(_type)
 grand_canonical.number_of_particles(_type)
-\end{pycode}
+\end{pypresso}
 
 If you want \es to keep track of particle ids of a certain type you have to
 initialize the method by calling 
 \begin{essyntax}
 	part gc \var{type}
 \end{essyntax}
-\begin{pycode}
+\begin{pypresso}
 grand_canonical.setup([_type])
-\end{pycode}
+\end{pypresso}
 After that \es will keep track of particle ids of that type. 
 When using the keyword \texttt{find} and a particle type, the
 command will return a randomly chosen particle id, for a particle of

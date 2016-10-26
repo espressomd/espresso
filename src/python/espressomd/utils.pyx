@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 cimport numpy as np
 import numpy as np
+from cpython.version cimport PY_MAJOR_VERSION
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
@@ -44,7 +46,6 @@ cdef int_list * create_int_list_from_python_object(obj):
     alloc_intlist(il, len(obj))
     for i in range(len(obj)):
         il.e[i] = obj[i]
-        print il.e[i]
     il.n = len(obj)
     return il
 
@@ -97,3 +98,18 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                 v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
             raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
                              str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+
+def to_char_pointer(s):
+    if isinstance(s, unicode):
+        s = (<unicode>s).encode('utf8')
+    return s
+
+def to_str(s):
+    if type(s) is unicode:
+        return <unicode>s
+    elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
+        return (<bytes>s).decode('ascii')
+    elif isinstance(s, unicode):
+        return unicode(s)
+    else:
+        return s

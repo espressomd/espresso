@@ -30,8 +30,6 @@ pagesize,                       % set the pagesize in a DVI document
 
 \include{common}
 
-\lstset{language=Python} 
-
 \begin{document}
 \esptitlehead
 \title{Tutorial 2: A simple charged system%
@@ -45,351 +43,282 @@ pagesize,                       % set the pagesize in a DVI document
 
 \section{Introduction}
 
-This tutorial introduces some of the features of \es\ by constructing
-step by step a simulation script for a simple salt crystal.  We cannot
-give a full Python tutorial here; however, most of the constructs should
-be self--explanatory. We also assume that the reader is familiar with
-the basic concepts of a MD simulation here. The code pieces can be
-copied step by step into a file, which then can be run using
-\verb|pypresso <file>| from the \es source directory.
+This tutorial introduces some of the basic features of \es\ for charged systems
+by constructing a simulation script for a simple salt crystal. We assume that
+the reader is familiar with the basic concepts of Python and MD simulations. The
+code pieces can be copied step by step into a python script file, which then can
+be run using \verb|pypresso <file>| from the \es build directory.
 
 \section{Basic set up}
 
-Our script starts with setting up the initial configuration.  Most
-conveniently, one would like to specify the density and the number of
-particles of the system as parameters:
+We start with setting up all the relevant simulation parameters in one place:
 
-\begin{tclcode}
-# Set system parameters
+\begin{python}
+# System parameters
 n_part = 200
+n_ionpairs = n_part/2
 density = 0.7
-box_l = (n_part/density)**(1./3.)
-\end{tclcode}
+time_step = 0.01
+temp = 1.0
+gamma = 1.0
+l_bjerrum = 1.0
+
+num_steps_equilibration = 1000
+num_configs = 100
+integ_steps_per_config = 1000
+
+# Particle parameters
+types       = {"Anion":          0, "Cation": 1}
+numbers     = {"Anion": n_ionpairs, "Cation": n_ionpairs}
+charges     = {"Anion":       -1.0, "Cation": 1.0}
+lj_sigmas   = {"Anion":        1.0, "Cation": 1.0}
+lj_epsilons = {"Anion":        1.0, "Cation": 1.0}
+
+WCA_cut = 2.**(1. / 6.)
+lj_cuts     = {"Anion":  WCA_cut * lj_sigmas["Anion"], 
+               "Cation": WCA_cut * lj_sigmas["Cation"]}
+\end{python}
 
 These variables do not change anything in the simulation engine, but
-are just standard Python variables; they are used to increase the
+are just standard Python variables. They are used to increase the
 readability and flexibility of the script. The box length is not a
-parameter of this simulation; it is calculated from the number of
+parameter of this simulation, it is calculated from the number of
 particles and the system density. This allows to change the parameters
 later easily, e.~g.\ to simulate a bigger system.
+We use dictionaries for all particle related parameters, which is less error-prone and
+readable as we will see later when we actually need the values. The parameters here define a purely repulsive, 
+equally sized, monovalent salt.
 
-The parameters of the simulation engine are modified by changing the
-espressomd.System() properties.
+The simulation engine itself is modified by changing the
+espressomd.System() properties. We create an instance \emph{system} and
+set the box length, periodicity and time step. The skin depth \verb|skin| 
+is a parameter for the link--cell system which tunes its
+performance, but shall not be discussed here. Further, we activate the langevin thermostat
+for our NVT ensemble with temperature \verb|temp| and friction coefficient \verb|gamma|. 
 
-\begin{tclcode}
-# Setup system geometry in Espresso
+
+\begin{python}
+# Setup System
 system = espressomd.System()
-
+box_l = (n_part / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
-\end{tclcode}
+system.time_step = time_step
+system.cell_system.skin = 0.3
+system.thermostat.set_langevin(kT=temp, gamma=gamma)
+\end{python}
 
-These lines define for example a cubic simulation box of size 
-\verb|box_l|, and periodic boundary conditions in all spatial dimensions. 
-We now fill this simulation box with particles
+We now fill this simulation box with particles at random positions, using type and charge from our dictionaries.
+Using the length of the particle list \emph{system.part} for the id, we make sure that our particles are numbered consecutively.
+The particle type is used to link non-bonded interactions to a certain group of particles.
 
-\begin{tclcode}
+\begin{python}
 # Place particles
-q = 1.
-ptype = 0
-
-for i in xrange(n_part):
-    q *= -1
-    ptype = 1-ptype
-    system.part.add(id=i, type=ptype, 
-                    pos=numpy.random.random(3) * system.box_l, q=q)
-\end{tclcode}
-
-This loop adds \verb|n_part| particles at random positions, one by
-one.  In this construct, the \verb|part| command is used to specify 
-particle properties, here the position, the charge \verb|q| and the type. 
-In \es\ the particle type is just an integer number which allows to group
-particles; it does not imply any physical parameters. Here we 
-alternate between creating positive charges of type 0 and negative
-charges of type 1.
-
-Now we define the ensemble that we will be simulating. This is done
-using the \verb|thermostat| class. We also set some integration
-scheme parameters:
-
-\begin{tclcode}
-# Simulation parameters
-system.time_step = 0.01
-system.skin = 0.3
-
-# Thermostat
-temp = 1.
-gamma = 1.
-thermostat.Thermostat().set_langevin(kT=temp, gamma=gamma)
-\end{tclcode}
-
-This switches on the Langevin thermostat for the NVT ensemble, with
-temperature \verb|temp| and friction coefficient \verb|gamma|. The skin depth
-\verb|skin| is a parameter for the link--cell system which tunes its
-performance, but shall not be discussed here.
+for i in range(n_ionpairs):
+    system.part.add(
+            id=len(system.part), 
+            type=types["Anion"],  
+            pos=numpy.random.random(3) * box_l, 
+            q=charges["Anion"])
+for i in range(n_ionpairs):
+    system.part.add(
+            id=len(system.part), 
+            type=types["Cation"], 
+            pos=numpy.random.random(3) * box_l, 
+            q=charges["Cation"])
+\end{python}
 
 Before we can really start the simulation, we have to specify the
-interactions between our particles.  We use a simple, purely repulsive
-Lennard-Jones interaction to model a hard core repulsion. Additionally the
-charges interact via the Coulomb potential:
+interactions between our particles. We already defined the Lennard-Jones parameters at the beginning,
+what is left is to specify the combination rule and to iterate over particle type pairs. For simplicity, 
+we implement only the \emph{Lorentz-Berthelot} rules. 
+We pass our interaction pair to \verb|system.non_bonded_inter[*,*]| and set the 
+pre-calculated LJ parameters \emph{epsilon}, \emph{sigma} and \emph{cutoff}. With \verb|shift="auto"|,
+we shift the interaction potential to the cutoff so that $U_{LJ}(r_{cutoff})=0$.
 
-\begin{tclcode}
-# Lennard-Jones interactions
-lj_sig = 1.
-lj_eps = 1.
-lj_cut = 2.**(1. / 6.)
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-system.non_bonded_inter[1, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-system.non_bonded_inter[1, 1].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+\begin{python}
+def combination_rule_epsilon(rule, eps1, eps2):
+    if rule=="Lorentz":
+        return (eps1*eps2)**0.5
+    else:
+        return ValueError("No combination rule defined")
 
-p3m = electrostatics.P3M(bjerrum_length=10.0, accuracy=1e-3)
+def combination_rule_sigma(rule, sig1, sig2):
+    if rule=="Berthelot":
+        return (sig1+sig2)*0.5
+    else:
+        return ValueError("No combination rule defined")
+
+# Lennard-Jones interactions parameters 
+for s in [["Anion", "Cation"], 
+          ["Anion", "Anion"], 
+          ["Cation", "Cation"]]:
+        lj_sig = combination_rule_sigma(
+                "Berthelot",
+                lj_sigmas[s[0]],lj_sigmas[s[1]])
+        lj_cut = combination_rule_sigma(
+                "Berthelot",
+                lj_cuts[s[0]],lj_cuts[s[1]])
+        lj_eps = combination_rule_epsilon(
+                "Lorentz",
+                lj_epsilons[s[0]],lj_epsilons[s[1]])
+
+        system.non_bonded_inter[types[s[0]], types[s[1]]].\
+            lennard_jones.set_params(
+            epsilon=lj_eps,
+            sigma=lj_sig,
+            cutoff=lj_cut,
+            shift="auto")
+
+\end{python}
+
+\newpage
+
+\section{Equilibration}
+
+With randomly positioned particles, we most likely have huge overlap and the strong repulsion will
+cause the simulation to crash. The next step in our script therefore is a suitable LJ equilibration.
+This is known to be a tricky part of a simulation and several approaches exist to reduce the particle overlap.
+Here, we use a highly damped system (huge gamma in the thermostat) and cap the forces of the LJ interaction.
+We use \verb|system.analysis.mindist| to get the minimal distance between all particles pairs. This value
+is used to progessively increase the force capping. This results in a slow increase of the force capping at
+strong overlap. At the end, we reset our thermostat to the target values and deactivate the force cap by setting 
+it to zero.
+
+\begin{python}
+print("\n--->Lennard Jones Equilibration")
+max_sigma = max(lj_sigmas.values())
+min_dist = 0.0
+cap = 10.0
+#Warmup Helper: Cold, highly damped system
+system.thermostat.set_langevin(kT=temp*0.1, gamma=gamma*50.0)
+
+while min_dist < max_sigma:
+    #Warmup Helper: Cap max. force, increase slowly for overlapping particles
+    min_dist = system.analysis.mindist(
+            [types["Anion"],types["Cation"]],
+            [types["Anion"],types["Cation"]])
+    cap += min_dist
+    system.non_bonded_inter.set_force_cap(cap)
+    system.integrator.run(10)
+
+#Don't forget to reset thermostat and force cap
+system.thermostat.set_langevin(kT=temp, gamma=gamma)
+system.non_bonded_inter.set_force_cap(0)
+\end{python}
+
+\es\ uses so-called \emph{actors} for electrostatics, magnetostatics and
+hydrodynamics. This ensures that unphysical combinations of algorithms are
+avoided, for example simultaneous usage of two electrostatic interactions.
+Adding an actor to the system also activates the method and calls necessary
+initialization routines. Here, we define a P$^3$M object with paramters Bjerrum
+length and rms force errow . This automatically starts a
+tuning function which tries to find optimal parameters for P$^3$M and prints them
+to the screen:
+
+\newpage
+
+\begin{python}
+print("\n--->Tuning Electrostatics")
+p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-3)
 system.actors.add(p3m)
-\end{tclcode}
+\end{python}
 
-The first three \verb|non_bonded_inter| commands instruct \es\ to use the same
-purely repulsive Lennard--Jones potential for the interaction between
-all combinations of the two particle types 0 and 1; by using different
-parameters for different combinations, one could simulate differently
-sized particles.  The last two lines set the Bjerrum length to the value
-10, and then instructs \es\ to use the P$^3$M method for the Coulombic
-interaction and to try to find suitable parameters for an rms force
-error below $10^{-3}$, with an optimal mesh size. This command will also print 
-the parameters and timings that the tuning found to the screen. Tuning takes 
-some time; if you run many simulations with similar parameters, you might want 
-to save and reload
-the P$^3$M parameters. You can obtain the P$^3$M parameters by
-\verb|get_params()|:
+Before the production part of the simulation, we do a quick temperature 
+equilibration. For the output, we gather all energies with
+\verb|system.analysis.energy()|, calculate the temperature from the ideal part and 
+print it to the screen along with the total and coulombic energies.
+We integrate for a certain amount of steps with \verb|system.integrator.run(100)|.
 
-\begin{tclcode}
-p3m_params = p3m.get_params()
-for key in p3m_params.keys():
-    print("{} = {}".format(key, p3m_params[key]))
-\end{tclcode}
 
+
+\begin{python}
+print("\n--->Temperature Equilibration")
+system.time = 0.0
+for i in range(num_steps_equilibration/100):
+    energy = system.analysis.energy()
+    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".\
+            format(system.time, energy['total'], 
+                   energy['coulomb'], temp_measured))
+    system.integrator.run(100)
+\end{python}
 
 \section{Running the simulation}
 
 Now we can integrate the particle trajectories for a couple of time
-steps:
+steps. Our integration loop basically looks like the equilibration:
 
-\begin{tclcode}
-integ_steps = 200
-int_n_times = 20
+\begin{python}
+print("\n--->Integration")
+system.time = 0.0
+for i in range(num_configs):
+    energy = system.analysis.energy()
+    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".\
+            format(system.time, energy['total'],
+                   energy['coulomb'], temp_measured))
+    system.integrator.run(integ_steps_per_config)
 
-# Main integration loop
-for i in xrange(int_n_times):
-    temp = system.analysis.energy()['ideal'] / ((3 / 2.0) * n_part)
-    print("t={0}, E={1}, T={2}".format(system.time,
-                                       system.analysis.energy()['total'], temp))
-    integrate.integrate(integ_steps)
-\end{tclcode}
+    # Interally append particle configuration
+    system.analysis.append()
+\end{python}
 
-This code block is the primary simulation loop and runs
-$20\times$\verb|integ_steps| MD steps. Every \verb|integ_steps| time
-steps, the potential, electrostatic and kinetic energies are printed
-out. The latter one is printed as temperature, by rescaling by the
-number of degrees of freedom (3) multiplied by $1/2kT$. Note that
-energies are measured in $kT$, so that only the factor $1/2$
-remains. Also note that $3/2$ should be written as $3/2.0$; to ensure
-that Python does not perform integer division (resuting in $1$ instead of
-$1.5$).
-
-Note, that in \es\ there are usually 3 translational degrees per
-particle. However, if \verb|ROTATION| is compiled in, there are in
-addition 3 rotational degrees of freedom, which also contribute to the
-kinetic energy.  You can get this number in the following way:
-
-\begin{tclcode}
-if "ROTATION" in code_info.features():
-    deg_free = 6
-else:
-    deg_free = 3
-\end{tclcode}
-
-Then all you need to do is to replace the hardcoded 3 by \verb|deg_free|.
-
-However, if you run the simulation, it will still
-crash: \es\ complains about particle coordinates being out of range.
-The reason for this is simple: Due to the initial random setup, the
-overlap energy is around a million $kT$, which we first have to remove
-from the system. In \es, this can be accelerated by limiting the maximum
-forces, i.~e.\ modifying the Lennard--Jones force such that it is
-constant below a certain distance. Before the main integration loop, we
-therefore insert this equilibration loop:
-
-\begin{tclcode}
-integ_steps = 200
-
-# Warmup integration loop
-for cap in xrange(20, 200, 20):
-    print("t={0}, E={1}".format(system.time,
-                                system.analysis.energy()['total']))
-    system.non_bonded_inter.set_force_cap(cap)
-    integrate.integrate(integ_steps)
-system.non_bonded_inter.set_force_cap(0)
-\end{tclcode}
-
-This loop integrates the system with a force cap value of initially 20 and
-finally 180.  The last command switches the force cap off again. With
-this equilibration, the simulation script runs fine. As a check
-that the equilibration loop works correctly, you might want to copy the
-energy and force printing from the main integration loop. You can then
-observe how the temperature initially overshoots and is then relaxed to
-its target value by the thermostat.
-
-\section{Writing out data}
-
-For later analysis of the simulation results, one will
-usually like to write out simulation data to configuration files.
-For this purpose one can use the \verb|cPickle| Python library to 
-write simulation data to a file in an easily parseable form.  We add the 
-following lines to the integration loop just after the \verb|integrate| line
-in order to write out the system configuration files
-``config\_0'' through ``config\_19'':
-
-\begin{tclcode}
-    # Pickle particle data
-    with open("config_{}".format(i), "w") as configfile:
-        pickle.dump(system.part, configfile, -1)
-\end{tclcode}
-
-In order to write out \verb|System()| variables such as the boxlength 
-\verb|box_l|, the timestep \verb|time_step| or the skin \verb|skin| to the 
-file ``system\_config'', one can insert the following lines before or after the 
-main loop integration:
-
-\begin{tclcode}
-# Pickle system properties
-with open("system_config", "w") as system_config:
-    pickle.dump(system, system_config, -1)
-\end{tclcode}
-
-
-Reading the system variables is done by the following simple script:
-
-\begin{tclcode}
-# Import system properties
-system = espressomd.System()
-pickle.load(open("system_config","r"))
-\end{tclcode}
-
-The \verb|load()| command will set the system variables
-to the values specified in the file. This includes to set for example 
-the box dimensions for the simulation. Note that it is important to have the box 
-dimensions set before reading the particles, to avoid problems with the periodic 
-boundary conditions. The particles (including all properties) of the first 
-frame can be restored with the following line:
-
-\begin{tclcode}
-# Import of particle properties
-pickle.load(open("config_0","r"))
-\end{tclcode}
-
+Additionally, we append all particle configurations in the core with \verb|system.analysis.append()| for
+a very convenient analysis later on. 
 
 \begin{figure}[tb]
   \centering
-  \includegraphics[width=0.4\textwidth]{figures/salt}
+  \includegraphics[width=0.3\textwidth]{figures/salt}
   \caption{VMD Snapshot of the salt system}
   \label{fig:snapshot}
 \end{figure}
 
-The \verb|pickle| mechanism is typically used for one of two main
-purposes, checkpointing and offline analysis.
-Checkpointing is useful for long-running simulations: If you have
-a simulation that runs for several days, you may want to have it
-periodically write its current state to a file. That way, the
-simulation can be resumed if your computer crashes while the
-simulation is running.
-Offline analysis refers to analyzing physical parameters of the
-simulation after the simulation has finished and will be discussed in
-the next section.
-
 \section{Analysis}
 
-Having written out pickle files during the simulation, we can now
-investigate the system. As an example, we will create a second script which 
-calculates the averaged radial distribution functions $g_{++}(r)$ and 
-$g_{+-}(r)$. The radial distribution function for the current 
-configuration can be calculated using the \verb|rdf()| command from the 
-\verb|analysis| submodule:
+Now, we want to calculate the averaged radial distribution functions
+$g_{++}(r)$ and $g_{+-}(r)$ with the \verb|rdf()| command from \verb|system.analysis|: 
 
-\begin{tclcode}
-    # Calculate rdf
-    rdf_bins = 100
-    rdf_list_a = [0]
-    rdf_list_b = [1]
-    r, rdf = system.analysis.rdf(rdf_type='rdf', type_list_a=rdf_list_a,
-                                 type_list_b=rdf_list_b, r_min=0.9,
-                                 r_max=system.box_l[0] / 2., r_bins=rdf_bins)
-\end{tclcode}
-
-
-The shown \verb|rdf()| command returns the distribution function
-of particles of type 1 around particles of type 0 (i.~e.\ of opposite
-charges) for radii between $0.9$ and half the box length, subdivided
-into $100$ bins.  Changing \verb|rdf_list_a| and \verb|rdf_list_b| to either 
-[0] and [0] or [1] and [1] allows to determine the distribution of equal charges
-around each other. The result are two numpy arrays containing the of $r$ and 
-$g(r)$ values.
-After the system properties are loaded, we loop additionally over all pickle 
-files given as command line arguments to average over all configurations.
-
-\begin{tclcode}
-# Import system properties
-system = espressomd.System()
-pickle.load(open("system_config", "r"))
-
+\begin{python}
+print("\n--->Analysis")
+# Calculate the averaged rdfs
 rdf_bins = 100
-rdf_list_a = [0]
-rdf_list_b = [1]
+r_min  = 0.0
+r_max  = system.box_l[0]/2.0
+r,rdf_00 = system.analysis.rdf(rdf_type='<rdf>', 
+                            type_list_a=[types["Anion"]],
+                            type_list_b=[types["Anion"]], 
+                            r_min=r_min,
+                            r_max=r_max, 
+                            r_bins=rdf_bins)
+r,rdf_01 = system.analysis.rdf(rdf_type='<rdf>', 
+                            type_list_a=[types["Anion"]],
+                            type_list_b=[types["Cation"]], 
+                            r_min=r_min,
+                            r_max=r_max, 
+                            r_bins=rdf_bins)
 
-# Initialize the total RDF with zero
-cnt = 0
-avg_rdf = numpy.zeros(rdf_bins)
+\end{python}
 
-for filename in sys.argv[1:]:
-    # Import of particle properties
-    try:
-        pfile = open(filename, "r")
-        pickle.load(pfile)
-        pfile.close()
-    except Exception as e:
-        print("Could not import particles from '{}'.".format(filename))
-        print(e)
-        continue
+The shown \verb|rdf()| commands return the radial distribution functions for
+equally and oppositely charged particles for specified radii and number of bins. 
+In this case, we calulate the averaged rdf of the the stored
+configurations, denoted by the chevrons in \verb|rdf_type='<rdf>'|. Using
+\verb|rdf_type='rdf'| would simply calculate the rdf of the current particle
+configuration. The results are two numpy arrays containing the $r$ and $g(r)$
+values. Finally we write the data into a file with standard python output routines.
 
-    # Calculate rdf
-    r, rdf = system.analysis.rdf(rdf_type='rdf', type_list_a=rdf_list_a,
-                                 type_list_b=rdf_list_b, r_min=0.9,
-                                 r_max=system.box_l[0] / 2., r_bins=rdf_bins)
-    avg_rdf += rdf
-
-    system.part[:].remove()
-
-    cnt += 1
-
-avg_rdf *= 1. / cnt
-\end{tclcode}
-
-Initially, the sum of all $g(r)$, which is stored in \verb|avg_rdf|,
-is set to 0.  Then the loops over all configurations given by
-\verb|sys.argv|, calculates $g(r)$ for each configuration and adds up all
-the $g(r)$ in \verb|avg_rdf|.  Finally, this sum is normalized by
-dividing by the number of configurations. Note again the
-\verb|1. / cnt|; also here, this is necessary, since \verb|1 / cnt| is 
-interpreted as an integer division, which would result in 0 for $\text{cnt}>1$. 
- \verb|sys.argv| is a predefined variable: it contains all the command line 
-parameters. Therefore this script should be called like this:
-\begin{verbatim}
-  ./pypresso <script> config_*
-\end{verbatim}
+\begin{python}
+rdf_fp = open('rdf.data', 'w')
+for i in range(rdf_bins):
+    rdf_fp.write("%1.5e %1.5e %1.5e\n" % (r[i], rdf_00[i], rdf_01[i]))
+rdf_fp.close()
+print("\n--->Written rdf.data\n--->Done")
+\end{python}
 
 \begin{figure}[tb]
   \centering
-  \includegraphics[width=0.7\textwidth]{figures/nacl-rdf}
+  \includegraphics[width=0.6\textwidth]{figures/nacl-rdf}
   \caption{Radial distribution functions $g_{++}(r)$ between equal
     charges (rectangles) and $g_{+-}(r)$ for opposite charges
     (circles). The plus symbols denote $g(r)$ for an uncharged
@@ -397,336 +326,61 @@ parameters. Therefore this script should be called like this:
   \label{fig:rdf}
 \end{figure}
 
-The printing of the calculated radial distribution functions is
-simple. Add to the end of the previous snippet the following lines:
+Fig.~\ref{fig:rdf} shows the resulting radial distribution functions. In
+addition, the distribution for a neutral system is given, which can be obtained
+from our simulation script by simply not adding the P$^3$M actor to the system.
+To view your own results, run \verb|gnuplot| in a Terminal window
+and plot the simulation data:
 
-\begin{tclcode}
-# Write averaged data to plot file
-plot = open("rdf.data", "w")
-plot.write("# r\trdf(r)\n")
-for i in xrange(len(rdf)):
-    plot.write("{0}\t{1}\n".format(r[i], avg_rdf[i]))
-plot.close()
-\end{tclcode}
+\begin{python}
+p 'rdf.data' u 1:2 w lp t 'g(r) ++' , '' u 1:3 w lp t 'g(r) +-'
+\end{python}
 
-This instructs Python to write the \verb|avg_rdf| to the
-file \verb|rdf.data| in gnuplot--compatible format. Fig.~\ref{fig:rdf}
-shows the resulting radial distribution functions, averaged over 100
-configurations. In addition, the distribution for a neutral system is
-given, which can be obtained from our simulation script by simply
-removing the commands
+\section{Task - Real units}
 
-\begin{tclcode}
-    p3m = electrostatics.P3M(bjerrum_length=10.0, accuracy=1e-3)
-    system.actors.add(p3m)
-\end{tclcode}
+So far, the system has arbitrary units and is not connected to any real physical system.
+Simulate a proper NaCl crystal with the force field parameter taken from:\\
+\\
+\noindent R. Fuentes-Azcatl and M. Barbosa, \emph{Sodium Chloride, NaCl/$\epsilon$ : New Force Field},\\ J. Phys. Chem. B, 2016, 120(9), pp 2460-2470
+\begin{table}[h]
+    \centering
+    \begin{tabular}{l|llll}
+           & $q/\mathrm{e}$  & $\sigma / \mathrm{\AA} $ & $(\epsilon /\mathrm{k_B})/\mathrm{K}$ & $m/\mathrm{u}$  \\
+        \hline
+        Na & +1     & 2.52          & 17.44                 & 22.99  \\
+        \hline
+        Cl & -1     & 3.85          & 192.45                & 35.453 
+    \end{tabular}
+\end{table}
 
-and therefore not turning on P$^3$M.
-To plot your own results, run \verb|gnuplot| in a Terminal window
-and type the following:
-\begin{tclcode}
-plot "rdf.data" using 1:2	
-\end{tclcode}
-If you have written out RDFs for multiple combinations of species,
-you can plot them into one graph like this:
-\begin{tclcode}
-plot "rdf00.data" using 1:2 w l title "g++", \
-     "rdf11.data" using 1:2 w l title "g--", \
-     "rdf01.data" using 1:2 w l title "g+-"	
-\end{tclcode}
+Use the following system parameters:
 
+\begin{table}[h]
+    \centering
+    \begin{tabular}{l|l}
+        Temperature            & $298 \ \mathrm{K}$          \\
+        \hline
+        Friction Coeff.        & $5 \ \mathrm{ps^{-1}}$      \\
+        \hline
+        Density                & $1.5736 \ \mathrm{u}\mathrm{\AA^{-3}}$ \\
+        \hline
+        Bjerrum length($298 \ \mathrm{K}$) & $439.2 \ \mathrm{\AA}$      \\
+        \hline
+        Time step              & $2 \ \mathrm{fs}$
+    \end{tabular}
+\end{table}
 
-\section{Further ideas}
-
-The code example given before is still quite simple, and the reader is
-encouraged to try to extend the example a little bit, e.~g. by using
-differently sized particle, or changing the interactions. If something
-does not work, \es\ will give comprehensive error messages, which
-should make it easy to identify mistakes. For real simulations, the
-simulation scripts can extend over thousands of lines of code and
-contain automated adaption of parameters or online analysis, up to
-automatic generation of data plots.  Parameters can be changed
-arbitrarily during the simulation process, as needed for e.~g.\
-simulated annealing. The possibility to perform non--standard
-simulations without the need of modifications to the simulation core
-was one of the main reasons why we decided to use a script language
-for controlling the simulation core.
-
-%\section{Accelerating the simulation using a GPU}
-
-%TODO
-\iffalse
-\es{} can make use of an Nvidia graphics processing unit (GPU) for 
-accelerating simulations.
-Of course, we expect that results of the GPU-based implementation of
-P$^3$M to be exactly identical to those of the traditional CPU
-implementation. So copy the results from the previous task to a
-different file name (e.g.~\verb|rdf_p3m_cpu.data|) for comparison.
-Additionally, we'd like to find out exactly how much faster the GPU
-implementation is. So first wrap your previous simulation script with
-a time measurement, run it again and note down the execution time.
-\begin{tclcode}
-	set starttime [clock seconds]
-	
-	# previous script code goes here
-	
-	set endtime [clock seconds]
-	puts "Simulation took [expr $endtime-$starttime] seconds"	
-\end{tclcode}
-
-To switch to the GPU-based implementation of 
-P$^3$M, go to the line of your simulation script that contains
-\verb|inter coulomb| and replace \verb|p3m| with \verb|p3m gpu|.
-Then run the simulation again and note down the execution time,
-which should be a lot shorter now. Plot the RDFs from both
-the CPU and the GPU simulation into one graph and check whether the
-results agree.
-\fi
-
-%\section{Using the MEMD algorithm}
-
-%TODO
-\iffalse
-\es{} provides a variety of different electrostatics solvers. So far,
-we have been introduced to P$^3$M, but in this section we will try
-something new. A fairly recent addition to the family of electrostatics
-solvers is the "Maxwell Equations Molecular Dynamics" (MEMD) algorithm.
-To use it, two parameters have to be set: A mesh size, and a method
-parameter called \verb|f_mass|, which can be estimated by a formula
-given in the \es{} user guide. In this example, a good estimate for
-the mesh size is 12, but this can be varied, affecting speed and
-accuracy of the algorithm.
-
-The MEMD algorithm relies on a very specific spatial distribution of
-the particles across processors, and will therefore currently not work
-with Verlet lists. Since those are switched on by default, they will
-have to be turned off manually by adding the following line before the
-\verb|setmd| commands:
-
-\begin{tclcode}
-  cellsystem domain_decomposition -no_verlet_list
-\end{tclcode}
-
-
-Besides this, you will have to replace the initialization of the
-P$^3$M interaction (\verb|inter| \verb|coulomb|...) with an
-appropriate one for MEMD:
-
-\begin{tclcode}
-  set memd_mesh 12
-  set f_mass [expr 100.0*pow( ([setmd time_step]*$memd_mesh/$box_l),2.0)]
-  inter coulomb 10.0 memd $f_mass $memd_mesh
-\end{tclcode}
-
-
-In the example script included
-within the \es{} code, there is already an \verb|if|-construct 
-provided and you can switch between the methods at the very top
-of the script.
-
-You can copy the results from your completed tasks so far to a different
-filename (e.g.~\verb|rdf_p3m.data|) for comparison. Then, just
-run the simulation and analysis again, and compare the speed and 
-resulting radial distribution function of the two methods.
-\fi
-
-%\section{Partially periodic boundary conditions}
-
-%TODO
-\iffalse
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.7\textwidth]{figures/neutral-rho}
-  \caption{Distribution of positive charges $\rho_+(z)$ (open squares)
-    and of negative charges $\rho_-(z)$ (closed squares) under
-    confinement along $z$.}
-  \label{fig:neutralrho}
-\end{figure}
-
-One of the strengths of \es{} is the possibility to simulate charged
-systems with partially periodic boundary conditions.
-Before you proceed, check your \emph{myconfig.hpp} file to make
-sure that the \verb|PARTIAL_PERIODIC| feature is enabled.
-
-As an example of a system in partially-periodic boundary conditions,
-we will modify our script to simulate our simple salt in a slit pore.
-Remove the \verb|cellsystem|, \verb|setmd box_l| and \verb|setmd periodic| lines left
-over from your previous simulation simulation script and replace them
-with these lines:
-
-\begin{tclcode}
-  set box_lxy [expr sqrt(2)*$box_l]
-  set box_lz  [expr 0.5*$box_l]
-  setmd box_l $box_lxy $box_lxy [expr $box_lz + 1.0]
-  setmd periodic 1 1 0
-  constraint wall normal 0 0  1 dist 0 type 2
-  constraint wall normal 0 0 -1 dist [expr -$box_lz - 1.0] type 2
-\end{tclcode}
-
-The final two lines add two confining walls at the top
-and the bottom of the simulation box. The wall is given by its normal
-vector (pointing up and downwards here), and its distance from
-$(0,0,0)$. Therefore this defines one wall at $z=0$, and a second
-one at $z=$\verb|box_lz|$+1$. Finally, the type of the wall is used like a
-particle type to define the interaction of the walls with the particles.
-
-The addition of $1.0$ to the slit width is due to the fact that we will
-use a Lennard-Jones potential to model the wall; this means that
-particles of diameter $1.0$ cannot come closer than $1.0$ to the wall. In a
-way, the wall itself therefore has a thickness of $0.5$. To compensate
-for this, we simply make the box bigger by 1.
-
-We also need to choose the initial positions of our particles to match
-the new box dimensions. Replace the appropriate part of your
-simulation script with this random drawing of particle positions:
-
-\begin{tclcode}
-  set posx [expr $box_lxy*[t_random]]
-  set posy [expr $box_lxy*[t_random]]
-  set posz [expr ($box_lz-1.0)*[t_random] + 1.0]
-\end{tclcode}
-
-When defining the interactions, we now also need to add the
-interactions between the particles and the walls, which is the same as
-between the particles:
-
-\begin{tclcode}
-  inter 0 2 lennard-jones $eps $sig $cut $shift 0
-  inter 1 2 lennard-jones $eps $sig $cut $shift 0
-\end{tclcode}
-
-For the electrostatic part, we also need to choose a different algorithm,
-as P$^3$M can only handle fully periodic boundary conditions. We
-choose the MMM2D method:
-
-\begin{tclcode}
-  cellsystem layered 3
-  inter coulomb 1.0 mmm2d 1e-4  
-\end{tclcode}
-
-which replaces the \verb|inter coulomb 10.0 p3m ...| code. Note the
-decreased Bjerrum length --- the confined system would take too long for
-a tutorial to equilibrate with Bjerrum length 10.0. Still,
-equilibrating the system is now more difficult. First, we cannot
-simply ramp up all Lennard-Jones interactions anymore; otherwise,
-particles will penetrate the walls and break the confinement. Second,
-we need to ramp up the electrostatic interaction more carefully
-now. The following code replaces the equilibration loop previously 
-used. It gradually increases the Bjerrum length to the
-target value of 1.0, and caps only the Lennard-Jones interactions
-between the particles. The latter can be done by switching on
-individual force capping, and setting a force cap radius for the
-particle-particle interactions:
-
-\begin{tclcode}
-inter forcecap individual
-for {set i 1} {$i < 10} {incr i} {
-    set rad [expr 1.0 - 0.5*$i/10.0]
-    set lb [expr 1.0 * $i / 10.0]
-    inter 0 0 lennard-jones $eps $sig $cut $shift 0 $rad
-    inter 1 0 lennard-jones $eps $sig $cut $shift 0 $rad
-    inter 1 1 lennard-jones $eps $sig $cut $shift 0 $rad
-    inter coulomb $lb mmm2d 1e-4
-    integrate $integ_steps
-}
-inter forcecap 0
-inter coulomb 1.0 mmm2d 1e-4  
-\end{tclcode}
-
-Finally, when writing out, we should update the set of
-Tcl-variables to represent the asymmetric box, and write out
-\verb|box_lxy| and \verb|box_lz| instead of just \verb|box_l|.
-
-\subsection*{Analysis}
-
-For a such a strongly confined system, the radially averaged
-distribution function is inappropriate. Instead, it would be more
-interesting to study the distribution of the particles along the slit
-width. \es{}  does not provide such a function, however, we can easily
-write one using the \verb|bin| command, which simply allows us 
-to create a histogram based on a set of values given as a Tcl list.
-Therefore, we first create the list
-of z-coordinates, and then bin them:
-
-\begin{tclcode}
-  set bins 20
-  set data ""
-  for {set p 0} {$p <= [setmd max_part]} {incr p} {
-    lappend data [lindex [part $p pr pos] 2]
-  }
-  set rho [bin -linbins 0.5 [expr $box_lz + 0.5] $bins $data]
-\end{tclcode}
-
-Here, \verb|bins| is a variable that you should set to the desired
-number of bins (20 should be fine). Otherwise, this code can replace
-the analyze rdf command. The \verb|bin| command can also be used to
-calculate the coordinates of the bins:
-
-\begin{tclcode}
-  bin -linbins 0.5 [expr $box_lz + 0.5] $bins -binctrwdth
-\end{tclcode}
-
-will return a list of the centers and widths of the bins, which can be
-used in analogy to \verb|rlist| in the previous analysis code. Of
-course, it would be interesting to study the distribution of positive
-and negative charges separately; for this, you need to duplicate the
-averaging code, and use two data sets to append the z-coordinates to,
-depending on the particle type:
-
-\begin{tclcode}
-  if {[part $p pr type] == 0} {
-    lappend data0 [lindex [part $p pr pos] 2]
-  } {
-    lappend data1 [lindex [part $p pr pos] 2]
-  }
-\end{tclcode}
-
-The resulting distribution of charges is shown in
-Fig.~\ref{fig:neutralrho}. You can see a layering effect of the
-confinement on the charge distributions.
+To make your life more easy, don't try to equilibrate randomly positioned particles,
+but set them up in a crystal structure close to equilibrium. If you do it right,
+you don't even need the Lennard-Jones equilibration. 
+To speed things up, don't go further than 1000 particles and use a P$^3$M accuracy of $10^{-2}$.
+Your RDF should look like the plot in figure \ref{fig:nacl_units}.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.7\textwidth]{figures/nonneutral-rho}
-  \caption{Distribution of positive charges $\rho_+(z)$ (open squares)
-    and of negative charges $\rho_-(z)$ (open squares) under
-    confinement along $z$. The two confining walls are negatively
-    charged, pushing away the negative charges.}
-  \label{fig:nonneutralrho}
+  \includegraphics[width=0.9\textwidth]{figures/nacl_units.jpg}
+  \caption{Snapshot and RDF of the parametrized NaCl crystal.}
+  \label{fig:nacl_units}
 \end{figure}
-
-\subsection*{Charging the walls}
-
-So far, the distributions of particles of type 0 and 1 are more or
-less the same, as one would expect. However, we can change this by
-introducing charged walls. That is done using the
-\verb|constraint plate| command:
-
-\begin{tclcode}
-  set sigma [expr -0.25*$n_part/($box_lxy*$box_lxy)]
-  constraint plate height 0 sigma $sigma
-  constraint plate height [expr $box_lz + 1.0] sigma $sigma
-\end{tclcode}
-
-Note that you need to have both the \verb|constraint plate| and the 
-\verb|constraint wall| commands in your simulation script.
-This adds two plates at the bottom and top of the simulation box. The
-charged walls (the capacitor \emph{plates}) are necessarily
-perpendicular to the z-axis, since for all electrostatics methods for
-2d-periodic systems, \es{} assumes that the z-axis is the
-non-periodic axis.
-
-Note that
-this adds two walls with a total charge of \verb|n_part|/2, which
-would make the overall system charged. So to maintain charge
-neutrality, we need to only create half of the charges (i.e. 100)
-with alternating charges as before, while the rest is created
-with positive charge.
-For this system, you should obtain distributions as shown in
-Fig.~\ref{fig:nonneutralrho}. The distribution of charges differs
-strongly between the two types of charges; while the positive charges
-layer at the walls, the negative charges accumulate in the center of
-the system.
-\fi
 
 \end{document}

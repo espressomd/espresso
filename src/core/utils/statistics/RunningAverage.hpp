@@ -22,6 +22,8 @@
 #ifndef __RUNING_AVERAGE_HPP
 #define __RUNING_AVERAGE_HPP
 
+#include <cmath>
+
 namespace Utils {
 namespace Statistics {
 

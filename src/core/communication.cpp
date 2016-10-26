@@ -28,6 +28,7 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/array.hpp>
 
 #include "communication.hpp"
 
@@ -2863,7 +2864,7 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 #ifndef ROTATIONAL_INERTIA
     MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 #else
-    for ( j = 0 ; j < 3 ; j++) MPI_Send(&(gamma_rot[j]), 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(gamma_rot, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
 #endif
   }
 
@@ -2883,11 +2884,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma_rot = s_buf;
 #else
-    for ( j = 0 ; j < 3 ; j++)
-    {
-    	MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    	p->p.gamma_rot[j] = s_buf;
-    }
+  	MPI_Recv(p->p.gamma_rot, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
 #endif
   }
   on_particle_change();

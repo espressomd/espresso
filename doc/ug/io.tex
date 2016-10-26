@@ -172,11 +172,11 @@ Closes the H5MD data file.
 
 \section{Writing H5MD-files with Python}
 To write data in a hdf5-file, first an object of the class \texttt{h5md} has to be created and linked to the respective hdf5-file. This may, for example, look like:
-\begin{pycode}
+\begin{pypresso}
 from espressomd import h5md
 system = espressomd.System()
 h5=h5md.h5md("File.h5",system)
-\end{pycode}
+\end{pypresso}
 The \texttt{h5md} class contains the sub-class \texttt{write_to_h5}, which contains all write commands such as \texttt{userdefined}. The sample python script ``h5md_WriteFile.py'' shows the usage of writing a hdf5-file.
 
 \subsection{\keyword{userdefined}: Write an arbitrary value}
@@ -373,7 +373,7 @@ Variant \variant{3} write only the seed(s) which were
 used to initialize the random number generators. Note that this
 information is not sufficient to restore the full state of a random
 number generator, because the internal state might contain more
-information.
+information and evolves over time.
 
 \subsection{Writing all stored configurations}
 \label{sec:blockfile:configs}
@@ -928,9 +928,9 @@ The PDB/PSF files created by \es via the command \lit{writepsf} and
 configuration.
 
 Then you can use the VMD console to execute the command
-\begin{code}
+\begin{tclcode}
   imd connect \var{host} \var{port}
-\end{code}
+\end{tclcode}
 where \var{host} is the host running the simulation and \var{port} is
 the port it listens to. Note that VMD crashes, if you do that without
 loading a structure file before.  For more information on how to use

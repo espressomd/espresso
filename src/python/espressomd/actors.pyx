@@ -1,5 +1,6 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from highlander import ThereCanOnlyBeOne
+from .highlander import ThereCanOnlyBeOne
 
 
 cdef class Actor:
@@ -38,7 +39,7 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
-        self._set_params_in_es_core()
+        #self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()
@@ -166,9 +167,9 @@ class Actors:
             raise ThereCanOnlyBeOne(actor)
 
     def __str__(self):
-        print "Active Actors:"
+        print("Active Actors:")
         for actor in Actors.active_actors:
-            print actor
+            print(actor)
         return ""
 
     def __getitem__(self, key):

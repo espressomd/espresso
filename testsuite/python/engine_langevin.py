@@ -1,8 +1,8 @@
+from __future__ import print_function
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
+
 
 if "ENGINE" in espressomd.features():
     class SwimmerTest(ut.TestCase):
@@ -28,7 +28,7 @@ if "ENGINE" in espressomd.features():
             S = espressomd.System()
 
             S.box_l = [boxl, boxl, boxl]
-            S.skin = 0.1
+            S.cell_system.skin = 0.1
             S.time_step = tstep
 
             S.part.add(id=0, pos=pos_0, swimming={"v_swim": v_swim})
@@ -36,7 +36,7 @@ if "ENGINE" in espressomd.features():
 
             S.thermostat.set_langevin(kT=temp, gamma=gamma)
 
-            integrate.integrate(sampsteps)
+            S.integrator.run(sampsteps)
 
             pos_0[2] = z_v(S.time, pos_0[2])
             pos_1[2] = z_f(S.time, pos_1[2])

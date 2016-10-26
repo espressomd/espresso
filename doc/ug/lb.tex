@@ -42,7 +42,30 @@ description of the method, please refer to the literature.
   \citewbibkey{lbgpu} if you use the GPU implementation.
 \end{citebox}
 
-
+\begin{pysyntax}
+    \object{
+        espressomd.lb
+    }{
+        LBFluid | LBFluid_GPU 
+    }{
+        agrid = \arg{int},
+        dens = \arg{float},
+        visc = \arg{float},
+        tau = \arg{float}
+    }[
+        bulk_viscosity = \arg{float},
+        ext_force = \arg{array of 3 floats},
+        friction = \arg{float},
+        \require{2}{couple = \arg{2pt} | \arg{3pt}},
+        gamma_odd = \arg{float},
+        gamma_even = \arg{float}
+    ]
+    \begin{features}
+        \required[1]{LB}
+        \required[2]{LB_GPU}
+    \end{features}
+\end{pysyntax}
+        
 \begin{essyntax}
   lbfluid
   \require{2}{\opt{gpu}}
@@ -82,8 +105,9 @@ implementation works with a different set of units: all lengths are
 expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
 changing \var{agrid} and \var{tau}, might change the behaviour of the
 LB fluid, \eg at boundaries, due to characteristics of the LBM
-itself. It should also be noted that the LB nodes are located at 0.5, 1.5, 2.5, etc (in terms of \var{agrid}).
-This has important implications for the location of hydrodynamic boundaries which are generally considered
+itself. It should also be noted that the LB nodes are located at 0.5, 1.5, 2.5,
+etc (in terms of \var{agrid}).  This has important implications for the
+location of hydrodynamic boundaries which are generally considered
 to be halfway between two nodes to first order.
 Currently it is not possible to precisely give a parameter set
 where reliable results are expected, but we are currently performing a
@@ -119,8 +143,10 @@ of the options \lit{dens}, \lit{visc}, \lit{bulk_viscosity}, \lit{friction},
 they are set to the default values. The three elements of the
 coupling matrix can be supplied with the option \lit{sc_coupling},
 and the mobility coefficient can be
-specified with the option \lit{mobility}. By default no copuling is activated, and the relaxation parameter associated to the mobility is zero, corresponding to an infinite value for \lit{mobility}. Additional details are
-given in \ref{sec:shanchen} and \ref{sec:scmd-coupling}.
+specified with the option \lit{mobility}. By default no copuling is activated,
+and the relaxation parameter associated to the mobility is zero, corresponding
+to an infinite value for \lit{mobility}. Additional details are given in
+\ref{sec:shanchen} and \ref{sec:scmd-coupling}.
 
 \begin{essyntax}
   lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
@@ -135,15 +161,22 @@ the lattice constant.
   lbfluid load_ascii_checkpoint \var{filename}\\
   lbfluid load_binary_checkpoint \var{filename}
 \end{essyntax}
-The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
-The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
-machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
-on both the computer being used as well as the compiler. One thing that one needs to be aware of is that loading the checkpoint also requires the used to reuse the old forces. This is necessary
-since the coupling force between the paricles and the fluid has already been applied to the fluid. Failing to reuse the old forces breaks momentum conservation, which is in general a problem. It is
-particularly problematic for bulk simulations as the system as a whole acquires a drift of the center of mass, causing errors in the calculation of velocities and diffusion coefficients.
-The correct way to restart
-an LB simulation is to first load in the particles with the correct forces, and use ``integrate \textit{steps} reuse_forces'' upon the first
-call to integrate. This causes the old forces to be reused and thus conserves momentum.
+The first two save commands save all of the LB fluid nodes' populations to
+\var{filename} in ascii or binary format respectively.  The two load commands
+load the populations from \var{filename}.  This is  useful for restarting a
+simulation either on the same machine or a different machine.  Some care should
+be taken when using the binary format as the format of doubles can depend
+on both the computer being used as well as the compiler. One thing that one
+needs to be aware of is that loading the checkpoint also requires the used to
+reuse the old forces. This is necessary since the coupling force between the
+paricles and the fluid has already been applied to the fluid. Failing to reuse
+the old forces breaks momentum conservation, which is in general a problem. It
+is particularly problematic for bulk simulations as the system as a whole
+acquires a drift of the center of mass, causing errors in the calculation of
+velocities and diffusion coefficients.  The correct way to restart
+an LB simulation is to first load in the particles with the correct forces, and
+use ``integrate \textit{steps} reuse_forces'' upon the first call to integrate.
+This causes the old forces to be reused and thus conserves momentum.
 
 \section{LB as a thermostat}
 \begin{essyntax}
@@ -160,15 +193,19 @@ in a frictional force and a random force:
 \begin{equation*}
   \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
 \end{equation*}
-The momentum acquired by the particles is then transferred back to the fluid using a linear interpolation scheme, to preserve total momentum.
-In the GPU implementation the force can alternatively be interpolated using a three point scheme which couples the particles to the nearest 27 LB nodes.
-This can be called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and Ladd by equation 301\cite{duenweg08a}. Note that the three point coupling scheme is incompatible with the Shan Chen Lattice Boltmann.
-The frictional force tends to decrease the relative velocity
-between the fluid and the particle whereas the random forces are chosen
-so large that the average kinetic energy per particle corresponds to
-the given temperature, according to a fluctuation dissipation theorem.
-No other thermostatting mechanism is necessary then. Please switch off any other thermostat 
- before starting the LB thermostatting mechanism.
+The momentum acquired by the particles is then transferred back to the fluid
+using a linear interpolation scheme, to preserve total momentum.  In the GPU
+implementation the force can alternatively be interpolated using a three point
+scheme which couples the particles to the nearest 27 LB nodes.  This can be
+called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and
+Ladd by equation 301\cite{duenweg08a}. Note that the three point coupling
+scheme is incompatible with the Shan Chen Lattice Boltmann.  The frictional
+force tends to decrease the relative velocity between the fluid and the
+particle whereas the random forces are chosen so large that the average kinetic
+energy per particle corresponds to the given temperature, according to a
+fluctuation dissipation theorem.  No other thermostatting mechanism is
+necessary then. Please switch off any other thermostat before starting the LB
+thermostatting mechanism.
 
 The LBM implementation provides a fully thermalized LB fluid, \ie all
 nonconserved modes, including the pressure tensor, fluctuate correctly
@@ -180,7 +217,8 @@ Section~\ref{sec:units}.
 
 \section{The Shan Chen bicomponent fluid\label{sec:shanchen}}
 \begin{citebox}
-  Please cite~\citewbibkey{sega13c} if you use the Shan Chen implementation described below.
+  Please cite~\citewbibkey{sega13c} if you use the Shan Chen implementation
+  described below.
 \end{citebox}
 
 
@@ -194,18 +232,18 @@ with fluctuations applied to all modes, that is already present in
 and component-dependent particle interactions (see sections
 \ref{sec:scmd-coupling} and\ref{sec:scmd-affinity}).
 
-The Shan-Chen fluid is set up using the \lit{lbfluid} command,
-supplying two values (one per component) to the \lit{dens} option. Optionally, two values can be set for each of the usual transport coefficients  (shear and bulk viscosity), and for the ghost modes. It
-is possible to set a relaxation time also for the momentum modes,
-since they are not conserved quantities in the Shan-Chen method,
-by using the option \lit{mobility}. The mobility transport coefficient
-expresses the propensity of the two components to mutually diffuse,
-and, differently from other transport coefficients, only one value
-is needed, as it carachterizes the mixture as a whole. When thermal
-fluctuations are switched on, a random noise is added, in addition,
-also to the momentum modes. Differently from the other modes, a
-correlated noise is added to the momentum ones, in order to preserve
-the \emph{total} momentum. 
+The Shan-Chen fluid is set up using the \lit{lbfluid} command, supplying two
+values (one per component) to the \lit{dens} option. Optionally, two values can
+be set for each of the usual transport coefficients  (shear and bulk
+viscosity), and for the ghost modes. It is possible to set a relaxation time
+also for the momentum modes, since they are not conserved quantities in the
+Shan-Chen method, by using the option \lit{mobility}. The mobility transport
+coefficient expresses the propensity of the two components to mutually diffuse,
+and, differently from other transport coefficients, only one value is needed,
+as it carachterizes the mixture as a whole. When thermal fluctuations are
+switched on, a random noise is added, in addition, also to the momentum modes.
+Differently from the other modes, a correlated noise is added to the momentum
+ones, in order to preserve the \emph{total} momentum. 
 
 
 The fluctuating hydrodynamic equations that are simulated using the
@@ -350,7 +388,9 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
   \end{features}
 \end{essyntax}
 
-In some cases, such as free energy profile calculations, it might be useful to prevent interface motion. This can be achieved using the command \lit{lbfluid remove_momentum}, that removes the total momentum of the fluid.
+In some cases, such as free energy profile calculations, it might be useful to
+prevent interface motion. This can be achieved using the command \lit{lbfluid
+remove_momentum}, that removes the total momentum of the fluid.
 
 
 \section{Visualization}
@@ -359,13 +399,25 @@ In some cases, such as free energy profile calculations, it might be useful to p
   \variant{1} lbfluid print \opt{vtk} \var{property} \var{filename}
   \variant{2} lbfluid print vtk velocity \opt{bb1_x bb1_y bb1_z bb2_x bb2_y bb2_z} \var{filename}
 \end{essyntax}
-The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
+The print parameter of the \lit{lbfluid} command is a feature to simplify
+visualization. It allows for the export of the whole fluid field data into a
 file with name \var{filename} at once. Currently supported values for the 
-parameter \var{property} are boundary and velocity when using \lit{LB} or \lit{LB_GPU} and density and velocity when using \lit{SHANCHEN}. The additional option 
-\lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
+parameter \var{property} are boundary and velocity when using \lit{LB} or
+\lit{LB_GPU} and density and velocity when using \lit{SHANCHEN}. The additional
+option \lit{vtk} enables export in the vtk format which is readable by
+visualization software such as paraview\footnote{http://www.paraview.org/} or
+mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot
+readable data will be 
 exported. If you plan to use paraview for visualization, note that also the 
-particle positions can be exported in the VTK format \ref{sec:writevtk}. \variant{2} allows you to only output part of the flow field by specifiying an axis aligned bounding box through the coordinates of two of its corners. This bounding box can be used to output a slice of the flow field. As an example, executing \texttt{lbfluid print vtk velocity 0 0 5 10 10 5 filename} will output the cross-section of the velocity field in a plane perpendicular to the $z$-axis at $z = 5$ (assuming the box size is 10 in the $x$- and $y$-direction).
-If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
+particle positions can be exported in the VTK format \ref{sec:writevtk}.
+\variant{2} allows you to only output part of the flow field by specifiying an
+axis aligned bounding box through the coordinates of two of its corners. This
+bounding box can be used to output a slice of the flow field. As an example,
+executing \texttt{lbfluid print vtk velocity 0 0 5 10 10 5 filename} will
+output the cross-section of the velocity field in a plane perpendicular to the
+$z$-axis at $z = 5$ (assuming the box size is 10 in the $x$- and
+$y$-direction).  If the \lit{SHANCHEN} bicomponent fluid is used, two filenames
+have to be supplied when exporting the density field, to save both components.
 
 \section{Setting up boundary conditions}
 \begin{essyntax}

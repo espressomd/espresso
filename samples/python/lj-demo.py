@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, division
-import espressomd._system as es
 import espressomd
 from espressomd import thermostat
-from espressomd import integrate
 from espressomd import visualization
 import numpy
 import matplotlib
@@ -82,7 +80,7 @@ lj_cap = 20
 #############################################################
 system = espressomd.System()
 system.time_step = 0.01
-system.skin = 0.4
+system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 system.cell_system.set_n_square(use_verlet_lists=False)
@@ -124,9 +122,9 @@ for i in range(n_part):
 system.analysis.distto(0)
 
 act_min_dist = system.analysis.mindist()
-system.max_num_cells = 2744
+system.cell_system.max_num_cells = 2744
 
-mayavi = visualization.mayavi_live(system)
+mayavi = visualization.mayaviLive(system)
 
 mayavi_rotation_angle = 45.
 mayavi_rotation_angle_step = 5.
@@ -299,7 +297,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 # # Warmup Integration Loop
 # i = 0
 # while (i < warm_n_times and act_min_dist < min_dist):
-#     integrate.integrate(warm_steps)
+#     system.integrator.run(warm_steps)
 #     # Warmup criterion
 #     act_min_dist = system.analysis.mindist()
 #     i += 1
@@ -390,7 +388,7 @@ def pressure_from_midi_val(midi_val, pmin, pmax, log_flag=pressure_log_flag):
 def main_loop():
     global energies, plt1_x_data, plt1_y_data, plt2_x_data, plt2_y_data, old_pressure
 
-    integrate.integrate(int_steps)
+    system.integrator.run(steps=int_steps)
     mayavi.update()
 
     # make sure the parameters are valid
@@ -417,12 +415,12 @@ def main_loop():
         newVkappa = system.analysis.Vkappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0/(NPTGamma0*NPTGamma0*NPTInitPistonMass)
         pistonMass = limit_range(4.0/(NPTGamma0*NPTGamma0*newVkappa), NPTMinPistonMass, NPTMaxPistonMass)
-        integrate.set_integrator_isotropic_npt(controls.pressure, pistonMass, cubic_box=True)
+        system.integrator.set_isotropic_npt(controls.pressure, pistonMass, cubic_box=True)
         
         controls.volume = system.box_l[0]**3.
 
     else:
-        integrate.set_integrator_nvt()
+        system.integrator.set_nvt()
         controls.pressure = pressure['total']
         
         new_box = numpy.ones(3) * controls.volume**(1./3.)
@@ -432,14 +430,14 @@ def main_loop():
         system.box_l = new_box
 
     new_part = controls.number_of_particles
-    if new_part > system.n_part:
-        for i in range(system.n_part, new_part):
+    if new_part > len(system.part):
+        for i in range(len(system.part), new_part):
             system.part.add(id=i, pos=numpy.random.random(3) * system.box_l)
-    elif new_part < system.n_part:
-        for i in range(new_part, system.n_part):
-            system.part[i].delete()
+    elif new_part < len(system.part):
+        for i in range(new_part, len(system.part)):
+            system.part[i].remove()
     # There should be no gaps in particle numbers
-    assert system.n_part == system.max_part + 1
+    assert len(system.part) == system.part.highest_particle_id + 1
     
     plt1_x_data = plot1.get_xdata()
     plt1_y_data = plot1.get_ydata()
@@ -448,7 +446,7 @@ def main_loop():
     
     plt1_x_data = numpy.append(plt1_x_data[-plot_max_data_len+1:], system.time)
     if show_real_system_temperature:
-        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], 2./(3. * system.n_part)*system.analysis.energy()["ideal"])
+        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], 2./(3. * len(system.part))*system.analysis.energy()["ideal"])
     else:
         plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], system.temperature)
     plt2_x_data = numpy.append(plt2_x_data[-plot_max_data_len+1:], system.time)
@@ -508,7 +506,7 @@ last_plotted = 0
 
 def calculate_kinetic_energy():
     tmp_kin_energy = 0.
-    for i in range(system.n_part):
+    for i in range(len(system.part)):
         tmp_kin_energy+=1./2.*numpy.linalg.norm(system.part[i].v)**2.0
     
     print("tmp_kin_energy={}".format(tmp_kin_energy))
@@ -561,11 +559,11 @@ def update_plot():
 
 t = Thread(target=main_thread)
 t.daemon = True
-mayavi.register_callback(update_plot, interval=1000)
+mayavi.registerCallback(update_plot, interval=1000)
 controls = Controls()
 t.start()
 if controls.midi_input is not None:
     t2 = Thread(target=midi_thread)
     t2.daemon = True
     t2.start()
-mayavi.run_gui_event_loop()
+mayavi.start()

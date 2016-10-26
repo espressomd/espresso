@@ -17,11 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-cimport utils
-from utils cimport *
-from utils import *
-cimport polymer
+from . cimport utils
+from espressomd.utils cimport *
+from .utils import *
+from . cimport polymer
 
 cdef class Polymer(object):
     cdef object _params
@@ -35,14 +36,14 @@ cdef class Polymer(object):
 
         for k in self.required_keys():
             if k not in kwargs:
-                print k 
+                print(k)
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
         for k in kwargs:
             self._params[k] = kwargs[k]
 
-        print self._params
+        print(self._params)
         self.validate_params()
 
         cdef double start_pos[3];

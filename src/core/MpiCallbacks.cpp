@@ -26,6 +26,7 @@
 #include "MpiCallbacks.hpp"
 
 #include "utils/make_unique.hpp"
+#include "utils/serialization/array.hpp"
 
 namespace Communication {
 
