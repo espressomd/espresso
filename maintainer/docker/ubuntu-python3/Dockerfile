@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 	tcl-dev \
 	git \
 	pep8 \
+    libhdf5-openmpi-dev \
+    libhdf5-openmpi-10:amd64 \
+    libhdf5-10:amd64 \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 

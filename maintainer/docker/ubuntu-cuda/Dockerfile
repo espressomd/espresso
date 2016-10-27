@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
 	python-pyvtk \
 	python-pip \
 	libpython-dev \
+    libhdf5-openmpi-dev \
+    libhdf5-openmpi-10:amd64 \
+    libhdf5-10:amd64 \
 && pip install cython \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
