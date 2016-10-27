@@ -1205,14 +1205,6 @@ cdef class ParticleList:
         if isinstance(key, slice):
             return ParticleSlice(key)
 
-        if not np.all(self.exists(key)):
-            if isinstance(key, int):
-                non_existing = key
-            else:
-                non_existing = np.trim_zeros(
-                    (np.array(key) * np.invert(self.exists(key))))
-            raise Exception("Particle(s) %s does not exist." % non_existing)
-
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
             return ParticleSlice(np.array(key))
 
