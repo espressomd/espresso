@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
+cimport globals
 from . cimport reaction
-from . cimport globals
 from . cimport utils
 from .highlander import ThereCanOnlyBeOne
 
