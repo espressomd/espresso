@@ -66,14 +66,15 @@ cdef class PScriptInterface:
         cdef ParameterType type
         cdef map[string, Variant] parameters
         cdef PObjectId oid
+        cdef string name
 
-        for name in kwargs:
+        for pname in kwargs:
+            name = to_char_pointer(pname)
+
             try:
-                self.parameters.at(to_char_pointer(name))
+                type = self.parameters.at(to_char_pointer(name)).type()
             except:
                 raise ValueError("Unknown parameter %s" % name)
-
-            type = self.parameters[name].type()
 
             # Check number of elements if applicable
             if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR, < int > VECTOR2D, < int > VECTOR3D]:
