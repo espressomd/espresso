@@ -53,7 +53,7 @@ cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
         utils.init_intlist(& (self.particle_data.bl))
-        self.id = _id
+        self.id = int(_id)
 
     cdef int update_particle_data(self) except -1:
         #    utils.realloc_intlist(self.particle_data.el, 0)
