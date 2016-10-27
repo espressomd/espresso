@@ -72,23 +72,23 @@ cdef class PScriptInterface:
             name = to_char_pointer(pname)
 
             try:
-                type = self.parameters.at(to_char_pointer(name)).type()
+                type = self.parameters.at(name).type()
             except:
                 raise ValueError("Unknown parameter %s" % name)
 
             # Check number of elements if applicable
             if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR, < int > VECTOR2D, < int > VECTOR3D]:
                 n_elements = self.parameters[name].n_elements()
-                if n_elements!=0 and not (len(kwargs[name]) == n_elements):
+                if n_elements!=0 and not (len(kwargs[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
             # Objects have to be translated to ids
             if < int > type is < int > OBJECT:
-                oid = kwargs[name].id()
+                oid = kwargs[pname].id()
                 parameters[name] = oid.id
             else:
-                parameters[name] = self.make_variant(type, kwargs[name])
+                parameters[name] = self.make_variant(type, kwargs[pname])
 
         self.sip.get().set_parameters(parameters)
 
