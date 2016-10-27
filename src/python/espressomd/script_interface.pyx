@@ -69,7 +69,7 @@ cdef class PScriptInterface:
 
         for name in kwargs:
             try:
-                self.parameters.at(name)
+                self.parameters.at(to_char_pointer(name))
             except:
                 raise ValueError("Unknown parameter %s" % name)
 
