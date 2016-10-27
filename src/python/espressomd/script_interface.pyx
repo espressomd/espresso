@@ -55,12 +55,11 @@ cdef class PScriptInterface:
             if isinstance(kwargs[name], PScriptInterface):
                 # Map python object do id
                 oid = kwargs[name].id()
-                parameters[name] = oid.id
+                parameters[to_char_pointer(name)] = oid.id
             else:
-                parameters[name] = kwargs[name]
+                parameters[to_char_pointer(name)] = kwargs[name]
 
-        return self.variant_to_python_object(self.sip.get().call_method(method, parameters))
-
+        return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
 
     def set_params(self, **kwargs):
         cdef ParameterType type
