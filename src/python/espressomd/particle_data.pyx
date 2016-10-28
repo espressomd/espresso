@@ -1202,8 +1202,14 @@ cdef class ParticleList:
     # Retrieve a particle
 
     def __getitem__(self, key):
-        if isinstance(key, slice) or isinstance(key, range):
+        if isinstance(key, slice):
             return ParticleSlice(key)
+
+        try:
+            if isinstance(key, range):
+                return ParticleSlice(key)
+        except:
+            pass
 
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
             return ParticleSlice(np.array(key))
