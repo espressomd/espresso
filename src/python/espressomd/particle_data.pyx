@@ -53,7 +53,7 @@ cdef class ParticleHandle:
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
         utils.init_intlist(& (self.particle_data.bl))
-        self.id = int(_id)
+        self.id = _id
 
     cdef int update_particle_data(self) except -1:
         #    utils.realloc_intlist(self.particle_data.el, 0)
@@ -1202,7 +1202,7 @@ cdef class ParticleList:
     # Retrieve a particle
 
     def __getitem__(self, key):
-        if isinstance(key, slice):
+        if isinstance(key, slice) or isinstance(key, range):
             return ParticleSlice(key)
 
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
