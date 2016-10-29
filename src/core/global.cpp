@@ -108,13 +108,14 @@ const Datafield fields[] = {
 #else
   {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1 },    /* 61 from thermostat.cpp */
 #endif
-  {&vv_predcorr_depth1_omega,       TYPE_INT, 1, "vv_predcorr_depth1_omega", 4 },       /* 62 from rotation.cpp */
-  {&vv_predcorr_langevin_pref1,     TYPE_DOUBLE, 1, "vv_predcorr_langevin_pref1", 13 }, /* 63 from thermostat.cpp */
+#ifdef VERLET_STEP4_VELOCITY
+  {&vv_langevin_pref1,     TYPE_DOUBLE, 1, "vv_langevin_pref1", 13 }, /* 62 from thermostat.cpp */
 #ifndef ROTATIONAL_INERTIA
-  {&vv_predcorr_langevin_pref1_rot, TYPE_DOUBLE, 1, "vv_predcorr_langevin_pref1_rot",13 },    /* 64 from thermostat.cpp */
+  {&vv_langevin_pref1_rot, TYPE_DOUBLE, 1, "vv_langevin_pref1_rot",13 },    /* 63 from thermostat.cpp */
 #else
-  {vv_predcorr_langevin_pref1_rot,  TYPE_DOUBLE, 3, "vv_predcorr_langevin_pref1_rot",13 },    /* 65 from thermostat.cpp */
-#endif
+  {vv_langevin_pref1_rot,  TYPE_DOUBLE, 3, "vv_langevin_pref1_rot",13 },    /* 63 from thermostat.cpp */
+#endif // ROTATIONAL_INERTIA
+#endif // VERLET_STEP4_VELOCITY
   { NULL, 0, 0, NULL, 0 }
 };
 

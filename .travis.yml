@@ -10,6 +10,7 @@ env:
     - myconfig=maxset image=ubuntu-python3
     - myconfig=maxset image=debian
     - myconfig=maxset-gaussrandom
+    - myconfig=maxset-gaussrandom-verlet-step4.hpp
     - myconfig=maxset-gaussrandomcut
     - myconfig=molcut
     - myconfig=rest1

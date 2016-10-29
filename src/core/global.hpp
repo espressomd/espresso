@@ -198,12 +198,12 @@ extern const Datafield fields[];
 #define FIELD_CONFIGTEMP          60
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
 #define FIELD_LANGEVIN_GAMMA_ROTATION 61
-/** index of \ref vv_predcorr_depth1_omega in  \ref #fields */
-#define FIELD_VV_PREDCORR_DEPTH1_OMEGA 62
-/** index of \ref vv_predcorr_langevin_pref1 in  \ref #fields */
-#define FIELD_VV_PREDCORR_LANGEVIN_PREF1 63
-/** index of \ref vv_predcorr_langevin_pref1_rot in  \ref #fields */
-#define FIELD_VV_PREDCORR_LANGEVIN_PREF1_ROT 64
+#ifdef VERLET_STEP4_VELOCITY
+/** index of \ref vv_langevin_pref1 in  \ref #fields */
+#define FIELD_VV_LANGEVIN_PREF1 62
+/** index of \ref vv_langevin_pref1_rot in  \ref #fields */
+#define FIELD_VV_LANGEVIN_PREF1_ROT 63
+#endif // VERLET_STEP4_VELOCITY
 
 /*@}*/
 

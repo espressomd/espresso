@@ -734,16 +734,19 @@ void rescale_forces_propagate_vel() {
 #endif
 
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+#ifdef VERLET_STEP4_VELOCITY
           if (thermo_switch & THERMO_LANGEVIN)
           {
 #ifdef LANGEVIN_PER_PARTICLE
-              pref1_temp = p->p.vv_predcorr_langevin_pref1 * scale / (p[i]).p.mass;
+              pref1_temp = p->p.vv_langevin_pref1 * scale / (p[i]).p.mass;
               p[i].m.v[j] = (p[i].m.v[j] * (1 - pref1_temp) + p[i].f.f[j]) / (1 - pref1_temp);
 #else
-              pref1_temp = vv_predcorr_langevin_pref1 * scale / (p[i]).p.mass;
+              pref1_temp = vv_langevin_pref1 * scale / (p[i]).p.mass;
               p[i].m.v[j] = (p[i].m.v[j] * (1 - pref1_temp) + p[i].f.f[j]) / (1 - pref1_temp);
 #endif // LANGEVIN_PER_PARTICLE
-          } else {
+          } else
+#endif // VERLET_STEP4_VELOCITY
+          {
               p[i].m.v[j] += p[i].f.f[j];
           }
 
