@@ -100,6 +100,8 @@ pagesize,                       % set the pagesize in a DVI document
 
 \newtheorem{task}{Task}
 
+\input{misc/common}
+
 \begin{document}
 
 \esptitlehead
@@ -126,6 +128,7 @@ the produced simulation data.
 
 More advanced features and algorithms available in the \es{} package are 
 described in additional tutorials.
+
 
 \section{Background}
 
@@ -212,16 +215,16 @@ Using the pypresso script in the build directory, python simulation scripts can 
     \begin{minipage}{0.95\textwidth} 
         \begin{task} 
              You can check the features, that are compiled in the \es{} core by
-             issueing \texttt{print(code\_info.features())} after having imported the 
+             issuing \texttt{print(code\_info.features())} after having imported the 
              \texttt{code\_info} Module:
         \end{task}
     \end{minipage}
 }\vspace{1cm}
 
-\begin{lstlisting}
+\begin{pypresso}
 from espressomd import code_info
 print(code_info.features())
-\end{lstlisting}
+\end{pypresso}
 
 
 \section{Overview over a Simulation Script}
@@ -235,26 +238,26 @@ Typically, a simulation script consists of the following parts
 \item Integration loop (propagate the system in time and record measurements)
 \end{itemize}
 In the following sections, it will be shown, how these steps can be taken. Once the basics are covered, we apply them to the simulation of the Lennard-Jones liquid.
-Note, that only the core elements of the Lennared-Jones simulation script will be covered in this document. The full script can be found in the under \verb+scripts/lj_tutorial.py+ in the Lennard-Jones tutorial directory.
+Note, that only the core elements of the Lennard-Jones simulation script will be covered in this document. The full script can be found in the under \verb+scripts/lj_tutorial.py+ in the Lennard-Jones tutorial directory.
 
 
 \subsection{System Setup}
 The functionality of \es{} for
 python is provided via a python module called
 \texttt{espressomd}. At the beginning of the simulation script, it has to be imported.
-\begin{lstlisting}
+\begin{pypresso}
 import espressomd
-\end{lstlisting}
+\end{pypresso}
 
 The next step would be to create an instance of the System class. 
 This instance is used as a handle to the simulation system. It can be used to manipulate the
 crucial system parameters like the time step and the size of the simulation box (\texttt{time\_step}, and \texttt{box\_l}). At any time, only one instance of the System class can exist.
-\begin{lstlisting}
+\begin{pypresso}
 system = espressomd.System()
 system.time_step = time_step
 system.box_l = [box_l_x, box_l_y, box_l_z]
-\end{lstlisting}
-\subsection{Chosing the thermodynamic ensemble, thermostat}
+\end{pypresso}
+\subsection{Choosing the thermodynamic ensemble, thermostat}
 Simulations can be carried out in different thermodynamic ensembles such as NVE (particle
 Number, Velocity, Energy) or NVT (particle Number, Velocity, Temperature)
 as well as NPT-isotropic (particle Number, Pressure, Temperature). 
@@ -262,21 +265,21 @@ The ensemble is maintained by a thermostat. In this tutorial we use the Langevin
 
 In \es{}, the thermostat is set as follows:
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 system.thermostat.set_langevin(kT=1.0, gamma=0.5)
-\end{lstlisting}}\vspace{0,2cm}
+\end{pypresso}}\vspace{0,2cm}
 \noindent Use a Langevin thermostat (NVT ensemble) with temperature set to 1.0 and damping coefficient to 0.5. Alternatively, the thermostat can be turned off using
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 system.thermostat.turn_off()
-\end{lstlisting}}\vspace{0,2cm}
+\end{pypresso}}\vspace{0,2cm}
 \noindent This results in an NVE ensemble.
 
 
 \subsection{Placing and Accessing Particles}
 
 Particles in the simulation can be accessed via the \texttt{part}-property of the System class. Individual particles are referred to by an integer id, e.g., \texttt{system.part[0]}. It is also possible to use common python iterators and slicing operations to access several particles at once.
-\begin{lstlisting}
+\begin{pypresso}
 # access position of single particle
 print system.part[0].pos
 
@@ -287,19 +290,20 @@ for p in system.part:
 
 #Obtain all particle positions
 cur_pos = system.part[:].pos
-\end{lstlisting}
+\end{pypresso}
 Particles can be grouped into several types, so that, e.g., a binary fluid can be simulated. Particle types are identified by integer ids, which are set via the particles' \texttt{type} attribute. 
 
 Particles are added to the simulation as follows
-\begin{lstlisting}
+\begin{pypresso}
 system.part.add(id=0, type=0, pos=[x,y,z])
-\end{lstlisting}\vspace{0,2cm}
-Here, \texttt{id} and \texttt{type} can be ommited, in which case an unused particle id is assigned automatically and type 0 is impied.
+\end{pypresso}\vspace{0,2cm}
+Here, \texttt{id} and \texttt{type} can be omitted, in which case an unused particle
+id is assigned automatically and type 0 is implied.
 
 Many objects in \es{} have a string representation, and thus can be displayed via python's \texttt{print} method:
-\begin{lstlisting}
+\begin{pypresso}
 print system.part[0]
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 
 
 \subsection{Setting up Non-Bonded Interactions}
@@ -308,7 +312,7 @@ Non-bonded interactions act between all particles of a given combination of part
 In this tutorial, we use the Lennard-Jones non-bonded interaction.
 The interaction of two particles of type 0 can be setup as follows:
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 lj1_eps     = 1.0
 lj1_sig     = 1.0
 lj1_cut     = 1.12246
@@ -316,7 +320,7 @@ lj1_shift   = 0.0
 lj1_offset  = 0.0
 system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig,
 cutoff=lj_cut, shift=lj_shift)
-\end{lstlisting}
+\end{pypresso}
 }\vspace{0,2cm}
 
 
@@ -325,7 +329,7 @@ cutoff=lj_cut, shift=lj_shift)
 In many cases, including this tutorial, particles are initially placed randomly in the simulation box. It is therefore possible that particles overlap, resulting in a huge repulsive force between them. In this case, integrating the equations of motion would not be numerically stable. Hence, it is necessary to remove this overlap.
 This is done by limiting the maximum force between two particles, integrating the equations of motion, and increasing the force limit step by step.
 This is done as follows
-\begin{lstlisting}
+\begin{pypresso}
 # Obtain minimum distance between particles
 act_min_dist = system.analysis.mindist()
 lj_cap=10
@@ -338,9 +342,9 @@ while i < warm_n_time and act_min_dist < lj_sigma*0.9 :
     # Obtain minimum distance between particles
     act_min_dist = system.analysis.mindist()
 
-# Disbale force cap
+# Disable force cap
 system.non_bonded_inter.set_force_cap(0)
-\end{lstlisting}
+\end{pypresso}
 In this code fragment, you can also see, how the analysis routines can be used to obtain information about the simulation system, and how to integrate the equation of motion.
 
 
@@ -355,7 +359,7 @@ Lennard-Jones Liquid Simulation.  Before we explain the script step by step, run
 
 First, we include necessary modules with \lstinline|import|.
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 import espressomd
 
 from __future__ import print_function
@@ -370,13 +374,13 @@ print("""
 
 Program Information:""")
 print(code_info.features())
-\end{lstlisting}\vspace{0,2cm}
+\end{pypresso}\vspace{0,2cm}
 
 \subsubsection{System Setup}
 At first, we must configure the environment and set the needed parameters.
 It is good practice to define all simulation parameters as variables in a single location.
 {\small\vspace{0,2cm}
-\begin{lstlisting}
+\begin{pypresso}
 # System parameters
 #############################################################
 # Number of particles and density
@@ -431,12 +435,12 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 
 # Thermostat
 system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-\end{lstlisting}
+\end{pypresso}
 
 
 \subsection{Particles}
 
-\begin{lstlisting}
+\begin{pypresso}
 # Particle setup
 #############################################################
 
@@ -444,7 +448,7 @@ volume = box_l * box_l * box_l
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-\end{lstlisting}}\vspace{0,2cm}
+\end{pypresso}}\vspace{0,2cm}
 
    \vspace{1cm}\framebox{\begin{minipage}{0.95\textwidth} 
    \begin{task}    
@@ -480,64 +484,64 @@ for i in range(n_part):
 \end{figure}
 
 
-\subsection{Warmup}
-
-After we have set the necessary environment we must warmup our system before we run the simulation. We set particles at random positions, so some particles can overlap. In this situation \es  will crash with an error:
-particle out of range. To remove the overlap between particles, we cap forces  by setting the Lennard-Jones force constant below a certain distance. 
-This is done using the \lstinline|set_force_cap| command. We do the procedure  \verb"warm_n_times" times 
-for \verb"warm_steps" steps and stop only if the minimal distance between particles is also larger than 
-\verb"min_dist", which was set earlier.  To turn 
-the capping off, we set \verb|set_force_cap(0)|. Then we equilibrate our system
-until all relevant physical observables are fluctuating around their mean values. In
-the case of Lennard-Jones it is enough to monitor energy.  To equilibrate we use the
-Langevin thermostat set to the target temperature.
-
-
-{\small\vspace{0,2cm}
-\begin{lstlisting}
-#############################################################
-#  Warmup Integration                                       #
-#############################################################
-
-print("""
-Start warmup integration:
-At maximum {} times {} steps
-Stop if minimal distance is larger than {}
-""".strip().format(warm_n_time, warm_steps, min_dist))
-
-i = 0
-act_min_dist = system.analysis.mindist()
-while i < warm_n_time and act_min_dist < min_dist :
-    system.integrator.run(warm_steps)
-    act_min_dist = system.analysis.mindist()
-    print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
-    i+=1
-    lj_cap += 1.0
-    system.non_bonded_inter.set_force_cap(lj_cap)
-
-system.non_bonded_inter.set_force_cap(0)
-
-print("\nWarm up finished\n")
-
-system.time_step = eq_tstep 
-
-for i in range(equilibration_iterations):
-    system.integrator.run(equilibration_interval)
-    energies = system.analysis.energy()
-    print("eq run {} at time {}\n".format(i, system.time))
-
-print("\nEquilibration done\n")
-# Switch thermostat off NVE msd measurement
-system.thermostat.turn_off()
-
-\end{lstlisting}}\vspace{0,2cm}
+%\subsection{Warmup}
+%
+%After we have set the necessary environment we must warmup our system before we run the simulation. We set particles at random positions, so some particles can overlap. In this situation \es  will crash with an error:
+%particle out of range. To remove the overlap between particles, we cap forces  by setting the Lennard-Jones force constant below a certain distance. 
+%This is done using the \lstinline|set_force_cap| command. We do the procedure  \verb"warm_n_times" times 
+%for \verb"warm_steps" steps and stop only if the minimal distance between particles is also larger than 
+%\verb"min_dist", which was set earlier.  To turn 
+%the capping off, we set \verb|set_force_cap(0)|. Then we equilibrate our system
+%until all relevant physical observables are fluctuating around their mean values. In
+%the case of Lennard-Jones it is enough to monitor energy.  To equilibrate we use the
+%Langevin thermostat set to the target temperature.
+%
+%
+%{\small\vspace{0,2cm}
+%\begin{pypresso}
+%#############################################################
+%#  Warmup Integration                                       #
+%#############################################################
+%
+%print("""
+%Start warmup integration:
+%At maximum {} times {} steps
+%Stop if minimal distance is larger than {}
+%""".strip().format(warm_n_time, warm_steps, min_dist))
+%
+%i = 0
+%act_min_dist = system.analysis.mindist()
+%while i < warm_n_time and act_min_dist < min_dist :
+%    system.integrator.run(warm_steps)
+%    act_min_dist = system.analysis.mindist()
+%    print("run {} at time = {} (LJ cap= {} ) min dist = {}".strip().format(i, system.time, lj_cap, act_min_dist))
+%    i+=1
+%    lj_cap += 1.0
+%    system.non_bonded_inter.set_force_cap(lj_cap)
+%
+%system.non_bonded_inter.set_force_cap(0)
+%
+%print("\nWarm up finished\n")
+%
+%system.time_step = eq_tstep 
+%
+%for i in range(equilibration_iterations):
+%    system.integrator.run(equilibration_interval)
+%    energies = system.analysis.energy()
+%    print("eq run {} at time {}\n".format(i, system.time))
+%
+%print("\nEquilibration done\n")
+%# Switch thermostat off NVE msd measurement
+%system.thermostat.turn_off()
+%
+%\end{pypresso}}\vspace{0,2cm}
 
 \subsection{Integrating the Equations of Motion, Taking Measurements}
 \noindent At this point, we have set the necessary environment and warmed up our system. As a last
 step before starting the actual simulation, we now open the files which we want to output data to
 during the simulation. Then the simulation is started.
 
-\begin{lstlisting}
+\begin{pypresso}
 print("\nSampling\n")
 system.time_step = time_step
 
@@ -569,7 +573,7 @@ for i in range(1, sampling_iterations + 1):
     kinetic_temperature = energies['ideal']/( 1.5 * n_part)
 
     en_fp.write("%i\t%1.5e\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (i, pressure['total'], energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
-\end{lstlisting}}\vspace{0,2cm}
+\end{pypresso}}\vspace{0,2cm}
 
 In the energy.dat file we print out the values for pressure, kinetic
 and potential energies, temperature obtained with the analysis submodule
@@ -610,7 +614,7 @@ deviation ($\sqrt{\sigma}$) and the standard error of the mean (SE) for $N$
     \label{eq:variance}
 \end{align}
 
-\begin{lstlisting}
+\begin{pypresso}
 # Data arrays for simple error estimation
 etotal = np.zeros((sampling_iterations,))
 ptotal = np.zeros((sampling_iterations,))
@@ -626,7 +630,7 @@ error_total_energy=np.sqrt(etotal.var())/np.sqrt(sampling_iterations)
 error_total_pressure=np.sqrt(ptotal.var())/np.sqrt(sampling_iterations)
 
 en_fp.write("#mean_energy energy_error mean_pressure pressure_error\n#%1.5e %1.5e %1.5e %1.5e" % \
-\end{lstlisting}
+\end{pypresso}
 
 \newpage
 
@@ -654,7 +658,7 @@ The rdf is computed on the fly in the current script, the data is then written t
 
 In order to compute the rdf with \texttt{espressomd} one needs the following code
 fragments:
-\begin{lstlisting}
+\begin{pypresso}
 # analyzing the radial distribution function
 # setting the parameters for the rdf
 r_bins = 30
@@ -682,7 +686,7 @@ for i in range(r_bins):
     rdf_fp.write("%1.5e %1.5e\n" % (r[i], avg_rdf[i]))
 
 rdf_fp.close()
-\end{lstlisting}
+\end{pypresso}
 
 \begin{figure}[ht]
 \begin{center}
@@ -696,14 +700,14 @@ rdf_fp.close()
 \section{Binary Lennard-Jones Liquid}
 
 In \es{} it is possible to simulate particles of various sizes, meaning different
-values of the Lennard-Jones paramter $\sigma$. For this purpose there are different mixing
+values of the Lennard-Jones parameter $\sigma$. For this purpose there are different mixing
 rules that define how particles of different size and different ``affinity'', Lennard-Jones $\epsilon$ interact. The most commonly used mixing rules are the
 Lorentz-Berthelot rules:
 \begin{align}
 	\sigma_{ij}		& = \frac{\sigma_{ii} + \sigma_{jj}}{2} \\
 	\epsilon_{ij}	& = \sqrt{\epsilon_{ii} \epsilon_{jj}} \,.
 \end{align}
-Here $\sigma_{ii}$ and $\epsilon_{ii}$ are the Lennard-Jones paramters for the
+Here $\sigma_{ii}$ and $\epsilon_{ii}$ are the Lennard-Jones parameters for the
 interactions among particles of type $i$, and $\sigma_{ij}$ and
 $\epsilon_{ij}$ the parameters for interactions between the two species $i$ and $j$.
 
@@ -723,8 +727,8 @@ $\epsilon_{ij}$ the parameters for interactions between the two species $i$ and 
 	\item Now you can also look at the radial distribution function between particles
 		of different species. Make sure you set up the files and analysis routines.
 	\item Of course you can also vary the $\epsilon$ parameter between both species. 
-	\item Note also, that there are many differnt mixing rules for the Lennard-Jones
-		paramters, you can also choose your own. 
+	\item Note also, that there are many different mixing rules for the Lennard-Jones
+		parameters, you can also choose your own. 
 \end{itemize}
 
 \newpage
