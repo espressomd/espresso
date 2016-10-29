@@ -93,3 +93,43 @@
     \end{center}
   }
 }
+
+% Do magic that \bfseries for keywords actually works
+\DeclareFontShape{OT1}{cmtt}{bx}{n}{<5><6><7><8><9><10><10.95><12><14.4><17.28><20.74><24.88>cmttb10}{}
+
+% Custom colors
+\definecolor{stringblue}{rgb}{0.09,0.211,0.57}
+\definecolor{codered}{rgb}{0.655,0.1137,0.3747}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+\definecolor{commentgray}{rgb}{0.4,0.4,0.4}
+\definecolor{framegray}{rgb}{0.8,0.8,0.8}
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+    language=Python,
+    belowskip=\bigskipamount,
+    aboveskip=\bigskipamount,
+    basicstyle=\ttfamily\small,
+    otherkeywords={self},             % Add keywords here
+    keywordstyle=\bfseries\color{codered},
+    emph={MyClass,__init__},          % Custom highlighting
+    emphstyle=\bfseries\color{deepgreen},    % Custom highlighting style
+    commentstyle=\color{commentgray}\ttfamily,
+    stringstyle=\color{stringblue},
+    frame=tb,                         % Any extra options here
+    rulecolor=\color{framegray},
+    showstringspaces=false            % 
+    }
+}
+
+
+% Python environment
+\lstnewenvironment{python}[1][]{\pythonstyle \lstset{#1}}{}
+
+% Python for external files
+\newcommand\pythonexternal[2][]{{\pythonstyle \lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
+
