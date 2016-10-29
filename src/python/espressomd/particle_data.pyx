@@ -923,6 +923,11 @@ cdef class ParticleSlice:
         self.id_selection=self.id_selection[mask]
 
 
+    def __iter__(self):
+        cdef int i
+        for i in self.id_selection:
+            yield ParticleHandle(i)
+
 
     cdef int update_particle_data(self, id) except -1:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
