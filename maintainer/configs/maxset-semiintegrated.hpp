@@ -1,4 +1,5 @@
 /* maximal set of features usable at the same time */
+#define SEMI_INTEGRATED
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
@@ -41,7 +42,6 @@
 #define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
 #define EWALD_GPU
-#define BARNES_HUT
 #endif
 
 #define AREA_FORCE_GLOBAL   
@@ -77,8 +77,3 @@
 
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
-
-
-
-
-

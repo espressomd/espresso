@@ -47,6 +47,7 @@
 #include "thermostat.hpp"
 #include "initialize.hpp"
 #include "cuda_interface.hpp"
+#include "random.hpp"
 
 /****************************************************
  *                     DEFINES
@@ -355,6 +356,7 @@ void convert_torques_propagate_omega()
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
+#ifndef SEMI_INTEGRATED
       pref1_temp[0] = pref1_temp[1] = pref1_temp[2] = 0.0;
 #ifdef VERLET_STEP4_VELOCITY
       if ( thermo_switch & THERMO_LANGEVIN )
@@ -398,7 +400,7 @@ void convert_torques_propagate_omega()
 
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
-      for(int times=0; times <= 5; times++)
+      for(int times=0; times <= 3; times++)
       { 
         double Wd[3];
 
@@ -407,9 +409,9 @@ void convert_torques_propagate_omega()
         Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]) + pref1_temp[1] * p[i].m.omega[1])/p[i].p.rinertia[1];
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]) + pref1_temp[2] * p[i].m.omega[2])/p[i].p.rinertia[2];
 #else
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]) + pref1_temp[0] * p[i].m.omega[0])/I[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]) + pref1_temp[1] * p[i].m.omega[1])/I[1]; 
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]) + pref1_temp[2] * p[i].m.omega[2])/I[2];
 #endif
 
         p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
@@ -418,8 +420,8 @@ void convert_torques_propagate_omega()
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
-    }
+#endif
+    }//p
   }
 }
 
@@ -482,6 +484,7 @@ void convert_initial_torques()
 void convert_omega_body_to_space(Particle *p, double *omega)
 {
   double A[9];
+
   define_rotation_matrix(p, A);
 
   omega[0] = A[0 + 3*0]*p->m.omega[0] + A[1 + 3*0]*p->m.omega[1] + A[2 + 3*0]*p->m.omega[2];
@@ -538,10 +541,8 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
   double a[3];
   convert_vec_space_to_body(p,aSpaceFrame,a);
 
-
   // Apply restrictions from the rotation_per_particle feature
 #ifdef ROTATION_PER_PARTICLE
-//  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (p->p.rotation <2) return;
 
@@ -556,7 +557,6 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 
   for (int i=0;i<3;i++)
     a[i]/=l;
-//  printf("%g %g %g\n",a[0],a[1],a[2]);
 
 #endif
 
@@ -582,6 +582,176 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 #endif
 }
 
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi */
+void rotate_particle_body(Particle* p, double* a, double phi)
+{
+  // Convert rotation axis to body-fixed frame
 
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
+
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+
+#endif
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
+
+#ifdef SEMI_INTEGRATED
+
+// Handle switching of noise function flat vs Gaussian
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
+#endif
+
+#if defined (FLATNOISE)
+  #define noise (d_random() -0.5)
+#elif defined (GAUSSRANDOMCUT)
+  #define noise gaussian_random_cut()
+#elif defined (GAUSSRANDOM)
+  #define noise gaussian_random()
+#else
+ #error "No noise function defined"
+#endif
+
+/** Rotate the particle p around the NORMALIZED axes X Y Z by amounts phi[] */
+void rotate_particle_3D(Particle* p, double* phi)
+{
+	  double aSpaceFrame[3];
+
+	  aSpaceFrame[0] = 1.0;
+	  aSpaceFrame[1] = 0.0;
+	  aSpaceFrame[2] = 0.0;
+	  rotate_particle(p,aSpaceFrame,phi[0]);
+
+	  aSpaceFrame[0] = 0.0;
+	  aSpaceFrame[1] = 1.0;
+	  aSpaceFrame[2] = 0.0;
+	  rotate_particle(p,aSpaceFrame,phi[1]);
+
+	  aSpaceFrame[0] = 0.0;
+	  aSpaceFrame[1] = 0.0;
+	  aSpaceFrame[2] = 1.0;
+	  rotate_particle(p,aSpaceFrame,phi[2]);
+}
+
+/** Propagate the positions: random walk part.*/
+void random_walk_rot(Particle *p)
+{
+	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, phi, theta, dphi_m, m_dphi;
+	double dphi[3], u_dphi[3];
+
+#ifdef ROTATION_PER_PARTICLE
+    if (!p->p.rotation) return;
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+#endif
+#if defined (FLATNOISE)
+		  sigma_coeff = 24.0*p->p.T/gamma_rot_m;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = 2.0*p->p.T/gamma_rot_m;
+#endif
+		  // WARNING: this method currently is implemented for ball particles only.
+		  // SEMI_INTEGRATED method is technically not compatible
+		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
+		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+
+		  e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
+		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*gamma_rot_m))*(-3+4*e_damp-e_damp*e_damp));
+		  phi = 2*PI*d_random();
+		  theta = PI*d_random();
+		  dphi_m = noise * sqrt(3 * sigma);
+		  dphi[0] = dphi_m*sin(theta)*cos(phi);
+		  dphi[1] = dphi_m*sin(theta)*sin(phi);
+		  dphi[2] = dphi_m*cos(theta);
+		  m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
+		  u_dphi[0] = dphi[0] / m_dphi;
+		  u_dphi[1] = dphi[1] / m_dphi;
+		  u_dphi[2] = dphi[2] / m_dphi;
+		  if (m_dphi == 0)
+		  {
+			  u_dphi[0] = 1.0;
+			  u_dphi[1] = 0.0;
+			  u_dphi[2] = 0.0;
+		  }
+		  rotate_particle_body(p,u_dphi,m_dphi);
+}
+
+/** Determine the angular velocities: random walk part.*/
+void random_walk_rot_vel(Particle *p, double dt)
+{
+	int j;
+	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, a[3];
+
+	a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+	if (!p->p.rotation) return;
+	if (!(p->p.rotation & 2)) a[0] = 0.0;
+	if (!(p->p.rotation & 4)) a[1] = 0.0;
+	if (!(p->p.rotation & 8)) a[2] = 0.0;
+#endif
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+	  if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+	  {
+		  // WARNING: this method currently is implemented for ball particles only.
+		  // SEMI_INTEGRATED method is technically not compatible
+		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
+		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+#endif
+#if defined (FLATNOISE)
+		  sigma_coeff = 12.0*p->p.T/rinertia_m;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+		  sigma_coeff = p->p.T/rinertia_m;
+#endif
+		  e_damp = exp(-2*gamma_rot_m*dt/rinertia_m);
+		  sigma = sigma_coeff*(1-e_damp);
+		  p->m.omega[j] += a[j] * sqrt(sigma) * noise;
+		  //printf("\n 2 %e %e %e",a[j], sqrt(sigma), noise);
+	  }
+    }//j
+}
+#endif // SEMI_INTEGRATED
 
 #endif

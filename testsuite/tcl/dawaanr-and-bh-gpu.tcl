@@ -36,7 +36,7 @@ source "tests_common.tcl"
 require_feature "DIPOLES"
 require_feature "CUDA"
 require_feature "PARTIAL_PERIODIC"
-require_feature "BARNES_HUT" off
+require_feature "BARNES_HUT"
 require_max_nodes_per_side 1
 
 source "tests_common.tcl"
@@ -44,7 +44,7 @@ source "tests_common.tcl"
 set tcl_precision 14
 
 proc vectorsTheSame {a b} {
- set tol 3E-2
+ set tol 5E-2
  set diff [vecsub $a $b]
  if { [veclen $diff] > $tol } {
   return 0
@@ -69,7 +69,7 @@ setmd time_step 0.0001
 setmd skin 0.1
 
 
-foreach n { 541 } {
+foreach n { 110 111 540 541 } {
 
 
 
@@ -116,7 +116,8 @@ inter magnetic 0
 
 integrate 0 recalc_forces
 
-inter magnetic $pf_dds_gpu dds-gpu
+#inter magnetic $pf_dds_gpu dds-gpu
+inter magnetic $pf_dds_gpu bh-gpu
 
 integrate 0 recalc_forces
 
@@ -141,7 +142,7 @@ for {set i 0} {$i<$n} {incr i} {
   }
 }
 
-if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 } {
+if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 * abs($dawaanr_e) } {
   error "Energies for dawaanr $dawaanr_e and dds_gpu [expr $ratio_dawaanr_dds_gpu*$ddsgpu_e] don't match."
 }
 

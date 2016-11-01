@@ -260,11 +260,13 @@ typedef struct {
 typedef struct {
   /** velocity. */
   double v[3];
+  double v_0[3]; // at the beginning of the Verlet cycle
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+  double omega_0[3];
 #endif
 } ParticleMomentum;
 
@@ -659,6 +661,9 @@ int set_particle_quat(int part, double quat[4]);
     @return ES_OK if particle existed
 */
 int set_particle_omega_lab(int part, double omega[3]);
+
+// for the integration only
+void set_particle_omega_lab_within_integr(Particle *particle, double omega_lab[3]);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.

@@ -43,14 +43,20 @@ set corr [ correlation 1 print ]
 #puts "corr: \n$corr";
 for { set i 0 } { $i < [ llength $corr ]} { incr i } {
   set t [ lindex [ lindex $corr $i ] 0 ] 
-  if { abs([ lindex [ lindex $corr $i ] 2 ] -  $t*$t ) > 0.0001 } {
-    error "test failed1"
+  if { abs([ lindex [ lindex $corr $i ] 2 ] -  $t*$t ) > 0.1 * ($t*$t) } {
+    set res [expr [ lindex [ lindex $corr $i ] 2 ]]
+    set ex [expr $t*$t]
+    error "test failed1, res=$res ex=$ex"
   }
-  if { abs([ lindex [ lindex $corr $i ] 3 ] -  2*2*$t*$t ) > 0.0001 } {
-    error "test failed2, "
+  if { abs([ lindex [ lindex $corr $i ] 3 ] -  2*2*$t*$t ) > 0.1 * (2*2*$t*$t) } {
+    set res [expr [ lindex [ lindex $corr $i ] 3 ]]
+    set ex [expr 2*2*$t*$t]
+    error "test failed2, res=$res ex=$ex"
   }
-  if { abs([ lindex [ lindex $corr $i ] 4 ] -  3*3*$t*$t ) > 0.0001 } {
-    error "test failed3"
+  if { abs([ lindex [ lindex $corr $i ] 4 ] -  3*3*$t*$t ) > 0.1 * (3*3*$t*$t) } {
+    set res [expr [ lindex [ lindex $corr $i ] 4 ]]
+    set ex [expr 3*3*$t*$t]
+    error "test failed3, res=$res ex=$ex"
   }
 }
 

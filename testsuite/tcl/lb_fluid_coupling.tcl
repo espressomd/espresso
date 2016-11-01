@@ -17,6 +17,7 @@ source "tests_common.tcl"
 
 require_feature "LB"
 require_feature "EXTERNAL_FORCES"
+require_feature "SEMI_INTEGRATED off"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase lb_fluid_coupling.tcl running on [format %02d [setmd n_nodes]] nodes"

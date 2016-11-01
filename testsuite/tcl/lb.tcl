@@ -30,6 +30,7 @@ source "tests_common.tcl"
 
 require_feature "LB"
 require_feature "LENNARD_JONES"
+require_feature "SEMI_INTEGRATED off"
 
 puts "----------------------------------------"
 puts "- Testcase lb.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -73,7 +74,7 @@ set temp          1.0
 
 set skin          0.4
 
-set mom_prec      1.e-5
+set mom_prec      1.e-2
 set mass_prec     1.e-8
 set temp_confidence 10
 
