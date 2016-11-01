@@ -91,7 +91,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                 error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
             }
             
-            set tolerance_v 4.5E-5
+            set tolerance_v 4.6E-5
             set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma0*[setmd time] / $mass))]
             set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma1*[setmd time] / $mass))]
             if { $dv0 > $tolerance_v || $dv1 > $tolerance_v } {
