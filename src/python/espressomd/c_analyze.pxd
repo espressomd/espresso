@@ -119,6 +119,12 @@ cdef extern from "statistics.hpp":
     void analyze_rdfchain(double r_min, double r_max, int r_bins, double **f1, double **f2, double **f3)
 
 cdef extern from "statistics.hpp":
+    int n_part
+    int n_part_conf
+    int n_configs
+    void analyze_append()
+
+cdef extern from "statistics.hpp":
     void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
                                 double r_min, double r_max, int r_bins, int log_flag, 
                                 double *low, double *dist)

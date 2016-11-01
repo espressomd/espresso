@@ -40,7 +40,7 @@ from .galilei import GalileiTransform
 import sys
 import random  # for true random numbers from os.urandom()
 
-setable_properties = ["box_l", "periodicity", "time",
+setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
 cdef class System:
@@ -128,7 +128,7 @@ cdef class System:
 
     property time:
         def __set__(self, double _time):
-            if _time <= 0:
+            if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
             global sim_time
             sim_time = _time
@@ -197,6 +197,14 @@ cdef class System:
         def __get__(self):
             return max_cut_bonded
 
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            global min_global_cut
+            min_global_cut = _min_global_cut
+            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+        def __get__(self):
+            return min_global_cut
+
     __seed = None
 
     def _get_PRNG_state_size(self):
@@ -206,7 +214,7 @@ cdef class System:
         _state_size_plus_one = self._get_PRNG_state_size() + 1
         states = string_vec(n_nodes)
         rng = random.SystemRandom()  # true RNG that uses os.urandom()
-        for i in range(self.n_nodes):
+        for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
                 states_on_node_i.append(rng.randint(0, sys.maxint))
@@ -217,19 +225,19 @@ cdef class System:
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
-            if(isinstance(_seed, int) and self.n_nodes == 1):
+            if(isinstance(_seed, int) and n_nodes == 1):
                 seed_array.resize(1)
                 seed_array[0] = int(_seed)
                 mpi_random_seed(0, seed_array)
             elif(hasattr(_seed, "__iter__")):
-                if(len(_seed) < self.n_nodes or len(_seed) > self.n_nodes):
+                if(len(_seed) < n_nodes or len(_seed) > n_nodes):
                     raise ValueError(
                         "The list needs to contain one seed value per node")
                 seed_array.resize(len(_seed))
                 for i in range(len(_seed)):
                     seed_array[i] = int(_seed[i])
 
-                mpi_random_seed(self.n_nodes, seed_array)
+                mpi_random_seed(n_nodes, seed_array)
             else:
                 raise ValueError(
                     "The seed has to be an integer or a list of integers with one integer per node")

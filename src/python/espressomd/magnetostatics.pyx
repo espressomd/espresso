@@ -70,6 +70,9 @@ IF DIPOLES == 1:
         def _get_active_method_from_es_core(self):
             return coulomb.Dmethod
 
+        def _deactivate_method(self):
+            coulomb.Dmethod = DIPOLAR_NONE
+            mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
     cdef class DipolarP3M(MagnetostaticInteraction):
@@ -224,7 +227,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -251,7 +254,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()

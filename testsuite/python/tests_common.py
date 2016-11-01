@@ -64,7 +64,7 @@ def params_match(inParams, outParams):
 
     return True
 
-def generate_test_for_class(_interClass, _params):
+def generate_test_for_class(_system, _interClass, _params):
     """Generates test cases for checking interaction parameters set and gotten back
     from Es actually match. Only keys which are present  in _params are checked
     1st: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
@@ -72,6 +72,7 @@ def generate_test_for_class(_interClass, _params):
     """
     params = _params
     interClass = _interClass
+    system = _system
 
     def func(self):
         # This code is run at the execution of the generated function.
@@ -81,9 +82,10 @@ def generate_test_for_class(_interClass, _params):
         # set Parameter
         Inter = interClass(**params)
         Inter.validate_params()
-
+        system.actors.add(Inter)
         # Read them out again
         outParams = Inter.get_params()
+        del system.actors[0]
 
         self.assertTrue(params_match(params, outParams), "Missmatch of parameters.\nParameters set " +
                         params.__str__() + " vs. output parameters " + outParams.__str__())

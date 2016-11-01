@@ -17,7 +17,7 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
-\chapter{Analysis in Tcl}
+\chapter{Analysis}
 \label{chap:analysis}
 \index{analysis}
 \newescommand{analyze}
@@ -63,6 +63,26 @@ global observables.
 \analyzeindex{minimal particle distance}
 \analyzeindex{particle distance}
 
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    mindist
+  }{
+    p1 = \arg{int},
+    p2 = \arg{int}
+  }
+\end{pysyntax}
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    distto
+  }{
+    id = \arg{int},
+    pos = \arg{int}
+  }
+\end{pysyntax}
 \begin{essyntax}
   \variant{1} analyze mindist \opt{\var{type\_list\_a} \var{type\_list\_b}}
   \variant{2} analyze distto \var{pid}
@@ -81,6 +101,17 @@ particle \var{pid} (variant \variant{2}), or to the coordinates
 \label{analyze:nbhood}
 \analyzeindex{particles in the neighbourhood}
 
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    nbhood
+  }{
+    pos = \arg{array of 3 floats},
+    r_catch = \arg{float},
+    plane = \arg{string 'xy'/'xz'/'yz'}
+  }
+\end{pysyntax}
 \begin{essyntax}
  \variant{1} analyze nbhood \var{pid} \var{r\_catch}
  \variant{2} analyze nbhood \var{x} \var{y} \var{z}
@@ -97,18 +128,17 @@ radius \var{r\_catch} around the position of the particle with number
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     distribution
   }{
-    system = \arg{system},
     type_list_a = \arg{list of ints},
     type_list_b = \arg{list of ints},
     r_min = \arg{float},
     r_max = \arg{float},
-    r_bins = \arg{int},
-    log_flag = \arg{int},
-    int_flag = \arg{int}
+    r_bins = \arg{int (100)},
+    log_flag = \arg{int 0/1},
+    int_flag = \arg{int (0)/1}
   }
 \end{pysyntax}
 
@@ -186,13 +216,12 @@ of the currently identified properties.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     cylindrical_average
   }{
-    system = \arg{system},
-    center = \arg{3 floats},
-    direction = \arg{3 floats},
+    center = \arg{array of 3 floats},
+    direction = \arg{array of 3 floats},
     length = \arg{float},
     radius = \arg{float},
     bins_axial = \arg{int},
@@ -342,11 +371,10 @@ be used to shift the not separated molecules if needed.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     Vkappa
   }{
-    system = \arg{system},
     mode = \arg{string},
     Vk1 = \arg{float},
     Vk2 = \arg{float},
@@ -372,17 +400,16 @@ used can be retrieved. Likewise the option \keyword{set} enables you to set thos
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     rdf
   }{
-    system = \arg{system},
     rdf_type = \arg{string},
     type_list_a = \arg{list of ints},
     type_list_b = \arg{list of ints},
     r_min = \arg{float (0.0)},
     r_max = \arg{float},
-    r_bins = \arg{int (100)}
+    r_bins = \arg{int (100)},
     n_conf = \arg{int}
   }
 \end{pysyntax}
@@ -416,11 +443,10 @@ The output corresponds to the blockfile format (see section
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     structure_factor
   }{
-    system = \arg{system},
     sf_types = \arg{list of ints},
     sf_order = \arg{int}
   }
@@ -490,6 +516,15 @@ yields $1$.
 \subsection{Center of mass}
 \label{analyze:centermass}
 \analyzeindex{center of mass}
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    centermass
+  }{
+    part_type = \arg{int},
+  }
+\end{pysyntax}
 \begin{essyntax}
   analyze centermass \var{part\_type}
 \end{essyntax}
@@ -503,11 +538,10 @@ Returns the center of mass of particles of the given type.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     momentofinertiamatrix
   }{
-    system = \arg{system},
     p_type = \arg{int}
   }
 \end{pysyntax}
@@ -526,11 +560,10 @@ eigenvectors of the matrix.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     gyration_tensor
   }{
-    system = \arg{system},
     p_type = \arg{int}
   }
 \end{pysyntax}
@@ -660,13 +693,12 @@ volume is taken into account.
 \analyzeindex{system momentum}
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
-    calc_re
+    analyze_linear_momentum
   }{
-    system = \arg{system},
     include_particles = \arg{bool},
-    include_lbfluid = \arg{bool},
+    include_lbfluid = \arg{bool}
   }
 \end{pysyntax}
 \begin{essyntax}
@@ -678,6 +710,15 @@ causes the command to ignore the contribution of LB or of the particles.
 \subsection{Energies}
 \label{analyze:energy}
 \analyzeindex{energies}
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    energy 
+  }{
+    etype = \arg{string 'all'/'bonded'/'non_bonded'},
+  }
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1} analyze energy
@@ -701,7 +742,15 @@ energy contributions of the bonded resp. non-bonded interactions.
 \subsection{Pressure}
 \label{analyze:pressure}
 \analyzeindex{pressure}
-
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    pressure 
+  }{
+    v_comp = \arg{bool},
+  }
+\end{pysyntax}
 \begin{essyntax}
   \variant{1} analyze pressure
   \variant{2} analyze pressure total
@@ -777,6 +826,15 @@ non-bonded interactions and the electrostatic contributions.
 \subsection{Stress Tensor}
 \label{analyze:stresstensor}
 \analyzeindex{stress tensor}
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    stress_tensor 
+  }{
+      v_comp = \arg{bool},
+  }
+\end{pysyntax}
 
 \begin{essyntax}
   \variant{1} analyze stress_tensor
@@ -831,6 +889,18 @@ non-bonded interactions and the electrostatic contributions.
 \subsection{Local Stress Tensor}
 \label{analyze:localstresstensor}
 \analyzeindex{local stress tensor}
+\begin{pysyntax}
+  \object{
+    espressomd.System.analysis
+  }{
+    local_stress_tensor 
+  }{
+    periodicity = \arg{array of three ints},
+    range_start = \arg{array of three floats},
+    stress_range = \arg{array of three floats},
+    bins = \arg{array of ints}
+  }
+\end{pysyntax}
 
 \begin{essyntax}
   analyze local_stress_tensor \var{periodic\_x} \var{periodic\_y} \var{periodic\_z} \var{range\_start\_x} \var{range\_start\_y} \var{range\_start\_z} \var{range\_x} \var{range\_y} \var{range\_z}  \var{bins\_x} \var{bins\_y} \var{bins\_z}
@@ -960,11 +1030,10 @@ required once.
 \analyzeindex{end-to-end distance of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     calc_re
   }{
-    system = \arg{system},
     chain_start = \arg{int},
     n_chains = \arg{int},
     chain_length = \arg{int}
@@ -987,11 +1056,10 @@ stored configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{radius of gyration of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     calc_rg
   }{
-    system = \arg{system},
     chain_start = \arg{int},
     n_chains = \arg{int},
     chain_length = \arg{int}
@@ -1025,11 +1093,10 @@ configurations (see section \vref{sec:stored-configs}).
 \analyzeindex{hydrodynamic radius of a chain}
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     calc_rh
   }{
-    system = \arg{system},
     chain_start = \arg{int},
     n_chains = \arg{int},
     chain_length = \arg{int}
@@ -1148,11 +1215,10 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 
 \begin{pysyntax}
   \object{
-    espressomd.analyze.Analysis(system)
+    espressomd.System.analysis
   }{
     rdfchain
   }{
-    system = \arg{system},
     r_min = \arg{float},
     r_max = \arg{float},
     r_bins = \arg{float},
