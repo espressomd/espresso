@@ -35,6 +35,7 @@
 #include "ghmc.hpp"
 #include "lb.hpp"
 #include "integrate_sd.hpp"
+#include "rotation.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -107,6 +108,14 @@ const Datafield fields[] = {
 #else
   {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1 },    /* 61 from thermostat.cpp */
 #endif
+#ifdef VERLET_STEP4_VELOCITY
+  {&vv_langevin_pref1,     TYPE_DOUBLE, 1, "vv_langevin_pref1", 13 }, /* 62 from thermostat.cpp */
+#ifndef ROTATIONAL_INERTIA
+  {&vv_langevin_pref1_rot, TYPE_DOUBLE, 1, "vv_langevin_pref1_rot",13 },    /* 63 from thermostat.cpp */
+#else
+  {vv_langevin_pref1_rot,  TYPE_DOUBLE, 3, "vv_langevin_pref1_rot",13 },    /* 63 from thermostat.cpp */
+#endif // ROTATIONAL_INERTIA
+#endif // VERLET_STEP4_VELOCITY
   { NULL, 0, 0, NULL, 0 }
 };
 

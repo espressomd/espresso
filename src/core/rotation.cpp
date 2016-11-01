@@ -246,8 +246,10 @@ void convert_torques_propagate_omega()
 {
   Particle *p;
   Cell *cell;
-  int np;
+  int np,j;
   double tx, ty, tz;
+  double omega_0[3] = {0.0, 0.0, 0.0};
+  double pref1_temp[3] = {0.0, 0.0, 0.0};
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
 
@@ -355,16 +357,47 @@ void convert_torques_propagate_omega()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
 #ifndef SEMI_INTEGRATED
-
+      pref1_temp[0] = pref1_temp[1] = pref1_temp[2] = 0.0;
+#ifdef VERLET_STEP4_VELOCITY
+      if ( thermo_switch & THERMO_LANGEVIN )
+      {
 #ifdef ROTATIONAL_INERTIA
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
+
+#ifdef LANGEVIN_PER_PARTICLE
+          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
 #else
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/I[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/I[2];
+          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
+#endif // LANGEVIN_PER_PARTICLE
+
+          //for (j = 0; j < 3; j++) p[i].m.omega[j] += (p[i].f.torque[j] * time_step_half / p[i].p.rinertia[j]) / (1 - pref1_temp[j]);
+
+#else
+
+#ifdef LANGEVIN_PER_PARTICLE
+          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot * time_step_half;
+#else
+          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot * time_step_half;
+
+#endif // LANGEVIN_PER_PARTICLE
+
+          //for (j = 0; j < 3; j++) p[i].m.omega[j] = (p[i].m.omega[j] * (1 - pref1_temp / I[j]) + p[i].f.torque[j] * time_step_half / I[j]) / (1 - pref1_temp / I[j]);
+
+#endif // ROTATIONAL_INERTIA
+      } // else
+#endif // VERLET_STEP4_VELOCITY
+      {
+#ifdef ROTATIONAL_INERTIA
+          for (j = 0; j < 3; j++)
+              p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / p[i].p.rinertia[j];
+#else
+          for (j = 0; j < 3; j++)
+              p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / I[j];
 #endif
+      }
+
+      // zeroth estimate of omega
+      for (int j = 0; j < 3; j++) omega_0[j] = p[i].m.omega[j];
+
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
       for(int times=0; times <= 3; times++)
@@ -372,18 +405,18 @@ void convert_torques_propagate_omega()
         double Wd[3];
 
 #ifdef ROTATIONAL_INERTIA
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(p[i].p.rinertia[1]-p[i].p.rinertia[2]))/p[i].p.rinertia[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]))/p[i].p.rinertia[1];
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]))/p[i].p.rinertia[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(p[i].p.rinertia[1]-p[i].p.rinertia[2]) + pref1_temp[0] * p[i].m.omega[0])/p[i].p.rinertia[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]) + pref1_temp[1] * p[i].m.omega[1])/p[i].p.rinertia[1];
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]) + pref1_temp[2] * p[i].m.omega[2])/p[i].p.rinertia[2];
 #else
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]) + pref1_temp[0] * p[i].m.omega[0])/I[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]) + pref1_temp[1] * p[i].m.omega[1])/I[1]; 
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]) + pref1_temp[2] * p[i].m.omega[2])/I[2];
 #endif
 
-        p[i].m.omega[0]+= time_step_half*Wd[0];
-        p[i].m.omega[1]+= time_step_half*Wd[1];
-        p[i].m.omega[2]+= time_step_half*Wd[2];
+        p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
+        p[i].m.omega[1] = omega_0[1] + time_step_half*Wd[1];
+        p[i].m.omega[2] = omega_0[2] + time_step_half*Wd[2];
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

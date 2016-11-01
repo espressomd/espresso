@@ -675,6 +675,7 @@ void rescale_forces_propagate_vel() {
   Particle *p;
   int i, j, np, c;
   double scale,e_damp,rinertia_m,gamma_rot_m,scale_f,omega_lab[3];
+  double step4_factor = 0.0;
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -683,6 +684,7 @@ void rescale_forces_propagate_vel() {
 #endif
 
   scale = 0.5 * time_step * time_step;
+
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     if (current_time_step_is_small)
@@ -725,6 +727,19 @@ void rescale_forces_propagate_vel() {
       if (ifParticleIsVirtual(&p[i]))
         continue;
 #endif
+
+      step4_factor = 1.0; // default
+#ifdef VERLET_STEP4_VELOCITY
+      if (thermo_switch & THERMO_LANGEVIN)
+      {
+#ifdef LANGEVIN_PER_PARTICLE
+          step4_factor = 1 / (1 - p->p.vv_langevin_pref1 * scale / (p[i]).p.mass);
+#else
+          step4_factor = 1 / (1 - vv_langevin_pref1 * scale / (p[i]).p.mass);
+#endif // LANGEVIN_PER_PARTICLE
+      }
+#endif
+
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
@@ -746,7 +761,7 @@ void rescale_forces_propagate_vel() {
           {
 #ifndef SEMI_INTEGRATED
             /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-              p[i].m.v[j] += p[i].f.f[j];
+              p[i].m.v[j] += p[i].f.f[j] * step4_factor;
           }
 #else
               /* only deterministic and non-dissipative part of the force is used here */

@@ -39,6 +39,7 @@ SEMI_INTEGRATED
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 ENGINE                          requires not SEMI_INTEGRATED
 CONFIGTEMP
+VERLET_STEP4_VELOCITY
 
 /* Rotation */
 ROTATION

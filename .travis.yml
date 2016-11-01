@@ -41,6 +41,10 @@ matrix:
     - os: linux
       sudo: required
       services: docker
+      env: myconfig=maxset-gaussrandom-verlet-step4
+    - os: linux
+      sudo: required
+      services: docker
       env: myconfig=maxset-gaussrandom-semiintegrated
     - os: linux
       sudo: required

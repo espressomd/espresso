@@ -155,12 +155,21 @@ struct ParticleProperties {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1;
+#endif // VERLET_STEP4_VELOCITY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1_rot;
+#endif // VERLET_STEP4_VELOCITY
 #else
   double gamma_rot[3];
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1_rot[3];
+#endif // VERLET_STEP4_VELOCITY
 #endif
 #endif
 #endif

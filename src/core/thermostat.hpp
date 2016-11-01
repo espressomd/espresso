@@ -86,12 +86,21 @@ extern double temperature;
 
 /** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
+#ifdef VERLET_STEP4_VELOCITY
+extern double vv_langevin_pref1;
+#endif
 
 /** Langevin friction coefficient gamma for the rotation. */
 #ifndef ROTATIONAL_INERTIA
 extern double langevin_gamma_rotation;
+#ifdef VERLET_STEP4_VELOCITY
+extern double vv_langevin_pref1_rot;
+#endif // VERLET_STEP4_VELOCITY
 #else
 extern double langevin_gamma_rotation[3];
+#ifdef VERLET_STEP4_VELOCITY
+extern double vv_langevin_pref1_rot[3];
+#endif // VERLET_STEP4_VELOCITY
 #endif
 
 /** Langevin for translations */
@@ -310,9 +319,16 @@ inline void friction_thermo_langevin(Particle *p)
       // Apply the force
 #ifndef SEMI_INTEGRATED
       p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+#ifdef VERLET_STEP4_VELOCITY
+#ifdef LANGEVIN_PER_PARTICLE
+      p->p.vv_langevin_pref1 = langevin_pref1_temp;
+#else
+      vv_langevin_pref1 = langevin_pref1_temp;
+#endif // LANGEVIN_PER_PARTICLE
+#endif // VERLET_STEP4_VELOCITY
 #else
       p->f.f[j] = 0;
-#endif
+#endif // SEMI_INTEGRATED
     }
   } // END LOOP OVER ALL COMPONENTS
 
@@ -474,15 +490,35 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   // Here the thermostats happens
   for ( j = 0 ; j < 3 ; j++) 
   {
-#ifdef ROTATIONAL_INERTIA
 #ifndef SEMI_INTEGRATED
+
+#ifdef ROTATIONAL_INERTIA
+
     p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*noise;
+#ifdef VERLET_STEP4_VELOCITY
+#ifdef LANGEVIN_PER_PARTICLE
+    p->p.vv_langevin_pref1_rot[j] = -langevin_pref1_temp[j];
+#else
+    vv_langevin_pref1_rot[j] = -langevin_pref1_temp[j];
+#endif // LANGEVIN_PER_PARTICLE
+#endif // VERLET_STEP4_VELOCITY
+
+#else // ROTATIONAL_INERTIA
+
+    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
+#ifdef VERLET_STEP4_VELOCITY
+#ifdef LANGEVIN_PER_PARTICLE
+    p->p.vv_langevin_pref1_rot = -langevin_pref1_temp;
+#else
+    vv_langevin_pref1_rot = -langevin_pref1_temp;
+#endif // LANGEVIN_PER_PARTICLE
+#endif // VERLET_STEP4_VELOCITY
+
+#endif // ROTATIONAL_INERTIA
+
 #else // SEMI_INTEGRATED
     p->f.torque[j] = 0;
 #endif // SEMI_INTEGATED
-#else // ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
-#endif // ROTATIONAL_INERTIA
   }
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));

@@ -72,10 +72,10 @@ set pos_1_analytic "[lindex $pos_1 0] [lindex $pos_1 1] [z_f $t [lindex $pos_1 2
 set delta_pos_0 [veclen [vecsub $pos_0_simulate $pos_0_analytic]]
 set delta_pos_1 [veclen [vecsub $pos_1_simulate $pos_1_analytic]]
 
-if { ! (1.4e-3 < $delta_pos_0 && $delta_pos_0 < 1.6e-3) } {
+if { ! (0.0 < $delta_pos_0 && $delta_pos_0 < 1.6e-3) } {
   error_exit "Velocity swimming deviation too large."
 }
-if { ! (4.9e-4 < $delta_pos_1 && $delta_pos_1 < 5.1e-4) } {
+if { ! (0.0 < $delta_pos_1 && $delta_pos_1 < 5.1e-4) } {
   error_exit "Force swimming deviation too large."
 }
 

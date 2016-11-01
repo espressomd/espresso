@@ -43,10 +43,11 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     cellsystem nsquare 
     #-no_verlet_lists
     set J "10 10 10"
+    set mass 12.74
 
     part deleteall
-    part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 
-    part 1 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
+    part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
     puts "\n"
     switch $test_case {
         0 {
@@ -81,15 +82,25 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd time 0
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            set deviation0 [expr [lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])]
-            set deviation1 [expr [lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])]
-            set omega_sim_0 [expr [lindex [part 0 print omega_body] $k]]
-            set omega_th [expr exp(-$gamma0*[setmd time] /[lindex $J $k])]
-            if {
-                 abs($deviation0) >0.01 ||
-                 abs($deviation1) >0.01
-            } {
-                error_exit "Friction Deviation in omega too large. $i $k $omega_sim_0 $omega_th"
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_o 1.25E-4
+            } else {
+                set tolerance_o 1.0E-2
+            }
+            set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k]))]
+            set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k]))]
+            if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
+                error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
+            }
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_v 4.5E-5
+            } else {
+                set tolerance_v 1.0E-2
+            }
+            set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma0*[setmd time] / $mass))]
+            set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma1*[setmd time] / $mass))]
+            if { $dv0 > $tolerance_v || $dv1 > $tolerance_v } {
+                error_exit "Friction Deviation in v too large. $i $k $dv0 $dv1"
             }
         }
         integrate 10
@@ -136,7 +147,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
-            part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass
+            set ind [expr $i + $k*$n]
+            set pos0($ind) [list [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box]]
+            part [expr $i + $k*$n] pos [lindex $pos0($ind) 0] [lindex $pos0($ind) 1] [lindex $pos0($ind) 2] rinertia $j1 $j2 $j3 mass $mass
             switch $test_case {
                 1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
@@ -152,27 +165,39 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set ox2($k) 0.
         set oy2($k) 0.
         set oz2($k) 0.
+        set dx2($k) 0.
+        set dy2($k) 0.
+        set dz2($k) 0.
     }
 
     set loops 100
 
     puts "Thermalizing..."
-    integrate 1200
+    set therm_steps 1200
+    integrate $therm_steps
     puts "Measuring..."
 
     for {set i 0} {$i <$loops} {incr i} {
-        integrate 100
+        set int_steps 100
+        integrate $int_steps
         # Get kinetic energy in each degree of freedom for all particles
         for {set p 0} {$p <$n} {incr p} {
             for {set k 0} {$k<2} {incr k} {
+                set ind [expr $p + $k*$n]
                 set v [part [expr $p + $k*$n] print v]
                 set o [part [expr $p + $k*$n] print omega_body]
+                set pos [part [expr $p + $k*$n] print pos]
                 set ox2($k) [expr $ox2($k) +pow([lindex $o 0],2)]
                 set oy2($k) [expr $oy2($k) +pow([lindex $o 1],2)]
                 set oz2($k) [expr $oz2($k) +pow([lindex $o 2],2)]
                 set vx2($k) [expr $vx2($k) +pow([lindex $v 0],2)]
                 set vy2($k) [expr $vy2($k) +pow([lindex $v 1],2)]
                 set vz2($k) [expr $vz2($k) +pow([lindex $v 2],2)]
+                if {$i == [expr $loops - 1]} {
+                    set dx2($k) [expr $dx2($k) + pow([expr [lindex $pos 0] - [lindex $pos0($ind) 0]], 2)]
+                    set dy2($k) [expr $dy2($k) + pow([expr [lindex $pos 1] - [lindex $pos0($ind) 1]], 2)]
+                    set dz2($k) [expr $dz2($k) + pow([expr [lindex $pos 2] - [lindex $pos0($ind) 2]], 2)]
+                }
             }
         }
     }
@@ -194,18 +219,35 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set dv($k) [expr 1./3. *($Evx($k) +$Evy($k) +$Evz($k))/$halfkT-1.]
         set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT-1.]
         
+        if {$test_case == 1 || $test_case == 3} {
+            set gamma_tr $gamma($k)
+        } else {
+            set gamma_tr 1
+        }
+        # translational diffusion
+        set D_tr($k) [expr 2 * $halfkT / $gamma_tr]
+        set dt [expr ($therm_steps + $int_steps * $loops) * [setmd time_step]]
+        set dt0 [expr $mass / $gamma_tr]
+        # translational variance: after a closed-form integration of the Langevin EOM
+        set sigma2_tr($k) [expr $D_tr($k) * (6 * $dt + 3 * $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
+        set dr($k) [expr (($dx2($k)+$dy2($k)+$dz2($k))/$n - $sigma2_tr($k)) / $sigma2_tr($k)]
+        
         puts "\n"
         puts "1/2 kT = $halfkT"
         puts "translation: $Evx($k) $Evy($k) $Evz($k) rotation: $Eox($k) $Eoy($k) $Eoz($k)"
 
         puts "Deviation in translational energy: $dv($k)"
         puts "Deviation in rotational energy: $do($k)"
+        puts "Deviation in translational dispersion: $dr($k)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
         }
         if { abs($do($k)) > $tolerance } {
            error "Relative deviation in rotational energy too large: $do($k)"
+        }
+        if { abs($dr($k)) > $tolerance } {
+           error "Relative deviation in translational dispersion too large: $dr($k)"
         }
     }
 }
