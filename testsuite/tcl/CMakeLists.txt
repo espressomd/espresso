@@ -90,6 +90,7 @@ set(tcl_tests  analysis.tcl
                rotate-system.tcl 
                rotate-system-dipoles.tcl 
                rotation.tcl 
+               rotational_inertia.tcl
                rotation_per_particle.tcl 
                scafacos-dipoles.tcl
                scafacos-dipoles-non-periodic.tcl

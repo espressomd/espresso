@@ -394,7 +394,6 @@ void convert_torques_propagate_omega()
               p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / I[j];
 #endif
       }
-
       // zeroth estimate of omega
       for (int j = 0; j < 3; j++) omega_0[j] = p[i].m.omega[j];
 
