@@ -45,17 +45,22 @@
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {
   int j;
+  double debug_small_val = 0.0;
   /* set temperature to zero */
   temperature = 0;
   mpi_bcast_parameter(FIELD_TEMPERATURE);
+#ifdef SEMI_INTEGRATED
+  // For DEBUG only cause zero gamma makes any sense in the SEMI_INTEGRATED method
+  debug_small_val = 1E-4;
+#endif // SEMI_INTEGRATED
   /* langevin thermostat */
-  langevin_gamma = 0;
+  langevin_gamma = debug_small_val;
   /* Friction coefficient gamma for rotation */
 #ifndef ROTATIONAL_INERTIA
-  langevin_gamma_rotation = 0;
-#else
-  for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = 0;
-#endif
+  langevin_gamma_rotation = debug_small_val;
+#else // ROTATIONAL_INERTIA
+  for ( j = 0 ; j < 3 ; j++) langevin_gamma_rotation[j] = debug_small_val;
+#endif // ROTATIONAL_INERTIA
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
 
@@ -193,6 +198,14 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
     Tcl_AppendResult(interp, "temperature and friction must be positive", (char *)NULL);
     return (TCL_ERROR);
   }
+#ifdef SEMI_INTEGRATED
+  if (gammat <= 0) {
+      //Tcl_AppendResult(interp, "SEMI_INTEGRATED method requires friction parameters larger than zero.", (char *)NULL);
+      //return (TCL_ERROR);
+	  fprintf(stderr,"WARNING: SEMI_INTEGRATED method requires friction parameters larger than zero. Setting to 1.0. \n");
+	  gammat = 1.0;
+    }
+#endif
 
   /* broadcast parameters */
   temperature = temp;
@@ -209,8 +222,6 @@ int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **ar
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION);
-
-  // TODO: mpi_bcast_parameter for langevin_trans and langevin_rotate ?
 
   fprintf(stderr,"WARNING: The behavior of the Langevin thermostat has changed\n");
   fprintf(stderr,"         as of this version! Please consult the user's guide.\n");

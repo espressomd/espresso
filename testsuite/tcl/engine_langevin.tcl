@@ -24,6 +24,7 @@ puts "- Testcase engine_langevin.tcl running on [format %02d [setmd n_nodes]] no
 puts "------------------------------------------------"
 
 require_feature "ENGINE"
+require_feature "SEMI_INTEGRATED off"
 
 proc z_f {t z0} {
   global f_swim

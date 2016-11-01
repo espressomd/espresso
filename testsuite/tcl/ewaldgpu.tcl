@@ -21,6 +21,7 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "EWALD_GPU"
+require_feature "BARNES_HUT" off
 # for more than 2 nodes, the cutoff will become too large
 require_max_nodes_per_side 2
 
@@ -30,7 +31,7 @@ puts "-------------------------------------------"
 
 
 set epsilon_energy 1e-2
-set epsilon_force 1e-4
+set epsilon_force 8e-4
 thermostat off
 setmd time_step 0.01
 setmd skin 0.05

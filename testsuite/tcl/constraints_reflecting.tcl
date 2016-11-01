@@ -46,7 +46,7 @@ set time_step     0.01
 set box_l         10.0
 set skin          0.5
 
-set prec     5.e-5
+set prec     1.e-2
 
 # Other parameters
 #############################################################

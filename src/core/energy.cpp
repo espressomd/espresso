@@ -85,6 +85,9 @@ void init_energies(Observable_stat *stat)
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
  case DIPOLAR_DS_GPU:   n_dipolar = 2; break;
+#ifdef BARNES_HUT
+ case DIPOLAR_BH_GPU:   n_dipolar = 2; break;
+#endif
 #ifdef SCAFACOS_DIPOLES
  case DIPOLAR_SCAFACOS:   n_dipolar = 2; break;
 #endif
@@ -149,13 +152,18 @@ void energy_calc(double *result)
   if (smaller_time_step > 0.)
     energy.data.e[0] /= (2.0*smaller_time_step*smaller_time_step);
   else
-#endif   
+#endif
+
+//#ifndef SEMI_INTEGRATED
   energy.data.e[0] /= (2.0*time_step*time_step);
+//#else
+//  energy.data.e[0] /= 2.0;
+//#endif
 
   calc_long_range_energies();
 
 #ifdef CUDA
-  copy_energy_from_GPU();
+  copy_energy_from_GPU(); // TODO
 #endif
   
   /* gather data */
@@ -258,6 +266,9 @@ void calc_long_range_energies()
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
     break;
   case DIPOLAR_DS_GPU:
+    // Do nothing, it's an actor.
+    break;
+  case DIPOLAR_BH_GPU:
     // Do nothing, it's an actor.
     break;
 #ifdef SCAFACOS_DIPOLES

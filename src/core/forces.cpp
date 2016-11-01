@@ -161,16 +161,24 @@ espressoSystemInterface.update();
 #endif
   init_forces();
 
+  //std::cout << "Trace forces 1" << std::endl;
+
   for (ActorList::iterator actor = forceActors.begin();
           actor != forceActors.end(); ++actor)
   {
+	//std::cout << "Trace ActorList 1" << std::endl;
     (*actor)->computeForces(espressoSystemInterface);
 #ifdef ROTATION
     (*actor)->computeTorques(espressoSystemInterface);
 #endif
+    //std::cout << "Trace ActorList 2" << std::endl;
   }
 
+  //std::cout << "Trace forces 2" << std::endl;
+
   calc_long_range_forces();
+
+  //std::cout << "Trace forces 3" << std::endl;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -221,7 +229,7 @@ espressoSystemInterface.update();
 #endif
 
 #ifdef CUDA
-  copy_forces_from_GPU();
+  copy_forces_from_GPU(); // TODO
 #endif
 
   // VIRTUAL_SITES distribute forces
@@ -349,6 +357,9 @@ void calc_long_range_forces()
     break;
   case DIPOLAR_DS_GPU: 
     // Do nothing. It's an actor
+    break;
+  case DIPOLAR_BH_GPU:
+      // Do nothing. It's an actor
     break;
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS: 

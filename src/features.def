@@ -35,7 +35,9 @@ NPT
 GHMC
 CATALYTIC_REACTIONS
 MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
+SEMI_INTEGRATED
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
+ENGINE                          requires not SEMI_INTEGRATED
 CONFIGTEMP
 
 /* Rotation */
@@ -59,9 +61,12 @@ _P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES
+BARNES_HUT
 DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM		requires CUDA
 DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
+BARNES_HUT		requires CUDA
+BARNES_HUT		implies DIPOLES, ROTATION
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
@@ -85,11 +90,12 @@ TUNABLE_SLIP                    implies DPD
 INTER_DPD
 
 /* Lattice-Boltzmann features */
-LB
+LB                              requires not SEMI_INTEGRATED
 LB_GPU                          requires CUDA
 LB_BOUNDARIES                   implies LB, CONSTRAINTS
 LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS         implies LB
+ELECTROKINETICS                 requires not SEMI_INTEGRATED
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS

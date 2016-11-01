@@ -1,4 +1,5 @@
 /* maximal set of features usable at the same time */
+#define SEMI_INTEGRATED
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
@@ -76,9 +77,4 @@
 #define BOND_ENDANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE
-#define FLATNOISE
-
-
-
-
-
+#define GAUSSRANDOMCUT

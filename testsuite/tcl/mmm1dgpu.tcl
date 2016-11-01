@@ -21,6 +21,7 @@ source "tests_common.tcl"
 
 require_feature "MMM1D_GPU"
 require_feature "PARTIAL_PERIODIC"
+require_feature "BARNES_HUT" off
 
 puts "-------------------------------------------"
 puts "- Testcase mmm1dgpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"

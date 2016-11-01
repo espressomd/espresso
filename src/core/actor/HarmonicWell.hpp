@@ -35,6 +35,7 @@ public:
   HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s);
 
   virtual void computeForces(SystemInterface &s) {
+	printf("Trace HarmonicWell computeForces 1");
     HarmonicWell_kernel_wrapper(x,y,z,k,s.npart_gpu(),
 					 s.rGpuBegin(), s.fGpuBegin());
   };

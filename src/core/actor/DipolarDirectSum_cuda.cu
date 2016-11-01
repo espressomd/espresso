@@ -53,7 +53,7 @@ __device__ void dipole_ia_force(int id,dds_float pf, float* r1, float *r2, float
 dds_float dr[3];
 dds_float _r1[3],_r2[3],_dip1[3],_dip2[3];
 
-for (int i=i=0;i<3;i++)
+for (int i=0;i<3;i++)
 {
  _r1[i]=r1[i];
  _r2[i]=r2[i];
@@ -112,8 +112,7 @@ for (int i=i=0;i<3;i++)
     torque1[0]=(pf*(-ax*r3_inv+bx*cc));
     torque1[1]=(pf *(-ay*r3_inv+by*cc));
     torque1[2]=(pf *(-az*r3_inv+bz*cc));
-    
-    
+
     bx=_dip2[1]*dr[2]-dr[1]*_dip2[2];
     by=dr[0]*_dip2[2]-_dip2[0]*dr[2];
     bz=_dip2[0]*dr[1]-dr[0]*_dip2[1];
@@ -375,7 +374,6 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos, floa
   thrust::device_ptr<dds_float> t(energySum);
   float x=thrust::reduce(t,t+block.x);
   cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
-
 
   cuda_safe_mem(cudaFree(energySum));
   cuda_safe_mem(cudaFree(box_l_gpu));
