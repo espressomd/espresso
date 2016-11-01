@@ -407,9 +407,9 @@ void convert_torques_propagate_omega()
         Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]) + pref1_temp[1] * p[i].m.omega[1])/p[i].p.rinertia[1];
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]) + pref1_temp[2] * p[i].m.omega[2])/p[i].p.rinertia[2];
 #else
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]) + pref1_temp[0] * p[i].m.omega[0])/I[0];
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]) + pref1_temp[1] * p[i].m.omega[1])/I[1]; 
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]) + pref1_temp[2] * p[i].m.omega[2])/I[2];
 #endif
 
         p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
