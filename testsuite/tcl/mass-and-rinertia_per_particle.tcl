@@ -130,9 +130,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     set n 200
     set mass [expr (0.2 + [t_random]) *20]
-    set j1 [expr (0.2 + [t_random]) * 20]
-    set j2 [expr (0.2 + [t_random]) * 20]
-    set j3 [expr (0.2 + [t_random]) * 20]
+    set j1 [expr (0.2 + [t_random]) * 7]
+    set j2 [expr (0.2 + [t_random]) * 7]
+    set j3 [expr (0.2 + [t_random]) * 7]
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
@@ -194,18 +194,36 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set dv($k) [expr 1./3. *($Evx($k) +$Evy($k) +$Evz($k))/$halfkT-1.]
         set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT-1.]
         
+        set dox($k) [expr ($Eox($k))/$halfkT-1.]
+        set doy($k) [expr ($Eoy($k))/$halfkT-1.]
+        set doz($k) [expr ($Eoz($k))/$halfkT-1.]
+        
         puts "\n"
         puts "1/2 kT = $halfkT"
         puts "translation: $Evx($k) $Evy($k) $Evz($k) rotation: $Eox($k) $Eoy($k) $Eoz($k)"
 
         puts "Deviation in translational energy: $dv($k)"
         puts "Deviation in rotational energy: $do($k)"
+        puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
         }
         if { abs($do($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
            error "Relative deviation in rotational energy too large: $do($k)"
+        }
+        if { abs($dox($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
+        }
+        if { abs($doy($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
+        }
+        if { abs($doz($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
         }
     }
 }
