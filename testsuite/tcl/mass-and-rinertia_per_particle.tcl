@@ -83,15 +83,21 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            
-            set tolerance_o 1.25E-4
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_o 1.25E-4
+            } else {
+                set tolerance_o 1.0E-2
+            }
             set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k]))]
             set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k]))]
             if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
                 error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
             }
-            
-            set tolerance_v 4.6E-5
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_v 4.5E-5
+            } else {
+                set tolerance_v 1.0E-2
+            }
             set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma0*[setmd time] / $mass))]
             set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma1*[setmd time] / $mass))]
             if { $dv0 > $tolerance_v || $dv1 > $tolerance_v } {
