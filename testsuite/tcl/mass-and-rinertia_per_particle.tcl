@@ -38,7 +38,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     
     # Decelleration
     setmd skin 0
-    setmd time_step 0.01
+    setmd time_step 0.007
     thermostat langevin 0 $gamma0 
     cellsystem nsquare 
     #-no_verlet_lists
