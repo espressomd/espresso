@@ -399,7 +399,7 @@ void convert_torques_propagate_omega()
 
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
-      for(int times=0; times <= 3; times++)
+      for(int times=0; times <= 5; times++)
       { 
         double Wd[3];
 
