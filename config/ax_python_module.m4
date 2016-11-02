@@ -14,6 +14,7 @@
 #
 # LICENSE
 #
+#   Copyright (C) 2014 The ESPResSo project
 #   Copyright (c) 2008 Andrew Collier
 #
 #   Copying and distribution of this file, with or without modification, are
@@ -25,8 +26,7 @@
 
 AU_ALIAS([AC_PYTHON_MODULE], [AX_PYTHON_MODULE])
 AC_DEFUN([AX_PYTHON_MODULE],[
-    if test -z $PYTHON;
-    then
+    if test -z "$PYTHON"; then
         PYTHON="python"
     fi
     PYTHON_NAME=`basename $PYTHON`

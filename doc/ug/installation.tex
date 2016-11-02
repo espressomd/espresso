@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -32,8 +32,7 @@ want to use the newest features of \es or that want to start
 contributing to the software can instead obtain the current
 development code via the version control system software
 \textsf{git}\footnote{\url{http://git.org}} from \es's project page at
-the Savannah GNU server
-\footnote{\url{https://savannah.nongnu.org/projects/espressomd/}}.
+Github \footnote{\url{https://github.com/espressomd/espresso}}.
 This code might be not as well tested and documented as the release
 code; it is recommended to use this code only if you have already
 gained some experience in using \es.
@@ -46,18 +45,76 @@ activate and deactivate various features before compiling the code.
 Some of these features are not compatible with each other, and some of
 the features have a profound impact on the performance of the code.
 Therefore it is not possible to build a single binary that can satisfy
-all needs.  A user should always activate only those features that are
+all needs.  F or performance reasons a user should always activate only those features that are
 actually needed.  This means, however, that learning how to compile
-\es is a necessary evil.  The build system of \es uses the GNU
-autotools, which are developed since more than 20 years and allow to
+\es is a necessary evil.  
+The build system of \es uses either the GNU
+autotools or cmake to
 compile software easily on a wide range of platforms.
 
-\section{Running \texttt{configure}}
+\section{cmake}
+In order to build \es the first step is to create a build directory in which cmake can be executed. In cmake, the \emph{source directory} (that contains all the source
+files) is completely separated from the \emph{build directory} (where the files created by the build process are put). cmake is designed to not be executed in the source directory.
+Cmake will determine how to use and where to find
+the compiler, as well as the different libraries and tools required by
+the compilation process. By having multiple build directories you can build several
+variants of \es, each variant having different activated features, and
+for as many platforms as you want.
+
+\paragraph{Example}
+When the source directory is \codebox{srcdir} (\ie the files where
+unpacked to this directory), then the user can create a build directory
+\codebox{build} below that path by calling the \codebox{mkdir srcdir/build}. In the build direcotry cmake is to be executed, followed by a call of make. None of the files in the source directory is ever modified when by the build process.
+\begin{code}
+cd build
+cmake srcdir
+make
+Espresso
+\end{code}
+Afterwards Espresso can be run via calling Espresso from the command line.
+\subsection{ccmake}
+Optionally and for easier use the curses interface to cmake can be used to configure ESPResSo interactively. 
+\paragraph{Example}
+Alternatively to the previous example instead of \codebox{cmake}, the \codebox{ccmake} executable is called in the build direcotry to configure ESPResSo previous to its compilation followed by a call of make:
+\begin{code}
+cd build
+ccmake srcdir
+make
+Espresso
+\end{code}
+Fig.~\ref{fig:ccmake} shows the interactive ccmake UI.
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/ccmake-example.png}
+  \caption{ccmake interface}
+  \label{fig:ccmake}
+\end{figure}
+
+
+\subsection{Options and Variables}
+The behaviour of \codebox{cmake} can be
+controlled by the means of options and variables in the CMakeLists.txt file. Also options are defined there.
+The following options are available:
+\begin{description}
+	\item WITH_PYTHON: Build python interface
+	\item WITH_TCL: Build tcl interface
+	\item WITH_CUDA: Build with GPU support
+        \item WITH_HDF5: Build with HDF5
+	\item WITH_TESTS: Enable tests
+	\item WITH_SCAFACOS: Build with Scafacos support
+	\item WITH_VALGRIND_INSTRUMENTATION: Build with valgrind instrumentation markers
+\end{description}
+When the value in the CMakeLists.txt file is set to ON the corresponding option is created if the value of the opition is set to OFF the corresponding option is not created. 
+These options can also be modified by calling cmake with the command line argument -D:
+\begin{code}
+cmake -D WITH_TCL=OFF srcdir 
+\end{code}
+In the rare event when working with cmake and you want to have a totally clean build (for example because you switched the compiler), remove the build directory and create a new one.
+\section{Autotools}
+\warning{Deprecated}
+\subsection{Running \texttt{configure}}
 \label{sec:configure}
 \index{configure}
-
-\todo[inline]{Description of basic options: \keyword{CPPFLAGS},
-  \keyword{CFLAGS}, \keyword{LDFLAGS}}
 
 The first step of building \es is to run the shell script
 \codebox{configure} which is to be found in the top level source
@@ -76,24 +133,26 @@ configure [\var{options} ...] [\var{variable}=\var{value} ...]
 If you are using the development source code from the \textsf{git}
 repository, before you can call \codebox{configure}, it is necessary
 to have the GNU autotools (\textsf{autoconf} and \textsf{automake})
-installed. Then you can call the script \codebox{bootstrap.sh} from
+installed.  Then you can call the script \codebox{bootstrap.sh} from
 the top level source directory, which will generate the
 \codebox{configure} script.
 
-\subsection{Source and build directories}
+\subsubsection{Source and build directories}
 \label{ssec:builddir}
 \index{build directory} \index{source directory}
 
 Usually, when a program is compiled, the resulting binary files are
 put into the same directory as the sources of the program.  In \es's
 build system, the \emph{source directory} that contains all the source
-files is completely separated from the \emph{build directory}, where
-the files created by the build process are put.  The location of the
-build directory is the current working directory at the time when
+files can be completely separated from the \emph{build directory},
+where the files created by the build process are put.  The location of
+the build directory is the current working directory at the time when
 \codebox{configure} is called.  In this way, you can build several
 variants of \es, each variant having different activated features, and
 for as many platforms as you want.  All further commands concerning
 compiling and running \es have to be called from the build directory.
+None of the files in the source directory is ever modified when by the
+build process.
 
 \paragraph{Example}
 When the source directory is \codebox{\$srcdir} (\ie the files where
@@ -107,22 +166,19 @@ make
 Espresso
 \end{code}
 
-\subsection{Options}
+\subsubsection{Options and Variables}
 \label{ssec:configureoptions}
 
 \index{configure options} The behaviour of \codebox{configure} can be
-controlled by the means of command line options.  In the following
-only those command line options that are specific to \es will be
-explained.  For a complete list of options and explanations thereof,
-call
+controlled by the means of command line options and variables.  In the
+following, only important command line options and variables \es will
+be explained.  For a complete list of options, variables and
+explanations thereof, call
 \begin{code}
 configure --help
 \end{code}
 
 \begin{description}
-\item[\texttt{--with-myconfig=MYCONFIG\_HEADER}] This option sets the
-  name of the local configuration header (see \vref{sec:myconfig}). It
-  defaults to ``\texttt{myconfig.h}''.
 \item[\texttt{--with-mpi=\alt{\lit{yes} \asep \lit{no} \asep
       \lit{guess}}}/ \texttt{--without-mpi}] By default,
   \codebox{configure} will automatically determine whether an MPI
@@ -159,7 +215,24 @@ configure --help
   i.e. everything with a Fermi chip or newer.  Note that we require at
   least compute model 1.1, that is G90. However, to use G90 (e.\,g.~Tesla
   C1060), you need to manually specificy compute model 1.1.
+\item[\texttt{--with-arpack=path} / \texttt{--without-arpack}] This switch
+  enables ARPACK support. \texttt{path} should be the path to the ARPACK
+  directory. ARPACK is currently only needed for Stokesian Dynamics support.
+\item[\texttt{LDFLAGS=\textit{linker-flags}}] This variable can be
+  used to change the flags that the linker will get when linking the
+  \es binaries.  This variable can be used to modify the path where
+  the compiler finds library files when they are installed in
+  non-standard places, \eg \codebox{LDFLAGS="-L/home/juser/lib"}.
+\item[\texttt{CPPFLAGS=\textit{preprocessor-flags}}] This variable can
+  be used to change the flags that the preprocessor will see.  This
+  variable can be used to modify the path wherer the compiler finds
+  include files when they are installed in non-standard places, \eg
+  \codebox{CPPFLAGS="-I/home/juser/include"}.
+\item[\texttt{CXXFLAGS=\textit{C++-compiler flags}}] This variable can
+  be used to modify the compilation flags, \eg to change the
+  optimization level for debugging (\codebox{CXXFLAGS="-g -O0"}).
 \end{description}
+
 
 \section{\texttt{make}: Compiling,  testing and installing \es}
 \label{sec:make}
@@ -199,9 +272,9 @@ following targets are available:
   The variable \texttt{extra} can be used to specify additional
   files and directories that are to be included in the archive
   file. \\
-  \textbf{Example:} \verb!make dist extra="myconfig.h internal"!\\
+  \textbf{Example:} \verb!make dist extra="myconfig.hpp internal"!\\
   will create the archive file and include the file
-  \texttt{myconfig.h} and the directory \texttt{internal} with all
+  \texttt{myconfig.hpp} and the directory \texttt{internal} with all
   files and subdirectories.
 \item[\texttt{install}] Install \es. The variables \texttt{prefix} and
   \texttt{exec-prefix} can be used to specify the installation
@@ -212,9 +285,6 @@ following targets are available:
   required only when there is an architecture-specific directory.\\
   \textbf{Example:} \verb!make install prefix=/usr/local!\\
   will install all files below \texttt{/usr/local}.
-\item[\texttt{uninstall}] Uninstalls \es, \ie removes all files that
-  were installed during \texttt{make install}. The variables are
-  identical to the variables of the \texttt{install}-target.
 \item[\texttt{ug\ \ }] Creates the User guide in the \texttt{doc/ug}
   subdirectory (only when using the development sources).
 \item[\texttt{dg\ \ }] Creates the Developers' guide in the
@@ -262,10 +332,10 @@ command line. Also, older installations sometimes require ``-np''
 instead of ``-n'' or ``mpirun'' instead of ``mpiexec''. 
 
 
-\section{\texttt{myconfig.h}: Activating and deactivating features}
+\section{\texttt{myconfig.hpp}: Activating and deactivating features}
 \label{sec:myconfig}
 
-\index{features} \index{myconfig.h} \index{configuration header} \es
+\index{features} \index{myconfig.hpp} \index{configuration header} \es
 has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
 features, as this will slow down \es significantly.  Instead, compile
@@ -274,24 +344,25 @@ speed can be achieved, by disabling all non-bonded interactions except
 for a single one, e.g. \feature{LENNARD_JONES}.  For the developers,
 it is also possible to turn on or off a number of debugging messages.
 The features and debug messages can be controlled via a configuration
-header file that contains C-preprocessor declarations. Appendix
-\vref{chap:features} lists and describes all available features.  When
-no configuration header is provided by the user, a default header,
-found in src/myconfig-default.h, will be used that turns on the
-default features.  The file \texttt{myconfig-sample.h} in the source
-directory contains a list of all possible features that can be copied
-into your own configuration file.
+header file that contains C-preprocessor declarations.  Appendix
+\vref{chap:features} lists and describes all available features.  The
+file \texttt{myconfig-sample.hpp} that configure will generate in the
+build directory contains a list of all possible features that can be
+copied into your own configuration file.  When no configuration header
+is provided by the user, a default header, found in
+\texttt{src/core/myconfig-default.hpp}, will be used that turns on the
+default features.
 
 When you distinguish between the build and the source directory, the
 configuration header can be put in either of these. Note, however,
 that when a configuration header is found in both directories, the one
 in the build directory will be used.
 
-By default, the configuration header is called \texttt{myconfig.h}.
+By default, the configuration header is called \texttt{myconfig.hpp}.
 The name of the configuration header can be changed either when the
-\texttt{configure}-script is called with the option
-\mbox{\texttt{--with-myconfig}} (see section \vref{sec:configure}), or
-when \texttt{make} is called with the setting
+\texttt{configure}-script is called via the variable
+\mbox{\texttt{MYCONFIG}} (see section \vref{sec:configure}), or when
+\texttt{make} is called with the setting
 \mbox{\texttt{myconfig=}\textit{myconfig\_header}} (see section
 \vref{sec:make}).
 
@@ -302,13 +373,13 @@ and two build directories \texttt{\$builddir1} and
 \texttt{\$builddir2} that contain different configuration headers:
 
 \begin{itemize}
-\item \texttt{\$builddir1/myconfig.h}:
+\item \texttt{\$builddir1/myconfig.hpp}:
 \begin{code}
 #define ELECTROSTATICS
 #define LENNARD-JONES
 \end{code}
 
-\item \texttt{\$builddir2/myconfig.h}:
+\item \texttt{\$builddir2/myconfig.hpp}:
 \begin{code}
 #define LJCOS
 \end{code}

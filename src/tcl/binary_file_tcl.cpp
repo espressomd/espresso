@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -77,7 +77,7 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   /* assemble rows */
   argc -= 2;
   argv += 2;
-  row = (char*)malloc(sizeof(char)*argc);
+  row = (char*)Utils::malloc(sizeof(char)*argc);
   for (i = 0; i < argc; i++) {
     if (!strncmp(*argv, "posx", strlen(*argv))) {
       row[i] = POSX;
@@ -141,15 +141,15 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
     build_particle_node();
 
   /* write header and row data */
-  memcpy(header.magic, MDMAGIC, 4*sizeof(char));
+  memmove(header.magic, MDMAGIC, 4*sizeof(char));
   header.n_rows = argc;
   Tcl_Write(channel, (char *)&header, sizeof(header));
   Tcl_Write(channel, row, header.n_rows*sizeof(char));
 
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
-    if (get_particle_data(p, &data)) {
-      unfold_position(data.r.p, data.l.i);
+    if (get_particle_data(p, &data) == ES_OK) {
+      unfold_position(data.r.p, data.m.v, data.l.i);
 
       /* write particle index */
       Tcl_Write(channel, (char *)&p, sizeof(int));
@@ -246,7 +246,7 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
     build_particle_node();
 
   /* parse rows */
-  row = (char*)malloc(header.n_rows*sizeof(char));
+  row = (char*)Utils::malloc(header.n_rows*sizeof(char));
   for (i = 0; i < header.n_rows; i++) {
     Tcl_Read(channel, (char *)&row[i], sizeof(char));
     switch (row[i]) {

@@ -1,3 +1,4 @@
+# Copyright (C) 2014 The ESPResSo project
 # Copyright (C) 2012,2013 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -19,7 +20,7 @@
 #
 from __future__ import print_function
 import sys, os, re, fileinput
-sys.path.append(os.path.join(sys.path[0], '..', '..', 'config'))
+sys.path.append(os.path.join(sys.path[0], '..', 'src'))
 
 import featuredefs
 

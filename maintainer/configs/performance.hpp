@@ -1,0 +1,2 @@
+#define LENNARD_JONES
+

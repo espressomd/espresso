@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -43,7 +43,10 @@ if { [file exists "~/.espressorc" ] } {
 # message. Can also be permanently switched off
 # in "~/.espressorc"
 set quiet 0
-foreach arg $argv { if {$arg == "-quiet"} { set quiet 1 } }
+foreach arg $argv {
+    if {$arg == "-quiet"} { set quiet 2 }
+    if {$arg == "-q"} { set quiet 1 }
+}
 
 if {!$quiet} {
     puts stderr "*******************************************************"
@@ -52,7 +55,7 @@ if {!$quiet} {
     puts stderr "*                    ============                     *"
     puts stderr "*        A Parallel Molecular Dynamics Program        *"
     puts stderr "*                                                     *"
-    puts stderr "* (c) 2010,2011,2012,2013                             *"
+    puts stderr "* (c) 2010,2011,2012,2013,2014,2015,2015,2016         *"
     puts stderr "*     The ESPResSo project                            *"
     puts stderr "*                                                     *"
     puts stderr "* (c) 2002,2003,2004,2005,2006,2007,2008,2009,2010    *"
@@ -76,6 +79,8 @@ if {!$quiet} {
     puts stderr "You should have received a copy of the GNU General Public License"
     puts stderr "along with this program.  If not, see <http://www.gnu.org/licenses/>."
     puts stderr ""
+} elseif { $quiet == 1 } {
+    puts stderr "This is [code_info]."
 }
 
 # Check to see if the user specified a packages directory
@@ -107,3 +112,4 @@ source vtf.tcl
 source vtk.tcl
 source dielectrics.tcl
 source object_in_fluid.tcl
+source h5md.tcl

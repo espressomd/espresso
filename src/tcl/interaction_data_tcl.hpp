@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -41,5 +41,14 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 
 /** datafield callback for \ref min_global_cut. Sets the minimal cell size. */
 int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data);
+
+/* Print the surface charge for capacitor feature in ic-mmm2d and ic-elc */
+int tclcommand_print_efield_capacitors(ClientData data, Tcl_Interp * interp,
+               int argc, char ** argv);
+
+
+#ifdef SCAFACOS
+int tclcommand_scafacos_methods(ClientData data, Tcl_Interp * interp, int argc, char ** argv);
+#endif
 
 #endif

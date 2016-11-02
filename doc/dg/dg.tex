@@ -1,4 +1,4 @@
-% Copyright (C) 2011,2012,2013 The ESPResSo project
+% Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -90,7 +90,7 @@ idxtotoc                        % add the index to the TOC
 
 \tableofcontents
 
-\chapter{Getting into contact}
+\chapter{Getting into Contact}
 
 The first thing that you should do when you want to start to
 participate is to get into contact with the \es developers. To do
@@ -102,10 +102,10 @@ with simulations and programming and the things that you would like to
 do in \es. We do not bite, and we are happy about anybody who wants to
 participate!
 
-\chapter{Development environment}
+\chapter{Development Environment}
 \label{sec:env}
 
-\section{Required development tools}
+\section{Required Development Tools}
 \label{sec:requirements}
 
 If you want to participate in the development of \es, you will require
@@ -134,7 +134,7 @@ the following tools depending on what tasks you want to perform:
 All of these tools should be easy to install on most Unix operating
 systems.
 
-\section{Building the development code}
+\section{Building the Development Code}
 \label{sec:build_devel}
 
 \begin{itemize}
@@ -155,14 +155,19 @@ systems.
 \end{itemize}
 
 
-\section{Git repositories}
+\section{Git Repositories}
 \label{sec:git}
 
-\section{Jenkins build server}
-\label{sec:jenkins}
+\begin{itemize}
+\item Development Repository: \url{https://github.com/espressomd/espresso}
+\item 
 
-Code hosting at GNU Savannah 
+Code hosting at GNU Savannah
   \url{https://savannah.nongnu.org/projects/espressomd/}
+
+\end{itemize}
+\section{Jenkins Build Server}
+\label{sec:jenkins}
 
 \url{http://espressomd.org/jenkins}
 \begin{itemize}
@@ -170,7 +175,7 @@ Code hosting at GNU Savannah
 \item Jenkins build server 
 \end{itemize}
 
-\section{Build system}
+\section{Build System}
 \label{sec:build_system}
 
 The build system of \es makes use of the GNU autotools suite
@@ -200,7 +205,7 @@ tools to generate the \texttt{configure} script and the
 \texttt{bootstrap.sh}, the \es development code can be build and used
 like the release code.
 
-\subsection{Creating a distribution package}
+\subsection{Creating a Distribution Package}
 
 As described in the User's Guide, to create a \texttt{.tar.gz}
 distribution file that contains all required files, you can simply run
@@ -234,7 +239,7 @@ DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
   make distcheck
 \end{verbatim}
 
-\subsection{Adding new files}
+\subsection{Adding New Files}
 
 To add new files to \es (like C source files or header files)
 you need to do the following:
@@ -275,7 +280,7 @@ subdirectory \texttt{doc/ug/} of the \es sources. The master file is
 \item To see which parts of the User's guide need to be fixed or which
   documentation is missing, there is a \verb!\todo!-command where one
   can put notes about what remains to be done. In the release version,
-  the boxes are diabled so that they do not disturb the users. They
+  the boxes are disabled so that they do not disturb the users. They
   can be turned on by commenting out the appropriate line in
   \texttt{ug.tex}:
 \begin{verbatim}
@@ -308,7 +313,7 @@ awk -f assemble_quickref.awk > quickref.inp
   \end{itemize}
 \end{itemize}
 
-\subsection{Adding new files}
+\subsection{Adding New Files}
 
 To add new \LaTeX-files to the User's Guide, you need to modify
 \begin{itemize}
@@ -318,7 +323,7 @@ To add new \LaTeX-files to the User's Guide, you need to modify
   \texttt{ug\_TEXFILES}. 
 \end{itemize}
 
-\subsection{Additional environments and commands}
+\subsection{Additional Environments and Commands}
 
 To maintain a consistent layout, a number of environments and
 commands have been defined that should be used where applicable. 
@@ -354,7 +359,7 @@ commands have been defined that should be used where applicable.
 \subsection{Documentation of Tcl commands}
 \label{tcl_docs}
 
-\subsubsection{Formal syntax definition}
+\subsubsection{Formal Syntax Definition}
 
 All \es-commands have to be documented in the User's Guide.
 
@@ -491,7 +496,7 @@ nicely format the descriptions.
 \end{arguments}
 \end{verbatim}
 
-\section{Doxygen code documentation}
+\section{Doxygen Code Documentation}
 \label{sec:doxygen}
 
 The documentation of each function should contain a short description,
@@ -536,7 +541,7 @@ This chapter provides some hints on how to extend \es.  It is not
 exhaustive, so for major changes the best documentation are the other
 developers.
 
-\section{Adding global variables}
+\section{Adding Global Variables}
 
 Global variables are the simplest way to communicate values between
 the Tcl script and the C simulation code.  To make a C variable
@@ -557,7 +562,7 @@ nodes. A simple example is \verb!box_l! with the callback procedure
 necessary that they occur in the list of constant definitions at the
 beginning of \texttt{global.h}.  So please keep this list in sync!
 
-\section{Adding new bonded interactions}
+\section{Adding New Bonded Interactions}
 
 Every interaction resides in its own source file. A simple example for
 a bonded interaction is the FENE bond in \texttt{fene.h}. The data
@@ -648,7 +653,7 @@ After the new bonded interaction works properly, it would be a good
 idea to add a testcase to the testsuite, so that changes breaking your
 interaction can be detected early.
 
-\section{Adding new nonbonded interactions}
+\section{Adding New Nonbonded Interactions}
 
 Writing nonbonded interactions is similar to writing nonbonded
 interactions. Again we start with \verb!interaction_data.h!, where the
@@ -730,7 +735,7 @@ After the new non-bonded interaction works properly, it would be a
 good idea to add a testcase to the testsuite, so that changes breaking
 your interaction can be detected early.
 
-\section{Tcl I/O - Parsing and printing}
+\section{Tcl I/O - Parsing and Printing}
 \begin{itemize}
 \item \verb!ARG_0_IS!
 \item \verb!Tcl_GetDouble/Int ...!
@@ -738,7 +743,7 @@ your interaction can be detected early.
 \item \verb!TCL_INTEGER_SPACE! ...
 \end{itemize}
 
-\section{Particle data organization}
+\section{Particle Data Organization}
 
 The particle data organization is described in the Tcl command
 cellsystem, its implementation is briefly described in
@@ -827,7 +832,7 @@ each cell system has its specific part of the code, where only this
 cellsystem does something strange and unique, so here you are
 completely on your own. Good luck.
 
-\section{Errorhandling for developers}
+\section{Errorhandling for Developers}
 
 Developers should use the errorhandling mechanism whenever it is
 possible to recover from an error such that continuing the simulation

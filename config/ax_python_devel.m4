@@ -33,6 +33,7 @@
 #
 # LICENSE
 #
+#   Copyright (C) 2014 The ESPResSo project
 #   Copyright (c) 2009 Sebastian Huber <sebastian-huber@web.de>
 #   Copyright (c) 2009 Alan W. Irwin
 #   Copyright (c) 2009 Rafael Laboissiere <rafael@laboissiere.net>

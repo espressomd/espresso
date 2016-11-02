@@ -7,9 +7,15 @@ config.status
 src/acconfig.h.in
 src/acconfig.h
 aclocal.m4
+*.m4
 autom4te.cache
 .deps/
 myconfig.h
+myconfig.hpp
+build/
+CMakeFiles
+
+*.*~
 
 # created by configure
 src/myconfig-final.h
@@ -18,6 +24,8 @@ doc/latexit.sh
 myconfig-sample.h
 testsuite/runtest.sh
 tools/es_mpiexec
+config/ltmain.sh
+src/python/espressomd/code_info.pyx
 
 # object files and executable
 *.o
@@ -25,11 +33,15 @@ tools/es_mpiexec
 src/libEspresso.a
 Espresso
 Espresso.install
+build.eclipse
+src/featuredefs.pyc
+src/acconfig.hpp.in
 
 # Espresso output
 *.end
 *.obs*
 *.chk
+*.h5
 
 # doxygen
 doc/dg/html/

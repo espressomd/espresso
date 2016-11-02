@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -17,12 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
 git ls-files --exclude-standard |
-egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|svg|ico|eps)$' |
-egrep -v '^testsuite/configs/|^old/' |
-egrep -v '(ChangeLog|AUTHORS|COPYING|bootstrap\.sh)' |
-egrep -v '(\.gitignore|pkgIndex\.tcl)' |
-egrep -v '(config/config\.guess|config/config\.sub|config/install-sh|config/myconfig-sample-header\.h\.in)' |
+egrep -v '\.(blk|gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|vtk|svg|ico|eps)$' |
+egrep -v '^testsuite/configs/|^old/|^cmake/|^config/' |
+egrep -v '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL|bootstrap\.sh)' |
+egrep -v '(\.gitignore|pkgIndex\.tcl|\.travis\.yml)' |
+egrep -v '(config/config\.guess|config/config\.sub|config/install-sh|config/myconfig-sample-header\.hpp\.in)' |
 egrep -v '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
 egrep -v '(src/features\.def)' |
 egrep -v '(doc/ug/ug-dist\.tex)' |
-egrep -v '(featurelist)'
+egrep -v '(featurelist)' |
+egrep -v '(\.cproject|\.project|\.settings)' |
+egrep -v '(maintainer/jenkins|samples/games/highscore.txt)'

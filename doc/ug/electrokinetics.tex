@@ -1,15 +1,37 @@
+% Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 \newcommand{\lb}{l_\mathrm{B}}
 \newcommand{\kT}{k_\mathrm{B}T}
 
 \chapter{\label{sec:electrokinetics}Electrokinetics}
 \newescommand{electrokinetics}
 
-The electrokinetics setup in \es{} allows for the description of 
-electro-hydrodynamic systems on the level of ion density distributions coupled 
-to a Lattice-Boltzmann (LB) fluid. The ion density distributions may also
-interact with explicit charged particles, which are interpolated on the LB grid.
-In the following paragraph we briefly explain the electrokinetic model
-implemented in \es{}, before we come to the description of the interface.
+The electrokinetics setup in \es{} allows for the description of
+electro-hydrodynamic systems on the level of ion density distributions
+coupled to a Lattice-Boltzmann (LB) fluid. The ion density
+distributions may also interact with explicit charged particles, which
+are interpolated on the LB grid.  In the following paragraph we
+briefly explain the electrokinetic model implemented in \es, before
+we come to the description of the interface.
+
+If you are interested in using the electrokinetic implementation in
+\es for scientific purposes, please contact G.~Rempfer before you
+start your project.
 
 \section{Electrokinetic Equations}
 
@@ -49,52 +71,58 @@ Eqs.~\eqref{eq:ek-model-continuity}-\eqref{eq:ek-model-continuity-fl}, combining
 diffusion-advection, electrostatics, and hydrodynamics is conventionally 
 referred to as the \textit{Electrokinetic Equations}.
 
-\todo{Complete in broad strokes the applicability of the electrokinetics model. Also mention the difference in temperatures between EK and LB species.}
+\todo{Complete in broad strokes the applicability of the
+  electrokinetics model. Also mention the difference in temperatures
+  between EK and LB species.}
 
 The electrokinetic equations have the following properties:
 \begin{itemize}
-	\item On the coarse time and length scale of the model, the dynamics of the
-	particle species can be described in terms of smooth density distributions and
-	potentials as opposed to the microscale where highly localized densities cause
-	singularities in the potential.
+\item On the coarse time and length scale of the model, the dynamics
+  of the particle species can be described in terms of smooth density
+  distributions and potentials as opposed to the microscale where
+  highly localized densities cause singularities in the potential.
 	
-	In most situations, this restricts the application of the model to species of
-	monovalent ions, since ions of higher valency typically show strong
-	condensation and correlation effects -- the localization of individual ions in
-	local potential minima and the subsequent correlated motion with the charges
-	causing this minima.
+  In most situations, this restricts the application of the model to
+  species of monovalent ions, since ions of higher valency typically
+  show strong condensation and correlation effects -- the localization
+  of individual ions in local potential minima and the subsequent
+  correlated motion with the charges causing this minima.
 	
-	\item Only the entropy of an ideal gas and electrostatic interactions are
-	accounted for. In particular, there is no excluded volume.
+\item Only the entropy of an ideal gas and electrostatic interactions
+  are accounted for. In particular, there is no excluded volume.
 	
-	This restricts the application of the model to monovalent ions and moderate
-  charge densities. At higher valencies or densities, overcharging and layering
-  effects can occur, which lead to non-monotonic charge densities and potentials,
-  that can not be covered by a mean-field model such as Poisson-Boltzmann or this
-  one.
+  This restricts the application of the model to monovalent ions and
+  moderate charge densities. At higher valencies or densities,
+  overcharging and layering effects can occur, which lead to
+  non-monotonic charge densities and potentials, that can not be
+  covered by a mean-field model such as Poisson-Boltzmann or this one.
 	
-	Even in salt free systems containing only counter ions, the counter-ion
-	densities close to highly charged objects can be overestimated when neglecting
-	excluded volume effects. Decades of the application of Poisson-Boltzmann
-	theory to systems of electrolytic solutions, however, show that those
-	conditions are fulfilled for monovalent salt ions (such as sodium chloride or
-	potassium chloride) at experimentally realizable concentrations.
+  Even in salt free systems containing only counter ions, the
+  counter-ion densities close to highly charged objects can be
+  overestimated when neglecting excluded volume effects. Decades of
+  the application of Poisson-Boltzmann theory to systems of
+  electrolytic solutions, however, show that those conditions are
+  fulfilled for monovalent salt ions (such as sodium chloride or
+  potassium chloride) at experimentally realizable concentrations.
 	
-	\item Electrodynamic and magnetic effects play no role. Electrolytic solutions
-	fulfill those conditions as long as they don't contain magnetic particles.
+\item Electrodynamic and magnetic effects play no role. Electrolytic
+  solutions fulfill those conditions as long as they don't contain
+  magnetic particles.
 	
-	\item The diffusion coefficient is a scalar, which means there can not be any
-	cross-diffusion. Additionally, the diffusive behavior has been deduced using
-	a formalism relying on the notion of a local equilibrium. The resulting
-	diffusion equation, however, is known to be valid also far from equilibrium.
+\item The diffusion coefficient is a scalar, which means there can not
+  be any cross-diffusion. Additionally, the diffusive behavior has
+  been deduced using a formalism relying on the notion of a local
+  equilibrium. The resulting diffusion equation, however, is known to
+  be valid also far from equilibrium.
 	
-	\item The temperature is constant throughout the system.
+\item The temperature is constant throughout the system.
 	
-	\item The density fluxes instantaneously relax to their local equilibrium
-	values. Obviously one can not extract information about processes on length
-	and time scales not covered by the model, such as dielectric spectra at
-	frequencies, high enough that they correspond to times faster than the
-	diffusive time scales of the charged species.
+\item The density fluxes instantaneously relax to their local
+  equilibrium values. Obviously one can not extract information about
+  processes on length and time scales not covered by the model, such
+  as dielectric spectra at frequencies, high enough that they
+  correspond to times faster than the diffusive time scales of the
+  charged species.
 \end{itemize}
 
 \section{Setup}
@@ -112,10 +140,14 @@ The electrokinetic equations have the following properties:
   \opt{gamma_even  \var{gamma\_even}}
   \opt{T  \var{T}}
   \opt{bjerrum_length  \var{bjerrum\_length}}
+  \opt{advection  \var{advection}}
+  \opt{fluid-coupling  \var{fluid-coupling}}
+  \opt{\require{4}{electrostatics_coupling}}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
   \required[3]{EK_REACTIONS}
+  \required[4]{EK_ELECTROSTATIC_COUPLING}
   \end{features}
 \end{essyntax}
 The \lit{electrokinetics} command initializes the LB fluid with a given
@@ -147,6 +179,25 @@ and \var{bjerrum\_length} the Bjerrum length associated with the electrostatic
 properties of the medium. See the above description of the electrokinetic 
 equations for an explanation of the introduction of a temperature, which does 
 not come in directly via a thermostat that produces thermal fluctuations.
+
+\lit{advection} can be set to \emph{on} or \emph{off}. It controls whether there
+should be an advective contribution to the diffusive species' fluxes. Default is
+\emph{on}.
+
+\lit{fluid-coupling} can be set to \emph{friction} or \emph{estatics}. This option
+determines the force term acting on the fluid. The former specifies the force term
+to be the sum of the species fluxes divided by their respective mobilities while the
+latter simply uses the electrostatic force density acting on all species. Note that 
+this switching is only possible for the linkcentered stencil. For all other stencils,
+this choice is hardcoded. The default is \emph{friction}.
+
+\lit{electrostatics_coupling} enables the action of the electrostatic potential
+due to the electrokinetics species and charged boundaries on the MD particles.
+The forces on the particles are calculated by interpolation from the electric
+field which is in turn calculated from the potential via finite differences.
+This only includes interactions between the species and boundaries and MD
+particles, not between MD particles and MD particles. To get complete electrostatic
+interactions a particles Coulomb method like Ewald or P3M has to be activate too.
 
 \subsection{\label{ssec:ek-diff-species}Diffusive Species}
 
@@ -199,7 +250,7 @@ with a volume charge density. To create a surface charge density, a combination
 of two oppositely charged boundaries, one inside the other, can be used. 
 However, care should be taken to maintain the surface charge density when the
 value of \var{agrid} is changed. Currently, the following \var{shape}s are 
-available: wall, sphere, cylinder, rhomboid, pore, and stomatocyte. We refer to 
+available: wall, sphere, cylinder, rhomboid, pore, stomatocyte, hollow_cone, and spherocylinder. We refer to 
 the documentation of the \lit{lbboundary} command (Chapter~\ref{sec:lb}) for
 information on the options \var{shape\_args} associated to these shapes. In
 order to properly set up the boundaries, the \var{charge\_density} and relevant
@@ -214,7 +265,7 @@ order to properly set up the boundaries, the \var{charge\_density} and relevant
   print 
   \require{1 or 2}{\var{property}}
   \opt{vtk}
-  filename [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -232,7 +283,7 @@ boundaries, respectively. The boundaries can only be printed when the
 used to directly export in the vtk format. The vtk format is readable
 by visualization software such as paraview\footnote{http://www.paraview.org/}
 and mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the 
-\opt{vtk} option is not specified, a gnuplot readable data will be exported.
+\opt{vtk} option is not specified, a gnuplot readable data file will be exported.
 
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
@@ -240,7 +291,7 @@ and mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. If the
   print 
   \var{property} 
   \opt{vtk}
-  filename [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -285,20 +336,46 @@ implementation. For other quantities the \lit{lbnode} command may be used.
 This command can be used to output the number density of the
 \var{species\_number}-th diffusive species on a single LB node.
 
+\section{\label{ssec:ek-checkpointing}Checkpointing}
+
+\begin{essyntax}
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint save \var{filename}
+  \variant{1}\require{1 or 2 or 3}{electrokinetics} checkpoint load \var{filename}
+  \begin{features}
+  \required[1]{ELECTROKINETICS}
+  \required[2]{EK_BOUNDARIES}
+  \required[3]{EK_REACTIONS}
+  \end{features}
+\end{essyntax}
+Variant \variant{1} writes the species density fields as well as all necessary 
+LB fields into two files called \var{filename.ek} and \var{filename.lb}.
+Variant \variant{2} reads these files back and restores the fields. All 
+algorithm parameters must be set via the simulation script, as they are not 
+part of the checkpointed data.
+
+The format of the checkpoint is binary and no special care is taken with 
+respect to the specific binary layout of the machine.
+
 \section{Catalytic Reaction}
 
 \subsection{Concept}
 
-The electrokinetics solver implemented in \es{} can be used to simulate a
-system, for which in addition to the electrokinetic equations, there is a 
-(local) catalytic reaction which converts one species into another. Currently,
-a linear reaction is implemented which converts one species into two others, in
+The electrokinetics solver implemented in \es{} can be used to
+simulate a system, for which in addition to the electrokinetic
+equations, there is a (local) catalytic reaction which converts one
+species into another.
+
+If you are interested in using this implementation in \es{} for
+scientific purposes, please contact J.~de~Graaf before you start your
+project.
+
+Currently, a linear reaction is implemented which converts one species into two others, in
 order to model the catalytic decomposition of hydrogen peroxide in the presence
 of a platinum catalyst: $2 \mathrm{H}_{2}\mathrm{O}_{2} \rightarrow 
 2 \mathrm{H}_{2}\mathrm{O} + \mathrm{O}_{2}$. The decomposition of 
-$\mathrm{H}_{2}\mathrm{O}_{2}$ is in reality more complicated than a linear 
-reaction, since it is assumed to proceed via many intermediate complexed-states, 
-but the linear reaction can be thought of as modeling the rate-limiting step.
+$\mathrm{H}_{2}\mathrm{O}_{2}$ is in reality more complicated than the linear 
+reaction introduced here, since it is assumed to proceed via several intermediate complexed-states, 
+but our model can be thought of as modeling the rate-limiting step.
 If we assume that there are three non-ionic species with number densities
 $n_{k}$, where $n_{0} = [ \mathrm{H}_{2}\mathrm{O}_{2} ]$,
 $n_{1} = [ \mathrm{H}_{2}\mathrm{O} ]$, and $n_{2} = [ \mathrm{O}_{2} ]$, 
@@ -331,52 +408,31 @@ and input parameters
 In this set of equations we have fully decoupled the number densities and the
 fluid mass density. N.B. We have set the initial fluid mass density is not necessarily 
 equal to the sum of the initial species number densities. This means that 
-some care needs to be taken in the interpretation of the results of the 
-simulations with this code. It is important to note that the reaction must 
-satisfy mass balance:
+some care needs to be taken in the interpretation of the results obtained using
+this feature. In particular, the solution of the Navier-Stokes equation exclusively
+models the momentum transport through the (multicomponent) fluid, while the diffusive
+properties of the individual chemical species are handled by Eqs.~\eqref{eq:ek-reaction-continuity}
+and~\eqref{eq:ek-reaction-fluxes}.
+
+It is important to note that to ensure mass conservation the reaction must satisfy:
 \begin{equation}
 \label{eq:ek-mass-balance} \sum_{k} f_{k} m_{k} = 0 ,
 \end{equation}
-where $m_{k}$ is the molecular mass of a reactive species. This implies that the
-total mass flux in the system is given by
-\begin{equation}
-\label{eq:ek-mass-flux} \vec{j}_{\mathrm{mass}} = \rho_{\mathrm{fl}}(t = 0) \frac{\sum_{k} m_{k} \vec{j}_{k}}{\sum_{k} m_{k} n_{k} (t = 0)}
-\end{equation}
-which is the quantity of interested in systems where, for instance, the
-catalytic reaction drives a particle to self-propel. There is a way to directly 
-access the mass flux from the simulation, without having to go through the
-computations, as will be shown later.
+where $m_{k}$ is the molecular mass of a reactive species. Unfortunately, the current
+electrokinetic implementation does not conserve mass flux locally. That is to say, the
+LB fluid is compressible and the sum of the fluxes of the three species is not equal to
+zero in the frame co-moving with the advective fluid velocity. It is therefore debatable
+whether it is necessary to impose Eq.~\eqref{eq:ek-mass-balance}, since the EK algorithm
+itself does not conserve mass density. However, we strived to be as accurate as
+possible and in future versions of the EK algorithm the lack of incompressiblity will 
+be addressed. 
 
 The reaction is specified by the second term on the right-hand side of 
 Eq.~\eqref{eq:ek-reaction-continuity}. It is important to note that this term
 can be set locally, as opposed to the other terms in the equation system 
 Eqs.~\eqref{eq:ek-reaction-continuity}-\eqref{eq:ek-reaction-continuity-fl}, in
 our implementation, as will become clear in the following. This has the
-advantage that catalytic surfaces may be modeled. 
-
-It turns out that in addition to the initial setting of the LB mass density, the
-inherent compressibility of the LB -- it satisfies the equation of state of an 
-ideal gas -- must be suppressed to obtain the `correct' advective contribution
-from the Navier-Stokes equation~\eqref{eq:ek-reaction-velocity}. The force 
-applied to the LB fluid coming from the diffusive species is sufficiently
-strong to create a mass density heterogeneity in the LB fluid. This 
-heterogeneity leads to an internal restorative force within the LB, which
-exceeds the applied force. An unfortunate consequence of this is that an 
-incorrect advective velocity is given by the LB scheme.
-
-In our implementation, suppression of LB fluid heterogeneity is achieved by 
-resetting the zeroth mode of the LB at the start of every time step. This 
-resetting violates mass conservation in the LB, but only by a small (and 
-controlled) amount, since the heterogeneities are in the order of 1\%, 
-for the physical systems that we considered thus far. Alternatively, one could
-use parameters for which the compressibility of the LB fluid is not as strong, 
-but tuning the internal LB parameters. However, this may severely limit the 
-range over which the system can be mapped to an experimental equivalent. 
-Regardless, great care must be taken to examine the effect of mode 0 resetting 
-and it should not be used without a good insight into the system you are 
-modeling. In future version of \es{} the reaction set-up will be built on top of
-an incompressible hydrodynamics solver, thus circumventing the problems that
-arrise in regular LB which necessitate mode resetting.
+advantage that catalytic surfaces may be modeled.
 
 \subsection{\label{ssec:ek-reac-init}Initialization and Geometry Definition}
 
@@ -425,30 +481,6 @@ catalytically converted. To use a chemical reaction, all options for the
 \begin{essyntax}
   \require{1 or 2 or 3}{electrokinetics}
   \require{3}{reaction}
-  \require{3}{reset_mode_zero \var{fraction}}
-  \opt{shape \var{shape\_args}}
-  \begin{features}
-  \required[1]{ELECTROKINETICS}
-  \required[2]{EK_BOUNDARIES}
-  \required[3]{EK_REACTIONS}
-  \end{features}
-\end{essyntax}
-The \lit{reset_mode_zero} option of the \lit{electrokinetics reaction} command 
-enables the user to violate mass conservation in the LB to effectively kill off
-its compressiblity. The parameter \var{fraction} can assume values in the range
-[0,1]. The resetting acts on the zeroth mode of the LB as follows
-\begin{equation}
-\label{eq:ek-mode} M_{0,\mathrm{reset}} = f * M_{0,\mathrm{original}} ,
-\end{equation}
-with $f$ the value of the \var{fraction} parameter. The default behavior of the
-electrokinetics algorithm is no mode resetting. Once mode resetting is enabled
-it can be adjusted at any time during the simulation and it may be switched off
-by setting the value of \var{fraction} to 1.0. Mode zero resetting can only be
-applied if a reaction has been set up and there are boundaries in the system.
-
-\begin{essyntax}
-  \require{1 or 2 or 3}{electrokinetics}
-  \require{3}{reaction}
   \require{3}{region}
   \opt{reaction_type \var{reaction\_type}}
   \opt{shape \var{shape\_args}}
@@ -467,7 +499,7 @@ place for this region, 1 the catalytic reaction takes place in this region, and
 to their initial (or reservoir) concentrations. The rest of the command follows 
 the same format of the \lit{electrokinetics boundary} command. Currently, the 
 following \var{shape}s are available: box, wall, sphere, cylinder, rhomboid, 
-pore, and stomatocyte. The box shape is a \lit{region} specific command, which
+pore, stomatocyte, hollow_cone, and spherocylinder. The box shape is a \lit{region} specific command, which
 can be used to set the entire simulation box to a specific reaction value. To
 use the \lit{electrokinetics reaction region} command, one must first set up
 a reaction, as described above. To successfully specify a region all the 
@@ -495,7 +527,7 @@ The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB 
   print 
   \require{3}{\var{property}}
   \opt{vtk} 
-  \var{filename} [\var{filename}]
+  \var{filename}
   \begin{features}
   \required[1]{ELECTROKINETICS}
   \required[2]{EK_BOUNDARIES}
@@ -505,24 +537,9 @@ The \lit{electrokinetics pdb-parse} feature allows the user to parse simple PDB 
 The print parameter of the \lit{electrokinetics} command can be used in
 combination with the \texttt{EK\_REACTION} feature to give advanced output 
 options. Currently, supported values of the parameter \var{property} are: 
-\var{pressure}, \var{reaction\_tags}, and \var{mass\_flux}, which give the 
-location and type of the reactive regions, the ideal-gas pressure coming from 
-the diffusive species and the total mass flux of the reactive species,
-respectively. To use this command a reaction must be set up.
-
-\begin{essyntax}
-  \require{1 or 2 or 3}{electrokinetics}
-  node \var{x} \var{y} \var{z} 
-  \require{3}{mass_flux}
-  \begin{features}
-  \required[1]{ELECTROKINETICS}
-  \required[2]{EK_BOUNDARIES}
-  \required[3]{EK_REACTIONS}
-  \end{features}
-\end{essyntax}
-In combination with the \texttt{EK\_REACTION} feature the \lit{node} option of 
-the \lit{electrokinetics} command allows one to output the value of the mass 
-flux on a single LB node.
+\var{pressure} and \var{reaction\_tags}, which give the 
+location and type of the reactive regions and the ideal-gas pressure coming from 
+the diffusive species, respectively. To use this command a reaction must be set up.
 
 %%% Local Variables:
 %%% mode: latex

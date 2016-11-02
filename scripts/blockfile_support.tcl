@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #  Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -62,128 +62,154 @@ proc blockfile_write_particles {channel write particles {info "id pos v type"} {
 }
 
 proc blockfile_read_auto_particles {channel read auto} {
-  set info "[blockfile $channel read start] [blockfile $channel read toend]"
-  set idx 1
-  foreach i $info {
-	  # the switch checks which property it MIGHT be at all, the second checks wether it is really a prefix
-	  switch -regexp $i {
-	      "^i"        { if {![regexp "^$i" "identity"]} { error " $i is not a particle property" }
-		  set id $idx; incr idx }
-	      "^p"        { if {![regexp "^$i" "position"]} { error " $i is not a particle property" }
-		  set pos $idx; incr idx 3 }
-	      "^ty"       { if {![regexp "^$i" "type"]} { error " $i is not a particle property" }
-		  set type $idx; incr idx }
-	      "^mo"       { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
-		  set mol $idx; incr idx }
-        "^ma"       { if {![regexp "^$i" "mass"]} { error " $i is not a particle property" }
-      set mass $idx; incr idx }
-        "^vi"       { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
-      set virtual $idx; incr idx }
-        "^vs"       { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
-      set vs_relative $idx; incr idx 2 }
-	      "^q$"       { set q $idx; incr idx }
-	      "^v"        { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
-		  set v $idx; incr idx 3 }
-	      "^di"       { if {![regexp "^$i" "dip"]} { error " $i is not a particle property" }
-		  set dip $idx; incr idx 3 }
-	      "^qu"       { if {![regexp "^$i" "quat"]} { error " $i is not a particle property" }
-		  set quat $idx; incr idx 4 }
-	      "^omega_l"  { if {![regexp "^$i" "omega_lab"]} { error " $i is not a particle property" }
-		  set omega_lab $idx; incr idx 3 }
-	      "^omega_b"  { if {![regexp "^$i" "omega_body"]} { error " $i is not a particle property" }
-		  set omega_body $idx; incr idx 3 }
-	      "^omega"  { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
-		  set omega $idx; incr idx 3 }
-	      "^torque_l" { if {![regexp "^$i" "torque_lab"]} { error " $i is not a particle property" }
-		  set torque_lab $idx; incr idx 3 }
-	      "^torque_b" { if {![regexp "^$i" "torque_body"]} { error " $i is not a particle property" }
-		  set torque_body $idx; incr idx 3 }
-	      "^torque" { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
-		  set torque $idx; incr idx 3 }
-	      "^tbf" { if {![regexp "^$i" "tbf"]} { error " $i is not a particle property" }
-		  set tbf $idx; incr idx 3 }
-	      "^fix"      { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
-		  set fix $idx; incr idx 3 }
-	      "^f"        { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
-		  set f $idx; incr idx 3 }
-	      "^ext_f"    { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
-		  set ext_force $idx; incr idx 3 }
-	      "^ext_t"    { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
-		  set ext_torque $idx; incr idx 3 }
-	      default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
-	  }
-  }
-  if {![info exists id] || ![info exists pos]} { error "the fields id and pos are mandatory" }
+    set info "[blockfile $channel read start] [blockfile $channel read toend]"
+    set idx 1
+    foreach i $info {
+        # the switch checks which property it MIGHT be at all, the second checks wether it is really a prefix
+        switch -regexp $i {
+            "^i"        { if {![regexp "^$i" "identity"]} { error " $i is not a particle property" }
+                set id $idx; incr idx }            
+            "^p"        { if {![regexp "^$i" "position"]} { error " $i is not a particle property" }
+                set pos $idx; incr idx 3 }
+            "^ty"       { if {![regexp "^$i" "type"]} { error " $i is not a particle property" }
+                set type $idx; incr idx }
+            "^mo"       { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
+                set mol $idx; incr idx }
+            "^ma"       { if {![regexp "^$i" "mass"]} { error " $i is not a particle property" }
+                set mass $idx; incr idx }
+            "^vi"       { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
+                set virtual $idx; incr idx }
+            "^vs"       { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
+                set vs_relative $idx; incr idx 6 }
+            "^rot"       { if {![regexp "^$i" "rotation"]} { error " $i is not a particle property" }
+                set rotation $idx; incr idx 1 }
+            "^dipm"       { if {![regexp "^$i" "dipm"]} { error " $i is not a particle property" }
+                set dipm $idx; incr idx 1 }
+            "^q$"       { set q $idx; incr idx }
+            "^v"        { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
+                set v $idx; incr idx 3 }
+            "^di"       { if {![regexp "^$i" "dip"]} { error " $i is not a particle property" }
+                set dip $idx; incr idx 3 }
+            "^qu"       { if {![regexp "^$i" "quat"]} { error " $i is not a particle property" }
+                set quat $idx; incr idx 4 }
+            "^omega_l"  { if {![regexp "^$i" "omega_lab"]} { error " $i is not a particle property" }
+                set omega_lab $idx; incr idx 3 }
+            "^omega_b"  { if {![regexp "^$i" "omega_body"]} { error " $i is not a particle property" }
+                set omega_body $idx; incr idx 3 }
+            "^omega"  { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
+                set omega $idx; incr idx 3 }
+            "^te"        { if {![regexp "^$i" "temp"]} { error " $i is not a particle property" }
+                set temp $idx; incr idx }                        
+            "^ga"        { if {![regexp "^$i" "gamma"]} { error " >$i< is not a particle property" }
+                set gamma $idx; incr idx }                        
+            "^torque_l" { if {![regexp "^$i" "torque_lab"]} { error " $i is not a particle property" }
+                set torque_lab $idx; incr idx 3 }
+            "^torque_b" { if {![regexp "^$i" "torque_body"]} { error " $i is not a particle property" }
+                set torque_body $idx; incr idx 3 }
+            "^torque" { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
+                set torque $idx; incr idx 3 }
+            "^tbf" { if {![regexp "^$i" "tbf"]} { error " $i is not a particle property" }
+                set tbf $idx; incr idx 3 }
+            "^fix"      { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
+                set fix $idx; incr idx 3 }
+            "^f"        { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
+                set f $idx; incr idx 3 }
+            "^ext_f"    { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
+                set ext_force $idx; incr idx 3 }
+            "^ext_t"    { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
+                set ext_torque $idx; incr idx 3 }
+            "^swimming" { if {![regexp "^$i" "swimming"]} { error " $i is not a particle property" }
+                set swimming $idx; incr idx 7 }
+            default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
+        }
+    }
+    if {![info exists id] || ![info exists pos]} { error "the fields id and pos are mandatory" }
 
-  set cmd "part \[lindex \$line $id\] \
+    set cmd "part \[lindex \$line $id\] \
            pos \[lindex \$line $pos \] \[lindex \$line [expr $pos + 1]\] \[lindex \$line [expr $pos + 2]\]"
-  if {[info exists q]} { set cmd "$cmd \
+    if {[info exists q]} { set cmd "$cmd \
            q \[lindex \$line $q\]" }
-  if {[info exists dip]} { set cmd "$cmd \
+    if {[info exists dip]} { set cmd "$cmd \
            dip  \[lindex \$line $dip\] \[lindex \$line [expr $dip + 1]\] \[lindex \$line [expr $dip + 2]\]"
-  }
-  if {[info exists type]} { set cmd "$cmd \
+    }
+    if {[info exists type]} { set cmd "$cmd \
            type \[lindex \$line $type\]" }
-  if {[info exists mol]} { set cmd "$cmd \
+    if {[info exists mol]} { set cmd "$cmd \
            molecule \[lindex \$line $mol\]" }
-  if {[info exists mass]} { set cmd "$cmd \
+    if {[info exists mass]} { set cmd "$cmd \
            mass \[lindex \$line $mass\]" }
-  if {[info exists virtual]} { set cmd "$cmd \
+    if {[info exists virtual]} { set cmd "$cmd \
            virtual \[lindex \$line $virtual\]" }
-  if {[info exists vs_relative]} { set cmd "$cmd \
-           vs_relative \[lindex \$line $vs_relative\] \[lindex \$line [expr $vs_relative +1]\]" }
-  if {[info exists v]} { set cmd "$cmd \
+    if {[info exists vs_relative]} { set cmd "$cmd \
+           vs_relative \[lindex \$line $vs_relative\] \[lindex \$line [expr $vs_relative +1]\] \[lindex \$line [expr $vs_relative +2]\] \[lindex \$line [expr $vs_relative +3]\] \[lindex \$line [expr $vs_relative +4]\] \[lindex \$line [expr $vs_relative +5]\]" }
+    if {[info exists v]} { set cmd "$cmd \
            v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
-  }
-  if {[info exists f]} { set cmd "$cmd \
+    }
+    if {[info exists f]} { set cmd "$cmd \
            f  \[lindex \$line $f\] \[lindex \$line [expr $f + 1]\] \[lindex \$line [expr $f + 2]\]"
-  }
-  if {[info exists quat]} { set cmd "$cmd \
+    }
+    if {[info exists rotation]} { set cmd "$cmd \
+           rotation \[lindex \$line $rotation\]" }
+    if {[info exists dipm]} { set cmd "$cmd \
+           dipm \[lindex \$line $dipm\]" }
+    if {[info exists gamma]} { set cmd "$cmd \
+           gamma \[lindex \$line $gamma\]" }
+    if {[info exists temp]} { set cmd "$cmd \
+           temp \[lindex \$line $temp\]" }    
+    if {[info exists quat]} { set cmd "$cmd \
            quat \[lindex \$line $quat\] \[lindex \$line [expr $quat + 1]\] \[lindex \$line [expr $quat + 2]\] \[lindex \$line [expr $quat + 3]\]"
-  }
-  if {[info exists omega_lab]} { set cmd "$cmd \
+    }
+    if {[info exists omega_lab]} { set cmd "$cmd \
            omega_lab \[lindex \$line $omega_lab\] \[lindex \$line [expr $omega_lab + 1]\] \[lindex \$line [expr $omega_lab + 2]\]"
-  }
-  if {[info exists omega_body]} { set cmd "$cmd \
+    }
+    if {[info exists omega_body]} { set cmd "$cmd \
            omega_body \[lindex \$line $omega_body\] \[lindex \$line [expr $omega_body + 1]\] \[lindex \$line [expr $omega_body + 2]\]"
-  } 
-  if {[info exists omega]} { set cmd "$cmd \
+    } 
+    if {[info exists omega]} { set cmd "$cmd \
            omega_body \[lindex \$line $omega\] \[lindex \$line [expr $omega + 1]\] \[lindex \$line [expr $omega + 2]\]"
-  }   
-  if {[info exists torque_lab]} { set cmd "$cmd \
+    }   
+    if {[info exists torque_lab]} { set cmd "$cmd \
            torque_lab \[lindex \$line $torque_lab\] \[lindex \$line [expr $torque_lab + 1]\] \[lindex \$line [expr $torque_lab + 2]\]"
-  }  
-  if {[info exists torque_body]} { set cmd "$cmd \
+    }  
+    if {[info exists torque_body]} { set cmd "$cmd \
            torque_body \[lindex \$line $torque_body\] \[lindex \$line [expr $torque_body + 1]\] \[lindex \$line [expr $torque_body + 2]\]"
-  }  
-  if {[info exists torque]} { set cmd "$cmd \
+    }  
+    if {[info exists torque]} { set cmd "$cmd \
            torque_body \[lindex \$line $torque\] \[lindex \$line [expr $torque + 1]\] \[lindex \$line [expr $torque + 2]\]"
-  }  
-  if {[info exists tbf]} { set cmd "$cmd \
+    }  
+    if {[info exists tbf]} { set cmd "$cmd \
            torque_body \[lindex \$line $tbf\] \[lindex \$line [expr $tbf + 1]\] \[lindex \$line [expr $tbf + 2]\]"
-  }
-  if {[info exists fix]} { set cmd "$cmd \
+    }
+    if {[info exists fix]} { set cmd "$cmd \
            fix \[lindex \$line $fix\] \[lindex \$line [expr $fix + 1]\] \[lindex \$line [expr $fix + 2]\]"
-  }
-  if {[info exists ext_force]} { set cmd "$cmd \
+    }
+    if {[info exists ext_force]} { set cmd "$cmd \
            ext_force \[lindex \$line $ext_force\] \[lindex \$line [expr $ext_force + 1]\] \[lindex \$line [expr $ext_force + 2]\]"
-  }
-  if {[info exists ext_torque]} { set cmd "$cmd \
+    }
+    if {[info exists ext_torque]} { set cmd "$cmd \
            ext_torque \[lindex \$line $ext_torque\] \[lindex \$line [expr $ext_torque + 1]\] \[lindex \$line [expr $ext_torque + 2]\]"
-  }
+    }
+    if {[info exists swimming]} { set cmd "$cmd __swimming_blockfile \
+           \[lindex \$line [expr $swimming + 1]\] \
+           v_swim \[lindex \$line [expr $swimming + 2]\] \
+           f_swim \[lindex \$line [expr $swimming + 3]\] \
+           push_pull \[lindex \$line [expr $swimming + 4]\] \
+           dipole_length \[lindex \$line [expr $swimming + 5]\] \
+           rotational_friction \[lindex \$line [expr $swimming + 6]\]"
+    }
     
-  while {1} {
+    while {1} {
 
-	  set line [blockfile $channel read auto]
-	  if {[lindex $line 0] != "usertag"} {
-      if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
-      break
-	  }
+        set line [blockfile $channel read auto]
+        if {[lindex $line 0] != "usertag"} {
+            if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
+            break
+        }
 
-	  eval $cmd
-  }
+        eval $cmd
+    }
 
-  return "particles"
+    return "particles"
 }
 
 ######################################
@@ -352,7 +378,7 @@ proc blockfile_read_auto_integrate {channel read auto} {
 proc blockfile_write_thermostat {channel write thermostat} {
     blockfile $channel write start thermostat
     set data [join [thermostat] "\}\n\t\{"]
-    puts $channel "\n\t\{ off \}\n\t{$data}\n\}"
+    puts $channel "\n\t{$data}\n\}"
 }
 
 proc blockfile_read_auto_thermostat {channel read auto} {
@@ -389,7 +415,7 @@ proc blockfile_write_random {channel write random} {
 
 proc blockfile_read_auto_random {channel read auto} {
     set data [blockfile $channel read toend]
-    eval t_random stat [eval concat $data]
+    t_random stat [concat $data]
 
     return "random"
 }
@@ -404,31 +430,6 @@ proc blockfile_read_auto_seed {channel read auto} {
     eval t_random seed $data
 
     return "seed"
-}
-
-# bit_random
-proc blockfile_write_bitrandom {channel write bitrandom} {
-    blockfile $channel write start bitrandom
-    puts $channel "\n\t{[join [bit_random stat] "\} \{"]}\n\}"
-}
-
-proc blockfile_read_auto_bitrandom {channel read auto} {
-    set data [blockfile $channel read toend]
-    eval bit_random stat [eval concat $data]
-
-    return "bitrandom"
-}
-
-proc blockfile_write_bitseed {channel write bitseed} {
-    blockfile $channel write start bitseed
-    puts $channel "\n\t{[join [bit_random seed] "\} \{"]}\n\}"
-}
-
-proc blockfile_read_auto_bitseed {channel read auto} {
-    set data [blockfile $channel read toend]
-    eval bit_random seed $data
-
-    return "bitseed"
 }
 
 ######################################

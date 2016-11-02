@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -20,6 +20,7 @@
 #include "utils.hpp"
 #include "parser.hpp"
 #include "cuda_init.hpp"
+#include "communication.hpp"
 
 #ifdef CUDA
 
@@ -78,6 +79,17 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     }
     return list_gpus(interp);
   }
+  else if (ARG0_IS_S("list_remote")) {
+    char buf[256];
+    std::vector<EspressoGpuDevice> devices;
+    devices = mpi_gather_cuda_devices();
+    for(std::vector<EspressoGpuDevice>::iterator it = devices.begin(); 
+	it != devices.end(); ++it) {
+      sprintf(buf, " {%.64s:%d %.64s}", it->proc_name, it->id, it->name);
+      Tcl_AppendResult(interp, buf, (char *)NULL);
+    }
+    return TCL_OK;
+  }
   else if (ARG0_IS_S("setdevice")) {
     int dev;
     if (argc <= 1 || !ARG1_IS_I(dev)) {
@@ -111,6 +123,14 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     else {
       Tcl_AppendResult(interp, cuda_error, (char *)NULL);
       return TCL_ERROR;
+    }
+  }
+  else if (ARG0_IS_S("testdevice")) {
+    if(cuda_test_device_access() == ES_ERROR) {
+      Tcl_AppendResult(interp, "Could not access cuda device.", (char *)NULL);
+      return TCL_ERROR;
+    } else {
+      return TCL_OK;
     }
   }
   else {

@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -24,7 +24,7 @@
 \newescommand{integrate}
 
 \begin{essyntax}
-  \variant{1} integrate \opt{reuse_forces} \var{steps}
+  \variant{1} integrate \var{steps} \opt{recalc_forces} \opt{reuse_forces}
   \variant{2} integrate set \opt{nvt}
   \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\; y\; z}} \opt{-cubic_box}
 \end{essyntax}
@@ -50,10 +50,16 @@ apart from some small calling overhead.
 However, for checkpointing, there is no way for \es{} to tell that the forces that you
 read back in actually match the parameters that are set. Therefore, \es{} would recompute
 the forces before the first time step, which makes it essentially impossible to checkpoint
-LB simulations, where it is vital to keep the coupling forces. Therefore, \texttt{integrate}
+LB simulations, where it is vital to keep the coupling forces. To work
+around this, \texttt{integrate}
 has an additional parameter \opt{reuse_forces}, which tells integrate to not recalculate
 the forces for the first time step, but use that the values still stored with the particles.
 Use this only if you are absolutely sure that the forces stored match your current setup!
+
+The opposite problem occurs when timing interactions: In this case,
+one would like to recompute the forces, despite the fact that they are
+already correctly calculated. To this aim, the option
+\opt{recalc_forces} can be used to enforce force recalculation.
 
 Two methods for the integration can be set: For an NVT ensemble
 (thermostat) and for an NPT isotropic ensemble (barostat). The current
@@ -86,6 +92,78 @@ can be added are:
 This command runs the integration as would the \texttt{integrate} command and
 returns the wall runtime in seconds.
 
+\section{\texttt{minimize_energy}: Run steepest descent minimization}
+\newescommand[minimize-energy]{minimize_energy}
+
+\begin{essyntax}
+  \variant{1} minimize_energy \var{f_\mathrm{max}} \var{steps} \var{gamma} \var{maxdisplacement}
+\end{essyntax}
+
+\begin{pysyntax}
+  \object{
+    espressomd.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    espressomd.minimize_energy
+  }{
+    minimize
+  }{}
+  \object{
+    System.minimize_energy
+  }{
+    init
+  }{
+    f_max = \arg{double},
+    gamma = \arg{double},
+    max_steps = \arg{double},
+    max_displacement = \arg{double}
+  }
+  \object{
+    System.minimize_energy
+  }{
+    minimize
+  }{}
+\end{pysyntax}
+
+In Python the minimize\_energy functionality can be imported from \texttt{espressomd}
+as class \texttt{MinimizeEnergy}. Alternatively it is already part of the System
+class object and can be called from there (second variant). 
+
+This command runs a steepest descent energy minimization on the system.
+Please note that the behaviour is undefined if either a thermostat, Maggs electrostatics or Lattice-Boltzmann is activated.
+It runs a simple steepest descent algorithm:
+
+Iterate
+$$p_i = p_i + \min(\text{\var{gamma}} \times F_i, \text{\var{maxdisplacement}}),$$
+while the maximal force is bigger than \var{f_\mathrm{max}} or for at most \var{steps} times.
+The energy is relaxed by \var{gamma}, while the change per coordinate per step is limited to \var{maxdisplacement}.
+The combination of \var{gamma} and \var{maxdisplacement} can be used to get an poor man's adaptive update.
+Rotational degrees of freedom are treated similarly: each particle is rotated around an axis parallel to the torque acting on the particle.
+Please be aware of the fact that this needs not to converge to a local minimum in periodic boundary conditions.
+Translational and rotational coordinates that are fixed using the ``fix`` command or the ROTATION\_PER\_PARTICLE feature are not altered.
+
+\section{\texttt{tune_skin}: Tune the skin}
+\newescommand[tune-skin]{tune_skin}
+
+\begin{essyntax}
+  \variant{1} tune_skin \var{min} \var{max} \var{tol} \var{steps}
+\end{essyntax}
+
+Determines the fastest skin between \var{min} and \var{max} with tolerance \var{tol}
+by bisection. The integration time is determined by timing \var{steps} intergration.
+You should chose \var{steps} big engough so that multiple verlet updates occure even
+for the \var{max} skin, otherwise the timings are not meaningful. Please be aware that
+this command runs actual integrations and propagates the system. In a typical MD simulation
+it should be used after warmup and equilibration, in the same conditions where sampling
+is done.
+
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
 
@@ -98,6 +176,57 @@ Changes the volume of either a cubic simulation box to the new volume
 box-length \var{L_\mathrm{new}}, and isotropically adjusts the
 particles coordinates as well. The function returns the new volume of
 the deformed simulation box.
+
+\section{\texttt{rotate_system}: Rotating the system around its center of mass}
+\newescommand[rotate-system]{rotate_system}
+
+\begin{essyntax}
+  \variant{1} rotate_system \var{phi} \var{theta} \var{alpha}
+\end{essyntax}
+
+Rotates the particle coordinates around the system's center of mass. This only makes sense for non-periodic boundaries, but no check is performed. 
+In addition to the particle positions, the command also rotates the particles themselves, if the ROTATION feature is activated. Hence, dipole moments as well as virtual sites based on the VS\_RELATIVE method will also be affected.
+The command only works on a single cpu.
+
+The rotation axis is given by the parameters \var{phi} and \var{theta} as
+\begin{equation}
+\vec{a} = (\sin \theta \cos \phi ; \sin \theta \sin \phi ; \cos \theta),
+\end{equation}
+and \var{alpha} denotes the rotation angle.
+
+
+\section{\texttt{lees_edwards_offset}: Applying shear between periodic images}
+\newescommand[lees-edwards-offset]{lees_edwards_offset}
+\label{sec:lees-edwards}
+\index{Lees-Edwards Boundaries|mainindex}
+\index{shear boundaries}
+\index{shear viscosity}
+
+
+\begin{essyntax}
+  \variant{1} lees_edwards_offset \var{offset_\mathrm{new}}  
+  \begin{features}
+    \required{LEES_EDWARDS}
+  \end{features}
+
+\end{essyntax}
+
+Lees-Edwards Periodic Boundary Conditions are used to impose a shear flow of speed $\dot{\gamma}$ on the system relative to its periodic images by moving the PBC wrap such that:  $v\_x_{unfolded} =  v\_x_{folded} + \dot{\gamma} y_{img}$ (where $v\_x_{unfolded}$ is the $x$-component of the velocity of an image particle outside the main simulation box, and $y_{img}$ is the count of PBC boundaries crossed in the $y$-direction).  
+The absolute value of the shear offset is set using this command; with the shear flow rate $\dot{\gamma}$ then determined internally as the difference between successive offsets.  
+A typical usage would be to integrate by 1 {MD} timestep and then to increase the offset to a new value using this command; this usage pattern is intended to allow for arbitrary shear flow time profiles, such as an oscillatory shear.  
+A common calculation to make using Lees-Edwards boundary conditions is to find the shear viscosity (or kinematic viscosity) by plotting shear stress (or shear stress/density) against the applied strain for different values of constant $\dot{\gamma}$. 
+
+Lees-Edwards differs from the NEMD approach (see \vref{sec:NEMD}) in that the shear imposed is homogenous across the system (but only on average: symmetry breaking effects are not ruled out) rather than reversing direction with a periodicity of the box length. 
+Accordingly the transport properties  measured using Lees-Edwards are likely to be different to (and arguably more physical than) those measured using NEMD or those from equilibrium simulations by a Green-Kubo type approach.
+
+When the shear flow rate $\dot{\gamma}$ is non-zero, the Langevin thermostat will treat $v\_x_{folded}$ as being relative to a flow field which changes smoothly from $-\dot{\gamma}/2$ at the bottom of the periodic box to $\dot{\gamma}/2$ at the top.  
+This `laminar' thermostatting is provided mostly because it gives quite convenient equilibration of a flowing system.  In order to correctly observe transport properties, symmetry-breaking or entropy production in relation to shear flow is probably better to use the DPD thermostat (see \vref{sec:DPD}) once the initial heat-up has been carried out.  
+The DPD thermostat removes kinetic energy from the system based on a frictional term defined relative to a local reference frame of a given particle-pair, without enforcing any specific flow pattern \textit{a priori}.  At high rates of dissipation, this can however lead to an artefactual  shear-banding type effect at the periodic boundaries, such that the bulk fluid is nearly stationary.  
+This effect is removed using the modification proposed to the DPD thermostat by Chatterjee \cite{chatterjee2007} to allow treatment of systems with high dissipation rates, which is applied automatically if \feature{LEES_EDWARDS} is compiled in.  Chatterjee's modification is just to skip calculation of DPD forces (both dissipative and random) for particle pairs which cross a boundary in \textit{y}.
+
+The function returns the old value of the offset.
+
+If \feature{LEES_EDWARDS} is compiled in, then coordinates are folded into the primary simulation box as the integration progresses, to prevent a numerical overflow.  
 
 \section{Stopping particles}
 
@@ -123,33 +252,24 @@ Sets the velocities of the particles with particle IDs between
 less than \var{v_\mathrm{max}}, and returns the absolute value of the
 total velocity assigned. By default, all particles are affected.
 
-\section{\texttt{invalidate_system}}
-\newescommand[invalidate-system]{invalidate_system}
+\section{Fixing the particle sorting}
+\newescommand[sort-particles]{sort_particles}
 \begin{essyntax}
-  invalidate_system
+  sort_particles
 \end{essyntax}
 
-Forces a system re-init which, among others, causes the integrator to
-also update the forces at its beginning (instead of re-using the
-values from the previous integration step).  This is particularly
-necessary to ensure continuity after setting a checkpoint:
-\texttt{integrate} - \texttt{set_checkpoint} - \texttt{integrate} has
-only one call to the force calculation routine, while
-\texttt{read_checkpoint} - \texttt{integrate} has two at the beginning
-of the \texttt{integrate} command (because loading a new system from
-disk typically requires re-initializing the system), and since the
-forces routine also uses the thermostat which in turn draws random
-numbers, the two situations do not end up at the same segment of the
-random number sequence, all random events will therefore slightly
-differ.  To prevent this, simply include a call to
-\texttt{invalidate_system} upon setting the checkpoint, because in
-that case both scenarios will call the forces routine twice at the
-beginning of the second integration phase thus having their random
-number sequences in total sync.
-
-Without applying this command directly before or after writing a
-checkpoint, you will run into a different state of the random number
-generator when reading the checkpoint to start again later!
+Resorts the particles, making sure that
+\begin{itemize}
+\item the domain decomposition is strictly fullfilled, \ie{} each
+   particle is on the processor and in the cell that its
+   position belongs to
+\item the particles within each cell are ordered with ascending
+identity.
+\end{itemize}
+Both conditions together form a unique particle ordering. This is
+important when doing checkpointing, because this makes sure that
+random numbers are applied in a specific order. Therefore, after
+writing or reading a checkpoint, you should call \texttt{sort_particles}.
 
 \section{Parallel tempering}
 \newescommand[parallel-tempering]{parallel_tempering}
@@ -253,7 +373,7 @@ by a few 100 MD time steps.
 
 \subsubsection{Details on usage and an example}
 
-The parallel tempering code has to be loaded explicitely by {\tt source
+The parallel tempering code has to be loaded explicitely by \texttt{source
   "scripts/parallel_tempering.tcl"} from the Espresso directory. To make use of the parallel
 tempering tool, one needs to implement three methods: the propagation, the energy calculation and
 an initialization routine for a configuration. A typical initialization routine will look roughly
@@ -271,7 +391,7 @@ proc init {id temp} {
 \end{verbatim}
 The last two lines are only necessary if each instance of \es{} handles more than one
 configuration, \eg if you have 300 temperatures, but only 10 \es{} processes
-(\ie {\tt -load 30}).  In this case, all
+(\ie \texttt{-load 30}).  In this case, all
 user provided routines need to save and restore the configurations. Saving the time is not
 necessary because the simulation tine across swaps is not meaningful anyways; it is however
 convenient for investigating the (temperature-)history of individual configurations.
@@ -324,7 +444,7 @@ parallel_tempering::main -connect $host -load 30 \
     -init init -swap swap -perform perform
 \end{verbatim}
 % make emacs happy: $
-Here, {\tt host} is a variable containing the TCP/IP hostname of the computer running the master
+Here, \texttt{host} is a variable containing the TCP/IP hostname of the computer running the master
 process. Note that the master process waits until enough processes have connected to start the
 simulation. In the example, there are 300 temperatures, and each process, including the master
 process, will deal with 30 of them. Therefore, 1 master and 9 slave processes are required. For a
@@ -340,7 +460,7 @@ for h in $HOSTS; do
   fi
 done
 \end{verbatim}
-where {\tt pt_test.tcl} passes the {\tt -connect} option on to {\tt parallel_tempering::main}.
+where \texttt{pt_test.tcl} passes the \texttt{-connect} option on to \texttt{parallel_tempering::main}.
 
 \subsubsection{Sharing data}
 
@@ -350,7 +470,7 @@ where {\tt pt_test.tcl} passes the {\tt -connect} option on to {\tt parallel_tem
 
 can be used at any time {\em by the master process} to specify additional data that is available on
 all processes of the parallel_tempering simulation. The data is accessible from all processes as
-{\tt parallel_tempering::shareddata}.
+\texttt{parallel_tempering::shareddata}.
 
 \section{Metadynamics}
 \newescommand[metadynamics]{metadynamics}
@@ -360,10 +480,10 @@ all processes of the parallel_tempering simulation. The data is accessible from 
   \variant{2} metadynamics set off
   \variant{3} metadynamics set distance \var{pid_1} \var{pid_2} \
   \var{d_\mathrm{min}} \var{d_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{4} metadynamics set relative_z \var{pid_1} \var{pid_2} \
   \var{z_\mathrm{min}} \var{z_\mathrm{max}} \var{b_\mathrm{height}} \
-  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}}
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}} \var{numrelaxationsteps}
   \variant{5} metadynamics print_stat current_coord
   \variant{6} metadynamics print_stat coord_values
   \variant{7} metadynamics print_stat profile
@@ -403,7 +523,8 @@ force (or free energy profile) can be extracted by reading the
 \item[\var{f_\mathrm{bound}}] strength of the ramping force at the
   boundaries of the reaction coordinate interval.
 \item[\var{d_\mathrm{bins}}, \var{z_\mathrm{bins}}]: number of bins of
-  the reaction coordinate.
+  the reaction coordinate. This is only used for the numerical evaluation of the bias function.
+\item[\var{numrelaxationsteps}] number of relaxation steps before setting a new hill. 
 \item[\var{profile\_list}] Tcl list of a previous metadynamics
   profile.
 \item[\var{force\_list}] Tcl list of a previous metadynamics force.
@@ -463,6 +584,101 @@ The bias functions that are applied to the potential of mean force and
 the biased force are not gaussian function (as in many metadynamics
 codes) but so-called Lucy functions. See \cite{marsili09} for more
 details. These avoid the calculation of exponentials.
+
+\section{\texttt{integrate_sd}: Running a stokesian dynamics simulation}
+\newescommand[integrate-sd]{integrate_sd}
+
+\begin{essyntax}
+  \variant{1} integrate_sd \var{steps}
+\end{essyntax}
+
+\es uses in the stokesian dynamics algorithm  the euler integrater for the
+equations of motion. The motion are overdamped. The velocities of the
+particles are related to the displacement in the last timestep. This are, at
+least if the system is thermalized, however not usefull, as the displacements
+don't scale linear with the timestep. The command \texttt{integrate_sd} with
+an integer \var{steps} as parameter integrates the system for
+\var{steps} time steps. This is implemented using CUDA, so \required{CUDA}
+has to be available in the system.
+
+Currently there is no parallel implementation of this integrator, so all
+particles have to be in a single process.
+
+\subsection{Setting up the system}
+Before running a stokesian dynamics simulation, you have to set a view
+constants:
+\begin{globvar}
+\item[sd_radius] The hydrodynamic particle radius of the (sperical)
+  particles. Only one particle size is supported.
+\item[sd_viscosity] The viscisity of the fluid. Remember this is only a
+  scaling of the timestep, so you can set it without problems to one.
+\item[sd_seed] (int[2]) seed of the Stokes Dynamics random number generator.
+  As the generator used for the SD runes on the GPU (cuRAND) it has its own
+  seed and own state.
+\item[sd_random_state] (int[2]) offset of the random number
+  generator. Together with the seed, the state of the random number generator
+  is well defined.
+\item[sd_precision_random] (double) precision used for the approximation of
+  the square root of the mobility. Sometimes higher accuracy can speedup the
+  simulation.
+\end{globvar}
+
+Make sure to only use the stokesian dynamics thermostat. If you made a warmup
+integration without SD, set it with:
+\begin{tclcode}
+thermostat off
+thermostat sd \$temp
+\end{tclcode}
+
+\subsection{Periodicity}
+The Code uses the ewald-summation (as derived in \cite{beenakker86a}) of the
+Rotne-Prager tensor to be usefull in periodic boundary conditions. To disable
+the peridoicity of the hydrodynamic, use the feature
+\feature{SD_NOT_PERIODIC}. 
+
+The ewald summation is required if the system is periodic, as otherwise an
+cutoff is introduced, which can lead to negative eigenvalues of the
+mobility. This leads to a break down of the code, as it is not possible to
+thermalize such a system.
+
+\subsection{Floatingpoint precision}
+It is possible to switch between double and float as datatype in Stokesian
+Dynamics. As GPUs have more single than double precision floating point
+units, the single precision is faster. However this can lead to problems, if
+the eigenvalues are not precise enough and get negative. Therfore the default
+is double precision. If you want to use single precision, use the feature
+\feature{SD_USE_FLOAT}.
+
+\subsection{Farfield only}
+The mobility matrix consists of two contribution, the farfield and the
+nearfield lubrication correction.
+If the nearfield is neglegible, than the feature \feature{SD_FF_ONLY} can be
+used.
+This should speedup the simulation, as the nearfield doesn't need to be
+inverted. Additional the thermal displacements can be directly calculated.
+
+\section{Multi-timestepping}
+\newescommand[multitimestepping]{multitimestepping}
+
+\begin{essyntax}
+  setmd smaller\_time\_step 0.001 \\
+  part $i$ smaller\_timestep 1
+
+  Required features: MULTI\_TIMESTEP
+\end{essyntax}
+
+The multi-timestepping integrator allows to run two concurrent integration time
+steps within a simulation, associating beads with either the large
+\var{time\_step} or the other \var{smaller\_time\_step}.  Setting
+\var{smaller\_time\_step} to a positive value turns on the multi-timestepping
+algorithm.  The ratio \var{time\_step}/\var{smaller\_time\_step} \emph{must} be
+an integer.  Beads are by default associated with \var{time\_step},
+corresponding to the particle property \var{smaller\_timestep} 0.  Setting
+\var{smaller\_timestep} to 1 associate the particle to the
+\var{smaller\_time\_step} integration.  The integrator can be used in the NVE
+ensemble, as well as with the Langevin thermostat and the modified Andersen
+barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
+more details.
 
 %%% Local Variables: 
 %%% mode: latex

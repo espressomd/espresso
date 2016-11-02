@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -17,45 +17,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 EXTRA_DIST = \
-	background_errors.sh background_errors.awk \
+	gen_doxyconfig.py \
 	Doxyfile \
-        figs/bond_angle.fig \
-        figs/bond_angle.gif \
-        figs/datastorage.gif \
-        figs/dihedral_angle.fig \
-        figs/dihedral_angle.gif \
-        figs/dihedral_angle.pdf \
-        figs/directions.fig \
-        figs/directions.gif \
-        figs/elc_errordist.gif \
-        figs/ghost_cells.fig \
-        figs/ghost_cells.gif \
-        figs/ghost_communication.fig \
-        figs/ghost_communication.gif \
-        figs/linked_cells.fig \
-        figs/linked_cells.gif \
-        figs/logo.png \
-        figs/move_to_p_buf.fig \
-        figs/move_to_p_buf.gif \
-        figs/particles.fig \
-        figs/particles.gif
+	figs/bond_angle.fig \
+	figs/bond_angle.gif \
+	figs/datastorage.gif \
+	figs/dihedral_angle.fig \
+	figs/dihedral_angle.gif \
+	figs/dihedral_angle.pdf \
+	figs/directions.fig \
+	figs/directions.gif \
+	figs/elc_errordist.gif \
+	figs/ghost_cells.fig \
+	figs/ghost_cells.gif \
+	figs/ghost_communication.fig \
+	figs/ghost_communication.gif \
+	figs/linked_cells.fig \
+	figs/linked_cells.gif \
+	figs/logo.png \
+	figs/move_to_p_buf.fig \
+	figs/move_to_p_buf.gif \
+	figs/particles.fig \
+	figs/particles.gif
 
 .PHONY: doc doxygen
 doc: doxygen
 
 if HAVE_DOXYGEN
 if HAVE_PYTHON
-background_errors.dox:
-	$(AM_V_GEN)SRCDIR=$(srcdir) AWK=$(AWK) \
-	  $(SHELL) $(srcdir)/background_errors.sh \
-	    $(top_srcdir)/src/*.cpp $(top_srcdir)/src/*.hpp \
-	    $(top_srcdir)/src/tcl/*.cpp $(top_srcdir)/src/tcl/*.hpp
-
 doxy-features:
-	$(AM_V_GEN)$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py \
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/gen_doxyconfig.py \
 	  $(top_srcdir)/src/features.def doxy-features
 
-doxygen-html: background_errors.dox doxy-features
+doxygen-html: doxy-features
 	$(AM_V_GEN)\
 	ESPRESSO_VERSION=`cd $(top_srcdir); sh config/genversion.sh` \
 	PACKAGE="ESPResSo $$ESPRESSO_VERSION" \
@@ -84,6 +78,5 @@ doxygen:
 
 endif
 
-MOSTLYCLEANFILES = background_errors.doxygen background_errors.sorted background_errors.unsorted
 clean-local:
 	-rm -rf html

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -21,10 +21,11 @@
 /** \file statistics_wallstuff_tcl.cpp
     This is the place for analysis (so far...).
 */
-#include "parser.hpp"
 #include "statistics_wallstuff_tcl.hpp"
-#include "../statistics_wallstuff.hpp"
-#include "../statistics.hpp"
+
+#include "parser.hpp"
+#include "statistics_wallstuff.hpp"
+#include "statistics.hpp"
 
 int tclcommand_analyze_wallstuff(Tcl_Interp *interp, int argc, char **argv)
 {
@@ -195,11 +196,11 @@ int tclcommand_analyze_wallstuff(Tcl_Interp *interp, int argc, char **argv)
     calc_wallbondyz(g.e, bin, rclocal, rmax, rbins);
     break;
   case SCALE:
-    realloc_doublelist(&g, g.n = 3*pow(4,boxes));
+    realloc_doublelist(&g, g.n = 3*pow(4.0,boxes));
     calc_scaling (g.e,bin, boxes, rclocal);
     break;
   case SCALE2:
-    realloc_doublelist(&g, g.n = 14*pow(4,boxes));
+    realloc_doublelist(&g, g.n = 14*pow(4.0,boxes));
     calc_scaling2 (g.e,bin, boxes, rclocal);
     break;
   case PRINT:

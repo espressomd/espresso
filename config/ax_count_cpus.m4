@@ -15,6 +15,7 @@
 #
 # LICENSE
 #
+#   Copyright (C) 2014 The ESPResSo project
 #   Copyright (c) 2012 Brian Aker <brian@tangent.org>
 #   Copyright (c) 2008 Michael Paul Bailey <jinxidoru@byu.net>
 #   Copyright (c) 2008 Christophe Tournayre <turn3r@users.sourceforge.net>

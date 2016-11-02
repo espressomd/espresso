@@ -1,5 +1,6 @@
 #!/bin/bash --login 
-# Copyright (C) 2013 Olaf Lenz
+# Copyright (C) 2013 Olaf Lenz,
+# Copyright (C) 2014, 2015 The Espresso Project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -18,8 +19,9 @@ start "CONFIGURE"
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="false"
+[ -z "$with_h5md" ] && with_h5md="true"
 outp configure_params configure_vars with_cuda with_mpi with_fftw \
-    with_tcl with_python_interface
+    with_tcl with_python_interface with_h5md
 
 # change into build dir
 pushd $builddir
@@ -31,6 +33,12 @@ if $with_mpi; then
     configure_params="--with-mpi $configure_params"
 else
     configure_params="--without-mpi $configure_params"
+fi
+
+if $with_h5md; then
+    configure_params="--with-h5md $configure_params"
+else
+    configure_params="--without-h5md $configure_params"
 fi
 
 CUDA_HEADER=$srcdir/src/cuda.h

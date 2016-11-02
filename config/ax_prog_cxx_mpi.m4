@@ -44,6 +44,7 @@
 #
 # LICENSE
 #
+#   Copyright (C) 2014 The ESPResSo project
 #   Copyright (c) 2010,2011 Olaf Lenz <olenz@icp.uni-stuttgart.de>
 #
 #   This program is free software: you can redistribute it and/or modify it

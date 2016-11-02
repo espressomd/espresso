@@ -1,4 +1,4 @@
-% Copyright (C) 2012,2013 The ESPResSo project
+% Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -54,8 +54,11 @@ as input for the core analysis. See more below.
 \subsection{Introduction}
 The first step of the core analysis is to tell \es to create an observable.
 An observable in the sense of the core analysis can be considered as 
-a rule how to compute a certain set of numbers from a given state of the system.
-It does not refer to the numbers itself.
+a rule how to compute a certain set of numbers from a given state of the system
+or a role how to collect data from other observables. Any observable
+is represented as a single array of double values. Any more complex
+shape (tensor, complex number, \ldots) must be compatible to this
+prerequisite. Every observable however documents the storage order.
 
 Creating an observable means just allocating the corresponding memory, assigning a function 
 to compute the observable value and reserving an \var{id} which will be used to refer 
@@ -66,7 +69,10 @@ the \var{id} of a core-observable can be passed to another analysis function.
 The observable value is computed from the current state of the system
 at the moment when it is needed, \ie when requested explicitly by the 
 user calling the \verb!observable print! function or when requested
-automatically by some other analysis function.
+automatically by some other analysis function. Updating is an orthogonal 
+concept: Observables that collect data over time (e.g. the average observable)
+need to be updated regularly, even though their current value is not
+of interest. 
 
 Not all observables are implemented in parallel. When performing a parallel
 computation, too frequent updates to observables which are not implemented
@@ -90,6 +96,8 @@ define a group of particles, from which the observable should be calculated.
 They are generic to all observables and are described after the list of observables.
 
 \todo{Missing descriptions of parameters of several observables}
+Here are the observables, that only depend on the current state of the simulation
+system:
   \begin{itemize}
     \item \lit{particle_positions} \var{particle\_specifications}\\
           Positions of the particles, in the format 
@@ -100,6 +108,13 @@ They are generic to all observables and are described after the list of observab
           $v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
           \dots\ v^x_n,\ v^y_n,\ v^z_n$. 
           The particles are ordered ascending according to their ids.
+    \item \lit{particle_body_velocities} \var{particle\_specifications}\\
+          Velocities of the particles in the body frame, in the format\\ 
+          $v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
+          \dots\ v^x_n,\ v^y_n,\ v^z_n$. 
+          The particles are ordered ascending according to their ids. This
+          command only produces a meaningful result when \texttt{ROTATIONS}
+          is compiled in.
     \item \lit{particle_forces} \var{particle\_specifications}\\
           Forces on the particles, in the format\\ 
           $f^x_1,\ f^y_1,\ f^z_1,\ f^x_2,\ f^y_2,\ f^z_2,\ 
@@ -111,6 +126,12 @@ They are generic to all observables and are described after the list of observab
           \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
           The particles are ordered ascending according to their ids and the 
           angular velocity/momentum is specified in the laboratory frame.
+    \item \lit{particle_body_angular_momentum} \var{particle\_specifications}\\
+          Angular momenta (omega) of the particles, in the format\\ 
+          $\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
+          \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
+          The particles are ordered ascending according to their ids and the 
+          angular velocity/momentum is specified in the body (co-rotating) frame.
     \item \lit{com_position} \var{particle\_specifications} \opt{blocked \var{size}}\\
           Position of the centre of mass. 
           If \lit{blocked \var{size}} is specified,
@@ -156,6 +177,12 @@ They are generic to all observables and are described after the list of observab
           The dipole moment of the specified group of particles:
           $\mu^x = \sum_i q_i r_i^x$
           Required feature: \required{ELECTROSTATICS}
+    \item \lit{com_dipole_moment} \var{particle\_specifications}\\
+          Total dipole moment of the specified group of particles:
+          $\mu^x = \sum_i d_i^x$
+          where $d_i^x$ is an intrinsic dipole moment of the
+          individual $i$-th particle.
+          Required feature: \required{DIPOLES}
 %    \item \lit{structure_factor} \var{order} \var{particle\_specifications}\\
 %          Structure factor of the specified particles. Meaning of the parameter
 %          \var{order} and the output formate are the same as 
@@ -173,7 +200,9 @@ They are generic to all observables and are described after the list of observab
     \item \lit{density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the density profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-
+\item \lit{force_density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
+          Compute the force density profile within the specified cube.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
     \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the Lattice-Boltzmann velocity profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
@@ -190,20 +219,98 @@ They are generic to all observables and are described after the list of observab
     \item \lit{lb_radial_velocity_profile} \\
         Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{rdf} \var{type\_list type\_list [r\_min [r\_max [n\_bins]]]}\\
+        Compute the radial distribution function, see \ref{analyze:rdf}.
+    \item \lit{structure_factor} \var{order}\\
+        Compute the structure factor. Remember it scales as order$^3$, see \ref{analyze:structurefactor}.
+	\item \lit{radial_density_distribution} \var{type <type> minr <minr>}\verb!\! \\
+		\var{maxr <maxr> rbins <rbins> ( start\_point <X> <Y> <Z>}\verb!\!\\
+		\var{end\_point <X> <Y> <Z> | id\_start\_point <id> id\_end\_point <id> )} \\
+		Computes the radial density distribution for particles of the given type around the axis
+		given either as fixed positions or as particle ids. The binning is done
+		between \verb!minr! and \verb!maxr! with \verb!rbins!. 
+	\item \lit{spatial_polymer_property} \var{(ids <id\_list> | type <type>) N
+		<Npoly>} \\
+		Calculates the mean charge along \verb!Npoly! weak polyelectrolytes of the \emph{same}
+		length. The particles can be specified as a list of particle ids or through
+		the particle type. The result will be the average charge during the
+		simulation in dependence of the monomer ranking number, \ie{} its position on
+		the chain. 
+	\item \lit{persistence_length} \var{ids <id\_list> max\_d <max\_d> cut\_off
+		<cut\_off>} \\
+		Calculates the persistence length based on the bond vector angle correlation of the given polymer specified through the
+		\verb!id_list!. \verb!max_d! is the maximum distance (in terms of particles) for
+		which the correlation is computed. With \verb!cut_off! the number of
+		particles at the polymer ends that are ignored for the calculation, can be
+		specified. The observable will not calculate the actual persistence length
+		but the correlation function of the bond angles. 
+		\begin{equation}
+			\mathrm{Obs}(i) =\mathrm{Norm\_const} \langle \sum_j \frac{(\vec{r}_j - \vec{r}_{j+1})
+			(\vec{r}_{j+i}-\vec{r}_{j+i+1})}{|\vec{r}_j-\vec{r}_{j+1}||\vec{r}_{i+j}-\vec{r}_{i+j+1}|}\rangle 
+		\end{equation}
+	\item \lit{polymer_pair_correlation} \var{ids <id\_list> maxr <maxr> minr <minr>
+		k <k>}\verb!\!\\
+		\var{rbins <rbins> N <Npoly> poly\_len <poly\_len>} \\
+		Computes the pair correlation of particles on a polymer chain given through
+		the \verb!id_list!, here \verb!k! is the distance (in terms of particles) between
+		the mononers on the chain for which the pair correlation is computed. This
+		is averaged over the whole chain and all the given chains. The number of
+		polymers for which this distribution is computed has to be given as
+		\verb!Npoly! and their length through \verb!poly_len!. The distribution is
+		calculated for distances between \verb!minr! and \verb!maxr! with
+		\verb!rbins!. 
+		\begin{equation}
+			\mathrm{Obs}(r) = \mathrm{Norm\_const} \langle \sum_{j=0,
+			j+=k}^{j<\mathrm{poly\_len} - k} \delta(r - |\vec{r}_j -
+			\vec{r}_{j+k}|)\rangle
+		\end{equation}
+      \end{itemize}
+The tclcommand observable is a helpful tool, that allows to make the 
+analysis framework much more versatile, by allowing
+the evaluation of arbitrary tcl commands.
+  \begin{itemize}
     \item \lit{tclcommand \var{dimQ} \var{command}} \\
         An arbitrary Tcl function that returns a list of floating point numbers of fixed size
         \var{dimQ} can be specified. Although its execution might be slow, it allows 
         to prototype new observables without a lot of trouble.
         Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
+The following commands allow to collect data automatically over time
+once their autoupdate feature is enabled.
 
+  \begin{itemize}
+    \item \lit{average \var{ref}} \\
+      The running average of the reference observable with id \var{ref}. 
+      It can be resetted by \lit{observable \var{no} reset}
+  \end{itemize}
 \subsection{Printing an observable}
 \begin{essyntax}
-observable \var{id} print \opt{formatted}
+observable \var{id} print \opt{no_calculation} \opt{formatted}
 \end{essyntax}
 Prints the value of the observable with a given $id$. If the observable
-refers to the current state of the system, its value is updated before printing.
+refers to the current state of the system, its value is updated before printing, except
+if \lit{no_calculation} is given.
 \todo{Formatted printing is not fully supported yet.}
+
+\subsection{Checkpointing observables}
+\begin{essyntax}
+observable \var{id} write_checkpoint \var{filename} \opt{binary}
+\end{essyntax}
+Writes the current state of the observable to \lit{filename}.
+If \lit{binary} is given then it does so in binary form. This is useful
+to save the state of statful observables as the average.
+This checkpoing mechanism is not portable, rereading is only guaranteed to work
+on the same system with the same Espresso binary.
+
+\begin{essyntax}
+observable \var{id} read_checkpoint \var{filename} \opt{binary}
+\end{essyntax}
+Reads the state of the observable from a checkpoint file. The observable
+has to be configured beforehand in the script in exactly the same way
+as it was when the checkpoint was written. That means that the configuration
+of the observable -- including possible particle and profile specifications -- is not saved in the file
+but has to be provided by the user. Please be aware that the value of observables that refer to the
+current state of the system are overwritten by the \lit{print} command except if the option \lit{no_calculation} is given.
 
 \subsection{Passing an observable to an analysis function}
 Currently the only analysis function which uses the core observables
@@ -373,8 +480,11 @@ Its further arguments are described below.
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
     (for each component separately).
+    \item \lit{tensor_product} \\
+    Tensor product of $A$ and $B$, \ie $C_{i \cdot l_B + j} = A_i B_j$, with $l_B$ the length of $B$.
     \item \lit{complex_conjugate_product}
-    \item \lit{fcs_acf} \var{w_x}\var{w_y} \var{w_z} \\
+    \todo{Complex conjugate product must be defined.}
+    \item \lit{fcs_acf} \var{w_x} \var{w_y} \var{w_z} \\
     Fluorescence Correlation Spectroscopy (FCS) autocorrelation function, \ie
     \begin{equation}
     G_i(\tau) = \frac{1}{N} \Bigl< \exp \Bigl( - \frac{\Delta x_i^2(\tau) }{w_x^2} - \frac{\Delta y_i^2(\tau)}{w_y^2} - \frac{\Delta z_i^2(\tau)}{w_z^2} \Bigr) \Bigr>\,,
@@ -386,7 +496,7 @@ Its further arguments are described below.
     \begin{equation}
     W(x,y,z) = I_0 \exp \Bigl( - \frac{2x^2}{w_x^2} - \frac{2y^2}{w_y^2} - \frac{2z^2}{w_z^2} \Bigr)\,.
     \end{equation}
-    Equation~\ref{eq:Gtau} is a generalization of the formula presented by 
+    Equation~\eqref{eq:Gtau} is a generalization of the formula presented by 
     H\"ofling \etal~\cite{hofling11a}. For more information, see references therein.
     Per each 3 dimensions of the observable, one dimension of the correlation output
     is produced. If \lit{fcs_acf} is used with other observables than 
@@ -410,7 +520,7 @@ Its further arguments are described below.
   in tau.  This is a parameter of the multiple tau correlator. If you
   want to use it, make sure that you know how it works. By default, it
   is set equal to \var{tau\_max} which results in the trivial linear
-  correlator. By setting \var{tau\_lin} < \var{tau\_max} the multiple
+  correlator. By setting \var{tau\_lin} $<$ \var{tau\_max} the multiple
   tau correlator is switched on. In many cases, \var{tau\_lin}=16 is a
   good choice but this may strongly depend on the observables you are
   correlating.  For more information, we recommend to read
@@ -478,7 +588,7 @@ is updated immediately. Higher levels are
 updated only when the lower level buffers are filled and
 there is a need to push some values one level up. When the
 updating is stopped, a number of observable values have not
-reached the higher level, especially when \var{tau_max} 
+reached the higher level, especially when \var{tau\_max} 
 is comparable to the total simulation time
 and if there are many compression levels. In such case,
 variant \variant{3} is very useful. If \var{tau\_max} 
@@ -549,9 +659,9 @@ for the special case of the velocity autocorrelation function.
 \end{figure}
 
 Let us consider a set of $N$ observable values as schematically shown
-in Figures~\ref{fig:dataSet}, where a value of index $i$ was measured
+in figure~\ref{fig:dataSet}, where a value of index $i$ was measured
 in time $i\delta t$. We are interested in computing the correlation 
-function according to Equation~\ref{eq:CtauDef} for a range lag times
+function according to equation~\eqref{eq:corr.def} for a range lag times
 $\tau = (i-j)\delta t$ between the measurements $i$ and $j$.
 To simplify the notation, we further drop $\delta t$
 when referring to observables and lag times. 
@@ -618,3 +728,43 @@ different contributions cancel each other. On the other hand, in the
 of the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref.~\cite{ramirez10a}.
+
+
+\subsection{Checkpointing the correlator}
+It is possible to checkpoint the correlator. Thereby the data is written
+directly to a file. It may be usefull to write to a binary file, as this
+preserves the full bit-value of the variables, whereas the text file 
+representation has a lower accuracy.
+
+\begin{essyntax}
+\variant{1} correlation \var{id} write_checkpoint_binary \var{filename}
+\variant{2} correlation \var{id} write_checkpoint_ascii \var{filename}
+\end{essyntax}
+
+In order to load a checkpoint, the correlator has to be initialized. Therefore
+the observable(s) have to be created. Make sure that the correlator is exactly
+initilized as it was when the checkpoint was created. If this is not
+fullfilled, and e.g. the size of an observable has changed, loading the
+checkpoint failes.
+\begin{essyntax}
+\variant{1} correlation \var{id} read_checkpoint_binary \var{filename}
+\variant{2} correlation \var{id} read_checkpoint_ascii \var{filename}
+\end{essyntax}
+Depending on whether the checkpoint was written as binary or as text, the
+corresponding variant for reading the checkpoint has to be used.
+
+An simple example for checkpointing:
+\begin{tclcode}
+set pp  [observable new particle_positions all]
+set cor1 [correlation new obs1 $pp corr_operation square_distance_componentwise \
+dt 0.01 tau_max 1000 tau_lin 16]
+integrate 1000
+correlation $cor1 write_checkpoint_binary "cor1.bin"
+\end{tclcode}
+And then to continue the simulation:
+\begin{tclcode}
+set pp  [observable new particle_positions all]
+set cor1 [correlation new obs1 $pp corr_operation square_distance_componentwise \
+dt 0.01 tau_max 1000 tau_lin 16]
+correlation $cor1 read_checkpoint_binary "cor1.bin"
+\end{tclcode}

@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,9 +16,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 EXTRA_DIST = \
-	gen_featureconfig.py \
 	gen_sampleconfig.py \
-	gen_doxyconfig.py \
-	gen_pxiconfig.py \
-	featuredefs.py \
 	genversion.sh

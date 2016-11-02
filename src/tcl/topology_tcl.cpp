@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,14 +26,12 @@
  *  For more information see topology.hpp
  *   */
 
-//#include "utils.hpp"
 #include "parser.hpp"
 #include "topology.hpp"
 #include "statistics_chain_tcl.hpp"
 #include "particle_data.hpp"
-//#include "cells.hpp"
 #include "communication.hpp"
-//#include "molforces.hpp"
+#include "topology_tcl.hpp"
 
 int tclcommand_analyze_set_print_all(Tcl_Interp *interp)
 {
@@ -67,11 +65,12 @@ int tclcommand_analyze_parse_generic_structure(Tcl_Interp *interp, int argc, cha
     }
     topology[arg].type = il.e[0];
     realloc_intlist(&topology[arg].part, topology[arg].part.n = il.n - 1);
-    memcpy(topology[arg].part.e, &il.e[1], (il.n - 1)*sizeof(int));
+    memmove(topology[arg].part.e, &il.e[1], (il.n - 1)*sizeof(int));
   }
   realloc_intlist(&il, 0);
-
-  return TCL_OK;
+  
+  
+  return tclcommand_analyze_set_parse_topo_part_sync(interp);
 }
 
 int tclcommand_analyze_set_parse_topo_part_sync(Tcl_Interp *interp) {
@@ -238,7 +237,7 @@ int tclcommand_analyze_set_parse_trapmol(Tcl_Interp *interp, int argc, char **ar
   realloc_doublelist(&trap_center,0);
   realloc_intlist(&trap_coords,0);
   realloc_intlist(&noforce_coords,0);
-  return TCL_OK;
+  return tclcommand_analyze_set_parse_topo_part_sync(interp);
   
 }
 

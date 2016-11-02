@@ -1,4 +1,5 @@
-# Copyright (C) 2013 Olaf Lenz
+# Copyright (C) 2016 The ESPResSo project
+# Copyright (C) 2013,2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
 #
@@ -16,18 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AM_CPPFLAGS = -I$(top_srcdir)/src
-if MPI_FAKE
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpifake
-endif
+EXTRA_DIST =
+CLEANFILES =
+AM_CPPFLAGS = -I$(top_srcdir)/src/core -I$(top_srcdir)/src -I$(builddir)/../core
 AM_DEFAULT_SOURCE_EXT = .cpp
 
-noinst_LTLIBRARIES = libEspressoTcl.la
+lib_LTLIBRARIES = libEspressoTcl.la
 libEspressoTcl_la_SOURCES = \
+	TclOutputHelper.hpp \
 	bin_tcl.cpp \
 	binary_file_tcl.cpp binary_file_tcl.hpp \
 	blockfile_tcl.cpp \
+	h5mdfile_tcl.cpp h5mdfile_tcl.hpp \
+	rotate_system_tcl.cpp rotate_system_tcl.hpp \
+	readpdb_tcl.cpp \
 	cells_tcl.cpp \
+	cells_tcl.hpp \
 	channels_tcl.cpp \
 	collision_tcl.cpp \
 	comfixed_tcl.cpp comfixed_tcl.hpp \
@@ -36,17 +41,19 @@ libEspressoTcl_la_SOURCES = \
 	constraint_tcl.cpp constraint_tcl.hpp \
 	domain_decomposition_tcl.cpp domain_decomposition_tcl.hpp \
 	electrokinetics_tcl.cpp electrokinetics_tcl.hpp \
+	external_potential_tcl.cpp external_potential_tcl.hpp \
 	energy_tcl.cpp \
 	galilei_tcl.cpp galilei_tcl.hpp \
 	global_tcl.cpp global_tcl.hpp \
 	grid_tcl.cpp grid_tcl.hpp \
 	iccp3m_tcl.cpp iccp3m_tcl.hpp \
 	imd_tcl.cpp \
-	initialize_interpreter.cpp \
+	initialize_interpreter.cpp initialize_interpreter.hpp \
 	integrate_tcl.cpp integrate_tcl.hpp \
 	interaction_data_tcl.cpp interaction_data_tcl.hpp \
 	lb-boundaries_tcl.cpp lb-boundaries_tcl.hpp \
 	lb_tcl.cpp lb_tcl.hpp \
+	lees_edwards_tcl.cpp lees_edwards_tcl.hpp \
 	metadynamics_tcl.cpp metadynamics_tcl.hpp \
 	nemd_tcl.cpp \
 	mol_cut_tcl.cpp mol_cut_tcl.hpp \
@@ -65,17 +72,22 @@ libEspressoTcl_la_SOURCES = \
 	statistics_wallstuff_tcl.cpp statistics_wallstuff_tcl.hpp \
 	statistics_tcl.cpp statistics_tcl.hpp \
 	thermostat_tcl.cpp thermostat_tcl.hpp \
-	topology_tcl.cpp \
+	topology_tcl.cpp topology_tcl.hpp \
 	tuning_tcl.cpp \
 	uwerr_tcl.cpp \
 	virtual_sites_com_tcl.cpp virtual_sites_com_tcl.hpp \
 	ghmc_tcl.cpp ghmc_tcl.hpp \
-	cg_dna_tcl.hpp cg_dna_tcl.cpp
+	twist_stack_tcl.hpp twist_stack_tcl.cpp \
+	hydrogen_bond_tcl.hpp hydrogen_bond_tcl.cpp \
+	minimize_energy_tcl.cpp minimize_energy_tcl.hpp \
+	integrate_sd_tcl.cpp integrate_sd_tcl.hpp \
+	mpiio_tcl.cpp mpiio_tcl.hpp
 
 # nonbonded potentials and forces
 libEspressoTcl_la_SOURCES += \
 	bmhtf-nacl_tcl.cpp bmhtf-nacl_tcl.hpp \
 	buckingham_tcl.cpp buckingham_tcl.hpp \
+	cos2_tcl.cpp cos2_tcl.hpp \
 	dpd_tcl.cpp dpd_tcl.hpp \
 	forcecap_tcl.cpp forcecap_tcl.hpp \
 	gaussian_tcl.cpp gaussian_tcl.hpp \
@@ -89,10 +101,12 @@ libEspressoTcl_la_SOURCES += \
 	ljgen_tcl.cpp ljgen_tcl.hpp \
 	morse_tcl.cpp morse_tcl.hpp \
 	soft_sphere_tcl.cpp soft_sphere_tcl.hpp \
+	object-in-fluid/affinity_tcl.cpp \
+	object-in-fluid/affinity_tcl.hpp \
+	object-in-fluid/membrane_collision_tcl.cpp object-in-fluid/membrane_collision_tcl.hpp \
 	steppot_tcl.cpp steppot_tcl.hpp \
 	tab_tcl.cpp tab_tcl.hpp \
-	tunable_slip_tcl.cpp tunable_slip_tcl.hpp \
-	harmonic_force_tcl.cpp harmonic_force_tcl.hpp
+	tunable_slip_tcl.cpp tunable_slip_tcl.hpp
 
 # bonded potentials and forces
 libEspressoTcl_la_SOURCES += \
@@ -104,21 +118,25 @@ libEspressoTcl_la_SOURCES += \
 	dihedral_tcl.cpp dihedral_tcl.hpp \
 	endangledist_tcl.cpp endangledist_tcl.hpp \
 	fene_tcl.cpp fene_tcl.hpp \
+	harmonic_dumbbell_tcl.cpp harmonic_dumbbell_tcl.hpp \
 	harmonic_tcl.cpp harmonic_tcl.hpp \
+	quartic_tcl.cpp quartic_tcl.hpp \
+	bonded_coulomb_tcl.cpp bonded_coulomb_tcl.hpp \
 	overlap_tcl.cpp overlap_tcl.hpp \
 	subt_lj_tcl.cpp subt_lj_tcl.hpp \
-	object-in-fluid/area_force_local_tcl.cpp \
-	object-in-fluid/area_force_local_tcl.hpp \
-	object-in-fluid/area_force_global_tcl.cpp \
-	object-in-fluid/area_force_global_tcl.hpp \
-	object-in-fluid/bending_force_tcl.cpp \
-	object-in-fluid/bending_force_tcl.hpp \
-	object-in-fluid/stretching_force_tcl.cpp \
-	object-in-fluid/stretching_force_tcl.hpp \
-	object-in-fluid/stretchlin_force_tcl.cpp \
-	object-in-fluid/stretchlin_force_tcl.hpp \
-	object-in-fluid/volume_force_tcl.cpp \
-	object-in-fluid/volume_force_tcl.hpp
+	umbrella_tcl.cpp umbrella_tcl.hpp \
+	object-in-fluid/oif_global_forces_tcl.cpp \
+	object-in-fluid/oif_global_forces_tcl.hpp \
+	object-in-fluid/oif_local_forces_tcl.cpp \
+	object-in-fluid/oif_local_forces_tcl.hpp \
+	object-in-fluid/out_direction_tcl.cpp \
+	object-in-fluid/out_direction_tcl.hpp \
+	immersed_boundary/ibm_triel_tcl.cpp \
+	immersed_boundary/ibm_triel_tcl.hpp \
+	immersed_boundary/ibm_volume_conservation_tcl.cpp \
+	immersed_boundary/ibm_volume_conservation_tcl.hpp \
+	immersed_boundary/ibm_tribend_tcl.cpp \
+	immersed_boundary/ibm_tribend_tcl.hpp
 
 # Coulomb methods
 libEspressoTcl_la_SOURCES += \
@@ -132,6 +150,14 @@ libEspressoTcl_la_SOURCES += \
 	p3m_tcl.cpp p3m_tcl.hpp \
 	reaction_field_tcl.cpp reaction_field_tcl.hpp \
 	mdlc_correction_tcl.cpp mdlc_correction_tcl.hpp	
+
+# Generic actors
+libEspressoTcl_la_SOURCES += \
+	actor/Mmm1dgpu_tcl.cpp actor/Mmm1dgpu_tcl.hpp \
+	actor/Ewaldgpu_tcl.cpp actor/Ewaldgpu_tcl.hpp \
+	actor/DipolarDirectSum_tcl.cpp actor/DipolarDirectSum_tcl.hpp \
+	actor/HarmonicWell_tcl.cpp actor/HarmonicWell_tcl.hpp \
+	actor/HarmonicOrientationWell_tcl.cpp actor/HarmonicOrientationWell_tcl.hpp
 
 if CUDA
 libEspressoTcl_la_SOURCES += cuda_init_tcl.cpp
@@ -147,12 +173,20 @@ endif
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
 Espresso_SOURCES = scriptsdir.cpp main.cpp
-Espresso_LDADD = libEspressoTcl.la ../libEspresso.la
+Espresso_LDADD = libEspressoTcl.la ../core/libEspresso.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\" $(AM_CPPFLAGS)
 Espresso_install_SOURCES = scriptsdir.cpp main.cpp
-Espresso_install_LDADD = libEspressoTcl.la ../libEspresso.la 
+Espresso_install_LDADD = libEspressoTcl.la ../core/libEspresso.la 
+
+# generate the Tcl library for the python interpreter
+if PYTHON_INTERFACE
+lib_LTLIBRARIES += libEspressoTcl4Py.la
+libEspressoTcl4Py_la_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\" $(AM_CPPFLAGS)
+libEspressoTcl4Py_la_SOURCES = scriptsdir.cpp
+libEspressoTcl4Py_la_LIBADD = libEspressoTcl.la
+endif
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
@@ -177,12 +211,17 @@ SUFFIXES=.cu
 cuda_verbose = $(cuda_verbose_@AM_V@)
 cuda_verbose_ = $(cuda_verbose_@AM_DEFAULT_V@)
 cuda_verbose_0 = @echo "  NVCC     $@";
-.cu.o:
+
+# nvcc does not allow for option MF for dependency generation, 
+# therefore make a separate run to generate dependencies
+# putting them into DEPDIR ensures configure creates empties dummies
+cuda_workaround.o: cuda_workaround.cu
 	$(cuda_verbose)$(NVCC) \
 		$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 		$(AM_NVCCFLAGS) $(NVCCFLAGS) -c -o $@ $<
 
-Espresso_SOURCES += cuda_workaround.cu
-Espresso_install_SOURCES += cuda_workaround.cu
+Espresso_LDADD += cuda_workaround.o
+Espresso_install_LDADD += cuda_workaround.o
+EXTRA_DIST += cuda_workaround.cu
 
 endif

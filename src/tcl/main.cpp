@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,15 +23,12 @@
 */
 /* first, since we need the TK define */
 #include "utils.hpp"
-#include <tcl.h>
 #ifdef TK
 #include <tk.h>
 #endif
+#include "initialize_interpreter.hpp"
 #include "initialize.hpp"
 #include "communication.hpp"
-
-// forward from initialize_interpreter.cpp
-int appinit(Tcl_Interp *interp);
 
 int main(int argc, char **argv)
 {
@@ -43,9 +40,9 @@ int main(int argc, char **argv)
   if (this_node == 0) {
     /* master node */
 #ifdef TK
-    Tk_Main(argc, argv, appinit);
+    Tk_Main(argc, argv, tcl_appinit);
 #else
-    Tcl_Main(argc, argv, appinit);
+    Tcl_Main(argc, argv, tcl_appinit);
 #endif
   }
   else {

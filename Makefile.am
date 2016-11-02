@@ -1,4 +1,4 @@
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -45,10 +45,21 @@ Espresso: version.txt
 endif
 endif
 
+if PYTHON_INTERFACE
+all-local: espresso-python pypresso
+espresso-python: FORCE
+	test -L espressomd || $(LN_S) src/python/espressomd espressomd
+pypresso: FORCE
+	test -L pypresso || $(LN_S) src/python/pypresso pypresso
+
+CLEANFILES += pypresso espresso
+endif
+
 # Sample myconfig generation
-myconfig-sample.hpp: 
+myconfig-sample.hpp:
 	./config.status myconfig-sample.hpp
-CLEANFILES += myconfig-sample.hpp
+DISTCLEANFILES = myconfig-sample.hpp
+
 # config.status deps in configure.ac
 
 # Handle version

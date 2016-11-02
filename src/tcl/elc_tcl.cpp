@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -39,14 +39,14 @@ int tclprint_to_result_ELC(Tcl_Interp *interp)
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   if (!elc_params.neutralize)
     Tcl_AppendResult(interp, " noneutralization", (char *) NULL);
-  if (elc_params.dielectric_contrast_on) {
-    Tcl_PrintDouble(interp, elc_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_mid, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_bot, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.space_layer, buffer);
+  if (elc_params.const_pot_on) {
+    Tcl_PrintDouble(interp, elc_params.pot_diff, buffer);
+    Tcl_AppendResult(interp, " capacitor ", buffer, (char *) NULL);
+  }
+  else if (elc_params.dielectric_contrast_on) {
+    Tcl_PrintDouble(interp, elc_params.di_mid_top, buffer);
+    Tcl_AppendResult(interp, " dielectric-contrasts ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, elc_params.di_mid_bot, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   }
   return TCL_OK;
@@ -58,10 +58,13 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
   double gap_size;
   double far_cut = -1;
   double top = 1, mid = 1, bot = 1;
+  double delta_top = 0, delta_bot = 0;
   int neutralize = 1;
+  double pot_diff = 0;
+  int const_pot_on = 0;
 
   if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
+    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>} <{dielectric <di_top> <di_mid> <di_bottom>} | {dielectric-contrasts <d1> <d2>} | {capacitor <dU>}> {noneutralization} expected, not \"",
 		     argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
   }
@@ -86,26 +89,47 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
 	argc--; argv++;
       }
       else if (argc >= 4 && ARG0_IS_S("dielectric")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
 	// just a dummy, not used, as it is only printed for information
 	// purposes. We need to calculate it
 	double space_layer_dummy;
 
 	if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
 	  return TCL_ERROR;
+        delta_top = (mid - top)/(mid + top);
+        delta_bot = (mid - bot)/(mid + bot);
 	argc -= 4; argv += 4;
 
 	if (argc > 0 && ARG_IS_D(4, space_layer_dummy)) {
 	  argc--; argv++;
 	}
       }
+      else if (argc >= 3 && ARG0_IS_S("dielectric-contrasts")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
+
+        if (!ARG_IS_D(1,delta_top) || !ARG_IS_D(2,delta_bot))
+	  return TCL_ERROR;
+        argc -= 3; argv += 3;
+      }
+      else if (argc >= 1 && ARG0_IS_S("capacitor")) {
+  	Tcl_AppendResult(interp, "There seems to be an error when using ELC with dielectric constrasts. If you are sure you want to use it, you have to deactivate this message manually. ", (char *)NULL);
+	return TCL_ERROR;
+	if (!ARG_IS_D(1,pot_diff))
+	   return TCL_ERROR;
+ 	argc -= 2; argv += 2;
+        const_pot_on = 1;
+	delta_top = -1; delta_bot = -1;
+      }
       else {
-	Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
-			 argv[0], "\"", (char *)NULL);
+	Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  <{dielectric <di_top> <di_mid> <di_bottom>} | {dielectric-contrasts <d1> <d2>} | {capacitor <dU>}> {noneutralization} expected, not \"", argv[0], "\"", (char *)NULL);
 	return TCL_ERROR;
       }
     }
   }
-  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot), "choose a 3d electrostatics method prior to ELC");
+  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, delta_top, delta_bot, const_pot_on, pot_diff),
+	      "choose a 3d electrostatics method prior to ELC");
 }
 
 #endif

@@ -26,20 +26,23 @@ BOND_CONSTRAINT
 MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
-COLLISION_DETECTION
+COLLISION_DETECTION             implies GHOST_FLAG, GHOSTS_HAVE_BONDS
+LEES_EDWARDS                    implies DPD
+LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 NEMD
-NPT 
+NPT
 GHMC
 CATALYTIC_REACTIONS
-
-HARMONICFORCE                   requires CUDA
+MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
+CONFIGTEMP
 
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
-BOND_CONSTRAINT	                requires not ROTATION
-ROTATION_PER_PARTICLE	        implies ROTATION
+BOND_CONSTRAINT                 requires not ROTATION
+ROTATION_PER_PARTICLE           implies ROTATION
 
 /* Adress */
 MOL_CUT                         implies VIRTUAL_SITES_COM
@@ -48,16 +51,23 @@ MOL_CUT                         implies VIRTUAL_SITES_COM
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
+MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
+EWALD_GPU                       requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT					requires CUDA and ELECTROSTATICS
+_P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
+
 
 /* Magnetostatics */
 DIPOLES
 DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM		requires CUDA
+DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES	                equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES	                equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
 VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
 THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
@@ -77,26 +87,38 @@ INTER_DPD
 /* Lattice-Boltzmann features */
 LB
 LB_GPU                          requires CUDA
-LB_BOUNDARIES	                implies LB, CONSTRAINTS
-LB_BOUNDARIES_GPU	        implies LB_GPU, CONSTRAINTS
-LB_ELECTROHYDRODYNAMICS	        implies LB
+LB_BOUNDARIES                   implies LB, CONSTRAINTS
+LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
+LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+EK_ELECTROSTATIC_COUPLING       implies ELECTROKINETICS, LB_GPU, ELECTROSTATICS
+EK_DEBUG                        requires ELECTROKINETICS
+EK_DOUBLE_PREC					requires ELECTROKINETICS
 LATTICE	                        equals LB or LB_GPU
-USE_TEMPORARY	                equals LB or LB_GPU
-SHANCHEN		        implies LB_GPU
-SHANCHEN 		        requires not ELECTROKINETICS
+SHANCHEN                        implies LB_GPU
+SHANCHEN                        requires not ELECTROKINETICS
+
+/* Stokesian-Dynamics features */
+BD
+SD 		      	        requires CUDA
+SD 		      	        requires ARPACK
+SD				implies BD
+SD_FF_ONLY			requires SD
+SD_USE_FLOAT			requires SD
+SD_NOT_PERIODIC			requires SD
 
 /* Interaction features */
 TABULATED
 LENNARD_JONES
 LJ_WARN_WHEN_CLOSE
-LENNARD_JONES_GENERIC
+LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS
 LJCOS2
 LJ_ANGLE
 LJGEN_SOFTCORE
+COS2
 GAY_BERNE
 SMOOTH_STEP
 HERTZIAN
@@ -106,12 +128,15 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-GAY_BERNE                       implies ROTATION
+UMBRELLA
+GAY_BERNE	            implies ROTATION
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
-AREA_FORCE_GLOBAL
-VOLUME_FORCE
+OIF_LOCAL_FORCES
+OIF_GLOBAL_FORCES
+AFFINITY
+MEMBRANE_COLLISION
 
 BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
@@ -121,31 +146,53 @@ BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
 BOND_ENDANGLEDIST
 BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 
-CG_DNA
+CG_DNA				implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
+TWIST_STACK
+HYDROGEN_BOND
+COULOMB_DEBYE_HUECKEL 		requires ELECTROSTATICS
+
+/* Immersed-Boundary Bayreuth version */
+IMMERSED_BOUNDARY
+IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_RELATIVE
+IMMERSED_BOUNDARY               requires not VIRTUAL_SITES_COM
+IMMERSED_BOUNDARY               requires not SHANCHEN
+IMMERSED_BOUNDARY               requires not ELECTROKINETICS
+SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
 
 /* Obsolete features. To be removed. */
 /* Old Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC	        requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE	        requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_HARMONIC             requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE               requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
 BOND_ANGLE_COSSQUARE            requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
 BOND_ANGLE_OLD                  equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-BOND_ANGLE_HARMONIC	        notest
-BOND_ANGLE_COSINE	        notest
+BOND_ANGLE_HARMONIC             notest
+BOND_ANGLE_COSINE               notest
 BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
+
+// Shape of the noise in ther (Langevin) thermostat
+FLATNOISE                        requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
+GAUSSRANDOM                      requires not FLATNOISE and not GAUSSRANDOM_CUT
+GAUSSRANDOMCUT                   requires not GAUSSRANDOM and not FLATNOISE
+
 
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */
 OLD_DIHEDRAL                    notest
 /* turn off nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
+/* add an int to the particle marking ghosts. Only visible on C level */
+GHOST_FLAG                      notest
+/* ghost particles also have the bond information. */
+GHOSTS_HAVE_BONDS               notest
 
 
 /* Debugging */
 ADDITIONAL_CHECKS
 ASYNC_BARRIER
 
+ESIF_DEBUG
 COMM_DEBUG
 EVENT_DEBUG
 INTEG_DEBUG
@@ -160,21 +207,23 @@ P3M_DEBUG
 FFT_DEBUG
 RANDOM_DEBUG
 FORCE_DEBUG
-THERMO_DEBUG 
+THERMO_DEBUG
+LE_DEBUG
 LJ_DEBUG
 MORSE_DEBUG
 ESR_DEBUG
 ESK_DEBUG
 FENE_DEBUG
 GHOST_FORCE_DEBUG
-STAT_DEBUG 
+STAT_DEBUG
 POLY_DEBUG
 MOLFORCES_DEBUG
 PTENSOR_DEBUG
-MEM_DEBUG
 MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
+SD_DEBUG
+CUDA_DEBUG
 
 MPI_CORE
 FORCE_CORE
@@ -189,3 +238,5 @@ ONEPART_DEBUG
 CUDA external
 FFTW external
 TK   external
+H5MD external
+SCAFACOS external

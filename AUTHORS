@@ -10,14 +10,15 @@ The following people have contributed to ESPResSo:
 
 Core developers
 ---------------
-Axel Arnold
-Olaf Lenz (maintainer)
+Florian Weik
 Stefan Kesselheim
 
 Bernward Mann (deceased 2006)
 Christoph Junghans (inactive)
 Hans-Jörg Limbach (inactive)
 Torsten Stühn (inactive)
+Axel Arnold (inactive)
+Olaf Lenz (inactive)
 
 Contributors
 ------------
@@ -26,44 +27,61 @@ Alexander Schlaich
 Arjit Maitra
 Ben Reynwar (formerly: Reynolds)
 Christoph Schneider
+David Schwörer
 Dmitro Galperin
 Dmytro Antypov
 Dominic Röhm
+Elena Minina
 Florian Fahrenberger (formerly: Rühle)
-Florian Weik
 Florian Häußermann
 Francesca Lugli
 Frank Mühlbach
 Georg Rempfer
 Gizem Inci
 Gregoria Illya
-Igor Pasichny
+Hamid Zaheri
+Henri Menke
+Igor Pasichnyk
 Ira Cooke
+Ivan Cimrak
+Iveta Jancigova
 Joan Josep Cerdà
 Jon Halverson
+Joost de Graaf
+Josh Berryman
 Kai Grass
 Kai Kratzer
+Kai Szuttor
 Karen Johnston
 Konrad Breitsprecher
+Lukas Fischer
 Marcello Sega
+Markus Gusenbauer
 Matej Praprotnik
 Mehmet Sayar
 Mehmet Süzen
+Michael Kuron
 Mingyang Hu
 Muhammad Anwar
 Nils Binz
-Owen Hickey
+Owen A. Hickey-Moriarty
+Patrick Diggins
+Pedro Ojeda
 Pedro Sanchez
 Peter Kosovan
+Pierre de Buyl
 Rudolf Weeber
 Sandeep Tyagi
 Sathish K. Sukumaran
 Sela Samin
 Shervin Raafatnia
 Simon Poblete
+Stephan Gekle
+Stefan Medina
 Thomas Spura
 Timo Schürg
 Tobias Richter
+Tobias Steinle
 Tristan Bereau
 Ulf Schiller
 Vagelis Harmandaris
@@ -75,3 +93,4 @@ Special thanks
 --------------
 Special thanks to Henrik Skov Midtiby for providing a GPL version of
 todonotes.sty.
+

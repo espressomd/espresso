@@ -1,5 +1,5 @@
 #! /bin/bash -x
-# Copyright (C) 2012,2013 The ESPResSo project
+# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -57,5 +57,7 @@ else
 fi
 echo
 
-
+if [ -n "$nolicense" ] || [ -n "$missing_current_copyright" ]; then
+  exit 1
+fi  
     

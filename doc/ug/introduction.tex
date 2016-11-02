@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %    Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -93,8 +93,7 @@ aware whether your particles are representing atoms or billiard balls, so
 it cannot check if the chosen parameters make sense and it is the
 user's responsibility to make sure they do.
 
-On the other hand, flexibility of \es stems from the employment of Tcl
-at the steering level. Apart from the ability to modify the simulation
+On the other hand, flexibility of \es stems from the employment of a scripting language  at the steering level. Apart from the ability to modify the simulation
 and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without
 even touching the C-kernel.  For example, simple problem-specific
@@ -111,39 +110,92 @@ then perform the actual productive simulation.
 
 \section{Available simulation methods}
 
-\begin{itemize}
-\item Ensembles: 
-  \begin{itemize} 
-  \item NVE
-  \item NVT
-  \item NpT
-  \end{itemize}
-\item Algorithms for charged systems:
-  \begin{itemize}
-  \item P3M for fully periodic systems
-  \item ELC and MMM-family of algorithms for charged systems with
-    non-periodic boundary conditions
-  \item MEMD (Maggs algorithm)
-  \end{itemize}
-\item Hydrodynamics:
-  \begin{itemize}
-  \item DPD (as a thermostat)
-  \item Lattice-Boltzmann
-  \end{itemize}
-\item Non-equilibrium MD to simulate shear flow
-\item Parallel tempering
-\item Metadynamics
-\item Rigid bodies via virtual sites
-\end{itemize}
+\es provides a number of useful methods. The following table shows the
+various methods as well as their status. The table distinguishes
+between the state of the development of a certain feature and the
+state of its use. We distinguish between five levels:
+\begin{description}
+\item[Core] means that the method is part of the core of \es, and that
+  it is extensively developed and used by many people.
+\item[Good] means that the method is developed and used by independent
+  people from different groups.
+\item[Group] means that the method is developed and used in one group.
+\item[Single] means that the method is developed and used by one
+  person only.
+\item[None] means that the method is developed and used by nobody.
+\end{description}
+If you believe that the status of a certain method is wrong, please
+report so to the developers.
+
+\newpage
+\definecolor{supportgrey}{rgb}{0.9,0.9,0.9}
+\rowcolors{1}{supportgrey}{}
+\begin{longtable}{|l|l|l|}
+  \hline
+  \textbf{Feature} & \textbf{Development Status} & \textbf{Usage Status}\\\hline%
+  \multicolumn{3}{|c|}{\textbf{Integrators, Thermostats, Barostats}} \\
+  Velocity-Verlet Integrator          & Core   & Core   \\
+  Langevin Thermostat                 & Core   & Core   \\
+  GHMC Thermostat                     & Single & Single \\
+  DPD Thermostat                      & None   & Good   \\
+  Isotropic NPT                       & None   & Single \\
+  NEMD                                & None   & Group  \\
+  Quarternion Integrator              & None   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Interactions}} \\
+  Short-range Interactions            & Core   & Core   \\
+  Directional Lennard-Jones           & Single & Single \\
+  Gay-Berne Interaction               & None   & Single \\
+  Constraints                         & Core   & Core   \\
+  Relative Virtual Sites              & Good   & Good   \\
+  Center-of-mass Virtual Sites        & None   & Good   \\
+  RATTLE Rigid Bonds                  & None   & Group  \\
+  \multicolumn{3}{|c|}{\textbf{Coulomb Interaction}} \\
+  P3M                                 & Core   & Core   \\
+  P3M on GPU                          & Single & Single \\
+  Dipolar P3M                         & Group  & Good   \\
+  Ewald on GPU                        & Single & Single \\
+  MMM1D                               & Single & Good   \\
+  MMM2D                               & Single & Good   \\
+  MMM1D on GPU                        & Single & Single \\
+  ELC                                 & Good   & Good   \\
+  MEMD                                & Single & Group  \\
+  ICC*                                & Group  & Group  \\
+  \multicolumn{3}{|c|}{\textbf{Hydrodynamic Interaction}} \\
+  Lattice-Boltzmann                   & Core   & Core   \\
+  Lattice-Boltzmann on GPU            & Group  & Core   \\
+  DPD                                 & None   & Good   \\
+  Shan-Chen Multicomponent Fluid      & Group  & Group  \\
+  Tunable Slip Boundary               & Single & Single \\
+  Stokesian Dynamics                  & Single & Single \\
+  \multicolumn{3}{|c|}{\textbf{Analysis}} \\
+  uwerr                               & None   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Input/Output}} \\
+  Blockfiles                          & Core   & Core   \\
+  VTF output                          & Core   & Core   \\
+  VTK output                          & Group  & Group  \\
+  PDB output                          & Good   & Good   \\
+  Online visulation with VMD          & Good   & Good   \\
+  \multicolumn{3}{|c|}{\textbf{Miscellaneous}} \\
+  Grand canonical feature             & Single & Single \\
+  Metadynamics                        & Single & Single \\
+  Parallel Tempering                  & Single & Single \\
+  Electrokinetics                     & Group  & Group  \\
+  Object-in-fluid                     & Group  & Group  \\
+  Collision Detection                 & Group  & Group  \\
+  Catalytic Reactions                 & Single & Single \\
+  mbtools package                     & Group  & Group  \\
+  \hline
+\end{longtable}
 
 \section{Basic program structure}
 \label{sec:structure}
 
 As already mentioned, \es consists of two components.
-The simulation engine is written in C for the sake
+The simulation engine is written in C and C++ for the sake
 of computational efficiency. The steering or control
 level is interfaced to the kernel via an interpreter 
-of the Tcl scripting language.
+of the Tcl and Python scripting languages.
+Please be aware that th TCL interface is going to be removed soon and new simulations should use Python as scripting language.
 
 The kernel performs all computationally demanding tasks. Before all,
 integration of Newton's equations of motion, including calculation of
@@ -154,26 +206,18 @@ modularized so that basic functions are accessed via a set of
 well-defined lean interfaces, hiding the details of the complex
 numerical algorithms.
 
-The Tcl interpreter contains several special commands as an extension
-to Tcl, which provide the interaction with the simulation
-engine. Thus, the user has at hand the full realm of Tcl commands and
-constructs plus a few commands to communicate with the simulation
-engine. The interfacing commands are designed so that they can both
-set properties of the system (set up particles, interactions,
-thermostat) and retrieve information about the already set-up
-entities. The standard Tcl constructs allow for a flexible
-decision-making in the course of the simulation. This can be for
-example exploited to check whether a simulation has reached the
-desired state.  With a certain overhead in efficiency, it can also be
+The scripting interface (Python or Tcl) are used to setup the system (particles, boundary onditions, interactions, ...), control the simulation, run analysis, and store and load results.
+The user has at hand the full rl3sibili5y and functionality of the scripting language. For instance, it is possible to use the SciPy package for analysis and PyPlot for plotting.
+With a certain overhead in efficiency, it can also be
 used to reject/accept new configurations in combined MD/MC schemes. In
-principle, any parameter which is accessible from the Tcl level can be
+principle, any parameter which is accessible from the scripting level can be
 changed at any moment of runtime.  In this way methods like
 thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the Tcl commands, their
+The focus of the user guide is documenting the scripting interfacce, its
 behaviour and use in the simulation. It only describes certain
 technical details of implementation which are necessary for
-understanding how the commands work.  Technical documentation of the
+understanding how the script interface works.  Technical documentation of the
 code and program structure is contained in the Developers' guide (see
 section~\ref{sec:dg}).
 
@@ -253,7 +297,7 @@ whole \es-script, there should be no problems.
 
 \section{Requirements}
 \label{sec:requirements}
-\index{requirements}
+\index{Installation requirements}
 
 The following libraries and tools are required to be able to compile
 and use \es:
@@ -277,8 +321,36 @@ and use \es:
   version 1.2).
 \end{description}
 
+\subsection{Installing Requirements on Ubuntu 16.04 LTS}
+\label{sec:installing-requirements}
+\index{Installation requirements!Ubuntu 16.04 LTS}
 
-\section{Syntax description}
+To make ESPResSo run on Ubuntu 16.04 LTS, its dependencies can be installed with:
+\begin{code}
+  sudo apt install build-essential cmake cython python-numpy tcl-dev tk-dev libboost-all-dev openmpi-common
+\end{code}
+Optionally the ccmake utility can be installed for easier configuration:
+\begin{code}
+  sudo apt install cmake-curses-gui
+\end{code}
+
+\subsection{Installing Requirements on Mac OS X}
+\label{sec:installing-requirements-mac}
+\index{Installation requirements!Mac OS X}
+
+To make ESPResSo run on Mac OS X 10.9 or higher, its dependencies can be installed using MacPorts.
+First, download the installer package appropriate for your Mac OS X version from \url{https://www.macports.org/install.php} and install it. Then, run the following commands:
+\begin{code}
+  sudo xcode-select --install
+  sudo xcodebuild -license accept
+  port selfupdate
+  port install cmake python27 python27-cython python27-numpy tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27
+  port select --set cython cython27
+  port select --set python python27
+  port select --set mpi openmpi-mp-fortran
+\end{code}
+
+\section{Tcl: Syntax description}
 \label{sec:syntax}
 
 

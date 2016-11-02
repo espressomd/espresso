@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -43,8 +43,7 @@ int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc,
    #endif
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
+       runtimeErrorMsg() <<"parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (argc < 2) {
@@ -87,8 +86,7 @@ int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int
    double Ekin;
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
+       runtimeErrorMsg() <<"parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (argc < 1) {
@@ -135,8 +133,7 @@ int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, c
    double dipole[4];
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+       runtimeErrorMsg() <<"parse_and_print_dipole: could not sort particle config, particle ids not consecutive?";
       return TCL_ERROR;
    }
    if (n_molecules==0) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -45,7 +45,7 @@ int tclprint_to_result_rf(Tcl_Interp *interp, const char *name)
 }
 
 int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp,
-				      int argc, char ** argv,int method)
+				      int argc, char ** argv, CoulombMethod method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
