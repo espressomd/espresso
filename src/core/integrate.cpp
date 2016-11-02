@@ -491,11 +491,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      //rescale_forces_propagate_vel();
+#ifndef SEMI_INTEGRATED
+      rescale_forces_propagate_vel();
+#endif
 #ifdef ROTATION
       convert_torques_propagate_omega();
 #endif
+#ifdef SEMI_INTEGRATED
       rescale_forces_propagate_vel();
+#endif
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
@@ -733,7 +737,7 @@ void rescale_forces_propagate_vel() {
       if (thermo_switch & THERMO_LANGEVIN)
       {
 #ifdef LANGEVIN_PER_PARTICLE
-          step4_factor = 1.0 / (1.0 - p->p.vv_langevin_pref1 * scale / (p[i]).p.mass);
+          step4_factor = 1.0 / (1.0 - (p[i]).p.vv_langevin_pref1 * scale / (p[i]).p.mass);
 #else
           step4_factor = 1.0 / (1.0 - vv_langevin_pref1 * scale / (p[i]).p.mass);
 #endif // LANGEVIN_PER_PARTICLE

@@ -366,7 +366,7 @@ void convert_torques_propagate_omega()
 #ifdef LANGEVIN_PER_PARTICLE
           for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot[j];
 #else
-          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot[j];
+          for (j = 0; j < 3; j++) pref1_temp[j] = vv_langevin_pref1_rot[j];
 #endif // LANGEVIN_PER_PARTICLE
 
 
@@ -375,7 +375,7 @@ void convert_torques_propagate_omega()
 #ifdef LANGEVIN_PER_PARTICLE
           for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot;
 #else
-          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot;
+          for (j = 0; j < 3; j++) pref1_temp[j] = vv_langevin_pref1_rot;
 
 #endif // LANGEVIN_PER_PARTICLE
 
