@@ -364,23 +364,20 @@ void convert_torques_propagate_omega()
 #ifdef ROTATIONAL_INERTIA
 
 #ifdef LANGEVIN_PER_PARTICLE
-          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
+          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot[j];
 #else
-          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot[j] * time_step_half / p[i].p.rinertia[j];
+          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot[j];
 #endif // LANGEVIN_PER_PARTICLE
 
-          //for (j = 0; j < 3; j++) p[i].m.omega[j] += (p[i].f.torque[j] * time_step_half / p[i].p.rinertia[j]) / (1 - pref1_temp[j]);
 
 #else
 
 #ifdef LANGEVIN_PER_PARTICLE
-          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot * time_step_half;
+          for (j = 0; j < 3; j++) pref1_temp[j] = p[i].p.vv_langevin_pref1_rot;
 #else
-          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot * time_step_half;
+          for (j = 0; j < 3; j++) pref1_temp[j] = p.vv_langevin_pref1_rot;
 
 #endif // LANGEVIN_PER_PARTICLE
-
-          //for (j = 0; j < 3; j++) p[i].m.omega[j] = (p[i].m.omega[j] * (1 - pref1_temp / I[j]) + p[i].f.torque[j] * time_step_half / I[j]) / (1 - pref1_temp / I[j]);
 
 #endif // ROTATIONAL_INERTIA
       } // else
