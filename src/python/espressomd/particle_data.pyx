@@ -184,9 +184,15 @@ cdef class ParticleHandle:
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
-                             self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
-                             self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
+            IF MASS:
+                return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
+                                 self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
+                                 self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
+            ELSE:
+                return np.array([self.particle_data.f.f[0] / (0.5 * time_step**2),
+                                 self.particle_data.f.f[1] / (0.5 * time_step**2),
+                                 self.particle_data.f.f[2] / (0.5 * time_step**2)])
+
 
     # Bonds
     property bonds:
