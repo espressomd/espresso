@@ -255,17 +255,21 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         if { abs($dr($k)) > $tolerance } {
            error "Relative deviation in translational dispersion too large: $dr($k)"
        }
-        if { abs($dox($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
-        }
-        if { abs($doy($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
-        }
-        if { abs($doz($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+       
+        # SEMI_INTEGRATED is consistent for isotropic particles only
+        if {![has_feature "SEMI_INTEGRATED"]} {
+            if { abs($dox($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
+            }
+            if { abs($doy($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
+            }
+            if { abs($doz($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+            }
         }
     }
 }
