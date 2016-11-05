@@ -27,19 +27,7 @@
 #define NPT 
 #define GHMC
 
-//#define LB
-//#define LB_BOUNDARIES
-//#define LB_ELECTROHYDRODYNAMICS
-
-// #define ENGINE
-
 #ifdef CUDA
-//#define LB_GPU
-//#define LB_BOUNDARIES_GPU
-//#define ELECTROKINETICS
-//#define EK_BOUNDARIES
-//#define EK_REACTION
-//#define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
 #define EWALD_GPU
 #define BARNES_HUT
