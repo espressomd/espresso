@@ -30,7 +30,7 @@
 namespace Utils {
 
 /**
- * \brief Container for objects that are identified by a numeric id.
+ * @brief Container for objects that are identified by a numeric id.
  *
  * This class implements a container that holds T instances and references
  * them by an integral index. New elements get the lowest free index
@@ -41,9 +41,31 @@ public:
   typedef typename std::unordered_map<index_type, T>::iterator iterator;
   typedef
       typename std::unordered_map<index_type, T>::const_iterator const_iterator;
+  typedef typename std::unordered_map<index_type, T>::value_type value_type;
+
   NumeratedContainer() {
     m_free_indices.insert(0);
     m_free_indices.insert(1);
+  }
+
+  /**
+   * @brief Construct from list of key-value pairs.
+   * The keys have to be unique.
+   */
+  explicit NumeratedContainer(std::initializer_list<value_type> l)
+      : NumeratedContainer() {
+    for (auto const &e : l) {
+      m_container.insert(e);
+      /* Remove the index from the index set if it exists. */
+      m_free_indices.erase(m_free_indices.find(e.first), m_free_indices.end());
+    }
+
+    /* Refill the index set */
+    for (index_type it(0); m_free_indices.size() < 2; ++it) {
+      if (m_container.find(it) == m_container.end()) {
+        m_free_indices.insert(it);
+      }
+    }
   }
 
   /**

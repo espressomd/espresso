@@ -23,7 +23,6 @@
 #define SCRIPT_INTERFACE_REGISTRY_HPP
 
 #include "ScriptInterface.hpp"
-#include <string>
 
 namespace ScriptInterface {
 
@@ -33,26 +32,49 @@ public:
   virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
-    Variant par = parameters.at("object");
-
-    auto so_ptr = ScriptInterface::get_instance(par);
-
-    auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
-
-    if (obj_ptr == nullptr)
-      throw std::runtime_error("Wrong type");
+                              VariantMap const &parameters) override {
 
     if (method == "add") {
+      Variant par = parameters.at("object");
+      auto so_ptr = ScriptInterface::get_instance(par);
+      auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
+
+      if (obj_ptr == nullptr)
+        throw std::runtime_error("Wrong type");
+
       add_in_core(obj_ptr);
+      m_elements.push_back(obj_ptr);
     }
 
     if (method == "remove") {
+      Variant par = parameters.at("object");
+      auto so_ptr = ScriptInterface::get_instance(par);
+      auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
+
+      if (obj_ptr == nullptr)
+        throw std::runtime_error("Wrong type");
+
       remove_in_core(obj_ptr);
+      m_elements.erase(
+          std::remove(m_elements.begin(), m_elements.end(), obj_ptr),
+          m_elements.end());
     }
 
-    return {};
-  };
+    if(method == "get_elements") {
+      std::vector<Variant> ret;
+      ret.reserve(m_elements.size());
+
+      for(auto const& e : m_elements)
+        ret.emplace_back(e->id());
+
+      return ret;
+    }
+
+    return true;
+  }
+
+private:
+  std::vector<std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface
 #endif

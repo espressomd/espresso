@@ -58,6 +58,7 @@ public:
   std::shared_ptr<T> m_p;
 
   ParallelScriptInterface() : m_p(ScriptInterfaceBase::make_shared<T>()) {
+
     call(static_cast<int>(CallbackAction::SET_ID));
 
     ObjectId global_id{m_p->id()};
@@ -89,7 +90,11 @@ public:
 
   Variant map_local_to_parallel_id(std::string const &name,
                                    Variant const &value) const {
-    return obj_map.at(name)->id();
+    if (boost::get<ObjectId>(value) != ObjectId()) {
+      return obj_map.at(name)->id();
+    } else {
+      return value;
+    }
   }
 
   Variant map_parallel_to_local_id(std::string const &name,

@@ -27,15 +27,14 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/shapes/Shape.hpp"
 
-#include <memory>
-
 namespace ScriptInterface {
 namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
-  
+  Constraint()
+      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {}
+
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
@@ -53,7 +52,7 @@ public:
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    if (name == "shape") {
+    if ((name == "shape") && (boost::get<ObjectId>(value) != ObjectId())) {
       std::shared_ptr<ScriptInterfaceBase> so_ptr =
           ScriptInterface::get_instance(value);
 
