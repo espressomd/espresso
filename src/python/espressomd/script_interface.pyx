@@ -59,7 +59,9 @@ cdef class PScriptInterface:
                 parameters[name] = kwargs[name]
 
         return self.variant_to_python_object(self.sip.get().call_method(method, parameters))
-
+    
+    def name(self):
+        return self.sip.get().name()
 
     def set_params(self, **kwargs):
         cdef ParameterType type
