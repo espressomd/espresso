@@ -23,6 +23,7 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
 
 #include "Constraint.hpp"
+
 #include "ScriptObjectRegistry.hpp"
 #include "core/constraints.hpp"
 #include "script_interface/ScriptInterface.hpp"
