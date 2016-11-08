@@ -18,8 +18,7 @@
 */
 
 #include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
+#include "ScriptInterface.hpp"
 
 #include "LBBoundary.hpp"
 #include "LBBoundaries.hpp"
@@ -28,11 +27,11 @@ namespace ScriptInterface {
 namespace LBBoundaries {
 
 void initialize() {
-  ParallelScriptInterface<ScriptInterface::LBBoundaries::LBBoundaries>::
-    register_new("LBBoundaries::LBBoundaries");
+  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundaries>(
+      "LBBoundaries::LBBoundaries");
 
-  ParallelScriptInterface<ScriptInterface::LBBoundaries::LBBoundary>::
-    register_new("LBBoundaries::LBBoundary");
+  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
+      "LBBoundaries::LBBoundary");
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */

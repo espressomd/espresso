@@ -36,6 +36,10 @@ public:
     Communication::mpiCallbacks().add(&mpi_callback);
   }
 
+  static void make() {
+    new T;
+  }
+
 private:
   /* Supported callback types. Currently we can only create new instances. */
   enum CallbackAction { CREATE };

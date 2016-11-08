@@ -60,7 +60,6 @@ protected:
   }
 };
 
-template <typename T>
 class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
                                      private ParallelScriptInterfaceSlaveBase {
 public:
@@ -73,11 +72,11 @@ public:
   };
 
 protected:
-  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>>;
-  ParallelScriptInterfaceSlave() : m_p(ScriptInterfaceBase::make_shared<T>()) {}
+  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
+  ParallelScriptInterfaceSlave() {}
 
 public:
-  std::shared_ptr<T> m_p;
+  std::shared_ptr<ScriptInterfaceBase> m_p;
 
 private:
   void mpi_slave(int action, int) override {

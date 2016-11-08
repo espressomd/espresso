@@ -30,6 +30,7 @@
 
 #include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
+#include "utils/Factory.hpp"
 
 #include "Parameter.hpp"
 #include "core/Vector.hpp"
@@ -43,8 +44,8 @@ typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
  * @brief Possible types for parameters.
  */
 typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d, ObjectId>
-    Variant;
+                       std::vector<double>, Vector2d, Vector3d,
+                       ObjectId> Variant;
 
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
@@ -181,7 +182,8 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name, CreationPolicy policy = CreationPolicy::LOCAL);
+  make_shared(std::string const &name,
+              CreationPolicy policy = CreationPolicy::LOCAL);
 
   /**
    * @brief Get a new reference counted instance of a script interface by

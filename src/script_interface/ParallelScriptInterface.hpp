@@ -46,18 +46,17 @@ public:
   }
 };
 
-template <typename T>
 class ParallelScriptInterface
     : public ParallelScriptInterfaceBase,
       private Communication::InstanceCallback,
-      public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>> {
+      public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave> {
 public:
   using CallbackAction =
-      typename ParallelScriptInterfaceSlave<T>::CallbackAction;
+      typename ParallelScriptInterfaceSlave::CallbackAction;
 
-  std::shared_ptr<T> m_p;
+  std::shared_ptr<ScriptInterfaceBase> m_p;
 
-  ParallelScriptInterface() : m_p(ScriptInterfaceBase::make_shared<T>()) {
+  ParallelScriptInterface() {
     call(static_cast<int>(CallbackAction::SET_ID));
 
     ObjectId global_id{m_p->id()};
@@ -173,16 +172,6 @@ public:
 private:
   std::map<std::string, std::shared_ptr<ParallelScriptInterfaceBase>> obj_map;
 
-public:
-  static void register_new(std::string const &name) {
-    /* Register with the factory */
-    Utils::Factory<ScriptInterfaceBase>::register_new<
-        ParallelScriptInterface<T>>(name);
-
-    /* Register the object creation callback */
-    Utils::Parallel::ParallelObject<
-        ParallelScriptInterfaceSlave<T>>::register_callback();
-  }
 };
 
 } /* namespace ScriptInterface */

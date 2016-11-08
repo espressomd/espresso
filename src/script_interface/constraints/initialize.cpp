@@ -16,11 +16,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.hpp" 
+#include "config.hpp"
 
 #include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
+#include "ScriptInterface.hpp"
 
 #include "Constraint.hpp"
 #include "Constraints.hpp"
@@ -30,13 +29,11 @@ namespace Constraints {
 
 void initialize() {
 #ifdef CONSTRAINTS
-  ParallelScriptInterface<ScriptInterface::Constraints::Constraints>::
-    register_new("Constraints::Constraints");
-
-  ParallelScriptInterface<ScriptInterface::Constraints::Constraint>::
-    register_new("Constraints::Constraint");
+  ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
+      "Constraints::Constraints");
+  ScriptInterface::register_new<ScriptInterface::Constraints::Constraint>(
+      "Constraints::Constraint");
 #endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
