@@ -25,7 +25,7 @@
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name) {
+ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy) {
   std::shared_ptr<ScriptInterfaceBase> sp =
       Utils::Factory<ScriptInterfaceBase>::make(name);
 
