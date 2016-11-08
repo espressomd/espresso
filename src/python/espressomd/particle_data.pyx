@@ -935,6 +935,11 @@ cdef class ParticleSlice:
         self.id_selection=self.id_selection[mask]
 
 
+    def __iter__(self):
+        cdef int i
+        for i in self.id_selection:
+            yield ParticleHandle(i)
+
 
     cdef int update_particle_data(self, id) except -1:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
@@ -1211,13 +1216,11 @@ cdef class ParticleList:
         if isinstance(key, slice):
             return ParticleSlice(key)
 
-        if not np.all(self.exists(key)):
-            if isinstance(key, int):
-                non_existing = key
-            else:
-                non_existing = np.trim_zeros(
-                    (np.array(key) * np.invert(self.exists(key))))
-            raise Exception("Particle(s) %s does not exist." % non_existing)
+        try:
+            if isinstance(key, range):
+                return ParticleSlice(key)
+        except:
+            pass
 
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
             return ParticleSlice(np.array(key))

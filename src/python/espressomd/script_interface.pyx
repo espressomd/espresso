@@ -1,8 +1,9 @@
+from espressomd.utils import to_char_pointer
 
 cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
-            self.sip = make_shared(name)
+            self.sip = make_shared(to_char_pointer(name))
             self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()
@@ -29,7 +30,7 @@ cdef class PScriptInterface:
         if < int > type == <int > DOUBLE:
             return make_variant[double]( < double > value)
         if < int > type == <int > STRING:
-            return make_variant[string]( < string > value)
+            return make_variant[string](to_char_pointer(value))
         if < int > type == <int > INT_VECTOR:
             return make_variant[vector[int] ]( < vector[int] > value)
         if < int > type == <int > DOUBLE_VECTOR:
@@ -54,39 +55,39 @@ cdef class PScriptInterface:
             if isinstance(kwargs[name], PScriptInterface):
                 # Map python object do id
                 oid = kwargs[name].id()
-                parameters[name] = oid.id
+                parameters[to_char_pointer(name)] = oid.id
             else:
-                parameters[name] = kwargs[name]
+                parameters[to_char_pointer(name)] = kwargs[name]
 
-        return self.variant_to_python_object(self.sip.get().call_method(method, parameters))
-
+        return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
 
     def set_params(self, **kwargs):
         cdef ParameterType type
         cdef map[string, Variant] parameters
         cdef PObjectId oid
+        cdef string name
 
-        for name in kwargs:
+        for pname in kwargs:
+            name = to_char_pointer(pname)
+
             try:
-                self.parameters.at(name)
+                type = self.parameters.at(name).type()
             except:
                 raise ValueError("Unknown parameter %s" % name)
-
-            type = self.parameters[name].type()
 
             # Check number of elements if applicable
             if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR, < int > VECTOR2D, < int > VECTOR3D]:
                 n_elements = self.parameters[name].n_elements()
-                if n_elements!=0 and not (len(kwargs[name]) == n_elements):
+                if n_elements!=0 and not (len(kwargs[pname]) == n_elements):
                     raise ValueError(
                         "Value of %s expected to be %i elements" % (name, n_elements))
 
             # Objects have to be translated to ids
             if < int > type is < int > OBJECT:
-                oid = kwargs[name].id()
+                oid = kwargs[pname].id()
                 parameters[name] = oid.id
             else:
-                parameters[name] = self.make_variant(type, kwargs[name])
+                parameters[name] = self.make_variant(type, kwargs[pname])
 
         self.sip.get().set_parameters(parameters)
 
