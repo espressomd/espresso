@@ -22,9 +22,10 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 
+#include <type_traits>
+
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
-#include "ParallelScriptInterface.hpp"
 
 namespace ScriptInterface {
   template <typename T> static void register_new(std::string const &name) {

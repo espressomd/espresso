@@ -32,39 +32,20 @@
 #include "utils/Factory.hpp"
 
 namespace ScriptInterface {
-class ParallelScriptInterfaceBase : public ScriptInterfaceBase {
-public:
-  virtual std::shared_ptr<ScriptInterfaceBase>
-  get_underlying_object() const = 0;
-
-  virtual bool operator==(ParallelScriptInterfaceBase const &rhs) {
-    return this->get_underlying_object() == rhs.get_underlying_object();
-  }
-
-  virtual bool operator!=(ParallelScriptInterfaceBase const &rhs) {
-    return !(*this == rhs);
-  }
-};
 
 class ParallelScriptInterface
-    : public ParallelScriptInterfaceBase,
+    : public ScriptInterfaceBase,
       private Communication::InstanceCallback,
       public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave> {
 public:
-  using CallbackAction =
-      typename ParallelScriptInterfaceSlave::CallbackAction;
+  using CallbackAction = typename ParallelScriptInterfaceSlave::CallbackAction;
 
-  std::shared_ptr<ScriptInterfaceBase> m_p;
+  ParallelScriptInterface(std::string const &name);
 
-  ParallelScriptInterface() {
-    call(static_cast<int>(CallbackAction::SET_ID));
+  bool operator==(ParallelScriptInterface const &rhs);
+  bool operator!=(ParallelScriptInterface const &rhs);
 
-    ObjectId global_id{m_p->id()};
-
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
-  }
-
-  std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const override {
+  std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const {
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   };
 
@@ -97,8 +78,7 @@ public:
 
     auto so_ptr = get_instance(outer_id).lock();
 
-    auto po_ptr =
-        std::dynamic_pointer_cast<ParallelScriptInterfaceBase>(so_ptr);
+    auto po_ptr = std::dynamic_pointer_cast<ParallelScriptInterface>(so_ptr);
 
     if (po_ptr != nullptr) {
       /* Store a pointer to the object to keep it alive */
@@ -170,8 +150,9 @@ public:
   }
 
 private:
-  std::map<std::string, std::shared_ptr<ParallelScriptInterfaceBase>> obj_map;
-
+  /* Data members */
+  std::shared_ptr<ScriptInterfaceBase> m_p;
+  std::map<std::string, std::shared_ptr<ParallelScriptInterface>> obj_map;
 };
 
 } /* namespace ScriptInterface */
