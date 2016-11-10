@@ -67,7 +67,7 @@ public:
   /**
    * @brief get instance by id.
    */
-  static std::weak_ptr<T> &get_instance(ObjectId id) { return reg()[id.m_id]; }
+  static std::weak_ptr<T> &get_instance(ObjectId id) { return reg().at(id.m_id); }
 
 private:
   ObjectId m_id;
