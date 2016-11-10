@@ -36,6 +36,7 @@ cdef class mayaviLive:
     interact with the GUI."""
 
     cdef object system
+    cdef object mapping
     cdef object points 
     cdef object box 
     cdef object arrows
@@ -50,13 +51,15 @@ cdef class mayaviLive:
     cdef object timers 
 
 
-    def __init__(self, system):
+    def __init__(self, system, mapping=None):
         """Constructor.
         **Arguments**
 
         :system: instance of espressomd.System
+        :mapping: (optional) function which maps particle types to radii
         """
         self.system = system
+        self.mapping = mapping
 
         # objects drawn
         self.points = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="sphere", scale_factor=1, name="Particles")
@@ -139,7 +142,10 @@ cdef class mayaviLive:
             coords[j,:] = p.r.p
             t = p.p.type
             types[j] = t +1
-            radii[j] =get_ia_param(t,t).LJ_sig *0.5
+            if self.mapping is None:
+                radii[j] = get_ia_param(t,t).LJ_sig *0.5
+            else:
+                radii[j] = self.mapping(t)
 
             # ITerate over bonds
             k=0        
