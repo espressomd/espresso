@@ -40,6 +40,7 @@ cdef class PScriptInterface:
         if < int > type == <int > VECTOR2D:
             return make_variant[Vector2d](Vector2d( < vector[double] > value))
 
+
         raise Exception("Unkown type")
 
     def id(self):
@@ -93,7 +94,10 @@ cdef class PScriptInterface:
 
     cdef variant_to_python_object(self, Variant value):
         cdef ObjectId oid
+        cdef vector[Variant] vec
         cdef int type = value.which()
+        cdef shared_ptr[ScriptInterfaceBase] ptr
+
         if < int > type == <int > BOOL:
             return get[bool](value)
         if < int > type == <int > INT:
@@ -114,11 +118,23 @@ cdef class PScriptInterface:
             # Get the id and build a curresponding object
             try:
                 oid = get[ObjectId](value)
-                pobj = PScriptInterface()
-                pobj.set_sip(get_instance(oid).lock())
-                return pobj
+                ptr = get_instance(oid).lock()
+                if ptr != shared_ptr[ScriptInterfaceBase]():
+                    pobj = PScriptInterface()
+                    pobj.set_sip(ptr)
+                    return pobj
+                else:
+                    return None
             except:
                 return None
+        if < int > type == < int > VECTOR:
+            vec = get[vector[Variant]](value)
+            res = []
+
+            for i in vec:
+                res.append(self.variant_to_python_object(i))
+
+            return res
 
         raise Exception("Unkown type")
 

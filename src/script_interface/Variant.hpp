@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_VARIANT_HPP
 #define SCRIPT_INTERFACE_VARIANT_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <boost/variant.hpp>
 
@@ -37,9 +37,10 @@ using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 /**
  * @brief Possible types for parameters.
  */
-typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d,
-                       ObjectId> Variant;
+typedef boost::make_recursive_variant<
+    bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    Vector2d, Vector3d, ObjectId, std::vector<boost::recursive_variant_>>::type
+    Variant;
 
 enum class VariantType {
   BOOL = 0,
@@ -50,7 +51,8 @@ enum class VariantType {
   DOUBLE_VECTOR,
   VECTOR2D,
   VECTOR3D,
-  OBJECTID
+  OBJECTID,
+  VECTOR
 };
 
 inline bool is_objectid(Variant const &v) {

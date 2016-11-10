@@ -72,7 +72,11 @@ public:
   /* Id mapping */
   Variant map_local_to_parallel_id(std::string const &name,
                                    Variant const &value) const {
-    return obj_map.at(name);
+    if (boost::get<ObjectId>(value) != ObjectId()) {
+      return obj_map.at(name);
+    } else {
+      return value;
+    }
   }
 
   Variant map_parallel_to_local_id(std::string const &name,

@@ -48,6 +48,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType VECTOR3D
     cdef ParameterType VECTOR2D
     cdef ParameterType OBJECT
+    cdef ParameterType VECTOR
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
