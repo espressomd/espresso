@@ -24,8 +24,11 @@
 
 #include <type_traits>
 
+#include "Variant.hpp"
+
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
+#include "utils/Factory.hpp"
 
 namespace ScriptInterface {
   template <typename T> static void register_new(std::string const &name) {
@@ -40,9 +43,6 @@ namespace ScriptInterface {
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }
-
-
-
 } /* namespace ScriptInterface */
 
 #endif

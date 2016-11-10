@@ -22,31 +22,14 @@
 
 #include <map>
 #include <memory>
-#include <string>
 #include <type_traits>
-#include <vector>
 
-#include <boost/variant.hpp>
-
-#include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
-#include "utils/Factory.hpp"
 
+#include "Variant.hpp"
 #include "Parameter.hpp"
-#include "core/Vector.hpp"
 
 namespace ScriptInterface {
-class ScriptInterfaceBase;
-
-typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
-
-/**
- * @brief Possible types for parameters.
- */
-typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d,
-                       ObjectId> Variant;
-
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
  * Variant.

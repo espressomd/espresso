@@ -20,14 +20,23 @@
 */
 
 #include "ScriptInterfaceBase.hpp"
+#include "ParallelScriptInterface.hpp"
 
 #include "utils/Factory.hpp"
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy) {
-  std::shared_ptr<ScriptInterfaceBase> sp =
-      Utils::Factory<ScriptInterfaceBase>::make(name);
+ScriptInterfaceBase::make_shared(std::string const &name,
+                                 CreationPolicy policy) {
+  auto sp = [&policy, &name]() -> std::shared_ptr<ScriptInterfaceBase> {
+    switch (policy) {
+    case CreationPolicy::LOCAL:
+      return Utils::Factory<ScriptInterfaceBase>::make(name);
+    case CreationPolicy::GLOBAL:
+      return std::shared_ptr<ScriptInterfaceBase>(
+          new ParallelScriptInterface(name));
+    }
+  }();
 
   /* Id of the newly created instance */
   const auto id = sp->id();
@@ -39,5 +48,4 @@ ScriptInterfaceBase::make_shared(std::string const &name, CreationPolicy policy)
 
   return sp;
 }
-
 }

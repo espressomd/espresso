@@ -29,18 +29,16 @@
 #include "ParallelScriptInterfaceSlave.hpp"
 #include "core/errorhandling.hpp"
 
-#include "utils/Factory.hpp"
-
 namespace ScriptInterface {
 
-class ParallelScriptInterface
-    : public ScriptInterfaceBase,
-      private Communication::InstanceCallback,
-      public Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave> {
+class ParallelScriptInterface : public ScriptInterfaceBase,
+                                private Communication::InstanceCallback {
 public:
-  using CallbackAction = typename ParallelScriptInterfaceSlave::CallbackAction;
+  using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
   ParallelScriptInterface(std::string const &name);
+
+  static void initialize();
 
   bool operator==(ParallelScriptInterface const &rhs);
   bool operator!=(ParallelScriptInterface const &rhs);
@@ -49,27 +47,32 @@ public:
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   };
 
+  /* Script interface */
   const std::string name() const override { return m_p->name(); }
-
-  void set_parameter(const std::string &name, const Variant &value) override {
-    std::pair<std::string, Variant> d(name, Variant());
-
-    if (valid_parameters()[name].type() == ParameterType::OBJECT) {
-      d = std::make_pair(name, map_parallel_to_local_id(name, value));
-    } else {
-      d = std::make_pair(name, value);
-    }
-
-    call(static_cast<int>(CallbackAction::SET_PARAMETER), 0);
-
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-
-    m_p->set_parameter(d.first, d.second);
+  void set_parameter(const std::string &name, const Variant &value) override;
+  void
+  set_parameters(const std::map<std::string, Variant> &parameters) override;
+  std::map<std::string, Parameter> valid_parameters() const override {
+    return m_p->valid_parameters();
   }
 
+  std::map<std::string, Variant> get_parameters() const override {
+    auto p = m_p->get_parameters();
+
+    /* Wrap the object ids */
+    for (auto &it : p) {
+      if (is_objectid(it.second)) {
+        it.second = map_local_to_parallel_id(it.first, it.second);
+      }
+    }
+
+    return p;
+  }
+
+  /* Id mapping */
   Variant map_local_to_parallel_id(std::string const &name,
                                    Variant const &value) const {
-    return obj_map.at(name)->id();
+    return obj_map.at(name);
   }
 
   Variant map_parallel_to_local_id(std::string const &name,
@@ -81,8 +84,8 @@ public:
     auto po_ptr = std::dynamic_pointer_cast<ParallelScriptInterface>(so_ptr);
 
     if (po_ptr != nullptr) {
-      /* Store a pointer to the object to keep it alive */
-      obj_map[name] = po_ptr;
+      /* Store a pointer to the object */
+      obj_map[name] = po_ptr->id();
 
       /* and return the id of the underlying object */
       auto underlying_object = po_ptr->get_underlying_object();
@@ -92,42 +95,6 @@ public:
       throw std::runtime_error(
           "Parameters passed to Parallel entities must also be parallel.");
     }
-  }
-
-  void
-  set_parameters(const std::map<std::string, Variant> &parameters) override {
-    call(static_cast<int>(CallbackAction::SET_PARAMETERS), 0);
-
-    /* Copy parameters into a non-const buffer, needed by boost::mpi */
-    std::map<std::string, Variant> p(parameters);
-
-    /* Unwrap the object ids */
-    for (auto &it : p) {
-      if (valid_parameters()[it.first].type() == ParameterType::OBJECT) {
-        it.second = map_parallel_to_local_id(it.first, it.second);
-      }
-    }
-
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
-
-    m_p->set_parameters(p);
-  }
-
-  std::map<std::string, Parameter> valid_parameters() const override {
-    return m_p->valid_parameters();
-  }
-
-  std::map<std::string, Variant> get_parameters() const override {
-    auto p = m_p->get_parameters();
-
-    /* Wrap the object ids */
-    for (auto &it : p) {
-      if (valid_parameters()[it.first].type() == ParameterType::OBJECT) {
-        it.second = map_local_to_parallel_id(it.first, it.second);
-      }
-    }
-
-    return p;
   }
 
   Variant call_method(const std::string &name,
@@ -152,7 +119,7 @@ public:
 private:
   /* Data members */
   std::shared_ptr<ScriptInterfaceBase> m_p;
-  std::map<std::string, std::shared_ptr<ParallelScriptInterface>> obj_map;
+  std::map<std::string, ObjectId> obj_map;
 };
 
 } /* namespace ScriptInterface */

@@ -24,8 +24,12 @@
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 
+#include "ParallelScriptInterface.hpp"
+
 namespace ScriptInterface {
 void initialize() {
+  ParallelScriptInterface::initialize();
+
   Shapes::initialize();
   Constraints::initialize();
   Observables::initialize();

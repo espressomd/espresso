@@ -31,13 +31,31 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include "core/utils/Factory.hpp"
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
 
-class ParallelScriptInterfaceSlaveBase {
-protected:
+class ParallelScriptInterfaceSlaveBase {};
+
+class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
+                                     private ParallelScriptInterfaceSlaveBase {
+public:
+  enum class CallbackAction {
+    CREATE,
+    SET_PARAMETER,
+    SET_PARAMETERS,
+    CALL_METHOD,
+    DELETE
+  };
+
+private:
+  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
+  ParallelScriptInterfaceSlave() {}
+
+  std::shared_ptr<ScriptInterfaceBase> m_p;
+
   static std::map<ObjectId, ObjectId> &get_translation_table() {
     static std::map<ObjectId, ObjectId> m_translation_table;
 
@@ -58,34 +76,17 @@ protected:
       ;
     }
   }
-};
-
-class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
-                                     private ParallelScriptInterfaceSlaveBase {
-public:
-  enum class CallbackAction {
-    SET_ID,
-    SET_PARAMETER,
-    SET_PARAMETERS,
-    CALL_METHOD,
-    DELETE
-  };
-
-protected:
-  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
-  ParallelScriptInterfaceSlave() {}
-
-public:
-  std::shared_ptr<ScriptInterfaceBase> m_p;
 
 private:
   void mpi_slave(int action, int) override {
     switch (CallbackAction(action)) {
-    case CallbackAction::SET_ID: {
-      ObjectId global_id;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
+    case CallbackAction::CREATE: {
+      std::pair<ObjectId, std::string> what;
+      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), what, 0);
 
-      get_translation_table()[global_id] = m_p->id();
+      m_p = ScriptInterfaceBase::make_shared(what.second);
+
+      get_translation_table()[what.first] = m_p->id();
 
       break;
     }
