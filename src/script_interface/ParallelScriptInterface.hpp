@@ -26,99 +26,49 @@
 
 #include "ScriptInterface.hpp"
 
-#include "ParallelScriptInterfaceSlave.hpp"
-#include "core/errorhandling.hpp"
+#include "utils/parallel/InstanceCallback.hpp"
 
 namespace ScriptInterface {
 
 class ParallelScriptInterface : public ScriptInterfaceBase,
                                 private Communication::InstanceCallback {
 public:
-  using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
-
   ParallelScriptInterface(std::string const &name);
+  ~ParallelScriptInterface() override;
 
+  /**
+   * @brief Initialize the mpi callback for instance creation.
+   */
   static void initialize();
 
   bool operator==(ParallelScriptInterface const &rhs);
   bool operator!=(ParallelScriptInterface const &rhs);
 
+  /**
+   * @brief Get the payload object.
+   */
   std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const {
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   };
 
-  /* Script interface */
+  /* Script interface implementation */
   const std::string name() const override { return m_p->name(); }
   void set_parameter(const std::string &name, const Variant &value) override;
   void
   set_parameters(const std::map<std::string, Variant> &parameters) override;
-  std::map<std::string, Parameter> valid_parameters() const override {
+  ParameterMap valid_parameters() const override {
     return m_p->valid_parameters();
   }
 
-  std::map<std::string, Variant> get_parameters() const override {
-    auto p = m_p->get_parameters();
-
-    /* Wrap the object ids */
-    for (auto &it : p) {
-      if (is_objectid(it.second)) {
-        it.second = map_local_to_parallel_id(it.first, it.second);
-      }
-    }
-
-    return p;
-  }
+  VariantMap get_parameters() const override;
+  Variant call_method(const std::string &name,
+                      const VariantMap &parameters) override;
 
   /* Id mapping */
   Variant map_local_to_parallel_id(std::string const &name,
-                                   Variant const &value) const {
-    if (boost::get<ObjectId>(value) != ObjectId()) {
-      return obj_map.at(name);
-    } else {
-      return value;
-    }
-  }
-
+                                   Variant const &value) const;
   Variant map_parallel_to_local_id(std::string const &name,
-                                   Variant const &value) {
-    const auto outer_id = boost::get<ObjectId>(value);
-
-    auto so_ptr = get_instance(outer_id).lock();
-
-    auto po_ptr = std::dynamic_pointer_cast<ParallelScriptInterface>(so_ptr);
-
-    if (po_ptr != nullptr) {
-      /* Store a pointer to the object */
-      obj_map[name] = po_ptr->id();
-
-      /* and return the id of the underlying object */
-      auto underlying_object = po_ptr->get_underlying_object();
-
-      return underlying_object->id();
-    } else {
-      throw std::runtime_error(
-          "Parameters passed to Parallel entities must also be parallel.");
-    }
-  }
-
-  Variant call_method(const std::string &name,
-                      const VariantMap &parameters) override {
-    InstanceCallback::call(static_cast<int>(CallbackAction::CALL_METHOD), 0);
-    VariantMap p = parameters;
-
-    /* Unwrap the object ids */
-    for (auto &it : p) {
-      if (it.second.which() == static_cast<int>(ParameterType::OBJECT)) {
-        it.second = map_parallel_to_local_id(it.first, it.second);
-      }
-    }
-
-    auto d = std::make_pair(name, p);
-    /* Broadcast method name and parameters */
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-
-    return m_p->call_method(name, p);
-  }
+                                   Variant const &value);
 
 private:
   /* Data members */

@@ -74,6 +74,8 @@ class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
+  virtual ~ScriptInterfaceBase() = default;
+
   /**
    * @brief Name of the object.
    *
