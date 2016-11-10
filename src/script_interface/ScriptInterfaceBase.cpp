@@ -21,7 +21,6 @@
 
 #include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
-
 #include "utils/Factory.hpp"
 
 namespace ScriptInterface {

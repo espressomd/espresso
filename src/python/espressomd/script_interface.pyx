@@ -3,7 +3,7 @@ from espressomd.utils import to_char_pointer
 cdef class PScriptInterface:
     def __init__(self, name=None):
         if name:
-            self.sip = make_shared(to_char_pointer(name))
+            self.sip = make_shared(to_char_pointer(name), GLOBAL)
             self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()

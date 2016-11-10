@@ -83,8 +83,14 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         ObjectId id() except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name)
+    cdef cppclass CreationPolicy:
+        pass
+    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy)
     weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id)
+
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+    CreationPolicy LOCAL
+    CreationPolicy GLOBAL
 
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
