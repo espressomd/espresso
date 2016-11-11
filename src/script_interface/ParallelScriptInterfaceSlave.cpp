@@ -11,6 +11,8 @@
 
 #include "core/utils/Factory.hpp"
 
+namespace ScriptInterface {
+
 std::map<ObjectId, ObjectId> &
 ParallelScriptInterfaceSlave::get_translation_table() {
   static std::map<ObjectId, ObjectId> m_translation_table;
@@ -78,3 +80,5 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
   }
   }
 }
+
+} /* namespace ScriptInterface */

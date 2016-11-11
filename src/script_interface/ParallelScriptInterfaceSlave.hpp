@@ -22,6 +22,7 @@
 #ifndef SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
+#include "ScriptInterfaceBase.hpp"
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
 
