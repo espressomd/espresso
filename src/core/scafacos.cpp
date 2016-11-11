@@ -293,16 +293,17 @@ static void set_params_safe(const std::string &method, const std::string &params
   
   scafacos = new Scafacos(method, comm_cart, params);
 
-  scafacos->parse_parameters(params);
   int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
   scafacos->set_dipolar(dipolar_ia);
   scafacos->set_common_parameters(box_l, per, n_part);
 
   on_coulomb_change();
   
-  tune();
+  if (!dipolar_ia) {
+    tune();
 
-  on_coulomb_change();
+    on_coulomb_change();
+  };
 }
 
 /** Bend result from scafacos back to original format */
@@ -320,6 +321,7 @@ std::string get_parameters() {
 
 double get_r_cut() {
   if(scafacos) {
+    if (!scafacos->has_near) return 0;
     return scafacos->r_cut();
   }
   return 0.0;  
@@ -363,8 +365,10 @@ void set_dipolar(bool d) {
 
 void free_handle() {
 
+  if (this_node==0) 
+    mpi_call(mpi_scafacos_free_slave, 0,0);
   if(scafacos) {
-    delete scafacos;
+delete scafacos;
     scafacos = 0;
   }
 }
@@ -393,4 +397,11 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
     set_dipolar(dip);
   #endif
   #endif /* SCAFACOS */
+}
+
+void mpi_scafacos_free_slave(int a, int b) {
+  #if defined(SCAFACOS) 
+  using namespace Scafacos;
+  free_handle();
+  #endif
 }
