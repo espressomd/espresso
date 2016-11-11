@@ -160,6 +160,7 @@ IF DP3M == 1:
                 self._tune()
 
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
@@ -227,6 +228,7 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core(self)
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -254,6 +256,7 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core(self)
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -272,11 +275,12 @@ IF DIPOLES == 1:
                 coulomb.Dmethod = DIPOLAR_SCAFACOS
                 dipolar_set_Dbjerrum(self._params["bjerrum_length"])
                 self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
             
             def _deactivate_method(self):
                 coulomb.Dmethod = DIPOLAR_NONE
-                print "free scafacos"
                 scafacos.free_handle()
+                mpi_bcast_coulomb_params()
 
             def default_params(self):
                 return {}
