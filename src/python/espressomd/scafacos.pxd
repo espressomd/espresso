@@ -1,6 +1,7 @@
 # Interface to the scafacos library. These are the methods shared between
 # dipolar and electrostatics methods
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 from libcpp.string cimport string

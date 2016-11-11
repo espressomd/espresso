@@ -49,12 +49,19 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-option(WITH_PYTHON "Build python interface"  ON)
-option(WITH_TCL    "Build tcl interface"     ON)
+#option(WITH_PYTHON "Build python interface"  ON)
+##option(WITH_TCL    "Build tcl interface"     ON)
+set(WITH_PYTHON yes)
+set(WITH_TCL no)
+
 option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
+
+# Write compile commands to file, for various tools...
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
@@ -106,16 +113,22 @@ if (WITH_CUDA)
   endif(CUDA_FOUND)
 endif(WITH_CUDA)
 
-find_package(PythonInterp 2)
+find_package(PythonInterp)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
-  find_package(PythonLibs REQUIRED)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE}
+                -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
+                OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
-  list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
-                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  else()
+    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  endif()
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -136,12 +149,19 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
+# If we build either interface turn on script interface
+if (WITH_PYTHON OR WITH_TCL)
+  set(WITH_SCRIPT_INTERFACE ON)
+endif()
+
+if (WITH_HDF5)
 find_package(HDF5)
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
   include_directories(${HDF5_INCLUDE_DIRS})
-endif()
+endif(HDF5_FOUND)
+endif(WITH_HDF5)
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
@@ -167,7 +187,7 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization)
+find_package(Boost REQUIRED mpi serialization system)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
@@ -180,10 +200,10 @@ if(WITH_TESTS)
   find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
+    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################

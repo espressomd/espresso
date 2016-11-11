@@ -1,39 +1,91 @@
 /*
   Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file binary_file_tcl.cpp
     Implementation of \ref binary_file_tcl.hpp "binary_file_tcl.h".
 */
+#include "binary_file_tcl.hpp"
+#include "communication.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "interaction_data.hpp"
+#include "utils.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "utils.hpp"
-#include "binary_file_tcl.hpp"
-#include "global.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
-#include "interaction_data.hpp"
 
-int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
-	    int argc, char **argv)
-{
+/** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader
+    to allow unique identification of binary packed MD data.
+*/
+#define MDMAGIC "MD01"
+
+/** The header of the binary file format. Magic is used to identify the file and
+   should have
+    a value of \ref MDMAGIC ("MD01") without trailing 0. */
+struct MDHeader {
+  /** Magic Identifier. Must be \ref MDMAGIC ("MD01") without trailing 0. */
+  char magic[4];
+  /** Number of data rows contained in the following data. */
+  int n_rows;
+};
+
+/** \name Field Codes.
+    Possible field codes to follow \ref MDHeader. */
+/*@{*/
+/** Row contains the x component of the position. */
+#define POSX 0
+/** Row contains the y component of the position. */
+#define POSY 1
+/** Row contains the z component of the position. */
+#define POSZ 2
+/** Row contains the x component of the velocity. */
+#define VX 3
+/** Row contains the y component of the velocity. */
+#define VY 4
+/** Row contains the z component of the velocity. */
+#define VZ 5
+/** Row contains the x component of the force. */
+#define FX 6
+/** Row contains the y component of the force. */
+#define FY 7
+/** Row contains the z component of the force. */
+#define FZ 8
+/** Row contains the mass. */
+#define MASSES 9
+/** Row contains the charge. */
+#define Q 10
+/** Row contains the type. */
+#define TYPE 11
+/** Row contains the x component of the magnetic moment. */
+#define MX 12
+/** Row contains the y component of the magnetic moment. */
+#define MY 13
+/** Row contains the z component of the magnetic moment. */
+#define MZ 14
+/** Row contains the solvation free energies (SHANCHEN) */
+#define SOLVATION 15
+
+/*@}*/
+
+int tclcommand_writemd(ClientData data, Tcl_Interp *interp, int argc,
+                       char **argv) {
   static int end_num = -1;
   char *row;
   int p, i;
@@ -42,32 +94,34 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   Tcl_Channel channel;
 
   if (argc < 3) {
-    #if defined(ELECTROSTATICS) && defined(DIPOLES)
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-	  	       argv[0], " <file> ?posx|posy|posz|q|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
-		       (char *) NULL);
-    #else
-      #ifdef ELECTROSTATICS
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-	  	       argv[0], " <file> ?posx|posy|posz|q|vx|vy|vz|fx|fy|fz|type?* ...\"",
-		       (char *) NULL);
-      #endif
-      
-      #ifdef DIPOLES
-      Tcl_AppendResult(interp, "wrong # args:  should be \"",
-	  	       argv[0], " <file> ?posx|posy|posz|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
-		       (char *) NULL);
-      #endif
-    
-    #endif		       
-   		     
+#if defined(ELECTROSTATICS) && defined(DIPOLES)
+    Tcl_AppendResult(
+        interp, "wrong # args:  should be \"", argv[0],
+        " <file> ?posx|posy|posz|q|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
+        (char *)NULL);
+#else
+#ifdef ELECTROSTATICS
+    Tcl_AppendResult(interp, "wrong # args:  should be \"", argv[0],
+                     " <file> ?posx|posy|posz|q|vx|vy|vz|fx|fy|fz|type?* ...\"",
+                     (char *)NULL);
+#endif
+
+#ifdef DIPOLES
+    Tcl_AppendResult(
+        interp, "wrong # args:  should be \"", argv[0],
+        " <file> ?posx|posy|posz|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
+        (char *)NULL);
+#endif
+
+#endif
+
     return (TCL_ERROR);
   }
 
   if ((channel = Tcl_GetChannel(interp, argv[1], &tcl_file_mode)) == NULL)
     return (TCL_ERROR);
   if (!(tcl_file_mode & TCL_WRITABLE)) {
-    Tcl_AppendResult(interp, "\"", argv[1], "\" not writeable", (char *) NULL);
+    Tcl_AppendResult(interp, "\"", argv[1], "\" not writeable", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -77,15 +131,13 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   /* assemble rows */
   argc -= 2;
   argv += 2;
-  row = (char*)Utils::malloc(sizeof(char)*argc);
+  row = (char *)Utils::malloc(sizeof(char) * argc);
   for (i = 0; i < argc; i++) {
     if (!strncmp(*argv, "posx", strlen(*argv))) {
       row[i] = POSX;
-    }
-    else if (!strncmp(*argv, "posy", strlen(*argv))) {
+    } else if (!strncmp(*argv, "posy", strlen(*argv))) {
       row[i] = POSY;
-    }
-    else if (!strncmp(*argv, "posz", strlen(*argv))) {
+    } else if (!strncmp(*argv, "posz", strlen(*argv))) {
       row[i] = POSZ;
     }
 #ifdef MASS
@@ -96,41 +148,32 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
     else if (!strncmp(*argv, "q", strlen(*argv))) {
       row[i] = Q;
     }
-#ifdef DIPOLES    
+#ifdef DIPOLES
     else if (!strncmp(*argv, "mx", strlen(*argv))) {
       row[i] = MX;
-    }
-    else if (!strncmp(*argv, "my", strlen(*argv))) {
+    } else if (!strncmp(*argv, "my", strlen(*argv))) {
       row[i] = MY;
-    }
-    else if (!strncmp(*argv, "mz", strlen(*argv))) {
+    } else if (!strncmp(*argv, "mz", strlen(*argv))) {
       row[i] = MZ;
-    }    
-#endif    
+    }
+#endif
     else if (!strncmp(*argv, "vx", strlen(*argv))) {
       row[i] = VX;
-    }
-    else if (!strncmp(*argv, "vy", strlen(*argv))) {
+    } else if (!strncmp(*argv, "vy", strlen(*argv))) {
       row[i] = VY;
-    }
-    else if (!strncmp(*argv, "vz", strlen(*argv))) {
+    } else if (!strncmp(*argv, "vz", strlen(*argv))) {
       row[i] = VZ;
-    }
-    else if (!strncmp(*argv, "fx", strlen(*argv))) {
+    } else if (!strncmp(*argv, "fx", strlen(*argv))) {
       row[i] = FX;
-    }
-    else if (!strncmp(*argv, "fy", strlen(*argv))) {
+    } else if (!strncmp(*argv, "fy", strlen(*argv))) {
       row[i] = FY;
-    }
-    else if (!strncmp(*argv, "fz", strlen(*argv))) {
+    } else if (!strncmp(*argv, "fz", strlen(*argv))) {
       row[i] = FZ;
-    }
-    else if (!strncmp(*argv, "type", strlen(*argv))) {
+    } else if (!strncmp(*argv, "type", strlen(*argv))) {
       row[i] = TYPE;
-    }
-    else {
+    } else {
       Tcl_AppendResult(interp, "no particle data field \"", *argv, "\"?",
-		       (char *) NULL);
+                       (char *)NULL);
       free(row);
       return (TCL_ERROR);
     }
@@ -141,10 +184,10 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
     build_particle_node();
 
   /* write header and row data */
-  memmove(header.magic, MDMAGIC, 4*sizeof(char));
+  memmove(header.magic, MDMAGIC, 4 * sizeof(char));
   header.n_rows = argc;
   Tcl_Write(channel, (char *)&header, sizeof(header));
-  Tcl_Write(channel, row, header.n_rows*sizeof(char));
+  Tcl_Write(channel, row, header.n_rows * sizeof(char));
 
   for (p = 0; p <= max_seen_particle; p++) {
     Particle data;
@@ -155,29 +198,59 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
       Tcl_Write(channel, (char *)&p, sizeof(int));
 
       for (i = 0; i < header.n_rows; i++) {
-	switch (row[i]) {
-	case POSX: Tcl_Write(channel, (char *)&data.r.p[0], sizeof(double)); break;
-	case POSY: Tcl_Write(channel, (char *)&data.r.p[1], sizeof(double)); break;
-	case POSZ: Tcl_Write(channel, (char *)&data.r.p[2], sizeof(double)); break;
-	case VX:   Tcl_Write(channel, (char *)&data.m.v[0], sizeof(double)); break;
-	case VY:   Tcl_Write(channel, (char *)&data.m.v[1], sizeof(double)); break;
-	case VZ:   Tcl_Write(channel, (char *)&data.m.v[2], sizeof(double)); break;
-	case FX:   Tcl_Write(channel, (char *)&data.f.f[0], sizeof(double)); break;
-	case FY:   Tcl_Write(channel, (char *)&data.f.f[1], sizeof(double)); break;
-	case FZ:   Tcl_Write(channel, (char *)&data.f.f[2], sizeof(double)); break;
+        switch (row[i]) {
+        case POSX:
+          Tcl_Write(channel, (char *)&data.r.p[0], sizeof(double));
+          break;
+        case POSY:
+          Tcl_Write(channel, (char *)&data.r.p[1], sizeof(double));
+          break;
+        case POSZ:
+          Tcl_Write(channel, (char *)&data.r.p[2], sizeof(double));
+          break;
+        case VX:
+          Tcl_Write(channel, (char *)&data.m.v[0], sizeof(double));
+          break;
+        case VY:
+          Tcl_Write(channel, (char *)&data.m.v[1], sizeof(double));
+          break;
+        case VZ:
+          Tcl_Write(channel, (char *)&data.m.v[2], sizeof(double));
+          break;
+        case FX:
+          Tcl_Write(channel, (char *)&data.f.f[0], sizeof(double));
+          break;
+        case FY:
+          Tcl_Write(channel, (char *)&data.f.f[1], sizeof(double));
+          break;
+        case FZ:
+          Tcl_Write(channel, (char *)&data.f.f[2], sizeof(double));
+          break;
 #ifdef MASS
-	case MASSES: Tcl_Write(channel, (char *)&data.p.mass, sizeof(double)); break;
+        case MASSES:
+          Tcl_Write(channel, (char *)&data.p.mass, sizeof(double));
+          break;
 #endif
 #ifdef ELECTROSTATICS
-	case Q:    Tcl_Write(channel, (char *)&data.p.q, sizeof(double)); break;
+        case Q:
+          Tcl_Write(channel, (char *)&data.p.q, sizeof(double));
+          break;
 #endif
 #ifdef DIPOLES
-	case MX:   Tcl_Write(channel, (char *)&data.r.dip[0], sizeof(double)); break;
-	case MY:   Tcl_Write(channel, (char *)&data.r.dip[1], sizeof(double)); break;
-	case MZ:   Tcl_Write(channel, (char *)&data.r.dip[2], sizeof(double)); break;
+        case MX:
+          Tcl_Write(channel, (char *)&data.r.dip[0], sizeof(double));
+          break;
+        case MY:
+          Tcl_Write(channel, (char *)&data.r.dip[1], sizeof(double));
+          break;
+        case MZ:
+          Tcl_Write(channel, (char *)&data.r.dip[2], sizeof(double));
+          break;
 #endif
-	case TYPE: Tcl_Write(channel, (char *)&data.p.type, sizeof(int)); break;
-	}
+        case TYPE:
+          Tcl_Write(channel, (char *)&data.p.type, sizeof(int));
+          break;
+        }
       }
       free_particle(&data);
     }
@@ -188,32 +261,31 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   return TCL_OK;
 }
 
-int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
-	   int argc, char **argv)
-{
+int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp, int argc,
+                      char **argv) {
   char *row;
-  int pos_row[3] = { -1 }, v_row[3] = { -1 }, 
-  #ifdef DIPOLES 
-  dip_row[3] = { -1 }, 
-  #endif
-  f_row[3] = { -1 };
-  
-  int av_pos = 0, av_v = 0, 
-#ifdef DIPOLES 
-    av_dip=0, 
+  int pos_row[3] = {-1}, v_row[3] = {-1},
+#ifdef DIPOLES
+      dip_row[3] = {-1},
+#endif
+      f_row[3] = {-1};
+
+  int av_pos = 0, av_v = 0,
+#ifdef DIPOLES
+      av_dip = 0,
 #endif
 #ifdef MASS
-    av_mass=0,
+      av_mass = 0,
 #endif
 #ifdef SHANCHEN
-    av_solvation=0,
+      av_solvation = 0,
 #endif
-    av_f = 0,
+      av_f = 0,
 #ifdef ELECTROSTATICS
-    av_q = 0,
+      av_q = 0,
 #endif
-    av_type = 0;
-  
+      av_type = 0;
+
   int node, i;
   struct MDHeader header;
   Particle data;
@@ -221,9 +293,8 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
   Tcl_Channel channel;
 
   if (argc != 2) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " <file>\"",
-		     (char *) NULL);
+    Tcl_AppendResult(interp, "wrong # args:  should be \"", argv[0],
+                     " <file>\"", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -237,8 +308,7 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
   /* check token */
   if (strncmp(header.magic, MDMAGIC, 4) || header.n_rows < 0) {
     Tcl_AppendResult(interp, "data file \"", argv[1],
-		     "\" does not contain tcl MD data",
-		     (char *) NULL);
+                     "\" does not contain tcl MD data", (char *)NULL);
     return (TCL_ERROR);
   }
 
@@ -246,34 +316,66 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
     build_particle_node();
 
   /* parse rows */
-  row = (char*)Utils::malloc(header.n_rows*sizeof(char));
+  row = (char *)Utils::malloc(header.n_rows * sizeof(char));
   for (i = 0; i < header.n_rows; i++) {
     Tcl_Read(channel, (char *)&row[i], sizeof(char));
     switch (row[i]) {
-    case POSX: pos_row[0] = i; break;
-    case POSY: pos_row[1] = i; break;
-    case POSZ: pos_row[2] = i; break;
-    case   VX:   v_row[0] = i; break;
-    case   VY:   v_row[1] = i; break;
-    case   VZ:   v_row[2] = i; break;
+    case POSX:
+      pos_row[0] = i;
+      break;
+    case POSY:
+      pos_row[1] = i;
+      break;
+    case POSZ:
+      pos_row[2] = i;
+      break;
+    case VX:
+      v_row[0] = i;
+      break;
+    case VY:
+      v_row[1] = i;
+      break;
+    case VZ:
+      v_row[2] = i;
+      break;
 #ifdef DIPOLES
-    case   MX:   dip_row[0] = i; break;
-    case   MY:   dip_row[1] = i; break;
-    case   MZ:   dip_row[2] = i; break;
+    case MX:
+      dip_row[0] = i;
+      break;
+    case MY:
+      dip_row[1] = i;
+      break;
+    case MZ:
+      dip_row[2] = i;
+      break;
 #endif
-    case   FX:   f_row[0] = i; break;
-    case   FY:   f_row[1] = i; break;
-    case   FZ:   f_row[2] = i; break;
+    case FX:
+      f_row[0] = i;
+      break;
+    case FY:
+      f_row[1] = i;
+      break;
+    case FZ:
+      f_row[2] = i;
+      break;
 #ifdef MASS
-    case MASSES: av_mass  = 1; break;
+    case MASSES:
+      av_mass = 1;
+      break;
 #endif
 #ifdef SHANCHEN
-    case SOLVATION: av_solvation = 1; break;
+    case SOLVATION:
+      av_solvation = 1;
+      break;
 #endif
 #ifdef ELECTROSTATICS
-    case    Q:   av_q     = 1; break;
+    case Q:
+      av_q = 1;
+      break;
 #endif
-    case TYPE:   av_type  = 1; break;
+    case TYPE:
+      av_type = 1;
+      break;
     }
   }
 
@@ -288,13 +390,12 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
   if (f_row[0] != -1 && f_row[1] != -1 && f_row[2] != -1) {
     av_f = 1;
   }
-  
-  #ifdef DIPOLES
+
+#ifdef DIPOLES
   if (dip_row[0] != -1 && dip_row[1] != -1 && dip_row[2] != -1) {
     av_dip = 1;
   }
-  #endif
-
+#endif
 
   while (!Tcl_Eof(channel)) {
     Tcl_Read(channel, (char *)&data.p.identity, sizeof(int));
@@ -305,52 +406,83 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
 
     if (data.p.identity < 0) {
       Tcl_AppendResult(interp, "illegal data format in data file \"", argv[1],
-		       "\", perhaps wrong file?",
-		       (char *) NULL);
+                       "\", perhaps wrong file?", (char *)NULL);
       free(row);
       return (TCL_ERROR);
     }
 
     for (i = 0; i < header.n_rows; i++) {
       switch (row[i]) {
-      case POSX: Tcl_Read(channel, (char *)&data.r.p[0], sizeof(double)); break;
-      case POSY: Tcl_Read(channel, (char *)&data.r.p[1], sizeof(double)); break;
-      case POSZ: Tcl_Read(channel, (char *)&data.r.p[2], sizeof(double)); break;
-      case   VX: Tcl_Read(channel, (char *)&data.m.v[0], sizeof(double)); break;
-      case   VY: Tcl_Read(channel, (char *)&data.m.v[1], sizeof(double)); break;
-      case   VZ: Tcl_Read(channel, (char *)&data.m.v[2], sizeof(double)); break;
-      case   FX: Tcl_Read(channel, (char *)&data.f.f[0], sizeof(double)); break;
-      case   FY: Tcl_Read(channel, (char *)&data.f.f[1], sizeof(double)); break;
-      case   FZ: Tcl_Read(channel, (char *)&data.f.f[2], sizeof(double)); break;
+      case POSX:
+        Tcl_Read(channel, (char *)&data.r.p[0], sizeof(double));
+        break;
+      case POSY:
+        Tcl_Read(channel, (char *)&data.r.p[1], sizeof(double));
+        break;
+      case POSZ:
+        Tcl_Read(channel, (char *)&data.r.p[2], sizeof(double));
+        break;
+      case VX:
+        Tcl_Read(channel, (char *)&data.m.v[0], sizeof(double));
+        break;
+      case VY:
+        Tcl_Read(channel, (char *)&data.m.v[1], sizeof(double));
+        break;
+      case VZ:
+        Tcl_Read(channel, (char *)&data.m.v[2], sizeof(double));
+        break;
+      case FX:
+        Tcl_Read(channel, (char *)&data.f.f[0], sizeof(double));
+        break;
+      case FY:
+        Tcl_Read(channel, (char *)&data.f.f[1], sizeof(double));
+        break;
+      case FZ:
+        Tcl_Read(channel, (char *)&data.f.f[2], sizeof(double));
+        break;
       case MASSES:
 #ifdef MASS
-          Tcl_Read(channel, (char *)&data.p.mass, sizeof(double)); break;
+        Tcl_Read(channel, (char *)&data.p.mass, sizeof(double));
+        break;
 #else
-          {
-              double dummy_mass;
-              Tcl_Read(channel, (char *)&dummy_mass, sizeof(double)); break;
-          }
+      {
+        double dummy_mass;
+        Tcl_Read(channel, (char *)&dummy_mass, sizeof(double));
+        break;
+      }
 #endif
 #ifdef ELECTROSTATICS
-      case    Q: Tcl_Read(channel, (char *)&data.p.q, sizeof(double)); break;
+      case Q:
+        Tcl_Read(channel, (char *)&data.p.q, sizeof(double));
+        break;
 #endif
 #ifdef DIPOLES
-      case   MX: Tcl_Read(channel, (char *)&data.r.dip[0], sizeof(double)); break;
-      case   MY: Tcl_Read(channel, (char *)&data.r.dip[1], sizeof(double)); break;
-      case   MZ: Tcl_Read(channel, (char *)&data.r.dip[2], sizeof(double)); break;
+      case MX:
+        Tcl_Read(channel, (char *)&data.r.dip[0], sizeof(double));
+        break;
+      case MY:
+        Tcl_Read(channel, (char *)&data.r.dip[1], sizeof(double));
+        break;
+      case MZ:
+        Tcl_Read(channel, (char *)&data.r.dip[2], sizeof(double));
+        break;
 #endif
 
-      case TYPE: Tcl_Read(channel, (char *)&data.p.type, sizeof(int)); break;
+      case TYPE:
+        Tcl_Read(channel, (char *)&data.p.type, sizeof(int));
+        break;
       }
     }
 
-    node = (data.p.identity <= max_seen_particle) ? particle_node[data.p.identity] : -1;
+    node = (data.p.identity <= max_seen_particle)
+               ? particle_node[data.p.identity]
+               : -1;
     if (node == -1) {
       if (!av_pos) {
-	Tcl_AppendResult(interp, "new particle without position data",
-			 (char *) NULL);
-	free(row);
-	return (TCL_ERROR);
+        Tcl_AppendResult(interp, "new particle without position data",
+                         (char *)NULL);
+        free(row);
+        return (TCL_ERROR);
       }
     }
 
@@ -383,4 +515,3 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
   free(row);
   return TCL_OK;
 }
-

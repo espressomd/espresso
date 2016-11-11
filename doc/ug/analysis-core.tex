@@ -79,6 +79,8 @@ computation, too frequent updates to observables which are not implemented
 in parallel may produce a significant slowdown.
 
 \subsection{Creating an observable}
+
+\subsubsection{Tcl}
 To create a new observable, use
 \begin{essyntax}
   observable new \var{name} \opt{\var{parameters+}}
@@ -89,7 +91,18 @@ an integer \var{id} which will be used later to refer to the observable.
 The parameter \var{name} and further arguments have to correspond to one of the
 observables described below.
 
+\subsubsection{Python}
+The observables are represented as Python classes. They are contained in the \texttt{espressomd.observables} module. An observable is instanced as follows
+\begin{lstlisting}
+from espressomd.observables import *
+part_pos=ParticlePositions(ids=(1,2,3,4,5))
+\end{lstlisting}
+Here, the keyword argument \texttt{ids} specifies the ids of the particles, which the observable should take into account.
+
+
 \subsubsection{Available observables}
+
+\subsubsection{Tcl}
 Currently the following observables are implemented.
 Particle specifications (see section~\ref{sec:PartSpec} below)
 define a group of particles, from which the observable should be calculated. 
@@ -169,7 +182,7 @@ system:
           where $\Delta t$ is the simulation time step.
           Required feature: \required{ELECTROSTATICS}
     \item \lit{currents} \var{particle\_specifications}\\
-          Electric currents averaged over all particles: 
+          Electric currents summed over all particles: 
           $j^x = \sum_i q_i v_i^x / \Delta t$
           where $\Delta t$ is the simulation time step.
           Required feature: \required{ELECTROSTATICS}
@@ -279,6 +292,48 @@ Prints the value of the observable with a given $id$. If the observable
 refers to the current state of the system, its value is updated before printing, except
 if \lit{no_calculation} is given.
 \todo{Formatted printing is not fully supported yet.}
+
+\subsubsection{Python}
+
+The following observables are available
+\begin{itemize}
+\item Observables working on a given set of particles specified as follows
+\begin{lstlisting}
+part_vel=ParticleVelocities(ids=(1,2,3,4,5))
+\end{lstlisting}
+\begin{itemize}
+\item ParticlePositions
+\item ParticleVelocities
+\item ParticleForces
+\item ParticleBodyVelocities
+\item ParticleAngularMomentum
+\item ParticleBodyAngularMomentum
+\item ParticleCurrent
+\item Current
+\item DipoleMoment
+\item MagneticDipoleMoment
+\item ComPosition
+\item ComVelocity
+\item ComForce
+\end{itemize}
+\item Profile observables sampling the spacial profile of various quantities
+\begin{lstlisting}
+dp =DensityProfile(
+   xbins=50, ybins=50, zbins=50, 
+   minx=0, miny=0, minz=0,
+   maxx=10, maxy=10, maxz=10,
+   ids=(1,2,3,4,5))
+\end{lstlisting}
+\begin{itemize}
+\item DensityProfile
+\item FluxDensityProfile
+\item ForceDensityProfile
+\item LBVelocityProfile
+\end{itemize}
+\end{itemize}
+
+
+
 
 \subsection{Checkpointing observables}
 \begin{essyntax}
@@ -528,7 +583,35 @@ Its further arguments are described below.
   perform your own tests.
 \end{arguments}
 
+\subsubsection{Python}
+
+Each correlator is represented by an instance of the Correlator class, which is defined in the \texttt{espressomd.correlators} module.
+\begin{pysyntax}
+\object{espressomd.correlators}{Correlator}{
+ obs1 = \arg{Observable},
+ obs2 = \arg{Observable},
+ dt = \arg{float},
+ tau_lin = \arg{int},
+ tau_max = \arg{float},
+ corr_operation = \arg{string},
+ compress1 = \arg{string},
+ compress2 = \arg{string}
+ }
+\end{pysyntax}
+The meaning of the arguments is as described for TCL. The only exceptions are the \texttt{obs1} and \texttt{obs2} arguments, which take instances of the Observable class.
+
+Correlators can be registered for automatic updating during the integration by adding them to \texttt{system.auto_update_correlators}.
+\begin{lstlisting}
+system.auto_update_correlators.add(corr)
+\end{lstlisting}
+
+  
+
 \subsection{Inquiring about already existing correlations}
+\begin{pysyntax}
+\object{esrpessomd.correlators}{Correlator}{get_params()}
+\end{pysyntax}
+
 \begin{essyntax}
 \variant{1} correlation 
 \variant{2} correlation n_corr

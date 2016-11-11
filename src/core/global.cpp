@@ -103,11 +103,9 @@ const Datafield fields[] = {
   {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5 },         /* 59 from integrate.cpp */
   {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1 },         /* 60 from integrate.cpp */
 #ifndef ROTATIONAL_INERTIA
-  {&(langevin_gamma_rotation),  TYPE_DOUBLE, 1, "gamma_rot",1 },    /* 61 from thermostat.cpp */
+  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1 },    /* 61 from thermostat.cpp */
 #else
-  {&(langevin_gamma_rotation[0]),  TYPE_DOUBLE, 1, "gamma_rot_0",1 },    /* 61 from thermostat.cpp */
-  {&(langevin_gamma_rotation[1]),  TYPE_DOUBLE, 1, "gamma_rot_1",1 },    /* 62 from thermostat.cpp */
-  {&(langevin_gamma_rotation[2]),  TYPE_DOUBLE, 1, "gamma_rot_2",1 },    /* 63 from thermostat.cpp */
+  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1 },    /* 61 from thermostat.cpp */
 #endif
   { NULL, 0, 0, NULL, 0 }
 };

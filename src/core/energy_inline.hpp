@@ -73,7 +73,7 @@
 #include "twist_stack.hpp"
 
 #ifdef CONSTRAINTS
-#include "constraint.hpp"
+#include "constraints.hpp"
 #endif
 
 #ifdef EXTERNAL_FORCES

@@ -16,13 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from actors cimport Actor
-cimport cuda_init
-import cuda_init
+from .actors cimport Actor
+from . cimport cuda_init
+from . import cuda_init
 from globals cimport *
 from copy import deepcopy
+from . import utils
 
 # Actor class
 ####################################################
@@ -35,6 +37,14 @@ cdef class HydrodynamicInteraction(Actor):
 ####################################################
 IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
+
+        def __getitem__(self, key):
+            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+                if len(key) == 3:
+                    return LBFluidRoutines(np.array(key))
+            else: 
+                raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," %key)
+
 
         # validate the given parameters on actor initalization
         ####################################################
@@ -149,24 +159,23 @@ IF LB_GPU or LB:
         # input/output function wrappers for whole LB fields
         ####################################################
         def print_vtk_velocity(self, path):
-            lb_lbfluid_print_vtk_velocity(path)
+            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
         def print_vtk_boundary(self, path):
-            lb_lbfluid_print_vtk_boundary(path)
+            lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
-            lb_lbfluid_print_velocity(path)
+            lb_lbfluid_print_velocity(utils.to_char_pointer(path))
         def print_boundary(self, path):
-            lb_lbfluid_print_boundary(path)
+            lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(path, binary)
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
         def load_checkpoint(self, path, binary):
-            lb_lbfluid_load_checkpoint(path, binary)
-        def lbnode_get_node_velocity(self, coord):
-            cdef double[3] double_return
-            cdef int[3] c_coord
-            for i in range(len(coord)):
-                c_coord[i] = int(coord[i])
-            lb_lbnode_get_u(c_coord, double_return)
-            return double_return
+            lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+       
+        # input/output function wrappers for LB nodes
+        ####################################################
+
+
+
 
         # Activate Actor
         ####################################################
@@ -186,3 +195,69 @@ IF LB_GPU:
                 raise Exception("lb_set_lattice_switch error")
 
 
+IF LB or LB_GPU:
+    cdef class LBFluidRoutines:
+        cdef int node[3]
+        def __init__(self, key):
+            self.node[0] = key[0]
+            self.node[1] = key[1]
+            self.node[2] = key[2]
+
+        property velocity:
+            def __get__(self):
+                cdef double[3] double_return
+                lb_lbnode_get_u(self.node, double_return)
+                return double_return
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
+        property density:
+            def __get__(self):
+                cdef double[3] double_return
+                lb_lbnode_get_rho(self.node, double_return)
+                return double_return
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+                
+            
+        property pi:
+            def __get__(self):
+                cdef double[6] pi
+                lb_lbnode_get_pi(self.node, pi)
+                return np.array([[pi[0],pi[1],pi[3]],
+                                 [pi[1],pi[2],pi[4]],
+                                 [pi[3],pi[4],pi[5]]])
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
+        property pi_neq:
+            def __get__(self):
+                cdef double[6] pi
+                lb_lbnode_get_pi_neq(self.node, pi)
+                return np.array([[pi[0],pi[1],pi[3]],
+                                 [pi[1],pi[2],pi[4]],
+                                 [pi[3],pi[4],pi[5]]])
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
+        property population:
+            def __get__(self):
+                cdef double[19] double_return
+                lb_lbnode_get_pop(self.node, double_return)
+                return double_return
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")
+
+        property boundary:
+            def __get__(self):
+                cdef int int_return
+                lb_lbnode_get_boundary(self.node, &int_return)
+                return int_return
+
+            def __set__(self, value):
+                raise Exception("Not implemented.")

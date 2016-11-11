@@ -16,19 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
-cimport utils
-from utils cimport *
-cimport particle_data
-from interactions import BondedInteraction
-from interactions import BondedInteractions
+from . cimport utils
+from espressomd.utils cimport *
+from . cimport particle_data
+from .interactions import BondedInteraction
+from .interactions import BondedInteractions
 from copy import copy
-from globals cimport max_seen_particle, time_step, smaller_time_step, box_l
+from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
-from globals cimport max_seen_particle, time_step, smaller_time_step, n_part
 
 PARTICLE_EXT_FORCE = 1
 
@@ -45,7 +45,8 @@ PARTICLE_EXT_TORQUE = 16
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        particle_attributes.append(d)
+        if not d in ["pos_folded"]:
+            particle_attributes.append(d)
 
 
 cdef class ParticleHandle:
@@ -111,10 +112,16 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return np.array([self.particle_data.r.p[0],
-                             self.particle_data.r.p[1],
-                             self.particle_data.r.p[2]])
-            
+            cdef double ppos[3]
+            cdef int img[3]
+            for i in range(3):
+               img[i]=self.particle_data.l.i[i]
+               ppos[i]=self.particle_data.r.p[i]
+
+
+            unfold_position(ppos,img)
+            return np.array([ppos[0],ppos[1],ppos[2]])
+
     property pos_folded:
         """Particle position (folded into central image)."""
 
@@ -195,7 +202,7 @@ cdef class ParticleHandle:
             # Assigning to the bond property means replacing the existing value
             # i.e., we delete all existing bonds
             if change_particle_bond(self.id, NULL, 1):
-                raise Exception("Deleting existing bonds failed.")
+                handle_errors("Deleting existing bonds failed.")
 
             # And add the new ones
             for bond in bonds:
@@ -458,7 +465,7 @@ cdef class ParticleHandle:
             """Setup this particle as virtual site relative to the particle with the given id"""
             if isinstance(_relto, int):
                 if vs_relate_to(self.id, _relto):
-                    raise Exception("Vs_relative setup failed.")
+                    handle_errors("Vs_relative setup failed.")
             else:
                 raise ValueError(
                     "Argument of vs_auto_relate_to has to be of type int")
@@ -471,7 +478,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int")
             if vs_relate_to(self.id, _relto):
-                raise Exception("vs_relative setup failed.")
+                handle_errors("vs_relative setup failed.")
 
     IF DIPOLES:
         # Vector dipole moment
@@ -607,7 +614,7 @@ cdef class ParticleHandle:
             IF ROTATIONAL_INERTIA:
                 property gamma_rot:
                     """Rotational friction coefficient per particle in Langevin"""
-    
+
                     def __set__(self, _gamma_rot):
                         cdef double gamma_rot[3]
                         check_type_or_throw_except(
@@ -616,7 +623,7 @@ cdef class ParticleHandle:
                             gamma_rot[i] = _gamma_rot[i]
                         if set_particle_gamma_rot(self.id, gamma_rot) == 1:
                             raise Exception("set particle position first")
-        
+
                     def __get__(self):
                         self.update_particle_data()
                         cdef double * gamma_rot = NULL
@@ -625,13 +632,13 @@ cdef class ParticleHandle:
             ELSE:
                 property gamma_rot:
                     """Friction coefficient per particle in Langevin"""
-        
+
                     def __set__(self, _gamma_rot):
                         check_type_or_throw_except(
                             _gamma_rot, 1, float, "gamma_rot has to be a float")
                         if set_particle_gamma_rot(self.id, _gamma_rot) == 1:
                             raise Exception("set particle position first")
-        
+
                     def __get__(self):
                         self.update_particle_data()
                         cdef double * gamma_rot = NULL
@@ -679,7 +686,7 @@ cdef class ParticleHandle:
     IF EXCLUSIONS:
         property exclude:
             """Exclude particle from interaction"""
-            
+
             def __set__(self, _partners):
                 if isinstance(_partners, int):
                     _partners = [_partners]
@@ -689,9 +696,11 @@ cdef class ParticleHandle:
                 if len(_partners) == 0:
                     return
                 for partner in _partners:
-                    check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                    check_type_or_throw_except(
+                        partner, 1, int, "PID of partner has to be an int")
                     if self.id == partner:
-                        raise Exception("Cannot exclude of a particle with itself!\n->particle id %i, partner %i" %(self.id, partner))
+                        raise Exception(
+                            "Cannot exclude of a particle with itself!\n->particle id %i, partner %i" % (self.id, partner))
                     if change_exclusion(self.id, partner, 0) == 1:
                         raise Exception("set particle position first")
 
@@ -710,14 +719,16 @@ cdef class ParticleHandle:
 
         def delete_exclusion(self, *_partners):
             for partner in _partners:
-                check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                check_type_or_throw_except(
+                    partner, 1, int, "PID of partner has to be an int")
                 if change_exclusion(self.id, partner, 1) == 1:
                     raise Exception("set particle position first")
 
         def delete_exclusions(self):
             _partners = self.exclude
             for partner in _partners:
-                check_type_or_throw_except(partner, 1, int, "PID of partner has to be an int")
+                check_type_or_throw_except(
+                    partner, 1, int, "PID of partner has to be an int")
                 if change_exclusion(self.id, partner, 1) == 1:
                     raise Exception("set particle position first")
 
@@ -823,7 +834,7 @@ cdef class ParticleHandle:
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 0):
-            raise Exception("Adding the bond failed.")
+            handle_errors("Adding the bond failed.")
 
     def delete_verified_bond(self, bond):
         cdef int bond_info[5]
@@ -831,7 +842,7 @@ cdef class ParticleHandle:
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
         if change_particle_bond(self.id, bond_info, 1):
-            raise Exception("Deleting the bond failed.")
+            handle_errors("Deleting the bond failed.")
 
     def check_bond_or_throw_exception(self, bond):
         """Checks the validity of the given bond:
@@ -855,6 +866,12 @@ cdef class ParticleHandle:
                 raise Exception(
                     "1st element of Bond has to be of type BondedInteraction or int.")
 
+        # Check whether the bond has been added to the list of active bonded
+        # interactions
+        if bond[0]._bond_id == -1:
+            raise Exception(
+                "The bonded interaction has not yet been added to the list of active bonds in Espresso")
+
         # Validity of the numeric id
         if bond[0]._bond_id >= n_bonded_ia:
             raise ValueError("The bond type", bond._bond_id, "does not exist.")
@@ -865,9 +882,14 @@ cdef class ParticleHandle:
                              bond[0]._bond_id], "partners.")
 
         # Type check on partners
-        for y in bond[1:]:
-            if not isinstance(y, int):
-                raise ValueError("Partners have to be integer.")
+        for i in range(1, len(bond)):
+            if not isinstance(bond[i], int):
+                if not isinstance(bond[i], ParticleHandle):
+                    raise ValueError(
+                        "Bond partners have to be of type integer or ParticleHandle.")
+                else:
+                    # Put the particle id instead of the particle handle
+                    bond[i] = bond[i].id
 
     def add_bond(self, _bond):
         """Add a single bond to the particle"""
@@ -883,7 +905,7 @@ cdef class ParticleHandle:
 
     def delete_all_bonds(self):
         if change_particle_bond(self.id, NULL, 1):
-            raise Exception("Deleting all bonds failed.")
+            handle_errors("Deleting all bonds failed.")
 
     def update(self, P):
 
@@ -907,6 +929,11 @@ cdef class ParticleSlice:
             mask[i]= particle_exists(i)
         self.id_selection=self.id_selection[mask]
 
+
+    def __iter__(self):
+        cdef int i
+        for i in self.id_selection:
+            yield ParticleHandle(i)
 
 
     cdef int update_particle_data(self, id) except -1:
@@ -965,9 +992,9 @@ cdef class ParticleSlice:
         def __get__(self):
             pos_array = np.zeros((len(self.id_selection), 3))
             for i in range(len(self.id_selection)):
-                pos_array[i, :] = ParticleHandle(self.id_selection[i]).pos_folded
+                pos_array[i, :] = ParticleHandle(
+                    self.id_selection[i]).pos_folded
             return pos_array
-
 
     # Velocity
     property v:
@@ -1114,23 +1141,27 @@ cdef class ParticleSlice:
     IF EXCLUSIONS:
         property exclude:
             """Exclude particle from interaction"""
-            
+
             def __set__(self, _partners):
                 if not isinstance(_partners, list):
-                    raise Exception("list object expected for exclusion partners")
+                    raise Exception(
+                        "list object expected for exclusion partners")
                 if isinstance(_partners[0], list):
                     for i in range(len(self.id_selection)):
-                        ParticleHandle(self.id_selection[i]).exclude = _partners[i]
+                        ParticleHandle(self.id_selection[
+                                       i]).exclude = _partners[i]
                 elif isinstance(_partners[0], int):
                     for i in range(len(self.id_selection)):
-                        ParticleHandle(self.id_selection[i]).exclude = _partners
+                        ParticleHandle(self.id_selection[
+                                       i]).exclude = _partners
                 else:
                     raise TypeError("unexpected exclusion partner type")
 
             def __get__(self):
                 _exclude_array = []
                 for i in range(len(self.id_selection)):
-                    _exclude_array.append(ParticleHandle(self.id_selection[i]).exclude)
+                    _exclude_array.append(ParticleHandle(
+                        self.id_selection[i]).exclude)
                 return _exclude_array
 
         def add_exclusion(self, _partners):
@@ -1141,13 +1172,14 @@ cdef class ParticleSlice:
                 raise Exception("list object expected")
             if isinstance(_partners[0], list):
                 for i in range(len(self.id_selection)):
-                    ParticleHandle(self.id_selection[i]).delete_exclusion(_partners[i])
+                    ParticleHandle(self.id_selection[
+                                   i]).delete_exclusion(_partners[i])
             if isinstance(_partners[0], int):
                 for i in range(len(self.id_selection)):
-                    ParticleHandle(self.id_selection[i]).delete_exclusion(_partners)
+                    ParticleHandle(self.id_selection[
+                                   i]).delete_exclusion(_partners)
             else:
                 raise TypeError("unexpected exclusion partner type")
-
 
         def delete_exclusions(self):
             for _id in self.id_selection:
@@ -1206,13 +1238,11 @@ cdef class ParticleList:
         if isinstance(key, slice):
             return ParticleSlice(key)
 
-        if not np.all(self.exists(key)):
-            if isinstance(key, int):
-                non_existing = key
-            else:
-                non_existing = np.trim_zeros(
-                    (np.array(key) * np.invert(self.exists(key))))
-            raise Exception("Particle(s) %s does not exist." % non_existing)
+        try:
+            if isinstance(key, range):
+                return ParticleSlice(key)
+        except:
+            pass
 
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
             return ParticleSlice(np.array(key))
@@ -1275,9 +1305,9 @@ cdef class ParticleList:
                         "pos attribute must be specified for new particle")
 
                 if len(np.array(kwargs["pos"]).shape) == 2:
-                    self._place_new_particles(kwargs)
+                    return self._place_new_particles(kwargs)
                 else:
-                    self._place_new_particle(kwargs)
+                    return self._place_new_particle(kwargs)
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args")
@@ -1310,6 +1340,8 @@ cdef class ParticleList:
         if P != {}:
             self[id].update(P)
 
+        return self[id]
+
     def _place_new_particles(self, P):
 
         if not "id" in P:
@@ -1332,6 +1364,8 @@ cdef class ParticleList:
 
         if P != {}:
             self[ids].update(P)
+
+        return self[ids]
 
     # Iteration over all existing particles
     def __iter__(self):
@@ -1359,9 +1393,9 @@ cdef class ParticleList:
         # Remove final newline
         return res[:-1]
 
-    def writevtk(self,fname,types='all'):
+    def writevtk(self, fname, types='all'):
         global box_l
-        if not hasattr(types,'__iter__'):
+        if not hasattr(types, '__iter__'):
             types = [types]
 
         n = 0
@@ -1389,3 +1423,30 @@ cdef class ParticleList:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
 
+    property highest_particle_id:
+        def __get__(self):
+            return max_seen_particle
+
+    property n_part_types:
+        def __get__(self):
+            return n_particle_types
+
+    property n_rigidbonds:
+        def __get__(self):
+            return n_rigidbonds
+
+    # property max_part:
+    #     def __get__(self):
+    #         return max_seen_particle
+
+    # # property n_part:
+    #     def __get__(self):
+    #         return n_part
+
+    def pairs(self):
+        """Generator returns all pairs of particles"""
+        for i in range(max_seen_particle + 1):
+            for j in range(i + 1, max_seen_particle + 1, 1):
+                if not (self.exists(i) and self.exists(j)):
+                    continue
+                yield (self[i], self[j])

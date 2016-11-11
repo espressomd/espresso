@@ -18,9 +18,10 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
-from utils cimport *
+from espressomd._system cimport *
+from espressomd.utils cimport *
 
 IF DIPOLES == 1:
 

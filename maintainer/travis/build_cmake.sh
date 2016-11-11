@@ -41,7 +41,7 @@ function cmd {
 # handle environment variables
 [ -z "$insource" ] && insource="true"
 [ -z "$srcdir" ] && srcdir=`pwd`
-[ -z "$cmake_params" ] && configure_params=""
+[ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
@@ -56,11 +56,11 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    configure_params with_fftw \
+    cmake_params with_fftw \
     with_tcl with_python_interface myconfig check_procs
 
 # check indentation of python files
-pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+#pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -73,33 +73,33 @@ else
     exit $ec
 fi
 
-if ! $insource; then
+if [ ! $insource ]; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
 fi
 
-if ! $insource ; then
+if [ ! $insource ]; then
     cd $builddir
 fi
 
 # CONFIGURE
 start "CONFIGURE"
 
-if $with_fftw; then
+if [ $with_fftw = "true" ]; then
     cmake_params="$cmake_params"
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
 
-if $with_tcl; then
+if [ $with_tcl = "true" ]; then
     cmake_params="-DWITH_TCL=ON $cmake_params"
 else
     cmake_params="-DWITH_TCL=OFF $cmake_params"
 fi
 
-if $with_python_interface; then
+if [ $with_python_interface = "true" ]; then
     cmake_params="-DWITH_PYTHON=ON $cmake_params"
 else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
@@ -117,9 +117,6 @@ else
     echo "Copying $myconfig.hpp to $builddir/myconfig.hpp..."
     cp $myconfig_file $builddir/myconfig.hpp
 fi
-
-# Acticate anaconda environment
-cmd "source activate test"
 
 cmd "cmake $cmake_params $srcdir" || exit $?
 end "CONFIGURE"
@@ -141,12 +138,12 @@ if $make_check; then
         exit $ec
     fi
 
-    cmd "make check_tcl $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
+#    cmd "make check_tcl $make_params"
+#    ec=$?
+#    if [ $ec != 0 ]; then	
+#        cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
+#        exit $ec
+#    fi
 
     cmd "make check_unit_tests $make_params"
     ec=$?

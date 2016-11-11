@@ -17,15 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport galilei
+from __future__ import print_function, absolute_import
+from . cimport galilei
 
 cdef class GalileiTransform:
 
-    def kill_particle_motion(self, rotation = 0):
+    def kill_particle_motion(self, rotation=0):
         """ Stop motion of the particles """
         mpi_kill_particle_motion(rotation)
 
-    def kill_particle_forces(self, torque = 0):
+    def kill_particle_forces(self, torque=0):
         """ Set the forces on the particles to zero """
         mpi_kill_particle_forces(torque)
 

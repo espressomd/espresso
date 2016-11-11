@@ -1,116 +1,130 @@
 /*
   Copyright (C) 2014,2015,2016 The ESPResSo project
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <cmath>
 #include <initializer_list>
+#include <iterator>
+#include <vector>
 
-/* @TODO: should have move semantics with c++11 for peformance reasons. */
+#include <boost/serialization/array.hpp>
 
-template<int n, typename Scalar>
-class Vector {
- private:
-  Scalar d[n];
-  
- public:
+template <size_t n, typename Scalar> class Vector {
+private:
+  std::array<Scalar, n> d;
+
+public:
+  typedef typename std::array<Scalar, n>::iterator iterator;
+  typedef typename std::array<Scalar, n>::const_iterator const_iterator;
+  typedef typename std::array<Scalar, n>::reference reference;
+  typedef typename std::array<Scalar, n>::const_reference const_reference;
+
   Vector() {}
 
-  explicit Vector(const Scalar * const a) {
-    for (int i = 0; i < n; i++)
-      d[i] = a[i];
+  template <typename Container> explicit Vector(Container const &v) {
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-#ifdef HAVE_CXX11
+  template <typename InputIterator>
+  Vector(InputIterator const& begin, InputIterator const& end) {
+    assert(std::distance(begin, end) <= n);
+    std::copy(begin, end, d.begin());
+  }
+
   Vector(std::initializer_list<Scalar> l) {
-    std::copy(l.begin(), l.begin() + n, d);
-  }
-#endif
-  
-  Scalar *begin() const {
-    return d;
+    assert(l.size() <= n);
+    std::copy(std::begin(l), std::end(l), d.begin());
   }
 
-  Scalar *end() const {
-    return d + n;
-  }
- 
-  int size() const { return n; }
-  
-  Vector(const Vector& rhs) {
-    std::copy(rhs.d, rhs.d+n, d);
+  Scalar &operator[](int i) { return d[i]; }
+  Scalar const &operator[](int i) const { return d[i]; }
+
+  iterator begin() { return d.begin(); }
+  const_iterator begin() const { return d.begin(); }
+
+  iterator end() { return d.end(); }
+  const_iterator end() const { return d.end(); }
+
+  reference front() { return d.front(); }
+  reference back() { return d.back(); }
+
+  const_reference front() const { return d.front(); }
+  const_reference back() const { return d.back(); }
+
+  static constexpr size_t size() { return n; }
+
+  operator std::array<Scalar, n> const &() const { return d; }
+
+  std::vector<Scalar> as_vector() const {
+    return std::vector<Scalar>(std::begin(d), std::end(d));
   }
 
-  void swap(Vector& rhs) {
-    std::swap(d, rhs.d);
-  }
-
-  Vector& operator=(Vector& rhs) {
-    Vector tmp(rhs); swap(rhs); return *this;
-  }
-
-  Scalar &operator[](int i) {
-    return d[i];
-  }
-
-  Scalar const & operator[](int i) const {
-    return d[i];
-  }
-  
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
     for (int i = 0; i < n; i++)
-      sum += d[i]*b[i];
+      sum += d[i] * b[i];
     return sum;
   }
 
-  inline Scalar norm2(void) const {
-    return dot(*this);
-  }
+  inline Scalar norm2(void) const { return dot(*this); }
 
-  inline Scalar norm(void) const {
-    return sqrt(norm2());
-  }
+  inline Scalar norm(void) const { return sqrt(norm2()); }
 
   inline void normalize(void) {
-    Scalar N = norm();
-    if (norm() > 0) {
+    const auto N = norm();
+    if (N > Scalar(0)) {
       for (int i = 0; i < n; i++)
         d[i] /= N;
     }
   }
 
-  inline void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b, Vector<3, Scalar> &c) const {
-    c[0] = a[1]*b[2] - a[2]*b[1];
-    c[1] = a[2]*b[0] - a[0]*b[2];
-    c[2] = a[0]*b[1] - a[1]*b[0];
-    return;
+  static void cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b,
+                    Vector<3, Scalar> &c) {
+    c[0] = a[1] * b[2] - a[2] * b[1];
+    c[1] = a[2] * b[0] - a[0] * b[2];
+    c[2] = a[0] * b[1] - a[1] * b[0];
   }
-  
-  inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a, const Vector<3, Scalar> &b) const {
+
+  static Vector<3, Scalar> cross(const Vector<3, Scalar> &a,
+                                 const Vector<3, Scalar> &b) {
     Vector<3, Scalar> c;
-    cross(a,b,c);
+    cross(a, b, c);
     return c;
   }
-  
+
   inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a) const {
-    return cross(this,a);
+    return cross(this, a);
+  }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int /* version */) {
+    ar &d;
   }
 };
 
 typedef Vector<3, double> Vector3d;
+typedef Vector<2, double> Vector2d;
 
+#endif

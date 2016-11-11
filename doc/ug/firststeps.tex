@@ -119,48 +119,47 @@ Tcl language in greater detail, there is an excellent tutorial
 \section{Python: Basic concepts}
 In this section, a brief overview is given over the most important components of the Python interface and their usage is illustrated by short examples.
 The interface is contained in the espressomd Python module, which needs to be imported, before anything \es related can be done.
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 import espressomd
-\end{lstlisting}
+\end{pypresso}
 Access to the simulation system is provided via the System class. As a first step, an instance of the class needs to be created
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 system=espressomd.System()
-\end{lstlisting}
+\end{pypresso}
 Note that only one instance of the System class can be created, due to limitations in the simulation core.
 Properties of the System class are used to access the parameters concerning the simulation system as a whole, \eg, the box geometry and the time step
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 system.box_l =(10.0,10.0,15.0)
 print system.time_step
-\end{lstlisting}
-
+\end{pypresso}
 
 The particles in the simulation are accessed via the ParticleList class. It is used to retrieve individual particles of the simulation as well as for adding particles.
 An instance of the class is provided as the part attribute of the System class.
 Individual particles can be retrieved by their numerical id by using angular brackets
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 p=system.part[0]
-\end{lstlisting}
+\end{pypresso}
 It is also possible to loop over all particles
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 for p in system.part:
     ...
-\end{lstlisting}
+\end{pypresso}
 Particles are added via the add method
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 p=system.part.add(id=1,pos=(3.0,0.5,1.0),q=1)
-\end{lstlisting}
+\end{pypresso}
 An individual particle is represented by an instance of ParticleHandle.
 The properties of the particle are implemented as Python properties:
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 p=system.part[0]
 p.pos=(0,0,0)
 print p.id,p.pos
 system.part[0].q=-1
-\end{lstlisting}
+\end{pypresso}
 Properties of several particles can be accessed by using Python ranges
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 v=system.part[:].v
-\end{lstlisting}
+\end{pypresso}
 
 Interactions between particles fall in three categories:
 \begin{itemize}
@@ -170,29 +169,33 @@ Interactions between particles fall in three categories:
 \end{itemize}
 
 Non-bonded interactions are represented as subclasses of NonBondedInteraction, \eg LennardJonesInteraction. Instances of these classes for a given pair of particle types are accessed via the non_bonded_inter attribute of the System class. Parameters are set as follows
-\begin{lstlisting}[language=python]
+\begin{pypresso}
 system.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=1,sigma=1,cutoff=1.5,shift="auto")
-\end{lstlisting}
+\end{pypresso}
 
 
 Bonded interactions are represented by subclasses of BondedInteraction. To set up a bonded interaction, first an instance of the appropriate class is created with the desired parameters. Then, the bonded interaction is registered with the simulation core. Finally, the bond can be added to particles using the add_bond()-method of ParticleHandle with the instance of the bond class and the id of the bond partner particle. 
-\begin{lstlisting}[language=python]
-from interactions import HarmonicBond
+\begin{pypresso}
+from espressomd.interactions import HarmonicBond
 harmonic=HarmonicBond(k=1,r_0=1)
 system.bonded_inter.add(harmonic)
 system.part[0].add_bond((harmonic,1))
 system.part[1].add_bond((harmonic,2))
-\end{lstlisting}
+\end{pypresso}
 
 Long-range interactions are subclasses of Actor. They are used by first creating an instance of the desired actor and then adding it to the system.
 To activate the P3M electrostatics solver, execute
-\begin{lstlisting}[language=python]
-from electrostatics import P3M
+\begin{pypresso}
+from espressomd.electrostatics import P3M
 p3m=P3M(accuracy=1E-3, bjerrum_length=1)
 system.actors.add(p3m)
-\end{lstlisting}
+\end{pypresso}
 
-\todo{Integrator, once the interface for that is clear}
+The integrator uses by default the velocity verlet algorithm and is created by the system class.
+To perform an integration step, execute
+\begin{pypresso}
+system.integrator.run(steps=100)
+\end{pypresso}
 
 \section{Tcl: Creating the first simulation script}
 

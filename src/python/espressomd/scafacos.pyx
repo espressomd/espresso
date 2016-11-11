@@ -1,8 +1,10 @@
-from actors cimport *
+from __future__ import print_function, absolute_import
+from espressomd.actors cimport *
 from libcpp.string cimport string  # import std::string
-cimport electrostatics
-cimport magnetostatics
+cimport .electrostatics
+cimport .magnetostatics
 
+from espressomd.utils cimport handle_errors
 
 include "myconfig.pxi"
 
@@ -55,6 +57,7 @@ IF SCAFACOS == 1:
 
             set_parameters(self._params["method_name"],
                            param_string, self.dipolar)
+            handle_errors("Scafacos not initialized.")
 
         def default_params(self):
             return {}

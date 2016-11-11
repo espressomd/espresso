@@ -38,7 +38,7 @@
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "global.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "cuda_interface.hpp"
 #ifdef LB_GPU
 

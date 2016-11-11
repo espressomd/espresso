@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport utils
+from __future__ import print_function, absolute_import
+from . cimport utils
 include "myconfig.pxi"
-from actors import Actor
+from .actors import Actor
 
 IF DIPOLES == 1:
     class MagnetostaticExtension(Actor):
@@ -33,10 +34,10 @@ IF DIPOLES == 1:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params,"maxPWerror", 0, False, "inf", True)
+                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params,"gap_size", 0, False, "inf", True)
+                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):
@@ -59,6 +60,7 @@ IF DIPOLES == 1:
             if mdlc_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
                 raise ValueError(
                     "Choose a 3d magnetostatics method prior to DLC")
+            handle_errors("mdlc tuning failed, gap size too small")
 
         def _activate_method(self):
             self._set_params_in_es_core()

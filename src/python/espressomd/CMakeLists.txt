@@ -63,7 +63,7 @@ foreach(cython_file ${cython_SRC})
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${basename}.cpp
-                         COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}  --cplus ${CYTHON_FLAGS}
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
@@ -79,11 +79,10 @@ foreach(cython_file ${cython_SRC})
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
       endif()
-      target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+      target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
-
 
 foreach(auxfile ${cython_AUX})
   add_custom_command(TARGET espressomd

@@ -9,6 +9,8 @@
  * function
  * */
 #if BOOST_VERSION < 105600
+#include <boost/serialization/serialization.hpp>
+#include <array>
 
 namespace boost {
 namespace serialization {
@@ -18,5 +20,9 @@ void serialize(Archive &ar, std::array<T, N> &a, const unsigned int) {
 }
 }
 }
+
+#else
+#include <array>
+#include <boost/serialization/serialization.hpp>
 #endif
 #endif

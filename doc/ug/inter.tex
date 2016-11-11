@@ -91,12 +91,13 @@ faster. See the subsection~\ref{sec:forcecap} for details.
   \begin{features}
     \required{TABULATED}
   \end{features}
-	\object{espressomd.non_bonded_inter[\var{type1},
-		\var{type2}]}
-		{tabulated}
-		{
-			filename=\arg{filename}
-		}
+  \object{
+    espressomd.non_bonded_inter[\var{type1},\var{type2}]
+  }{
+    tabulated
+  }{
+    filename=\arg{filename}
+  }
 \end{pysyntax}
 
 This defines an interaction between particles of the types \var{type1} and
@@ -854,8 +855,8 @@ A minimalistic example how to set up bonded harmonic interactions between two pa
   \var{K} \var{\Delta r_\mathrm{max}} \opt{\var{r_0}}
 \end{essyntax}
 \begin{pysyntax}
- \object{
-	 espressomd.System().bondedInter.add(FeneBond)
+  \object{
+    espressomd.System().bondedInter.add(FeneBond)
   }{
     setParams
   }{
@@ -1014,14 +1015,16 @@ general tabulated potentials.
 \label{sec:rattle}
 
 \begin{pysyntax}
-\object{espressomd.interactions}{
-	RigidBond
-}{
-	r = \arg{float},
-}[
-	ptol = \arg{float},
-	vtol = \arg{float}
-]
+  \object{
+    espressomd.interactions
+  }{
+    RigidBond
+  }{
+    r = \arg{float},
+  }[
+    ptol = \arg{float},
+    vtol = \arg{float}
+  ]
 \end{pysyntax}
 
 \begin{essyntax}
@@ -1043,6 +1046,7 @@ In the python implementation the constrained bond distance is named r, the posit
 \index{tabulated bond interactions|mainindex}
 \index{interactions!tabulated bond|mainindex}
 
+\subsubsection{Tcl}
 \begin{essyntax}
     \variant{1} inter \var{bondid}
     tabulated bond \var{filename}
@@ -1051,7 +1055,6 @@ In the python implementation the constrained bond distance is named r, the posit
     \variant{3} inter \var{bondid}
     tabulated dihedral \var{filename}
 \end{essyntax}
-
 This creates a bond type with identificator \var{bondid} with a
 two-body bond length (variant \variant{1}), three-body angle (variant
 \variant{2}) or four-body dihedral (variant \variant{3}) tabulated
@@ -1059,14 +1062,34 @@ potential. The tabulated forces and energies have to be provided in a
 file \var{filename}, which is formatted identically as the files for
 non-bonded tabulated potentials (see section \ref{sec:tabnonbonded}).
 
+
+\subsubsection{Python}
+\begin{pysyntax}
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
+  \object{
+    espressomd.interactions
+  }{
+    Tabulated
+  }{
+    type=\arg{str},
+    filename=\arg{filename}
+  }
+\end{pysyntax}
+
+The bonded interaction can be based on a distance, a bond angle or a dihedral angle. This is determined by the \texttt{type} argument, which can be one of \texttt{distance}, \texttt{angle} or \texttt{dihedral}. The data is read from th file given by the \texttt{filename} argument.
+
+\subsubsection{Calculation of the force and energy}
+
 The potential is calculated as follows:
 \begin{itemize}
-\item Variant~\variant{1} is a two body interaction depending on the distance of
+\item Tcl: Variant~\variant{1}, Python: \texttt{type="distance"} is a two body interaction depending on the distance of
   two particles. The force acts in the direction of the connecting vector
   between the particles. The bond breaks above the tabulated range, but for
   distances smaller than the tabulated range, a linear extrapolation based on
   the first two tabulated force values is used.
-\item Variant~\variant{2} is a three-body angle interaction similar to the
+\item Tcl: Variant~\variant{2}, Python: \texttt{type="angle"} is a three-body angle interaction similar to the
   \texttt{angle} potential (see section~\ref{sec:angle}).  It is assumed that
   the potential is tabulated for all angles between 0 and $ \pi $, where 0
   corresponds to a stretched polymer, and just as for the tabulated pair
@@ -1076,7 +1099,7 @@ The potential is calculated as follows:
   the particle and the center particle $p_2$ in the plane defined by the three
   particles. The force on the center particle $p_2$ balances the other two
   forces.
-\item Variant~\variant{3} tabulates a torsional dihedral angle potential (see
+\item Tcl: Variant~\variant{3}, Python: \texttt{type="dihedral"} tabulates a torsional dihedral angle potential (see
   section~\ref{sec:dihedral}). It is assumed that the potential is tabulated for
   all angles between 0 and $2\pi$. \em{This potential is not tested yet! Use on
     own risk, and please report your findings and eventually necessary fixes.}

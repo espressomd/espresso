@@ -407,37 +407,56 @@ covariance $\mathrm{cov}(a,b)$ and $\chi$.
 t\_random
 \end{code}
 
-returns a random double between 0 and 1 using the standard C++ Mersenne twister random number generator. For python please use the numpy random number generator. 
+returns a random double between 0 and 1 using the standard C++ Mersenne twister random number generator. For drawing random numbers in python please use the numpy random number generator. 
  \item
 \begin{code}
 t\_random int <n> (tcl only)
 \end{code}
   returns a random integer between 0 and n-1. For python please use the numpy random number generator.
- \item
- 
-To obtain the seeds of the random number generator (C++ Mersenne Twister) which is used in the C core of Espresso use the command
-\begin{code}
-t\_random seed
-\end{code}
-\begin{pycode}
+ \item Note that the best practice in initilizing the random number generator is to randomly set its internal state. This is \textit{attempted} by seeding the random number generator however the state space of the random number generator is typically much bigger than than a single random number. Therefore C++ cannot do miracles during the seeding with only one random number and cannot come up with more randomness. In the python interface Espresso provides the function
+\begin{pypresso}
 system = espressomd.System()
-system.seed
-\end{pycode}
-which returns a list with the seeds of the random number generators on
-each of the 'n\_nodes' nodes if they were set by the user, while
+system.set_random_state_PRNG()
+\end{pypresso}
+ which sets the state of the random number generator with real random numbers.
+ \item Set the state of the random number generator by providing a string with a sufficient amount of space separated integers
+\begin{code}
+t_random stat "<state(1)> ... <state(n_nodes*625)>"
+\end{code}
+\begin{pypresso}
+system = espressomd.System()
+system.random_number_generator_state=[state(1),... ,state(n_nodes*625)]
+\end{pypresso}
+If you want to get the random number generator state, use 
+\begin{code}
+t_random stat
+\end{code}
+\begin{pypresso}
+system = espressomd.System()
+print(system.random_number_generator_state)
+\end{pypresso} 
+ \item Alternatively to setting the full state of the random number generator one can also only set a seed and hope for sane initilization of the random number generator state. The following command sets the seeds to the new values respectively, re-initializing the
+random number generators on each node
 \begin{code}
 t\_random seed <seed(0)> ... <seed(n\_nodes-1)>
 \end{code}
-\begin{pycode}
+\begin{pypresso}
 system = espressomd.System()
 system.seed=[seed(0), ... seed(n_nodes-1)]
-\end{pycode}
+\end{pypresso}
+ Note that Espresso automatically comes up with a seed of the random number generator, however due to that your simulation will always start with the same random sequence on any node \textit{unless you seed your random number generator} at the beginning of the simulation.
 
-sets those seeds to the new values respectively, re-initialising the
-random number generators on each node.  Note that this is
-automatically done on invoking Espresso, however due to that your
-simulation will always start with the same random sequence on any node
-\textit{unless you seed your random number generator} at the beginning of the simulation.
+ \item To obtain the seeds of the random number generator which is used in the C++ core of Espresso use the command
+\begin{code}
+t\_random seed
+\end{code}
+\begin{pypresso}
+system = espressomd.System()
+system.seed
+\end{pypresso}
+which returns a list with the seeds of the random number generators on
+each of the 'n\_nodes' nodes if they were set by the user.
+
 \end{itemize}
 
 \section{Checking for features of \es}

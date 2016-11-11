@@ -26,6 +26,7 @@
 #include "MpiCallbacks.hpp"
 
 #include "utils/make_unique.hpp"
+#include "utils/serialization/array.hpp"
 
 namespace Communication {
 
@@ -94,15 +95,12 @@ void MpiCallbacks::loop() const {
   }
 }
 
-namespace {
-std::unique_ptr<MpiCallbacks> m_global_callback;
-} /* namespace */
-
-void initialize_callbacks(boost::mpi::communicator const &comm) {
-  m_global_callback = Utils::make_unique<MpiCallbacks>(comm);
-}
-
 /* We use a singelton callback class for now. */
-MpiCallbacks &mpiCallbacks() { return *m_global_callback; }
+MpiCallbacks &mpiCallbacks() {
+  static boost::mpi::communicator world;
+  static MpiCallbacks *m_global_callback = new MpiCallbacks(world);
+
+  return *m_global_callback;
+}
 
 } /* namespace Communication */

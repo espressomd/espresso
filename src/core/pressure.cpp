@@ -1024,7 +1024,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 
 
 /************************************************************/
-int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
+int observable_compute_stress_tensor(int v_comp, double *A)
 {
   int i, j;
   double value;
