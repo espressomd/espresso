@@ -7,7 +7,7 @@ import sys
 
 # Setup constant
 time_step = 0.01
-loops = 500
+loops = 5000
 step_per_loop = 100
 
 # System setup
