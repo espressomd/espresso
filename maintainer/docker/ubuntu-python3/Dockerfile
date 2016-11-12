@@ -2,16 +2,16 @@ FROM ubuntu:xenial
 MAINTAINER Florian Weik <fweik@icp.uni-stuttgart.de>
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
-	apt-utils \
-	cmake \
-	build-essential \
-	openmpi-bin \
-	libfftw3-dev \
-	libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
-	cython3 python3 python3-numpy \
-	tcl-dev \
-	git \
-	pep8 \
+    apt-utils \
+    cmake \
+    build-essential \
+    openmpi-bin \
+    libfftw3-dev \
+    libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
+    cython3 python3 python3-numpy \
+    tcl-dev \
+    git \
+    pep8 \
     libhdf5-openmpi-dev \
     libhdf5-openmpi-10:amd64 \
     libhdf5-10:amd64 \
