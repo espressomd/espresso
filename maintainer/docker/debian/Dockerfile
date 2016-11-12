@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     pep8 \
     python-pip \
     libpython-dev \
+    libhdf5-openmpi-dev \
 && pip install cython \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
