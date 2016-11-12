@@ -2009,13 +2009,10 @@ __global__ void ek_init_species_density_homogeneous() {
   {  
     for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) 
     {
-//      if(coord[0] == ek_parameters_gpu.dim_x/2 && coord[1] == ek_parameters_gpu.dim_y/2 && coord[2] == ek_parameters_gpu.dim_z/2)
         ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
                                               ek_parameters_gpu.agrid *
                                               ek_parameters_gpu.agrid *
                                               ek_parameters_gpu.agrid;
-//      else
-//        ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
     }
   }
 }
@@ -2584,7 +2581,7 @@ int ek_init() {
     }
 
     lattice_switch = LATTICE_LB_GPU;
-    ek_initialized = 1;         
+    ek_initialized = 1;
 
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
@@ -2644,6 +2641,8 @@ int ek_init() {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.electric_field,
                                ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
   }
+  
+  copy_part_data_to_gpu();
 #endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );
