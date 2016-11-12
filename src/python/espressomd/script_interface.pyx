@@ -61,6 +61,9 @@ cdef class PScriptInterface:
 
         return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
 
+    def name(self):
+        return self.sip.get().name()
+
     def set_params(self, **kwargs):
         cdef ParameterType type
         cdef map[string, Variant] parameters
