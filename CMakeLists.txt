@@ -203,7 +203,7 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization filesystem system timer chrono)
+find_package(Boost REQUIRED mpi serialization filesystem system)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
