@@ -141,7 +141,7 @@ IF ELECTROKINETICS:
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
 
         def print_vtk_density(self, path):
-            ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
+            ek_lb_print_vtk_density(utils.to_char_pointer(path))
 
         def print_vtk_potential(self, path):
             ek_print_vtk_potential(utils.to_char_pointer(path))
