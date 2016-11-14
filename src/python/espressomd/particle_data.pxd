@@ -40,6 +40,7 @@ cdef extern from "particle_data.hpp":
         int    identity
         int    mol_id
         int    type
+        double mass
 
     ctypedef struct particle_position "ParticlePosition":
         double p[3]
@@ -99,9 +100,8 @@ cdef extern from "particle_data.hpp":
         int set_particle_smaller_timestep(int part, int small_timestep)
         void pointer_to_smaller_timestep(particle * p, int * & res)
 
-    IF MASS:
-        int set_particle_mass(int part, double mass)
-        void pointer_to_mass(particle * p, double * & res)
+    int set_particle_mass(int part, double mass)
+    void pointer_to_mass(particle * p, double * & res)
 
     IF SHANCHEN:
         int set_particle_solvation(int part, double * solvation)
