@@ -147,8 +147,8 @@ class ScriptInterfaceHelper(PScriptInterface):
     
     def generate_caller(self,method_name):
         def template_method(**kwargs):
-           res=self.call_method(method_name,**kwargs)
-           return res
+            res=self.call_method(method_name,**kwargs)
+            return res
 
         return template_method
 
