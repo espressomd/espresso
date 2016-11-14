@@ -178,6 +178,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   double a[3] = {0, 0, 0};
   double b[3], c[3] = {0., 0., 0.}, d[3];
   double absc;
+
   poly = (double *)Utils::malloc(3 * MPC * sizeof(double));
 
   bond_size = bonded_ia_params[type_bond].num;
