@@ -55,4 +55,6 @@ unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
 set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
 unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
 
-
+set(ParallelScriptInterface_test_SRC  ParallelScriptInterface_test.cpp)
+unit_test(ParallelScriptInterface_test "${ParallelScriptInterface_test_SRC}")
+target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
