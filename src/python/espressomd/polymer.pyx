@@ -27,14 +27,16 @@ cdef class Polymer(object):
     def __init__(self, *args, **kwargs):
         self._params = self.default_params()
 
+        for k in kwargs:
+            if not k in self.valid_keys():
+                raise ValueError("Unknown parameter '%s'" % k)
+            self._params[k] = kwargs[k]
+
         for k in self.required_keys():
             if k not in kwargs:
                 print(k)
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
-        for k in kwargs:
-            self._params[k] = kwargs[k]
 
         self.validate_params()
         bond_id = self._params["bond"]._bond_id
