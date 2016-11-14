@@ -120,6 +120,25 @@ IF ELECTROKINETICS:
             self._set_params_in_es_core()
             for species in self.species_list:
                 species._activate_method()
+            self.ek_init()
+
+
+        def neutralize_system(self, species):
+            err = ek_neutralize_system(species.id)
+
+            if err == 1:
+                raise Exception('Species used for neutralization must be added to electrokinetics')
+            elif err == 2:
+                raise Exception('Species used for neutralization must be charged')
+            elif err == 3:
+                raise Exception('Neutralization with specified species would result in negative density')
+            elif err != 0: 
+                raise Exception('Unknown error')
+
+            self.ek_init()
+
+
+        def ek_init(self):
             err = ek_init()
             if err == 2:
                 raise Exception('EK init failed', 'agrid incompatible with box size')
@@ -141,7 +160,7 @@ IF ELECTROKINETICS:
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
 
         def print_vtk_density(self, path):
-            ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
+            ek_lb_print_vtk_density(utils.to_char_pointer(path))
 
         def print_vtk_potential(self, path):
             ek_print_vtk_potential(utils.to_char_pointer(path))

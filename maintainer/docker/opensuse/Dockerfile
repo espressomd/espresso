@@ -12,8 +12,10 @@ RUN zypper -n --gpg-auto-import-keys refresh \
   git \
   python-pep8 \
   python-pip \
-  libpython-devel
-
+  libpython-devel \
+  hdf5-1_8-openmpi \
+  hdf5-1_8-openmpi-devel \
+  libhdf5-10-openmpi
 RUN useradd -m espresso
 USER espresso
 WORKDIR /home/espresso
