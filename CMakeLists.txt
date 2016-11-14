@@ -165,19 +165,30 @@ endif()
 
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
-find_package(HDF5 "1.8" COMPONENTS C)
-if(HDF5_IS_PARALLEL)
-  set(H5MD 1)
-  include(FindPythonModule)
-  find_python_module(h5py)
-  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRS})
-  add_feature_info(HDF5 ON "parallel")
-else()
-  unset(HDF5_FOUND)
-  add_feature_info(HDF5 OFF "serial")
-endif(HDF5_IS_PARALLEL)
+  find_package(HDF5 "1.8" COMPONENTS C)
+  if(HDF5_IS_PARALLEL)
+    set(H5MD 1)
+    include(FindPythonModule)
+    find_python_module(h5py)
+    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+    include_directories(${HDF5_INCLUDE_DIRS})
+    add_feature_info(HDF5 ON "parallel")
+  else()
+    unset(HDF5_FOUND)
+    add_feature_info(HDF5 OFF "serial")
+  endif(HDF5_IS_PARALLEL)
 endif(WITH_HDF5)
+
+# Check for the h5xx submodule
+# and try to check it out if not found.
+if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+  # Try to find git
+  find_package(Git)
+  if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  endif(GIT_FOUND)
+endif()
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)

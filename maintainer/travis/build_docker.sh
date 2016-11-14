@@ -18,8 +18,8 @@ if [ -z "$image" ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	image=espressomd/buildenv-espresso-$image:python
-	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone /travis && cd travis && maintainer/travis/build_cmake.sh"
+	image=espressomd/buildenv-espresso-$image
+	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone --recursive /travis && cd travis && maintainer/travis/build_cmake.sh"
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 #	brew update
 #	brew upgrade
