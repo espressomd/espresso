@@ -26,13 +26,14 @@
 
 #include "ScriptInterface.hpp"
 
-#include "utils/parallel/InstanceCallback.hpp"
+#include "ParallelScriptInterfaceSlave.hpp"
 
 namespace ScriptInterface {
 
-class ParallelScriptInterface : public ScriptInterfaceBase,
-                                private Communication::InstanceCallback {
+class ParallelScriptInterface : public ScriptInterfaceBase {
 public:
+  using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
+
   ParallelScriptInterface(std::string const &name);
   ~ParallelScriptInterface() override;
 
@@ -71,7 +72,12 @@ public:
                                    Variant const &value);
 
 private:
+  void call(CallbackAction action) {
+    Communication::mpiCallbacks().call(m_callback_id, static_cast<int>(action));
+  }
+
   /* Data members */
+  int m_callback_id;
   std::shared_ptr<ScriptInterfaceBase> m_p;
   std::map<std::string, ObjectId> obj_map;
 };

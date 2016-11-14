@@ -30,8 +30,7 @@ namespace ScriptInterface {
 
 class ParallelScriptInterfaceSlaveBase {};
 
-class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
-                                     private ParallelScriptInterfaceSlaveBase {
+class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
 public:
   enum class CallbackAction {
     CREATE,
@@ -43,7 +42,7 @@ public:
 
 private:
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
-  ParallelScriptInterfaceSlave() = default;
+  ParallelScriptInterfaceSlave();
 
   std::shared_ptr<ScriptInterfaceBase> m_p;
 
@@ -58,7 +57,7 @@ private:
   }
 
 private:
-  void mpi_slave(int action, int) override;
+  void mpi_slave(int action, int);
 };
 
 } /* namespace ScriptInterface */

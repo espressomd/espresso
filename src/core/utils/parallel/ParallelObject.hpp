@@ -28,16 +28,14 @@ namespace Parallel {
 template <typename T> /* The type we are wrapping */
 class ParallelObject {
 public:
-  ParallelObject() {
-    Communication::mpiCallbacks().call(&mpi_callback, 0, 0);
-  }
+  ParallelObject() = delete;
 
   static void register_callback() {
     Communication::mpiCallbacks().add(&mpi_callback);
   }
 
   static void make() {
-    new T;
+    Communication::mpiCallbacks().call(&mpi_callback);
   }
 
 private:

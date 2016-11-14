@@ -13,6 +13,11 @@
 
 namespace ScriptInterface {
 
+ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
+  Communication::mpiCallbacks().add(Communication::MpiCallbacks::function_type(
+      [this](int a, int) { mpi_slave(a, 0); }));
+}
+
 std::map<ObjectId, ObjectId> &
 ParallelScriptInterfaceSlave::get_translation_table() {
   static std::map<ObjectId, ObjectId> m_translation_table;
@@ -20,7 +25,7 @@ ParallelScriptInterfaceSlave::get_translation_table() {
   return m_translation_table;
 }
 
-void ParallelScriptInterfaceSlave::mpi_slave(int action, int) {
+void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
   switch (CallbackAction(action)) {
   case CallbackAction::CREATE: {
     std::pair<ObjectId, std::string> what;
