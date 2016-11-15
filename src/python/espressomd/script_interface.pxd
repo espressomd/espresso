@@ -90,9 +90,9 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
-    cdef Variant make_variant(self, ParameterType type, value)
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value)
+    cdef Variant python_object_to_variant(self, value)
 
 cdef class PObjectId:
     cpdef ObjectId id
