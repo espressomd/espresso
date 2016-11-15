@@ -21,7 +21,6 @@
 #define UTILS_OBJECT_ID_HPP
 
 #include <memory>
-#include <ostream>
 
 #include <boost/serialization/access.hpp>
 

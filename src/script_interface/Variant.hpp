@@ -28,7 +28,7 @@
 #include <boost/variant.hpp>
 
 #include "Vector.hpp"
-#include "utils/ObjectId.hpp"
+#include "utils/AutoObjectId.hpp"
 
 namespace ScriptInterface {
 class ScriptInterfaceBase;
