@@ -3,7 +3,7 @@
 #include <boost/mpi.hpp>
 
 #define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_MODULE MpiCallbacks test
+#define BOOST_TEST_MODULE ParallelScriptInterface test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
