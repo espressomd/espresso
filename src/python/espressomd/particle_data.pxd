@@ -35,7 +35,6 @@ cdef extern from "particle_data.hpp":
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
     # For all other properties, getter-funcionts have to be used on the c
     # level.
-
     ctypedef struct particle_properties "ParticleProperties":
         int    identity
         int    mol_id
@@ -89,8 +88,6 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_f(int part, double F[3])
 
-    int set_particle_mass(int part, double mass)
-
     int set_particle_solvation(int part, double * solvation)
 
     IF ROTATION_PER_PARTICLE == 1:
@@ -100,8 +97,8 @@ cdef extern from "particle_data.hpp":
         int set_particle_smaller_timestep(int part, int small_timestep)
         void pointer_to_smaller_timestep(particle * p, int * & res)
 
-    int set_particle_mass(int part, double mass)
-    void pointer_to_mass(particle * p, double * & res)
+    IF MASS:
+        int set_particle_mass(int part, double mass)
 
     IF SHANCHEN:
         int set_particle_solvation(int part, double * solvation)
@@ -196,6 +193,7 @@ cdef extern from "particle_data.hpp":
     void remove_all_bonds_to(int part)
 
     bool particle_exists(int part)
+
 
 cdef extern from "virtual_sites_relative.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:

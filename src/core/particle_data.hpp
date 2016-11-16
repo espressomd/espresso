@@ -1019,10 +1019,6 @@ void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
 void pointer_to_smaller_timestep(Particle *p, int *&res);
 #endif
 
-#ifdef MASS
-void pointer_to_mass(Particle *p, double *&res);
-#endif
-
 void pointer_to_dip(Particle *P, double *&res);
 
 void pointer_to_dipm(Particle *P, double *&res);

@@ -184,15 +184,9 @@ cdef class ParticleHandle:
         def __get__(self):
             global time_step
             self.update_particle_data()
-            IF MASS:
-                return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
-                                 self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
-                                 self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
-            ELSE:
-                return np.array([self.particle_data.f.f[0] / (0.5 * time_step**2),
-                                 self.particle_data.f.f[1] / (0.5 * time_step**2),
-                                 self.particle_data.f.f[2] / (0.5 * time_step**2)])
-
+            return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -271,9 +265,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_mass(& (self.particle_data), x)
-                return x[0]
+                return self.particle_data.p.mass
 
     IF ROTATION == 1:
         # Omega (angular velocity) lab frame
