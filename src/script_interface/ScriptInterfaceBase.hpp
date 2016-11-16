@@ -32,6 +32,17 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
+
+template <typename T> T get_value(Variant const &v) { return boost::get<T>(v); }
+
+template <> inline Vector3d get_value<Vector3d>(Variant const &v) {
+  return Vector3d(boost::get<std::vector<double>>(v));
+}
+
+template <> inline Vector2d get_value<Vector2d>(Variant const &v) {
+  return Vector2d(boost::get<std::vector<double>>(v));
+}
+
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
  * Variant.
@@ -42,11 +53,10 @@ namespace ScriptInterface {
  * remove_reference ensures that this also works with member access by reference
  * for example as returned by a function.
  */
-
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
-        boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
+        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
   }
 
 /**
