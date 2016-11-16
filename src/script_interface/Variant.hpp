@@ -16,8 +16,7 @@ using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 
 typedef boost::make_recursive_variant<
     bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    Vector2d, Vector3d, ObjectId, std::vector<boost::recursive_variant_>>::type
-    Variant;
+    ObjectId, std::vector<boost::recursive_variant_>>::type Variant;
 
 enum class VariantType {
   BOOL = 0,
