@@ -28,7 +28,7 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Wall::valid_parameters() const {
-  return {{"normal", {ParameterType::VECTOR3D, true}},
+  return {{"normal", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"dist", {ParameterType::DOUBLE, true}}};
 }
 

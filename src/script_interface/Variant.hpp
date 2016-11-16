@@ -26,8 +26,6 @@ enum class VariantType {
   STRING,
   INT_VECTOR,
   DOUBLE_VECTOR,
-  VECTOR2D,
-  VECTOR3D,
   OBJECTID,
   VECTOR
 };

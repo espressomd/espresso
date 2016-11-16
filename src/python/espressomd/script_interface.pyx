@@ -52,7 +52,7 @@ cdef class PScriptInterface:
                 raise ValueError("Unknown parameter %s" % name)
 
             # Check number of elements if applicable
-            if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR, < int > VECTOR2D, < int > VECTOR3D]:
+            if < int > type in [ < int > INT_VECTOR, < int > DOUBLE_VECTOR]:
                 n_elements = self.parameters[name].n_elements()
                 if n_elements!=0 and not (len(kwargs[pname]) == n_elements):
                     raise ValueError(
@@ -117,10 +117,6 @@ cdef class PScriptInterface:
             return get[vector[int]](value)
         if < int > type == <int > DOUBLE_VECTOR:
             return get[vector[double]](value)
-        if < int > type == <int > VECTOR3D:
-            return get[Vector3d](value).as_vector()
-        if < int > type == <int > VECTOR2D:
-            return get[Vector2d](value).as_vector()
         if < int > type == <int > OBJECTID:
             # Get the id and build a curresponding object
             try:

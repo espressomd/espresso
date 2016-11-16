@@ -28,17 +28,19 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Sphere::valid_parameters() const {
-  return {{"center", {ParameterType::VECTOR3D, true}},
+  return {{"center", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"radius", {ParameterType::DOUBLE, true}},
-		  {"direction", {ParameterType::DOUBLE, true}}};
+          {"direction", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap Sphere::get_parameters() const {
-  return {{"center", m_sphere->pos()}, {"radius", m_sphere->rad()}, {"direction", m_sphere->direction()}};
+  return {{"center", m_sphere->pos()},
+          {"radius", m_sphere->rad()},
+          {"direction", m_sphere->direction()}};
 }
 
 void Sphere::set_parameter(const string &name,
-                         const ScriptInterface::Variant &value) {
+                           const ScriptInterface::Variant &value) {
   SET_PARAMETER_HELPER("center", m_sphere->pos());
   SET_PARAMETER_HELPER("radius", m_sphere->rad());
   SET_PARAMETER_HELPER("direction", m_sphere->direction());

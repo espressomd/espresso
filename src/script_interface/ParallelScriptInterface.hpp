@@ -24,7 +24,7 @@
 
 #include <utility>
 
-#include "ScriptInterface.hpp"
+#include "ScriptInterfaceBase.hpp"
 
 #include "ParallelScriptInterfaceSlave.hpp"
 #include "core/errorhandling.hpp"

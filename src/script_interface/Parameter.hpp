@@ -44,17 +44,7 @@ public:
 
   Parameter(ParameterType type, bool required)
       : m_type(type), m_required(required) {
-    switch (type) {
-    case ParameterType::VECTOR2D:
-      m_n_elements = 2;
-      break;
-    case ParameterType::VECTOR3D:
-      m_n_elements = 3;
-      break;
-    default:
-      m_n_elements = ARBITRARY_LENGTH;
-      break;
-    }
+    m_n_elements = ARBITRARY_LENGTH;
   }
 
   Parameter(ParameterType type, int n_elements, bool required)
