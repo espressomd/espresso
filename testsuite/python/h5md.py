@@ -41,10 +41,11 @@ class H5mdTest(ut.TestCase):
         self.system.time_step = 0.01
         for i in range(10):
             self.system.part.add(id=i, pos=np.array([float(i),float(i),float(i)]),
-                                 v=(1.0,2.0,3.0), ext_force=(0.1,0.2,0.3), 
-                                 type=23)
+                                 v=(1.0,2.0,3.0), type=23)
             if ('MASS' in espressomd.code_info.features()):
                 self.system.part[i].mass = 2.3
+            if ('EXTERNAL_FORCE' in espressomd.code_info.features()):
+                self.system.part[i].ext_force = [0.1,0.2,0.3]
         self.system.integrator.run(steps=0)
         self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
                             write_force=True, write_type=True, write_mass=True)
@@ -79,7 +80,8 @@ class H5mdTest(ut.TestCase):
             np.array([x for (y,x) in sorted(zip(self.py_id,self.py_vel))])),
             msg="Velocities not written correctly by H5md!")
 
-    
+    @ut.skipIf('EXTERNAL_FORCE' not in espressomd.code_info.features(),
+            "EXTERNAL_FORCE not compiled in, can not check writing forces.")
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
