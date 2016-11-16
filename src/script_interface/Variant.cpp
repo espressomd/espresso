@@ -1,9 +1,9 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-static const char *VariantLabels[] = {
-    "BOOL",          "INT",      "DOUBLE",  "STRING",   "INT_VECTOR",
-    "DOUBLE_VECTOR", "VECTOR2D", "VECTOR3", "OBJECTID", "VECTOR"};
+static const char *VariantLabels[] = {"BOOL",     "INT",        "DOUBLE",
+                                      "STRING",   "INT_VECTOR", "DOUBLE_VECTOR",
+                                      "OBJECTID", "VECTOR"};
 
 std::string get_type_label(Variant const &v) {
   return std::string(VariantLabels[v.which()]);
