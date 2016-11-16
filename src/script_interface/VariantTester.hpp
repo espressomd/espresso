@@ -18,9 +18,13 @@ public:
     }
 
     if (method == "flat") {
-      return std::vector<Variant>{true, std::string("a string"), 3.14159,
+      return std::vector<Variant>{true,
+                                  std::string("a string"),
+                                  3.14159,
                                   std::vector<int>{3, 1, 4, 1, 5},
-                                  std::vector<double>{1.1, 2.2, 3.3}};
+                                  std::vector<double>{1.1, 2.2, 3.3},
+                                  ObjectId(),
+                                  this->id()};
     }
 
     if (method == "recursive") {
