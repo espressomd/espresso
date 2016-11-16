@@ -1,6 +1,6 @@
 from ...script_interface import PScriptInterface
 import sys
-
+from six import iteritems
 
 class H5md():
     def __init__(self, **kwargs):
@@ -31,7 +31,7 @@ class H5md():
                      'write_mass': 1<<4}
         self.valid_params.append(self.what.keys())
         self.what_bin = 0
-        for i,j in kwargs.iteritems():
+        for i,j in iteritems(kwargs):
             if (i in self.what.keys()):
                 if (isinstance(j, bool)):
                     if j:

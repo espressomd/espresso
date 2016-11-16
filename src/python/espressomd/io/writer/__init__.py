@@ -1,1 +1,1 @@
-import h5md
+from . import h5md
