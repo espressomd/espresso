@@ -33,7 +33,7 @@ public:
             {"charge_density", {ParameterType::DOUBLE, true}},
             {"net_charge", {ParameterType::DOUBLE, true}},
 #endif
-            {"shape", {ParameterType::OBJECT, true}}};
+            {"shape", {ParameterType::OBJECTID, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {

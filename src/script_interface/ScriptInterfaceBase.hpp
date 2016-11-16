@@ -26,28 +26,12 @@
 #include <type_traits>
 #include <vector>
 
-#include <boost/variant.hpp>
-
-#include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
 
 #include "Parameter.hpp"
-#include "core/Vector.hpp"
+#include "Variant.hpp"
 
 namespace ScriptInterface {
-class ScriptInterfaceBase;
-
-typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
-
-/**
- * @brief Possible types for parameters.
- */
-
-typedef boost::make_recursive_variant<
-    bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    Vector2d, Vector3d, ObjectId,
-    std::vector<boost::recursive_variant_>>::type Variant;
-
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
  * Variant.

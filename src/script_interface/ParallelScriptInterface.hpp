@@ -75,7 +75,7 @@ public:
   void set_parameter(const std::string &name, const Variant &value) override {
     std::pair<std::string, Variant> d(name, Variant());
 
-    if (valid_parameters()[name].type() == ParameterType::OBJECT) {
+    if (valid_parameters()[name].type() == ParameterType::OBJECTID) {
       d = std::make_pair(name, map_parallel_to_local_id(name, value));
     } else {
       d = std::make_pair(name, value);
@@ -129,7 +129,7 @@ public:
 
     /* Unwrap the object ids */
     for (auto &it : p) {
-      if (valid_parameters()[it.first].type() == ParameterType::OBJECT) {
+      if (valid_parameters()[it.first].type() == ParameterType::OBJECTID) {
         it.second = map_parallel_to_local_id(it.first, it.second);
       }
     }
@@ -148,7 +148,7 @@ public:
 
     /* Wrap the object ids */
     for (auto &it : p) {
-      if (valid_parameters()[it.first].type() == ParameterType::OBJECT) {
+      if (valid_parameters()[it.first].type() == ParameterType::OBJECTID) {
         it.second = map_local_to_parallel_id(it.first, it.second);
       }
     }
@@ -163,7 +163,7 @@ public:
 
     /* Unwrap the object ids */
     for (auto &it : p) {
-      if (it.second.which() == static_cast<int>(ParameterType::OBJECT)) {
+      if (it.second.which() == static_cast<int>(ParameterType::OBJECTID)) {
         it.second = map_parallel_to_local_id(it.first, it.second);
       }
     }

@@ -43,6 +43,10 @@ bool is_double_vector(Variant const &v);
 bool is_objectid(Variant const &v);
 bool is_vector(Variant const &v);
 
+void transform_vectors(Variant &v);
+
+std::string print_variant_types(Variant const &v);
+
 } /* namespace ScriptInterface */
 
 #endif

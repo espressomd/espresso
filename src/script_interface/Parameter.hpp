@@ -20,8 +20,7 @@
 #ifndef SCRIPT_INTERFACE_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_PARAMETERS_HPP
 
-#include <map>
-#include <string>
+#include "Variant.hpp"
 
 namespace ScriptInterface {
 
@@ -29,18 +28,7 @@ namespace ScriptInterface {
  * Possible parameter type. Corresponds to the template parameters of @type
  * Variant.
  */
-enum class ParameterType {
-  BOOL = 0,
-  INT,
-  DOUBLE,
-  STRING,
-  INT_VECTOR,
-  DOUBLE_VECTOR,
-  VECTOR2D,
-  VECTOR3D,
-  OBJECT,
-  VECTOR
-};
+using ParameterType = VariantType;
 
 /**
  * @brief Script interface parameter.
