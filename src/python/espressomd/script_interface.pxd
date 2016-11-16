@@ -47,7 +47,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType DOUBLE_VECTOR
     cdef ParameterType VECTOR3D
     cdef ParameterType VECTOR2D
-    cdef ParameterType OBJECT
+    cdef ParameterType OBJECTID
     cdef ParameterType VECTOR
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
@@ -63,6 +63,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant(const Variant & )
         Variant & operator = (const Variant &)
         int which()
+    void transform_vectors(Variant &)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +

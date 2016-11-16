@@ -65,6 +65,7 @@ cdef class PScriptInterface:
         self.sip.get().set_parameters(parameters)
 
     cdef Variant python_object_to_variant(self, value):
+        cdef Variant v
         cdef vector[Variant] vec
         cdef PObjectId oid
 
@@ -81,7 +82,9 @@ cdef class PScriptInterface:
         elif hasattr(value, '__iter__'):
             for e in value:
                 vec.push_back(self.python_object_to_variant(e))
-            return make_variant[vector[Variant]](vec)
+            v = make_variant[vector[Variant]](vec)
+            transform_vectors(v)
+            return v
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
         elif type(value) == int:
@@ -115,7 +118,7 @@ cdef class PScriptInterface:
             return get[Vector3d](value).as_vector()
         if < int > type == <int > VECTOR2D:
             return get[Vector2d](value).as_vector()
-        if < int > type == <int > OBJECT:
+        if < int > type == <int > OBJECTID:
             # Get the id and build a curresponding object
             try:
                 oid = get[ObjectId](value)
