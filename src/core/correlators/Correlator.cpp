@@ -22,6 +22,8 @@
 #include "integrate.hpp"
 #include "utils.hpp" 
 
+#include <limits>
+
 namespace Correlators {
 
 /* global variables */
@@ -147,8 +149,8 @@ void Correlator::initialize() {
   }
 
   // Time steps and intervals
-  update_frequency = (int) floor(dt/time_step);
-  
+  update_frequency = std::floor(dt/time_step + std::numeric_limits<double>::round_error());
+
   if ( tau_lin == 1 ) { // use the default
     tau_lin=(int)ceil(tau_max/dt);
     if (tau_lin%2) tau_lin+=1;
