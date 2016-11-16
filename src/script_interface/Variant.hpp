@@ -32,7 +32,8 @@ enum class VariantType {
   VECTOR
 };
 
-extern const char *VariantLabels[];
+std::string get_type_label(Variant const &);
+std::string get_type_label(VariantType);
 
 bool is_bool(Variant const &v);
 bool is_int(Variant const &v);

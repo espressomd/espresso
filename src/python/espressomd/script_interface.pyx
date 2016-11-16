@@ -63,7 +63,7 @@ cdef class PScriptInterface:
             if v.which() == <int> type:
                 parameters[name] = v
             else:
-                raise ValueError("Wrong type for parameter '%s'" % pname)
+                raise ValueError("Wrong type for parameter '%s': Expected %s, but got %s" % (pname, get_type_label(type), get_type_label(v)))
 
         self.sip.get().set_parameters(parameters)
 

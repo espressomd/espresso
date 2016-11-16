@@ -1,9 +1,17 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-const char *VariantLabels[] = {
+static const char *VariantLabels[] = {
     "BOOL",          "INT",      "DOUBLE",  "STRING",   "INT_VECTOR",
     "DOUBLE_VECTOR", "VECTOR2D", "VECTOR3", "OBJECTID", "VECTOR"};
+
+std::string get_type_label(Variant const &v) {
+  return std::string(VariantLabels[v.which()]);
+}
+
+std::string get_type_label(VariantType t) {
+  return std::string(VariantLabels[static_cast<int>(t)]);
+}
 
 bool is_bool(Variant const &v) {
   return v.which() == static_cast<int>(VariantType::BOOL);

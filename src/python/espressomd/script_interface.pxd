@@ -64,6 +64,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant & operator = (const Variant &)
         int which()
     void transform_vectors(Variant &)
+    string get_type_label(const Variant &)
+    string get_type_label(ParameterType)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +
