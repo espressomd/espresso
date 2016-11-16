@@ -1,8 +1,8 @@
 from __future__ import print_function, absolute_import
 from espressomd.actors cimport *
 from libcpp.string cimport string  # import std::string
-cimport .electrostatics
-cimport .magnetostatics
+cimport electrostatics
+cimport magnetostatics
 
 from espressomd.utils cimport handle_errors
 

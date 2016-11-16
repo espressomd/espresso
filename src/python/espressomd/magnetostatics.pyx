@@ -19,10 +19,10 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from .globals cimport temperature
+from globals cimport temperature
 from .actors cimport *
 from .scafacos import ScafacosConnector
-cimport .scafacos
+cimport scafacos
 
 from espressomd.utils cimport handle_errors
 
