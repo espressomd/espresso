@@ -27,6 +27,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	case "$image" in
 		python3)
 			brew install python3
+            pip3 install h5py
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
@@ -35,6 +36,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 		;;
 		*)
 			brew install python
+            pip install h5py
 			pip install cython
 			pip install numpy
 			pip install pep8
@@ -42,7 +44,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	esac
 	brew install openmpi
 	brew install fftw
-
+    brew install hdf5 --with-mpi
 	# The binary version of Boost comes without MPI support, so we have to compile it ourselves.
 	# Boost takes a long time to install, so we have Travis-CI cache it.
 	BOOST_VERSION=$(brew info --json=v1 boost | python -m json.tool | grep linked_keg | awk -F '"' '{print $4}')
