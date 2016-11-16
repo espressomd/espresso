@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     openmpi-bin \
     libfftw3-dev \
     libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
-    python python-numpy \
+    python python-numpy python-h5py \
     tcl-dev \
     git \
     pep8 \
@@ -16,8 +16,6 @@ RUN apt-get update && apt-get install -y \
     python-pip \
     libpython-dev \
     libhdf5-openmpi-dev \
-    libhdf5-openmpi-10:amd64 \
-    libhdf5-10:amd64 \
 && pip install cython \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
