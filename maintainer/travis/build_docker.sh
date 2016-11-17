@@ -44,9 +44,9 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	esac
 	brew install openmpi
 	brew install fftw
-    brew install homebrew/science/hdf5 --with-mpi
+    #brew install homebrew/science/hdf5 --with-mpi
     HDF5_VERSION=1.8.17
-    wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz && tar xfvz hdf5-${HDF5_VERSION} &&
+    wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz && tar xfvz hdf5-${HDF5_VERSION}.tar.gz &&
     cd hdf5-${HDF5_VERSION} && mkdir build && cd build && cmake .. -DHDF5_ENABLE_PARALLEL=ON -DHDF5_BUILD_CPP_LIB=OFF -DCMAKE_INSTALL_PREFIX=$HOME/hdf5 && make -j4 &> /dev/null && make install && cd .. ;
     # The binary version of Boost comes without MPI support, so we have to
     # compile it ourselves.
