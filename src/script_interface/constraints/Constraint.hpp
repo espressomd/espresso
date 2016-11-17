@@ -48,7 +48,7 @@ public:
     return {{"only_positive", {ParameterType::INT, true}},
             {"penetrable", {ParameterType::INT, true}},
             {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECT, true}}};
+            {"shape", {ParameterType::OBJECTID, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {

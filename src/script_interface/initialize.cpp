@@ -25,6 +25,7 @@
 #include "lbboundaries/initialize.hpp"
 
 #include "ParallelScriptInterface.hpp"
+#include "VariantTester.hpp"
 
 namespace ScriptInterface {
 void initialize() {
@@ -35,6 +36,8 @@ void initialize() {
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
+
+  ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
 }
 
 } /* namespace ScriptInterface */

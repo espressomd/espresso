@@ -28,8 +28,8 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Cylinder::valid_parameters() const {
-  return {{"center", {ParameterType::VECTOR3D, true}},
-          {"axis", {ParameterType::VECTOR3D, true}},
+  return {{"center", {ParameterType::DOUBLE_VECTOR, 3, true}},
+          {"axis", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"direction", {ParameterType::DOUBLE, true}},
           {"radius", {ParameterType::DOUBLE, true}},
           {"length", {ParameterType::DOUBLE, true}}};

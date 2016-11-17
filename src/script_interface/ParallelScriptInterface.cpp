@@ -110,7 +110,7 @@ Variant ParallelScriptInterface::call_method(const std::string &name,
 
   /* Unwrap the object ids */
   for (auto &it : p) {
-    if (it.second.which() == static_cast<int>(ParameterType::OBJECT)) {
+    if (is_objectid(it.second)) {
       it.second = map_parallel_to_local_id(it.first, it.second);
     }
   }
