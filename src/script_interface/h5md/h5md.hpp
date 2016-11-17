@@ -19,6 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#ifdef H5MD
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 
@@ -56,3 +58,4 @@ class H5mdScript : public ScriptInterfaceBase {
 
 
 #endif //ESPRESSO_H5MD_HPP
+#endif //H5MD

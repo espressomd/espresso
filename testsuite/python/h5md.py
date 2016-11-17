@@ -18,7 +18,6 @@
 #
 
 
-#from __future__ import print_function
 import espressomd
 from espressomd.io.writer import h5md
 import unittest as ut
@@ -30,6 +29,8 @@ import os
 
 
 
+@ut.skipIf('H5MD' not in espressomd.code_info.features(),
+            "H5MD not compiled in, can not check functionality.")
 class H5mdTest(ut.TestCase):
     """Test the core implementation of writing hdf5 files."""
     @classmethod

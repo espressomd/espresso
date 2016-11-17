@@ -19,6 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#ifdef H5MD
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 
@@ -67,3 +69,4 @@ Variant H5mdScript::call_method(const std::string& name, const VariantMap& param
 
 
 #endif //ESPRESSO_H5MD_HPP
+#endif //H5MD

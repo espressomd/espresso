@@ -175,7 +175,7 @@ if (WITH_HDF5)
     add_feature_info(HDF5 ON "parallel")
   else()
     unset(HDF5_FOUND)
-    add_feature_info(HDF5 OFF "serial")
+    add_feature_info(HDF5 OFF)
   endif(HDF5_IS_PARALLEL)
 endif(WITH_HDF5)
 
