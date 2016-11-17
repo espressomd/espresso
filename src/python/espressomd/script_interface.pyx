@@ -79,10 +79,7 @@ cdef class PScriptInterface:
             # Map python object do id
             oid = value.id()
             return make_variant[ObjectId](oid.id)
-        # Check for iter is on purpose (instead of Sequence),
-        # because strings should be converted to strings and
-        # not to vector[int].
-        elif hasattr(value, '__iter__'):
+        elif hasattr(value, '__iter__') and not(type(value) == str):
             for e in value:
                 vec.push_back(self.python_object_to_variant(e))
             v = make_variant[vector[Variant]](vec)
