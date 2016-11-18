@@ -92,10 +92,8 @@ void free_pairList(PairList *list)
   list->pair = (Particle **)Utils::realloc(list->pair, 0);
 }
 
-
 /** Returns true if the particles are to be considered for short range 
     interactions */
-
 
 void build_verlet_lists()
 {

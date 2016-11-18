@@ -22,20 +22,18 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 
-#include "initialize.hpp"
-#include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
+#include "ScriptInterfaceBase.hpp"
+#include "initialize.hpp"
 
 namespace ScriptInterface {
-  enum { NOT_SET = -1 };
+enum { NOT_SET = -1 };
 
-  inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
-    const auto id = boost::get<ObjectId>(value);
+inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
+  const auto id = boost::get<ObjectId>(value);
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }
-
-
 
 } /* namespace ScriptInterface */
 

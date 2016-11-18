@@ -28,10 +28,10 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Rhomboid::valid_parameters() const {
-  return {{"corner", {ParameterType::VECTOR3D, true}},
-          {"a", {ParameterType::VECTOR3D, true}},
-          {"b", {ParameterType::VECTOR3D, true}},
-          {"c", {ParameterType::VECTOR3D, true}},
+  return {{"corner", {ParameterType::DOUBLE_VECTOR, 3, true}},
+          {"a", {ParameterType::DOUBLE_VECTOR, 3, true}},
+          {"b", {ParameterType::DOUBLE_VECTOR, 3, true}},
+          {"c", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"direction", {ParameterType::DOUBLE, true}}};
 }
 

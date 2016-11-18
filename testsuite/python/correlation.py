@@ -27,11 +27,7 @@ from espressomd.observables import *
 from espressomd.observables import *
 from espressomd.correlators import *
 
-
-
 class Observables(ut.TestCase):
-
-
     # Error tolerance when comparing arrays/tuples...
     tol = 1E-9
 
@@ -49,7 +45,7 @@ class Observables(ut.TestCase):
         s.part.add(id=0,pos=(0,0,0),v=(1,2,3))
 
         O=ParticlePositions(ids=(0,))
-        C2=Correlator(obs1=O,dt=0.01,tau_lin=10,tau_max=10,corr_operation="square_distance_componentwise")
+        C2=Correlator(obs1=O,dt=0.01,tau_lin=10,tau_max=10.0,corr_operation="square_distance_componentwise")
         s.integrator.run(1000)
         s.auto_update_correlators.add(C2)
         s.integrator.run(20000)
