@@ -20,7 +20,9 @@
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#ifdef H5MD
 #include "h5md/initialize.hpp"
+#endif
 #include "observables/initialize.hpp" 
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
@@ -31,6 +33,7 @@ void initialize() {
   Shapes::initialize();
   Constraints::initialize();
 #ifdef H5MD
+#pragma message "h5md still initialized"
   Writer::initialize();
 #endif
   Observables::initialize();

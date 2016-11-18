@@ -57,14 +57,14 @@ file(GLOB_RECURSE EspressoScriptInterface_SRC
       #    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.hpp"
       #)
 
-if(H5MD)
-    list(APPEND EspressoScriptInterface_SRC 
-        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
-        )
-endif(H5MD)
+      #if(H5MD)
+      #    list(APPEND EspressoScriptInterface_SRC 
+      #        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.hpp"
+      #        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
+      #        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.hpp"
+      #        "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
+      #        )
+      #endif(H5MD)
 message("${EspressoScriptInterface_SRC}")
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 add_dependencies(EspressoScriptInterface EspressoConfig EspressoConfig)

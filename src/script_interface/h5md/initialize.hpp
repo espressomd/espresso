@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#ifdef H5MD
 #ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 
@@ -28,4 +30,5 @@ namespace Writer {
 } /* namespace Writer */
 } /* namespace ScriptInterface */
 
+#endif
 #endif

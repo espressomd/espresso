@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef H5MD
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "io/writer/h5md/h5md_core.hpp"
@@ -32,3 +32,4 @@ namespace Writer {
     }
 } /* namespace Writer */
 } /* namespace ScriptInterface */
+#endif
