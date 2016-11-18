@@ -19,7 +19,6 @@
 
 
 import espressomd
-from espressomd.io.writer import h5md
 import unittest as ut
 import logging
 import sys
@@ -36,6 +35,7 @@ class H5mdTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
         """Prepare a testsystem."""
+        from espressomd.io.writer import h5md
         self.system = espressomd.System()
         self.system.box_l = [20.0, 20.0, 20.0]
         self.system.cell_system.skin = 0.4

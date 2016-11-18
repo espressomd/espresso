@@ -18,6 +18,7 @@
 */
 
 
+#include "config.hpp"
 #ifdef H5MD
 #ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
@@ -30,5 +31,5 @@ namespace Writer {
 } /* namespace Writer */
 } /* namespace ScriptInterface */
 
-#endif
-#endif
+#endif // SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
+#endif // H5MD

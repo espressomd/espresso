@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include "config.hpp"
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
@@ -33,7 +35,6 @@ void initialize() {
   Shapes::initialize();
   Constraints::initialize();
 #ifdef H5MD
-#pragma message "h5md still initialized"
   Writer::initialize();
 #endif
   Observables::initialize();

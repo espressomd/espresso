@@ -22,6 +22,8 @@
 
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
+
+#include "config.hpp"
 #ifdef H5MD
 #include "ScriptInterface.hpp"
 #include <string>
