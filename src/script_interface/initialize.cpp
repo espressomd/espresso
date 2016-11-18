@@ -30,7 +30,9 @@ namespace ScriptInterface {
 void initialize() {
   Shapes::initialize();
   Constraints::initialize();
+#ifdef H5MD
   Writer::initialize();
+#endif
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
