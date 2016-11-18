@@ -26,25 +26,22 @@
 #include <type_traits>
 #include <vector>
 
-#include <boost/variant.hpp>
-
-#include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
 
 #include "Parameter.hpp"
-#include "core/Vector.hpp"
+#include "Variant.hpp"
 
 namespace ScriptInterface {
-class ScriptInterfaceBase;
 
-typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
+template <typename T> T get_value(Variant const &v) { return boost::get<T>(v); }
 
-/**
- * @brief Possible types for parameters.
- */
-typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d, ObjectId>
-    Variant;
+template <> inline Vector3d get_value<Vector3d>(Variant const &v) {
+  return Vector3d(boost::get<std::vector<double>>(v));
+}
+
+template <> inline Vector2d get_value<Vector2d>(Variant const &v) {
+  return Vector2d(boost::get<std::vector<double>>(v));
+}
 
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
@@ -56,21 +53,10 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
  * remove_reference ensures that this also works with member access by reference
  * for example as returned by a function.
  */
-
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
-        boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value));            \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value));            \
+        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
   }
 
 /**

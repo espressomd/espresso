@@ -28,6 +28,11 @@
 #include "NumeratedContainer.hpp"
 namespace Utils {
 
+/**
+ * @brief Class to automatically maintain a registry of
+ * objects. The objects are assigned an id, by which an
+ * instance can be retrieved.
+ */
 template <typename T> class AutoObjectId {
 public:
   class ObjectId {
@@ -65,14 +70,17 @@ public:
    */
   ObjectId id() const { return m_id; }
   /**
-   * @brief get instance by id.
+   * @brief get instance by id. If the id is none (ObjectId()),
+   * a nullptr is returned. If the id is unknown, an out-of-range
+   * exception is thrown.
    */
   static std::weak_ptr<T> &get_instance(ObjectId id) { return reg()[id.m_id]; }
 
 private:
   ObjectId m_id;
   static Utils::NumeratedContainer<std::weak_ptr<T>> &reg() {
-    static Utils::NumeratedContainer<std::weak_ptr<T>> m_reg;
+    static Utils::NumeratedContainer<std::weak_ptr<T>> m_reg(
+        {{ObjectId().id(), std::weak_ptr<T>()}});
 
     return m_reg;
   }
