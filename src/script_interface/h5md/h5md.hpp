@@ -20,15 +20,12 @@
 */
 
 
-#ifdef H5MD
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
-
-
+#ifdef H5MD
 #include "ScriptInterface.hpp"
-#include "io/writer/h5md/h5md_core.hpp"
 #include <string>
-
+#include "io/writer/h5md/h5md_core.hpp"
 
 namespace ScriptInterface {
 namespace Writer {

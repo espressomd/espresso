@@ -18,7 +18,6 @@
 */
 
 
-#ifdef H5MD
 #include "initialize.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "io/writer/h5md/h5md_core.hpp"
@@ -33,4 +32,3 @@ namespace Writer {
     }
 } /* namespace Writer */
 } /* namespace ScriptInterface */
-#endif
