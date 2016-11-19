@@ -1,0 +1,56 @@
+\documentclass[tikz]{standalone}
+\usepackage{amsmath,chemformula}
+\begin{document}
+\begin{tikzpicture}[
+  chemarrow,
+  particle/.style = {shade,ball color=#1,circle,inner sep=2pt},
+  catalyzer/.style = {particle=green},
+  reactant/.style = {particle=blue},
+  product/.style = {particle=red},
+  inert/.style = {particle=white}
+  ]
+  \begin{scope}
+    \node[catalyzer] (C1) at (0,0) {};
+    \draw[dashed] (C1) circle (1.5);
+    \draw[->] (C1) -- node[above left] {$r$} (45:1.5);
+    \node[reactant] (R1) at (-130:1) {};
+    \node[reactant] (R2) at (90:2) {};
+    \node[product]  (R3) at (-80:2) {};
+    \node[inert] at (150:1) {};
+    \pgfmathsetseed{42}
+    \foreach \i in {0,...,5} {
+      \node[inert] at ({360*rnd}:{random(17,20)/10}) {};
+      \node[reactant] at ({360*rnd}:{random(17,20)/10}) {};
+      \node[product] at ({360*rnd}:{random(17,20)/10}) {};
+    }
+  \end{scope}
+  \begin{scope}[shift={(6,0)}]
+    \node[catalyzer] (C2) at (0,0) {};
+    \draw[dashed] (C2) circle (1.5);
+    \draw[->] (C2) -- node[above left] {$r$} (45:1.5);
+    \node[product]  (P1) at (-130:1) {};
+    \node[product]  (P2) at (90:2) {};
+    \node[reactant] (P3) at (-80:2) {};
+    \node[inert] at (150:1) {};
+    \pgfmathsetseed{42}
+    \foreach \i in {0,...,5} {
+      \node[inert] at ({360*rnd}:{random(17,20)/10}) {};
+      \node[reactant] at ({360*rnd}:{random(17,20)/10}) {};
+      \node[product] at ({360*rnd}:{random(17,20)/10}) {};
+    }
+  \end{scope}
+  \path (C1) -- coordinate[pos=.5] (mid) (C2);
+  \draw[dashed] (mid) +(0,-3) -- +(0,3);
+  \node[above=2.5cm] at (C1) {$t$};
+  \node[above=2.5cm] at (C2) {$t+\Delta t$};
+  \draw[-cf] (R1) -- node[pos=.5,below] {$k_{\text{ct}}$} (P1);
+  \draw[-cf] (R2) -- node[pos=.4,below] {$k_{\text{eq},+}$} (P2);
+  \draw[-cf] (R3) -- node[pos=.3,below] {$k_{\text{eq},-}$} (P3);
+  \node[draw=gray,ultra thin,below=3.2cm] at (mid) {%
+    \tikz\node[catalyzer] {}; Catalyzer\quad
+    \tikz\node[product] {};   Product\quad
+    \tikz\node[reactant] {};  Reactant\quad
+    \tikz\node[inert] {};     Inert
+  };
+\end{tikzpicture}
+\end{document}
