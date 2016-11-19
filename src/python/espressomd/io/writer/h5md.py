@@ -1,8 +1,18 @@
-from ...script_interface import PScriptInterface
+# -*- coding: utf-8 -*-
+"""Interface module for the H5md core implementation.
+"""
+
+
 import sys
 from six import iteritems
+from ...script_interface import PScriptInterface # pylint: disable=import-error
 
-class H5md():
+
+class H5md(object):
+    """H5md file object for accessing to the H5MD core
+       implementation via the PScriptInterface.
+    """
+
     def __init__(self, **kwargs):
         """Initialize a H5md object.
 
@@ -22,7 +32,7 @@ class H5md():
                      If masses should be written.
         """
         self.valid_params = ['filename',]
-        if not ('filename' in kwargs):
+        if 'filename' not in kwargs:
             raise ValueError("'filename' parameter missing.")
         self.what = {'write_pos': 1<<0,
                      'write_vel': 1<<1,
@@ -31,17 +41,17 @@ class H5md():
                      'write_mass': 1<<4}
         self.valid_params.append(self.what.keys())
         self.what_bin = 0
-        for i,j in iteritems(kwargs):
-            if (i in self.what.keys()):
-                if (isinstance(j, bool)):
+        for i, j in iteritems(kwargs):
+            if i in self.what.keys():
+                if isinstance(j, bool):
                     if j:
                         self.what_bin += self.what[i]
                 else:
                     raise ValueError("{} has to be a bool value.".format(i))
-            elif (i not in self.valid_params):
+            elif i not in self.valid_params:
                 raise ValueError("Unknown parameter {} for H5MD writer.".format(i))
         self.h5md_instance = PScriptInterface("ScriptInterface::Writer::H5mdScript")
-        self.h5md_instance.set_params(filename=kwargs['filename'], what=self.what_bin, 
+        self.h5md_instance.set_params(filename=kwargs['filename'], what=self.what_bin,
                                       scriptname=sys.argv[0])
         self.h5md_instance.call_method("init_file")
 
@@ -50,13 +60,13 @@ class H5md():
         """Get the parameters from the scriptinterface.
         """
         return self.h5md_instance.get_params()
-    
+
 
     def write(self):
         """Calls the H5md write method.
         """
         self.h5md_instance.call_method("write")
-    
+
 
     def close(self):
         """Close the H5md file.
