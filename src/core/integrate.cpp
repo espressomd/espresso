@@ -1084,7 +1084,7 @@ void propagate_vel() {
       } //j
 #ifdef SEMI_INTEGRATED
         random_walk_vel(&(p[i]),0.5*time_step);
-        random_walk_rot_vel(&(p[i]),0.5*time_step);
+        //random_walk_rot_vel(&(p[i]),0.5*time_step);
 #endif
     }
   }
