@@ -764,17 +764,18 @@ AC_CONFIG_FILES([
 	doc/ug/Makefile
 	doc/dg/Makefile
 	doc/doxygen/Makefile
-  doc/tutorials/Makefile
+	doc/tutorials/Makefile
 	doc/tutorials/tcl/Makefile
 	doc/tutorials/tcl/00-building_espresso/Makefile
 	doc/tutorials/tcl/01-lennard_jones/Makefile 
 	doc/tutorials/tcl/02-charged_system/Makefile 
 	doc/tutorials/tcl/03-object_in_fluid/Makefile 
-  doc/tutorials/tcl/04-lattice_boltzmann/Makefile 
+	doc/tutorials/tcl/04-lattice_boltzmann/Makefile 
 	doc/tutorials/tcl/05-raspberry_electrophoresis/Makefile 
 	doc/tutorials/tcl/06-active_matter/Makefile 
 	doc/tutorials/tcl/07-electrokinetics/Makefile 
 	doc/tutorials/tcl/08-visualization/Makefile 
+	doc/tutorials/tcl/09-catalytic_reactions/Makefile 
 	doc/latexit.sh
 	])
 AC_CONFIG_FILES([testsuite/tcl/runtest.sh],
