@@ -17,36 +17,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-import espressomd
+"""Testmodule for the H5MD interface.
+"""
+import os
 import unittest as ut
-import logging
-import sys
 import h5py
 import numpy as np
-import os
+import espressomd # pylint: disable=import-error
 
 
 
 @ut.skipIf('H5MD' not in espressomd.code_info.features(),
-            "H5MD not compiled in, can not check functionality.")
+           "H5MD not compiled in, can not check functionality.")
 class H5mdTest(ut.TestCase):
     """Test the core implementation of writing hdf5 files."""
     @classmethod
     def setUpClass(self):
         """Prepare a testsystem."""
-        from espressomd.io.writer import h5md
+        from espressomd.io.writer import h5md # pylint: disable=import-error
         self.system = espressomd.System()
         self.system.box_l = [20.0, 20.0, 20.0]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         for i in range(10):
-            self.system.part.add(id=i, pos=np.array([float(i),float(i),float(i)]),
-                                 v=(1.0,2.0,3.0), type=23)
-            if ('MASS' in espressomd.code_info.features()):
+            self.system.part.add(id=i, pos=np.array([float(i),
+                                                     float(i),
+                                                     float(i)]),
+                                 v=(1.0, 2.0, 3.0), type=23)
+            if 'MASS' in espressomd.code_info.features():
                 self.system.part[i].mass = 2.3
-            if ('EXTERNAL_FORCE' in espressomd.code_info.features()):
-                self.system.part[i].ext_force = [0.1,0.2,0.3]
+            if 'EXTERNAL_FORCE' in espressomd.code_info.features():
+                self.system.part[i].ext_force = [0.1, 0.2, 0.3]
         self.system.integrator.run(steps=0)
         self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
                             write_force=True, write_type=True, write_mass=True)
@@ -60,35 +61,37 @@ class H5mdTest(ut.TestCase):
         self.py_type = self.py_file['particles/atoms/type/value']
         self.py_mass = self.py_file['particles/atoms/mass/value']
         self.py_id = self.py_file['particles/atoms/id/value']
-    
+
+
     @classmethod
     def tearDownClass(self):
-        os.remove("test.h5")    
+        os.remove("test.h5")
 
 
     def test_pos(self):
         """Test if positions have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([(float(i),float(i),float(i)) for i in range(10)]),
-            np.array([x for (y,x) in sorted(zip(self.py_id,self.py_pos))])),
-            msg="Positions not written correctly by H5md!")
+            np.array([(float(i), float(i), float(i)) for i in range(10)]),
+            np.array([x for (y, x) in sorted(zip(self.py_id, self.py_pos))])),
+                        msg="Positions not written correctly by H5md!")
 
 
     def test_vel(self):
         """Test if velocities have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([[1.0,2.0,3.0] for i in range(10)]),
-            np.array([x for (y,x) in sorted(zip(self.py_id,self.py_vel))])),
-            msg="Velocities not written correctly by H5md!")
+            np.array([[1.0, 2.0, 3.0] for i in range(10)]),
+            np.array([x for (y, x) in sorted(zip(self.py_id, self.py_vel))])),
+                        msg="Velocities not written correctly by H5md!")
 
     @ut.skipIf('EXTERNAL_FORCE' not in espressomd.code_info.features(),
-            "EXTERNAL_FORCE not compiled in, can not check writing forces.")
+               "EXTERNAL_FORCE not compiled in, can not check writing forces.")
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([[0.1,0.2,0.3] for i in range(10)]),
-            np.array([x for (y,x) in sorted(zip(self.py_id,self.py_f))])),
-            msg="Forces not written correctly by H5md!")
+            np.array([[0.1, 0.2, 0.3] for i in range(10)]),
+            np.array([x for (y, x) in sorted(zip(self.py_id, self.py_f))])),
+                        msg="Forces not written correctly by H5md!")
+
 
 if __name__ == "__main__":
     ut.main()
