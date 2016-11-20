@@ -36,6 +36,7 @@ cdef class mayaviLive:
     interact with the GUI."""
 
     cdef object system
+    cdef object particle_sizes
     cdef object points 
     cdef object box 
     cdef object arrows
@@ -50,13 +51,15 @@ cdef class mayaviLive:
     cdef object timers 
 
 
-    def __init__(self, system):
+    def __init__(self, system, particle_sizes='auto'):
         """Constructor.
         **Arguments**
 
         :system: instance of espressomd.System
+        :particle_sizes: (optional) function, list, or dict, which maps particle types to radii
         """
         self.system = system
+        self.particle_sizes = particle_sizes
 
         # objects drawn
         self.points = mlab.quiver3d([],[],[], [],[],[], scalars=[], mode="sphere", scale_factor=1, name="Particles")
@@ -77,6 +80,30 @@ cdef class mayaviLive:
         # GUI window
         self.gui = GUI()
         self.timers = [Timer(100, self._draw)]
+
+    def _determine_radius(self, t):
+        """Determine radius of particle type t for visualization."""
+        def radius_from_lj(t):
+            radius = 0.
+            try:
+                radius = 0.5 * get_ia_param(t,t).LJ_sig
+            except:
+                radius = 0.
+            if radius == 0:
+                radius = 0.5  # fallback value
+            return radius
+
+        radius = 0.
+        try:
+            if self.particle_sizes is 'auto':
+                radius = radius_from_lj(t)
+            elif callable(self.particle_sizes):
+                radius = self.particle_sizes(t)
+            else:
+                radius = self.particle_sizes[t]
+        except:
+            radius = radius_from_lj(t)
+        return radius
 
     def _draw(self):
         """Update the Mayavi objects with new particle information.
@@ -139,20 +166,20 @@ cdef class mayaviLive:
             coords[j,:] = p.r.p
             t = p.p.type
             types[j] = t +1
-            radii[j] =get_ia_param(t,t).LJ_sig *0.5
+            radii[j] = self._determine_radius(t)
 
-            # ITerate over bonds
-            k=0        
+            # Iterate over bonds
+            k = 0        
             while k<p.bl.n:
                 # Bond type
-                t= p.bl.e[k]
-                k+=1
+                t = p.bl.e[k]
+                k += 1
                 # Iterate over bond partners and store each connection
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
                     bonds.push_back(p.bl.e[k])
                     bonds.push_back(t)
-                    k+=1
+                    k += 1
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size()//3
@@ -163,9 +190,9 @@ cdef class mayaviLive:
         cdef particle p1,p2
         cdef double bond_vec[3]
         for n in range(Nbonds):
-            i =bonds[3*n]
-            j =bonds[3*n+1]
-            t =bonds[3*n+2]
+            i = bonds[3*n]
+            j = bonds[3*n+1]
+            t = bonds[3*n+2]
             get_particle_data(i,&p1)
             get_particle_data(j,&p2)
             bond_coords[n,:3] = p1.r.p 
