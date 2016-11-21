@@ -59,8 +59,8 @@ public:
       {{"tau_lin", {ParameterType::INT, true}},
       {"tau_max", {ParameterType::DOUBLE, true}},
       {"dt", {ParameterType::DOUBLE, true}},
-      {"obs1", {ParameterType::OBJECT, true}},
-      {"obs2", {ParameterType::OBJECT, true}},
+      {"obs1", {ParameterType::OBJECTID, true}},
+      {"obs2", {ParameterType::OBJECTID, true}},
       {"compress1", {ParameterType::STRING, true}},
       {"compress2", {ParameterType::STRING, true}},
       {"corr_operation", {ParameterType::STRING, true}}};

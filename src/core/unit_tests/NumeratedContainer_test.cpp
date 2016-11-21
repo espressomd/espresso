@@ -34,6 +34,28 @@
 
 using namespace Utils;
 
+BOOST_AUTO_TEST_CASE(il_constructor) {
+  NumeratedContainer<int> container{{0, 1}, {2, 3}};
+
+  BOOST_CHECK(container.size() == 2);
+
+  /* Index 0 was in the construction set,
+     so the next free index should be 1.
+  */
+  {
+    const int next_index = container.add(5);
+    BOOST_CHECK(next_index == 1);
+  }
+
+  /* Index 2 was in the construction set,
+     so the next free index has to be 3.
+  */
+  {
+    const int next_index = container.add(5);
+    BOOST_CHECK(next_index == 3);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(index_handling) {
   NumeratedContainer<int> container;
 

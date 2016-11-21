@@ -511,29 +511,32 @@ system.
 \end{essyntax}
 
 \begin{pysyntax}
-	\object{
-		espressomd
-	}{
-		polymer
-	}{
-		N_P = \arg{int},
-		MPC = \arg{int},
-		bond_length = \arg{float},
-		start_id = \arg{int},
-		start_pos = \arg{ndarray},
-		mode = 0 or 1 or 2,
-		shield = \arg{float},
-		max_tries = \arg{int},
-		val_poly = \arg{float},
-		charge_distance = \arg{int},
-		type_poly_neutral = \arg{int},
-		type_poly_charged = \arg{int},
-		bond_id = \arg{int},
-		angle = \arg{float},
-		angle2 = \arg{float},
-		pos2 = \arg{ndarray},
-		constraint = 0 or 1
-	}
+import espressomd.polymer
+\object{
+    espressomd.polymer
+        }{
+    create_polymer
+        }{
+		N_P = \arg{int},  
+		MPC = \arg{int}, 
+		bond_length = \arg{float}, 
+		bond = \arg{object} 
+        }[
+		start_id = \arg{int}, 
+		start_pos = \arg{ndarray}, 
+		mode = 0 or 1 or 2, 
+		shield = \arg{float}, 
+		max_tries = \arg{int}, 
+		val_poly = \arg{float}, 
+		charge_distance = \arg{int}, 
+		type_poly_neutral = \arg{int}, 
+		type_poly_charged = \arg{int}, 
+		angle = \arg{float}, 
+		angle2 = \arg{float}, 
+		pos2 = \arg{ndarray}, 
+		constraint = 0 or 1 
+        ]
+        
 \end{pysyntax}
 
 This command will create \var{num\_polymers} N\_P polymer or

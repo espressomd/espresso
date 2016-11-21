@@ -32,10 +32,10 @@ namespace ScriptInterface {
 namespace Constraints {
 
 class Constraints : public ScriptObjectRegistry<Constraint> {
-  virtual void add_in_core(std::shared_ptr<Constraint> obj_ptr) {
+  virtual void add_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.add(obj_ptr->constraint());
   }
-  virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) {
+  virtual void remove_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
   };
 

@@ -27,13 +27,13 @@ public:
   }
 
   ParameterMap valid_parameters() const override {
-    return {{"velocity", {ParameterType::VECTOR3D, true}},
-            {"force", {ParameterType::VECTOR3D, true}},
+    return {{"velocity", {ParameterType::DOUBLE_VECTOR, 3, true}},
+            {"force", {ParameterType::DOUBLE_VECTOR, 3, true}},
 #ifdef EK_BOUNDARIES
             {"charge_density", {ParameterType::DOUBLE, true}},
             {"net_charge", {ParameterType::DOUBLE, true}},
 #endif
-            {"shape", {ParameterType::OBJECT, true}}};
+            {"shape", {ParameterType::OBJECTID, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
