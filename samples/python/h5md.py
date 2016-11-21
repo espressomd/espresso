@@ -4,8 +4,8 @@ in ESPResSo.
 
 
 import numpy as np
-import espressomd # pylint: disable=import-error
-from espressomd.io.writer import h5md # pylint: disable=import-error
+import espressomd  # pylint: disable=import-error
+from espressomd.io.writer import h5md  # pylint: disable=import-error
 
 
 sys = espressomd.System()
