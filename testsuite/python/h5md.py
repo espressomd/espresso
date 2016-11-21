@@ -21,10 +21,9 @@
 """
 import os
 import unittest as ut
-import h5py
 import numpy as np
-import espressomd # pylint: disable=import-error
-
+import espressomd  # pylint: disable=import-error
+import h5py  # h5py has to be imported *after* espressomd (MPI)
 
 
 @ut.skipIf('H5MD' not in espressomd.code_info.features(),
@@ -34,7 +33,7 @@ class H5mdTest(ut.TestCase):
     @classmethod
     def setUpClass(self):
         """Prepare a testsystem."""
-        from espressomd.io.writer import h5md # pylint: disable=import-error
+        from espressomd.io.writer import h5md  # pylint: disable=import-error
         self.system = espressomd.System()
         self.system.box_l = [20.0, 20.0, 20.0]
         self.system.cell_system.skin = 0.4
@@ -43,7 +42,7 @@ class H5mdTest(ut.TestCase):
             self.system.part.add(id=i, pos=np.array([float(i),
                                                      float(i),
                                                      float(i)]),
-                                 v=(1.0, 2.0, 3.0), type=23)
+                                 v=np.array([1.0, 2.0, 3.0]), type=23)
             if 'MASS' in espressomd.code_info.features():
                 self.system.part[i].mass = 2.3
             if 'EXTERNAL_FORCE' in espressomd.code_info.features():
@@ -62,11 +61,9 @@ class H5mdTest(ut.TestCase):
         self.py_mass = self.py_file['particles/atoms/mass/value']
         self.py_id = self.py_file['particles/atoms/id/value']
 
-
     @classmethod
     def tearDownClass(self):
         os.remove("test.h5")
-
 
     def test_pos(self):
         """Test if positions have been written properly."""
@@ -74,7 +71,6 @@ class H5mdTest(ut.TestCase):
             np.array([(float(i), float(i), float(i)) for i in range(10)]),
             np.array([x for (y, x) in sorted(zip(self.py_id, self.py_pos))])),
                         msg="Positions not written correctly by H5md!")
-
 
     def test_vel(self):
         """Test if velocities have been written properly."""
