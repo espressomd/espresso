@@ -8,16 +8,16 @@ import espressomd # pylint: disable=import-error
 from espressomd.io.writer import h5md # pylint: disable=import-error
 
 
-SYS = espressomd.System()
-SYS.box_l = [10.0, 10.0, 10.0]
-SYS.time_step = 0.01
-SYS.thermostat.set_langevin(kT=1.0, gamma=1.0)
-SYS.cell_system.skin = 0.4
+sys = espressomd.System()
+sys.box_l = [10.0, 10.0, 10.0]
+sys.time_step = 0.01
+sys.thermostat.set_langevin(kT=1.0, gamma=1.0)
+sys.cell_system.skin = 0.4
 
 for i in range(1000):
-    SYS.part.add(id=i, pos=np.random.random(3) * SYS.box_l, type=23)
-SYS.integrator.run(steps=10)
-H5_FILE = h5md.H5md(filename="bla.h5", write_pos=True, write_vel=True,
+    sys.part.add(id=i, pos=np.random.random(3) * sys.box_l, type=23)
+sys.integrator.run(steps=10)
+h5_file = h5md.H5md(filename="bla.h5", write_pos=True, write_vel=True,
                     write_force=True, write_type=True, write_mass=False)
-H5_FILE.write()
-H5_FILE.close()
+h5_file.write()
+h5_file.close()
