@@ -34,7 +34,7 @@ NEMD
 NPT
 GHMC
 CATALYTIC_REACTIONS
-MULTI_TIMESTEP        requires not GAUSSRANDOMCUT and not GAUSSRANDOM
+MULTI_TIMESTEP                  requires not GAUSSRANDOMCUT and not GAUSSRANDOM
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 CONFIGTEMP
 
@@ -53,21 +53,21 @@ P3M                             equals ELECTROSTATICS and FFTW
 INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
-_P3M_GPU_FLOAT					requires CUDA and ELECTROSTATICS
-_P3M_GPU_DOUBLE					requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
+_P3M_GPU_DOUBLE                 requires CUDA and ELECTROSTATICS
 
 
 /* Magnetostatics */
 DIPOLES
 DP3M                            equals DIPOLES and FFTW
-DIPOLAR_DIRECT_SUM		requires CUDA
-DIPOLAR_DIRECT_SUM		equals DIPOLES and ROTATION and CUDA
+DIPOLAR_DIRECT_SUM              requires CUDA
+DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES_COM               requires not VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_RELATIVE          requires not VIRTUAL_SITES_COM
 VIRTUAL_SITES_RELATIVE          implies ROTATION
-VIRTUAL_SITES	                equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
+VIRTUAL_SITES                   equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE or IMMERSED_BOUNDARY
 VIRTUAL_SITES_NO_VELOCITY       require VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_THERMOSTAT        require VIRTUAL_SITES_RELATIVE
 THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
@@ -91,23 +91,27 @@ LB_BOUNDARIES                   implies LB, CONSTRAINTS
 LB_BOUNDARIES_GPU               implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS         implies LB
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, CONSTRAINTS, EXTERNAL_FORCES, ELECTROSTATICS
+EK_BOUNDARIES                   requires CUDA
 EK_REACTION                     implies ELECTROKINETICS, LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+EK_REACTION                     requires CUDA
 EK_ELECTROSTATIC_COUPLING       implies ELECTROKINETICS, LB_GPU, ELECTROSTATICS
+EK_ELECTROSTATIC_COUPLING       requires CUDA and FFTW
 EK_DEBUG                        requires ELECTROKINETICS
-EK_DOUBLE_PREC					requires ELECTROKINETICS
-LATTICE	                        equals LB or LB_GPU
+EK_DOUBLE_PREC                  requires ELECTROKINETICS
+LATTICE                         equals LB or LB_GPU
 SHANCHEN                        implies LB_GPU
 SHANCHEN                        requires not ELECTROKINETICS
 
 /* Stokesian-Dynamics features */
 BD
-SD 		      	        requires CUDA
-SD 		      	        requires ARPACK
-SD				implies BD
-SD_FF_ONLY			requires SD
-SD_USE_FLOAT			requires SD
-SD_NOT_PERIODIC			requires SD
+SD                              requires CUDA
+SD                              requires ARPACK
+SD                              implies BD
+SD_FF_ONLY                      requires SD
+SD_USE_FLOAT                    requires SD
+SD_NOT_PERIODIC                 requires SD
 
 /* Interaction features */
 TABULATED
@@ -129,7 +133,7 @@ BUCKINGHAM
 SOFT_SPHERE
 HAT
 UMBRELLA
-GAY_BERNE	            implies ROTATION
+GAY_BERNE                       implies ROTATION
 OVERLAPPED
 
 /* Fluid-Structure Interactions (object in fluid) */
@@ -146,10 +150,10 @@ BOND_ANGLEDIST_HARMONIC         implies BOND_ANGLEDIST, CONSTRAINTS
 BOND_ENDANGLEDIST
 BOND_ENDANGLEDIST_HARMONIC      implies BOND_ENDANGLEDIST, CONSTRAINTS
 
-CG_DNA				implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
+CG_DNA                          implies TWIST_STACK, HYDROGEN_BOND, COULOMB_DEBYE_HUECKEL
 TWIST_STACK
 HYDROGEN_BOND
-COULOMB_DEBYE_HUECKEL 		requires ELECTROSTATICS
+COULOMB_DEBYE_HUECKEL           requires ELECTROSTATICS
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
@@ -172,9 +176,9 @@ BOND_ANGLE_COSSQUARE            notest
 BOND_ANGLE_OLD                  notest
 
 // Shape of the noise in ther (Langevin) thermostat
-FLATNOISE                        requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
-GAUSSRANDOM                      requires not FLATNOISE and not GAUSSRANDOM_CUT
-GAUSSRANDOMCUT                   requires not GAUSSRANDOM and not FLATNOISE
+FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
+GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
+GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 
 
 /* Strange features. Use only if you know what you are doing! */
