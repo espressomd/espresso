@@ -17,27 +17,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "h5md/initialize.hpp"
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
-#include "lbboundaries/initialize.hpp"
-
-#include "VariantTester.hpp"
+#ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
+#define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 
 namespace ScriptInterface {
+namespace Writer {
 
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Writer::initialize();
-  Observables::initialize();
-  Correlators::initialize();
-  LBBoundaries::initialize();
+    void initialize();
 
-  ParallelScriptInterface<Testing::VariantTester>::register_new("Testing::VariantTester");
-}
-
+} /* namespace Writer */
 } /* namespace ScriptInterface */
+
+#endif

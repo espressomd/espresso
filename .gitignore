@@ -49,6 +49,9 @@ doc/dg/background_errors.doc
 doc/dg/background_errors.sorted
 doc/dg/background_errors.unsorted
 
+# IDE
+.idea
+
 # Compiled python
 *.pyc
 

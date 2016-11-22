@@ -18,26 +18,16 @@
 */
 
 #include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "h5md/initialize.hpp"
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
-#include "lbboundaries/initialize.hpp"
+#include "ParallelScriptInterface.hpp"
+#include "io/writer/h5md/h5md_core.hpp"
+#include "h5md.hpp"
 
-#include "VariantTester.hpp"
 
 namespace ScriptInterface {
-
-void initialize() {
-  Shapes::initialize();
-  Constraints::initialize();
-  Writer::initialize();
-  Observables::initialize();
-  Correlators::initialize();
-  LBBoundaries::initialize();
-
-  ParallelScriptInterface<Testing::VariantTester>::register_new("Testing::VariantTester");
-}
-
+namespace Writer {
+    void initialize() {
+        ParallelScriptInterface<ScriptInterface::Writer::H5mdScript>::register_new(
+            "ScriptInterface::Writer::H5mdScript");
+    }
+} /* namespace Writer */
 } /* namespace ScriptInterface */
