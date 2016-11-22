@@ -28,7 +28,7 @@
 #include <iterator>
 #include <vector>
 
-#include <boost/serialization/array.hpp>
+#include "utils/serialization/array.hpp"
 
 template <size_t n, typename Scalar> class Vector {
 private:

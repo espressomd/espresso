@@ -23,8 +23,6 @@
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
 #include <boost/mpi/collectives.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/array.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -33,6 +31,7 @@
 
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
+#include "core/utils/serialization/array.hpp"
 
 namespace ScriptInterface {
 
