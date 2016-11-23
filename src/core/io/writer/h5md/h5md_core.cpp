@@ -33,9 +33,19 @@ static void backup_file(const std::string &from, const std::string& to)
 #endif
     if (this_node == 0)
     {
-    boost::filesystem::path pfrom(from), pto(to);
-    boost::filesystem::copy_file(pfrom, pto,
-        boost::filesystem::copy_option::overwrite_if_exists);
+        /*
+         * If the file itself *and* a backup file exists something must
+         * went wrong before.
+        */
+        boost::filesystem::path pfrom(from), pto(to);
+        try
+        {
+            boost::filesystem::copy_file(pfrom, pto,
+                boost::filesystem::copy_option::fail_if_exists);
+        } catch(const boost::filesystem::filesystem_error& e)
+        {
+            throw left_backupfile();
+        }
     }
 }
 

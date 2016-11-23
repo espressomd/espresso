@@ -178,6 +178,15 @@ struct incompatible_h5mdfile : public std::exception {
     }
 };
 
+struct left_backupfile : public std::exception {
+    const char* what () const throw ()
+    {
+        return "A backup of the .h5 file exists. This usually means \
+that either you forgot to call the 'close' method or your simulation \
+crashed.";
+    }
+};
+
 
 } /* namespace H5md */
 } /* namespace Writer */
