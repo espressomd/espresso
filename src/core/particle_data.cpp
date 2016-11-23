@@ -702,6 +702,8 @@ int set_particle_mass(int part, double mass)
   mpi_send_mass(pnode, part, mass);
   return ES_OK;
 }
+#else
+constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA

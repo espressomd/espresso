@@ -287,7 +287,7 @@ void File::Write(int write_dat)
         for (int local_part_id = 0;
              local_part_id < local_cell->n; ++local_part_id)
         {
-            auto current_particle = local_cell->part[local_part_id];
+            const auto & current_particle = local_cell->part[local_part_id];
             id[0][particle_index][0] = current_particle.p.identity;
             if (write_typ)
             {
