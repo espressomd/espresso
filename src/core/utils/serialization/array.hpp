@@ -1,8 +1,8 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
-#include <boost/version.hpp>
 #include <boost/mpi/datatype.hpp>
+#include <boost/version.hpp>
 
 /* New versions of boost alrady containt this
  * function
@@ -28,6 +28,7 @@ void serialize(Archive &ar, std::array<T, N> &a, const unsigned int) {
 namespace boost {
 namespace mpi {
 template <> struct is_mpi_datatype<std::array<double, 3>> : mpl::true_ {};
+template <> struct is_mpi_datatype<std::array<int, 3>> : mpl::true_ {};
 }
 }
 
