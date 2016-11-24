@@ -12,4 +12,10 @@ else
     PYTHONPATH=@abs_top_builddir@
 fi
 export PYTHONPATH
+
+if [ "$1" = "--gdb" ]; then
+  shift
+  exec gdb -ex run --args @PYTHON_EXECUTABLE@ $@
+fi
+
 exec @PYTHON@ $@

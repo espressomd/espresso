@@ -66,6 +66,10 @@ public:
     boost::mpi::broadcast(Communication::mpiCallbacks().comm(), global_id, 0);
   }
 
+~ParallelScriptInterface() {
+     call(static_cast<int>(CallbackAction::DELETE)); 
+}
+
   std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const override {
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
   };

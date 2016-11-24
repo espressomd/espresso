@@ -1,11 +1,9 @@
 #include "config.hpp"
-
 #ifdef CONSTRAINTS
 
-#include <memory>
-#include <vector>
-
 #include "ObjectRegistry.hpp"
+#include <vector>
+#include <memory>
 #include "constraints/Constraint.hpp"
 
 namespace Constraints {

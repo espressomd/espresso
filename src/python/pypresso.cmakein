@@ -13,7 +13,11 @@ if test -n "$PYTHONPATH"; then
 else
   PYTHONPATH=@PYTHON_DIR@
 fi
-
-
 export PYTHONPATH
+
+if [ "$1" = "--gdb" ]; then
+  shift
+  exec gdb -ex run --args @PYTHON_EXECUTABLE@ $@
+fi
+
 exec @PYTHON_EXECUTABLE@ $@
