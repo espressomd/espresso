@@ -1236,6 +1236,8 @@ cdef class ParticleList:
         for i in ["director", "dip", "id"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
+        IF MASS == 0:
+            pickle_attr.remove("mass")
         odict = {}
         key_list = [p.id for p in self]
         for particle_number in key_list:
