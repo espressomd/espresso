@@ -24,12 +24,4 @@ void serialize(Archive &ar, std::array<T, N> &a, const unsigned int) {
 #include <array>
 #include <boost/serialization/serialization.hpp>
 #endif
-
-namespace boost {
-namespace mpi {
-template <> struct is_mpi_datatype<std::array<double, 3>> : mpl::true_ {};
-template <> struct is_mpi_datatype<std::array<int, 3>> : mpl::true_ {};
-}
-}
-
 #endif
