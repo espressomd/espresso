@@ -2776,6 +2776,7 @@ proc oif_object_analyze { args } {
 	set surface -1
 	set elastic_forces ""
 	set pressure_ks ""
+	set von_misses_stress_file ""
 	set output_file ""
 	set velocity 0
 	set affinity ""
@@ -2790,8 +2791,7 @@ proc oif_object_analyze { args } {
 	set aff_K0 -1
 	set aff_Fd -1
 	set aff_file "aff-default.dat"
-	set avg_length -1
-
+	set edge_stat 0
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2819,15 +2819,11 @@ proc oif_object_analyze { args } {
 			}
 			"diameter" {  
 				incr pos
-				set diamater 0.0
+				set diameter 0.0
 			}
 			"surface-area" {  
 				incr pos
 				set surface 0.0
-			}
-			"edge-statistics" {  
-				incr pos
-				set avg_length 0.0
 			}
 			"first-particle-id" {  
 				incr pos
@@ -2836,6 +2832,10 @@ proc oif_object_analyze { args } {
 			"n-nodes" {  
 				incr pos
 				set n_nodes 1
+			}
+			"edge-statistics" {  
+				incr pos
+				set edge_stat 1
 			}
 			"affinity" {  
 				incr pos
@@ -2884,6 +2884,15 @@ proc oif_object_analyze { args } {
 					break
 				}
 				set pressure_ks [lindex $args $pos]
+				incr pos
+			}
+			"von-misses-stress" {
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_object_analyze: output file for pressure is needed"
+					break
+				}
+				set von_misses_stress_file [lindex $args $pos]
 				incr pos
 			}
 			"elastic-forces" {  
@@ -3050,92 +3059,6 @@ proc oif_object_analyze { args } {
 		}
 		close $fout
 		return $n_active_bonds
-	}
-
-	if {$avg_length != -1} {
-	    ##### counting average lenght of edges
-		#####################################################################
-		set global_dist 0.0
-		set average_dist 0.0
-		set max_dist 0.0
-		set min_dist 1000000.0
-
-		
-		# recover data of this object
-			set object [lindex $oif_objects $objectID]
-			set template_id [lindex $object 0]
-			set template [lindex $oif_templates $template_id]
-			set nnodes [lindex $template 0]
-			set nedges [lindex $template 1]
-
-			set start_id_of_nodes 0
-			set start_id_of_edges 0
-			for {set i 0} {$i < $template_id} {incr i} {
-			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
-			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
-			}
-		
-		# recover edges from this object's template
-			for {set i 0} {$i < $nedges} {incr i} {
-			    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
-			    set mesh_edges($i,0) [lindex $edge_pair 0]
-			    set mesh_edges($i,1) [lindex $edge_pair 1]
-			}
-		
-			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
-			    
-			for { set i 0 } { $i < $nedges } { incr i } {
-			    # Take an edge and copy the nodes of the edge to pA, pB (point A, point B)
-			    set pA $mesh_edges($i,0)
-			    set pB $mesh_edges($i,1)
-			    
-			    # Get the current position of the same two points
-			    set currA [part [expr $start_id_of_particles + $pA] print pos]
-			    set currAx [lindex $currA 0]
-			    set currAy [lindex $currA 1]
-			    set currAz [lindex $currA 2]
-			    set currB [part [expr $start_id_of_particles + $pB] print pos]
-			    set currBx [lindex $currB 0]
-			    set currBy [lindex $currB 1]
-			    set currBz [lindex $currB 2]
-
-				set curr_dist 0.0
-				set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
-				set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
-				set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
-				set curr_dist [expr sqrt($curr_dist)]
-		
-				set global_dist [expr ($global_dist + $curr_dist) ]
-		
-				set value_dist($i) $curr_dist
-		
-				if {$max_dist < $curr_dist} {
-					set max_dist $curr_dist
-				}
-		
-				if {$min_dist > $curr_dist} {
-					set min_dist $curr_dist
-				}
-			}
-
-		set average_dist [expr ($global_dist / $nedges) ]
-
-		set suma 0.0
-		for { set i 0 } { $i < $nedges } { incr i } {
-			set suma [expr ($suma + (($value_dist($i) - $average_dist) * ($value_dist($i) - $average_dist)))]
-		}
-		set sigma 0.0
-		set sigma [expr (sqrt($suma / $nedges))]
-
-		# average length of edges:
-#		puts "average length of edges:"
-#		puts "	average length: 	$average_dist"
-#		puts "	min: 	$min_dist"
-#		puts "	max: 	$max_dist"
-#		puts "	sigma: 	$sigma"
-	
-		set result [list $min_dist $average_dist $max_dist $sigma]
-		return $result
 	}
 
 
@@ -3358,6 +3281,7 @@ proc oif_object_analyze { args } {
 			}
 				
 		}
+		set diameter $max_distance
 		return $diameter
 	}
 
@@ -3406,7 +3330,85 @@ proc oif_object_analyze { args } {
 		}
 		return $area
 	}
+	
+	if {$edge_stat != 0} {
+	    # calculates statistics of edges in triangulation
+		
+		set sum_lengths 0.0
+		set avg_length 0.0
+		set max_length 0.0
+		set min_length 1000.0
+		
+		# recover data of this object
+		set object [lindex $oif_objects $objectID]
+		set template_id [lindex $object 0]
+		set template [lindex $oif_templates $template_id]
+		set nnodes [lindex $template 0]
+		set nedges [lindex $template 1]
 
+		set start_id_of_nodes 0
+		set start_id_of_edges 0
+		for {set i 0} {$i < $template_id} {incr i} {
+		    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+		    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+		}
+		
+		# recover edges from this object's template
+		for {set i 0} {$i < $nedges} {incr i} {
+		    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+		    set mesh_edges($i,0) [lindex $edge_pair 0]
+		    set mesh_edges($i,1) [lindex $edge_pair 1]
+		}
+		
+		set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+			    
+		for { set i 0 } { $i < $nedges } { incr i } {
+		    # take an edge and copy the nodes of the edge to pA, pB (point A, point B)
+			set pA $mesh_edges($i,0)
+			set pB $mesh_edges($i,1)
+			    
+			# get the current position of the same two points
+			set currA [part [expr $start_id_of_particles + $pA] print pos]
+			set currAx [lindex $currA 0]
+			set currAy [lindex $currA 1]
+			set currAz [lindex $currA 2]
+			set currB [part [expr $start_id_of_particles + $pB] print pos]
+			set currBx [lindex $currB 0]
+			set currBy [lindex $currB 1]
+			set currBz [lindex $currB 2]
+
+			set curr_dist 0.0
+			set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			set curr_dist [expr sqrt($curr_dist)]
+		
+			set sum_lengths [expr ($sum_lengths + $curr_dist) ]
+		
+			set curr_edge_length($i) $curr_dist
+		
+			if {$max_length < $curr_dist} {
+				set max_length $curr_dist
+			}
+		
+			if {$min_length > $curr_dist} {
+				set min_length $curr_dist
+			}
+		}
+
+		set avg_length [expr ($sum_lengths / $nedges) ]
+
+		set sum_of_sq 0.0
+		for { set i 0 } { $i < $nedges } { incr i } {
+			set sum_of_sq [expr ($sum_of_sq + (($curr_edge_length($i) - $avg_length) * ($curr_edge_length($i) - $avg_length)))]
+		}
+		set sigma 0.0
+		set sigma [expr (sqrt($sum_of_sq / ($nedges)))]
+
+		set answer [list $min_length $avg_length $max_length $sigma]
+		return $answer
+	}
+	
 	if { $pos_bounds != ""} {
 		set Zmin 10000000
 		set Zmax -10000000
@@ -3498,7 +3500,7 @@ proc oif_object_analyze { args } {
 				set tmp_area($i) 0.0
 			}
 			
-			# Calculate the microslopic pressure around all points. 
+			# Calculate the microscopic pressure around all points. 
 			# This will be done by running over all edges and computing the respective scalar product 
 			# and adding it to both points of the edge. 
 			# !!!!! First, without dividing by respective area around the points 
@@ -3590,6 +3592,160 @@ proc oif_object_analyze { args } {
 			close $out_f
 
 	}
+    
+    	if { $von_misses_stress_file != ""} {
+			# recover data of this object
+            puts "ahoj"
+			set object [lindex $oif_objects $objectID]
+			set template_id [lindex $object 0]
+			set template [lindex $oif_templates $template_id]
+			set nnodes [lindex $template 0]
+			set nedges [lindex $template 1]
+			set ntriangles [lindex $template 2]
+			set ks [lindex $template 3]
+
+			set start_id_of_nodes 0
+			set start_id_of_edges 0
+			set start_id_of_triangles 0
+			for {set i 0} {$i < $template_id} {incr i} {
+			    set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+			    set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+			    set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+			}
+
+			# recover particles from this object's template  
+			for {set i 0} {$i < $nnodes} {incr i} {
+			    set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+			    set mesh_nodes($i,0) [lindex $node_triplet 0] 
+			    set mesh_nodes($i,1) [lindex $node_triplet 1]
+			    set mesh_nodes($i,2) [lindex $node_triplet 2]
+			}
+
+			# recover edges from this object's template
+			for {set i 0} {$i < $nedges} {incr i} {
+			    set edge_pair [lindex $oif_template_edges [expr $start_id_of_edges+$i]]
+			    set mesh_edges($i,0) [lindex $edge_pair 0]
+			    set mesh_edges($i,1) [lindex $edge_pair 1]
+			}
+
+			# recover triangles from this object's template
+			for {set i 0} {$i < $ntriangles} {incr i} {
+			    set triangle [lindex $oif_template_triangles [expr $start_id_of_triangles+$i]]
+			    set mesh_triangles($i,0) [lindex $triangle 0]
+			    set mesh_triangles($i,1) [lindex $triangle 1]
+			    set mesh_triangles($i,2) [lindex $triangle 2]
+			}
+
+			set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+
+			# initialize the von misses stress values
+            # I suppose that you eventually have scalar values in each point. So this array will store these values for later print out.
+			for { set i 0 } { $i < [expr $nnodes] } { incr i } {
+				set von_misses_values($i) 0.0
+			}
+
+			# Calculate the von misses stress
+            # THIS I do not know exactly how you do it. So probably you need to run over edges, or triangles. I prepare two loops, one for edges and one for triangles. Use whatever you need...
+
+			# Loop over the edges
+			for { set i 0 } { $i < $nedges } { incr i } {
+			    # Take an edge and copy the indices of nodes of the edge to pA, pB (point A, point B)
+			    set pA $mesh_edges($i,0)
+			    set pB $mesh_edges($i,1)
+			    # Get the current position of the same two points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+
+                # here you can implement your computation. As an example, the computation of original and current edge_length is done. 
+			    set orig_dist 0.0
+			    for { set j 0 } { $j < 3 } { incr j } {
+				set orig_dist [expr ($orig_dist + ($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j))*($mesh_nodes($pB,$j) - $mesh_nodes($pA,$j)))]
+			    }
+			    set orig_dist [expr sqrt($orig_dist)]
+			    
+			    set curr_dist 0.0
+			    set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+			    set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+			    set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+			    set curr_dist [expr sqrt($curr_dist)]
+			}
+
+			## Loop over triangles
+
+			for { set i 0 } { $i < $ntriangles } { incr i } {
+			    # Take a triangle and copy the indices of nodes of the triangle to pA, pB, pC
+			    set pA $mesh_triangles($i,0)
+			    set pB $mesh_triangles($i,1)
+			    set pC $mesh_triangles($i,2)
+			    # get original positions of the nodes
+			    set origA [list $mesh_nodes($pA,0) $mesh_nodes($pA,1) $mesh_nodes($pA,2)]
+			    set origB [list $mesh_nodes($pB,0) $mesh_nodes($pB,1) $mesh_nodes($pB,2)]
+			    set origC [list $mesh_nodes($pC,0) $mesh_nodes($pC,1) $mesh_nodes($pC,2)]
+			    # Get the current position of the same three points
+			    set currA [part [expr $start_id_of_particles + $pA] print pos]
+			    set currAx [lindex $currA 0]
+			    set currAy [lindex $currA 1]
+			    set currAz [lindex $currA 2]
+			    set currB [part [expr $start_id_of_particles + $pB] print pos]
+			    set currBx [lindex $currB 0]
+			    set currBy [lindex $currB 1]
+			    set currBz [lindex $currB 2]
+			    set currC [part [expr $start_id_of_particles + $pC] print pos]
+			    set currCx [lindex $currC 0]
+			    set currCy [lindex $currC 1]
+			    set currCz [lindex $currC 2]
+                # here you can implement your computation. As an example, the computation of original and current triangle area is done. 
+			    # Calculate current local area for these three points
+			    set orig_area [area_triangle origA origB origC]
+			    set curr_area [area_triangle currA currB currC]
+			}
+
+            # Now you can output information to a file. I suppose you would like to have visual output by coloring of the nodes with the von-misses stress. This outpur will be wrtitten, if the filename contains .vtk. Otherwise, just scalar values will be written. Your values of von misses tress have been meanwhile computed and stored in von_misses_values array  
+            # determine whether .vtk or other file type will be written
+            if { [ string first ".vtk" $von_misses_stress_file ] > -1 } {
+                # write values of von_misses stress into a .vtk file for visualization
+                set out_f [open $von_misses_stress_file "w"]
+                puts $out_f "# vtk DataFile Version 3.0"
+                puts $out_f "Data"
+                puts $out_f "ASCII"
+                puts $out_f "DATASET POLYDATA"
+                puts $out_f "POINTS $nnodes float"
+                # writing points
+                for { set i $start_id_of_particles } { $i < [expr $start_id_of_particles + $nnodes] } { incr i } {
+                puts $out_f "[part $i print pos]"
+                }
+                set ntriangles [lindex $template 2]
+                puts $out_f "TRIANGLE_STRIPS $ntriangles [expr 4*$ntriangles]"
+                # extracts the starting position of the triangles for the template_id
+                set start_id_of_triangles [lindex $oif_template_starting_triangles $template_id]
+                # writing triangles
+                for { set i $start_id_of_triangles } { $i < [expr $start_id_of_triangles + $ntriangles] } { incr i } {
+                puts $out_f "3 [lindex $oif_template_triangles $i]"
+                }
+                # writing stretching forces
+                puts $out_f "POINT_DATA $nnodes"
+                puts $out_f "SCALARS sample_scalars float 1"
+                puts $out_f "LOOKUP_TABLE default"
+                for { set i 0 } { $i < $nnodes } { incr i } {
+                    puts $out_f "$von_misses_values($i)"
+                    #puts $out_f "$i"       ;#for testing purposes....
+                }
+                close $out_f
+            } else {
+                # raw data file will be written with just values of the von_misses_stress in one column.
+                set out_f [open $von_misses_stress_file "w"]
+                for { set i 0 } { $i < $nnodes } { incr i } {
+                    puts $out_f "$von_misses_values($i)"
+                }
+                close $out_f
+            }
+        }
 
 	if { $elastic_forces != ""} {
 		set result -1
