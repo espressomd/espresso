@@ -1728,7 +1728,6 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # checking wheter all mandatory arguments have been given
 	set mandatory 1
-	if { $origin_X == 0 && $origin_Y == 0 && $origin_Z == 0 } { set mandatory 0 }
 	if { $part_type == "-1" } { set mandatory 0 }
 	if { $template_id == "-1" } { set mandatory 0 }
 	if { $object_id == "-1" } { set mandatory 0 }
@@ -2792,6 +2791,9 @@ proc oif_object_analyze { args } {
 	set aff_Fd -1
 	set aff_file "aff-default.dat"
 	set edge_stat 0
+    set principal_x -1.0
+    set principal_y -1.0
+    set principal_z -1.0
 
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
     set pos 0
@@ -2821,6 +2823,11 @@ proc oif_object_analyze { args } {
 				incr pos
 				set diameter 0.0
 			}
+			"principal-dimensions" {  
+				incr pos
+				set principal_x 0.0
+			}
+
 			"surface-area" {  
 				incr pos
 				set surface 0.0
@@ -3593,9 +3600,224 @@ proc oif_object_analyze { args } {
 
 	}
     
+    
+    
+    if { $principal_x >= 0} {
+        # computing the following thre principal diameters:
+        # the first largest diameter of the cell (simply the largest distance btw two points in the mesh). Then, the second largest diameter which lies in a plane perpendicular to the first largest diameter. And finally, the third number will be "thickness" of the cell in the direction that is perpendicular to both the first and the second largest diameters....
+        
+
+        # recover data of this object
+        set object [lindex $oif_objects $objectID]
+        set template_id [lindex $object 0]
+        set template [lindex $oif_templates $template_id]
+        set nnodes [lindex $template 0]
+        set nedges [lindex $template 1]
+        set ntriangles [lindex $template 2]
+
+        set start_id_of_nodes 0
+        set start_id_of_edges 0
+        set start_id_of_triangles 0
+        for {set i 0} {$i < $template_id} {incr i} {
+            set start_id_of_nodes [expr $start_id_of_nodes + [lindex [lindex $oif_templates $i] 0]]
+            set start_id_of_edges [expr $start_id_of_edges + [lindex [lindex $oif_templates $i] 1]]
+            set start_id_of_triangles [expr $start_id_of_triangles + [lindex [lindex $oif_templates $i] 2]]
+        }
+
+        # recover particles from this object's template  
+        for {set i 0} {$i < $nnodes} {incr i} {
+            set node_triplet [lindex $oif_template_nodes [expr $start_id_of_nodes+$i]]
+            set mesh_nodes($i,0) [lindex $node_triplet 0] 
+            set mesh_nodes($i,1) [lindex $node_triplet 1]
+            set mesh_nodes($i,2) [lindex $node_triplet 2]
+        }
+        set start_id_of_particles [lindex $oif_object_starting_particles $objectID]  
+
+        # First, find two points A,B for which the distance AB is maximal.
+        set max_length 0.0
+        for { set iii $start_id_of_particles } { $iii < [expr $start_id_of_particles + $nnodes] } { incr iii } {
+			for { set jjj [expr $iii + 1]} { $jjj < [expr $start_id_of_particles + $nnodes] } { incr jjj } {
+				set currA [part $iii print pos]
+				set currB [part $jjj print pos]
+                set currAx [lindex $currA 0]
+                set currAy [lindex $currA 1]
+                set currAz [lindex $currA 2]
+                set currBx [lindex $currB 0]
+                set currBy [lindex $currB 1]
+                set currBz [lindex $currB 2]
+    
+                set curr_dist 0.0
+                set curr_dist [expr ($curr_dist + ($currBx - $currAx)*($currBx - $currAx))]
+                set curr_dist [expr ($curr_dist + ($currBy - $currAy)*($currBy - $currAy))]
+                set curr_dist [expr ($curr_dist + ($currBz - $currAz)*($currBz - $currAz))]
+                set curr_dist [expr sqrt($curr_dist)]
+                #remember maximal points
+                if {$max_length < $curr_dist} {
+                    set max_length $curr_dist
+                    set Ax $currAx
+                    set Ay $currAy
+                    set Az $currAz
+                    set Bx $currBx
+                    set By $currBy
+                    set Bz $currBz
+                    
+                }
+            }
+        }
+        set principal_x $max_length
+#                puts "principal_x $principal_x"
+
+        
+        # Now we will determine the plane alpha that is perpendicular to the line AB
+        # P is the middle of the segment AB and lies in the plane perpendicular to AB
+        set Px [expr ($Ax + $Bx)/2.0]
+        set Py [expr ($Ay + $By)/2.0]
+        set Pz [expr ($Az + $Bz)/2.0]
+        # n is the unit normal vector to plane perpendicular to AB
+        set nx [expr ($Bx - $Ax)]
+        set ny [expr ($By - $Ay)]
+        set nz [expr ($Bz - $Az)]
+        set nsize [expr sqrt($nx*$nx + $ny*$ny + $nz*$nz)]
+        set nx [expr $nx/$nsize]
+        set ny [expr $ny/$nsize]
+        set nz [expr $nz/$nsize]
+#        puts "n: $nx $ny $nz"
+#        puts "P: $Px $Py $Pz"
+        # now we loop over the all couples points, we compute projections of those two points onto the plane alpha and find maximal length of these projections. This will be the second pricipal size.
+        # projections will be computed according this (doublechecked by Ivan)
+        # The projection of a point q = (x, y, z) onto a plane given by a point p = (a, b, c) and a normal n = (d, e, f) is
+        # q_proj = q - dot(q - p, n) * n
+        # This calculation assumes that n is a unit vector.
+        
+        set max_length 0.0
+        for { set iii $start_id_of_particles } { $iii < [expr $start_id_of_particles + $nnodes] } { incr iii } {
+			for { set jjj [expr $iii + 1]} { $jjj < [expr $start_id_of_particles + $nnodes] } { incr jjj } {
+				set currA [part $iii print pos]
+				set currB [part $jjj print pos]
+                set currAx [lindex $currA 0]
+                set currAy [lindex $currA 1]
+                set currAz [lindex $currA 2]
+                set currBx [lindex $currB 0]
+                set currBy [lindex $currB 1]
+                set currBz [lindex $currB 2]
+
+                # projection of the first point
+                set dot [expr ($currAx - $Px)*($nx) + ($currAy - $Py)*($ny) + ($currAz - $Pz)*($nz)]
+                set proj_currAx [expr $currAx - $dot*$nx]
+                set proj_currAy [expr $currAy - $dot*$ny]
+                set proj_currAz [expr $currAz - $dot*$nz]
+                # projection of the second point
+                set dot [expr ($currBx - $Px)*($nx) + ($currBy - $Py)*($ny) + ($currBz - $Pz)*($nz)]
+                set proj_currBx [expr $currBx - $dot*$nx]
+                set proj_currBy [expr $currBy - $dot*$ny]
+                set proj_currBz [expr $currBz - $dot*$nz]
+                # projected distance
+                set proj_dist 0.0
+                set proj_dist [expr ($proj_dist + ($proj_currBx - $proj_currAx)*($proj_currBx - $proj_currAx))]
+                set proj_dist [expr ($proj_dist + ($proj_currBy - $proj_currAy)*($proj_currBy - $proj_currAy))]
+                set proj_dist [expr ($proj_dist + ($proj_currBz - $proj_currAz)*($proj_currBz - $proj_currAz))]
+                set proj_dist [expr sqrt($proj_dist)]
+                #remember maximal points
+                if {$max_length < $proj_dist} {
+#                    puts "$proj_dist"
+                    set max_length $proj_dist
+                    set Cx $proj_currAx
+                    set Cy $proj_currAy
+                    set Cz $proj_currAz
+                    set Dx $proj_currBx
+                    set Dy $proj_currBy
+                    set Dz $proj_currBz
+                }
+            }
+        }
+        set principal_y $max_length
+#        puts "principal_y $principal_y"
+
+        # Now we will determine the line with directional vector n perpendicular to AB and CD by cross product
+        set ABx [expr ($Bx - $Ax)]
+        set ABy [expr ($By - $Ay)]
+        set ABz [expr ($Bz - $Az)]
+        set CDx [expr ($Dx - $Cx)]
+        set CDy [expr ($Dy - $Cy)]
+        set CDz [expr ($Dz - $Cz)]
+        set nx [expr $ABy*$CDz - $ABz*$CDy]
+        set ny [expr $ABz*$CDx - $ABx*$CDz]
+        set nz [expr $ABx*$CDy - $ABy*$CDx]
+        set nsize [expr sqrt($nx*$nx + $ny*$ny + $nz*$nz)]
+        set nx [expr $nx/$nsize]
+        set ny [expr $ny/$nsize]
+        set nz [expr $nz/$nsize]
+#                puts "AB: $ABx $ABy $ABz"
+#                puts "CD: $CDx $CDy $CDz"
+#                puts "n = ABxCD: $nx $ny $nz"
+        
+
+        
+
+        # P will be the same from the previous
+        set Px [expr ($Ax + $Bx)/2.0]
+        set Py [expr ($Ay + $By)/2.0]
+        set Pz [expr ($Az + $Bz)/2.0]
+                puts "P = $Px $Py $Pz"
+        # now we loop over the all couples of meshpoints, we compute projections onto the line given by P and n and find maximal length of these projections. This will be the third pricipal size.  
+        # computation of the rojection will be slighty different:
+        # The projection of a point q = (x, y, z) onto a line given by a point p = (a, b, c) and a directional vector n = (d, e, f) is
+        # q_proj = p + dot(q - p, n) * n
+        # This calculation assumes that n is a unit vector.          
+        set max_length 0.0
+        for { set iii $start_id_of_particles } { $iii < [expr $start_id_of_particles + $nnodes] } { incr iii } {
+			for { set jjj [expr $iii + 1]} { $jjj < [expr $start_id_of_particles + $nnodes] } { incr jjj } {
+				set currA [part $iii print pos]
+				set currB [part $jjj print pos]
+                set currAx [lindex $currA 0]
+                set currAy [lindex $currA 1]
+                set currAz [lindex $currA 2]
+                set currBx [lindex $currB 0]
+                set currBy [lindex $currB 1]
+                set currBz [lindex $currB 2]
+            
+            
+            
+                # projection of the first point
+                set dot [expr ($currAx - $Px)*($nx) + ($currAy - $Py)*($ny) + ($currAz - $Pz)*($nz)]
+                set proj_currAx [expr $Px + $dot*$nx]
+                set proj_currAy [expr $Py + $dot*$ny]
+                set proj_currAz [expr $Pz + $dot*$nz]
+                # projection of the second point
+                set dot [expr ($currBx - $Px)*($nx) + ($currBy - $Py)*($ny) + ($currBz - $Pz)*($nz)]
+                set proj_currBx [expr $Px + $dot*$nx]
+                set proj_currBy [expr $Py + $dot*$ny]
+                set proj_currBz [expr $Pz + $dot*$nz]
+                # projected distance
+                set proj_dist 0.0
+                set proj_dist [expr ($proj_dist + ($proj_currBx - $proj_currAx)*($proj_currBx - $proj_currAx))]
+                set proj_dist [expr ($proj_dist + ($proj_currBy - $proj_currAy)*($proj_currBy - $proj_currAy))]
+                set proj_dist [expr ($proj_dist + ($proj_currBz - $proj_currAz)*($proj_currBz - $proj_currAz))]
+                set proj_dist [expr sqrt($proj_dist)]
+                #remember maximal points
+                if {$max_length < $proj_dist} {
+#                    puts "$max_length"
+                    set max_length $proj_dist
+                    set Ex $currAx
+                    set Ey $currAy
+                    set Ez $currAz
+                    set Fx $currBx
+                    set Fy $currBy
+                    set Fz $currBz
+                }
+            }
+        }
+
+        set principal_z $max_length
+#        puts "principal_z $principal_z"
+        set answer [list $principal_x $principal_y $principal_z] 
+        return $answer
+    }
+
+
+
     	if { $von_misses_stress_file != ""} {
 			# recover data of this object
-            puts "ahoj"
 			set object [lindex $oif_objects $objectID]
 			set template_id [lindex $object 0]
 			set template [lindex $oif_templates $template_id]
