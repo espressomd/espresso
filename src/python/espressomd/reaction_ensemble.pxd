@@ -39,6 +39,8 @@ cdef extern from "reaction_ensemble.hpp":
     int update_type_index(int* educt_types, int len_educt_types , int* product_types, int len_product_types)
     void set_cuboid_reaction_ensemble_volume()
     int check_reaction_ensemble()
+    int accepted_configurational_MC_moves
+    int tried_configurational_MC_moves
 
 
 

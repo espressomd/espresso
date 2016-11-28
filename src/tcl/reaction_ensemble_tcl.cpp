@@ -347,7 +347,9 @@ int tclcommand_reaction_ensemble(ClientData data, Tcl_Interp *interp, int argc, 
 			argv+=1;
 			if(ARG1_IS_S("do")) {
 				provided_unknown_command=false;
-				do_reaction_wang_landau();
+				int status_wang_landau=do_reaction_wang_landau();
+				if (status_wang_landau <0)
+					exit(0); // Wang-Landau simulation has converged, end simulation
 			} else { //for performance reasons skip the other checks if do is found as argument
 				//do other checks here
 

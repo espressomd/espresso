@@ -27,7 +27,7 @@ bool system_is_in_1_over_t_regime=false;
 int number_of_times_in_the_same_bin=0;//for avoiding becoming trapped in HMC-Wang-Landau
 int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
 
-double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from tcl interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
+double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
 
 int accepted_configurational_MC_moves=0;
 int tried_configurational_MC_moves=0;
@@ -1519,7 +1519,7 @@ int do_reaction_wang_landau(){
 			//check for convergence
 			if(achieved_desired_number_of_refinements_one_over_t()==true){
 				write_wang_landau_results_to_file(current_wang_landau_system.output_filename);
-				exit(0); //XXX make Espresso exit not the program itself
+				return -10; //return negative value to indicate that the Wang-Landau algorithm has converged
 			}
 			refine_wang_landau_parameter_one_over_t();
 		}

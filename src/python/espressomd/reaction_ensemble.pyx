@@ -2,6 +2,8 @@ include "myconfig.pxi"
 from libc.stdlib cimport malloc, realloc, calloc
 
 IF REACTION_ENSEMBLE:
+    class Wang_Landau_has_converged(Exception):
+        pass
 
     cdef class ReactionEnsemble:
         def __init__(self,*args,**kwargs):
@@ -52,6 +54,19 @@ IF REACTION_ENSEMBLE:
                 set_cuboid_reaction_ensemble_volume()
             current_reaction_system.standard_pressure_in_simulation_units = self._params["standard_pressure"]
             current_reaction_system.exclusion_radius = self._params["exclusion_radius"]
+
+        def set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder):
+            current_reaction_system.cyl_x=center_x
+            current_reaction_system.cyl_y=center_y
+            current_reaction_system.cyl_radius=radius_of_cylinder
+            current_reaction_system.box_is_cylindric_around_z_axis=True
+            
+        def set_wall_constraints_in_z_direction(slab_start_z,slab_end_z):
+            current_reaction_system.slab_start_z=slab_start_z
+            current_reaction_system.slab_end_z=slab_end_z
+         
+        def print_acceptance_rate_configurational_moves(self):
+                print "acceptance rate for configurational moves is", (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves
 
 
 
@@ -257,8 +272,7 @@ IF REACTION_ENSEMBLE:
             write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             
         
-        ##specify monte carlo move
-        
+        ##specify information for configuration changing monte carlo move
         property counter_ion_type:
             def __set__(self, int c_type):
                 current_wang_landau_system.counter_ion_type=c_type
@@ -281,14 +295,14 @@ IF REACTION_ENSEMBLE:
             def __get__(self):
                 return current_wang_landau_system.fix_polymer
 
-        def set_pH_core(self,pH):
-                 set_pH(pH)
-
         def do_reaction_wang_landau(self):
-            do_reaction_wang_landau()
+            status_wang_landau=do_reaction_wang_landau()
+            if(status_wang_landau<0):
+                    raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
 
         #//////////////////////////constant pH ensemble
-                
+        def set_pH_core(self,pH):
+                set_pH(pH)      
         def do_reaction_constant_pH(self):
             do_reaction_constant_pH()
         
