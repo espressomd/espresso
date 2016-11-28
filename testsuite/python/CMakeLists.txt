@@ -13,7 +13,9 @@ set(py_tests  bondedInteractions.py
               particle.py
 	            tabulated.py
 )
-
+if(PY_H5PY)
+  set(py_tests ${py_tests} h5md.py)
+endif(PY_H5PY)
 add_custom_target(python_tests
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 

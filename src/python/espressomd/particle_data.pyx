@@ -184,9 +184,9 @@ cdef class ParticleHandle:
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.f.f[0] / (0.5 * time_step**2),
-                             self.particle_data.f.f[1] / (0.5 * time_step**2),
-                             self.particle_data.f.f[2] / (0.5 * time_step**2)])
+            return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -250,21 +250,22 @@ cdef class ParticleHandle:
                 return x[0]
 
     # MASS
-    IF MASS == 1:
-        property mass:
+    property mass:
             """Particle mass"""
 
             def __set__(self, _mass):
-                check_type_or_throw_except(
-                    _mass, 1, float, "Mass has to be 1 floats")
-                if set_particle_mass(self.id, _mass) == 1:
-                    raise Exception("set particle position first")
+                IF MASS == 1:
+                    check_type_or_throw_except(
+                        _mass, 1, float, "Mass has to be 1 floats")
+                    if set_particle_mass(self.id, _mass) == 1:
+                        raise Exception("set particle position first")
+                ELSE:
+                    raise Exception("You are trying to set the particle mass \
+                                     but the mass feature is not compiled in.")
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_mass(& (self.particle_data), x)
-                return x[0]
+                return self.particle_data.p.mass
 
     IF ROTATION == 1:
         # Omega (angular velocity) lab frame
@@ -1040,20 +1041,22 @@ cdef class ParticleSlice:
                 f_array[i, :] = ParticleHandle(self.id_selection[i]).f
             return f_array
 
-    IF MASS:
-        property mass:
+    property mass:
             """Particle mass"""
-
             def __set__(self, _mass_array):
-                if isinstance(_mass_array, int) or isinstance(_mass_array, float):
-                    for i in range(len(self.id_selection)):
-                        ParticleHandle(self.id_selection[i]).mass = _mass_array
-                    return
-                if len(self.id_selection) != len(_mass_array):
-                    raise Exception("Input list size (%i) does not match slice size (%i)" % (
-                        len(_mass_array), len(self.id_selection)))
-                for i in range(len(_mass_array)):
-                    ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
+                IF MASS:
+                    if isinstance(_mass_array, int) or isinstance(_mass_array, float):
+                        for i in range(len(self.id_selection)):
+                            ParticleHandle(self.id_selection[i]).mass = _mass_array
+                        return
+                    if len(self.id_selection) != len(_mass_array):
+                        raise Exception("Input list size (%i) does not match slice size (%i)" % (
+                            len(_mass_array), len(self.id_selection)))
+                    for i in range(len(_mass_array)):
+                        ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
+                ELSE:
+                    raise Exception("You are trying to set the particle mass \
+                                     but the mass feature is not compiled in.")
 
             def __get__(self):
                 mass_array = np.zeros_like(self.id_selection)
