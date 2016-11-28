@@ -76,6 +76,7 @@ public:
   static constexpr size_t size() { return n; }
 
   operator std::array<Scalar, n> const &() const { return d; }
+  bool operator==(Vector const &rhs) const { return d == rhs.d; }
   operator std::vector<Scalar>() const {
     return std::vector<Scalar>(std::begin(d), std::end(d));
   }

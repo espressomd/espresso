@@ -24,17 +24,20 @@
 #include "correlators/initialize.hpp" 
 #include "lbboundaries/initialize.hpp"
 
+#include "ParallelScriptInterface.hpp"
 #include "VariantTester.hpp"
 
 namespace ScriptInterface {
 void initialize() {
+  ParallelScriptInterface::initialize();
+
   Shapes::initialize();
   Constraints::initialize();
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
 
-  ParallelScriptInterface<Testing::VariantTester>::register_new("Testing::VariantTester");
+  ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
 }
 
 } /* namespace ScriptInterface */
