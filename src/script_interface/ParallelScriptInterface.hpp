@@ -50,7 +50,7 @@ public:
    */
   std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const {
     return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
-  };
+  }
 
   /* Script interface implementation */
   const std::string name() const override { return m_p->name(); }

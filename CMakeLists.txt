@@ -19,7 +19,7 @@
 #
 
 cmake_minimum_required(VERSION 3.0)
-
+include(FeatureSummary)
 project(ESPResSo)
 
 enable_language(CXX)
@@ -36,6 +36,15 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# If the version is smaller than 3.4, use custom find HDF5 module
+# else, use prefer parallel feature of default module.
+if(CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
+else()
+  set(HDF5_PREFER_PARALLEL 1)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
@@ -142,14 +151,32 @@ if (WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
 
+# We need the parallel hdf5 version!
 if (WITH_HDF5)
-find_package(HDF5)
-if(HDF5_FOUND)
-  set(H5MD 1)
-  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRS})
-endif(HDF5_FOUND)
+  find_package(HDF5 "1.8" COMPONENTS C)
+  if(HDF5_IS_PARALLEL)
+    set(H5MD 1)
+    include(FindPythonModule)
+    find_python_module(h5py)
+    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+    include_directories(${HDF5_INCLUDE_DIRS})
+    add_feature_info(HDF5 ON "parallel")
+  else()
+    unset(H5MD)
+    unset(HDF5_FOUND)
+  endif(HDF5_IS_PARALLEL)
 endif(WITH_HDF5)
+
+# Check for the h5xx submodule
+# and try to check it out if not found.
+if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+  # Try to find git
+  find_package(Git)
+  if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  endif(GIT_FOUND)
+endif()
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
@@ -175,7 +202,7 @@ include(RequireCXX11)
 # Boost
 #######################################################################
 
-find_package(Boost REQUIRED mpi serialization system)
+find_package(Boost REQUIRED mpi serialization filesystem system)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
@@ -203,6 +230,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
+add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Paths
