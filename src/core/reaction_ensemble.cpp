@@ -27,7 +27,7 @@ bool system_is_in_1_over_t_regime=false;
 int number_of_times_in_the_same_bin=0;//for avoiding becoming trapped in HMC-Wang-Landau
 int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
 
-double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //XXX make this accessible from interface (use 90 for free polymer, 1000 for rod system, this is determined by try and error)
+double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //make this accessible from interface (use 90 for free polymer, 1000 for rod system, this is determined by trial and error)
 
 int accepted_configurational_MC_moves=0;
 int tried_configurational_MC_moves=0;
@@ -1450,9 +1450,7 @@ bool do_HMC_move_wang_landau(){
 //	//experimental: avoid becoming trapped with Wang-Landau and continous moves
 //	if(number_of_times_in_the_same_bin>100 && bf>=0){
 //		bf=10;
-//		//XXX Debug
 //		//printf("C energy %f\n",calculate_current_potential_energy_of_system(0));
-//		//XXX
 //		printf("avoided trapping \n");
 //		fflush(stdout);
 //	}
@@ -1892,10 +1890,11 @@ void set_pH(double pH){
 int do_reaction_constant_pH(){
 	
 	//get a list of reactions where a randomly selected particle type occurs in the educt list. the selection probability of the particle types has to be proportional to the number of occurances of the number of particles with this type
-	//XXX for optimizations this list could be determined during the initialization
+	
+	//for optimizations this list could be determined during the initialization
 	int* list_of_reaction_ids_with_given_educt_type=NULL;
 	int found_reactions_with_given_educt_type=0;
-	while(found_reactions_with_given_educt_type==0) { // avoid selecting a (salt) particle which does not take part in a reaction
+	while(found_reactions_with_given_educt_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
 		int random_p_id = i_random(max_seen_particle); // only used to determine which reaction is attempted.
 		Particle part;
 		int found_particle=get_particle_data(random_p_id,&part);
@@ -1916,6 +1915,7 @@ int do_reaction_constant_pH(){
 			}
 		}
 	}
+	
 	//randomly select a reaction to be performed
 	int reaction_id=list_of_reaction_ids_with_given_educt_type[i_random(found_reactions_with_given_educt_type)];
 	free(list_of_reaction_ids_with_given_educt_type);

@@ -691,6 +691,12 @@ Since you might be interested in thermodynamic properties of a reacting system y
   \variant{4} reaction\_ensemble temperature\_reaction\_ensemble \var{temperature\_reaction\_ensemble}
   \variant{5} reaction\_ensemble exclusion\_radius
   \variant{6} reaction\_ensemble set\_default\_charge\_of\_type \var{type} \var{charge}
+  \variant{21} reaction\_ensemble cylindrical\_constraint\_in\_z\_direction center \var{cyl_x} \var{cyl_y} radius \var{radius}
+  \variant{22} reaction\_ensemble volume \var{volume}
+  \variant{24} reaction\_ensemble wall\_constraints\_in\_z\_direction \var{slab\_z\_start} \var{slab\_z\_end}
+  \end{essyntax}
+  Additionally we several commands for the Wang-Landau reaction ensemble are available.
+  \begin{essyntax}
   \variant{7} reaction\_ensemble wang_landau add degree\_of\_association associated\_type \var{associated\_type} min \var{min\_value} max \var{max\_value} corresponding\_acid\_types \var{list\_of\_corresponding\_types}
   \variant{8} reaction\_ensemble wang\_landau add energy filename \var{energy\_boundary\_filename} delta \var{Delta\_E}
   \variant{9} reaction\_ensemble wang\_landau counter\_ion\_type \var{counter\_ion\_type} [polymer\_start\_id \var{polymer\_start\_id}] [polymer\_end\_id \var{polymer\_start\_id}] [fix_polymer_monomers] 
@@ -702,13 +708,10 @@ Since you might be interested in thermodynamic properties of a reacting system y
   \variant{15} reaction_ensemble wang_landau \var{wang\_landau\_setps}
     \variant{16} reaction\_ensemble wang\_landau use\_hybrid\_monte\_carlo (Requires feature CONSTRAINTS)
   \variant{17} reaction\_ensemble [wang\_landau] do
+  \variant{20} reaction\_ensemble monte\_carlo\_move\_for\_type \var{type}
   \variant{18} reaction\_ensemble wang\_landau write\_wang\_landau\_checkpoint \var{unique identifier}
   \variant{19} reaction\_ensemble wang\_landau load\_wang\_landau\_checkpoint \var{unique identifier}
-  \variant{20} reaction\_ensemble monte\_carlo\_move\_for\_type \var{type}
-  \variant{21} reaction\_ensemble cylindrical\_constraint\_in\_z\_direction center \var{cyl_x} \var{cyl_y} radius \var{radius}
-  \variant{22} reaction\_ensemble volume \var{volume}
   \variant{23} reaction\_ensemble print\_acceptance\_rate
-  
   Required features: REACTION\_ENSEMBLE
 \end{essyntax}
 Note: if the commands are used they should be used in this order (except of the last two), since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
