@@ -64,7 +64,6 @@ class openGLLive:
             'particle_type_sizes':		  [1, 1, 1, 1, 1, 1, 1, ],
 
             'draw_constraints':			  True,
-            'draw_constraints_mode':	  'rasterize', #triangulate',
             'rasterize_pointsize':	      10,
             'rasterize_resolution':	      75.0,
             'constraint_type_colors':     [[0.5, 0.5, 0.5,0.9], [0, 0.5, 0.5,0.9],[0.5, 0, 0.5,0.9], [0.5, 0.5, 0,0.9], [0, 0, 0.5,0.9], [0.5, 0, 0,0.9]],
@@ -161,7 +160,7 @@ class openGLLive:
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                self.trcnt = 45 
+                self.trcnt = 70 
                 self.updateConstraints()
                 self.hasParticleData = True
             
@@ -220,7 +219,7 @@ class openGLLive:
             t = c.get_parameter('particle_type')
             s = c.get_parameter('shape')
             n = s.name()
-            if n in ['Shapes::WallNO','Shapes::CylinderNO','Shapes::SphereNO']:
+            if n in ['Shapes::Wall','Shapes::Cylinder','Shapes::Sphere']:
                 coll_shape_obj[n].append([s,t])
             else:
                 coll_shape_obj['Shapes::Misc'].append([s,t])
@@ -245,402 +244,9 @@ class openGLLive:
             self.shapes['Shapes::Sphere'].append([pos, r, s[1]])
         
         for s in coll_shape_obj['Shapes::Misc']:
-            if self.specs['draw_constraints_mode']=='rasterize': 
-                self.shapes['Shapes::Misc'].append([self.rasterizeBruteForce(s[0]), s[1]])
-            elif self.specs['draw_constraints_mode']=='triangulate': 
-                self.shapes['Shapes::Misc'].append([self.triangulate(s[0]), s[1]])
-
-    def triangulate(self,shape):
-
-        #Following Erich Hartmann - "A marching method for the triangulation of surfaces"
-        #https://pdfs.semanticscholar.org/ae1e/216a99fb6943b122ba3d42041291f039f0d1.pdf
-
-        #step_length
-        self.sl = 1.0
-        sl_sq = self.sl*self.sl
-        #3 indices of points
-        self.triangles = []
-        #coords, normal, tangent1, tangent2, front_angle, angle_changed
-        self.points = []
-
-        #Get starting point
-        np.random.seed(2)
-        self.points.append(self.surface_point(shape,np.random.random(3)*np.array(self.system.box_l)))
-        #Get surface points from regular hexagon
-        for i in range(6):
-            self.points.append(self.surface_point(shape,self.points[0][0]+self.sl*cos(i*np.pi/3.0)*self.points[0][2]+self.sl*sin(i*np.pi/3.0)*self.points[0][3]))
-        #First six triangles 
-        self.triangles.append([0,1,2])
-        self.triangles.append([0,2,3])
-        self.triangles.append([0,3,4])
-        self.triangles.append([0,4,5])
-        self.triangles.append([0,5,6])
-        self.triangles.append([0,6,1])
-        #Starting front polygon indices
-        self.front_polygon = [1,2,3,4,5,6]
-        self.front_polygon_stack = []
-       
-        do_distance_checks = False
-
-        #while len(self.front_polygon) > 0
-        self.trcnt += 1
-        for n_tri_moves in range(self.trcnt):
-            print n_tri_moves 
-
-            #Distance Checks
-            if do_distance_checks:
-                #Unite front polygons
-                united = False
-                while len(self.front_polygon_stack) > 0:
-                    united = False
-                    for i in range(len(self.front_polygon)):
-                        #Do distance check
-                        if not self.points[self.front_polygon[i]][7]:
-                            continue
-                        for fps in self.front_polygon_stack:
-                            for j in range(len(fps)):
-                                if not self.points[fps[j]][7]:
-                                    continue
-                                if not self.points[self.front_polygon[i]][6] and not self.points[fps[j]][6]:
-                                    pi = self.points[self.front_polygon[i]][0]
-                                    pj = self.points[fps[j]][0]
-                                    if ( (pi[0]-pj[0])**2 + (pi[1]-pj[1])**2 + (pi[2]-pj[2])**2 ) < sl_sq:
-
-                                        v1 = self.points[self.front_polygon[i-1]][0]
-                                        v2 = self.points[self.front_polygon[(i+1)%len(self.front_polygon)]][0]
-                                        p = self.points[self.front_polygon[i]]
-                                        if p[4] < self.calc_outer_angle(pj,v2,p[0],p[1]):
-                                            print "Bad near points"
-                                            continue
-                                        else:
-
-                                            fp_united = self.front_polygon[:i+1] + fps[j:] + fps[:j+1] + self.front_polygon[i:]
-
-
-                                            print "Duplicates Before Unite: "
-                                            for ii in range(len(self.front_polygon)):
-                                                for jj in range(ii+1,len(self.front_polygon)):
-                                                    if not ii == jj and self.front_polygon[ii]==self.front_polygon[jj]:
-                                                        print ii,jj,self.front_polygon[ii]
-
-
-                                            self.front_polygon = fp_united
-                                            self.front_polygon_stack.remove(fps)
-                                            print "United polygons"
-                                            united = True
-                                            #Double entries front_polygon[i] and fps[j]=front_polygon[i+1] need to be resolved first
-
-                                            #Check angles of double entries
-                                            self.calc_angle_for_i(i)
-                                            self.calc_angle_for_i(i+1)
-                                            
-                                            #Get smaller, remember point index of other
-                                            min_angle_de_1 = self.points[self.front_polygon[i]][4]
-                                            min_angle_de_2 = self.points[self.front_polygon[i+1]][4]
-                                            print min_angle_de_1,min_angle_de_2
-                                            if  min_angle_de_1 > min_angle_de_2:
-                                                min_angle_double_entries = i+1
-                                                other_point_index = self.front_polygon[i]
-                                            else:
-                                                min_angle_double_entries = i
-                                                other_point_index = self.front_polygon[i+1]
-                                            
-                                            print "Duplicates After Unite: "
-                                            for ii in range(len(self.front_polygon)):
-                                                for jj in range(ii+1,len(self.front_polygon)):
-                                                    if not ii == jj and self.front_polygon[ii]==self.front_polygon[jj]:
-                                                        print ii,jj,self.front_polygon[ii]
-
-                                            #Triangles around smaller first
-                                            self.surroundWithTriangles(min_angle_double_entries, min_angle_de_1, shape)
-
-                                            print "Duplicates After fix1: "
-                                            for ii in range(len(self.front_polygon)):
-                                                for jj in range(ii+1,len(self.front_polygon)):
-                                                    if not ii == jj and self.front_polygon[ii]==self.front_polygon[jj]:
-                                                        print ii,jj,self.front_polygon[ii]
-
-
-                                            #New entries in front_polygon, get new front_polygon index of second double entry
-                                            second_double_entry = self.front_polygon.index(other_point_index)
-                                            #Possibly new neighbours, get new angle
-                                            self.calc_angle_for_i(second_double_entry)
-                                            min_angle_de_2 = self.points[self.front_polygon[second_double_entry]][4]
-                                            #Surround second double entry with triangles
-                                            self.surroundWithTriangles(second_double_entry, min_angle_de_2, shape)
-                                           
-                                            print "Duplicates After fix2: "
-                                            for ii in range(len(self.front_polygon)):
-                                                for jj in range(ii+1,len(self.front_polygon)):
-                                                    if not ii == jj and self.front_polygon[ii]==self.front_polygon[jj]:
-                                                        print ii,jj,self.front_polygon[ii]
-
-                                            break
-                            if united:
-                                break
-                        if united:
-                            break
-                    #Compared all points in front_polygon with all of the polygon stack. 
-                    #Nothing united? Break. Otherwise repeat comparison with new (united) front_polygon until stack is empty 
-                    #or something was united
-                    if not united:
-                        break
-
-                if not united:
-                    #Split front polygon
-                    #Loop over non-neighbours and non-next-neightbours
-                    N=len(self.front_polygon)
-                    foundNearPoints = False
-                    for i in range(N-3):
-                        #Ignore Borderpoints
-                        if self.points[self.front_polygon[i]][6]:
-                             continue
-                        for j in range(i + 3,min(N,N-3+1+i)):
-                            #Ignore Borderpoints
-                            if not self.points[self.front_polygon[j]][6]:
-                                pi = self.points[self.front_polygon[i]][0]
-                                pj = self.points[self.front_polygon[j]][0]
-                                if not self.points[self.front_polygon[i]][7] or not self.points[self.front_polygon[j]][7]:
-                                    continue
-                                d = ( (pi[0]-pj[0])**2 + (pi[1]-pj[1])**2 + (pi[2]-pj[2])**2 ) 
-                                if d < sl_sq:
-                                    #Ignore i,j in further distance checks
-                                    self.points[self.front_polygon[i]][7] = False
-                                    self.points[self.front_polygon[j]][7] = False
-                                    fp0 = self.front_polygon[:i+1] + self.front_polygon[j:]
-                                    self.front_polygon_stack.append(self.front_polygon[i:j+1])
-                                    self.front_polygon = fp0
-                                    foundNearPoints = True
-                                    print "SPLIT"
-                                    print self.front_polygon
-                                    print self.front_polygon_stack[-1]
-                                    break
-                        if foundNearPoints:
-                            break
-
-#
-
-
-            #Front angles
-            self.calc_front_angles()
-            fp_nb_angles = []
-            fp_nb_indices = []
-            nonBorderPoints = []
-            for i in range(len(self.front_polygon)):
-                if not self.points[self.front_polygon[i]][6] and not self.points[self.front_polygon[(i+1)%len(self.front_polygon)]][6] and not self.points[self.front_polygon[i-1]][6]:
-                    fp_nb_angles.append(self.points[self.front_polygon[i]][4])
-                    fp_nb_indices.append(i)
-                    nonBorderPoints.append(self.points[self.front_polygon[i]][0])
-            min_angle = min(fp_nb_angles)
-
-            do_distance_checks = min_angle > 1.05
-
-            fp_angles_i_min = fp_nb_indices[fp_nb_angles.index(min_angle)]
-
-            #Calc index of front polygon point with min front_angle
-
-            self.surroundWithTriangles(fp_angles_i_min,min_angle, shape)
-
-            checkFinished = False
-            #Only <= 3 noBorderPoints left OR > use new front_polygon from stack of finish
-            if len(nonBorderPoints) <= 3:
-                print "<= 3 noBorderPoints"
-                checkFinished = True
-            #Three front_polygon points left:
-            elif len(self.front_polygon)==3:
-                print "3 front_polygon points"
-                self.triangles.append([self.front_polygon[i] for i in range(3)])
-                checkFinished = True
-                
-            if checkFinished:
-                if len(self.front_polygon_stack) == 0:
-                    print "finished"
-                    break
-                else: 
-                    print "Use new front_polygon from stack"
-                    self.front_polygon = self.front_polygon_stack[-1]
-                    del self.front_polygon_stack[-1]
-
-#print "fp_angles", fp_angles
-
-        tr_points = []
-        for tr in self.triangles:
-            tr_coords = []
-            for tr_i in tr:
-                tr_coords.append(self.points[tr_i][0])
-            tr_points.append(tr_coords)
-#print tr_coords
-#print tr_points
-        return [tr_points, [p for p in nonBorderPoints]]
-#return [tr_points, [self.points[fp][0] for fp in self.front_polygon]]
-#return [tr_points, [self.points[i_min_angle_m1][0], self.points[i_min_angle][0], self.points[i_min_angle_p1][0]]]
-
-#return [tr_points, [self.points[i_min_angle][0],self.points[i_min_angle_m1][0],self.points[i_min_angle_p1][0]]]
-
-    def surroundWithTriangles(self,fp_angles_i_min, min_angle,shape):
-
-        i_min_angle = self.front_polygon[fp_angles_i_min]
-        i_min_angle_p1 = self.front_polygon[(fp_angles_i_min+1) % len(self.front_polygon)]
-        i_min_angle_m1 = self.front_polygon[(fp_angles_i_min-1) % len(self.front_polygon)]
-
-        #Point with min angle and neighbours
-        p = self.points[i_min_angle][0]
-        v1 = self.points[i_min_angle_m1][0]
-        v2 = self.points[i_min_angle_p1][0]
-        #Determine number of new triangles
-        nt = int(3.0*min_angle/np.pi)+1
-        dw = min_angle/nt
-        if dw < 0.8 and nt > 1:
-            nt -= 1
-            dw = 1.0*min_angle/nt
-        elif nt == 1 and dw > 0.8 and np.linalg.norm(v1-v2) > 1.2*self.sl:
-            nt = 2
-            dw /= 2.0
-        elif min_angle < 3.0 and (np.linalg.norm(v1-p) <= 0.5*self.sl or np.linalg.norm(v2-p) <= 0.5*self.sl):
-            nt = 1
-        N=len(self.points)
-
-        if nt == 1:
-            self.triangles.append([i_min_angle_m1,i_min_angle_p1,i_min_angle])
-        else:
-            n = self.points[i_min_angle][1]
-            #Get projection of v1-p on plane defined by n
-            q = v1-np.dot(v1-p,n)*n
-            #Rotate q-d/||q-d|| * sl around n
-            d = q-p
-            rv = d/np.linalg.norm(d)*self.sl
-
-            for i in range(1,nt):
-                r = self.rotate_vector(rv,n,dw*i)
-                qi = p+r
-                #Get nt surface points of rotated arch 
-                self.points.append(self.surface_point(shape,qi))
-
-
-            #Add triangles
-            self.triangles.append([i_min_angle_m1, N, i_min_angle])
-            
-            for i in range(1,nt-1):
-                self.triangles.append([N-1+i,N+i, i_min_angle])
-
-            self.triangles.append([N+nt-2, i_min_angle_p1,i_min_angle])
-
-        #Remove central point from front polygon
-        self.front_polygon.remove(i_min_angle)
-
-        #Add new indices to front polygon if no one was outside box
-        if nt > 1:
-            self.front_polygon[fp_angles_i_min:fp_angles_i_min] = range(N,N+nt-1)
-
-    def truncToGlobalBox(self,p):
-        isOut = False
-        for i in range(3):
-            if p[i] > self.system.box_l[i]:
-                p[i] = self.system.box_l[i]
-                isOut = True
-            elif p[i] < 0:
-                p[i] = 0
-                isOut = True
-        return isOut
-
-    def rotate_vector(self,v,axis,theta):
-        return np.dot(self.rotation_matrix(axis,theta),v)
-
-    def rotation_matrix(self,axis, theta):
-            axis = np.asarray(axis)
-            axis = axis/math.sqrt(np.dot(axis, axis))
-            a = math.cos(theta/2.0)
-            b, c, d = -axis*math.sin(theta/2.0)
-            aa, bb, cc, dd = a*a, b*b, c*c, d*d
-            bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
-            return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)], [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)], [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
-        
-    def calc_front_angles(self):
-        for i in range(len(self.front_polygon)):
-            self.calc_angle_for_i(i)
-#                d1 = v1-p[0]
-#                d2 = v2-p[0]
-#                d1_len = np.linalg.norm(d1)
-#                d2_len = np.linalg.norm(d2)
-#                dot = np.dot(d1,d2)/d1_len/d2_len
-#                if dot > 1 or dot < -1 or np.isclose(d1_len,0) or np.isclose(d2_len, 0):
-#                    print "ERROR", v1,v2,p[0]
-#
-#                inner = acos(dot)
-#                outer = 2.0*np.pi-inner
-#                if (np.dot(p[1], np.cross(d1,d2)))>0:
-#                    a=inner
-#                else:
-#                    a=outer
-#                p[4] = a
-
-    def calc_angle_for_i(self,i):
-        p = self.points[self.front_polygon[i]]
-        if p[5] == True:
-            
-            v1 = self.points[self.front_polygon[i-1]][0]
-            v2 = self.points[self.front_polygon[(i+1)%len(self.front_polygon)]][0]
-            p[4] = self.calc_outer_angle(v1,v2,p[0],p[1])
-#            d1 = v1-p[0]
-#            d2 = v2-p[0]
-#            d1_len = np.linalg.norm(d1)
-#            d2_len = np.linalg.norm(d2)
-#            dot = np.dot(d1,d2)/d1_len/d2_len
-#
-#            inner = acos(dot)
-#            outer = 2.0*np.pi-inner
-#            if (np.dot(p[1], np.cross(d1,d2)))>0:
-#                a = inner
-#            else:
-#                a = outer
-#
-#            p[4] = a
-
-    def calc_outer_angle(self,v1,v2,p,n):
-        d1 = v1-p
-        d2 = v2-p
-        d1_len = np.linalg.norm(d1)
-        d2_len = np.linalg.norm(d2)
-        dot = np.dot(d1,d2)/d1_len/d2_len
-
-        inner = acos(dot)
-        outer = 2.0*np.pi-inner
-        if (np.dot(n, np.cross(d1,d2)))>0:
-            return inner
-        else:
-            return outer
-
-
-    def surface_point(self, shape, p):
-
-        isOut = self.truncToGlobalBox(p)
-        dist,vec = shape.call_method("calc_distance", position = p.tolist())
-        
-        rn = 0.0001
-        while np.isclose(dist,0) or abs(dist)>1e90:
-            print "Surface Point hits shape, rnd displacement"
-            tp=p+(np.random.random(3)-0.5)*rn
-            dist,vec = shape.call_method("calc_distance", position = tp.tolist())
-            rn +=  0.0001
-
-        vec = np.array(vec)
-        s = p-vec
-        n = np.sign(dist) * vec / np.linalg.norm(vec)
-        t1,t2 = self.getTangents(n)
-
-        return [s,n,t1,t2,0,True,isOut, True]
+            self.shapes['Shapes::Misc'].append([self.rasterizeBruteForce(s[0]), s[1]])
 
     def getTangents(self, n):
-#        if n[2] != 0:
-#            v1 = np.array([1,1,(-n[0]-n[1])/n[2]])
-#        elif n[1] != 0:
-#            v1 = np.array([1,(-n[0]-n[2])/n[1],1])
-#        elif n[0] != 0:
-#            v1 = np.array([(-n[1]-n[2])/n[0],1,1])
-#        v2 = np.cross(n,v1)
-#        
-#        v1 /= np.linalg.norm(v1)
-#        v2 /= np.linalg.norm(v2)
         if n[0] > 0.5 or n[1]>0.5:
             v1 = np.array([n[1],-n[0],0])
         else:
@@ -653,7 +259,7 @@ class openGLLive:
 
     def rasterizeBruteForce(self,shape):
         #box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-
+        print "Rasterizing..."
         sp = max(self.system.box_l)/self.specs['rasterize_resolution']
         res = np.array(self.system.box_l)/sp
 
@@ -666,6 +272,7 @@ class openGLLive:
                     if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp and dist != 0:
                         points.append((p-vec).tolist())
 #points.append((p).tolist())
+        print "...Done"
         return points
 
     #GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
@@ -722,11 +329,7 @@ class openGLLive:
         
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
-            if self.specs['draw_constraints_mode']=='rasterize':
-                drawPoints(s[0], self.specs['rasterize_pointsize'],  self.constraintColorByType(s[1]), self.constraintMaterialByType(s[1]))
-            elif self.specs['draw_constraints_mode']=='triangulate':
-                drawTriangles(s[0][0], self.constraintColorByType(s[1]), self.constraintMaterialByType(s[1]))
-                drawPoints(s[0][1], self.specs['rasterize_pointsize'],  [1,0,0,1], self.constraintMaterialByType(s[1]))
+            drawPoints(s[0], self.specs['rasterize_pointsize'],  self.constraintColorByType(s[1]), self.constraintMaterialByType(s[1]))
 
     def drawSystemParticles(self):
         coords = self.particles['coords']

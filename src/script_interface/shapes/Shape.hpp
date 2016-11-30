@@ -36,6 +36,16 @@ public:
    * @brief Return the Shape that we are wrapping.
    */
   virtual std::shared_ptr<::Shapes::Shape> shape() const = 0;
+
+  Variant call_method(std::string const &name,
+          VariantMap const &params) override {
+      if (name == "calc_distance") {
+          std::array<double, 3> pos = get_value<Vector3d>(params.at("position"));
+          double dist, vec[3];
+          shape()->calculate_dist(pos.data(), &dist, vec);
+          return std::vector<Variant>{dist, Vector3d{vec}};
+      }
+  }
 };
 
 } /* namespace Shapes */
