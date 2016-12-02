@@ -28,7 +28,7 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Wall::valid_parameters() const {
-  return {{"normal", {ParameterType::VECTOR3D, true}},
+  return {{"normal", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"dist", {ParameterType::DOUBLE, true}}};
 }
 
@@ -41,7 +41,7 @@ void Wall::set_parameter(const string &name,
   if (name == "normal") {
     /* Get the variant as vector, and explicitly construct a Vector3d
        from that. */
-    m_wall->set_normal(boost::get<Vector3d>(value));
+    m_wall->set_normal(get_value<Vector3d>(value));
   }
 
   SET_PARAMETER_HELPER("dist", m_wall->d());

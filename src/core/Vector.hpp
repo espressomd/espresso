@@ -48,7 +48,7 @@ public:
   }
 
   template <typename InputIterator>
-  Vector(InputIterator const& begin, InputIterator const& end) {
+  Vector(InputIterator const &begin, InputIterator const &end) {
     assert(std::distance(begin, end) <= n);
     std::copy(begin, end, d.begin());
   }
@@ -76,6 +76,9 @@ public:
   static constexpr size_t size() { return n; }
 
   operator std::array<Scalar, n> const &() const { return d; }
+  operator std::vector<Scalar>() const {
+    return std::vector<Scalar>(std::begin(d), std::end(d));
+  }
 
   std::vector<Scalar> as_vector() const {
     return std::vector<Scalar>(std::begin(d), std::end(d));

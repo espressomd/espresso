@@ -115,8 +115,8 @@ cdef class ParticleHandle:
             cdef double ppos[3]
             cdef int img[3]
             for i in range(3):
-               img[i]=self.particle_data.l.i[i]
-               ppos[i]=self.particle_data.r.p[i]
+                img[i]=self.particle_data.l.i[i]
+                ppos[i]=self.particle_data.r.p[i]
 
 
             unfold_position(ppos,img)

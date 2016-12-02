@@ -50,9 +50,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 ######################################################################
 
 #option(WITH_PYTHON "Build python interface"  ON)
-##option(WITH_TCL    "Build tcl interface"     ON)
 set(WITH_PYTHON yes)
-set(WITH_TCL no)
 
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -138,19 +136,9 @@ if (FFTW3_FOUND)
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-if (WITH_TCL)
-  find_package(TCL)
-
-  if(NOT TCL_FOUND)
-	  message(FATAL_ERROR "TCL not found.")
-  endif()
-
-  include_directories(${TCL_INCLUDE_PATH})
-  list(APPEND LIBRARIES ${TCL_LIBRARY})
-endif()
 
 # If we build either interface turn on script interface
-if (WITH_PYTHON OR WITH_TCL)
+if (WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
 
@@ -234,7 +222,6 @@ endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 
-set(SCRIPTDIR ${DATA}/scripts)
 
 #######################################################################
 # Flags
@@ -243,12 +230,14 @@ set(SCRIPTDIR ${DATA}/scripts)
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 endif()
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
+endif()
 
 #######################################################################
 # Subdirectories
 #######################################################################
 
-add_subdirectory(scripts)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(config)
