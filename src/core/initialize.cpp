@@ -67,6 +67,8 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "scafacos.hpp"
+#include "scafacos.hpp"
+
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -464,6 +466,7 @@ void on_boxl_change() {
 #endif
   }
 #endif
+
 }
 
 void on_cell_structure_change()
@@ -553,6 +556,9 @@ void on_parameter_change(int field)
   switch (field) {
   case FIELD_BOXL:
     grid_changed_box_l();
+#ifdef SCAFACOS
+  Scafacos::on_boxl_change();
+#endif
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
     recalc_maximal_cutoff();

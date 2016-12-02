@@ -307,12 +307,12 @@ static void set_params_safe(const std::string &method, const std::string &params
 }
 
 /** Bend result from scafacos back to original format */
-std::string get_parameters() {
+std::string get_method_and_parameters() {
   if(!scafacos) {
     return std::string();
   }
 
-  std::string p = scafacos->get_parameters();
+  std::string p = scafacos->get_method()+" "+scafacos->get_parameters();
   
   std::replace(p.begin(), p.end(), ',', ' ');
   
@@ -372,6 +372,23 @@ delete scafacos;
     scafacos = 0;
   }
 }
+
+void on_boxl_change() {
+// If scafacos is not active, do nothing
+if (!scafacos) return;
+
+// Get current parameters and re_initialize
+std::string params=scafacos->get_parameters();
+std::string method=scafacos->get_method();
+bool dip=scafacos->dipolar();
+
+// Delete existing scafacos instance
+free_handle();
+
+// And make a new one
+set_parameters(method,params,dip);
+}
+
 } // namespace scafacos
 #endif /* SCAFACOS */
 

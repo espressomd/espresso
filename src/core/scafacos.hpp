@@ -43,7 +43,7 @@ void add_long_range_force();
 /** Calculate long range energy contribution */
 double long_range_energy(); 
 /** Get parameters */
-std::string get_parameters();
+std::string get_method_and_parameters();
 /** Set parameters */
 void set_parameters(const std::string &method, const std::string &params, bool dipolar);
 double get_r_cut();
@@ -53,6 +53,9 @@ bool dipolar();
 
 /** Choose whether scafacos is used for dipolar interactions */
 void set_dipolar(bool d);
+
+/** Reinit scafacos when the box geometry has changed */
+void on_boxl_change();
 
 #endif /* SCAFACOS */
 
