@@ -29,7 +29,7 @@ Observable::Observable()
   , last_update(0)
   , autoupdate(0)
   , autoupdate_dt(0)
-  , m_filename("")
+  , m_filename()
   , m_binary(false)
 {}
 
@@ -72,7 +72,7 @@ void Observable::do_write() const
   if (m_binary) mode &= std::ios_base::binary;
 
   std::ofstream ofile;
-  ofile.open(m_filename, std::ios_base::app);
+  ofile.open(m_filename, mode);
 
   ofile << sim_time;
   for (auto p : last_value)
