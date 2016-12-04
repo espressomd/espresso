@@ -59,6 +59,11 @@ public:
     if (method == "value") {
       return observable()->last_value;
     }
+    if (method == "write_to") {
+      auto filename = get_value<std::string>(parameters.at("filename"));
+      observable()->set_filename(filename);
+      return {};
+    }
 
      return {};
   };

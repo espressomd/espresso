@@ -1252,6 +1252,12 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
       reuse_forces = 1;
       Observables::auto_update();
       Correlators::auto_update();
+
+      if ( Observables::auto_write_enabled() )
+      {
+        Observables::auto_write();
+      }
+
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))
