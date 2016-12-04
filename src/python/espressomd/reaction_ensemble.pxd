@@ -102,4 +102,5 @@ cdef extern from "reaction_ensemble.hpp":
 
 cdef class ReactionEnsemble:
     cdef _params
+    cdef _set_params_in_es_core_add_reverse(self, equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar)
 

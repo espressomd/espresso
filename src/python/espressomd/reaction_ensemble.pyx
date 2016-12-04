@@ -6,6 +6,7 @@ IF REACTION_ENSEMBLE:
         pass
 
     cdef class ReactionEnsemble:
+
         def __init__(self,*args,**kwargs):
             self._params=self.default_params()
 
@@ -127,7 +128,25 @@ IF REACTION_ENSEMBLE:
             #assign different types an index in a growing list that starts at and is incremented by 1 for each new type
             update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types);
             
+            #add reverse reaction
+            self._set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.educt_coefficients, -1*new_reaction.nu_bar )
 
+        cdef _set_params_in_es_core_add_reverse(self, equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
+            #add reverse reaction based on last reaction that was added            
+            cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))     
+            new_reaction.equilibrium_constant=equilibrium_constant
+            new_reaction.educt_types=educt_types
+            new_reaction.len_educt_types=len_educt_types
+            new_reaction.educt_coefficients=educt_coefficients
+            new_reaction.product_types=product_types
+            new_reaction.len_product_types=len_product_types
+            new_reaction.product_coefficients=product_coefficients
+            new_reaction.nu_bar=nu_bar
+            #if everything is fine:
+            current_reaction_system.reactions=<single_reaction**> realloc(current_reaction_system.reactions,sizeof(single_reaction*)*(current_reaction_system.nr_single_reactions+1)); #enlarge current_reaction_system
+            current_reaction_system.reactions[current_reaction_system.nr_single_reactions]=new_reaction;
+            current_reaction_system.nr_single_reactions+=1;
+            
         def default_charges(self,*args,**kwargs):
                 for k in kwargs:
                     if k in self.valid_keys_default_charge():
