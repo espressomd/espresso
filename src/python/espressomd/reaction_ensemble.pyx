@@ -197,7 +197,9 @@ IF REACTION_ENSEMBLE:
                     
             print "Reaction ensemble temperature:", current_reaction_system.temperature_reaction_ensemble
             print "Exclusion radius:", current_reaction_system.exclusion_radius
-            check_reaction_ensemble()
+            es_error=1
+            if(check_reaction_ensemble()==es_error):
+                raise ValueError("")
             
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):

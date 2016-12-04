@@ -26,6 +26,7 @@ bool system_is_in_1_over_t_regime=false;
 
 int number_of_times_in_the_same_bin=0;//for avoiding becoming trapped in HMC-Wang-Landau
 int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
+int invalid_charge=-10000;
 
 double minimum_average_of_hisogram_before_removal_of_unused_bins=1000.0; //make this accessible from interface (use 90 for free polymer, 1000 for rod system, this is determined by trial and error)
 
@@ -68,6 +69,15 @@ int check_reaction_ensemble(){
 		printf("Temperatures cannot be negative. Please provide a temperature (in k_B T) to the simulation. Normally it should be 1.0. This will be used directly to calculate beta:=1/(k_B T) which occurs in the exp(-beta*E)");
 		check_is_successfull=ES_ERROR;
 	}
+	#ifdef ELECTROSTATICS
+	//check for the existence of default charges for all types that take part in the reactions
+	for (int i=0; i<current_reaction_system.nr_different_types; i++) {
+		if(current_reaction_system.charges_of_types[current_reaction_system.type_index[i]]==invalid_charge) {
+			printf("Forgot to assign default charges for some types\n");
+			check_is_successfull=ES_ERROR;
+		}
+	}
+	#endif
 	return check_is_successfull;
 }
 
@@ -313,8 +323,10 @@ int generic_oneway_reaction(int reaction_id){
 			int p_id = (int) hidden_particles_properties[i];
 			double charge= hidden_particles_properties[i+1];
 			int type=(int) hidden_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
@@ -323,8 +335,10 @@ int generic_oneway_reaction(int reaction_id){
 			int p_id = (int) changed_particles_properties[i];
 			double charge= changed_particles_properties[i+1];
 			int type=(int) changed_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
@@ -385,6 +399,7 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 
 	//increase current_reaction_system.charges_of_types length
 	current_reaction_system.charges_of_types =(double*) realloc(current_reaction_system.charges_of_types,sizeof(double)*current_reaction_system.nr_different_types);
+	current_reaction_system.charges_of_types[current_reaction_system.nr_different_types-1]=invalid_charge;
 	
 	return 0;
 }
@@ -403,15 +418,20 @@ int find_index_of_type(int type){
 
 int replace(int p_id, int desired_type){
 	int err_code_type=set_particle_type(p_id, desired_type);
-	int err_code_q=set_particle_q(p_id, (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
+	int err_code_q;
+	#ifdef ELECTROSTATICS
+	err_code_q=set_particle_q(p_id, (double) current_reaction_system.charges_of_types[find_index_of_type(desired_type)]);
+	#endif
 	return (err_code_q bitor err_code_type);
 }
 
 
 int hide_particle(int p_id, int previous_type){
 	//remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing
+	#ifdef ELECTROSTATICS
 	//set charge
 	set_particle_q(p_id, 0.0);
+	#endif
 	//set type
 	int desired_type=previous_type+100;//+100 in order to assign types that are out of the "usual" range of types
 	int err_code_type=set_particle_type(p_id, desired_type);
@@ -440,8 +460,10 @@ int delete_particle (int p_id) {
 		place_particle(p_id,ppos);
 		//set velocities
 		set_particle_v(p_id,last_particle.m.v);
+		#ifdef ELECTROSTATICS
 		//set charge
 		set_particle_q(p_id,last_particle.p.q);
+		#endif
 		//set type
 		set_particle_type(p_id,last_particle.p.type);
 		
@@ -519,8 +541,10 @@ int create_particle(int desired_type){
 			place_particle(p_id,pos_vec);
 			//set type
 			set_particle_type(p_id, desired_type);
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set velocities
 			set_particle_v(p_id,vel);
 			double d_min=distto(pos_vec,p_id); //TODO also catch constraints with an IFDEF CONSTRAINTS here, but only interesting, when doing MD/ HMC because then the system might explode easily here due to high forces
@@ -535,8 +559,10 @@ int create_particle(int desired_type){
 		set_particle_type(p_id, desired_type);	
 		//set velocities
 		set_particle_v(p_id,vel);
+		#ifdef ELECTROSTATICS
 		//set charge
 		set_particle_q(p_id, charge);
+		#endif
 	}
 	if(insert_tries>max_insert_tries){
 		printf("Error: Particle not inserted\n");
@@ -1183,8 +1209,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 			int p_id = (int) hidden_particles_properties[i];
 			double charge=hidden_particles_properties[i+1];
 			int type=(int) hidden_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
@@ -1193,8 +1221,10 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 			int p_id = (int) changed_particles_properties[i];
 			double charge= changed_particles_properties[i+1];
 			int type=(int) changed_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
@@ -1997,8 +2027,10 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 			int p_id = (int) hidden_particles_properties[i];
 			double charge= hidden_particles_properties[i+1];
 			int type=(int) hidden_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
@@ -2007,8 +2039,10 @@ int generic_oneway_reaction_constant_pH(int reaction_id){
 			int p_id = (int) changed_particles_properties[i];
 			double charge= changed_particles_properties[i+1];
 			int type=(int) changed_particles_properties[i+2];
+			#ifdef ELECTROSTATICS
 			//set charge
 			set_particle_q(p_id, charge);
+			#endif
 			//set type
 			set_particle_type(p_id, type);
 		}
