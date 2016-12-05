@@ -131,7 +131,7 @@ IF REACTION_ENSEMBLE:
             #add reverse reaction
             self._set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.educt_coefficients, -1*new_reaction.nu_bar )
 
-        cdef _set_params_in_es_core_add_reverse(self, equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
+        def _set_params_in_es_core_add_reverse(self, equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
             #add reverse reaction based on last reaction that was added            
             cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))     
             new_reaction.equilibrium_constant=equilibrium_constant
