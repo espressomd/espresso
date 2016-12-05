@@ -41,6 +41,7 @@ cdef extern from "reaction_ensemble.hpp":
     int check_reaction_ensemble()
     int accepted_configurational_MC_moves
     int tried_configurational_MC_moves
+    int free_reaction_ensemble()
 
 
 
@@ -93,6 +94,7 @@ cdef extern from "reaction_ensemble.hpp":
 
     int write_wang_landau_checkpoint(char* identifier)
     int load_wang_landau_checkpoint(char* identifier)
+    void free_wang_landau()
 
 #///////////////////////////////////////////// Constant-pH ensemble
     cdef extern double constant_pH
@@ -103,4 +105,5 @@ cdef extern from "reaction_ensemble.hpp":
 cdef class ReactionEnsemble:
     cdef _params
     cdef _set_params_in_es_core_add_reverse(self, equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar)
+    
 

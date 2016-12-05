@@ -200,6 +200,8 @@ IF REACTION_ENSEMBLE:
             es_error=1
             if(check_reaction_ensemble()==es_error):
                 raise ValueError("")
+        def free(self):
+            free_reaction_ensemble()
             
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):
@@ -292,6 +294,13 @@ IF REACTION_ENSEMBLE:
         def write_out_preliminary_energy_run_results(self):
             write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             
+        def do_reaction_wang_landau(self):
+            status_wang_landau=do_reaction_wang_landau()
+            if(status_wang_landau<0):
+                    raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
+
+        def wang_landau_free(self):
+            free_wang_landau()
         
         ##specify information for configuration changing monte carlo move
         property counter_ion_type:
@@ -316,11 +325,7 @@ IF REACTION_ENSEMBLE:
             def __get__(self):
                 return current_wang_landau_system.fix_polymer
 
-        def do_reaction_wang_landau(self):
-            status_wang_landau=do_reaction_wang_landau()
-            if(status_wang_landau<0):
-                    raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
-
+        
         #//////////////////////////constant pH ensemble
         def set_pH_core(self,pH):
                 set_pH(pH)      
