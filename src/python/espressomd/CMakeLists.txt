@@ -18,6 +18,8 @@
 #
 
 
+
+
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
@@ -28,6 +30,10 @@ add_custom_command(OUTPUT gen_pxiconfig.cpp
 include_directories(${CMAKE_BINARY_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_BINARY_DIR}/src/core)
+if (HDF5_FOUND)
+    include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
+    include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
+endif(HDF5_FOUND)
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 add_dependencies(gen_pxiconfig EspressoConfig)
@@ -43,50 +49,74 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
 
 add_custom_target(espressomd)
-add_custom_command(TARGET espressomd
-        PRE_BUILD
-        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/python/espressomd/code_info.pyx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/python/espressomd
+add_custom_command(OUTPUT code_info.pyx
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
 file(GLOB cython_SRC *.pyx)
+# Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to
+# be able to extend it in the subdirectories.
+SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
+SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
+SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
+
+add_subdirectory(io)
+
+list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
+list(REMOVE_DUPLICATES cython_SRC)
 
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
-
+  file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
+  if("${basename}" STREQUAL "code_info")
+      file(RELATIVE_PATH relpath ${CMAKE_CURRENT_BINARY_DIR} ${cython_file})
+  endif()
+  get_filename_component(relpath ${relpath} DIRECTORY)
+  if("${relpath}" STREQUAL "")
+      string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${basename} ".cpp")
+  else()
+      string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${basename} ".cpp")
+  endif()
   if("${basename}" STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
       list(APPEND cython_generated_SRC "${basename}.cpp")
-      add_custom_command(OUTPUT ${basename}.cpp
+      add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
                          ${cython_file}
-                         -o ${CMAKE_CURRENT_BINARY_DIR}/${basename}.cpp
+                         -o ${outputpath}
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
-
-      add_library(${basename} SHARED ${basename}.cpp)
-      set_target_properties(${basename} PROPERTIES PREFIX "")
+      add_library(${basename} SHARED ${outputpath})
+      if(NOT "${relpath}" STREQUAL "")
+          set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+      else()
+          set_target_properties(${basename} PROPERTIES PREFIX "")
+      endif()
       set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
       endif()
-      target_link_libraries(${basename} EspressoCore ${LIBRARIES})
+      target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})
   endif()
 endforeach()
 
-
 foreach(auxfile ${cython_AUX})
+  get_filename_component(filename ${auxfile} NAME)
+  file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${auxfile})
+  get_filename_component(relpath ${relpath} DIRECTORY)
+  string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/" ${filename})
   add_custom_command(TARGET espressomd
                      COMMAND ${CMAKE_COMMAND} -E
-                       copy ${auxfile} ${CMAKE_CURRENT_BINARY_DIR}
+                       copy ${auxfile} ${outputpath}
                     )
 endforeach(auxfile)
 

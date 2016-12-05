@@ -19,6 +19,7 @@
 
 ### This script extracts tcl blockfiles and pickles the appropriate py class.
 
+from __future__ import print_function
 import blockfile as bf
 import espressomd
 import espressomd._system as es
@@ -41,11 +42,11 @@ def safe_str2intflt(string):
 
 # nagnagnag
 if len(argv) < 3:
-    print "Usage:  ./pypresso ./blockfile2pickle.py <blockfile> <output-prefix>"
-    print "Output: create files named <output-prefix>-<classname>.pcl in workdir"
-    print "Example output: lj_fluid-ParticleList.pcl lj_fluid-NonBondedInteractions.pcl"
-    print "Supports: particle, interaction"
-    print "Depends:  Espresso/tools/blockfile.py file in a sys.path dir"
+    print("Usage:  ./pypresso ./blockfile2pickle.py <blockfile> <output-prefix>")
+    print("Output: create files named <output-prefix>-<classname>.pcl in workdir")
+    print("Example output: lj_fluid-ParticleList.pcl lj_fluid-NonBondedInteractions.pcl")
+    print("Supports: particle, interaction")
+    print("Depends:  Espresso/tools/blockfile.py file in a sys.path dir")
 
 # initialize blockfile class from blockfile
 blocks = bf.open(argv[1])
@@ -68,27 +69,27 @@ for k in b_list:
     
     # if k is a particle block
     if k[0] == 'particles':
-        print "Particle Block found"
+        print("Particle Block found")
         if "pos" not in k[1] or "id" not in k[1]:
-            print "Error, id and/or pos missing in particle block, skipping particle"
+            print("Error, id and/or pos missing in particle block, skipping particle")
             continue # the continue statement jumps to the next iteration.
 
-        print "Particle properties found:"
-        print k[1].keys()
+        print("Particle properties found:")
+        print(list(k[1].keys()))
         # instance of the system internal particle list
         pl = ParticleList()
         # Set appropriate params foreach particle, since pl.add is so nice,
         # we just have to pass the k[1] dict.
         try: pl.add( k[1] )
         except AttributeError: 
-            print "Error, the blockfile sets a particle parameter which is not compiled in."
-            print "To properly pickle a particle, all necessary features need to be compiled."
-            print "For example, if the particle property 'q' is set, we need ELECTROSTATICS."
-            print "skipping particle"
+            print("Error, the blockfile sets a particle parameter which is not compiled in.")
+            print("To properly pickle a particle, all necessary features need to be compiled.")
+            print("For example, if the particle property 'q' is set, we need ELECTROSTATICS.")
+            print("skipping particle")
             continue
         # pickle it
         with open(argv[2] + "-ParticleList.pcl", 'w') as outfile:
-            print "Pickling ParticleList"
+            print("Pickling ParticleList")
             pickle.dump(pl, outfile, -1)
             del pl
 
@@ -98,8 +99,8 @@ for k in b_list:
         # here, the blockfile tool returns a string containing ugly escapes.
         # this means we have to do some data processing.
         if not isinstance(k[1], str):
-            print "Unexpected error, bf.blockfile did not return string for inter"
-            print "skipping interaction block"
+            print("Unexpected error, bf.blockfile did not return string for inter")
+            print("skipping interaction block")
             continue
         # split block into strings for every interaction directive and
         # get rid of unnecessary characters
@@ -109,7 +110,7 @@ for k in b_list:
         # every numeric string into an integer or float.
         # Then filter every empty string.
         # Do that for every command invocation in block.
-        k[1] = [filter(lambda x: x!='',[safe_str2intflt(word) for word in words.split(' ')]) 
+        k[1] = [[x for x in [safe_str2intflt(word) for word in words.split(' ')] if x!=''] 
                             for words in k[1]] 
 
         # We need to differentiate between Bonded and Nonbonded
@@ -135,11 +136,11 @@ for k in b_list:
                     # Here, we found lennard-jones interaction. 
                     # In this indentation level we write interaction specific
                     # parsing code.
-                    print "Found lennard-jones interaction for particles"
+                    print("Found lennard-jones interaction for particles")
                     # test whether or not there are enough arguments for
                     # the required parameters of lj
                     if n_args < 6:
-                        print "Not enough arguments for lennard-jones, skipping"
+                        print("Not enough arguments for lennard-jones, skipping")
                         continue # The continue statement jumps to the next
                                  # iteration of the innermost for-loop
                     # create input dict for the lj kwargs
@@ -153,7 +154,7 @@ for k in b_list:
                     if 7 < n_args: in_dict["offset"] = arg_list[7]
                     if 8 < n_args: in_dict["min"]    = arg_list[8]
                     if 9 < n_args: 
-                        print "Error: too many arguments for lennard-jones, skipping"
+                        print("Error: too many arguments for lennard-jones, skipping")
                         continue
                     # initialization of the interaction with nia.
                     # Also: since set_params doesn't natively support dicts as *args
@@ -163,10 +164,10 @@ for k in b_list:
                     nia_success = True # set this to true if nia actually did something
                     
                     # be nice to the user
-                    print "\nSetting up lennard-jones with the following params:"
-                    print in_dict
-                    print "for id %d and %d" %(arg_list[0], arg_list[1])
-                    print ""
+                    print("\nSetting up lennard-jones with the following params:")
+                    print(in_dict)
+                    print("for id %d and %d" %(arg_list[0], arg_list[1]))
+                    print("")
             
                 # HERE is the spot where you can implement the initialization
                 # for an individual NonBondedInteraction. One elif-statement for every
@@ -177,7 +178,7 @@ for k in b_list:
                 elif arg_list[2] == "MyNonBondedInteraction":
                     pass
                 else:
-                    print "NonBondedInteraction " + arg_list[2] + " is unknown, skipping"
+                    print("NonBondedInteraction " + arg_list[2] + " is unknown, skipping")
                     continue
         
             elif isinstance(arg_list[0], int) and isinstance(arg_list[1], str):
@@ -190,26 +191,26 @@ for k in b_list:
                     pass
                 
                 else:
-                    print "BondedInteraction" + arg_list[1] + " is unknown, skipping"
+                    print("BondedInteraction" + arg_list[1] + " is unknown, skipping")
                     continue
             else:
-                print "Unknown interaction format, skipping"
+                print("Unknown interaction format, skipping")
         
         # end of arg_list for loop
         if nia_success:
             with open(argv[2] + "-NonBondedInteractions.pcl", "w") as outfile:
                 pickle.dump(nia, outfile, -1)
-                print "pickling NonBondedInteractions"
+                print("pickling NonBondedInteractions")
             del nia, nia_success
         if bia_success:
             with open(argv[2] + "-BondedInteractions.pcl", "w") as outfile:
                 pickle.dump(bia, outfile, -1)
-                print "pickling NonBondedInteractions"
+                print("pickling NonBondedInteractions")
             del bia, bia_success
     elif k[0] == "MyBlockIdentifier":
         pass
 
     else:
-        print "blocktype " + k[0] + " unknown, skipping"
+        print("blocktype " + k[0] + " unknown, skipping")
 
 

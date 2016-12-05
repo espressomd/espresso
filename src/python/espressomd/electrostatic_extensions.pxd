@@ -18,10 +18,11 @@
 #
 # Handling of electrostatics
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
-from utils cimport *
-from electrostatics cimport *
+from espressomd._system cimport *
+from espressomd.utils cimport *
+from espressomd.electrostatics cimport *
 
 IF ELECTROSTATICS and P3M:
 
@@ -66,5 +67,5 @@ IF ELECTROSTATICS and P3M:
         void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
-        cdef extern from "communication.hpp":
-            int mpi_iccp3m_init(int dummy)
+    cdef extern from "communication.hpp":
+        int mpi_iccp3m_init(int dummy)

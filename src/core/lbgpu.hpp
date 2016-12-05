@@ -28,7 +28,7 @@
 
 #include "utils.hpp"
 #include "config.hpp"
-#include "statistics_observable.hpp"
+#include "observables/profiles.hpp" 
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -223,7 +223,6 @@ extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
-extern int n_lb_boundaries;
 #ifdef ELECTROKINETICS
 extern LB_node_force_gpu node_f;
 extern int ek_initialized;
@@ -304,8 +303,8 @@ void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkp
 int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
 
-int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
-int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
+//int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
+//int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
 
 /*@{*/
 

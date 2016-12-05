@@ -18,13 +18,14 @@
 #
 # Minimize Energy
 
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from _system cimport *
+from espressomd._system cimport *
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 
-cdef extern from "minimize_energy.hpp": 
-    cdef void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement) 
+cdef extern from "minimize_energy.hpp":
+    cdef void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
 
 cdef extern from "communication.hpp":
-    cdef int mpi_minimize_energy();
+    cdef int mpi_minimize_energy()

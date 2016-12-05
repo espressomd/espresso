@@ -702,6 +702,8 @@ int set_particle_mass(int part, double mass)
   mpi_send_mass(pnode, part, mass);
   return ES_OK;
 }
+#else
+constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
@@ -2201,15 +2203,6 @@ void pointer_to_smaller_timestep(Particle* p, int*&  res)
 }
 #endif
 
-
-#ifdef MASS
-void pointer_to_mass(Particle* p, double*&  res)
-{
-  res=&(p->p.mass);
-}
-#endif
-
-
 #ifdef DIPOLES
 void pointer_to_dip(Particle* p, double*& res)
 {
@@ -2303,8 +2296,3 @@ bool particle_exists(int part) {
         return true;
    return false;
 }
-
-#ifndef MASS
-constexpr double ParticleProperties::mass;
-#endif
-

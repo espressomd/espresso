@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef UTILS_HPP
+#define UTILS_HPP
 /** \file utils.hpp
  *    Small functions that are useful not only for one modul.
 
@@ -28,14 +28,18 @@
  *
 */
 
+#include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <exception>
 #include <vector>
-#include <cmath>
 
 #include "config.hpp"
 
+#include "debug.hpp"
 #include "errorhandling.hpp"
-
+#include "lees_edwards.hpp"
+#include "utils/math/sqr.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -315,9 +319,6 @@ inline void permute_ifield(int *field, int size, int permute) {
 
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
 inline double dround(double x) { return floor(x + 0.5); }
-
-/** Calculates the SQuaRe of 'double' x, returning 'double'. */
-inline double SQR(double x) { return x * x; }
 
 /** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
@@ -851,7 +852,8 @@ inline void print_block(double *data, int start[3], int size[3], int dim[3],
   for (b = 0; b < divide; b++) {
     start1 = b * block1 + start[1];
     for (i0 = start[0] + size[0] - 1; i0 >= start[0]; i0--) {
-      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]); i1++) {
+      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]);
+           i1++) {
         for (i2 = start[2]; i2 < start[2] + size[2]; i2++) {
           tmp = data[num + (element * (i2 + dim[2] * (i1 + dim[1] * i0)))];
           if (tmp < 0)

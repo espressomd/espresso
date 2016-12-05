@@ -8,6 +8,10 @@
 //#include <cuda_interface.hpp>
 #include <cstdio>
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn(cufftComplex *charge_potential);
 

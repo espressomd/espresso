@@ -208,7 +208,6 @@ struct ParticleProperties {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4];
@@ -1018,10 +1017,6 @@ void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
 
 #ifdef MULTI_TIMESTEP
 void pointer_to_smaller_timestep(Particle *p, int *&res);
-#endif
-
-#ifdef MASS
-void pointer_to_mass(Particle *p, double *&res);
 #endif
 
 void pointer_to_dip(Particle *P, double *&res);

@@ -47,6 +47,10 @@
 //#include "errorhandling.hpp"
 #include "global.hpp"
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 
 // global variables for usage in this file
 cublasHandle_t     cublas    = NULL;

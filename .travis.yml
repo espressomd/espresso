@@ -1,66 +1,65 @@
-language: cpp
-dist: trusty
-sudo: false
+language: generic
 
-cache: 
-  - apt
-  - ccache
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=default
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=ubuntu-python3
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=debian
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=ubuntu-cuda make_check=false
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset
+      cache:
+        directories:
+        - /usr/local/Cellar/boost
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset image=python3
+      cache:
+        directories:
+        - /usr/local/Cellar/boost
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandom
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandomcut
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=molcut
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=rest1
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=rest2
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=nocheck-maxset make_check=false
 
-addons:
-  apt:
-    sources:
-      - boost-latest 
-      - ubuntu-toolchain-r-test
-      - george-edison55-precise-backports
-    packages:
-      - ccache
-      - tcl-dev
-      - libhdf5-serial-dev 
-      - build-essential 
-      - pep8 
-      - cmake
-      - cmake-data
-      - libboost1.55-dev 
-      - libboost-test1.55-dev
-      - libboost-mpi1.55-dev
-      - libboost-serialization1.55-dev
-      - libopenmpi-dev
-      - openmpi-bin
-      - libfftw3-dev
-      - gcc-4.8
-      - g++-4.8
 
-before_install:
- - if [[ ${CC} = gcc ]]; then export CC="gcc-${GVER}" CXX="g++-${GVER}"; fi
- - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
- - chmod +x miniconda.sh
- - bash miniconda.sh -b -p $HOME/miniconda
- - export PATH=/home/travis/miniconda/bin:$PATH
- - conda update --yes conda
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang++"
- - ln -s /usr/bin/ccache "$HOME/miniconda/bin/clang"
-
-install:
- - conda create --yes -n test python=2.7.9
- - source activate test
- - conda install --yes numpy cython pip
-
-env:
-  global:
-    - CCACHE_CPP2=yes
-    - GVER=4.8
-  matrix:
-    - myconfig=default
-    - myconfig=maxset
-    - myconfig=maxset-gaussrandom
-    - myconfig=maxset-gaussrandomcut
-    - myconfig=molcut
-    - myconfig=rest1
-    - myconfig=rest2
-    - make_check=false myconfig=nocheck-maxset
-
-compiler:
-  - gcc
-  - clang
-
-script: ./maintainer/travis/build_cmake.sh
+script:
+        - maintainer/travis/build_docker.sh
+ 

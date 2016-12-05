@@ -1,7 +1,11 @@
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 
 IF DIPOLES == 1:
+    cdef extern from "communication.hpp":
+        void mpi_bcast_coulomb_params()
+
     cdef extern from "interaction_data.hpp":
         ctypedef enum dipolar_interaction "DipolarInteraction":
             DIPOLAR_NONE = 0,

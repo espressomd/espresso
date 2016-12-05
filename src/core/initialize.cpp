@@ -57,9 +57,10 @@
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
 #include "reaction_ensemble.hpp"
-#include "statistics_observable.hpp"
-#include "statistics_correlation.hpp"
-#include "lb-boundaries.hpp"
+#include "observables/Observable.hpp"
+#include "correlators/Correlator.hpp"
+#include "lbboundaries.hpp"
+#include "lbboundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
@@ -202,10 +203,6 @@ void on_integration_start()
 #ifdef METADYNAMICS
   meta_init();
 #endif
-
-//#ifdef REACTION_ENSEMBLE
-//  reaction_ensemble_init();
-//#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -379,14 +376,14 @@ void on_lbboundary_change()
 
 #ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
   }
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries();
+      LBBoundaries::lb_init_boundaries();
     }
   }
 #endif
@@ -464,7 +461,7 @@ void on_boxl_change() {
   if(lattice_switch & LATTICE_LB) {
     lb_init();
 #ifdef LB_BOUNDARIES
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
 #endif
@@ -660,7 +657,7 @@ void on_lb_params_change_gpu(int field) {
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
 #ifdef LB_BOUNDARIES_GPU
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
   if (field == LBPAR_DENSITY) {

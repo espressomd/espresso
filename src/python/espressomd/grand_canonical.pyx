@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from utils cimport *
+from __future__ import print_function, absolute_import
+from espressomd.utils cimport *
 cimport globals
 from globals cimport max_seen_particle
 
@@ -41,6 +42,7 @@ def setup(type_list=None):
             raise ValueError(
                 "The system contains no particles. Create one particle with arbitrary type first!")
         init_type_array(type_id)
+        handle_errors("init_type_array -> updatePartCfg failed")
 
 
 def delete_particles(type_id=None):

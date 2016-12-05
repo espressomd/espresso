@@ -26,6 +26,7 @@ cdef extern from "global.hpp":
     int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
     int FIELD_SIMTIME
+    int FIELD_MIN_GLOBAL_CUT
 
 cdef extern from "communication.hpp":
     extern int n_nodes
@@ -75,6 +76,7 @@ cdef extern from "interaction_data.hpp":
     extern int n_particle_types
     extern double max_cut_nonbonded
     extern double max_cut_bonded
+    extern double min_global_cut
 
 
 cdef extern from "thermostat.hpp":
@@ -83,7 +85,11 @@ cdef extern from "thermostat.hpp":
     extern double nptiso_gammav
     extern double temperature
     extern int thermo_switch
-
+    IF ROTATION:
+        IF ROTATIONAL_INERTIA:
+            double langevin_gamma_rotation[3]
+        ELSE:
+            double langevin_gamma_rotation
 
 cdef extern from "dpd.hpp":
     extern int dpd_wf

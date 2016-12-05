@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport utils
+from __future__ import print_function, absolute_import
+from . cimport utils
 include "myconfig.pxi"
-cimport actors
-import actors
+from espressomd cimport actors
+from . import actors
 import numpy as np
+from espressomd.utils cimport handle_errors
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
@@ -64,8 +66,7 @@ IF ELECTROSTATICS and P3M:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
             if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
-                raise ValueError(
-                    "Choose a 3d electrostatics method prior to ELC")
+                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()

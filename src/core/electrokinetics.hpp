@@ -21,7 +21,7 @@
 #define _ELECTROKINETICS_HPP
 
 #include "config.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 
 //note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
 //to compile when electrokinetics is not compiled in. This seemed more elegant than
@@ -186,7 +186,7 @@ int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
 int ek_node_set_density(int species, int x, int y, int z, double density);
-float ek_calculate_net_charge(); 
+ekfloat ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 
 int ek_save_checkpoint(char* filename);
 int ek_load_checkpoint(char* filename);
@@ -196,6 +196,8 @@ void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int
 #endif
 
 #ifdef EK_REACTION
+#error The EK_REACTION feature has not been adjusted to the new lb boundaries. Hence, this feature is unavailable at this point.
+
 int ek_print_vtk_reaction_tags(char* filename);
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 

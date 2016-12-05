@@ -45,9 +45,9 @@ double temperature = 0.0;
 double langevin_gamma = 0.0;
 /* Friction coefficient gamma for rotation */
 #ifndef ROTATIONAL_INERTIA
-double langevin_gamma_rotation = 0.0;
+double langevin_gamma_rotation = -1.0;
 #else
-double langevin_gamma_rotation[3] = {0.0,0.0,0.0};
+double langevin_gamma_rotation[3] = {-1.0,-1.0,-1.0};
 #endif
 /* Langevin for translations */
 bool langevin_trans = true;
@@ -121,12 +121,12 @@ void thermo_init_langevin()
   
 #ifdef ROTATION 
 #ifndef ROTATIONAL_INERTIA
-  if ( langevin_gamma_rotation == 0.0 )
+  if ( langevin_gamma_rotation < 0.0 )
   {
     langevin_gamma_rotation = langevin_gamma;
   }
 #else
-  if (( langevin_gamma_rotation[0] == 0.0 ) && (langevin_gamma_rotation[1] == 0.0) && (langevin_gamma_rotation[2] == 0.0))
+  if (( langevin_gamma_rotation[0] < 0.0 ) || (langevin_gamma_rotation[1] < 0.0) || (langevin_gamma_rotation[2] < 0.0))
   for ( j = 0 ; j < 3 ; j++)
   {
     langevin_gamma_rotation[j] = langevin_gamma;
