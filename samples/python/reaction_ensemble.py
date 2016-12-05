@@ -29,7 +29,9 @@ import numpy as np
 
 import sys
 
-print(code_info.features())
+if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
+	print("REACTION_ENSEMBLE not compiled in.")
+	sys.exit()
 dev = "cpu"
 
 # System parameters
