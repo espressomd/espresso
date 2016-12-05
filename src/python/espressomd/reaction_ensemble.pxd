@@ -104,5 +104,3 @@ cdef extern from "reaction_ensemble.hpp":
 
 cdef class ReactionEnsemble:
     cdef _params
-    
-
