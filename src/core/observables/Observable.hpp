@@ -20,6 +20,7 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include "config.hpp"
+#include <fstream>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -41,10 +42,7 @@ class Observable {
 
 
     /* IO functions for observables */
-    void set_filename(std::string const& filename)
-    {
-      m_filename = filename;
-    };
+    void set_filename(std::string const& filename, bool binary);
     bool writable() const;
     void write() const;
   //void read();
@@ -59,6 +57,7 @@ class Observable {
 
     virtual void do_write() const;
   //virtual void do_read();
+    std::ofstream mutable m_ofile;
     std::string m_filename;
     bool        m_binary;
 };

@@ -29,6 +29,7 @@ Observable::Observable()
   , last_update(0)
   , autoupdate(0)
   , autoupdate_dt(0)
+  , m_ofile()
   , m_filename()
   , m_binary(false)
 {}
@@ -51,9 +52,31 @@ int Observable::update() {
 }
 
 
+void Observable::set_filename(std::string const& filename, bool binary)
+{
+  if ( !filename.empty() )
+  {
+    m_filename = filename;
+    m_binary   = binary;
+
+    auto mode = std::ios_base::out;
+    if ( m_binary )
+      mode |= std::ios_base::binary;
+
+    if ( m_ofile.is_open() )
+    {
+      m_ofile.close();
+      m_ofile.clear(); // clear flags
+    }
+
+    m_ofile.open(m_filename, mode);
+  }
+};
+
+
 bool Observable::writable() const
 {
-  return !m_filename.empty();
+  return m_ofile.is_open();
 }
 
 
@@ -68,16 +91,10 @@ void Observable::write() const
 
 void Observable::do_write() const
 {
-  auto mode = std::ios_base::app;
-  if (m_binary) mode &= std::ios_base::binary;
-
-  std::ofstream ofile;
-  ofile.open(m_filename, mode);
-
-  ofile << sim_time;
+  m_ofile << sim_time;
   for (auto p : last_value)
-    ofile << " " << p;
-  ofile << std::endl;
+    m_ofile << " " << p;
+  m_ofile << std::endl;
 }
 
 
