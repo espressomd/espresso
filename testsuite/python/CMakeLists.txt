@@ -12,6 +12,7 @@ set(py_tests  bondedInteractions.py
               p3m_gpu.py
               particle.py
 	            tabulated.py
+              reaction_ensemble.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

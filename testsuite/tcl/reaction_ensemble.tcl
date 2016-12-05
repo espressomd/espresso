@@ -85,7 +85,7 @@ if { [catch {
     set pK_a [expr -log10($K_apparent_HA_diss)]
     set real_error_in_degree_of_association [expr abs($average_degree_of_association-[ideal_degree_of_association $pK_a $pH])/[ideal_degree_of_association $pK_a $pH]]
     
-    if { $real_error_in_degree_of_association > 0.04  } {
+    if { $real_error_in_degree_of_association > 0.07  } {
       error "reaction ensemble: relative error in the degreee of association too large"
     }
     
