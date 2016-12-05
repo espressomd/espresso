@@ -10,6 +10,7 @@ set(py_tests  bondedInteractions.py
               p3m_gpu.py
               particle.py
 	      tabulated.py
+	      reaction_ensemble.py
 )
 
 add_custom_target(python_tests
