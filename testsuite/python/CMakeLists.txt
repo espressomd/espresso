@@ -11,7 +11,8 @@ set(py_tests  bondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
-	      tabulated.py
+              scafacos_dipoles_1d_2d.py
+	            tabulated.py
 )
 
 add_custom_target(python_tests
