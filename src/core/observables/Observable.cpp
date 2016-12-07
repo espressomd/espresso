@@ -59,7 +59,7 @@ void Observable::set_filename(std::string const& filename, bool binary)
     m_filename = filename;
     m_binary   = binary;
 
-    auto mode = std::ios_base::out;
+    auto mode = std::ios_base::app;
     if ( m_binary )
       mode |= std::ios_base::binary;
 
