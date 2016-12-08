@@ -695,7 +695,7 @@ The reaction ensemble is derived from the grand canonical ensemble\cite{turner20
   \variant{2} reaction\_ensemble add equilibrium_constant \var{K} educt\_types \var{list\_educt\_types} educt_coefficients \var{list\_educt\_coefficients} product\_types \var{list\_product\_types} product\_coefficients \var{list\_product\_coefficients}
   \variant{3} reaction\_ensemble standard\_pressure\_in\_simulation\_units \var{desired\_pressure\_at\_which\_reactions\_occur}
   \variant{4} reaction\_ensemble temperature\_reaction\_ensemble \var{temperature\_reaction\_ensemble}
-  \variant{5} reaction\_ensemble exclusion\_radius
+  \variant{5} reaction\_ensemble exclusion\_radius \var{exclusion\_radius}
   \variant{6} reaction\_ensemble set\_default\_charge\_of\_type \var{type} \var{charge}
   \variant{7} reaction\_ensemble cylindrical\_constraint\_in\_z\_direction center \var{cyl_x} \var{cyl_y} radius \var{radius}
   \variant{8} reaction\_ensemble wall\_constraints\_in\_z\_direction \var{slab\_z\_start} \var{slab\_z\_end}
@@ -704,6 +704,26 @@ The reaction ensemble is derived from the grand canonical ensemble\cite{turner20
   
   Required features: REACTION\_ENSEMBLE
   \end{essyntax}
+  
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
+  	RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
+  	RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
+  	RE.set_cylindrical_constraint_in_z_direction()
+  	RE.set_wall_constraints_in_z_direction()
+	RE.print_status()
+	RE.reaction()
+	RE.set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder)
+	RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z)
+	RE.set_volume(volume)
+	RE.print_acceptance_rate_configurational_moves()
+	RE.free()
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+  
   Note: if the commands are used they should be used in this order, since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
 \variant{1} prints the current reaction system and checks for some essential parameters.
 \variant{3} sets the pressure for the reaction\_ensemble algorithm
@@ -747,6 +767,28 @@ Note that \variant{6} has to be called for each type that occurs in the reaction
   
   Required features: REACTION\_ENSEMBLE
 \end{essyntax}
+
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
+	RE.add_collective_variable_degree_of_association(associated_type=int, min=float, max=float, corresponding_acid_types=list)
+	RE.add_collective_variable_potential_energy(filename=string,delta=float)
+	RE.set_wang_landau_parameters(final_wang_landau_parameter=float, wang_landau_steps=float, full_path_to_output_filename=string, do_not_sample_reaction_partition_function=bool, use_hybrid_monte_carlo=bool)
+	RE.write_wang_landau_checkpoint()
+	RE.load_wang_landau_checkpoint()
+	RE.update_maximum_and_minimum_energies_at_current_state()
+	RE.write_out_preliminary_energy_run_results()
+	RE.do_reaction_wang_landau()
+	RE.wang_landau_free()
+	RE.counter_ion_type=int
+	RE.polymer_start_id=int
+	RE.polymer_end_id=int
+	RE.fix_polymer_monomers=bool
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+
 \variant{11} adds a reaction coordinate of the type degree of association
 \variant{12} adds a reaction coordinate of the type potential energy
 Note since also configuration changing moves have to be biased by the Wang-Landau potential in the case of energy reweighting the configuration changing Monte-Carlo moves are implemented which take care of the biasing. \variant{20} can be used without Wang-Landau biasing when you ommit the optional wang-landau keyword. For these monte carlo moves we need to provide additional information which are put into espresso by \variant{13}. \variant{13} provides the counter\_ion\_type that gets moved by MC moves as well as optionally the ids of the monomers that correspond to a polymer that should be moved. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable \variant{13} is therefore optional. In the case of using an energy collective variable \variant{13} together with \var{counter\_ion\_type} has to be used. Also in this case \var{polymer\_start\_id} and \var{polymer\_start\_id} are optional, since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation.
@@ -780,6 +822,21 @@ The Constant pH method from Reed and Reed (1992) can yield equivalent results fo
 	
 	Required features: REACTION_ENSEMBLE
 \end{essyntax}
+
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=ignored_float, temperature=float, exclusion_radius=float)
+  	RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
+  	RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\})
+	RE.print_status()
+	RE.set_pH_core(pH_input)
+	RE.do_reaction_constant_pH() 
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+
+
 \variant{1} sets the pH that the pH bath assumes and \variant{2} performs a reaction according to the constant pH method.
 
 

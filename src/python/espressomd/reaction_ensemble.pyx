@@ -82,6 +82,9 @@ IF REACTION_ENSEMBLE:
             current_reaction_system.slab_start_z=slab_start_z
             current_reaction_system.slab_end_z=slab_end_z
          
+        def set_volume(volume):
+            current_reaction_system.volume=volume
+
         def print_acceptance_rate_configurational_moves(self):
                 print "acceptance rate for configurational moves is", (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves
 
