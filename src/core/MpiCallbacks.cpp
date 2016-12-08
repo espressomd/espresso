@@ -42,7 +42,7 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
   std::array<int, 3> request{id, par1, par2};
 
   /** Send request to slaves */
-  boost::mpi::broadcast(m_comm, request, 0);
+  boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
 }
 
 void MpiCallbacks::call(func_ptr_type fp, int par1, int par2) const {
@@ -84,7 +84,7 @@ void MpiCallbacks::loop() const {
   for (;;) {
     std::array<int, 3> request;
     /** Communicate callback id and parameters */
-    boost::mpi::broadcast(m_comm, request, 0);
+    boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
     /** id == 0 is loop_abort. */
     if (request[0] == LOOP_ABORT) {
       break;
