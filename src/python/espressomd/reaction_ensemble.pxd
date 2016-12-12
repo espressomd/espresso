@@ -34,6 +34,7 @@ cdef extern from "reaction_ensemble.hpp":
 
     cdef extern reaction_system current_reaction_system
     int do_reaction()
+    bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer)
     int find_index_of_type(int type)
     int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types)
     int update_type_index(int* educt_types, int len_educt_types , int* product_types, int len_product_types)
@@ -87,6 +88,7 @@ cdef extern from "reaction_ensemble.hpp":
     cdef extern wang_landau_system current_wang_landau_system
     int initialize_wang_landau()
     int do_reaction_wang_landau()
+    bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer)
     void free_wang_landau()
     int update_maximum_and_minimum_energies_at_current_state()
     void write_out_preliminary_energy_run_results(char* filename)

@@ -681,51 +681,59 @@ barostat for NVT and NPT simulations, respectively.  See \cite{bereau15} for
 more details.
 
 \section{Reaction Ensemble}
-The reaction ensemble\cite{smith1994reaction} allows to simulate chemical reactions especially with varying particle numbers.  Therefore it is similar to the grand canonical ensemble however it applies some further restrictions since the particle numbers are not allowed to fluctuate arbitrarily. Therefore it can be viewed as a grand canonical simulation scheme with inherent rejection sampling with respect to the fluctuations in the particle numbers. Arbitrary chemical reactions can be simulated with the reaction ensemble as long as you know the educts and products of the reaction as well as the equilibrium constant of the reaction. Currently only the version of the reaction ensemble at constant volume and constant temperature is implemented (the version at constant pressure and constant temperature is not implemented). Note that the method also only allows to obtain static observables since the particle dynamics are changed by the Monte Carlo moves of the method.
-Since you might be interested in thermodynamic properties of a reacting system you may use the Wang-Landau algorithm\cite{wang2001efficient} to obtain them. Here the 1/t Wang-Landau algorithm\cite{belardinelli2007fast} is implemented since it does not suffer from systematic errors.
+The reaction ensemble\cite{smith1994reaction} allows to simulate chemical reactions for which one can provide a reaction equation:
+\begin{equation}
+	\schemestart  $\left|\nu_1\right|$ $S_1$ +\dots  $\left|\nu_l \right|$ $S_l$ \arrow{<=>} $\nu_m$ $S_m$ + \dots $\nu_z$ $S_z$ \schemestop,
+	\label{most_general_chemical_equation}
+\end{equation}
+where the stoichiometric coefficient $\nu_i$ indicates the number of particles of the chemical species $S_i$ that take part in the reaction.
+
+The reaction ensemble is derived from the grand canonical ensemble\cite{turner2008simulation}. Therefore, it is similar to the grand canonical ensemble however it applies some further restrictions since the particle numbers are not allowed to fluctuate arbitrarily. It can be viewed as a grand canonical simulation scheme with inherent rejection sampling with respect to the fluctuations in the particle numbers. Note that the method also only allows to obtain static observables since the particle dynamics are changed by the Monte Carlo moves of the method.
 
 \begin{essyntax}
   \variant{1} reaction\_ensemble
   \variant{2} reaction\_ensemble add equilibrium_constant \var{K} educt\_types \var{list\_educt\_types} educt_coefficients \var{list\_educt\_coefficients} product\_types \var{list\_product\_types} product\_coefficients \var{list\_product\_coefficients}
   \variant{3} reaction\_ensemble standard\_pressure\_in\_simulation\_units \var{desired\_pressure\_at\_which\_reactions\_occur}
   \variant{4} reaction\_ensemble temperature\_reaction\_ensemble \var{temperature\_reaction\_ensemble}
-  \variant{5} reaction\_ensemble exclusion\_radius
+  \variant{5} reaction\_ensemble exclusion\_radius \var{exclusion\_radius}
   \variant{6} reaction\_ensemble set\_default\_charge\_of\_type \var{type} \var{charge}
-  \variant{21} reaction\_ensemble cylindrical\_constraint\_in\_z\_direction center \var{cyl_x} \var{cyl_y} radius \var{radius}
-  \variant{22} reaction\_ensemble volume \var{volume}
-  \variant{24} reaction\_ensemble wall\_constraints\_in\_z\_direction \var{slab\_z\_start} \var{slab\_z\_end}
-  \end{essyntax}
-  Additionally we several commands for the Wang-Landau reaction ensemble are available.
-  \begin{essyntax}
-  \variant{7} reaction\_ensemble wang_landau add degree\_of\_association associated\_type \var{associated\_type} min \var{min\_value} max \var{max\_value} corresponding\_acid\_types \var{list\_of\_corresponding\_types}
-  \variant{8} reaction\_ensemble wang\_landau add energy filename \var{energy\_boundary\_filename} delta \var{Delta\_E}
-  \variant{9} reaction\_ensemble wang\_landau counter\_ion\_type \var{counter\_ion\_type} [polymer\_start\_id \var{polymer\_start\_id}] [polymer\_end\_id \var{polymer\_start\_id}] [fix_polymer_monomers] 
-  \variant{10} reaction\_ensemble wang\_landau final\_wang\_landau\_parameter \var{final\_wang\_landau\_parameter}
-  \variant{11} reaction\_ensemble wang\_landau full\_path\_to\_output\_filename \var{full\_path\_to\_output\_filename}
-  \variant{12} reaction\_ensemble wang\_landau do\_not\_sample\_reaction\_partition\_function
-  \variant{13} reaction\_ensemble wang\_landau update\_maximum\_and\_minimum\_energies\_at\_current\_state
-  \variant{14} reaction\_ensemble wang\_landau write\_out\_preliminary\_energy\_run\_results \var{energy\_boundary\_filename}
-  \variant{15} reaction_ensemble wang_landau \var{wang\_landau\_setps}
-    \variant{16} reaction\_ensemble wang\_landau use\_hybrid\_monte\_carlo (Requires feature CONSTRAINTS)
-  \variant{17} reaction\_ensemble [wang\_landau] do
-  \variant{20} reaction\_ensemble monte\_carlo\_move\_for\_type \var{type}
-  \variant{18} reaction\_ensemble wang\_landau write\_wang\_landau\_checkpoint \var{unique identifier}
-  \variant{19} reaction\_ensemble wang\_landau load\_wang\_landau\_checkpoint \var{unique identifier}
-  \variant{23} reaction\_ensemble print\_acceptance\_rate
+  \variant{7} reaction\_ensemble cylindrical\_constraint\_in\_z\_direction center \var{cyl_x} \var{cyl_y} radius \var{radius}
+  \variant{8} reaction\_ensemble wall\_constraints\_in\_z\_direction \var{slab\_z\_start} \var{slab\_z\_end}
+  \variant{9} reaction\_ensemble volume \var{volume}
+  \variant{10} reaction\_ensemble do
+  
   Required features: REACTION\_ENSEMBLE
-\end{essyntax}
-Note: if the commands are used they should be used in this order (except of the last two), since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
+  \end{essyntax}
+  
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble \\
+  	\variant{1} RE.print_status() \\
+  	\variant{2} RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list) \\
+  	\variant{3} \variant{4} \variant{5} RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float) \\
+  	\variant{6} RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\}) \\
+  	\variant{7} RE.set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder) \\
+  	\variant{8} RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z) \\
+	\variant{9} RE.set_volume(volume) \\
+	\variant{10} RE.reaction() \\
+	RE.do_global_mc_move_for_one_particle_of_type(type) (similar like in the Wang-Landau case below) \\
+	RE.print_acceptance_rate_configurational_moves() (similar like in the Wang-Landau case below) \\
+	RE.free() 
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+  
+  Note: if the commands are used they should be used in this order, since the implementation in the tcl interface is sensitive to the order of the arguments of the reaction\_ensemble command. Further note that an equilibrium reaction always has a forward and a backward reaction. Each of them has to be provided via \variant{2}. 
 \variant{1} prints the current reaction system and checks for some essential parameters.
 \variant{3} sets the pressure for the reaction\_ensemble algorithm
-\variant{4} sets the temperature for the reaction\_ensemble algorithm. This could in principle be different from the temperature that is used in a MD thermostat. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves (default off).
+\variant{4} sets the temperature for the reaction\_ensemble algorithm. This could in principle be different from the temperature that is used in a MD thermostat.
 \variant{5} sets an exclusion radius. This is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore $\exp(-\beta E)$ gives these configurations aproximately zero contribution in the partition function.
-\variant{9} provides the counter\_ion\_type that gets moved by MC moves as well as optionally the ids of the monomers that correspond to a polymer that should be moved. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable \variant{9} is therefore optional. In the case of using an energy collective variable \variant{9} together with \var{counter\_ion\_type} has to be used. Also in this case \var{polymer\_start\_id} and \var{polymer\_start\_id} are optional, since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation.
-\variant{18-19} can be used to checkpoint the Wang-Landau histogram, potential, parameter and the number of executed trial moves.
-\variant{20} performs a global monte carlo move for all paricles of the given type.
-\variant{21} can be used to constrain the monte carlo moves so that particles are only placed in a cylinder around the z-axis at the given center and with the given radius. In conjunction to that \variant{24} needs to be used to set the volume of the reaction ensemble method to the appropriate (constrained) value.
-\variant{23} returns the acceptrance rate for all MC moves that are preformed with reaction\_ensemble monte\_carlo\_move\_for\_type
-\begin{arguments}
-\item[\var{K}] dimensionless equilibrium constant of the reaction (note this is not necessarily the equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
+\variant{6} sets the charges of the particle types that are created. Note that it has to be called for each type that occurs in the reaction system individually.
+\variant{7} can be used to constrain the monte carlo moves so that particles are only placed in a cylinder around the z-axis at the given center and with the given radius. Similarly \variant{8} can be used to restrict the sampling area to a slab in z-direction. In conjunction with the previous two commands you need to use \variant{9} to set the volume of the reaction ensemble method to the appropriate (constrained) value.
+\variant{10} performs one randomly selected reaction out of the provided reaction system.
+
+  \begin{arguments}
+  \item[\var{K}] dimensionless equilibrium constant of the reaction (note this is not necessarily the equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
 \item[\var{list\_educt\_types}] a list of educt types of the reaction.
 \item[\var{list\_educt\_coefficients}] a list of the educt coefficients of the reaction that correspond to the product types.
 \item[\var{list\_product\_types}] a list of product types of the reaction.
@@ -733,42 +741,114 @@ Note: if the commands are used they should be used in this order (except of the 
 \item[\var{desired\_pressure\_at\_which\_reactions\_occur}] the pressure in simulation units where the reactions should occur. This is an input parameter of the reaction ensemble.
 \item[\var{type}] a type id.
 \item[\var{charge}] a charge that corresponds to the previously given \var{type}. Make sure to provide this for all types that occur in a reaction!
+  \end{arguments}
+
+
+\subsection{Wang-Landau Reaction Ensemble}
+  Since you might be interested in thermodynamic properties of a reacting system you may use the Wang-Landau algorithm\cite{wang2001efficient} to obtain them. Here the 1/t Wang-Landau algorithm\cite{belardinelli2007fast} is implemented since it does not suffer from systematic errors.
+  Additionally to the above commands for the reaction ensemble use the following commands for the Wang-Landau reaction ensemble:
+  \begin{essyntax}
+  \variant{11} reaction\_ensemble wang_landau add degree\_of\_association associated\_type \var{associated\_type} min \var{min\_value} max \var{max\_value} corresponding\_acid\_types \var{list\_of\_corresponding\_types}
+  \variant{12} reaction\_ensemble wang\_landau add energy filename \var{energy\_boundary\_filename} delta \var{Delta\_E}
+  \variant{13} reaction\_ensemble wang\_landau counter\_ion\_type \var{counter\_ion\_type} [polymer\_start\_id \var{polymer\_start\_id}] [polymer\_end\_id \var{polymer\_start\_id}] [fix_polymer_monomers] 
+  \variant{14} reaction\_ensemble wang\_landau final\_wang\_landau\_parameter \var{final\_wang\_landau\_parameter}
+  \variant{15} reaction\_ensemble wang\_landau full\_path\_to\_output\_filename \var{full\_path\_to\_output\_filename}
+  \variant{16} reaction\_ensemble wang\_landau do\_not\_sample\_reaction\_partition\_function
+  \variant{17} reaction\_ensemble wang\_landau update\_maximum\_and\_minimum\_energies\_at\_current\_state
+  \variant{18} reaction\_ensemble wang\_landau write\_out\_preliminary\_energy\_run\_results \var{energy\_boundary\_filename}
+  \variant{19} reaction_ensemble wang_landau \var{wang\_landau\_setps}
+    \variant{20} reaction\_ensemble wang\_landau use\_hybrid\_monte\_carlo (Requires feature CONSTRAINTS)
+  \variant{21} reaction\_ensemble wang\_landau do
+  \variant{22} reaction\_ensemble [wang\_landau] monte\_carlo\_move\_for\_type \var{type}
+  \variant{23} reaction\_ensemble wang\_landau write\_wang\_landau\_checkpoint \var{unique identifier}
+  \variant{24} reaction\_ensemble wang\_landau load\_wang\_landau\_checkpoint \var{unique identifier}
+  \variant{25} reaction\_ensemble print\_acceptance\_rate
+  
+  Required features: REACTION\_ENSEMBLE
+\end{essyntax}
+
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble \\
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float) \\
+	\variant{11} RE.add_collective_variable_degree_of_association(associated_type=int, min=float, max=float, corresponding_acid_types=list) \\
+	\variant{12} RE.add_collective_variable_potential_energy(filename=string,delta=float) \\
+	\variant{13} RE.counter_ion_type=int \\
+	\variant{13} RE.polymer_start_id=int \\
+	\variant{13} RE.polymer_end_id=int \\
+	\variant{13} RE.fix_polymer_monomers=bool \\
+	\variant{14} \variant{15} \variant{16} \variant{19} \variant{20} RE.set_wang_landau_parameters(final_wang_landau_parameter=float, wang_landau_steps=float, full_path_to_output_filename=string, do_not_sample_reaction_partition_function=bool, use_hybrid_monte_carlo=bool) \\
+	\variant{17} RE.update_maximum_and_minimum_energies_at_current_state() \\
+	\variant{18} RE.write_out_preliminary_energy_run_results() \\
+	\variant{21} RE.do_reaction_wang_landau() \\
+	\variant{22} RE.do_global_mc_move_for_one_particle_of_type_wang_landau(type) \\
+	\variant{23} RE.write_wang_landau_checkpoint() \\
+	\variant{24} RE.load_wang_landau_checkpoint() \\
+	\variant{25} RE.print_acceptance_rate_configurational_moves() \\
+	\variant{26} RE.wang_landau_free()
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+
+\variant{11} adds a reaction coordinate of the type degree of association
+\variant{12} adds a reaction coordinate of the type potential energy
+Note since also configuration changing moves have to be biased by the Wang-Landau potential in the case of energy reweighting the configuration changing Monte-Carlo moves are implemented which take care of the biasing. \variant{20} can be used without Wang-Landau biasing when you ommit the optional wang-landau keyword. For these monte carlo moves we need to provide additional information which are put into espresso by \variant{13}. \variant{13} provides the counter\_ion\_type that gets moved by MC moves as well as optionally the ids of the monomers that correspond to a polymer that should be moved. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable \variant{13} is therefore optional. In the case of using an energy collective variable \variant{13} together with \var{counter\_ion\_type} has to be used. Also in this case \var{polymer\_start\_id} and \var{polymer\_start\_id} are optional, since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation.
+For \variant{20}: make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves (default off). Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However the implementation is experimental only. Check the implementation again before using HMC here. \variant{21} performs a reaction in the Wang-Landau reaction ensemble.
+\variant{22} performs a global monte carlo move for one paricles of the given type. If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
+\variant{23, 24} can be used to checkpoint the Wang-Landau histogram, potential, parameter and the number of executed trial moves.
+\variant{25} returns the acceptrance rate for all MC moves that are preformed with reaction\_ensemble monte\_carlo\_move\_for\_type
+\variant{26} frees the Wang-Landau data structures in the core.
+
+\begin{arguments}
 \item[\var{associated\_type}] type id of the associated type when calculating the degree of association
 \item[\var{min\_value}] the minimum value of the range of the degree of association which should be sampled
 \item[\var{max\_value}] the maximum value of the range of the degree of association which should be sampled
 \item[\var{list\_of\_corresponding\_types}] 
 \item[\var{energy\_boundary\_filename}] filename of file that contains the energy boundaries. This file has to be obtained before being able to run a simulation with the energy as collective variable.
 \item[\var{Delta\_E}] discretization distance of the energy when binning it in the process of using it as a collective variable. Avoid the begin and the end of the CV\_interval not being a multiple of the delta\_CV.
+\item[\var{final\_wang\_landau\_parameter}] Wang-Landau parameter at which the simulation should stop.
+\item[\var{full\_path\_to\_output\_filename}] Filename of the file that contains the Wang-Landau potential.
+\item[\var{wang\_landau\_setps}], number of Wang-Landau steps performed at once. This is for performance. It reduces the need for the tcl interpreter to be called.
 \item[\var{counter\_ion\_type}], type of ions which will be moved by global Monte-Carlo moves. \textit{Since you cannot employ MD when using the potential energy collective variable} without adding a force (not implemented) that is calculated from the Wang-Landau potential we use MC moves to explore new configurations. In the case of not using the energy collective variable you may use MD steps to propagate your system instead of using MC moves.
 \item[\var{polymer\_start\_id}] the start id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space.
 \item[\var{polymer\_end\_id}] the end id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space.
 \item[fix\_polymer\_monomers] fixes the polymer monomers in the Monte Carlo moves
-\item[\var{final\_wang\_landau\_parameter}] Wang-Landau parameter at which the simulation should stop.
-\item[\var{full\_path\_to\_output\_filename}] Filename of the file that contains the Wang-Landau potential.
-\item[\var{wang\_landau\_setps}] for a performance, reduces the need for the tcl interpreter to be called.
-
-Required features: REACTION_ENSEMBLE
 \end{arguments}
-Note that \variant{6} has to be called for each type that occurs in the reaction system individually.
 
 \section{Constant pH}
-The Constant pH method from Reed and Reed (1992) is somewhat similar to some extent to the reaction ensemble when it is used for monoprotic acids. However the constant pH method significantly differs in its derivation and the physical setting it sets up. Whereas the pH in the reaction ensemble adjusts \textit{in the simulation box} (this means that is assured that there is a certain number of protons in the simulation box) the constant pH method couples the simulation box to a kind of proton bath in the way reactions are performed. In Espresso you can use the constant pH method by initializing the reactions of interest with the commands mentioned for the reaction ensemble. However with the difference that you do not provide the dimensionless reaction constant but directly the \textit{apparent reaction constant} (from the law of mass action) $K_a$ which can in general carry a unit. Additionally the following commands are available:
+The Constant pH method from Reed and Reed (1992) can yield equivalent results for monoprotic acids as the reaction ensemble under certain circumstances\cite{landsgesell2016b}. However the constant pH method significantly differs in its derivation and the physical setting it sets up. Whereas the pH in the reaction ensemble adjusts \textit{in the simulation box} (this means that is assured that there is a certain number of protons in the simulation box) the constant pH method couples the simulation box to a kind of proton bath in the way reactions are performed. In Espresso you can use the constant pH method by initializing the reactions of interest with the commands mentioned for the reaction ensemble. However with the difference that you do not provide the dimensionless reaction constant but directly the \textit{apparent reaction constant} (from the law of mass action) $K_a$ which can in general carry a unit. Additionally the following commands are available:
 \begin{essyntax}
 	\variant{1} reaction_ensemble constant_pH pH \var{pH}
 	\variant{2} reaction_ensemble constant_pH do
+	
+	Required features: REACTION_ENSEMBLE
 \end{essyntax}
+
+  \begin{pysyntax}
+  	from espressomd import reaction_ensemble
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=ignored_float, temperature=float, exclusion_radius=float)
+  	RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
+  	RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\})
+	RE.print_status()
+	RE.set_pH_core(pH_input)
+	RE.do_reaction_constant_pH() 
+	\begin{features}
+		\required{REACTION_ENSEMBLE}
+	\end{features}
+\end{pysyntax}
+
+
 \variant{1} sets the pH that the pH bath assumes and \variant{2} performs a reaction according to the constant pH method.
 
 
-Required features: REACTION_ENSEMBLE
-
 \section{Grand Canonical Ensemble}
-Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves with the same transition probability as in the grand canonical ensemble. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities. These kinds of moves are perfect to include the autodissociation of water into the system.
+Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities.
 \subsection{How to add the water autodissociation to a simulation}
-In order to add the water autodissociation 2 H2O $<=>$ H3O+ +OH-  to a simulation add the following reactions to Espresso ($\emptyset$ (read ex nihilo) means that the reaction has no educts, respectively products. Therefore if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an educt, then particles are created ex nihilo. Do not provide educts or products if they are $\emptyset$.):
+With the above trick of grand canonical simulation moves include we can include the autodissociation of water into the system.
+In order to add the water autodissociation \schemestart 2 H$_2$O \arrow{<=>} H$_3$O$^+$ +OH$^-$ \schemestop  to a simulation, add the following ex nihilo reactions to Espresso. ($\emptyset$, read ex nihilo). Ex nihilo means that the reaction has no educts or products. Therefore, if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an educt, then particles are created ex nihilo:
 \begin{itemize}
-\item $\emptyset -> H3O+ + OH-$ with reaction constant $K$
-\item $H3O+ + OH- -> \emptyset$ with reaction constant $1/K$,
+\item \ce{$\emptyset$ -> H3O+ + OH-} with reaction constant $K$
+\item \ce{ H3O+ + OH- -> $\emptyset$ } with reaction constant $1/K$,
 \end{itemize}
 where K is given implicitly as a function of the apparent dissociation constant $K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}$: $K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}$ with $\overline{\nu}=2$ for the dissociation reaction and where x is the value of the apparent dissociation constant that is converted from $\rm{mol^2/l^2}$ to a number density in $1/(\sigma^3)^2$, where $\sigma$ is the simulation length unit. If $\beta$ and $P^0$ are provided in simulation units this will make $K$ dimensionless. 
 As a test for the autodissociation of water a big simulation box can be set up and the autodissociation reaction can be performed. Then the box should fill with the correct number of protons and hydroxide ions (check for the number of protons and hydroxide ions in the given simulation volume and compare this to the expected value at pH 7). Further the $pK_w=14$ should be reproduced -also in the case of an initial excess of acid or base in the simulation box. Note that this only works for big enough volumes.
