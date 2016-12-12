@@ -171,6 +171,9 @@ IF REACTION_ENSEMBLE:
         
         def reaction(self):
             do_reaction()
+        
+        def do_global_mc_move_for_one_particle_of_type(type_mc):
+            do_global_mc_move_for_one_particle_of_type(type_mc, -10,-10)
 
         def print_status(self):
             if(current_reaction_system.nr_single_reactions == 0):
@@ -301,6 +304,9 @@ IF REACTION_ENSEMBLE:
             status_wang_landau=do_reaction_wang_landau()
             if(status_wang_landau<0):
                     raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
+
+        def do_global_mc_move_for_one_particle_of_type_wang_landau(type_mc):
+            do_global_mc_move_for_one_particle_of_type_wang_landau(type_mc, current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id)
 
         def wang_landau_free(self):
             free_wang_landau()

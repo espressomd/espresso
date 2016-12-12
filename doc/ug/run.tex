@@ -706,19 +706,18 @@ The reaction ensemble is derived from the grand canonical ensemble\cite{turner20
   \end{essyntax}
   
   \begin{pysyntax}
-  	from espressomd import reaction_ensemble
-  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
-  	RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
-  	RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
-  	RE.set_cylindrical_constraint_in_z_direction()
-  	RE.set_wall_constraints_in_z_direction()
-	RE.print_status()
-	RE.reaction()
-	RE.set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder)
-	RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z)
-	RE.set_volume(volume)
-	RE.print_acceptance_rate_configurational_moves()
-	RE.free()
+  	from espressomd import reaction_ensemble \\
+  	\variant{1} RE.print_status() \\
+  	\variant{2} RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list) \\
+  	\variant{3} \variant{4} \variant{5} RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float) \\
+  	\variant{6} RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\}) \\
+  	\variant{7} RE.set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder) \\
+  	\variant{8} RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z) \\
+	\variant{9} RE.set_volume(volume) \\
+	\variant{10} RE.reaction() \\
+	RE.do_global_mc_move_for_one_particle_of_type(type) (similar like in the Wang-Landau case below) \\
+	RE.print_acceptance_rate_configurational_moves() (similar like in the Wang-Landau case below) \\
+	RE.free() 
 	\begin{features}
 		\required{REACTION_ENSEMBLE}
 	\end{features}
@@ -729,7 +728,7 @@ The reaction ensemble is derived from the grand canonical ensemble\cite{turner20
 \variant{3} sets the pressure for the reaction\_ensemble algorithm
 \variant{4} sets the temperature for the reaction\_ensemble algorithm. This could in principle be different from the temperature that is used in a MD thermostat.
 \variant{5} sets an exclusion radius. This is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore $\exp(-\beta E)$ gives these configurations aproximately zero contribution in the partition function.
-Note that \variant{6} has to be called for each type that occurs in the reaction system individually.
+\variant{6} sets the charges of the particle types that are created. Note that it has to be called for each type that occurs in the reaction system individually.
 \variant{7} can be used to constrain the monte carlo moves so that particles are only placed in a cylinder around the z-axis at the given center and with the given radius. Similarly \variant{8} can be used to restrict the sampling area to a slab in z-direction. In conjunction with the previous two commands you need to use \variant{9} to set the volume of the reaction ensemble method to the appropriate (constrained) value.
 \variant{10} performs one randomly selected reaction out of the provided reaction system.
 
@@ -769,21 +768,23 @@ Note that \variant{6} has to be called for each type that occurs in the reaction
 \end{essyntax}
 
   \begin{pysyntax}
-  	from espressomd import reaction_ensemble
-  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
-	RE.add_collective_variable_degree_of_association(associated_type=int, min=float, max=float, corresponding_acid_types=list)
-	RE.add_collective_variable_potential_energy(filename=string,delta=float)
-	RE.set_wang_landau_parameters(final_wang_landau_parameter=float, wang_landau_steps=float, full_path_to_output_filename=string, do_not_sample_reaction_partition_function=bool, use_hybrid_monte_carlo=bool)
-	RE.write_wang_landau_checkpoint()
-	RE.load_wang_landau_checkpoint()
-	RE.update_maximum_and_minimum_energies_at_current_state()
-	RE.write_out_preliminary_energy_run_results()
-	RE.do_reaction_wang_landau()
-	RE.wang_landau_free()
-	RE.counter_ion_type=int
-	RE.polymer_start_id=int
-	RE.polymer_end_id=int
-	RE.fix_polymer_monomers=bool
+  	from espressomd import reaction_ensemble \\
+  	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float) \\
+	\variant{11} RE.add_collective_variable_degree_of_association(associated_type=int, min=float, max=float, corresponding_acid_types=list) \\
+	\variant{12} RE.add_collective_variable_potential_energy(filename=string,delta=float) \\
+	\variant{13} RE.counter_ion_type=int \\
+	\variant{13} RE.polymer_start_id=int \\
+	\variant{13} RE.polymer_end_id=int \\
+	\variant{13} RE.fix_polymer_monomers=bool \\
+	\variant{14} \variant{15} \variant{16} \variant{19} \variant{20} RE.set_wang_landau_parameters(final_wang_landau_parameter=float, wang_landau_steps=float, full_path_to_output_filename=string, do_not_sample_reaction_partition_function=bool, use_hybrid_monte_carlo=bool) \\
+	\variant{17} RE.update_maximum_and_minimum_energies_at_current_state() \\
+	\variant{18} RE.write_out_preliminary_energy_run_results() \\
+	\variant{21} RE.do_reaction_wang_landau() \\
+	\variant{22} RE.do_global_mc_move_for_one_particle_of_type_wang_landau(type) \\
+	\variant{23} RE.write_wang_landau_checkpoint() \\
+	\variant{24} RE.load_wang_landau_checkpoint() \\
+	\variant{25} RE.print_acceptance_rate_configurational_moves() \\
+	\variant{26} RE.wang_landau_free()
 	\begin{features}
 		\required{REACTION_ENSEMBLE}
 	\end{features}
@@ -796,7 +797,7 @@ For \variant{20}: make sure not to use an MD thermostat in the case of using the
 \variant{22} performs a global monte carlo move for one paricles of the given type. If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
 \variant{23, 24} can be used to checkpoint the Wang-Landau histogram, potential, parameter and the number of executed trial moves.
 \variant{25} returns the acceptrance rate for all MC moves that are preformed with reaction\_ensemble monte\_carlo\_move\_for\_type
-
+\variant{26} frees the Wang-Landau data structures in the core.
 
 \begin{arguments}
 \item[\var{associated\_type}] type id of the associated type when calculating the degree of association
@@ -846,8 +847,8 @@ Since the Reaction Ensemble acceptance transition probability can be derived fro
 With the above trick of grand canonical simulation moves include we can include the autodissociation of water into the system.
 In order to add the water autodissociation \schemestart 2 H$_2$O \arrow{<=>} H$_3$O$^+$ +OH$^-$ \schemestop  to a simulation, add the following ex nihilo reactions to Espresso. ($\emptyset$, read ex nihilo). Ex nihilo means that the reaction has no educts or products. Therefore, if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an educt, then particles are created ex nihilo:
 \begin{itemize}
-\item $\schemestart $\emptyset$ \arrow{->} H$_3$O$^+$ + OH$^-$\schemestop$ with reaction constant $K$
-\item $\schemestart H$_3$O$^+$ + OH$^-$ \arrow{->} $\emptyset$ \schemestop$ with reaction constant $1/K$,
+\item \ce{$\emptyset$ -> H3O+ + OH-} with reaction constant $K$
+\item \ce{ H3O+ + OH- -> $\emptyset$ } with reaction constant $1/K$,
 \end{itemize}
 where K is given implicitly as a function of the apparent dissociation constant $K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}$: $K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}$ with $\overline{\nu}=2$ for the dissociation reaction and where x is the value of the apparent dissociation constant that is converted from $\rm{mol^2/l^2}$ to a number density in $1/(\sigma^3)^2$, where $\sigma$ is the simulation length unit. If $\beta$ and $P^0$ are provided in simulation units this will make $K$ dimensionless. 
 As a test for the autodissociation of water a big simulation box can be set up and the autodissociation reaction can be performed. Then the box should fill with the correct number of protons and hydroxide ions (check for the number of protons and hydroxide ions in the given simulation volume and compare this to the expected value at pH 7). Further the $pK_w=14$ should be reproduced -also in the case of an initial excess of acid or base in the simulation box. Note that this only works for big enough volumes.
