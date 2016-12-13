@@ -28,6 +28,7 @@ set(tcl_tests  analysis.tcl
                ek_electrostatics_coupling_y.tcl 
                ek_electrostatics_coupling_z.tcl 
                ek_reaction.tcl 
+               electrostatics-driven-aggregate-drift.tcl
                el2d.tcl 
                el2d_nonneutral.tcl 
                engine_langevin.tcl 
