@@ -31,7 +31,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     # make real random draw
     set cmd "t_random seed"
     for {set i 0} {$i < [setmd n_nodes]} { incr i } {
-	  lappend cmd [expr [pid] + $i] }
+        lappend cmd [expr [pid] + $i] }
     eval $cmd
 
     set gamma0 1.
@@ -129,11 +129,19 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set gamma_rot_2(1) [expr (0.2 + [t_random]) * 20]
     set gamma_rot_3(1) [expr (0.2 + [t_random]) * 20]
 
-    set box 35
-    setmd box_l $box $box $box
+    set n 200
+    set sig [expr 5.0/6.0]
+    set start_lattice_a [expr $sig]
+    set buf_l [expr 2*$start_lattice_a]
+    set box_l [expr $start_lattice_a*pow(2*$n,1/3.0)+$buf_l]
+    set box_l_x [expr $box_l*1.0]
+    set box_l_y [expr $box_l*1.0]
+    set box_l_z [expr $box_l/1.0]
+
+    setmd box_l $box_l $box_l $box_l
     set kT 1.5
     if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
-        cellsystem layered [expr 25/[setmd n_nodes]]
+        cellsystem layered [expr 3]
         setmd periodic 1 1 0
     }
 
@@ -158,16 +166,41 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd skin 1.0
     setmd time_step 0.004
 
-    set n 200
     set mass [expr (0.2 + [t_random]) * 7]
     set j1 [expr (0.2 + [t_random]) * 7]
     set j2 [expr (0.2 + [t_random]) * 7]
     set j3 [expr (0.2 + [t_random]) * 7]
-
+    set coord_shift [expr 0.1*$start_lattice_a]
+    set posx $coord_shift
+    set posy $coord_shift
+    set posz $coord_shift
+    
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
             set ind [expr $i + $k*$n]
-            part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr $box * (0.15 + 0.7 * [t_random])] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
+            
+            set theta [expr $PI*[t_random]]
+            set phi [expr 2.0*$PI*[t_random]]
+            
+            set posx [expr $posx+$start_lattice_a]
+            if {$posx > $box_l_x-$buf_l} {
+                set posx [expr $coord_shift]
+                set posy [expr $posy+$start_lattice_a]
+                if {$posy > $box_l_y-$buf_l} {
+                    set posy [expr $coord_shift]
+                    set posz [expr $posz+$start_lattice_a]
+                    if {$posz > $box_l_z-$buf_l} {
+                        puts "Not enough box_l for particles!"
+                    }
+                }
+            }
+            
+            set dx [expr sin($theta)*cos($phi)]
+            set dy [expr sin($theta)*sin($phi)]
+            set dz [expr cos($theta)]
+            
+            part [expr $i + $k*$n] pos $posx $posy $posz dip $dx $dy $dz rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
+            
             switch $test_case {
                 1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
@@ -182,17 +215,31 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
     
     if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
-        inter coulomb 1.0 mmm2d 1E-1
-        constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]
+        #inter coulomb 1.0 mmm2d 1E-1
+        #constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]
         
         set sig [expr 1.0];
-        constraint wall normal 0 0 1 dist [expr 0.03 * $box] type 2 penetrable 0 reflecting 1
-        constraint wall normal 0 0 -1 dist [expr -0.97 * $box] type 2 penetrable 0 reflecting 1
+        constraint wall normal 0 0 1 dist [expr 0.03 * $box_l] type 2 penetrable 0 reflecting 1
+        constraint wall normal 0 0 -1 dist [expr -0.97 * $box_l] type 2 penetrable 0 reflecting 1
         
         set sig [expr 5.0/6.0]; set cut [expr 0.4*1.12246*$sig]
         set eps 5; set shift [expr 0.25*$eps]
         inter 2 1 lennard-jones $eps $sig $cut $shift 0
         inter 2 0 lennard-jones $eps $sig $cut $shift 0
+        
+        set sig [expr 5.0/6.0]; set cut [expr 0.4*1.12246*$sig]
+        set eps 5; set shift [expr 0.25*$eps]
+        inter 0 0 lennard-jones $eps $sig $cut $shift 0
+        
+        set sig [expr 5.0/6.0]; set cut [expr 0.4*1.12246*$sig]
+        set eps 5; set shift [expr 0.25*$eps]
+        inter 1 1 lennard-jones $eps $sig $cut $shift 0
+        
+        set sig [expr 5.0/6.0]; set cut [expr 0.4*1.12246*$sig]
+        set eps 5; set shift [expr 0.25*$eps]
+        inter 0 1 lennard-jones $eps $sig $cut $shift 0
+        
+        inter magnetic 5 bh-gpu
     }
     
     prepare_vmd_connection "vmdfile" 10000
@@ -245,20 +292,6 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                 set dz2($k) [expr pow([expr [lindex $pos 2] - [lindex $pos0($ind) 2]], 2)]
                 set dt0 [expr $mass / $gamma_tr($k)]
                 set dt [expr ($int_steps * ($i + 1) + $therm_steps) * [setmd time_step]]
-                # translational diffusion variance: after a closed-form integration of the Langevin EOM
-                if {!([has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"])} {
-                    set sigma2_tr($k) [expr $D_tr($k) * (6 * $dt + 3 * $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
-                    set dr($k) [expr $dr($k) + (($dx2($k)+$dy2($k)+$dz2($k)) - $sigma2_tr($k)) / $sigma2_tr($k)]
-                } else {
-                    if { $k == 0} {
-                        set sigma2_tr($k) [expr $D_tr($k) * (2 * $dt + $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
-                        set dr($k) [expr $dr($k) + ($dz2($k) - $sigma2_tr($k)) / $sigma2_tr($k)]
-                        #set dr($k) 0
-                    } else {
-                        # nothing to test due to contraints and the periodicity
-                        set dr($k) 0
-                    }
-                }
             }
         }
     }
@@ -275,7 +308,6 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
         set dv($k) [expr 1./3. *($Evx($k) +$Evy($k) +$Evz($k))/$halfkT($k)-1.]
         set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT($k)-1.]
-        set dr($k) [expr $dr($k)/$n/$loops]
         
         set dox($k) [expr ($Eox($k))/$halfkT($k)-1.]
         set doy($k) [expr ($Eoy($k))/$halfkT($k)-1.]
@@ -297,9 +329,6 @@ proc test_mass-and-rinertia_per_particle {test_case} {
            puts "Moment of inertia principal components: $j1 $j2 $j3"
            error "Relative deviation in rotational energy too large: $do($k)"
         }
-        if { abs($dr($k)) > $tolerance } {
-           error "Relative deviation in translational dispersion too large: $dr($k)"
-       }
        
         # SEMI_INTEGRATED is consistent for isotropic particles only
         if {![has_feature "SEMI_INTEGRATED"]} {
