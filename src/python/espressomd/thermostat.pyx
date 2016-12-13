@@ -66,7 +66,12 @@ cdef class Thermostat:
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
-            lang_dict["gamma"] = langevin_gamma
+            IF PARTICLE_ANISOTROPY:
+                lang_dict["gamma"] = [langevin_gamma[0],
+                                      langevin_gamma[1],
+                                      langevin_gamma[2]]
+            ELSE:
+                lang_dict["gamma"] = langevin_gamma
             IF ROTATIONAL_INERTIA:
                 lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
                                                langevin_gamma_rotation[1],
@@ -117,7 +122,11 @@ cdef class Thermostat:
         temperature = 0.
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         global langevin_gamma
-        langevin_gamma = 0.
+        IF PARTICLE_ANISOTROPY:
+            for i in range(3):
+                langevin_gamma[i] = 0.
+        ELSE:
+            langevin_gamma = 0.
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         global langevin_gamma_rotation
         IF ROTATION:
@@ -137,15 +146,29 @@ cdef class Thermostat:
     def set_langevin(self, kT="", gamma="", gamma_rotation=""):
         """Sets the Langevin thermostat with required parameters 'temperature' 'gamma'
         and optional parameter 'gamma_rotation'"""
+        
+        scalar_gamma_def = True
+        IF PARTICLE_ANISOTROPY:
+            if isinstance(gamma,list):
+                scalar_gamma_def = False
+            else:
+                scalar_gamma_def = True
 
         if kT == "" or gamma == "":
             raise ValueError(
                 "Both, kT and gamma have to be given as keyword args")
         utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
-        utils.check_type_or_throw_except(gamma,1,float,"gamma must be a number")
-        if float(kT) < 0. or float(gamma) < 0.:
-            raise ValueError("temperature and gamma must be positive numbers")
-
+        if scalar_gamma_def:
+            utils.check_type_or_throw_except(gamma,1,float,"gamma must be a number")
+        else:
+            utils.check_type_or_throw_except(gamma,3,float,"diagonal elements of the gamma tensor must be numbers")
+        
+        if scalar_gamma_def:
+            if float(kT) < 0. or float(gamma) < 0.:
+                raise ValueError("temperature and gamma must be positive numbers")
+        else:
+            if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
+                raise ValueError("temperature and diagonal elements of the gamma tensor must be positive numbers")
         global langevin_gamma_rotation
         if gamma_rotation != "":
             IF ROTATIONAL_INERTIA:
@@ -158,7 +181,17 @@ cdef class Thermostat:
         global temperature
         temperature = float(kT)
         global langevin_gamma
-        langevin_gamma = float(gamma)
+        IF PARTICLE_ANISOTROPY:
+            if scalar_gamma_def:
+                langevin_gamma[0] = gamma
+                langevin_gamma[1] = gamma
+                langevin_gamma[2] = gamma
+            else:
+                langevin_gamma[0] = gamma[0]
+                langevin_gamma[1] = gamma[1]
+                langevin_gamma[2] = gamma[3]
+        ELSE:
+            langevin_gamma = float(gamma)
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
@@ -212,5 +245,3 @@ cdef class Thermostat:
             req = ["kT","gamma","r_cut"]
             valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
             raise Exception("Not implemented yet.")
-
-

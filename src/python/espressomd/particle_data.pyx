@@ -597,20 +597,39 @@ cdef class ParticleHandle:
                         return np.array([0.0, 0.0, 0.0])
 
     IF LANGEVIN_PER_PARTICLE:
-        property gamma:
-            """Friction coefficient per particle in Langevin"""
-
-            def __set__(self, _gamma):
-                check_type_or_throw_except(
-                    _gamma, 1, float, "gamma has to be a float")
-                if set_particle_gamma(self.id, _gamma) == 1:
-                    raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * gamma = NULL
-                pointer_to_gamma( & (self.particle_data), gamma)
-                return gamma[0]
+        IF PARTICLE_ANISOTROPY:
+            property gamma:
+                """Rotational friction coefficient per particle in Langevin"""
+    
+                def __set__(self, _gamma):
+                    cdef double gamma[3]
+                    check_type_or_throw_except(
+                        _gamma, 3, float, "Friction has to be 3 floats")
+                    for i in range(3):
+                        gamma[i] = _gamma[i]
+                    if set_particle_gamma(self.id, gamma) == 1:
+                        raise Exception("set particle position first")
+        
+                def __get__(self):
+                    self.update_particle_data()
+                    cdef double * gamma = NULL
+                    pointer_to_gamma(& (self.particle_data), gamma)
+                    return np.array([gamma[0], gamma[1], gamma[2]])
+        ELSE:
+            property gamma:
+                """Friction coefficient per particle in Langevin"""
+    
+                def __set__(self, _gamma):
+                    check_type_or_throw_except(
+                        _gamma, 1, float, "gamma has to be a float")
+                    if set_particle_gamma(self.id, _gamma) == 1:
+                        raise Exception("set particle position first")
+    
+                def __get__(self):
+                    self.update_particle_data()
+                    cdef double * gamma = NULL
+                    pointer_to_gamma( & (self.particle_data), gamma)
+                    return gamma[0]
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 property gamma_rot:
