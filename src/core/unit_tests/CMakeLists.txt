@@ -36,6 +36,16 @@ function(UNIT_TEST TEST_NAME TEST_SRC)
   add_dependencies(check_unit_tests ${TEST_NAME})  
 endfunction(UNIT_TEST)
 
+function(PARALLEL_UNIT_TEST TEST_NAME TEST_SRC NUM_PROC)
+  add_executable(${TEST_NAME} ${TEST_SRC})
+  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  add_dependencies(${TEST_NAME} EspressoConfig)
+  
+  add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NUM_PROC} ${TEST_NAME})
+  add_dependencies(check_unit_tests ${TEST_NAME})  
+endfunction(PARALLEL_UNIT_TEST)
+
+
 # Add tests here
 
 unit_test(Vector_test Vector_test.cpp)
@@ -53,6 +63,8 @@ unit_test(Factory_test Factory_test.cpp)
 unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
 
 set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
-unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}")
+parallel_unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}" 2)
 
-
+set(ParallelScriptInterface_test_SRC  ParallelScriptInterface_test.cpp)
+parallel_unit_test(ParallelScriptInterface_test "${ParallelScriptInterface_test_SRC}" 2)
+target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)

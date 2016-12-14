@@ -17,8 +17,8 @@ if [ -z "$image" ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	image=espressomd/buildenv-espresso-$image
-	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone /travis && cd travis && maintainer/travis/build_cmake.sh"
+	image=espressomd/buildenv-espresso-$image:python
+	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone --recursive /travis && cd travis && maintainer/travis/build_cmake.sh"
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 #	brew update
 #	brew upgrade
@@ -26,6 +26,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	case "$image" in
 		python3)
 			brew install python3
+            pip3 install h5py
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
@@ -34,6 +35,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 		;;
 		*)
 			brew install python
+            pip install h5py
 			pip install cython
 			pip install numpy
 			pip install pep8
@@ -41,8 +43,14 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	esac
 	brew install openmpi
 	brew install fftw
-
-	# The binary version of Boost comes without MPI support, so we have to compile it ourselves.
+    #brew install homebrew/science/hdf5 --with-mpi
+    HDF5_VERSION=1.8.17
+    export HDF5_ROOT=$HOME/hdf5
+    wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz && tar xfvz hdf5-${HDF5_VERSION}.tar.gz &&
+    cd hdf5-${HDF5_VERSION} && mkdir build && cd build && cmake .. -DHDF5_ENABLE_PARALLEL=ON -DHDF5_BUILD_CPP_LIB=OFF -DCMAKE_INSTALL_PREFIX=$HOME/hdf5 &&
+    make -j4 &> /dev/null && make install && cd ../../ ;
+    # The binary version of Boost comes without MPI support, so we have to
+    # compile it ourselves.
 	# Boost takes a long time to install, so we have Travis-CI cache it.
 	BOOST_VERSION=$(brew info --json=v1 boost | python -m json.tool | grep linked_keg | awk -F '"' '{print $4}')
 	brew unlink boost

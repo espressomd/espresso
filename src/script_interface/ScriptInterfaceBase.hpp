@@ -22,14 +22,12 @@
 
 #include <map>
 #include <memory>
-#include <string>
 #include <type_traits>
-#include <vector>
 
 #include "utils/serialization/array.hpp"
 
-#include "Parameter.hpp"
 #include "Variant.hpp"
+#include "Parameter.hpp"
 
 namespace ScriptInterface {
 
@@ -83,6 +81,10 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
+  enum class CreationPolicy { LOCAL, GLOBAL };
+
+  virtual ~ScriptInterfaceBase() = default;
+
   /**
    * @brief Name of the object.
    *
@@ -165,7 +167,8 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name);
+  make_shared(std::string const &name,
+              CreationPolicy policy = CreationPolicy::LOCAL);
 
   /**
    * @brief Get a new reference counted instance of a script interface by
