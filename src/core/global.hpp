@@ -61,6 +61,9 @@ typedef struct {
   /** Minimal number of characters needed for unique identification of the
       variable. */
   int min_length;
+  /** Whether scalar (i.e. single value) definition of all vector components is allowed.
+      One makes sense for dimension > 1 only */
+  bool scalar_default_allowed;
 } Datafield;
 
 /** This array contains the description of all global variables that
@@ -196,8 +199,12 @@ extern const Datafield fields[];
 #define FIELD_SMALLERTIMESTEP     59
 /** index of \ref configtemp in \ref #fields */
 #define FIELD_CONFIGTEMP          60
+/** index of \ref langevin_trans in \ref #fields */
+#define FIELD_LANGEVIN_TRANS_SWITCH 61
+/** index of \ref langevin_rotate in \ref #fields */
+#define FIELD_LANGEVIN_ROT_SWITCH 62
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
-#define FIELD_LANGEVIN_GAMMA_ROTATION 61
+#define FIELD_LANGEVIN_GAMMA_ROTATION 63
 
 /*@}*/
 

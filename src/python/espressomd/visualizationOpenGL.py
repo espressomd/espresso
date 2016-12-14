@@ -122,9 +122,6 @@ class openGLLive:
         if self.specs['light_pos'] == 'auto':
             glutTimerFunc(2000, timed_update_particleCOM, -1)
             glutTimerFunc(60, timed_update_centerLight, -1)
-        #FOR MAC, BRING WINDOW TO FRONT
-        os.system(
-            '''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')
         #START THE BLOCKING MAIN LOOP
         glutMainLoop()
 
