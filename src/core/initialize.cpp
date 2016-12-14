@@ -597,6 +597,7 @@ void on_parameter_change(int field)
     }
 #endif
   case FIELD_LANGEVIN_GAMMA:
+  case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_DPD_GAMMA:
   case FIELD_DPD_TGAMMA:
     reinit_thermo = 1;
