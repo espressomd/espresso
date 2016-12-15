@@ -23,8 +23,9 @@ from espressomd cimport actors
 from . import actors
 cimport globals
 import numpy as np
-from .scafacos import *
-from . cimport scafacos
+IF SCAFACOS == 1:
+    from .scafacos import *
+    from . cimport scafacos
 
 
 cdef class ElectrostaticInteraction(actors.Actor):
