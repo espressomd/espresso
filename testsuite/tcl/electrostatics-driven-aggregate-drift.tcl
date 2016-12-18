@@ -111,7 +111,7 @@ set F [expr 2*$PI*$sigma*$q_tot]
 set gamma_tot [expr $gamma0*$n]
 set mass_tot [expr $mass*$n]
 
-prepare_vmd_connection "vmdfile" 10000
+# prepare_vmd_connection "vmdfile" 10000
 
 # Let's start from zero again
 setmd time 0
