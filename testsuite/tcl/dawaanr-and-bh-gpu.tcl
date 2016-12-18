@@ -45,8 +45,8 @@ set tcl_precision 14
 
 proc vectorsTheSame {a b} {
  set tol 5E-2
- set diff [vecsub $a $b]
- if { [veclen $diff] > $tol } {
+ set rel_diff [expr [veclen [vecsub $a $b]] / [veclen $a]]
+ if { $rel_diff > $tol } {
   return 0
   puts "Difference: [veclen $diff]"
  }
@@ -156,7 +156,7 @@ for {set i 0} {$i<1000} {incr i} {
   eval "part $b pos $posa dip $dipa"
   integrate 0 recalc_forces
   set E [analyze energy total]
-  if { abs($E -$ddsgpu_e) > 5E-2 } {
+  if { abs($E -$ddsgpu_e) / $ddsgpu_e > 5E-2 } {
     error "energy mismatch: $E $ddsgpu_e"
   }
 }
