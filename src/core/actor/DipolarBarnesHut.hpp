@@ -21,7 +21,7 @@ class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s) {
 
-	k = coulomb.Dbjerrum;
+	k = coulomb.Dprefactor;
 
 	if(!s.requestFGpu())
       std::cerr << "DipolarBarnesHut needs access to forces on GPU!" << std::endl;
@@ -72,7 +72,7 @@ public:
 
 	//std::cout << "Trace computeForces 2" << std::endl;
 	//printf("Trace computeForces 2");
-	forceBH(s.blocksGpu(),k, s.fGpuBegin(),s.torqueGpuBegin(),box,per);
+	forceBH(s.blocksGpu(),k,s.fGpuBegin(),s.torqueGpuBegin(),box,per);
 	//cudaThreadSynchronize();
   };
   void computeEnergy(SystemInterface &s) {
