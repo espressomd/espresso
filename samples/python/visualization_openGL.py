@@ -32,7 +32,7 @@ system = espressomd.System()
 
 #Init the visualizer, set specs by an optional dict (coloring, periodic images etc). 
 #See visualization_openGL.py for possible options
-visualizer = openGLLive(system, {'periodic_images': [1,1,0]})
+visualizer = openGLLive(system, periodic_images = [1,1,0])
 
 for key, value in visualizer.specs.items():
     print(str(key) + ":" + (30-len(key))*" " + str(value))
@@ -52,7 +52,7 @@ visualizer.registerCallback(muu)
 
 def main():
     system.time_step = 0.00001
-    system.skin = 0.4
+    system.cell_system.skin = 0.4
     box_l = 10
     system.box_l = [box_l, box_l, box_l]
 
@@ -63,7 +63,7 @@ def main():
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
     while True: 
-        integrate.integrate(1)
+        system.integrator.run(1)
         #Update particle information safely here
         visualizer.update()
 

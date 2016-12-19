@@ -10,38 +10,13 @@ import espressomd
 import collections
 
 import scipy.spatial
+include "myconfig.pxi"
 
 class openGLLive:
 
-    def __init__(self, system, specs={}):
+    def __init__(self, system, **kwargs):
 
-        #Sanity Checks
-        if not 'EXTERNAL_FORCES' in espressomd.features():
-                raise Exception("EXTERNAL_FORCES need to be compiled in")
-
-        #TODO: COMPLETE DESCRIPTION FOR SPECS
-
-        #		'particle_coloring':		 'auto', 'charge', 'type'
-        #		'particle_type_colors':		 [r_t1,g_t1,b_t1],[r_t2,g_t2,b_t2],... ]
-        #		'particle_charge_colors':	 [[r_lowq,g_lowq,b_lowq],[r_highq,g_highq,b_highq]]
-        #		'particle_sizes':		     'auto', 'type'
-        #		'particle_type_sizes':			     [size_t1,size_t2,..]
-        #		'ext_force_arrows': 		 True/False
-        #		'window_size':				 [x,y]
-        #		'background_color':			 [r,g,b]
-        #		'update_fps':				 fps
-        #	    'draw_bonds':				 True/False
-        #       'bond_coloring':			 'type'
-        #       'bond_type_radius':			 [r_t1,r_t2,...]
-        #       'bond_type_colors':			 [r_t1,g_t1,b_t1],[r_t2,g_t2,b_t2],... ]
-        #       'LB':						 True/False
-        #		'light_pos':				 'auto', [x,y,z]
-        #       'light_color':				 [r,g,b]
-        #       'lightDecay':				 factor*[box_l] to light attenuation
-        #       'particle_type_materials'
-
-        #USER FRIENDLY DICT WITH VISUALIZATION SPECIFICATIONS
-
+        #DEFAULT PROPERTIES
         self.specs = {
             'window_size':				  [800, 800],
             'name':						  'Espresso Visualization',
@@ -55,6 +30,8 @@ class openGLLive:
             'quality_cylinder':           15,
             'close_cut_distance':         0.1,
             'far_cut_distance':           5,
+            'camera_position':	   		  'auto',
+            'camera_rotation':	   		  [3.55,-0.4],
 
             'particle_coloring':   		  'auto',
             'particle_sizes':			  'auto',
@@ -82,19 +59,24 @@ class openGLLive:
 
             'light_pos':				  'auto',
             'light_color':				  [0.8, 0.8, 0.8],
-            'lightBrightness':   		  1.0,
-            'lightSize':		   		  1.0,
+            'light_brightness':   		  1.0,
+            'light_size':		   		  1.0,
 
-            'dragEnabled':		   		  True,
-            'dragForce':		   		  3.0
+            'drag_enabled':		   		  False,
+            'drag_force':		   		  3.0
         }
 
-        for prop in specs.iterkeys():
-            if prop not in self.specs.iterkeys():
+        #OVERWRITE WITH USER PROPERTIES
+        for key in kwargs.iterkeys():
+            if key not in self.specs.iterkeys():
                 raise ValueError(
-                    prop + 'is not a valid visualization property')
+                    key + 'is not a valid visualization property')
             else:
-                self.specs[prop] = specs[prop]
+                self.specs[key] = kwargs[key]
+
+        #DEPENDENCIES
+        if not 'EXTERNAL_FORCES' in espressomd.features():
+            self.specs['drag_enabled'] = False
 
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 - self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
 
@@ -157,7 +139,6 @@ class openGLLive:
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                self.trcnt = 70 
                 self.updateConstraints()
                 self.hasParticleData = True
             
@@ -171,26 +152,37 @@ class openGLLive:
 
             self.measureTimeBeforeIntegrate = time.time()
 
-            if self.triggerSetParticleDrag==True and self.dragId != -1:
-                self.system.part[self.dragId].ext_force = self.dragExtForce
-                self.triggerSetParticleDrag=False
-            elif self.triggerResetParticleDrag==True and self.dragId != -1:
-                self.system.part[self.dragId].ext_force = self.extForceOld
-                self.triggerResetParticleDrag=False
-                self.dragId = -1
+            IF EXTERNAL_FORCES:
+                if self.triggerSetParticleDrag==True and self.dragId != -1:
+                    self.system.part[self.dragId].ext_force = self.dragExtForce
+                    self.triggerSetParticleDrag=False
+                elif self.triggerResetParticleDrag==True and self.dragId != -1:
+                    self.system.part[self.dragId].ext_force = self.extForceOld
+                    self.triggerResetParticleDrag=False
+                    self.dragId = -1
 
 
     #GET THE PARTICLE DATA
     def updateParticles(self): 
-        if 'ELECTROSTATICS' in espressomd.features():
+        IF EXTERNAL_FORCES and ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
                               'charges':    self.system.part[:].q}
-        else:
+        ELIF EXTERNAL_FORCES and not ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
                               'ext_forces': self.system.part[:].ext_force,
+                              'charges':    [0]*len(self.system.part)}
+        ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
+            self.particles = {'coords':  	self.system.part[:].pos_folded,
+                              'types':   	self.system.part[:].type,
+                              'ext_forces': [0,0,0]*len(self.system.part),
+                              'charges':    self.system.part[:].q}
+        ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
+            self.particles = {'coords':  	self.system.part[:].pos_folded,
+                              'types':   	self.system.part[:].type,
+                              'ext_forces': [0,0,0]*len(self.system.part),
                               'charges':    [0]*len(self.system.part)}
 
     def edgesFromPN(self,p,n,diag):
@@ -225,7 +217,7 @@ class openGLLive:
         for s in coll_shape_obj['Shapes::Wall']:
             d = s[0].get_parameter('dist')
             n = s[0].get_parameter('normal')
-            edges = self.edgesFromPN(d*np.array(n),n,box_diag)
+            edges = self.edgesFromPN(d*np.array(n),n,2*box_diag)
             self.shapes['Shapes::Wall'].append([edges,s[1]])
         
         for s in coll_shape_obj['Shapes::Cylinder']:
@@ -256,7 +248,6 @@ class openGLLive:
 
     def rasterizeBruteForce(self,shape):
         #box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-        print "Rasterizing..."
         sp = max(self.system.box_l)/self.specs['rasterize_resolution']
         res = np.array(self.system.box_l)/sp
 
@@ -268,8 +259,6 @@ class openGLLive:
                     dist,vec = shape.call_method("calc_distance", position = p.tolist())
                     if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp and dist != 0:
                         points.append((p-vec).tolist())
-#points.append((p).tolist())
-        print "...Done"
         return points
 
     #GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
@@ -292,6 +281,7 @@ class openGLLive:
             self.drawLBVel()
         if self.specs['draw_box']:
             self.drawSystemBox()
+
         self.drawSystemParticles()
 
 #		drawSphere(self.smooth_light_pos,0.5,[0,1.0,0,1.0],[1.,1.,1.])
@@ -378,7 +368,7 @@ class openGLLive:
                     else:
                         sc = self.extForceArrowScaleByType(ptype)
                     if sc > 0:
-                        drawArrow(pos, np.array(ext_f) * sc, 0.25, [1, 1, 1], self.specs['quality_arrows'])
+                        drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
 
     def drawBonds(self):
         coords = self.particles['coords']
@@ -574,15 +564,15 @@ class openGLLive:
             viewport = glGetIntegerv(GL_VIEWPORT)
             mouseWorld = gluUnProject(mousePos[0], viewport[3] - mousePos[1], self.depth)
 
-            self.dragExtForce = self.specs['dragForce'] * (np.asarray(mouseWorld) - np.array(ppos))
+            self.dragExtForce = self.specs['drag_force'] * (np.asarray(mouseWorld) - np.array(ppos))
             self.triggerSetParticleDrag = True
-            #self.system.part[self.dragId].ext_force = f
         else:
             self.camera.rotateCamera(mousePos, mousePosOld)
 
     #DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
     def setParticleDrag(self, pos, pos_old):
 
+        glClearColor(0.0,0.0,0.0,1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
@@ -592,6 +582,7 @@ class openGLLive:
         oldColMode = self.specs['particle_coloring']
         self.specs['particle_coloring'] = 'id'
         glDisable(GL_LIGHTING)
+        glDisable(GL_LIGHT0)
         self.drawSystemParticles()
         viewport = glGetIntegerv(GL_VIEWPORT)
 
@@ -600,7 +591,6 @@ class openGLLive:
         depth = glReadPixelsf(
             pos[0], viewport[3] - pos[1], 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0]
         pid = self.fcolorToId(readPixel)
-        print "Selected Particle ", pid
 
         self.dragId = pid
         if pid != -1:
@@ -609,6 +599,10 @@ class openGLLive:
             self.depth = depth
         self.specs['particle_coloring'] = oldColMode
         glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glClearColor(self.specs['background_color'][0], 
+                     self.specs['background_color'][1],
+                     self.specs['background_color'][2], 1.)
 
     def resetParticleDrag(self, pos, pos_old):
         if self.dragId != -1:
@@ -619,7 +613,8 @@ class openGLLive:
         return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def fcolorToId(self, fcol):
-        if (fcol==self.specs['background_color']).all():
+        if (fcol==[0,0,0]).all():
+#if (fcol==self.specs['background_color']).all():
             return -1
         else:
             return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
@@ -670,7 +665,7 @@ class openGLLive:
     def initControls(self):
         self.mouseManager.registerButton(MouseButtonEvent(
             None, MouseFireEvent.FreeMotion, self.mouseMotion))
-        if self.specs['dragEnabled']:
+        if self.specs['drag_enabled']:
             self.mouseManager.registerButton(MouseButtonEvent(
                 GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self.setParticleDrag))
             self.mouseManager.registerButton(MouseButtonEvent(
@@ -697,8 +692,6 @@ class openGLLive:
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL))
 
-        self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'n', KeyboardFireEvent.Pressed, self.updateConstraints))
 
     
     #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
@@ -717,8 +710,12 @@ class openGLLive:
     def initCamera(self):
         bl = self.system.box_l[0]
         bl2 = bl / 2.0
+        if self.specs['camera_position'] == 'auto':
+            cp = [bl * 1.3, bl * 1.3, bl * 2.5]
+        else:
+            cp = self.specs['camera_position']
         box_center = np.array([bl2, bl2, bl2])
-        self.camera = Camera(camPos=np.array([bl * 1.3, bl * 1.3, bl * 2.5]), camRot=np.array([3.55, -0.4]), center=box_center, updateLights=self.triggerLightPosUpdate)
+        self.camera = Camera(camPos=np.array(cp), camRot=np.array(self.specs['camera_rotation']), center=box_center, updateLights=self.triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
@@ -750,9 +747,9 @@ class openGLLive:
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_color'])
 
         glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,
-                 0.7 / self.specs['lightBrightness'])
+                 0.7 / self.specs['light_brightness'])
         glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, self.system.box_l[
-                 0] / 67. * 0.005 / self.specs['lightSize'])
+                 0] / 67. * 0.005 / self.specs['light_size'])
         glEnable(GL_LIGHT0)
 
 #END OF MAIN CLASS 
@@ -874,8 +871,12 @@ def drawPoints(points, pointsize, color, material):
 def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False):
     setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
     glPushMatrix()
+    quadric = gluNewQuadric()
 
     d = posB - posA
+    if d[2] == 0.0:
+        d[2]=0.0001
+
     v = np.linalg.norm(d)
     if v == 0:
         ax = 57.2957795 
@@ -890,9 +891,10 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
     #angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     glTranslatef(posA[0], posA[1], posA[2])
+   
+
     glRotatef(ax, rx, ry, 0.0)
 
-    quadric = gluNewQuadric()
 
 #        glBegin(GL_TRIANGLE_FAN)
 #        glVertex3f(0,0,0)
@@ -909,7 +911,8 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
     
     if draw_caps:
         gluDisk(quadric, 0, radius, quality, quality) 
-        glTranslatef(d[0], d[1], d[2])
+#glTranslatef(d[0], d[1], d[2])
+        glTranslatef(0,0,v)
         gluDisk(quadric, 0, radius, quality, quality) 
 
     glPopMatrix()
@@ -940,7 +943,7 @@ def drawArrow(pos, d, radius, color, quality):
     # glRotatef(angle,t[0],t[1],t[2]);
     glRotatef(ax, rx, ry, 0.0)
 
-    glutSolidCone(radius * 3, 3, quality, quality)
+    glutSolidCone(radius * 3,radius* 3, quality, quality)
     glPopMatrix()
 
 
@@ -1048,19 +1051,16 @@ class KeyboardManager:
                 for be in self.buttonEventsHold:
                     if be.button == b:
                         be.callback()
-#				print 'Key',b,'Pressed'
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 1:
                 for be in self.buttonEventsHold:
                     if be.button == b:
                         be.callback()
-#				print 'Key',b,'Hold'
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 0:
                 for be in self.buttonEventsReleased:
                     if be.button == b:
                         be.callback()
-#				print 'Key',b,'Released'
                 removeKeys.add(b)
 
             self.keyStateOld[b] = self.keyState[b]
@@ -1079,7 +1079,7 @@ class KeyboardManager:
 #CAMERA
 class Camera:
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=3, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0]), updateLights=None):
+    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
@@ -1136,7 +1136,6 @@ class Camera:
     def rotateCamera(self, mousePos, mousePosOld):
         self.camRot += (mousePos - mousePosOld) * self.lookSpeed
         self.calcCameraDirections()
-
     def glLookAt(self):
         lookAt = self.camPos + self.lookDir
         gluLookAt(self.camPos[0], self.camPos[1], self.camPos[2],
