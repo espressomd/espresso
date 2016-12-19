@@ -224,9 +224,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT($k)-1.]
         set dr($k) [expr $dr($k)/$n/$loops]
         
-        set dox($k) [expr ($Eox($k))/$halfkT-1.]
-        set doy($k) [expr ($Eoy($k))/$halfkT-1.]
-        set doz($k) [expr ($Eoz($k))/$halfkT-1.]
+        set dox($k) [expr ($Eox($k))/$halfkT($k)-1.]
+        set doy($k) [expr ($Eoy($k))/$halfkT($k)-1.]
+        set doz($k) [expr ($Eoz($k))/$halfkT($k)-1.]
         
         puts "\n"
         puts "1/2 kT = $halfkT($k)"
