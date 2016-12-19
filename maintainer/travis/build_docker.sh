@@ -47,7 +47,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	# Boost takes a long time to install, so we have Travis-CI cache it.
 	BOOST_VERSION=$(brew info --json=v1 boost | python -m json.tool | grep linked_keg | awk -F '"' '{print $4}')
 	brew unlink boost
-	brew info --json=v1 boost | python -m json.tool | grep -B 4 "\"version\": \"$BOOST_VERSION\"" | grep -q 'with-mpi' || brew uninstall boost
+	brew info --json=v1 boost | python -m json.tool | grep -B 4 "\"version\": \"$BOOST_VERSION\"" | grep -q 'with-mpi' || brew uninstall --ignore-dependencies boost
 	brew install boost --without-single --with-mpi &
 	BOOST_PID=$!
 	START_TIME=$(date +%s)

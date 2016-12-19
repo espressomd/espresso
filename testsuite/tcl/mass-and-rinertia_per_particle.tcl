@@ -224,6 +224,10 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT($k)-1.]
         set dr($k) [expr $dr($k)/$n/$loops]
         
+        set dox($k) [expr ($Eox($k))/$halfkT-1.]
+        set doy($k) [expr ($Eoy($k))/$halfkT-1.]
+        set doz($k) [expr ($Eoz($k))/$halfkT-1.]
+        
         puts "\n"
         puts "1/2 kT = $halfkT($k)"
         puts "translation: $Evx($k) $Evy($k) $Evz($k) rotation: $Eox($k) $Eoy($k) $Eoz($k)"
@@ -231,15 +235,29 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         puts "Deviation in translational energy: $dv($k)"
         puts "Deviation in rotational energy: $do($k)"
         puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k)"
+        puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
         }
         if { abs($do($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
            error "Relative deviation in rotational energy too large: $do($k)"
         }
         if { abs($dr($k)) > $tolerance } {
            error "Relative deviation in translational diffusion too large: $dr($k)"
+        }
+        if { abs($dox($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
+        }
+        if { abs($doy($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
+        }
+        if { abs($doz($k)) > $tolerance } {
+           puts "Moment of inertia principal components: $j1 $j2 $j3"
+           error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
         }
     }
 }
