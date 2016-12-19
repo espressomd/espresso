@@ -146,7 +146,7 @@ void File::init_filestructure()
         { "particles/atoms/id/value"      , 1, npart, type_int },
         { "particles/atoms/id/time"       , 1, 1    , type_double },
         { "particles/atoms/id/step"       , 1, 1    , type_int },
-        { "particles/atoms/type/value"    , 1, npart, type_double },
+        { "particles/atoms/type/value"    , 1, npart, type_int },
         { "particles/atoms/type/time"     , 1, 1    , type_double },
         { "particles/atoms/type/step"     , 1, 1    , type_int },
         { "particles/atoms/position/value", 3, npart, type_double },
