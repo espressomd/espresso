@@ -369,6 +369,8 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
+	int status_gc_init;
+	int status_gc_init_temp;
 	if(current_reaction_system.type_index==NULL){
 		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
 		if(len_educt_types>0)
@@ -376,7 +378,7 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 		else
 			current_reaction_system.type_index[0]=product_types[0];
 		current_reaction_system.nr_different_types=1;
-		init_type_array(current_reaction_system.type_index[0]); //make types known in espresso
+		status_gc_init=init_type_array(current_reaction_system.type_index[0]); //make types known in espresso
 	}
 	for (int i =0; i<len_educt_types;i++){
 		bool educt_type_i_is_known=is_in_list(educt_types[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
@@ -384,7 +386,8 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=educt_types[i];
 			current_reaction_system.nr_different_types+=1;
-			init_type_array(educt_types[i]); //make types known in espresso
+			status_gc_init_temp=init_type_array(educt_types[i]); //make types known in espresso
+			status_gc_init=status_gc_init || status_gc_init_temp;
 		}
 	}
 	for (int i =0; i<len_product_types;i++){
@@ -393,7 +396,8 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=product_types[i];
 			current_reaction_system.nr_different_types+=1;
-			init_type_array(product_types[i]); //make types known in espresso
+			status_gc_init_temp=init_type_array(product_types[i]); //make types known in espresso
+			status_gc_init=status_gc_init || status_gc_init_temp;
 		}
 	}
 
@@ -401,7 +405,7 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 	current_reaction_system.charges_of_types =(double*) realloc(current_reaction_system.charges_of_types,sizeof(double)*current_reaction_system.nr_different_types);
 	current_reaction_system.charges_of_types[current_reaction_system.nr_different_types-1]=invalid_charge;
 	
-	return 0;
+	return status_gc_init;
 }
 
 int find_index_of_type(int type){

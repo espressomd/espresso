@@ -2,6 +2,7 @@ include "myconfig.pxi"
 from libc.stdlib cimport malloc, realloc, calloc
 
 IF REACTION_ENSEMBLE:
+    es_error=1
     class Wang_Landau_has_converged(Exception):
         pass
 
@@ -145,7 +146,9 @@ IF REACTION_ENSEMBLE:
             current_reaction_system.nr_single_reactions+=1;
             
             #assign different types an index in a growing list that starts at and is incremented by 1 for each new type
-            update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types);
+            status=update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types);
+            if(status==es_error):
+                raise Exception("could not initialize gc particle list for types")
             
             #add reverse reaction
             _set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.educt_coefficients, -1*new_reaction.nu_bar )
@@ -203,7 +206,6 @@ IF REACTION_ENSEMBLE:
                     
             print "Reaction ensemble temperature:", current_reaction_system.temperature_reaction_ensemble
             print "Exclusion radius:", current_reaction_system.exclusion_radius
-            es_error=1
             if(check_reaction_ensemble()==es_error):
                 raise ValueError("")
         def free(self):
