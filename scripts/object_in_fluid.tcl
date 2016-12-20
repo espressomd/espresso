@@ -683,6 +683,7 @@ proc oif_create_template { args } {
 	set check_output 0
 	set template_id -1
 	set normal -1
+    set solid 0
 
 #--------------------------------------------------------------------------------------------
 # reading the arguments. some of them are mandatory. we check for the mandatory arguments at the end of this section
@@ -787,6 +788,10 @@ proc oif_create_template { args } {
 				}
 				set kv [lindex $args $pos]
 				incr pos
+			}
+			"solid" {  
+				incr pos
+				set solid 1
 			}
 			"triangles-file" {  
 				incr pos
@@ -1453,11 +1458,17 @@ proc oif_create_template { args } {
             lappend oif_template_bending_incidences $temp_incidence
             # clear list
             set temp_incidence [lreplace $temp_incidence 0 3]
-        
-            angle_btw_triangles P1 P2 P3 P4 phi
-            set area1 [area_triangle P1 P2 P3]
-            set area2 [area_triangle P4 P2 P3]
-            
+            if {$solid == 0} {
+                angle_btw_triangles P1 P2 P3 P4 phi
+                set area1 [area_triangle P1 P2 P3]
+                set area2 [area_triangle P4 P2 P3]
+            } else {
+                set phi 0.0
+                set kb 0.0
+                set area1 0.0
+                set area2 0.0
+                set kal 0.0
+            }
             set dist [distance P2 P3]
                 
             # to replace lists with empty lists so they do not grow
@@ -1469,7 +1480,7 @@ proc oif_create_template { args } {
             if { $ks_file != ""} { set ks [expr $ks_min*(1 - $ks_weight($i)) + $ks_max*$ks_weight($i)] }
             if { $kslin_file != ""} { set kslin [expr $kslin_min*(1 - $kslin_weight($i)) + $kslin_max*$kslin_weight($i)] }
             if { $kb_file != ""} { set kb [expr $kb_min*(1 - $kb_weight($i)) + $kb_max*$kb_weight($i)] }
-
+            
             inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal]
             if {$check_output == 1} {
                 puts $out_file "inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal]"
