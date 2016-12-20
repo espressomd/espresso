@@ -158,8 +158,6 @@ def main():
 
     ball.ext_force = impulse*np.array([sin(angle),0,cos(angle)])
     ball.fix = [1,1,1]
-    ball.mass = 1
-    #system.thermostat.turn_off()
     system.thermostat.set_langevin(kT=0, gamma=0.8)
     #ELECTROSTATICS
     #	p3m = electrostatics.P3M(bjerrum_length=50, accuracy=1e-2)

@@ -38,7 +38,6 @@ class openGLLive:
             'particle_type_colors':		  [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'particle_type_materials':	  [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
             'particle_charge_colors':	  [np.array([1, 0, 0, 1]), np.array([0, 1, 0, 1])],
-            'particle_type_sizes':		  [1, 1, 1, 1, 1, 1, 1, ],
 
             'draw_constraints':			  True,
             'rasterize_pointsize':	      10,
@@ -327,15 +326,17 @@ class openGLLive:
             ptype = self.particles['types'][pid]
             ext_f = self.particles['ext_forces'][pid]
 
+            radius = 1
             # Size: Lennard Jones Sigma,
-            if self.specs['particle_sizes'] == 'auto':
-                lj_sig = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
-                    'sigma']
+            if callable(self.specs['particle_sizes']):
+                radius = self.specs['particle_sizes'](ptype)
+            elif self.specs['particle_sizes'] == 'auto':
+                lj_sig = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma']
                 radius = lj_sig / 2.0
                 if radius == 0:
                     radius = self.sizeByType(ptype)
 
-            elif self.specs['particle_sizes'] == 'type':
+            elif isinstance(self.specs['particle_sizes'], list):
                 radius = self.sizeByType(ptype)
 
             material = self.materialByType(ptype)
@@ -462,7 +463,7 @@ class openGLLive:
         return self.specs['bond_type_radius'][btype % len(self.specs['bond_type_radius'])]
 
     def sizeByType(self, ptype):
-        return self.specs['particle_type_sizes'][ptype % len(self.specs['particle_type_sizes'])]
+        return self.specs['particle_sizes'][ptype % len(self.specs['particle_sizes'])]
 
     def colorByType(self, ptype):
         return self.specs['particle_type_colors'][ptype % len(self.specs['particle_type_colors'])]
