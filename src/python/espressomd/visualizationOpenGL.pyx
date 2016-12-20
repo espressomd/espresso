@@ -317,6 +317,25 @@ class openGLLive:
         for s in self.shapes['Shapes::Misc']:
             drawPoints(s[0], self.specs['rasterize_pointsize'],  self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
 
+    def determine_radius(self,ptype):
+        def radiusByLJ(ptype):
+            try:
+                radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
+            except:
+                radius = 0.5
+            return radius
+
+        if self.specs['particle_sizes'] == 'auto':
+            radius = radiusByLJ(ptype)
+        elif callable(self.specs['particle_sizes']):
+            radius = self.specs['particle_sizes'](ptype)
+        else:
+            try:
+                radius = self.modulo_indexing(self.specs['particle_sizes'], ptype)
+            except:
+                radius = self.radiusByLJ(ptype) 
+        return radius
+
     def drawSystemParticles(self):
         coords = self.particles['coords']
         pIds = range(len(coords))
@@ -326,17 +345,8 @@ class openGLLive:
             ptype = self.particles['types'][pid]
             ext_f = self.particles['ext_forces'][pid]
 
-            radius = 0.5
-            try:
-                if callable(self.specs['particle_sizes']):
-                    radius = self.specs['particle_sizes'](ptype)
-                elif isinstance(self.specs['particle_sizes'], (list,tuple,np.ndarray)):
-                    radius = self.modulo_indexing(self.specs['particle_sizes'], ptype)
-                elif self.specs['particle_sizes'] == 'auto':
-                    radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
-            except:
-                pass
-
+            radius = self.determine_radius(ptype)
+                    
             material = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
 
             if self.specs['particle_coloring'] == 'id':

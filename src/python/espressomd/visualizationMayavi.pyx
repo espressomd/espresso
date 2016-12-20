@@ -94,15 +94,15 @@ cdef class mayaviLive:
             return radius
 
         radius = 0.
-        try:
-            if self.particle_sizes is 'auto':
-                radius = radius_from_lj(t)
-            elif callable(self.particle_sizes):
-                radius = self.particle_sizes(t)
-            else:
-                radius = self.particle_sizes[t]
-        except:
+        if self.particle_sizes is 'auto':
             radius = radius_from_lj(t)
+        elif callable(self.particle_sizes):
+            radius = self.particle_sizes(t)
+        else:
+            try:
+                radius = self.particle_sizes[t]
+            except:
+                radius = radius_from_lj(t)
         return radius
 
     def _draw(self):
