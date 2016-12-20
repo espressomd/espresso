@@ -523,7 +523,7 @@ cdef class ParticleHandle:
 
             def __set__(self, _ext_f):
                 cdef double ext_f[3]
-                cdef int ext_flag
+                cdef int ext_flag = 0
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats")
                 for i in range(3):
@@ -549,7 +549,7 @@ cdef class ParticleHandle:
             """Fix the particle at current position"""
 
             def __set__(self, _fixed_coord_flag):
-                cdef int ext_flag
+                cdef int ext_flag = 0
                 check_type_or_throw_except(
                     _fixed_coord_flag, 3, int, "Fix has to be 3 ints")
                 for i in map(long, range(3)):
