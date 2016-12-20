@@ -302,20 +302,20 @@ class openGLLive:
             glClipPlane(GL_CLIP_PLANE0+i, self.box_eqn[i])
 
         for s in self.shapes['Shapes::Wall']:
-            drawPlane(s[0], self.constraintColorByType(s[1]), self.constraintMaterialByType(s[1]))
+            drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
         
         for s in self.shapes['Shapes::Sphere']:
-            drawSphere(s[0], s[1], self.constraintColorByType(s[2]), self.constraintMaterialByType(s[2]), self.specs['quality_cylinder'])
+            drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'],s[2]), self.modulo_indexing(self.specs['constraint_type_materials'],s[2]), self.specs['quality_cylinder'])
 
         for i in range(6):
             glDisable(GL_CLIP_PLANE0+i)
 
         for s in self.shapes['Shapes::Cylinder']:
-            drawCylinder(s[0],s[1],s[2], self.constraintColorByType(s[3]), self.constraintMaterialByType(s[3]), self.specs['quality_cylinder'],True)
+            drawCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_cylinder'],True)
         
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
-            drawPoints(s[0], self.specs['rasterize_pointsize'],  self.constraintColorByType(s[1]), self.constraintMaterialByType(s[1]))
+            drawPoints(s[0], self.specs['rasterize_pointsize'],  self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
 
     def drawSystemParticles(self):
         coords = self.particles['coords']
@@ -326,20 +326,18 @@ class openGLLive:
             ptype = self.particles['types'][pid]
             ext_f = self.particles['ext_forces'][pid]
 
-            radius = 1
-            # Size: Lennard Jones Sigma,
-            if callable(self.specs['particle_sizes']):
-                radius = self.specs['particle_sizes'](ptype)
-            elif self.specs['particle_sizes'] == 'auto':
-                lj_sig = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma']
-                radius = lj_sig / 2.0
-                if radius == 0:
-                    radius = self.sizeByType(ptype)
+            radius = 0.5
+            try:
+                if callable(self.specs['particle_sizes']):
+                    radius = self.specs['particle_sizes'](ptype)
+                elif isinstance(self.specs['particle_sizes'], (list,tuple,np.ndarray)):
+                    radius = self.modulo_indexing(self.specs['particle_sizes'], ptype)
+                elif self.specs['particle_sizes'] == 'auto':
+                    radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
+            except:
+                pass
 
-            elif isinstance(self.specs['particle_sizes'], list):
-                radius = self.sizeByType(ptype)
-
-            material = self.materialByType(ptype)
+            material = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
 
             if self.specs['particle_coloring'] == 'id':
                 color = self.IdToColorf(pid)
@@ -349,11 +347,11 @@ class openGLLive:
                 if q != 0:
                     color = self.colorByCharge(q)
                 else:
-                    color = self.colorByType(ptype)
+                    color = self.modulo_indexing(self.specs['particle_type_colors'], ptype)
             elif self.specs['particle_coloring'] == 'charge':
                 color = self.colorByCharge(q)
             elif self.specs['particle_coloring'] == 'type':
-                color = self.colorByType(q)
+                color = self.modulo_indexing(self.specs['particle_type_colors'], ptype)
 
             drawSphere(pos, radius, color, material, self.specs['quality_spheres'])
             for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
@@ -367,7 +365,7 @@ class openGLLive:
                     if pid == self.dragId:
                         sc = 1
                     else:
-                        sc = self.extForceArrowScaleByType(ptype)
+                        sc = self.modulo_indexing(self.specs['ext_force_arrows_scale'],ptype)
                     if sc > 0:
                         drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
 
@@ -378,9 +376,9 @@ class openGLLive:
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
             if self.specs['bond_coloring'] == 'type':
-                col = self.bondColorByType(b[2])
-            mat = self.bondMaterialByType(b[2])
-            radius = self.bondRadiusByType(b[2])
+                col = self.modulo_indexing(self.specs['bond_type_colors'],b[2])
+            mat = self.modulo_indexing(self.specs['bond_type_materials'],b[2])
+            radius = self.modulo_indexing(self.specs['bond_type_radius'],b[2])
             d = coords[b[0]] - coords[b[1]]
             bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
 
@@ -447,32 +445,8 @@ class openGLLive:
                     drawCube(c, cubeSize, col, alpha)
 
     #USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR COLORS, MATERIALS ETC..
-    def extForceArrowScaleByType(self, btype):
-        return self.specs['ext_force_arrows_scale'][btype % len(self.specs['ext_force_arrows_scale'])]
-
-    def materialByType(self, btype):
-        return self.specs['particle_type_materials'][btype % len(self.specs['particle_type_materials'])]
-
-    def bondColorByType(self, btype):
-        return self.specs['bond_type_colors'][btype % len(self.specs['bond_type_colors'])]
-    
-    def bondMaterialByType(self, btype):
-        return self.specs['bond_type_materials'][btype % len(self.specs['bond_type_materials'])]
-
-    def bondRadiusByType(self, btype):
-        return self.specs['bond_type_radius'][btype % len(self.specs['bond_type_radius'])]
-
-    def sizeByType(self, ptype):
-        return self.specs['particle_sizes'][ptype % len(self.specs['particle_sizes'])]
-
-    def colorByType(self, ptype):
-        return self.specs['particle_type_colors'][ptype % len(self.specs['particle_type_colors'])]
-    
-    def constraintColorByType(self, ptype):
-        return self.specs['constraint_type_colors'][ptype % len(self.specs['constraint_type_colors'])]
-    
-    def constraintMaterialByType(self, ptype):
-        return self.specs['constraint_type_materials'][ptype % len(self.specs['constraint_type_materials'])]
+    def modulo_indexing(self, l, t):
+        return l[t % len(l)]
 
     #FADE PARTICE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP MINUSCOLOR (q=q_min)
     def colorByCharge(self, q):

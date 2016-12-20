@@ -135,7 +135,7 @@ def main():
     spawnpos.append(ball_start_pos)
     ball = system.part[0]
 
-    d = lj_sig[0]*1.2
+    d = lj_sig[0]*1.15
     a1 = np.array([d*sqrt(3)/2.0,0, -0.5*d])
     a2 = np.array([d*sqrt(3)/2.0,0, 0.5*d])
     sp = [system.box_l[0]*0.7, ball_y, system.box_l[2]*0.5+lj_sig[0]*0.5]
