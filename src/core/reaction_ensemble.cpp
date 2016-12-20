@@ -369,8 +369,8 @@ int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product
 
 int update_type_index(int* educt_types, int len_educt_types, int* product_types, int len_product_types){
 	//should only be used at when defining a new reaction
-	int status_gc_init;
-	int status_gc_init_temp;
+	int status_gc_init=0;
+	int status_gc_init_temp=0;
 	if(current_reaction_system.type_index==NULL){
 		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
 		if(len_educt_types>0)
@@ -400,11 +400,10 @@ int update_type_index(int* educt_types, int len_educt_types, int* product_types,
 			status_gc_init=status_gc_init || status_gc_init_temp;
 		}
 	}
-
+	
 	//increase current_reaction_system.charges_of_types length
 	current_reaction_system.charges_of_types =(double*) realloc(current_reaction_system.charges_of_types,sizeof(double)*current_reaction_system.nr_different_types);
 	current_reaction_system.charges_of_types[current_reaction_system.nr_different_types-1]=invalid_charge;
-	
 	return status_gc_init;
 }
 

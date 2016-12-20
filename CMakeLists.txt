@@ -128,7 +128,6 @@ if (WITH_PYTHON)
                 -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
                 OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
-  list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
                 -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -216,10 +215,10 @@ if(WITH_TESTS)
   find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
+    list(APPEND LIBRARIES ${Boost_LIBRARIES})
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
   add_subdirectory(testsuite)
-  list(APPEND LIBRARIES ${Boost_LIBRARIES})
 endif(WITH_TESTS)
 
 #######################################################################

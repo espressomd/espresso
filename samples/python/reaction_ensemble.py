@@ -42,8 +42,8 @@ box_l = 35
 #############################################################
 system = espressomd.System()
 system.time_step = 0.02
-system.skin = 0.4
-system.max_num_cells = 2744
+system.cell_system.skin = 0.4
+system.cell_system.max_num_cells = 2744
 
 
 #############################################################
@@ -71,6 +71,7 @@ RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, 
 RE.add(equilibrium_constant=K_diss,educt_types=[0],educt_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
+grand_canonical.setup([0,1,2])
 
 #RE.set_pH_core(2)
 
@@ -78,5 +79,5 @@ for i in range(10000):
 	RE.reaction()
 #	RE.do_reaction_constant_pH()
 	if(i%100==0):
-		print("HA", grand_canonical.number_of_particles(type_id=0), "A-", grand_canonical.number_of_particles(type_id=1), "H+", grand_canonical.number_of_particles(type_id=2))
+		print("HA", grand_canonical.number_of_particles(current_type=0), "A-", grand_canonical.number_of_particles(current_type=1), "H+", grand_canonical.number_of_particles(current_type=2))
 

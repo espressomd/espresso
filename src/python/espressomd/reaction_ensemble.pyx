@@ -112,6 +112,9 @@ IF REACTION_ENSEMBLE:
         def _set_params_in_es_core_add(self):
             
             cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))
+            #initialize values of educt/ products in reaction to reasonable value
+            new_reaction.len_educt_types=0
+            new_reaction.len_product_types=0
             
             new_reaction.equilibrium_constant=self._params["equilibrium_constant"]
             cdef int *educt_types = <int *>malloc(len(self._params["educt_types"]) * sizeof(int))

@@ -1847,9 +1847,8 @@ int init_type_array(int type){
 	if (init_gc() == ES_ERROR)
 		return ES_ERROR;
 
-
 	for ( int i = 0; i<Index.max_entry; i++ )
-		if (type == Type.index[i]) {
+		if (type == Type.index[i] && Index.type[i]!=-1) {
 			// already indexed
 			return ES_OK;
 		}
@@ -2134,9 +2133,8 @@ int free_particle_lists(void){
 
 int number_of_particles_with_type(int type, int *number){
 	int indexed=0;
-	if ( type_array == (TypeList *) 0 ) 
+	if ( type_array == (TypeList *) 0 )
 		init_type_array(type);
-
 	for ( int i = 0; i<Type.max_entry; i++) {
 		if ( type == Type.index[i] ){
 			indexed=1;

@@ -40,8 +40,8 @@ box_l = 10
 #############################################################
 system = espressomd.System()
 system.time_step = 0.5 #bigger timestep than usual is VERY important for hybrid monte carlo, at least 0.5 (or higher) for this system
-system.skin = 0.4
-system.max_num_cells = 2744
+system.cell_system.skin = 0.4
+system.cell_system.max_num_cells = 2744
 
 
 #############################################################
@@ -74,6 +74,8 @@ RE.add(equilibrium_constant=1.0/K_diss, educt_types=[1,2], educt_coefficients=[1
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
 
+grand_canonical.setup([0,1,2])
+
 ## Wang-Landau stuff
 RE.add_collective_variable_degree_of_association(associated_type=0,min=0, max=1, corresponding_acid_types=[0,1])
 np.savetxt("temp_energy_file.dat",np.c_[[0,0.5,1],[0,0,0],[9,9,9]],header="nbar E_min E_max") # Note header may not be omitted since it is expected
@@ -81,6 +83,8 @@ RE.add_collective_variable_potential_energy(filename="temp_energy_file.dat",delt
 os.remove("temp_energy_file.dat")
 RE.set_wang_landau_parameters(final_wang_landau_parameter=0.00001, wang_landau_steps=1, full_path_to_output_filename="WL.out", do_not_sample_reaction_partition_function=True, use_hybrid_monte_carlo=True)
 RE.counter_ion_type=1
+
+
 
 counter=1
 while True:

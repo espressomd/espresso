@@ -89,7 +89,6 @@ cdef extern from "reaction_ensemble.hpp":
     int initialize_wang_landau()
     int do_reaction_wang_landau()
     bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer)
-    void free_wang_landau()
     int update_maximum_and_minimum_energies_at_current_state()
     void write_out_preliminary_energy_run_results(char* filename)
 
