@@ -118,10 +118,11 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set kT 1.5
         
     for {set k 0} {$k<2} {incr k} {
-        set halfkT($k) 0.75
         if {$test_case == 2 || $test_case == 3} {
             set halfkT($k) [expr $temp($k)/2.]
-        }        
+        } else {
+            set halfkT($k) 0.75
+        }
         
         if {$test_case == 1 || $test_case == 3} {
             set gamma_tr($k) $gamma($k)
@@ -146,7 +147,6 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
-            set ind [expr $i + $k*$n]
             part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
             switch $test_case {
                 1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
