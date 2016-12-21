@@ -234,7 +234,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
         puts "Deviation in translational energy: $dv($k)"
         puts "Deviation in rotational energy: $do($k)"
-        puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k)"
+        puts "Deviation in translational diffusion: $dr($k)"
         puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
 
         if { abs($dv($k)) > $tolerance } {
@@ -245,7 +245,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
            error "Relative deviation in rotational energy too large: $do($k)"
         }
         if { abs($dr($k)) > $tolerance } {
-           error "Relative deviation in translational diffusion too large: $dr($k)"
+           error "Relative deviation in translational diffusion too large: $dr($k) for parameters: mass=$mass gamma_tr=$gamma_tr($k)"
         }
         if { abs($dox($k)) > $tolerance } {
            puts "Moment of inertia principal components: $j1 $j2 $j3"
