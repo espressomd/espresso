@@ -239,6 +239,23 @@ int make_reaction_attempt(single_reaction* current_reaction, double** changed_pa
 	*_len_hidden_particles_properties=len_hidden_particles_properties;
 }
 
+double calculate_factorial_expression(single_reaction* current_reaction, int* old_particle_numbers){
+	double factorial_expr=1.0;	
+	//factorial contribution of educts
+	for(int i=0;i<current_reaction->len_educt_types;i++) {
+		int nu_i=-1*current_reaction->educt_coefficients[i];
+		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->educt_types[i])];
+		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
+	}
+	//factorial contribution of products
+	for(int i=0;i<current_reaction->len_product_types;i++) {
+		int nu_i=current_reaction->product_coefficients[i];
+		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
+		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
+	}
+	return factorial_expr;
+}
+
 int generic_oneway_reaction(int reaction_id){
 	double volume = current_reaction_system.volume;
 	single_reaction* current_reaction=current_reaction_system.reactions[reaction_id];
@@ -275,19 +292,8 @@ int generic_oneway_reaction(int reaction_id){
 	
 	double E_pot_new=calculate_current_potential_energy_of_system(0);
 	
-	double factorial_expr=1.0;
-	//factorial contribution of educts
-	for(int i=0;i<current_reaction->len_educt_types;i++) {
-		int nu_i=-1*current_reaction->educt_coefficients[i];
-		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->educt_types[i])];
-		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
-	}
-	//factorial contribution of products
-	for(int i=0;i<current_reaction->len_product_types;i++) {
-		int nu_i=current_reaction->product_coefficients[i];
-		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
-		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
-	}
+	double factorial_expr=calculate_factorial_expression(current_reaction, old_particle_numbers);
+
 
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
@@ -1119,19 +1125,7 @@ int generic_oneway_reaction_wang_landau(int reaction_id){
 	//save new_state_index
 	int new_state_index=get_flattened_index_wang_landau_of_current_state();
 	
-	double factorial_expr=1.0;
-	//factorial contribution of educts
-	for(int i=0;i<current_reaction->len_educt_types;i++) {
-		int nu_i=-1*current_reaction->educt_coefficients[i];
-		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->educt_types[i])];
-		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
-	}
-	//factorial contribution of products
-	for(int i=0;i<current_reaction->len_product_types;i++) {
-		int nu_i=current_reaction->product_coefficients[i];
-		int N_i0= old_particle_numbers[find_index_of_type(current_reaction->product_types[i])];
-		factorial_expr=factorial_expr*factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0,nu_i); //zeta = 1 (see smith paper) since we only perform one reaction at one call of the function
-	}
+	double factorial_expr=calculate_factorial_expression(current_reaction, old_particle_numbers);
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	double standard_pressure_in_simulation_units=current_reaction_system.standard_pressure_in_simulation_units;
 	
