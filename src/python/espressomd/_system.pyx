@@ -170,13 +170,13 @@ cdef class System:
             if _time_step <= 0:
                 raise ValueError("Time Step must be positive")
             IF LB:
-                if lbpar.tau >= 0.0 and _time_step > lbpar.tau:
+                if lbpar.tau >= 0.0 and _time_step < lbpar.tau:
                     raise ValueError(
-                        "Time Step must be > LB_time_step (" + str(lbpar.tau) + ")")
+                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
-                if lbpar_gpu.tau >= 0.0 and _time_step > lbpar_gpu.tau:
+                if lbpar_gpu.tau >= 0.0 and _time_step < lbpar_gpu.tau:
                     raise ValueError(
-                        "Time Step must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
+                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
             mpi_set_time_step(_time_step)
 
         def __get__(self):

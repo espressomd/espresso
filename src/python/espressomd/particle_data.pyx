@@ -1274,7 +1274,10 @@ cdef class ParticleList:
     def __setstate__(self, params):
         for particle_number in params.keys():
             params[particle_number]["id"] = particle_number
-            self.add(params[particle_number])
+            try:
+                self.add(params[particle_number])
+            except:
+                pass
 
     def __len__(self):
         return n_part
