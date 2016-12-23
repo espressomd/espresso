@@ -47,19 +47,6 @@ def setup(type_list=None):
         handle_errors("init_type_array -> updatePartCfg failed")
 
 
-def delete_particles(current_type=None):
-    check_valid_type(current_type)
-    status=delete_particle_of_type(current_type)
-    if status==es_error:
-        raise Exception("no particles with type left")
-
-def find_particle(current_type=None):
-    check_valid_type(current_type)
-    cdef int pid
-    find_particle_type(current_type, & pid)
-    return int(pid)
-
-
 def number_of_particles(current_type=None):
     check_valid_type(current_type)
     cdef int number
@@ -67,6 +54,22 @@ def number_of_particles(current_type=None):
         raise Exception("no list for particle type ", current_type)
     number_of_particles_with_type(current_type, & number)
     return int(number)
+
+def find_particle(current_type=None):
+    check_valid_type(current_type)
+    cdef int pid
+    status=find_particle_type(current_type, & pid)
+    if(status== es_error):
+        print("error no particle found")
+        return -1
+    else:
+        return int(pid)
+
+def delete_particles(current_type=None):
+    check_valid_type(current_type)
+    status=delete_particle_of_type(current_type)
+    if status==es_error:
+        raise Exception("no particles with type left to be deleted")
 
 def status(current_type=None):
     check_valid_type(current_type)
@@ -76,9 +79,11 @@ def status(current_type=None):
             if (current_type==Type.index[i]):
                 indexed=1;
                 break;
-            if ( indexed==1 ):
-                for i in range( type_array[Index.type[current_type]].max_entry):
-                    print(type_array[Index.type[current_type]].id_list[i]);
+    if ( indexed==1 ):
+        id_list=[]
+        for i in range( type_array[Index.type[current_type]].max_entry):
+            id_list.append(type_array[Index.type[current_type]].id_list[i])
+        return id_list
     else:
         raise Exception("no list for particle")
 
