@@ -84,11 +84,15 @@ extern int thermo_switch;
 /** temperature. */
 extern double temperature;
 
+#ifndef PARTICLE_ANISOTROPY
 /** Langevin friction coefficient gamma. */
 extern double langevin_gamma;
+#else
+extern double langevin_gamma[3];
+#endif
 
-/** Langevin friction coefficient gamma. */
 #ifndef ROTATIONAL_INERTIA
+/** Langevin friction coefficient gamma. */
 extern double langevin_gamma_rotation;
 #else
 extern double langevin_gamma_rotation[3];
@@ -136,6 +140,55 @@ int get_cpu_temp();
 /** Start the CPU thermostat */
 void set_cpu_temp(int temp);
 
+#ifdef ROTATION
+inline void thermo_define_rotation_matrix(Particle *p, double A[9])
+{
+  double q0q0 =p->r.quat[0];
+  q0q0 *=q0q0;
+
+  double q1q1 =p->r.quat[1];
+  q1q1 *=q1q1;
+
+  double q2q2 =p->r.quat[2];
+  q2q2 *=q2q2;
+
+  double q3q3 =p->r.quat[3];
+  q3q3 *=q3q3;
+
+  A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
+  A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
+  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
+
+  A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
+  A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
+  A[1 + 3*0] = 2*(p->r.quat[1]*p->r.quat[2] - p->r.quat[0]*p->r.quat[3]);
+
+  A[1 + 3*2] = 2*(p->r.quat[2]*p->r.quat[3] + p->r.quat[0]*p->r.quat[1]);
+  A[2 + 3*0] = 2*(p->r.quat[1]*p->r.quat[3] + p->r.quat[0]*p->r.quat[2]);
+  A[2 + 3*1] = 2*(p->r.quat[2]*p->r.quat[3] - p->r.quat[0]*p->r.quat[1]);
+}
+
+inline void thermo_convert_forces_body_to_space(Particle *p, double *force)
+{
+  double A[9];
+  thermo_define_rotation_matrix(p, A);
+
+  force[0] = A[0 + 3*0]*p->f.f[0] + A[1 + 3*0]*p->f.f[1] + A[2 + 3*0]*p->f.f[2];
+  force[1] = A[0 + 3*1]*p->f.f[0] + A[1 + 3*1]*p->f.f[1] + A[2 + 3*1]*p->f.f[2];
+  force[2] = A[0 + 3*2]*p->f.f[0] + A[1 + 3*2]*p->f.f[1] + A[2 + 3*2]*p->f.f[2];
+}
+
+inline void thermo_convert_vel_space_to_body(Particle *p, double *vel_space, double *vel_body)
+{
+  double A[9];
+  thermo_define_rotation_matrix(p, A);
+
+  vel_body[0] = A[0 + 3*0]*vel_space[0] + A[0 + 3*1]*vel_space[1] + A[0 + 3*2]*vel_space[2];
+  vel_body[1] = A[1 + 3*0]*vel_space[0] + A[1 + 3*1]*vel_space[1] + A[1 + 3*2]*vel_space[2];
+  vel_body[2] = A[2 + 3*0]*vel_space[0] + A[2 + 3*1]*vel_space[1] + A[2 + 3*2]*vel_space[2];
+}
+#endif // ROTATION
+
 /** locally defined funcion to find Vx. In case of LEES_EDWARDS, that is relative to the LE shear frame
     @param i      coordinate index
     @param vel    velocity vector
@@ -181,9 +234,16 @@ inline double friction_thermV_nptiso(double p_diff) {
 */
 inline void friction_thermo_langevin(Particle *p)
 {
+#ifndef PARTICLE_ANISOTROPY
   extern double langevin_pref1, langevin_pref2;
-  
-  double langevin_pref1_temp, langevin_pref2_temp, langevin_temp_coeff;
+  double langevin_pref1_temp, langevin_pref2_temp;
+#else
+  extern double langevin_pref1[3], langevin_pref2[3];
+  double langevin_pref1_temp[3], langevin_pref2_temp[3];
+#endif
+
+  double langevin_temp_coeff;
+  double particle_force[3] = {0.0, 0.0, 0.0};
 
 #ifdef MULTI_TIMESTEP
   extern double langevin_pref1_small;
@@ -193,6 +253,7 @@ inline void friction_thermo_langevin(Particle *p)
 #endif /* MULTI_TIMESTEP */
 
   int j;
+  int aniso_flag = 1; // particle anisotropy flag
   double switch_trans = 1.0;
   if ( langevin_trans == false )
   {
@@ -224,7 +285,7 @@ inline void friction_thermo_langevin(Particle *p)
 #endif /* VIRTUAL_SITES */
 
   // Get velocity effective in the thermostatting
-  double velocity[3];
+  double velocity[3],velocity_body[3] = {0.0, 0.0, 0.0};
   for (int i = 0; i < 3; i++) {
     // Particle velocity
     velocity[i] = p->m.v[i];
@@ -242,8 +303,16 @@ inline void friction_thermo_langevin(Particle *p)
   // Determine prefactors for the friction and the noise term 
 
   // first, set defaults
+#ifndef PARTICLE_ANISOTROPY
   langevin_pref1_temp = langevin_pref1;
   langevin_pref2_temp = langevin_pref2;
+#else
+  for ( j = 0 ; j < 3 ; j++)
+  {
+	  langevin_pref1_temp[j] = langevin_pref1[j];
+	  langevin_pref2_temp[j] = langevin_pref2[j];
+  }
+#endif
 
   // Override defaults if per-particle values for T and gamma are given 
 #ifdef LANGEVIN_PER_PARTICLE  
@@ -256,6 +325,7 @@ inline void friction_thermo_langevin(Particle *p)
 #error No Noise defined
 #endif
 
+#ifndef PARTICLE_ANISOTROPY
     if(p->p.gamma >= 0.) 
     {
       langevin_pref1_temp = -p->p.gamma/time_step;
@@ -277,6 +347,31 @@ inline void friction_thermo_langevin(Particle *p)
         // Defaut values for both
         langevin_pref2_temp = langevin_pref2;
     }
+#else
+    for ( j = 0 ; j < 3 ; j++)
+    if(p->p.gamma[j] >= 0.)
+    {
+      langevin_pref1_temp[j] = -p->p.gamma[j]/time_step;
+      // Is a particle-specific temperature also specified?
+      if(p->p.T >= 0.)
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*p->p.T*p->p.gamma[j]/time_step);
+      else
+        // Default temperature but particle-specific gamma
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*temperature*p->p.gamma[j]/time_step);
+
+    } // particle specific gamma
+    else
+    {
+      langevin_pref1_temp[j] = -langevin_gamma[j]/time_step;
+      // No particle-specific gamma, but is there particle-specific temperature
+      if(p->p.T >= 0.)
+        langevin_pref2_temp[j] = sqrt(langevin_temp_coeff*p->p.T*langevin_gamma[j]/time_step);
+      else
+        // Defaut values for both
+        langevin_pref2_temp[j] = langevin_pref2[j];
+    }
+
+#endif // PARTICLE_ANISOTROPY
 #endif /* LANGEVIN_PER_PARTICLE */
 
   // Multi-timestep handling
@@ -293,7 +388,14 @@ inline void friction_thermo_langevin(Particle *p)
     }
 #endif /* MULTI_TIMESTEP */
 
-  
+#ifdef PARTICLE_ANISOTROPY
+    // Particle frictional isotropy check
+    aniso_flag = (langevin_pref1_temp[0] != langevin_pref1_temp[1]) || (langevin_pref1_temp[1] != langevin_pref1_temp[2]) ||
+            (langevin_pref2_temp[0] != langevin_pref2_temp[1]) || (langevin_pref2_temp[1] != langevin_pref2_temp[2]);
+    if (aniso_flag)
+            thermo_convert_vel_space_to_body(p,velocity,velocity_body);
+#endif
+
   // Do the actual thermostatting
   for ( j = 0 ; j < 3 ; j++) 
   {
@@ -305,10 +407,33 @@ inline void friction_thermo_langevin(Particle *p)
     #endif
     {
       // Apply the force
+#ifndef PARTICLE_ANISOTROPY
       p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+#else
+      // In case of anisotropic particle: body-fixed reference frame. Otherwise: lab-fixed reference frame.
+      if (aniso_flag)
+          p->f.f[j] = langevin_pref1_temp[j]*velocity_body[j] + switch_trans*langevin_pref2_temp[j]*noise;
+      else
+          p->f.f[j] = langevin_pref1_temp[j]*velocity[j] + switch_trans*langevin_pref2_temp[j]*noise;
+#endif
     }
   } // END LOOP OVER ALL COMPONENTS
 
+#ifdef PARTICLE_ANISOTROPY
+  if (aniso_flag)
+  {
+      thermo_convert_forces_body_to_space(p,particle_force);
+      for ( j = 0 ; j < 3 ; j++)
+      {
+#ifdef EXTERNAL_FORCES
+          if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+          {
+              p->f.f[j] = particle_force[j];
+          }
+      }
+  }
+#endif // PARTICLE_ANISOTROPY
 
   // printf("%d: %e %e %e %e %e %e\n",p->p.identity, p->f.f[0],p->f.f[1],p->f.f[2], p->m.v[0],p->m.v[1],p->m.v[2]);
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
@@ -404,7 +529,7 @@ inline void friction_thermo_langevin_rotation(Particle *p)
         // Default values for both
         langevin_pref2_temp[j] = langevin_pref2_rotation[j];
     }
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif /* LANGEVIN_PER_PARTICLE */
 
 

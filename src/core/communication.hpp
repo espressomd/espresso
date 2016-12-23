@@ -514,7 +514,12 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional
  * coefficient. */
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#else
+void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+#endif
+
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
