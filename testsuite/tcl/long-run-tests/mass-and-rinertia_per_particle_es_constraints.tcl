@@ -181,11 +181,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
     
     if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
+        if {$test_case == 0} {
+            constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]}
+            constraint wall normal 0 0 1 dist [expr 0.03 * $box] type 2 penetrable 0 reflecting 1
+            constraint wall normal 0 0 -1 dist [expr -0.97 * $box] type 2 penetrable 0 reflecting 1
+        }
+        
         inter coulomb 1.0 mmm2d 1E-1
-        
-        constraint wall normal 0 0 1 dist [expr 0.03 * $box] type 2 penetrable 0 reflecting 1
-        constraint wall normal 0 0 -1 dist [expr -0.97 * $box] type 2 penetrable 0 reflecting 1
-        
         set sig [expr 0.25*5.0/6.0]; set cut [expr 1.12246*$sig]
         set eps 3; set shift [expr 0.25*$eps]
         inter 2 1 lennard-jones $eps $sig $cut $shift 0
@@ -319,10 +321,6 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 }
 
 # the actual testing
-
-if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
-    constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]
-}
 
 for {set i 0} {$i < 4} {incr i} {
     test_mass-and-rinertia_per_particle $i
