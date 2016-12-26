@@ -1,4 +1,5 @@
 # Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -41,14 +42,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd skin 0
     setmd time_step 0.007
     thermostat langevin 0 $gamma0 
-    cellsystem nsquare 
+    # cellsystem nsquare 
     #-no_verlet_lists
     set J "10 10 10"
     set mass 12.74
 
     part deleteall
-    part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
-    part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    part 0 pos 0 0 0 type 3 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    part 1 pos 0 0 0 type 3 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
     puts "\n"
     switch $test_case {
         0 {
@@ -131,14 +132,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
     set box 35
     setmd box_l $box $box $box
-    set kT 1.5
+    set kT 2.321
     if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
         cellsystem layered [expr 25/[setmd n_nodes]]
         setmd periodic 1 1 0
     }
 
     for {set k 0} {$k<2} {incr k} {
-        set halfkT($k) 0.75
+        set halfkT($k) [expr $kT / 2.0]
         if {$test_case == 2 || $test_case == 3} {
             set halfkT($k) [expr $temp($k)/2.]
         }        
@@ -174,23 +175,19 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                 3 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
             }
             if {[has_feature "ELECTROSTATICS"]} {
-                # Charges are assigned only to non-zero type of particles
-                # part [expr $i + $k*$n] type $k q $k
-                part [expr $i + $k*$n] type $k q 1
+                part [expr $i + $k*$n] type $k q $k
             }
         }
     }
     
     if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
         inter coulomb 1.0 mmm2d 1E-1
-        constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]
         
-        set sig [expr 1.0];
         constraint wall normal 0 0 1 dist [expr 0.03 * $box] type 2 penetrable 0 reflecting 1
         constraint wall normal 0 0 -1 dist [expr -0.97 * $box] type 2 penetrable 0 reflecting 1
         
-        set sig [expr 5.0/6.0]; set cut [expr 0.4*1.12246*$sig]
-        set eps 5; set shift [expr 0.25*$eps]
+        set sig [expr 0.25*5.0/6.0]; set cut [expr 1.12246*$sig]
+        set eps 3; set shift [expr 0.25*$eps]
         inter 2 1 lennard-jones $eps $sig $cut $shift 0
         inter 2 0 lennard-jones $eps $sig $cut $shift 0
     }
@@ -216,10 +213,10 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             set pos0($ind) [part $ind print pos]
         }
     }
-    set loops 1E3
+    set loops 2E3
 
     puts "Thermalizing..."
-    set therm_steps 1200
+    set therm_steps 500
     integrate $therm_steps
     puts "Measuring..."
 
@@ -251,9 +248,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                     set dr($k) [expr $dr($k) + (($dx2($k)+$dy2($k)+$dz2($k)) - $sigma2_tr($k)) / $sigma2_tr($k)]
                 } else {
                     if { $k == 0} {
-                        set sigma2_tr($k) [expr $D_tr($k) * (2 * $dt + $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
-                        set dr($k) [expr $dr($k) + ($dz2($k) - $sigma2_tr($k)) / $sigma2_tr($k)]
-                        #set dr($k) 0
+                        #set sigma2_tr($k) [expr $D_tr($k) * (2 * $dt + $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
+                        #set dr($k) [expr $dr($k) + ($dz2($k) - $sigma2_tr($k)) / $sigma2_tr($k)]
+                        set dr($k) 0
                     } else {
                         # nothing to test due to contraints and the periodicity
                         set dr($k) 0
@@ -317,9 +314,16 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             }
         }
     }
+    
+    inter coulomb 0.0
 }
 
 # the actual testing
+
+if {[has_feature "ELECTROSTATICS"] && [has_feature "CONSTRAINTS"]} {
+    constraint plate height [expr 1.1*$box] sigma [expr 1/(2.0*$PI)]
+}
+
 for {set i 0} {$i < 4} {incr i} {
     test_mass-and-rinertia_per_particle $i
 }
