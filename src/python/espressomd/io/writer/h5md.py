@@ -30,8 +30,10 @@ class H5md(object):
                      If types should be written.
         write_mass : bool, optional
                      If masses should be written.
+        write_ordered: bool, optional
+                       If particle properties should be ordered according to ids.
         """
-        self.valid_params = ['filename',]
+        self.valid_params = ['filename','write_ordered',]
         if 'filename' not in kwargs:
             raise ValueError("'filename' parameter missing.")
         self.what = {'write_pos': 1<<0,
@@ -50,9 +52,13 @@ class H5md(object):
                     raise ValueError("{} has to be a bool value.".format(i))
             elif i not in self.valid_params:
                 raise ValueError("Unknown parameter {} for H5MD writer.".format(i))
+        
+        write_ordered_default=True
+        self.write_ordered=kwargs.get('write_ordered',write_ordered_default)
+        
         self.h5md_instance = PScriptInterface("ScriptInterface::Writer::H5mdScript")
         self.h5md_instance.set_params(filename=kwargs['filename'], what=self.what_bin,
-                                      scriptname=sys.argv[0])
+                                      scriptname=sys.argv[0], write_ordered=self.write_ordered)
         self.h5md_instance.call_method("init_file")
 
 

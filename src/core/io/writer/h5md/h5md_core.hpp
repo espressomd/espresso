@@ -37,6 +37,7 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include <h5xx/h5xx.hpp>
+#include "communication.hpp"
 
 
 extern double sim_time;
@@ -94,6 +95,8 @@ class File
         std::string &scriptname() { return m_scriptname; };
         // Returns the int that describes which data should be written to the dataset.
         int &what() { return m_what; };
+        // Returns the boolean value that describes whether data should be written to the dataset in the order of ids (possibly slower on output for many particles).
+        bool &write_ordered() {return m_write_ordered;} ;
 
     private:
         bool check_file_exists(const std::string &name)
@@ -154,6 +157,7 @@ class File
         std::string m_filename;
         std::string m_scriptname;
         int m_what;
+        bool m_write_ordered;
         std::string m_backup_filename;
         boost::filesystem::path m_absolute_script_path = "NULL";
         h5xx::file m_h5md_file;

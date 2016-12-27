@@ -91,6 +91,7 @@ foreach(cython_file ${cython_SRC})
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
                          ${cython_file}
                          -o ${outputpath}
+                         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
                          DEPENDS _espresso/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
