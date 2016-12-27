@@ -268,23 +268,27 @@ void File::Write(int write_dat)
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
 
-    std::cout << "ordered " << m_write_ordered << std::endl;
-
+    int num_particles_to_be_written;
+    int remainder=0;
+    
     if (m_write_ordered==true) {
-    	int npart=max_seen_particle+1;
-    	int num_particles_to_be_written=std::floor(npart/n_nodes);
-    	int remainder=0;
+    	num_particles_to_be_written=std::floor(n_part/n_nodes);
     	if(this_node==n_nodes-1)
-    		remainder=npart%num_particles_to_be_written;
+    		remainder=n_part%num_particles_to_be_written;
+     }else{
+         /* Get the number of particles on each node. */
+        num_particles_to_be_written = cells_get_n_particles();       
+     }
         
-        
-        double_array_3d pos(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        double_array_3d vel(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        double_array_3d f(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        int_array_3d image(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        int_array_3d id(boost::extents[1][num_particles_to_be_written+remainder][1]);
-        int_array_3d typ(boost::extents[1][num_particles_to_be_written+remainder][1]);
-        double_array_3d mass(boost::extents[1][num_particles_to_be_written+remainder][1]);
+    double_array_3d pos(boost::extents[1][num_particles_to_be_written+remainder][3]);
+    double_array_3d vel(boost::extents[1][num_particles_to_be_written+remainder][3]);
+    double_array_3d f(boost::extents[1][num_particles_to_be_written+remainder][3]);
+    int_array_3d image(boost::extents[1][num_particles_to_be_written+remainder][3]);
+    int_array_3d id(boost::extents[1][num_particles_to_be_written+remainder][1]);
+    int_array_3d typ(boost::extents[1][num_particles_to_be_written+remainder][1]);
+    double_array_3d mass(boost::extents[1][num_particles_to_be_written+remainder][1]);
+    
+    if(m_write_ordered==true){
         //loop over all particles
         for(int particle_index=this_node*num_particles_to_be_written;particle_index<(this_node+1)*num_particles_to_be_written+remainder;particle_index++){
             	Particle current_particle;
@@ -323,48 +327,7 @@ void File::Write(int write_dat)
 		free_particle(&current_particle);
 
         }
-
-        if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part;
-        }
-
-        WriteDataset(id, "particles/atoms/id");
-
-        if (write_typ)
-        {
-            WriteDataset(typ, "particles/atoms/type");
-            printf("write type%d \n", this_node);
-        }
-        if (write_mass)
-        {
-            WriteDataset(mass, "particles/atoms/mass");
-        }
-        if (write_pos)
-        {
-            WriteDataset(pos, "particles/atoms/position");
-            WriteDataset(image, "particles/atoms/image");
-            printf("write pos%d \n", this_node);
-        }
-        if (write_vel)
-        {
-            WriteDataset(vel, "particles/atoms/velocity");
-        }
-        if (write_force)
-        {
-            WriteDataset(f, "particles/atoms/force");
-            printf("write force%d \n", this_node);
-        }
-    }else{
-        /* Get the number of particles on all other nodes. */
-        int nlocalpart = cells_get_n_particles();
-        double_array_3d pos(boost::extents[1][nlocalpart][3]);
-        double_array_3d vel(boost::extents[1][nlocalpart][3]);
-        double_array_3d f(boost::extents[1][nlocalpart][3]);
-        int_array_3d image(boost::extents[1][nlocalpart][3]);
-        int_array_3d id(boost::extents[1][nlocalpart][1]);
-        int_array_3d typ(boost::extents[1][nlocalpart][1]);
-        double_array_3d mass(boost::extents[1][nlocalpart][1]);
-
+    } else {
         /* Prepare data for writing, loop over all local cells. */
         Cell *local_cell;
         int particle_index = 0;
@@ -413,35 +376,34 @@ void File::Write(int write_dat)
                 particle_index++;
             }
         }
+    
+    }
+    if (n_part > m_max_n_part) {
+    	m_max_n_part = n_part;
+    }
 
-        int n_part = max_seen_particle+1;
-        if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part;
-        }
+    WriteDataset(id, "particles/atoms/id");
 
-        WriteDataset(id, "particles/atoms/id");
-
-        if (write_typ)
-        {
-            WriteDataset(typ, "particles/atoms/type");
-        }
-        if (write_mass)
-        {
-            WriteDataset(mass, "particles/atoms/mass");
-        }
-        if (write_pos)
-        {
-            WriteDataset(pos, "particles/atoms/position");
-            WriteDataset(image, "particles/atoms/image");
-        }
-        if (write_vel)
-        {
-            WriteDataset(vel, "particles/atoms/velocity");
-        }
-        if (write_force)
-        {
-            WriteDataset(f, "particles/atoms/force");
-        }
+    if (write_typ)
+    {
+        WriteDataset(typ, "particles/atoms/type");
+    }
+    if (write_mass)
+    {
+        WriteDataset(mass, "particles/atoms/mass");
+    }
+    if (write_pos)
+    {
+        WriteDataset(pos, "particles/atoms/position");
+        WriteDataset(image, "particles/atoms/image");
+    }
+    if (write_vel)
+    {
+        WriteDataset(vel, "particles/atoms/velocity");
+    }
+    if (write_force)
+    {
+        WriteDataset(f, "particles/atoms/force");
     }
 }
 
