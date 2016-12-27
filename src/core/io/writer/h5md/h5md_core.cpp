@@ -268,60 +268,52 @@ void File::Write(int write_dat)
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
 
-    std::cout << "ordered " << m_write_ordered << std::endl;
 
-    if (m_write_ordered==true) {
-    	int npart=max_seen_particle+1;
-    	int num_particles_to_be_written=std::floor(npart/n_nodes);
-    	int remainder=0;
-    	if(this_node==n_nodes-1)
-    		remainder=npart%num_particles_to_be_written;
+    if (m_write_ordered==true && n_nodes==1) {
         
-        
-        double_array_3d pos(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        double_array_3d vel(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        double_array_3d f(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        int_array_3d image(boost::extents[1][num_particles_to_be_written+remainder][3]);
-        int_array_3d id(boost::extents[1][num_particles_to_be_written+remainder][1]);
-        int_array_3d typ(boost::extents[1][num_particles_to_be_written+remainder][1]);
-        double_array_3d mass(boost::extents[1][num_particles_to_be_written+remainder][1]);
+        double_array_3d pos(boost::extents[1][n_part][3]);
+        double_array_3d vel(boost::extents[1][n_part][3]);
+        double_array_3d f(boost::extents[1][n_part][3]);
+        int_array_3d image(boost::extents[1][n_part][3]);
+        int_array_3d id(boost::extents[1][n_part][1]);
+        int_array_3d typ(boost::extents[1][n_part][1]);
+        double_array_3d mass(boost::extents[1][n_part][1]);
         //loop over all particles
-        for(int particle_index=this_node*num_particles_to_be_written;particle_index<(this_node+1)*num_particles_to_be_written+remainder;particle_index++){
-            	Particle current_particle;
-		get_particle_data(particle_index, &current_particle);
-		id[0][particle_index][0] = current_particle.p.identity;
-                if (write_typ)
-                    typ[0][particle_index][0] =current_particle.p.type;
-                if (write_mass)
-                    mass[0][particle_index][0] = current_particle.p.mass;
-                /* store folded particle positions. */
-                if (write_pos)
-                {
-                    pos[0][particle_index][0] = current_particle.r.p[0];
-                    pos[0][particle_index][1] = current_particle.r.p[1];
-                    pos[0][particle_index][2] = current_particle.r.p[2];
-                    image[0][particle_index][0] = current_particle.l.i[0];
-                    image[0][particle_index][1] = current_particle.l.i[1];
-                    image[0][particle_index][2] = current_particle.l.i[2];
-                }
-                if (write_vel)
-                {
-                    vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-                    vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-                    vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
-                }
-                if (write_force)
-                {
-                    /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
-                     * world force. */
-                    double fac = current_particle.p.mass / (0.5 * time_step * time_step);
-                    f[0][particle_index][0] = current_particle.f.f[0] * fac;
-                    f[0][particle_index][1] = current_particle.f.f[1] * fac;
-                    f[0][particle_index][2] = current_particle.f.f[2] * fac;
-                }
+        for(int particle_index=0;particle_index<n_part;particle_index++){
+            Particle current_particle;
+	        get_particle_data(particle_index, &current_particle); //this function only works when run with one process
+	        id[0][particle_index][0] = current_particle.p.identity;
+            if (write_typ)
+                typ[0][particle_index][0] =current_particle.p.type;
+            if (write_mass)
+                mass[0][particle_index][0] = current_particle.p.mass;
+            /* store folded particle positions. */
+            if (write_pos)
+            {
+                pos[0][particle_index][0] = current_particle.r.p[0];
+                pos[0][particle_index][1] = current_particle.r.p[1];
+                pos[0][particle_index][2] = current_particle.r.p[2];
+                image[0][particle_index][0] = current_particle.l.i[0];
+                image[0][particle_index][1] = current_particle.l.i[1];
+                image[0][particle_index][2] = current_particle.l.i[2];
+            }
+            if (write_vel)
+            {
+                vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
+                vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
+                vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
+            }
+            if (write_force)
+            {
+                /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
+                 * world force. */
+                double fac = current_particle.p.mass / (0.5 * time_step * time_step);
+                f[0][particle_index][0] = current_particle.f.f[0] * fac;
+                f[0][particle_index][1] = current_particle.f.f[1] * fac;
+                f[0][particle_index][2] = current_particle.f.f[2] * fac;
+            }
 
-		free_particle(&current_particle);
-
+	        free_particle(&current_particle);
         }
 
         if (n_part > m_max_n_part) {
@@ -333,7 +325,6 @@ void File::Write(int write_dat)
         if (write_typ)
         {
             WriteDataset(typ, "particles/atoms/type");
-            printf("write type%d \n", this_node);
         }
         if (write_mass)
         {
@@ -343,7 +334,6 @@ void File::Write(int write_dat)
         {
             WriteDataset(pos, "particles/atoms/position");
             WriteDataset(image, "particles/atoms/image");
-            printf("write pos%d \n", this_node);
         }
         if (write_vel)
         {
@@ -352,7 +342,6 @@ void File::Write(int write_dat)
         if (write_force)
         {
             WriteDataset(f, "particles/atoms/force");
-            printf("write force%d \n", this_node);
         }
     }else{
         /* Get the number of particles on all other nodes. */

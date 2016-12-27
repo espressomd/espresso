@@ -53,7 +53,7 @@ class H5md(object):
             elif i not in self.valid_params:
                 raise ValueError("Unknown parameter {} for H5MD writer.".format(i))
         
-        write_ordered_default=True
+        write_ordered_default=False
         self.write_ordered=kwargs.get('write_ordered',write_ordered_default)
         
         self.h5md_instance = PScriptInterface("ScriptInterface::Writer::H5mdScript")
