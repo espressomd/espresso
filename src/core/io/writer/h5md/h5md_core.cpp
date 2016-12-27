@@ -84,7 +84,7 @@ void File::InitFile()
 #endif
     boost::filesystem::path script_path(m_scriptname);
     m_absolute_script_path = boost::filesystem::canonical(script_path);
-    if(!(cells_get_n_particles() > 0)) {
+    if(n_part <= 0) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
 
