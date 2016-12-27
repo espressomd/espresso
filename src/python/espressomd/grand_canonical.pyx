@@ -85,7 +85,7 @@ def status(current_type=None):
             id_list.append(type_array[Index.type[current_type]].id_list[i])
         return id_list
     else:
-	print("no list for particle")
+        print("no list for particle")
         return []
 
     
