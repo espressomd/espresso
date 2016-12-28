@@ -257,6 +257,40 @@ void File::Close()
 }
 
 
+void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle,bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force ){
+	        id[0][particle_index][0] = current_particle->p.identity;
+            if (write_typ)
+                typ[0][particle_index][0] =current_particle->p.type;
+            if (write_mass)
+                mass[0][particle_index][0] = current_particle->p.mass;
+            /* store folded particle positions. */
+            if (write_pos)
+            {
+                pos[0][particle_index][0] = current_particle->r.p[0];
+                pos[0][particle_index][1] = current_particle->r.p[1];
+                pos[0][particle_index][2] = current_particle->r.p[2];
+                image[0][particle_index][0] = current_particle->l.i[0];
+                image[0][particle_index][1] = current_particle->l.i[1];
+                image[0][particle_index][2] = current_particle->l.i[2];
+            }
+            if (write_vel)
+            {
+                vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
+                vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
+                vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
+            }
+            if (write_force)
+            {
+                /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
+                 * world force. */
+                double fac = current_particle->p.mass / (0.5 * time_step * time_step);
+                f[0][particle_index][0] = current_particle->f.f[0] * fac;
+                f[0][particle_index][1] = current_particle->f.f[1] * fac;
+                f[0][particle_index][2] = current_particle->f.f[2] * fac;
+            }
+
+}
+
 void File::Write(int write_dat)
 {
 #ifdef H5MD_DEBUG
@@ -267,94 +301,34 @@ void File::Write(int write_dat)
     bool write_vel = write_dat & W_V;
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
+    int num_particles_to_be_written;
+    if(m_write_ordered==true && n_nodes==1)
+        num_particles_to_be_written=n_part;
+    else
+        num_particles_to_be_written=cells_get_n_particles();
 
+    double_array_3d pos(boost::extents[1][num_particles_to_be_written][3]);
+    double_array_3d vel(boost::extents[1][num_particles_to_be_written][3]);
+    double_array_3d f(boost::extents[1][num_particles_to_be_written][3]);
+    int_array_3d image(boost::extents[1][num_particles_to_be_written][3]);
+    int_array_3d id(boost::extents[1][num_particles_to_be_written][1]);
+    int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
+    double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
 
     if (m_write_ordered==true && n_nodes==1) {
         
-        double_array_3d pos(boost::extents[1][n_part][3]);
-        double_array_3d vel(boost::extents[1][n_part][3]);
-        double_array_3d f(boost::extents[1][n_part][3]);
-        int_array_3d image(boost::extents[1][n_part][3]);
-        int_array_3d id(boost::extents[1][n_part][1]);
-        int_array_3d typ(boost::extents[1][n_part][1]);
-        double_array_3d mass(boost::extents[1][n_part][1]);
         //loop over all particles
         for(int particle_index=0;particle_index<n_part;particle_index++){
             Particle current_particle;
 	        get_particle_data(particle_index, &current_particle); //this function only works when run with one process
-	        id[0][particle_index][0] = current_particle.p.identity;
-            if (write_typ)
-                typ[0][particle_index][0] =current_particle.p.type;
-            if (write_mass)
-                mass[0][particle_index][0] = current_particle.p.mass;
-            /* store folded particle positions. */
-            if (write_pos)
-            {
-                pos[0][particle_index][0] = current_particle.r.p[0];
-                pos[0][particle_index][1] = current_particle.r.p[1];
-                pos[0][particle_index][2] = current_particle.r.p[2];
-                image[0][particle_index][0] = current_particle.l.i[0];
-                image[0][particle_index][1] = current_particle.l.i[1];
-                image[0][particle_index][2] = current_particle.l.i[2];
-            }
-            if (write_vel)
-            {
-                vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-                vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-                vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
-            }
-            if (write_force)
-            {
-                /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
-                 * world force. */
-                double fac = current_particle.p.mass / (0.5 * time_step * time_step);
-                f[0][particle_index][0] = current_particle.f.f[0] * fac;
-                f[0][particle_index][1] = current_particle.f.f[1] * fac;
-                f[0][particle_index][2] = current_particle.f.f[2] * fac;
-            }
-
+            fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle,  write_typ, write_mass, write_pos, write_vel, write_force );
 	        free_particle(&current_particle);
         }
 
-        if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part;
-        }
-
-        WriteDataset(id, "particles/atoms/id");
-
-        if (write_typ)
-        {
-            WriteDataset(typ, "particles/atoms/type");
-        }
-        if (write_mass)
-        {
-            WriteDataset(mass, "particles/atoms/mass");
-        }
-        if (write_pos)
-        {
-            WriteDataset(pos, "particles/atoms/position");
-            WriteDataset(image, "particles/atoms/image");
-        }
-        if (write_vel)
-        {
-            WriteDataset(vel, "particles/atoms/velocity");
-        }
-        if (write_force)
-        {
-            WriteDataset(f, "particles/atoms/force");
-        }
     }else{
         /* Get the number of particles on all other nodes. */
-        int nlocalpart = cells_get_n_particles();
-        double_array_3d pos(boost::extents[1][nlocalpart][3]);
-        double_array_3d vel(boost::extents[1][nlocalpart][3]);
-        double_array_3d f(boost::extents[1][nlocalpart][3]);
-        int_array_3d image(boost::extents[1][nlocalpart][3]);
-        int_array_3d id(boost::extents[1][nlocalpart][1]);
-        int_array_3d typ(boost::extents[1][nlocalpart][1]);
-        double_array_3d mass(boost::extents[1][nlocalpart][1]);
 
-        /* Prepare data for writing, loop over all local cells. */
+        /* loop over all local cells. */
         Cell *local_cell;
         int particle_index = 0;
         for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
@@ -363,75 +337,42 @@ void File::Write(int write_dat)
             for (int local_part_id = 0;
                  local_part_id < local_cell->n; ++local_part_id)
             {
-                const auto & current_particle = local_cell->part[local_part_id];
-                id[0][particle_index][0] = current_particle.p.identity;
-                if (write_typ)
-                {
-                    typ[0][particle_index][0] = current_particle.p.type;
-                }
-                if (write_mass)
-                {
-                    mass[0][particle_index][0] = current_particle.p.mass;
-                }
-
-                /* store folded particle positions. */
-                if (write_pos)
-                {
-                    pos[0][particle_index][0] = current_particle.r.p[0];
-                    pos[0][particle_index][1] = current_particle.r.p[1];
-                    pos[0][particle_index][2] = current_particle.r.p[2];
-                    image[0][particle_index][0] = current_particle.l.i[0];
-                    image[0][particle_index][1] = current_particle.l.i[1];
-                    image[0][particle_index][2] = current_particle.l.i[2];
-                }
-                if (write_vel)
-                {
-                    vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
-                    vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
-                    vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
-                }
-                if (write_force)
-                {
-                    /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
-                     * world force. */
-                    double fac = current_particle.p.mass / (0.5 * time_step * time_step);
-                    f[0][particle_index][0] = current_particle.f.f[0] * fac;
-                    f[0][particle_index][1] = current_particle.f.f[1] * fac;
-                    f[0][particle_index][2] = current_particle.f.f[2] * fac;
-                }
+                auto & current_particle = local_cell->part[local_part_id];
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle, write_typ, write_mass, write_pos, write_vel, write_force );
                 particle_index++;
             }
         }
-
-        int n_part = max_seen_particle+1;
-        if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part;
-        }
-
-        WriteDataset(id, "particles/atoms/id");
-
-        if (write_typ)
-        {
-            WriteDataset(typ, "particles/atoms/type");
-        }
-        if (write_mass)
-        {
-            WriteDataset(mass, "particles/atoms/mass");
-        }
-        if (write_pos)
-        {
-            WriteDataset(pos, "particles/atoms/position");
-            WriteDataset(image, "particles/atoms/image");
-        }
-        if (write_vel)
-        {
-            WriteDataset(vel, "particles/atoms/velocity");
-        }
-        if (write_force)
-        {
-            WriteDataset(f, "particles/atoms/force");
-        }
     }
+
+    int n_part = max_seen_particle+1;
+    if (n_part > m_max_n_part) {
+    	m_max_n_part = n_part;
+    }
+
+    WriteDataset(id, "particles/atoms/id");
+
+    if (write_typ)
+    {
+        WriteDataset(typ, "particles/atoms/type");
+    }
+    if (write_mass)
+    {
+        WriteDataset(mass, "particles/atoms/mass");
+    }
+    if (write_pos)
+    {
+        WriteDataset(pos, "particles/atoms/position");
+        WriteDataset(image, "particles/atoms/image");
+    }
+    if (write_vel)
+    {
+        WriteDataset(vel, "particles/atoms/velocity");
+    }
+    if (write_force)
+    {
+        WriteDataset(f, "particles/atoms/force");
+    }
+
 }
 
 /* data is assumed to be three dimensional */
@@ -450,9 +391,9 @@ void File::WriteDataset(T &data, const std::string& path)
     auto& time = datasets[path + "/time"];
     auto& step = datasets[path + "/step"];
 
-    int nlocalpart = cells_get_n_particles();
+    int num_particles_to_be_written = data.shape()[1];
     int pref = 0;
-    MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Exscan(&num_particles_to_be_written, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
     hsize_t dims[3], maxdims[3];
@@ -461,7 +402,7 @@ void File::WriteDataset(T &data, const std::string& path)
 
     /* We will write the last timestep of all local particles. */
     hsize_t offset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-    hsize_t count[3] = {1, static_cast<hsize_t>(nlocalpart), data.shape()[2]};
+    hsize_t count[3] = {1, static_cast<hsize_t>(num_particles_to_be_written), data.shape()[2]};
     /* Extend the dataset for another timestep. */
     dims[0] += 1;
     dims[1] = m_max_n_part;

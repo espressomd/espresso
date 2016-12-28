@@ -118,6 +118,10 @@ class File
         template <typename T>
         void WriteDataset(T &data, const std::string& path);
         /*
+         * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
+         */
+	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle, bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force );
+        /*
          * @brief Method to write the simulation script to the dataset.
          */
         void WriteScript(std::string const &filename);

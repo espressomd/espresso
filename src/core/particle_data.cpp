@@ -345,19 +345,19 @@ void free_particle(Particle *part) {
 int updatePartCfg(int bonds_flag)
 {
   int j;
-
+printf("00001000\n");
   if(partCfg)
     return 1;
-
+printf("00002000\n");
   partCfg = (Particle*)Utils::malloc(n_part*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
     mpi_get_particles(partCfg,&partCfg_bl);
-
+printf("00003000\n");
   for(j=0; j<n_part; j++)
     unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-
+printf("00004000\n");
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
