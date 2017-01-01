@@ -14,9 +14,8 @@ class FixedPoint:
     def __init__(self, pos, id):
         if not isinstance(id, int):
             raise TypeError("Id must be integer.")
-        if False: #TODO
-        #if isinstance(pos[0],float) and isinstance(pos[0],float) and isinstance(pos[0],float):
-            raise TypeError("Pos must be .....") #TODO
+        if not ((len(pos) == 3) and isinstance(pos[0],float) and isinstance(pos[1],float) and isinstance(pos[2],float)):
+            raise TypeError("Pos must be a list of three floats.") 
 
         self.x = pos[0]
         self.y = pos[1]
@@ -148,7 +147,7 @@ class Mesh:
     Represents a triangular mesh.
 
     """
-    def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
+    def __init__(self, nodes_file=None, triangles_file=None, system=None, resize=[1.0, 1.0, 1.0],
                  part_type=-1, part_mass=1.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system,espressomd.System)):
             raise Exception("Mesh: No system provided or wrong type given. Quitting.")
@@ -171,9 +170,8 @@ class Mesh:
         else:
             if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
                 raise TypeError("Filenames must be strings.")
-#            if not isinstance(resize,tuple): #TOD
-            if False:
-                raise TypeError("resize must be a tuple.")
+            if not ((len(resize) == 3) and isinstance(resize[0],float) and isinstance(resize[1],float) and isinstance(resize[2],float)):
+                raise TypeError("Pos must be a list of three floats.") 
             if not isinstance(part_type,int):
                 raise TypeError("part_type must be integer.") 
             if not isinstance(part_mass,float):
@@ -647,19 +645,16 @@ class OifCellType:  # analogous to oif_template
             raise Exception("OifCellType: No system provided or wrong type. Quitting.")
         if (nodes_file is "") or (triangles_file is ""):
             raise Exception("OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
-
         if not (isinstance(nodes_file,str) and isinstance(triangles_file,str)):
             raise TypeError("Filenames must be strings.")
-        #if not isinstance(resize,tuple): #TODO
-        if False:
-            raise TypeError("resize must be tuple.")
+        if not ((len(resize) == 3) and isinstance(resize[0],float) and isinstance(resize[1],float) and isinstance(resize[2],float)):
+            raise TypeError("resize must be a list of three floats.") 
         if not (isinstance(ks,float) and isinstance(ks,float) and isinstance(kb,float) and isinstance(kal,float) and isinstance(kag,float) and isinstance(kv,float) and isinstance(kvisc,float)):
             raise TypeError("elastic parameters must be floats.")
         if not isinstance(normal,bool):
             raise TypeError("normal must be bool.") 
         if not isinstance(check_orientation,bool):
             raise TypeError("check_orientation must be bool.")     
-
         if normal is False:
             print "OifCellType warning: Option normal is not used => membrane collision will not work."
         if check_orientation is False:
@@ -726,16 +721,16 @@ class OifCell:
     def __init__(self, cell_type=None, origin=None, part_type=None, part_mass=1.0, rotate=None):
         if (cell_type is None) or (not isinstance(cell_type,OifCellType)):
             raise Exception("OifCell: No cellType provided or wrong type. Quitting.")
-        #if (origin is None) or (not isinstance(origin,TODO)): #TODO
-        if (origin is None): #TODO
-            raise Exception("OifCell: No origin specified or wrong type. Quitting.")
+        if (origin is None) or \
+        (not ((len(origin) == 3) and isinstance(origin[0],float) and isinstance(origin[1],float) and isinstance(origin[2],float))):
+            raise TypeError("Origin must be tuple.")
         if (part_type is None) or (not isinstance(part_type,int)):
             raise Exception("OifCell: No partType specified or wrong type. Quitting.")
         if not isinstance(part_mass,float):
             raise Exception("OifCell: part mass must be float.")
-#        if not isinstance(rotate,tuple): #TODO
-        if False:
-            raise Exception("OifCell: rotate must be tuple")
+        if (rotate is not None) and not ((len(rotate) == 3) and isinstance(rotate[0],float) and isinstance(rotate[1],float) and isinstance(rotate[2],float)):
+            print rotate
+            raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
         self.mesh = cell_type.mesh.copy(origin=origin, part_type=part_type, part_mass=part_mass, rotate=rotate)
