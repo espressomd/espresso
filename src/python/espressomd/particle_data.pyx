@@ -842,9 +842,9 @@ cdef class ParticleHandle(object):
             arguments it is possible to fix motion in x, y, or z coordinates
             independently. For example::
 
-                part[<ID>].fix = [0, 0, 1]
+                part[<INDEX>].fix = [0, 0, 1]
 
-            will fix motion for particle with id ``ID`` only in z.
+            will fix motion for particle with index ``INDEX`` only in z.
 
             .. note::
                This needs the feature EXTERNAL_FORCES.
