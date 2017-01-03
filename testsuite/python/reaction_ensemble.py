@@ -41,7 +41,7 @@ class ReactionEnsembleTest(ut.TestCase):
     K_HA_diss=0.5; #could be in this test for example anywhere in the range 0.000001 ... 9
     system = espressomd.System()
     system.box_l = [35.0, 35.0, 35.0]
-    system.skin = 0.4
+    system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE=reaction_ensemble.ReactionEnsemble(standard_pressure=standard_pressure_in_simulation_units, temperature=1, exclusion_radius=1)        
     
@@ -53,12 +53,8 @@ class ReactionEnsembleTest(ut.TestCase):
         cls.system.part.add(id=np.arange(cls.N0,2*cls.N0) ,pos=np.random.random((cls.N0,3)) * cls.system.box_l, type=cls.type_H)
         
         cls.RE.add(equilibrium_constant=cls.K_HA_diss,educt_types=[cls.type_HA],educt_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
-        ReactionEnsembleTest.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
-        ReactionEnsembleTest.RE.print_status()
-
-#    @classmethod
-#    def tearDownClass(self):
-#        self.RE.free()
+        cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
+        cls.RE.print_status()
 
     @classmethod
     def ideal_degree_of_association(cls,pK_a,pH):
@@ -85,8 +81,8 @@ class ReactionEnsembleTest(ut.TestCase):
         num_samples=2000
         for i in range(num_samples):
             RE.reaction()
-            average_NH+=grand_canonical.number_of_particles(type_id=type_H)
-            average_degree_of_association+=grand_canonical.number_of_particles(type_id=type_HA)/float(N0)
+            average_NH+=grand_canonical.number_of_particles(current_type=type_H)
+            average_degree_of_association+=grand_canonical.number_of_particles(current_type=type_HA)/float(N0)
         average_NH/=num_samples
         average_degree_of_association/=num_samples
         pH=-np.log10(average_NH/volume)
