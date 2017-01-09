@@ -144,7 +144,7 @@ cdef class Thermostat:
         return True
 
     def set_langevin(self, kT="", gamma="", gamma_rotation=""):
-        """Sets the Langevin thermostat with required parameters 'temperature' 'gamma'
+        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'"""
         
         scalar_gamma_def = True
