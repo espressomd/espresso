@@ -159,9 +159,6 @@ cdef class PScriptInterface:
         cdef Variant value = self.sip.get().get_parameter(name)
         return self.variant_to_python_object(value)
 
-    def set_parameter(self, name, value):
-        self.sip.get().set_parameter(to_char_pointer(name), self.python_object_to_variant(value))
-
     def get_params(self):
         cdef map[string, Variant] params = self.sip.get().get_parameters()
         odict = {}
@@ -193,7 +190,7 @@ class ScriptInterfaceHelper(PScriptInterface):
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():
-            self.set_parameter(attr, value)
+            self.set_params(**{attr:value})
         else:
             self.__dict__[attr] = value
 
