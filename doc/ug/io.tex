@@ -1221,7 +1221,7 @@ these errors.
 \label{sec:visualizer}
 \index{Visualization}
 
-\es with the python interface features two possibilities for
+With the python interface, \es features two possibilities for
 online-visualization: 
 
 \begin{enumerate}
@@ -1231,7 +1231,7 @@ specify the appearance of the output. Additional requirements: XXXXXX.
 \item A direct rendering engine based on \emph{pyopengl}. As it is
 developed for \es, it supports the visualization of several specific features
 like external forces or constraints. It has no GUI to setup the appearance, but
-can be adjusted by a set of parameters. Additional requirements: installed
+can be adjusted by a large set of parameters. Additional requirements: installed
 python module \emph{PyOpenGL}.  
 \end{enumerate}
 Both are not meant to produce high quality renderings, but rather to debug your
@@ -1240,18 +1240,21 @@ setup and equilibration process.
 \subsection{General usage}
 
 The recommended usage of both tools is similar: Create the visualizer of your
-choice and pass it the \lstinline{espressomd.System()}. Then write your
-simulation script in a seperate function, which is started in a non-blocking
+choice and pass it the \lstinline{espressomd.System()} object. Then write your
+integration loop in a seperate function, which is started in a non-blocking
 thread. Whenever needed, call \lstinline{update()} to synchronize the renderer
-with your system.  Finally start the blocking visualization window. The \es
-visualization and threading modules can be imported with
+with your system. Finally start the blocking visualization window with
+\lstinline{start()}. 
+
+\subsection{Common methods}
+
+The \es visualization and threading modules can be
+imported with
 
 \begin{pycode}
     from espressomd import visualization
     from threading import Thread
 \end{pycode}
-
-\subsection{Common methods}
 
 \begin{pysyntax}
   \attributes{
@@ -1263,7 +1266,7 @@ visualization and threading modules can be imported with
 }
 \end{pysyntax}
 
-Starts the visualizer window.
+Starts the blocking visualizer window.
 
 \begin{pysyntax}
   \attributes{
@@ -1278,16 +1281,18 @@ Starts the visualizer window.
 Synchonizes system and visualizer, handles keyboard events for openGLLive. 
 
 \begin{pysyntax}
-  \attributes{
-    visualization
+  \object{
+    visualization.mayaviLive | openGLLive
   }{
-    mayaviLive | openGLLive
+    registerCallback
   }{
-    registerCallback(callback, interval=<int>)
-}
+    callback
+  }[
+    interval=\arg{int}
+]
 \end{pysyntax}
 
-Registers the method \keyword{callback}, which is called every \keyword{intervall} milliseconds.
+Registers the method \keyword{callback}, which is called every \keyword{interval} milliseconds.
 Useful for live plotting (see sample script samples/python/visualization.py)
 
 \subsection{Mayavi visualizer}
@@ -1313,17 +1318,10 @@ The mayavi visualizer is created with the following syntax:
 is used for the particle diameter. 
 \keyword{callable}: A lambda function with one argument. Internally, the numerical 
 particle type is passed to the lambda function to determine the particle radius. 
-\keyword{list} A list of particle radii, indexed by the particle type.
+\keyword{list}: A list of particle radii, indexed by the particle type.
 \end{arguments}
 
 \subsection{OpenGL visualizer}
-
-The optional parameters to adjust the appearance of the visualization
-have suitable default values. Colors for particles, bonds and constraints are
-specified by RGBA arrays, materials by an array for the ambient, diffuse and
-specular (ADS) components.  To distinguish particle groups, arrays of RGBA or
-ADS arrays are used, which are indexed circularly by the numerical particle
-type.
 
 \begin{pysyntax}
   \object{
@@ -1388,15 +1386,15 @@ type.
 
 \item[\opt{close_cut_distance}] The distance from the viewer to the near clipping plane.
 \item[\opt{far_cut_distance}] The distance from the viewer to the far clipping plane.
-\item[\opt{camera_position}] The initial camera position.
-\item[\opt{camera_rotation}] Camera angles.
+\item[\opt{camera_position}] Initial camera position.
+\item[\opt{camera_rotation}] Initial camera angles.
 
 \item[\opt{particle_sizes}] 
 \keyword{"auto"} (default): The Lennard-Jones sigma value of the self-interaction 
 is used for the particle diameter.\\
 \keyword{callable}: A lambda function with one argument. Internally, the numerical 
 particle type is passed to the lambda function to determine the particle radius.\\
-\keyword{list} A list of particle radii, indexed by the particle type.
+\keyword{list}: A list of particle radii, indexed by the particle type.
 \item[\opt{particle_coloring}] 
 \keyword{"auto"} (default): Colors of charged particles are specified by 
 \keyword{particle_charge_colors}, neutral particles by \keyword{particle_type_colors}\\
@@ -1427,27 +1425,48 @@ indexed by their numerical particle type.
 \item[\opt{drag_enabled}] Enables mouse-controlled particles dragging (Default: False)
 \item[\opt{drag_force}] Factor for particle dragging 
 
-\item[\opt{light_pos}] If \keyword{"auto"} (default) is used, the light is placed in the particle barycenter of the system dynamically. Otherwise, a fixed coordinate can be set.
+\item[\opt{light_pos}] If \keyword{"auto"} (default) is used, the light is placed dynamically
+in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
 \item[\opt{light_color}] Light color
 \item[\opt{light_brightness}] Brightness (inverse constant attenuation) of the light.
 \item[\opt{light_size}] Size (inverse linear attenuation) of the light.
 
 \end{arguments}
 
+The optional parameters to adjust the appearance of the visualization
+have suitable default values for most simulations. Colors for particles, bonds
+and constraints are specified by RGBA arrays, materials by an array for the
+ambient, diffuse and specular (ADS) components. To distinguish particle
+groups, arrays of RGBA or ADS entries are used, which are indexed circularly by
+the numerical particle type.
+
 \subsubsection{Keyboard controls}
 
-The camera is controlled via 
+The camera is controlled via mouse (camera direction), WASD-Keyboard control
+(camera movement) and the key pairs QE, RF, ZC (camera roll).
+With the keyword \lstinline{drag_enabled} set to \lstinline{True}, the mouse can be
+used to exert a force on particles in drag direction (scaled by
+\lstinline{drag_force} and the distance of particle and mouse cursor).
+Additional input functionality for mouse and keyboard is possible by assigning 
+callbacks to specified keyboard or mouse buttons. This may be useful for realtime 
+adjustment of system parameters (temperature, interactions, particle properties etc)
+of for demonstration purposes. An example can be found in samples/python/billard.py.
 
+\subsection{Visualization example scripts}
 
-\begin{pysyntax}
-  \attributes{
-    visualization
-  }{
-    mayaviLive | openGLLive
-  }{
-    registerCallback(callback, interval=<int>)
-}
-\end{pysyntax}
+Various example scripts can be found in the samples/python folder or in some tutorials:
+
+\begin{itemize}
+\item samples/python/visualization.py: LJ-Liquid with live plotting.
+\item samples/python/visualization_bonded.py: Sample for bond visualization.
+\item samples/python/billard.py: Simple billard game including many features of the openGL visualizer.
+\item samples/python/visualization_openGL.py: Timer and keyboard callbacks for the openGL visualizer.
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_vis.py: Periodic NaCl crystal, see tutorial "Charged Systems".
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_confined_vis.py: Confined NaCl with interactively adjustable electric field, see tutorial "Charged Systems".
+\item doc/tutorials/python/08-visualization/scripts/visualization.py: LJ-Liquid visualization along with tutorial "Visualization".
+\end{itemize}
+
+Finally, it is recommended to go through tutorial "02-Charged Systems" and "08-Visualization" for further code explanations and examples.
 
 %%% Local Variables: 
 %%% mode: latex

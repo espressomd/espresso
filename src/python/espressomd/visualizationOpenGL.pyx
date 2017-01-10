@@ -322,6 +322,8 @@ class openGLLive:
                 radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
             except:
                 radius = 0.5
+            if radius==0:
+                radius=0.5
             return radius
 
         if self.specs['particle_sizes'] == 'auto':
@@ -637,12 +639,12 @@ class openGLLive:
         self.box_p = [np.array([0, 0, 0]), np.array([0, 0, 0]), np.array([0, 0, 0]), np.array(
             self.system.box_l), np.array(self.system.box_l), np.array(self.system.box_l)]
         self.box_eqn = []
-        self.box_eqn.append((self.box_n[0][0],self.box_n[0][1],self.box_n[0][2],0))
-        self.box_eqn.append((self.box_n[1][0],self.box_n[1][1],self.box_n[1][2],0))
-        self.box_eqn.append((self.box_n[2][0],self.box_n[2][1],self.box_n[2][2],0))
-        self.box_eqn.append((self.box_n[3][0],self.box_n[3][1],self.box_n[3][2],self.system.box_l[0]))
-        self.box_eqn.append((self.box_n[4][0],self.box_n[4][1],self.box_n[4][2],self.system.box_l[1]))
-        self.box_eqn.append((self.box_n[5][0],self.box_n[5][1],self.box_n[5][2],self.system.box_l[2]))
+        self.box_eqn.append((self.box_n[0][0],self.box_n[0][1],self.box_n[0][2],self.system.box_l[0]*0.001))
+        self.box_eqn.append((self.box_n[1][0],self.box_n[1][1],self.box_n[1][2],self.system.box_l[1]*0.001))
+        self.box_eqn.append((self.box_n[2][0],self.box_n[2][1],self.box_n[2][2],self.system.box_l[2]*0.001))
+        self.box_eqn.append((self.box_n[3][0],self.box_n[3][1],self.box_n[3][2],self.system.box_l[0]*1.001))
+        self.box_eqn.append((self.box_n[4][0],self.box_n[4][1],self.box_n[4][2],self.system.box_l[1]*1.001))
+        self.box_eqn.append((self.box_n[5][0],self.box_n[5][1],self.box_n[5][2],self.system.box_l[2]*1.001))
 
     #DEFAULT CONTROLS
     def initControls(self):
