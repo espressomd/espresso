@@ -21,13 +21,13 @@ class openGLLive:
             'window_size':				  [800, 800],
             'name':						  'Espresso Visualization',
             'background_color':			  [0, 0, 0],
-            'update_fps':				  30,
+            'update_fps':				  30.0,
             'periodic_images':	   		  [0, 0, 0],
             'draw_box':		 	  		  True,
             'quality_spheres':            15,
             'quality_bonds':              15,
             'quality_arrows':             15,
-            'quality_cylinder':           15,
+            'quality_constraints':        15,
             'close_cut_distance':         0.1,
             'far_cut_distance':           5,
             'camera_position':	   		  'auto',
@@ -37,7 +37,7 @@ class openGLLive:
             'particle_sizes':			  'auto',
             'particle_type_colors':		  [[1, 1, 0, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'particle_type_materials':	  [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
-            'particle_charge_colors':	  [np.array([1, 0, 0, 1]), np.array([0, 1, 0, 1])],
+            'particle_charge_colors':	  [[1, 0, 0, 1], [0, 1, 0, 1]],
 
             'draw_constraints':			  True,
             'rasterize_pointsize':	      10,
@@ -46,7 +46,6 @@ class openGLLive:
             'constraint_type_materials':  [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
 
             'draw_bonds':				  True,
-            'bond_coloring':			  'type',
             'bond_type_radius':		      [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
             'bond_type_colors':			  [[1, 1, 1, 1], [1, 0, 1, 1], [0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0.5, 0, 1], [0.5, 0, 1, 1]],
             'bond_type_materials':	      [[0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1], [0.6, 1, 0.1]],
@@ -305,13 +304,13 @@ class openGLLive:
             drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
         
         for s in self.shapes['Shapes::Sphere']:
-            drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'],s[2]), self.modulo_indexing(self.specs['constraint_type_materials'],s[2]), self.specs['quality_cylinder'])
+            drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'],s[2]), self.modulo_indexing(self.specs['constraint_type_materials'],s[2]), self.specs['quality_constraints'])
 
         for i in range(6):
             glDisable(GL_CLIP_PLANE0+i)
 
         for s in self.shapes['Shapes::Cylinder']:
-            drawCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_cylinder'],True)
+            drawCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_constraints'],True)
         
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
@@ -385,8 +384,7 @@ class openGLLive:
         b2 = self.system.box_l[0] / 2.0
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
-            if self.specs['bond_coloring'] == 'type':
-                col = self.modulo_indexing(self.specs['bond_type_colors'],b[2])
+            col = self.modulo_indexing(self.specs['bond_type_colors'],b[2])
             mat = self.modulo_indexing(self.specs['bond_type_materials'],b[2])
             radius = self.modulo_indexing(self.specs['bond_type_radius'],b[2])
             d = coords[b[0]] - coords[b[1]]
@@ -462,11 +460,11 @@ class openGLLive:
     def colorByCharge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
-            return self.specs['particle_charge_colors'][0] * c + (1 - c) * np.array([1, 1, 1, 1])
+            return np.array(self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1, 1])
         else:
             c = 1.0 * q / self.maxq
 
-            return self.specs['particle_charge_colors'][1] * c + (1 - c) * np.array([1, 1, 1, 1])
+            return np.array(self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1, 1])
 
     #ON INITIALIZATION, CHECK q_max/q_min
     def updateChargeColorRange(self):
