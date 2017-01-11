@@ -61,6 +61,7 @@ public:
     return m_p->valid_parameters();
   }
 
+  Variant get_parameter(const std::string &name) const override;
   VariantMap get_parameters() const override;
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override;

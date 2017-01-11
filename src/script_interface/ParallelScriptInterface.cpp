@@ -126,6 +126,16 @@ Variant ParallelScriptInterface::call_method(const std::string &name,
   return m_p->call_method(name, p);
 }
 
+Variant ParallelScriptInterface::get_parameter(std::string const &name) const {
+  auto p = m_p->get_parameter(name);
+
+  if (is_objectid(p)) {
+    return map_local_to_parallel_id(name, p);
+  } else {
+    return p;
+  }
+}
+
 std::map<std::string, Variant> ParallelScriptInterface::get_parameters() const {
   auto p = m_p->get_parameters();
 
