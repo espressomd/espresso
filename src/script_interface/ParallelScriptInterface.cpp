@@ -178,6 +178,12 @@ ParallelScriptInterface::map_parallel_to_local_id(std::string const &name,
 
     /* and return the id of the underlying object */
     return po_ptr->get_underlying_object()->id();
+  } else if (so_ptr == nullptr) {
+    /* Release the object */
+    obj_map.erase(name);
+
+    /* Return None */
+    return ObjectId();
   } else {
     throw std::runtime_error(
         "Parameters passed to Parallel entities must also be parallel.");
