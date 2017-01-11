@@ -103,18 +103,20 @@ class openGLLive:
 
         #PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION CHANGE, CALL WITH 10FPS
         def timed_update_centerLight(data):
-            ldt = 0.8
-            cA = (self.particle_COM - self.smooth_light_pos) * \
-                0.1 - self.smooth_light_posV * 1.8
-            self.smooth_light_posV += ldt * cA
-            self.smooth_light_pos += ldt * self.smooth_light_posV
-            self.updateLightPos=True
+            if self.hasParticleData:
+                ldt = 0.8
+                cA = (self.particle_COM - self.smooth_light_pos) * \
+                    0.1 - self.smooth_light_posV * 1.8
+                self.smooth_light_posV += ldt * cA
+                self.smooth_light_pos += ldt * self.smooth_light_posV
+                self.updateLightPos=True
             glutTimerFunc(100, timed_update_centerLight, -1)
 
         #AVERAGE PARTICLE COM ONLY EVERY 2sec
         def timed_update_particleCOM(data):
-            if len(self.particles['coords']) > 0:
-                self.particle_COM = np.average(self.particles['coords'], axis=0)
+            if self.hasParticleData:
+                if len(self.particles['coords']) > 0:
+                    self.particle_COM = np.average(self.particles['coords'], axis=0)
             glutTimerFunc(2000, timed_update_particleCOM, -1)
 
         self.started = True

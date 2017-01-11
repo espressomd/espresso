@@ -15,7 +15,7 @@ def increaseTemp():
         global temperature
         temperature += 0.1
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print temperature 
+        print system.thermostat.get_state()[0]['kT']
 
 def decreaseTemp():
     global temperature
@@ -26,7 +26,7 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print temperature 
+    print system.thermostat.get_state()[0]['kT']
 
 system = espressomd.System()
 
