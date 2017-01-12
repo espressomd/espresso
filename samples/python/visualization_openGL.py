@@ -15,7 +15,7 @@ def increaseTemp():
         global temperature
         temperature += 0.1
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print system.temperature 
+        print system.thermostat.get_state()[0]['kT']
 
 def decreaseTemp():
     global temperature
@@ -26,13 +26,26 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print system.temperature 
+    print system.thermostat.get_state()[0]['kT']
 
 system = espressomd.System()
 
-#Init the visualizer, set specs by an optional dict (coloring, periodic images etc). 
-#See visualization_openGL.py for possible options
-visualizer = openGLLive(system, periodic_images = [1,1,0])
+system.time_step = 0.00001
+system.cell_system.skin = 0.4
+box_l = 10
+system.box_l = [box_l, box_l, box_l]
+
+for i in range(10):
+    rpos=numpy.random.random(3) * box_l
+    system.part.add(id=i, pos=rpos)
+                                    
+system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+
+#system.non_bonded_inter[0,0].lennard_jones.set_params(
+#    epsilon=0, sigma=1,
+#    cutoff=2, shift="auto")
+
+visualizer = openGLLive(system)
 
 for key, value in visualizer.specs.items():
     print(str(key) + ":" + (30-len(key))*" " + str(value))
@@ -51,16 +64,6 @@ visualizer.registerCallback(foo,interval=500)
 visualizer.registerCallback(muu)
 
 def main():
-    system.time_step = 0.00001
-    system.cell_system.skin = 0.4
-    box_l = 10
-    system.box_l = [box_l, box_l, box_l]
-
-    for i in range(10):
-        rpos=numpy.random.random(3) * box_l
-        system.part.add(id=i, pos=rpos)
-                                        
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
     while True: 
         system.integrator.run(1)
