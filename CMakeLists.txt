@@ -212,7 +212,7 @@ list(APPEND LIBRARIES ${Boost_LIBRARIES})
 
 if(WITH_TESTS)
   enable_testing()
-  find_package(Boost COMPONENTS unit_test_framework timer chrono) 
+  find_package(Boost COMPONENTS unit_test_framework) 
   if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
     set(WITH_UNIT_TESTS ON)
     list(APPEND LIBRARIES ${Boost_LIBRARIES})
