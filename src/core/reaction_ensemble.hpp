@@ -56,6 +56,13 @@ int generic_oneway_reaction(int reaction_id);
 
 int find_index_of_type(int type);
 
+struct invalid_index : public std::exception {
+    const char* what () const throw ()
+    {
+	return "Type not indexed!";
+    }
+};
+
 bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
 
 bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer);

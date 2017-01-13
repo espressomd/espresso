@@ -166,7 +166,8 @@ IF REACTION_ENSEMBLE:
                 self.validate_params_default_charge()
                 
                 for key in self._params["dictionary"]:
-                        current_reaction_system.charges_of_types[find_index_of_type(int(key))] = self._params["dictionary"][key]
+                        if(find_index_of_type(int(key))>=0):
+                            current_reaction_system.charges_of_types[find_index_of_type(int(key))] = self._params["dictionary"][key]
                 
         def valid_keys_default_charge(self):
             return "dictionary"

@@ -1849,7 +1849,6 @@ int init_type_array(int type){
 
 	for ( int i = 0; i<Index.max_entry; i++ )
 		if (type == Type.index[i] && Index.type[type]!=-1) {
-			printf("already initialized type %d, index of type %d\n", Type.index[i], Index.type[i]);
 			// already indexed
 			return ES_OK;
 		}

@@ -421,6 +421,10 @@ int find_index_of_type(int type){
 			break;
 		}
 	}
+	if(index<0){
+		throw invalid_index();
+		
+	}
 	return index;
 }
 
