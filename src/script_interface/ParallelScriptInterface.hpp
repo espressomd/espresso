@@ -61,6 +61,7 @@ public:
     return m_p->valid_parameters();
   }
 
+  Variant get_parameter(const std::string &name) const override;
   VariantMap get_parameters() const override;
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override;
@@ -72,14 +73,21 @@ public:
                                    Variant const &value);
 
 private:
+  using map_t = std::map<std::string, std::shared_ptr<ParallelScriptInterface>>;
+
   void call(CallbackAction action) {
     Communication::mpiCallbacks().call(m_callback_id, static_cast<int>(action));
   }
 
+  /**
+   * @brief Remove instances that are not used by anybody but us.
+   */
+  void collect_garbage();
+
   /* Data members */
   int m_callback_id;
   std::shared_ptr<ScriptInterfaceBase> m_p;
-  std::map<std::string, ObjectId> obj_map;
+  map_t obj_map;
 };
 
 } /* namespace ScriptInterface */

@@ -72,7 +72,7 @@ cdef class mayaviLive:
         # state
         self.data = None
         self.last_N = 1
-        self.last_Nbonds = 1
+        self.last_Nbonds = 0
         self.last_boxl = [0,0,0]
         self.running = False
         self.last_T = -1
@@ -121,7 +121,6 @@ cdef class mayaviLive:
 
         if box_changed or not self.running:
             self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
-
         if not N_changed:
             self.points.mlab_source.set(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
         else:
@@ -132,7 +131,7 @@ cdef class mayaviLive:
 
         if not Nbonds_changed:
             if bonds.shape[0] > 0:
-                self.arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
+                self.arrows.mlab_source.set(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
         else:
             self.arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
@@ -201,6 +200,7 @@ cdef class mayaviLive:
             bond_coords[n,6] = t
 
         boxl = self.system.box_l
+
 
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \

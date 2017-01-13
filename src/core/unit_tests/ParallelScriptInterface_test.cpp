@@ -37,6 +37,18 @@ struct TestClass : public ScriptInterfaceBase {
 
   void set_parameter(const std::string &name, const Variant &value) override {
     last_parameter = make_pair(name, value);
+
+    if (name == "obj_param") {
+      obj_param = get_instance(boost::get<ObjectId>(value)).lock();
+    }
+  }
+
+  Variant get_parameter(std::string const &name) const override {
+    if (name == "obj_param") {
+      return obj_param->id();
+    } else {
+      return last_parameter.second;
+    }
   }
 
   Variant call_method(const std::string &method,
@@ -50,6 +62,8 @@ struct TestClass : public ScriptInterfaceBase {
 
   std::pair<std::string, Variant> last_parameter;
   static TestClass *last_instance;
+
+  std::shared_ptr<ScriptInterfaceBase> obj_param;
 
   const std::string name() const override { return "TestClass"; }
   static bool constructed;
@@ -159,6 +173,29 @@ BOOST_AUTO_TEST_CASE(call_method) {
                               last_parameters.first == method);
     Testing::reduce_and_check(mpiCallbacks().comm(),
                               last_parameters.second == params);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(parameter_lifetime) {
+  if (mpiCallbacks().comm().rank() == 0) {
+    auto host = std::make_shared<ParallelScriptInterface>("TestClass");
+    ScriptInterfaceBase *bare_ptr;
+
+    {
+      auto parameter = ScriptInterfaceBase::make_shared(
+          "TestClass", ScriptInterfaceBase::CreationPolicy::GLOBAL);
+      bare_ptr = parameter.get();
+
+      BOOST_CHECK(get_instance(parameter->id()) == parameter);
+
+      host->set_parameter("obj_param", parameter->id());
+    }
+
+    auto param_id = host->get_parameter("obj_param");
+    auto parameter = get_instance(param_id);
+
+    /* Check that we got the original instance back */
+    BOOST_CHECK(parameter.get() == bare_ptr);
   }
 }
 

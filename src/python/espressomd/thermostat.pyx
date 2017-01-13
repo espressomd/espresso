@@ -72,12 +72,13 @@ cdef class Thermostat:
                                       langevin_gamma[2]]
             ELSE:
                 lang_dict["gamma"] = langevin_gamma
-            IF ROTATIONAL_INERTIA:
-                lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
-                                               langevin_gamma_rotation[1],
-                                               langevin_gamma_rotation[2]]
-            ELSE:
-                lang_dict["gamma_rotation"] = langevin_gamma_rotation
+            IF ROTATION:
+                IF ROTATIONAL_INERTIA:
+                    lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
+                                                   langevin_gamma_rotation[1],
+                                                   langevin_gamma_rotation[2]]
+                ELSE:
+                    lang_dict["gamma_rotation"] = langevin_gamma_rotation
 
             thermo_list.append(lang_dict)
         if thermo_switch & THERMO_LB:
@@ -144,7 +145,7 @@ cdef class Thermostat:
         return True
 
     def set_langevin(self, kT="", gamma="", gamma_rotation=""):
-        """Sets the Langevin thermostat with required parameters 'temperature' 'gamma'
+        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'"""
         
         scalar_gamma_def = True
@@ -170,13 +171,14 @@ cdef class Thermostat:
             if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
                 raise ValueError("temperature and diagonal elements of the gamma tensor must be positive numbers")
         global langevin_gamma_rotation
-        if gamma_rotation != "":
-            IF ROTATIONAL_INERTIA:
-                langevin_gamma_rotation[0] = gamma_rotation[0]
-                langevin_gamma_rotation[1] = gamma_rotation[1]
-                langevin_gamma_rotation[2] = gamma_rotation[2]
-            ELSE:
-                langevin_gamma_rotation = gamma_rotation
+        IF ROTATION:
+            if gamma_rotation != "":
+                IF ROTATIONAL_INERTIA:
+                    langevin_gamma_rotation[0] = gamma_rotation[0]
+                    langevin_gamma_rotation[1] = gamma_rotation[1]
+                    langevin_gamma_rotation[2] = gamma_rotation[2]
+                ELSE:
+                    langevin_gamma_rotation = gamma_rotation
 
         global temperature
         temperature = float(kT)
