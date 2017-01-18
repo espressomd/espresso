@@ -127,7 +127,7 @@ class File
         /**
          * @brief Method that extends datasets.
          */            
-        void ExtendDataset(std::string path );
+        void ExtendDataset(std::string path, int extent);
         
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
@@ -181,7 +181,6 @@ class File
         struct DatasetDescriptor  {
             std::string path;
             hsize_t dim;
-            hsize_t size;
             h5xx::datatype type;
         };
         std::vector<std::string> group_names;
