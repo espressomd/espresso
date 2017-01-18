@@ -99,6 +99,7 @@ class File
         bool &write_ordered() {return m_write_ordered;} ;
 
     private:
+    	MPI_Comm MPI_H5MD_COMM;
         bool check_file_exists(const std::string &name)
         {
             std::ifstream f(name.c_str());

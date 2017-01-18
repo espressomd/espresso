@@ -82,17 +82,24 @@ void File::InitFile()
     H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
+    //use a seperate mpi communicator if we want to write out ordered data. This is in order to avoid  blocking by collective functions
+    if(m_write_ordered ==true)
+        MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &MPI_H5MD_COMM); 
+    else
+        MPI_H5MD_COMM=MPI_COMM_WORLD;
+    if(m_write_ordered== true and this_node!=0)
+        return;
     boost::filesystem::path script_path(m_scriptname);
     m_absolute_script_path = boost::filesystem::canonical(script_path);
     if(n_part <= 0) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object.");
     }
-
     init_filestructure();
     bool fileexists = check_file_exists(m_filename);
     /* Perform a barrier synchronization. Otherwise one process might already
      * create the file while another still checks for its existence. */
-    MPI_Barrier(MPI_COMM_WORLD);
+    if(m_write_ordered==false)
+        MPI_Barrier(MPI_H5MD_COMM);
     if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
             /*
@@ -220,7 +227,7 @@ void File::load_file(const std::string& filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, MPI_H5MD_COMM, MPI_INFO_NULL,
                              h5xx::file::out);
 #ifdef H5MD_DEBUG
     std::cout << "Finished opening the h5 file on node " << this_node << std::endl;
@@ -236,7 +243,7 @@ void File::create_new_file(const std::string &filename)
 #endif
     this->WriteScript(filename);
     /* Create a new h5xx file object. */
-    m_h5md_file = h5xx::file(filename, MPI_COMM_WORLD, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, MPI_H5MD_COMM, MPI_INFO_NULL,
                              h5xx::file::out);
 
     create_groups();
@@ -296,16 +303,19 @@ void File::Write(int write_dat)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
+    int num_particles_to_be_written;
+    if(m_write_ordered==true && this_node==0)
+        num_particles_to_be_written=n_part;
+    else if(m_write_ordered == true && this_node !=0)
+        return ;
+    else if (m_write_ordered ==false)
+        num_particles_to_be_written=cells_get_n_particles();
+    
     bool write_typ = write_dat & W_TYPE;
     bool write_pos = write_dat & W_POS;
     bool write_vel = write_dat & W_V;
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
-    int num_particles_to_be_written;
-    if(m_write_ordered==true && n_nodes==1)
-        num_particles_to_be_written=n_part;
-    else
-        num_particles_to_be_written=cells_get_n_particles();
 
     double_array_3d pos(boost::extents[1][num_particles_to_be_written][3]);
     double_array_3d vel(boost::extents[1][num_particles_to_be_written][3]);
@@ -315,14 +325,15 @@ void File::Write(int write_dat)
     int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
 
-    if (m_write_ordered==true && n_nodes==1) {
-        
-        //loop over all particles
-        for(int particle_index=0;particle_index<n_part;particle_index++){
-            Particle current_particle;
-	        get_particle_data(particle_index, &current_particle); //this function only works when run with one process
-            fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle,  write_typ, write_mass, write_pos, write_vel, write_force );
-	        free_particle(&current_particle);
+    if (m_write_ordered==true) {
+        if( this_node ==0){ 
+            //loop over all particles
+            for(int particle_index=0;particle_index<n_part;particle_index++){
+                Particle current_particle;
+	            get_particle_data(particle_index, &current_particle); //this function only works when run with one process
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle,  write_typ, write_mass, write_pos, write_vel, write_force );
+	            free_particle(&current_particle);
+            }
         }
 
     }else{
@@ -393,7 +404,7 @@ void File::WriteDataset(T &data, const std::string& path)
 
     int num_particles_to_be_written = data.shape()[1];
     int pref = 0;
-    MPI_Exscan(&num_particles_to_be_written, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Exscan(&num_particles_to_be_written, &pref, 1, MPI_INT, MPI_SUM, MPI_H5MD_COMM);
     hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
     hsize_t dims[3], maxdims[3];
