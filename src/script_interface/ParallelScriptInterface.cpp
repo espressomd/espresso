@@ -83,6 +83,8 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
   boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
   m_p->set_parameter(d.first, d.second);
+
+  collect_garbage();
 }
 
 void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
@@ -101,6 +103,8 @@ void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
   boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
 
   m_p->set_parameters(p);
+
+  collect_garbage();
 }
 
 Variant ParallelScriptInterface::call_method(const std::string &name,
@@ -120,6 +124,16 @@ Variant ParallelScriptInterface::call_method(const std::string &name,
   boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
 
   return m_p->call_method(name, p);
+}
+
+Variant ParallelScriptInterface::get_parameter(std::string const &name) const {
+  auto p = m_p->get_parameter(name);
+
+  if (is_objectid(p)) {
+    return map_local_to_parallel_id(name, p);
+  } else {
+    return p;
+  }
 }
 
 std::map<std::string, Variant> ParallelScriptInterface::get_parameters() const {
@@ -143,7 +157,7 @@ ParallelScriptInterface::map_local_to_parallel_id(std::string const &name,
    * has the same id everywhere.
    */
   if (boost::get<ObjectId>(value) != ObjectId()) {
-    return obj_map.at(name);
+    return obj_map.at(name)->id();
   } else {
     return value;
   }
@@ -160,15 +174,38 @@ ParallelScriptInterface::map_parallel_to_local_id(std::string const &name,
 
   if (po_ptr != nullptr) {
     /* Store a pointer to the object */
-    obj_map[name] = po_ptr->id();
+    obj_map[name] = po_ptr;
 
     /* and return the id of the underlying object */
-    auto underlying_object = po_ptr->get_underlying_object();
+    return po_ptr->get_underlying_object()->id();
+  } else if (so_ptr == nullptr) {
+    /* Release the object */
+    obj_map.erase(name);
 
-    return underlying_object->id();
+    /* Return None */
+    return ObjectId();
   } else {
     throw std::runtime_error(
         "Parameters passed to Parallel entities must also be parallel.");
+  }
+}
+
+void ParallelScriptInterface::collect_garbage() {
+  /* Removal condition, the instance is removed iff
+     its payload is not used anywhere. In this case
+     the reference count is one, because the host object
+     still holds a pointer.
+  */
+  auto pred = [](map_t::value_type const &e) -> bool {
+    return e.second->get_underlying_object().use_count() == 1;
+  };
+
+  for (auto it = obj_map.begin(); it != obj_map.end();) {
+    if (pred(*it)) {
+      obj_map.erase(it++);
+    } else {
+      ++it;
+    }
   }
 }
 
