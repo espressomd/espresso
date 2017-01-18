@@ -120,9 +120,9 @@ class File
         void WriteDataset(T &data, const std::string& path, int_array_3d id);
         
         /**
-         * @brief Method that calls WriteDataset to write all datasets.
-         */        
-        void WriteAllDatasets(int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f,bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force);
+         * @brief create chunk dataset dimensions.
+         */  	
+	std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size);
 
         /**
          * @brief Method that extends datasets.

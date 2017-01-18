@@ -65,15 +65,45 @@ create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
         throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
 }
 
+std::vector<hsize_t>
+File::create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size)
+{
+#ifdef H5MD_DEBUG
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
+    if( m_write_ordered==false){
+        if (dim == 3)
+            return std::vector<hsize_t>{chunk_size, size, dim};
+        if (dim == 2)
+            return std::vector<hsize_t>{chunk_size, size};
+        if (dim == 1)
+            return std::vector<hsize_t>{size};
+        else
+            throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
+    } else {
+        if (dim == 3)
+            return std::vector<hsize_t>{1, size, dim};
+        if (dim == 2)
+            return std::vector<hsize_t>{1, size};
+        if (dim == 1)
+            return std::vector<hsize_t>{size};
+        else
+            throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");    
+    }
+}
 static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
 {
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    if (dim > 0)
+    if (dim == 3)
         return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+    if (dim == 2)
+        return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED};
+    if (dim == 1)
+        return std::vector<hsize_t>{H5S_UNLIMITED};
     else
-        return std::vector<hsize_t>{size};
+        throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
 }
 
 
@@ -211,7 +241,7 @@ void File::create_datasets(bool only_load)
                     chunk_size=n_part;
                 }
                 auto dims = create_dims(descr.dim, creation_size_dataset);
-                auto chunk_dims = create_dims(descr.dim, chunk_size, 1);
+                auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
                 auto maxdims = create_maxdims(descr.dim, creation_size_dataset);
                 auto storage = h5xx::policy::storage::chunked(chunk_dims).set(
                         h5xx::policy::storage::fill_value(-10));
@@ -400,7 +430,6 @@ void File::WriteDataset(T &data, const std::string& path, int_array_3d id )
 {
 #ifdef H5MD_DEBUG
     /* Turn on hdf5 error messages */
-    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
     std::cout << "Dataset: " << path << std::endl;
 #endif
