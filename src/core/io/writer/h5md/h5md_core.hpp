@@ -111,13 +111,24 @@ class File
          * @param filename The Name of the hdf5-file to check.
          * @return TRUE if H5MD structure is present, FALSE else.
          */
-        bool check_for_H5MD_structure(std::string const &filename);
+        bool check_for_H5MD_structure(std::string const &filename);   
         /**
          * @brief Method that performs all the low-level stuff for writing the particle
          * positions to the dataset.
          */
         template <typename T>
         void WriteDataset(T &data, const std::string& path);
+
+        /**
+         * @brief Method that extends datasets.
+         */            
+        void ExtendDataset(std::string path, int extent);
+        
+         /**
+         * @brief Method that returns chunk dimensions.
+         */  
+        std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size);
+        
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
          */
@@ -170,7 +181,6 @@ class File
         struct DatasetDescriptor  {
             std::string path;
             hsize_t dim;
-            hsize_t size;
             h5xx::datatype type;
         };
         std::vector<std::string> group_names;
