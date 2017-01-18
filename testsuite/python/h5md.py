@@ -49,7 +49,7 @@ class H5mdTest(ut.TestCase):
                 self.system.part[i].ext_force = [0.1, 0.2, 0.3]
         self.system.integrator.run(steps=0)
         self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                            write_force=True, write_type=True, write_mass=True)
+                            write_force=True, write_type=True, write_mass=True, write_ordered=True)
         self.h5.write()
         self.h5.close()
         del self.h5

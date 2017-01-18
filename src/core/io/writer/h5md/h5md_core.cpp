@@ -134,11 +134,12 @@ void File::init_filestructure()
         "parameters/vmd_structure",
         "parameters/files"
     };
-
+    
     h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
     h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
     hsize_t npart = static_cast<hsize_t>(n_part);
     dataset_descriptors = {
+            //path, dim, size, type
         { "particles/atoms/box/edges"     , 0, 3    , type_double },
         { "particles/atoms/mass/value"    , 1, npart, type_double },
         { "particles/atoms/mass/time"     , 1, 1    , type_double },
@@ -146,7 +147,7 @@ void File::init_filestructure()
         { "particles/atoms/id/value"      , 1, npart, type_int },
         { "particles/atoms/id/time"       , 1, 1    , type_double },
         { "particles/atoms/id/step"       , 1, 1    , type_int },
-        { "particles/atoms/type/value"    , 1, npart, type_double },
+        { "particles/atoms/type/value"    , 1, npart, type_int },
         { "particles/atoms/type/time"     , 1, 1    , type_double },
         { "particles/atoms/type/step"     , 1, 1    , type_int },
         { "particles/atoms/position/value", 3, npart, type_double },
@@ -258,6 +259,10 @@ void File::Close()
 
 
 void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle,bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force ){
+#ifdef H5MD_DEBUG
+    /* Turn on hdf5 error messages */
+    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
+#endif
 	        id[0][particle_index][0] = current_particle->p.identity;
             if (write_typ)
                 typ[0][particle_index][0] =current_particle->p.type;
@@ -302,10 +307,7 @@ void File::Write(int write_dat)
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
     int num_particles_to_be_written;
-    if(m_write_ordered==true && n_nodes==1)
-        num_particles_to_be_written=n_part;
-    else
-        num_particles_to_be_written=cells_get_n_particles();
+    num_particles_to_be_written=cells_get_n_particles();
 
     double_array_3d pos(boost::extents[1][num_particles_to_be_written][3]);
     double_array_3d vel(boost::extents[1][num_particles_to_be_written][3]);
@@ -315,69 +317,87 @@ void File::Write(int write_dat)
     int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
 
-    if (m_write_ordered==true && n_nodes==1) {
-        
-        //loop over all particles
-        for(int particle_index=0;particle_index<n_part;particle_index++){
-            Particle current_particle;
-	        get_particle_data(particle_index, &current_particle); //this function only works when run with one process
-            fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle,  write_typ, write_mass, write_pos, write_vel, write_force );
-	        free_particle(&current_particle);
-        }
-
-    }else{
-        /* Get the number of particles on all other nodes. */
-
-        /* loop over all local cells. */
-        Cell *local_cell;
-        int particle_index = 0;
-        for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    /* loop over all local cells. */
+    Cell *local_cell;
+    int particle_index = 0;
+    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    {
+        local_cell = local_cells.cell[cell_id];
+        for (int local_part_id = 0;local_part_id < local_cell->n; ++local_part_id)
         {
-            local_cell = local_cells.cell[cell_id];
-            for (int local_part_id = 0;
-                 local_part_id < local_cell->n; ++local_part_id)
-            {
-                auto & current_particle = local_cell->part[local_part_id];
-                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle, write_typ, write_mass, write_pos, write_vel, write_force );
-                particle_index++;
-            }
+            auto & current_particle = local_cell->part[local_part_id];
+            fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle, write_typ, write_mass, write_pos, write_vel, write_force );
+            particle_index++;
         }
     }
 
-    int n_part = max_seen_particle+1;
-    if (n_part > m_max_n_part) {
-    	m_max_n_part = n_part;
-    }
-
-    WriteDataset(id, "particles/atoms/id");
+    WriteDataset(id, "particles/atoms/id", id);
 
     if (write_typ)
     {
-        WriteDataset(typ, "particles/atoms/type");
+        WriteDataset(typ, "particles/atoms/type", id);
     }
     if (write_mass)
     {
-        WriteDataset(mass, "particles/atoms/mass");
+        WriteDataset(mass, "particles/atoms/mass", id);
     }
     if (write_pos)
     {
-        WriteDataset(pos, "particles/atoms/position");
-        WriteDataset(image, "particles/atoms/image");
+        WriteDataset(pos, "particles/atoms/position", id);
+        WriteDataset(image, "particles/atoms/image", id);
     }
     if (write_vel)
     {
-        WriteDataset(vel, "particles/atoms/velocity");
+        WriteDataset(vel, "particles/atoms/velocity", id);
     }
     if (write_force)
     {
-        WriteDataset(f, "particles/atoms/force");
+        WriteDataset(f, "particles/atoms/force", id);
     }
 
 }
 
+
+void File::ExtendDataset(std::string path ){
+    /* Until now the h5xx does not support dataset extending, so we
+       have to use the lower level hdf5 library functions. */
+        /* Get the number of particles on all other nodes. */
+    int n_part = max_seen_particle+1;
+    if (n_part > m_max_n_part) {
+    	m_max_n_part = n_part;
+    }
+    
+    auto& dataset = datasets[path + "/value"];
+    auto& time = datasets[path + "/time"];
+    auto& step = datasets[path + "/step"];
+    /* Get the current dimensions of the dataspace. */
+    hid_t ds = H5Dget_space(dataset.hid());
+    hsize_t dims[3], maxdims[3];
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+    /* Extend the dataset for another timestep. */
+    dims[0] += 1;
+    dims[1] = m_max_n_part;
+    H5Dset_extent(dataset.hid(), dims); //extend all dims is collective
+    
+    /* Extend time dataset */
+    ds = H5Dget_space(time.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+    dims[0] += 1;
+    H5Dset_extent(time.hid(), dims);
+    
+    /* Same offset, count and dims as the time dataset */
+    ds = H5Dget_space(step.hid());
+    H5Sget_simple_extent_dims(ds, dims, maxdims);
+    H5Sclose(ds);
+    dims[0] += 1;
+    H5Dset_extent(step.hid(), dims);
+}
+
 /* data is assumed to be three dimensional */
 template <typename T>
-void File::WriteDataset(T &data, const std::string& path)
+void File::WriteDataset(T &data, const std::string& path, int_array_3d id )
 {
 #ifdef H5MD_DEBUG
     /* Turn on hdf5 error messages */
@@ -385,60 +405,78 @@ void File::WriteDataset(T &data, const std::string& path)
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
     std::cout << "Dataset: " << path << std::endl;
 #endif
-    /* Until now the h5xx does not support dataset extending, so we
-       have to use the lower level hdf5 library functions. */
+H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
+    ExtendDataset(path);
     auto& dataset = datasets[path + "/value"];
     auto& time = datasets[path + "/time"];
     auto& step = datasets[path + "/step"];
 
     int num_particles_to_be_written = data.shape()[1];
-    int pref = 0;
-    MPI_Exscan(&num_particles_to_be_written, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    int prefix = 0;
     hid_t ds = H5Dget_space(dataset.hid());
     /* Get the current dimensions of the dataspace. */
     hsize_t dims[3], maxdims[3];
     H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
-
-    /* We will write the last timestep of all local particles. */
-    hsize_t offset[3] = {dims[0], static_cast<hsize_t>(pref), 0};
-    hsize_t count[3] = {1, static_cast<hsize_t>(num_particles_to_be_written), data.shape()[2]};
-    /* Extend the dataset for another timestep. */
-    dims[0] += 1;
-    dims[1] = m_max_n_part;
-    H5Dset_extent(dataset.hid(), dims);
-
-    /* Refresh the dataset after extension. */
-    ds = H5Dget_space(dataset.hid());
     /* Select the region in the dataspace. */
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
-    /* Create a temporary dataspace. */
-    hid_t ds_new = H5Screate_simple(3, count, maxdims);
-    /* Finally write the data to the dataset. */
-    H5Dwrite(dataset.hid(),
-             dataset.get_type(),
-             ds_new,
-             ds, H5P_DEFAULT,
-             data.origin());
-    H5Sclose(ds);
-    H5Sclose(ds_new);
+    hsize_t offset[3];
+    hsize_t count[3];
+    hid_t ds_new;
+    if(m_write_ordered==false){
+        ds = H5Dget_space(dataset.hid());
+        //calculate offset (prefix) based on local particle number
+        MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        offset[0]= dims[0]-1;
+        offset[1]= static_cast<hsize_t>(prefix);
+        offset[2]= 0;
+        count [0] = 1;
+        count [1] = static_cast<hsize_t>(num_particles_to_be_written);
+        count [2] = data.shape()[2];
+        H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+        /* Create a temporary dataspace. */
+        ds_new = H5Screate_simple(3, count, maxdims);
+        /* Finally write the data to the dataset. */
+        H5Dwrite(dataset.hid(),
+                 dataset.get_type(),
+                 ds_new,
+                 ds, H5P_DEFAULT,
+                 data.origin());
+        H5Sclose(ds_new);
+        H5Sclose(ds);
+    }else {
+        for(int i=0;i<num_particles_to_be_written;i++){
+            ds = H5Dget_space(dataset.hid());
+            prefix=id[0][i][0];
+            offset[0]= dims[0]-1;
+            offset[1]= static_cast<hsize_t>(prefix);
+            offset[2]= 0;
+            count[0]= 1;
+            count[1]= 1;
+            count[2]= data.shape()[2];
+            H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+            /* Create a temporary dataspace. */
+            ds_new = H5Screate_simple(3, count, maxdims);
+            /* Finally write the data to the dataset. */
+            T data_single_particle(boost::extents[1][1][3]);
+            data_single_particle[0][0][0]=data[0][i][0];
+            data_single_particle[0][0][1]=data[0][i][1];
+            data_single_particle[0][0][2]=data[0][i][2];
+            H5Dwrite(dataset.hid(), dataset.get_type(), ds_new, ds, H5P_DEFAULT, data_single_particle.origin());
+            H5Sclose(ds_new);
+            H5Sclose(ds);
+        }
+    }
 
     /* Write the md time to the position -- time dataset. */
     ds = H5Dget_space(time.hid());
     H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
 
-    hsize_t timeoffset[3] = {dims[0], 0, 0};
+    hsize_t timeoffset[3] = {dims[0]-1, 0, 0};
     hsize_t timecount[3] = {0, 0, 0};
     /* Only master node writes time and timestep */
     if (this_node == 0)
         timecount[0] = timecount[1] = timecount[2] = 1;
-    dims[0] += 1;
-    H5Dset_extent(time.hid(), dims);
-
-    ds = H5Dget_space(time.hid());
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
-    ds_new = H5Screate_simple(3, timecount, maxdims);
+    ds_new = H5Screate_simple(1, timecount, maxdims);
     H5Dwrite(time.hid(),
              time.get_type(),
              ds_new,
@@ -446,17 +484,10 @@ void File::WriteDataset(T &data, const std::string& path)
              &sim_time);
     H5Sclose(ds_new);
     H5Sclose(ds);
-
     /* Write the md step to the position -- step dataset. */
+    /* Same offset, count and dims as the time dataset */
     ds = H5Dget_space(step.hid());
     H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
-
-    /* Same offset, count and dims as the time dataset */
-    dims[0] += 1;
-    H5Dset_extent(step.hid(), dims);
-
-    ds = H5Dget_space(step.hid());
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, timeoffset, NULL, timecount, NULL);
     ds_new = H5Screate_simple(1, timecount, maxdims);
     int sim_step_data = (int)std::round(sim_time/time_step);

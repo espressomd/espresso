@@ -111,12 +111,24 @@ class File
          * @return TRUE if H5MD structure is present, FALSE else.
          */
         bool check_for_H5MD_structure(std::string const &filename);
+        
         /**
          * @brief Method that performs all the low-level stuff for writing the particle
          * positions to the dataset.
          */
         template <typename T>
-        void WriteDataset(T &data, const std::string& path);
+        void WriteDataset(T &data, const std::string& path, int_array_3d id);
+        
+        /**
+         * @brief Method that calls WriteDataset to write all datasets.
+         */        
+        void WriteAllDatasets(int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f,bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force);
+
+        /**
+         * @brief Method that extends datasets.
+         */            
+        void ExtendDataset(std::string path );
+        
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
          */
