@@ -65,33 +65,24 @@ create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
         throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
 }
 
+//Correct Chunking is important for the IO performance!
 std::vector<hsize_t>
 File::create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size)
 {
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    if( m_write_ordered==false){
-        if (dim == 3)
-            return std::vector<hsize_t>{chunk_size, size, dim};
-        if (dim == 2)
-            return std::vector<hsize_t>{chunk_size, size};
-        if (dim == 1)
-            return std::vector<hsize_t>{size};
-        else
-            throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
-    } else {
-        if (dim == 3)
-            return std::vector<hsize_t>{1, size, dim};
-        if (dim == 2)
-            return std::vector<hsize_t>{1, size};
-        if (dim == 1)
-            return std::vector<hsize_t>{size};
-        else
-            throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");    
-    }
+	if (dim == 3)
+	    return std::vector<hsize_t>{chunk_size, size, dim};
+	if (dim == 2)
+	    return std::vector<hsize_t>{chunk_size, size};
+	if (dim == 1)
+	    return std::vector<hsize_t>{size};
+	else
+	    throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
+
 }
-static std::vector<hsize_t> create_maxdims(hsize_t dim, hsize_t size)
+static std::vector<hsize_t> create_maxdims(hsize_t dim)
 {
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
@@ -123,11 +114,11 @@ void File::InitFile()
         MPI_H5MD_COMM=MPI_COMM_WORLD;
     if(m_write_ordered== true and this_node!=0)
         return;
+    if(n_part <= 0) {
+        throw std::runtime_error("Please first set up particles before initializing the H5md object."); //this is important since n_part is used for chunking
+    }
     boost::filesystem::path script_path(m_scriptname);
     m_absolute_script_path = boost::filesystem::canonical(script_path);
-    if(n_part <= 0) {
-        throw std::runtime_error("Please first set up particles before initializing the H5md object.");
-    }
     init_filestructure();
     bool fileexists = check_file_exists(m_filename);
     /* Perform a barrier synchronization. Otherwise one process might already
@@ -179,7 +170,7 @@ void File::init_filestructure()
     h5xx::datatype type_int = h5xx::datatype(H5T_NATIVE_INT);
     hsize_t npart = static_cast<hsize_t>(n_part);
     dataset_descriptors = {
-            //path, dim, size, type
+            //path, dim, type
         { "particles/atoms/box/edges"     , 1, type_double },
         { "particles/atoms/mass/value"    , 2, type_double },
         { "particles/atoms/mass/time"     , 1, type_double },
@@ -240,7 +231,7 @@ void File::create_datasets(bool only_load)
                 datasets[path] = h5xx::dataset(groups[father],
                                                basename);
             } else {
-                int creation_size_dataset=0;
+                int creation_size_dataset=0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
                 int chunk_size=1;
                 if(descr.dim>1){
                     //we deal now with a particle based property
@@ -248,7 +239,7 @@ void File::create_datasets(bool only_load)
                 }
                 auto dims = create_dims(descr.dim, creation_size_dataset);
                 auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
-                auto maxdims = create_maxdims(descr.dim, creation_size_dataset);
+                auto maxdims = create_maxdims(descr.dim);
                 auto storage = h5xx::policy::storage::chunked(chunk_dims).set(
                         h5xx::policy::storage::fill_value(-10));
                 auto dataspace = h5xx::dataspace(dims, maxdims);
@@ -290,7 +281,7 @@ void File::create_new_file(const std::string &filename)
     h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
     h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
     std::string path_edges="particles/atoms/box/edges";
-    int extent_edges = 3;
+    int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
     ExtendDataset(path_edges, extent_edges);
     h5xx::write_dataset(datasets[path_edges], boxvec);
 }
@@ -369,6 +360,10 @@ void File::Write(int write_dat)
     int_array_3d id(boost::extents[1][num_particles_to_be_written][1]);
     int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
+    double_array_3d time(boost::extents[1][1][1]);
+    time[0][0][0]=sim_time;
+    int_array_3d step(boost::extents[1][1][1]);
+    step[0][0][0]=(int)std::round(sim_time/time_step);
 
     if (m_write_ordered==true) {
         if( this_node ==0){ 
@@ -400,28 +395,42 @@ void File::Write(int write_dat)
         }
     }
 
-    WriteDataset(id, "particles/atoms/id");
+    WriteDataset(id, "particles/atoms/id/value");
+    WriteDataset(time, "particles/atoms/id/time");
+    WriteDataset(step, "particles/atoms/id/step");
 
     if (write_typ)
     {
-        WriteDataset(typ, "particles/atoms/type");
+        WriteDataset(typ, "particles/atoms/type/value");
+        WriteDataset(time, "particles/atoms/type/time");
+        WriteDataset(step, "particles/atoms/type/step");
     }
     if (write_mass)
     {
-        WriteDataset(mass, "particles/atoms/mass");
+        WriteDataset(mass, "particles/atoms/mass/value");
+        WriteDataset(time, "particles/atoms/mass/time");
+        WriteDataset(step, "particles/atoms/mass/step");
     }
     if (write_pos)
     {
-        WriteDataset(pos, "particles/atoms/position");
-        WriteDataset(image, "particles/atoms/image");
+        WriteDataset(pos, "particles/atoms/position/value");
+        WriteDataset(time, "particles/atoms/position/time");
+        WriteDataset(step, "particles/atoms/position/step");
+        WriteDataset(image, "particles/atoms/image/value");
+        WriteDataset(time, "particles/atoms/image/time");
+        WriteDataset(step, "particles/atoms/image/step");
     }
     if (write_vel)
     {
-        WriteDataset(vel, "particles/atoms/velocity");
+        WriteDataset(vel, "particles/atoms/velocity/value");
+        WriteDataset(time, "particles/atoms/velocity/time");
+        WriteDataset(step, "particles/atoms/velocity/step");
     }
     if (write_force)
     {
-        WriteDataset(f, "particles/atoms/force");
+        WriteDataset(f, "particles/atoms/force/value");
+        WriteDataset(time, "particles/atoms/force/time");
+        WriteDataset(step, "particles/atoms/force/step");
     }
 
 }
@@ -437,7 +446,7 @@ void File::ExtendDataset(std::string path, int extent=1){
     hsize_t dims[rank], maxdims[rank];
     H5Sget_simple_extent_dims(ds, dims, maxdims);
     H5Sclose(ds);
-    /* Extend the dataset for another timestep. */
+    /* Extend the dataset for another timestep (extent=1) */
     dims[0] += extent;
     
     // Extend the dataset for more particles if the particle number increased
@@ -462,15 +471,12 @@ void File::WriteDataset(T &data, const std::string& path)
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
     std::cout << "Dataset: " << path << std::endl;
 #endif
-    auto& dataset = datasets[path + "/value"];
-    ExtendDataset(path+ "/value");
-    auto& time = datasets[path + "/time"];
-    ExtendDataset(path+ "/time");
-    auto& step = datasets[path + "/step"];
-    ExtendDataset(path+ "/step");
+    auto& dataset = datasets[path];
+    ExtendDataset(path);
 
     int num_particles_to_be_written = data.shape()[1];
     int prefix = 0;
+    //calculate prefix for write of the current process
     MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, MPI_H5MD_COMM);
     hid_t ds = H5Dget_space(dataset.hid());
     hsize_t rank = H5Sget_simple_extent_ndims(ds);
@@ -483,65 +489,28 @@ void File::WriteDataset(T &data, const std::string& path)
     hsize_t count[rank];
     hid_t ds_new;
     ds = H5Dget_space(dataset.hid());
-    //calculate offset (prefix) based on local particle number
-    MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    offset[0]= dims[0]-1;
-    count [0] = 1;
+    offset[0]= dims[0]-1; //offset for time (-1 since hdf5 counts from 0 onwards)
+    count [0] = 1; //count for time
     if(rank>1){
+        //particle based offset and count
         offset[1]= static_cast<hsize_t>(prefix);
         count [1] = static_cast<hsize_t>(num_particles_to_be_written);
      }
-        if(rank>2){
-            offset[2]= 0;
-            count [2] = data.shape()[2];
-        }
+    if(rank>2){
+        //coordinate based offset and count
+        offset[2]= 0;
+        count [2] = data.shape()[2];
+    }
             
-        H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
-        /* Create a temporary dataspace. */
-        ds_new = H5Screate_simple(rank, count, maxdims);
-        /* Finally write the data to the dataset. */
-        H5Dwrite(dataset.hid(),
-                 dataset.get_type(),
-                 ds_new,
-                 ds, H5P_DEFAULT,
-                 data.origin());
-        H5Sclose(ds_new);
-        H5Sclose(ds);
-
-    /* Write the md time to the position -- time dataset. */
-    ds = H5Dget_space(time.hid());
-    rank = H5Sget_simple_extent_ndims(ds);
-    hsize_t dims_time[rank];
-    hsize_t maxdims_time[rank];
-    H5Sget_simple_extent_dims(ds, dims_time, maxdims_time);
-
-    hsize_t time_offset[rank];
-    time_offset[0] = dims_time[0]-1;
-    hsize_t time_count[rank];
-    time_count[0] = 0;
-    /* Only master node writes time and timestep */
-    if (this_node == 0)
-        time_count[0] = 1; //write 1 timestep
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, time_offset, NULL, time_count, NULL);
-    ds_new = H5Screate_simple(rank, time_count, maxdims_time);
-    H5Dwrite(time.hid(),
-             time.get_type(),
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+    /* Create a temporary dataspace. */
+    ds_new = H5Screate_simple(rank, count, maxdims);
+    /* Finally write the data to the dataset. */
+    H5Dwrite(dataset.hid(),
+             dataset.get_type(),
              ds_new,
              ds, H5P_DEFAULT,
-             &sim_time);
-    H5Sclose(ds);
-    /* Write the md step to the position -- step dataset. */
-    /* Same offset, count and dims as the time dataset */
-    ds = H5Dget_space(step.hid());
-    H5Sget_simple_extent_dims(ds, dims_time, maxdims_time);
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, time_offset, NULL, time_count, NULL);
-    int sim_step_data = (int)std::round(sim_time/time_step);
-    H5Dwrite(step.hid(),
-             step.get_type(),
-             ds_new,
-             ds,
-             H5P_DEFAULT,
-             &sim_step_data);
+             data.origin());
     H5Sclose(ds_new);
     H5Sclose(ds);
 }
