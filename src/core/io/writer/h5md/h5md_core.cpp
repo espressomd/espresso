@@ -243,18 +243,18 @@ void File::create_links_for_time_and_step_datasets(){
 	std::string path_time="particles/atoms/id/time";
 	std::string path_step="particles/atoms/id/step";
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
 	
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
 }
 
 void File::load_file(const std::string& filename)
