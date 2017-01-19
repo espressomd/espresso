@@ -111,7 +111,7 @@ class File
          * @param filename The Name of the hdf5-file to check.
          * @return TRUE if H5MD structure is present, FALSE else.
          */
-        bool check_for_H5MD_structure(std::string const &filename);   
+        bool check_for_H5MD_structure(std::string const &filename);
         /**
          * @brief Method that performs all the low-level stuff for writing the particle
          * positions to the dataset.

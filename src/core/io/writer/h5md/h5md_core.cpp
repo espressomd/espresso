@@ -108,11 +108,11 @@ void File::InitFile()
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     //use a seperate mpi communicator if we want to write out ordered data. This is in order to avoid  blocking by collective functions
-    if(m_write_ordered ==true)
+    if(m_write_ordered == true)
         MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &MPI_H5MD_COMM); 
     else
         MPI_H5MD_COMM=MPI_COMM_WORLD;
-    if(m_write_ordered== true and this_node!=0)
+    if(m_write_ordered == true and this_node !=0)
         return;
     if(n_part <= 0) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object."); //this is important since n_part is used for chunking
@@ -123,7 +123,7 @@ void File::InitFile()
     bool fileexists = check_file_exists(m_filename);
     /* Perform a barrier synchronization. Otherwise one process might already
      * create the file while another still checks for its existence. */
-    if(m_write_ordered==false)
+    if(m_write_ordered == false)
         MPI_Barrier(MPI_H5MD_COMM);
     if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
@@ -219,10 +219,10 @@ void File::create_datasets(bool only_load)
                 datasets[path] = h5xx::dataset(groups[father],
                                                basename);
             } else {
-                int creation_size_dataset=0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
-                int chunk_size=1;
+                int creation_size_dataset = 0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
+                int chunk_size = 1;
                 if(descr.dim>1){
-                    //we deal now with a particle based property
+                    //we deal now with a particle based property, change chunk. Important for IO performance!
                     chunk_size=n_part;
                 }
                 auto dims = create_dims(descr.dim, creation_size_dataset);
@@ -288,7 +288,7 @@ void File::create_new_file(const std::string &filename)
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
     h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
     h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
-    std::string path_edges="particles/atoms/box/edges";
+    std::string path_edges = "particles/atoms/box/edges";
     int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
     ExtendDataset(path_edges, extent_edges);
     h5xx::write_dataset(datasets[path_edges], boxvec);
@@ -311,7 +311,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index,
 #endif
 	        id[0][particle_index][0] = current_particle->p.identity;
             if (write_typ)
-                typ[0][particle_index][0] =current_particle->p.type;
+                typ[0][particle_index][0] = current_particle->p.type;
             if (write_mass)
                 mass[0][particle_index][0] = current_particle->p.mass;
             /* store folded particle positions. */
@@ -348,11 +348,11 @@ void File::Write(int write_dat)
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     int num_particles_to_be_written;
-    if(m_write_ordered==true && this_node==0)
+    if(m_write_ordered == true && this_node == 0)
         num_particles_to_be_written=n_part;
     else if(m_write_ordered == true && this_node !=0)
         return ;
-    else if (m_write_ordered ==false)
+    else if (m_write_ordered == false)
         num_particles_to_be_written=cells_get_n_particles();
     
     bool write_typ = write_dat & W_TYPE;
@@ -373,8 +373,8 @@ void File::Write(int write_dat)
     int_array_3d step(boost::extents[1][1][1]);
     step[0][0][0]=(int)std::round(sim_time/time_step);
 
-    if (m_write_ordered==true) {
-        if( this_node ==0){ 
+    if (m_write_ordered == true) {
+        if( this_node == 0 ){ 
             //loop over all particles
             for(int particle_index=0;particle_index<n_part;particle_index++){
                 Particle current_particle;
