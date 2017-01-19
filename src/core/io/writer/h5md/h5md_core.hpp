@@ -99,7 +99,7 @@ class File
         bool &write_ordered() {return m_write_ordered;} ;
 
     private:
-    	MPI_Comm MPI_H5MD_COMM;
+    	MPI_Comm m_hdf5_comm;
         bool check_file_exists(const std::string &name)
         {
             std::ifstream f(name.c_str());
@@ -151,7 +151,7 @@ class File
         void load_file(const std::string& filename);
 
         /**
-         * @brief Initializes the necessary data to create the groups and datsets.
+         * @brief Initializes the necessary data to create the datsets and attributes.
          */
         void init_filestructure();
 
@@ -165,11 +165,6 @@ class File
          * @brief Links the time and step datasets to of all properties to the time and step dataset of the id property. All properties are written at the same time.
          */
 	void create_links_for_time_and_step_datasets();
-
-        /**
-         * @brief Creates the necessary HDF5 groups.
-         */
-        void create_groups();
 
         /**
          * Member variables.
@@ -190,7 +185,6 @@ class File
         };
         std::vector<std::string> group_names;
         std::vector<DatasetDescriptor> dataset_descriptors;
-        std::unordered_map<std::string, h5xx::group> groups;
         std::unordered_map<std::string, h5xx::dataset> datasets;
 };
 

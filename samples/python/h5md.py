@@ -19,6 +19,6 @@ for i in range(1000):
 sys.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=1, sigma=1,cutoff=2.3, shift="auto")
 sys.integrator.run(steps=100)
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,
-                    write_force=True, write_type=True, write_mass=False, write_ordered=True)
+                    write_force=True, write_type=True, write_mass=False, write_ordered=False)
 h5_file.write()
 h5_file.close()

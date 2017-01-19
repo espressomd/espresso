@@ -109,9 +109,9 @@ void File::InitFile()
 #endif
     //use a seperate mpi communicator if we want to write out ordered data. This is in order to avoid  blocking by collective functions
     if(m_write_ordered == true)
-        MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &MPI_H5MD_COMM); 
+        MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm); 
     else
-        MPI_H5MD_COMM=MPI_COMM_WORLD;
+        m_hdf5_comm=MPI_COMM_WORLD;
     if(m_write_ordered == true and this_node !=0)
         return;
     if(n_part <= 0) {
@@ -124,7 +124,7 @@ void File::InitFile()
     /* Perform a barrier synchronization. Otherwise one process might already
      * create the file while another still checks for its existence. */
     if(m_write_ordered == false)
-        MPI_Barrier(MPI_H5MD_COMM);
+        MPI_Barrier(m_hdf5_comm);
     if (fileexists) {
         if (check_for_H5MD_structure(m_filename)) {
             /*
@@ -163,7 +163,6 @@ void File::init_filestructure()
         "particles/atoms/force",
         "particles/atoms/image",
         "parameters",
-        "parameters/vmd_structure",
         "parameters/files"
     };
     h5xx::datatype type_double = h5xx::datatype(H5T_NATIVE_DOUBLE);
@@ -184,24 +183,6 @@ void File::init_filestructure()
     };
 }
 
-void File::create_groups()
-{
-#ifdef H5MD_DEBUG
-    std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
-    for (const auto& path: group_names) {
-        auto i = path.find_last_of('/');
-
-        if (i == std::string::npos) {
-            groups[path] = h5xx::group(m_h5md_file, path);
-        } else {
-            auto basename = path.substr(i + 1);
-            auto father = path.substr(0, i);
-            groups[path] = h5xx::group(groups[father], basename);
-        }
-    }
-}
-
 void File::create_datasets(bool only_load)
 {
 #ifdef H5MD_DEBUG
@@ -209,33 +190,29 @@ void File::create_datasets(bool only_load)
 #endif
     for (const auto& descr: dataset_descriptors) {
         const std::string& path = descr.path;
-        auto i = path.find_last_of('/');
 
-        if (i != std::string::npos) {
-            auto basename = path.substr(i + 1);
-            auto father = path.substr(0, i);
-
-            if (only_load) {
-                datasets[path] = h5xx::dataset(groups[father],
-                                               basename);
-            } else {
-                int creation_size_dataset = 0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
-                int chunk_size = 1;
-                if(descr.dim>1){
-                    //we deal now with a particle based property, change chunk. Important for IO performance!
-                    chunk_size=n_part;
-                }
-                auto dims = create_dims(descr.dim, creation_size_dataset);
-                auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
-                auto maxdims = create_maxdims(descr.dim);
-                auto storage = h5xx::policy::storage::chunked(chunk_dims).set(
-                        h5xx::policy::storage::fill_value(-10));
-                auto dataspace = h5xx::dataspace(dims, maxdims);
-                datasets[path] = h5xx::dataset(groups[father],basename, descr.type,dataspace,storage);
+        if (only_load) {
+            datasets[path] = h5xx::dataset(m_h5md_file, path);
+        } else {
+            int creation_size_dataset = 0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
+            int chunk_size = 1;
+            if(descr.dim>1){
+                //we deal now with a particle based property, change chunk. Important for IO performance!
+                chunk_size=n_part;
             }
+            auto dims = create_dims(descr.dim, creation_size_dataset);
+            auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
+            auto maxdims = create_maxdims(descr.dim);
+            auto storage = h5xx::policy::storage::chunked(chunk_dims).set(
+                    h5xx::policy::storage::fill_value(-10));
+            auto dataspace = h5xx::dataspace(dims, maxdims);
+            hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
+            H5Pset_create_intermediate_group(lcpl_id, 1);
+            datasets[path] = h5xx::dataset(m_h5md_file, path, descr.type,dataspace,storage, lcpl_id, H5P_DEFAULT);
         }
     }
-    create_links_for_time_and_step_datasets();
+    if(! only_load)
+        create_links_for_time_and_step_datasets();
 }
 
 void File::create_links_for_time_and_step_datasets(){
@@ -244,7 +221,6 @@ void File::create_links_for_time_and_step_datasets(){
 	std::string path_step="particles/atoms/id/step";
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
-	
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/time", H5P_DEFAULT, H5P_DEFAULT );
@@ -262,12 +238,11 @@ void File::load_file(const std::string& filename)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    m_h5md_file = h5xx::file(filename, MPI_H5MD_COMM, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL,
                              h5xx::file::out);
 #ifdef H5MD_DEBUG
     std::cout << "Finished opening the h5 file on node " << this_node << std::endl;
 #endif
-    create_groups();
     bool only_load = true;
     create_datasets(only_load);
 }
@@ -279,15 +254,15 @@ void File::create_new_file(const std::string &filename)
 #endif
     this->WriteScript(filename);
     /* Create a new h5xx file object. */
-    m_h5md_file = h5xx::file(filename, MPI_H5MD_COMM, MPI_INFO_NULL,
+    m_h5md_file = h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL,
                              h5xx::file::out);
 
-    create_groups();
     bool only_load = false;
     create_datasets(only_load);
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
-    h5xx::write_attribute(groups["particles/atoms/box"], "dimension", 3);
-    h5xx::write_attribute(groups["particles/atoms/box"], "boundary", "periodic");
+    auto group = h5xx::group(m_h5md_file,  "particles/atoms/box");
+    h5xx::write_attribute(group, "dimension", 3);
+    h5xx::write_attribute(group, "boundary", "periodic");
     std::string path_edges = "particles/atoms/box/edges";
     int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
     ExtendDataset(path_edges, extent_edges);
@@ -473,7 +448,7 @@ void File::WriteDataset(T &data, const std::string& path)
     int num_particles_to_be_written = data.shape()[1];
     int prefix = 0;
     //calculate prefix for write of the current process
-    MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, MPI_H5MD_COMM);
+    MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
     hid_t ds = H5Dget_space(dataset.hid());
     hsize_t rank = H5Sget_simple_extent_ndims(ds);
     /* Get the current dimensions of the dataspace. */
@@ -530,18 +505,17 @@ void File::WriteScript(std::string const &filename)
     buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                   std::istreambuf_iterator<char>());
 
-    hid_t filetype, dtype, space, dset, file_id, group1_id, group2_id;
+    hid_t filetype, dtype, space, dset, file_id;
     file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    group1_id = H5Gcreate2(file_id, "parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    group2_id = H5Gcreate2(group1_id, "files", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     dtype = H5Tcopy(H5T_C_S1);
     H5Tset_size(dtype, filelen * sizeof(char));
 
     space = H5Screate_simple(1, dims, NULL);
     /* Create the dataset. */
-    dset = H5Dcreate(group2_id, "script", dtype, space, H5P_DEFAULT, H5P_DEFAULT,
-                      H5P_DEFAULT);
+    hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
+    H5Pset_create_intermediate_group(link_crt_plist, true);	// Set flag for intermediate group creation
+    dset = H5Dcreate(file_id, "parameters/files/script", dtype, space, link_crt_plist, H5P_DEFAULT, H5P_DEFAULT);
     /* Write data from buffer to dataset. */
     if (this_node == 0)
         H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
@@ -549,8 +523,6 @@ void File::WriteScript(std::string const &filename)
     H5Dclose(dset);
     H5Sclose(space);
     H5Tclose(dtype);
-    H5Gclose(group1_id);
-    H5Gclose(group2_id);
     H5Fclose(file_id);
 }
 
