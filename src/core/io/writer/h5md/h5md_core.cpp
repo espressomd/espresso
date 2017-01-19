@@ -423,9 +423,9 @@ void File::ExtendDataset(std::string path, int extent=1){
     // Extend the dataset for more particles if the particle number increased
     if(rank>1){
         /* Get the number of particles on all other nodes. */
-        int n_part = max_seen_particle+1;
+        int n_part = std::max((int) dims[1],max_seen_particle+1); //take into account previous dimension, if we append to an already existing dataset
         if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part;
+        	m_max_n_part = n_part; 
         }
         dims[1] = m_max_n_part;
     }
