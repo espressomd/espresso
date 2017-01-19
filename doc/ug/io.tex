@@ -1217,6 +1217,279 @@ parts of the internal data also had to be changed to allow \es to
 continue, so you should really know what you do if you try and catch
 these errors.
 
+\section{Online-visualisation with Mayavi or OpenGL}
+\label{sec:visualizer}
+\index{Visualization}
+
+With the python interface, \es features two possibilities for
+online-visualization: 
+
+\begin{enumerate}
+\item Using the mlab module to drive \emph{Mayavi, a "3D scientific data
+visualization and plotting in Python"}. Mayavi has a user-friendly GUI to
+specify the appearance of the output. Additional requirements: python module
+\emph{mayavi}, VTK (package \emph{python-vtk} for Debian/Ubuntu). Note that
+only VTK from version 7.0.0 and higher has Python 3 support.
+\item A direct rendering engine based on \emph{pyopengl}. As it is
+developed for \es, it supports the visualization of several specific features
+like external forces or constraints. It has no GUI to setup the appearance, but
+can be adjusted by a large set of parameters. Additional requirements: python
+module \emph{PyOpenGL}.  
+\end{enumerate}
+Both are not meant to produce high quality renderings, but rather to debug your
+setup and equilibration process.
+
+\subsection{General usage}
+
+The recommended usage of both tools is similar: Create the visualizer of your
+choice and pass it the \lstinline{espressomd.System()} object. Then write your
+integration loop in a seperate function, which is started in a non-blocking
+thread. Whenever needed, call \lstinline{update()} to synchronize the renderer
+with your system. Finally start the blocking visualization window with
+\lstinline{start()}. See the following minimal code example:
+
+\begin{pycode}
+import espressomd
+from espressomd import visualization
+from threading import Thread
+
+system = espressomd.System()
+system.cell_system.skin = 0.4
+system.time_step = 0.01
+system.box_l = [10,10,10]
+
+system.part.add(pos = [1,1,1])
+system.part.add(pos = [9,9,9])
+
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualization.openGLLive(system)
+
+def main_thread():
+    while True:
+        system.integrator.run(1)
+        visualizer.update()
+
+t = Thread(target=main_thread)
+t.daemon = True
+t.start()
+
+visualizer.start()
+\end{pycode}
+
+\subsection{Common methods}
+
+
+\begin{pysyntax}
+  \attributes{
+    visualization
+  }{
+    mayaviLive | openGLLive
+  }{
+    start()
+}
+\end{pysyntax}
+
+Starts the blocking visualizer window.
+
+\begin{pysyntax}
+  \attributes{
+    visualization
+  }{
+    mayaviLive | openGLLive
+  }{
+    update()
+}
+\end{pysyntax}
+
+Synchonizes system and visualizer, handles keyboard events for openGLLive. 
+
+\begin{pysyntax}
+  \object{
+    visualization.mayaviLive | openGLLive
+  }{
+    registerCallback
+  }{
+    callback
+  }[
+    interval=\arg{int}
+]
+\end{pysyntax}
+
+Registers the method \keyword{callback}, which is called every \keyword{interval} milliseconds.
+Useful for live plotting (see sample script samples/python/visualization.py)
+
+\subsection{Mayavi visualizer}
+
+The mayavi visualizer is created with the following syntax:
+
+\begin{pysyntax}
+  \object{
+    visualization
+  }{
+    mayaviLive
+  }{
+    system=\arg{object}
+  }[
+    particle_sizes=\arg{"auto" | callable | list}
+  ]
+\end{pysyntax}
+
+\begin{arguments}
+\item[\var{system}] The espressomd.System() object.
+\item[\opt{particle_sizes}] 
+\keyword{"auto"} (default): The Lennard-Jones sigma value of the self-interaction 
+is used for the particle diameter. 
+\keyword{callable}: A lambda function with one argument. Internally, the numerical 
+particle type is passed to the lambda function to determine the particle radius. 
+\keyword{list}: A list of particle radii, indexed by the particle type.
+\end{arguments}
+
+\subsection{OpenGL visualizer}
+
+\begin{pysyntax}
+  \object{
+    visualization
+  }{
+    openGLLive
+  }{
+    system=\arg{str}
+  }[
+    window_size=\arg{array of 2 ints},                        
+    name=\arg{str},	 
+    background_color=\arg{array of 3 floats},
+    periodic_images=\arg{array of 3 floats},
+    draw_box=\arg{bool},
+    quality_spheres=\arg{int},
+    quality_bonds=\arg{int},          
+    quality_arrows=\arg{int},            
+    close_cut_distance=\arg{float},
+    far_cut_distance=\arg{float},       
+    camera_position=\arg{"auto" | array of 3 floats },
+    camera_rotation=\arg{array of 2 floats},
+    particle_sizes=\arg{"auto" | callable | list},
+    particle_coloring=\arg{"auto", "id", "charge", "type"},
+    particle_type_colors=\arg{array of arrays of 4 floats},
+    particle_type_materials=\arg{array of arrays of 3 floats},
+    particle_charge_colors=\arg{array of 2 arrays of 4 floats},	 
+    draw_constraints=\arg{bool},			 
+    rasterize_pointsize=\arg{float},	     
+    rasterize_resolution=\arg{float},	     
+    quality_constraints=\arg{int},          
+    constraint_type_colors=\arg{array of arrays of 4 floats},
+    constraint_type_materials=\arg{array of arrays of 3 floats},
+    draw_bonds=\arg{bool},				 
+    bond_type_radius=\arg{array of floats},		     
+    bond_type_colors=\arg{array of arrays of 4 floats},			 
+    bond_type_materials=\arg{array of arrays of 3 floats},	     
+    ext_force_arrows=\arg{bool}, 		 
+    ext_force_arrows_scale=\arg{array of floats}, 	 
+    drag_enabled=\arg{bool},		   		 
+    drag_force=\arg{float},		   		 
+    light_pos=\arg{"auto" | array of 3 floats},				 
+    light_color=\arg{array of 3 floats},				 
+    light_brightness=\arg{float},   		 
+    light_size=\arg{float}		   		 
+  ]
+\end{pysyntax}
+
+\begin{arguments}
+\item[\var{system}] The espressomd.System() object.
+
+\item[\opt{window_size}] Size of the visualizer window in pixels.
+\item[\opt{name}] The name of the visualizer window.
+
+\item[\opt{background_color}] RGB of the background.
+\item[\opt{periodic_images}] Periodic repetitions on both sides of the box in xyz direction.
+\item[\opt{draw_box}] Draw wireframe boundaries.
+
+\item[\opt{quality_spheres}] The number of subdivisions for spheres.
+\item[\opt{quality_bonds}] The number of subdivisions for cylindrical bonds.
+\item[\opt{quality_arrows}] The number of subdivisions for external force arrows.
+
+\item[\opt{close_cut_distance}] The distance from the viewer to the near clipping plane.
+\item[\opt{far_cut_distance}] The distance from the viewer to the far clipping plane.
+\item[\opt{camera_position}] Initial camera position.
+\item[\opt{camera_rotation}] Initial camera angles.
+
+\item[\opt{particle_sizes}] 
+\keyword{"auto"} (default): The Lennard-Jones sigma value of the self-interaction 
+is used for the particle diameter.\\
+\keyword{callable}: A lambda function with one argument. Internally, the numerical 
+particle type is passed to the lambda function to determine the particle radius.\\
+\keyword{list}: A list of particle radii, indexed by the particle type.
+\item[\opt{particle_coloring}] 
+\keyword{"auto"} (default): Colors of charged particles are specified by 
+\keyword{particle_charge_colors}, neutral particles by \keyword{particle_type_colors}\\
+\keyword{"charge"}: Minimum and maximum charge of all particles is determined by the visualizer.
+All particles are colored by a linear interpolation of the two colors given by 
+\keyword{particle_charge_colors} according to their charge.\\
+\keyword{"type"}: Particle colors are specified by \keyword{particle_type_colors}, 
+indexed by their numerical particle type.
+\item[\opt{particle_type_colors}] Colors for particle types.
+\item[\opt{particle_type_materials}] Materials of the particle types.
+\item[\opt{particle_charge_colors}] Two colors for min/max charged particles.
+
+\item[\opt{draw_constraints}] Enables constraint visualization. For simple constraints.
+(planes, spheres and cylinders), OpenGL primitives are used. Otherwise, visualization by rasterization is used.
+ \item[\opt{rasterize_pointsize}] Point size for the rasterization dots.
+\item[\opt{rasterize_resolution}] Accuracy of the rasterization.
+\item[\opt{quality_constraints}] The number of subdivisions for primitive constraints.
+\item[\opt{constraint_type_colors}] Colors of the constaints by type.
+\item[\opt{constraint_type_materials}] Materials of the constraints by type.
+
+\item[\opt{draw_bonds}] Enables bond visualization.
+\item[\opt{bond_type_radius}] Radii of bonds by type.
+\item[\opt{bond_type_colors}] Color of bonds by type.
+\item[\opt{bond_type_materials}] Materials of bonds by type.
+
+\item[\opt{ext_force_arrows}] Enables external force visualization.
+\item[\opt{ext_force_arrows_scale}] Scale factor for external force arrows.
+\item[\opt{drag_enabled}] Enables mouse-controlled particles dragging (Default: False)
+\item[\opt{drag_force}] Factor for particle dragging 
+
+\item[\opt{light_pos}] If \keyword{"auto"} (default) is used, the light is placed dynamically
+in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
+\item[\opt{light_color}] Light color
+\item[\opt{light_brightness}] Brightness (inverse constant attenuation) of the light.
+\item[\opt{light_size}] Size (inverse linear attenuation) of the light.
+
+\end{arguments}
+
+The optional parameters to adjust the appearance of the visualization
+have suitable default values for most simulations. Colors for particles, bonds
+and constraints are specified by RGBA arrays, materials by an array for the
+ambient, diffuse and specular (ADS) components. To distinguish particle
+groups, arrays of RGBA or ADS entries are used, which are indexed circularly by
+the numerical particle type.
+
+\subsubsection{Keyboard controls}
+
+The camera is controlled via mouse (camera look direction), WASD-Keyboard control
+(WS: move forwards/backwards, AD: move sidewards) and the key pairs QE, RF, ZC (camera roll).
+With the keyword \lstinline{drag_enabled} set to \lstinline{True}, the mouse can be
+used to exert a force on particles in drag direction (scaled by
+\lstinline{drag_force} and the distance of particle and mouse cursor).
+Additional input functionality for mouse and keyboard is possible by assigning 
+callbacks to specified keyboard or mouse buttons. This may be useful for realtime 
+adjustment of system parameters (temperature, interactions, particle properties etc)
+of for demonstration purposes. An example can be found in samples/python/billard.py.
+
+\subsection{Visualization example scripts}
+
+Various example scripts can be found in the samples/python folder or in some tutorials:
+
+\begin{itemize}
+\item samples/python/visualization.py: LJ-Liquid with live plotting.
+\item samples/python/visualization_bonded.py: Sample for bond visualization.
+\item samples/python/billard.py: Simple billard game including many features of the openGL visualizer.
+\item samples/python/visualization_openGL.py: Timer and keyboard callbacks for the openGL visualizer.
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_vis.py: Periodic NaCl crystal, see tutorial "Charged Systems".
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_confined_vis.py: Confined NaCl with interactively adjustable electric field, see tutorial "Charged Systems".
+\item doc/tutorials/python/08-visualization/scripts/visualization.py: LJ-Liquid visualization along with tutorial "Visualization".
+\end{itemize}
+
+Finally, it is recommended to go through tutorial "Visualization" for further code explanations. 
+Also, the tutorial "Charged Systems" has two visualization examples.
 
 %%% Local Variables: 
 %%% mode: latex
