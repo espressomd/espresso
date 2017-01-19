@@ -160,6 +160,11 @@ class File
          * @param only_load Set this to true if you want to append to an existing file.
          */
         void create_datasets(bool only_load);
+        
+        /**
+         * @brief Links the time and step datasets to of all properties to the time and step dataset of the id property. All properties are written at the same time.
+         */
+	void create_links_for_time_and_step_datasets();
 
         /**
          * @brief Creates the necessary HDF5 groups.

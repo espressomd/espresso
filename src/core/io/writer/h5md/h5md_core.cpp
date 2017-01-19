@@ -173,26 +173,14 @@ void File::init_filestructure()
             //path, dim, type
         { "particles/atoms/box/edges"     , 1, type_double },
         { "particles/atoms/mass/value"    , 2, type_double },
-        { "particles/atoms/mass/time"     , 1, type_double },
-        { "particles/atoms/mass/step"     , 1, type_int },
         { "particles/atoms/id/value"      , 2, type_int },
         { "particles/atoms/id/time"       , 1, type_double },
         { "particles/atoms/id/step"       , 1, type_int },
         { "particles/atoms/type/value"    , 2, type_int },
-        { "particles/atoms/type/time"     , 1, type_double },
-        { "particles/atoms/type/step"     , 1, type_int },
         { "particles/atoms/position/value", 3, type_double },
-        { "particles/atoms/position/time" , 1, type_double },
-        { "particles/atoms/position/step" , 1, type_int },
         { "particles/atoms/velocity/value", 3, type_double },
-        { "particles/atoms/velocity/time" , 1, type_double },
-        { "particles/atoms/velocity/step" , 1, type_int },
         { "particles/atoms/force/value"   , 3, type_double },
-        { "particles/atoms/force/time"    , 1, type_double },
-        { "particles/atoms/force/step"    , 1, type_int },
         { "particles/atoms/image/value"   , 3, type_int },
-        { "particles/atoms/image/time"    , 1, type_double },
-        { "particles/atoms/image/step"    , 1, type_int },
     };
 }
 
@@ -247,6 +235,26 @@ void File::create_datasets(bool only_load)
             }
         }
     }
+    create_links_for_time_and_step_datasets();
+}
+
+void File::create_links_for_time_and_step_datasets(){
+	H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
+	std::string path_time="particles/atoms/id/time";
+	std::string path_step="particles/atoms/id/step";
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
+	
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
 }
 
 void File::load_file(const std::string& filename)
@@ -402,35 +410,23 @@ void File::Write(int write_dat)
     if (write_typ)
     {
         WriteDataset(typ, "particles/atoms/type/value");
-        WriteDataset(time, "particles/atoms/type/time");
-        WriteDataset(step, "particles/atoms/type/step");
     }
     if (write_mass)
     {
         WriteDataset(mass, "particles/atoms/mass/value");
-        WriteDataset(time, "particles/atoms/mass/time");
-        WriteDataset(step, "particles/atoms/mass/step");
     }
     if (write_pos)
     {
         WriteDataset(pos, "particles/atoms/position/value");
-        WriteDataset(time, "particles/atoms/position/time");
-        WriteDataset(step, "particles/atoms/position/step");
         WriteDataset(image, "particles/atoms/image/value");
-        WriteDataset(time, "particles/atoms/image/time");
-        WriteDataset(step, "particles/atoms/image/step");
     }
     if (write_vel)
     {
         WriteDataset(vel, "particles/atoms/velocity/value");
-        WriteDataset(time, "particles/atoms/velocity/time");
-        WriteDataset(step, "particles/atoms/velocity/step");
     }
     if (write_force)
     {
         WriteDataset(f, "particles/atoms/force/value");
-        WriteDataset(time, "particles/atoms/force/time");
-        WriteDataset(step, "particles/atoms/force/step");
     }
 
 }
