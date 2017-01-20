@@ -526,6 +526,9 @@ void File::WriteScript(std::string const &filename)
     H5Fclose(file_id);
 }
 
+void File::Flush(){
+	H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
+}
 
 bool File::check_for_H5MD_structure(std::string const &filename)
 {

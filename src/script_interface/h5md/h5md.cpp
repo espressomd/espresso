@@ -64,6 +64,7 @@ Variant H5mdScript::call_method(const std::string& name, const VariantMap& param
 {
     if (name == "init_file") m_h5md->InitFile();
     else if (name == "write") m_h5md->Write(m_h5md->what());
+    else if (name == "flush") m_h5md->Flush();
     else if (name == "close") m_h5md->Close();
     return {};
 }

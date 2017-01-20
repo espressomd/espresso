@@ -97,6 +97,10 @@ class File
         int &what() { return m_what; };
         // Returns the boolean value that describes whether data should be written to the dataset in the order of ids (possibly slower on output for many particles).
         bool &write_ordered() {return m_write_ordered;} ;
+        /**
+         * @brief Method to force flush to h5md file.
+         */
+        void Flush();
 
     private:
     	MPI_Comm m_hdf5_comm;

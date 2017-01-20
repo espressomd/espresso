@@ -73,6 +73,11 @@ class H5md(object):
         """
         self.h5md_instance.call_method("write")
 
+    def flush(self):
+        """Calls the H5md write method.
+        """
+        self.h5md_instance.call_method("flush")
+
 
     def close(self):
         """Close the H5md file.

@@ -21,4 +21,5 @@ sys.integrator.run(steps=10)
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,
                     write_force=True, write_type=True, write_mass=False, write_ordered=True)
 h5_file.write()
+h5_file.flush()
 h5_file.close()
