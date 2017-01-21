@@ -182,6 +182,7 @@ void File::init_filestructure()
         { "particles/atoms/velocity/value", 3, type_double },
         { "particles/atoms/force/value"   , 3, type_double },
         { "particles/atoms/image/value"   , 3, type_int },
+        { "connectivity/atoms"   , 1, type_int },
     };
 }
 
@@ -263,6 +264,8 @@ void File::create_new_file(const std::string &filename)
 
     bool only_load = false;
     create_datasets(only_load);
+
+    //write box information
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
     auto group = h5xx::group(m_h5md_file,  "particles/atoms/box");
     h5xx::write_attribute(group, "dimension", 3);
@@ -271,6 +274,7 @@ void File::create_new_file(const std::string &filename)
     int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
     ExtendDataset(path_edges, extent_edges);
     h5xx::write_dataset(datasets[path_edges], boxvec);
+
 }
 
 
@@ -326,7 +330,9 @@ void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index,
             f[0][particle_index][2] = current_particle->f.f[2] * fac;
         }
         if (write_charge){
+            #ifdef ELECTROSTATICS
             charge[0][particle_index][0]=current_particle->p.q;
+            #endif        
         }
 
 }
@@ -420,7 +426,9 @@ void File::Write(int write_dat)
         WriteDataset(f, "particles/atoms/force/value");
     }
     if (write_charge){
+        #ifdef ELECTROSTATICS
         WriteDataset(charge, "particles/atoms/charge/value");
+        #endif
     }
 
 }
