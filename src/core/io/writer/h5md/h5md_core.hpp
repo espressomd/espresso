@@ -78,7 +78,8 @@ class File
                          W_V    = 1 << 1,
                          W_F    = 1 << 2,
                          W_TYPE = 1 << 3,
-                         W_MASS = 1 << 4 };
+                         W_MASS = 1 << 4,
+                         W_CHARGE= 1 << 5};
         /**
          * @brief General method to write to the datasets which calls more specific write methods.
          * @param Boolean values for position, velocity, force and mass.
@@ -136,7 +137,7 @@ class File
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
          */
-	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle, bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force );
+	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat);
         /*
          * @brief Method to write the simulation script to the dataset.
          */

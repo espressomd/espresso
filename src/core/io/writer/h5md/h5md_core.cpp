@@ -156,6 +156,7 @@ void File::init_filestructure()
         "particles/atoms",
         "particles/atoms/box",
         "particles/atoms/mass",
+        "particles/atoms/charge",
         "particles/atoms/id",
         "particles/atoms/type",
         "particles/atoms/position",
@@ -172,6 +173,7 @@ void File::init_filestructure()
             //path, dim, type
         { "particles/atoms/box/edges"     , 1, type_double },
         { "particles/atoms/mass/value"    , 2, type_double },
+        { "particles/atoms/charge/value"  , 2, type_double },
         { "particles/atoms/id/value"      , 2, type_int },
         { "particles/atoms/id/time"       , 1, type_double },
         { "particles/atoms/id/step"       , 1, type_int },
@@ -231,6 +233,8 @@ void File::create_links_for_time_and_step_datasets(){
 	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/time", H5P_DEFAULT, H5P_DEFAULT );
 	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/charge/time", H5P_DEFAULT, H5P_DEFAULT );
+	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/charge/step", H5P_DEFAULT, H5P_DEFAULT );
 }
 
 void File::load_file(const std::string& filename)
@@ -279,41 +283,51 @@ void File::Close()
 }
 
 
-void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle,bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force ){
+void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat ){
 #ifdef H5MD_DEBUG
     /* Turn on hdf5 error messages */
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-	        id[0][particle_index][0] = current_particle->p.identity;
-            if (write_typ)
-                typ[0][particle_index][0] = current_particle->p.type;
-            if (write_mass)
-                mass[0][particle_index][0] = current_particle->p.mass;
-            /* store folded particle positions. */
-            if (write_pos)
-            {
-                pos[0][particle_index][0] = current_particle->r.p[0];
-                pos[0][particle_index][1] = current_particle->r.p[1];
-                pos[0][particle_index][2] = current_particle->r.p[2];
-                image[0][particle_index][0] = current_particle->l.i[0];
-                image[0][particle_index][1] = current_particle->l.i[1];
-                image[0][particle_index][2] = current_particle->l.i[2];
-            }
-            if (write_vel)
-            {
-                vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
-                vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
-                vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
-            }
-            if (write_force)
-            {
-                /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
-                 * world force. */
-                double fac = current_particle->p.mass / (0.5 * time_step * time_step);
-                f[0][particle_index][0] = current_particle->f.f[0] * fac;
-                f[0][particle_index][1] = current_particle->f.f[1] * fac;
-                f[0][particle_index][2] = current_particle->f.f[2] * fac;
-            }
+    bool write_typ = write_dat & W_TYPE;
+    bool write_pos = write_dat & W_POS;
+    bool write_vel = write_dat & W_V;
+    bool write_force = write_dat & W_F;
+    bool write_mass = write_dat & W_MASS;
+    bool write_charge = write_dat & W_CHARGE;
+
+        id[0][particle_index][0] = current_particle->p.identity;
+        if (write_typ)
+            typ[0][particle_index][0] = current_particle->p.type;
+        if (write_mass)
+            mass[0][particle_index][0] = current_particle->p.mass;
+        /* store folded particle positions. */
+        if (write_pos)
+        {
+            pos[0][particle_index][0] = current_particle->r.p[0];
+            pos[0][particle_index][1] = current_particle->r.p[1];
+            pos[0][particle_index][2] = current_particle->r.p[2];
+            image[0][particle_index][0] = current_particle->l.i[0];
+            image[0][particle_index][1] = current_particle->l.i[1];
+            image[0][particle_index][2] = current_particle->l.i[2];
+        }
+        if (write_vel)
+        {
+            vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
+            vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
+            vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
+        }
+        if (write_force)
+        {
+            /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
+             * world force. */
+            double fac = current_particle->p.mass / (0.5 * time_step * time_step);
+            f[0][particle_index][0] = current_particle->f.f[0] * fac;
+            f[0][particle_index][1] = current_particle->f.f[1] * fac;
+            f[0][particle_index][2] = current_particle->f.f[2] * fac;
+        }
+        if (write_charge){
+            charge[0][particle_index][0]=current_particle->p.q;
+        }
 
 }
 
@@ -335,6 +349,7 @@ void File::Write(int write_dat)
     bool write_vel = write_dat & W_V;
     bool write_force = write_dat & W_F;
     bool write_mass = write_dat & W_MASS;
+    bool write_charge = write_dat & W_CHARGE;
 
     double_array_3d pos(boost::extents[1][num_particles_to_be_written][3]);
     double_array_3d vel(boost::extents[1][num_particles_to_be_written][3]);
@@ -343,6 +358,7 @@ void File::Write(int write_dat)
     int_array_3d id(boost::extents[1][num_particles_to_be_written][1]);
     int_array_3d typ(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
+    double_array_3d charge(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d time(boost::extents[1][1][1]);
     time[0][0][0]=sim_time;
     int_array_3d step(boost::extents[1][1][1]);
@@ -354,7 +370,7 @@ void File::Write(int write_dat)
             for(int particle_index=0;particle_index<n_part;particle_index++){
                 Particle current_particle;
 	            get_particle_data(particle_index, &current_particle); //this function only works when run with one process
-                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle,  write_typ, write_mass, write_pos, write_vel, write_force );
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat );
 	            free_particle(&current_particle);
             }
         }
@@ -372,7 +388,7 @@ void File::Write(int write_dat)
                  local_part_id < local_cell->n; ++local_part_id)
             {
                 auto & current_particle = local_cell->part[local_part_id];
-                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, &current_particle, write_typ, write_mass, write_pos, write_vel, write_force );
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat );
                 particle_index++;
             }
         }
@@ -402,6 +418,9 @@ void File::Write(int write_dat)
     if (write_force)
     {
         WriteDataset(f, "particles/atoms/force/value");
+    }
+    if (write_charge){
+        WriteDataset(charge, "particles/atoms/charge/value");
     }
 
 }

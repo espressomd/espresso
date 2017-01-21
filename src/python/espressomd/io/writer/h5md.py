@@ -30,17 +30,20 @@ class H5md(object):
                      If types should be written.
         write_mass : bool, optional
                      If masses should be written.
+        write_charge : bool, opional
+                       If charges should be written.
         write_ordered: bool, optional
                        If particle properties should be ordered according to ids.
         """
-        self.valid_params = ['filename', 'write_ordered',]
+        self.valid_params = ['filename', "write_ordered"]
         if 'filename' not in kwargs:
             raise ValueError("'filename' parameter missing.")
         self.what = {'write_pos': 1<<0,
                      'write_vel': 1<<1,
                      'write_force': 1<<2,
                      'write_type': 1<<3,
-                     'write_mass': 1<<4}
+                     'write_mass': 1<<4,
+                     'write_charge': 1<<5}
         self.valid_params.append(self.what.keys())
         self.what_bin = 0
         for i, j in iteritems(kwargs):
@@ -74,10 +77,9 @@ class H5md(object):
         self.h5md_instance.call_method("write")
 
     def flush(self):
-        """Calls the H5md write method.
+        """Calls the H5md flush method.
         """
         self.h5md_instance.call_method("flush")
-
 
     def close(self):
         """Close the H5md file.
