@@ -90,10 +90,11 @@ static MPI_Op MPI_FORCES_SUM;
 */
 int ghosts_have_v = 0;
 
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
+void prepare_comm(GhostCommunicator *comm, int data_parts, int num, bool async)
 {
   int i;
   comm->data_parts = data_parts;
+  comm->async = async;
 
   /* if ghosts should have uptodate velocities, they have to be updated like positions
      (except for shifting...) */
@@ -549,7 +550,13 @@ static int is_recv_op(int comm_type, int node)
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
-void ghost_communicator(GhostCommunicator *gc)
+static void ghost_communicator_async(GhostCommunicator *gc)
+{
+  fputs("Async comm not implemented.", stderr);
+  errexit();
+}
+
+static void ghost_communicator_sync(GhostCommunicator *gc)
 {
   static CommBuf s_buffer, r_buffer;
   MPI_Status status;
@@ -715,6 +722,14 @@ void ghost_communicator(GhostCommunicator *gc)
       }
     }
   }
+}
+
+void ghost_communicator(GhostCommunicator *gc)
+{
+  if (gc->async)
+    ghost_communicator_async(gc);
+  else
+    ghost_communicator_sync(gc);
 }
 
 void ghost_init()

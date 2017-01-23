@@ -173,6 +173,9 @@ typedef struct {
   /** number of communication steps. */
   int num;
 
+  /** Synchronous or asynchronous communication? */
+  bool async;
+
   /** List of ghost communications. */
   GhostCommunication *comm;
 
@@ -185,7 +188,7 @@ typedef struct {
 /*@{*/
 
 /** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
+void prepare_comm(GhostCommunicator *comm, int data_parts, int num, bool async = false);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);
