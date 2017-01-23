@@ -97,6 +97,9 @@ IF LB_GPU or LB:
         int lb_lbnode_get_pop(int * coord, double * double_return)
         int lb_lbnode_get_boundary(int * coord, int * int_return)
 
+    cdef extern from "lbgpu.hpp":
+        int lb_lbfluid_remove_total_momentum();
+
     ###############################################
     #
     # Wrapper-functions for access to C-pointer: Set params

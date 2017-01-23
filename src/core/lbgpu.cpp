@@ -40,6 +40,7 @@
 #include "global.hpp"
 #include "lbboundaries.hpp"
 #include "cuda_interface.hpp"
+#include "statistics.hpp"
 #ifdef LB_GPU
 
 
@@ -114,6 +115,10 @@ LB_parameters_gpu lbpar_gpu = {
   0,
   // number_of_particles
   0,
+#ifdef LB_BOUNDARIES_GPU
+  // number_of_boundnodes
+  0,
+#endif
   // fluct
   0,
   // calc_val
@@ -138,13 +143,10 @@ LB_parameters_gpu lbpar_gpu = {
 #endif // SHANCHEN  
 };
 
-
 /** this is the array that stores the hydrodynamic fields for the output */
 LB_rho_v_pi_gpu *host_values = NULL;
 
 LB_nodes_gpu *host_nodes = NULL;
-
-
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -438,6 +440,36 @@ int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary)
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
 {
   return lb_lbfluid_load_checkpoint(filename, binary);
+}
+
+void lb_lbfluid_particles_add_momentum ( float velocity[3] )
+{
+  for (int i = 0; i < lbpar_gpu.number_of_particles; ++i)
+  {
+    double mass;
+#ifdef MASS
+    mass = particle_data_host[i].mass;
+#else
+    mass = 1.;
+#endif
+
+    double new_velocity[3] = {
+      particle_data_host[i].v[0] + velocity[0],
+      particle_data_host[i].v[1] + velocity[1],
+      particle_data_host[i].v[2] + velocity[2]
+    };
+    set_particle_v( i, new_velocity );
+  }
+}
+
+void lb_lbfluid_get_total_momentum ( float momentum[3] )
+{
+  std::vector<double> total_momentum;
+  total_momentum = calc_linear_momentum(1,1);
+  momentum[0] = total_momentum[0];
+  momentum[1] = total_momentum[1];
+  momentum[2] = total_momentum[2];
+  return;
 }
 
 #endif /* LB_GPU */

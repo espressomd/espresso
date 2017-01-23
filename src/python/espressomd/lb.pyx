@@ -194,6 +194,9 @@ IF LB_GPU:
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
 
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
+
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines:
