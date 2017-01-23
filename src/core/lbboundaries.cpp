@@ -191,6 +191,8 @@ void lb_init_boundaries() {
             number_of_boundnodes++;
           }
 
+          lbpar_gpu.number_of_boundnodes = number_of_boundnodes;
+
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
             ek_parameters.number_of_boundary_nodes = number_of_boundnodes;

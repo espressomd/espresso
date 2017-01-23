@@ -3254,7 +3254,6 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_lb_boundary_velocity){
   int temp = host_n_lb_boundaries;
 
-  lbpar_gpu.number_of_boundnodes = number_of_boundnodes
   size_of_boundindex = number_of_boundnodes*sizeof(int);
   cuda_safe_mem(cudaMalloc((void**)&boundary_node_list, size_of_boundindex));
   cuda_safe_mem(cudaMalloc((void**)&boundary_index_list, size_of_boundindex));
