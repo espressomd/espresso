@@ -127,7 +127,7 @@ class File
         /**
          * @brief Method that extends datasets.
          */            
-        void ExtendDataset(std::string path, int extent);
+        void ExtendDataset(std::string path, int extent_1=1, int extent_2=-10);
         
          /**
          * @brief Method that returns chunk dimensions.

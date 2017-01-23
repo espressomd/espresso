@@ -112,8 +112,6 @@ void File::InitFile()
         MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm); 
     else
         m_hdf5_comm=MPI_COMM_WORLD;
-    if(m_write_ordered == true and this_node !=0)
-        return;
     if(n_part <= 0) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object."); //this is important since n_part is used for chunking
     }
@@ -182,7 +180,7 @@ void File::init_filestructure()
         { "particles/atoms/velocity/value", 3, type_double },
         { "particles/atoms/force/value"   , 3, type_double },
         { "particles/atoms/image/value"   , 3, type_int },
-        { "connectivity/atoms"   , 1, type_int },
+        { "connectivity/atoms"   		  , 2, type_int },
     };
 }
 
@@ -264,7 +262,8 @@ void File::create_new_file(const std::string &filename)
 
     bool only_load = false;
     create_datasets(only_load);
-
+	
+	//write time independent datasets
     //write box information
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
     auto group = h5xx::group(m_h5md_file,  "particles/atoms/box");
@@ -274,6 +273,58 @@ void File::create_new_file(const std::string &filename)
     int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
     ExtendDataset(path_edges, extent_edges);
     h5xx::write_dataset(datasets[path_edges], boxvec);
+
+	//writing bonds is only implemented here for bonds between two particles, use this as number of columns
+	int_array_3d bond(boost::extents[1][0][2]);
+    /* loop over all local cells. */
+    Cell *local_cell;
+    int num_bonds_local=0;
+    //loop over all particles
+    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
+    {
+        local_cell = local_cells.cell[cell_id];
+        for (int local_part_id = 0;
+             local_part_id < local_cell->n; ++local_part_id)
+        {
+            auto & current_particle = local_cell->part[local_part_id];
+            for(int i=1; i<current_particle.bl.n;i=i+2){
+            	num_bonds_local+=1;
+            	bond.resize(boost::extents[1][num_bonds_local][2]);
+				bond[0][num_bonds_local-1][0]=current_particle.p.identity;
+				bond[0][num_bonds_local-1][1]=current_particle.bl.e[i];
+				
+			}
+        }
+    }
+    int nbonds_total;
+    MPI_Allreduce(&num_bonds_local, &nbonds_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    std::string path="connectivity/atoms";
+    ExtendDataset(path, nbonds_total, 2);
+    
+    int prefix=0;
+    MPI_Exscan(&num_bonds_local, &prefix, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    auto& dataset = datasets[path];
+	/* Get the current dimensions of the dataspace. */
+	int rank =2;
+	hsize_t offset[rank];
+	offset[0]=prefix;
+	offset[1]=0;
+	hsize_t count[rank];
+	count[0]=num_bonds_local;
+	count[1]=2;
+	hid_t ds = H5Dget_space(dataset.hid());
+    H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
+	/* Create a temporary dataspace. */
+	hsize_t dims[rank], maxdims[rank];
+	H5Sget_simple_extent_dims(ds, dims, maxdims);
+	hid_t ds_new = H5Screate_simple(rank, count, maxdims);        
+	H5Dwrite(dataset.hid(),
+	         dataset.get_type(),
+	         ds_new,
+	         ds, H5P_DEFAULT,
+	         bond.origin());
+	H5Sclose(ds_new);
+	H5Sclose(ds);
 
 }
 
@@ -375,7 +426,7 @@ void File::Write(int write_dat)
             //loop over all particles
             for(int particle_index=0;particle_index<n_part;particle_index++){
                 Particle current_particle;
-	            get_particle_data(particle_index, &current_particle); //this function only works when run with one process
+	        	get_particle_data(particle_index, &current_particle); //this function only works when run with one process
                 fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat );
 	            free_particle(&current_particle);
             }
@@ -434,7 +485,7 @@ void File::Write(int write_dat)
 }
 
 
-void File::ExtendDataset(std::string path, int extent=1){
+void File::ExtendDataset(std::string path, int extent_1, int extent_2){
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path];
@@ -445,10 +496,12 @@ void File::ExtendDataset(std::string path, int extent=1){
     H5Sget_simple_extent_dims(ds, dims, maxdims);
     H5Sclose(ds);
     /* Extend the dataset for another timestep (extent=1) */
-    dims[0] += extent;
+    dims[0] += extent_1;
+    if(extent_2!=-10)
+        dims[1] = extent_2;
     
     // Extend the dataset for more particles if the particle number increased
-    if(rank>1){
+    if(rank>1 && extent_2 ==-10){
         /* Get the number of particles on all other nodes. */
         int n_part = std::max((int) dims[1],max_seen_particle+1); //take into account previous dimension, if we append to an already existing dataset
         if (n_part > m_max_n_part) {
@@ -554,7 +607,11 @@ void File::WriteScript(std::string const &filename)
 }
 
 void File::Flush(){
-	H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
+	if(m_write_ordered==true){
+		if(this_node==0)
+			H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
+	} else
+		H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
 }
 
 bool File::check_for_H5MD_structure(std::string const &filename)
