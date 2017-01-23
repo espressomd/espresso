@@ -1150,11 +1150,11 @@ int set_particle_gamma(int part, double gamma[3])
   return ES_OK;
 }
 #ifdef ROTATION
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma_rot)
 #else
 int set_particle_gamma_rot(int part, double gamma_rot[3])
-#endif // PARTICLE_ANISOTROPY
+#endif // ROTATIONAL_INERTIA
 {
   int pnode;
 
@@ -2258,11 +2258,11 @@ void pointer_to_gamma(Particle *p, double*& res)
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ROTATIONAL_INERTIA
   res=&(p->p.gamma_rot);
 #else
   res=p->p.gamma_rot; // array [3]
-#endif // PARTICLE_ANISTROPY
+#endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
 
