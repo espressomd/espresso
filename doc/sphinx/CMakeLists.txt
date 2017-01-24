@@ -25,6 +25,11 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
         "${SPHINX_BASE}/index.rst"
         COPYONLY)
+    
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
+        "${SPHINX_BASE}/introduction.rst"
+        COPYONLY)
 
     add_custom_target(sphinx ALL
         ${SPHINX_API_DOC_EXE}

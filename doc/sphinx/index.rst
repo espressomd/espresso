@@ -9,10 +9,11 @@ Welcome to ESPResSo python interface documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 4
+    introduction
 
 .. automodule:: espressomd
-   :members: 
+    :members: 
 
 Indices and tables
 ==================
