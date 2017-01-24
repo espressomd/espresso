@@ -3,14 +3,34 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ESPResSo python interface documentation!
+Welcome to the ESPResSo documentation!
 ==================================================================================
 
 Contents:
 
 .. toctree::
-    :maxdepth: 4
-    introduction
+    :maxdepth: 2
+
+    introduction.tex.rst
+    installation.tex.rst
+    inter.tex.rst
+    run.tex.rst
+    analysis.tex.rst
+    analysis-core.tex.rst
+    aux.tex.rst
+    lb.tex.rst
+    electrokinetics.tex.rst
+    ibm.tex.rst
+    mbtools.tex.rst
+    
+    internal.tex.rst
+    contributing.tex.rst
+    features.tex.rst
+    examples.tex.rst
+    
+    memd.tex.rst
+    mmm.tex.rst
+    modules
 
 .. automodule:: espressomd
     :members: 
@@ -21,4 +41,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

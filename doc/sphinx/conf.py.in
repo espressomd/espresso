@@ -32,6 +32,7 @@ sys.path.insert(0, '@CMAKE_BINARY_DIR@/src/python')
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
@@ -82,7 +83,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ["gen_code_info", "gen_pxiconfig"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -128,7 +129,7 @@ html_theme = 'classic'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "ESPResSo python interface documentation"
+html_title = "ESPResSo documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = "ESPResSo doc"
@@ -290,3 +291,7 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# Supress warning if html is build
+# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+numpydoc_show_class_members = False
