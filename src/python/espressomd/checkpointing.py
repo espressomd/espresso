@@ -142,8 +142,11 @@ class Checkpointing(object):
         if checkpoint_index is None:
             checkpoint_index = self.counter
         filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
-        with open(filename,"w") as checkpoint_file:
+
+        tmpname = filename + ".__tmp__"
+        with open(tmpname,"w") as checkpoint_file:
             pickle.dump(checkpoint_data, checkpoint_file, -1)
+        os.rename(tmpname, filename)
     
     
     def load(self, checkpoint_index=None):

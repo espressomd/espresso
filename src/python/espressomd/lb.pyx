@@ -25,6 +25,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
+import os
 
 # Actor class
 ####################################################
@@ -167,7 +168,9 @@ IF LB_GPU or LB:
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
+            tmp_path = path + ".__tmp__"
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+            os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
        
