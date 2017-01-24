@@ -22,39 +22,37 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
-#include "script_interface/ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
+#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/shapes/Shape.hpp"
-
-#include <memory>
 
 namespace ScriptInterface {
 namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint() : m_constraint(new ::Constraints::Constraint()) {}
-  
+  Constraint()
+      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {}
+
   const std::string name() const override { return "Constraints::Constraint"; }
 
   VariantMap get_parameters() const override {
     return {{"only_positive", m_constraint->only_positive()},
             {"penetrable", m_constraint->penetrable()},
             {"particle_type", m_constraint->type()},
-            {"shape",
-             (m_shape != nullptr) ? m_shape->id() : ScriptInterface::NOT_SET}};
+            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
   }
 
   ParameterMap valid_parameters() const override {
     return {{"only_positive", {ParameterType::INT, true}},
             {"penetrable", {ParameterType::INT, true}},
             {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECT, true}}};
+            {"shape", {ParameterType::OBJECTID, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    if (name == "shape") {
+    if ((name == "shape") && (boost::get<ObjectId>(value) != ObjectId())) {
       std::shared_ptr<ScriptInterfaceBase> so_ptr =
           ScriptInterface::get_instance(value);
 

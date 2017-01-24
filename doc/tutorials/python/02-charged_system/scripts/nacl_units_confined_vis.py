@@ -28,7 +28,7 @@ from time import sleep
 import numpy
 
 system = espressomd.System()
-visualizer = openGLLive(system, {'dragForce':5*298, 'background_color': [1,1,1], 'light_pos':[30,30,30], 'ext_force_arrows_scale': [0.0001], 'ext_force_arrows': False })
+visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30], ext_force_arrows_scale=[0.0001], ext_force_arrows=False)
 
 print("\n--->Setup system")
 

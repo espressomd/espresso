@@ -18,8 +18,7 @@
 */
 
 #include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
-#include "utils/Factory.hpp"
+#include "ScriptInterface.hpp"
 
 #include "Correlator.hpp"
 #include "AutoUpdateCorrelators.hpp"
@@ -28,11 +27,12 @@ namespace ScriptInterface {
 namespace Correlators {
 
 void initialize() {
-  ParallelScriptInterface<ScriptInterface::Correlators::AutoUpdateCorrelators>::
-    register_new("Correlators::AutoUpdateCorrelators");
+  ScriptInterface::register_new<
+      ScriptInterface::Correlators::AutoUpdateCorrelators>(
+      "Correlators::AutoUpdateCorrelators");
 
-  ParallelScriptInterface<ScriptInterface::Correlators::Correlator>::
-    register_new("Correlators::Correlator");
+  ScriptInterface::register_new<ScriptInterface::Correlators::Correlator>(
+      "Correlators::Correlator");
 }
 } /* namespace Correlators */
 } /* namespace ScriptInterface */

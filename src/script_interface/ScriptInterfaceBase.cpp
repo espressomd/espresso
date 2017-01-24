@@ -20,17 +20,25 @@
 */
 
 #include "ScriptInterfaceBase.hpp"
-
+#include "ParallelScriptInterface.hpp"
 #include "utils/Factory.hpp"
 
 namespace ScriptInterface {
 std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name) {
-  std::shared_ptr<ScriptInterfaceBase> sp =
-      Utils::Factory<ScriptInterfaceBase>::make(name);
+ScriptInterfaceBase::make_shared(std::string const &name,
+                                 CreationPolicy policy) {
+  auto sp = [&policy, &name]() -> std::shared_ptr<ScriptInterfaceBase> {
+    switch (policy) {
+    case CreationPolicy::LOCAL:
+      return Utils::Factory<ScriptInterfaceBase>::make(name);
+    case CreationPolicy::GLOBAL:
+      return std::shared_ptr<ScriptInterfaceBase>(
+          new ParallelScriptInterface(name));
+    }
+  }();
 
   /* Id of the newly created instance */
-  const int id = sp->id();
+  const auto id = sp->id();
 
   /* Now get a reference to the corresponding weak_ptr in ObjectId and update
      it with our shared ptr, so that everybody uses the same ref count.
@@ -38,11 +46,5 @@ ScriptInterfaceBase::make_shared(std::string const &name) {
   sp->get_instance(id) = sp;
 
   return sp;
-}
-
-std::ostream &operator<<(std::ostream &out, OId const &oid) {
-  out << oid.id;
-
-  return out;
 }
 }

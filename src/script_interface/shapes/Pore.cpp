@@ -28,8 +28,8 @@ namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Pore::valid_parameters() const {
-  return {{"pos", {ParameterType::VECTOR3D, true}},
-          {"axis", {ParameterType::VECTOR3D, true}},
+  return {{"pos", {ParameterType::DOUBLE_VECTOR, 3, true}},
+          {"axis", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"rad_left", {ParameterType::DOUBLE, true}},
           {"rad_right", {ParameterType::DOUBLE, true}},
           {"smoothing_radius", {ParameterType::DOUBLE, true}},

@@ -19,7 +19,7 @@
 #
 
 cmake_minimum_required(VERSION 3.0)
-
+include(FeatureSummary)
 project(ESPResSo)
 
 enable_language(CXX)
@@ -37,6 +37,15 @@ endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# If the version is smaller than 3.4, use custom find HDF5 module
+# else, use prefer parallel feature of default module.
+if(CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION LESS 4)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/hdf5)
+else()
+  set(HDF5_PREFER_PARALLEL 1)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -50,9 +59,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 ######################################################################
 
 #option(WITH_PYTHON "Build python interface"  ON)
-##option(WITH_TCL    "Build tcl interface"     ON)
 set(WITH_PYTHON yes)
-set(WITH_TCL no)
 
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -113,13 +120,14 @@ if (WITH_CUDA)
   endif(CUDA_FOUND)
 endif(WITH_CUDA)
 
-find_package(PythonInterp 2)
+find_package(PythonInterp)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
-  find_package(PythonLibs REQUIRED)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE}
+                -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
+                OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
-  list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
                 -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -137,30 +145,38 @@ if (FFTW3_FOUND)
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-if (WITH_TCL)
-  find_package(TCL)
-
-  if(NOT TCL_FOUND)
-	  message(FATAL_ERROR "TCL not found.")
-  endif()
-
-  include_directories(${TCL_INCLUDE_PATH})
-  list(APPEND LIBRARIES ${TCL_LIBRARY})
-endif()
 
 # If we build either interface turn on script interface
-if (WITH_PYTHON OR WITH_TCL)
+if (WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
 
+# We need the parallel hdf5 version!
 if (WITH_HDF5)
-find_package(HDF5 COMPONENTS C)
-if(HDF5_FOUND)
-  set(H5MD 1)
-  list(APPEND LIBRARIES ${HDF5_LIBRARIES})
-  include_directories(${HDF5_INCLUDE_DIRS})
-endif(HDF5_FOUND)
+  find_package(HDF5 "1.8" COMPONENTS C)
+  if(HDF5_IS_PARALLEL)
+    set(H5MD 1)
+    include(FindPythonModule)
+    find_python_module(h5py)
+    list(APPEND LIBRARIES ${HDF5_LIBRARIES})
+    include_directories(${HDF5_INCLUDE_DIRS})
+    add_feature_info(HDF5 ON "parallel")
+  else()
+    unset(H5MD)
+    unset(HDF5_FOUND)
+  endif(HDF5_IS_PARALLEL)
 endif(WITH_HDF5)
+
+# Check for the h5xx submodule
+# and try to check it out if not found.
+if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+  # Try to find git
+  find_package(Git)
+  if(GIT_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  endif(GIT_FOUND)
+endif()
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
@@ -214,6 +230,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 list(APPEND LIBRARIES ${MPI_LIBRARIES})
+add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Paths
@@ -233,7 +250,6 @@ endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
 
-set(SCRIPTDIR ${DATA}/scripts)
 
 #######################################################################
 # Flags
@@ -242,12 +258,14 @@ set(SCRIPTDIR ${DATA}/scripts)
 if(APPLE)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
 endif()
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
+endif()
 
 #######################################################################
 # Subdirectories
 #######################################################################
 
-add_subdirectory(scripts)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(config)

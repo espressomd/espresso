@@ -24,16 +24,6 @@ from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
-cdef extern from "Vector.hpp":
-    cdef cppclass Vector3d:
-        Vector3d()
-        Vector3d(vector[double])
-        vector[double] as_vector()
-    cdef cppclass Vector2d:
-        Vector2d()
-        Vector2d(vector[double])
-        vector[double] as_vector()
-
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass ParameterType:
         bool operator == (const ParameterType & a, const ParameterType & b)
@@ -45,9 +35,8 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::Pa
     cdef ParameterType STRING
     cdef ParameterType INT_VECTOR
     cdef ParameterType DOUBLE_VECTOR
-    cdef ParameterType VECTOR3D
-    cdef ParameterType VECTOR2D
-    cdef ParameterType OBJECT
+    cdef ParameterType OBJECTID
+    cdef ParameterType VECTOR
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
     cdef cppclass Parameter:
@@ -62,14 +51,16 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant(const Variant & )
         Variant & operator = (const Variant &)
         int which()
+    void transform_vectors(Variant &)
+    string get_type_label(const Variant &)
+    string get_type_label(ParameterType)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
     T get[T](const Variant &) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    cdef cppclass OId:
-        OId(int)
-        int id
+    cdef cppclass ObjectId:
+        pass
 
     Variant make_variant[T](const T & x)
 
@@ -81,15 +72,24 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_parameter(const string & name, const Variant & value) except +
         void set_parameters(map[string, Variant] & parameters) except +
         Variant call_method(const string & name, const map[string, Variant] & parameters) except +
-        int id()
+        ObjectId id() except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name)
-    weak_ptr[ScriptInterfaceBase] get_instance(int id)
+    cdef cppclass CreationPolicy:
+        pass
+    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy)
+    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id)
+
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+    CreationPolicy LOCAL
+    CreationPolicy GLOBAL
 
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
-    cdef Variant make_variant(self, ParameterType type, value)
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value)
+    cdef Variant python_object_to_variant(self, value)
+
+cdef class PObjectId:
+    cpdef ObjectId id

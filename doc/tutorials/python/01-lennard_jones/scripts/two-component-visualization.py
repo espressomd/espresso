@@ -32,25 +32,12 @@ from espressomd import code_info
 import os 
 import numpy as np
 
-
-
-from espressomd.visualizationMayavi import *
+from espressomd import visualization
 from threading import Thread
-import numpy
-
-
-
-
-
-
-
-
-
-
 
 
 n_part  = 200
-density = 0.8442
+density = 0.4442
 
 skin        = 0.1
 time_step   = 0.01 
@@ -157,14 +144,14 @@ while i < warm_n_time and act_min_dist < min_dist :
 
 system.non_bonded_inter.set_force_cap(0)
 
+
 def loop():
-    global system
-    system.integrator.run(100)
-    visualizer.update()
+    while True:
+        system.integrator.run(100)
+        visualizer.update()
 
-
+visualizer = visualization.mayaviLive(system)
 #Start simulation in seperate thread
-visualizer = mayaviLive(system)
 t = Thread(target=loop)
 t.daemon = True
 t.start()

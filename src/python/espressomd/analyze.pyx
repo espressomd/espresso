@@ -431,7 +431,7 @@ class Analysis:
         tmp = np.zeros(9)
         for i in range(9):
             value = c_analyze.total_p_tensor.data.e[i]
-            for k in range(c_analyze.total_p_tensor.data.n/9):
+            for k in range(c_analyze.total_p_tensor.data.n // 9):
                 value += c_analyze.total_p_tensor.data.e[9*k + i]
             # I don't know, why the 1/2 is needed.
             tmp[i]=value/2.
@@ -614,7 +614,7 @@ class Analysis:
     
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
         cdef double * rg = NULL
-        self.check_topology(system, chain_start, number_of_chains, chain_length)
+        self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rg( & rg)
         tuple_rg = (rg[0], rg[1], rg[2])
         free(rg)

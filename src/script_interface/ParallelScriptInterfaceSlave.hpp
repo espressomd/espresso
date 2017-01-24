@@ -22,102 +22,42 @@
 #ifndef SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
-#include <boost/mpi/collectives.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
-
+#include "ScriptInterfaceBase.hpp"
 #include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
 
-class ParallelScriptInterfaceSlaveBase {
-protected:
-  static std::map<int, int> &get_translation_table() {
-    static std::map<int, int> m_translation_table;
+class ParallelScriptInterfaceSlaveBase {};
 
-    return m_translation_table;
-  }
-
-  static int translate_id(int id) { return get_translation_table().at(id); }
-};
-
-template <typename T>
-class ParallelScriptInterfaceSlave : public Communication::InstanceCallback,
-                                     private ParallelScriptInterfaceSlaveBase {
+class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
 public:
   enum class CallbackAction {
-    SET_ID,
+    CREATE,
     SET_PARAMETER,
     SET_PARAMETERS,
     CALL_METHOD,
     DELETE
   };
 
-protected:
-  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave<T>>;
-  ParallelScriptInterfaceSlave() : m_p(ScriptInterfaceBase::make_shared<T>()) {}
-
-public:
-  std::shared_ptr<T> m_p;
-
 private:
-  void mpi_slave(int action, int id) override {
-    switch (CallbackAction(action)) {
-    case CallbackAction::SET_ID:
-      get_translation_table()[id] = m_p->id();
-      break;
+  friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
+  ParallelScriptInterfaceSlave();
 
-    case CallbackAction::SET_PARAMETER: {
-      std::pair<std::string, Variant> d;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+  std::shared_ptr<ScriptInterfaceBase> m_p;
 
-      /* If the parameter is a object we have to tranlate it first to a
-         local id.
-      */
-      if (m_p->valid_parameters()[d.first].type() == ParameterType::OBJECT) {
-        const int global_id = boost::get<int>(d.second);
-        const int local_id = translate_id(global_id);
+  static std::map<ObjectId, ObjectId> &get_translation_table();
 
-        m_p->set_parameter(d.first, local_id);
-      } else {
-        m_p->set_parameter(d.first, d.second);
-      }
-
-      break;
-    }
-    case CallbackAction::SET_PARAMETERS: {
-      std::map<std::string, Variant> parameters;
-      boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters,
-                            0);
-
-      m_p->set_parameters(parameters);
-
-      break;
-    }
-    case CallbackAction::CALL_METHOD: {
-      /* Name of the method and para// meters */
-      // std::pair<std::string, VariantMap> d;
-
-      // /* Broadcast method name and parameters */
-      // boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
-
-      // /* Forward to the local instance. */
-      // m_p->call_method(d.first, d.second);
-
-      break;
-    }
-    case CallbackAction::DELETE: {
-      delete this;
-      break;
-    }
+  /* If the variant encapsulates an object id we translate the
+     master id to a local one */
+  static void translate_id(Variant &v) {
+    if (is_objectid(v)) {
+      v = get_translation_table().at(boost::get<ObjectId>(v));
     }
   }
+
+private:
+  void mpi_slave(int action, int);
 };
 
 } /* namespace ScriptInterface */

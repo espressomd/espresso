@@ -115,8 +115,8 @@ cdef class ParticleHandle:
             cdef double ppos[3]
             cdef int img[3]
             for i in range(3):
-               img[i]=self.particle_data.l.i[i]
-               ppos[i]=self.particle_data.r.p[i]
+                img[i]=self.particle_data.l.i[i]
+                ppos[i]=self.particle_data.r.p[i]
 
 
             unfold_position(ppos,img)
@@ -184,9 +184,9 @@ cdef class ParticleHandle:
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.f.f[0] / (0.5 * time_step**2),
-                             self.particle_data.f.f[1] / (0.5 * time_step**2),
-                             self.particle_data.f.f[2] / (0.5 * time_step**2)])
+            return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
+                             self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -250,21 +250,22 @@ cdef class ParticleHandle:
                 return x[0]
 
     # MASS
-    IF MASS == 1:
-        property mass:
+    property mass:
             """Particle mass"""
 
             def __set__(self, _mass):
-                check_type_or_throw_except(
-                    _mass, 1, float, "Mass has to be 1 floats")
-                if set_particle_mass(self.id, _mass) == 1:
-                    raise Exception("set particle position first")
+                IF MASS == 1:
+                    check_type_or_throw_except(
+                        _mass, 1, float, "Mass has to be 1 floats")
+                    if set_particle_mass(self.id, _mass) == 1:
+                        raise Exception("set particle position first")
+                ELSE:
+                    raise Exception("You are trying to set the particle mass \
+                                     but the mass feature is not compiled in.")
 
             def __get__(self):
                 self.update_particle_data()
-                cdef double * x = NULL
-                pointer_to_mass(& (self.particle_data), x)
-                return x[0]
+                return self.particle_data.p.mass
 
     IF ROTATION == 1:
         # Omega (angular velocity) lab frame
@@ -522,7 +523,7 @@ cdef class ParticleHandle:
 
             def __set__(self, _ext_f):
                 cdef double ext_f[3]
-                cdef int ext_flag
+                cdef int ext_flag = 0
                 check_type_or_throw_except(
                     _ext_f, 3, float, "External force vector has to be 3 floats")
                 for i in range(3):
@@ -548,7 +549,7 @@ cdef class ParticleHandle:
             """Fix the particle at current position"""
 
             def __set__(self, _fixed_coord_flag):
-                cdef int ext_flag
+                cdef int ext_flag = 0
                 check_type_or_throw_except(
                     _fixed_coord_flag, 3, int, "Fix has to be 3 ints")
                 for i in map(long, range(3)):
@@ -596,20 +597,39 @@ cdef class ParticleHandle:
                         return np.array([0.0, 0.0, 0.0])
 
     IF LANGEVIN_PER_PARTICLE:
-        property gamma:
-            """Friction coefficient per particle in Langevin"""
-
-            def __set__(self, _gamma):
-                check_type_or_throw_except(
-                    _gamma, 1, float, "gamma has to be a float")
-                if set_particle_gamma(self.id, _gamma) == 1:
-                    raise Exception("set particle position first")
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef double * gamma = NULL
-                pointer_to_gamma( & (self.particle_data), gamma)
-                return gamma[0]
+        IF PARTICLE_ANISOTROPY:
+            property gamma:
+                """Rotational friction coefficient per particle in Langevin"""
+    
+                def __set__(self, _gamma):
+                    cdef double gamma[3]
+                    check_type_or_throw_except(
+                        _gamma, 3, float, "Friction has to be 3 floats")
+                    for i in range(3):
+                        gamma[i] = _gamma[i]
+                    if set_particle_gamma(self.id, gamma) == 1:
+                        raise Exception("set particle position first")
+        
+                def __get__(self):
+                    self.update_particle_data()
+                    cdef double * gamma = NULL
+                    pointer_to_gamma(& (self.particle_data), gamma)
+                    return np.array([gamma[0], gamma[1], gamma[2]])
+        ELSE:
+            property gamma:
+                """Friction coefficient per particle in Langevin"""
+    
+                def __set__(self, _gamma):
+                    check_type_or_throw_except(
+                        _gamma, 1, float, "gamma has to be a float")
+                    if set_particle_gamma(self.id, _gamma) == 1:
+                        raise Exception("set particle position first")
+    
+                def __get__(self):
+                    self.update_particle_data()
+                    cdef double * gamma = NULL
+                    pointer_to_gamma( & (self.particle_data), gamma)
+                    return gamma[0]
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 property gamma_rot:
@@ -929,6 +949,11 @@ cdef class ParticleSlice:
         self.id_selection=self.id_selection[mask]
 
 
+    def __iter__(self):
+        cdef int i
+        for i in self.id_selection:
+            yield ParticleHandle(i)
+
 
     cdef int update_particle_data(self, id) except -1:
         utils.realloc_intlist(& (self.particle_data.bl), 0)
@@ -1035,20 +1060,22 @@ cdef class ParticleSlice:
                 f_array[i, :] = ParticleHandle(self.id_selection[i]).f
             return f_array
 
-    IF MASS:
-        property mass:
+    property mass:
             """Particle mass"""
-
             def __set__(self, _mass_array):
-                if isinstance(_mass_array, int) or isinstance(_mass_array, float):
-                    for i in range(len(self.id_selection)):
-                        ParticleHandle(self.id_selection[i]).mass = _mass_array
-                    return
-                if len(self.id_selection) != len(_mass_array):
-                    raise Exception("Input list size (%i) does not match slice size (%i)" % (
-                        len(_mass_array), len(self.id_selection)))
-                for i in range(len(_mass_array)):
-                    ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
+                IF MASS:
+                    if isinstance(_mass_array, int) or isinstance(_mass_array, float):
+                        for i in range(len(self.id_selection)):
+                            ParticleHandle(self.id_selection[i]).mass = _mass_array
+                        return
+                    if len(self.id_selection) != len(_mass_array):
+                        raise Exception("Input list size (%i) does not match slice size (%i)" % (
+                            len(_mass_array), len(self.id_selection)))
+                    for i in range(len(_mass_array)):
+                        ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
+                ELSE:
+                    raise Exception("You are trying to set the particle mass \
+                                     but the mass feature is not compiled in.")
 
             def __get__(self):
                 mass_array = np.zeros_like(self.id_selection)
@@ -1205,13 +1232,11 @@ cdef class ParticleList:
         if isinstance(key, slice):
             return ParticleSlice(key)
 
-        if not np.all(self.exists(key)):
-            if isinstance(key, int):
-                non_existing = key
-            else:
-                non_existing = np.trim_zeros(
-                    (np.array(key) * np.invert(self.exists(key))))
-            raise Exception("Particle(s) %s does not exist." % non_existing)
+        try:
+            if isinstance(key, range):
+                return ParticleSlice(key)
+        except:
+            pass
 
         if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
             return ParticleSlice(np.array(key))
@@ -1233,6 +1258,8 @@ cdef class ParticleList:
         for i in ["director", "dip", "id"]:
             if i in pickle_attr:
                 pickle_attr.remove(i)
+        IF MASS == 0:
+            pickle_attr.remove("mass")
         odict = {}
         key_list = [p.id for p in self]
         for particle_number in key_list:

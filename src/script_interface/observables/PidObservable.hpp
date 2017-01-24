@@ -24,7 +24,6 @@
 
 
 #include "ScriptInterface.hpp"
-#include "core/utils/Factory.hpp"
 
 #include <memory>
 
