@@ -25,13 +25,13 @@ import numpy as np
 import espressomd  # pylint: disable=import-error
 import h5py  # h5py has to be imported *after* espressomd (MPI)
 
-
+npart=25
 class CommonTests(object):
     system = espressomd.System()
-    system.box_l = [20.0, 20.0, 20.0]
+    system.box_l = [npart, npart, npart] #avoid particles to be set outside of the main box, otherwise particle positions are folded in the core when writing out and we cannot directly compare positions in the dataset and where particles were set. One would need to unfold the positions of the hdf5 file.
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    for i in range(10):
+    for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
                                             float(i)]),
@@ -45,14 +45,14 @@ class CommonTests(object):
     def test_pos(self):
         """Test if positions have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([(float(i), float(i), float(i)) for i in range(10)]),
+            np.array([(float(i), float(i), float(i)) for i in range(npart)]),
             np.array([x for (y, x) in sorted(zip(self.py_id, self.py_pos))])),
             msg="Positions not written correctly by H5md!")
 
     def test_vel(self):
         """Test if velocities have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([[1.0, 2.0, 3.0] for i in range(10)]),
+            np.array([[1.0, 2.0, 3.0] for i in range(npart)]),
             np.array([x for (y, x) in sorted(zip(self.py_id, self.py_vel))])),
             msg="Velocities not written correctly by H5md!")
 
@@ -61,7 +61,7 @@ class CommonTests(object):
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
-            np.array([[0.1, 0.2, 0.3] for i in range(10)]),
+            np.array([[0.1, 0.2, 0.3] for i in range(npart)]),
             np.array([x for (y, x) in sorted(zip(self.py_id, self.py_f))])),
             msg="Forces not written correctly by H5md!")
 
@@ -96,7 +96,7 @@ class H5mdTestOrdered(ut.TestCase, CommonTests):
     def test_ids(self):
         """Test if ids have been written properly."""
         self.assertTrue(np.allclose(
-            np.array(range(10)),
+            np.array(range(npart)),
             self.py_id),
             msg="ids correctly ordered and written by H5md!")
 

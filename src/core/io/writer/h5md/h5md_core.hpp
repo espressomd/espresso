@@ -105,7 +105,9 @@ class File
 
     private:
     	MPI_Comm m_hdf5_comm;
-        bool check_file_exists(const std::string &name)
+	bool m_already_wrote_bonds=false;
+        
+	bool check_file_exists(const std::string &name)
         {
             std::ifstream f(name.c_str());
             return f.good();
@@ -122,12 +124,12 @@ class File
          * positions to the dataset.
          */
         template <typename T>
-        void WriteDataset(T &data, const std::string& path);
+        void WriteDataset(T &data, const std::string& path, int* change_extent, hsize_t* offset, hsize_t* count);
 
         /**
-         * @brief Method that extends datasets.
+         * @brief Method that extends datasets by the given extent.
          */            
-        void ExtendDataset(std::string path, int extent_1=1, int extent_2=-10);
+        void ExtendDataset(std::string path, int* change_extent);
         
          /**
          * @brief Method that returns chunk dimensions.
@@ -137,7 +139,7 @@ class File
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
          */
-	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat);
+	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat, int_array_3d& bond);
         /*
          * @brief Method to write the simulation script to the dataset.
          */

@@ -50,15 +50,15 @@ static void backup_file(const std::string &from, const std::string& to)
 }
 
 static std::vector<hsize_t>
-create_dims(hsize_t dim, hsize_t size, hsize_t chunk_size=0)
+create_dims(hsize_t dim, hsize_t size)
 {
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
     if (dim == 3)
-        return std::vector<hsize_t>{chunk_size, size, dim};
+        return std::vector<hsize_t>{size, size, dim};
     if (dim == 2)
-        return std::vector<hsize_t>{size, dim};
+        return std::vector<hsize_t>{size, size};
     if (dim == 1)
         return std::vector<hsize_t>{size};
     else
@@ -72,14 +72,14 @@ File::create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-	if (dim == 3)
-	    return std::vector<hsize_t>{chunk_size, size, dim};
-	if (dim == 2)
-	    return std::vector<hsize_t>{chunk_size, size};
-	if (dim == 1)
-	    return std::vector<hsize_t>{size};
-	else
-	    throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
+    if (dim == 3)
+        return std::vector<hsize_t>{chunk_size, size, dim};
+    if (dim == 2)
+        return std::vector<hsize_t>{chunk_size, size};
+    if (dim == 1)
+        return std::vector<hsize_t>{size};
+    else
+        throw std::runtime_error("H5MD Error: datastets with this dimension are not implemented\n");
 
 }
 static std::vector<hsize_t> create_maxdims(hsize_t dim)
@@ -112,6 +112,9 @@ void File::InitFile()
         MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm); 
     else
         m_hdf5_comm=MPI_COMM_WORLD;
+    if(m_write_ordered == true && this_node !=0)
+        return ;
+
     if(n_part <= 0) {
         throw std::runtime_error("Please first set up particles before initializing the H5md object."); //this is important since n_part is used for chunking
     }
@@ -134,6 +137,7 @@ void File::InitFile()
             m_backup_filename = m_filename + ".bak";
             if (this_node == 0) backup_file(m_filename, m_backup_filename);
             load_file(m_filename);
+            m_already_wrote_bonds=true;
         } else {
             throw incompatible_h5mdfile();
         }
@@ -180,7 +184,7 @@ void File::init_filestructure()
         { "particles/atoms/velocity/value", 3, type_double },
         { "particles/atoms/force/value"   , 3, type_double },
         { "particles/atoms/image/value"   , 3, type_int },
-        { "connectivity/atoms"   		  , 2, type_int },
+        { "connectivity/atoms"            , 2, type_int },
     };
 }
 
@@ -217,23 +221,23 @@ void File::create_datasets(bool only_load)
 }
 
 void File::create_links_for_time_and_step_datasets(){
-	H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
-	std::string path_time="particles/atoms/id/time";
-	std::string path_step="particles/atoms/id/step";
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/charge/time", H5P_DEFAULT, H5P_DEFAULT );
-	H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/charge/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
+    std::string path_time="particles/atoms/id/time";
+    std::string path_step="particles/atoms/id/step";
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/force/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/velocity/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/position/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/position/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/type/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/type/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/mass/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/mass/step", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/charge/time", H5P_DEFAULT, H5P_DEFAULT );
+    H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/charge/step", H5P_DEFAULT, H5P_DEFAULT );
 }
 
 void File::load_file(const std::string& filename)
@@ -262,69 +266,17 @@ void File::create_new_file(const std::string &filename)
 
     bool only_load = false;
     create_datasets(only_load);
-	
-	//write time independent datasets
+    
+    //write time independent datasets
     //write box information
     std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
     auto group = h5xx::group(m_h5md_file,  "particles/atoms/box");
     h5xx::write_attribute(group, "dimension", 3);
     h5xx::write_attribute(group, "boundary", "periodic");
     std::string path_edges = "particles/atoms/box/edges";
-    int extent_edges = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
-    ExtendDataset(path_edges, extent_edges);
+    int change_extent_box = 3; //for three entries for cuboid box box_l_x, box_l_y, box_l_z
+    ExtendDataset(path_edges, &change_extent_box);
     h5xx::write_dataset(datasets[path_edges], boxvec);
-
-	//writing bonds is only implemented here for bonds between two particles, use this as number of columns
-	int_array_3d bond(boost::extents[1][0][2]);
-    /* loop over all local cells. */
-    Cell *local_cell;
-    int num_bonds_local=0;
-    //loop over all particles
-    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id)
-    {
-        local_cell = local_cells.cell[cell_id];
-        for (int local_part_id = 0;
-             local_part_id < local_cell->n; ++local_part_id)
-        {
-            auto & current_particle = local_cell->part[local_part_id];
-            for(int i=1; i<current_particle.bl.n;i=i+2){
-            	num_bonds_local+=1;
-            	bond.resize(boost::extents[1][num_bonds_local][2]);
-				bond[0][num_bonds_local-1][0]=current_particle.p.identity;
-				bond[0][num_bonds_local-1][1]=current_particle.bl.e[i];
-				
-			}
-        }
-    }
-    int nbonds_total;
-    MPI_Allreduce(&num_bonds_local, &nbonds_total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    std::string path="connectivity/atoms";
-    ExtendDataset(path, nbonds_total, 2);
-    
-    int prefix=0;
-    MPI_Exscan(&num_bonds_local, &prefix, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    auto& dataset = datasets[path];
-	/* Get the current dimensions of the dataspace. */
-	int rank =2;
-	hsize_t offset[rank];
-	offset[0]=prefix;
-	offset[1]=0;
-	hsize_t count[rank];
-	count[0]=num_bonds_local;
-	count[1]=2;
-	hid_t ds = H5Dget_space(dataset.hid());
-    H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
-	/* Create a temporary dataspace. */
-	hsize_t dims[rank], maxdims[rank];
-	H5Sget_simple_extent_dims(ds, dims, maxdims);
-	hid_t ds_new = H5Screate_simple(rank, count, maxdims);        
-	H5Dwrite(dataset.hid(),
-	         dataset.get_type(),
-	         ds_new,
-	         ds, H5P_DEFAULT,
-	         bond.origin());
-	H5Sclose(ds_new);
-	H5Sclose(ds);
 
 }
 
@@ -338,7 +290,7 @@ void File::Close()
 }
 
 
-void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat ){
+void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat, int_array_3d& bond){
 #ifdef H5MD_DEBUG
     /* Turn on hdf5 error messages */
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
@@ -350,41 +302,50 @@ void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index,
     bool write_mass = write_dat & W_MASS;
     bool write_charge = write_dat & W_CHARGE;
 
-        id[0][particle_index][0] = current_particle->p.identity;
-        if (write_typ)
-            typ[0][particle_index][0] = current_particle->p.type;
-        if (write_mass)
-            mass[0][particle_index][0] = current_particle->p.mass;
-        /* store folded particle positions. */
-        if (write_pos)
-        {
-            pos[0][particle_index][0] = current_particle->r.p[0];
-            pos[0][particle_index][1] = current_particle->r.p[1];
-            pos[0][particle_index][2] = current_particle->r.p[2];
-            image[0][particle_index][0] = current_particle->l.i[0];
-            image[0][particle_index][1] = current_particle->l.i[1];
-            image[0][particle_index][2] = current_particle->l.i[2];
+    id[0][particle_index][0] = current_particle->p.identity;
+    if (write_typ)
+        typ[0][particle_index][0] = current_particle->p.type;
+    if (write_mass)
+        mass[0][particle_index][0] = current_particle->p.mass;
+    /* store folded particle positions. */
+    if (write_pos)
+    {
+        pos[0][particle_index][0] = current_particle->r.p[0];
+        pos[0][particle_index][1] = current_particle->r.p[1];
+        pos[0][particle_index][2] = current_particle->r.p[2];
+        image[0][particle_index][0] = current_particle->l.i[0];
+        image[0][particle_index][1] = current_particle->l.i[1];
+        image[0][particle_index][2] = current_particle->l.i[2];
+    }
+    if (write_vel)
+    {
+        vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
+        vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
+        vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
+    }
+    if (write_force)
+    {
+        /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
+         * world force. */
+        double fac = current_particle->p.mass / (0.5 * time_step * time_step);
+        f[0][particle_index][0] = current_particle->f.f[0] * fac;
+        f[0][particle_index][1] = current_particle->f.f[1] * fac;
+        f[0][particle_index][2] = current_particle->f.f[2] * fac;
+    }
+    if (write_charge){
+        #ifdef ELECTROSTATICS
+        charge[0][particle_index][0]=current_particle->p.q;
+        #endif        
+    }
+
+    if (!m_already_wrote_bonds) {
+        int nbonds_local=bond.shape()[1];
+        for(int i=1; i<current_particle->bl.n;i=i+2){
+            bond.resize(boost::extents[1][nbonds_local+1][2]);
+        bond[0][nbonds_local][0]=current_particle->p.identity;
+        bond[0][nbonds_local][1]=current_particle->bl.e[i];
         }
-        if (write_vel)
-        {
-            vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
-            vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
-            vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
-        }
-        if (write_force)
-        {
-            /* Scale the stored force with m/(0.5*dt**2.0) to get a real 
-             * world force. */
-            double fac = current_particle->p.mass / (0.5 * time_step * time_step);
-            f[0][particle_index][0] = current_particle->f.f[0] * fac;
-            f[0][particle_index][1] = current_particle->f.f[1] * fac;
-            f[0][particle_index][2] = current_particle->f.f[2] * fac;
-        }
-        if (write_charge){
-            #ifdef ELECTROSTATICS
-            charge[0][particle_index][0]=current_particle->p.q;
-            #endif        
-        }
+    }
 
 }
 
@@ -393,13 +354,15 @@ void File::Write(int write_dat)
 #ifdef H5MD_DEBUG
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-    int num_particles_to_be_written;
+    int num_particles_to_be_written=0;
     if(m_write_ordered == true && this_node == 0)
         num_particles_to_be_written=n_part;
-    else if(m_write_ordered == true && this_node !=0)
-        return ;
+    else if (m_write_ordered == true && this_node != 0)
+        num_particles_to_be_written=0;
     else if (m_write_ordered == false)
         num_particles_to_be_written=cells_get_n_particles();
+    if(m_write_ordered == true && this_node !=0)
+        return ;
     
     bool write_typ = write_dat & W_TYPE;
     bool write_pos = write_dat & W_POS;
@@ -420,15 +383,16 @@ void File::Write(int write_dat)
     time[0][0][0]=sim_time;
     int_array_3d step(boost::extents[1][1][1]);
     step[0][0][0]=(int)std::round(sim_time/time_step);
+    int_array_3d bond(boost::extents[0][0][0]);
 
     if (m_write_ordered == true) {
-        if( this_node == 0 ){ 
+        if( this_node == 0 ){
             //loop over all particles
             for(int particle_index=0;particle_index<n_part;particle_index++){
                 Particle current_particle;
-	        	get_particle_data(particle_index, &current_particle); //this function only works when run with one process
-                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat );
-	            free_particle(&current_particle);
+                get_particle_data(particle_index, &current_particle); //this function only works when run with one process
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat, bond);
+                free_particle(&current_particle);
             }
         }
 
@@ -445,47 +409,95 @@ void File::Write(int write_dat)
                  local_part_id < local_cell->n; ++local_part_id)
             {
                 auto & current_particle = local_cell->part[local_part_id];
-                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat );
+                fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat, bond);
                 particle_index++;
             }
         }
     }
 
-    WriteDataset(id, "particles/atoms/id/value");
-    WriteDataset(time, "particles/atoms/id/time");
-    WriteDataset(step, "particles/atoms/id/step");
+    // calculate count and offset
+    int prefix = 0;
+    //calculate prefix for write of the current process
+    MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
+    hid_t ds=H5Dget_space(datasets["particles/atoms/id/value"].hid());
+    hsize_t dims_id[2], maxdims_id[2];
+    H5Sget_simple_extent_dims(ds, dims_id, maxdims_id);
+    H5Sclose(ds);
+
+    hsize_t offset_1d[1]={dims_id[0]};
+    hsize_t offset_2d[2]={dims_id[0], (hsize_t) prefix};
+    hsize_t offset_3d[3]={dims_id[0], (hsize_t) prefix, 0};
+    
+    hsize_t count_1d[1]={1};
+    hsize_t count_2d[2]={1, (hsize_t) num_particles_to_be_written};
+    hsize_t count_3d[3]={1, (hsize_t) num_particles_to_be_written, 3};
+    
+    //calculate the change of the extent for fluctuating particle numbers
+    int n_part = max_seen_particle+1;
+    int old_max_n_part=std::max(m_max_n_part, (int) dims_id[1]); // check that dataset is not shrinked: take into account previous dimension, if we append to an already existing dataset
+    if (n_part > old_max_n_part) {
+        m_max_n_part = n_part; 
+    }else{
+        m_max_n_part=old_max_n_part;
+    }
+    int extent_particle_number=m_max_n_part-old_max_n_part;
+    
+    int change_extent_1d[1]={1};
+    int change_extent_2d[2]={1, extent_particle_number};
+    int change_extent_3d[3]={1, extent_particle_number, 0};
+
+
+    if (! m_already_wrote_bonds) {
+        //communicate the total number of bonds to all processes since extending is a collective hdf5 function
+        int nbonds_local=bond.shape()[1];
+        int nbonds_total=nbonds_local;
+        int prefix_bonds=0;
+        if(m_write_ordered!=true){
+            MPI_Exscan(&nbonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
+            MPI_Allreduce(&nbonds_local, &nbonds_total, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
+        }
+        hsize_t offset_bonds[2]={(hsize_t) prefix_bonds, 0};
+        hsize_t count_bonds[2]={(hsize_t) nbonds_local, 2};
+        int change_extent_bonds[2]={nbonds_total, 2};
+        WriteDataset(bond, "connectivity/atoms", change_extent_bonds, offset_bonds, count_bonds);
+        m_already_wrote_bonds=true;
+    }
+
+
+    WriteDataset(id, "particles/atoms/id/value", change_extent_2d, offset_2d, count_2d);
+    WriteDataset(time, "particles/atoms/id/time", change_extent_1d, offset_1d, count_1d);
+    WriteDataset(step, "particles/atoms/id/step", change_extent_1d, offset_1d, count_1d);
 
     if (write_typ)
     {
-        WriteDataset(typ, "particles/atoms/type/value");
+        WriteDataset(typ, "particles/atoms/type/value", change_extent_2d, offset_2d, count_2d);
     }
     if (write_mass)
     {
-        WriteDataset(mass, "particles/atoms/mass/value");
+        WriteDataset(mass, "particles/atoms/mass/value", change_extent_2d, offset_2d, count_2d);
     }
     if (write_pos)
     {
-        WriteDataset(pos, "particles/atoms/position/value");
-        WriteDataset(image, "particles/atoms/image/value");
+        WriteDataset(pos, "particles/atoms/position/value", change_extent_3d, offset_3d, count_3d);
+        WriteDataset(image, "particles/atoms/image/value", change_extent_3d, offset_3d, count_3d);
     }
     if (write_vel)
     {
-        WriteDataset(vel, "particles/atoms/velocity/value");
+        WriteDataset(vel, "particles/atoms/velocity/value", change_extent_3d, offset_3d, count_3d);
     }
     if (write_force)
     {
-        WriteDataset(f, "particles/atoms/force/value");
+        WriteDataset(f, "particles/atoms/force/value", change_extent_3d, offset_3d, count_3d);
     }
     if (write_charge){
         #ifdef ELECTROSTATICS
-        WriteDataset(charge, "particles/atoms/charge/value");
+        WriteDataset(charge, "particles/atoms/charge/value", change_extent_2d, offset_2d, count_2d);
         #endif
     }
 
 }
 
-
-void File::ExtendDataset(std::string path, int extent_1, int extent_2){
+void File::ExtendDataset(std::string path, int* change_extent){
     /* Until now the h5xx does not support dataset extending, so we
        have to use the lower level hdf5 library functions. */
     auto& dataset = datasets[path];
@@ -496,25 +508,15 @@ void File::ExtendDataset(std::string path, int extent_1, int extent_2){
     H5Sget_simple_extent_dims(ds, dims, maxdims);
     H5Sclose(ds);
     /* Extend the dataset for another timestep (extent=1) */
-    dims[0] += extent_1;
-    if(extent_2!=-10)
-        dims[1] = extent_2;
-    
-    // Extend the dataset for more particles if the particle number increased
-    if(rank>1 && extent_2 ==-10){
-        /* Get the number of particles on all other nodes. */
-        int n_part = std::max((int) dims[1],max_seen_particle+1); //take into account previous dimension, if we append to an already existing dataset
-        if (n_part > m_max_n_part) {
-        	m_max_n_part = n_part; 
-        }
-        dims[1] = m_max_n_part;
+    for(int i=0; i<rank; i++){
+        dims[i]+=change_extent[i];
     }
     H5Dset_extent(dataset.hid(), dims); //extend all dims is collective
 }
 
 /* data is assumed to be three dimensional */
 template <typename T>
-void File::WriteDataset(T &data, const std::string& path)
+void File::WriteDataset(T &data, const std::string& path, int* change_extent, hsize_t* offset, hsize_t* count)
 {
 #ifdef H5MD_DEBUG
     /* Turn on hdf5 error messages */
@@ -522,40 +524,17 @@ void File::WriteDataset(T &data, const std::string& path)
     std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
     std::cout << "Dataset: " << path << std::endl;
 #endif
+    ExtendDataset(path, change_extent);
     auto& dataset = datasets[path];
-    ExtendDataset(path);
-
-    int num_particles_to_be_written = data.shape()[1];
-    int prefix = 0;
-    //calculate prefix for write of the current process
-    MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
     hid_t ds = H5Dget_space(dataset.hid());
     hsize_t rank = H5Sget_simple_extent_ndims(ds);
-    /* Get the current dimensions of the dataspace. */
-    hsize_t dims[rank], maxdims[rank];
-    H5Sget_simple_extent_dims(ds, dims, maxdims);
-    H5Sclose(ds);
-    /* Select the region in the dataspace. */
-    hsize_t offset[rank];
-    hsize_t count[rank];
-    hid_t ds_new;
-    ds = H5Dget_space(dataset.hid());
-    offset[0]= dims[0]-1; //offset for time (-1 since hdf5 counts from 0 onwards)
-    count [0] = 1; //count for time
-    if(rank>1){
-        //particle based offset and count
-        offset[1]= static_cast<hsize_t>(prefix);
-        count [1] = static_cast<hsize_t>(num_particles_to_be_written);
-     }
-    if(rank>2){
-        //coordinate based offset and count
-        offset[2]= 0;
-        count [2] = data.shape()[2];
+    hsize_t maxdims[rank];
+    for(int i=0;i<rank;i++){
+        maxdims[i]=H5S_UNLIMITED;
     }
-            
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
     /* Create a temporary dataspace. */
-    ds_new = H5Screate_simple(rank, count, maxdims);
+    hid_t ds_new = H5Screate_simple(rank, count, maxdims);
     /* Finally write the data to the dataset. */
     H5Dwrite(dataset.hid(),
              dataset.get_type(),
@@ -594,7 +573,7 @@ void File::WriteScript(std::string const &filename)
     space = H5Screate_simple(1, dims, NULL);
     /* Create the dataset. */
     hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
-    H5Pset_create_intermediate_group(link_crt_plist, true);	// Set flag for intermediate group creation
+    H5Pset_create_intermediate_group(link_crt_plist, true); // Set flag for intermediate group creation
     dset = H5Dcreate(file_id, "parameters/files/script", dtype, space, link_crt_plist, H5P_DEFAULT, H5P_DEFAULT);
     /* Write data from buffer to dataset. */
     if (this_node == 0)
@@ -607,11 +586,11 @@ void File::WriteScript(std::string const &filename)
 }
 
 void File::Flush(){
-	if(m_write_ordered==true){
-		if(this_node==0)
-			H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
-	} else
-		H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
+        if(m_write_ordered==true){
+            if(this_node==0)
+                H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
+        }else
+             H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
 }
 
 bool File::check_for_H5MD_structure(std::string const &filename)
