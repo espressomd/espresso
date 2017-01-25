@@ -454,9 +454,9 @@ void lb_lbfluid_particles_add_momentum ( float velocity[3] )
 #endif
 
     double new_velocity[3] = {
-      particle_data_host[i].v[0] + velocity[0],
-      particle_data_host[i].v[1] + velocity[1],
-      particle_data_host[i].v[2] + velocity[2]
+      particle_data_host[i].v[0] + velocity[0] * time_step,
+      particle_data_host[i].v[1] + velocity[1] * time_step,
+      particle_data_host[i].v[2] + velocity[2] * time_step
     };
     set_particle_v( i, new_velocity );
   }
