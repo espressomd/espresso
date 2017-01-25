@@ -11,8 +11,9 @@ Contents:
 .. toctree::
     :maxdepth: 2
 
-    introduction.tex.rst
-    installation.tex.rst
+    ug
+    modules
+..    installation.tex.rst
     inter.tex.rst
     run.tex.rst
     analysis.tex.rst
@@ -22,7 +23,7 @@ Contents:
     electrokinetics.tex.rst
     ibm.tex.rst
     mbtools.tex.rst
-    
+ 
     internal.tex.rst
     contributing.tex.rst
     features.tex.rst
@@ -30,7 +31,8 @@ Contents:
     
     memd.tex.rst
     mmm.tex.rst
-    modules
+
+
 
 .. automodule:: espressomd
     :members: 

@@ -1,9 +1,11 @@
+.. include:: defs.rst
+
 Introduction
 ============
 
-is a simulation package designed to perform Molecular Dynamics (MD) and
+|es| is a simulation package designed to perform Molecular Dynamics (MD) and
 Monte Carlo (MC) simulations. It is meant to be a universal tool for
-simulations of a variety of soft matter systems. features a broad range
+simulations of a variety of soft matter systems. |es| features a broad range
 of interaction potentials which opens up possibilities for performing
 simulations using models with different levels of coarse-graining. It
 also includes modern and efficient algorithms for treatment of
@@ -14,7 +16,7 @@ computational environments. The program is being continuously extended
 to keep the pace with current developments both in the algorithms and
 software.
 
-The kernel of is written in C with computational efficiency in mind.
+The kernel of |es| is written in C with computational efficiency in mind.
 Interaction between the user and the simulation engine is provided via a
 Tcl scripting interface. This enables setup of arbitrarily complex
 systems which users might want to simulate in future, as well as
@@ -23,19 +25,19 @@ modifying simulation parameters during runtime.
 Guiding principles
 ------------------
 
-is a tool for performing computer simulation and this user guide
+|es| is a tool for performing computer simulation and this user guide
 describes how to use this tool. However, it should be borne in mind that
 being able to operate a tool is not sufficient to obtain physically
 meaningful results. It is always the responsibility of the user to
 understand the principles behind the model, simulation and analysis
-methods he is using. will *not* do that for you!
+methods he is using. |es| will *not* do that for you!
 
-It is expected that the users of and readers of this user guide have a
+It is expected that the users of |es| and readers of this user guide have a
 thorough understanding of simulation methods and algorithms they are
 planning to use. They should have passed a basic course on molecular
 simulations or read one of the renown textbooks,
-:raw-latex:`\cite{frenkel02b}`. It is not necessary to understand
-everything that is contained in , but it is inevitable to understand all
+:cite:`frenkel02b`. It is not necessary to understand
+everything that is contained in |es|, but it is inevitable to understand all
 methods that you want to use. Using the program as a black box without
 proper understanding of the background will most probably result in
 wasted user and computer time with no useful output.
@@ -58,11 +60,11 @@ functions. An example can be the implementation of the Generic
 Lennard-Jones potential described in section [sec:GenLennardJones] where
 the user can change all available parameters. Where possible, default
 values are avoided, providing the user with the possibility of choice.
-cannot be aware whether your particles are representing atoms or
+|es| cannot be aware whether your particles are representing atoms or
 billiard balls, so it cannot check if the chosen parameters make sense
 and it is the user’s responsibility to make sure they do.
 
-On the other hand, flexibility of stems from the employment of a
+On the other hand, flexibility of |es| stems from the employment of a
 scripting language at the steering level. Apart from the ability to
 modify the simulation and system parameters at runtime, many simple
 tasks which are not computationally critical can be implemented at this
@@ -70,7 +72,7 @@ level, without even touching the C-kernel. For example, simple
 problem-specific analysis routines can be implemented in this way and
 made interact with the simulation core. Another example of the program’s
 flexibility is the possibility to integrate system setup, simulation and
-analysis in one single control script. provides commands to create
+analysis in one single control script. |es| provides commands to create
 particles and set up interactions between them. Capping of forces helps
 prevent system blow-up when initially some particles are placed on top
 of each other. Using the Tcl interface, one can simulate the randomly
@@ -86,76 +88,138 @@ various methods as well as their status. The table distinguishes between
 the state of the development of a certain feature and the state of its
 use. We distinguish between five levels:
 
-Core
-    means that the method is part of the core of , and that it is
+**Core**
+    means that the method is part of the core of |es|, and that it is
     extensively developed and used by many people.
 
-Good
+**Good**
     means that the method is developed and used by independent people
     from different groups.
 
-Group
+**Group**
     means that the method is developed and used in one group.
 
-Single
+**Single**
     means that the method is developed and used by one person only.
 
-None
+**None**
     means that the method is developed and used by nobody.
 
 If you believe that the status of a certain method is wrong, please
 report so to the developers.
 
-| \|l\|l\|l\| **Feature** & **Development Status** & **Usage Status**
-| Velocity-Verlet Integrator & Core & Core
-| Langevin Thermostat & Core & Core
-| GHMC Thermostat & Single & Single
-| DPD Thermostat & None & Good
-| Isotropic NPT & None & Single
-| NEMD & None & Group
-| Quarternion Integrator & None & Good
-| Short-range Interactions & Core & Core
-| Directional Lennard-Jones & Single & Single
-| Gay-Berne Interaction & None & Single
-| Constraints & Core & Core
-| Relative Virtual Sites & Good & Good
-| Center-of-mass Virtual Sites & None & Good
-| RATTLE Rigid Bonds & None & Group
-| P3M & Core & Core
-| P3M on GPU & Single & Single
-| Dipolar P3M & Group & Good
-| Ewald on GPU & Single & Single
-| MMM1D & Single & Good
-| MMM2D & Single & Good
-| MMM1D on GPU & Single & Single
-| ELC & Good & Good
-| MEMD & Single & Group
-| ICC\* & Group & Group
-| Lattice-Boltzmann & Core & Core
-| Lattice-Boltzmann on GPU & Group & Core
-| DPD & None & Good
-| Shan-Chen Multicomponent Fluid & Group & Group
-| Tunable Slip Boundary & Single & Single
-| Stokesian Dynamics & Single & Single
-| uwerr & None & Good
-| Blockfiles & Core & Core
-| VTF output & Core & Core
-| VTK output & Group & Group
-| PDB output & Good & Good
-| Online visulation with VMD & Good & Good
-| Grand canonical feature & Single & Single
-| Metadynamics & Single & Single
-| Parallel Tempering & Single & Single
-| Electrokinetics & Group & Group
-| Object-in-fluid & Group & Group
-| Collision Detection & Group & Group
-| Catalytic Reactions & Single & Single
-| mbtools package & Group & Group
+.. tabularcolumns:: |c|c|c|
+
++--------------------------------+------------------------+------------------+
+| **Feature**                    | **Development Status** | **Usage Status** |
++================================+========================+==================+
+|             **Integrators**, **Thermostats**, **Barostats**                |
++--------------------------------+------------------------+------------------+
+| Velocity-Verlet Integrator     | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| Langevin Thermostat            | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| GHMC Thermostat                | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| DPD Thermostat                 | None                   | Good             |
++--------------------------------+------------------------+------------------+
+| Isotropic NPT                  | None                   | Single           |
++--------------------------------+------------------------+------------------+
+| NEMD                           | None                   | Group            |
++--------------------------------+------------------------+------------------+
+| Quarternion Integrator         | None                   | Good             |
++--------------------------------+------------------------+------------------+
+|                                **Interactions**                            |
++--------------------------------+------------------------+------------------+
+| Short-range Interactions       | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| Directional Lennard-Jones      | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Gay-Berne Interaction          | None                   | Single           |
++--------------------------------+------------------------+------------------+
+| Constraints                    | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| Relative Virtual Sites         | Good                   | Good             |
++--------------------------------+------------------------+------------------+
+| Center-of-mass Virtual Sites   | None                   | Good             |
++--------------------------------+------------------------+------------------+
+| RATTLE Rigid Bonds             | None                   | Group            |
++--------------------------------+------------------------+------------------+
+|                              **Coulomb Interaction**                       |
++--------------------------------+------------------------+------------------+
+| P3M                            | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| P3M on GPU                     | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Dipolar P3M                    | Group                  | Good             |
++--------------------------------+------------------------+------------------+
+| Ewald on GPU                   | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| MMM1D                          | Single                 | Good             |
++--------------------------------+------------------------+------------------+
+| MMM2D                          | Single                 | Good             |
++--------------------------------+------------------------+------------------+
+| MMM1D on GPU                   | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| ELC                            | Good                   | Good             |
++--------------------------------+------------------------+------------------+
+| MEMD                           | Single                 | Group            |
++--------------------------------+------------------------+------------------+
+| ICC*                           | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+|                         **Hydrodynamic Interaction**                       |
++--------------------------------+------------------------+------------------+
+| Lattice-Boltzmann              | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| Lattice-Boltzmann on GPU       | Group                  | Core             |
++--------------------------------+------------------------+------------------+
+| DPD                            | None                   | Good             |
++--------------------------------+------------------------+------------------+
+| Shan-Chen Multicomponent Fluid | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+| Tunable Slip Boundary          | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Stokesian Dynamics             | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+|                             **Analysis**                                   |
++--------------------------------+------------------------+------------------+
+| uwerr                          | None                   | Good             |
++--------------------------------+------------------------+------------------+
+|                              **Input/Output**                              |
++--------------------------------+------------------------+------------------+
+| Blockfiles                     | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| VTF output                     | Core                   | Core             |
++--------------------------------+------------------------+------------------+
+| VTK output                     | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+| PDB output                     | Good                   | Good             |
++--------------------------------+------------------------+------------------+
+| Online visulation with VMD     | Good                   | Good             |
++--------------------------------+------------------------+------------------+
+|                               **Miscellaneous**                            |
++--------------------------------+------------------------+------------------+
+| Grand canonical feature        | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Metadynamics                   | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Parallel Tempering             | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| Electrokinetics                | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+| Object-in-fluid                | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+| Collision Detection            | Group                  | Group            |
++--------------------------------+------------------------+------------------+
+| Catalytic Reactions            | Single                 | Single           |
++--------------------------------+------------------------+------------------+
+| mbtools package                | Group                  | Group            |
++--------------------------------+------------------------+------------------+
 
 Basic program structure
 -----------------------
 
-As already mentioned, consists of two components. The simulation engine
+As already mentioned, |es| consists of two components. The simulation engine
 is written in C and C++ for the sake of computational efficiency. The
 steering or control level is interfaced to the kernel via an interpreter
 of the Tcl and Python scripting languages. Please be aware that th TCL
@@ -226,7 +290,7 @@ mass of 1, so that the mass unit is simply the mass of all particles.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
-.. math:: [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}.
+.. math:: [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}
 
  This means, that if you measure lengths in Ångström, energies in
 :math:`k_B T` at 300K and masses in 39.95u, then your time scale is
@@ -339,3 +403,6 @@ constraint sphere center radius direction type
 
 .. [2]
    http://www.fftw.org/
+
+.. bibliography:: refs.bib
+
