@@ -137,7 +137,7 @@ void File::InitFile()
             m_backup_filename = m_filename + ".bak";
             if (this_node == 0) backup_file(m_filename, m_backup_filename);
             load_file(m_filename);
-            m_already_wrote_bonds=true;
+            m_already_wrote_bonds = true;
         } else {
             throw incompatible_h5mdfile();
         }
@@ -201,7 +201,7 @@ void File::create_datasets(bool only_load)
         } else {
             int creation_size_dataset = 0; //creation size of all datasets is 0. Make sure to call ExtendDataset before writing to dataset
             int chunk_size = 1;
-            if(descr.dim>1){
+            if(descr.dim > 1){
                 //we deal now with a particle based property, change chunk. Important for IO performance!
                 chunk_size=n_part;
             }
@@ -222,8 +222,8 @@ void File::create_datasets(bool only_load)
 
 void File::create_links_for_time_and_step_datasets(){
     H5Eset_auto(H5E_DEFAULT, (H5E_auto_t) H5Eprint, stderr);
-    std::string path_time="particles/atoms/id/time";
-    std::string path_step="particles/atoms/id/step";
+    std::string path_time = "particles/atoms/id/time";
+    std::string path_step = "particles/atoms/id/step";
     H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/image/time", H5P_DEFAULT, H5P_DEFAULT );
     H5Lcreate_hard( m_h5md_file.hid(), path_step.c_str(), m_h5md_file.hid(), "particles/atoms/image/step", H5P_DEFAULT, H5P_DEFAULT );
     H5Lcreate_hard( m_h5md_file.hid(), path_time.c_str(), m_h5md_file.hid(), "particles/atoms/force/time", H5P_DEFAULT, H5P_DEFAULT );
@@ -334,16 +334,16 @@ void File::fill_arrays_for_h5md_write_with_particle_property(int particle_index,
     }
     if (write_charge){
         #ifdef ELECTROSTATICS
-        charge[0][particle_index][0]=current_particle->p.q;
+        charge[0][particle_index][0] = current_particle->p.q;
         #endif        
     }
 
     if (!m_already_wrote_bonds) {
-        int nbonds_local=bond.shape()[1];
-        for(int i=1; i<current_particle->bl.n;i=i+2){
+        int nbonds_local = bond.shape()[1];
+        for(int i = 1; i< current_particle->bl.n;i = i+2){
             bond.resize(boost::extents[1][nbonds_local+1][2]);
-        bond[0][nbonds_local][0]=current_particle->p.identity;
-        bond[0][nbonds_local][1]=current_particle->bl.e[i];
+        bond[0][nbonds_local][0] = current_particle->p.identity;
+        bond[0][nbonds_local][1] = current_particle->bl.e[i];
         }
     }
 
@@ -356,12 +356,12 @@ void File::Write(int write_dat)
 #endif
     int num_particles_to_be_written=0;
     if(m_write_ordered == true && this_node == 0)
-        num_particles_to_be_written=n_part;
+        num_particles_to_be_written = n_part;
     else if (m_write_ordered == true && this_node != 0)
-        num_particles_to_be_written=0;
+        num_particles_to_be_written = 0;
     else if (m_write_ordered == false)
-        num_particles_to_be_written=cells_get_n_particles();
-    if(m_write_ordered == true && this_node !=0)
+        num_particles_to_be_written = cells_get_n_particles();
+    if(m_write_ordered == true && this_node != 0)
         return ;
     
     bool write_typ = write_dat & W_TYPE;
@@ -380,15 +380,15 @@ void File::Write(int write_dat)
     double_array_3d mass(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d charge(boost::extents[1][num_particles_to_be_written][1]);
     double_array_3d time(boost::extents[1][1][1]);
-    time[0][0][0]=sim_time;
+    time[0][0][0] = sim_time;
     int_array_3d step(boost::extents[1][1][1]);
-    step[0][0][0]=(int)std::round(sim_time/time_step);
+    step[0][0][0] = (int)std::round(sim_time/time_step);
     int_array_3d bond(boost::extents[0][0][0]);
 
     if (m_write_ordered == true) {
         if( this_node == 0 ){
             //loop over all particles
-            for(int particle_index=0;particle_index<n_part;particle_index++){
+            for(int particle_index=0;particle_index < n_part;particle_index++){
                 Particle current_particle;
                 get_particle_data(particle_index, &current_particle); //this function only works when run with one process
                 fill_arrays_for_h5md_write_with_particle_property(particle_index, id, typ, mass, pos, image, vel, f, charge, &current_particle, write_dat, bond);
@@ -419,14 +419,14 @@ void File::Write(int write_dat)
     int prefix = 0;
     //calculate prefix for write of the current process
     MPI_Exscan(&num_particles_to_be_written, &prefix, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
-    hid_t ds=H5Dget_space(datasets["particles/atoms/id/value"].hid());
+    hid_t ds = H5Dget_space(datasets["particles/atoms/id/value"].hid());
     hsize_t dims_id[2], maxdims_id[2];
     H5Sget_simple_extent_dims(ds, dims_id, maxdims_id);
     H5Sclose(ds);
 
-    hsize_t offset_1d[1]={dims_id[0]};
-    hsize_t offset_2d[2]={dims_id[0], (hsize_t) prefix};
-    hsize_t offset_3d[3]={dims_id[0], (hsize_t) prefix, 0};
+    hsize_t offset_1d[1] = {dims_id[0]};
+    hsize_t offset_2d[2] = {dims_id[0], (hsize_t) prefix};
+    hsize_t offset_3d[3] = {dims_id[0], (hsize_t) prefix, 0};
     
     hsize_t count_1d[1]={1};
     hsize_t count_2d[2]={1, (hsize_t) num_particles_to_be_written};
@@ -434,33 +434,33 @@ void File::Write(int write_dat)
     
     //calculate the change of the extent for fluctuating particle numbers
     int n_part = max_seen_particle+1;
-    int old_max_n_part=std::max(m_max_n_part, (int) dims_id[1]); // check that dataset is not shrinked: take into account previous dimension, if we append to an already existing dataset
+    int old_max_n_part = std::max(m_max_n_part, (int) dims_id[1]); // check that dataset is not shrinked: take into account previous dimension, if we append to an already existing dataset
     if (n_part > old_max_n_part) {
         m_max_n_part = n_part; 
     }else{
-        m_max_n_part=old_max_n_part;
+        m_max_n_part = old_max_n_part;
     }
-    int extent_particle_number=m_max_n_part-old_max_n_part;
+    int extent_particle_number = m_max_n_part-old_max_n_part;
     
-    int change_extent_1d[1]={1};
-    int change_extent_2d[2]={1, extent_particle_number};
-    int change_extent_3d[3]={1, extent_particle_number, 0};
+    int change_extent_1d[1] = {1};
+    int change_extent_2d[2] = {1, extent_particle_number};
+    int change_extent_3d[3] = {1, extent_particle_number, 0};
 
 
     if (! m_already_wrote_bonds) {
         //communicate the total number of bonds to all processes since extending is a collective hdf5 function
-        int nbonds_local=bond.shape()[1];
-        int nbonds_total=nbonds_local;
-        int prefix_bonds=0;
-        if(m_write_ordered!=true){
+        int nbonds_local = bond.shape()[1];
+        int nbonds_total = nbonds_local;
+        int prefix_bonds = 0;
+        if(m_write_ordered != true){
             MPI_Exscan(&nbonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
             MPI_Allreduce(&nbonds_local, &nbonds_total, 1, MPI_INT, MPI_SUM, m_hdf5_comm);
         }
-        hsize_t offset_bonds[2]={(hsize_t) prefix_bonds, 0};
-        hsize_t count_bonds[2]={(hsize_t) nbonds_local, 2};
-        int change_extent_bonds[2]={nbonds_total, 2};
+        hsize_t offset_bonds[2] = {(hsize_t) prefix_bonds, 0};
+        hsize_t count_bonds[2] = {(hsize_t) nbonds_local, 2};
+        int change_extent_bonds[2] = {nbonds_total, 2};
         WriteDataset(bond, "connectivity/atoms", change_extent_bonds, offset_bonds, count_bonds);
-        m_already_wrote_bonds=true;
+        m_already_wrote_bonds = true;
     }
 
 
@@ -507,9 +507,9 @@ void File::ExtendDataset(std::string path, int* change_extent){
     hsize_t dims[rank], maxdims[rank];
     H5Sget_simple_extent_dims(ds, dims, maxdims);
     H5Sclose(ds);
-    /* Extend the dataset for another timestep (extent=1) */
-    for(int i=0; i<rank; i++){
-        dims[i]+=change_extent[i];
+    /* Extend the dataset for another timestep (extent = 1) */
+    for(int i = 0; i < rank; i++){
+        dims[i] += change_extent[i];
     }
     H5Dset_extent(dataset.hid(), dims); //extend all dims is collective
 }
@@ -529,8 +529,8 @@ void File::WriteDataset(T &data, const std::string& path, int* change_extent, hs
     hid_t ds = H5Dget_space(dataset.hid());
     hsize_t rank = H5Sget_simple_extent_ndims(ds);
     hsize_t maxdims[rank];
-    for(int i=0;i<rank;i++){
-        maxdims[i]=H5S_UNLIMITED;
+    for(int i = 0;i<rank;i++){
+        maxdims[i] = H5S_UNLIMITED;
     }
     H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, NULL, count, NULL);
     /* Create a temporary dataspace. */
@@ -586,8 +586,8 @@ void File::WriteScript(std::string const &filename)
 }
 
 void File::Flush(){
-        if(m_write_ordered==true){
-            if(this_node==0)
+        if(m_write_ordered == true){
+            if(this_node == 0)
                 H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
         }else
              H5Fflush(m_h5md_file.hid(),H5F_SCOPE_GLOBAL);
