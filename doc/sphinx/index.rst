@@ -12,7 +12,14 @@ Contents:
     :maxdepth: 2
 
     ug
-    modules
+
+espressomd package
+================
+
+.. toctree::
+
+    modules.rst
+
 ..    installation.tex.rst
     inter.tex.rst
     run.tex.rst
@@ -36,6 +43,8 @@ Contents:
 
 .. automodule:: espressomd
     :members: 
+    :private-members:
+    :special-members:
 
 Indices and tables
 ==================

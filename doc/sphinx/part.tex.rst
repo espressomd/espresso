@@ -1,13 +1,25 @@
 Setting up particles
 ====================
 
+*************************
 Creating single particles
--------------------------
+*************************
 
 Defining particle properties
 ----------------------------
 
-:class:`espressomd.particle_data.ParticleHandle`
+The first step when writing a simulation script is to import the :mod:`espressomd`
+module and to create a :class:`espressomd.system.System` instance::
+
+    import espressomd
+
+    sys = espressomd.System()
+
+In order to add particles to the instance, you have to call 
+:meth:`espressomd.particle_data.ParticleList.add` which is also a method of the 
+:class:`espressomd.system.System` class::
+
+    
 
 This command modifies particle data, namely position, type (monomer,
 ion, …), charge, velocity, force and bonds. Multiple properties can be
