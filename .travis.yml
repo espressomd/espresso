@@ -41,6 +41,14 @@ matrix:
     - os: linux
       sudo: required
       services: docker
+      env: myconfig=maxset-gaussrandom-verlet-step4
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandom-semiintegrated-bh
+    - os: linux
+      sudo: required
+      services: docker
       env: myconfig=maxset-gaussrandomcut
     - os: linux
       sudo: required
@@ -58,7 +66,6 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=nocheck-maxset make_check=false
-
 
 script:
         - maintainer/travis/build_docker.sh

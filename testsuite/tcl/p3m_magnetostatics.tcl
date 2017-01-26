@@ -46,7 +46,7 @@ puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 if { [catch {
 
     set tcl_precision 15
-    set accuracy 1e-8
+    set accuracy 1e-3
 
     puts "Creating the magnetic system"
  

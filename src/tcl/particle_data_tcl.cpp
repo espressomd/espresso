@@ -166,8 +166,10 @@ void tclcommand_part_print_omega_lab_frame(Particle *part, char *buffer, Tcl_Int
 
   Tcl_PrintDouble(interp, omega[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
   Tcl_PrintDouble(interp, omega[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
   Tcl_PrintDouble(interp, omega[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }

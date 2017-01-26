@@ -514,7 +514,6 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 
   /* kinetic energy */
-
   // #ifdef MULTI_TIMESTEP
   //   if (p1->p.smaller_timestep==1) {
   //     ostringstream msg;

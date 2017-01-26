@@ -19,6 +19,7 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
+require_feature "SEMI_INTEGRATED off"
 
 proc define_rotation_matrix { part } {
     

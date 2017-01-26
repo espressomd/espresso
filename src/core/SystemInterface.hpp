@@ -112,6 +112,8 @@ public:
   virtual bool hasR() { return false; };
   virtual bool requestR() { m_needsR = hasR(); return m_needsR; }
 
+  virtual int blocksGpu(void) {return 0; }
+
   virtual float *rGpuBegin() { return 0; };
   virtual float *rGpuEnd() { return 0; };
   virtual bool hasRGpu() { return false; };

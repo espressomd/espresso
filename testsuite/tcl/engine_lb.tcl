@@ -25,6 +25,7 @@ puts "------------------------------------------------"
 
 require_feature "ENGINE"
 require_feature "LB"
+require_feature "SEMI_INTEGRATED off"
 
 if { [setmd n_nodes] > 1 } {
   puts "NOTE: Ignoring testcase for n_nodes > 1"

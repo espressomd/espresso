@@ -155,12 +155,21 @@ struct ParticleProperties {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1;
+#endif // VERLET_STEP4_VELOCITY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   double gamma_rot;
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1_rot;
+#endif // VERLET_STEP4_VELOCITY
 #else
   double gamma_rot[3];
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1_rot[3];
+#endif // VERLET_STEP4_VELOCITY
 #endif
 #endif
 #endif
@@ -251,11 +260,13 @@ typedef struct {
 typedef struct {
   /** velocity. */
   double v[3];
+  double v_0[3]; // at the beginning of the Verlet cycle
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
+  double omega_0[3];
 #endif
 } ParticleMomentum;
 
@@ -650,6 +661,9 @@ int set_particle_quat(int part, double quat[4]);
     @return ES_OK if particle existed
 */
 int set_particle_omega_lab(int part, double omega[3]);
+
+// for the integration only
+void set_particle_omega_lab_within_integr(Particle *particle, double omega_lab[3]);
 
 /** Call only on the master node: set particle angular velocity in body frame.
     @param part the particle.

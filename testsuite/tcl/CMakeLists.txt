@@ -15,6 +15,7 @@ set(tcl_tests  analysis.tcl
                constraints_rhomboid.tcl 
                coulomb_cloud_wall.tcl 
                dawaanr-and-dds-gpu.tcl 
+               dawaanr-and-bh-gpu.tcl
                dh.tcl dielectric.tcl 
                dihedral.tcl dpd.tcl 
                ek_eof_one_species_x.tcl 
@@ -27,6 +28,7 @@ set(tcl_tests  analysis.tcl
                ek_electrostatics_coupling_y.tcl 
                ek_electrostatics_coupling_z.tcl 
                ek_reaction.tcl 
+               electrostatics-driven-aggregate-drift.tcl
                el2d.tcl 
                el2d_nonneutral.tcl 
                engine_langevin.tcl 
@@ -111,7 +113,7 @@ add_custom_target(tcl_tests
 if(NOT DEFINED TEST_NP)
   include(ProcessorCount)
   ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
+  math(EXPR TEST_NP "1")
 endif()
 
 if(WITH_TCL)

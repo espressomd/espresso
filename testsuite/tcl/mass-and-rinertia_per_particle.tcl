@@ -43,10 +43,11 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     cellsystem nsquare 
     #-no_verlet_lists
     set J "10 10 10"
+    set mass 12.74
 
     part deleteall
-    part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 
-    part 1 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
+    part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
     puts "\n"
     switch $test_case {
         0 {
@@ -79,13 +80,27 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
     }
     setmd time 0
-
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            if { abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k])) >0.01 ||
-                 abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k])) >0.01
-            } {
-                error_exit "Friction Deviation in omega too large. $i $k"
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_o 1.25E-4
+            } else {
+                set tolerance_o 1.0E-2
+            }
+            set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k]))]
+            set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k]))]
+            if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
+                error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
+            }
+            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                set tolerance_v 4.5E-5
+            } else {
+                set tolerance_v 1.0E-2
+            }
+            set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma0*[setmd time] / $mass))]
+            set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma1*[setmd time] / $mass))]
+            if { $dv0 > $tolerance_v || $dv1 > $tolerance_v } {
+                error_exit "Friction Deviation in v too large. $i $k $dv0 $dv1"
             }
         }
         integrate 10
@@ -123,6 +138,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         } else {
             set halfkT($k) 0.75
         }
+
         
         if {$test_case == 1 || $test_case == 3} {
             set gamma_tr($k) $gamma($k)
@@ -177,6 +193,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
 
     set loops 100
+
     puts "Thermalizing..."
     set therm_steps 1200
     integrate $therm_steps
@@ -236,6 +253,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         puts "Deviation in rotational energy: $do($k)"
         puts "Deviation in translational diffusion: $dr($k)"
         puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
+        puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
@@ -246,18 +264,22 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         }
         if { abs($dr($k)) > $tolerance } {
            error "Relative deviation in translational diffusion too large: $dr($k) for parameters: mass=$mass gamma_tr=$gamma_tr($k)"
-        }
-        if { abs($dox($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
-        }
-        if { abs($doy($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
-        }
-        if { abs($doz($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+       }
+       
+        # SEMI_INTEGRATED is consistent for isotropic particles only
+        if {![has_feature "SEMI_INTEGRATED"]} {
+            if { abs($dox($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
+            }
+            if { abs($doy($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
+            }
+            if { abs($doz($k)) > $tolerance } {
+            puts "Moment of inertia principal components: $j1 $j2 $j3"
+            error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+            }
         }
     }
 }
