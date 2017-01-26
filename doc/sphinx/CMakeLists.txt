@@ -24,6 +24,8 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/defs.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/introduction.tex.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.tex.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/part.tex.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/refs.bib"
         #        "${CMAKE_CURRENT_SOURCE_DIR}/analysis-core.tex.rst"
         #        "${CMAKE_CURRENT_SOURCE_DIR}/analysis.tex.rst"

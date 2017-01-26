@@ -254,11 +254,11 @@ structure is contained in the Developers’ guide (see section [sec:dg]).
 On units
 --------
 
-What is probably one of the most confusing subjects for beginners of is,
-that does not predefine any units. While most MD programs specify a set
+What is probably one of the most confusing subjects for beginners of |es| is,
+that |es| does not predefine any units. While most MD programs specify a set
 of units, like, for example, that all lengths are measured in Ångström
 or nanometers, times are measured in nano- or picoseconds and energies
-are measured in :math:`\mathrm{kJ/mol}`, does not do so.
+are measured in :math:`\mathrm{kJ/mol}`, |es| does not do so.
 
 Instead, the length-, time- and energy scales can be freely chosen by
 the user. Once these three scales are fixed, all remaining units are
@@ -267,7 +267,7 @@ derived from these three basic choices.
 The probably most important choice is the length scale. A length of
 :math:`1.0` can mean a nanometer, an Ångström, or a kilometer -
 depending on the physical system, that the user has in mind when he
-writes his -script. When creating particles that are intended to
+writes his |es|-script. When creating particles that are intended to
 represent a specific type of atoms, one will probably use a length scale
 of Ångström. This would mean, that the parameter :math:`\sigma` of the
 Lennard-Jones interaction between two atoms would be set to twice the
@@ -285,27 +285,31 @@ unit. Alternatively, one can choose to set it to :math:`1.0` and measure
 everything in multiples of the van-der-Waals binding energy of the
 respective particles.
 
-The final choice is the time (or mass) scale. By default, uses a reduced
+The final choice is the time (or mass) scale. By default, |es| uses a reduced
 mass of 1, so that the mass unit is simply the mass of all particles.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
-.. math:: [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}
+.. math:: 
 
- This means, that if you measure lengths in Ångström, energies in
+    [\mathrm{time}] = [\mathrm{length}]\sqrt{\frac{[\mathrm{mass}]}{[\mathrm{energy}]}}
+
+This means, that if you measure lengths in Ångström, energies in
 :math:`k_B T` at 300K and masses in 39.95u, then your time scale is
-:math:`\AA \sqrt{39.95u / k_B T} = 0.40\,\mathrm{ps}`.
+:math:`\mathring{A} \sqrt{39.95u / k_B T} = 0.40\,\mathrm{ps}`.
 
 On the other hand, if you want a particular time scale, then the mass
 scale can be derived from the time, energy and length scales as
 
-.. math:: [\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
+.. math:: 
 
- By activating the feature MASSES, you can specify particle masses in
+    [\mathrm{mass}] = [\mathrm{energy}]\frac{[\mathrm{time}]^2}{[\mathrm{length}]^2}.
+
+By activating the feature MASSES, you can specify particle masses in
 the chosen unit system.
 
 A special note is due regarding the temperature, which is coupled to the
-energy scale by Boltzmann’s constant. However, since does not enforce a
+energy scale by Boltzmann’s constant. However, since |es| does not enforce a
 particular unit system, we also don’t know the numerical value of the
 Boltzmann constant in the current unit system. Therefore, when
 specifying the temperature of a thermostat, you actually do not define
@@ -316,7 +320,7 @@ you need to set the thermostat’s effective temperature to
 :math:`k_B 300\, K \mathrm{mol / kJ} = 2.494`.
 
 As long as one remains within the same unit system throughout the whole
--script, there should be no problems.
+|es|-script, there should be no problems.
 
 Requirements
 ------------
@@ -324,17 +328,9 @@ Requirements
 The following libraries and tools are required to be able to compile and
 use :
 
-Tcl/Tk
-    requires the Toolkit Command Language Tcl/Tk  [1]_ in the version
-    8.3 or later. Some example scripts will only work with Tcl 8.4. You
-    do not only need the interpreter, but also the header files and
-    libraries. Depending on the operating system, these may come in
-    separate development packages. If you want to use a graphical user
-    interface (GUI) for your simulation scripts, you will also need Tk.
-
 FFTW
     For some algorithms (P:math:`^3`\ M), needs the FFTW library version
-    3 or later  [2]_ for Fourier transforms. Again, the header files are
+    3 or later  [1]_ for Fourier transforms. Again, the header files are
     required.
 
 MPI
@@ -347,12 +343,16 @@ Installing Requirements on Ubuntu 16.04 LTS
 To make ESPResSo run on Ubuntu 16.04 LTS, its dependencies can be
 installed with:
 
-sudo apt install build-essential cmake cython python-numpy tcl-dev
-tk-dev libboost-all-dev openmpi-common
+.. code-block:: bash
+
+    $ sudo apt install build-essential cmake cython python-numpy tcl-dev
+    tk-dev libboost-all-dev openmpi-common
 
 Optionally the ccmake utility can be installed for easier configuration:
 
-sudo apt install cmake-curses-gui
+.. code-block:: bash
+
+    $ sudo apt install cmake-curses-gui
 
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -363,45 +363,15 @@ appropriate for your Mac OS X version from
 https://www.macports.org/install.php and install it. Then, run the
 following commands:
 
-sudo xcode-select –install sudo xcodebuild -license accept port
-selfupdate port install cmake python27 python27-cython python27-numpy
-tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27 port
-select –set cython cython27 port select –set python python27 port select
-–set mpi openmpi-mp-fortran
+.. code-block:: bash
 
-Tcl: Syntax description
------------------------
-
-Throughout the user’s guide, formal definitions of the syntax of several
-Tcl-commands can be found. The following conventions are used in these
-descriptions:
-
--  Different *variants* of a command are labeled , , …
-
--  Keywords and literals of the command that have to be typed exactly as
-   given are written in font.
-
--  If the command has variable arguments, they are set in . The
-   description following the syntax definition should contain a detailed
-   explanation of the argument and its type.
-
--  ```` specifies, that one of the alternatives or can be used.
-
--  ```` specifies, that the argument is optional, it can be omitted.
-
--  When an optional argument or a whole command is marked by a
-   superscript label (), this denotes that the argument can only be
-   used, when the corresponding feature (see appendix ) specified in
-   “Required features” is activated.
-
-constraint wall normal dist type
-
-constraint sphere center radius direction type
+    $ sudo xcode-select –install sudo xcodebuild -license accept port
+    selfupdate port install cmake python27 python27-cython python27-numpy
+    tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27 port
+    select –set cython cython27 port select –set python python27 port select
+    –set mpi openmpi-mp-fortran
 
 .. [1]
-   http://www.tcl.tk/
-
-.. [2]
    http://www.fftw.org/
 
 .. bibliography:: refs.bib
