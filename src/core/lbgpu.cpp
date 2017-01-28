@@ -454,22 +454,21 @@ void lb_lbfluid_particles_add_momentum ( float velocity[3] )
 #endif
 
     double new_velocity[3] = {
-      particle_data_host[i].v[0] + velocity[0] * time_step,
-      particle_data_host[i].v[1] + velocity[1] * time_step,
-      particle_data_host[i].v[2] + velocity[2] * time_step
+      particle_data_host[i].v[0] + velocity[0] / mass * time_step,
+      particle_data_host[i].v[1] + velocity[1] / mass * time_step,
+      particle_data_host[i].v[2] + velocity[2] / mass * time_step
     };
     set_particle_v( i, new_velocity );
   }
 }
 
-void lb_lbfluid_get_total_momentum ( float momentum[3] )
+void lb_lbfluid_calc_linear_momentum ( float momentum[3], int include_particles, int include_lbfluid )
 {
-  std::vector<double> total_momentum;
-  total_momentum = calc_linear_momentum(1,1);
-  momentum[0] = total_momentum[0];
-  momentum[1] = total_momentum[1];
-  momentum[2] = total_momentum[2];
-  return;
+  std::vector<double> linear_momentum;
+  linear_momentum = calc_linear_momentum(include_particles, include_lbfluid);
+  momentum[0] = linear_momentum[0];
+  momentum[1] = linear_momentum[1];
+  momentum[2] = linear_momentum[2];
 }
 
 #endif /* LB_GPU */

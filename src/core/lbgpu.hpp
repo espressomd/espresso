@@ -308,7 +308,7 @@ int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);
-void lb_lbfluid_get_total_momentum(float momentum[3]);
+void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles, int include_lbfluid);
 void lb_lbfluid_particles_add_momentum(float velocity[3]);
 
 //int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);

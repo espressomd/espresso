@@ -4092,26 +4092,25 @@ struct lb_lbfluid_mass_of_particle
 
 void lb_lbfluid_remove_total_momentum()
 {
-  float total_momentum[3];
-  float velocity[3];
-  float fluid_mass;
-  float particles_mass;
-
   // calculate momentum of fluid and particles
-  lb_lbfluid_get_total_momentum(total_momentum);
+  float total_momentum[3] = { 0.0f, 0.0f, 0.0f };
+  lb_lbfluid_calc_linear_momentum(total_momentum, /*include_particles*/ 1, /*include_lbfluid*/ 1);
 
   thrust::device_ptr<CUDA_particle_data> ptr(gpu_get_particle_pointer());
-  particles_mass = thrust::transform_reduce(
-      ptr,
-      ptr + lbpar_gpu.number_of_particles,
-      lb_lbfluid_mass_of_particle(),
-      0.0f,
-      thrust::plus<float>());
+  float particles_mass = thrust::transform_reduce(
+    ptr,
+    ptr + lbpar_gpu.number_of_particles,
+    lb_lbfluid_mass_of_particle(),
+    0.0f,
+    thrust::plus<float>());
 
+  // lb_calc_fluid_mass_GPU has to be called with double but we don't
+  // want narrowing warnings, that's why we narrow it down by hand.
   double lb_calc_fluid_mass_res;
   lb_calc_fluid_mass_GPU( &lb_calc_fluid_mass_res );
-  fluid_mass = lb_calc_fluid_mass_res;
+  float fluid_mass = lb_calc_fluid_mass_res;
 
+  float velocity[3] = { 0.0f, 0.0f, 0.0f };
   velocity[0] = -total_momentum[0]/(fluid_mass + particles_mass);
   velocity[1] = -total_momentum[1]/(fluid_mass + particles_mass);
   velocity[2] = -total_momentum[2]/(fluid_mass + particles_mass);
