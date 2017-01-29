@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to the ESPResSo documentation!
-==================================================================================
+======================================
 
 Contents:
 
@@ -14,37 +14,16 @@ Contents:
     ug
 
 espressomd package
-================
+==================
 
 .. toctree::
+    :maxdepth: 2
 
     modules.rst
-
-..    installation.tex.rst
-    inter.tex.rst
-    run.tex.rst
-    analysis.tex.rst
-    analysis-core.tex.rst
-    aux.tex.rst
-    lb.tex.rst
-    electrokinetics.tex.rst
-    ibm.tex.rst
-    mbtools.tex.rst
- 
-    internal.tex.rst
-    contributing.tex.rst
-    features.tex.rst
-    examples.tex.rst
-    
-    memd.tex.rst
-    mmm.tex.rst
-
-
 
 .. automodule:: espressomd
     :members: 
     :private-members:
-    :special-members:
 
 Indices and tables
 ==================
