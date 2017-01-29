@@ -16,7 +16,10 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in"
         "${SPHINX_BASE}/conf.py"
         @ONLY)
-    
+
+    # Copy the figure directory to the build dir
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/figures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
     # Files to be copied to the build directory
     set(FILE_LIST 
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
@@ -27,22 +30,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.tex.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/part.tex.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/refs.bib"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/analysis-core.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/analysis.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/aux.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/contributing.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/electrokinetics.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/examples.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/features.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/ibm.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/installation.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/inter.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/internal.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/lb.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/mbtools.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/memd.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/mmm.tex.rst"
-        #        "${CMAKE_CURRENT_SOURCE_DIR}/run.tex.rst"
         )
 
     foreach(file ${FILE_LIST})
@@ -58,6 +45,7 @@ if(SPHINX_FOUND)
         ${SPHINX_API_DOC_EXE}
             -f
             -o ${SPHINX_BASE}
+            -P
             ${SPHINX_PYTHON_DIR}
         COMMAND
         ${SPHINX_EXECUTABLE}
