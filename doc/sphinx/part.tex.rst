@@ -1,9 +1,9 @@
 Setting up particles
-====================
+********************
 
-*************************
 Creating single particles
-*************************
+=========================
+
 
 Defining particle properties
 ----------------------------
@@ -15,135 +15,161 @@ module and to create a :class:`espressomd.system.System` instance::
 
     sys = espressomd.System()
 
-In order to add particles to the instance, you have to call 
-:meth:`espressomd.particle_data.ParticleList.add` which is also a method of the 
-:class:`espressomd.system.System` class::
+In order to add particles to the system, call 
+:meth:`espressomd.particle_data.ParticleList.add`::
 
-    
+    sys.part.add(pos = [1.0, 1.0, 1.0], id = 0, type = 0)
 
-This command modifies particle data, namely position, type (monomer,
-ion, …), charge, velocity, force and bonds. Multiple properties can be
-changed at once. If you add a new particle the position has to be set
-first because of the spatial decomposition.
+This command adds a single particle to the system with properties given
+as arguments. All available particle properties are members of
+:class:`espressomd.particle_data.ParticleHandle` and are listed below.
 
-Sets the position of this particle to :math:`(x,y,z)`.
+    - :attr:`espressomd.particle_data.ParticleHandle.bonds`
+    - :attr:`espressomd.particle_data.ParticleHandle.dip`
 
-| Restrictions: :math:`\var{typeid} \geq 0`.
-| The is used in the command (see section ) to define the parameters of
-  the non bonded interactions between different kinds of particles.
+        ..  note::
 
-Sets the velocity of this particle to :math:`(vx,vy,vz)`. The velocity
-remains variable and will be changed during integration.
+            `Feature DIPOLES required.`
 
-Set the force acting on this particle to :math:`(fx,fy,fz)`. The force
-remains variable and will be changed during integration. However,
-whereas the velocity is modified with respect to the velocity you set
-upon integration, the force it recomputed during the integration step
-and any force set in this way is lost during the integration step.
+    - :attr:`espressomd.particle_data.ParticleHandle.dipm`
 
-Restrictions: :math:`\geq 0`; must be an existing particle. The is used
-for the inter command to define bonded interactions.
+        ..  note::
 
-Will delete all bonds attached to this particle.
+            `Feature DIPOLES required.`
 
-Sets the charge of this particle to :math:`q`.
+    - :attr:`espressomd.particle_data.ParticleHandle.director`
 
-Sets the quaternion representation of the rotational position of this
-particle.
+        ..  note::
 
-The command sets the angular momentum of this particle in the particle’s
-co-rotating frame (or body frame) and the command sets it for the
-particle in the fixed frame (or laboratory frame). If you set the
-angular momentum of the particle in the lab frame, the orientation of
-the particle () must be set before invoking , otherwise the conversion
-from lab to body frame will not be handled properly.
+            `Feature ROTATION required.`
 
-The command sets the torque of this particle in the particle’s
-co-rotating frame (or body frame) and the command sets it for the
-particle in the fixed frame (or laboratory frame). If you set the torque
-of the particle in the lab frame, the orientation of the particle ()
-must be set before invoking , otherwise the conversion from lab to body
-frame will not be handled properly.
+    - :attr:`espressomd.particle_data.ParticleHandle.exclude`
 
-Sets the diagonal elements of this particles rotational inertia tensor.
-These correspond with the inertial moments along the coordinate axes in
-the particle’s co-rotating coordinate system. When the particle’s
-quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab)
-frame are co-aligned.
+        ..  note::
 
-Fixes the particle in space. By supplying a set of 3 integers as
-arguments it is possible to fix motion in , , or coordinates
-independently. For example 0 0 1 will fix motion only in z. Note that
-without arguments is equivalent to 1 1 1.
+            `Feature EXCLUSIONS required.`
 
-Release any external influence from the particle.
+    - :attr:`espressomd.particle_data.ParticleHandle.ext_force`
 
-An additional external force is applied to the particle.
+        ..  note::
+            
+            `Feature EXTERNAL_FORCE required.`
 
-An additional external torque is applied to the particle. This torque is
-specified in the laboratory frame!
+    - :attr:`espressomd.particle_data.ParticleHandle.ext_torque`
 
-Restrictions: must be an existing particle. Between the current particle
-an the exclusion partner(s), no nonbonded interactions are calculated.
-Note that unlike bonds, exclusions are stored with both partners.
-Therefore this command adds the defined exclusions to both partners.
+        ..  note::
+            
+            `Feature ROTATION and EXTERNAL_FORCE required.`
 
-Searches for the given exclusion and deletes it. Again deletes the
-exclusion with both partners.
+    - :attr:`espressomd.particle_data.ParticleHandle.f`
+    - :attr:`espressomd.particle_data.ParticleHandle.fix`
 
-Sets the mass of this particle to :math:`mass`. If not set, all
-particles have a mass of 1 in reduced units.
+        ..  note::
+            
+            `Feature EXTERNAL_FORCE required.`
 
-Sets the dipol moment of this particle to :math:`moment`.
+    - :attr:`espressomd.particle_data.ParticleHandle.gamma`
 
-Sets the orientation of the dipole axis to :math:`(dx,dy,dz)`.
+        ..  note::
+            
+            `Feature LANGEVIN_PER_PARTICLE required.`
 
-Declares the particles as virtual (1) or non-virtual (0, default).
-Please read chapter [sec:virtual] before using virtual sites.
+    - :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
 
-Automatically relates a virtual site to a non-virtual particle for the
-“relative” implementation of virtual sites. is the id of the particle to
-which the virtual site should be related.
+        ..  note::
+            
+            `Feature LANGEVIN_PER_PARTICLE, ROTATION and ROTATIONAL_INERTIA required.`
 
-Allows for manual access to the attributes of virtual sites in the
-“relative” implementation. denotes the id of the particle to which this
-virtual site is related and the distance between non-virtual and virtual
-particle.
+    - :attr:`espressomd.particle_data.ParticleHandle.type`
+    - :attr:`espressomd.particle_data.ParticleHandle.pos`
+    - :attr:`espressomd.particle_data.ParticleHandle.pos_folded`
+    - :attr:`espressomd.particle_data.ParticleHandle.mass`
 
-If used in combination with the Langevin thermostat (as documented in
-section [sec:thermostat]), sets the temperature individually for the
-particle with id . This allows to simulate systems containing particles
-of different temperatures. Caution: this has no influence on any other
-thermostat then the Langevin thermostat.
+        ..  note::
 
-If used in combination with the Langevin thermostat (as documented in
-section [sec:thermostat]), sets the translational frictional coefficient
-individually for the particle with id .This allows to simulate systems
-containing particles with different diffusion constants. If this
-parameter is skipped for a specific particle then the corresponding
-value of the thermostat is applied. Caution: this has no influence on
-any other thermostat than the Langevin thermostat.
+            `Feature MASS required.`
 
-If used in combination with the Langevin thermostat (as documented in
-section [sec:thermostat]), sets the rotational frictional coefficient(s)
-individually for the particle with id . This allows to simulate systems
-containing particles with different diffusion constants. Feature
-provides possibility to specify different diagonal elements (, , ) of
-the rotational frictional tensor in the particle body-fixed frames of
-reference. If this parameter(s) is skipped for a specific particle then
-the corresponding value(s) of the thermostat is applied. Caution: this
-has no influence on any other thermostat than the Langevin thermostat.
+    - :attr:`espressomd.particle_data.ParticleHandle.omega_body`
 
-Specifies whether a particle’s rotational degrees of freedom along the
-different axes in the particle’s body-fixed frame are integrated or not.
-If set to zero, rotation is disabled entirely, and the content of the
-torque and omega variables are meaningless. Rotation of a particular
-axis is turned on by adding up the corresponding flags: x=2, y=4, z=8.
-To enable rotation around all axis, use a value of 2+4+8=14. This is
-also the default.
+        ..  note::
 
-Sets the four solvation coupling constants for the two components of a
-Shan-Chen fluid, as documented in Section [sec:scmd-coupling].
+            `Feature ROTATION required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.omega_lab`
+
+        ..  note::
+
+            `Feature ROTATION required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.q`
+
+        ..  note::
+
+            `Feature ELECTROSTATICS required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.quat`
+
+        ..  note::
+
+            `Feature ROTATION required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.rotation`
+
+        ..  note::
+
+            `Feature ROTATION required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.rinertia`
+
+        ..  note::
+
+            `Feature ROTATIONAL_INERTIA required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.smaller_timestep`
+
+        ..  note::
+
+            `Feature MULTI_TIMESTEP required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.swimming`
+
+        ..  note::
+
+            `Feature ENGINE required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.temp`
+
+        ..  note::
+            
+            `Feature LANGEVIN_PER_PARTICLE required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
+
+        ..  note::
+
+            `Feature ROTATION required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.v`
+    - :attr:`espressomd.particle_data.ParticleHandle.virtual`
+
+        ..  note::
+
+            `Feature VIRTUAL_SITES required.`
+
+    - :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
+
+        ..  note::
+
+            `Feature VIRTUAL_SITES required.`
+
+An already existing particles property can be set with the
+following command::
+
+    sys.part[<ID>].<PROPERTY> = <SOME_VALUE>
+
+This sets the property ``PROPERTY`` for particle with id ``ID`` to 
+``SOME_VALUE``.
+
 
 Enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the quaternion of the particle see . The
@@ -358,7 +384,7 @@ by several orders of magnitude.
 Sets the valency of the charged monomers. If the valency of the charged
 polymers is smaller than :math:`10^{-10}`, the charge is assumed to be
 zero, and the types are set to :math:`\var{typeid_\mathrm{charged}} =
-  \var{typeid_\mathrm{neutral}}`. If charge is not set, it defaults to
+\var{typeid_\mathrm{neutral}}`. If charge is not set, it defaults to
 0.0.
 
 charge\_distance Sets the stride between the indices of two charged
@@ -441,10 +467,10 @@ particle ID 0. Nodes are assigned type 0, monomers (both charged and
 uncharged) are type 1 and counterions type 2. For inter-particle bonds
 interaction :math:`0` is taken which must be a two-particle bond.
 
-[fig:diamond]
 
-.. figure:: figures/diamond
+.. figure:: figures/diamond.png
    :alt: Diamond-like polymer network with =15.
+   :align: center
    :height: 6.00000cm
 
    Diamond-like polymer network with =15.
@@ -479,8 +505,9 @@ must be a two-particle bond. Two particle types are used for the
 pentagons and the interconnecting links. For an example, see figure
 [fig:fullerene].
 
-.. figure:: figures/fullerene
+.. figure:: figures/fullerene.png
    :alt: Icosaeder with =15.
+   :align: center
    :height: 6.00000cm
 
    Icosaeder with =15.
@@ -657,6 +684,7 @@ charges that can be calculated with the ICC\ :math:`\star` algorithm.
 
 .. figure:: figures/slitpore.pdf
    :alt: The slitpore created by the
+   :align: center
    :height: 6.00000cm
 
    The slitpore created by the 
@@ -702,86 +730,107 @@ type id 1 which is directed inwards to the origin (0,0,0), use:
 
 constraint wall normal 0 0 -1 dist -20 type 1
 
-Python Syntax
-'''''''''''''
+Python Syntax::
 
-import espressomd from espressomd.shapes import <SHAPE>
-system=espressomd.System()
+    import espressomd from espressomd.shapes import <SHAPE>
+    system=espressomd.System()
 
-:math:`\langle`\ SHAPE\ :math:`\rangle` can be any of:
+``<SHAPE>`` can be any of:
 
-#. wall = Wall(normal=[n\_x, n\_y, n\_z], dist=d)
+* ::
 
-   creates a wall shape object with normal vector at distance from the
-   origin in the direction of the normal vector.
+     wall = Wall(normal=[n_x, n_y, n_z], dist=d)
 
-#. sphere = Sphere(pos=[x, y, z], rad=R, direction=D)
+creates a wall shape object with normal vector at distance from the
+origin in the direction of the normal vector.
 
-   creates a sphere object with its center at posistion and radius .
+* ::
 
-#. cylinder = Cylinder(pos=[x, y, z], axis=[a\_x, a\_y, a\_z], rad=R,
-   length=L, direction=D)
+    sphere = Sphere(pos=[x, y, z], rad=R, direction=D)
 
-   createa a cylinder object at position with its axis pointing torwards
+    
+creates a sphere object with its center at posistion and radius ``R``.
+
+* ::
+
+    cylinder = Cylinder(pos=[x, y, z], axis=[a\_x, a\_y, a\_z], rad=R,
+    length=L, direction=D)
+
+creates a cylinder object at position with its axis pointing torwards
    , radius and length .
 
-#. rhomboid = Rhomboid(pos=[x, y, z], a=[a\_x, a\_y, a\_z], b=[b\_x,
-   b\_y, b\_z], c=[c\_x, c\_y, c\_z], direction=D)
+* ::
 
-   creates a rhomboid defined by one corner located at and three
-   adjacent edges, defined by the three vectors connecting the corner p
-   with it’s three neighboring corners, a , b and c .
+    rhomboid = Rhomboid(pos=[x, y, z], a=[a\_x, a\_y, a\_z], b=[b\_x,
+    b\_y, b\_z], c=[c\_x, c\_y, c\_z], direction=D)
 
-#. maze = Maze(nsphere=NS, dim=Dim, cylrad=CR, sphrad=SR)
+creates a rhomboid defined by one corner located at and three
+adjacent edges, defined by the three vectors connecting the corner p
+with it’s three neighboring corners, a , b and c .
 
-   creates a -dimensional maze by spheres with radius per dimension. The
-   spheres build a grid of simple cubic symmetry and are connected by
-   cylinders with radius .
+* ::
 
-#. pore = Pore(pos=[x, y, z], axis=[a\_x, a\_y, a\_z], length=L,
-   smoothing\_radius = SR, rad\_left=LR, rad\_right=RR,
-   outer\_rad\_left=ORL, outer\_rad\_right=ORR)
+    maze = Maze(nsphere=NS, dim=Dim, cylrad=CR, sphrad=SR)
 
-   creates a pore at position , with its axis pointing in the direction
-   of and length .
+creates a -dimensional maze by spheres with radius per dimension. The
+spheres build a grid of simple cubic symmetry and are connected by
+cylinders with radius .
 
-#. stomatocyte = Stomatocyte(position\_x=x, position\_y=y,
-   position\_z=z, orientation\_x = o\_x, orientation\_y = o\_y,
-   orientation\_z = o\_z, outer\_radius = OR, inner\_radius = IR,
-   layer\_width = LW, direction = D)
+* ::
 
-   creates a Stomatocyte at position with orientation whose outer radius
-   is , its inner radius is and the layer width will be .
+    pore = Pore(pos=[x, y, z], axis=[a\_x, a\_y, a\_z], length=L,
+    smoothing\_radius = SR, rad\_left=LR, rad\_right=RR,
+    outer\_rad\_left=ORL, outer\_rad\_right=ORR)
 
-#. slitpore = Slitpore(pore\_mouth = z, channel\_width = CW, pore\_width
-   = PW, pore\_length = PL, upper\_smoothing\_radius = USR,
-   lower\_smoothing\_radius = LSR)
+creates a pore at position , with its axis pointing in the direction
+of and length .
 
-   creates a Slitpore, the meaning of the geometrical parameters can be
-   inferred from fig. [fig:slitpore].
+* ::
 
-#. spherocylinder=SpheroCylinder(pos=[x, y, z], axis=[a\_x, a\_y, a\_z],
-   length=L, rad=R)
+    stomatocyte = Stomatocyte(position\_x=x, position\_y=y,
+    position\_z=z, orientation\_x = o\_x, orientation\_y = o\_y,
+    orientation\_z = o\_z, outer\_radius = OR, inner\_radius = IR,
+    layer\_width = LW, direction = D)
 
-   creates a Sphero-Cylinder at position , whose cylindrical element is
-   aligned in direction . The cylinder will have a length of and a
-   radius of . The spherical cap will have the same radius.
+creates a Stomatocyte at position with orientation whose outer radius
+is , its inner radius is and the layer width will be .
 
-#. hollowCone = HollowCone(position\_x = x, position\_y = y, position\_z
-   = z, orientation\_x = o\_x, orientation\_y = o\_y, orientation\_z =
-   o\_z, outer\_radius = OR, inner\_radius = IR, width = W,
-   opening\_angle = a, direction = D)
+* ::
 
-   creates a hollow cone whose axis is aligned to located at position ,
-   which inner and outer radii are and , respectively. The width and
-   opening angle are given by and .
+    slitpore = Slitpore(pore\_mouth = z, channel\_width = CW, pore\_width
+    = PW, pore\_length = PL, upper\_smoothing\_radius = USR,
+    lower\_smoothing\_radius = LSR)
+
+creates a Slitpore, the meaning of the geometrical parameters can be
+inferred from fig. [fig:slitpore].
+
+* ::
+
+    spherocylinder=SpheroCylinder(pos=[x, y, z], axis=[a\_x, a\_y, a\_z],
+    length=L, rad=R)
+
+creates a Sphero-Cylinder at position , whose cylindrical element is
+aligned in direction . The cylinder will have a length of and a
+radius of . The spherical cap will have the same radius.
+
+* ::
+
+    hollowCone = HollowCone(position\_x = x, position\_y = y, position\_z
+    = z, orientation\_x = o\_x, orientation\_y = o\_y, orientation\_z =
+    o\_z, outer\_radius = OR, inner\_radius = IR, width = W,
+    opening\_angle = a, direction = D)
+
+creates a hollow cone whose axis is aligned to located at position ,
+which inner and outer radii are and , respectively. The width and
+opening angle are given by and .
 
 The direction paramter for the shapes specifies wheter it will act
 torwards the outside or inside . All those shapes can be used as
 constraints and added to the systems constraints by passing a
 initialized shape object to
 
-system.constraints.add(shape = shape\_object, particle\_type=p\_type)
+::
+    system.constraints.add(shape = shape\_object, particle\_type=p\_type)
 
 The extra argument specifies the nonbonded interaction to be used with
 that constraint. There are two further optional parameters and that can
@@ -924,7 +973,7 @@ The position of the virtual site is given by
 
 .. math:: \vec{x_v} =\vec{x_n} +O_n (O_v \vec{E_z}) d,
 
- where :math:`\vec{x_n}` is the position of the non-virtual particle,
+where :math:`\vec{x_n}` is the position of the non-virtual particle,
 :math:`O_n` is the orientation of the non-virtual particle, :math:`O_v`
 denotes the orientation of the vector :math:`\vec{x_v}-\vec{x_n}` with
 respect to the non-virtual particle’s body fixed frame and :math:`d` the
