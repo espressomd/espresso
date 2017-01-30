@@ -1,3 +1,5 @@
+.. include:: defs.rst
+
 First steps
 ===========
 

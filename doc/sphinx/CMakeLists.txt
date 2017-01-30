@@ -26,10 +26,29 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/defs.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/introduction.tex.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.tex.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/part.tex.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/refs.bib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/installation.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/part.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/inter.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/setup.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/run.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/analysis.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/analysis-core.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/io.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/aux.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/lb.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/electrokinetics.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/oif.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/ibm.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/mbtools.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/internal.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/contributing.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/features.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/examples.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/memd.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/mmm.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
         )
 
     foreach(file ${FILE_LIST})
@@ -49,6 +68,7 @@ if(SPHINX_FOUND)
             ${SPHINX_PYTHON_DIR}
         COMMAND
         ${SPHINX_EXECUTABLE}
+            -q
             -b html
             -c "${SPHINX_BASE}"
             -d "${SPHINX_CACHE_DIR}"

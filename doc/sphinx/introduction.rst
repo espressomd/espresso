@@ -373,6 +373,3 @@ following commands:
 
 .. [1]
    http://www.fftw.org/
-
-.. bibliography:: refs.bib
-

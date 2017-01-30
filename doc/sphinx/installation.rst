@@ -1,5 +1,7 @@
-Getting, compiling and running 
-===============================
+.. include:: defs.rst
+
+Getting, compiling and running |es| 
+===================================
 
 This chapter will describe how to get, compile and run the software.
 
@@ -259,13 +261,15 @@ different configuration headers:
 
    #define LJCOS
 
-Then you can simply compile two different versions of via
+Then you can simply compile two different versions of via::
 
-cd :math:`builddir1
-`\ srcdir/configure make
+    cd builddir1
+    srcdir/configure
+    make
 
-cd :math:`builddir2
-`\ srcdir/configure make
+    cd builddir2
+    srcdir/configure
+    make
 
 .. [1]
    http://espressomd.org

@@ -262,8 +262,9 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'extensiblesimulationpackageforsoftmatterresearch', 'Extensible Simulation Package for Soft Matter Research Documentation',
-     [author], 1)
+    (master_doc, 'extensiblesimulationpackageforsoftmatterresearch',
+        'Extensible Simulation Package for Soft Matter Research Documentation',
+        [author], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -276,8 +277,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch', 'Extensible Simulation Package for Soft Matter Research Documentation',
-   author, 'ExtensibleSimulationPackageforSoftMatterResearch', 'One line description of project.',
+  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch', 'Extensible\
+      Simulation Package for Soft Matter Research Documentation', author,
+      'ExtensibleSimulationPackageforSoftMatterResearch', 'One line description\
+      of project.',
    'Miscellaneous'),
 ]
 
@@ -297,12 +300,6 @@ texinfo_documents = [
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 numpydoc_show_class_members = False
 autodoc_mock_imports = ['featuredefs', ]
-autodoc_default_flags = ['members', 'private-members', 'special-members',
+autodoc_default_flags = ['members', 'private-members', 
+                         'special-members',
                          'show-inheritance', 'undoc-members']
-
-def maybe_skip_member(app, what, name, obj, skip, options):
-    print  what, name, skip
-    return False
-
-def setup(app):
-    app.connect('autodoc-skip-member', maybe_skip_member)

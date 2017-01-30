@@ -9,6 +9,7 @@ Welcome to the ESPResSo documentation!
 Contents:
 
 .. toctree::
+    :numbered:
     :maxdepth: 2
 
     ug
