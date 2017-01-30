@@ -37,9 +37,8 @@ as . If is not found, is returned.
 
 This function is useful to access certain properties of particles
 without hard-wiring their index-position, which might change in future
-releases of .
+releases of |es|.
 
-[lindex [part :math:`i] [findPropPos [part `\ i] type]]
 
 This returns the particle type id of particle without fixing where
 exactly that information has to be in the output of .

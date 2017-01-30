@@ -205,9 +205,7 @@ cdef class ParticleHandle:
     # Bonds
     property bonds:
         """Bond partners with respect to bonded interactions.
-
-        ..  note::
-            Bond ids have to be :math:`\geq 0`.
+        ..  note:: Bond ids have to be :math:`\geq 0`.
 
         """
 
@@ -918,10 +916,11 @@ cdef class ParticleHandle:
 
     # Bond related methods
     # Does not work properly with 3 or more partner bonds!
+
     def add_verified_bond(self, bond):
         """Add a bond, the validity of which has already been verified."""
-        # If someone adds bond types with more than four partners, this has to
-        # be changed
+
+        # If someone adds bond types with more than four partners, this has to be changed
         cdef int bond_info[5]
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
