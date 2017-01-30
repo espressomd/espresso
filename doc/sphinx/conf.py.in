@@ -298,7 +298,7 @@ texinfo_documents = [
 numpydoc_show_class_members = False
 autodoc_mock_imports = ['featuredefs', ]
 autodoc_default_flags = ['members', 'private-members', 'special-members',
-                         'show-inheritance']
+                         'show-inheritance', 'undoc-members']
 
 def maybe_skip_member(app, what, name, obj, skip, options):
     print  what, name, skip
