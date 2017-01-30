@@ -231,9 +231,9 @@ void predict_momentum_particles(double *result)
 #ifdef MASS
       mass = p[i].p.mass;
 #endif
-      momentum[0] += p[i].p.mass * (p[i].m.v[0] + p[i].f.f[0]);
-      momentum[1] += p[i].p.mass * (p[i].m.v[1] + p[i].f.f[1]);
-      momentum[2] += p[i].p.mass * (p[i].m.v[2] + p[i].f.f[2]);
+      momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
+      momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
+      momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
     }
   }
 
