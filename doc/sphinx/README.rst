@@ -3,10 +3,12 @@ How to get started with SPHINX
 
 #. Install the latest stable sphinx version via pip
    .. code::
+
        pip install git+https://github.com/sphinx-doc/sphinx@stable --user
 
 #. Install a bibtex extension to SPHINX
    .. code::
+
        pip install sphinxcontrib-bibtex --user
 
 #. Compile the ``sphinx`` target in your build directory (that can take some time
