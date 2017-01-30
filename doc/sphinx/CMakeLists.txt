@@ -59,13 +59,20 @@ if(SPHINX_FOUND)
                 COPYONLY
                 )
     endforeach()
+    
+    # Place files to be excluded from SPHINX documentation
+    set(EXCLUDE
+        "${SPHINX_PYTHON_DIR}/gen_code_info.py"
+        "${SPHINX_PYTHON_DIR}/gen_pxiconfig*"
+    )
 
-    add_custom_target(sphinx ALL
+    add_custom_target(sphinx
         ${SPHINX_API_DOC_EXE}
             -f
-            -o ${SPHINX_BASE}
             -P
+            -o ${SPHINX_BASE}
             ${SPHINX_PYTHON_DIR}
+            ${EXCLUDE}
         COMMAND
         ${SPHINX_EXECUTABLE}
             -q
