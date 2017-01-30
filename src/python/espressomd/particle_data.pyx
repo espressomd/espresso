@@ -90,6 +90,7 @@ cdef class ParticleHandle:
         particles.
 
         ..  note::
+        
             Type has to be :math:`\geq 0`.
 
         """
@@ -205,7 +206,10 @@ cdef class ParticleHandle:
     # Bonds
     property bonds:
         """Bond partners with respect to bonded interactions.
-        ..  note:: Bond ids have to be :math:`\geq 0`.
+
+        ..  note:: 
+        
+            Bond ids have to be :math:`\geq 0`.
 
         """
 
