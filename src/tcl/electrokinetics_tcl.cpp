@@ -61,7 +61,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
          mass_product1;
 #endif
 
-  if(argc < 2) 
+  if(argc < 1) 
   {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [lb_density #float] [viscosity #float] [friction #float]\n", (char *)NULL);
@@ -108,6 +108,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics #int node #int #int #int print <density|flux>\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics pdb-parse #string #string #double\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics checkpoint <save|load> #string\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics remove_total_momentum\n", (char *)NULL);
     return TCL_ERROR;
   }
   else if(ARG0_IS_S("checkpoint"))
@@ -614,6 +615,10 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     	  return TCL_ERROR ;
       }
     }
+  }
+  else if(ARG0_IS_S("remove_total_momentum"))
+  {
+    err = ek_remove_total_momentum();
   }
   else 
   {

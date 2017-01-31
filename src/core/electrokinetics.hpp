@@ -188,6 +188,12 @@ int ek_node_print_flux(int species, int x, int y, int z, double* flux);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 ekfloat ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 
+int ek_remove_total_momentum();
+void ek_fluid_add_momentum(ekfloat momentum[3]);
+void ek_get_total_momentum(ekfloat momentum[3]);
+void ek_particles_add_momentum(ekfloat velocity[3]);
+
+
 int ek_save_checkpoint(char* filename);
 int ek_load_checkpoint(char* filename);
   

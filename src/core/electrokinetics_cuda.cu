@@ -3880,6 +3880,92 @@ int ek_neutralize_system(int species) {
   return 0;
 }
 
+struct ek_mass_of_particle
+{
+  __device__ float operator()(CUDA_particle_data particle)
+  {
+#ifdef MASS
+    return particle.mass;
+#else
+    return 1.;
+#endif
+  };
+};
+
+int ek_remove_total_momentum() {
+  ekfloat total_momentum[3];
+  ekfloat velocity[3];
+  ekfloat fluid_mass;
+  ekfloat particles_mass;
+
+  // calculate momentum of fluid and particles
+  ek_get_total_momentum(total_momentum);
+
+  particle_data_gpu = gpu_get_particle_pointer();
+  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
+  particles_mass = thrust::transform_reduce(
+      ptr,
+      ptr + lbpar_gpu.number_of_particles,
+      ek_mass_of_particle(),
+      0.0f,
+      thrust::plus<ekfloat>());
+
+  lb_calc_fluid_mass_GPU( &fluid_mass );
+
+  velocity[0] = -total_momentum[0]/(fluid_mass + particles_mass);
+  velocity[1] = -total_momentum[1]/(fluid_mass + particles_mass);
+  velocity[2] = -total_momentum[2]/(fluid_mass + particles_mass);
+
+  ekfloat momentum_fluid[3] = {
+    velocity[0]*fluid_mass,
+    velocity[1]*fluid_mass,
+    velocity[2]*fluid_mass
+  };
+
+  ek_particles_add_momentum( velocity );
+  ek_fluid_add_momentum( momentum_fluid );
+
+  return 0;
+}
+
+__global__ void ek_fluid_add_momentum_kernel(
+                                            ekfloat momentum[3],
+                                            LB_nodes_gpu n_a,
+                                            LB_parameters_gpu *ek_lbparameters,
+                                            LB_node_force_gpu node_f,
+                                            LB_rho_v_gpu *d_v
+                                          ){
+  unsigned int index = ek_getThreadIndex();
+  unsigned int number_of_nodes = ek_parameters_gpu.number_of_nodes;
+#ifdef EK_BOUNDARIES
+  number_of_nodes -= ek_parameters_gpu.number_of_boundary_nodes;
+#endif
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+    if( n_a.boundary[index] == 0 ){
+      float force_factor=powf(ek_lbparameters->agrid,2)*ek_lbparameters->tau*ek_lbparameters->tau;
+      for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+        // add force density onto each node (momentum / time_step / Volume)
+        node_f.force[(0+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[0] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
+        node_f.force[(1+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[1] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
+        node_f.force[(2+ii*3)*ek_parameters_gpu.number_of_nodes + index] += momentum[2] / ek_lbparameters->tau / (number_of_nodes * powf(ek_lbparameters->agrid,3)) * force_factor;
+      }
+    }
+  }
+}
+
+void ek_fluid_add_momentum( ekfloat momentum_host[3] ){
+  ekfloat* momentum_device;
+  cuda_safe_mem(cudaMalloc((void**)&momentum_device,3*sizeof(ekfloat)));
+  cuda_safe_mem(cudaMemcpy(momentum_device, momentum_host, 3*sizeof(ekfloat), cudaMemcpyHostToDevice));
+
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1)/(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL( ek_fluid_add_momentum_kernel, dim_grid, threads_per_block, (momentum_device, *current_nodes, ek_lbparameters_gpu, node_f, ek_lb_device_values));
+}
+
 int ek_save_checkpoint(char* filename) {
   std::string fname(filename);
   std::ofstream fout((const char *) (fname + ".ek").c_str(), std::ofstream::binary);
