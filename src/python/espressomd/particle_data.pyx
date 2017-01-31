@@ -84,13 +84,14 @@ cdef class ParticleHandle:
 
     # Particle Type
     property type:
-        """Particle type.
-        
+        """
+        Particle type.
+
         The particle type is used to set interactions between different
         particles.
 
         ..  note::
-        
+
             Type has to be :math:`\geq 0`.
 
         """
@@ -108,7 +109,10 @@ cdef class ParticleHandle:
 
     # Position
     property pos:
-        """Particle position (not folded into central image)."""
+        """
+        Particle position (not folded into central image).
+
+        """
 
         def __set__(self, _pos):
             cdef double mypos[3]
@@ -132,7 +136,10 @@ cdef class ParticleHandle:
             return np.array([ppos[0],ppos[1],ppos[2]])
 
     property pos_folded:
-        """Particle position (folded into central image)."""
+        """
+        Particle position (folded into central image).
+
+        """
 
         def __set__(self, v):
             raise Exception("setting a folded position is not implemented")
@@ -145,8 +152,13 @@ cdef class ParticleHandle:
 
     # Velocity
     property v:
-        """Particle velocity.
-        The velocity remains variable and will be changed during integration.
+        """
+        Particle velocity.
+
+        .. note::
+
+          The velocity remains variable and will be changed during integration.
+
         """
         def __set__(self, _v):
             global time_step
@@ -179,11 +191,15 @@ cdef class ParticleHandle:
 
     # Force
     property f:
-        """Particle force.
-        
-        Whereas the velocity is modified with respect to the velocity you set
-        upon integration, the force it recomputed during the integration step and any
-        force set in this way is lost during the integration step.
+        """
+        Particle force.
+
+        .. note::
+
+            Whereas the velocity is modified with respect to the velocity you set
+            upon integration, the force it recomputed during the integration step and any
+            force set in this way is lost during the integration step.
+
         """
 
         def __set__(self, _f):
@@ -205,10 +221,11 @@ cdef class ParticleHandle:
 
     # Bonds
     property bonds:
-        """Bond partners with respect to bonded interactions.
+        """
+        Bond partners with respect to bonded interactions.
 
-        ..  note:: 
-        
+        ..  note::
+
             Bond ids have to be :math:`\geq 0`.
 
         """
@@ -256,8 +273,11 @@ cdef class ParticleHandle:
     # MULTI_TIMESTEP
     IF MULTI_TIMESTEP == 1:
         property smaller_timestep:
-            """Particle flag specifying whether particle trajectory should be
-            integrated with time_step of small_time_step."""
+            """
+            Particle flag specifying whether particle trajectory should be
+            integrated with time_step of small_time_step.
+
+            """
 
             def __set__(self, _smaller_timestep):
                 check_type_or_throw_except(
@@ -273,7 +293,10 @@ cdef class ParticleHandle:
 
     # MASS
     property mass:
-            """Particle mass."""
+            """
+            Particle mass.
+
+            """
 
             def __set__(self, _mass):
                 IF MASS == 1:
@@ -291,7 +314,8 @@ cdef class ParticleHandle:
 
     IF ROTATION == 1:
         property omega_lab:
-            """Angular velocity in lab frame.
+            """
+            Angular velocity in lab frame.
 
             .. note::
 
@@ -323,10 +347,12 @@ cdef class ParticleHandle:
                 return np.array([o[0], o[1], o[2]])
 
         property quat:
-            """Quaternions.
+            """
+            Quaternions.
 
             Sets the quaternion representation of the rotational position of
             this particle.
+
             """
 
             def __set__(self, _q):
@@ -346,7 +372,10 @@ cdef class ParticleHandle:
 
 # Director ( z-axis in body fixed frame)
         property director:
-            """Director."""
+            """
+            Director.
+
+            """
 
             def __set__(self, _q):
                 raise Exception(
@@ -366,10 +395,12 @@ cdef class ParticleHandle:
 
     # ROTATIONAL_INERTIA
         property omega_body:
-            """Angular velocity in body frame.
+            """
+            Angular velocity in body frame.
 
             This property sets the angular momentum of this particle in the
             particle’s co-rotating frame (or body frame).
+
             """
             def __set__(self, _o):
                 cdef double myo[3]
@@ -388,11 +419,12 @@ cdef class ParticleHandle:
 
 
         property torque_lab:
-            """Torque in lab frame.
+            """
+            Torque in lab frame.
 
-            This property defines the torque of this particle 
-            in the fixed frame (or laboratory frame). 
-            
+            This property defines the torque of this particle
+            in the fixed frame (or laboratory frame).
+
             .. note::
 
                 The orientation of the particle (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be set
@@ -422,13 +454,15 @@ cdef class ParticleHandle:
 
     IF ROTATIONAL_INERTIA == 1:
         property rinertia:
-            """Rotational inertia.
-            
+            """
+            Rotational inertia.
+
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
             coordinate axes in the particle’s co-rotating coordinate system.
             When the particle’s quaternions are set to 1 0 0 0, the co-rotating
             and the fixed (lab) frame are co-aligned.
+
             """
 
             def __set__(self, _rinertia):
@@ -449,7 +483,10 @@ cdef class ParticleHandle:
 # Charge
     IF ELECTROSTATICS == 1:
         property q:
-            """Particle charge."""
+            """
+            Particle charge.
+
+            """
 
             def __set__(self, _q):
                 cdef double myq
@@ -466,7 +503,10 @@ cdef class ParticleHandle:
                 return x[0]
 
     def delete(self):
-        """Delete the particle."""
+        """
+        Delete the particle.
+
+        """
         if remove_particle(self.id):
             raise Exception("Could not delete particle.")
         del self
@@ -474,7 +514,10 @@ cdef class ParticleHandle:
     IF VIRTUAL_SITES == 1:
 
         property virtual:
-            """Virtual flag."""
+            """
+            Virtual flag.
+
+            """
 
             def __set__(self, _v):
                 if isinstance(_v, int):
@@ -491,7 +534,10 @@ cdef class ParticleHandle:
 
     IF VIRTUAL_SITES_RELATIVE == 1:
         property vs_relative:
-            """Virtual sites relative parameters."""
+            """
+            Virtual sites relative parameters.
+
+            """
 
             def __set__(self, x):
                 if len(x) != 3:
@@ -523,7 +569,10 @@ cdef class ParticleHandle:
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, _relto):
-            """Setup this particle as virtual site relative to the particle with the given id."""
+            """
+            Setup this particle as virtual site relative to the particle with the given id.
+
+            """
             if isinstance(_relto, int):
                 if vs_relate_to(self.id, _relto):
                     handle_errors("Vs_relative setup failed.")
@@ -535,7 +584,10 @@ cdef class ParticleHandle:
 
         # vs_auto_relate_to
         def vs_auto_relate_to(self, _relto):
-            """Setup this particle as virtual site relative to the particle with the given id."""
+            """
+            Setup this particle as virtual site relative to the particle with the given id.
+
+            """
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
             if vs_relate_to(self.id, _relto):
@@ -543,7 +595,10 @@ cdef class ParticleHandle:
 
     IF DIPOLES:
         property dip:
-            """Dipole moment as vector."""
+            """
+            Dipole moment as vector.
+
+            """
 
             def __set__(self, _q):
                 cdef double myq[3]
@@ -562,7 +617,10 @@ cdef class ParticleHandle:
 
         # Scalar magnitude of dipole moment
         property dipm:
-            """Dipole moment (magnitude)."""
+            """
+            Dipole moment (magnitude).
+
+            """
 
             def __set__(self, _q):
                 check_type_or_throw_except(
@@ -578,7 +636,10 @@ cdef class ParticleHandle:
 
     IF EXTERNAL_FORCES:
         property ext_force:
-            """External force on a particle defined by a vector."""
+            """
+            External force on a particle defined by a vector.
+
+            """
 
             def __set__(self, _ext_f):
                 cdef double ext_f[3]
@@ -605,14 +666,15 @@ cdef class ParticleHandle:
                     return np.array([0.0, 0.0, 0.0])
 
         property fix:
-            """Fix the particle at current position.
-            
+            """
+            Fix the particle at current position.
+
             Fixes the particle in space. By supplying a set of 3 integers as
             ar- guments it is possible to fix motion in x, y, or z coordinates
             independently. For example::
-            
-                part[<ID>].fix = [0, 0, 1] 
-                
+
+                part[<ID>].fix = [0, 0, 1]
+
             will fix motion for particle with id ``ID`` only in z.
 
             """
@@ -639,11 +701,13 @@ cdef class ParticleHandle:
 
         IF ROTATION:
             property ext_torque:
-                """External torque on a particle defined by a vector.
-                
+                """
+                External torque on a particle defined by a vector.
+
                 ..  note::
 
                     This torque is specified in the laboratory frame!
+
                 """
 
                 def __set__(self, _ext_t):
@@ -673,8 +737,11 @@ cdef class ParticleHandle:
     IF LANGEVIN_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             property gamma:
-                """Rotational friction coefficient per particle in Langevin."""
-    
+                """
+                Rotational friction coefficient per particle in Langevin.
+
+                """
+
                 def __set__(self, _gamma):
                     cdef double gamma[3]
                     check_type_or_throw_except(
@@ -683,7 +750,7 @@ cdef class ParticleHandle:
                         gamma[i] = _gamma[i]
                     if set_particle_gamma(self.id, gamma) == 1:
                         raise Exception("Set particle position first.")
-        
+
                 def __get__(self):
                     self.update_particle_data()
                     cdef double * gamma = NULL
@@ -691,14 +758,17 @@ cdef class ParticleHandle:
                     return np.array([gamma[0], gamma[1], gamma[2]])
         ELSE:
             property gamma:
-                """Friction coefficient per particle in Langevin."""
-    
+                """
+                Friction coefficient per particle in Langevin.
+
+                """
+
                 def __set__(self, _gamma):
                     check_type_or_throw_except(
                         _gamma, 1, float, "Gamma has to be a float.")
                     if set_particle_gamma(self.id, _gamma) == 1:
                         raise Exception("Set particle position first.")
-    
+
                 def __get__(self):
                     self.update_particle_data()
                     cdef double * gamma = NULL
@@ -707,7 +777,10 @@ cdef class ParticleHandle:
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 property gamma_rot:
-                    """Rotational friction coefficient per particle in Langevin."""
+                    """
+                    Rotational friction coefficient per particle in Langevin.
+
+                    """
 
                     def __set__(self, _gamma_rot):
                         cdef double gamma_rot[3]
@@ -725,7 +798,10 @@ cdef class ParticleHandle:
                         return np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
             ELSE:
                 property gamma_rot:
-                    """Rotational friction coefficient per particle in Langevin."""
+                    """
+                    Rotational friction coefficient per particle in Langevin.
+
+                    """
 
                     def __set__(self, _gamma_rot):
                         check_type_or_throw_except(
@@ -740,7 +816,10 @@ cdef class ParticleHandle:
                         return gamma_rot[0]
 
         property temp:
-            """Temperature per particle in Langevin."""
+            """
+            Temperature per particle in Langevin.
+
+            """
 
             def __set__(self, _temp):
                 check_type_or_throw_except(
@@ -756,7 +835,10 @@ cdef class ParticleHandle:
 
     IF ROTATION_PER_PARTICLE:
         property rotation:
-            """Friction coefficient per particle in Langevin."""
+            """
+            Friction coefficient per particle in Langevin.
+
+            """
 
             def __set__(self, _rot):
                 cdef int rot
@@ -779,7 +861,10 @@ cdef class ParticleHandle:
 
     IF EXCLUSIONS:
         property exclude:
-            """Exclude particle from interaction."""
+            """
+            Exclude particle from interaction.
+
+            """
 
             def __set__(self, _partners):
                 if isinstance(_partners, int):
@@ -809,7 +894,10 @@ cdef class ParticleHandle:
                 return np.array(py_partners)
 
         def add_exclusion(self, *_partners):
-            """Excluding interaction with given partners."""
+            """
+            Excluding interaction with given partners.
+
+            """
             self.exclude = _partners
 
         def delete_exclusion(self, *_partners):
@@ -829,7 +917,10 @@ cdef class ParticleHandle:
 
     IF ENGINE:
         property swimming:
-            """Set swimming parameters."""
+            """
+            Set swimming parameters.
+
+            """
 
             def __set__(self, _params):
                 cdef particle_parameters_swimming swim
@@ -913,7 +1004,10 @@ cdef class ParticleHandle:
                 return swim
 
     def remove(self):
-        """Delete the particle."""
+        """
+        Delete the particle.
+
+        """
         if remove_particle(self.id):
             raise Exception("Could not delete particle.")
         del self
@@ -922,7 +1016,10 @@ cdef class ParticleHandle:
     # Does not work properly with 3 or more partner bonds!
 
     def add_verified_bond(self, bond):
-        """Add a bond, the validity of which has already been verified."""
+        """
+        Add a bond, the validity of which has already been verified.
+
+        """
 
         # If someone adds bond types with more than four partners, this has to be changed
         cdef int bond_info[5]
@@ -941,14 +1038,18 @@ cdef class ParticleHandle:
             handle_errors("Deleting the bond failed.")
 
     def check_bond_or_throw_exception(self, bond):
-        """Checks the validity of the given bond:
+        """
+        Checks the validity of the given bond:
 
             - If the bondtype is given as an object or a numerical id
             - If all partners are of type int
             - If the number of partners satisfies the bond
             - If the bond type used exists (is lower than n_bonded_ia)
             - If the number of bond partners fits the bond type
-        Throws an exception if any of these are not met."""
+
+        Throws an exception if any of these are not met.
+
+        """
 
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
@@ -989,19 +1090,28 @@ cdef class ParticleHandle:
                     bond[i] = bond[i].id
 
     def add_bond(self, _bond):
-        """Add a single bond to the particle."""
+        """
+        Add a single bond to the particle.
+
+        """
         bond = list(_bond)  # As we will modify it
         self.check_bond_or_throw_exception(bond)
         self.add_verified_bond(bond)
 
     def delete_bond(self, _bond):
-        """Delete a single bond from the particle."""
+        """
+        Delete a single bond from the particle.
+
+        """
         bond = list(_bond)  # as we modify it
         self.check_bond_or_throw_exception(bond)
         self.delete_verified_bond(bond)
 
     def delete_all_bonds(self):
-        """Delete all bonds from the particle."""
+        """
+        Delete all bonds from the particle.
+
+        """
         if change_particle_bond(self.id, NULL, 1):
             handle_errors("Deleting all bonds failed.")
 
@@ -1015,7 +1125,10 @@ cdef class ParticleHandle:
 
 
 cdef class ParticleSlice:
-    """Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list."""
+    """
+    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
+
+    """
 
     def __cinit__(self, slice_):
         id_list = np.arange(max_seen_particle + 1)
@@ -1043,7 +1156,9 @@ cdef class ParticleSlice:
 
     # Particle Type
     property type:
-        """Particle type.
+        """
+        Particle type.
+
         """
         def __get__(self):
             type_list = []
@@ -1064,7 +1179,10 @@ cdef class ParticleSlice:
 
     # Position
     property pos:
-        """Particle position (not folded into central image)."""
+        """
+        Particle position (not folded into central image).
+
+        """
         def __set__(self, _pos_array):
             if len(self.id_selection) != len(_pos_array):
                 raise Exception("Input list size (%i) does not match slice size (%i)." % (
@@ -1081,7 +1199,10 @@ cdef class ParticleSlice:
             return pos_array
 
     property pos_folded:
-        """Particle position (folded into central image)."""
+        """
+        Particle position (folded into central image).
+
+        """
 
         def __set__(self, d):
             raise Exception("setting a folded position is not implemented.")
@@ -1095,7 +1216,10 @@ cdef class ParticleSlice:
 
     # Velocity
     property v:
-        """Particle velocity."""
+        """
+        Particle velocity.
+
+        """
 
         def __set__(self, _v_array):
             if len(np.array(_v_array).shape) == 1:
@@ -1118,7 +1242,10 @@ cdef class ParticleSlice:
 
     # Force
     property f:
-        """Particle force."""
+        """
+        Particle force.
+
+        """
 
         def __set__(self, _f_array):
             if len(np.array(_f_array).shape) == 1:
@@ -1139,38 +1266,42 @@ cdef class ParticleSlice:
             return f_array
 
     property mass:
-            """Particle mass.
-            
-            .. note::
+        """
+        Particle mass.
 
-                If not set the particle mass is ``1`` in reduced units.
+        .. note::
 
-            """
+            If not set the particle mass is ``1`` in reduced units.
 
-            def __set__(self, _mass_array):
-                IF MASS:
-                    if isinstance(_mass_array, int) or isinstance(_mass_array, float):
-                        for i in range(len(self.id_selection)):
-                            ParticleHandle(self.id_selection[i]).mass = _mass_array
-                        return
-                    if len(self.id_selection) != len(_mass_array):
-                        raise Exception("Input list size (%i) does not match slice size (%i)." % (
-                            len(_mass_array), len(self.id_selection)))
-                    for i in range(len(_mass_array)):
-                        ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
-                ELSE:
-                    raise Exception("You are trying to set the particle mass \
-                                     but the mass feature is not compiled in.")
+        """
 
-            def __get__(self):
-                mass_array = np.zeros_like(self.id_selection)
-                for i in range(len(self.id_selection)):
-                    mass_array[i] = ParticleHandle(self.id_selection[i]).mass
-                return mass_array
+        def __set__(self, _mass_array):
+            IF MASS:
+                if isinstance(_mass_array, int) or isinstance(_mass_array, float):
+                    for i in range(len(self.id_selection)):
+                        ParticleHandle(self.id_selection[i]).mass = _mass_array
+                    return
+                if len(self.id_selection) != len(_mass_array):
+                    raise Exception("Input list size (%i) does not match slice size (%i)." % (
+                        len(_mass_array), len(self.id_selection)))
+                for i in range(len(_mass_array)):
+                    ParticleHandle(self.id_selection[i]).mass = _mass_array[i]
+            ELSE:
+                raise Exception("You are trying to set the particle mass \
+                                 but the mass feature is not compiled in.")
+
+        def __get__(self):
+            mass_array = np.zeros_like(self.id_selection)
+            for i in range(len(self.id_selection)):
+                mass_array[i] = ParticleHandle(self.id_selection[i]).mass
+            return mass_array
 
     IF ELECTROSTATICS == 1:
         property q:
-            """Particle charge."""
+            """
+            Particle charge.
+
+            """
 
             def __set__(self, _q_array):
                 if isinstance(_q_array, int) or isinstance(_q_array, float):
@@ -1192,7 +1323,10 @@ cdef class ParticleSlice:
 
     IF EXTERNAL_FORCES:
         property ext_force:
-            """External force on a particle defined by a vector."""
+            """
+            External force on a particle defined by a vector.
+
+            """
 
             def __set__(self, _ext_f_array):
                 if len(np.array(_ext_f_array).shape) == 1:
@@ -1219,7 +1353,10 @@ cdef class ParticleSlice:
 
     IF EXCLUSIONS:
         property exclude:
-            """Exclude particle from interaction."""
+            """
+            Exclude particle from interaction.
+
+            """
 
             def __set__(self, _partners):
                 if not isinstance(_partners, list):
@@ -1282,7 +1419,10 @@ cdef class ParticleSlice:
 
     # Bond related methods
     def add_bond(self, _bond):
-        """Add a single bond to the particles."""
+        """
+        Add a single bond to the particles.
+
+        """
         bond = list(_bond)  # As we will modify it
         for i in range(len(self.id_selection)):
             partners = []
@@ -1291,7 +1431,10 @@ cdef class ParticleSlice:
             ParticleHandle(self.id_selection[i]).add_bond((bond[0], *partners))
 
     def delete_bond(self, _bond):
-        """Delete a single bond from the particles."""
+        """
+        Delete a single bond from the particles.
+
+        """
         bond = list(_bond)  # as we modify it
         for i in range(len(self.id_selection)):
             partners = []
@@ -1304,13 +1447,19 @@ cdef class ParticleSlice:
             ParticleHandle(self.id_selection[i]).delete_all_bonds()
 
     def remove(self):
-        """Delete the particles."""
+        """
+        Delete the particles.
+
+        """
         for id in self.id_selection:
             ParticleHandle(id).remove()
 
 
 cdef class ParticleList:
-    """Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object """
+    """
+    Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object.
+
+    """
     # Retrieve a particle
 
     def __getitem__(self, key):
@@ -1330,7 +1479,8 @@ cdef class ParticleList:
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        """ Attributes to pickle.
+        """
+        Attributes to pickle.
         Content of particle_attributes, minus a few exceptions
         dip, director: Setting only the director will overwrite
         the orientation of the particle around the axis parallel
@@ -1338,7 +1488,9 @@ cdef class ParticleList:
         id: The particle id is used as the storage key when pickling
         all particles via ParticleList, and the interface
         (rightly) does not support changing of the id after the particle
-        was created."""
+        was created.
+
+        """
         pickle_attr = copy(particle_attributes)
         for i in ["director", "dip", "id"]:
             if i in pickle_attr:
@@ -1477,6 +1629,7 @@ cdef class ParticleList:
     def writevtk(self, fname, types='all'):
         """
         :todo: `Documentation missing.`
+
         """
         global box_l
         if not hasattr(types, '__iter__'):
@@ -1508,17 +1661,26 @@ cdef class ParticleList:
                         vtk.write("{} {} {}\n".format(*p.v))
 
     property highest_particle_id:
-        """Largest particle id."""
+        """
+        Largest particle id.
+
+        """
         def __get__(self):
             return max_seen_particle
 
     property n_part_types:
-        """Number of particle types."""
+        """
+        Number of particle types.
+
+        """
         def __get__(self):
             return n_particle_types
 
     property n_rigidbonds:
-        """Number of rigid bonds."""
+        """
+        Number of rigid bonds.
+
+        """
         def __get__(self):
             return n_rigidbonds
 
@@ -1531,7 +1693,10 @@ cdef class ParticleList:
     #         return n_part
 
     def pairs(self):
-        """Generator returns all pairs of particles."""
+        """
+        Generator returns all pairs of particles.
+
+        """
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
                 if not (self.exists(i) and self.exists(j)):
