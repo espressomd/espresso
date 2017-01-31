@@ -17,7 +17,7 @@ export PYTHONPATH
 
 if [ "$1" = "--gdb" ]; then
   shift
-  exec gdb -ex run --args @PYTHON_EXECUTABLE@ $@
+  exec gdb -ex run --args @PYTHON_FRONTEND@ $@
 fi
 
-exec @PYTHON_EXECUTABLE@ $@
+exec @PYTHON_FRONTEND@ $@
