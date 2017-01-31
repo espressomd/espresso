@@ -35,7 +35,9 @@ ParameterMap H5mdScript::valid_parameters() const
 {
     return {{"filename", {ParameterType::STRING, true}},
             {"scriptname", {ParameterType::STRING, true}},
-            {"what", {ParameterType::INT, true}}};
+            {"what", {ParameterType::INT, true}},
+            {"write_ordered", {ParameterType::BOOL, true}}
+            };
 }
 
 
@@ -44,6 +46,7 @@ void H5mdScript::set_parameter(const std::string& name, const Variant& value)
     SET_PARAMETER_HELPER("filename", m_h5md->filename());
     SET_PARAMETER_HELPER("scriptname", m_h5md->scriptname());
     SET_PARAMETER_HELPER("what", m_h5md->what());
+    SET_PARAMETER_HELPER("write_ordered", m_h5md->write_ordered());
 }
 
 
@@ -51,7 +54,9 @@ VariantMap H5mdScript::get_parameters() const
 {
     return {{"filename", m_h5md->filename()},
             {"scriptname", m_h5md->scriptname()},
-            {"what", m_h5md->what()}};
+            {"what", m_h5md->what()},
+            {"write_ordered", m_h5md->write_ordered()},
+            };
 }
 
 

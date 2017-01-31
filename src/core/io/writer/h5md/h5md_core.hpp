@@ -37,6 +37,7 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include <h5xx/h5xx.hpp>
+#include "communication.hpp"
 
 
 extern double sim_time;
@@ -94,6 +95,8 @@ class File
         std::string &scriptname() { return m_scriptname; };
         // Returns the int that describes which data should be written to the dataset.
         int &what() { return m_what; };
+        // Returns the boolean value that describes whether data should be written to the dataset in the order of ids (possibly slower on output for many particles).
+        bool &write_ordered() {return m_write_ordered;} ;
 
     private:
         bool check_file_exists(const std::string &name)
@@ -108,12 +111,28 @@ class File
          * @return TRUE if H5MD structure is present, FALSE else.
          */
         bool check_for_H5MD_structure(std::string const &filename);
+        
         /**
          * @brief Method that performs all the low-level stuff for writing the particle
          * positions to the dataset.
          */
         template <typename T>
-        void WriteDataset(T &data, const std::string& path);
+        void WriteDataset(T &data, const std::string& path, int_array_3d id);
+        
+        /**
+         * @brief create chunk dataset dimensions.
+         */  	
+	std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size);
+
+        /**
+         * @brief Method that extends datasets.
+         */            
+        void ExtendDataset(std::string path, int extent);
+        
+        /*
+         * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
+         */
+	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, Particle* current_particle, bool write_typ,bool write_mass,bool write_pos, bool write_vel, bool write_force );
         /*
          * @brief Method to write the simulation script to the dataset.
          */
@@ -154,6 +173,7 @@ class File
         std::string m_filename;
         std::string m_scriptname;
         int m_what;
+        bool m_write_ordered;
         std::string m_backup_filename;
         boost::filesystem::path m_absolute_script_path = "NULL";
         h5xx::file m_h5md_file;
@@ -161,7 +181,6 @@ class File
         struct DatasetDescriptor  {
             std::string path;
             hsize_t dim;
-            hsize_t size;
             h5xx::datatype type;
         };
         std::vector<std::string> group_names;
