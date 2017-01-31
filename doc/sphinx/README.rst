@@ -17,5 +17,5 @@ How to get started with SPHINX
 #. In the directory ``doc/sphinx`` you can find all the source rst files for the user guide.
    You can change those files and rerun ``make sphinx``.
 
-#. When writing a docstring please keep the style to 
-   `numpy docstrings <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_.
+#. When writing a docstring please keep the style to
+   `numpy docstrings <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_.
