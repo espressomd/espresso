@@ -37,6 +37,7 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include <h5xx/h5xx.hpp>
+#include "communication.hpp"
 
 
 extern double sim_time;
@@ -77,7 +78,8 @@ class File
                          W_V    = 1 << 1,
                          W_F    = 1 << 2,
                          W_TYPE = 1 << 3,
-                         W_MASS = 1 << 4 };
+                         W_MASS = 1 << 4,
+                         W_CHARGE= 1 << 5};
         /**
          * @brief General method to write to the datasets which calls more specific write methods.
          * @param Boolean values for position, velocity, force and mass.
@@ -94,9 +96,18 @@ class File
         std::string &scriptname() { return m_scriptname; };
         // Returns the int that describes which data should be written to the dataset.
         int &what() { return m_what; };
+        // Returns the boolean value that describes whether data should be written to the dataset in the order of ids (possibly slower on output for many particles).
+        bool &write_ordered() {return m_write_ordered;} ;
+        /**
+         * @brief Method to force flush to h5md file.
+         */
+        void Flush();
 
     private:
-        bool check_file_exists(const std::string &name)
+    	MPI_Comm m_hdf5_comm;
+	bool m_already_wrote_bonds=false;
+        
+	bool check_file_exists(const std::string &name)
         {
             std::ifstream f(name.c_str());
             return f.good();
@@ -113,7 +124,22 @@ class File
          * positions to the dataset.
          */
         template <typename T>
-        void WriteDataset(T &data, const std::string& path);
+        void WriteDataset(T &data, const std::string& path, int* change_extent, hsize_t* offset, hsize_t* count);
+
+        /**
+         * @brief Method that extends datasets by the given extent.
+         */            
+        void ExtendDataset(std::string path, int* change_extent);
+        
+         /**
+         * @brief Method that returns chunk dimensions.
+         */  
+        std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size, hsize_t chunk_size);
+        
+        /*
+         * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
+         */
+	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat, int_array_3d& bond);
         /*
          * @brief Method to write the simulation script to the dataset.
          */
@@ -132,7 +158,7 @@ class File
         void load_file(const std::string& filename);
 
         /**
-         * @brief Initializes the necessary data to create the groups and datsets.
+         * @brief Initializes the necessary data to create the datsets and attributes.
          */
         void init_filestructure();
 
@@ -141,11 +167,11 @@ class File
          * @param only_load Set this to true if you want to append to an existing file.
          */
         void create_datasets(bool only_load);
-
+        
         /**
-         * @brief Creates the necessary HDF5 groups.
+         * @brief Links the time and step datasets to of all properties to the time and step dataset of the id property. All properties are written at the same time.
          */
-        void create_groups();
+	void create_links_for_time_and_step_datasets();
 
         /**
          * Member variables.
@@ -154,6 +180,7 @@ class File
         std::string m_filename;
         std::string m_scriptname;
         int m_what;
+        bool m_write_ordered;
         std::string m_backup_filename;
         boost::filesystem::path m_absolute_script_path = "NULL";
         h5xx::file m_h5md_file;
@@ -161,12 +188,10 @@ class File
         struct DatasetDescriptor  {
             std::string path;
             hsize_t dim;
-            hsize_t size;
             h5xx::datatype type;
         };
         std::vector<std::string> group_names;
         std::vector<DatasetDescriptor> dataset_descriptors;
-        std::unordered_map<std::string, h5xx::group> groups;
         std::unordered_map<std::string, h5xx::dataset> datasets;
 };
 
