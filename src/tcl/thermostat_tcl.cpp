@@ -560,6 +560,9 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
       return tclcommand_thermostat_print_usage(interp, argc, argv);
     }
   }
+
+  auto thermo_switch_before = thermo_switch;
+
   if ( ARG1_IS_S("off") )
     err = tclcommand_thermostat_parse_off(interp, argc, argv);
   else if ( ARG1_IS_S("langevin"))
@@ -598,6 +601,18 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
     return tclcommand_thermostat_print_usage(interp, argc, argv);
   }
+
+  // If there is already a thermostat and we are not switching it off,
+  // issue a warning.
+  if ( thermo_switch_before != thermo_switch && // thermostat has changed
+       thermo_switch        != THERMO_OFF &&    // it is not off now
+       thermo_switch_before != THERMO_OFF       // it was not off before
+    )
+  {
+    fprintf(stderr, "WARNING: You are activating more than one thermostat!\n"
+                    "         This will NOT overwrite previous settings.\n");
+  }
+
   return gather_runtime_errors(interp, err);
 }
 
