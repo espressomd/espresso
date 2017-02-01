@@ -4110,18 +4110,19 @@ void lb_lbfluid_remove_total_momentum()
   lb_calc_fluid_mass_GPU( &lb_calc_fluid_mass_res );
   float fluid_mass = lb_calc_fluid_mass_res;
 
-  float velocity[3] = { 0.0f, 0.0f, 0.0f };
-  velocity[0] = -total_momentum[0]/(fluid_mass + particles_mass);
-  velocity[1] = -total_momentum[1]/(fluid_mass + particles_mass);
-  velocity[2] = -total_momentum[2]/(fluid_mass + particles_mass);
-
-  float momentum_fluid[3] = {
-    velocity[0]*fluid_mass,
-    velocity[1]*fluid_mass,
-    velocity[2]*fluid_mass
+  float momentum[3] = {
+    -total_momentum[0]/(fluid_mass + particles_mass),
+    -total_momentum[1]/(fluid_mass + particles_mass),
+    -total_momentum[2]/(fluid_mass + particles_mass)
   };
 
-  lb_lbfluid_particles_add_momentum( velocity );
+  float momentum_fluid[3] = {
+    momentum[0]*fluid_mass,
+    momentum[1]*fluid_mass,
+    momentum[2]*fluid_mass
+  };
+
+  lb_lbfluid_particles_add_momentum( momentum );
   lb_lbfluid_fluid_add_momentum( momentum_fluid );
 }
 

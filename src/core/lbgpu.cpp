@@ -442,7 +442,7 @@ int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
   return lb_lbfluid_load_checkpoint(filename, binary);
 }
 
-void lb_lbfluid_particles_add_momentum ( float velocity[3] )
+void lb_lbfluid_particles_add_momentum ( float momentum[3] )
 {
   for (int i = 0; i < lbpar_gpu.number_of_particles; ++i)
   {
@@ -454,9 +454,9 @@ void lb_lbfluid_particles_add_momentum ( float velocity[3] )
 #endif
 
     double new_velocity[3] = {
-      particle_data_host[i].v[0] + velocity[0] / mass * time_step,
-      particle_data_host[i].v[1] + velocity[1] / mass * time_step,
-      particle_data_host[i].v[2] + velocity[2] / mass * time_step
+      particle_data_host[i].v[0] + momentum[0] / mass * time_step,
+      particle_data_host[i].v[1] + momentum[1] / mass * time_step,
+      particle_data_host[i].v[2] + momentum[2] / mass * time_step
     };
     set_particle_v( i, new_velocity );
   }
@@ -464,8 +464,7 @@ void lb_lbfluid_particles_add_momentum ( float velocity[3] )
 
 void lb_lbfluid_calc_linear_momentum ( float momentum[3], int include_particles, int include_lbfluid )
 {
-  std::vector<double> linear_momentum;
-  linear_momentum = calc_linear_momentum(include_particles, include_lbfluid);
+  auto linear_momentum = calc_linear_momentum(include_particles, include_lbfluid);
   momentum[0] = linear_momentum[0];
   momentum[1] = linear_momentum[1];
   momentum[2] = linear_momentum[2];
