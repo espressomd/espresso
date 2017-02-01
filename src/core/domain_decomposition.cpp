@@ -283,162 +283,169 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3])
   return c;
 }
 
-/** Create communicators for cell structure domain decomposition. (see \ref GhostCommunicator) */
-void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
+
+/** Determine lc and hc as lower and upper corner of the area to send.
+ * \param disp the displacement vector in {-1, 0, 1}^3
+ * \param recv 0 or 1 indicating a send (0) or receive (1) operation
+ * \param lc out lower corner of communication area, inclusive
+ * \param hc out high corner of communication area, inclusive
+ */
+static void dd_determine_send_receive_cells(const int disp[3], int recv, int lc[3], int hc[3])
 {
-  int dir,lr,i,cnt, num, n_comm_cells[3];
-  int lc[3],hc[3],done[3]={0,0,0};
+  for (int i = 0; i < 3; ++i) {
+    lc[i] = disp[i] <= 0? 1: dd.cell_grid[i];
+    hc[i] = disp[i] < 0? 1: dd.cell_grid[i];
 
-  /* calculate number of communications */
-  num = 0;
-  for(dir=0; dir<3; dir++) { 
-    for(lr=0; lr<2; lr++) {
-      /* No communication for border of non periodic direction */
-      if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
-       {
-         if(node_grid[dir] == 1 ) num++;
-         else num += 2;
-       }
-    }
-  }
-
-  /* prepare communicator */
-  CELL_TRACE(fprintf(stderr,"%d Create Communicator: prep_comm data_parts %d num %d\n",this_node,data_parts,num));
-  prepare_comm(comm, data_parts, num);
-
-  /* number of cells to communicate in a direction */
-  n_comm_cells[0] = dd.cell_grid[1]       * dd.cell_grid[2];
-  n_comm_cells[1] = dd.cell_grid[2]       * dd.ghost_cell_grid[0];
-  n_comm_cells[2] = dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1];
-
-  cnt=0;
-  /* direction loop: x, y, z */
-  for(dir=0; dir<3; dir++) {
-    lc[(dir+1)%3] = 1-done[(dir+1)%3]; 
-    lc[(dir+2)%3] = 1-done[(dir+2)%3];
-    hc[(dir+1)%3] = dd.cell_grid[(dir+1)%3]+done[(dir+1)%3];
-    hc[(dir+2)%3] = dd.cell_grid[(dir+2)%3]+done[(dir+2)%3];
-    /* lr loop: left right */
-    /* here we could in principle build in a one sided ghost
-       communication, simply by taking the lr loop only over one
-       value */
-    for(lr=0; lr<2; lr++) {
-      if(node_grid[dir] == 1) {
-        /* just copy cells on a single node */
-      if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
-      {
-        comm->comm[cnt].type          = GHOST_LOCL;
-        comm->comm[cnt].node          = this_node;
-
-        /* Buffer has to contain Send and Recv cells -> factor 2 */
-        comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
-        comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
-        /* prepare folding of ghost positions */
-        if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
-             comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-        }        
-
-            /* fill send comm cells */
-        lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir]-1);
-        
-            dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-            CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-                               lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-        
-        /* fill recv comm cells */
-            lc[dir] = hc[dir] = 0 +( 1 - lr ) * ( dd.cell_grid[dir] + 1 );
-        
-            /* place recieve cells after send cells */
-            dd_fill_comm_cell_lists(&comm->comm[cnt].part_lists[n_comm_cells[dir]],lc,hc);
-            CELL_TRACE(fprintf(stderr,"%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-            cnt++;
-          }
-      }
-      else {
-        /* i: send/recv loop */
-        for(i=0; i<2; i++) {
-          if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
-            if((node_pos[dir]+i)%2==0) {
-              comm->comm[cnt].type          = GHOST_SEND;
-              comm->comm[cnt].node          = node_neighbors[2*dir+lr];
-              comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-              comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-              /* prepare folding of ghost positions */
-              if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) {
-                 comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-          }        
-  
-              lc[dir] = hc[dir] = 1 + lr * ( dd.cell_grid[dir] - 1 );
-          
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-        
-              CELL_TRACE(fprintf(stderr,"%d: prep_comm %d send to   node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-                                 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-              cnt++;
-            }
-          if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
-            if((node_pos[dir]+(1-i))%2==0) {
-              comm->comm[cnt].type          = GHOST_RECV;
-              comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
-              comm->comm[cnt].part_lists    = (ParticleList**)Utils::malloc(n_comm_cells[dir]*sizeof(ParticleList *));
-              comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
-        
-              lc[dir] = hc[dir] = ( 1 - lr ) * ( dd.cell_grid[dir] + 1 );
-        
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists,lc,hc);
-              CELL_TRACE(fprintf(stderr,"%d: prep_comm %d recv from node %d grid (%d,%d,%d)-(%d,%d,%d)\n",this_node,cnt,
-                                 comm->comm[cnt].node,lc[0],lc[1],lc[2],hc[0],hc[1],hc[2]));
-              cnt++;
-            }
-        }
-      }
-      done[dir]=1;
+    // The receive area is actually in the ghost layer
+    // so shift the corresponding indices.
+    if (recv) {
+      if (disp[i] > 0)
+        lc[i] = hc[i] = dd.cell_grid[i] + 1;
+      else if (disp[i] < 0)
+        lc[i] = hc[i] = 0;
     }
   }
 }
 
-/** Revert the order of a communicator: After calling this the
-    communicator is working in reverted order with exchanged
-    communication types GHOST_SEND <-> GHOST_RECV. */
+/** Count the number of cells in a cell range given by lc and hc, both
+ * inclusive!
+ */
+static int dd_lc_hc_count_ncells(const int lc[3], const int hc[3])
+{
+    int ncells = 1;
+    for (int d = 0; d < 3; ++d)
+      ncells *= hc[d] - lc[d] + 1;
+    return ncells;
+}
+
+
+/** Returns an integer unique for a given displacement from {-1, 0, 1}^3.
+ * Is the same for send and receive site, i.e. for sending with displacement d
+ * and receiving with -d this functions returns the same tag.
+ * \param recv 0 if send operation 1 if receive
+ * \param disp displacement vector from {-1, 0, 1}^3
+ * \return unique number for a displacement vector
+ */
+static int get_tag(int recv, const int disp[3])
+{
+  int tag = 0;
+  for (int i = 0; i < 3; ++i)
+    tag = tag * 10 + (disp[i] * (recv? -1: 1) + 1);
+  return tag;
+}
+
+/** Create communicators for cell structure domain decomposition. (see \ref GhostCommunicator)
+ * Works ONLY for FULLY periodic systems.
+ */
+void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
+{
+  const int nneigh = 26;
+  const static int disps[nneigh][3] = {
+      {-1, -1, -1},
+      {-1, -1,  0},
+      {-1, -1,  1},
+      {-1,  0, -1},
+      {-1,  0,  0},
+      {-1,  0,  1},
+      {-1,  1, -1},
+      {-1,  1,  0},
+      {-1,  1,  1},
+      { 0, -1, -1},
+      { 0, -1,  0},
+      { 0, -1,  1},
+      { 0,  0, -1},
+      //{ 0,  0,  0}, Actually not a boundary so nothing to send, here.
+      { 0,  0,  1},
+      { 0,  1, -1},
+      { 0,  1,  0},
+      { 0,  1,  1},
+      { 1, -1, -1},
+      { 1, -1,  0},
+      { 1, -1,  1},
+      { 1,  0, -1},
+      { 1,  0,  0},
+      { 1,  0,  1},
+      { 1,  1, -1},
+      { 1,  1,  0},
+      { 1,  1,  1},
+  };
+
+  // Prepare communicator
+  CELL_TRACE(fprintf(stderr,"%d Create Communicator: prep_comm data_parts %d num %d\n", this_node, data_parts, 2 * nneigh));
+  prepare_comm(comm, data_parts, 2 * nneigh, true); // Send and receive per neighbor
+
+  // Prepare communications
+  for (int i = 0; i < nneigh; ++i) {
+    int node = grid_get_neighbor_rank(disps[i]);
+
+    // Send receive loop
+    for (int sr = 0; sr <= 1; ++sr) {
+      int lc[3], hc[3], ncells;
+      dd_determine_send_receive_cells(disps[i], sr, lc, hc);
+      ncells = dd_lc_hc_count_ncells(lc, hc);
+
+      comm->comm[2*i+sr].type = sr == 0? GHOST_SEND: GHOST_RECV;
+      comm->comm[2*i+sr].node = node;
+      comm->comm[2*i+sr].n_part_lists = ncells;
+      comm->comm[2*i+sr].part_lists = (ParticleList **) Utils::malloc(ncells * sizeof(ParticleList *));
+      comm->comm[2*i+sr].tag = get_tag(sr, disps[i]);
+
+      int nc = dd_fill_comm_cell_lists(comm->comm[2*i+sr].part_lists, lc, hc);
+      // Sanity check
+      if (nc != ncells) {
+        fprintf(stderr, "[Node %i] dd_prepare_comm: Wrote %i cells but expected %i. UB :(\n", this_node, nc, ncells);
+        fprintf(stderr, "Diagnostic: lc = %i,%i,%i, hc = %i,%i,%i, disp = %i,%i,%i, node = %i\n", lc[0], lc[1], lc[2], hc[0], hc[1], hc[2], disps[i][0], disps[i][1], disps[i][2], node);
+        errexit();
+      }
+
+      // Set the periodic shift (only relevant for sender and only if requested)
+      // in the relevant directions
+      for (int d = 0; d < 3; ++d)
+        if (sr == 0 && (data_parts & GHOSTTRANS_POSSHFTD) && grid_node_on_boundary(disps[i], d))
+          comm->comm[2*i+sr].shift[d] = -disps[i][d] * box_l[d];
+    }
+  }
+}
+
+/** Exchange GHOST_SEND and GHOST_RECV Communicator types.
+ */
 void dd_revert_comm_order(GhostCommunicator *comm)
 {
-  int i,j,nlist2;
-  GhostCommunication tmp;
-  ParticleList *tmplist;
+  int i;
 
   CELL_TRACE(fprintf(stderr,"%d: dd_revert_comm_order: anz comm: %d\n",this_node,comm->num));
 
-  /* revert order */
-  for(i=0; i<(comm->num/2); i++) {
-    tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num-i-1];
-    comm->comm[comm->num-i-1] = tmp;
-  }
   /* exchange SEND/RECV */
-  for(i=0; i<comm->num; i++) {
-    if(comm->comm[i].type == GHOST_SEND) comm->comm[i].type = GHOST_RECV;
-    else if(comm->comm[i].type == GHOST_RECV) comm->comm[i].type = GHOST_SEND;
-    else if(comm->comm[i].type == GHOST_LOCL) {
-      nlist2=comm->comm[i].n_part_lists/2;
-      for(j=0;j<nlist2;j++) {
-        tmplist = comm->comm[i].part_lists[j];
-        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j+nlist2];
-        comm->comm[i].part_lists[j+nlist2] = tmplist;
-      }
-    }
+  for(i = 0; i < comm->num; i++) {
+    if (comm->comm[i].type == GHOST_SEND)
+      comm->comm[i].type = GHOST_RECV;
+    else if (comm->comm[i].type == GHOST_RECV)
+      comm->comm[i].type = GHOST_SEND;
   }
 }
 
-/** Of every two communication rounds, set the first receivers to prefetch and poststore */
-void dd_assign_prefetches(GhostCommunicator *comm)
+/** Signum function
+ */
+static inline double sign(double n)
 {
-  int cnt;
+  if (n > 0.0)
+    return 1.0;
+  else if (n < 0.0)
+    return -1.0;
+  else
+    return 0.0;
+}
 
-  for(cnt=0; cnt<comm->num; cnt += 2) {
-    if (comm->comm[cnt].type == GHOST_RECV && comm->comm[cnt + 1].type == GHOST_SEND) {
-      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-    }
+/** Rescale a communicator to shift by the current box_l.
+ */
+static void dd_comm_rescale_shift(GhostCommunicator *gc)
+{
+  // No need to recalc the shifts using the Cartesian process displacements.
+  // Just use the signum and multiply it to the new box_l.
+  for (int i = 0; i < gc->num; ++i) {
+    double *shift = gc->comm[i].shift;
+    for (int d = 0; d < 3; ++d)
+      shift[d] = sign(shift[d]) * box_l[d];
   }
 }
 
@@ -449,43 +456,8 @@ void dd_assign_prefetches(GhostCommunicator *comm)
     dd_prepare_comm. */
 void dd_update_communicators_w_boxl()
 {
-  int cnt=0;
-  
-  /* direction loop: x, y, z */
-  for(int dir=0; dir<3; dir++) {
-    /* lr loop: left right */
-    for(int lr=0; lr<2; lr++) {
-      if(node_grid[dir] == 1) {
-        if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) )
-          {
-            /* prepare folding of ghost positions */
-            if(boundary[2*dir+lr] != 0) {
-              cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-              cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-            }
-            cnt++;
-          }
-      }
-      else {
-        /* i: send/recv loop */
-        for(int i=0; i<2; i++) {
-          if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) )
-            if((node_pos[dir]+i)%2==0) {
-              /* prepare folding of ghost positions */
-              if(boundary[2*dir+lr] != 0) {
-                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-              }
-              cnt++;
-            }
-          if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) )
-            if((node_pos[dir]+(1-i))%2==0) {
-              cnt++;
-            }
-        }
-      }
-    }
-  }
+  dd_comm_rescale_shift(&cell_structure.exchange_ghosts_comm);
+  dd_comm_rescale_shift(&cell_structure.update_ghost_pos_comm);
 }
 
 /** Init cell interactions for cell system domain decomposition.
@@ -725,15 +697,10 @@ void dd_on_geometry_change(int flags) {
 #ifdef LB
     le_dd_dynamic_update_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING);
 #endif
-    
-    /* prefetch status may have changed? */
-    dd_assign_prefetches(&cell_structure.ghost_cells_comm);
-    dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-    dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
-    dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+
 #endif
-    
-  } 
+
+  }
 
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
@@ -841,27 +808,19 @@ void dd_topology_init(CellPList *old)
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
-  dd_assign_prefetches(&cell_structure.ghost_cells_comm);
-  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
-  dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
-
 #ifdef LB
   dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING) ;
-  dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
-  
+
 #ifdef IMMERSED_BOUNDARY
   // Immersed boundary needs to communicate the forces from but also to the ghosts
   // This is different than usual collect_ghost_force_comm (not in reverse order)
   // Therefore we need our own communicator
   dd_prepare_comm(&cell_structure.ibm_ghost_force_comm, GHOSTTRANS_FORCE);
-  dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
 #endif
 
 #ifdef ENGINE
   dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING) ;
-  dd_assign_prefetches(&cell_structure.ghost_swimming_comm) ;
 #endif
 
   /* initialize cell neighbor structures */

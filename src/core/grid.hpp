@@ -331,5 +331,24 @@ inline void unfold_position(double pos[3], int image_box[3])
   unfold_position(pos, v, image_box);
 }
 
+
+/** Determine the rank of a process in direction given by disp.
+ * Cannot use MPI_Cart_shift here because we need more than just the
+ * face neighbors.
+ *
+ * \param dist dispalcement vector in {-1, 0, 1}^3
+ * \return rank within comm_cart
+ */
+int grid_get_neighbor_rank(const int disp[3]);
+
+/** Returns true if this node is on the boundary in direction d and this
+ * direction is relevant according to disp.
+ *
+ * \param dist dispalcement vector in {-1, 0, 1}^3
+ * \param d direction to check
+ * \return true if process on boundary w.r.t. direction d and disp
+ */
+bool grid_node_on_boundary(const int disp[3], int d);
+
 /*@}*/
 #endif

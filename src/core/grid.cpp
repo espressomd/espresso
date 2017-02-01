@@ -387,3 +387,30 @@ void rescale_boxl(int dir, double d_new) {
     mpi_rescale_particles(dir, scale);
   }
 }
+
+
+int grid_get_neighbor_rank(const int disp[3])
+{
+  int neigh, coords[3];
+
+  for (int i = 0; i < 3; ++i) {
+    coords[i] = node_pos[i] + disp[i];
+    if (coords[i] >= node_grid[i])
+        coords[i] = 0;
+    else if (coords[i] < 0)
+        coords[i] = node_grid[i] - 1;
+  }
+  MPI_Cart_rank(comm_cart, coords, &neigh);
+  return neigh;
+}
+
+bool grid_node_on_boundary(const int disp[3], int d)
+{
+  if (disp[d] > 0 && node_pos[d] == node_grid[d] - 1)
+    return true;
+  else if (disp[d] < 0 && node_pos[d] == 0)
+    return true;
+  else
+    return false;
+}
+
