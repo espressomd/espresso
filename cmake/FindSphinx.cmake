@@ -1,6 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
-find_program(SPHINX_EXECUTABLE NAMES sphinx-build
+find_program(SPHINX_EXECUTABLE NAMES sphinx-build sphinx-build-${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
     HINTS
     $ENV{SPHINX_DIR}
     PATHS /opt/local/ /usr/local/ $ENV{HOME}/Library/Python/2.7/
@@ -8,7 +8,7 @@ find_program(SPHINX_EXECUTABLE NAMES sphinx-build
     DOC "Sphinx documentation generator."
 )
  
-find_program(SPHINX_API_DOC_EXE NAMES sphinx-apidoc
+find_program(SPHINX_API_DOC_EXE NAMES sphinx-apidoc sphinx-apidoc-${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
     HINTS
     PATH_SUFFIXES bin
     PATHS /opt/local/ /usr/local/ $ENV{HOME}/Library/Python/2.7/
