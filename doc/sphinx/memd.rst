@@ -1,5 +1,3 @@
-.. include:: defs.rst
-
 Maxwell Equations Molecular Dynamics (MEMD)
 ===========================================
 

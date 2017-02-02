@@ -1,5 +1,3 @@
-.. include:: defs.rst
-
 The MMM family of algorithms
 ============================
 

@@ -1,5 +1,3 @@
-.. include:: defs.rst
-
 Immersed Boundary Method for soft elastic objects
 =================================================
 

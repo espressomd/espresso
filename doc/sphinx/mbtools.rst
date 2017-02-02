@@ -1,5 +1,3 @@
-.. include:: defs.rst
-
 External package: mbtools
 =========================
 
