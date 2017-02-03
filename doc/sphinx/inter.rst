@@ -1,13 +1,15 @@
+.. _Setting up interactions:
+
 Setting up interactions
 =======================
 
-In , interactions are set up and investigated by the command. There are
+In |es|, interactions are set up and investigated by the``interactions`` module. There are
 mainly two types of interactions: non-bonded and bonded interactions.
 Non-bonded interactions only depend on the *type* of the two involved
 particles. This also applies to the electrostatic interaction; however,
-due to its long-ranged nature, it requires special care and handles it
-separately with a number of state-of-the-art algorithms. The particle
-type and the charge are both defined using the command.
+due to its long-ranged nature, it requires special care and |es| handles it
+separately with a number of state-of-the-art algorithms. To specify particle
+type and charge see :ref:`Setting up particles`.
 
 A bonded interaction defines an interaction between a number of specific
 particles; it only applies to the set of particles for which it has been
@@ -15,44 +17,53 @@ explicitly set. A bonded interaction between a set of particles has to
 be specified explicitly by the command, while the command is used to
 define the interaction parameters.
 
-inter
+.. todo::
+    IMPLEMENT: print interaction list
 
-Without any arguments, returns a list of all defined interactions as a
-Tcl-list. The format of each entry corresponds to the syntax for
-defining the interaction as described below. Typically, this list looks
-like
-
-0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0 0 FENE 7.0 2.0
+.. _Isotropic non-bonded interactions :
 
 Isotropic non-bonded interactions
 ---------------------------------
+Nonbonded interaction are configured by the :class:`espressomd.interactions.NonBondedInteractions` class, which is a member of :class:`espressomd.system.System`::
+    system.non_bonded_inter[type1, type2]
 
-inter
+This command defines an interaction between all particles of type *type1* and
+*type2*. The possible interaction types and their parameters are
+listed below. 
 
-This command defines an interaction of type between all particles of
-type and . The possible interaction types and their parameters are
-listed below. If the interaction is omitted, the command returns the
-currently defined interaction between the two types using the syntax to
-define the interaction,
+.. todo::
+    Implement this functionality:
+    If the interaction is omitted, the command returns the
+    currently defined interaction between the two types using the syntax to
+    define the interaction
 
-0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
-the subsection [sec:forcecap] for details.
+the subsection :ref:`Capping the force during warmup` for more details.
+
+.. _Non-bonded tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
 
-[sec:tabnonbonded]
+.. note ::
 
-inter tabulated
+    `Feature TABULATED required.`
 
-This defines an interaction between particles of the types and according
-to an arbitrary tabulated pair potential. specifies a file which
+
+The interface for tabulated interactions are implemented 
+:class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
+via the following syntax::
+
+    system.non_bonded_inter[type1, type2].tabulated(filename = 'filename')
+
+
+This defines an interaction between particles of the types *type1* and *type2* according
+to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
 separation distance. The tabulated potential allows capping the force
-using , see section [sec:forcecap].
+using , see section :ref:`Capping the force during warmup`.
 
 At present the required file format is simply an ordered list separated
 by whitespace. The data reader first looks for a ``#`` character and
@@ -63,7 +74,7 @@ The first three parameters after the ``#`` specify the number of data
 points :math:`N_\mathrm{points}` and the minimal and maximal tabulated
 separation distances :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}`.
 The number of data points obviously should be an integer, the two other
-can be arbitrary positive doubles. Take care when choosing the number of
+can be arbitrary positive floating points. Take care when choosing the number of
 points, since a copy of each lookup table is kept on each node and must
 be referenced very frequently. The maximal tabulated separation distance
 also acts as the effective cutoff value for the potential.
@@ -78,64 +89,72 @@ of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`; the
 distance values :math:`r` in the file are ignored and only included for
 human readability.
 
+.. _Lennard-Jones interaction:
+
 Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter lennard-jones
+.. note::
+    `Feature LENNARD_JONES required.`
+
+The interface for the Lennard-Jones interaction is implemented in 
+:class:`espressomd.interactions.LennardJonesInteraction`. They are 
+configured via the following syntax::
+
+    system.non_bonded_inter[type1, type2].lennard_jones.set_params(**kwargs)
+
 
 This command defines the traditional (12-6)-Lennard-Jones interaction
-between particles of the types and . The potential is defined by
+between particles of the types *type1* and *type2*. For a description of the input arguments
+see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is defined by
 
 .. math::
 
    \label{eq:lj}
      V_\mathrm{LJ}(r) = \Biggl\{
        \begin{array}{ll}
-         4\epsilon((\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^{12}
-         - (\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^6+\var{c_\mathrm{shift}}) 
-         & \mathrm{, if~} \var{r_\mathrm{min}}+\var{r_\mathrm{off}} < \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
-         \mathit{0} 
-         & \mathrm{, otherwise}\\
-       \end{array}.
+         4\epsilon\left[(\frac{\sigma}{r-r_\mathrm{off}})^{12}
+         - (\frac{\sigma}{r-r_\mathrm{off}})^6+c_\mathrm{shift}\right], 
+         & \mathrm{ if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
+         \mathit{0}, 
+         & \mathrm{ otherwise}\\
+       \end{array}\ .
 
 The traditional Lennard–Jones potential is the “work–horse” potential of
 particle–particle interactions in coarse–grained simulations. It is a
 simple model of the van–der–Waals interaction, and is attractive at
 large distance, but strongly repulsive at short distances.
-:math:`\var{r_\mathrm{off}} + \var{\sigma}` corresponds to the sum of
-the radii of the interaction particles; at this radius,
-:math:`V_\mathrm{LJ}(\var{r}) = 4 \var{\epsilon} \var{c_\mathrm{shift}}`.
+:math:`r_\mathrm{off} + \sigma` corresponds to the sum of
+the radii of the interaction particles. At this distance, the potential is
+:math:`V_\mathrm{LJ}(r_\mathrm{off} + \sigma) = 4 \epsilon c_\mathrm{shift}`.
 The minimum of the potential is at
-:math:`\var{r} = \var{r_\mathrm{off}} +
-2^\frac{1}{6}\var{\sigma}`. At this value of :math:`r`,
-:math:`V_\mathrm{LJ}(r) =
--\var{\epsilon} + 4 \var{\epsilon} \var{c_\mathrm{shift}}`. The
-attractive part starts beyond this value of :math:`\var{r}`.
-:math:`\var{r_\mathrm{cut}}` determines the radius where the potential
-is cut off.
+:math:`V_\mathrm{LJ}(r_\mathrm{off} +
+2^\frac{1}{6}\sigma) = 
+-\epsilon + 4 \epsilon c_\mathrm{shift}`. Beyond this value the interaction is attractive.
+Beyond the distance :math:`r_\mathrm{cut}` the potential is cut off and the interaction force is zero.
 
-If is not set or it is set to the string , the shift will be
+If :math:`c_\mathrm{shift}` is not set or it is set to the string *auto*, the shift will be
 automatically computed such that the potential is continuous at the
 cutoff radius. If is not set, it is set to :math:`0`.
 
-The total force on a particle can be capped by using the command , see
-section [sec:forcecap], or on an individual level using the variable.
-When is set *and* has been issued before, the maximal force that is
-generated by this potential is the force at . By default, force capping
-is off, the cap radius is set to 0.
+The Lennard-Jones force on a particle can be capped by setting :math:`r_\mathrm{cap}`.
+When :math:`r_\mathrm{cap}` is set *and* individual force capping has been issued the Lennard-Jones interaction is capped by the force at :math:`r_\mathrm{cap}`.
+For further information on force capping see :ref:`Capping the force during warmup`.
+By default, force capping
+is off and the cap radius is set to 0.
 
 An optional additional parameter can be used to restrict the interaction
-from a *minimal* distance :math:`\var{r_\mathrm{min}}`. This is an
+from a *minimal* distance :math:`r_\mathrm{min}`. This is an
 optional parameter, set to 0 by default.
 
 A special case of the Lennard–Jones potential is the
 Weeks–Chandler–Andersen (WCA) potential, which one obtains by putting
 the cutoff into the minimum, choosing
-:math:`\var{r_\mathrm{cut}}=2^\frac{1}{6}\var{\sigma}`. The WCA
+:math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma`. The WCA
 potential is purely repulsive, and is often used to mimick hard sphere
 repulsion.
 
-When coupling particles to a Shan-Chen fluid, if the interaction is set,
+When coupling particles to a Shan-Chen fluid, if the *affinity* interaction is set,
 the Lennard-Jones potential is multiplied by the function
 
 .. math::
@@ -144,13 +163,13 @@ the Lennard-Jones potential is multiplied by the function
      A(r) = \Biggl\{
        \begin{array}{ll}
          \frac{(1-\alpha_1)}{2} [1+\tanh(2\phi)]  +  \frac{(1-\alpha_2)}{2} [1+\tanh(-2\phi)]
-         & \mathrm{, if~}  \var{r} > \var{r_\mathrm{cut}}+2^{\frac{1}{6}}\sigma\\
+         & \mathrm{, if~}  r > r_\mathrm{cut}+2^{\frac{1}{6}}\sigma\\
          1
          & \mathrm{, otherwise~} \\
-       \end{array},
+       \end{array}\ ,
 
 where :math:`\alpha_i` is the affinity to the :math:`i`-th fluid
-component (see [sec:affinity]), and the order parameter :math:`\phi` is
+component (see :ref:`Affinity interaction`), and the order parameter :math:`\phi` is
 calculated from the fluid component local density as
 :math:`\phi=\frac{\rho_1 -
 \rho_2}{\rho_1+\rho_2}`. For example, if the affinities are chosen so
@@ -158,7 +177,7 @@ that the first component is a good solvent (:math:`\alpha_1=1`) and the
 second one is a bad solvent (:math:`\alpha_2=0`), then, if the two
 particles are both in a region rich in the first component, then
 :math:`\phi\simeq1`, and :math:`A(r)\simeq0` for
-:math:`r>\var{r_\mathrm{cut}}+2^{\frac{1}{6}}\sigma`. Therefore, the
+:math:`r>r_\mathrm{cut}+2^{\frac{1}{6}}\sigma`. Therefore, the
 interaction potential will be very close to the WCA one. Conversely, if
 both particles are in a region rich in the second component, then
 :math:`\phi\simeq-1`, and :math:`A(r)\simeq 1`, so that the potential
@@ -166,51 +185,68 @@ will be very close to the full LJ one. If the cutoff has been set large
 enough, the particle will experience the attractive part of the
 potential, mimiking the effective attraction induced by the bad solvent.
 
+
+.. _Generic Lennard-Jones interaction:
+
 Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[sec:GenLennardJones]
+.. note::
+    Feature LENNARD_JONES_GENERIC required.
 
-inter lj-gen
+
+The interface for the generic Lennard-Jones interactions is implemented in 
+:class:`espressomd.interactions.GenericLennardJonesInteraction`. They
+are configured via the syntax::
+
+    system.non_bonded_inter[type1, type2].generic_lennard_jones.set_params(**kwargs)
 
 This command defines a generalized version of the Lennard-Jones
-interaction (see section [sec:LennardJones]) between particles of the
-types and . The potential is defined by
+interaction (see :ref:`Lennard-Jones interaction`) between particles of the
+types *type1* and *type2*. The potential is defined by
 
 .. math::
 
    \label{eq:lj-generic}
      V_\mathrm{LJ}(r) = \Biggl\{
        \begin{array}{ll}
-         \epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
-         -\var{b_2}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^{e_2}+\var{c_\mathrm{shift}}) 
-         & \mathrm{, if~} \var{r_\mathrm{min}}+\var{r_\mathrm{off}} < \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
+         \epsilon\left[b_1(\frac{\sigma}{r-r_\mathrm{off}})^{e_1}
+         -b_2(\frac{\sigma}{r-r_\mathrm{off}})^{e_2}+c_\mathrm{shift}\right]
+         & \mathrm{, if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
          \mathit{0} 
          & \mathrm{, otherwise}\\
-       \end{array}.
+       \end{array}\ .
 
 Note that the prefactor 4 of the standard LJ potential is missing, so
 the normal LJ potential is recovered for :math:`b_1=b_2=4`,
 :math:`e_1=12` and :math:`e_2=6`.
 
-The total force on a particle can be capped by using the command , see
-section [sec:forcecap], or on an individual level using the variable.
-When is set *and* has been issued before, the maximal force that is
-generated by this potential is the force at . By default, force capping
-is off, the cap radius is set to 0.
+The net force on a particle can be capped by using force capping , see
+section :ref:`Capping the force during warmup`
+
+.. todo::
+    IMPLEMENT: or on an individual level using the variable :math:`r_\mathrm{cap}`.
+    When :math:`r_\mathrm{cap}` is set *and* individual force capping has been issued,
+    the maximal force that is generated by this potential is the force at 
+    :math:`r_\mathrm{cap}`. By default, force capping is off, the cap radius is set to 0.
 
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
 the potential, where the following transformations apply:
 :math:`\epsilon \rightarrow \lambda \epsilon` and
-:math:`r-\var{r_\mathrm{off}} \rightarrow \sqrt{(r-\var{r_\mathrm{off}})^2 -
+:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 -
 (1-\lambda) \delta \sigma^2}`. allows to tune the strength of the
 interaction, while varies how smoothly the potential goes to zero as
-:math:`\var{\lambda}\rightarrow 0`. Such a feature allows one to perform
+:math:`\lambda\rightarrow 0`. Such a feature allows one to perform
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
 
 Lennard-Jones cosine interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. todo::
+    
+    Not implemented yet.
+
 
 inter lj-cos inter lj-cos2
 
@@ -249,6 +285,10 @@ section [sec:forcecap].
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter smooth-step
 
 This defines a smooth step interaction between particles of the types
@@ -266,6 +306,10 @@ the second one, :math:`\sigma_2`, where in general
 
 BMHTF potential
 ~~~~~~~~~~~~~~~
+
+.. todo::
+    
+    Not implemented yet.
 
 inter bmhtf-nacl
 
@@ -307,6 +351,10 @@ Cl–particles, the corresponding prefactor of the Coulomb interaction is
 Morse interaction
 ~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter morse
 
 This defines an interaction using the Morse potential between particles
@@ -330,6 +378,10 @@ where is again chosen such that :math:`V(\var{r_\mathrm{cut}})=0`. For
 Buckingham interaction
 ~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter buckingham
 
 This defines a Buckingham interaction between particles of the types and
@@ -346,6 +398,10 @@ see section [sec:forcecap].
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter soft-sphere
 
 This defines a soft sphere interaction between particles of the types
@@ -360,6 +416,10 @@ calculations should be used with great caution.
 
 Membrane-collision interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. todo::
+    
+    Not implemented yet.
 
 inter membrane
 
@@ -393,6 +453,10 @@ be used with great caution.
 Hat interaction
 ~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter hat
 
 This defines a simple force ramp between particles of the types and .
@@ -419,6 +483,10 @@ entirely correct.
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter hertzian
 
 This defines an interaction according to the Hertzian potential between
@@ -437,6 +505,10 @@ is undefined.
 
 Gaussian
 ~~~~~~~~
+
+.. todo::
+    
+    Not implemented yet.
 
 inter gaussian
 
@@ -463,9 +535,17 @@ than a desired accuracy, since the potential decays very rapidly.
 
 Anisotropic non-bonded interactions
 -----------------------------------
+.. todo::
+    
+    Not implemented yet.
+
 
 Directional Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. todo::
+    
+    Not implemented yet.
 
 inter lj-angle
 
@@ -537,6 +617,10 @@ weak, and in a lipid bilayer, where it is comparatively stronger.
 Gay-Berne interaction
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter gay-berne
 
 This defines a Gay-Berne potential for prolate and oblate particles
@@ -605,6 +689,10 @@ original one being :math:`\var{k_1} = 3`, :math:`\var{k_2} = 5`,
 Affinity interaction
 ~~~~~~~~~~~~~~~~~~~~
 
+.. todo::
+    
+    Not implemented yet.
+
 inter affinity
 
 Instead of defining a new interaction, this command acts as a modifier
@@ -617,99 +705,117 @@ functional form depends on the interaction type and is listed in the
 interaction section. So far, only the standard Lennard-Jones interaction
 is modified by the interaction.
 
+.. _Bonded interactions:
+
 Bonded interactions
 -------------------
 
-inter
+Bonded interactions are configured by the 
+:class:`espressomd.interactions.BondedInteractions` class, which is
+a member of :class:`espressomd.system.System`. Generally, one may use 
+the following syntax to activate and assign a bonded interaction::
 
-Bonded interactions are identified by their *bonded interaction type
-identificator* , which is a non-negative integer. The command is used to
-specify the type and parameters of a bonded interaction, which applies
-to all particles connected explicitly by this bond using the command
-(see section ). Therefore, defining a bond between two particles always
-involves two steps: defining the interaction and applying it. Assuming
-that two particles with ids 42 and 43 already exist, one can create a
-FENE-bond between them using
+    system.bonded_inter.add(bond)
+    system.part[pid1].add_bond((bond, pid2...))
 
-inter 1 fene 10.0 2.0 part 42 bond 1 43
+Generally, one instantiates an interaction object *bond* and subsequently pass it 
+to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
+bonded interaction and allows the user to assign bonds between particle ids *pidX*. 
+Bonded interactions are identified by either their *bondid* or their appropriate object.
 
-If a FENE-bond with the same interaction parameters is required between
-several particles (in a simple chain molecule), one can use the same
-type :
 
-inter 1 fene 10.0 2.0 part 42 bond 1 43; part 43 bond 1 44
+Defining a bond between two particles always
+involves three steps: defining the interaction, adding it to the system
+and applying it to the particles. Assuming
+that three particles with ids 42, 43 and 12 already exist, one can create a
+FENE-bond between them using::
 
-Bonds can have more than just two bond partners. For the command that
-does not play a role as it only specifies the parameters, only when
-applying the bond using the particle, the number of involved particles
-plays a role. The number of involved particles and their order, if
-important, is nevertheless specified here for completeness.
+    fene = FeneBond(k=1, d_r_max=1)
+    system.bonded_inter.add(fene)
+    system.part[42].add_bond((fene, 43), (fene, 12))
+    system.part[12].add_bond((fene, 43))
 
-In the python interface you don’t have to worry about bond ids. A
-minimalistic example how to set up bonded harmonic interactions between
-two particles (particle ids 0 and 1) follows:
+This will set up a FENE bond between particles 42 and 43, 42 and 12, and 12 and 43.
+Note that the *fene* object specifies the type of bond and its parameters,
+the specific bonds are stored within the particles. you can find more 
+information regarding particle properties in :ref:`Setting up particles`.
 
-[ r\_cut = ]
+.. _FENE bond:
 
 FENE bond
 ~~~~~~~~~
 
-[ ]
+A FENE (finite extension nonlinear expander) bond can be instantiated via
+:class:`espressomd.interactions.FeneBond`::
+    
+    from espressomd.interactions import FeneBond
+    fene = FeneBond(k = <float>, d_r_max = <float>, r_0 = <float>)
 
-inter fene
 
-[ r\_0 = ]
-
-This creates a bond type with identificator with a FENE (finite
+This creates a bond type identifier with a FENE (finite
 extension nonlinear expander) interaction. This is a rubber-band-like,
-symmetric interaction between two particles with prefactor , maximal
-stretching and equilibrium bond length . The bond potential diverges at
-a particle distance :math:`r=\var{r_0}-\var{\Delta r_\mathrm{max}}` and
-:math:`r=\var{r_0}+\var{\Delta r_\mathrm{max}}`. It is given by
+symmetric interaction between two particles with magnitude :math:`K`, maximal
+stretching length :math:`\Delta r_0` and equilibrium bond length :math:`r_0`. The bond potential diverges at
+a particle distance :math:`r=r_0-\Delta r_\mathrm{max}` and
+:math:`r=r_0+\Delta r_\mathrm{max}`. It is given by
 
 .. math::
 
-   V(r) = -\frac{1}{2} \var{K} \var{\Delta r_\mathrm{max}}^2\ln \left[ 1 - \left(
-         \frac{r-\var{r_0}}{\var{\Delta r_\mathrm{max}}} \right)^2 \right].
+   V(r) = -\frac{1}{2} K \Delta r_\mathrm{max}^2\ln \left[ 1 - \left(
+         \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right].
 
 Harmonic bond
 ~~~~~~~~~~~~~
 
-[ r\_cut = ]
+A harmonic bond can be instantiated via
+:class:`espressomd.interactions.HarmonicBond`::
+    
+    from espressomd.interactions import HarmonicBond
+    hb = HarmonicBond(k = <float>, r_0 = <float>, r_cut = <float>)
 
-inter harmonic
 
-This creates a bond type with identificator with a classical harmonic
-potential. It is a symmetric interaction between two particles. The
-potential is minimal at particle distance :math:`r=R`, and the prefactor
-is :math:`K`. It is given by
+This creates a bond type identifier with a classical harmonic
+potential. It is a symmetric interaction between two particles. With the 
+equilibrium length :math:`r_0` and the magnitude :math:`k`. It is given by
 
-.. math:: V(r) = \frac{1}{2} K \left( r - R \right)^2
+.. math:: V(r) = \frac{1}{2} k \left( r - r_0 \right)^2
 
 The third, optional parameter defines a cutoff radius. Whenever a
-harmonic bond gets longer than , the bond will be reported as broken,
+harmonic bond gets longer than :math:`r_\mathrm{cut}`, the bond will be reported as broken,
 and a background error will be raised.
 
 Harmonic Dumbbell Bond
 ~~~~~~~~~~~~~~~~~~~~~~
 
-[ r\_cut = ]
+.. note::
 
-inter harmonic\_dumbbell
+    Requires ROTATION feature.
+
+
+A harmonic bond can be instantiated via
+:class:`espressomd.interactions.HarmonicDumbbellBond`::
+    
+    from espressomd.interactions import HarmonicDumbbellBond
+    hdb = HarmonicDumbbellBond(k1 = <float>, k2 = <float>, r_0 = <float>, r_cut = <float>)
+
 
 This bond is similar to the normal harmonic bond in such a way that it
 sets up a harmonic potential, i.e. a spring, between the two particles.
-Additionally the of the first particle in the bond will be aligned along
+Additionally the orientation of the first particle in the bond will be aligned along
 the distance vector between both particles. This alignment can be
-controlled by the second harmonic constant . Keep in mind that the will
-perform an oscillation around the distance vector and some kind of
-friction needs to be present for the to relax.
+controlled by the second harmonic constant :math:`k2`. Keep in mind that orientation will
+oscillate around the distance vector and some kind of
+friction needs to be present for it to relax.
 
-The role of the parameters , , and is exactly the same as for the
+The roles of the parameters :math:`k1,\ r_0,\ r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
 Quartic bond
 ~~~~~~~~~~~~
+
+.. todo::
+    Not implemented.
+
 
 inter quartic
 
@@ -726,6 +832,9 @@ a background error will be raised.
 Bonded coulomb
 ~~~~~~~~~~~~~~
 
+.. todo::
+    Not implemented.
+
 inter bonded\_coulomb
 
 This creates a bond type with identificator with a coulomb pair
@@ -739,6 +848,9 @@ account.
 
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. todo::
+    Not implemented.
 
 inter subt\_lj
 
@@ -758,34 +870,43 @@ force fields or in general tabulated potentials.
 Rigid bonds
 ~~~~~~~~~~~
 
-[sec:rattle]
+.. note::
 
-[ ptol = , vtol = ]
+    required BOND_CONSTRAINT feature.
 
-inter rigid\_bond
 
-To simulate rigid bonds, uses the Rattle Shake algorithm which satisfies
+A rigid bond can be instantiated via
+:class:`espressomd.interactions.RigidBond`::
+    
+    from espressomd.interactions import RigidBond
+    rig = RigidBond(r = <float>, ptol = <float>, vtol = <float> )
+
+To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
-using Lagrange multipliers.:cite:`andersen83a` In the python
-implementation the constrained bond distance is named r, the positional
-tolerance is named ptol and the velocity tolerance is named vtol.
+using Lagrange multipliers.:cite:`andersen83a` The constrained bond distance 
+is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
+is named :math:`vtol`.
 
 Tabulated bond interactions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Tcl
-^^^
+.. note::
+    
+    required TABULATED feature.
 
-inter tabulated bond inter tabulated angle inter tabulated dihedral
 
-This creates a bond type with identificator with a two-body bond length
-(variant ), three-body angle (variant ) or four-body dihedral (variant )
+A tabulated bond can be instantiated via
+:class:`espressomd.interactions.Tabulated`::
+    
+    from espressomd.interactions import Tabulated
+    tab = Tabulated(type = <str>, filename = <filename> )
+
+This creates a bond type identifier with a two-body bond length, 
+three-body angle or four-body dihedral 
 tabulated potential. The tabulated forces and energies have to be
-provided in a file , which is formatted identically as the files for
-non-bonded tabulated potentials (see section [sec:tabnonbonded]).
+provided in a file which is formatted identically as the files for
+non-bonded tabulated potentials (see :ref:`Non-bonded tabulated interaction`).
 
-Python
-^^^^^^
 
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
@@ -797,27 +918,27 @@ Calculation of the force and energy
 
 The potential is calculated as follows:
 
--  Tcl: Variant , Python: ``type=distance`` is a two body interaction
+-  ``type=distance``: is a two body interaction
    depending on the distance of two particles. The force acts in the
    direction of the connecting vector between the particles. The bond
    breaks above the tabulated range, but for distances smaller than the
    tabulated range, a linear extrapolation based on the first two
    tabulated force values is used.
 
--  Tcl: Variant , Python: ``type=angle`` is a three-body angle
-   interaction similar to the ``angle`` potential (see
-   section [sec:angle]). It is assumed that the potential is tabulated
-   for all angles between 0 and :math:` \pi `, where 0 corresponds to a
+-  ``type=angle``: is a three-body angle
+   interaction similar to the bond angle potential.
+   It is assumed that the potential is tabulated
+   for all angles between 0 and :math:`\pi`, where 0 corresponds to a
    stretched polymer, and just as for the tabulated pair potential, the
    forces are scaled with the inverse length of the connecting vectors.
-   The force on particles :math:`p_1` and :math:`p_3` (in the notation
-   of section [sec:angle]) acts perpendicular to the connecting vector
-   between the particle and the center particle :math:`p_2` in the plane
+   The force on the extremities acts perpendicular 
+   to the connecting vector
+   between the corresponding particle and the center particle, in the plane
    defined by the three particles. The force on the center particle
    :math:`p_2` balances the other two forces.
 
--  Tcl: Variant , Python: ``type=dihedral`` tabulates a torsional
-   dihedral angle potential (see section [sec:dihedral]). It is assumed
+-  ``type=dihedral``: tabulates a torsional
+   dihedral angle potential. It is assumed
    that the potential is tabulated for all angles between 0 and
    :math:`2\pi`. *This potential is not tested yet! Use on own risk, and
    please report your findings and eventually necessary fixes.*
@@ -825,12 +946,20 @@ The potential is calculated as follows:
 Virtual bonds
 ~~~~~~~~~~~~~
 
-[ ]
+.. note::
+    
+    requires BOND_VIRTUAL feature.
 
-inter virtual\_bond
 
-This creates a virtual bond type with identificator , a pair bond
-without associated potential or force. It can used to specify topologies
+A virtual bond can be instantiated via
+:class:`espressomd.interactions.Virtual`::
+    
+    from espressomd.interactions import Virtual
+    tab = Virtual()
+
+
+This creates a virtual bond type identifier for a pair bond
+without associated potential or force. It can be used to specify topologies
 and for some analysis that rely on bonds, or for bonds that should be
 displayed in VMD.
 
