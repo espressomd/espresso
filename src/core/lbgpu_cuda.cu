@@ -37,6 +37,10 @@
 #include "cuda_utils.hpp"
 #include "observables/profiles.hpp"
 
+#include <thrust/transform_reduce.h>
+#include <thrust/functional.h>
+#include <thrust/device_ptr.h>
+
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -4070,5 +4074,100 @@ int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A,
 
   return 0;
 }
+
+
+
+struct lb_lbfluid_mass_of_particle
+{
+  __device__ float operator()(CUDA_particle_data particle)
+  {
+#ifdef MASS
+    return particle.mass;
+#else
+    return 1.;
+#endif
+  };
+};
+
+
+void lb_lbfluid_remove_total_momentum()
+{
+  // calculate momentum of fluid and particles
+  float total_momentum[3] = { 0.0f, 0.0f, 0.0f };
+  lb_lbfluid_calc_linear_momentum(total_momentum, /*include_particles*/ 1, /*include_lbfluid*/ 1);
+
+  thrust::device_ptr<CUDA_particle_data> ptr(gpu_get_particle_pointer());
+  float particles_mass = thrust::transform_reduce(
+    ptr,
+    ptr + lbpar_gpu.number_of_particles,
+    lb_lbfluid_mass_of_particle(),
+    0.0f,
+    thrust::plus<float>());
+
+  // lb_calc_fluid_mass_GPU has to be called with double but we don't
+  // want narrowing warnings, that's why we narrow it down by hand.
+  double lb_calc_fluid_mass_res;
+  lb_calc_fluid_mass_GPU( &lb_calc_fluid_mass_res );
+  float fluid_mass = lb_calc_fluid_mass_res;
+
+  float momentum[3] = {
+    -total_momentum[0]/(fluid_mass + particles_mass),
+    -total_momentum[1]/(fluid_mass + particles_mass),
+    -total_momentum[2]/(fluid_mass + particles_mass)
+  };
+
+  float momentum_fluid[3] = {
+    momentum[0]*fluid_mass,
+    momentum[1]*fluid_mass,
+    momentum[2]*fluid_mass
+  };
+
+  lb_lbfluid_particles_add_momentum( momentum );
+  lb_lbfluid_fluid_add_momentum( momentum_fluid );
+}
+
+
+__global__ void lb_lbfluid_fluid_add_momentum_kernel(
+  float momentum[3],
+  LB_nodes_gpu n_a,
+  LB_node_force_gpu node_f,
+  LB_rho_v_gpu *d_v)
+{
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int number_of_nodes = para.number_of_nodes;
+#ifdef LB_BOUNDARIES_GPU
+  number_of_nodes -= para.number_of_boundnodes;
+#endif
+  if( index < para.number_of_nodes )
+  {
+    if( n_a.boundary[index] == 0 )
+    {
+      float force_factor=powf(para.agrid,2)*para.tau*para.tau;
+      for(int i = 0 ; i < LB_COMPONENTS ; ++i )
+      {
+        // add force density onto each node (momentum / time_step / Volume)
+        node_f.force[(0+i*3)*para.number_of_nodes + index] += momentum[0] / para.tau / (number_of_nodes * powf(para.agrid,3)) * force_factor;
+        node_f.force[(1+i*3)*para.number_of_nodes + index] += momentum[1] / para.tau / (number_of_nodes * powf(para.agrid,3)) * force_factor;
+        node_f.force[(2+i*3)*para.number_of_nodes + index] += momentum[2] / para.tau / (number_of_nodes * powf(para.agrid,3)) * force_factor;
+      }
+    }
+  }
+}
+
+
+void lb_lbfluid_fluid_add_momentum( float momentum_host[3] )
+{
+  float* momentum_device;
+  cuda_safe_mem(cudaMalloc((void**)&momentum_device,3*sizeof(float)));
+  cuda_safe_mem(cudaMemcpy(momentum_device, momentum_host, 3*sizeof(float), cudaMemcpyHostToDevice));
+
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1)/(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL( lb_lbfluid_fluid_add_momentum_kernel, dim_grid, threads_per_block, (momentum_device, *current_nodes, node_f, device_rho_v));
+}
+
 
 #endif /* LB_GPU */

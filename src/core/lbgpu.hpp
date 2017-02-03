@@ -119,6 +119,9 @@ typedef struct {
 
   unsigned int number_of_nodes;
   unsigned int number_of_particles;
+#ifdef LB_BOUNDARIES_GPU
+  unsigned int number_of_boundnodes;
+#endif
   /** Flag indicating whether fluctuations are present. */
   int fluct;
   /**to calc and print out phys values */
@@ -302,6 +305,11 @@ void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkp
 void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, lbForceFloat *host_checkpoint_force);
 int lb_lbfluid_save_checkpoint_wrapper(char* filename, int binary);
 int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary);
+
+void lb_lbfluid_remove_total_momentum();
+void lb_lbfluid_fluid_add_momentum(float momentum[3]);
+void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles, int include_lbfluid);
+void lb_lbfluid_particles_add_momentum(float velocity[3]);
 
 //int statistics_observable_lbgpu_radial_velocity_profile(radial_profile_data* pdata, double* A, unsigned int n_A);
 //int statistics_observable_lbgpu_velocity_profile(profile_data* pdata, double* A, unsigned int n_A);
