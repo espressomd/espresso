@@ -46,10 +46,13 @@
 #include "p3m_gpu_common.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "interaction_data.hpp"
+#include "global.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
+
+extern double box_l[3];
 
 struct P3MGpuData {
   /** Charge mesh */
@@ -563,8 +566,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
   * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
   */
 
- void p3m_gpu_init(int cao, int mesh[3], double alpha, double box[3]) {
-   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao, mesh[0], mesh[1], mesh[2], alpha, box[0], box[1], box[2]));
+ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
+   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao, mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1], box_l[2]));
    int reinit_if = 0, mesh_changed = 0;
  
    espressoSystemInterface.requestParticleStructGpu();
@@ -595,11 +598,11 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        }
 
      if((p3m_gpu_data_initialized == 0) ||
-        (p3m_gpu_data.box[0] != box[0]) ||
-        (p3m_gpu_data.box[1] != box[1]) ||
-        (p3m_gpu_data.box[2] != box[2]))
+        (p3m_gpu_data.box[0] != box_l[0]) ||
+        (p3m_gpu_data.box[1] != box_l[1]) ||
+        (p3m_gpu_data.box[2] != box_l[2]))
        {
-         std::copy(box, box + 3, p3m_gpu_data.box);
+         std::copy(box_l, box_l + 3, p3m_gpu_data.box);
          reinit_if = 1;
        }
      

@@ -299,7 +299,7 @@ void on_coulomb_change()
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha, box_l);
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
     MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
               sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     break;

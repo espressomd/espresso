@@ -1166,200 +1166,159 @@ of the potential is used:
 where :math:`p` is rather a phase factor and can only take values
 :math:`p=\pm 1`.
 
+.. _Coulomb interaction:
+
 Coulomb interaction
 -------------------
 
-inter coulomb 0.0 inter coulomb inter coulomb
-
-These commands allow to set up the calculation of the Coulomb
-interaction. The Coulomb (or electrostatic) interaction is defined as
+The Coulomb (or electrostatic) interaction is defined as
 follows. For a pair of particles at distance :math:`r` with charges
 :math:`q_1` and :math:`q_2`, the interaction is given by
 
-.. math:: U^C(r)=l_B k_B T\frac{q_1 q_2}{r}.
+.. math:: U_C(r)=l_B k_B T\frac{q_1 q_2}{r}.
 
 where :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` denotes the Bjerrum
 length, which measures the strength of the electrostatic interaction. As
-a special case, when the internal variable is set to zero, the value of
+a special case, when the thermostat is switched off, the value of
 bjerrum length you enter is treated as :math:`l_B k_B T` rather than
-:math:`l_B`. This occurs when the thermostat is switched off and
-performs an NVE integration (see also Section [sec:thermostat]).
+:math:`l_B`. This is used to perform an NVE integration (see also
+section :ref:`thermostat`).
 
 Computing electrostatic interactions is computationally very expensive.
-features some state-of-the-art algorithms to deal with these
+|es| features some state-of-the-art algorithms to deal with these
 interactions as efficiently as possible, but almost all of them require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-Variant disables Coulomb interactions. Variant returns the current
-parameters of the coulomb interaction as a Tcl-list using the same
-syntax as used to setup the method,
+Coulomb interactions have to be added to the actors of the system to become
+active. This prevents the simultaneous use of multiple electrostatic solvers.
 
-coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n\_interpol
-32768 mesh\_off 0.5 0.5 0.5
+.. todo:: Document missing implementation for actor.remove()
 
-Variant is the generic syntax to set up a specific method or its
-parameters, the details of which are described in the following
-subsections. Note that using the electrostatic interaction also requires
-assigning charges to the particles. This is done using the ``part``
-command to set the charge ``q``,
+Note that using the electrostatic interaction also requires assigning charges to
+the particles via the particle property
+:py:attr:`espressomd.particle_data.ParticleHandle.q`.
 
-inter coulomb 1.0 p3m tune accuracy 1e-4 part 0 q 1.0; part 1 q -1.0
+This example shows the general usage of an electrostatic method ``<SOLVER>``.
+All of them need the bjerrum length and a set of other required paramters.
+First, an instance of the solver is created and only after adding it to the actors
+list, it is activated. Internally the method calls a tuning routine on
+activation to achieve the given accuracy::
+
+    import espressomd
+    from espressomd import electrostatics
+    
+    system = espressomd.System()
+    solver = electrostatics.<SOLVER>(bjerrum_length = 1.0, <ADDITIONAL REQUIRED PARAMETERS>)
+    system.actors.add(solver)
 
 Coulomb P3M
 ~~~~~~~~~~~
 
-[P3M] [ ] [ mesh\_off = ]
+:class:`espressomd.electrostatics.P3M`
 
-inter coulomb p3m [gpu]
+Required paramters:
+    * bjerrum_length
+    * accuracy
 
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In , you can check if it is compiled in by
-checking for the feature ``FFTW``.
-
-This command activates the P3M method to compute the electrostatic
-interactions between charged particles. P3M requires full periodicity (1
-1 1). The different parameters are described in more detail in
-:cite:`deserno98a`.
-
-    The optional flag gpu causes the far field portion of p3m to be
-    calculated on the GPU. It should be noted that this does not always
-    provide significant increase in performance. Furthermore it computes
-    the far field interactions with only single precision which limits
-    the maximum precision. Furthermore the algorithm does not work in
-    combination with certain other methods implemented in ESPResSo and
-    only for the case of cubic boxes.
-
-    The real space cutoff as a positive floating point number.
-
-    The number of mesh points, as a single positive integer.
-
-    The number of mesh points in x, y and z direction. This is relevant
-    for noncubic boxes.
-
-    The *charge-assignment order*, an integer between :math:`0` and
-    :math:`7`.
-
-    The Ewald parameter as a positive floating point number.
-
-Make sure that you know the relevance of the P3M parameters before using
-P3M! If you are not sure, read the following references
+checking for the feature ``FFTW`` with ``espressomd.code_info.features()``
+P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
+P3M parameters before using P3M! If you are not sure, read the following
+references
 :cite:`ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a,cerda08a`.
 
 Tuning Coulomb P3M
 ^^^^^^^^^^^^^^^^^^
 
+The tuning method is called when the handle of the Coulomb P3M is added to the
+actor list. At this point, the system should already contain the charged
+particles. Setted parameters are fixed and not changed by the tuning algorithm.
+This can be useful to speed up the tuning during testing or if the parameters
+are already known.
+
+To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
+To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
+All parameteres passed to the method are fixed in the tuning routine. If not
+specified in the ``Tune()`` method, the parameters ``bjerrum_length`` and
+``accuracy`` are reused.
+
 It is not easy to calculate the various parameters of the P3M method
 such that the method provides the desired accuracy at maximum speed. To
-simplify this, provides a function to automatically tune the algorithm.
+simplify this, it provides a function to automatically tune the algorithm.
 Note that for this function to work properly, your system should already
 contain an initial configuration of charges and the correct initial box
-size. Also note that both provided tuning algorithms work very well on
+size. Also note that the provided tuning algorithms works very well on
 homogenous charge distributions, but might not achieve the requested
 precision for highly inhomogenous or symmetric systems. For example,
 because of the nature of the P3M algorithm, systems are problematic
 where most charges are placed in one plane, one small region, or on a
 regular grid.
 
-During execution the tuning routines report the tested parameter sets,
-the corresponding k-space and real-space errors and the timings needed
-for force calculations (the setmd variable controls the number of test
-force calculations). Since the error depends on / and the output is
-given in these units.
-
 The function employs the analytical expression of the error estimate for
-the P3M method :cite:`hockney88` and its real space error
-:cite:`kolafa92` to obtain sets of parameters that yield the
-desired accuracy, then it measures how long it takes to compute the
-coulomb interaction using these parameter sets and chooses the set with
-the shortest run time.
+the P3M method :cite:`hockney88` and its real space error :cite:`kolafa92` to
+obtain sets of parameters that yield the desired accuracy, then it measures how
+long it takes to compute the coulomb interaction using these parameter sets and
+chooses the set with the shortest run time.
 
-Tuning with the TCL interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+After execution the tuning routines report the tested parameter sets,
+the corresponding k-space and real-space errors and the timings needed
+for force calculations. In the output, the timings are given in units of
+milliseconds, length scales are in units of inverse box lengths.
 
-| inter coulomb p3m [gpu] accuracy
+Coulomb P3M on GPU
+^^^^^^^^^^^^^^^^^^
 
-The function will only automatically tune those parameters that are not
-set to a predetermined value using the optional parameters of the tuning
-command. The two tuning methods follow different methods for determining
-the optimal parameters. While the version tests different values on a
-grid in the parameter space, the version uses a bisection to determine
-the optimal parameters. In general, for small systems the version is
-faster, while for large systems is faster. The results of are always at
-least as good as the parameters from the version, and normally the
-obtained accuracy is much closer to the desired value. Note that the
-previous setting of , and will be remembered. If you want to retune your
-electrostatics, after a major system change, you should use
+:class:`espressomd.electrostatics.P3M_GPU`
 
-inter coulomb p3m tune accuracy r\_cut 0 mesh 0 cao 0
+Required paramters:
+    * bjerrum_length
+    * accuracy
 
-Tuning with the Python Interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The GPU implementation of P3M calculates the far field portion on the GPU. 
+It uses the same parameters and interface funcionality as the CPU version of
+the solver. It should be noted that this does not always provide significant
+increase in performance.  Furthermore it computes the far field interactions
+with only single precision which limits the maximum precision. The algorithm
+does not work in combination with the electrostatic extensions :ref:`ICC` and
+:ref:`ELC`.
 
-[ ]
-
-can be given a python dictionary that specifies the target parameters
-for the tuning algorithm. If it doesn’t contain or , the previous values
-are used respectively. Other parameters are retuned if not specified
-explicitly. Valid keys for the dictionary are given in .
-
-Additional P3M parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-inter coulomb
-
-Once P3M algorithm has been set up, it is possible to set some
-additional P3M parameters with this command. The different parameters
-have the following meaning:
-
-    The dielectric constant of the surrounding medium, metallic
-    (infinity) or some finite positive number. Defaults to .
-
-    Number of interpolation points for the charge assignment function.
-    When this is set to :math:`0`, interpolation is turned off and the
-    function is computed directly. Defaults to :math:`32768`.
-
-    Offset of the first mesh point from the lower left corner of the
-    simulation box in units of the mesh constant. Defaults to .
+.. todo:: Check P3M_GPU for non-cubic boxes, and also for cubic.
 
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
 
-[ alpha = ]
+:class:`espressomd.electrostatics.Ewald_Gpu`
 
-inter coulomb ewaldgpu
+Required paramters:
+    * bjerrum_length
+    * accuracy
+    * precision
+    * K_max
 
-This command activates the Ewald method to compute the electrostatic
-interactions between charged particles. The far field is computed by the
-GPU with single precision and the near field by the CPU with double
-precision. It only works for the case of cubic boxes.
+This uses the Ewald method to compute the electrostatic interactions between
+charged particles. The far field is computed by the GPU with single precision
+and the near field by the CPU with double precision. It only works for the case
+of cubic boxes.
 
-    Bjerrum length as positive floating point number
+.. todo::
 
-    Real space cutoff as positive floating point number
+    * Check pyhton interface:
+        * Clean up parameters
+        * missing tunealpha method (from usersguide)
+        * Test automatic / manual tuning
 
-    Reciprocal space cutoff as single positive integer
-
-    Reciprocal space cutoff in x, y and z direction (relevant for
-    noncubic boxes)
-
-    Ewald parameter as positive floating point number
+    * Add to coulomb_cloud_wall testcase
+    
 
 Tuning Ewald GPU
 ^^^^^^^^^^^^^^^^
 
-inter coulomb ewaldgpu tune accuracy precision K\_max
-
-The tuning algorithm first computes the optimal and for every between
-one and as described in :cite:`kolafa92`. Then the
-performance for all those (, , )-triplets will be measured via a short
-test simulation and the fastest will be chosen.
-
-    Maximal allowed root mean square error regarding the forces
-
-    Determines how precise alpha will be computed
-
-    Maximal reciprocal space cutoff to be tested in the tuning algorithm
+The tuning algorithm first computes the optimal and for every between one and as
+described in :cite:`kolafa92`. Then the performance for all those  (``K_cut,
+r_cut, alpha``) triplets will be measured via a short test simulation and the
+fastest will be chosen.
 
 Tuning Alpha Ewald GPU
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1367,18 +1326,23 @@ Tuning Alpha Ewald GPU
 inter coulomb ewaldgpu tunealpha
 
 If and are given by the user, then computes the optimal with the chosen
-as described in :cite:`kolafa92`. But in general should be
+as described in :cite:`kolafa92`. But in general tune should be
 chosen for tuning.
 
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
-[ ]
+.. todo::
 
-inter coulomb dh
+    * Python/Core: DH as actor
+    * Python
+        * Move interface from debje-hueckel.pyx -> electrostatics.pyx
+        * Adapt interface structure
 
-| 
-| Defines the electrostatic potential by
+Required paramters:
+    * ? 
+
+Uses the Debye-Hückel electrostatic potential defined by
 
   .. math:: U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
@@ -1408,6 +1372,10 @@ potential is
 The parameter :math:`\alpha` that controlls the transition from Coulomb-
 to Debye-Hückel potential should be chosen such that the force is
 continous.
+
+
+.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
+
 
 MMM2D
 ~~~~~
@@ -1499,6 +1467,8 @@ For details on the MMM family of algorithms, refer to appendix .
 
 Maxwell Equation Molecular Dynamics (MEMD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 inter coulomb memd
 

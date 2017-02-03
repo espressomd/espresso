@@ -115,6 +115,7 @@ for i in range(n_part / 2 - 1):
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
+#p3m = electrostatics.P3M_GPU(bjerrum_length=2.0, accuracy=1e-2)
 p3m = electrostatics.P3M(bjerrum_length=2.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
@@ -126,7 +127,7 @@ for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print("\nSCRIPT--->Explicit tune call\n")
-p3m._tune() 
+p3m.Tune(accuracy=1e3) 
     
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
