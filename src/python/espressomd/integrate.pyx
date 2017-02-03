@@ -48,11 +48,11 @@ cdef class Integrator:
         for key in kwargs:
             if not key in req:
                 raise Exception("Set required parameter %s first." %key)
-            
+
         self._steepest_descent_params.update(kwargs)
         self._method = "STEEPEST_DESCENT"
 
-    cdef set_vv(self):
+    def set_vv(self):
         self._method = "VV"
 
     cdef set_nvt(self):
