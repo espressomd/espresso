@@ -13,12 +13,12 @@ module and to create a :class:`espressomd.system.System` instance::
 
     import espressomd
 
-    sys = espressomd.System()
+    system = espressomd.System()
 
 In order to add particles to the system, call 
 :meth:`espressomd.particle_data.ParticleList.add`::
 
-    sys.part.add(pos = [1.0, 1.0, 1.0], id = 0, type = 0)
+    system.part.add(pos = [1.0, 1.0, 1.0], id = 0, type = 0)
 
 This command adds a single particle to the system with properties given
 as arguments. All available particle properties are members of
