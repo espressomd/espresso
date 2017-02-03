@@ -11,14 +11,14 @@ Defining particle properties
 The first step when writing a simulation script is to import the :mod:`espressomd`
 module and to create a :class:`espressomd.system.System` instance::
 
-    import espressomd
+    >>> import espressomd
 
-    system = espressomd.System()
+    >>> system = espressomd.System()
 
-In order to add particles to the system, call 
+In order to add particles to the system, call
 :meth:`espressomd.particle_data.ParticleList.add`::
 
-    system.part.add(pos = [1.0, 1.0, 1.0], id = 0, type = 0)
+    >>> system.part.add(pos=[1.0, 1.0, 1.0], id=0, type=0)
 
 This command adds a single particle to the system with properties given
 as arguments. All available particle properties are members of
@@ -162,14 +162,41 @@ as arguments. All available particle properties are members of
 
             `Feature VIRTUAL_SITES required.`
 
-An already existing particles property can be set with the
-following command::
+Properties of already existing particles can be set using::
 
-    sys.part[<ID>].<PROPERTY> = <SOME_VALUE>
+    >>> system.part[<ID>].<PROPERTY> = <SOME_VALUE>
 
-This sets the property ``PROPERTY`` for particle with id ``ID`` to 
+This sets the property ``PROPERTY`` for the particle with id ``ID`` to 
 ``SOME_VALUE``.
 
+Getting particle properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a certain particle property is set, it can be accessed like a class
+member. To access property ``PROPERTY`` of the particle with id ``ID``::
+
+    system.part[<ID>].<PROPERTY>
+
+For example, to print the current position of all particles in the system, call::
+
+    >>> print(system.part[:].pos)
+    [[ 3.77651228  2.74802277  7.8614655 ]
+     [ 3.16587857  2.88714253  3.0495119 ]
+     [ 3.13657179  6.26879849  1.1182947 ]
+     ..., 
+     [ 1.42691672  8.39444662  7.61834009]
+     [ 3.63801655  3.05804937  5.30344039]
+     [ 8.13603676  3.91630721  2.70701524]]
+
+Deleting particles
+~~~~~~~~~~~~~~~~~~
+
+Particles can be easily deleted in Python using particle ids or ranges of particle ids. For example, to delete all particles with particle id greater than 10, run::
+
+    >>> system.part[10:].remove()
+
+TODO: Check following text
+--------------------------
 
 Enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the quaternion of the particle see . The
@@ -216,11 +243,6 @@ as the particle reaches a constant speed (given by ) this monopolar
 moment is gone and the flow field is zero! In contrast, always, i.e.,
 while accelerating *and* while swimming at constant force possesses a
 dipolar flow field.
-
-Getting particle properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-part print … part
 
 Variant will return a list of the specified properties of particle , or
 all properties, if no keyword is specified. Variant will return a list
@@ -286,16 +308,6 @@ blockfiles will contain imaged positions, but un-imaged velocities,
 which should not be interpreted together. However, that is fine for
 restoring the simulation, since the particled data is loaded the same
 way.
-
-Deleting particles
-~~~~~~~~~~~~~~~~~~
-
-part delete part deleteall
-
-Particles can be easily deleted in Python using particle ids or ranges
-of particle ids. In TCL variant , the particle is deleted and all bonds
-referencing it. TCL variant will delete all particles currently present
-in the simulation.
 
 Exclusions
 ~~~~~~~~~~
