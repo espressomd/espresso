@@ -58,12 +58,12 @@ int Cylinder::calculate_dist(const double *ppos, double *dist,
     d_par = half_length - d_par;
     if (d_per < d_par) {
       *dist = d_per;
-      for (i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
       }
     } else {
       *dist = d_par;
-      for (i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         vec[i] = -d_par_vec[i] * d_par / (half_length - d_par);
       }
     }
