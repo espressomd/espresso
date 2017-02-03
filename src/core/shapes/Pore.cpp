@@ -38,7 +38,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   double e_z[3], e_r[3]; /* unit vectors in the cylindrical coordinate system */
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
-  double slope, slope2, z_left, z_right;
+  double z_left, z_right;
   /* and another helper that is hopefully optmized out */
   double norm;
   double c1_r, c1_z, c2_r, c2_z;
@@ -47,9 +47,10 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
 
   auto const half_length = 0.5 * m_length;
 
-  slope = (m_rad_right - m_rad_left) / 2. / (half_length - m_smoothing_radius);
-  slope2 = (m_outer_rad_right - m_outer_rad_left) / 2. /
-           (half_length - m_smoothing_radius);
+  auto const slope =
+      (m_rad_right - m_rad_left) / 2. / (half_length - m_smoothing_radius);
+  auto const slope2 = (m_outer_rad_right - m_outer_rad_left) / 2. /
+                      (half_length - m_smoothing_radius);
 
   /* compute the position relative to the center of the pore */
   for (int i = 0; i < 3; i++) {
