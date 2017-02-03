@@ -1,4 +1,8 @@
+Userguide
+=========
+
 .. toctree::
+    :numbered:
     :maxdepth: 2
 
     introduction.rst
