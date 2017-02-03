@@ -77,8 +77,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy)
-    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id)
+    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
+    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
     CreationPolicy LOCAL
