@@ -148,33 +148,54 @@ mobility. Sometimes higher accuracy can speedup the simulation.
 Setting global variables in Python
 ----------------------------------
 
+The global variables in Python are controlled via the
+:class:`espressomd._system.System` class.
 In analogy to the TCL interface global system variables can be read and
 set in Python simply by accessing the attribute of the corresponding
 Python object. Those variables that are already available in the Python
 interface are listed in the following.
 
-Variables of the system class:
+Variables of the system class
 
-Variables of the cell system module:
+    * :py:attr:`~espressomd._system.System.box_l`
+    * :py:attr:`~espressomd._system.System.periodicity`
+    * :py:attr:`~espressomd._system.System.time_step`
+    * :py:attr:`~espressomd._system.System.time`
+    * :py:attr:`~espressomd._system.System.transfer_rate`
+    * :py:attr:`~espressomd._system.System.max_cut_bonded`
+    * :py:attr:`~espressomd._system.System.max_cut_nonbonded`
+    * :py:attr:`~espressomd._system.System.min_global_cut`
+
+The properties of the cell system can be accessed by
+:class:`espressomd._system.System.cell_system` Variables of the cell system
+module
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
+    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
+    * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
+    * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+
+Special attention has to be paid to the ``skin`` property. This value has to be set, otherwise the simulation 
+will not start.
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
 objects like
 
-n\_part = len(espressomd.System().part[:].pos)
+``n_part = len(espressomd.System().part[:].pos)``
 
 or by calling the corresponding ``get_state`` methods like
 
-temperature = espressomd.System().thermostat.get\_state()[0][’kT’] gamma
-= espressomd.System().thermostat.get\_state()[0][’gamma’] gamma\_rot =
-espressomd.System().thermostat.get\_state()[0][’gamma\_rotation’]
+``temperature = espressomd.System().thermostat.get_state()[0][’kT’]`` 
+
+``gamma = espressomd.System().thermostat.get_state()[0][’gamma’]``
+
+``gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]``
 
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
 
-thermostat thermostat off thermostat
-
-The command is used to change settings of the thermostat.
+The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`
 
 The different available thermostats will be described in the following
 subsections. Note that for a simulation of the NPT ensemble, you need to
@@ -186,34 +207,22 @@ on one by one. Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 
-Since does not enforce a particular unit system, it cannot know about
+Since |es| does not enforce a particular unit system, it cannot know about
 the current value of the Boltzmann constant. Therefore, when specifying
 the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
 current unit system (see the discussion on units, Section [sec:units]).
 
-Variant returns the thermostat parameters. A Tcl list is given
-containing all the parameters needed to set the specific thermostat.
-(exactly the same as the input command line, without the preceding
-``thermostat``).
-
-Variant turns off all thermostats and sets all thermostat variables to
-zero. Setting temperature to zero also affects the way in which
-electrostatics are handled (see also
-Section [sec:inter-electrostatics]).
-
-Variant sets up one of the thermostats described below.
-
-Note that their are three different types of noise which can be used in
-. The one used typically in simulations is flat noise with the correct
-variance and it is the default used in , though it can be explicitly
-specified using the feature . You can also employ Gaussian noise which
+Note that there are three different types of noise which can be used in
+|es|. The one used typically in simulations is flat noise with the correct
+variance and it is the default used in |es|, though it can be explicitly
+specified using the feature ``FLATNOISE``. You can also employ Gaussian noise which
 is, in some sense, more realistic. Notably Gaussian noise (activated
-using the feature ) does a superior job of reproducing higher order
+using the feature ``GAUSSRANDOM``) does a superior job of reproducing higher order
 moments of the Maxwell-Boltzmann distribution. For typical generic
 coarse-grained polymers using FENE bonds the Gaussian noise tends to
 break the FENE bonds. We thus offer a third type of noise, activate
-using the feature , which produces Gaussian random numbers but takes
+using the feature ``GAUSSRANDOMCUT``, which produces Gaussian random numbers but takes
 anything which is two standard deviations (:math:`2\sigma`) below or
 above zero and set it to :math:`-2\sigma` or :math:`2\sigma`
 respectively. In all three cases the distribution is made such that the
@@ -223,48 +232,60 @@ same temperature.
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
-| thermostat langevin
+In order to activate the langevin thermostat the memberfunction
+:py:attr:`~espressomd.thermostat.Thermostat.set_langevin` has to be invoked.
+Best explained in an example:::
+    
+    import espressomd
+    system = espressomd.System()
+    therm  = system.Thermostat()
 
+    therm.set_langevin(kT=1.0, gamma=1.0)
+
+As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`. 
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a function
 of the particle velocities. By specifying the diffusion coefficient for
 the particle becomes
 
-.. math:: D = \frac{\var{temperature}}{\var{gamma\_trans}}.
+.. math:: D = \frac{\text{temperature}}{\text{gamma}}.
 
-The relaxation time is given by /MASS, with MASS the particle’s mass.
-For a more detailed explanation, refer to :cite:`grest86a`.
-An anisotropic diffusion coefficient tensor is available to simulate
-anisotropic colloids (rods, etc.) properly. It can be enabled by the
-feature .
+The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
+``MASS`` the particle’s mass.  For a more detailed explanation, refer to
+:cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
+simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
+feature ``PARTICLE_ANISOTROPY``.
 
-If the feature is compiled in, the rotational degrees of freedom are
+If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
 specified then the diffusion coefficient for the rotation is set to the
 same value as that for the translation.
 
-A separate rotational diffusion coefficient can be set by inputting .
-This also allows one to properly match the translational and rotational
-diffusion coefficients of a sphere. Feature enables an anisotropic
-rotational diffusion coefficient tensor through corresponding friction
-coefficients . Finally, the two options allow one to switch the
-translational and rotational thermalization on or off separately,
-maintaining the frictional behavior. This can be useful, for instance,
-in high Péclet number active matter systems, where one only wants to
-thermalize the rotational degrees of freedom and translational motion is
-effected by the self-propulsion.
+A separate rotational diffusion coefficient can be set by inputting
+``gamma_rotate``.  This also allows one to properly match the translational and
+rotational diffusion coefficients of a sphere. ``ROTATIONAL_INERTIA`` Feature
+enables an anisotropic rotational diffusion coefficient tensor through
+corresponding friction coefficients. 
+
+Finally, the two options allow one to switch the translational and rotational
+thermalization on or off separately, maintaining the frictional behavior. This
+can be useful, for instance, in high Péclet number active matter systems, where
+one only wants to thermalize the rotational degrees of freedom and
+translational motion is effected by the self-propulsion.
 
 Using the Langevin thermostat, it is posible to set a temperature and a
-friction coefficient for every particle individually via the feature .
-Consult the reference of the ``part`` command (chapter [chap:part]) for
-information on how to achieve this.
+friction coefficient for every particle individually via the feature
+``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
+(chapter :ref:`Setting_up_particles`) for information on how to achieve this.
 
 GHMC thermostat
 ~~~~~~~~~~~~~~~
 
-thermostat ghmc
+.. todo::
+    this is not yet implemented in the python interface.
 
-implements Generalized Hybrid Monte Carlo (GHMC) as a thermostat. GHMC
+
+Implements Generalized Hybrid Monte Carlo (GHMC) as a thermostat. GHMC
 is a simulation method for sampling the canonical ensemble
 :cite:`mehlig92`. The method consists of MC cycles that
 combine a few constant energy MD steps, specified by , followed by a
@@ -290,7 +311,13 @@ The default for temperature scaling is .
 Dissipative Particle Dynamics (DPD) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-implements Dissipative Particle Dynamics (DPD) either via a global
+.. todo::
+    this is not implemented yet
+
+The DPD thermostat can be invoked by the function:
+:py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
+
+Implements Dissipative Particle Dynamics (DPD) either via a global
 thermostat, or via a thermostat and a special DPD interaction between
 particle types. The latter allows the user to specify friction
 coefficients on a per-interaction basis.
@@ -365,20 +392,20 @@ act on the system center of mass motion. Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you can
 achieve by using the command [sec:Galilei]. This may be repeated once in
 a while for long runs due to round off errors (check this with the
-command ) [sec:Galilei].
+command ) [:ref:`galilei_transform`].
 
 Two restrictions apply for the dpd implementation of :
 
--  As soon as at least one of the two interacting particles is fixed
-   (see [chap:part] on how to fix a particle in space) the dissipative
-   and the stochastic force part is set to zero for both particles (you
-   should only change this hardcoded behaviour if you are sure not to
-   violate the dissipation fluctuation theorem).
+    * As soon as at least one of the two interacting particles is fixed
+      (see [chap:part] on how to fix a particle in space) the dissipative
+      and the stochastic force part is set to zero for both particles (you
+      should only change this hardcoded behaviour if you are sure not to
+      violate the dissipation fluctuation theorem).
 
--  ``DPD`` does not take into account any internal rotational degrees of
-   freedom of the particles if ``ROTATION`` is switched on. Up to the
-   current version DPD only acts on the translatorial degrees of
-   freedom.
+    * ``DPD`` does not take into account any internal rotational degrees of
+      freedom of the particles if ``ROTATION`` is switched on. Up to the
+      current version DPD only acts on the translatorial degrees of
+      freedom.
 
 Transverse DPD thermostat
 '''''''''''''''''''''''''
@@ -823,6 +850,8 @@ In future versions of the capabilities of the feature may be generalized
 to handle multiple reactant, catalyzer, and product types, as well as
 more general reaction schemes. Other changes may involve merging the
 current implementation with the feature.
+
+.. _galilei_transform: 
 
 Galilei Transform and Particle Velocity Manipulation
 ----------------------------------------------------

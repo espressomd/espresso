@@ -116,6 +116,9 @@ cdef class CellSystem(object):
 
 
     property max_num_cells:
+        """
+        Maximum number for the cells
+        """
         def __set__(self, int _max_num_cells):
             global max_num_cells
             if _max_num_cells < min_num_cells:
@@ -128,6 +131,9 @@ cdef class CellSystem(object):
             return max_num_cells
 
     property min_num_cells:
+        """
+        Minimal number of the cells
+        """
         def __set__(self, int _min_num_cells):
             global min_num_cells
             min = calc_processor_min_num_cells()
@@ -146,6 +152,9 @@ cdef class CellSystem(object):
 
     # setter deprecated
     property node_grid:
+        """
+        Node grid
+        """
         def __set__(self, _node_grid):
             raise Exception('node_grid is not settable by the user.')
 
@@ -154,6 +163,11 @@ cdef class CellSystem(object):
 
 
     property skin:
+        """
+        Value of the skin layer expects a floating point number.
+
+        Mandatory to set.
+        """
         def __set__(self, double _skin):
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
