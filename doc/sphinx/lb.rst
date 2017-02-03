@@ -2,61 +2,66 @@ Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-
-Boltzmann-Method (LBM) is a fast, lattice based method that, in its
-“pure” form, allows to calculate fluid flow in different boundary
+dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-Boltzmann-Method (LBM) is a fast, lattice based method that, in its
+"pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
-hydrodynamic interactions into the simulation. The implementation of
-boundary conditions for the LBM is a difficult task, a lot of research
-is still being conducted on this topic. The focus of the |es| implementation
+hydrodynamic interactions into the simulation. The focus of the |es| implementation
 of the LBM is, of course, the coupling to MD and therefore available
 geometries and boundary conditions are somewhat limited in comparison to
-"pure" codes.
+"pure" LB codes.
 
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-Please cite :cite:`espresso2` (Bibtex key espresso2 in doc/sphinx/lb.bib) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in doc/sphinx/lb.bib) if you use the GPU implementation.
+.. note:: Please cite :cite:`espresso2` (Bibtex key espresso2 in doc/sphinx/zref.bib) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in doc/sphinx/zref.bib) if you use the GPU implementation.
 
 Setting up a LB fluid
 ---------------------
 
-.. math:: [ bulk\_viscosity = , ext\_force = , friction = , , gamma\_odd = ,
-gamma\_even = ]
+The following minimal example illustrates how to use the LBM in |es|::
 
-lbfluid
+    import espressomd
+    sys = espressomd.System()
+    sys.box_l = [10, 20, 30]
+    sys.time_step = 0.01
+    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    sys.actors.add(lb)
+    sys.integrator.run(100)
+
+.. note:: `Feature LB or LB_GPU required`
+
+To use the (much faster) GPU implementation of the LBM, use
+:class:`espressomd.lb.LBFluid_GPU` in place of :class:`espressomd.lb.LBFluid`.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
 be done in practice. Before being able to use the LBM, it is necessary
 to set up a box of a desired size. The parameter is used to set the
 lattice constant of the fluid, so the size of the box in every direction
-must be a multiple of .
+must be a multiple of ``agrid``.
+
+In the following, we discuss the parameters that can be supplied to the LBM in |es|. The detailed interface definition is available at :class:`espressomd.lb.LBFluid`.
 
 In the LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
-the simulations and is adjusted with the parameter , the LB timestep.
-The parameters and set up the density and (kinematic) viscosity of the
+the simulations and is adjusted with the parameter ``tau``, the LB timestep.
+The parameters ``dens`` and ``visc`` set up the density and (kinematic) viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
-with a different set of units: all lengths are expressed in , all times
-in and so on. Therefore changing and , might change the behaviour of the
-LB fluid, at boundaries, due to characteristics of the LBM itself. It
-should also be noted that the LB nodes are located at 0.5, 1.5, 2.5, etc
-(in terms of ). This has important implications for the location of
+with a different set of units: all lengths are expressed in ``agrid``, all times
+in ``tau`` and so on.
+LB nodes are located at 0.5, 1.5, 2.5, etc.
+(in terms of ``agrid``). This has important implications for the location of
 hydrodynamic boundaries which are generally considered to be halfway
-between two nodes to first order. Currently it is not possible to
-precisely give a parameter set where reliable results are expected, but
-we are currently performing a study on that. Therefore the LBM should
+between two nodes for flat, axis-aligned walls. For more complex boundary geometries, the hydrodynamic boundary location deviates from this midpoint and the deviation decays like to first order in ``agrid``. 
+The LBM should
 *not be used as a black box*, but only after a careful check of all
 parameters that were applied.
 
-The parameter allows to apply an external body force density that is
-homogeneous over the fluid. It is again to be given in MD units. The
+In the following, we describe a number of optional parameters.
+The parameter ``ext_force`` takes a three dimensional vector as an `array_like`, representing a homogeneous external body force density in MD units to be applied to the fluid. The
 parameter allows to tune the bulk viscosity of the fluid and is given in
-MD units. In the limit of low Mach (often also low Reynolds) number the
-results should be independent of the bulk viscosity up to a scaling
-factor. It is however known that the values of the viscosity does affect
+MD units. In the limit of low Mach number, the flow does not compress the fluid and the resulting flow field is therefore independent of the bulk viscosity. It is however known that the values of the viscosity does affect
 the quality of the implemented link-bounce-back method. and are the
 relaxation parameters for the kinetic modes. Due to their somewhat
 obscure nature they are to be given directly in LB units.
@@ -121,7 +126,7 @@ fluid using a linear interpolation scheme, to preserve total momentum.
 In the GPU implementation the force can alternatively be interpolated
 using a three point scheme which couples the particles to the nearest 27
 LB nodes. This can be called using “lbfluid 3pt” and is described in
-Dünweg and Ladd by equation 301:cite:`duenweg08a`. Note that
+Dünweg and Ladd by equation 301 :cite:`duenweg08a`. Note that
 the three point coupling scheme is incompatible with the Shan Chen
 Lattice Boltmann. The frictional force tends to decrease the relative
 velocity between the fluid and the particle whereas the random forces
@@ -139,8 +144,8 @@ fluctuations can be switched off by setting the temperature to 0.
 Regarind the unit of the temperature, please refer to
 Section [sec:units].
 
-The Shan Chen bicomponent fluid[sec:shanchen]
----------------------------------------------
+The Shan Chen bicomponent fluid
+-------------------------------
 
 Please cite  if you use the Shan Chen implementation described below.
 
@@ -217,8 +222,8 @@ values specified by the option , and these can be modified with the
 command. Note that the number of active fluid components can be accessed
 through the global variable .
 
-SC as a thermostat[sec:scmd-coupling]
--------------------------------------
+SC as a thermostat
+------------------
 
 The coupling of particle dynamics to the Shan-Chen fluid has been
 conceived as an extension of the Ahlrichs and Dünweg’s point coupling,
