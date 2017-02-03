@@ -467,30 +467,13 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             rcut : float, optional
                     The real space cutoff.
             
-            "num_kx", "num_ky", "num_kz", "time_calc_steps"
-
-            cao : float, optional 
-                  The charge-assignment order, an integer between 0 and 7.
+            num_kx : ??
             
-            epsilon : string, optional
-                      Use 'metallic' to set the dielectric constant of the
-                      surrounding medium to infinity (Default).
+            num_ky : ??
+
+            num_kz : ??
             
-            epsilon : float, optional
-                      A positive number for the dielectric constant of the
-                      surrounding medium.
-
-            mesh : int, optional 
-                   The number of mesh points
-
-            mesh : array_like, optional
-                   The number of mesh points in x, y and z direction. This is
-                   relevant for 8 noncubic boxes.
-            
-
-            tune : bool, optional
-                   Used to activate/deactivate the tuning method on activation.
-                   Defaults to True
+            time_calc_steps : ??
             
             """
             super(type(self), self).__init__(*args, **kwargs)
