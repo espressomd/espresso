@@ -1,3 +1,5 @@
+.. _introduction:
+
 Introduction
 ============
 
@@ -19,6 +21,8 @@ Interaction between the user and the simulation engine is provided via a
 Tcl scripting interface. This enables setup of arbitrarily complex
 systems which users might want to simulate in future, as well as
 modifying simulation parameters during runtime.
+
+.. _guiding_principles:
 
 Guiding principles
 ------------------
@@ -55,7 +59,7 @@ Hand-in-hand with the extensibility and readability of the code comes
 the flexibility of the whole program. On the one hand, it is provided by
 the generalized functionality of its parts, avoiding highly specialized
 functions. An example can be the implementation of the Generic
-Lennard-Jones potential described in section [sec:GenLennardJones] where
+Lennard-Jones potential described in section :ref:`GenLennardJones` where
 the user can change all available parameters. Where possible, default
 values are avoided, providing the user with the possibility of choice.
 |es| cannot be aware whether your particles are representing atoms or
@@ -77,6 +81,8 @@ of each other. Using the Tcl interface, one can simulate the randomly
 set-up system with capped forces, interactively check whether it is safe
 to remove the cap and switch on the full interactions and then perform
 the actual productive simulation.
+
+.. _available_simulation_methods:
 
 Available simulation methods
 ----------------------------
@@ -214,15 +220,15 @@ report so to the developers.
 | mbtools package                | Group                  | Group            |
 +--------------------------------+------------------------+------------------+
 
+.. _basic_program_structure:
+
 Basic program structure
 -----------------------
 
 As already mentioned, |es| consists of two components. The simulation engine
 is written in C and C++ for the sake of computational efficiency. The
 steering or control level is interfaced to the kernel via an interpreter
-of the Tcl and Python scripting languages. Please be aware that th TCL
-interface is going to be removed soon and new simulations should use
-Python as scripting language.
+of Python scripting languages.
 
 The kernel performs all computationally demanding tasks. Before all,
 integration of Newton’s equations of motion, including calculation of
@@ -232,10 +238,10 @@ processors or cells of the cell-system. The kernel is modularized so
 that basic functions are accessed via a set of well-defined lean
 interfaces, hiding the details of the complex numerical algorithms.
 
-The scripting interface (Python or Tcl) are used to setup the system
+The scripting interface (Python) is used to setup the system
 (particles, boundary onditions, interactions, ...), control the
 simulation, run analysis, and store and load results. The user has at
-hand the full rl3sibili5y and functionality of the scripting language.
+hand the full readability and functionality of the scripting language.
 For instance, it is possible to use the SciPy package for analysis and
 PyPlot for plotting. With a certain overhead in efficiency, it can also
 be used to reject/accept new configurations in combined MD/MC schemes.
@@ -248,6 +254,8 @@ behaviour and use in the simulation. It only describes certain technical
 details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
 structure is contained in the Developers’ guide (see section [sec:dg]).
+
+.. _on_units:
 
 On units
 --------
@@ -319,6 +327,9 @@ you need to set the thermostat’s effective temperature to
 
 As long as one remains within the same unit system throughout the whole
 |es|-script, there should be no problems.
+
+
+.. _requirements:
 
 Requirements
 ------------
