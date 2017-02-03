@@ -134,9 +134,9 @@ value turns on the multi-timestepping algorithm. The ratio
 *must* be an integer. Beads are by default associated with
 :attr:`espressomd._system.System.time_step`, corresponding to the
 particle property
-:attr:`espressomd.particle_data.ParticleHandle.smaller_time_step` set
+:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` set
 to 0. Setting to
-:attr:`espressomd.particle_data.ParticleHandle.smaller_time_step` to 1
+:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` to 1
 associates the particle to the
 :attr:`espressomd._system.System.smaller_time_step` integration. The
 integrator can be used in the NVE ensemble, as well as with the
