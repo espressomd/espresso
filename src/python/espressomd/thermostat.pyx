@@ -220,7 +220,17 @@ cdef class Thermostat:
 
     IF LB_GPU or LB:
         def set_lb(self, kT=""):
-            """Sets the LB thermostat with required parameter 'temperature'"""
+            """
+            Sets the LB thermostat with required parameter 'kT'.
+
+            This thermostat requires the feature LB or LB_GPU.
+
+            Parameters
+            ----------
+            'kT':   float
+                Specifies the thermal energy of the heat bath
+
+            """
 
             if kT == "":
                 raise ValueError(

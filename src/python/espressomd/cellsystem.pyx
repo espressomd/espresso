@@ -25,8 +25,15 @@ from espressomd.utils cimport handle_errors
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
-        """Activates domain decomposition cell system
-        set_domain_decomposition(useVerletList=True)
+        """
+        Activates domain decomposition cell system.
+
+        Parameters
+        ----------
+        
+        'use_verlet_lists' : bool, optional, defaults to True
+            Activates or deactivates the usage of Verlet lists in the algorithm
+
         """
         if use_verlet_lists:
             dd.use_vList = 1
@@ -41,7 +48,14 @@ cdef class CellSystem(object):
         return True
 
     def set_n_square(self, use_verlet_lists=True):
-        """Activates the nsquare force calculation
+        """
+        Activates the nsquare force calculation.
+
+        Parameters
+        ----------
+        'use_verlet_lists': bool, optional, defaults to True
+            Activates or deactivates the usage of the verlet lists for this algorithm
+
         """
         if use_verlet_lists:
             dd.use_vList = 1
@@ -53,8 +67,16 @@ cdef class CellSystem(object):
         return True
 
     def set_layered(self, n_layers=None):
-        """set_layered(n_layers=None)
-        Set the layerd cell system with n_layers layers"""
+        """
+        Activates the layered cell system.
+
+        Parameters
+        ----------
+
+        'n_layers': int, optional, positive
+           Sets the number of layers in the z-direction
+
+        """
         if n_layers:
             if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
