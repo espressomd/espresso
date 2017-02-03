@@ -39,6 +39,7 @@ class H5md(object):
         write_ordered: bool, optional
                        If particle properties should be ordered according to
                        ids.
+
         """
         self.valid_params = ['filename', "write_ordered"]
         if 'filename' not in kwargs:

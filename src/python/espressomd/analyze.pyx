@@ -51,9 +51,7 @@ class Analysis:
     #
 
     def append(self):
-        """Append configuration for averaged analysis
-          append()
-        """
+        """Append configuration for averaged analysis."""
         if c_analyze.n_part == 0:
             raise Exception("No particles to append!")
         if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
@@ -69,10 +67,12 @@ class Analysis:
     #
     
     def mindist(self, p1='default', p2='default'):
-        """Minimal distance between particles
-          mindist(p1="default",p2="default")
-    
-          p1, p2: lists of particle types
+        """Minimal distance between particles.
+        
+        Parameters
+        ----------
+        p1, p2: lists of particle types
+
         """
     
         cdef int_list * set1
