@@ -1,3 +1,5 @@
+.. _getting, compiling and running:
+
 Getting, compiling and running |es| 
 ===================================
 

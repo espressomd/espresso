@@ -1,72 +1,63 @@
+.. _first steps:
+
 First steps
 ===========
+
+.. _quick installation:
 
 Quick installation
 ------------------
 
-If you have installed the requirements (see section ) in standard
-locations, to compile , it is usually enough to execute the following
-sequence of two steps in the directory where you have unpacked the
-sources:
+If you have installed the requirements (see section :ref:`Requirements
+<requirements>` ) in standard locations, to compile, it is usually enough to
+create a build directory and call ``cmake`` and ``make``:
 
-::
+.. code-block:: bash
 
-    $ ./configure make
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ make
 
-This will compile in a freshly created object path named according to
-your CPU and operating system. As you have not yet specified a
-configuration, a standard version will be built with the most often used
-features. Usually you will want to build another version of with options
-better suited for your purpose.
+This will build |es| with a default feature set, namely
+:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file, 
+therefore features that should be compiled in are defined.
+You may want to adjust the feature set to your needs. This can be easily done
+by copying the `myconfig-sample.hpp` which has been created in the build 
+directory and only uncomment the features you want to use in your simulation.
 
-In some cases, when needs to be compiled for several different platforms
-or when different versions with different sets of features are required,
-it might be useful to execute the commands not in the source directory
-itself, but to start ``configure`` from another directory (see section
-). Furthermore, many features of can be selectively turned on or off in
-the local configuration header (see section ) before starting the
-compilation with ``make``.
-
-The shell script ``configure`` prepares the source code for compilation.
-It will determine how to use and where to find the different libraries
-and tools required by the compilation process, and it will test what
-compiler flags are to be used. The script will find out most of these
-things automatically. If something is missing, it will complain and give
-hints on how to solve the problem. The configuration process can be
-controlled with the help of a number of options that are explained in
-section .
+The ``cmake`` command looks for libraries and tools needed by |es|. So |es| 
+can only be built if ``cmake`` reports no errors.
 
 The command ``make`` will compile the source code. Depending on the
 options passed to the program, ``make`` can also be used for a number of
 other things:
 
--  It can install and uninstall the program to some other directories.
+*  It can install and uninstall the program to some other directories.
    However, normally it is not necessary to actually *install* to run
-   it.
+   it: ``make install``
 
--  It can test for correctness.
+*  It can invoke code checks: ``make check`` 
 
--  It can build the documentation.
+*  It can build this documentation: ``make sphinx``
 
-The details of the usage of ``make`` are described in section .
+When these steps have successfully completed, |es| can be started with the
+command (see section :ref:`getting, compiling and running`)::
 
-When these steps have successfully completed, can be started with the
-command (see section )
+    ./pypresso <SCRIPT>
 
-Espresso
-
-where is a Tcl script that tells what to do, and has to be written by
-the user. You can find some examples in the ``samples`` folder of the
-source code directory. If you want to run in parallel, you should have
-compiled to use MPI, and need to tell MPI to run in parallel. The actual
+where is ``<SCRIPT>`` is a ``python`` script which has to
+be written by the user. You can find some examples in the :file:`samples`
+folder of the source code directory. If you want to run in parallel, you should
+have compiled with the open-MPI, and need to tell MPI to run in parallel. The actual
 invocation is implementation dependent, but in many cases, such as
 OpenMPI, you can use
 
 ::
 
-    $ mpirun -n Espresso
+    $ mpirun -n <N> ./pypresso <SCRIPT>
 
-where is the number of prcessors to be used.
+where ``<N>`` is the number of prcessors to be used.
 
 Running 
 --------
@@ -74,7 +65,7 @@ Running
 Python
 ~~~~~~
 
-is implemented as a Python module. This means that you need to write a
+|es| is implemented as a Python module. This means that you need to write a
 python script for any task you want to perform with . In this chapter,
 the basic structure of the interface will be explained. For a practical
 introduction, see the tutorials, which are also part of the
