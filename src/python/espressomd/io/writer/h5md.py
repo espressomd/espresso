@@ -36,9 +36,9 @@ class H5md(object):
                      If masses should be written.
         write_charge : bool, opional
                        If charges should be written.
-        write_ordered: bool, optional
-                       If particle properties should be ordered according to
-                       ids.
+        write_ordered : bool, optional
+                        If particle properties should be ordered according to
+                        ids.
 
         """
         self.valid_params = ['filename', "write_ordered"]
