@@ -1,7 +1,7 @@
 Lattice-Boltzmann
 =================
 
-For an implicit treatment of a solvent, allows to couple the molecular
+For an implicit treatment of a solvent, |es| allows to couple the molecular
 dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-
 Boltzmann-Method (LBM) is a fast, lattice based method that, in its
 “pure” form, allows to calculate fluid flow in different boundary
@@ -9,21 +9,20 @@ conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
 hydrodynamic interactions into the simulation. The implementation of
 boundary conditions for the LBM is a difficult task, a lot of research
-is still being conducted on this topic. The focus of the implementation
+is still being conducted on this topic. The focus of the |es| implementation
 of the LBM is, of course, the coupling to MD and therefore available
 geometries and boundary conditions are somewhat limited in comparison to
-“pure” codes.
+"pure" codes.
 
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
+Please cite :cite:`espresso2` (Bibtex key espresso2 in doc/sphinx/lb.bib) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in doc/sphinx/lb.bib) if you use the GPU implementation.
+
 Setting up a LB fluid
 ---------------------
 
-Please cite  if you use the LB fluid and if you use the GPU
-implementation.
-
-[ bulk\_viscosity = , ext\_force = , friction = , , gamma\_odd = ,
+.. math:: [ bulk\_viscosity = , ext\_force = , friction = , , gamma\_odd = ,
 gamma\_even = ]
 
 lbfluid
@@ -245,7 +244,7 @@ In addition to the solvation force acting on particles, another one that
 acts on the fluid components is present, representing the solvation
 force of particles on the fluid.
 
-.. math:: \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{|\vec{r}_i-\vec{r}|} \cdot \frac{(\vec{r}'-\vec{r})}{|\vec{r}'-\vec{r}|} \right] \frac{\vec{r}'-\vec{r}}{|\vec{r}'-\vec{r}|^2},
+.. math:: \vec{F}_{\zeta}^{\mathrm{fs}}(\vec{r}) = -\lambda_{\zeta} \rho_{\zeta}(\vec{r}) \sum_i \sum_{\vec{r}'} \Theta \left[\frac{(\vec{r}_i-\vec{r})}{\|\vec{r}_i-\vec{r}\|} \cdot \frac{(\vec{r}'-\vec{r})}{\|\vec{r}'-\vec{r}\|} \right] \frac{\vec{r}'-\vec{r}}{\|\vec{r}'-\vec{r}\|^2},
 
 where :math:`\Theta(x)=1` if :math:`0<x<1`, and 0 otherwise, the sum
 over lattice nodes is performed on the neighboring sites of

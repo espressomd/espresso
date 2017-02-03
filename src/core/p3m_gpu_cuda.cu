@@ -637,9 +637,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data * const pdata,
        cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),        cmesh_size*sizeof(REAL_TYPE)));
 
        cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2], CUFFT_PLAN_FORW_FLAG);
-       cufftSetCompatibilityMode( p3m_gpu_fft_plans.forw_plan, CUFFT_COMPATIBILITY_NATIVE );
+       //cufftSetCompatibilityMode( p3m_gpu_fft_plans.forw_plan, CUFFT_COMPATIBILITY_NATIVE );
        cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2], CUFFT_PLAN_BACK_FLAG);
-       cufftSetCompatibilityMode( p3m_gpu_fft_plans.back_plan, CUFFT_COMPATIBILITY_NATIVE );
+       //cufftSetCompatibilityMode( p3m_gpu_fft_plans.back_plan, CUFFT_COMPATIBILITY_NATIVE );
      }
 
      if(((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) && (p3m_gpu_data.mesh_size > 0)) {
