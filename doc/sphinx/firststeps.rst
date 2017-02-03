@@ -200,6 +200,3 @@ created by the system class. To perform an integration step, execute
 ::
 
     system.integrator.run(steps=100)
-
-.. [1]
-   http://www.tcl.tk/man/tcl8.5/tutorial/tcltutorial.html
