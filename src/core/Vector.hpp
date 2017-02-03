@@ -24,6 +24,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <initializer_list>
 #include <iterator>
 #include <vector>
 
@@ -46,6 +47,11 @@ public:
   Vector() {}
 
   template <typename Container> explicit Vector(Container v) {
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
+  explicit Vector(std::initializer_list<Scalar> v) {
     assert(std::distance(std::begin(v), std::end(v)) <= n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
