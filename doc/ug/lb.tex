@@ -379,6 +379,14 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 
 \section{Removing total fluid momentum}
 \label{sec:remove-momentum}
+\begin{pysyntax}
+    \object{
+        espressomd.lb.LBFluid_GPU
+    }{
+        remove_total_momentum
+    }{}
+\end{pysyntax}
+
 \begin{essyntax}
   lbfluid remove_momentum
   \begin{features}
@@ -392,6 +400,10 @@ In some cases, such as free energy profile calculations, it might be useful to
 prevent interface motion. This can be achieved using the command \lit{lbfluid
 remove_momentum}, that removes the total momentum of the fluid.
 
+The Python version works slightly different in that it subtracts the
+momentum depending on the fluid and coupled particle momentum.  It
+takes into account particles masses set using the \texttt{MASS}
+feature.
 
 \section{Visualization}
 \label{ssec:LBvisualization}

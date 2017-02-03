@@ -1511,7 +1511,7 @@ cdef class ParticleList:
     def __setstate__(self, params):
         for particle_number in params.keys():
             params[particle_number]["id"] = particle_number
-            self.add(params[particle_number])
+            self._place_new_particle(params[particle_number])
 
     def __len__(self):
         return n_part
@@ -1545,7 +1545,10 @@ cdef class ParticleList:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args.")
 
-    def _place_new_particle(self, P):
+        # Check for presence of pos attribute
+        if not "pos" in P:
+            raise ValueError(
+                "pos attribute must be specified for new particle")
 
         # Handling of particle id
         if not "id" in P:
@@ -1554,6 +1557,13 @@ cdef class ParticleList:
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
+
+        if len(np.array(P["pos"]).shape) == 2:
+            self._place_new_particles(P)
+        else:
+            self._place_new_particle(P)
+
+    def _place_new_particle(self, P):
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
