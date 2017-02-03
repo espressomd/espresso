@@ -16,42 +16,86 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#include <string>
+#include <fstream>
 #include "Observable.hpp"
 #include "integrate.hpp" 
 
 namespace Observables {
 
-Observable::Observable() {
-  last_update = 0;
-  autoupdate = 0;
-  autoupdate_dt = 0;
-  last_value.resize(n_values());
-};
+Observable::Observable()
+  : last_value(n_values())
+  , n()
+  , last_update(0)
+  , autoupdate(0)
+  , autoupdate_dt(0)
+  , m_ofile()
+  , m_filename()
+  , m_binary(false)
+{}
+
 
 int Observable::calculate() {
-  int temp = 0;
   // Clear last value
-  int n=n_values();
-  last_value.resize(n);
-  for (int i=0;i<last_value.size();i++)
-    last_value[i]=0;
+  last_value.assign(n_values(), 0.0);
 
-  temp=actual_calculate();
+  int temp=actual_calculate();
   last_update = sim_time;
   return temp;
 }
 
 
 int Observable::update() {
-  int temp = 0;
-  temp=actual_update();
+  int temp=actual_update();
   last_update = sim_time;
   return temp;
 }
 
 
+void Observable::set_filename(std::string const& filename, bool binary)
+{
+  if ( !filename.empty() )
+  {
+    m_filename = filename;
+    m_binary   = binary;
 
-	
+    auto mode = std::ios_base::app;
+    if ( m_binary )
+      mode |= std::ios_base::binary;
+
+    if ( m_ofile.is_open() )
+    {
+      m_ofile.close();
+      m_ofile.clear(); // clear flags
+    }
+
+    m_ofile.open(m_filename, mode);
+  }
+};
+
+
+bool Observable::writable() const
+{
+  return m_ofile.is_open();
+}
+
+
+void Observable::write() const
+{
+  if ( writable() )
+  {
+    do_write();
+  }
+}
+
+
+void Observable::do_write() const
+{
+  m_ofile << sim_time;
+  for (auto p : last_value)
+    m_ofile << " " << p;
+  m_ofile << std::endl;
+}
 
 
 void autoupdate_observables() {
