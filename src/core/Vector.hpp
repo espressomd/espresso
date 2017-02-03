@@ -51,6 +51,11 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
+  explicit Vector(Scalar const (&v)[n]) {
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
   explicit Vector(std::initializer_list<Scalar> v) {
     assert(std::distance(std::begin(v), std::end(v)) <= n);
     std::copy(std::begin(v), std::end(v), d.begin());
@@ -79,6 +84,7 @@ public:
 
   static constexpr size_t size() { return n; }
   Scalar const *data() const { return d.data(); }
+  Scalar *data() { return d.data(); }
   size_type max_size() const { return d.max_size(); }
   bool empty() const { return d.empty(); }
 
