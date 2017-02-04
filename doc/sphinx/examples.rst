@@ -8,22 +8,22 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``billard.py`` needs the Python ``pypopengl`` module
 
 * ``bonds-tst.py``
-   Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This shows how to:
+   Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
   
    * print defined bonded interactions 
    * print bonds on a particle
-   * delete a specific (or all) bonds
-
-.. todo:: print to screen the state of bonds, with what the code is doing. 
+   * delete bonds by index or name
+   * save/load a bond to/from a variable
  
 
 * ``cellsystem_test.py``
-
-.. todo:: remove this file (needed?), or merge with a more complete simulation example. 
+    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.     
+    .. todo:: implement the older [tune_cells] call
+    .. todo:: add save/load optimal cell parameters from tune_skin()
+    
 
 * ``coulomb_debye_hueckel.py``,  ``debye_hueckel.py``
     Charged beads with a WCA interaction are simulated using the screened Debye-Huckle potential. See :ref:`Debye-Hückel potential`
-
 
 
 * ``ekboundaries.py``
@@ -35,8 +35,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``lbf.py``
 
 * ``lj-demo.py``
+    Lennard-Jones liquid used for demonstration purposes to showcase |Es|. Sliders from a MIDI controller can change system variables such as temperature and volume. Some thermodynamic observables are analyzed and plotted live.
 
 * ``lj_liquid_distribution.py``
+    Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.
 
 * ``lj_liquid.py``
     Simple Lennard-Jones particle liquid. Shows the basic features of how to:
@@ -47,8 +49,11 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     * handle the connection to VMD.
 
 * ``lj_liquid_structurefactor.py``
+    Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.
+
 
 * ``load_bonds.py``,  ``store_bonds.py``
+    Uses the Python ``pickle`` module to store and load bond information.
 
 * ``load_checkpoint.py``,  ``save_checkpoint.py``
    Basing usage of the checkpointing feature. Shows how to write/load the state of:   
@@ -59,6 +64,7 @@ Serveral scripts that can serve as usage examples can be found in the directory 
    * thermostat
 
 * ``load_properties.py``,  ``store_properties.py``
+    Uses the Python ``pickle`` module to store and load system information.
 
 * ``minimal-charged-particles.py``
    Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
@@ -76,6 +82,7 @@ Serveral scripts that can serve as usage examples can be found in the directory 
    Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
 
 * ``slice_input.py``
+    Uses python array slicing to set and extract various particle properties.
 
 * ``visualization_bonded.py``
 
