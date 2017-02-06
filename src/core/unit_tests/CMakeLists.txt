@@ -27,44 +27,37 @@ add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND})
 add_dependencies(check check_unit_tests)
 
 # unit_test function
-function(UNIT_TEST TEST_NAME TEST_SRC)
+function(UNIT_TEST)
+  cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC" ${ARGN} )
   add_executable(${TEST_NAME} ${TEST_SRC})
   target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
   add_dependencies(${TEST_NAME} EspressoConfig)
-  
-  add_test(${TEST_NAME} ${TEST_NAME})
-  add_dependencies(check_unit_tests ${TEST_NAME})  
+
+  # If NUM_PROC is given, set up MPI parallel test case
+  if( TEST_NUM_PROC )
+    add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${TEST_NAME})
+  else( )
+    add_test(${TEST_NAME} ${TEST_NAME})
+  endif( )
+
+  add_dependencies(check_unit_tests ${TEST_NAME})
 endfunction(UNIT_TEST)
-
-function(PARALLEL_UNIT_TEST TEST_NAME TEST_SRC NUM_PROC)
-  add_executable(${TEST_NAME} ${TEST_SRC})
-  target_link_libraries(${TEST_NAME} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-  add_dependencies(${TEST_NAME} EspressoConfig)
-  
-  add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${NUM_PROC} ${TEST_NAME})
-  add_dependencies(check_unit_tests ${TEST_NAME})  
-endfunction(PARALLEL_UNIT_TEST)
-
 
 # Add tests here
 
-unit_test(Vector_test Vector_test.cpp)
-unit_test(RuntimeError_test RuntimeError_test.cpp)
-unit_test(RunningAverage_test RunningAverage_test.cpp)
+unit_test(NAME Vector_test SRC Vector_test.cpp)
+unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
+unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)
 
-set(RuntimeErrorCollector_test_SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
-unit_test(RuntimeErrorCollector_test "${RuntimeErrorCollector_test_SRC}")
+unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 
-unit_test(ScriptInterface_test ScriptInterface_test.cpp)
+unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp)
 
-set(Wall_test_SRC Wall_test.cpp ../shapes/Wall.cpp)
-unit_test(Wall_test "${Wall_test_SRC}")
-unit_test(Factory_test Factory_test.cpp)
-unit_test(NumeratedContainer_test NumeratedContainer_test.cpp)
+unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
+unit_test(NAME Factory_test SRC Factory_test.cpp)
+unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
 
-set(MpiCallbacks_test_SRC  MpiCallbacks_test.cpp ../MpiCallbacks.cpp)
-parallel_unit_test(MpiCallbacks_test "${MpiCallbacks_test_SRC}" 2)
+unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
 
-set(ParallelScriptInterface_test_SRC  ParallelScriptInterface_test.cpp)
-parallel_unit_test(ParallelScriptInterface_test "${ParallelScriptInterface_test_SRC}" 2)
+unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp NUM_PROC 2)
 target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
