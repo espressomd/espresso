@@ -584,6 +584,9 @@ The command offers a variety of surfaces that can be defined to interact
 with desired particles. Variants to create interactions via a non-bonded
 interaction potential, where the distance between the two particles is
 replaced by the distance of the center of the particle to the surface.
+
+.. warning:: When using shapes with concave edges and corners, the fact that a particle only interacts with the closest point on the constraint surface leads to discontinuous force fields acting on the particles. This breaks energy conservation in otherwise symplectic integrators. Often, the total energy of the system increases exponentially.
+
 The constraints are identified like a particle via its type for the
 non-bonded interaction. After a type is defined for each constraint one
 has to define the interaction of all different particle types with the
