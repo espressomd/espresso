@@ -411,6 +411,24 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
 }
 
 
+int lb_lbfluid_get_couple_flag(int * couple_flag) {
+  *couple_flag = LB_COUPLE_NULL;
+  if (lattice_switch & LATTICE_LB_GPU)
+  {
+#ifdef LB_GPU
+    *couple_flag = lbpar_gpu.lb_couple_switch;
+#endif
+  }
+  else
+  {
+#ifdef LB
+    *couple_flag = LB_COUPLE_TWO_POINT;
+#endif
+  }
+  return 0;
+}
+
+
 int lb_lbfluid_set_agrid(double p_agrid){
   if ( p_agrid <= 0)
     return -1;
