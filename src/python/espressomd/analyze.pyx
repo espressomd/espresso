@@ -34,7 +34,6 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from ._system import System
 
 
 class Analysis:
@@ -42,8 +41,6 @@ class Analysis:
     _systemp =None
 
     def __init__(self,system):
-        if not isinstance(system,System):
-            raise TypeError("An instance of System is required as argument")
         self._system=system            
 
     #
