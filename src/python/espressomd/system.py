@@ -1,6 +1,6 @@
 from __future__ import print_function
 from espressomd.highlander import highlander
-from espressomd import _system
+from espressomd._system import *
 
 
 import numpy as np
@@ -109,7 +109,7 @@ class System(object):
         return np.array([box_l[0], box_l[1], box_l[2]])
 
     @box_l.setter
-    def __set__(self, _box_l):
+    def box_l(self, _box_l):
         if len(_box_l) != 3:
             raise ValueError("Box length must be of length 3")
         for i in range(3):
@@ -145,7 +145,7 @@ class System(object):
         mpi_bcast_parameter(FIELD_PERIODIC)
 
     @periodicity.setter
-    def __get__(self):
+    def periodicity(self):
         periodicity = np.zeros(3)
         periodicity[0] = periodic % 2
         periodicity[1] = int(periodic / 2) % 2
@@ -158,7 +158,7 @@ class System(object):
         return sim_time
 
     @time.setter
-    def __set__(self, _time):
+    def time(self, _time):
         if _time < 0:
             raise ValueError("Simulation time must be >= 0")
         global sim_time
@@ -170,7 +170,7 @@ class System(object):
         return smaller_time_step
 
     @smaller_time_step.setter
-    def __set__(self, _smaller_time_step):
+    def smaller_time_step(self, _smaller_time_step):
         if "MULTI_TIMESTEP" in code_info.features():
             global smaller_time_step
             if _smaller_time_step <= 0:
@@ -182,7 +182,7 @@ class System(object):
         return time_step
 
     @time_step.setter
-    def __set__(self, _time_step):
+    def time_step(self, _time_step):
         if "LB" in code_info.features():
             global lbpar
         if "LB_GPU" in code_info.features():
@@ -204,7 +204,7 @@ class System(object):
         return timing_samples
 
     @timings.setter
-    def __set__(self, _timings):
+    def timings(self, _timings):
         global timing_samples
         if _timings <= 0:
             timing_samples = 0
@@ -232,7 +232,7 @@ class System(object):
         return min_global_cut
 
     @min_global_cut.setter
-    def __set__(self, _min_global_cut):
+    def min_global_cut(self, _min_global_cut):
         global min_global_cut
         min_global_cut = _min_global_cut
         mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
