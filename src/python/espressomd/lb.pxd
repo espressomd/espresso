@@ -73,7 +73,6 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_agrid(double c_agrid)
         int lb_lbfluid_get_agrid(double * c_agrid)
         int lb_lbfluid_set_friction(double * c_friction)
-        int lb_lbfluid_set_couple_flag(int couple_flag)
         int lb_lbfluid_get_friction(double * c_friction)
         int lb_lbfluid_set_gamma_odd(double * c_gamma_odd)
         int lb_lbfluid_get_gamma_odd(double * c_gamma_odd)
