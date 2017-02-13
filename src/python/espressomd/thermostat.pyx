@@ -79,6 +79,8 @@ cdef class Thermostat:
                                                    langevin_gamma_rotation[2]]
                 ELSE:
                     lang_dict["gamma_rotation"] = langevin_gamma_rotation
+            ELSE:
+                lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
         if thermo_switch & THERMO_LB:
