@@ -25,6 +25,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
+import os
 
 # Actor class
 ####################################################
@@ -37,6 +38,10 @@ cdef class HydrodynamicInteraction(Actor):
 ####################################################
 IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+        
+        """
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -167,7 +172,9 @@ IF LB_GPU or LB:
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
+            tmp_path = path + ".__tmp__"
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+            os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
        
@@ -190,9 +197,16 @@ IF LB_GPU or LB:
 
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+        
+        """
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
+
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
 
 
 IF LB or LB_GPU:

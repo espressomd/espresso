@@ -621,7 +621,7 @@ system.auto_update_correlators.add(corr)
 
 \subsection{Inquiring about already existing correlations}
 \begin{pysyntax}
-\object{esrpessomd.correlators}{Correlator}{get_params()}
+\object{esrpessomd.correlators.Correlator}{get_params}{}
 \end{pysyntax}
 
 \begin{essyntax}
@@ -635,6 +635,30 @@ including their parameters.  \todo{Maybe not all parameters are
 
 Variant \variant{2} returns the number of currently
 defined correlations.  
+
+
+
+\subsection{Recording observables to a file}
+
+Observables can be recorded to a file for fine-grained post
+processing.  Sometimes it does not suffice to only get the value of an
+observable in each iteration of the main loop in a script but it is
+needed in every time step.  An example would be the calculation of the
+MSD with a correlator other than the internal.
+\begin{pysyntax}
+\object{espressomd.observables.Observable}{auto_write_to}{
+  filename=\arg{string},
+  binary=\arg{bool}
+}
+\end{pysyntax}
+where \texttt{Observalble} is one of the many obsrvables available.
+
+A simple example for the MSD would be
+\begin{pypresso}
+p = espressomd.observables.ComPosition(ids=[0,1,2])
+p.auto_write_to(filename="test_observable_writer.dat")
+system.auto_update_observables.add(p)
+\end{pypresso}
   
 \subsection{Collecting time series data for the correlation}
 

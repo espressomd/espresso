@@ -217,16 +217,25 @@ A list of all registered object names can be generated with
 \end{pysyntax}
 
 \vspace{2em}
-A new checkpoint with a consecutive index that contains the latest data of the 
-registered objects can then be created by calling
+A new checkpoint that contains the latest data of the registered
+objects can then be created by calling
 \begin{pysyntax}
   \object{
     checkpoint
   }{
     save
   }{
-  }
+  }[
+    checkpoint_index=\arg{int}
+  ]
 \end{pysyntax}
+A new consecutive index is chosen if the optional
+\texttt{checkpoint_index} is not given.  Using an explicit checkpoint
+index existing ones can be overwritten.  This is useful to save disk
+space if a lot of data is being checkpointed and the files are huge.
+Of course this only works well if then this specific checkpoint is
+loaded again, otherwise the heuristic will choose the one with the
+highest index.
 
 \vspace{2em}
 An existing checkpoint can be loaded with 
