@@ -44,7 +44,7 @@ VariantMap Pore::get_parameters() const {
           {"rad_left", m_pore->rad_left()},
           {"rad_right", m_pore->rad_right()},
           {"smoothing_radius", m_pore->smoothing_radius()},
-          {"length", m_pore->smoothing_radius()},
+          {"length", m_pore->length()},
           {"outer_rad_left", m_pore->outer_rad_left()},
           {"outer_rad_right", m_pore->outer_rad_right()}};
 }

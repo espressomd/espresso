@@ -78,7 +78,7 @@ cdef class Integrator:
         for key in kwargs:
             if not key in req:
                 raise Exception("Set required parameter %s first." %key)
-            
+
         self._steepest_descent_params.update(kwargs)
         self._method = "STEEPEST_DESCENT"
 
@@ -86,7 +86,6 @@ cdef class Integrator:
         """
         Set the integration method to Velocity Verlet.
         """
-
         self._method = "VV"
 
     def set_nvt(self):

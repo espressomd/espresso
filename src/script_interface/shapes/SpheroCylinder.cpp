@@ -26,7 +26,6 @@ using std::string;
 
 namespace ScriptInterface {
 namespace Shapes {
-
 ParameterMap SpheroCylinder::valid_parameters() const {
   return {{"pos", {ParameterType::DOUBLE_VECTOR, 3, true}},
           {"axis", {ParameterType::DOUBLE_VECTOR, 3, true}},
