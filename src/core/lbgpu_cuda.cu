@@ -263,14 +263,28 @@ __device__ void random_wrapper(LB_randomnr_gpu *rn) {
  * @param index   node index / thread index (Input)
  * @param xyz     Pointer to calculated xyz array (Output)
  */
-__device__ void index_to_xyz(unsigned int index, unsigned int *xyz){
-
+template < typename T >
+__device__ void index_to_xyz(T index, T* xyz){
   xyz[0] = index%para.dim_x;
   index /= para.dim_x;
   xyz[1] = index%para.dim_y;
   index /= para.dim_y;
   xyz[2] = index;
 }
+
+
+/**tranformation from xyz to 1d array-index
+ * @param xyz     Pointer xyz array (Input)
+ * @param index   Calculated node index / thread index (Output)
+ */
+template < typename T >
+__device__ T xyz_to_index(T* xyz){
+  T x = (xyz[0] + para.dim_x) % para.dim_x;
+  T y = (xyz[1] + para.dim_y) % para.dim_y;
+  T z = (xyz[2] + para.dim_z) % para.dim_z;
+  return x + para.dim_x*(y + para.dim_y*z);
+}
+
 
 /**calculation of the modes from the velocity densities (space-transform.)
  * @param n_a     Pointer to local node residing in array a (Input)
@@ -4167,6 +4181,85 @@ void lb_lbfluid_fluid_add_momentum( float momentum_host[3] )
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL( lb_lbfluid_fluid_add_momentum_kernel, dim_grid, threads_per_block, (momentum_device, *current_nodes, node_f, device_rho_v));
+}
+
+
+/**set the populations of a specific node on the GPU
+ * @param n_a            Pointer to local node residing in array a (Input)
+ * @param population     Pointer to new population (Input)
+ * @param x              x-coordinate of node (Input)
+ * @param y              y-coordinate of node (Input)
+ * @param z              z-coordinate of node (Input)
+ * @param c              LB component (for SHANCHEN) (Input)
+*/
+__global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a, float population[LBQ], int x, int y, int z, int c)
+{
+  int xyz[3] = { x, y, z };
+  int index = xyz_to_index( xyz );
+
+  for (int i = 0; i < LBQ; ++i)
+  {
+    n_a.vd[( i + c*LBQ ) * para.number_of_nodes + index] = population[i];
+  }
+}
+
+
+/**interface to set the populations of a specific node for the GPU
+ * @param xyz            coordinates of node (Input)
+ * @param population     Pointer to population (Input)
+ * @param c              LB component (for SHANCHEN) (Input)
+*/
+void lb_lbfluid_set_population( int xyz[3], float population_host[LBQ], int c )
+{
+  float* population_device;
+  cuda_safe_mem(cudaMalloc((void**)&population_device,LBQ*sizeof(float)));
+  cuda_safe_mem(cudaMemcpy(population_device, population_host, LBQ*sizeof(float), cudaMemcpyHostToDevice));
+
+  dim3 dim_grid = make_uint3(1, 1, 1);
+  KERNELCALL( lb_lbfluid_set_population_kernel, dim_grid, 1,
+              (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
+
+  cuda_safe_mem(cudaFree(population_device));
+}
+
+
+/**get the populations of a specific node on the GPU
+ * @param n_a            Pointer to local node residing in array a (Input)
+ * @param population     Pointer to population (Output)
+ * @param x              x-coordinate of node (Input)
+ * @param y              y-coordinate of node (Input)
+ * @param z              z-coordinate of node (Input)
+ * @param c              LB component (for SHANCHEN) (Input)
+*/
+__global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a, float population[LBQ], int x, int y, int z, int c)
+{
+  int xyz[3] = { x, y, z };
+  int index = xyz_to_index( xyz );
+
+  for (int i = 0; i < LBQ; ++i)
+  {
+    population[i] = n_a.vd[( i + c*LBQ ) * para.number_of_nodes + index];
+  }
+}
+
+
+/**interface to get the populations of a specific node for the GPU
+ * @param xyz            coordinates of node (Input)
+ * @param population     Pointer to population (Output)
+ * @param c              LB component (for SHANCHEN) (Input)
+*/
+void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
+{
+  float* population_device;
+  cuda_safe_mem(cudaMalloc((void**)&population_device,LBQ*sizeof(float)));
+
+  dim3 dim_grid = make_uint3(1, 1, 1);
+  KERNELCALL( lb_lbfluid_get_population_kernel, dim_grid, 1,
+              (*current_nodes, population_device, xyz[0], xyz[1], xyz[2], c));
+
+  cuda_safe_mem(cudaMemcpy(population_host, population_device, LBQ*sizeof(float), cudaMemcpyDeviceToHost));
+
+  cuda_safe_mem(cudaFree(population_device));
 }
 
 

@@ -267,7 +267,8 @@ IF LB or LB_GPU:
                 return double_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                cdef double[19] double_return = value
+                lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:
             def __get__(self):
