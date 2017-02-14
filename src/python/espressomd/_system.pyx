@@ -96,6 +96,9 @@ cdef class System:
             System.__setattr__(self, property_, params[property_])
 
     property box_l:
+        """
+        Array like, list of three floats
+        """
         def __set__(self, _box_l):
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
@@ -115,6 +118,12 @@ cdef class System:
             return integ_switch
 
     property periodicity:
+        """
+        list of three integers
+        [x, y, z]
+        zero for no periodicity in this direction
+        one for periodicity
+        """
         def __set__(self, _periodic):
             global periodic
             if len(_periodic) != 3:

@@ -5,6 +5,9 @@ Under the hood
 
 -  Main loop in pseudo code (for comparison)
 
+
+.. _internal_particle_org:
+
 Internal particle organization
 ------------------------------
 

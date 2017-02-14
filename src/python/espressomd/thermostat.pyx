@@ -146,7 +146,24 @@ cdef class Thermostat:
 
     def set_langevin(self, kT="", gamma="", gamma_rotation=""):
         """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'"""
+        and optional parameter 'gamma_rotation'.
+        
+        Parameters
+        -----------
+        'kT': float
+            Thermal energy of the simulated heat bath.
+
+        'gamma': float 
+            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY' 
+            is compiled in then 'gamma' can be a list of three positive floats, for the friction 
+            coefficient in each cardinal direction.
+
+        gamma_rotation: float, optional
+            The same applies to 'gamma_rotation', which requires the feature 
+            'ROTATION' to work properly. But also accepts three floating point numbers
+            if 'PARTICLE_ANISOTROPY' is also compiled in.
+
+        """
         
         scalar_gamma_def = True
         IF PARTICLE_ANISOTROPY:
@@ -203,7 +220,17 @@ cdef class Thermostat:
 
     IF LB_GPU or LB:
         def set_lb(self, kT=""):
-            """Sets the LB thermostat with required parameter 'temperature'"""
+            """
+            Sets the LB thermostat with required parameter 'kT'.
+
+            This thermostat requires the feature LB or LB_GPU.
+
+            Parameters
+            ----------
+            'kT':   float
+                Specifies the thermal energy of the heat bath
+
+            """
 
             if kT == "":
                 raise ValueError(
@@ -221,7 +248,23 @@ cdef class Thermostat:
 
     IF NPT:
         def set_npt(self, kT="", gamma0="", gammav=""):
-            """Sets the NPT thermostat with required parameters 'temperature' 'gamma0' 'gammav'"""
+            """
+            Sets the NPT thermostat with required parameters 'temperature', 'gamma0', 'gammav'.
+
+            Parameters
+            ----------
+
+            'kT': float
+                Thermal energy of the heat bath
+
+            'gamma0': float
+                Friction coefficient of the bath
+
+            'gammav': float
+                Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+            
+            """
+
             if kT == "" or gamma0 == "" or gammav == "":
                 raise ValueError(
                     "kT, gamma0 and gammav have to be given as keyword args")
@@ -243,7 +286,34 @@ cdef class Thermostat:
             
     IF DPD or INTER_DPD:
         def set_dpd(self, **kwargs):
-            """Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'"""
+            """
+            Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
+            
+            Parameters
+            ----------
+            'kT': float 
+                Thermal energy of the heat bath, floating point number
+
+            'gamma': float 
+                Friction the particles experience in the bath, floating point number
+
+            'r_cut': float
+                Cut off value, floating point number
+
+            'wf'   : integer, optional
+                Integer value zero or one, affects scaling of the random forces
+        
+            'tgamma': float, optional
+                Friction coefficient for the transverse DPD algorithm
+
+            'tr_cut': float, optional
+                Cut off radius for the transverse DPD
+
+            'twf'   : integer 
+                Interger value zero or one, affects the scaling of the random forces
+                in the transverse DPD algorithm
+
+            """
             req = ["kT","gamma","r_cut"]
             valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
             raise Exception("Not implemented yet.")
