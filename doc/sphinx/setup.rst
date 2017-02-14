@@ -169,6 +169,8 @@ temperature = espressomd.System().thermostat.get\_state()[0][’kT’] gamma
 = espressomd.System().thermostat.get\_state()[0][’gamma’] gamma\_rot =
 espressomd.System().thermostat.get\_state()[0][’gamma\_rotation’]
 
+.. _thermostat:
+
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
 
