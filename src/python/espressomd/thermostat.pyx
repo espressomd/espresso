@@ -23,11 +23,58 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 
+
+class AssertThermostatType():
+    """Assert that only a certain thermostat is active
+
+    Decorator class to assure that only a given thermostat is active
+    at a time.  Usage:
+
+        @AssertThermostatType(THERMO_LANGEVIN)
+        def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+
+    This will prefix an assertion for THERMO_LANGEVIN to the call.
+
+    """
+    def __init__(self, *args):
+        self.thermo_type = args
+    def __call__(self, f):
+        def __f(*args, **kwargs):
+            if  ( not (thermo_switch in self.thermo_type) and
+                  (thermo_switch != THERMO_OFF) ):
+                raise Exception("A different thermostat is already set!")
+            f(*args, **kwargs)
+        return __f
+
+
 cdef class Thermostat:
 
+    # We have to cdef the state variable because it is a cdef class
+    cdef _state
+
     def __init__(self):
+        self._state = None
         pass
 
+    def suspend(self):
+        """Suspend the thermostat
+
+        The thermostat can be suspended, e.g. to perform an energy
+        minimization.
+
+        """
+        self._state = self.__getstate__()
+        self.turn_off()
+
+    def recover(self):
+        """Recover a suspended thermostat
+
+        If the thermostat had been suspended using .suspend(), it can
+        be reovered with this method.
+
+        """
+        if self._state is not None:
+            self.__setstate__(self._state)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -146,7 +193,8 @@ cdef class Thermostat:
         # here other thermostats stuff
         return True
 
-    def set_langevin(self, kT="", gamma="", gamma_rotation=""):
+    @AssertThermostatType(THERMO_LANGEVIN)
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
         """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'"""
         
@@ -157,7 +205,7 @@ cdef class Thermostat:
             else:
                 scalar_gamma_def = True
 
-        if kT == "" or gamma == "":
+        if kT is None or gamma is None:
             raise ValueError(
                 "Both, kT and gamma have to be given as keyword args")
         utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
@@ -174,7 +222,7 @@ cdef class Thermostat:
                 raise ValueError("temperature and diagonal elements of the gamma tensor must be positive numbers")
         global langevin_gamma_rotation
         IF ROTATION:
-            if gamma_rotation != "":
+            if gamma_rotation is not None:
                 IF ROTATIONAL_INERTIA:
                     langevin_gamma_rotation[0] = gamma_rotation[0]
                     langevin_gamma_rotation[1] = gamma_rotation[1]
@@ -204,10 +252,11 @@ cdef class Thermostat:
         return True
 
     IF LB_GPU or LB:
-        def set_lb(self, kT=""):
+        @AssertThermostatType(THERMO_LB)
+        def set_lb(self, kT=None):
             """Sets the LB thermostat with required parameter 'temperature'"""
 
-            if kT == "":
+            if kT is None:
                 raise ValueError(
                     "kT has to be given as keyword arg")
             utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
@@ -222,9 +271,10 @@ cdef class Thermostat:
             return True
 
     IF NPT:
-        def set_npt(self, kT="", gamma0="", gammav=""):
+        @AssertThermostatType(THERMO_NPT_ISO)
+        def set_npt(self, kT=None, gamma0=None, gammav=None):
             """Sets the NPT thermostat with required parameters 'temperature' 'gamma0' 'gammav'"""
-            if kT == "" or gamma0 == "" or gammav == "":
+            if kT is None or gamma0 is None or gammav is None:
                 raise ValueError(
                     "kT, gamma0 and gammav have to be given as keyword args")
             if not isinstance(kT, float):
@@ -244,6 +294,7 @@ cdef class Thermostat:
         
             
     IF DPD or INTER_DPD:
+        @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
         def set_dpd(self, **kwargs):
             """Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'"""
             req = ["kT","gamma","r_cut"]
