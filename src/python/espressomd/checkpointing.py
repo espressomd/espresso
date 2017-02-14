@@ -36,7 +36,7 @@ class Checkpointing(object):
         
         if not isinstance(checkpoint_path, str):
             raise ValueError("Invalid checkpoint path.")
-        
+
         self.checkpoint_objects = []
         self. checkpoint_signals = []
         frm = inspect.stack()[1]
@@ -131,7 +131,7 @@ class Checkpointing(object):
         return self.counter-1
     
     
-    def save(self):
+    def save(self, checkpoint_index=None):
         """Saves all registered python objects in the given checkpoint directory using cPickle."""
         
         #get attributes of registered objects
@@ -139,9 +139,14 @@ class Checkpointing(object):
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self.getattr_submodule(self.calling_module, obj_name, None)
         
-        filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))
-        with open(filename,"w") as checkpoint_file:
+        if checkpoint_index is None:
+            checkpoint_index = self.counter
+        filename = os.path.join(self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
+
+        tmpname = filename + ".__tmp__"
+        with open(tmpname,"w") as checkpoint_file:
             pickle.dump(checkpoint_data, checkpoint_file, -1)
+        os.rename(tmpname, filename)
     
     
     def load(self, checkpoint_index=None):
