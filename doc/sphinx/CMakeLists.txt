@@ -1,4 +1,4 @@
-find_package(Sphinx)
+find_package(Sphinx 1.5.2)
 if(SPHINX_FOUND) 
     # configured documentation tools and
     # intermediate build results
