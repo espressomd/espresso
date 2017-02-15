@@ -191,6 +191,8 @@ void lb_init_boundaries() {
             number_of_boundnodes++;
           }
 
+          lbpar_gpu.number_of_boundnodes = number_of_boundnodes;
+
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
             ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
@@ -432,8 +434,8 @@ void lb_bounce_back() {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
               population_shift -=
-                  lbpar.agrid * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                  lbpar.agrid * lbpar.rho[0] * 2 * lbmodel.c[i][l] *
+                  lbpar.agrid * lbpar.agrid * lbpar.agrid *
+                  lbpar.rho[0] * 2 * lbmodel.c[i][l] *
                   lbmodel.w[i] *
 		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
                   lbmodel.c_sound_sq;

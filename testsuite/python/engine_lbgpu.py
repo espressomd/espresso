@@ -14,7 +14,7 @@ except ImportError:
     print("Module \"vtk\" not available, skipping test!")
     exit()
 
-if not set(["ENGINE", "LB"]) < set(espressomd.features()):
+if not set(["ENGINE", "LB_GPU"]) < set(espressomd.features()):
     print("Features not available, skipping test!")
     exit()
 
@@ -62,13 +62,13 @@ class SwimmerTest(ut.TestCase):
         S = espressomd.System()
         self.prepare(S)
 
-        lbm = espressomd.lb.LBFluid(agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0)
+        lbm = espressomd.lb.LBFluid(agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0, couple="2pt")
         S.actors.add(lbm)
+        self.run_and_check(S,lbm,"engine_lbgpu_2pt.vtk")
 
-        if (S.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_and_check(S,lbm,"engine_lb.vtk")
+        lbm = espressomd.lb.LBFluid(agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0, couple="3pt")
+        self.run_and_check(S,lbm,"engine_lbgpu_3pt.vtk")
+
 
 if __name__ == '__main__':
     ut.main()

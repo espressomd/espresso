@@ -59,6 +59,31 @@ public:
     if (method == "value") {
       return observable()->last_value;
     }
+    if (method == "auto_write_to") {
+      std::string filename;
+      bool binary;
+
+      try
+      {
+        filename = get_value<std::string>(parameters.at("filename"));
+      }
+      catch (std::out_of_range &e)
+      {
+        return {};
+      }
+
+      try
+      {
+        binary = get_value<bool>(parameters.at("binary"));
+      }
+      catch (std::out_of_range &e)
+      {
+        binary = false;
+      }
+
+      observable()->set_filename(filename, binary);
+      return {};
+    }
 
      return {};
   };

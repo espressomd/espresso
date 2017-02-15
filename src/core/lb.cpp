@@ -411,6 +411,24 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
 }
 
 
+int lb_lbfluid_get_couple_flag(int * couple_flag) {
+  *couple_flag = LB_COUPLE_NULL;
+  if (lattice_switch & LATTICE_LB_GPU)
+  {
+#ifdef LB_GPU
+    *couple_flag = lbpar_gpu.lb_couple_switch;
+#endif
+  }
+  else
+  {
+#ifdef LB
+    *couple_flag = LB_COUPLE_TWO_POINT;
+#endif
+  }
+  return 0;
+}
+
+
 int lb_lbfluid_set_agrid(double p_agrid){
   if ( p_agrid <= 0)
     return -1;
@@ -1323,13 +1341,13 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
         index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
         mpi_recv_fluid(node,index,&rho,j,pi);
-        // unit conversion // TODO: Check Unit Conversion!
-        p_pi[0] = pi[0]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[1] = pi[1]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[2] = pi[2]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[3] = pi[3]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[4] = pi[4]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[5] = pi[5]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+        // unit conversion
+        p_pi[0] = pi[0]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[1] = pi[1]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[2] = pi[2]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[3] = pi[3]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[4] = pi[4]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[5] = pi[5]/lbpar.tau/lbpar.tau/lbpar.agrid;
 #endif // LB
     }
     return 0;

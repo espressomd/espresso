@@ -5,13 +5,15 @@ set(py_tests  bondedInteractions.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
+              engine_lbgpu.py
               ewald_gpu.py
               magnetostaticInteractions.py
               nonBondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
-	            tabulated.py
+              lbgpu_remove_total_momentum.py
+              tabulated.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

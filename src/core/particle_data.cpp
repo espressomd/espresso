@@ -345,19 +345,15 @@ void free_particle(Particle *part) {
 int updatePartCfg(int bonds_flag)
 {
   int j;
-
   if(partCfg)
     return 1;
-
   partCfg = (Particle*)Utils::malloc(n_part*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
     mpi_get_particles(partCfg,&partCfg_bl);
-
   for(j=0; j<n_part; j++)
     unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
@@ -1150,11 +1146,11 @@ int set_particle_gamma(int part, double gamma[3])
   return ES_OK;
 }
 #ifdef ROTATION
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma_rot)
 #else
 int set_particle_gamma_rot(int part, double gamma_rot[3])
-#endif // PARTICLE_ANISOTROPY
+#endif // ROTATIONAL_INERTIA
 {
   int pnode;
 
@@ -2258,11 +2254,11 @@ void pointer_to_gamma(Particle *p, double*& res)
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double*& res)
 {
-#ifndef PARTICLE_ANISOTROPY
+#ifndef ROTATIONAL_INERTIA
   res=&(p->p.gamma_rot);
 #else
   res=p->p.gamma_rot; // array [3]
-#endif // PARTICLE_ANISTROPY
+#endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
 

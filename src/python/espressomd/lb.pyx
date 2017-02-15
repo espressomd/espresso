@@ -25,6 +25,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
+import os
 
 # Actor class
 ####################################################
@@ -65,7 +66,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force", "visc", "tau"
+            return "agrid", "dens", "fric", "ext_force", "visc", "tau", "couple"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -82,7 +83,8 @@ IF LB_GPU or LB:
                         "ext_force": [0.0, 0.0, 0.0],
                         "visc": [-1.0, -1.0],
                         "bulk_visc": [-1.0, -1.0],
-                        "tau": -1.0}
+                        "tau": -1.0,
+                        "couple": "2pt"}
             ELSE:
                 return {"agrid": -1.0,
                         "dens": -1.0,
@@ -90,7 +92,8 @@ IF LB_GPU or LB:
                         "ext_force": [0.0, 0.0, 0.0],
                         "visc": -1.0,
                         "bulk_visc": -1.0,
-                        "tau": -1.0}
+                        "tau": -1.0,
+                        "couple": "2pt"}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
@@ -125,6 +128,10 @@ IF LB_GPU or LB:
                 if python_lbfluid_set_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
+            if not self._params["couple"] == default_params["couple"]:
+                if python_lbfluid_set_couple_flag(self._params["couple"]):
+                    raise Exception("lb_lbfluid_set_couple_flag error")
+
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
         def _get_params_from_es_core(self):
@@ -154,6 +161,10 @@ IF LB_GPU or LB:
                 if python_lbfluid_get_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
+            if not self._params["couple"] == default_params["couple"]:
+                if python_lbfluid_get_couple_flag(self._params["couple"]):
+                    raise Exception("lb_lbfluid_get_couple_flag error")
+
             return self._params
 
         # input/output function wrappers for whole LB fields
@@ -167,7 +178,9 @@ IF LB_GPU or LB:
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
         def save_checkpoint(self, path, binary):
-            lb_lbfluid_save_checkpoint(utils.to_char_pointer(path), binary)
+            tmp_path = path + ".__tmp__"
+            lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+            os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
        
@@ -193,6 +206,9 @@ IF LB_GPU:
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
+
+        def remove_total_momentum(self):
+            lb_lbfluid_remove_total_momentum()
 
 
 IF LB or LB_GPU:
