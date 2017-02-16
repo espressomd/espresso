@@ -208,7 +208,7 @@ struct ParticleProperties {
   double body_force[3];
   double lab_force[3]; /** this one needs to be converted && stored */
   double body_torque[3];
-  #endif 
+  #endif
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
