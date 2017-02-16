@@ -279,6 +279,12 @@ void mpi_init(int *argc, char ***argv) {
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+  
+  /* Create the datatype cache before registering atexit(mpi_stop). This is
+     necessary as it is a static variable that would otherwise be destructed
+     before mpi_stop is called. mpi_stop however needs to communicate and thus
+     depends on the cache. */
+  boost::mpi::detail::mpi_datatype_cache();
 }
 
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
