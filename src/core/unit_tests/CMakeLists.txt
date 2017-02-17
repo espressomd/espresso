@@ -71,4 +71,5 @@ target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
 
 unit_test(ParticleMap_test ParticleMap_test.cpp)
 unit_test(utils_size_test utils_size_test.cpp)
-parallel_unit_test(gather_buffer_test gather_buffer_test.cpp 2)
+parallel_unit_test(gather_buffer_test gather_buffer_test.cpp 4)
+parallel_unit_test(scatter_buffer_test scatter_buffer_test.cpp 4)
