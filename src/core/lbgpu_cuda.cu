@@ -24,6 +24,7 @@
  */
 
 #include "config.hpp"
+#include "debug.hpp"
 
 #ifdef LB_GPU
 #include <stdio.h>
