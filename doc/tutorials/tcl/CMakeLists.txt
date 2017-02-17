@@ -26,9 +26,10 @@ add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
+add_subdirectory(09-catalytic_reactions)
 
 add_custom_target(tutorials_tcl DEPENDS tutorials_tcl_00 tutorials_tcl_01
                                         tutorials_tcl_02 tutorials_tcl_03
                                         tutorials_tcl_04 tutorials_tcl_05
                                         tutorials_tcl_06 tutorials_tcl_07
-                                        tutorials_tcl_08                 )
+                                        tutorials_tcl_08 tutorials_tcl_09)
