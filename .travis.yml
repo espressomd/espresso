@@ -22,18 +22,12 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=maxset image=ubuntu-cuda make_check=false
-#    - os: osx
-#      osx_image: xcode8
-#      env: myconfig=maxset
-#      cache:
-#        directories:
-#        - /usr/local/Cellar/boost
-#    - os: osx
-#      osx_image: xcode8
-#      env: myconfig=maxset image=python3
-#      cache:
-#        directories:
-#        - /usr/local/Cellar/boost
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset
+    - os: osx
+      osx_image: xcode8
+      env: myconfig=maxset image=python3
     - os: linux
       sudo: required
       services: docker
