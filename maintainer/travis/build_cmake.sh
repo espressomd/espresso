@@ -117,21 +117,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make" || exit $?
+cmd "make -j2" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make check_python $make_params"
+    cmd "make -j2 check_python $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
-    cmd "make check_unit_tests $make_params"
+    cmd "make -j2 check_unit_tests $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
