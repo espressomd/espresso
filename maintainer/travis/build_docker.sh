@@ -43,5 +43,6 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install fftw
 	brew install homebrew/science/hdf5 --with-mpi --without-cxx
 
+	export TMPDIR=/tmp
 	maintainer/travis/build_cmake.sh
 fi
