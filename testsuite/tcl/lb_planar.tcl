@@ -1,17 +1,17 @@
 # Copyright (C) 2011,2012,2013,2014,2015,2016 The ESPResSo project
-#  
+#
 # This file is part of ESPResSo.
-#  
+#
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # ESPResSo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 
 source "tests_common.tcl"
 
@@ -33,16 +33,16 @@ setmd box_l $l $l $l
 setmd time_step 0.01
 thermostat lb 0
 
-set agrid 1.00
+set agrid 0.5
 set visc 7.
 set rho 2.
 set tau 0.04
 
 setmd skin [ expr 0.4*$agrid ]
 
-lbfluid cpu agrid $agrid visc $visc dens $rho friction 1 tau $tau 
+lbfluid cpu agrid $agrid visc $visc dens $rho friction 1 tau $tau
 
-# Wall positions are set to $agrid and $l-$agrid, leaving one layer of boundary nodes 
+# Wall positions are set to $agrid and $l-$agrid, leaving one layer of boundary nodes
 # on each side of the box
 #
 # We start with couette flow setting the velocity on boundary 2 to $v_couette
@@ -61,7 +61,7 @@ lset v_boundary $couette_flow_direction $v_couette
 
 lbboundary wall normal [ lindex $normal1 0 ]  [ lindex $normal1 1 ]  [ lindex $normal1 2 ] dist $agrid
 lbboundary wall normal [ lindex $normal2 0 ]  [ lindex $normal2 1 ]  [ lindex $normal2 2 ] dist [ expr -$l +$agrid ] \
-  velocity [ lindex $v_boundary 0 ] [ lindex $v_boundary 1 ] [ lindex $v_boundary 2 ] 
+  velocity [ lindex $v_boundary 0 ] [ lindex $v_boundary 1 ] [ lindex $v_boundary 2 ]
 
 set dist [ expr $l - 2*$agrid ]
 
@@ -76,7 +76,7 @@ for { set i 2 } { $i < int(floor($l/$agrid))-2 } { incr i } {
 
   set u_theory [ expr $v_couette*($pos-$agrid)/$dist ]
   set p_xy_theory [ expr -$v_couette/$dist*$rho*$visc ]
-  ## We go though the box in normal direction
+  ## We go through the box in normal direction
   set m [ expr $i * [ lindex $normal1 0 ] ]
   set n [ expr $i * [ lindex $normal1 1 ] ]
   set o [ expr $i * [ lindex $normal1 2 ] ]
@@ -102,8 +102,8 @@ set couette_u_accuracy [ expr $accuracy_u / $meanabs_u ]
 set couette_p_accuracy  [ expr $accuracy_p / $meanabs_p ]
 
 puts "Couette flow result:"
-puts "flow accuary $couette_u_accuracy"
-puts "pressure accuary $couette_p_accuracy"
+puts "flow accuracy $couette_u_accuracy"
+puts "pressure accuracy $couette_p_accuracy"
 puts "----------"
 
 # Now we add a force density in normal direction, and compress the flow.
@@ -151,13 +151,13 @@ for { set i 2 } { $i < int(floor($l/$agrid))-2 } { incr i } {
 }
 set hydrostatic_p_accuracy  [ expr $accuracy_p / $meanabs_p ]
 puts "Hydrostatic test result:"
-puts "pressure accuary $hydrostatic_p_accuracy"
+puts "pressure accuracy $hydrostatic_p_accuracy"
 puts "-------------"
 
 # Now we add a force density in the direction of the Couette flow
 # We'd like to switch of the Couette flow, but changing the velocity of the BCs is not implemented
 # yet. So we just make a much larger force density.
-# 
+#
 # We expect a flow profile u=f/eta/2*(x-agrid)*($l-$agrid-$x)
 # and the pressure tensor has to be the derivative of that: p_xy = f*(x-$l/2)
 
@@ -204,8 +204,8 @@ set poisseuille_u_accuracy [ expr $accuracy_u / $meanabs_u ]
 set poisseuille_p_accuracy [ expr $accuracy_p / $meanabs_p ]
 
 puts "Poisseuille flow result:"
-puts "flow accuary $poisseuille_u_accuracy"
-puts "pressure accuary $poisseuille_p_accuracy"
+puts "flow accuracy $poisseuille_u_accuracy"
+puts "pressure accuracy $poisseuille_p_accuracy"
 puts "----------"
 
 if { $couette_u_accuracy > 1e-5 } {
@@ -214,13 +214,13 @@ if { $couette_u_accuracy > 1e-5 } {
 if { $couette_p_accuracy > 1e-5 } {
   error_exit "Couette pressure accuracy not achieved"
 }
-if { $hydrostatic_p_accuracy > 1e-3 } {
+if { $hydrostatic_p_accuracy > 5e-3 } {
   error_exit "hydrostatic pressure accuracy not achieved"
 }
 if { $poisseuille_u_accuracy > 3e-2 } {
   error_exit "Poisseuille flow accuracy not achieved"
 }
-if { $poisseuille_p_accuracy > 1e-2 } {
+if { $poisseuille_p_accuracy > 1.5e-2 } {
   error_exit "Poisseuille pressure accuracy not achieved"
 }
 

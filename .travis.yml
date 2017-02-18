@@ -25,15 +25,9 @@ matrix:
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset
-      cache:
-        directories:
-        - /usr/local/Cellar/boost
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset image=python3
-      cache:
-        directories:
-        - /usr/local/Cellar/boost
     - os: linux
       sudo: required
       services: docker
