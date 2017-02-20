@@ -105,9 +105,9 @@ class File
 
     private:
     	MPI_Comm m_hdf5_comm;
-	bool m_already_wrote_bonds=false;
+    	bool m_already_wrote_bonds=false;
         
-	bool check_file_exists(const std::string &name)
+	    bool check_file_exists(const std::string &name)
         {
             std::ifstream f(name.c_str());
             return f.good();
@@ -139,7 +139,7 @@ class File
         /*
          * @brief Method to fill the arrays that are used by WriteDataset particle by particle.
          */
-	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat, int_array_3d& bond);
+    	void fill_arrays_for_h5md_write_with_particle_property(int particle_index, int_array_3d& id, int_array_3d& typ, double_array_3d& mass, double_array_3d& pos, int_array_3d& image, double_array_3d& vel, double_array_3d& f, double_array_3d& charge, Particle* current_particle, int write_dat, int_array_3d& bond);
         /*
          * @brief Method to write the simulation script to the dataset.
          */
@@ -171,7 +171,7 @@ class File
         /**
          * @brief Links the time and step datasets to of all properties to the time and step dataset of the id property. All properties are written at the same time.
          */
-	void create_links_for_time_and_step_datasets();
+	    void create_links_for_time_and_step_datasets();
 
         /**
          * Member variables.

@@ -50,11 +50,14 @@ setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
 cdef class System:
-    # NOTE: every attribute has to be declared at the class level.
-    # This means that methods cannot define an attribute by using
-    # `self.new_attr = somevalue` without declaring it inside this
-    # indentation level, either as method, property or reference.
-    doge = 1
+    """ The base class for espressomd.system.System().
+
+    .. note:: every attribute has to be declared at the class level.
+              This means that methods cannot define an attribute by using
+              ``self.new_attr = somevalue`` without declaring it inside this
+              indentation level, either as method, property or reference.
+
+    """
     part = particle_data.ParticleList()
     non_bonded_inter = interactions.NonBondedInteractions()
     bonded_inter = interactions.BondedInteractions()
@@ -93,6 +96,9 @@ cdef class System:
             System.__setattr__(self, property_, params[property_])
 
     property box_l:
+        """
+        Array like, list of three floats
+        """
         def __set__(self, _box_l):
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
@@ -112,6 +118,12 @@ cdef class System:
             return integ_switch
 
     property periodicity:
+        """
+        list of three integers
+        [x, y, z]
+        zero for no periodicity in this direction
+        one for periodicity
+        """
         def __set__(self, _periodic):
             global periodic
             if len(_periodic) != 3:
@@ -278,8 +290,9 @@ cdef class System:
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
         """Change box size and rescale particle coordinates
            change_volume_and_rescale_particles(d_new, dir="xyz")
-           d_new: new length, dir=coordinate tow work on, "xyz" for isotropic
+           d_new: new length, dir=coordinate tow work on, "xyz" for isotropic.
         """
+
         if d_new < 0:
             raise ValueError("No negative lengths")
         if dir == "xyz":
@@ -296,11 +309,13 @@ cdef class System:
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
 
     def volume(self):
-        """Return box volume"""
+        """Return box volume."""
+
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the distance between the particles, respecting periodic boundaries"""
+        """Return the distance between the particles, respecting periodic boundaries."""
+
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos

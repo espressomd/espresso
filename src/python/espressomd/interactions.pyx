@@ -204,6 +204,30 @@ IF LENNARD_JONES == 1:
         def is_active(self):
             return (self._params["epsilon"] > 0)
 
+        def set_params(self, **kwargs):
+            """ Set parameters for the Lennard-Jones interaction.
+
+            Parameters
+            ----------
+
+            epsilon : float
+                      The magnitude of the interaction.
+            sigma : float
+                    Determines the interaction length scale.
+            cutoff : float
+                     Cutoff distance of the interaction.
+            shift : float, string
+                    Constant shift of the potential. (4*epsilon*shift).
+            offset : float, optional
+                     Offset distance of the interaction.
+            cap : float, optional
+                  If individual force caps are used, determines the distance
+                  at which the force is capped.
+            min : float, optional
+                  Restricts the interaction to a minimal distance.
+            """
+            super(LennardJonesInteraction, self).set_params(**kwargs)
+
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
@@ -328,6 +352,39 @@ IF LENNARD_JONES_GENERIC == 1:
         def type_name(self):
             return "GenericLennardJones"
 
+        def set_params(self, **kwargs):
+            """
+            Set parameters for the generic Lennard-Jones interaction.
+
+            Parameters
+            ----------
+            epsilon : float
+                      The magnitude of the interaction.
+            sigma : float
+                    Determines the interaction length scale.
+            cutoff : float
+                     Cutoff distance of the interaction.
+            shift : float, string
+                    Constant shift of the potential.
+            offset : float
+                     Offset distance of the interaction.
+            e1 : int
+                 Exponent of the repulsion term.
+            e2 : int
+                 Exponent of the attraction term.
+            b1 : float
+                 Prefactor of the repulsion term.
+            b2 : float
+                 Prefactor of the attraction term.
+            delta : float, optional
+                    LJGEN_SOFTCORE parameter. Allows control over how smoothly
+                    the potential drops to zero as lambda approaches zero.
+            lambda : float, optional
+                     LJGEN_SOFTCORE parameter. Tune the strength of the 
+                     interaction.
+            """
+            super(GenericLennardJonesInteraction, self).set_params(**kwargs)
+
         def valid_keys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lambda"
 
@@ -423,9 +480,11 @@ cdef class BondedInteraction(object):
     _bond_id = -1
 
     def __init__(self, *args, **kwargs):
-        """Either called with an interaction id, in which case, the interaction will represent
-           the bonded interaction as it is defined in Espresso core
-           Or called with keyword arguments describing a new interaction."""
+        """
+           Either called with an interaction id, in which case, the interaction
+           will represent the bonded interaction as it is defined in Espresso core
+           Or called with keyword arguments describing a new interaction.
+        """
         # Interaction id as argument
         if len(args) == 1 and isinstance(args[0], int):
             bond_id = args[0]
@@ -585,6 +644,23 @@ class BondedInteractionNotDefined(object):
 
 class FeneBond(BondedInteraction):
 
+    def __init__(self, *args, **kwargs):
+        """ 
+        FeneBond initialiser. Used to instatiate a FeneBond identifier
+        with a given set of parameters.
+
+        Parameters
+        ----------
+        k : float
+            Specifies the magnitude of the bond interaction.
+        d_r_max : float
+                  Specifies the maximum stretch and compression length of the
+                  bond.
+        r_0 : float, optional
+              Specifies the equilibrium length of the bond.
+        """
+        super(FeneBond, self).__init__(*args, **kwargs)
+
     def type_number(self):
         return BONDED_IA_FENE
 
@@ -613,6 +689,24 @@ class FeneBond(BondedInteraction):
 
 
 class HarmonicBond(BondedInteraction):
+
+    def __init__(self, *args, **kwargs):
+        """ 
+        HarmonicBond initialiser. Used to instatiate a HarmonicBond identifier
+        with a given set of parameters.
+
+        Parameters
+        ----------
+        k : float
+            Specifies the magnitude of the bond interaction.
+        r_0 : float
+              Specifies the equilibrium length of the bond.
+        r_cut : float, optional
+                Specifies maximum distance beyond which the bond is considered
+                broken.
+        """
+        super(HarmonicBond, self).__init__(*args, **kwargs)
+
 
     def type_number(self):
         return BONDED_IA_HARMONIC
@@ -643,6 +737,27 @@ class HarmonicBond(BondedInteraction):
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
+        def __init__(self, *args, **kwargs):
+            """ 
+            HarmonicDumbbellBond initialiser. Used to instatiate a 
+            HarmonicDumbbellBond identifier with a given set of parameters.
+
+            Parameters
+            ----------
+            k1 : float
+                Specifies the magnitude of the bond interaction.
+            k2 : float
+                Specifies the magnitude of the angular interaction.
+            r_0 : float
+                  Specifies the equilibrium length of the bond.
+            r_cut : float, optional
+                    Specifies maximum distance beyond which the bond is considered
+                    broken.
+            """
+            super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
+
+
+
         def type_number(self):
             return BONDED_IA_HARMONIC_DUMBBELL
 
@@ -672,6 +787,27 @@ IF ROTATION:
 
 IF ROTATION != 1:
     class HarmonicDumbbellBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            HarmonicDumbbellBond initialiser. Used to instatiate a 
+            HarmonicDumbbellBond identifier with a given set of parameters.
+
+            Parameters
+            ----------
+            k1 : float
+                Specifies the magnitude of the bond interaction.
+            k2 : float
+                Specifies the magnitude of the angular interaction.
+            r_0 : float
+                  Specifies the equilibrium length of the bond.
+            r_cut : float, optional
+                    Specifies maximum distance beyond which the bond is considered
+                    broken.
+            """
+            raise Exception(
+                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
+
 
         def type_number(self):
             raise Exception(
@@ -704,6 +840,23 @@ IF ROTATION != 1:
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            RigidBond initialiser. Used to instantiate a RigidBond identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            r : float
+                Specifies the length of the rigid bond.
+            ptol : float, optional
+                   Specifies the tolerance for positional deviations.
+            vtop : float, optional
+                   Specifies the tolerance for velocity deviations.
+            """
+            super(RigidBond, self).__init__(*args, **kwargs)
+
 
         def type_number(self):
             return BONDED_IA_RIGID_BOND
@@ -764,6 +917,22 @@ class Dihedral(BondedInteraction):
 
 IF TABULATED == 1:
     class Tabulated(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            RigidBond initialiser. Used to instantiate a RigidBond identifier
+            with a given set of parameters.
+
+            Parameters
+            ----------
+            type : str
+                   Specifies the type of bonded interaction. Possible inputs:
+                   'distance', 'angle' and 'dihedral'.
+            filename : str
+                       Filename of the tabular.
+            """
+            super(Tabulated, self).__init__(*args, **kwargs)
+
 
         def type_number(self):
             return BONDED_IA_TABULATED
@@ -919,6 +1088,12 @@ IF LENNARD_JONES == 1:
 
 IF BOND_VIRTUAL == 1:
     class Virtual(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            VirtualBond initialiser. Used to instantiate a VirtualBond identifier.
+            """
+            super(Virtual, self).__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_VIRTUAL_BOND
@@ -1238,7 +1413,7 @@ class BondedInteractions:
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
         self[n_bonded_ia] = bonded_ia
-    
+
     def __getstate__(self):
         params = {}
         for i,bonded_instance in enumerate(self):
