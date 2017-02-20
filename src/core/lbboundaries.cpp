@@ -440,6 +440,7 @@ void lb_bounce_back() {
 		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
                   lbmodel.c_sound_sq;
             }
+
             if (x - lbmodel.c[i][0] > 0 &&
                 x - lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
                 y - lbmodel.c[i][1] > 0 &&
