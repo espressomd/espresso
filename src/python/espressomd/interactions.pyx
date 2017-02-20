@@ -559,7 +559,7 @@ class BondedInteractionNotDefined(object):
 
     def __init__(self, *args, **kwargs):
         raise Exception(
-            self.__class_s__.__name__ + " not compiled into Espresso core")
+            self.__class__.__name__ + " not compiled into Espresso core")
 
     def type_number(self):
         raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
