@@ -96,6 +96,8 @@ IF LB_GPU or LB:
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
         int lb_lbnode_get_pop(int * coord, double * double_return)
         int lb_lbnode_get_boundary(int * coord, int * int_return)
+        int lb_lbfluid_set_couple_flag(int c_couple_flag)
+        int lb_lbfluid_get_couple_flag(int * c_couple_flag)
 
     cdef extern from "lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum();
@@ -223,6 +225,45 @@ IF LB_GPU or LB:
             if(lb_lbfluid_set_ext_force(0, c_ext_force[0], c_ext_force[1], c_ext_force[2])):
                 raise Exception(
                     "lb_fluid_set_ext_force error at C-level interface")
+
+        return 0
+
+###############################################
+
+    cdef inline python_lbfluid_set_couple_flag(p_couple_flag):
+
+        if p_couple_flag == "2pt":
+            p_couple_flag = 2
+        elif p_couple_flag == "3pt":
+            p_couple_flag = 4
+        else:
+            raise Exception(
+                "Parameter couple accepts only \"2pt\" and \"3pt\"")
+
+        cdef int c_couple_flag;
+        c_couple_flag = p_couple_flag
+        if(lb_lbfluid_set_couple_flag(c_couple_flag)):
+            raise Exception(
+                "lb_lbfluid_set_couple_flag error at C-level interface")
+        return 0
+
+###############################################
+
+    cdef inline python_lbfluid_get_couple_flag(p_couple_flag):
+
+        cdef int c_couple_flag;
+        if(lb_lbfluid_get_couple_flag(&c_couple_flag)):
+            raise Exception(
+                "lb_lbfluid_get_couple_flag error at C-level interface")
+        p_couple_flag = c_couple_flag
+
+        if p_couple_flag == 2:
+            p_couple_flag = "2pt"
+        elif p_couple_flag == 4:
+            p_couple_flag = "3pt"
+        else:
+            raise Exception(
+                "lb_lbfluid_get_couple_flag error at C-level interface")
 
         return 0
 

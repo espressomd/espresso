@@ -66,7 +66,7 @@ IF LB_GPU or LB:
         # list of valid keys for parameters
         ####################################################
         def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force", "visc", "tau"
+            return "agrid", "dens", "fric", "ext_force", "visc", "tau", "couple"
 
         # list of esential keys required for the fluid
         ####################################################
@@ -83,7 +83,8 @@ IF LB_GPU or LB:
                         "ext_force": [0.0, 0.0, 0.0],
                         "visc": [-1.0, -1.0],
                         "bulk_visc": [-1.0, -1.0],
-                        "tau": -1.0}
+                        "tau": -1.0,
+                        "couple": "2pt"}
             ELSE:
                 return {"agrid": -1.0,
                         "dens": -1.0,
@@ -91,7 +92,8 @@ IF LB_GPU or LB:
                         "ext_force": [0.0, 0.0, 0.0],
                         "visc": -1.0,
                         "bulk_visc": -1.0,
-                        "tau": -1.0}
+                        "tau": -1.0,
+                        "couple": "2pt"}
 
         # function that calls wrapper functions which set the parameters at C-Level
         ####################################################
@@ -126,6 +128,10 @@ IF LB_GPU or LB:
                 if python_lbfluid_set_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
 
+            if not self._params["couple"] == default_params["couple"]:
+                if python_lbfluid_set_couple_flag(self._params["couple"]):
+                    raise Exception("lb_lbfluid_set_couple_flag error")
+
         # function that calls wrapper functions which get the parameters from C-Level
         ####################################################
         def _get_params_from_es_core(self):
@@ -154,6 +160,10 @@ IF LB_GPU or LB:
             if not self._params["ext_force"] == default_params["ext_force"]:
                 if python_lbfluid_get_ext_force(self._params["ext_force"]):
                     raise Exception("lb_lbfluid_set_ext_force error")
+
+            if not self._params["couple"] == default_params["couple"]:
+                if python_lbfluid_get_couple_flag(self._params["couple"]):
+                    raise Exception("lb_lbfluid_get_couple_flag error")
 
             return self._params
 

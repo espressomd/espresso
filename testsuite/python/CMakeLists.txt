@@ -5,6 +5,7 @@ set(py_tests  bondedInteractions.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
+              engine_lbgpu.py
               ewald_gpu.py
               magnetostaticInteractions.py
               nonBondedInteractions.py
