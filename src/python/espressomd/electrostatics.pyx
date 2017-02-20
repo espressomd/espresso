@@ -148,14 +148,14 @@ ELSE:
 
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
-        
+
         def __init__(self, *args, **kwargs):
             """
             P3M electrostatics solver.
 
             Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
             summation method to calculate potentials in N-body simulation.  
-            
+
             Parameters
             ----------
             bjerrum_length : float
@@ -170,11 +170,11 @@ IF P3M == 1:
 
             cao : float, optional 
                   The charge-assignment order, an integer between 0 and 7.
-            
+
             epsilon : string, optional
                       Use 'metallic' to set the dielectric constant of the
                       surrounding medium to infinity (Default).
-            
+
             epsilon : float, optional
                       A positive number for the dielectric constant of the
                       surrounding medium.
@@ -185,14 +185,14 @@ IF P3M == 1:
             mesh : array_like, optional
                    The number of mesh points in x, y and z direction. This is
                    relevant for 8 noncubic boxes.
-            
+
             r_cut : float, optional
                     The real space cutoff.
 
             tune : bool, optional
                    Used to activate/deactivate the tuning method on activation.
                    Defaults to True
-            
+
             """
             super(type(self), self).__init__(*args, **kwargs)
 
@@ -294,14 +294,14 @@ IF P3M == 1:
 
     IF CUDA:
         cdef class P3M_GPU(ElectrostaticInteraction):
-        
+
             def __init__(self, *args, **kwargs):
                 """
                 P3M electrostatics solver with GPU support.
 
                 Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
                 summation method to calculate potentials in N-body simulation.  
-                
+
                 Parameters
                 ----------
                 bjerrum_length : float
@@ -316,11 +316,11 @@ IF P3M == 1:
 
                 cao : float, optional 
                       The charge-assignment order, an integer between 0 and 7.
-                
+
                 epsilon : string, optional
                           Use 'metallic' to set the dielectric constant of the
                           surrounding medium to infinity (Default).
-                
+
                 epsilon : float, optional
                           A positive number for the dielectric constant of the
                           surrounding medium.
@@ -331,14 +331,14 @@ IF P3M == 1:
                 mesh : array_like, optional
                        The number of mesh points in x, y and z direction. This is
                        relevant for 8 noncubic boxes.
-                
+
                 r_cut : float, optional
                         The real space cutoff.
 
                 tune : bool, optional
                        Used to activate/deactivate the tuning method on activation.
                        Defaults to True
-                
+
                 """
                 super(type(self), self).__init__(*args, **kwargs)
 
@@ -433,14 +433,14 @@ IF P3M == 1:
 
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
     cdef class EwaldGpu(ElectrostaticInteraction):
-        
+
         def __init__(self, *args, **kwargs):
             """
             P3M electrostatics solver with GPU support.
 
             Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
             summation method to calculate potentials in N-body simulation.  
-            
+
             Parameters
             ----------
             bjerrum_length : float
@@ -456,7 +456,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             K_max : float,
                     Maximal reciprocal space cutoff to be tested in the
                     tuning algorithm
-            
+
             K_max : array_like,
                     Maximal reciprocal space cutoff to be tested in the
                     tuning algorithm, specified for each dimension.
@@ -466,15 +466,15 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
             rcut : float, optional
                     The real space cutoff.
-            
+
             num_kx : ??
-            
+
             num_ky : ??
 
             num_kz : ??
-            
+
             time_calc_steps : ??
-            
+
             """
             super(type(self), self).__init__(*args, **kwargs)
 

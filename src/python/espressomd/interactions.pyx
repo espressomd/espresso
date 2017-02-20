@@ -643,7 +643,7 @@ class BondedInteractionNotDefined(object):
 
 
 class FeneBond(BondedInteraction):
-    
+
     def __init__(self, *args, **kwargs):
         """ 
         FeneBond initialiser. Used to instatiate a FeneBond identifier
@@ -689,7 +689,7 @@ class FeneBond(BondedInteraction):
 
 
 class HarmonicBond(BondedInteraction):
-    
+
     def __init__(self, *args, **kwargs):
         """ 
         HarmonicBond initialiser. Used to instatiate a HarmonicBond identifier
@@ -736,7 +736,7 @@ class HarmonicBond(BondedInteraction):
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
-    
+
         def __init__(self, *args, **kwargs):
             """ 
             HarmonicDumbbellBond initialiser. Used to instatiate a 
@@ -840,7 +840,7 @@ IF ROTATION != 1:
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
-    
+
         def __init__(self, *args, **kwargs):
             """ 
             RigidBond initialiser. Used to instantiate a RigidBond identifier
@@ -1413,7 +1413,7 @@ class BondedInteractions:
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
         self[n_bonded_ia] = bonded_ia
-    
+
     def __getstate__(self):
         params = {}
         for i,bonded_instance in enumerate(self):

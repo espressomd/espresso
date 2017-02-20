@@ -30,7 +30,7 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        
+
         'use_verlet_lists' : bool, optional, defaults to True
             Activates or deactivates the usage of Verlet lists in the algorithm
 

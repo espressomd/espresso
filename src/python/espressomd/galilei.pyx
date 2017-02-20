@@ -25,7 +25,7 @@ cdef class GalileiTransform:
     def kill_particle_motion(self, rotation=0):
         """ 
         Stop motion of the particles. 
-        
+
         Parameters
         ----------
 
@@ -38,7 +38,7 @@ cdef class GalileiTransform:
     def kill_particle_forces(self, torque=0):
         """ 
         Set the forces on the particles to zero.
-        
+
         Parameters
         ----------
 
@@ -66,6 +66,6 @@ cdef class GalileiTransform:
     def galilei_transform(self):
         """ 
         Remove the CMS velocity of the system.
-        
+
         """
         mpi_galilei_transform()

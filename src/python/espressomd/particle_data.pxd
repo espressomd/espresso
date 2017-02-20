@@ -151,9 +151,9 @@ cdef extern from "particle_data.hpp":
             int set_particle_gamma(int part, double gamma[3])
         ELSE:
             int set_particle_gamma(int part, double gamma)
-        
+
         void pointer_to_gamma(particle * p, double * & res)
-        
+
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 int set_particle_gamma_rot(int part, double gamma[3])

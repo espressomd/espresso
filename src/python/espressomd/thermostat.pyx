@@ -277,7 +277,7 @@ cdef class Thermostat:
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
         def set_lb(self, kT=None):
-                  """
+            """
             Sets the LB thermostat with required parameter 'kT'.
 
             This thermostat requires the feature LB or LB_GPU.
@@ -320,7 +320,6 @@ cdef class Thermostat:
 
             'gammav': float
                 Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
-            
             """
 
             if kT is None or gamma0 is None or gammav is None:

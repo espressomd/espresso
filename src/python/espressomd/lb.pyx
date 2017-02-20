@@ -183,7 +183,7 @@ IF LB_GPU or LB:
             os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
-       
+
         # input/output function wrappers for LB nodes
         ####################################################
 
@@ -236,8 +236,8 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
-                
-            
+
+
         property pi:
             def __get__(self):
                 cdef double[6] pi

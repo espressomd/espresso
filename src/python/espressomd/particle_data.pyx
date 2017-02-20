@@ -293,24 +293,24 @@ cdef class ParticleHandle:
 
     # MASS
     property mass:
-            """
-            Particle mass.
+        """
+        Particle mass.
 
-            """
+        """
 
-            def __set__(self, _mass):
-                IF MASS == 1:
-                    check_type_or_throw_except(
-                        _mass, 1, float, "Mass has to be 1 floats")
-                    if set_particle_mass(self.id, _mass) == 1:
-                        raise Exception("Set particle position first.")
-                ELSE:
-                    raise Exception("You are trying to set the particle mass \
+        def __set__(self, _mass):
+            IF MASS == 1:
+                check_type_or_throw_except(
+                    _mass, 1, float, "Mass has to be 1 floats")
+                if set_particle_mass(self.id, _mass) == 1:
+                    raise Exception("Set particle position first.")
+            ELSE:
+                raise Exception("You are trying to set the particle mass \
                                      but the mass feature is not compiled in.")
 
-            def __get__(self):
-                self.update_particle_data()
-                return self.particle_data.p.mass
+        def __get__(self):
+            self.update_particle_data()
+            return self.particle_data.p.mass
 
     IF ROTATION == 1:
         property omega_lab:
