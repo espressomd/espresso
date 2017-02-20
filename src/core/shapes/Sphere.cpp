@@ -27,7 +27,8 @@ using namespace std;
 #define SQR(A) ((A) * (A))
 
 namespace Shapes {
-int Sphere::calculate_dist(const double *ppos, double *dist, double *vec) const {
+int Sphere::calculate_dist(const double *ppos, double *dist,
+                           double *vec) const {
   int i;
   double fac, c_dist;
 

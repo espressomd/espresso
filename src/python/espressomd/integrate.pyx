@@ -86,7 +86,6 @@ cdef class Integrator:
         """
         Set the integration method to Velocity Verlet.
         """
-
         self._method = "VV"
 
     def set_nvt(self):
