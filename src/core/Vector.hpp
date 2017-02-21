@@ -24,11 +24,12 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <vector>
 
-#include <boost/serialization/array.hpp>
+#include "utils/serialization/array.hpp"
 
 template <size_t n, typename Scalar> class Vector {
 private:
@@ -44,26 +45,28 @@ public:
   using iterator = typename std::array<Scalar, n>::iterator;
   using const_iterator = typename std::array<Scalar, n>::const_iterator;
 
-  Vector() {}
+  Vector() = default;
+  Vector(Vector const &) = default;
+  Vector &operator=(Vector const &) = default;
 
   template <typename Container> explicit Vector(Container v) {
-    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    assert(std::distance(std::begin(v), std::end(v)) == n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(Scalar const (&v)[n]) {
-    assert(std::distance(std::begin(v), std::end(v)) <= n);
+  template <typename T> explicit Vector(T const (&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
   explicit Vector(std::initializer_list<Scalar> v) {
-    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    /* Convert to static_assert in C++14 */
+    assert(v.size() == n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
   template <typename InputIterator>
-  Vector(InputIterator const &begin, InputIterator const &end) {
-    assert(std::distance(begin, end) <= n);
+  Vector(InputIterator begin, InputIterator end) {
+    assert(std::distance(begin, end) == n);
     std::copy(begin, end, d.begin());
   }
 
@@ -89,14 +92,12 @@ public:
   bool empty() const { return d.empty(); }
 
   operator std::array<Scalar, n> const &() const { return d; }
-  bool operator==(Vector const &rhs) const { return d == rhs.d; }
-  operator std::vector<Scalar>() const {
-    return std::vector<Scalar>(std::begin(d), std::end(d));
-  }
 
   std::vector<Scalar> as_vector() const {
     return std::vector<Scalar>(std::begin(d), std::end(d));
   }
+
+  operator std::vector<Scalar>() const { return as_vector(); }
 
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
@@ -135,6 +136,7 @@ public:
     return cross(this, a);
   }
 
+  friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
     ar &d;
@@ -144,4 +146,67 @@ public:
 typedef Vector<3, double> Vector3d;
 typedef Vector<2, double> Vector2d;
 
+namespace detail {
+template <size_t N, typename T, typename Op>
+Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
+  Vector<N, T> ret;
+
+  std::transform(std::begin(a), std::begin(b), std::begin(b), std::begin(ret),
+                 op);
+
+  return ret;
+}
+
+template <size_t N, typename T, typename Op>
+bool all_of(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
+  for (int i = 0; i < a.size(); i++) {
+    /* Short circuit */
+    if (!static_cast<bool>(op(a[i], b[i]))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+}
+
+template <size_t N, typename T>
+bool operator<(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::less<T>());
+}
+
+template <size_t N, typename T>
+bool operator>(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::greater<T>());
+}
+
+template <size_t N, typename T>
+bool operator<=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::less_equal<T>());
+}
+
+template <size_t N, typename T>
+bool operator>=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::greater_equal<T>());
+}
+
+template <size_t N, typename T>
+bool operator==(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::equal_to<T>());
+}
+
+template <size_t N, typename T>
+bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::not_equal_to<T>());
+}
+
+template <size_t N, typename T>
+Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::binary_op(a, b, std::plus<T>());
+}
+
+template <size_t N, typename T>
+Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::binary_op(a, b, std::minus<T>());
+}
 #endif
