@@ -1,3 +1,5 @@
+#include <boost/mpi/collectives.hpp>
+
 #include "Constraint.hpp"
 #include "communication.hpp"
 #include "energy_inline.hpp"
@@ -9,8 +11,8 @@ namespace Constraints {
 
 Vector3d Constraint::total_force() const {
   Vector3d total_force;
-  MPI_Allreduce(m_local_force.data(), total_force.data(), 3, MPI_DOUBLE,
-                MPI_SUM, comm_cart);
+  boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
+                         std::plus<Vector3d>());
 
   return total_force;
 }
