@@ -23,7 +23,7 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     
 
 * ``coulomb_debye_hueckel.py``,  ``debye_hueckel.py``
-    Charged beads with a WCA interaction are simulated using the screened Debye-Huckle potential. See :ref:`Debye-Hückel potential`
+    Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`
 
 
 * ``ekboundaries.py``

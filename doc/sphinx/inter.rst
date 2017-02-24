@@ -1458,6 +1458,8 @@ If and are given by the user, then computes the optimal with the chosen
 as described in :cite:`kolafa92`. But in general tune should be
 chosen for tuning.
 
+.. _Debye-Hückel potential:
+
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
