@@ -686,6 +686,8 @@ parameters of the potential. Several Gay-Berne parametrizations exist, the
 original one being :math:`\var{k_1} = 3`, :math:`\var{k_2} = 5`,
 :math:`\var{\mu} = 2` and :math:`\var{\nu} = 1`.
 
+.. _Affinity interaction:
+
 Affinity interaction
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -1820,6 +1822,8 @@ available if you build with cmake. You need to build Scafacos as a
 shared library. Scafacos can be used only once, either for coulomb or
 for dipolar interactions.
 
+.. _ELC:
+
 Electrostatic Layer Correction (ELC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1872,6 +1876,8 @@ by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
 (:cite:`elc,icelc`) before using it.
+
+.. _ICC:
 
 Dielectric interfaces with the ICC\ :math:`\star` algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2212,6 +2218,8 @@ used to set the ratio of the force applied on particles of vs. . This is
 useful if one has to keep the total applied force on the bundle and on
 the target molecule the same. A force of magnitude is applied on
 particles, and a force of magnitude ( \* ) is applied on particles.
+
+.. _Capping the force during warmup:
 
 Capping the force during warmup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
