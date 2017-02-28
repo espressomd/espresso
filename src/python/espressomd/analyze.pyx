@@ -555,7 +555,7 @@ class Analysis:
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
-            if (bonded_ia_params[i].type != 0):
+            if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 e["bonded", i] = c_analyze.obsstat_bonded(& c_analyze.total_energy, i)[0]
                 total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
