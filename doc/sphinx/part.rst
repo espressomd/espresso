@@ -1,4 +1,4 @@
-.. _Setting_up_particles:
+.. _Setting up particles:
 
 Setting up particles
 ********************
