@@ -17,18 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Testmodule for the H5MD interface.
+"""
+Testmodule for the H5MD interface.
 """
 import os
+import sys
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
 import h5py  # h5py has to be imported *after* espressomd (MPI)
 
-npart=25
+npart = 25
+
+
 class CommonTests(object):
     system = espressomd.System()
-    system.box_l = [npart, npart, npart] #avoid particles to be set outside of the main box, otherwise particle positions are folded in the core when writing out and we cannot directly compare positions in the dataset and where particles were set. One would need to unfold the positions of the hdf5 file.
+    # avoid particles to be set outside of the main box, otherwise particle
+    # positions are folded in the core when writing out and we cannot directly
+    # compare positions in the dataset and where particles were set. One would
+    # need to unfold the positions of the hdf5 file.
+    system.box_l = [npart, npart, npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     for i in range(npart):
@@ -80,7 +88,7 @@ class H5mdTestOrdered(ut.TestCase, CommonTests):
         """Prepare a testsystem."""
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_type=True, write_mass=True,
+                           write_force=True, write_species=True, write_mass=True,
                            write_ordered=write_ordered)
         cls.h5.write()
         cls.h5.close()
@@ -89,8 +97,6 @@ class H5mdTestOrdered(ut.TestCase, CommonTests):
         cls.py_pos = cls.py_file['particles/atoms/position/value']
         cls.py_vel = cls.py_file['particles/atoms/velocity/value']
         cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_type = cls.py_file['particles/atoms/type/value']
-        cls.py_mass = cls.py_file['particles/atoms/mass/value']
         cls.py_id = cls.py_file['particles/atoms/id/value']
 
     def test_ids(self):
@@ -113,7 +119,7 @@ class H5mdTestUnordered(ut.TestCase, CommonTests):
         """Prepare a testsystem."""
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_type=True, write_mass=True,
+                           write_force=True, write_species=True, write_mass=True,
                            write_ordered=False)
         cls.h5.write()
         cls.h5.close()
@@ -122,13 +128,13 @@ class H5mdTestUnordered(ut.TestCase, CommonTests):
         cls.py_pos = cls.py_file['particles/atoms/position/value']
         cls.py_vel = cls.py_file['particles/atoms/velocity/value']
         cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_type = cls.py_file['particles/atoms/type/value']
-        cls.py_mass = cls.py_file['particles/atoms/mass/value']
         cls.py_id = cls.py_file['particles/atoms/id/value']
 
 
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(H5mdTestUnordered)
-    ut.TextTestRunner(verbosity=2).run(suite)
-    suite = ut.TestLoader().loadTestsFromTestCase(H5mdTestOrdered)
-    ut.TextTestRunner(verbosity=2).run(suite)
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestOrdered))
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    if os.path.isfile("test.h5"):
+        os.remove("test.h5")
+    sys.exit(not result.wasSuccessful())
