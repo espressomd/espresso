@@ -52,6 +52,8 @@ Returns a Tcl-list of the particle ids of all particles within a given
 radius around the position of the particle with number in variant or
 around the spatial coordinate (, , ) in variant .
 
+.. _Particle distribution:
+
 Particle distribution
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -239,6 +241,8 @@ in . The range is given by and and is divided into equidistant bins.
 The output corresponds to the blockfile format (see section ):
 
 { } { { } }
+
+.. _Structure factor:
 
 Structure factor
 ~~~~~~~~~~~~~~~~
