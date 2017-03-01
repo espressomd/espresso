@@ -93,7 +93,7 @@ def create_polymer(**kwargs):
     params = default_params 
 
     valid_keys=["N_P", "MPC", "bond_length", "bond", "start_id", "start_pos", "mode", "shield", "max_tries", "val_poly", "charge_distance", "type_poly_neutral", "type_poly_charged", "angle", "angle2", "constraints"]
-        
+
     required_keys=["N_P", "MPC", "bond_length", "bond"]
 
     for k in kwargs:
@@ -108,7 +108,7 @@ def create_polymer(**kwargs):
                 "At least the following keys have to be given as keyword arguments: " + required_keys.__str__())
 
     validate_params(params, default_params)
-    
+
     bond_id = params["bond"]._bond_id
 
     cdef double start_pos[3];
@@ -122,7 +122,7 @@ def create_polymer(**kwargs):
              params["val_poly"], params["charge_distance"], params["type_poly_neutral"], \
              params["type_poly_charged"], bond_id, params["angle"], \
              params["angle2"], start_pos2, params["constraints"])
-    
+
     #poly=Polymer(**kwargs)
 
 

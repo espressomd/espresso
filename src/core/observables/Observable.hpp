@@ -20,7 +20,9 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include "config.hpp"
+#include <fstream>
 #include <vector>
+#include <string>
 #include <stdexcept>
 
 
@@ -40,8 +42,10 @@ class Observable {
 
 
     /* IO functions for observables */
-    int write(char *filename, bool binary);
-    int read(char *filename, bool binary);
+    void set_filename(std::string const& filename, bool binary);
+    bool writable() const;
+    void write() const;
+  //void read();
     virtual int n_values() const {return 0;};
     std::vector<double> last_value;
 
@@ -50,6 +54,12 @@ class Observable {
     double last_update;
     int autoupdate;
     double autoupdate_dt;
+
+    virtual void do_write() const;
+  //virtual void do_read();
+    std::ofstream mutable m_ofile;
+    std::string m_filename;
+    bool        m_binary;
 };
 
 

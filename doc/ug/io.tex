@@ -217,16 +217,25 @@ A list of all registered object names can be generated with
 \end{pysyntax}
 
 \vspace{2em}
-A new checkpoint with a consecutive index that contains the latest data of the 
-registered objects can then be created by calling
+A new checkpoint that contains the latest data of the registered
+objects can then be created by calling
 \begin{pysyntax}
   \object{
     checkpoint
   }{
     save
   }{
-  }
+  }[
+    checkpoint_index=\arg{int}
+  ]
 \end{pysyntax}
+A new consecutive index is chosen if the optional
+\texttt{checkpoint_index} is not given.  Using an explicit checkpoint
+index existing ones can be overwritten.  This is useful to save disk
+space if a lot of data is being checkpointed and the files are huge.
+Of course this only works well if then this specific checkpoint is
+loaded again, otherwise the heuristic will choose the one with the
+highest index.
 
 \vspace{2em}
 An existing checkpoint can be loaded with 
@@ -316,88 +325,7 @@ checkpointed user variables (like \var{skin}) or checkpointed \es submodules
 \section{Writing H5MD-files}
 For large amounts of data it's a good idea to store it in the hdf5 (H5MD is
 based on hdf5) file format
-(see \url{https://www.hdfgroup.org/} for details). \es currently supports
-some basic functions for writing simulation data to H5MD files.
-\subsection{\keyword{h5md_init}: Initialize a H5MD data file}
-
-\begin{essyntax}
-h5md_init \var{/where/to/store/data/file} [\var{list\_of\_p\_ids}]
-\end{essyntax}
-The \codebox{h5md_init} command initializes the H5MD file and
-creates groups and datasets according to the conventions of H5MD (see
-\url{http://nongnu.org/h5md/}). In order to safely start from a
-checkpoint the init command automatically copies the old file to a new file
-with a "tmp" suffix. The optional argument \var{list\_of\_p\_ids} can be provided. In
-this case observables are written for these particle ids only.
-
-\subsection{\keyword{h5md_write_positions}: Write particle positions to H5MD
-file}
-
-\begin{essyntax}
-h5md_write_positions
-\opt{folded}
-\end{essyntax}
-Writes the positions of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_write_velocities}: Write particle velocities to H5MD
-file}
-
-\begin{essyntax}
-h5md_write_velocities
-\end{essyntax}
-Writes the velocities of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\begin{essyntax}
-h5md_write_forces
-\end{essyntax}
-Writes the forces of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable1D_init}: Initialize a user-defined H5MD
-observable}
-
-\begin{essyntax}
-h5md_observable1D_init \var{name\_of\_observable}
-\end{essyntax}
-Initializes an observable dataset of a zero dimensional, but timedependent, 
-observable with given name in the H5MD file previously
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable1D_write}: Write to a user-defined H5MD
-dataset}
-
-\begin{essyntax}
-h5md_observable1D_write \var{name\_of\_observable} \var{value}
-\end{essyntax}
-Writes \texttt{value} to a user-defined observable dataset with given name.
-
-
-\begin{essyntax}
-h5md_observable2D_init \var{name\_of\_observable}
-\end{essyntax}
-Initializes an observable dataset of a one dimensional, but timedependent, 
-observable with given \textit{property} of particles in Espresso in the H5MD file previously
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable2D_write}: Write to a user-defined H5MD
-dataset}
-
-\begin{essyntax}
-h5md_observable2D_write \var{name\_of\_observable} \var{value}
-\end{essyntax}
-Writes \texttt{value} to a user-defined observable dataset with given name.
-
-\subsection{\keyword{h5md_close}: Close H5MD file}
-
-\begin{essyntax}
-h5md_close
-\end{essyntax}
-Closes the H5MD data file.
-
-
-\section{Writing H5MD-files with Python}
+(see \url{https://www.hdfgroup.org/} for details).
 To write data in a hdf5-file, first an object of the class \texttt{H5md} has to
 be created and linked to the respective hdf5-file. This may, for example, look
 like:
@@ -411,7 +339,7 @@ If a file with the given filename exists and has a valid H5MD structures it
 will be backed up to a file with suffix ".bak". This file will be removed by
 the close() method of the class which has to be called at the end of the
 simulation to close the file. The current implementation allows to write the
-following properties: positions, velocities, forces, types, and masses of the
+following properties: positions, velocities, forces, types, masses and charges of the
 particles. In order to write any property, you have to set the respective
 boolean flag as an option to the H5md class. Currently available:
 \begin{itemize}
@@ -419,24 +347,33 @@ boolean flag as an option to the H5md class. Currently available:
     \item write_vel
     \item write_force
     \item write_type
-    \item write_mass.
+    \item write_mass
+    \item write_charge
+    \item write_ordered
 \end{itemize}
-In simulations with varying numbers of particles (MC or reactions), the
+Connectivity Information is written out automatically if there are bonds in the system.
+Additionally you can force \es to write particle based properties ordered according to particle ids via the flag write\_ordered. Typically for particle numbers below or around $10^4$ the ordered, serial output (default) from the master node is faster since only one write access is needed. For very large particle numbers the unordered, parallel output is faster. 
+In simulations with varying numbers of particles (e.g. in the reaction ensemble), the
 size of the dataset will be adapted if the maximum number of particles
 increases but will not be decreased. Instead a negative fill value will 
-be written to the trajectory for the id. If you have a parallel simulation
-please keep in mind that the sequence of particles in general changes
+be written to the trajectory for the id. If you use unordered output please keep in mind that the sequence of particles in general changes
 from timestep to timestep. Therefore you have to always use the dataset
-for the ids to track which position/velocity/force/type/mass entry belongs
+for the ids to track which property entry belongs
 to which particle.
 To write data to the hdf5 file, simply call the H5md objects write method
 without any arguments.
 \begin{pycode}
 h5.write()
 \end{pycode}
+You can flush the h5md file via calling
+\begin{pycode}
+h5.flush()
+\end{pycode}
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
-\section{\texttt{blockfile}: Using the structured file format}
+
+\section{\texttt{blockfile}: Using the structured file format (deprecated)}
+
 \label{sec:structured-file-format}
 \newescommand{blockfile}
 

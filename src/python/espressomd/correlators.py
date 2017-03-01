@@ -6,7 +6,7 @@ import numpy as np
 class Correlator(ScriptInterfaceHelper):
     _so_name = "Correlators::Correlator"
     _so_bind_methods = ("update","auto_update","finalize", "dim_corr","n_results","hierarchy_depth")
-    
+
     def result(self):
         res=np.array(self.call_method("get_correlation"))
         res=res.reshape((self.n_results(),2+self.dim_corr()))

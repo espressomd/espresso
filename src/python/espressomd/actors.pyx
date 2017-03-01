@@ -152,6 +152,9 @@ cdef class Actor:
 
 
 class Actors:
+    """
+    .. todo:: implement def remove(self, actor)
+    """
 
     active_actors = []
 
