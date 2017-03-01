@@ -23,6 +23,9 @@ class Constraints(ScriptInterfaceHelper):
     def remove(self, constraint):
         self.call_method("remove", constraint=constraint)
 
+    def get(self):
+        return self.call_method("get_elements")
+
 
 class Constraint(ScriptInterfaceHelper):
     _so_name = "Constraints::Constraint"
