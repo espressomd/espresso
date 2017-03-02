@@ -107,10 +107,6 @@ private:
   MPI_Comm m_hdf5_comm;
   bool m_already_wrote_bonds = false;
 
-  bool check_file_exists(const std::string &name) {
-    std::ifstream f(name.c_str());
-    return f.good();
-  };
   /**
    * @brief Method to check if the H5MD structure is present in the file.
    * Only call this on valid HDF5 files.
