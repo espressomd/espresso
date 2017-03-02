@@ -95,6 +95,7 @@ void File::InitFile() {
   H5Eset_auto(H5E_DEFAULT, (H5E_auto_t)H5Eprint, stderr);
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
+  m_backup_filename = m_filename + ".bak";
   // use a seperate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
   if (m_write_ordered == true)
@@ -115,12 +116,13 @@ void File::InitFile() {
   boost::filesystem::path script_path(m_scriptname);
   m_absolute_script_path = boost::filesystem::canonical(script_path);
   init_filestructure();
-  bool fileexists = check_file_exists(m_filename);
+  bool file_exists = boost::filesystem::exists(m_filename);
+  bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   if (m_write_ordered == false)
     MPI_Barrier(m_hdf5_comm);
-  if (fileexists) {
+  if (file_exists) {
     if (check_for_H5MD_structure(m_filename)) {
       /*
        * If the file exists and has a valid H5MD structure, lets create a
@@ -128,7 +130,6 @@ void File::InitFile() {
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
       */
-      m_backup_filename = m_filename + ".bak";
       if (this_node == 0)
         backup_file(m_filename, m_backup_filename);
       load_file(m_filename);
@@ -137,6 +138,7 @@ void File::InitFile() {
       throw incompatible_h5mdfile();
     }
   } else {
+    if (backup_file_exists) throw left_backupfile();
     create_new_file(m_filename);
   }
 }
