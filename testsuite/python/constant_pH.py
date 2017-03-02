@@ -80,13 +80,13 @@ class ReactionEnsembleTest(ut.TestCase):
         K_HA_diss=ReactionEnsembleTest.K_HA_diss
         RE=ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(10*N0):
+        for i in range(12*N0):
             RE.do_reaction_constant_pH()
             
         volume=np.prod(self.system.box_l) #cuboid box
         average_NH=0.0
         average_degree_of_association=0.0
-        num_samples=2000
+        num_samples=3000
         for i in range(num_samples):
             RE.do_reaction_constant_pH()
             average_NH+=grand_canonical.number_of_particles(current_type=type_H)
@@ -98,7 +98,6 @@ class ReactionEnsembleTest(ut.TestCase):
         K_apparent_HA_diss=K_HA_diss*standard_pressure_in_simulation_units/temperature
         pK_a=-np.log10(K_apparent_HA_diss)
         real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))/ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH)
-        print(average_degree_of_association, ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))
         self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
