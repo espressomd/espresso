@@ -230,15 +230,20 @@ species (|es| types), and masses of the particles. In order to write any propert
 have to set the respective boolean flag as an option to the H5md class.
 Currently available:
 
--  write_pos
+    - write_pos: particle positions
 
--  write_vel
+    - write_vel: particle velocities
 
--  write_force
+    - write_force: particle forces
 
--  write_species
+    - write_species: particle types
 
--  write_mass.
+    - write_mass: particle masses
+
+    - write_ordered: if particles should be written ordered according to their
+      id (implies serial write). 
+
+
 
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
