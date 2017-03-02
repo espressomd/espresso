@@ -15,6 +15,7 @@ set(py_tests  bondedInteractions.py
               lbgpu_remove_total_momentum.py
               tabulated.py
               reaction_ensemble.py
+              constant_pH.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

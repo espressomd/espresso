@@ -52,8 +52,8 @@ class ReactionEnsembleTest(ut.TestCase):
     def setUpClass(cls):
         """Prepare a testsystem."""
         for i in range(0,2*cls.N0,2):
-		cls.system.part.add(id=i ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_A)
-		cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
+            cls.system.part.add(id=i ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_A)
+            cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
         
         cls.RE.add(equilibrium_constant=cls.K_HA_diss*cls.standard_pressure_in_simulation_units,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
         cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
@@ -98,7 +98,7 @@ class ReactionEnsembleTest(ut.TestCase):
         K_apparent_HA_diss=K_HA_diss*standard_pressure_in_simulation_units/temperature
         pK_a=-np.log10(K_apparent_HA_diss)
         real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))/ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH)
-	print(average_degree_of_association, ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))
+    print(average_degree_of_association, ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))
         self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
