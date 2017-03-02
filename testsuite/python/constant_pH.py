@@ -98,10 +98,10 @@ class ReactionEnsembleTest(ut.TestCase):
         K_apparent_HA_diss=K_HA_diss*standard_pressure_in_simulation_units/temperature
         pK_a=-np.log10(K_apparent_HA_diss)
         real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))/ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH)
-    print(average_degree_of_association, ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))
+        print(average_degree_of_association, ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))
         self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(ReactionEnsembleTest)
-    result=ut.TextTestRunner(verbosity=2).run(suite
+    result=ut.TextTestRunner(verbosity=2).run(suite)
     sys.exit(not result.wasSuccessful())
