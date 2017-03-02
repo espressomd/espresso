@@ -205,10 +205,12 @@ Writing H5MD-files
 
 For large amounts of data it’s a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
-details). currently supports some basic functions for writing simulation
-data to H5MD files.
+details). Currently |es| supports some basic functions for writing simulation
+data to H5MD files. The implementation is MPI-parallelized and is capable
+of dealing with varying numbers of particles.
 
-To write data in a hdf5-file, first an object of the class
+To write data in a hdf5-file according to the H5MD proposal (see
+http://nongnu.org/h5md/), first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -217,7 +219,7 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System()
     # ... add particles here
-    h5 = h5md.H5md(filename=“trajectory.h5”, write\_pos=True, write\_vel=True)
+    h5 = h5md.H5md(filename=“trajectory.h5”, write_pos=True, write_vel=True)
 
 If a file with the given filename exists and has a valid H5MD structures
 it will be backed up to a file with suffix “.bak”. This file will be
