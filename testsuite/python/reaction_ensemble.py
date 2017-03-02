@@ -20,6 +20,7 @@
 """Testmodule for the Reaction Ensemble.
 """
 import os
+import sys
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
@@ -48,11 +49,11 @@ class ReactionEnsembleTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
+        for i in range(0,2*cls.N0,2):
+		cls.system.part.add(id=i ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_A)
+		cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
         
-        cls.system.part.add(id=np.arange(cls.N0) ,pos=np.random.random((cls.N0,3)) * cls.system.box_l, type=cls.type_A)
-        cls.system.part.add(id=np.arange(cls.N0,2*cls.N0) ,pos=np.random.random((cls.N0,3)) * cls.system.box_l, type=cls.type_H)
-        
-        cls.RE.add(equilibrium_constant=cls.K_HA_diss,educt_types=[cls.type_HA],educt_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
+        cls.RE.add(equilibrium_constant=cls.K_HA_diss,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
         cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
         cls.RE.print_status()
 
@@ -93,4 +94,5 @@ class ReactionEnsembleTest(ut.TestCase):
     
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(ReactionEnsembleTest)
-    ut.TextTestRunner(verbosity=2).run(suite)
+    result=ut.TextTestRunner(verbosity=2).run(suite)
+    sys.exit(not result.wasSuccessful())

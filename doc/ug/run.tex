@@ -818,8 +818,8 @@ Eq.\ref{eq:Pacc}. This is necessary when unsing constraints \variant{5} or
   \begin{arguments}
   \item[\var{K}] dimensionless (thermodynamic) equilibrium constant of the reaction, see Eq.\ref{Keq}. 
 	  %Note that this is not necessarily the same number as equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
-\item[\var{list\_educt\_types}] a list of types of reactants in the reaction.
-\item[\var{list\_educt\_coefficients}] a list of stoichiometric coefficients of the reactants 
+\item[\var{list\_reactant\_types}] a list of types of reactants in the reaction.
+\item[\var{list\_reactant\_coefficients}] a list of stoichiometric coefficients of the reactants 
 	in the same order as the list of their types
 \item[\var{list\_product\_types}] a list of product types of the reaction.
 \item[\var{list\_product\_coefficients}] a list of stoichiometric coefficients of products of the reaction
@@ -833,7 +833,7 @@ Eq.\ref{eq:Pacc}. This is necessary when unsing constraints \variant{5} or
   	from espressomd import reaction_ensemble \\
   	\variant{1}  RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float) \\
   	\variant{2}  RE.print_status() \\
-  	\variant{3}  RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list) \\
+  	\variant{3}  RE.add(equilibrium_constant=equilibrium constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list) \\
   	\variant{4}  RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\}) \\
   	\variant{5}  RE.set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder) \\
   	\variant{6}  RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z) \\
@@ -884,8 +884,8 @@ set, box volume is used by default.
   \begin{arguments}
   \item[\var{K}] dimensionless (thermodynamic) equilibrium constant of the reaction, see Eq.\ref{Keq}. 
 	  %Note that this is not necessarily the same number as equilibrium constant from the law of mass action, but needs to be converted to the dimensionless equilibrium constant $K=\exp(-\beta \Delta G)$).
-\item[\var{list\_educt\_types}] a list of types of reactants in the reaction.
-\item[\var{list\_educt\_coefficients}] a list of stoichiometric coefficients of the reactants 
+\item[\var{list\_reactant\_types}] a list of types of reactants in the reaction.
+\item[\var{list\_reactant\_coefficients}] a list of stoichiometric coefficients of the reactants 
 	in the same order as the list of their types
 \item[\var{list\_product\_types}] a list of product types of the reaction.
 \item[\var{list\_product\_coefficients}] a list of stoichiometric coefficients of products of the reaction
@@ -1029,7 +1029,7 @@ can in general carry a unit. For an example file for how to setup a Constant pH 
   \begin{pysyntax}
   	from espressomd import reaction_ensemble \\
   	RE=reaction_ensemble.ReactionEnsemble(standard_pressure=ignored_float, temperature=float, exclusion_radius=float) \\
-  	RE.add(equilibrium_constant=equilibrium constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list) \\
+  	RE.add(equilibrium_constant=equilibrium constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list) \\
   	RE.default_charges(dictionary=\{type1,charge1; type2, charge2;...\}) \\
 	RE.print_status() \\
 	\variant{1} RE.set_pH_core(pH_input) \\
@@ -1044,10 +1044,10 @@ can in general carry a unit. For an example file for how to setup a Constant pH 
 
 
 \section{Grand Canonical Ensemble}
-Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves. This is done via adding reactions that only have educts (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities.
+Since the Reaction Ensemble acceptance transition probability can be derived from the grand canonical acceptance transition probability we can use the reaction ensemble to implement grand canonical simulation moves. This is done via adding reactions that only have reactants (for the deletion of particles) or only have products (for the creation of particles). There exists a one to one mapping of the expressions in the grand canonical transition probabilities and the expressions in the reaction ensemble transition probabilities.
 \subsection{How to add the water autodissociation to a simulation}
 With the above trick of grand canonical simulation moves include we can include the autodissociation of water into the system.
-In order to add the water autodissociation \schemestart 2 H$_2$O \arrow{<=>} H$_3$O$^+$ +OH$^-$ \schemestop  to a simulation, add the following ex nihilo reactions to Espresso. ($\emptyset$, read ex nihilo). Ex nihilo means that the reaction has no educts or products. Therefore, if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an educt, then particles are created ex nihilo:
+In order to add the water autodissociation \schemestart 2 H$_2$O \arrow{<=>} H$_3$O$^+$ +OH$^-$ \schemestop  to a simulation, add the following ex nihilo reactions to Espresso. ($\emptyset$, read ex nihilo). Ex nihilo means that the reaction has no reactants or products. Therefore, if $\emptyset$ is a product, particles vanish and if $\emptyset$ is an reactant, then particles are created ex nihilo:
 \begin{itemize}
 \item \ce{$\emptyset$ -> H3O+ + OH-} with reaction constant $K$
 \item \ce{ H3O+ + OH- -> $\emptyset$ } with reaction constant $1/K$,

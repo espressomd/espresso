@@ -6,13 +6,13 @@ IF REACTION_ENSEMBLE:
     class Wang_Landau_has_converged(Exception):
         pass
 
-    cdef _set_params_in_es_core_add_reverse(equilibrium_constant, int* educt_types, len_educt_types, int* educt_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
+    cdef _set_params_in_es_core_add_reverse(equilibrium_constant, int* reactant_types, len_reactant_types, int* reactant_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
         #add reverse reaction based on last reaction that was added            
         cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))     
         new_reaction.equilibrium_constant=equilibrium_constant
-        new_reaction.educt_types=educt_types
-        new_reaction.len_educt_types=len_educt_types
-        new_reaction.educt_coefficients=educt_coefficients
+        new_reaction.reactant_types=reactant_types
+        new_reaction.len_reactant_types=len_reactant_types
+        new_reaction.reactant_coefficients=reactant_coefficients
         new_reaction.product_types=product_types
         new_reaction.len_product_types=len_product_types
         new_reaction.product_coefficients=product_coefficients
@@ -35,7 +35,7 @@ IF REACTION_ENSEMBLE:
             temperature : float
                           the temperature at which the reaction is performed
             exclusion_radius : float
-                               Exclusion radius is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore $\exp(-\beta E)$ gives these configurations aproximately zero contribution in the partition function. The exclusion radius needs to be set in order to avoid oppositley charged particles to be set too close to each other or in order to avoid too steep gradients from the short ranged interaction potential when using the Reaction ensemble together with a MD scheme.
+                               Exclusion radius is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore :math:`\exp(-\\beta E)` gives these configurations aproximately zero contribution in the partition function. The exclusion radius needs to be set in order to avoid oppositley charged particles to be set too close to each other or in order to avoid too steep gradients from the short ranged interaction potential when using the Reaction ensemble together with a MD scheme.
             
             """
             self._params=self.default_params()
@@ -117,8 +117,7 @@ IF REACTION_ENSEMBLE:
          
         def set_volume(volume):
             """
-            set the volume to be used in the acceptance probability,
-Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume is different from the box volume. If not used the default volume which is used, is the box volume.
+            set the volume to be used in the acceptance probability of the reaction ensemble. This can be useful when using constraints, if the relevant volume is different from the box volume. If not used the default volume which is used, is the box volume.
 
             """
             current_reaction_system.volume=volume
@@ -139,9 +138,9 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
             ----------
             equilibrium_constant : float
                                    dimensionless (thermodynamic) equilibrium constant of the reaction, see Eq.[Keq].
-            educt_types : list 
+            reactant_types : list 
                           a list of types of reactants in the reaction
-            educt_coefficients : list 
+            reactant_coefficients : list 
                                  a list of stoichiometric coefficients of the reactants in the same order as the list of their types
             product_types : list
                             a list of product types of the reaction.
@@ -156,10 +155,10 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
             self._set_params_in_es_core_add()
 
         def valid_keys_add(self):
-            return "equilibrium_constant", "educt_types", "educt_coefficients", "product_types", "product_coefficients"
+            return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
 
         def required_keys_add(self):
-            return ["equilibrium_constant", "educt_types", "educt_coefficients", "product_types", "product_coefficients"]
+            return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
 
         def default_params_add(self):
             
@@ -168,22 +167,22 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
         def _set_params_in_es_core_add(self):
             
             cdef single_reaction* new_reaction =<single_reaction *>malloc(sizeof(single_reaction))
-            #initialize values of educt/ products in reaction to reasonable value
-            new_reaction.len_educt_types=0
+            #initialize values of reactant/ products in reaction to reasonable value
+            new_reaction.len_reactant_types=0
             new_reaction.len_product_types=0
             
             new_reaction.equilibrium_constant=self._params["equilibrium_constant"]
-            cdef int *educt_types = <int *>malloc(len(self._params["educt_types"]) * sizeof(int))
-            for i in range(len(self._params["educt_types"])):
-                educt_types[i]=self._params["educt_types"][i]
-            new_reaction.educt_types=educt_types
-            new_reaction.len_educt_types=len(self._params["educt_types"]);
+            cdef int *reactant_types = <int *>malloc(len(self._params["reactant_types"]) * sizeof(int))
+            for i in range(len(self._params["reactant_types"])):
+                reactant_types[i]=self._params["reactant_types"][i]
+            new_reaction.reactant_types=reactant_types
+            new_reaction.len_reactant_types=len(self._params["reactant_types"]);
             
             
-            cdef int *educt_coefficients = <int *>malloc(len(self._params["educt_coefficients"]) * sizeof(int))
-            for i in range(len(self._params["educt_coefficients"])):
-                educt_coefficients[i]=self._params["educt_coefficients"][i]
-            new_reaction.educt_coefficients=educt_coefficients
+            cdef int *reactant_coefficients = <int *>malloc(len(self._params["reactant_coefficients"]) * sizeof(int))
+            for i in range(len(self._params["reactant_coefficients"])):
+                reactant_coefficients[i]=self._params["reactant_coefficients"][i]
+            new_reaction.reactant_coefficients=reactant_coefficients
             
             cdef int *product_types = <int *>malloc(len(self._params["product_types"]) * sizeof(int))
             for i in range(len(self._params["product_types"])):
@@ -197,7 +196,7 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
                 product_coefficients[i]=self._params["product_coefficients"][i]
             new_reaction.product_coefficients=product_coefficients
             
-            new_reaction.nu_bar=calculate_nu_bar(new_reaction.educt_coefficients, new_reaction. len_educt_types,  new_reaction.product_coefficients, new_reaction.len_product_types);
+            new_reaction.nu_bar=calculate_nu_bar(new_reaction.reactant_coefficients, new_reaction. len_reactant_types,  new_reaction.product_coefficients, new_reaction.len_product_types);
             
             #if everything is fine:
             current_reaction_system.reactions=<single_reaction**> realloc(current_reaction_system.reactions,sizeof(single_reaction*)*(current_reaction_system.nr_single_reactions+1)); #enlarge current_reaction_system
@@ -205,12 +204,12 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
             current_reaction_system.nr_single_reactions+=1;
             
             #assign different types an index in a growing list that starts at and is incremented by 1 for each new type
-            status=update_type_index(new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.product_types, new_reaction.len_product_types);
+            status=update_type_index(new_reaction.reactant_types, new_reaction.len_reactant_types, new_reaction.product_types, new_reaction.len_product_types);
             if(status==es_error):
                 raise Exception("could not initialize gc particle list for types")
             
             #add reverse reaction
-            _set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.educt_types, new_reaction.len_educt_types, new_reaction.educt_coefficients, -1*new_reaction.nu_bar )
+            _set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.reactant_types, new_reaction.len_reactant_types, new_reaction.reactant_coefficients, -1*new_reaction.nu_bar )
 
         def default_charges(self,*args,**kwargs):
             """
@@ -256,16 +255,16 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
                 print("Reaction System is not initialized")
             else:
                 print("Reaction System is the following:")
-                print("Educt Types")
+                print("reactant Types")
                 for single_reaction_i in range(current_reaction_system.nr_single_reactions):
                     print "Reaction Nr.", single_reaction_i
-                    print "Educt Types"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_educt_types):
-                        print current_reaction_system.reactions[single_reaction_i].educt_types[i]
+                    print "reactant Types"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                        print current_reaction_system.reactions[single_reaction_i].reactant_types[i]
 
-                    print "Educt coefficients"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_educt_types):
-                        print current_reaction_system.reactions[single_reaction_i].educt_coefficients[i]
+                    print "reactant coefficients"
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                        print current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i]
                     
                     print "Product Types"
                     for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
@@ -394,7 +393,7 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
             do_not_sample_reaction_partition_function : bool, optional
                                                         avoids sampling the Reaction ensemble partition function in the Wang-Landau algorithm. Therefore this option makes all degrees of association equally probable. This option may be used in the sweeping mode of the reaction ensemble, since the reaction ensemble partition function can be later added analytically.
             use_hybrid_monte_carlo : bool, optional
-                                     this is an experimental implementation only and per default it is turned off! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\beta \Delta E_\text{pot})`).            
+                                     this is an experimental implementation only and per default it is turned off! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).            
             """
             for k in kwargs:
                 if k in self.valid_keys_set_wang_landau_parameters():
@@ -423,7 +422,7 @@ Eq.[eq:Pacc]. This can be useful when using constraints, if the relevant volume 
             
         def update_maximum_and_minimum_energies_at_current_state(self):
             """
-            records the minimum and maximum potential energy as a function of the degree of association in a preliminary Wang-Landau reaction ensemble simulation where the acceptance probability includes the factor :math:`\exp(-beta Delta E_{pot})`. The minimal and maximal potential energys which occur in the system are needed for the energy reweighting simulations wehere the factor :math:`\exp(-beta \Delta E_{pot})` is not included in the acceptance probability in order to avoid choosing the wrong potential energy boundaries.
+            records the minimum and maximum potential energy as a function of the degree of association in a preliminary Wang-Landau reaction ensemble simulation where the acceptance probability includes the factor :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal potential energys which occur in the system are needed for the energy reweighting simulations wehere the factor :math:`\exp(-\\beta \\Delta E_{pot})` is not included in the acceptance probability in order to avoid choosing the wrong potential energy boundaries.
             """
             update_maximum_and_minimum_energies_at_current_state()
         

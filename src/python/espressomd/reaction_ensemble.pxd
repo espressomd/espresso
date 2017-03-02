@@ -4,9 +4,9 @@ from libcpp cimport bool
 
 cdef extern from "reaction_ensemble.hpp":
     ctypedef struct single_reaction:
-        int* educt_types
-        int len_educt_types
-        int* educt_coefficients
+        int* reactant_types
+        int len_reactant_types
+        int* reactant_coefficients
         int* product_types
         int len_product_types
         int* product_coefficients
@@ -36,8 +36,8 @@ cdef extern from "reaction_ensemble.hpp":
     int do_reaction()
     bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer)
     int find_index_of_type(int type) except +
-    int calculate_nu_bar(int* educt_coefficients, int len_educt_types,  int* product_coefficients, int len_product_types)
-    int update_type_index(int* educt_types, int len_educt_types , int* product_types, int len_product_types)
+    int calculate_nu_bar(int* reactant_coefficients, int len_reactant_types,  int* product_coefficients, int len_product_types)
+    int update_type_index(int* reactant_types, int len_reactant_types , int* product_types, int len_product_types)
     void set_cuboid_reaction_ensemble_volume()
     int check_reaction_ensemble()
     int accepted_configurational_MC_moves

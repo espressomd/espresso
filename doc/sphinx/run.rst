@@ -148,7 +148,7 @@ Reaction Ensemble
 
 Required features: REACTION\_ENSEMBLE
 
-The reaction ensemble ::cite:`smith94a` allows to simulate
+The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -212,7 +212,7 @@ ensemble is given by the criterion ::cite:`smith94a`
        \label{eq:Pacc}
        \biggr),
 
-where :math:`\Delta E_\mathrm{pot}=E_\mathrm{pot o}-E_\mathrm{pot n}` is the interaction energy change,
+where :math:`\Delta E_\mathrm{pot}=E_\mathrm{pot new}-E_\mathrm{pot old}` is the interaction energy change,
 :math:`\beta=1/k_\mathrm{B}T`, :math:`V` is the simulation box volume,
 :math:`\bar\nu = \sum_i
 \nu_i`. The extent of reaction, :math:`\xi=1` for the forward, and
@@ -229,7 +229,7 @@ where :math:`N_{\mathrm{A}}` is the Avogadro number and
 convenient and in some cases even necessary (dissociation reaction of
 polyelectrolytes) that some particles representing reactants are not
 removed from or placed at randomly in the system (think about reacting monomers in a polymer), but their identity is changed to that of the
-products (and vice versa in the reverse direction). The replacement rule is that for any given reactand type it is replaced by the corresponding product type (corresponding means here in terms of order in the reaction equation that was provided) as long as the corresponding coefficients allow it.
+products (and vice versa in the reverse direction). The replacement rule is that for any given reactant type it is replaced by the corresponding product type (corresponding means here in terms of order in the reaction equation that was provided) as long as the corresponding coefficients allow it.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`
 
 .. code-block:: python
@@ -237,7 +237,7 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
     from espressomd import reaction_ensemble
     RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
     RE.print_status()
-    RE.add(equilibrium_constant=equilibrium_constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
+    RE.add(equilibrium_constant=equilibrium_constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list)
     RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
     RE.set_cylindrical_constraint_in_z_direction(center_x,center_y, radius_of_cylinder)
     RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z)
@@ -254,7 +254,7 @@ Required features: REACTION_ENSEMBLE
 
 Since you might be interested in thermodynamic properties of a reacting
 system you may use the Wang-Landau algorithm ::cite:`wang01a`
-to obtain them. Here the 1/t Wang-Landau
+to obtain them ::cite:`landsgesell16a`. Here the 1/t Wang-Landau
 algorithm ::cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
@@ -285,13 +285,14 @@ Constant pH method
 ~~~~~~~~~~~~~~~~~~
 
 Required features: REACTION_ENSEMBLE
+
 In the constant pH method due to Reed and Reed
 ::cite:`reed92a` it is possible to set the chemical potential
 of :math:`H^{+}` ions, assuming the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
 pH method can yield equivalent results as the reaction ensemble. For
-more information see ::cite:`landsgesell2016b`. However, it
+more information see ::cite:`landsgesell16b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
 serious artifacts. The constant pH method significantly differs in its
@@ -309,7 +310,7 @@ commands for the constant pH method are available. For a description of the avai
     reaction_ensemble constant_pH pH reaction_ensemble constant_pH do
     from espressomd import reaction_ensemble
     RE=reaction_ensemble.ReactionEnsemble(standard_pressure=ignored_float,temperature=float, exclusion_radius=float)
-    RE.add(equilibrium_constant=equilibrium_constant,educt_types=list,educt_coefficients=list, product_types=list, product_coefficients=list)
+    RE.add(equilibrium_constant=equilibrium_constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list)
     RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
     RE.print_status()
     RE.set_pH_core(pH_input)
@@ -322,7 +323,7 @@ Grand Canonical Ensemble
 Since the Reaction Ensemble acceptance transition probability can be
 derived from the grand canonical acceptance transition probability we
 can use the reaction ensemble to implement grand canonical simulation
-moves. This is done via adding reactions that only have educts (for the
+moves. This is done via adding reactions that only have reactants (for the
 deletion of particles) or only have products (for the creation of
 particles). There exists a one to one mapping of the expressions in the
 grand canonical transition probabilities and the expressions in the
@@ -342,9 +343,9 @@ the water autodissociation
 
 
 add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-nihilo). Ex nihilo means that the reaction has no educts or products.
+nihilo). Ex nihilo means that the reaction has no reactants or products.
 Therefore, if :math:`\emptyset` is a product, particles vanish and if
-:math:`\emptyset` is an educt, then particles are created ex nihilo:
+:math:`\emptyset` is an reactant, then particles are created ex nihilo:
 
 .. math::
 

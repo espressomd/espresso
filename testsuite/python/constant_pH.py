@@ -19,6 +19,7 @@
 
 """Testmodule for the Reaction Ensemble.
 """
+import sys
 import os
 import unittest as ut
 import numpy as np
@@ -50,11 +51,11 @@ class ReactionEnsembleTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
+        for i in range(0,2*cls.N0,2):
+		cls.system.part.add(id=i ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_A)
+		cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
         
-        cls.system.part.add(id=np.arange(cls.N0) ,pos=np.random.random((cls.N0,3)) * cls.system.box_l, type=cls.type_A)
-        cls.system.part.add(id=np.arange(cls.N0,2*cls.N0) ,pos=np.random.random((cls.N0,3)) * cls.system.box_l, type=cls.type_H)
-        
-        cls.RE.add(equilibrium_constant=cls.K_HA_diss*cls.standard_pressure_in_simulation_units,educt_types=[cls.type_HA],educt_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
+        cls.RE.add(equilibrium_constant=cls.K_HA_diss*cls.standard_pressure_in_simulation_units,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
         cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
         cls.RE.print_status()
         cls.RE.set_pH_core(3.5635629432865294)
@@ -85,7 +86,7 @@ class ReactionEnsembleTest(ut.TestCase):
         volume=np.prod(self.system.box_l) #cuboid box
         average_NH=0.0
         average_degree_of_association=0.0
-        num_samples=20000
+        num_samples=2000
         for i in range(num_samples):
             RE.do_reaction_constant_pH()
             average_NH+=grand_canonical.number_of_particles(current_type=type_H)
@@ -102,4 +103,5 @@ class ReactionEnsembleTest(ut.TestCase):
     
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(ReactionEnsembleTest)
-    ut.TextTestRunner(verbosity=2).run(suite)
+    result=ut.TextTestRunner(verbosity=2).run(suite
+    sys.exit(not result.wasSuccessful())

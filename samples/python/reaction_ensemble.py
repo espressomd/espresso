@@ -68,7 +68,7 @@ system.part.add(id=np.arange(N0,2*N0) ,pos=np.random.random((N0,3)) * system.box
 
 
 RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, exclusion_radius=1)
-RE.add(equilibrium_constant=K_diss,educt_types=[0],educt_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
+RE.add(equilibrium_constant=K_diss,reactant_types=[0],reactant_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
 grand_canonical.setup([0,1,2])
