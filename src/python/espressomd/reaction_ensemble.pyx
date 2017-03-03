@@ -146,8 +146,8 @@ IF REACTION_ENSEMBLE:
                             a list of product types of the reaction.
             product_coefficients : list
                                    a list of stoichiometric coefficients of products of the reaction in the same order as the list of their types
-                                   
-            """
+
+            """            
             for k in self.required_keys_add():
                 if k not in kwargs:
                     raise ValueError("At least the following keys have to be given as keyword arguments: " + self.required_keys_add().__str__() + " got " + kwargs.__str__())
@@ -428,8 +428,7 @@ IF REACTION_ENSEMBLE:
         
         def write_out_preliminary_energy_run_results(self):
             """
-            this writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously was
-used.
+            this writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously was used.
             """
             write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             
