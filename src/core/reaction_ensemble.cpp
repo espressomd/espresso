@@ -61,7 +61,7 @@ int do_reaction(){
 //checks the reaction_ensemble struct for valid parameters
 int check_reaction_ensemble(){
 	int check_is_successfull =ES_OK;
-	if(current_reaction_system.standard_pressure_in_simulation_units<0 and not abs(constant_pH-(-10)) >0.00001){
+	if(current_reaction_system.standard_pressure_in_simulation_units<0 and not (std::abs(constant_pH-(-10)) >0.00001) ){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
 		check_is_successfull=ES_ERROR;
 	}
@@ -160,7 +160,7 @@ double calculate_current_potential_energy_of_system(int unimportant_int){
 	return sum_all_energies-kinetic_energy;
 }
 
-int make_reaction_attempt(single_reaction* current_reaction, double** changed_particles_properties, int* _len_changed_particles_properties, int** p_ids_created_particles, int* _len_p_ids_created_particles, double** hidden_particles_properties, int* _len_hidden_particles_properties) {
+void make_reaction_attempt(single_reaction* current_reaction, double** changed_particles_properties, int* _len_changed_particles_properties, int** p_ids_created_particles, int* _len_p_ids_created_particles, double** hidden_particles_properties, int* _len_hidden_particles_properties) {
 	//make sure to free *changed_particles_properties, *p_id_s_changed_particles, *hidden_particles_properties after the call of make_reaction_attempt
 	int len_changed_particles_properties= *_len_changed_particles_properties;
 	int len_p_ids_created_particles= *_len_p_ids_created_particles;
@@ -489,7 +489,7 @@ int delete_particle (int p_id) {
 }
 
 
-int get_random_position_in_box (double* out_pos) {
+void get_random_position_in_box (double* out_pos) {
 	if(current_reaction_system.box_is_cylindric_around_z_axis==true) {
 		//see http://mathworld.wolfram.com/DiskPointPicking.html
 		double random_radius=current_reaction_system.cyl_radius*sqrt(d_random()); //for uniform disk point picking in cylinder
@@ -517,7 +517,7 @@ int get_random_position_in_box (double* out_pos) {
 	}
 } 
 
-int get_random_position_in_box_enhanced_proposal_of_small_radii (double* out_pos) {
+void get_random_position_in_box_enhanced_proposal_of_small_radii (double* out_pos) {
 	double random_radius=current_reaction_system.cyl_radius*d_random(); //for enhanced proposal of small radii, needs correction within metropolis hasting algorithm, proposal density is p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii are proposed more often
 	double phi=2.0*PI*d_random();
 	out_pos[0]=random_radius*cos(phi);
@@ -1702,7 +1702,7 @@ void write_wang_landau_results_to_file(char* full_path_to_output_filename){
 		int* nr_subindices_of_collective_variable =current_wang_landau_system.nr_subindices_of_collective_variable;
 		for(int flattened_index=0;flattened_index<current_wang_landau_system.len_histogram;flattened_index++){
 			//unravel index
-			if(abs(current_wang_landau_system.wang_landau_potential[flattened_index]-current_wang_landau_system.double_fill_value)>1){ //only output data if they are not equal to current_reaction_system.double_fill_value. This if ensures that for the energy observable not allowed energies (energies in the interval [global_E_min, global_E_max]) in the multidimensional wang landau potential are printed out, since the range [E_min(nbar), E_max(nbar)] for each nbar may be a different one
+			if(std::abs(current_wang_landau_system.wang_landau_potential[flattened_index]-current_wang_landau_system.double_fill_value)>1){ //only output data if they are not equal to current_reaction_system.double_fill_value. This if ensures that for the energy observable not allowed energies (energies in the interval [global_E_min, global_E_max]) in the multidimensional wang landau potential are printed out, since the range [E_min(nbar), E_max(nbar)] for each nbar may be a different one
 				int unraveled_index[current_wang_landau_system.nr_collective_variables];
 				unravel_index(nr_subindices_of_collective_variable,current_wang_landau_system.nr_collective_variables,flattened_index,unraveled_index);
 				//use unraveled index
@@ -1732,10 +1732,10 @@ int update_maximum_and_minimum_energies_at_current_state(){
 	int index=get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
-	if( (( E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index])|| abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
+	if( (( E_pot_current<current_wang_landau_system.minimum_energies_at_flat_index[index])|| std::abs(current_wang_landau_system.minimum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
 		current_wang_landau_system.minimum_energies_at_flat_index[index]=E_pot_current;
 	}
-	if( ((E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) || abs(current_wang_landau_system.maximum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
+	if( ((E_pot_current>current_wang_landau_system.maximum_energies_at_flat_index[index]) || std::abs(current_wang_landau_system.maximum_energies_at_flat_index[index] -current_wang_landau_system.double_fill_value)<0.0001) ) {
 		current_wang_landau_system.maximum_energies_at_flat_index[index]= E_pot_current;
 	}
 	
