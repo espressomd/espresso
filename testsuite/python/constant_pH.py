@@ -34,19 +34,23 @@ class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of writing hdf5 files."""
     
     N0=40
+    c0=0.00028
     type_HA=0
     type_A=1
     type_H=2
     temperature=1.0
     standard_pressure_in_simulation_units=0.00108
-    K_HA_diss=10; #could be in this test for example anywhere in the range 0.000001 ... 9
-    c0=0.00028
+    pKa_minus_pH=2*(np.random.random()-0.5) #avoid extreme regions in the titration curve
+    pH=4*np.random.random()
+    pKa=pKa_minus_pH+pH
+    K_HA_diss_apparent=10**(-pKa); #could be in this test for example anywhere in the range 0.000001 ... 9
     box_l=(N0/c0)**(1.0/3.0)
     system = espressomd.System()
+    system.seed=np.random.randint(0, 2**31-1)
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=standard_pressure_in_simulation_units, temperature=1, exclusion_radius=1)        
+    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=standard_pressure_in_simulation_units, temperature=1.0, exclusion_radius=1)        
     
     @classmethod
     def setUpClass(cls):
@@ -55,18 +59,13 @@ class ReactionEnsembleTest(ut.TestCase):
             cls.system.part.add(id=i ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_A)
             cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
         
-        cls.RE.add(equilibrium_constant=cls.K_HA_diss*cls.standard_pressure_in_simulation_units,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
+        cls.RE.add(equilibrium_constant=cls.K_HA_diss_apparent,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
         cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
-        cls.RE.print_status()
-        cls.RE.set_pH_core(3.5635629432865294)
-
-#    @classmethod
-#    def tearDownClass(self):
-#        self.RE.free()
+        cls.RE.set_pH_core(cls.pH)
 
     @classmethod
-    def ideal_degree_of_association(cls,pK_a,pH):
-        return 1-1.0/(1+10**(pK_a-pH))
+    def ideal_degree_of_association(cls,pH):
+        return 1-1.0/(1+10**(cls.pKa-pH))
 
     def test_ideal_titration_curve(self):
         N0=ReactionEnsembleTest.N0
@@ -75,29 +74,24 @@ class ReactionEnsembleTest(ut.TestCase):
         type_H=ReactionEnsembleTest.type_H
         type_HA=ReactionEnsembleTest.type_HA
         box_l=ReactionEnsembleTest.system.box_l
-        standard_pressure_in_simulation_units=ReactionEnsembleTest.standard_pressure_in_simulation_units
         system=ReactionEnsembleTest.system
-        K_HA_diss=ReactionEnsembleTest.K_HA_diss
         RE=ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(12*N0):
-            RE.do_reaction_constant_pH()
+        for i in range(30*N0):
+            r=RE.do_reaction_constant_pH()
             
         volume=np.prod(self.system.box_l) #cuboid box
         average_NH=0.0
         average_degree_of_association=0.0
-        num_samples=3000
+        num_samples=10000
         for i in range(num_samples):
             RE.do_reaction_constant_pH()
             average_NH+=grand_canonical.number_of_particles(current_type=type_H)
             average_degree_of_association+=grand_canonical.number_of_particles(current_type=type_HA)/float(N0)
         average_NH/=num_samples
         average_degree_of_association/=num_samples
-        pH=-np.log10(average_NH/volume)
-        print("ph", pH)
-        K_apparent_HA_diss=K_HA_diss*standard_pressure_in_simulation_units/temperature
-        pK_a=-np.log10(K_apparent_HA_diss)
-        real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))/ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH)
+        pH=ReactionEnsembleTest.pH #note you cannot calculate the pH via -log10(<NH>/volume) in the constant pH ensemble, since the volume is totally arbitrary and does not influence the average number of protons
+        real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(ReactionEnsembleTest.pH))/ReactionEnsembleTest.ideal_degree_of_association(ReactionEnsembleTest.pH)
         self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
