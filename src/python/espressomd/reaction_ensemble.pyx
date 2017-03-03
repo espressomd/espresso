@@ -38,38 +38,38 @@ IF REACTION_ENSEMBLE:
                                Exclusion radius is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore :math:`\exp(-\\beta E)` gives these configurations aproximately zero contribution in the partition function. The exclusion radius needs to be set in order to avoid oppositley charged particles to be set too close to each other or in order to avoid too steep gradients from the short ranged interaction potential when using the Reaction ensemble together with a MD scheme.
             
             """
-            self._params=self.default_params()
+            self._params=self._default_params()
 
-            for k in self.required_keys():
+            for k in self._required_keys():
                 if k not in kwargs:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__() + " got " + kwargs.__str__())
+                        "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
 
             for k in kwargs:
-                if k in self.valid_keys():
+                if k in self._valid_keys():
                     self._params[k] = kwargs[k]
                 else:
                     raise KeyError("%s is not a vaild key" % k)
                 
-            self.validate_params()
+            self._validate_params()
             self._set_params_in_es_core()
 
-        def default_params(self):
+        def _default_params(self):
             return {"standard_pressure":0,
                     "temperature":1,
                     "exclusion_radius":0}
 
-        def validate_params(self):
+        def _validate_params(self):
             return -1       
 
-        def validate_params_add(self):
+        def _validate_params_add(self):
             return -1
 
-        def valid_keys(self):
+        def _valid_keys(self):
             return "standard_pressure", "temperature", "exclusion_radius"
 
-        def required_keys(self):
+        def _required_keys(self):
             return "standard_pressure", "temperature", "exclusion_radius"
 
         def _get_params_from_es_core(self):
@@ -148,21 +148,17 @@ IF REACTION_ENSEMBLE:
                                    a list of stoichiometric coefficients of products of the reaction in the same order as the list of their types
 
             """            
-            for k in self.required_keys_add():
+            for k in self._required_keys_add():
                 if k not in kwargs:
-                    raise ValueError("At least the following keys have to be given as keyword arguments: " + self.required_keys_add().__str__() + " got " + kwargs.__str__())
+                    raise ValueError("At least the following keys have to be given as keyword arguments: " + self._required_keys_add().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
             self._set_params_in_es_core_add()
 
-        def valid_keys_add(self):
+        def _valid_keys_add(self):
             return "equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"
 
-        def required_keys_add(self):
+        def _required_keys_add(self):
             return ["equilibrium_constant", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients"]
-
-        def default_params_add(self):
-            
-            return {}
 
         def _set_params_in_es_core_add(self):
             
@@ -216,21 +212,21 @@ IF REACTION_ENSEMBLE:
             sets the charges of the particle types that are created. Note that it has to be called for each type that occurs in the reaction system individually.
             """
             for k in kwargs:
-                if k in self.valid_keys_default_charge():
+                if k in self._valid_keys_default_charge():
                     self._params[k] = kwargs[k]
                 else:
                     raise KeyError("%s is not a vaild key" % k)
     
-            self.validate_params_default_charge()
+            self._validate_params_default_charge()
             
             for key in self._params["dictionary"]:
                     if(find_index_of_type(int(key))>=0):
                         current_reaction_system.charges_of_types[find_index_of_type(int(key))] = self._params["dictionary"][key]
             
-        def valid_keys_default_charge(self):
+        def _valid_keys_default_charge(self):
             return "dictionary"
         
-        def validate_params_default_charge(self):
+        def _validate_params_default_charge(self):
             if(isinstance(self._params["dictionary"],dict)==False):
                 raise ValueError("No dictionary for relation between types and default charges provided.")
         
@@ -306,15 +302,15 @@ IF REACTION_ENSEMBLE:
             
             """
             for k in kwargs:
-                if k in self.valid_keys_add_collective_variable_degree_of_association():
+                if k in self._valid_keys_add_collective_variable_degree_of_association():
                     self._params[k]=kwargs[k]
                 else: KeyError("%s is not a valid key" %k)
             cdef collective_variable* new_collective_variable=<collective_variable*> calloc(1,sizeof(collective_variable))
 
-            for k in self.required_keys_add_collective_variable_degree_of_association():
+            for k in self._required_keys_add_collective_variable_degree_of_association():
                 if k not in kwargs:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
+                        "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                 self._params[k] = kwargs[k]
 
             new_collective_variable.associated_type=self._params["associated_type"]
@@ -334,10 +330,10 @@ IF REACTION_ENSEMBLE:
             
             initialize_wang_landau()
 
-        def valid_keys_add_collective_variable_degree_of_association(self):
+        def _valid_keys_add_collective_variable_degree_of_association(self):
             return "associated_type", "min", "max", "corresponding_acid_types"
 
-        def required_keys_add_collective_variable_degree_of_association(self):
+        def _required_keys_add_collective_variable_degree_of_association(self):
             return "associated_type", "min", "max", "corresponding_acid_types"
 
         def add_collective_variable_potential_energy(self,*args,**kwargs):
@@ -352,14 +348,14 @@ IF REACTION_ENSEMBLE:
                     provides the discretization of the potential energy range. Only for small enough delta the results of the energy reweighted averages are correct. If delta is chosen too big there are discretization errors in the numerical integration which occurs during the energy reweighting process.
             """
             for k in kwargs:
-                if k in self.valid_keys_add_collective_variable_potential_energy():
+                if k in self._valid_keys_add_collective_variable_potential_energy():
                     self._params[k]=kwargs[k]
                 else: KeyError("%s is not a valid key" %k)
                 
-                for k in self.required_keys_add_collective_variable_potential_energy():
+                for k in self._required_keys_add_collective_variable_potential_energy():
                     if k not in kwargs:
                         raise ValueError(
-                            "At least the following keys have to be given as keyword arguments: " + self.required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
+                            "At least the following keys have to be given as keyword arguments: " + self._required_keys_add_collective_variable_degree_of_association().__str__() + " got " + kwargs.__str__())
                     self._params[k] = kwargs[k]
             cdef collective_variable* new_collective_variable=<collective_variable*> calloc(1,sizeof(collective_variable)*(current_wang_landau_system.nr_collective_variables+1))
 
@@ -372,10 +368,10 @@ IF REACTION_ENSEMBLE:
             
             initialize_wang_landau()
 
-        def valid_keys_add_collective_variable_potential_energy(self):
+        def _valid_keys_add_collective_variable_potential_energy(self):
             return "filename","delta"
 
-        def required_keys_add_collective_variable_potential_energy(self):
+        def _required_keys_add_collective_variable_potential_energy(self):
             return "filename","delta"
 
         def set_wang_landau_parameters(self,*args,**kwargs):
@@ -396,7 +392,7 @@ IF REACTION_ENSEMBLE:
                                      this is an experimental implementation only and per default it is turned off! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).            
             """
             for k in kwargs:
-                if k in self.valid_keys_set_wang_landau_parameters():
+                if k in self._valid_keys_set_wang_landau_parameters():
                     self._params[k]=kwargs[k]
                 else: KeyError("%s is not a valid key" %k)
             
@@ -406,7 +402,7 @@ IF REACTION_ENSEMBLE:
             current_wang_landau_system.do_not_sample_reaction_partition_function=self._params["do_not_sample_reaction_partition_function"]
             current_wang_landau_system.use_hybrid_monte_carlo=self._params["use_hybrid_monte_carlo"]
 
-        def valid_keys_set_wang_landau_parameters(self):
+        def _valid_keys_set_wang_landau_parameters(self):
             return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function", "use_hybrid_monte_carlo"
             
         def load_wang_landau_checkpoint(self):
@@ -428,7 +424,7 @@ IF REACTION_ENSEMBLE:
         
         def write_out_preliminary_energy_run_results(self):
             """
-            this writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously was used.
+            this writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
             """
             write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             

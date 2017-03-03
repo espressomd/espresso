@@ -146,7 +146,7 @@ simulations, respectively. See :cite:`bereau15` for more details.
 Reaction Ensemble
 -----------------
 
-Required features: REACTION\_ENSEMBLE
+.. note:: Required features: REACTION\_ENSEMBLE
 
 The reaction ensemble ::cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -232,25 +232,11 @@ removed from or placed at randomly in the system (think about reacting monomers 
 products (and vice versa in the reverse direction). The replacement rule is that for any given reactant type it is replaced by the corresponding product type (corresponding means here in terms of order in the reaction equation that was provided) as long as the corresponding coefficients allow it.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`
 
-.. code-block:: python
-
-    from espressomd import reaction_ensemble
-    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float, temperature=float, exclusion_radius=float)
-    RE.print_status()
-    RE.add(equilibrium_constant=equilibrium_constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list)
-    RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
-    RE.set_cylindrical_constraint_in_z_direction(center_x,center_y, radius_of_cylinder)
-    RE.set_wall_constraints_in_z_direction(slab_start_z,slab_end_z)
-    RE.set_volume(volume)
-    RE.reaction()
-    RE.do_global_mc_move_for_one_particle_of_type(type) (similar like in the Wang-Landau case below)
-    RE.print_acceptance_rate_configurational_moves() (similar like in the Wang-Landau case below)
-    RE.free()
 
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Required features: REACTION_ENSEMBLE
+.. note:: Required features: REACTION_ENSEMBLE
 
 Since you might be interested in thermodynamic properties of a reacting
 system you may use the Wang-Landau algorithm ::cite:`wang01a`
@@ -260,31 +246,10 @@ does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
 Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
-.. code-block:: python
-
-    from espressomd import reaction_ensemble
-    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=float,temperature=float, exclusion_radius=float)
-    RE.add_collective_variable_degree_of_association(associated_type=int,min=float, max=float, corresponding_acid_types=list)
-    RE.add_collective_variable_potential_energy(filename=string,delta=float)
-    RE.counter_ion_type=int
-    RE.polymer_start_id=int
-    RE.polymer_end_id=int
-    RE.fix_polymer_monomers=bool
-    RE.set_wang_landau_parameters(final_wang_landau_parameter=float,wang_landau_steps=float, full_path_to_output_filename=string,do_not_sample_reaction_partition_function=bool,use_hybrid_monte_carlo=bool)
-    RE.update_maximum_and_minimum_energies_at_current_state()
-    RE.write_out_preliminary_energy_run_results()
-    RE.do_reaction_wang_landau()
-    RE.do_global_mc_move_for_one_particle_of_type_wang_landau(type)
-    RE.write_wang_landau_checkpoint()
-    RE.load_wang_landau_checkpoint()
-    RE.print_acceptance_rate_configurational_moves()
-    RE.wang_landau_free()
-
-
 Constant pH method
 ~~~~~~~~~~~~~~~~~~
 
-Required features: REACTION_ENSEMBLE
+.. note:: Required features: REACTION_ENSEMBLE
 
 In the constant pH method due to Reed and Reed
 ::cite:`reed92a` it is possible to set the chemical potential
@@ -304,18 +269,6 @@ you do not provide the dimensionless reaction constant but directly the
 which can in general carry a unit. For an example file for how to setup
 a Constant pH simulation, see a file in the testcases. The following
 commands for the constant pH method are available. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
-
-.. code-block:: python
-
-    reaction_ensemble constant_pH pH reaction_ensemble constant_pH do
-    from espressomd import reaction_ensemble
-    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=ignored_float,temperature=float, exclusion_radius=float)
-    RE.add(equilibrium_constant=equilibrium_constant,reactant_types=list,reactant_coefficients=list, product_types=list, product_coefficients=list)
-    RE.default_charges(dictionary={type1,charge1; type2, charge2;...})
-    RE.print_status()
-    RE.set_pH_core(pH_input)
-    RE.do_reaction_constant_pH()
-
 
 Grand Canonical Ensemble
 ------------------------
