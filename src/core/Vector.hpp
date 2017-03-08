@@ -128,6 +128,7 @@ public:
   }
 };
 
+typedef Vector<4, double> Vector4d;
 typedef Vector<3, double> Vector3d;
 typedef Vector<2, double> Vector2d;
 

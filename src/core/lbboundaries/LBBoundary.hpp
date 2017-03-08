@@ -50,6 +50,23 @@ public:
 #endif
   }
 
+  // \defgroup moving boundary parameters
+  // @{
+  Vector3d & torque()      { return m_torque;      }
+  Vector3d & omega()       { return m_omega;       }
+  Vector4d & quat()        { return m_quat;        }
+  double   & mass()        { return m_mass;        }
+  int      & n_anchors()   { return m_n_anchors;   }
+  float *    anchors()     { return m_anchors;     }
+  Vector3d & rinertia()    { return m_rinertia;    }
+  Vector3d & body_torque() { return m_body_torque; }
+  Vector3d & body_force()  { return m_body_force;  }
+
+  Vector3d & pos()         { return m_pos;         }
+  double   & rad()         { return m_rad;         }
+  bool     & moving()      { return m_moving;      }
+  // @}
+
 #ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
   void set_charge_density(float charge_density) { m_charge_density = charge_density; }
   void set_net_charge(float net_charge) { m_net_charge = net_charge; }
@@ -67,6 +84,23 @@ private:
   std::shared_ptr<Shapes::Shape> m_shape; //TODO: I dont like this being a pointer just to get around the virtual limitations
   Vector3d m_velocity;
   Vector3d m_force;
+
+  // \defgroup moving boundary parameters
+  // @{
+  Vector3d m_torque;
+  Vector3d m_omega;
+  Vector4d m_quat;
+  double   m_mass;
+  int      m_n_anchors;
+  float *  m_anchors;
+  Vector3d m_rinertia;
+  Vector3d m_body_torque;
+  Vector3d m_body_force;
+
+  Vector3d m_pos;
+  double   m_rad;
+  bool     m_moving;
+  // @}
 
 #ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
   float m_charge_density;

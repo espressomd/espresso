@@ -44,6 +44,7 @@
 
 namespace LBBoundaries {
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+extern int n_lb_moving_boundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /*@}*/
 

@@ -683,7 +683,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
             if(bound_array[j]>=0)
               fprintf(fp, "%d \n", bound_array[j]);
             else
-              fprintf(fp, "%d \n", n_lb_boundaries - bound_array[j]);
+              fprintf(fp, "%d \n", LBBoundaries::lbboundaries.size() - bound_array[j]);
         }
         free(bound_array);
 #endif // LB_GPU
@@ -875,7 +875,7 @@ int lb_lbfluid_print_boundary(char* filename) {
             if(bound_array[j] >=0)
               fprintf(fp, "%f %f %f %d\n", (xyz[0]+0.5)*lbpar_gpu.agrid, (xyz[1]+0.5)*lbpar_gpu.agrid, (xyz[2]+0.5)*lbpar_gpu.agrid, bound_array[j]);
             else
-              fprintf(fp, "%f %f %f %d\n", (xyz[0]+0.5)*lbpar_gpu.agrid, (xyz[1]+0.5)*lbpar_gpu.agrid, (xyz[2]+0.5)*lbpar_gpu.agrid, n_lb_boundaries - bound_array[j]);
+              fprintf(fp, "%f %f %f %d\n", (xyz[0]+0.5)*lbpar_gpu.agrid, (xyz[1]+0.5)*lbpar_gpu.agrid, (xyz[2]+0.5)*lbpar_gpu.agrid, LBBoundaries::lbboundaries.size() - bound_array[j]);
         }
         free(bound_array);
 #endif // LB_GPU
@@ -1369,7 +1369,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
         if(host_flag>=0)
           p_boundary[0] = host_flag;
         else
-          p_boundary[0] = n_lb_boundaries - host_flag;
+          p_boundary[0] = LBBoundaries::lbboundaries.size() - host_flag;
 #endif // LB_GPU
     } else {
 #ifdef LB
