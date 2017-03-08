@@ -261,11 +261,7 @@ extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
-<<<<<<< 704b3710f9d62ff70cffc192ecdedf7103098e63
-=======
-extern int n_lb_boundaries;
 extern int n_lb_moving_boundaries;
->>>>>>> Implemented Ladd boundaries to lbgpu
 #ifdef ELECTROKINETICS
 extern LB_node_force_gpu node_f;
 extern int ek_initialized;
