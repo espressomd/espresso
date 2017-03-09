@@ -4073,7 +4073,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int h_n_lb_moving_boundari
     return;
   }
 
-  if(number_of_boundnodes == 0 && n_lb_moving_boundaries == 0)
+  if(number_of_boundnodes == 0 && host_n_lb_moving_boundaries == 0)
   {
     fprintf(stderr, "WARNING: boundary cmd executed but no boundary node found!\n");
   }
