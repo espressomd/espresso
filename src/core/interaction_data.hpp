@@ -631,6 +631,7 @@ typedef struct {
     double A01;
     double A02;
     double kal;
+    double kvisc;
 } Oif_local_forces_bond_parameters;
 
 /** Parameters for oif_out_direction */

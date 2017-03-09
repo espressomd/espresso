@@ -53,7 +53,7 @@ proc oif_init {} {
 
     global list oif_templates
     set oif_templates { }
-    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, kslin, kb, kal, start_id_of_local_interaction, kag, kv, start_id_of_global_interaction, initial_surface, initial_volume, normal
+    # 2D list of existing templates of oif objects containing rows with data. One row describes parameters of one object template. One row consists of X elements. The order of the elements is crucial. Structure of one row: num_of_particles, num_of_edges, num_of_triangles, ks, kslin, kb, kal, start_id_of_local_interaction, kag, kv, start_id_of_global_interaction, initial_surface, initial_volume, normal, kvisc
 
     global list oif_objects
     set oif_objects { }
@@ -514,6 +514,7 @@ proc calc_local_area_force { args } {
     return $f
 }
 
+
 #---------------------------------------------------------------------------
 # calculation of global area force
 
@@ -676,6 +677,7 @@ proc oif_create_template { args } {
 	set kal 0.0
 	set kag 0.0
 	set kv 0.0
+	set kvisc 0.0
 	set check_output 0
 	set template_id -1
 	set normal -1
@@ -765,6 +767,15 @@ proc oif_create_template { args } {
 					break
 				}
 				set kal [lindex $args $pos]
+                incr pos
+			}
+			"kvisc" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_create_template: missing value of viscous coefficient kvisc"
+					break
+				}
+				set kvisc [lindex $args $pos]
                 incr pos
 			}
 			"kag" {  
@@ -887,6 +898,7 @@ proc oif_create_template { args } {
 	puts "	kal:            $kal"
 	puts "	kag:            $kag"
 	puts "	kv:             $kv"
+	puts "	kvisc:          $kvisc"
 	puts "	stretch: 	$stretch_X $stretch_Y $stretch_Z"
 #--------------------------------------------------------------------------------------------
 #reading nodes
@@ -1168,14 +1180,14 @@ proc oif_create_template { args } {
 		exit
     }
     
-    if { $ks == 0.0 && $ks_file == "" && $kslin == 0.0 && $kslin_file == "" && $kb == 0.0 && $kb_file == "" && $kal == 0.0 } {
+    if { $ks == 0.0 && $ks_file == "" && $kslin == 0.0 && $kslin_file == "" && $kb == 0.0 && $kb_file == "" && $kal == 0.0 && $kvisc == 0.0 } {
         set start_id_of_local_interaction -1
     } else {
         set start_id_of_local_interaction $oif_first_inter_id
     }
     lappend template $start_id_of_local_interaction
     
-    if { $ks != 0.0 || $ks_file != "" || $kslin != 0.0 || $kslin_file != "" || $kb != 0.0 || $kb_file != "" || $kal != 0.0 } {
+    if { $ks != 0.0 || $ks_file != "" || $kslin != 0.0 || $kslin_file != "" || $kb != 0.0 || $kb_file != "" || $kal != 0.0 || $kvisc != 0.0 } {
     
         if { $ks_file != ""} {
             # ks is nonuniform
@@ -1381,6 +1393,7 @@ proc oif_create_template { args } {
                 set area1 0.0
                 set area2 0.0
                 set kal 0.0
+                set kvisc 0.0
             }
             set dist [distance P2 P3]
                 
@@ -1394,9 +1407,9 @@ proc oif_create_template { args } {
             if { $kslin_file != ""} { set kslin [expr $kslin_min*(1 - $kslin_weight($i)) + $kslin_max*$kslin_weight($i)] }
             if { $kb_file != ""} { set kb [expr $kb_min*(1 - $kb_weight($i)) + $kb_max*$kb_weight($i)] }
             
-            inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal]
+            inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal] [format %e $kvisc]
             if {$check_output == 1} {
-                puts $out_file "inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal]"
+                puts $out_file "inter [expr $start_id_of_local_interaction + $i] oif_local_force [format %e $dist] [format %e $ks] [format %e $kslin] [format %e $phi] [format %e $kb] [format %e $area1] [format %e $area2] [format %e $kal] [format %e $kvisc]"
             }
         }
         if {$check_output == 1} {
@@ -1499,6 +1512,9 @@ proc oif_create_template { args } {
 	} else {
 	    lappend template 1
 	}
+	# viscous contribution
+	lappend template $kvisc
+	
 	lappend oif_templates $template
 	incr oif_n_templates
 } 
@@ -1698,8 +1714,8 @@ proc oif_add_object { args } {
 #--------------------------------------------------------------------------------------------
 # find and read the template for the given object
 
- 	# there are 14 elements in one row of oif_templates:
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
+ 	# there are 15 elements in one row of oif_templates:
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal, visc
 	# get the data form oif_templates list
 	set template [lindex $oif_templates $template_id]
 
@@ -1868,12 +1884,13 @@ for {set i 0} {$i < $mesh_nnodes} {incr i} {
 #--------------------------------------------------------------------------------------------
 # generating local force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal, visc
 	set ks_from_template [lindex $template 3]
     set kslin_from_template [lindex $template 4]
     set kb_from_template [lindex $template 5]
     set kal_from_template [lindex $template 6]
-	if { $ks_from_template != 0.0 || $kslin_from_template != 0.0 || $kb_from_template != 0.0 || $kal_from_template != 0.0 } {
+    set kvisc_from_template [lindex $template 14]
+	if { $ks_from_template != 0.0 || $kslin_from_template != 0.0 || $kb_from_template != 0.0 || $kal_from_template != 0.0 || $kvisc_from_template != 0.0 } {
 		
         if {$check_output == 1} {
 		       	set out_file [open $bondLocal "w"]
@@ -1901,7 +1918,7 @@ for {set i 0} {$i < $mesh_nnodes} {incr i} {
 #--------------------------------------------------------------------------------------------
 # generating global force bonds
 	# template data
-	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal
+	# nnodes, nedges, ntriangles, ks, kslin, kb, kal, start_id_of_local_inter, kag, kv, start_id_of_global_inter, S_0, V_0, normal, kvisc
 	set kag_from_template [lindex $template 8]
 	set kv_from_template [lindex $template 9]
 	if { $kag_from_template != 0.0 || $kv_from_template != 0.0} {
@@ -1970,7 +1987,7 @@ proc oif_template_change { args } {
 	set kal_perc 0
 	set kag_perc 0
 	set kv_perc 0
-	
+		
 	##### reading the arguments. some of them are mandatory. we check for the mandatory arguments ad the end of this section
 	set pos 0
 	while { $pos < $n_args } {
@@ -2050,7 +2067,7 @@ proc oif_template_change { args } {
 	# changing the stretching interactions for the given template
 	if { $ks_perc != 0 } {
 # template data
-# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0, kvisc
 	    # change cannot be too large (biological cells break at ~4% surface change) 
 	    if { [expr abs($ks_perc) > 2] } {
 		puts "oif_template_change: warning: change of stretching interactions might be too large"
@@ -2073,7 +2090,7 @@ proc oif_template_change { args } {
 	# changing the local area interactions for the given template
 	if { $kal_perc != 0 } {
 # template data
-# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0, kvisc
 	    if { [expr abs($kal_perc) > 4] } {
 		puts "oif_template_change: warning: change of local area interactions might be too large"
 	    }
@@ -2095,7 +2112,7 @@ proc oif_template_change { args } {
 	# changing the global area interaction for the given template
 	if { $kag_perc != 0 } {
 # template data
-# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0, kvisc
 	    if { [expr abs($kag_perc) > 4] } {
 		puts "oif_template_change: warning: change of global area might be too large"
 	    }
@@ -2112,7 +2129,7 @@ proc oif_template_change { args } {
 	# changing the volume for the given template
 	if { $kv_perc != 0 } {
 # template data
-# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0, kvisc
 	    if { [expr abs($kv_perc) > 8] } {
 		puts "oif_template_change: warning: change of global volume might be too large"
 	    }
@@ -2129,7 +2146,7 @@ proc oif_template_change { args } {
 # changing the surface for the given template (includes change of stretching, local area and global area)
 	if { $surface_perc != 0 } {
 # template data
-# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0
+# nnodes, nedges, ntriangles, ks, start_id_of_ks_inter, kb, start_id_of_kb_inter, kal, start_id_of_kal_inter, kag, start_id_of_kag_inter, kv, start_id_of_kv_inter, S_0, V_0, kvisc
 	    set kag [lindex $template 9]
 	    set kag_inter_id [lindex $template 10]
 	    set orig_surface [lindex $template 13]

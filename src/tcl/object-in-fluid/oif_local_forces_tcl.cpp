@@ -29,22 +29,22 @@
 // parse parameters for the oif_local_forces potential
 int tclcommand_inter_parse_oif_local_forces(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
-    double r0, ks, kslin, phi0, kb, A01, A02, kal;
+    double r0, ks, kslin, phi0, kb, A01, A02, kal, kvisc;
     
-    if (argc != 9) {
-        Tcl_AppendResult(interp, "oif_global_forces needs 8 parameters: "
-                         "<r0> <ks> <kslin> <phi0> <kb> <A01> <A02> <kal>", (char *) NULL);
+    if (argc != 10) {
+        Tcl_AppendResult(interp, "oif_local_forces needs 9 parameters: "
+                         "<r0> <ks> <kslin> <phi0> <kb> <A01> <A02> <kal> <kvisc>", (char *) NULL);
         return (TCL_ERROR);
     }
     
-    if ((! ARG_IS_D(1, r0)) || (! ARG_IS_D(2, ks)) || (! ARG_IS_D(3, kslin)) || (! ARG_IS_D(4, phi0)) || (! ARG_IS_D(5, kb)) || (! ARG_IS_D(6, A01)) || (! ARG_IS_D(7, A02)) || (! ARG_IS_D(8, kal)))
+    if ((! ARG_IS_D(1, r0)) || (! ARG_IS_D(2, ks)) || (! ARG_IS_D(3, kslin)) || (! ARG_IS_D(4, phi0)) || (! ARG_IS_D(5, kb)) || (! ARG_IS_D(6, A01)) || (! ARG_IS_D(7, A02)) || (! ARG_IS_D(8, kal)) || (! ARG_IS_D(9, kvisc)))
     {
-        Tcl_AppendResult(interp, "oif_global_forces needs 7 DOUBLE parameters: "
-                         "<r0> <ks> <kslin> <phi0> <kb> <A01> <A02> <kal>", (char *) NULL);
+        Tcl_AppendResult(interp, "oif_local_forces needs 9 DOUBLE parameters: "
+                         "<r0> <ks> <kslin> <phi0> <kb> <A01> <A02> <kal> <kvisc>", (char *) NULL);
         return TCL_ERROR;
     }
     
-    CHECK_VALUE(oif_local_forces_set_params(bond_type, r0, ks, kslin, phi0, kb, A01, A02, kal), "bond type must be nonnegative");
+    CHECK_VALUE(oif_local_forces_set_params(bond_type, r0, ks, kslin, phi0, kb, A01, A02, kal, kvisc), "bond type must be nonnegative");
 }
 
 int tclprint_to_result_oiflocalforcesIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
@@ -65,6 +65,8 @@ int tclprint_to_result_oiflocalforcesIA(Tcl_Interp *interp, Bonded_ia_parameters
     Tcl_PrintDouble(interp, params->p.oif_local_forces.A02, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, params->p.oif_local_forces.kal, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.oif_local_forces.kvisc, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     return (TCL_OK);
 }

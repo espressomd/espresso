@@ -32,7 +32,7 @@
 #include "config.hpp"
 
 // set parameters for local forces
-int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal);
+int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc);
 
 inline double KS(double lambda){ // Defined by (19) from Dupin2007
     double res;
@@ -58,6 +58,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     double dx[3],fac,dr,len2,len,lambda;
     double A,h[3],rh[3],hn;
     double m1[3],m2[3],m3[3];
+    double v[3], len_new, len_old, def_vel;
     double m1_length,m2_length,m3_length,t;
 
 	#ifdef GHOST_FLAG
@@ -174,6 +175,55 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
             force2[i] += fac*dx[i]/len;
             force3[i] += -fac*dx[i]/len;
         }
+    }
+    
+     // viscous force
+    if (iaparams->p.oif_local_forces.kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) {	// to be implemented....
+        //vecsub(fp2,fp3,dx);
+        //len2 = sqrlen(dx);
+        //len = sqrt(len2);
+        //dr = len - iaparams->p.oif_local_forces.r0;
+        //fac = -iaparams->p.oif_local_forces.kslin * dr; // no normalization
+        //for(i=0; i<3; i++) {
+            //force2[i] += fac*dx[i]/len;
+            //force3[i] += -fac*dx[i]/len;
+        //}
+        
+        // KOD od Mata:
+        vecsub(fp2,fp3,dx);
+        len2 = sqrlen(dx);
+        len = sqrt(len2);
+          
+		len_new = sqrt(pow((fp2[0] +  p2->m.v[0]) - (fp3[0] +  p3->m.v[0]),2) + pow((fp2[1] +  p2->m.v[1]) - (fp3[1] +  p3->m.v[1]),2) + pow((fp2[2] +  p2->m.v[2]) - (fp3[2] +  p3->m.v[2]),2));
+		len_old = sqrt(pow((fp2[0] -  p2->m.v[0]) - (fp3[0] -  p3->m.v[0]),2) + pow((fp2[1] -  p2->m.v[1]) - (fp3[1] -  p3->m.v[1]),2) + pow((fp2[2] -  p2->m.v[2]) - (fp3[2] -  p3->m.v[2]),2));
+
+		//printf("future length %lf\n", len_new);
+		//printf("old length %lf\n", len_old);    
+		//printf("actual length %lf\n", len);
+
+		if ( - len_old + len < 0 ) {
+			def_vel = -sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		else if ( - len_old + len > 0 ) {
+			def_vel = +sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		else { def_vel = 0; }
+ 	 
+		fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
+  
+	
+		v[0] = p3->m.v[0] - p2->m.v[0];
+		v[1] = p3->m.v[1] - p2->m.v[1];
+		v[2] = p3->m.v[2] - p2->m.v[2];
+ 
+		// Variant A
+		for(i=0;i<3;i++) {
+			force2[i] += iaparams->p.oif_local_forces.kvisc*v[i];
+			force3[i] -= iaparams->p.oif_local_forces.kvisc*v[i];
+		}
+		// Variant B
+		//for(i=0;i<3;i++) {
+			//force2[i] += fac*dx[i];
+			//force3[i] -= fac*dx[i];
+		//}
     }
     
     /* bending

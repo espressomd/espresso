@@ -984,14 +984,14 @@ class Oif_Local_Forces(BondedInteraction):
         return "OIF_LOCAL_FORCES"
 
     def valid_keys(self):
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def required_keys(self):
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal"
+        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
 
     def set_default_params(self):
         self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0., "kvisc": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -1002,11 +1002,12 @@ class Oif_Local_Forces(BondedInteraction):
              "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
              "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
              "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
+             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal,
+             "kvisc": bonded_ia_params[self._bond_id].p.oif_local_forces.kvisc}
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
-            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
+            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"], self._params["kvisc"])
 
 
 bonded_interaction_classes = {
