@@ -4006,9 +4006,7 @@ void set_virtual_particles_and_lab_space_moving(LB_moving_boundary *lbb_in, Part
     part_out[ii].p.body_force[2] = lbb_in[ii].body_force[2];
     
 #endif    
-    part_out[ii].p.n_anchors = lbb_in[ii].n_anchors;
-    part_out[ii].p.anchors = lbb_in[ii].anchors;//!free: lbb_in anchors pointer will be deleted here and a copy kept in part_out 
-    lbb_in[ii].anchors = NULL;//So that a deep free implementation does not delete p.p.anchors
+    part_out[ii].p.anchors = lbb_in[ii].anchors;
       old_anchor_count = anchor_count;
       anchor_count += lbb_in[ii].n_anchors;
     h_lab_anchors = (float*) realloc(h_lab_anchors, (4*anchor_count+1)*sizeof(float)); // +1 for good luck ...and because cuda doesn't like nullpointers & memcpy(0)
@@ -4618,7 +4616,7 @@ void convert_omega_anchors_body_to_space(Particle *p, float *omega, float *h_anc
   omega[1] = A[0 + 3*1]*p->m.somega[0] + A[1 + 3*1]*p->m.somega[1] + A[2 + 3*1]*p->m.somega[2];
   omega[2] = A[0 + 3*2]*p->m.somega[0] + A[1 + 3*2]*p->m.somega[1] + A[2 + 3*2]*p->m.somega[2];
   int ii;
-  for(ii=0; ii<p->p.n_anchors; ii++){
+  for(ii=0; ii<p->p.anchors.size()*4; ii++){
     h_anchors[4*ii + 0] = A[0 + 3*0]*p->p.anchors[4*ii + 0] + A[1 + 3*0]*p->p.anchors[4*ii + 1] + A[2 + 3*0]*p->p.anchors[4*ii + 2];
     h_anchors[4*ii + 1] = A[0 + 3*1]*p->p.anchors[4*ii + 0] + A[1 + 3*1]*p->p.anchors[4*ii + 1] + A[2 + 3*1]*p->p.anchors[4*ii + 2];
     h_anchors[4*ii + 2] = A[0 + 3*2]*p->p.anchors[4*ii + 0] + A[1 + 3*2]*p->p.anchors[4*ii + 1] + A[2 + 3*2]*p->p.anchors[4*ii + 2];
@@ -4822,7 +4820,7 @@ void lb_integrate_moving_boundaries(){
     lb_convert_torques_propagate_omega(host_lb_moving_boundary + ii); //calc new torques and do the rest of the rotation
     
     convert_omega_anchors_body_to_space(host_lb_moving_boundary + ii, omega, migrating_anchors);
-    migrating_anchors += 4*host_lb_moving_boundary[ii].p.n_anchors;
+    migrating_anchors += 4*host_lb_moving_boundary[ii].p.anchors.size()*4;
       omega[0] *= lbpar_gpu.tau;//back to lb time units
       omega[1] *= lbpar_gpu.tau;
       omega[2] *= lbpar_gpu.tau;

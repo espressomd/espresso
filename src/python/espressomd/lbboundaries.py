@@ -23,3 +23,27 @@ class LBBoundaries(ScriptInterfaceHelper):
 
 class LBBoundary(ScriptInterfaceHelper):
     _so_name = "LBBoundaries::LBBoundary"
+
+
+class LBMovingBoundaries(ScriptInterfaceHelper):
+    _so_name = "LBBoundaries::LBMovingBoundaries"
+
+    def add(self, *args, **kwargs):
+        if len(args) == 1:
+            if isinstance(args[0], LBMovingBoundary):
+                lbboundary = args[0]
+            else:
+                raise TypeError(
+                    "Either a LBMovingBoundary object or key-value pairs for the\
+                     parameters of a LBMovingBoundary object need to be passed.")
+        else:
+            lbboundary = LBMovingBoundary(**kwargs)
+        self.call_method("add", object=lbboundary)
+        return lbboundary
+
+    def remove(self, lbboundary):
+        self.call_method("remove", lbboundary=lbboundary)
+
+
+class LBMovingBoundary(ScriptInterfaceHelper):
+    _so_name = "LBBoundaries::LBMovingBoundary"

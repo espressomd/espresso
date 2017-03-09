@@ -212,9 +212,8 @@ struct ParticleProperties {
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
-  int n_anchors;
-  float *anchors;
-  float *anchors_out;
+  std::vector<float> anchors;
+  std::vector<float> anchors_out;
 #endif
 };
 

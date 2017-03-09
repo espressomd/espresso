@@ -148,9 +148,8 @@ void set_moving_boundary_struct(LBMovingBoundary * lbb_in, LB_moving_boundary* l
     lbb_out->rinertia[2] =  2.0f/5.0f * lbb_in->mass() * (lbb_out->radius+0.5)*(lbb_out->radius+0.5);// sphere. [kg a^2] because torque is calced in lb units.
   }
 
-
-  lbb_out->n_anchors = lbb_in->n_anchors();
-  lbb_out->anchors = lbb_in->anchors();
+  lbb_out->n_anchors = lbb_in->anchors().size()*4;
+  lbb_out->anchors = std::vector<float>( lbb_in->anchors().begin(), lbb_in->anchors().end() );
 }
 
 /** Initialize boundary conditions for all constraints in the system. */
