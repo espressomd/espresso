@@ -19,7 +19,6 @@ public:
   VariantMap get_parameters() const override {
     return {{"velocity", m_lbboundary->velocity()},
             {"force", m_lbboundary->get_force()},
-            {"moving", m_lbboundary->moving()},
 #ifdef EK_BOUNDARIES
             {"charge_density", m_lbboundary->charge_density()},
             {"net_charge", m_lbboundary->net_charge()},
@@ -30,7 +29,6 @@ public:
   ParameterMap valid_parameters() const override {
     return {{"velocity", {ParameterType::DOUBLE_VECTOR, 3, true}},
             {"force", {ParameterType::DOUBLE_VECTOR, 3, true}},
-            {"moving", {ParameterType::BOOL, 1, false}},
 #ifdef EK_BOUNDARIES
             {"charge_density", {ParameterType::DOUBLE, true}},
             {"net_charge", {ParameterType::DOUBLE, true}},
@@ -59,7 +57,6 @@ public:
 
     SET_PARAMETER_HELPER("velocity", m_lbboundary->velocity());
     SET_PARAMETER_HELPER("force", m_lbboundary->force());
-    SET_PARAMETER_HELPER("moving", m_lbboundary->moving());
 #ifdef EK_BOUNDARIES
     if (name == "charge_density") {
       m_lbboundary->set_charge_density(boost::get<double>(value));

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "shapes/NoWhere.hpp"
+#include "shapes/Sphere.hpp"
 #include "shapes/Shape.hpp"
 #include "Vector.hpp"
 
@@ -50,23 +51,6 @@ public:
 #endif
   }
 
-  // \defgroup moving boundary parameters
-  // @{
-  Vector3d & torque()      { return m_torque;      }
-  Vector3d & omega()       { return m_omega;       }
-  Vector4d & quat()        { return m_quat;        }
-  double   & mass()        { return m_mass;        }
-  int      & n_anchors()   { return m_n_anchors;   }
-  float *    anchors()     { return m_anchors;     }
-  Vector3d & rinertia()    { return m_rinertia;    }
-  Vector3d & body_torque() { return m_body_torque; }
-  Vector3d & body_force()  { return m_body_force;  }
-
-  Vector3d & pos()         { return m_pos;         }
-  double   & rad()         { return m_rad;         }
-  bool     & moving()      { return m_moving;      }
-  // @}
-
 #ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
   void set_charge_density(float charge_density) { m_charge_density = charge_density; }
   void set_net_charge(float net_charge) { m_net_charge = net_charge; }
@@ -85,8 +69,43 @@ private:
   Vector3d m_velocity;
   Vector3d m_force;
 
-  // \defgroup moving boundary parameters
-  // @{
+#ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
+  float m_charge_density;
+  float m_net_charge;
+#endif
+};
+
+
+class LBMovingBoundary : public LBBoundary
+{
+public:
+  LBMovingBoundary()
+  : m_shape(std::make_shared<Shapes::Sphere>())
+  , m_torque(Vector3d{0, 0, 0})
+  , m_omega(Vector3d{0, 0, 0})
+  , m_quat(Vector3d{0, 0, 0, 0})
+  , m_mass(0)
+  , m_n_anchors(0)
+  , m_anchors(nullptr)
+  , m_rinertia(Vector3d{0, 0, 0})
+  , m_body_torque(Vector3d{0, 0, 0})
+  , m_body_force(Vector3d{0, 0, 0})
+  {}
+
+  Vector3d & torque()      { return m_torque;      }
+  Vector3d & omega()       { return m_omega;       }
+  Vector4d & quat()        { return m_quat;        }
+  double   & mass()        { return m_mass;        }
+  int      & n_anchors()   { return m_n_anchors;   }
+  float *    anchors()     { return m_anchors;     }
+  Vector3d & rinertia()    { return m_rinertia;    }
+  Vector3d & body_torque() { return m_body_torque; }
+  Vector3d & body_force()  { return m_body_force;  }
+
+  Shapes::Sphere shape() { return *m_shape; }
+
+private:
+  std::shared_ptr<Shapes::Sphere> m_shape;
   Vector3d m_torque;
   Vector3d m_omega;
   Vector4d m_quat;
@@ -96,16 +115,6 @@ private:
   Vector3d m_rinertia;
   Vector3d m_body_torque;
   Vector3d m_body_force;
-
-  Vector3d m_pos;
-  double   m_rad;
-  bool     m_moving;
-  // @}
-
-#ifdef EK_BOUNDARIES //TODO: ugly. Better would be a class EKBoundaries, deriving from LBBoundaries, but that requires completely different initialization infrastructure.
-  float m_charge_density;
-  float m_net_charge;
-#endif
 };
 
 } /* namespace LBBoundaries */

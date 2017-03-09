@@ -46,8 +46,8 @@
 namespace LBBoundaries {
 
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+std::vector<std::shared_ptr<LBMovingBoundary>> lbmovingboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-int n_lb_moving_boundaries = 0;
 
 void lbboundary_mindist_position(double pos[3], double *mindist,
                                  double distvec[3], int *no) {
@@ -73,7 +73,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 }
 
 /* translates moving boundary data for gpu */
-void set_moving_boundary_struct(LBBoundary* lbb_in, LB_moving_boundary* lbb_out){
+void set_moving_boundary_struct(LBMovingBoundary * lbb_in, LB_moving_boundary* lbb_out){
 
   lbb_out->mass = lbb_in->mass();
   lbb_out->scaled_mass = lbb_in->mass();
@@ -82,11 +82,11 @@ void set_moving_boundary_struct(LBBoundary* lbb_in, LB_moving_boundary* lbb_out)
   lbb_out->velocity[1] = lbb_in->velocity()[1] / lbpar_gpu.agrid * lbpar_gpu.tau;
   lbb_out->velocity[2] = lbb_in->velocity()[2] / lbpar_gpu.agrid * lbpar_gpu.tau;
   //Adding half time-step worth of velocity here, since collisions always occur on halftime
-  lbb_out->center[0] = (lbb_in->pos()[0] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[0];//0.5 shifted to get the coordinates in nodespace
-  lbb_out->center[1] = (lbb_in->pos()[1] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[1];//then 1/a to scale with lattice sites
-  lbb_out->center[2] = (lbb_in->pos()[2] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[2];//then integrated by half timestep
+  lbb_out->center[0] = (lbb_in->shape().pos()[0] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[0];//0.5 shifted to get the coordinates in nodespace
+  lbb_out->center[1] = (lbb_in->shape().pos()[1] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[1];//then 1/a to scale with lattice sites
+  lbb_out->center[2] = (lbb_in->shape().pos()[2] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[2];//then integrated by half timestep
 
-  lbb_out->radius = lbb_in->rad() / lbpar_gpu.agrid;//this is stored as number of lattice sites
+  lbb_out->radius = lbb_in->shape().rad() / lbpar_gpu.agrid;//this is stored as number of lattice sites
 
   lbb_out->omega[0] = lbb_in->omega()[0]*lbpar_gpu.tau;//same units as velocity for fast surface velocity calculation
   lbb_out->omega[1] = lbb_in->omega()[1]*lbpar_gpu.tau;
@@ -317,7 +317,6 @@ void lb_init_boundaries() {
     float *boundary_velocity =
         (float *)Utils::malloc(3 * (lbboundaries.size() + 1) * sizeof(float));
     LB_moving_boundary *host_moving_boundary = (LB_moving_boundary *) calloc(1,(lbboundaries.size()+1) * sizeof(LB_moving_boundary)); //using calloc to set the redundant boundary (+1) to zero, in case something goes wrong;
-    int moving_count;
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
       boundary_velocity[3 * n + 0] = (**lbb).velocity()[0];
@@ -329,16 +328,16 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 1] = 0.0f;
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
-    for (n=0, moving_count=0; n<lbboundaries.size(); n++) {
-      if (lbboundaries[n]->moving()) {
-        set_moving_boundary_struct(lbboundaries[n].get(), host_moving_boundary + moving_count);
-        host_moving_boundary[moving_count].index = -1 - moving_count;
-        moving_count++;
-      }
+    int moving_count = 0;
+    for ( auto boundary : lbmovingboundaries )
+    {
+      set_moving_boundary_struct(boundary.get(), host_moving_boundary + moving_count);
+      host_moving_boundary[moving_count].index = -1 - moving_count;
+      ++moving_count;
     }
 
     if (lbboundaries.size() || pdb_boundary_lattice) {
-      lb_init_boundaries_GPU(lbboundaries.size(), n_lb_moving_boundaries, number_of_boundnodes,
+      lb_init_boundaries_GPU(lbboundaries.size(), lbmovingboundaries.size(), number_of_boundnodes,
                              host_boundary_node_list, host_boundary_index_list,
                              boundary_velocity, host_moving_boundary);
     }
