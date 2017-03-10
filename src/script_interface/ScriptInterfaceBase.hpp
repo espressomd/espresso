@@ -33,6 +33,10 @@ namespace ScriptInterface {
 
 template <typename T> T get_value(Variant const &v) { return boost::get<T>(v); }
 
+template <> inline Vector4d get_value<Vector4d>(Variant const &v) {
+  return Vector4d(boost::get<std::vector<double>>(v));
+}
+
 template <> inline Vector3d get_value<Vector3d>(Variant const &v) {
   return Vector3d(boost::get<std::vector<double>>(v));
 }

@@ -74,7 +74,7 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
 
 /* translates moving boundary data for gpu */
 void set_moving_boundary_struct(LBMovingBoundary * lbb_in, LB_moving_boundary* lbb_out){
-
+#ifdef LB_GPU
   lbb_out->mass = lbb_in->mass();
   lbb_out->scaled_mass = lbb_in->mass();
 
@@ -150,7 +150,9 @@ void set_moving_boundary_struct(LBMovingBoundary * lbb_in, LB_moving_boundary* l
 
   lbb_out->n_anchors = lbb_in->anchors().size()*4;
   lbb_out->anchors = std::vector<float>( lbb_in->anchors().begin(), lbb_in->anchors().end() );
+#endif
 }
+
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
