@@ -181,8 +181,10 @@ typedef struct {
   int *boundary_buffer;
   
 } LB_nodes_gpu;
+
  /**Data structure holding information necessary to integrate moving boundaries on gpu */
- typedef struct {
+#endif // LB_GPU
+typedef struct {
   float velocity[3];//stored as a/tau
   float omega[3];//stored as 1/tau, on host it's 1/1 
   float center[3];//folded coordinate. Absolute coord stored as double on host.
@@ -212,7 +214,7 @@ typedef struct {
 #endif
   double rinertia[3];
 } LB_moving_boundary;
-
+#ifdef LB_GPU
 
 /** Data structure for the randomnr and the seed. */
 typedef struct {
