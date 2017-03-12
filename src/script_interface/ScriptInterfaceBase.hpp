@@ -31,14 +31,15 @@
 
 namespace ScriptInterface {
 
-template <typename T> T get_value(Variant const &v) { return boost::get<T>(v); }
+template < typename T >
+typename std::enable_if<!traits::is_vector<T>::value, T>::type
+get_value(Variant const& v) { return boost::get<T>(v); }
 
-template <> inline Vector3d get_value<Vector3d>(Variant const &v) {
-  return Vector3d(boost::get<std::vector<double>>(v));
-}
-
-template <> inline Vector2d get_value<Vector2d>(Variant const &v) {
-  return Vector2d(boost::get<std::vector<double>>(v));
+template < typename T >
+inline typename std::enable_if<traits::is_vector<T>::value, T>::type
+get_value(Variant const& v)
+{
+  return T(boost::get<std::vector<double>>(v));
 }
 
 /**
