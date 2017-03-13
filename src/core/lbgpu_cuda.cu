@@ -4883,8 +4883,36 @@ void lb_integrate_moving_boundaries(){
    }
    //if ( !n_integration_steps % 5000)
        // printf("\n %d: boundary velocity %f %f %f; boundary omega(lab) %f %f %f,force_hyd %e, track %e ,force_add %f, track %f, diff %f torque_track %e %e %e\n",n_integration_steps, host_lb_moving_boundary[ii].m.v[0], host_lb_moving_boundary[ii].m.v[1], host_lb_moving_boundary[ii].m.v[2],omega[0],omega[1],omega[2], host_lb_moving_boundary[ii].f.sf[0], hyd_track, force_add[0], add_track, -hyd_track+add_track,torque_track[0] ,torque_track[1] ,torque_track[2] );
+
+      fprintf(stderr, "Copying stuff back to the boundary (hopefully)\n");
+      auto lbb = LBBoundaries::lbmovingboundaries[ii];
+
+      int rc;
+      double tmp3d[3];
+
+      rc = lb_lbfluid_print_moving_pos(ii, tmp3d); assert( rc == 0 );
+      lbb->shape().pos() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_vel(ii, tmp3d); assert( rc == 0 );
+      lbb->velocity() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_omega_lab(ii, tmp3d); assert( rc == 0 );
+      lbb->omega() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_force_body(ii, tmp3d); assert( rc == 0 );
+      lbb->body_force() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_force_lab(ii, tmp3d); assert( rc == 0 );
+      lbb->force() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_torque_body(ii, tmp3d); assert( rc == 0 );
+      lbb->body_torque() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
+
+      rc = lb_lbfluid_print_moving_torque_lab(ii, tmp3d); assert( rc == 0 );
+      lbb->torque() = Vector3d(std::begin(tmp3d), std::end(tmp3d));
    }
-  cudaMemcpy(d_lab_anchors, h_lab_anchors, (4* *migrating_anchors +1)*sizeof(float), cudaMemcpyHostToDevice);
+
+  cuda_safe_mem(cudaMemcpy(d_lab_anchors, h_lab_anchors, (4* *migrating_anchors +1)*sizeof(float), cudaMemcpyHostToDevice));
 }
 
 /**integration kernel for the lb gpu fluid update called from host */
@@ -4922,7 +4950,7 @@ void lb_integrate_GPU() {
   }
 
 #ifdef LB_BOUNDARIES_GPU
-  if (LBBoundaries::lbboundaries.size() > 0)
+  if (LBBoundaries::lbmovingboundaries.size())
     {
       #ifdef EXTERNAL_FORCES
       calc_MD_force_and_set_ia_vel();
