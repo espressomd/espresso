@@ -134,16 +134,10 @@ public:
 namespace traits {
 
 template < typename T >
-struct is_vector
-{
-  static constexpr const bool value = false;
-};
+struct is_vector : std::false_type {};
 
 template < size_t n, typename Scalar >
-struct is_vector < Vector < n, Scalar > >
-{
-  static constexpr const bool value = true;
-};
+struct is_vector < Vector < n, Scalar > > : std::true_type {};
 
 } // namespace traits
 
