@@ -106,6 +106,7 @@ class ParticleProperties(ut.TestCase):
     test_v = generateTestForVectorProperty("v", np.array([0.2, 0.3, 0.4]))
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
+    test_mol_id = generateTestForScalarProperty("mol_id", int(3))
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
