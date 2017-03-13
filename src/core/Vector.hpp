@@ -35,14 +35,28 @@ private:
   std::array<Scalar, n> d;
 
 public:
-  typedef typename std::array<Scalar, n>::iterator iterator;
-  typedef typename std::array<Scalar, n>::const_iterator const_iterator;
-  typedef typename std::array<Scalar, n>::reference reference;
-  typedef typename std::array<Scalar, n>::const_reference const_reference;
+  /* Concept Container requirements */
+  using size_type = typename std::array<Scalar, n>::size_type;
+  using difference_type = typename std::array<Scalar, n>::difference_type;
+  using value_type = Scalar;
+  using reference = Scalar &;
+  using const_reference = const Scalar &;
+  using iterator = typename std::array<Scalar, n>::iterator;
+  using const_iterator = typename std::array<Scalar, n>::const_iterator;
 
   Vector() {}
 
-  template <typename Container> explicit Vector(Container const &v) {
+  template <typename Container> explicit Vector(Container v) {
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
+  explicit Vector(Scalar const (&v)[n]) {
+    assert(std::distance(std::begin(v), std::end(v)) <= n);
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
+  explicit Vector(std::initializer_list<Scalar> v) {
     assert(std::distance(std::begin(v), std::end(v)) <= n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
@@ -51,11 +65,6 @@ public:
   Vector(InputIterator const &begin, InputIterator const &end) {
     assert(std::distance(begin, end) <= n);
     std::copy(begin, end, d.begin());
-  }
-
-  Vector(std::initializer_list<Scalar> l) {
-    assert(l.size() <= n);
-    std::copy(std::begin(l), std::end(l), d.begin());
   }
 
   Scalar &operator[](int i) { return d[i]; }
@@ -74,6 +83,10 @@ public:
   const_reference back() const { return d.back(); }
 
   static constexpr size_t size() { return n; }
+  Scalar const *data() const { return d.data(); }
+  Scalar *data() { return d.data(); }
+  size_type max_size() const { return d.max_size(); }
+  bool empty() const { return d.empty(); }
 
   operator std::array<Scalar, n> const &() const { return d; }
   bool operator==(Vector const &rhs) const { return d == rhs.d; }

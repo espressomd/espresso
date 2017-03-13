@@ -16,7 +16,9 @@ public:
   Constraint()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
         m_reflection_type(ReflectionType::NONE), m_penetrable(false),
-        m_only_positive(false), m_tuneable_slip(0), m_type(-1) {}
+        m_only_positive(false), m_tuneable_slip(0), m_type(-1) {
+    reset_force();
+  }
 
   void add_energy(Particle *p, double *folded_pos,
                   Observable_stat &energy) const;
@@ -36,10 +38,11 @@ public:
 
   ReflectionType const &reflection_type() const;
 
-  void reset_force() { m_total_force = Vector3d{0, 0, 0}; }
+  void reset_force() { m_local_force = Vector3d{0, 0, 0}; }
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return m_type; }
+  Vector3d total_force() const;
 
 private:
   /** Private methods */
@@ -54,7 +57,7 @@ private:
   int m_only_positive;
   int m_tuneable_slip;
   int m_type;
-  Vector3d m_total_force;
+  Vector3d m_local_force;
 };
 
 } /* namespace Constaints */
