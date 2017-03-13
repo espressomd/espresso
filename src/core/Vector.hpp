@@ -128,6 +128,28 @@ public:
   }
 };
 
+
+// type checking using SFINAE
+
+namespace traits {
+
+template < typename T >
+struct is_vector
+{
+  static constexpr const bool value = false;
+};
+
+template < size_t n, typename Scalar >
+struct is_vector < Vector < n, Scalar > >
+{
+  static constexpr const bool value = true;
+};
+
+} // namespace traits
+
+
+// Useful typedefs
+
 typedef Vector<4, double> Vector4d;
 typedef Vector<3, double> Vector3d;
 typedef Vector<2, double> Vector2d;
