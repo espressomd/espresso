@@ -97,6 +97,21 @@ cdef class ParticleHandle:
             self.update_particle_data()
             return self.particle_data.p.type
 
+    # Particle MolId
+    property mol_id:
+        """Particle mol_id"""
+
+        def __set__(self, _mol_id):
+            if isinstance(_mol_id, int) and _mol_id >= 0:
+                if set_particle_mol_id(self.id, _mol_id) == 1:
+                    raise Exception("set particle position first")
+            else:
+                raise ValueError("mol_id must be an integer >= 0")
+
+        def __get__(self):
+            self.update_particle_data()
+            return self.particle_data.p.mol_id
+
     # Position
     property pos:
         """Particle position (not folded into central image)."""
