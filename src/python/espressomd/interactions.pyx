@@ -264,6 +264,119 @@ IF LENNARD_JONES == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift"
 
+IF MEMBRANE_COLLISION == 1:
+    cdef class MembraneCollisionInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["membrane_cut"] < 0:
+                raise ValueError("Membrane Collision cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "membrane_a": ia_params.membrane_a,
+                "membrane_n": ia_params.membrane_n,
+                "membrane_cut": ia_params.membrane_cut,
+                "membrane_offset": ia_params.membrane_offset}
+
+        def is_active(self):
+            return (self._params["membrane_a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if membrane_collision_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["membrane_a"],
+                                        self._params["membrane_n"],
+                                        self._params["membrane_cut"],
+                                        self._params["membrane_offset"]):
+                raise Exception("Could not set Membrane Collision parameters")
+
+        def default_params(self):
+            return {
+                "membrane_a": 0.,
+                "membrane_n": 1.,
+                "membrane_cut": 0.,
+                "membrane_offset": 0.}
+
+        def type_name(self):
+            return "MembraneCollision"
+
+        def valid_keys(self):
+            return "membrane_a", "membrane_n", "membrane_cut", "membrane_offset"
+
+        def required_keys(self):
+            return "membrane_a", "membrane_n", "membrane_cut"
+
+
+IF AFFINITY == 1:
+    cdef class AffinityInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["affinity_cut"] < 0:
+                raise ValueError("Affinity cutoff has to be >=0")
+            if self._params["affinity_type"] < 0:
+                raise ValueError("Affinity type has to be >=0")
+            if self._params["affinity_kappa"] < 0:
+                raise ValueError("Affinity kappa has to be >=0")
+            if self._params["affinity_r0"] < 0:
+                raise ValueError("Affinity r0 has to be >=0")
+            if self._params["affinity_Kon"] < 0:
+                raise ValueError("Affinity Kon has to be >=0")
+            if self._params["affinity_Koff"] < 0:
+                raise ValueError("Affinity Koff has to be >=0")
+            if self._params["affinity_maxBond"] < 0:
+                raise ValueError("Affinity maxBond has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "affinity_type": ia_params.affinity_type,
+                "affinity_kappa": ia_params.affinity_kappa,
+                "affinity_r0": ia_params.affinity_r0,
+                "affinity_Kon": ia_params.affinity_Kon,
+                "affinity_Koff": ia_params.affinity_Koff,
+                "affinity_maxBond": ia_params.affinity_maxBond,
+                "affinity_cut": ia_params.affinity_cut}
+
+        def is_active(self):
+            return (self._params["affinity_kappa"] > 0)
+
+
+        def _set_params_in_es_core(self):
+            if affinity_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["affinity_type"],
+                                        self._params["affinity_kappa"],
+                                        self._params["affinity_r0"],
+                                        self._params["affinity_Kon"],
+                                        self._params["affinity_Koff"],
+                                        self._params["affinity_maxBond"],
+                                        self._params["affinity_cut"]):
+                raise Exception("Could not set Affinity parameters")
+
+        def default_params(self):
+            return {
+                "affinity_type": 0,
+                "affinity_kappa": 0.,
+                "affinity_r0": 0.,
+                "affinity_Kon": 0.,
+                "affinity_Koff": 0.,
+                "affinity_maxBond": 0.,
+                "affinity_cut": 0.}
+
+        def type_name(self):
+            return "Affinity"
+
+        def valid_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+        def required_keys(self):
+            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+
+
+
 # Generic Lennard Jones
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -415,6 +528,10 @@ class NonBondedInteractionHandle(object):
         # Here, add one line for each nonbonded ia
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
+        IF MEMBRANE_COLLISION:
+            self.membrane_collsision = MembraneCollisionInteraction(_type1, _type2)
+        IF AFFINITY:
+            self.affinity = AffinityInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
@@ -1275,9 +1392,7 @@ ELSE:
     class Angle_Cossquare(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
 
-
-class Oif_Global_Forces(BondedInteraction):
-
+class OifGlobalForces(BondedInteraction):
     def type_number(self):
         return BONDED_IA_OIF_GLOBAL_FORCES
 
@@ -1296,16 +1411,17 @@ class Oif_Global_Forces(BondedInteraction):
     def _get_params_from_es_core(self):
         return \
             {"A0_g": bonded_ia_params[self._bond_id].p.oif_global_forces.A0_g,
-             "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
-             "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
-             "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
+            "ka_g": bonded_ia_params[self._bond_id].p.oif_global_forces.ka_g,
+            "V0": bonded_ia_params[self._bond_id].p.oif_global_forces.V0,
+            "kv": bonded_ia_params[self._bond_id].p.oif_global_forces.kv}
 
     def _set_params_in_es_core(self):
         oif_global_forces_set_params(
             self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
 
 
-class Oif_Local_Forces(BondedInteraction):
+
+class OifLocalForces(BondedInteraction):
 
     def type_number(self):
         return BONDED_IA_OIF_LOCAL_FORCES
@@ -1321,23 +1437,22 @@ class Oif_Local_Forces(BondedInteraction):
 
     def set_default_params(self):
         self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
+                    "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0.}
 
     def _get_params_from_es_core(self):
         return \
             {"r0": bonded_ia_params[self._bond_id].p.oif_local_forces.r0,
-             "ks": bonded_ia_params[self._bond_id].p.oif_local_forces.ks,
-             "kslin": bonded_ia_params[self._bond_id].p.oif_local_forces.kslin,
-             "phi0": bonded_ia_params[self._bond_id].p.oif_local_forces.phi0,
-             "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
-             "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
-             "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
-             "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
+            "ks": bonded_ia_params[self._bond_id].p.oif_local_forces.ks,
+            "kslin": bonded_ia_params[self._bond_id].p.oif_local_forces.kslin,
+            "phi0": bonded_ia_params[self._bond_id].p.oif_local_forces.phi0,
+            "kb": bonded_ia_params[self._bond_id].p.oif_local_forces.kb,
+            "A01": bonded_ia_params[self._bond_id].p.oif_local_forces.A01,
+            "A02": bonded_ia_params[self._bond_id].p.oif_local_forces.A02,
+            "kal": bonded_ia_params[self._bond_id].p.oif_local_forces.kal}
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
             self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
-
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
@@ -1352,8 +1467,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_HARMONIC): Angle_Harmonic,
     int(BONDED_IA_ANGLE_COSINE): Angle_Cosine,
     int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
-    int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
-    int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
+    int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
+    int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
