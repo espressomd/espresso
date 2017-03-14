@@ -20,7 +20,6 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
 from globals cimport *
-from libcpp.limits cimport numeric_limits
 import numpy as np
 
 from . cimport integrate
@@ -31,6 +30,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
+from .utils cimport numeric_limits
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
