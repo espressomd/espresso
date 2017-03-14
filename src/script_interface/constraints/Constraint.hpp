@@ -75,6 +75,14 @@ public:
     SET_PARAMETER_HELPER("particle_type", m_constraint->type());
   }
 
+  Variant call_method(std::string const &name, VariantMap const &) override {
+    if (name == "total_force") {
+      return m_constraint->total_force();
+    }
+
+    return false;
+  }
+
   std::shared_ptr<::Constraints::Constraint> constraint() {
     return m_constraint;
   }

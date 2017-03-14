@@ -27,19 +27,19 @@
 namespace Shapes {
 class Maze : public Shape {
 public:
-  Maze() : m_nsphere(0.0), m_dim(0.0), m_sphrad(0.0), m_cylrad(0.0) {}
+  Maze() : m_nsphere(0), m_dim(0), m_sphrad(0), m_cylrad(0) {}
 
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 
-  double &nsphere() { return m_nsphere; }
+  int &nsphere() { return m_nsphere; }
   double &dim() { return m_dim; }
   double &sphrad() { return m_sphrad; }
   double &cylrad() { return m_cylrad; }
 
 private:
   /** number of spheres. */
-  double m_nsphere;
+  int m_nsphere;
   /** dimension of the maze. */
   double m_dim;
   /** sphere radius. */
