@@ -16,9 +16,12 @@ class H5md(object):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, write_ordered=True, **kwargs):
         """
         Initialize a H5md object.
+
+        .. note::
+           Bonds will be written to the file automatically if they exist.
 
         Parameters
         ----------
@@ -30,8 +33,8 @@ class H5md(object):
                     If velocities should be written.
         write_force : bool, optional
                       If forces should be written.
-        write_type : bool, optional
-                     If types should be written.
+        write_species : bool, optional
+                     If types (called 'species' in the H5MD specification) should be written.
         write_mass : bool, optional
                      If masses should be written.
         write_charge : bool, opional
@@ -47,7 +50,7 @@ class H5md(object):
         self.what = {'write_pos': 1 << 0,
                      'write_vel': 1 << 1,
                      'write_force': 1 << 2,
-                     'write_type': 1 << 3,
+                     'write_species': 1 << 3,
                      'write_mass': 1 << 4,
                      'write_charge': 1 << 5}
         self.valid_params.append(self.what.keys())
@@ -63,15 +66,12 @@ class H5md(object):
                 raise ValueError(
                     "Unknown parameter {} for H5MD writer.".format(i))
 
-        write_ordered_default = True
-        self.write_ordered = kwargs.get('write_ordered', write_ordered_default)
-
         self.h5md_instance = PScriptInterface(
             "ScriptInterface::Writer::H5mdScript")
         self.h5md_instance.set_params(filename=kwargs['filename'],
                                       what=self.what_bin,
                                       scriptname=sys.argv[0],
-                                      write_ordered=self.write_ordered)
+                                      write_ordered=write_ordered)
         self.h5md_instance.call_method("init_file")
 
     def get_params(self):

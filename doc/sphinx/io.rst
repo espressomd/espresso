@@ -198,112 +198,52 @@ checkpointing yet. By calling these modules are created and can be
 easily initialized with checkpointed user variables (like ) or
 checkpointed submodules (like ).
 
+.. _Writing H5MD-Files:
+
 Writing H5MD-files
 ------------------
 
 For large amounts of data it’s a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
-details). currently supports some basic functions for writing simulation
-data to H5MD files.
+details). Currently |es| supports some basic functions for writing simulation
+data to H5MD files. The implementation is MPI-parallelized and is capable
+of dealing with varying numbers of particles.
 
-: Initialize a H5MD data file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To write data in a hdf5-file according to the H5MD proposal (see
+http://nongnu.org/h5md/), first an object of the class
+:class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
+respective hdf5-file. This may, for example, look like:
 
-h5md\_init []
+.. code:: python
 
-The command initializes the H5MD file and creates groups and datasets
-according to the conventions of H5MD (see http://nongnu.org/h5md/). In
-order to safely start from a checkpoint the init command automatically
-copies the old file to a new file with a “tmp” suffix. The optional
-argument can be provided. In this case observables are written for these
-particle ids only.
-
-: Write particle positions to H5MD file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-h5md\_write\_positions
-
-Writes the positions of all particles to the dataset which was
-previously initialized by ``h5md_init``.
-
-: Write particle velocities to H5MD file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-h5md\_write\_velocities
-
-Writes the velocities of all particles to the dataset which was
-previously initialized by ``h5md_init``.
-
-h5md\_write\_forces
-
-Writes the forces of all particles to the dataset which was previously
-initialized by ``h5md_init``.
-
-: Initialize a user-defined H5MD observable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-h5md\_observable1D\_init
-
-Initializes an observable dataset of a zero dimensional, but
-timedependent, observable with given name in the H5MD file previously
-initialized by ``h5md_init``.
-
-: Write to a user-defined H5MD dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-h5md\_observable1D\_write
-
-Writes ``value`` to a user-defined observable dataset with given name.
-
-h5md\_observable2D\_init
-
-Initializes an observable dataset of a one dimensional, but
-timedependent, observable with given *property* of particles in Espresso
-in the H5MD file previously initialized by ``h5md_init``.
-
-: Write to a user-defined H5MD dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-h5md\_observable2D\_write
-
-Writes ``value`` to a user-defined observable dataset with given name.
-
-: Close H5MD file
-~~~~~~~~~~~~~~~~~
-
-h5md\_close
-
-Closes the H5MD data file.
-
-Writing H5MD-files with Python
-------------------------------
-
-To write data in a hdf5-file, first an object of the class ``H5md`` has
-to be created and linked to the respective hdf5-file. This may, for
-example, look like:
-
-from espressomd.io.writer import h5md # add particles here system =
-espressomd.System() h5=h5md.H5md(filename=“trajectory.h5”,
-write\_pos=True, write\_vel=True)
+    from espressomd.io.writer import h5md
+    system = espressomd.System()
+    # ... add particles here
+    h5 = h5md.H5md(filename=“trajectory.h5”, write_pos=True, write_vel=True)
 
 If a file with the given filename exists and has a valid H5MD structures
 it will be backed up to a file with suffix “.bak”. This file will be
 removed by the close() method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
-types, and masses of the particles. In order to write any property, you
+species (|es| types), and masses of the particles. In order to write any property, you
 have to set the respective boolean flag as an option to the H5md class.
 Currently available:
 
--  write\_pos
+    - write_pos: particle positions
 
--  write\_vel
+    - write_vel: particle velocities
 
--  write\_force
+    - write_force: particle forces
 
--  write\_type
+    - write_species: particle types
 
--  write\_mass.
+    - write_mass: particle masses
+
+    - write_ordered: if particles should be written ordered according to their
+      id (implies serial write). 
+
+
 
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
