@@ -30,6 +30,7 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 #include "config.hpp"
+#include "integrate.hpp"
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc);
@@ -209,10 +210,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
  	 
 		fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
   
-	
-		v[0] = p3->m.v[0] - p2->m.v[0];
-		v[1] = p3->m.v[1] - p2->m.v[1];
-		v[2] = p3->m.v[2] - p2->m.v[2];
+		/* unscale velocities ! */
+		v[0] = (p3->m.v[0] - p2->m.v[0])/time_step;
+		v[1] = (p3->m.v[1] - p2->m.v[1])/time_step;
+		v[2] = (p3->m.v[2] - p2->m.v[2])/time_step;
  
 		// Variant A
 		for(i=0;i<3;i++) {
@@ -221,8 +222,8 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		}
 		// Variant B
 		//for(i=0;i<3;i++) {
-			//force2[i] += fac*dx[i];
-			//force3[i] -= fac*dx[i];
+			//force2[i] += fac*dx[i]/time_step;
+			//force3[i] -= fac*dx[i]/time_step;
 		//}
     }
     
