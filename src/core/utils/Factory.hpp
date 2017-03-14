@@ -149,19 +149,6 @@ private:
 template <class T>
 std::map<std::string, typename Factory<T>::builder_type> Factory<T>::m_map;
 
-/**
- * @brief Convenience function to creates an instance by name.
- * Here the Base type is the template parameter of a free function, and
- * not part of a type, which works around partially missing template support
- * in cython.
- * Also we use a shared_ptr as return type (should be unique_ptr), because
- * in cython translation of c++ to python exceptions only works for functions
- * whose return type can be copyed (unique_ptr can not).
- */
-template <class T> std::shared_ptr<T> factory_make(const std::string &name) {
-  return Factory<T>::make(name);
-}
-
 } /* namespace Utils */
 
 #endif

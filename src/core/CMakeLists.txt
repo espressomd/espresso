@@ -23,8 +23,8 @@ add_custom_target(EspressoConfig DEPENDS config-features.hpp config-features.cpp
 add_dependencies(EspressoConfig myconfig)
 
 add_library(EspressoCore SHARED ${EspressoCore_SRC} config-features.cpp config-version.cpp)
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
+set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoCore EspressoConfig)
 
 target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
@@ -45,6 +45,7 @@ if(CUDA)
 
   cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
   install(TARGETS EspressoCuda DESTINATION ${LIBDIR})
+  set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
   add_dependencies(EspressoCuda EspressoConfig)
 
   set_target_properties(EspressoCuda PROPERTIES MACOSX_RPATH TRUE)
@@ -56,6 +57,10 @@ endif(CUDA)
 add_subdirectory(utils)
 add_subdirectory(observables)
 add_subdirectory(correlators)
+add_subdirectory(io)
+if(HDF5_FOUND)
+    target_link_libraries(EspressoCore H5mdCore)
+endif(HDF5_FOUND)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)

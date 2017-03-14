@@ -21,7 +21,7 @@ class AutoUpdateObservables(ScriptInterfaceHelper):
 
 class Observable(ScriptInterfaceHelper):
     _so_name="Observables::Observable"
-    _so_bind_methods = ("value","calculate","update")
+    _so_bind_methods = ("value","calculate","update","auto_write_to")
 
 
 

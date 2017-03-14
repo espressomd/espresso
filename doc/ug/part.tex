@@ -55,7 +55,7 @@
     ext_torque=\arg{array of 3 floats},
     exclude=\arg{list of ints},
     temp=\arg{float},
-    gamma=\arg{float},
+    gamma=\arg{float} | \arg{array of 3 floats},
     gamma_rot=\arg{float} | \arg{array of 3 floats},
     rotation=\arg{bool},
     swimming=\arg{dictionary \ttfamily \{
@@ -108,7 +108,7 @@ for p in espressomd.System().part: ...
   \require{8}{\opt{vs\_relative \var{pid} \par{distance}}}
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \require{9}{\opt{temp \var{T}}}
-  \require{9}{\opt{gamma \var{g}}}
+  \require{9}{\opt{gamma \alt{\var{gtran} \asep \var{gtranx}\fmark{15} \var{gtrany}\fmark{15} \var{gtranz}\fmark{15}}}}
   \require{2,9}{\opt{gamma\_rot \alt{\var{grot} \asep \var{grotx}\fmark{14} \var{groty}\fmark{14} \var{grotz}\fmark{14}}}}
   \require{10}{\opt{rotation \var{rot}}}
   \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
@@ -139,6 +139,7 @@ for p in espressomd.System().part: ...
     \required[12]{ENGINE}
     \required[13]{LB \MakeLowercase{\textrm{or}} LB_GPU}
     \required[14]{ROTATIONAL_INERTIA}
+    \required[15]{PARTICLE_ANISOTROPY}
   \end{features}
 \end{essyntax}
 
@@ -511,29 +512,32 @@ system.
 \end{essyntax}
 
 \begin{pysyntax}
-	\object{
-		espressomd
-	}{
-		polymer
-	}{
-		N_P = \arg{int},
-		MPC = \arg{int},
-		bond_length = \arg{float},
-		start_id = \arg{int},
-		start_pos = \arg{ndarray},
-		mode = 0 or 1 or 2,
-		shield = \arg{float},
-		max_tries = \arg{int},
-		val_poly = \arg{float},
-		charge_distance = \arg{int},
-		type_poly_neutral = \arg{int},
-		type_poly_charged = \arg{int},
-		bond_id = \arg{int},
-		angle = \arg{float},
-		angle2 = \arg{float},
-		pos2 = \arg{ndarray},
-		constraint = 0 or 1
-	}
+import espressomd.polymer
+\object{
+    espressomd.polymer
+        }{
+    create_polymer
+        }{
+		N_P = \arg{int},  
+		MPC = \arg{int}, 
+		bond_length = \arg{float}, 
+		bond = \arg{object} 
+        }[
+		start_id = \arg{int}, 
+		start_pos = \arg{ndarray}, 
+		mode = 0 or 1 or 2, 
+		shield = \arg{float}, 
+		max_tries = \arg{int}, 
+		val_poly = \arg{float}, 
+		charge_distance = \arg{int}, 
+		type_poly_neutral = \arg{int}, 
+		type_poly_charged = \arg{int}, 
+		angle = \arg{float}, 
+		angle2 = \arg{float}, 
+		pos2 = \arg{ndarray}, 
+		constraint = 0 or 1 
+        ]
+        
 \end{pysyntax}
 
 This command will create \var{num\_polymers} N\_P polymer or

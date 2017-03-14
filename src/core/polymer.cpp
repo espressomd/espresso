@@ -178,6 +178,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   double a[3] = {0, 0, 0};
   double b[3], c[3] = {0., 0., 0.}, d[3];
   double absc;
+
   poly = (double *)Utils::malloc(3 * MPC * sizeof(double));
 
   bond_size = bonded_ia_params[type_bond].num;
@@ -191,7 +192,6 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       if (posed != NULL) {
         /* if position of 1st monomer is given */
         if (p > 0) {
-          free(posed);
           posed = NULL;
         } else {
           pos[0] = posed[0];
@@ -276,7 +276,6 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
         }
       }
       if (posed2 != NULL && p > 0) {
-        free(posed2);
         posed2 = NULL;
       }
       poly[3 * n] = pos[0];

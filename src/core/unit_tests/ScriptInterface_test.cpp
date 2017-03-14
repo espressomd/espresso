@@ -1,30 +1,27 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
-#include <map>
-#include <vector>
-
 #define BOOST_TEST_MODULE ScriptInterface test
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -40,9 +37,7 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
-  const string name() const {
-    return string("ScriptInterfaceTest");
-  }
+  const string name() const { return string("ScriptInterfaceTest"); }
 
   map<string, Variant> get_parameters() const {
     map<string, Variant> ret;
@@ -52,13 +47,13 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
     ret["bool_req"] = bool_req;
     ret["vec_double"] = vec_double;
     ret["vec_int"] = vec_int;
-    
+
     return ret;
   }
 
   /* Not needed for testing */
-  map<string, Parameter> all_parameters() const {
-    return map<string, Parameter>();
+  map<string, Parameter> valid_parameters() const override {
+    return {};
   }
 
   void set_parameter(const string &name, const Variant &value) {
@@ -69,8 +64,17 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
     SET_PARAMETER_HELPER("vec_int", vec_int);
   }
 
+  Variant call_method(const std::string& name, const VariantMap &params) override {
+    if(name == "test_method") {
+      method_called = true;
+    }
+
+    return true;
+  }
+
+  bool method_called{false};
   bool bool_opt, bool_req;
-  int integer;  
+  int integer;
   vector<double> vec_double;
   vector<int> vec_int;
 };
@@ -111,6 +115,10 @@ BOOST_AUTO_TEST_CASE(default_implementation) {
   BOOST_CHECK(boost::get<bool>(si_test.get_parameter("bool_opt")) == false);
   BOOST_CHECK(boost::get<bool>(si_test.get_parameter("bool_req")) == true);
   BOOST_CHECK(boost::get<int>(si_test.get_parameter("integer")) == 5);
-  BOOST_CHECK(boost::get<vector<int> >(si_test.get_parameter("vec_int")) == vec_int);
-  BOOST_CHECK(boost::get<vector<double> >(si_test.get_parameter("vec_double")) == vec_double);
+  BOOST_CHECK(boost::get<vector<int>>(si_test.get_parameter("vec_int")) ==
+              vec_int);
+  BOOST_CHECK(boost::get<vector<double>>(si_test.get_parameter("vec_double")) ==
+              vec_double);
+
+  si_test.call_method("test_method", {});
 }

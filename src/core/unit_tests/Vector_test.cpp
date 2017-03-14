@@ -28,6 +28,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <vector>
+#include <numeric>
 
 #include "../Vector.hpp"
 
@@ -36,9 +38,8 @@
   { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
 #define TEST_NUMBERS_PARTIAL_NORM2                                             \
   { 0, 1, 2, 51, 492, 13036 }
-const int test_numbers[] = TEST_NUMBERS;
-const int test_numbers_partial_norm2[] = TEST_NUMBERS_PARTIAL_NORM2;
-const int n_test_numbers = sizeof(test_numbers) / sizeof(int);
+constexpr int test_numbers[] = TEST_NUMBERS;
+constexpr int n_test_numbers = sizeof(test_numbers) / sizeof(int);
 
 template <int n> bool il_constructor() {
   bool pass = true;
@@ -64,25 +65,23 @@ template <int n> bool default_constructor() {
 }
 
 template <int n> bool norm2() {
-  Vector<n, int> v(test_numbers);
+  Vector<n, int> v(std::begin(test_numbers), test_numbers + n);
 
-  return v.norm2() == test_numbers_partial_norm2[n - 1];
+  return v.norm2() == std::inner_product(v.begin(), v.end(), v.begin(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(test_constructor) {
-#ifdef HAVE_CXX11
-  BOOST_CHECK(il_constructor<1>());
-  BOOST_CHECK(il_constructor<2>());
-  BOOST_CHECK(il_constructor<3>());
-  BOOST_CHECK(il_constructor<4>());
-  BOOST_CHECK(il_constructor<5>());
-  BOOST_CHECK(il_constructor<6>());
-  BOOST_CHECK(il_constructor<7>());
-  BOOST_CHECK(il_constructor<8>());
-  BOOST_CHECK(il_constructor<9>());
-  BOOST_CHECK(il_constructor<10>());
-#endif
+BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
+  Vector<n_test_numbers, int> v(TEST_NUMBERS);
 
+  BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+}
+
+BOOST_AUTO_TEST_CASE(iterator_constructor) {
+  Vector<n_test_numbers, int> v(std::begin(test_numbers), std::end(test_numbers));
+  BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
+}
+
+BOOST_AUTO_TEST_CASE(default_constructor_test) {
   BOOST_CHECK(default_constructor<1>());
   BOOST_CHECK(default_constructor<2>());
   BOOST_CHECK(default_constructor<3>());
@@ -100,6 +99,4 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
   BOOST_CHECK(norm2<4>());
-  BOOST_CHECK(norm2<5>());
-  BOOST_CHECK(norm2<6>());
 }

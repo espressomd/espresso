@@ -22,21 +22,27 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_HPP
 
+#include <type_traits>
+
+#include "Variant.hpp"
+
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
-#include "ParallelScriptInterface.hpp"
+#include "utils/Factory.hpp"
 
 namespace ScriptInterface {
-  enum { NOT_SET = -1 };
+  template <typename T> static void register_new(std::string const &name) {
+    static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
+
+    /* Register with the factory */
+    Utils::Factory<ScriptInterfaceBase>::register_new<T>(name);
+  }
 
   inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
     const auto id = boost::get<ObjectId>(value);
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }
-
-
-
 } /* namespace ScriptInterface */
 
 #endif

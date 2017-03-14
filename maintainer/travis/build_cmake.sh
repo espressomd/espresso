@@ -43,7 +43,6 @@ function cmd {
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
-[ -z "$with_tcl" ] && with_tcl="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
@@ -57,10 +56,10 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_tcl with_python_interface myconfig check_procs
+    with_python_interface myconfig check_procs
 
 # check indentation of python files
-#pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
+pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
 ec=$?
 if [ $ec -eq 0 ]; then
     echo ""
@@ -87,19 +86,13 @@ fi
 # CONFIGURE
 start "CONFIGURE"
 
-if [ $with_fftw = "yes" ]; then
+if [ $with_fftw = "true" ]; then
     cmake_params="$cmake_params"
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON $cmake_params"
 fi
 
-if [ $with_tcl = "yes" ]; then
-    cmake_params="-DWITH_TCL=ON $cmake_params"
-else
-    cmake_params="-DWITH_TCL=OFF $cmake_params"
-fi
-
-if [ $with_python_interface = "yes" ]; then
+if [ $with_python_interface = "true" ]; then
     cmake_params="-DWITH_PYTHON=ON $cmake_params"
 else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
@@ -124,28 +117,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make" || exit $?
+cmd "make -j2" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make check_python $make_params"
+    cmd "make -j2 check_python $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
         exit $ec
     fi
 
-#    cmd "make check_tcl $make_params"
-#    ec=$?
-#    if [ $ec != 0 ]; then	
-#        cmd "cat $srcdir/testsuite/tcl/Testing/Temporary/LastTest.log"
-#        exit $ec
-#    fi
-
-    cmd "make check_unit_tests $make_params"
+    cmd "make -j2 check_unit_tests $make_params"
     ec=$?
     if [ $ec != 0 ]; then	
         cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"

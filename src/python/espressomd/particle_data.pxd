@@ -35,11 +35,11 @@ cdef extern from "particle_data.hpp":
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
     # For all other properties, getter-funcionts have to be used on the c
     # level.
-
     ctypedef struct particle_properties "ParticleProperties":
         int    identity
         int    mol_id
         int    type
+        double mass
 
     ctypedef struct particle_position "ParticlePosition":
         double p[3]
@@ -88,8 +88,6 @@ cdef extern from "particle_data.hpp":
 
     int set_particle_f(int part, double F[3])
 
-    int set_particle_mass(int part, double mass)
-
     int set_particle_solvation(int part, double * solvation)
 
     IF ROTATION_PER_PARTICLE == 1:
@@ -101,7 +99,6 @@ cdef extern from "particle_data.hpp":
 
     IF MASS:
         int set_particle_mass(int part, double mass)
-        void pointer_to_mass(particle * p, double * & res)
 
     IF SHANCHEN:
         int set_particle_solvation(int part, double * solvation)
@@ -161,8 +158,13 @@ cdef extern from "particle_data.hpp":
         int set_particle_temperature(int part, double T)
         void pointer_to_temperature(particle * p, double * & res)
 
-        int set_particle_gamma(int part, double gamma)
+        IF PARTICLE_ANISOTROPY:
+            int set_particle_gamma(int part, double gamma[3])
+        ELSE:
+            int set_particle_gamma(int part, double gamma)
+
         void pointer_to_gamma(particle * p, double * & res)
+
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 int set_particle_gamma_rot(int part, double gamma[3])
@@ -207,6 +209,7 @@ cdef extern from "particle_data.hpp":
     void remove_all_bonds_to(int part)
 
     bool particle_exists(int part)
+
 
 cdef extern from "virtual_sites_relative.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:

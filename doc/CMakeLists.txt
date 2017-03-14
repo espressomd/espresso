@@ -1,4 +1,5 @@
 add_subdirectory(doxygen)
+add_subdirectory(sphinx)
 add_subdirectory(logo)
 add_subdirectory(ug)
 add_subdirectory(dg)

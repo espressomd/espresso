@@ -21,11 +21,11 @@ class System(_system.System):
 
     def create_attr(self, *args, **kwargs):
         """
-        Circumvents the __setattr__ lock. Allows to create and set new
-        attributes to System instances.
-        For *args, it initializes an attribute with None value, if the
-        attribute does not already exist.
-        For **kwargs, it simply calls super().__setattr__.
+            Circumvents the ``__setattr__`` lock. Allows to create and set new
+            attributes to System instances.
+            For ``*args``, it initializes an attribute with None value, if the
+            attribute does not already exist.
+            For ``**kwargs``, it simply calls ``super().__setattr__``.
         """
         for arg in args:
             try: name = str(arg)

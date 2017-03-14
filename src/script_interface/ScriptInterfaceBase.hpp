@@ -22,29 +22,25 @@
 
 #include <map>
 #include <memory>
-#include <string>
 #include <type_traits>
-#include <vector>
 
-#include <boost/variant.hpp>
-
-#include "utils/ObjectId.hpp"
 #include "utils/serialization/array.hpp"
 
+#include "Variant.hpp"
 #include "Parameter.hpp"
-#include "core/Vector.hpp"
 
 namespace ScriptInterface {
-class ScriptInterfaceBase;
 
-typedef Utils::ObjectId<ScriptInterfaceBase> ObjectId;
+template < typename T >
+typename std::enable_if<!traits::is_vector<T>::value, T>::type
+get_value(Variant const& v) { return boost::get<T>(v); }
 
-/**
- * @brief Possible types for parameters.
- */
-typedef boost::variant<bool, int, double, std::string, std::vector<int>,
-                       std::vector<double>, Vector2d, Vector3d, ObjectId>
-    Variant;
+template < typename T >
+inline typename std::enable_if<traits::is_vector<T>::value, T>::type
+get_value(Variant const& v)
+{
+  return T(boost::get<std::vector<double>>(v));
+}
 
 /**
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
@@ -56,21 +52,10 @@ typedef boost::variant<bool, int, double, std::string, std::vector<int>,
  * remove_reference ensures that this also works with member access by reference
  * for example as returned by a function.
  */
-
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
   if (name == PARAMETER_NAME) {                                                \
     MEMBER_NAME =                                                              \
-        boost::get<std::remove_reference<decltype(MEMBER_NAME)>::type>(value); \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR3D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector3d(boost::get<std::vector<double>>(value));            \
-  }
-
-#define SET_PARAMETER_HELPER_VECTOR2D(PARAMETER_NAME, MEMBER_NAME)             \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME = Vector2d(boost::get<std::vector<double>>(value));            \
+        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
   }
 
 /**
@@ -97,6 +82,10 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
+  enum class CreationPolicy { LOCAL, GLOBAL };
+
+  virtual ~ScriptInterfaceBase() = default;
+
   /**
    * @brief Name of the object.
    *
@@ -179,7 +168,8 @@ public:
    *
    */
   static std::shared_ptr<ScriptInterfaceBase>
-  make_shared(std::string const &name);
+  make_shared(std::string const &name,
+              CreationPolicy policy = CreationPolicy::LOCAL);
 
   /**
    * @brief Get a new reference counted instance of a script interface by
