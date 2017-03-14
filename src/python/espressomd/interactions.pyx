@@ -1279,6 +1279,35 @@ class OifLocalForces(BondedInteraction):
         oif_local_forces_set_params(
             self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
 
+IF MEMBRANE_COLLISION == 1:
+    class OifOutDirection(BondedInteraction):
+        def type_number(self):
+            return BONDED_IA_OIF_OUT_DIRECTION
+
+        def type_name(self):
+            return "OIF_OUT_DIRECTION"
+
+        def valid_keys(self):
+            return ""
+
+        def required_keys(self):
+            return ""
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return \
+                {}
+
+        def _set_params_in_es_core(self):
+            oif_out_direction_set_params(
+                self._bond_id)
+
+ELSE:
+    class OifOutDirection(BondedInteractionNotDefined):
+        name = "OIF_OUT_DIRECTION"
+
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
@@ -1294,6 +1323,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
+    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj

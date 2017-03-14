@@ -30,7 +30,7 @@
 #ifdef MEMBRANE_COLLISION
 
 // set out_direction parameters
-int out_direction_set_params(int bond_type);
+int oif_out_direction_set_params(int bond_type);
 
 /** Computes the outward direction of the membrane from one particle and its three neighbors 
  
