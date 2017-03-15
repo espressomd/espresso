@@ -55,6 +55,10 @@ public:
   CommBuf(): nbytes(0), maxbytes(0), buf(nullptr) {}
 
   ~CommBuf() { Utils::realloc(buf, 0); }
+  CommBuf(const CommBuf& other): nbytes(other.nbytes), maxbytes(other.maxbytes), buf(Utils::malloc(maxbytes))
+  {
+    memcpy(buf, other.buf, nbytes);
+  }
 
   /** Returns the size in bytes set by the last call to ensure_and_set_size.
    */
