@@ -30,6 +30,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
+from .utils cimport numeric_limits
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -186,7 +187,8 @@ cdef class System:
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
-                if lbpar_gpu.tau >= 0.0 and lbpar_gpu.tau - _time_step > 1e-8*abs(lbpar_gpu.tau+_time_step):
+                if ( lbpar_gpu.tau >= 0.0 and
+                     lbpar_gpu.tau-_time_step > numeric_limits[float].epsilon()*abs(lbpar_gpu.tau+_time_step) ):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
             mpi_set_time_step(_time_step)
