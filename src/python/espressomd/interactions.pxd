@@ -139,6 +139,7 @@ cdef extern from "interaction_data.hpp":
         double A01
         double A02
         double kal
+        double kvisc
 
 #* Parameters for harmonic bond Potential */
     ctypedef struct Harmonic_bond_parameters:
@@ -297,7 +298,7 @@ cdef extern from "subt_lj.hpp":
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
-    int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
+    int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc)
 cdef extern from "object-in-fluid/out_direction.hpp":
     int oif_out_direction_set_params(int bond_type)
 

@@ -30,9 +30,10 @@
 #include "particle_data.hpp"
 #include "grid.hpp"
 #include "config.hpp"
+#include "integrate.hpp"
 
 // set parameters for local forces
-int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal);
+int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc);
 
 inline double KS(double lambda){ // Defined by (19) from Dupin2007
     double res;
@@ -57,6 +58,9 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     double n1[3],n2[3],dn1,dn2,phi,aa;
     double dx[3],fac,dr,len2,len,lambda;
     double A,h[3],rh[3],hn;
+    double m1[3],m2[3],m3[3];
+    double v[3], len_new, len_old, def_vel;
+    double m1_length,m2_length,m3_length,t;
 
 	#ifdef GHOST_FLAG
 	// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p2, however, it might be other one. we call this particle reference particle.
@@ -174,6 +178,55 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         }
     }
     
+     // viscous force
+    if (iaparams->p.oif_local_forces.kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) {	// to be implemented....
+        //vecsub(fp2,fp3,dx);
+        //len2 = sqrlen(dx);
+        //len = sqrt(len2);
+        //dr = len - iaparams->p.oif_local_forces.r0;
+        //fac = -iaparams->p.oif_local_forces.kslin * dr; // no normalization
+        //for(i=0; i<3; i++) {
+            //force2[i] += fac*dx[i]/len;
+            //force3[i] += -fac*dx[i]/len;
+        //}
+        
+        // KOD od Mata:
+        vecsub(fp2,fp3,dx);
+        len2 = sqrlen(dx);
+        len = sqrt(len2);
+          
+		len_new = sqrt(pow((fp2[0] +  p2->m.v[0]) - (fp3[0] +  p3->m.v[0]),2) + pow((fp2[1] +  p2->m.v[1]) - (fp3[1] +  p3->m.v[1]),2) + pow((fp2[2] +  p2->m.v[2]) - (fp3[2] +  p3->m.v[2]),2));
+		len_old = sqrt(pow((fp2[0] -  p2->m.v[0]) - (fp3[0] -  p3->m.v[0]),2) + pow((fp2[1] -  p2->m.v[1]) - (fp3[1] -  p3->m.v[1]),2) + pow((fp2[2] -  p2->m.v[2]) - (fp3[2] -  p3->m.v[2]),2));
+
+		//printf("future length %lf\n", len_new);
+		//printf("old length %lf\n", len_old);    
+		//printf("actual length %lf\n", len);
+
+		if ( - len_old + len < 0 ) {
+			def_vel = -sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		else if ( - len_old + len > 0 ) {
+			def_vel = +sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		else { def_vel = 0; }
+ 	 
+		fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
+  
+		/* unscale velocities ! */
+		v[0] = (p3->m.v[0] - p2->m.v[0])/time_step;
+		v[1] = (p3->m.v[1] - p2->m.v[1])/time_step;
+		v[2] = (p3->m.v[2] - p2->m.v[2])/time_step;
+ 
+		// Variant A
+		for(i=0;i<3;i++) {
+			force2[i] += iaparams->p.oif_local_forces.kvisc*v[i];
+			force3[i] -= iaparams->p.oif_local_forces.kvisc*v[i];
+		}
+		// Variant B
+		//for(i=0;i<3;i++) {
+			//force2[i] += fac*dx[i]/time_step;
+			//force3[i] -= fac*dx[i]/time_step;
+		//}
+    }
+    
     /* bending
        forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring force for triangle p2,p3,p4
        p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2; p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
@@ -199,8 +252,12 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     /* local area
        for both triangles
        only 1/3 of calculated forces are added, because each triangle will enter this calculation 3 times (one time per edge)
-     test
-       normalisation by square root of the triangle's area, see "R.Tothova: Comparison of Different Formulas for Local Area Conservation Modulus in Spring Network Models"
+
+		Proportional distribution of forces, implemented according to the article
+		I.Jancigova, I.Cimrak, 
+		Non-uniform force allocation for area preservation in spring network models,  
+		International Journal for Numerical Methods in Biomedical Engineering, DOI: 10.1002/cnm.2757
+     
     */
     if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
         
@@ -208,45 +265,54 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         for(i=0; i<3; i++){            // centroid of triangle p1,p2,p3
             h[i]=1.0/3.0 *(fp1[i]+fp2[i]+fp3[i]);
         }
-        A=area_triangle(fp1,fp2,fp3);
-        aa=(A - iaparams->p.oif_local_forces.A01)/sqrt(A);
-        vecsub(h,fp1,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p1
-            force[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
-        vecsub(h,fp2,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p2
-            force2[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
-        vecsub(h,fp3,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p3
-            force3[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
+        A=area_triangle(fp1,fp2,fp3); 	
+        t = sqrt(A/iaparams->p.oif_local_forces.A01) - 1.0; 
+        vecsub(h,fp1,m1);
+        vecsub(h,fp2,m2);
+        vecsub(h,fp3,m3);					
         
+        m1_length = normr(m1);
+		m2_length = normr(m2);
+		m3_length = normr(m3);
+		
+        fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+		
+		for(i=0; i<3; i++) {          // local area force for p1
+			force[i] += fac*m1[i]/3.0;
+		}    
+		for(i=0; i<3; i++) {          // local area force for p2
+			force2[i] += fac*m2[i]/3.0;
+		}
+		for(i=0; i<3; i++) {          // local area force for p3
+			force3[i] += fac*m3[i]/3.0;
+		}
+            
         // triangle p2,p3,p4
         for(i=0; i<3; i++) {         // centroid of triangle p2,p3,p4
             h[i]=1.0/3.0 *(fp2[i]+fp3[i]+fp4[i]);
         }
         A=area_triangle(fp2,fp3,fp4);
-        aa=(A - iaparams->p.oif_local_forces.A02)/sqrt(A);
-        vecsub(h,fp4,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p4
-            force4[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
-        vecsub(h,fp2,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p2
-            force2[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
-        vecsub(h,fp3,rh);
-        hn=normr(rh);
-        for(i=0; i<3; i++) {          // local area force for p3
-            force3[i] += iaparams->p.oif_local_forces.kal * aa * rh[i]/(3*hn);
-        }
+        t = sqrt(A/iaparams->p.oif_local_forces.A02) - 1.0;    				////
+        vecsub(h,fp2,m1);
+        vecsub(h,fp3,m2);
+        vecsub(h,fp4,m3);					
+        
+        m1_length = normr(m1);
+		m2_length = normr(m2);
+		m3_length = normr(m3);
+		
+		fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+		
+		for(i=0; i<3; i++) {          // local area force for p2
+			force2[i] += fac*m1[i]/3.0;
+		}    
+		for(i=0; i<3; i++) {          // local area force for p3
+			force3[i] += fac*m2[i]/3.0;
+		}
+		for(i=0; i<3; i++) {          // local area force for p4
+			force4[i] += fac*m3[i]/3.0;
+		}
+
     }
   return 0;
 }

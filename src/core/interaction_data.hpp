@@ -623,14 +623,15 @@ typedef struct {
 
 /** Parameters for oif_local_forces */
 typedef struct {
-  double r0;
-  double ks;
-  double kslin;
-  double phi0;
-  double kb;
-  double A01;
-  double A02;
-  double kal;
+    double r0;
+    double ks;
+    double kslin;
+    double phi0;
+    double kb;
+    double A01;
+    double A02;
+    double kal;
+    double kvisc;
 } Oif_local_forces_bond_parameters;
 
 /** Parameters for oif_out_direction */
