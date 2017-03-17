@@ -337,7 +337,7 @@ void lb_init_boundaries() {
       ++moving_count;
     }
 
-    if (lbboundaries.size() || pdb_boundary_lattice) {
+    if (lbboundaries.size() || lbmovingboundaries.size() || pdb_boundary_lattice) {
       lb_init_boundaries_GPU(lbboundaries.size(), lbmovingboundaries.size(), number_of_boundnodes,
                              host_boundary_node_list, host_boundary_index_list,
                              boundary_velocity, host_moving_boundary);

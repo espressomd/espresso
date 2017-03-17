@@ -4884,7 +4884,6 @@ void lb_integrate_moving_boundaries(){
    //if ( !n_integration_steps % 5000)
        // printf("\n %d: boundary velocity %f %f %f; boundary omega(lab) %f %f %f,force_hyd %e, track %e ,force_add %f, track %f, diff %f torque_track %e %e %e\n",n_integration_steps, host_lb_moving_boundary[ii].m.v[0], host_lb_moving_boundary[ii].m.v[1], host_lb_moving_boundary[ii].m.v[2],omega[0],omega[1],omega[2], host_lb_moving_boundary[ii].f.sf[0], hyd_track, force_add[0], add_track, -hyd_track+add_track,torque_track[0] ,torque_track[1] ,torque_track[2] );
 
-      fprintf(stderr, "Copying stuff back to the boundary (hopefully)\n");
       auto lbb = LBBoundaries::lbmovingboundaries[ii];
 
       int rc;
