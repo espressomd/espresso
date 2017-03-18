@@ -80,9 +80,10 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             # 2 different langevin parameters for particles
             gamma = np.array((0.2 + random(2)) * 20)
             temp = np.array([2.5, 2.0])
-            gamma_rot_1 = np.array((0.2 + random(2)) * 20)
-            gamma_rot_2 = np.array((0.2 + random(2)) * 20)
-            gamma_rot_3 = np.array((0.2 + random(2)) * 20)
+            # gamma_rot matrix: [2 types of particless] x [3 dimensions X Y Z]
+            gamma_rot = np.zeros((2,3))
+            for k in range(2):
+                gamma_rot[k,:] = np.array((0.2 + random(3)) * 20)
 
             box = 10.0
             self.es.box_l = [box, box, box]
@@ -120,24 +121,20 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
                     self.es.part.add(id = ind, mass = mass, rinertia = J, pos = part_pos, v = part_v, omega_body = part_omega_body)
                     if test_case == 1:
                         self.es.part[ind].gamma = np.array([gamma[k],gamma[k],gamma[k]])
-                        self.es.part[ind].gamma_rot = np.array([gamma_rot_1[k], gamma_rot_2[k], gamma_rot_3[k]])
+                        self.es.part[ind].gamma_rot = gamma_rot[k,:]
                     if test_case == 2:
                         self.es.part[ind].temp = temp[k]
                     if test_case == 3:
                         self.es.part[ind].gamma = np.array([gamma[k],gamma[k],gamma[k]])
-                        self.es.part[ind].gamma_rot = np.array([gamma_rot_1[k], gamma_rot_2[k], gamma_rot_3[k]])
+                        self.es.part[ind].gamma_rot = gamma_rot[k,:]
                         self.es.part[ind].temp = temp[k]
 
-            vx2 = np.array([0.0, 0.0])
-            vy2 = np.array([0.0, 0.0])
-            vz2 = np.array([0.0, 0.0])
-            ox2 = np.array([0.0, 0.0])
-            oy2 = np.array([0.0, 0.0])
-            oz2 = np.array([0.0, 0.0])
-            dx2 = np.array([0.0, 0.0])
-            dy2 = np.array([0.0, 0.0])
-            dz2 = np.array([0.0, 0.0])
-            dr  = np.array([0.0, 0.0])
+            # matrices: [2 types of particless] x [3 dimensions X Y Z]
+            # velocity^2, omega^2, position^2
+            v2 = np.zeros((2,3))
+            o2 = np.zeros((2,3))
+            dr2 = np.zeros((2,3))
+            dr_norm = np.array([0.0, 0.0])
             sigma2_tr = np.array([0.0, 0.0])
             
             pos0 = np.zeros((2 * n, 3))
@@ -162,34 +159,26 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
                         v = self.es.part[ind].v
                         o = self.es.part[ind].omega_body
                         pos = self.es.part[ind].pos
-                        ox2[k] = ox2[k] + math.pow(o[0], 2)
-                        oy2[k] = oy2[k] + math.pow(o[1], 2)
-                        oz2[k] = oz2[k] + math.pow(o[2], 2)
-                        vx2[k] = vx2[k] + math.pow(v[0], 2)
-                        vy2[k] = vy2[k] + math.pow(v[1], 2)
-                        vz2[k] = vz2[k] + math.pow(v[2], 2)
-                        dx2[k] = math.pow((pos[0] - pos0[ind,0]), 2)
-                        dy2[k] = math.pow((pos[1] - pos0[ind,1]), 2)
-                        dz2[k] = math.pow((pos[2] - pos0[ind,2]), 2)
+                        o2[k,:] = o2[k,:] + np.power(o[:], 2)
+                        v2[k,:] = v2[k,:] + np.power(v[:], 2)
+                        dr2[k,:] = np.power((pos[:] - pos0[ind,:]), 2)
                         dt0 = mass / gamma_tr[k]
                         dt = (int_steps * (i + 1) + therm_steps) * self.es.time_step
                         # translational diffusion variance: after a closed-form integration of the Langevin EOM
                         sigma2_tr[k] = D_tr[k] * (6 * dt + 3 * dt0 * (- 3 + 4 * math.exp(- dt / dt0) - math.exp( - 2 * dt / dt0)))
-                        dr[k] = dr[k] + (dx2[k] + dy2[k] + dz2[k] - sigma2_tr[k]) / sigma2_tr[k]
+                        dr_norm[k] = dr_norm[k] + (sum(dr2[k,:]) - sigma2_tr[k]) / sigma2_tr[k]
                         
             tolerance = 0.15
-            Evx = 0.5 * mass * vx2 / (n * loops)
-            Evy = 0.5 * mass * vy2 / (n * loops)
-            Evz = 0.5 * mass * vz2 / (n * loops)
-            Eox = 0.5 * J[0] * ox2 / (n * loops)
-            Eoy = 0.5 * J[1] * oy2 / (n * loops)
-            Eoz = 0.5 * J[2] * oz2 / (n * loops)
-            dv = (Evx + Evy + Evz) / (3 * halfkT) - 1.0
-            do = (Eox + Eoy + Eoz) / (3 * halfkT) - 1.0
-            dox = Eox / halfkT - 1.0
-            doy = Eoy / halfkT - 1.0
-            doz = Eoz / halfkT - 1.0
-            dr = dr / (n * loops)
+            Ev = 0.5 * mass * v2 / (n * loops)
+            Eo = 0.5 * J * o2 / (n * loops)
+            dv = np.zeros((2))
+            do = np.zeros((2))
+            do_vec = np.zeros((2,3))
+            for k in range(2):
+                dv[k] = sum(Ev[k,:]) / (3 * halfkT[k]) - 1.0
+                do[k] = sum(Eo[k,:]) / (3 * halfkT[k]) - 1.0
+                do_vec[k,:] = Eo[k,:] / halfkT[k] - 1.0
+            dr_norm = dr_norm / (n * loops)
             for k in range(2):
                 print("\n")
                 print("k = " + str(k))
@@ -197,20 +186,20 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
                 print("gamma_tr = " + str(gamma_tr[k]))
                 print("Moment of inertia principal components: = " + str(J))
                 print("1/2 kT = " + str(halfkT[k]))
-                print("Translational energy: {0} {1} {2}".format(Evx[k], Evy[k], Evz[k]))
-                print("Rotational energy: {0} {1} {2}".format(Eox[k], Eoy[k], Eoz[k]))
+                print("Translational energy: {0} {1} {2}".format(Ev[k,0], Ev[k,1], Ev[k,2]))
+                print("Rotational energy: {0} {1} {2}".format(Eo[k,0], Eo[k,1], Eo[k,2]))
 
                 print("Deviation in translational energy: " + str(dv[k]))
                 print("Deviation in rotational energy: " + str(do[k]))
-                print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(dox[k], doy[k], doz[k]))
-                print("Deviation in translational diffusion: " + str(dr[k]))
+                print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(do_vec[k,0], do_vec[k,1], do_vec[k,2]))
+                print("Deviation in translational diffusion: " + str(dr_norm[k]))
                 
                 self.assertTrue(abs(dv[k]) <= tolerance, msg = 'Relative deviation in translational energy too large: {0}'.format(dv[k]))
                 self.assertTrue(abs(do[k]) <= tolerance, msg = 'Relative deviation in rotational energy too large: {0}'.format(do[k]))
-                self.assertTrue(abs(dox[k]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(dox[k]))
-                self.assertTrue(abs(doy[k]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(doy[k]))
-                self.assertTrue(abs(doz[k]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(doz[k]))
-                self.assertTrue(abs(dr[k]) <= tolerance, msg = 'Relative deviation in translational diffusion too large: {0}'.format(dr[k]))
+                self.assertTrue(abs(do_vec[k,0]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k,0]))
+                self.assertTrue(abs(do_vec[k,1]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k,1]))
+                self.assertTrue(abs(do_vec[k,2]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k,2]))
+                self.assertTrue(abs(dr_norm[k]) <= tolerance, msg = 'Relative deviation in translational diffusion too large: {0}'.format(dr_norm[k]))
 
         def test(self):
             for i in range(4):
