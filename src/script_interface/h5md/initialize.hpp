@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "config.hpp"
 #ifdef H5MD
 #ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
@@ -26,7 +25,7 @@
 namespace ScriptInterface {
 namespace Writer {
 
-    void initialize();
+void initialize();
 
 } /* namespace Writer */
 } /* namespace ScriptInterface */

@@ -110,7 +110,7 @@ cdef class mayaviLive:
         This is called periodically in the GUI thread"""
         if self.data is None:
             return
-        
+
         assert isinstance(threading.current_thread(), threading._MainThread)
 
         f = mlab.gcf()
@@ -143,7 +143,7 @@ cdef class mayaviLive:
         if self.last_T is not None and self.last_T == self.system.time:
             return
         self.last_T = self.system.time
-        
+
         cdef int N = len(self.system.part)
         coords = numpy.zeros((N,3))
         types = numpy.empty(N, dtype=int)
@@ -182,7 +182,7 @@ cdef class mayaviLive:
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size()//3
-        
+
         bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n

@@ -38,6 +38,10 @@ cdef class HydrodynamicInteraction(Actor):
 ####################################################
 IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+        
+        """
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -183,7 +187,7 @@ IF LB_GPU or LB:
             os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
-       
+
         # input/output function wrappers for LB nodes
         ####################################################
 
@@ -203,6 +207,10 @@ IF LB_GPU or LB:
 
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+        
+        """
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
@@ -236,8 +244,8 @@ IF LB or LB_GPU:
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
-                
-            
+
+
         property pi:
             def __get__(self):
                 cdef double[6] pi
@@ -267,7 +275,8 @@ IF LB or LB_GPU:
                 return double_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                cdef double[19] double_return = value
+                lb_lbnode_set_pop(self.node, double_return)
 
         property boundary:
             def __get__(self):

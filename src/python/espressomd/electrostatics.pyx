@@ -40,7 +40,7 @@ cdef class ElectrostaticInteraction(actors.Actor):
         coulomb.method = COULOMB_NONE
         mpi_bcast_coulomb_params()
 
-    def Tune(self, subsetTuneParams=None):
+    def Tune(self, **subsetTuneParams):
 
         # Override default parmas with subset given by user
         tuneParams = self.default_params()
@@ -55,7 +55,7 @@ cdef class ElectrostaticInteraction(actors.Actor):
         for param in tuneParams.iterkeys():
             if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
                 self._params[param] = tuneParams[param]
-        self._set_params_in_es_core()
+        print(self._params)
         self._tune()
 
 IF COULOMB_DEBYE_HUECKEL:
@@ -149,6 +149,53 @@ ELSE:
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
 
+        def __init__(self, *args, **kwargs):
+            """
+            P3M electrostatics solver.
+
+            Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
+            summation method to calculate potentials in N-body simulation.  
+
+            Parameters
+            ----------
+            bjerrum_length : float
+                             The separation at which the electrostatic interaction
+                             energy and thermal energy are comparable. Defined as
+                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+            accuracy : float
+                       P3M tunes its parameters to provide this target accuracy.
+
+            alpha : float, optional 
+                    The Ewald parameter.
+
+            cao : float, optional 
+                  The charge-assignment order, an integer between 0 and 7.
+
+            epsilon : string, optional
+                      Use 'metallic' to set the dielectric constant of the
+                      surrounding medium to infinity (Default).
+
+            epsilon : float, optional
+                      A positive number for the dielectric constant of the
+                      surrounding medium.
+
+            mesh : int, optional 
+                   The number of mesh points
+
+            mesh : array_like, optional
+                   The number of mesh points in x, y and z direction. This is
+                   relevant for 8 noncubic boxes.
+
+            r_cut : float, optional
+                    The real space cutoff.
+
+            tune : bool, optional
+                   Used to activate/deactivate the tuning method on activation.
+                   Defaults to True
+
+            """
+            super(type(self), self).__init__(*args, **kwargs)
+
         def validate_params(self):
             default_params = self.default_params()
             if not (self._params["bjerrum_length"] > 0.0):
@@ -191,10 +238,10 @@ IF P3M == 1:
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "bjerrum_length", "tune"
 
         def required_keys(self):
-            return ["bjerrum_length"]
+            return ["bjerrum_length", "accuracy"]
 
         def default_params(self):
             return {"cao": 0,
@@ -248,6 +295,53 @@ IF P3M == 1:
     IF CUDA:
         cdef class P3M_GPU(ElectrostaticInteraction):
 
+            def __init__(self, *args, **kwargs):
+                """
+                P3M electrostatics solver with GPU support.
+
+                Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
+                summation method to calculate potentials in N-body simulation.  
+
+                Parameters
+                ----------
+                bjerrum_length : float
+                                 The separation at which the electrostatic interaction
+                                 energy and thermal energy are comparable. Defined as
+                                 :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+                accuracy : float
+                           P3M tunes its parameters to provide this target accuracy.
+
+                alpha : float, optional 
+                        The Ewald parameter.
+
+                cao : float, optional 
+                      The charge-assignment order, an integer between 0 and 7.
+
+                epsilon : string, optional
+                          Use 'metallic' to set the dielectric constant of the
+                          surrounding medium to infinity (Default).
+
+                epsilon : float, optional
+                          A positive number for the dielectric constant of the
+                          surrounding medium.
+
+                mesh : int, optional 
+                       The number of mesh points
+
+                mesh : array_like, optional
+                       The number of mesh points in x, y and z direction. This is
+                       relevant for 8 noncubic boxes.
+
+                r_cut : float, optional
+                        The real space cutoff.
+
+                tune : bool, optional
+                       Used to activate/deactivate the tuning method on activation.
+                       Defaults to True
+
+                """
+                super(type(self), self).__init__(*args, **kwargs)
+
             def validate_params(self):
                 default_params = self.default_params()
                 if not (self._params["bjerrum_length"] > 0.0):
@@ -288,10 +382,10 @@ IF P3M == 1:
                         "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
             def valid_keys(self):
-                return "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "bjerrum_length", "tune"
+                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "bjerrum_length", "tune"
 
             def required_keys(self):
-                return ["bjerrum_length"]
+                return ["bjerrum_length", "accuracy"]
 
             def default_params(self):
                 return {"cao": 0,
@@ -309,10 +403,10 @@ IF P3M == 1:
                 params.update(p3m.params)
                 params["bjerrum_length"] = coulomb.bjerrum
                 params["tune"] = self._params["tune"]
-                params["box"] = self.system.box_l
                 return params
 
             def _tune(self):
+                coulomb_set_bjerrum(self._params["bjerrum_length"])
                 python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                                            "cao"], -1.0, self._params["accuracy"], self._params["inter"])
                 resp = python_p3m_adaptive_tune()
@@ -322,25 +416,68 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                self._set_params_in_es_core()
+                #self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
-                # python_p3m_gpu_init(self._params)
                 if self._params["tune"]:
                     self._tune()
-
+                python_p3m_gpu_init(self._params)
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
+                coulomb_set_bjerrum(self._params["bjerrum_length"])
                 python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
                                       "cao"], self._params["alpha"], self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
-                coulomb_set_bjerrum(self._params["bjerrum_length"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
 
-
 IF ELECTROSTATICS and CUDA and EWALD_GPU:
     cdef class EwaldGpu(ElectrostaticInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """
+            P3M electrostatics solver with GPU support.
+
+            Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
+            summation method to calculate potentials in N-body simulation.  
+
+            Parameters
+            ----------
+            bjerrum_length : float
+                             The separation at which the electrostatic interaction
+                             energy and thermal energy are comparable. Defined as
+                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+            accuracy : float
+                       Maximal allowed root mean square error regarding the forces
+
+            precision : float
+                        Determines how precise alpha will be computed
+
+            K_max : float,
+                    Maximal reciprocal space cutoff to be tested in the
+                    tuning algorithm
+
+            K_max : array_like,
+                    Maximal reciprocal space cutoff to be tested in the
+                    tuning algorithm, specified for each dimension.
+
+            alpha : float, optional 
+                    The Ewald parameter.
+
+            rcut : float, optional
+                    The real space cutoff.
+
+            num_kx : ??
+
+            num_ky : ??
+
+            num_kz : ??
+
+            time_calc_steps : ??
+
+            """
+            super(type(self), self).__init__(*args, **kwargs)
+
         cdef EwaldgpuForce * thisptr
         cdef EspressoSystemInterface * interface
         cdef char * log
