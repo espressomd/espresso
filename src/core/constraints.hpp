@@ -1,17 +1,15 @@
 #ifndef CONSTRAINTS_HPP
 #define CONSTRAINTS_HPP
 
-#include "config.hpp"
 #include "ObjectRegistry.hpp"
-
+#include "config.hpp"
 
 #include <memory>
 #include <vector>
 
+#include "constraints/Constraint.hpp"
 #include "energy.hpp"
 #include "particle_data.hpp"
-#include "constraints/Constraint.hpp"
-
 
 namespace Constraints {
 extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
@@ -19,14 +17,15 @@ extern ObjectRegistry<std::vector<std::shared_ptr<Constraint>>> constraints;
 #ifdef CONSTRAINTS
 
 inline void add_constraints_forces(Particle *p) {
-  
-  // Copy position and image count so as not to modify particle when folding position
+
+  // Copy position and image count so as not to modify particle when folding
+  // position
   int image[3];
   double pos[3];
-  memcpy(pos,p->r.p,3*sizeof(double));
-  memcpy(image,p->l.i,3*sizeof(int));
+  memcpy(pos, p->r.p, 3 * sizeof(double));
+  memcpy(image, p->l.i, 3 * sizeof(int));
 
-  fold_position(pos,image);
+  fold_position(pos, image);
   for (auto const &c : Constraints::constraints) {
     c->add_force(p, pos);
   }
@@ -42,9 +41,9 @@ inline void add_constraints_energy(Particle *p) {
 
   int image[3];
   double pos[3];
-  memcpy(pos,p->r.p,3*sizeof(double));
-  memcpy(image,p->l.i,3*sizeof(int));
-  fold_position(pos,image);
+  memcpy(pos, p->r.p, 3 * sizeof(double));
+  memcpy(image, p->l.i, 3 * sizeof(int));
+  fold_position(pos, image);
   for (auto const &c : Constraints::constraints) {
     c->add_energy(p, p->r.p, energy);
   }

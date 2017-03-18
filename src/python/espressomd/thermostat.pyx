@@ -36,12 +36,14 @@ class AssertThermostatType():
     This will prefix an assertion for THERMO_LANGEVIN to the call.
 
     """
+
     def __init__(self, *args):
         self.thermo_type = args
+
     def __call__(self, f):
         def __f(*args, **kwargs):
-            if  ( not (thermo_switch in self.thermo_type) and
-                  (thermo_switch != THERMO_OFF) ):
+            if (not (thermo_switch in self.thermo_type) and
+                  (thermo_switch != THERMO_OFF)):
                 raise Exception("A different thermostat is already set!")
             f(*args, **kwargs)
         return __f
@@ -90,17 +92,18 @@ cdef class Thermostat:
             if thmst["type"] == "OFF":
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
-                self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"], gamma_rotation=thmst["gamma_rotation"])
+                self.set_langevin(kT=thmst["kT"], gamma=thmst[
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
             if thmst["type"] == "LB":
                 self.set_lb(kT=thmst["kT"])
             if thmst["type"] == "NPT_ISO":
-                self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"], piston=thmst["piston"])
+                self.set_npt(kT=thmst["kT"], p_diff=thmst[
+                             "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
                 pass
 
     def get_ts(self):
         return thermo_switch
-
 
     def get_state(self):
         """Returns the thermostat status."""
@@ -164,7 +167,6 @@ cdef class Thermostat:
             thermo_list.append(dpd_dict)
         return thermo_list
 
-
     def turn_off(self):
         """Turns off all the thermostat and sets all the thermostat variables to zero"""
 
@@ -196,11 +198,28 @@ cdef class Thermostat:
     @AssertThermostatType(THERMO_LANGEVIN)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
         """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'"""
-        
+        and optional parameter 'gamma_rotation'.
+
+        Parameters
+        -----------
+        'kT': float
+            Thermal energy of the simulated heat bath.
+
+        'gamma': float
+            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+            is compiled in then 'gamma' can be a list of three positive floats, for the friction
+            coefficient in each cardinal direction.
+
+        gamma_rotation: float, optional
+            The same applies to 'gamma_rotation', which requires the feature
+            'ROTATION' to work properly. But also accepts three floating point numbers
+            if 'PARTICLE_ANISOTROPY' is also compiled in.
+
+        """
+
         scalar_gamma_def = True
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma,list):
+            if isinstance(gamma, list):
                 scalar_gamma_def = False
             else:
                 scalar_gamma_def = True
@@ -208,18 +227,22 @@ cdef class Thermostat:
         if kT is None or gamma is None:
             raise ValueError(
                 "Both, kT and gamma have to be given as keyword args")
-        utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+        utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
         if scalar_gamma_def:
-            utils.check_type_or_throw_except(gamma,1,float,"gamma must be a number")
+            utils.check_type_or_throw_except(
+                gamma, 1, float, "gamma must be a number")
         else:
-            utils.check_type_or_throw_except(gamma,3,float,"diagonal elements of the gamma tensor must be numbers")
-        
+            utils.check_type_or_throw_except(
+                gamma, 3, float, "diagonal elements of the gamma tensor must be numbers")
+
         if scalar_gamma_def:
             if float(kT) < 0. or float(gamma) < 0.:
-                raise ValueError("temperature and gamma must be positive numbers")
+                raise ValueError(
+                    "temperature and gamma must be positive numbers")
         else:
             if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
-                raise ValueError("temperature and diagonal elements of the gamma tensor must be positive numbers")
+                raise ValueError(
+                    "temperature and diagonal elements of the gamma tensor must be positive numbers")
         global langevin_gamma_rotation
         IF ROTATION:
             if gamma_rotation is not None:
@@ -254,7 +277,17 @@ cdef class Thermostat:
     IF LB_GPU or LB:
         @AssertThermostatType(THERMO_LB)
         def set_lb(self, kT=None):
-            """Sets the LB thermostat with required parameter 'temperature'"""
+            """
+            Sets the LB thermostat with required parameter 'kT'.
+
+            This thermostat requires the feature LB or LB_GPU.
+
+            Parameters
+            ----------
+            'kT':   float
+                Specifies the thermal energy of the heat bath
+
+            """
 
             if kT is None:
                 raise ValueError(
@@ -273,7 +306,22 @@ cdef class Thermostat:
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)
         def set_npt(self, kT=None, gamma0=None, gammav=None):
-            """Sets the NPT thermostat with required parameters 'temperature' 'gamma0' 'gammav'"""
+            """
+            Sets the NPT thermostat with required parameters 'temperature', 'gamma0', 'gammav'.
+
+            Parameters
+            ----------
+
+            'kT': float
+                Thermal energy of the heat bath
+
+            'gamma0': float
+                Friction coefficient of the bath
+
+            'gammav': float
+                Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+            """
+
             if kT is None or gamma0 is None or gammav is None:
                 raise ValueError(
                     "kT, gamma0 and gammav have to be given as keyword args")
@@ -296,7 +344,34 @@ cdef class Thermostat:
     IF DPD or INTER_DPD:
         @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
         def set_dpd(self, **kwargs):
-            """Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'"""
+            """
+            Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
+            
+            Parameters
+            ----------
+            'kT': float 
+                Thermal energy of the heat bath, floating point number
+
+            'gamma': float 
+                Friction the particles experience in the bath, floating point number
+
+            'r_cut': float
+                Cut off value, floating point number
+
+            'wf'   : integer, optional
+                Integer value zero or one, affects scaling of the random forces
+        
+            'tgamma': float, optional
+                Friction coefficient for the transverse DPD algorithm
+
+            'tr_cut': float, optional
+                Cut off radius for the transverse DPD
+
+            'twf'   : integer 
+                Interger value zero or one, affects the scaling of the random forces
+                in the transverse DPD algorithm
+
+            """
             req = ["kT","gamma","r_cut"]
             valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
             raise Exception("Not implemented yet.")

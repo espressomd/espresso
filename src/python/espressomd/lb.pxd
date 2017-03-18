@@ -95,6 +95,7 @@ IF LB_GPU or LB:
         int lb_lbnode_get_pi(int * coord, double * double_return)
         int lb_lbnode_get_pi_neq(int * coord, double * double_return)
         int lb_lbnode_get_pop(int * coord, double * double_return)
+        int lb_lbnode_set_pop(int * coord, double * double_return)
         int lb_lbnode_get_boundary(int * coord, int * int_return)
         int lb_lbfluid_set_couple_flag(int c_couple_flag)
         int lb_lbfluid_get_couple_flag(int * c_couple_flag)

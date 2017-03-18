@@ -40,8 +40,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
          
         test_P3M = generate_test_for_class(system, P3M, dict(bjerrum_length=1.0,
                                                                      epsilon=0.0,
-                                                                     inter=1000,
-                                                                     mesh_off=[0.5, 0.5, 0.5],
                                                                      r_cut=2.4,
                                                                      mesh=[2, 2, 2],
                                                                      cao=1,
