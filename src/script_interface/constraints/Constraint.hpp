@@ -25,7 +25,6 @@
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/shapes/Shape.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -33,47 +32,9 @@ namespace Constraints {
 class Constraint : public ScriptInterfaceBase {
 public:
   Constraint()
-      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {}
+      : m_constraint(new ::Constraints::Constraint()) {}
 
   const std::string name() const override { return "Constraints::Constraint"; }
-
-  VariantMap get_parameters() const override {
-    return {{"only_positive", m_constraint->only_positive()},
-            {"penetrable", m_constraint->penetrable()},
-            {"particle_type", m_constraint->type()},
-            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
-  }
-
-  ParameterMap valid_parameters() const override {
-    return {{"only_positive", {ParameterType::INT, true}},
-            {"penetrable", {ParameterType::INT, true}},
-            {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECTID, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if ((name == "shape") && (boost::get<ObjectId>(value) != ObjectId())) {
-      std::shared_ptr<ScriptInterfaceBase> so_ptr =
-          ScriptInterface::get_instance(value);
-
-      auto shape_ptr =
-          std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);
-
-      /* We are expecting a ScriptInterface::Shapes::Shape here,
-         throw if not. That means the assigned object had the wrong type. */
-      if (shape_ptr != nullptr) {
-        m_constraint->set_shape(shape_ptr->shape());
-        /* Store a reference */
-        m_shape = shape_ptr;
-      } else {
-        throw std::runtime_error("shape parameter expects a Shapes::Shape");
-      }
-    }
-
-    SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
-    SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
-    SET_PARAMETER_HELPER("particle_type", m_constraint->type());
-  }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
@@ -91,8 +52,6 @@ private:
   /* The actual constraint */
   std::shared_ptr<::Constraints::Constraint> m_constraint;
 
-  /* Keep a reference to the shape */
-  std::shared_ptr<ScriptInterfaceBase> m_shape;
 };
 
 } /* namespace Constraints */

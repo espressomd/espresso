@@ -15,9 +15,9 @@ public:
   }
 
   virtual void add_energy(Particle *p, double *folded_pos,
-                  Observable_stat &energy) const = 0;
+                  Observable_stat &energy) const {};
 
-  virtual void add_force(Particle *p, double *folded_pos) = 0;
+  virtual void add_force(Particle *p, double *folded_pos) {};
 
   void reset_force() { m_local_force = Vector3d{0, 0, 0}; }
   Vector3d total_force() const;
