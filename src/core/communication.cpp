@@ -263,7 +263,6 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
-  int reorder = 1;
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
