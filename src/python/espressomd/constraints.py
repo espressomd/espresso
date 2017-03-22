@@ -54,3 +54,7 @@ class Constraint(ScriptInterfaceHelper):
       One of the shapes from :mod:`espressomd.shapes`
     """
     _so_name = "Constraints::Constraint"
+
+class ShapeBasedConstraint(ScriptInterfaceHelper):
+
+    _so_name = "Constraints::ShapeBasedConstraint"

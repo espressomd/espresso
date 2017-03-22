@@ -22,8 +22,8 @@ public:
   void reset_force() { m_local_force = Vector3d{0, 0, 0}; }
   Vector3d total_force() const;
 
-private:
   Vector3d m_local_force;
+private:
 };
 
 } /* namespace Constaints */
