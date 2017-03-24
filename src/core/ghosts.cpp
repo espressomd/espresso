@@ -417,8 +417,6 @@ void put_recv_buffer(CommBuf& r_buffer, GhostCommunication *gc, int data_parts)
             this_node, r_buffer.bondbuf().end() - bond_retrieve );
     errexit();
   }
-  // Note: Asynchronous bond reception relies on resetting the bondbuffers to
-  // zero size.
   r_buffer.bondbuf().resize(0);
 }
 
@@ -572,6 +570,12 @@ static void ghost_communicator_async(GhostCommunicator *gc)
   // bond Isends are stored. After reception of the particle data, the finished
   // Irecv requests are replaced by new bond Irecv requests.
   static std::vector<MPI_Request> reqs;
+
+  // Zero the size of *all* bondbufs since the code relies of zero size receive
+  // bondbufs and at this point we cannot guarantee that all comm_types are
+  // ordered the same way for each GhostCommunicator.
+  for (int i = 0; i < commbufs.size(); ++i)
+    commbufs[i].bondbuf().resize(0);
 
   // Ensure minimum size of buffers
   if (commbufs.size() < gc->num) {
