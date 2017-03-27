@@ -21,13 +21,11 @@ class Constraints(ScriptInterfaceHelper):
 
         if len(args) == 1:
             if isinstance(args[0], ShapeBasedConstraint):
-                print("option 1")
                 constraint = args[0]
             else:
                 raise TypeError(
                     "Either a Constraint object or key-value pairs for the parameters of a Constraint object need to be passed.")
         else:
-            print("option 2")
             constraint = ShapeBasedConstraint(**kwargs)
         self.call_method("add", object=constraint)
         return constraint

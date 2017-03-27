@@ -9,6 +9,14 @@
 
 namespace Constraints {
 
+Vector3d ShapeBasedConstraint::total_force() const {
+    Vector3d total_force;
+    boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
+            std::plus<Vector3d>());                                                                         
+
+    return total_force;
+}
+
 void ShapeBasedConstraint::reflect_particle(Particle *p, const double *distance_vector,
                                   const double *folded_pos) const {
   double vec[3];
