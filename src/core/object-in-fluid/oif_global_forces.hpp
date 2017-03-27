@@ -308,7 +308,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 									
 			        fac = iaparams->p.oif_global_forces.ka_g*iaparams->p.oif_global_forces.A0_g*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 			
-                    // adding the proportionality coefficient, so that the influence of global force depends on the size of the triengle. To avoid merging of the mesh points.
+                    // adding the proportionality coefficient, so that the influence of global force depends on the size of the triangle. To avoid merging of the mesh points.
                     fac *= VOL_A/iaparams->p.oif_global_forces.A0_g; 
                     // end of adding proportionality coefficient
                     

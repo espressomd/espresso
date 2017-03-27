@@ -275,7 +275,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-        fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+        fac = iaparams->p.oif_local_forces.kal*iaparams->p.oif_local_forces.A01*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p1
 			force[i] += fac*m1[i]/3.0;
@@ -301,7 +301,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-		fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+		fac = iaparams->p.oif_local_forces.kal*iaparams->p.oif_local_forces.A02*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p2
 			force2[i] += fac*m1[i]/3.0;
