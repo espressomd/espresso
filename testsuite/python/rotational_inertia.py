@@ -13,7 +13,6 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
         def define_rotation_matrix(self, part):
             A = np.zeros((3,3))
             quat = self.es.part[part].quat
-            quatu = self.es.part[part].director
             qq = np.power(quat,2)
             
             A[0,0] = qq[0] + qq[1] - qq[2] - qq[3]
@@ -29,18 +28,14 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             A[2,1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1])
             
             return A
-
+        
         def convert_vec_body_to_space(self, part, vec):
-            vec_lab = np.zeros((3))
             A = self.define_rotation_matrix(part)
-            vec_lab[:] = A[0,:] * vec[0] + A[1,:] * vec[1] + A[2,:] * vec[2]
-            return vec_lab
-            
+            return np.dot(A.transpose(), vec)
+        
         # Angular momentum
         def L_body(self, part):
-            L_body_return = np.zeros((3))
-            L_body_return = self.es.part[part].omega_body[:] * self.es.part[part].rinertia[:]
-            return L_body_return
+            return self.es.part[part].omega_body[:] * self.es.part[part].rinertia[:]
             
         def test(self):
             self.es.cell_system.skin = 0
@@ -48,10 +43,7 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             
             #Inertial motion around the stable and unstable axes
             
-            self.es.thermostat.turn_off()
-            
             tol = 4E-3
-            T = np.zeros((3))
             # Anisotropic inertial moment. Stable axes correspond to J[1] and J[2].
             # The unstable axis corresponds to J[0]. These values relation is J[1] < J[0] < J[2].
             J = np.array([5,0.5,18.5])
@@ -63,10 +55,8 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             stable_omega = 57.65
             self.es.part[0].omega_body=np.array([0.15, stable_omega, -0.043])
             self.es.part[0].rinertia = J[:]
-            self.es.part[0].ext_torque = T[:]
             
             # Angular momentum
-            L_0_body = np.zeros((3))
             L_0_body = self.L_body(0)
             L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
             
@@ -87,7 +77,6 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             stable_omega = 3.2
             self.es.part[0].omega_body=np.array([0.011, -0.043, stable_omega])
             self.es.part[0].rinertia = J[:]
-            self.es.part[0].ext_torque = T[:]
             
             L_0_body = self.L_body(0)
             L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
@@ -109,7 +98,6 @@ if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.featur
             unstable_omega = 5.76
             self.es.part[0].omega_body=np.array([unstable_omega, -0.043, 0.15])
             self.es.part[0].rinertia = J[:]
-            self.es.part[0].ext_torque = T[:]
             
             L_0_body = self.L_body(0)
             L_0_lab = self.convert_vec_body_to_space(0, L_0_body)
