@@ -21,8 +21,8 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "Constraint.hpp"
 #include "Constraints.hpp"
+
 #include "ShapeBasedConstraint.hpp"
 
 namespace ScriptInterface {

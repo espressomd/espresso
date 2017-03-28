@@ -11,7 +11,7 @@
 
 namespace Constraints {
 
-class ShapeBasedConstraint : Constraint {
+class ShapeBasedConstraint : public Constraint {
 public:
   enum class ReflectionType { NONE, NORMAL, NORMAL_TANGENTIAL };
 

@@ -24,26 +24,19 @@
 
 #include "core/constraints/Constraint.hpp"
 #include "core/utils/Factory.hpp"
-#include "script_interface/ScriptInterface.hpp"
+#include "../ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
 class Constraint : public ScriptInterfaceBase {
 public:
-  Constraint()
-      : m_constraint(new ::Constraints::Constraint()) {}
+    Constraint() {};
 
-  const std::string name() const override { return "Constraints::Constraint"; }
+  const std::string name() const override { return "Constraint::Constraint"; }
 
-
-  std::shared_ptr<::Constraints::Constraint> constraint() {
-    return m_constraint;
-  }
-
-private:
-  /* The actual constraint */
-  std::shared_ptr<::Constraints::Constraint> m_constraint;
+  virtual std::shared_ptr<const ::Constraints::Constraint> constraint() const = 0;
+  virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;
 
 };
 
