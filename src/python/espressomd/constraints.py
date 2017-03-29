@@ -15,16 +15,16 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        Either an :class:`espressomd.constraints.ShapeBasedConstraint`, or
-        the parameters to construct one.
+        Either an :class:`espressomd.constraints.Constraint`, or
+        the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
         """
 
         if len(args) == 1:
-            if isinstance(args[0], ShapeBasedConstraint):
+            if isinstance(args[0], Constraint):
                 constraint = args[0]
             else:
                 raise TypeError(
-                    "Either a Constraint object or key-value pairs for the parameters of a Constraint object need to be passed.")
+                    "Either a Constraint object or key-value pairs for the parameters of a ShapeBasedConstraint object need to be passed.")
         else:
             constraint = ShapeBasedConstraint(**kwargs)
         self.call_method("add", object=constraint)
@@ -50,7 +50,7 @@ class Constraint(ScriptInterfaceHelper):
 
     _so_name = "Constraints::Constraint"
 
-class ShapeBasedConstraint(ScriptInterfaceHelper):
+class ShapeBasedConstraint(Constraint):
     """
     Attributes
     ----------
