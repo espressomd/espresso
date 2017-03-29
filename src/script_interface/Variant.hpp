@@ -1,6 +1,8 @@
 #ifndef SCRIPT_INTERFACE_VARIANT_HPP
 #define SCRIPT_INTERFACE_VARIANT_HPP
 
+#include <type_traits>
+
 #include <boost/variant.hpp>
 
 #include "core/Vector.hpp"
@@ -28,6 +30,48 @@ enum class VariantType {
   OBJECTID,
   VECTOR
 };
+
+namespace detail {
+template <typename T, typename = void> struct infer_type_helper {
+  static_assert(true, "Type not supported by Variant.");
+};
+
+template <> struct infer_type_helper<bool> {
+  static constexpr VariantType value{VariantType::BOOL};
+};
+
+template <> struct infer_type_helper<std::string> {
+  static constexpr VariantType value{VariantType::STRING};
+};
+
+template <typename T>
+struct infer_type_helper<
+    T, typename std::enable_if<std::is_integral<T>::value, void>::type> {
+  static constexpr VariantType value{VariantType::INT};
+};
+
+template <typename T>
+struct infer_type_helper<
+    T, typename std::enable_if<std::is_floating_point<T>::value, void>::type> {
+  static constexpr VariantType value{VariantType::DOUBLE};
+};
+
+template <> struct infer_type_helper<std::vector<int>> {
+  static constexpr VariantType value{VariantType::INT_VECTOR};
+};
+
+template <> struct infer_type_helper<std::vector<double>> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
+template <> struct infer_type_helper<std::vector<Variant>> {
+  static constexpr VariantType value{VariantType::VECTOR};
+};
+}
+
+template <typename T> constexpr VariantType infer_type() {
+  return detail::infer_type_helper<T>::value;
+}
 
 std::string get_type_label(Variant const &);
 std::string get_type_label(VariantType);
