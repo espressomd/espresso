@@ -30,6 +30,7 @@ add_dependencies(EspressoCore EspressoConfig)
 target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
 
 if(SCAFACOS)
+  include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
 
