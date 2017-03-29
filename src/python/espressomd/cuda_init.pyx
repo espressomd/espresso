@@ -30,10 +30,23 @@ cdef class CudaInitHandle:
 
         IF CUDA == 1:
             def __set__(self, int _dev):
+                """
+                Specify which device to use.
+
+                Parameters
+                ----------
+
+                'dev':  integer
+                    Set the device id of the graphics card to use.
+
+                """
                 if cuda_set_device(_dev):
                     raise Exception("cuda device set error")
 
             def __get__(self):
+                """
+                Get the id of the currently set device
+                """
                 dev = cuda_get_device()
                 if dev == -1:
                     raise Exception("cuda device get error")

@@ -86,6 +86,7 @@ foreach(cython_file ${cython_SRC})
       list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
+                         --directive embedsignature=True
                          -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
                          -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso

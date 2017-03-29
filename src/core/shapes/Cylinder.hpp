@@ -48,7 +48,7 @@ protected:
   Vector3d m_axis;
   /** cylinder radius. */
   double m_rad;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  /** cylinder length. */
   double m_length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double m_direction;

@@ -25,12 +25,10 @@
 #include "Shape.hpp"
 #include "core/shapes/SpheroCylinder.hpp"
 
-#include "Cylinder.hpp"
-
 namespace ScriptInterface {
 namespace Shapes {
 
-class SpheroCylinder : public Cylinder {
+  class SpheroCylinder : public Shape {
 public:
   SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {}
 

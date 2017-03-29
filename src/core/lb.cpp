@@ -1381,7 +1381,16 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
     if (lattice_switch & LATTICE_LB_GPU) {
-        fprintf(stderr, "Not implemented for GPU\n");
+#ifdef LB_GPU
+      float population[19];
+
+      // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
+      int c = 0;
+      lb_lbfluid_get_population( ind, population, c );
+
+      for (int i = 0; i < LBQ; ++i)
+        p_pop[i] = population[i];
+#endif // LB_GPU
     } else {
 #ifdef LB
         index_t index;
@@ -1475,7 +1484,16 @@ int lb_lbnode_set_pi_neq(int* ind, double* pi_neq) {
 
 int lb_lbnode_set_pop(int* ind, double* p_pop) {
     if (lattice_switch & LATTICE_LB_GPU) {
-        printf("Not implemented in the LB GPU code!\n");
+#ifdef LB_GPU
+      float population[19];
+
+      for (int i = 0; i < LBQ; ++i)
+        population[i] = p_pop[i];
+
+      // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
+      int c = 0;
+      lb_lbfluid_set_population( ind, population, c );
+#endif // LB_GPU
     } else {
 #ifdef LB
         index_t index;

@@ -141,7 +141,7 @@ class openGLLive:
                 self.updateBonds()
                 self.updateConstraints()
                 self.hasParticleData = True
-            
+
             #IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
             self.elapsedTime += (time.time() - self.measureTimeBeforeIntegrate)
             if self.elapsedTime > 1.0 / self.specs['update_fps']:
@@ -199,7 +199,7 @@ class openGLLive:
     def updateConstraints(self):
 
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-        
+
         self.shapes = collections.defaultdict(list) 
 
         #Collect shapes and interaction type (for coloring) from constraints
@@ -219,19 +219,19 @@ class openGLLive:
             n = s[0].get_parameter('normal')
             edges = self.edgesFromPN(d*np.array(n),n,2*box_diag)
             self.shapes['Shapes::Wall'].append([edges,s[1]])
-        
+
         for s in coll_shape_obj['Shapes::Cylinder']:
             pos = np.array(s[0].get_parameter('center'))
             a = np.array(s[0].get_parameter('axis'))
             l = 2.0*s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append([pos - a*l*0.5, pos + a*l*0.5, r, s[1]])
-        
+
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Sphere'].append([pos, r, s[1]])
-        
+
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append([self.rasterizeBruteForce(s[0]), s[1]])
 
@@ -276,7 +276,7 @@ class openGLLive:
 
     #DRAW CALLED AUTOMATICALLY FROM GLUT DISPLAY FUNC
     def draw(self):
-    
+
         if self.specs['LB']:
             self.drawLBVel()
         if self.specs['draw_box']:
@@ -289,7 +289,7 @@ class openGLLive:
 
         if self.specs['draw_bonds']:
             self.drawBonds()
-        
+
         if self.specs['draw_constraints']:
             self.drawConstraints()
 
@@ -304,7 +304,7 @@ class openGLLive:
 
         for s in self.shapes['Shapes::Wall']:
             drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
-        
+
         for s in self.shapes['Shapes::Sphere']:
             drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'],s[2]), self.modulo_indexing(self.specs['constraint_type_materials'],s[2]), self.specs['quality_constraints'])
 
@@ -313,7 +313,7 @@ class openGLLive:
 
         for s in self.shapes['Shapes::Cylinder']:
             drawCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_constraints'],True)
-        
+
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
             drawPoints(s[0], self.specs['rasterize_pointsize'],  self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
@@ -349,7 +349,7 @@ class openGLLive:
             ext_f = self.particles['ext_forces'][pid]
 
             radius = self.determine_radius(ptype)
-                    
+
             material = self.modulo_indexing(self.specs['particle_type_materials'], ptype)
 
             if self.specs['particle_coloring'] == 'id':
@@ -680,7 +680,7 @@ class openGLLive:
             'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL))
 
 
-    
+
     #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def setLightPos(self): 
 #glPushMatrix()
@@ -722,7 +722,7 @@ class openGLLive:
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
-        
+
         # setup lighting
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
@@ -869,7 +869,7 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
         ax = 57.2957795 
     else:
         ax = 57.2957795 * acos(d[2] / v)
-    
+
     if d[2] < 0.0:
         ax = -ax
     rx = -d[1] * d[2]
@@ -878,7 +878,7 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
     #angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     glTranslatef(posA[0], posA[1], posA[2])
-   
+
 
     glRotatef(ax, rx, ry, 0.0)
 
@@ -895,7 +895,7 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
 #        glEnd()
 
     gluCylinder(quadric, radius, radius, length, quality, quality)
-    
+
     if draw_caps:
         gluDisk(quadric, 0, radius, quality, quality) 
 #glTranslatef(d[0], d[1], d[2])

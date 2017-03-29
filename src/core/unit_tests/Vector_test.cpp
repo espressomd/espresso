@@ -28,8 +28,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include "../Vector.hpp"
 
@@ -40,29 +40,6 @@
   { 0, 1, 2, 51, 492, 13036 }
 constexpr int test_numbers[] = TEST_NUMBERS;
 constexpr int n_test_numbers = sizeof(test_numbers) / sizeof(int);
-
-template <int n> bool il_constructor() {
-  bool pass = true;
-  Vector<n, int> v(TEST_NUMBERS);
-
-  pass &= v.size() == n;
-
-  for (int i = 0; i < std::min(n_test_numbers, n); i++)
-    pass &= v[i] == test_numbers[i];
-
-  return pass;
-}
-
-template <int n> bool default_constructor() {
-  bool pass = true;
-  Vector<n, int> v;
-
-  for (int i = 0; i < n; i++) {
-    v[i] = i;
-  }
-
-  return pass;
-}
 
 template <int n> bool norm2() {
   Vector<n, int> v(std::begin(test_numbers), test_numbers + n);
@@ -77,21 +54,20 @@ BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
 }
 
 BOOST_AUTO_TEST_CASE(iterator_constructor) {
-  Vector<n_test_numbers, int> v(std::begin(test_numbers), std::end(test_numbers));
+  Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                std::end(test_numbers));
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 }
 
 BOOST_AUTO_TEST_CASE(default_constructor_test) {
-  BOOST_CHECK(default_constructor<1>());
-  BOOST_CHECK(default_constructor<2>());
-  BOOST_CHECK(default_constructor<3>());
-  BOOST_CHECK(default_constructor<4>());
-  BOOST_CHECK(default_constructor<5>());
-  BOOST_CHECK(default_constructor<6>());
-  BOOST_CHECK(default_constructor<7>());
-  BOOST_CHECK(default_constructor<8>());
-  BOOST_CHECK(default_constructor<9>());
-  BOOST_CHECK(default_constructor<10>());
+  Vector<0, int> v1;
+  BOOST_CHECK(v1.size() == 0);
+  Vector<1, int> v2;
+  BOOST_CHECK(v2.size() == 1);
+  Vector<2, int> v3;
+  BOOST_CHECK(v3.size() == 2);
+  Vector<11, int> v4;
+  BOOST_CHECK(v4.size() == 11);
 }
 
 BOOST_AUTO_TEST_CASE(test_norm2) {
@@ -99,4 +75,28 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
   BOOST_CHECK(norm2<4>());
+}
+
+BOOST_AUTO_TEST_CASE(normalize) {
+  Vector<3, double> v{1, 2, 3};
+  v.normalize();
+
+  BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
+}
+
+BOOST_AUTO_TEST_CASE(operators) {
+  Vector<5, int> v1{1, 2, 3, 4, 5};
+  Vector<5, int> v2{6, 7, 8, 9, 10};
+
+  BOOST_CHECK(v1 < v2);
+  BOOST_CHECK(!(v1 < v1));
+  BOOST_CHECK(v1 <= v2);
+  BOOST_CHECK(v1 <= v1);
+  BOOST_CHECK(v2 > v1);
+  BOOST_CHECK(!(v2 > v2));
+  BOOST_CHECK(v2 >= v1);
+  BOOST_CHECK(v2 >= v2);
+  BOOST_CHECK(v1 != v2);
+  BOOST_CHECK(!(v1 == v2));
+  BOOST_CHECK(v1 == v1);
 }

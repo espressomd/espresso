@@ -21,25 +21,24 @@
 
 #include "Maze.hpp"
 
-using std::vector;
-using std::string;
-
 namespace ScriptInterface {
 namespace Shapes {
 
 ParameterMap Maze::valid_parameters() const {
-  return {{"nsphere", {ParameterType::DOUBLE, true}},
+  return {{"nsphere", {ParameterType::INT, true}},
           {"dim", {ParameterType::DOUBLE, true}},
           {"sphrad", {ParameterType::DOUBLE, true}},
-		  {"cylrad", {ParameterType::DOUBLE, true}}};
+          {"cylrad", {ParameterType::DOUBLE, true}}};
 }
 
 VariantMap Maze::get_parameters() const {
-  return {{"nsphere", m_maze->nsphere()}, {"dim", m_maze->dim()},
-          {"sphrad", m_maze->sphrad()}, {"cylrad", m_maze->cylrad()}};
+  return {{"nsphere", m_maze->nsphere()},
+          {"dim", m_maze->dim()},
+          {"sphrad", m_maze->sphrad()},
+          {"cylrad", m_maze->cylrad()}};
 }
 
-void Maze::set_parameter(const string &name,
+void Maze::set_parameter(const std::string &name,
                          const ScriptInterface::Variant &value) {
 
   SET_PARAMETER_HELPER("nsphere", m_maze->nsphere());
