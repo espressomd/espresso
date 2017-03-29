@@ -1,5 +1,6 @@
 set(py_tests  bondedInteractions.py
               cellsystem.py
+              constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
               electrostaticInteractions.py
