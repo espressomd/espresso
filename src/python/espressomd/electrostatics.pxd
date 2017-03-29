@@ -128,7 +128,7 @@ IF ELECTROSTATICS:
             return p3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
         cdef inline python_p3m_adaptive_tune():
-            cdef char * log = NULL
+            cdef char * log = ""
             cdef int response
             response = p3m_adaptive_tune(& log)
             print(log)
