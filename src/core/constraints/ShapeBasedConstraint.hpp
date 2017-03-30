@@ -22,6 +22,7 @@ public:
     reset_force();
   }
 
+
   virtual void add_energy(Particle *p, double *folded_pos,
                   Observable_stat &energy) const override;
 
