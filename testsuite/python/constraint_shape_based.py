@@ -13,10 +13,8 @@ import espressomd
 from espressomd import interactions
 from espressomd.shapes import Wall
 
-if not set(["CONSTRAINTS", "LENNARD_JONES"]) < set(espressomd.features()):
-    print("Features not available, skipping test!")
-    exit()
-
+@ut.skipIf(not set(["CONSTRAINTS", "LENNARD_JONES"]) < set(espressomd.features()),
+        "Features not available, skipping test!")
 class ShapeBasedConstraintTest(ut.TestCase):
 
     def prepare(self, S):
