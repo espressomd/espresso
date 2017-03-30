@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SCRIPT_INTERFACE_SHAPEBASEDCONSTRAINTS_CONSTRAINT_HPP
-#define SCRIPT_INTERFACE_SHAPEBASEDCONSTRAINTS_CONSTRAINT_HPP
+#ifndef SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
+#define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
