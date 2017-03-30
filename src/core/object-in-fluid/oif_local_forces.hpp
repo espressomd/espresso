@@ -265,8 +265,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         for(i=0; i<3; i++){            // centroid of triangle p1,p2,p3
             h[i]=1.0/3.0 *(fp1[i]+fp2[i]+fp3[i]);
         }
-        A=area_triangle(fp1,fp2,fp3); 	
-        t = sqrt(A/iaparams->p.oif_local_forces.A01) - 1.0; 
+        A=area_triangle(fp1,fp2,fp3); 	// Toto ma Iva inak spravene, ale robi to to iste, plati moja verzia        
         vecsub(h,fp1,m1);
         vecsub(h,fp2,m2);
         vecsub(h,fp3,m3);					
@@ -275,7 +274,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-        fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+        fac = iaparams->p.oif_local_forces.kal*(A - iaparams->p.oif_local_forces.A01)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p1
 			force[i] += fac*m1[i]/3.0;
@@ -291,8 +290,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         for(i=0; i<3; i++) {         // centroid of triangle p2,p3,p4
             h[i]=1.0/3.0 *(fp2[i]+fp3[i]+fp4[i]);
         }
-        A=area_triangle(fp2,fp3,fp4);
-        t = sqrt(A/iaparams->p.oif_local_forces.A02) - 1.0;    				////
+        A=area_triangle(fp2,fp3,fp4);     // Toto ma Iva inak spravene, ale robi to to iste, plati moja verzia   
         vecsub(h,fp2,m1);
         vecsub(h,fp3,m2);
         vecsub(h,fp4,m3);					
@@ -301,7 +299,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-		fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+		fac = iaparams->p.oif_local_forces.kal*(A - iaparams->p.oif_local_forces.A02)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p2
 			force2[i] += fac*m1[i]/3.0;
