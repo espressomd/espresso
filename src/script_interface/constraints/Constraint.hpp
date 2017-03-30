@@ -33,7 +33,7 @@ class Constraint : public ScriptInterfaceBase {
 public:
     Constraint() {};
 
-  const std::string name() const override { return "Constraint::Constraint"; }
+  const std::string name() const override { return "Constraints::Constraint"; }
 
   virtual std::shared_ptr<const ::Constraints::Constraint> constraint() const = 0;
   virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;
