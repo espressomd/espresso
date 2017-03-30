@@ -1,7 +1,9 @@
+//TODO remove guards, always compile reaction ensemble
 #ifndef REACTION_ENSEMBLE_H
 #define REACTION_ENSEMBLE_H
 
 #include "utils.hpp"
+namespace reaction_ensemble{
 
 typedef struct single_reaction{
 	//strict input to the algorithm
@@ -63,9 +65,9 @@ struct invalid_index : public std::exception {
     }
 };
 
-bool do_global_mc_move_for_one_particle_of_type(int type, int start_id_polymer, int end_id_polymer);
+bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type=1);
 
-bool do_global_mc_move_for_one_particle_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer);
+bool do_global_mc_move_for_particles_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type=1);
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 
@@ -139,6 +141,6 @@ int load_wang_landau_checkpoint(char* identifier);
 int do_reaction_constant_pH();
 double extern constant_pH;
 void set_pH(double pH);
-
+}
 
 #endif /* ifdef REACTION_H */

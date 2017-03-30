@@ -241,7 +241,7 @@ IF REACTION_ENSEMBLE:
             performs a global mc move for one particle of type type_mc.
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
-            do_global_mc_move_for_one_particle_of_type(type_mc, -10,-10)
+            do_global_mc_move_for_particles_of_type(type_mc, -10, -10, 1)
 
         def print_status(self):
             """
@@ -441,7 +441,7 @@ IF REACTION_ENSEMBLE:
             performs a global mc move for one particle of type type_mc (depending on the energy reweighting scheme)
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
-            do_global_mc_move_for_one_particle_of_type_wang_landau(type_mc, current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id)
+            do_global_mc_move_for_particles_of_type_wang_landau(type_mc, current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id, 1)
 
         def wang_landau_free(self):
             """
