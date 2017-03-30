@@ -2213,6 +2213,10 @@ proc oif_object_set { args } {
 		return 0
 	}
 
+	set rotate_X 0
+	set rotate_Y 0
+	set rotate_Z 0
+
 	set objectID -1
 	set force 0
 	set velocity 0
@@ -2246,6 +2250,28 @@ proc oif_object_set { args } {
 				incr pos
 				set force 1
 			}
+			"rotate" {
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
+					break
+				}
+				set rotate_X [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
+					break
+				}
+				set rotate_Y [lindex $args $pos]
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error in oif_add_object: rotation input incorrect - 3 angles in radians expected"
+					break
+				}
+				set rotate_Z [lindex $args $pos]
+				incr pos
+			}
+
 			"velocity" {
 				incr pos
 				if { $pos >= $n_args } { 
@@ -2439,6 +2465,65 @@ proc oif_object_set { args } {
 			part $iii pos $newposX $newposY $newposZ
 		}
 	}
+
+	if { $rotate_X != 0 || $rotate_Y != 0 || $rotate_Z != 0} {
+		#--------------------------------------------------------------------------------------------
+		# some variables for rotation
+		set ca [expr cos($rotate_X)];
+		set sa [expr sin($rotate_X)];
+		set cb [expr cos($rotate_Y)];
+		set sb [expr sin($rotate_Y)];
+		set cc [expr cos($rotate_Z)];
+		set sc [expr sin($rotate_Z)];
+		set rotation(0,0) [expr $cb*$cc]
+		set rotation(0,1) [expr $sa * $sb * $cc - $ca * $sc]
+		set rotation(0,2) [expr $sc * $sa + $cc * $sb * $ca]
+		set rotation(1,0) [expr $cb * $sc]
+		set rotation(1,1) [expr $ca * $cc + $sa * $sb * $sc ]
+		set rotation(1,2) [expr $sc * $sb * $ca - $cc * $sa]
+		set rotation(2,0) [expr -$sb]
+		set rotation(2,1) [expr $cb * $sa ]
+		set rotation(2,2) [expr $ca * $cb  ]
+		
+		# first find the current center of the object
+		set centerX 0
+		set centerY 0
+		set centerZ 0
+		set firstPartId [lindex $oif_object_starting_particles $objectID]
+		set nnode [lindex $oif_nparticles $objectID]
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set coords [part $iii print pos]
+			set centerX [expr $centerX + [lindex $coords 0]]
+			set centerY [expr $centerY + [lindex $coords 1]]
+			set centerZ [expr $centerZ + [lindex $coords 2]]
+		}
+		set centerX [expr $centerX/$nnode]
+		set centerY [expr $centerY/$nnode]
+		set centerZ [expr $centerZ/$nnode]
+
+		#then move object to (0,0,0), rotate it and move back.
+		for { set iii $firstPartId } { $iii < [expr $firstPartId + $nnode] } { incr iii } {
+			set coords [part $iii print pos]
+			# moving to (0,0,0)
+			set newposX [expr - $centerX + [lindex $coords 0]]
+			set newposY [expr - $centerY + [lindex $coords 1]]
+			set newposZ [expr - $centerZ + [lindex $coords 2]]
+			#rotating
+			set xx [discard_epsilon [expr $rotation(0,0)*$newposX + $rotation(0,1)*$newposY + $rotation(0,2)*$newposZ]]
+			set yy [discard_epsilon [expr $rotation(1,0)*$newposX + $rotation(1,1)*$newposY + $rotation(1,2)*$newposZ]]
+			set zz [discard_epsilon [expr $rotation(2,0)*$newposX + $rotation(2,1)*$newposY + $rotation(2,2)*$newposZ]]
+			set newposX $xx;
+			set newposY $yy;
+			set newposZ $zz;
+			# moving back
+			set newposX [expr $newposX + $centerX ]
+			set newposY [expr $newposY + $centerY ]
+			set newposZ [expr $newposZ + $centerZ ]			
+			# setting new position
+			part $iii pos $newposX $newposY $newposZ
+		}
+	}
+
 }
 
 
