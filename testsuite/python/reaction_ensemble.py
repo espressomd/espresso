@@ -74,7 +74,7 @@ class ReactionEnsembleTest(ut.TestCase):
         K_HA_diss=ReactionEnsembleTest.K_HA_diss
         RE=ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
-        for i in range(30*N0):
+        for i in range(40*N0):
             RE.reaction()
             
         volume=np.prod(self.system.box_l) #cuboid box

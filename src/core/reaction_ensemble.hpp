@@ -3,7 +3,7 @@
 #define REACTION_ENSEMBLE_H
 
 #include "utils.hpp"
-namespace reaction_ensemble{
+namespace ReactionEnsemble{
 
 typedef struct single_reaction{
 	//strict input to the algorithm
@@ -54,7 +54,7 @@ int calculate_nu_bar(int* reactant_coefficients, int len_reactant_types,  int* p
 
 int update_type_index(int* reactant_types, int len_reactant_types , int* product_types, int len_product_types); //assign different types an index in a growing list that starts at 0 and is incremented by 1 for each new type. the entry in the index at place i is the "type_value". therefore the type of type "typevalue" has the index i; 
 
-int generic_oneway_reaction(int reaction_id);
+int generic_oneway_reaction(int reaction_id, int reaction_modus);
 
 int find_index_of_type(int type);
 
@@ -62,6 +62,20 @@ struct invalid_index : public std::exception {
     const char* what () const throw ()
     {
 	return "Type not indexed!";
+    }
+};
+
+struct no_particle_inserted : public std::exception {
+    const char* what () const throw ()
+    {
+	return "Error: Particle not inserted. System too dense?";
+    }
+};
+
+struct reaction_mode_unknown : public std::exception {
+    const char* what () const throw ()
+    {
+	return "Error: This reaction mode is unknown";
     }
 };
 

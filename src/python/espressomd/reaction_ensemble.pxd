@@ -2,7 +2,7 @@ include "myconfig.pxi"
 
 from libcpp cimport bool
 
-cdef extern from "reaction_ensemble.hpp" namespace "reaction_ensemble":
+cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     ctypedef struct single_reaction:
         int* reactant_types
         int len_reactant_types
