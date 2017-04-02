@@ -25,9 +25,8 @@ reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL
 //global variable
 bool system_is_in_1_over_t_regime=false;
 
-int number_of_times_in_the_same_bin=0;//for avoiding becoming trapped in HMC-Wang-Landau
-int last_bin_index=-10;//for avoiding becoming trapped in HMC-Wang-Landau
 int invalid_charge=-10000;//this is the default charge which is assigned to a type which occurs in a reaction. this charge has to be overwritten. if it is not overwritten the code below will complain.
+int non_interacting_type=100; //this is assumed to be a type which is non interacting
 
 int accepted_configurational_MC_moves=0;
 int tried_configurational_MC_moves=0;
@@ -64,8 +63,7 @@ double calculate_boltzmann_factor_consant_pH(single_reaction* current_reaction, 
 
 int do_reaction(){
 	int reaction_id=i_random(current_reaction_system.nr_single_reactions);
-	reaction_mode mode=reaction_ensemble_mode;
-	generic_oneway_reaction(reaction_id, mode);
+	generic_oneway_reaction(reaction_id, reaction_ensemble_mode);
 	return 0;
 }
 
@@ -463,8 +461,7 @@ int hide_particle(int p_id, int previous_type){
 	set_particle_q(p_id, 0.0);
 	#endif
 	//set type
-	int desired_type=previous_type+100;//+100 in order to assign types that are out of the "usual" range of types
-	int err_code_type=set_particle_type(p_id, desired_type);
+	int err_code_type=set_particle_type(p_id, non_interacting_type);
 	return err_code_type;
 }
 
@@ -654,17 +651,32 @@ void add_random_vector(double* vector, int len_vector, double length_of_displace
 	}
 }
 
-bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type){
+bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau){
 	
 	tried_configurational_MC_moves+=1;
-	int p_id;
-	const double E_pot_old=calculate_current_potential_energy_of_system(0);
 
+	int old_state_index;
+	if(use_wang_landau==true){
+		old_state_index=get_flattened_index_wang_landau_of_current_state();
+		if(old_state_index>=0){
+			if(current_wang_landau_system.histogram[old_state_index]>=0)
+				current_wang_landau_system.monte_carlo_trial_moves+=1;
+		}
+	}
+
+	int p_id;
 	number_of_particles_with_type(type, &(particle_number_of_type));
 	if(particle_number_of_type==0){
 		bool got_accepted=false;
+		//reject
+		if(current_wang_landau_system.do_energy_reweighting==true&& use_wang_landau== true){
+			update_wang_landau_potential_and_histogram(old_state_index);
+		}
 		return got_accepted;
 	}
+
+
+	const double E_pot_old=calculate_current_potential_energy_of_system(0);
 
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
@@ -743,8 +755,16 @@ bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int
 	const double E_pot_new=calculate_current_potential_energy_of_system(0);
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	
+	int new_state_index;
 	double bf=1.0;
-	bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))); //Metropolis Algorithm since proposal density is symmetric
+	if(use_wang_landau==true){
+		new_state_index=get_flattened_index_wang_landau_of_current_state();
+		std::vector<int> dummy_old_particle_numbers;
+		bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(NULL, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
+	}else{
+		bf=std::min(1.0, bf*exp(-beta*(E_pot_new-E_pot_old))); //Metropolis Algorithm since proposal density is symmetric
+	}
+	
 	
 //	//correct for enhanced proposal of small radii by using the metropolis hastings algorithm for asymmetric proposal densities.
 //	double old_radius=std::sqrt(std::pow(particle_positions[0]-current_reaction_system.cyl_x,2)+std::pow(particle_positions[1]-current_reaction_system.cyl_y,2));
@@ -756,8 +776,16 @@ bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int
 		//accept
 		accepted_configurational_MC_moves+=1;
 		got_accepted=true;
+		if(use_wang_landau==true && current_wang_landau_system.do_energy_reweighting==true){
+			//modify wang_landau histogram and potential
+			update_wang_landau_potential_and_histogram(new_state_index);		
+		}
 	}else{
 		//reject
+		//modify wang_landau histogram and potential
+		if(use_wang_landau==true && current_wang_landau_system.do_energy_reweighting==true)
+			update_wang_landau_potential_and_histogram(old_state_index);
+
 		//create particles again at the positions they were
 		for(int i=0;i<particle_number_of_type;i++)
 			place_particle(p_id_s_changed_particles[i],&particle_positions[3*i]);
@@ -770,7 +798,6 @@ bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int
 	}
 	return got_accepted;
 }
-
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 
@@ -845,7 +872,7 @@ wang_landau_system current_wang_landau_system={.histogram=NULL,.len_histogram=0 
  						.used_bins=-10, .monte_carlo_trial_moves=0, .wang_landau_steps=1,\
  						.output_filename=NULL,\
  						.minimum_energies_at_flat_index=NULL, .maximum_energies_at_flat_index=NULL,\
- 						.do_energy_reweighting=false, .counter_ion_type=-10, .polymer_start_id=-10 ,\
+ 						.do_energy_reweighting=false, .polymer_start_id=-10 ,\
  						.polymer_end_id=-10, .fix_polymer=false ,.do_not_sample_reaction_partition_function=false,\
  					.use_hybrid_monte_carlo=false
  						};//use negative value as fill value since it cannot occur in the wang_landau algorithm in the histogram and in the wang landau potential, use only 1 wang_landau_steps if you want to record other observables in the tcl script.
@@ -1117,127 +1144,6 @@ void update_wang_landau_potential_and_histogram(int index_of_state_after_accepta
 
 }
 
-bool do_global_mc_move_for_particles_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type){
-	
-	tried_configurational_MC_moves+=1;
-	const int old_state_index=get_flattened_index_wang_landau_of_current_state();
-	if(old_state_index>=0){
-		if(current_wang_landau_system.histogram[old_state_index]>=0)
-			current_wang_landau_system.monte_carlo_trial_moves+=1;
-	}
-
-	const double E_pot_old=calculate_current_potential_energy_of_system(0);
-
-	number_of_particles_with_type(type, &(particle_number_of_type));
-	if(particle_number_of_type==0){
-		bool got_accepted=false;
-		//reject
-		if(current_wang_landau_system.do_energy_reweighting==true){
-			update_wang_landau_potential_and_histogram(old_state_index);
-		}
-		return got_accepted;
-	}
-	double particle_positions[3*particle_number_of_type];
-	int changed_particle_counter=0;
-	int p_id_s_changed_particles[particle_number_of_type];
-
-	int max_tries=100*particle_number_of_type;//important for very dense systems
-	int attempts=0;
-
-	int p_id;
-
-	while(changed_particle_counter<particle_number_of_type){
-		//save old_position
-		if(changed_particle_counter==0){
-			find_particle_type(type, &p_id);
-		}else{
-			//determine a p_id you have not touched yet. Especially needed in canonical monte carlo move, since particle type is not changed here.
-			while(is_in_list(p_id,p_id_s_changed_particles,changed_particle_counter) or changed_particle_counter ==0 ){
-				find_particle_type(type, &p_id); //check wether you already touched this p_id
-			}
-		}
-		Particle part;
-		get_particle_data(p_id, &part);
-		double ppos[3];
-		memmove(ppos, part.r.p, 3*sizeof(double));
-		free_particle(&part);
-		particle_positions[3*changed_particle_counter+0]=ppos[0];
-		particle_positions[3*changed_particle_counter+1]=ppos[1];
-		particle_positions[3*changed_particle_counter+2]=ppos[2];
-		bool particle_inserted_too_close_to_another_one=true;
-		while(particle_inserted_too_close_to_another_one==true && attempts<max_tries){
-			//change particle position
-			double new_pos[3];
-			get_random_position_in_box(new_pos);
-			place_particle(p_id,new_pos);
-			double d_min=distto(new_pos,p_id);
-			attempts+=1;
-			if(d_min>current_reaction_system.exclusion_radius){
-				particle_inserted_too_close_to_another_one=false;
-			}
-		}
-		
-		p_id_s_changed_particles[changed_particle_counter]=p_id;
-		changed_particle_counter+=1;
-	}
-	
-	if(attempts==max_tries){
-		//reversing
-		//create particles again at the positions they were
-		for(int i=0;i<particle_number_of_type;i++){
-			place_particle(p_id_s_changed_particles[i],&particle_positions[3*i]);
-		}
-	}
-	
-	//change polymer conformation if start and end id are provided
-	double old_pos_polymer_particle[3];
-	int random_polymer_particle_id;
-	
-	if((start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value) && current_wang_landau_system.fix_polymer==false){
-		random_polymer_particle_id=start_id_polymer+i_random(end_id_polymer-start_id_polymer+1);
-		Particle part;
-		get_particle_data(random_polymer_particle_id, &part);
-		memmove(old_pos_polymer_particle, part.r.p, 3*sizeof(double));
-		//move particle to new position nearby
-		const double length_of_displacement=0.05;
-		add_random_vector(part.r.p, 3, length_of_displacement);
-		place_particle(random_polymer_particle_id ,part.r.p);
-		free_particle(&part);
-	}
-	
-	
-	const int new_state_index=get_flattened_index_wang_landau_of_current_state();
-	
-	const double E_pot_new=calculate_current_potential_energy_of_system(0);
-
-	std::vector<int> dummy_old_particle_numbers;
-	double bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(NULL, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
-	
-	bool got_accepted=false;
-	if(d_random()<bf){
-		//accept
-		accepted_configurational_MC_moves+=1;
-
-		got_accepted=true;
-		//modify wang_landau histogram and potential
-		if(new_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true)
-			update_wang_landau_potential_and_histogram(new_state_index);
-	}else{
-		//reject
-		//modify wang_landau histogram and potential
-		if(old_state_index>=0 && current_wang_landau_system.do_energy_reweighting==true)
-			update_wang_landau_potential_and_histogram(old_state_index);
-		//create particles again at the positions they were
-		for(int j=0;j<particle_number_of_type;j++)
-			place_particle(p_id_s_changed_particles[j],&particle_positions[3*j]);
-		//restore polymer particle again at original position
-		if(start_id_polymer!=current_wang_landau_system.int_fill_value && end_id_polymer !=current_wang_landau_system.int_fill_value)
-			place_particle(random_polymer_particle_id, old_pos_polymer_particle);
-	
-	}
-	return got_accepted;
-}
-
 bool do_HMC_move_wang_landau(){
 	const int old_state_index=get_flattened_index_wang_landau_of_current_state();
 	if(old_state_index>=0){
@@ -1314,8 +1220,7 @@ int do_reaction_wang_landau(){
 	tries+=current_wang_landau_system.wang_landau_steps;
 	for(int step=0;step<current_wang_landau_system.wang_landau_steps;step++){
 		int reaction_id=i_random(current_reaction_system.nr_single_reactions);
-		reaction_mode mode=reaction_ensemble_wang_landau_mode;
-		got_accepted=generic_oneway_reaction(reaction_id, mode);
+		got_accepted=generic_oneway_reaction(reaction_id, reaction_ensemble_wang_landau_mode);
 		if(got_accepted==true){
 			accepted_moves+=1;
 		}
@@ -1719,8 +1624,7 @@ int do_reaction_constant_pH(){
 	//randomly select a reaction to be performed
 	int reaction_id=list_of_reaction_ids_with_given_reactant_type[i_random(found_reactions_with_given_reactant_type)];
 	free(list_of_reaction_ids_with_given_reactant_type);
-	reaction_mode mode=constant_pH_mode;
-	generic_oneway_reaction(reaction_id, mode);
+	generic_oneway_reaction(reaction_id, constant_pH_mode);
 	return 0;
 }
 

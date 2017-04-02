@@ -34,7 +34,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
 
     cdef extern reaction_system current_reaction_system
     int do_reaction()
-    bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type)
+    bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, bool use_wang_landau)
     int find_index_of_type(int type) except +
     int calculate_nu_bar(int* reactant_coefficients, int len_reactant_types,  int* product_coefficients, int len_product_types)
     int update_type_index(int* reactant_types, int len_reactant_types , int* product_types, int len_product_types)
@@ -78,7 +78,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double* minimum_energies_at_flat_index
         double* maximum_energies_at_flat_index
         bool do_energy_reweighting
-        int counter_ion_type
         int polymer_start_id
         int polymer_end_id
         bool fix_polymer
@@ -88,7 +87,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     cdef extern wang_landau_system current_wang_landau_system
     int initialize_wang_landau()
     int do_reaction_wang_landau()
-    bool do_global_mc_move_for_particles_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type)
     int update_maximum_and_minimum_energies_at_current_state()
     void write_out_preliminary_energy_run_results(char* filename)
 

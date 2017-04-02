@@ -52,19 +52,12 @@ IF REACTION_ENSEMBLE:
                 else:
                     raise KeyError("%s is not a vaild key" % k)
                 
-            self._validate_params()
             self._set_params_in_es_core()
 
         def _default_params(self):
             return {"standard_pressure":0,
                     "temperature":1,
                     "exclusion_radius":0}
-
-        def _validate_params(self):
-            return -1       
-
-        def _validate_params_add(self):
-            return -1
 
         def _valid_keys(self):
             return "standard_pressure", "temperature", "exclusion_radius"
@@ -241,7 +234,7 @@ IF REACTION_ENSEMBLE:
             performs a global mc move for one particle of type type_mc.
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
-            do_global_mc_move_for_particles_of_type(type_mc, -10, -10, 1)
+            do_global_mc_move_for_particles_of_type(type_mc, -10, -10, 1, False)
 
         def print_status(self):
             """
@@ -386,9 +379,9 @@ IF REACTION_ENSEMBLE:
                                 sets the number of Wang-Landau steps which are performed at once. Do not use too many Wang-Landau steps consequetively without having conformation changing steps in between. Number of Wang-Landau steps performed at once. This is for performance. It reduces the need for the interpreter to be called.
             full_path_to_output_filename : string
                                            sets the path to the output file of the Wang-Landau algorithm which contains the Wang-Landau potential
-            do_not_sample_reaction_partition_function : bool, optional
+            do_not_sample_reaction_partition_function : bool
                                                         avoids sampling the Reaction ensemble partition function in the Wang-Landau algorithm. Therefore this option makes all degrees of association equally probable. This option may be used in the sweeping mode of the reaction ensemble, since the reaction ensemble partition function can be later added analytically.
-            use_hybrid_monte_carlo : bool, optional
+            use_hybrid_monte_carlo : bool
                                      this is an experimental implementation only and per default it is turned off! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).            
             """
             for k in kwargs:
@@ -436,12 +429,12 @@ IF REACTION_ENSEMBLE:
             if(status_wang_landau<0):
                     raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
 
-        def do_global_mc_move_for_one_particle_of_type_wang_landau(type_mc):
+        def do_global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
             """
             performs a global mc move for one particle of type type_mc (depending on the energy reweighting scheme)
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
-            do_global_mc_move_for_particles_of_type_wang_landau(type_mc, current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id, 1)
+            do_global_mc_move_for_particles_of_type(type_mc, current_wang_landau_system.polymer_start_id,current_wang_landau_system.polymer_end_id, 1, True)
 
         def wang_landau_free(self):
             """
@@ -451,15 +444,6 @@ IF REACTION_ENSEMBLE:
             free_wang_landau()
         
         ##specify information for configuration changing monte carlo move
-        property counter_ion_type:
-            """
-            *Since you cannot employ MD when using the potential energy collective variable* without adding a force (not implemented) that is calculated from the Wang-Landau potential we use MC moves to explore new configurations. Provides the counter_ion_type that gets moved by MC moves. In the case of no energy collective variable you may additionally (or instead) use MD to change configurations in your simulation. In the case of no energy collective variable using MC is therefore optional. In the case of using an energy collective variable MC moves have to be used.
-            
-            """
-            def __set__(self, int c_type):
-                current_wang_landau_system.counter_ion_type=c_type
-            def __get__(self):
-                return current_wang_landau_system.counter_ion_type
         property polymer_start_id:
             """
             Optional: since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation. Sets the start id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space.. MC moves for free particles and polymer particles may be very different.

@@ -1,7 +1,3 @@
-//TODO remove guards, always compile reaction ensemble
-#ifndef REACTION_ENSEMBLE_H
-#define REACTION_ENSEMBLE_H
-
 #include "utils.hpp"
 namespace ReactionEnsemble{
 
@@ -79,9 +75,7 @@ struct reaction_mode_unknown : public std::exception {
     }
 };
 
-bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type=1);
-
-bool do_global_mc_move_for_particles_of_type_wang_landau(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type=1);
+bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, const bool use_wang_landau);
 
 ///////////////////////////////////////////// Wang-Landau algorithm
 
@@ -123,7 +117,6 @@ typedef struct wang_landau_system {
 	double* maximum_energies_at_flat_index; //only present in energy preparation run
 	
 	bool do_energy_reweighting;
-	int counter_ion_type;
 	int polymer_start_id;
 	int polymer_end_id;
 	bool fix_polymer;
@@ -156,5 +149,3 @@ int do_reaction_constant_pH();
 double extern constant_pH;
 void set_pH(double pH);
 }
-
-#endif /* ifdef REACTION_H */

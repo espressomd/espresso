@@ -24,22 +24,24 @@ from espressomd import analyze
 from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
+from espressomd import grand_canonical
 import numpy as np
 
 import sys
-import os
 
-print(code_info.features())
+if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
+	print("REACTION_ENSEMBLE not compiled in.")
+	sys.exit()
 dev = "cpu"
 
 # System parameters
 #############################################################
-box_l = 10
+box_l = 6*np.sqrt(2)
 
 # Integration parameters
 #############################################################
 system = espressomd.System()
-system.time_step = 0.5 #bigger timestep than usual is VERY important for hybrid monte carlo, at least 0.5 (or higher) for this system
+system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
 
@@ -58,48 +60,36 @@ system.box_l = [box_l, box_l, box_l]
 #type 1 = A-
 #type 2 = H+
 
-N0 = 2 # number of titratable units
+N0 = 1 # number of titratable units
 K_diss=0.0088
 
-system.part.add(id=np.arange(N0) ,pos=np.random.random((N0,3))*box_l, type=np.zeros(N0))
+system.part.add(id=0,pos=[0,0,0] * system.box_l, type=3)
+system.part.add(id=1,pos=[1.0,1.0,1.0] * system.box_l/2.0, type=1)
+system.part.add(id=2,pos=np.random.random() * system.box_l, type=2)
+system.part.add(id=3,pos=np.random.random() * system.box_l, type=2)
 
-h = HarmonicBond(r_0=0.0, k=10.0)
-system.bonded_inter.add(h)
+#create a harmonic bond between the two reacting particles => the potential energy is quadratic in the elongation of the bond and therefore the density of states is known as the one of the harmonic oscillator
+h = HarmonicBond(r_0=0, k=1)
+system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
-bonded_energies=analyze.energy(system=system)["bonded"]
+
 
 RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, exclusion_radius=0)
-RE.add(equilibrium_constant=K_diss,educt_types=[0],educt_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
-RE.add(equilibrium_constant=1.0/K_diss, educt_types=[1,2], educt_coefficients=[1,1], product_types=[0],product_coefficients=[1])
+RE.add(equilibrium_constant=K_diss,reactant_types=[0],reactant_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
 RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
 RE.print_status()
-
-grand_canonical.setup([0,1,2])
-
-## Wang-Landau stuff
-RE.add_collective_variable_degree_of_association(associated_type=0,min=0, max=1, corresponding_acid_types=[0,1])
-np.savetxt("temp_energy_file.dat",np.c_[[0,0.5,1],[0,0,0],[9,9,9]],header="nbar E_min E_max") # Note header may not be omitted since it is expected
-RE.add_collective_variable_potential_energy(filename="temp_energy_file.dat",delta=0.5)
-os.remove("temp_energy_file.dat")
-RE.set_wang_landau_parameters(final_wang_landau_parameter=0.00001, wang_landau_steps=1, full_path_to_output_filename="WL.out", do_not_sample_reaction_partition_function=True, use_hybrid_monte_carlo=True)
-RE.counter_ion_type=1
+grand_canonical.setup([0,1,2,3])
 
 
+#####initialize wang_landau
+#generate preliminary_energy_run_results here, this should be done in a seperate simulation without energy reweighting using the update energy functions
+np.savetxt("energy_boundaries.dat", np.c_[[0,1],[0,0],[9,9]], header="nbar E_min E_max")
 
-counter=1
+RE.add_collective_variable_degree_of_association(associated_type=0,min=0,max=1,corresponding_acid_types=[0,1])
+RE.add_collective_variable_potential_energy(filename="energy_boundaries.dat", delta=0.05)
+RE.set_wang_landau_parameters(final_wang_landau_parameter=0.00001,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat", use_hybrid_monte_carlo=False)
+
+i=0
 while True:
 	RE.do_reaction_wang_landau()
-	
-	##for preliminary run
-#	counter+=1
-#	RE.do_reaction_wang_landau()
-#	RE.update_maximum_and_minimum_energies_at_current_state()
-#	if counter%1000:
-#		RE.write_out_preliminary_energy_run_results()
-#	
-
-
-#	_types=np.array(system.part[:].type)
-#	print("HA", len(_types[_types==0]), "A-", len(_types[_types==1]), "H+", len(_types[_types==2]))
-#	bonded_energies=analyze.energy(system=system)["bonded"]
-#	print("E_bond", bonded_energies)
+	RE.do_global_mc_move_for_one_particle_of_type_wang_landau(3)
