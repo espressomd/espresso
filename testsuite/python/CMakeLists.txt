@@ -9,10 +9,12 @@ set(py_tests  bondedInteractions.py
               engine_lbgpu.py
               ewald_gpu.py
               magnetostaticInteractions.py
+              mass-and-rinertia_per_particle.py
               nonBondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              rotational_inertia.py
               lbgpu_remove_total_momentum.py
               tabulated.py
 )
