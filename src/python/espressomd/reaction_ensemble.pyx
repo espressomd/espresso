@@ -121,7 +121,11 @@ IF REACTION_ENSEMBLE:
             """
             print "acceptance rate for configurational moves is", (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves
 
-
+        def set_non_interacting_type(non_interacting_type):
+            """
+            sets a type which is assumed to be non interacting in order to hide particles temporarily during a reaction trial move if they are to be deleted. The default value for this non_interacting type is 100. Please change this value if you intend to use a type 100 which has interactions. Please also note that particles in the current implementation of the Reaction Ensemble are only hidden with respect to Lennard-Jones interactions and Coulomb interactions. If there is for example a magnetic interaction hiding for this needs to be implemented in the code.
+            """
+            current_reaction_system.non_interacting_type=non_interacting_type
 
         def add(self,*args,**kwargs):
             """

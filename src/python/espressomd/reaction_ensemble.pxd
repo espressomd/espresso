@@ -31,6 +31,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         bool box_has_wall_constraints
         double slab_start_z
         double slab_end_z
+        int non_interacting_type
 
     cdef extern reaction_system current_reaction_system
     int do_reaction()

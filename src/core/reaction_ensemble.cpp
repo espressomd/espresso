@@ -20,13 +20,12 @@
 #include "utils.hpp" // for PI
 namespace ReactionEnsemble{
 
-reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10}; //the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
+reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10, .non_interacting_type=100}; //the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
 //global variable
 bool system_is_in_1_over_t_regime=false;
 
 int invalid_charge=-10000;//this is the default charge which is assigned to a type which occurs in a reaction. this charge has to be overwritten. if it is not overwritten the code below will complain.
-int non_interacting_type=100; //this is assumed to be a type which is non interacting
 
 int accepted_configurational_MC_moves=0;
 int tried_configurational_MC_moves=0;
@@ -461,7 +460,7 @@ int hide_particle(int p_id, int previous_type){
 	set_particle_q(p_id, 0.0);
 	#endif
 	//set type
-	int err_code_type=set_particle_type(p_id, non_interacting_type);
+	int err_code_type=set_particle_type(p_id, current_reaction_system.non_interacting_type);
 	return err_code_type;
 }
 

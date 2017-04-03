@@ -31,6 +31,7 @@ typedef struct reaction_system {
 	bool box_has_wall_constraints;
 	double slab_start_z;
 	double slab_end_z;
+	int non_interacting_type;
 } reaction_system;
 
 extern reaction_system current_reaction_system;
