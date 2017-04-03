@@ -4,7 +4,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "make_function.hpp"
+#include "utils/make_function.hpp"
 using Utils::make_function;
 
 BOOST_AUTO_TEST_CASE(lambda) {

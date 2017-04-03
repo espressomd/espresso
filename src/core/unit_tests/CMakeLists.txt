@@ -63,3 +63,4 @@ unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp
 target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
 
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp)
+unit_test(NAME make_function_test SRC make_function_test.cpp)
