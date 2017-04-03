@@ -32,9 +32,7 @@ enum class VariantType {
 };
 
 namespace detail {
-template <typename T, typename = void> struct infer_type_helper {
-  static_assert(true, "Type not supported by Variant.");
-};
+template <typename T, typename = void> struct infer_type_helper {};
 
 template <> struct infer_type_helper<bool> {
   static constexpr VariantType value{VariantType::BOOL};
