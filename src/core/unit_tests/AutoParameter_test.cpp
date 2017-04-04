@@ -1,5 +1,3 @@
-#include <iostream>
-
 #define BOOST_TEST_MODULE AutoParameter test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -43,7 +41,7 @@ BOOST_AUTO_TEST_CASE(read_only) {
                         });
 }
 
-BOOST_AUTO_TEST_CASE(user_provided_lambda) {
+BOOST_AUTO_TEST_CASE(user_provided) {
   using namespace ScriptInterface;
   int i{12};
 
