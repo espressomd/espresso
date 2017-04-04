@@ -542,14 +542,13 @@ class Analysis:
         # Total energy
         cdef int i
         cdef double tmp
-        tmp = 0
-        for i in range(c_analyze.total_energy.data.n):
-            tmp += c_analyze.total_energy.data.e[i]
+        tmp = c_analyze.total_energy.data.e[0]
+        tmp += calculate_current_potential_energy_of_system()
 
         e["total"] = tmp
 
-        # Ideal
-        e["ideal"] = c_analyze.total_energy.data.e[0]
+        # Kinetic energy
+        e["kinetic"] = c_analyze.total_energy.data.e[0]
 
         # Nonbonded
         cdef double total_bonded
