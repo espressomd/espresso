@@ -22,7 +22,7 @@ namespace ReactionEnsemble{
 
 reaction_system current_reaction_system={.nr_single_reactions=0, .reactions=NULL , .type_index=NULL, .nr_different_types=0, .charges_of_types=NULL, .standard_pressure_in_simulation_units=-10, .temperature_reaction_ensemble=-10.0, .exclusion_radius=0.0, .volume=-10, .box_is_cylindric_around_z_axis=false, .cyl_radius=-10, .cyl_x=-10,. cyl_y=-10, .box_has_wall_constraints=false, .slab_start_z=-10, .slab_end_z=-10, .non_interacting_type=100}; //the standard_pressure_in_simulation_units is an input parameter for the reaction ensemble
 
-//global variable
+//global variables
 bool system_is_in_1_over_t_regime=false;
 
 int invalid_charge=-10000;//this is the default charge which is assigned to a type which occurs in a reaction. this charge has to be overwritten. if it is not overwritten the code below will complain.
@@ -67,8 +67,8 @@ int do_reaction(){
 }
 
 
-//checks the reaction_ensemble struct for valid parameters
 int check_reaction_ensemble(){
+	/**checks the reaction_ensemble struct for valid parameters */
 	int check_is_successfull =ES_OK;
 	if(current_reaction_system.standard_pressure_in_simulation_units<0 and not (std::abs(constant_pH-(-10)) > std::numeric_limits<double>::epsilon() ) ){
 		printf("Please initialize your reaction ensemble standard pressure before calling initialize.\n");
@@ -91,7 +91,7 @@ int check_reaction_ensemble(){
 }
 
 int free_reaction_ensemble(){
-	//needs to be called at the end of the simulation
+	/**needs to be called at the end of the simulation*/
 	for(int single_reaction_i=0;single_reaction_i<current_reaction_system.nr_single_reactions;single_reaction_i++){
 		//free reactant types and coefficients
 		free(current_reaction_system.reactions[single_reaction_i]->reactant_types);
@@ -150,23 +150,8 @@ bool all_reactant_particles_exist(int reaction_id) {
 	return enough_particles;
 }
 
-double calculate_current_potential_energy_of_system(int unimportant_int){
-	//calculate potential energy
-	if (total_energy.init_status == 0) {
-		init_energies(&total_energy);
-		master_energy_calc();
-	}
-  	int num_energies=total_energy.data.n;
-	double kinetic_energy =total_energy.data.e[0];
-	double sum_all_energies=0;
-	for(int i=0;i<num_energies;i++){
-		sum_all_energies+= total_energy.data.e[i];
-	}
-	for (int i = 0; i < n_external_potentials; i++) {
-        	sum_all_energies += external_potentials[i].energy;
-        }
-
-	return sum_all_energies-kinetic_energy;
+double calculate_current_potential_energy_of_system_wrap(int unimportant_int){
+	return calculate_current_potential_energy_of_system();
 }
 
 typedef struct stored_particle_property {
@@ -186,6 +171,7 @@ void append_particle_property_of_random_particle(int type, std::vector<stored_pa
 }
 
 void make_reaction_attempt(single_reaction* current_reaction, std::vector<stored_particle_property>& changed_particles_properties, std::vector<int>& p_ids_created_particles, std::vector<stored_particle_property>& hidden_particles_properties){
+	/**Performs a trial reaction move */
 	const int number_of_saved_properties=3;//save p_id, charge and type of the reactant particle, only thing we need to hide the particle and recover it
 	//create or hide particles of types with corresponding types in reaction
 	for(int i=0;i<std::min(current_reaction->len_product_types,current_reaction->len_reactant_types);i++){
@@ -260,6 +246,7 @@ void restore_properties(std::vector<stored_particle_property> property_list ,con
 }
 
 double calculate_boltzmann_factor_reaction_ensemble(single_reaction* current_reaction, double E_pot_old, double E_pot_new, std::vector<int>& old_particle_numbers){
+	/**calculate the acceptance probability in the reaction ensemble */
 	const double volume = current_reaction_system.volume;
 	const double factorial_expr=calculate_factorial_expression(current_reaction, old_particle_numbers.data());
 
@@ -301,7 +288,7 @@ int generic_oneway_reaction(int reaction_id, int reaction_modus){
 	}
 	
 	//calculate potential energy
-	const double E_pot_old=calculate_current_potential_energy_of_system(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
+	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0); //only consider potential energy since we assume that the kinetic part drops out in the process of calculating ensemble averages (kinetic part may be seperated and crossed out)
 	
 	//find reacting molecules in reactants and save their properties for later recreation if step is not accepted
 	//do reaction
@@ -318,7 +305,7 @@ int generic_oneway_reaction(int reaction_id, int reaction_modus){
 	const int number_of_saved_properties=3; //save p_id, charge and type of the reactant particle, only thing we need to hide the particle and recover it
 	make_reaction_attempt(current_reaction, changed_particles_properties, p_ids_created_particles, hidden_particles_properties);
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system(0);
+	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0);
 
 
 	//Wang-Landau begin
@@ -454,7 +441,7 @@ int replace(int p_id, int desired_type){
 
 
 int hide_particle(int p_id, int previous_type){
-	//remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing
+	/**remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing */
 	#ifdef ELECTROSTATICS
 	//set charge
 	set_particle_q(p_id, 0.0);
@@ -465,8 +452,8 @@ int hide_particle(int p_id, int previous_type){
 }
 
 
-//copies last particle to the particle with id p_id and deletes the then last one
 int delete_particle (int p_id) {
+	/**copies last particle to the particle with id p_id and deletes the then last one */
 	if (p_id == max_seen_particle) {
 		// last particle, just delete
 		int status= remove_particle(p_id);
@@ -546,7 +533,6 @@ void get_random_position_in_box_enhanced_proposal_of_small_radii (double* out_po
 }
 
 int create_particle(int desired_type){
-	//remark only works for cubic box
 	int p_id=max_seen_particle+1;
 	double pos_vec[3];
 	
@@ -614,14 +600,14 @@ int vecnorm(double* vec, double desired_length){
 }
 
 int vec_random(double* vecrandom, double desired_length){
-	//returns a random vector of length len
-	//(uniform distribution on a sphere)
-	//This is done by chosing 3 uniformly distributed random numbers [-1,1]
-	//If the length of the resulting vector is <= 1.0 the vector is taken and normalized
-	//to the desired length, otherwise the procedure is repeated until succes.
-	//On average the procedure needs 5.739 random numbers per vector.
-	//(This is probably not the most efficient way, but it works!)
-	//Ask your favorit mathematician for a proof!
+	/**returns a random vector of length len
+	*(uniform distribution on a sphere)
+	*This is done by chosing 3 uniformly distributed random numbers [-1,1]
+	*If the length of the resulting vector is <= 1.0 the vector is taken and normalized
+	*to the desired length, otherwise the procedure is repeated until succes.
+	*On average the procedure needs 5.739 random numbers per vector.
+	*(This is probably not the most efficient way, but it works!)
+	*/
 	while(1){
 		for(int i=0;i<3;i++){
 			vecrandom[i]=2*d_random()-1.0;
@@ -675,7 +661,7 @@ bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int
 	}
 
 
-	const double E_pot_old=calculate_current_potential_energy_of_system(0);
+	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0);
 
 	double particle_positions[3*particle_number_of_type];
 	int changed_particle_counter=0;
@@ -751,7 +737,7 @@ bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int
 		
 	}
 	
-	const double E_pot_new=calculate_current_potential_energy_of_system(0);
+	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0);
 	double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
 	
 	int new_state_index;
@@ -1081,7 +1067,7 @@ int initialize_wang_landau(){
 		}
 		if(current_collective_variable->energy_boundaries_filename!=NULL){
 			//found a collective variable which is not of the type of an energy
-			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system;
+			current_collective_variable->determine_current_state_in_collective_variable_with_index=&calculate_current_potential_energy_of_system_wrap;
 		}
 		
 	}
@@ -1150,7 +1136,7 @@ bool do_HMC_move_wang_landau(){
 			current_wang_landau_system.monte_carlo_trial_moves+=1;
 	}
 	
-	const double E_pot_old=calculate_current_potential_energy_of_system(0);
+	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0);
 	
 	double particle_positions[3*(max_seen_particle+1)];
 
@@ -1177,7 +1163,7 @@ bool do_HMC_move_wang_landau(){
 	mpi_integrate(20,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on a thermostat	
 	
 	const int new_state_index=get_flattened_index_wang_landau_of_current_state();
-	const double E_pot_new=calculate_current_potential_energy_of_system(0);
+	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0);
 	
 //	printf("E_pot_old %f E_pot_new %f\n",E_pot_old, E_pot_new); //use this to check wether your MD timestep is big enough. There needs to be a change in the energy bigger than Delta E. If there is no change increase the timestep.
 	
@@ -1401,7 +1387,7 @@ int update_maximum_and_minimum_energies_at_current_state(){
 		}
 	}
 	
-	const double E_pot_current=calculate_current_potential_energy_of_system(0);
+	const double E_pot_current=calculate_current_potential_energy_of_system_wrap(0);
 	int index=get_flattened_index_wang_landau_of_current_state();
 
 	//update stored energy values
@@ -1629,7 +1615,7 @@ int do_reaction_constant_pH(){
 
 
 double calculate_boltzmann_factor_consant_pH(single_reaction* current_reaction, double E_pot_old, double E_pot_new){
-	//calculate boltzmann factor
+	/**calculate acceptance probability factor in the constant pH ensemble */
 	double ln_bf;
 	double pKa;
 	const double beta =1.0/current_reaction_system.temperature_reaction_ensemble;
