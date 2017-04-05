@@ -44,7 +44,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     int accepted_configurational_MC_moves
     int tried_configurational_MC_moves
     int free_reaction_ensemble()
-
+    int delete_particle (int p_id)
 
 
 #///////////////////////////////////////////// Wang-Landau reaction ensemble algorithm

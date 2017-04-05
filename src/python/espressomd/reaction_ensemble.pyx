@@ -280,6 +280,9 @@ IF REACTION_ENSEMBLE:
             """
             free_reaction_ensemble()
 
+        def delete_particle(self, p_id):
+            delete_particle(p_id)
+
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):
             """

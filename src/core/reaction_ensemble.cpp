@@ -82,7 +82,7 @@ int check_reaction_ensemble(){
 	//check for the existence of default charges for all types that take part in the reactions
 	for (int i=0; i<current_reaction_system.nr_different_types; i++) {
 		if(current_reaction_system.charges_of_types[current_reaction_system.type_index[i]]==invalid_charge) {
-			printf("Forgot to assign default charges for some types\n");
+			printf("Forgot to assign charge to type %d\n", current_reaction_system.charges_of_types[current_reaction_system.type_index[i]] );
 			check_is_successfull=ES_ERROR;
 		}
 	}
@@ -382,19 +382,20 @@ int calculate_nu_bar(int* reactant_coefficients, int len_reactant_types,  int* p
 int add_types_to_index(int* type_list, int len_type_list, int status_gc_init){
 	int status_gc_init_temp=0;
 	for (int i =0; i<len_type_list;i++){
-		bool type_i_is_known=(is_in_list(type_list[i],current_reaction_system.type_index,current_reaction_system.nr_different_types) or current_reaction_system.nr_different_types == 0);
-		if (type_i_is_known==false)
+		bool type_i_is_known=is_in_list(type_list[i],current_reaction_system.type_index,current_reaction_system.nr_different_types);
+		if (type_i_is_known==false){
 			current_reaction_system.type_index=(int*) realloc(current_reaction_system.type_index, sizeof(int)*(current_reaction_system.nr_different_types+1));
 			current_reaction_system.type_index[current_reaction_system.nr_different_types]=type_list[i];
 			current_reaction_system.nr_different_types+=1;
 			status_gc_init_temp=init_type_array(type_list[i]); //make types known in espresso
 			status_gc_init=status_gc_init || status_gc_init_temp;
+		}
 	}
 	return status_gc_init;
 }
 
 int update_type_index(int* reactant_types, int len_reactant_types, int* product_types, int len_product_types){
-	//should only be used at when defining a new reaction
+	//should only be used when defining a new reaction
 	int status_gc_init=0;
 	if(current_reaction_system.type_index==NULL){
 		current_reaction_system.type_index=(int*) calloc(1,sizeof(int));
@@ -441,7 +442,7 @@ int replace(int p_id, int desired_type){
 
 
 int hide_particle(int p_id, int previous_type){
-	/**remove_charge and put type to a non existing one --> no interactions anymore (not even bonds contribute to energy) it is as if the particle was non existing */
+	/**remove_charge and put type to a non existing one --> no interactions anymore it is as if the particle was non existing (currently only type-based interactions are swithced off, as well as the electrostatic interaction)  */
 	#ifdef ELECTROSTATICS
 	//set charge
 	set_particle_q(p_id, 0.0);

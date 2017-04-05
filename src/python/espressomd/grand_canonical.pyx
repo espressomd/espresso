@@ -32,6 +32,14 @@ def check_valid_type(current_type):
 
 
 def setup(type_list=None):
+    """
+    For using Espresso conveniently for simulations in the grand canonical ensemble, or
+    other purposes, when particles of certain types are created and deleted frequently.
+    Particle ids can be stored in lists for each individual type and so random ids of
+    particles of a certain type can be drawn.
+    If you want Espresso to keep track of particle ids of a certain type you have to
+    initialize the method by calling the setup function. After that Espresso will keep track of particle ids of that type.
+    """
     if not hasattr(type_list, "__iter__"):
         raise ValueError("type_list has to be iterable.")
 
@@ -48,6 +56,9 @@ def setup(type_list=None):
 
 
 def number_of_particles(current_type=None):
+    """
+    return the number of particles which share the given type.
+    """
     check_valid_type(current_type)
     cdef int number
     if ( number_of_particles_with_type(current_type, &number) == -3 ):
@@ -56,6 +67,9 @@ def number_of_particles(current_type=None):
     return int(number)
 
 def find_particle(current_type=None):
+    """
+    The command will return a randomly chosen particle id, for a particle of the given type. 
+    """
     check_valid_type(current_type)
     cdef int pid
     status=find_particle_type(current_type, & pid)
@@ -65,13 +79,10 @@ def find_particle(current_type=None):
     else:
         return int(pid)
 
-def delete_particles(current_type=None):
-    check_valid_type(current_type)
-    status=delete_particle_of_type(current_type)
-    if status==es_error:
-        raise Exception("no particles with type left to be deleted")
-
 def status(current_type=None):
+    """
+    returns a list with all particles with the given type
+    """
     check_valid_type(current_type)
     if ( (type_array!=NULL) and type_array[Index.type[current_type]].max_entry!= 0 ):
         indexed=0;
@@ -87,8 +98,3 @@ def status(current_type=None):
     else:
         print("no list for particle")
         return []
-
-    
-    
-    
-    

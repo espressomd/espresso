@@ -78,6 +78,8 @@ struct reaction_mode_unknown : public std::exception {
 
 bool do_global_mc_move_for_particles_of_type(int type, int start_id_polymer, int end_id_polymer, int particle_number_of_type, const bool use_wang_landau);
 
+int delete_particle (int p_id);
+
 ///////////////////////////////////////////// Wang-Landau algorithm
 
 typedef struct collective_variable{

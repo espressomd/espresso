@@ -985,10 +985,6 @@ int find_particle_type(int type, int *id);
  * typelist */
 int find_particle_type_id(int type, int *id, int *in_id);
 
-/** delete one randomly chosen particle of given type
- * returns ES_OK if succesful or else ES_ERROR		*/
-int delete_particle_of_type(int type);
-
 int remove_id_type_array(int part_id, int type);
 int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
