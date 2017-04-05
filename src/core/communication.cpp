@@ -263,7 +263,6 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
-  int reorder = 1;
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
@@ -278,6 +277,12 @@ void mpi_init(int *argc, char ***argv) {
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+  
+  /* Create the datatype cache before registering atexit(mpi_stop). This is
+     necessary as it is a static variable that would otherwise be destructed
+     before mpi_stop is called. mpi_stop however needs to communicate and thus
+     depends on the cache. */
+  boost::mpi::detail::mpi_datatype_cache();
 }
 
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
