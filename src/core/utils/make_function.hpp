@@ -13,6 +13,13 @@ template <class FPtr> struct function_traits;
 template <class T, class C> struct function_traits<T(C::*)> { typedef T type; };
 }
 
+/* Identity for std::function */
+template <typename T, typename... Args>
+std::function<T(Args...)> make_function(std::function<T(Args...)> const &f) {
+  return f;
+}
+
+/* For lambdas and functors */
 template <
     typename F,
     typename Signature = typename Utils::function_remove_const<
