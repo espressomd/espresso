@@ -63,6 +63,8 @@ IF DIPOLES == 1:
                     else:
                         self._params["bjerrum_length"] = self.params[
                             "prefactor"] / temperature
+            # also necessary on 1 CPU or GPU, does more than just broadcasting
+            mpi_bcast_coulomb_params()
 
         def get_params(self):
             self._params = self._get_params_from_es_core()
@@ -263,3 +265,29 @@ IF DIPOLES == 1:
             if mdds_set_params(self._params["n_replica"]):
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
+
+    IF CUDA == 1:
+        cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
+    
+            """Calculates magnetostatic interactions by direct summation over all
+            pairs. If the system has periodic boundaries, the minimum image
+            convention is applied."""
+    
+            def default_params(self):
+                return {}
+    
+            def required_keys(self):
+                return ()
+    
+            def valid_keys(self):
+                return ("bjerrum_length", "prefactor")
+    
+            def _get_params_from_es_core(self):
+                return {"prefactor": coulomb.Dprefactor}
+    
+            def _activate_method(self):
+                self._set_params_in_es_core()
+    
+            def _set_params_in_es_core(self):
+                self.set_magnetostatics_prefactor()
+                activate_dipolar_direct_sum_gpu()
