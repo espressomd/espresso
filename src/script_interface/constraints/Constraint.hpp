@@ -23,47 +23,34 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
 #include "core/constraints/Constraint.hpp"
-#include "core/utils/Factory.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/shapes/Shape.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
-class Constraint : public ScriptInterfaceBase {
+class Constraint : public AutoParameters {
 public:
   Constraint()
-      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {}
+      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {
+    add_parameters({{"only_positive", m_constraint->only_positive()},
+                    {"penetrable", m_constraint->penetrable()},
+                    {"particle_type", m_constraint->type()},
+                    {"shape",
+                     [this](Variant const &value) {
+                       m_shape =
+                           get_value<std::shared_ptr<Shapes::Shape>>(value);
+
+                       if (m_shape) {
+                         m_constraint->set_shape(m_shape->shape());
+                       };
+                     },
+                     [this]() {
+                       return (m_shape != nullptr) ? m_shape->id() : ObjectId();
+                     }}});
+  }
 
   const std::string name() const override { return "Constraints::Constraint"; }
-
-  VariantMap get_parameters() const override {
-    return {{"only_positive", m_constraint->only_positive()},
-            {"penetrable", m_constraint->penetrable()},
-            {"particle_type", m_constraint->type()},
-            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
-  }
-
-  ParameterMap valid_parameters() const override {
-    return {{"only_positive", {ParameterType::INT, true}},
-            {"penetrable", {ParameterType::INT, true}},
-            {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECTID, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if (name == "shape") {
-      m_shape = get_value<std::shared_ptr<Shapes::Shape>>(value);
-
-      if (m_shape) {
-        m_constraint->set_shape(m_shape->shape());
-      }
-    }
-
-    SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
-    SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
-    SET_PARAMETER_HELPER("particle_type", m_constraint->type());
-  }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
