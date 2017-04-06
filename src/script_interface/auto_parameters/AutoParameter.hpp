@@ -26,6 +26,9 @@ template <typename T> constexpr size_t infer_length() {
 }
 
 struct AutoParameter {
+  /* Exception types */
+  struct WriteError {};
+
   /* read-write parameter */
   template <typename T>
   AutoParameter(std::string const &name, T &binding,
@@ -40,9 +43,8 @@ struct AutoParameter {
   AutoParameter(std::string const &name, T const &binding,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length), set([this](Variant const &) {
-          throw std::runtime_error(this->name + " is read-only.");
-        }),
+      : name(name), type(type), length(length),
+        set([this](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return binding; }) {}
 
   /* user-provided getter and setter */
@@ -56,11 +58,12 @@ struct AutoParameter {
       : name(name), type(type), length(length), set(Utils::make_function(set)),
         get(Utils::make_function(get)) {}
 
+  const std::function<void(Variant const &)> set;
+  const std::function<Variant()> get;
+
   const std::string name;
   VariantType type;
   size_t length;
-  const std::function<void(Variant const &)> set;
-  const std::function<Variant()> get;
 };
 }
 

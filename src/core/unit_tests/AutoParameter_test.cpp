@@ -34,11 +34,11 @@ BOOST_AUTO_TEST_CASE(read_only) {
 
   /* Getting should work as usual */
   BOOST_CHECK(boost::get<int>(p.get()) == i);
+
   /* Setting should throw */
-  BOOST_CHECK_EXCEPTION(p.set(2), std::runtime_error,
-                        [](std::runtime_error const &e) {
-                          return std::string("i is read-only.") == e.what();
-                        });
+  BOOST_CHECK_EXCEPTION(
+      p.set(2), AutoParameter::WriteError,
+      [](AutoParameter::WriteError const &e) { return true; });
 }
 
 BOOST_AUTO_TEST_CASE(user_provided) {
