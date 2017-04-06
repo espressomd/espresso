@@ -62,8 +62,26 @@ template <> struct infer_type_helper<std::vector<double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
+template <size_t N, typename T>
+struct infer_type_helper<
+    Vector<N, T>,
+    typename std::enable_if<std::is_floating_point<T>::value, void>::type> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
+template <size_t N, typename T>
+struct infer_type_helper<
+    Vector<N, T>,
+    typename std::enable_if<std::is_integral<T>::value, void>::type> {
+  static constexpr VariantType value{VariantType::INT_VECTOR};
+};
+
 template <> struct infer_type_helper<std::vector<Variant>> {
   static constexpr VariantType value{VariantType::VECTOR};
+};
+
+template <> struct infer_type_helper<ObjectId> {
+  static constexpr VariantType value{VariantType::OBJECTID};
 };
 }
 
