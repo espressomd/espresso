@@ -12,15 +12,23 @@
 namespace ScriptInterface {
 
 namespace detail {
+/* Base case */
 template <typename T> struct infer_length_helper {
   static constexpr size_t value{0};
 };
 
+/* Specialization for Vectors */
 template <size_t N, typename T> struct infer_length_helper<Vector<N, T>> {
   static constexpr size_t value{N};
 };
 }
 
+/**
+ * @brief Infer supposed length of the paramer.
+ *
+ * This currently only works for fixed-sized vectors,
+ * where the length is encoded in the type.
+ */
 template <typename T> constexpr size_t infer_length() {
   return detail::infer_length_helper<T>::value;
 }

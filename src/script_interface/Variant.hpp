@@ -1,8 +1,6 @@
 #ifndef SCRIPT_INTERFACE_VARIANT_HPP
 #define SCRIPT_INTERFACE_VARIANT_HPP
 
-#include <type_traits>
-
 #include <boost/variant.hpp>
 
 #include "core/Vector.hpp"
@@ -32,7 +30,13 @@ enum class VariantType {
 };
 
 namespace detail {
-template <typename T, typename = void> struct infer_type_helper {};
+/**
+ * @brief Implementation of @f infer_type.
+ *
+ * Helper struct is needed because particle specialization
+ * of functions if not allowed.
+ */
+template <typename T> struct infer_type_helper {};
 
 template <> struct infer_type_helper<bool> {
   static constexpr VariantType value{VariantType::BOOL};
@@ -42,15 +46,11 @@ template <> struct infer_type_helper<std::string> {
   static constexpr VariantType value{VariantType::STRING};
 };
 
-template <typename T>
-struct infer_type_helper<
-    T, typename std::enable_if<std::is_integral<T>::value, void>::type> {
+template <> struct infer_type_helper<int> {
   static constexpr VariantType value{VariantType::INT};
 };
 
-template <typename T>
-struct infer_type_helper<
-    T, typename std::enable_if<std::is_floating_point<T>::value, void>::type> {
+template <> struct infer_type_helper<double> {
   static constexpr VariantType value{VariantType::DOUBLE};
 };
 
@@ -62,17 +62,11 @@ template <> struct infer_type_helper<std::vector<double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
-template <size_t N, typename T>
-struct infer_type_helper<
-    Vector<N, T>,
-    typename std::enable_if<std::is_floating_point<T>::value, void>::type> {
+template <size_t N> struct infer_type_helper<Vector<N, double>> {
   static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
 };
 
-template <size_t N, typename T>
-struct infer_type_helper<
-    Vector<N, T>,
-    typename std::enable_if<std::is_integral<T>::value, void>::type> {
+template <size_t N> struct infer_type_helper<Vector<N, int>> {
   static constexpr VariantType value{VariantType::INT_VECTOR};
 };
 

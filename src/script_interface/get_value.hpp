@@ -26,7 +26,12 @@
 namespace ScriptInterface {
 
 namespace detail {
-/* Base case */
+/**
+ * @brief Implementation of get_value.
+ *
+ * Helper struct is needed because partial specialization of functions
+ * is not allowed.
+ */
 template <typename T, typename = void> struct get_value_helper {
   T operator()(Variant const &v) const { return boost::get<T>(v); }
 };
@@ -78,6 +83,15 @@ struct get_value_helper<
 };
 }
 
+/**
+ * @brief Extract value of specific type T from a Variant.
+ *
+ * This is a wrapper around boost::get that allows us to
+ * customize the behavior for different types. This is
+ * needed e.g. to deal with Vector types that are not
+ * explicitly contained in Variant, but can easily
+ * be converted.
+ */
 template <typename T> T get_value(Variant const &v) {
   return detail::get_value_helper<T>{}(v);
 }
