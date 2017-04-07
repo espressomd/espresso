@@ -9,6 +9,9 @@
 
 namespace ScriptInterface {
 
+/**
+ * @brief Bind parameters in the script interface.
+ */
 class AutoParameters : public ScriptInterfaceBase {
 public:
   /* Exceptions */
@@ -37,6 +40,7 @@ protected:
   }
 
 public:
+  /* ScriptInterfaceBase interface */
   ParameterMap valid_parameters() const final {
     ParameterMap valid_params;
 
