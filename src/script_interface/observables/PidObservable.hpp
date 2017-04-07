@@ -70,7 +70,7 @@ public:
     return m_observable;
   };
   private:
-  mutable std::shared_ptr<::Observables::PidObservable> m_observable;
+  std::shared_ptr<::Observables::PidObservable> m_observable;
 };
 
 
@@ -88,7 +88,7 @@ public: \
     return m_observable;\
   };\
   private: \
-  mutable std::shared_ptr<::Observables::obs_name> m_observable; \
+  std::shared_ptr<::Observables::obs_name> m_observable; \
 };
 
 NEW_PID_OBSERVABLE(ParticlePositions);
