@@ -19,7 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_HPP
 
@@ -33,28 +32,25 @@ namespace ScriptInterface {
 namespace Writer {
 
 class H5mdScript : public ScriptInterfaceBase {
-    public:
-        H5mdScript() : m_h5md(new ::Writer::H5md::File()) {};
-        
-        const std::string name() const override
-        { 
-            return "ScriptInterface::Writer::H5mdScript"; 
-        };
-        
-        ParameterMap valid_parameters() const override;
-        void set_parameter(const std::string& name,
-                           const Variant& value) override;
-        VariantMap get_parameters() const override;
-        Variant call_method(const std::string& name,
-                            const VariantMap& parameters) override;
+public:
+  H5mdScript() : m_h5md(new ::Writer::H5md::File()){};
 
-    private:
-        std::shared_ptr<::Writer::H5md::File> m_h5md;
+  const std::string name() const override {
+    return "ScriptInterface::Writer::H5mdScript";
+  };
+
+  ParameterMap valid_parameters() const override;
+  void set_parameter(const std::string &name, const Variant &value) override;
+  VariantMap get_parameters() const override;
+  Variant call_method(const std::string &name,
+                      const VariantMap &parameters) override;
+
+private:
+  std::shared_ptr<::Writer::H5md::File> m_h5md;
 };
 
 } /* namespace Writer */
 } /* namespace Scriptinterface */
 
-
-#endif //ESPRESSO_H5MD_HPP
-#endif //H5MD
+#endif // ESPRESSO_H5MD_HPP
+#endif // H5MD

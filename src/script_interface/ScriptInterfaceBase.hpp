@@ -26,37 +26,10 @@
 
 #include "utils/serialization/array.hpp"
 
-#include "Variant.hpp"
 #include "Parameter.hpp"
+#include "Variant.hpp"
 
 namespace ScriptInterface {
-
-template <typename T> T get_value(Variant const &v) { return boost::get<T>(v); }
-
-template <> inline Vector3d get_value<Vector3d>(Variant const &v) {
-  return Vector3d(boost::get<std::vector<double>>(v));
-}
-
-template <> inline Vector2d get_value<Vector2d>(Variant const &v) {
-  return Vector2d(boost::get<std::vector<double>>(v));
-}
-
-/**
- * @brief Tries to extract a value with the type of MEMBER_NAME from the
- * Variant.
- *
- * This will fail at compile time if the type of MEMBER_NAME is not one of the
- * possible types of Variant, and at runtime if the current type of the variant
- * is not that of MEMBER_NAME.
- * remove_reference ensures that this also works with member access by reference
- * for example as returned by a function.
- */
-#define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME =                                                              \
-        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
-  }
-
 /**
  * Convinience typedefs.
  */
@@ -190,6 +163,22 @@ public:
     return sp;
   }
 };
+
+/**
+ * @brief Tries to extract a value with the type of MEMBER_NAME from the
+ * Variant.
+ *
+ * This will fail at compile time if the type of MEMBER_NAME is not one of the
+ * possible types of Variant, and at runtime if the current type of the
+ * variant is not that of MEMBER_NAME. remove_reference ensures that this also
+ * works with member access by reference for example as returned by a
+ * function.
+ */
+#define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
+  if (name == PARAMETER_NAME) {                                                \
+    MEMBER_NAME =                                                              \
+        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
+  }
 
 } /* namespace ScriptInterface */
 

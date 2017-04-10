@@ -107,6 +107,30 @@ cdef class ParticleHandle:
             self.update_particle_data()
             return self.particle_data.p.type
 
+    # Particle MolId
+    property mol_id:
+        """
+        Particle mol_id.
+
+        The particle mol_id is used to differentiate between particles belonging to different molecules, e.g. when virtual sites are used, or object-in-fuid cells.  The default `mol_id` for all particles is 0.
+
+        ..  note::
+
+            mol_id has to be :math:`\geq 0`.
+
+        """
+
+        def __set__(self, _mol_id):
+            if isinstance(_mol_id, int) and _mol_id >= 0:
+                if set_particle_mol_id(self.id, _mol_id) == 1:
+                    raise Exception("Set particle position first.")
+            else:
+                raise ValueError("mol_id must be an integer >= 0")
+
+        def __get__(self):
+            self.update_particle_data()
+            return self.particle_data.p.mol_id
+
     # Position
     property pos:
         """

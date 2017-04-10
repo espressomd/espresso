@@ -25,6 +25,10 @@ project(ESPResSo)
 enable_language(CXX)
 
 set(PROJECT_VERSION "4.0-dev")
+string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
+if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
+  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 ######################################################################
 # CMake internal vars
@@ -237,6 +241,10 @@ add_definitions(-DH5XX_USE_MPI)
 if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
+
+if (NOT DEFINED LIBDIR)
+  set(LIBDIR "lib")
+endif(NOT DEFINED LIBDIR)
 
 if (NOT DEFINED BINDIR)
   set(BINDIR "bin")

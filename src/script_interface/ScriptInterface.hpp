@@ -28,6 +28,7 @@
 
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
+#include "get_value.hpp"
 #include "utils/Factory.hpp"
 
 namespace ScriptInterface {

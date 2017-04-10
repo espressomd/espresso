@@ -52,27 +52,25 @@ public:
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    if ((name == "shape") && (boost::get<ObjectId>(value) != ObjectId())) {
-      std::shared_ptr<ScriptInterfaceBase> so_ptr =
-          ScriptInterface::get_instance(value);
+    if (name == "shape") {
+      m_shape = get_value<std::shared_ptr<Shapes::Shape>>(value);
 
-      auto shape_ptr =
-          std::dynamic_pointer_cast<ScriptInterface::Shapes::Shape>(so_ptr);
-
-      /* We are expecting a ScriptInterface::Shapes::Shape here,
-         throw if not. That means the assigned object had the wrong type. */
-      if (shape_ptr != nullptr) {
-        m_constraint->set_shape(shape_ptr->shape());
-        /* Store a reference */
-        m_shape = shape_ptr;
-      } else {
-        throw std::runtime_error("shape parameter expects a Shapes::Shape");
+      if (m_shape) {
+        m_constraint->set_shape(m_shape->shape());
       }
     }
 
     SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
     SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
     SET_PARAMETER_HELPER("particle_type", m_constraint->type());
+  }
+
+  Variant call_method(std::string const &name, VariantMap const &) override {
+    if (name == "total_force") {
+      return m_constraint->total_force();
+    }
+
+    return false;
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() {
@@ -84,7 +82,7 @@ private:
   std::shared_ptr<::Constraints::Constraint> m_constraint;
 
   /* Keep a reference to the shape */
-  std::shared_ptr<ScriptInterfaceBase> m_shape;
+  std::shared_ptr<Shapes::Shape> m_shape;
 };
 
 } /* namespace Constraints */

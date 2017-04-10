@@ -54,7 +54,7 @@ private:
   double m_rad_left;
   double m_rad_right;
   double m_smoothing_radius;
-  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  /** cylinder length. **/
   double m_length;
   double m_outer_rad_left;
   double m_outer_rad_right;

@@ -1,10 +1,22 @@
+#include <boost/mpi/collectives.hpp>
+
 #include "Constraint.hpp"
+#include "communication.hpp"
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
 
 namespace Constraints {
+
+Vector3d Constraint::total_force() const {
+  Vector3d total_force;
+  boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
+                         std::plus<Vector3d>());
+
+  return total_force;
+}
+
 void Constraint::reflect_particle(Particle *p, const double *distance_vector,
                                   const double *folded_pos) const {
   double vec[3];
@@ -87,7 +99,7 @@ void Constraint::add_force(Particle *p, double *folded_pos) {
   }
   for (int j = 0; j < 3; j++) {
     p->f.f[j] += force[j];
-    m_total_force[j] -= force[j];
+    m_local_force[j] -= force[j];
 #ifdef ROTATION
     p->f.torque[j] += torque1[j];
     part_rep.f.torque[j] += torque2[j];
@@ -124,56 +136,4 @@ void Constraint::add_energy(Particle *p, double *folded_pos,
   if (part_rep.p.type >= 0)
     *obsstat_nonbonded(&energy, p->p.type, part_rep.p.type) += nonbonded_en;
 }
-
-// std::map<std::string, Variant> ShapeConstraint::get_parameters() {
-//   std::map<std::string, Variant> p;
-
-//   p["only_positive"] = only_positive;
-//   p["type"] = part_rep.p.type;
-//   p["reflecting"] = reflection_type;
-//   p["penetrable"] = penetrable;
-//   p["tunable_slip"] = tuneable_slip;
-//   p["shape"] = m_shape_id;
-
-//   return p;
-// }
-
-// ParameterMap ShapeConstraint::all_parameters() const {
-//   Parameters p;
-//   using ScriptInterface::ParameterType;
-//   p["only_positive"] = Parameter(Parameter::Type::INT, false);
-//   p["type"] = Parameter(Parameter::Type::INT, true);
-//   p["reflecting"] = Parameter(Parameter::Type::INT, false);
-//   p["penetrable"] = Parameter(Parameter::Type::INT, false);
-//   p["tunable_slip"] = Parameter(Parameter::Type::INT, false);
-//   p["shape"] = Parameter(Parameter::Type::INT, true);
-
-//   return p;
-// }
-
-// void ShapeConstraint::set_parameter(const std::string &name,
-//                                        const Variant &value) {
-//   SET_PARAMETER_HELPER("only_positive", only_positive);
-//   if (name == "type") {
-//     SET_PARAMETER_HELPER("type", part_rep.p.type);
-//     make_particle_type_exist(part_rep.p.type);
-//     return;
-//   }
-
-//   if (name == "reflecting")
-//     reflection_type =
-//         static_cast<ReflectionType>(static_cast<int>(boost::get<int>(value)));
-
-//   SET_PARAMETER_HELPER("penetrable", penetrable);
-//   SET_PARAMETER_HELPER("tunable_slip", tuneable_slip);
-
-//   if (name == "shape") {
-//     m_shape_id = boost::get<int>(value);
-//     m_shape = dynamic_cast<Shapes::Shape *>(
-//         ParallelObject::get_local_address(m_shape_id));
-//     assert(m_shape != nullptr);
-
-//     return;
-//   }
-// }
 }
