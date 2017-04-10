@@ -281,6 +281,10 @@ IF REACTION_ENSEMBLE:
             free_reaction_ensemble()
 
         def delete_particle(self, p_id):
+            """
+            Deletes the particle of the given p_id and makes sure that the particle range has no holes. This function has some restrictions, as e.g. bonds are not deleted. 
+            Therefore only apply this function to simple ions.
+            """
             delete_particle(p_id)
 
         #//////////////////////////Wang-Landau algorithm
