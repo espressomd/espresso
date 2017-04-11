@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(transform_vectors_test) {
   /* v = {{INT, INT, INT}, {STRING, {DOUBLE, DOUBLE, DOUBLE, DOUBLE}}} */
   auto v = Variant(vv);
 
-  transform_vectors(v)
+  transform_vectors(v);
   /* v should now be { INT_VECTOR, { STRING, DOUBLE_VECTOR}} */
   BOOST_CHECK(is_vector(v));
 
