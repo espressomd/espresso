@@ -38,6 +38,15 @@ BOOST_AUTO_TEST_CASE(values) {
   BOOST_CHECK(r.end() == a + 10);
 }
 
+BOOST_AUTO_TEST_CASE(std_begin_end) {
+  int a[10];
+
+  auto r = Range<int *>(a, a + 10);
+
+  BOOST_CHECK(std::begin(r) == r.begin());
+  BOOST_CHECK(std::end(r) == r.end());
+}
+
 BOOST_AUTO_TEST_CASE(make_range) {
   int a[10];
 
