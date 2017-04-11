@@ -36,9 +36,6 @@ BOOST_AUTO_TEST_CASE(empty_cells) {
   auto begin = iterator(cells.begin(), cells.end(), 0);
   auto end = iterator(cells.end(), cells.end(), 0);
 
-  /* Should skip over all cells */
-  begin++;
-
   BOOST_CHECK(begin == end);
 }
 

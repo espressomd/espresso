@@ -9,7 +9,12 @@ struct ParticleIterator : public boost::iterator_facade<
                               Particle, boost::forward_traversal_tag> {
   ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end,
                    int part_id)
-      : m_cell(cell), m_end(end), m_part_id(part_id) {}
+      : m_cell(cell), m_end(end), m_part_id(part_id) {
+    /* Jump to first actual particle */
+    if ((m_cell != m_end) && (*m_cell)->n == 0) {
+      increment();
+    }
+  }
 
 public:
   using cell_type = typename BidirectionalIterator::value_type;
