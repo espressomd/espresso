@@ -61,3 +61,6 @@ unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp ../MpiCallbacks.cpp N
 
 unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp NUM_PROC 2)
 target_link_libraries(ParallelScriptInterface_test EspressoScriptInterface)
+
+unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp)
+unit_test(NAME Range_test SRC Range_test.cpp)
