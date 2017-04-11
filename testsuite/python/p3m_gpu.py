@@ -32,12 +32,10 @@ if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features()
             test_params = {}
             test_params["bjerrum_length"] = 2
             test_params["cao"] = 2
-            test_params["inter"] = 3
             test_params["r_cut"] = 0.9
             test_params["accuracy"] = 1e-1
             test_params["mesh"] = [10, 10, 10]
             test_params["epsilon"] = 20.0
-            test_params["mesh_off"] = [0.8, 0.8, 0.8]
             test_params["alpha"] = 1.1
             test_params["tune"] = False
     

@@ -27,11 +27,6 @@
 #include "topology.hpp"
 #endif
 
-#include "constraint.hpp"
-#include "forces.hpp"
-#include "magnetic_non_p3m_methods.hpp"
-#include "mdlc_correction.hpp"
-
 #include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
@@ -42,10 +37,12 @@
 #include "collision.hpp"
 #include "comfixed.hpp"
 #include "comforce.hpp"
+#include "constraints.hpp"
 #include "dihedral.hpp"
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
+#include "forces.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
 #include "harmonic.hpp"
@@ -58,6 +55,8 @@
 #include "ljcos.hpp"
 #include "ljcos2.hpp"
 #include "ljgen.hpp"
+#include "magnetic_non_p3m_methods.hpp"
+#include "mdlc_correction.hpp"
 #include "metadynamics.hpp"
 #include "molforces.hpp"
 #include "morse.hpp"

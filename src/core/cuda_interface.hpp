@@ -88,6 +88,10 @@ typedef struct {
   float q;
 #endif
 
+#ifdef MASS
+  float mass;
+#endif
+
   unsigned int fixed;
   
 #ifdef IMMERSED_BOUNDARY

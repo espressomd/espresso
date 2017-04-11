@@ -53,7 +53,8 @@
 #include "rattle.hpp"
 #include "reaction.hpp"
 #include "rotation.hpp"
-#include "statistics_correlation.hpp"
+#include "correlators.hpp"
+#include "observables.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
 #include "verlet.hpp"
@@ -1241,7 +1242,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
   }
 
   /* perform integration */
-  if (!correlations_autoupdate && !observables_autoupdate) {
+  if (!Correlators::auto_update_enabled() && !Observables::auto_update_enabled()) {
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
@@ -1249,8 +1250,14 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      autoupdate_observables();
-      autoupdate_correlations();
+      Observables::auto_update();
+      Correlators::auto_update();
+
+      if ( Observables::auto_write_enabled() )
+      {
+        Observables::auto_write();
+      }
+
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))

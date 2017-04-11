@@ -5,6 +5,7 @@
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
+#define PARTICLE_ANISOTROPY
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
@@ -36,7 +37,6 @@
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
-#define EK_REACTION
 #define MMM1D_GPU
 #endif
 

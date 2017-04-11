@@ -54,7 +54,8 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
+#include "lbboundaries/LBBoundary.hpp"
 #include "lb.hpp"
 #include "lj.hpp"
 #include "ljangle.hpp"
@@ -76,12 +77,13 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_correlation.hpp"
+#include "correlators.hpp"
 #include "statistics_fluid.hpp"
-#include "statistics_observable.hpp"
+#include "observables/Observable.hpp"
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "observables/LbRadialVelocityProfile.hpp"
 
 using namespace std;
 using Communication::mpiCallbacks;
@@ -124,9 +126,7 @@ static int terminated = 0;
   CB(mpi_send_ext_torque_slave)                                                \
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
-  CB(mpi_bcast_constraint_slave)                                               \
   CB(mpi_cap_forces_slave)                                                     \
-  CB(mpi_get_constraint_force_slave)                                           \
   CB(mpi_get_configtemp_slave)                                                 \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
@@ -153,7 +153,6 @@ static int terminated = 0;
   CB(mpi_send_rotational_inertia_slave)                                        \
   CB(mpi_send_affinity_slave)                                                  \
   CB(mpi_send_out_direction_slave)                                             \
-  CB(mpi_bcast_lbboundary_slave)                                               \
   CB(mpi_send_mu_E_slave)                                                      \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_send_vs_relative_slave)                                               \
@@ -264,6 +263,7 @@ void mpi_init(int *argc, char ***argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
   int reorder = 1;
+
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
@@ -271,13 +271,20 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  Communication::initialize_callbacks(comm_cart);
+
+  Communication::mpiCallbacks().set_comm(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+  
+  /* Create the datatype cache before registering atexit(mpi_stop). This is
+     necessary as it is a static variable that would otherwise be destructed
+     before mpi_stop is called. mpi_stop however needs to communicate and thus
+     depends on the cache. */
+  boost::mpi::detail::mpi_datatype_cache();
 }
 
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
@@ -288,7 +295,7 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
   comm_cart =
       boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
 
-  MPI_Comm_rank(comm_cart, &this_node);
+  this_node = comm_cart.rank();
 }
 
 void mpi_call(SlaveCallback cb, int node, int param) {
@@ -1142,9 +1149,10 @@ void mpi_observable_lb_radial_velocity_profile() {
   mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
 #endif
 }
+
 void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part) {
 #ifdef LB
-  mpi_observable_lb_radial_velocity_profile_slave_implementation();
+  Observables::mpi_observable_lb_radial_velocity_profile_slave_implementation();
 #endif
 }
 
@@ -1284,7 +1292,7 @@ void mpi_minimize_energy_slave(int a, int b) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
 int mpi_integrate(int n_steps, int reuse_forces) {
-  if (!correlations_autoupdate) {
+  if (!Correlators::auto_update_enabled()) {
     mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
     integrate_vv(n_steps, reuse_forces);
     COMM_TRACE(
@@ -1296,7 +1304,7 @@ int mpi_integrate(int n_steps, int reuse_forces) {
       reuse_forces = 0; // makes even less sense after the first time step
       COMM_TRACE(
           fprintf(stderr, "%d: integration task %d done.\n", this_node, i));
-      autoupdate_correlations();
+      Correlators::auto_update();
     }
   }
   return mpi_check_runtime_errors();
@@ -2182,122 +2190,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
 #endif
 }
 
-/*************** REQ_BCAST_CONSTR ************/
-void mpi_bcast_constraint(int del_num) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_bcast_constraint_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new constraint */
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
-  } else if (del_num == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  } else {
-    memmove(&constraints[del_num], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  }
-
-  on_constraint_change();
-#endif
-}
-
-void mpi_bcast_constraint_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  if (parm == -1) {
-    n_constraints++;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-    MPI_Bcast(&constraints[n_constraints - 1], sizeof(Constraint), MPI_BYTE, 0,
-              comm_cart);
-  } else if (parm == -2) {
-    /* delete all constraints */
-    n_constraints = 0;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  } else {
-    memmove(&constraints[parm], &constraints[n_constraints - 1],
-            sizeof(Constraint));
-    n_constraints--;
-    constraints = (Constraint *)Utils::realloc(
-        constraints, n_constraints * sizeof(Constraint));
-  }
-
-  on_constraint_change();
-#endif
-}
-
-/*************** REQ_BCAST_LBBOUNDARY ************/
-void mpi_bcast_lbboundary(int del_num) {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
-
-  if (del_num == -1) {
-    /* bcast new boundaries */
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries - 1], sizeof(LB_Boundary),
-              MPI_BYTE, 0, comm_cart);
-  } else if (del_num == -2) {
-    /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-#if defined(LB_BOUNDARIES_GPU)
-  else if (del_num == -3) {
-    // nothing, GPU code just requires to call on_lbboundary_change()
-  }
-#endif
-  else {
-    memmove(&lb_boundaries[del_num], &lb_boundaries[n_lb_boundaries - 1],
-            sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-
-  on_lbboundary_change();
-#endif
-}
-
-void mpi_bcast_lbboundary_slave(int node, int parm) {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-
-#if defined(LB_BOUNDARIES)
-  if (parm == -1) {
-    n_lb_boundaries++;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries - 1], sizeof(LB_Boundary),
-              MPI_BYTE, 0, comm_cart);
-  } else if (parm == -2) {
-    /* delete all boundaries */
-    n_lb_boundaries = 0;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-#if defined(LB_BOUNDARIES_GPU)
-  else if (parm == -3) {
-    // nothing, GPU code just requires to call on_lbboundary_change()
-  }
-#endif
-  else {
-    memmove(&lb_boundaries[parm], &lb_boundaries[n_lb_boundaries - 1],
-            sizeof(LB_Boundary));
-    n_lb_boundaries--;
-    lb_boundaries = (LB_Boundary *)Utils::realloc(
-        lb_boundaries, n_lb_boundaries * sizeof(LB_Boundary));
-  }
-#endif
-
-  on_lbboundary_change();
-#endif
-}
 
 void mpi_cap_forces(double fc) {
   force_cap = fc;
@@ -2339,22 +2231,6 @@ void mpi_cap_forces_slave(int node, int parm) {
     check_tab_forcecap(force_cap);
   */
   on_short_range_ia_change();
-#endif
-}
-
-/*************** REQ_GET_CONSFOR ************/
-void mpi_get_constraint_force(int cons, double force[3]) {
-#ifdef CONSTRAINTS
-  mpi_call(mpi_get_constraint_force_slave, -1, cons);
-  MPI_Reduce(constraints[cons].part_rep.f.f, force, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-#endif
-}
-
-void mpi_get_constraint_force_slave(int node, int parm) {
-#ifdef CONSTRAINTS
-  MPI_Reduce(constraints[parm].part_rep.f.f, NULL, 3, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
 #endif
 }
 
@@ -2810,16 +2686,30 @@ void mpi_set_particle_temperature_slave(int pnode, int part) {
 }
 
 #ifdef LANGEVIN_PER_PARTICLE
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma) {
+#else
+void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
+#endif
+  int j;
   mpi_call(mpi_set_particle_gamma_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local
      * node */
+#ifndef PARTICLE_ANISOTROPY
     p->p.gamma = gamma;
+#else
+    for ( j = 0 ; j < 3 ; j++) p->p.gamma[j] = gamma[j];
+#endif
+
   } else {
+#ifndef PARTICLE_ANISOTROPY
     MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+#else
+    MPI_Send(gamma, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+#endif
   }
 
   on_particle_change();
@@ -2829,14 +2719,18 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma) {
 void mpi_set_particle_gamma_slave(int pnode, int part) {
 #ifdef LANGEVIN_PER_PARTICLE
   double s_buf = 0.;
+  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
+#ifndef PARTICLE_ANISOTROPY
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma = s_buf;
+#else
+    MPI_Recv(p->p.gamma, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+#endif
   }
-
   on_particle_change();
 #endif
 }
@@ -2853,12 +2747,13 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    /* here the setting actually happens, if the particle belongs to the local
-     * node */
+/* here the setting actually happens, if the particle belongs to the local
+ * node */
 #ifndef ROTATIONAL_INERTIA
     p->p.gamma_rot = gamma_rot;
 #else
-    for ( j = 0 ; j < 3 ; j++) p->p.gamma_rot[j] = gamma_rot[j];
+    for (j = 0; j < 3; j++)
+      p->p.gamma_rot[j] = gamma_rot[j];
 #endif
   } else {
 #ifndef ROTATIONAL_INERTIA
@@ -2879,7 +2774,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    /* here the setting happens for nonlocal nodes */
+/* here the setting happens for nonlocal nodes */
 #ifndef ROTATIONAL_INERTIA
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma_rot = s_buf;

@@ -106,6 +106,7 @@ class ParticleProperties(ut.TestCase):
     test_v = generateTestForVectorProperty("v", np.array([0.2, 0.3, 0.4]))
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
+    test_mol_id = generateTestForScalarProperty("mol_id", int(3))
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
@@ -123,10 +124,17 @@ class ParticleProperties(ut.TestCase):
         # The tested value has to be normalized!
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
+
         if "LANGEVIN_PER_PARTICLE" in espressomd.features():
+            if "PARTICLE_ANISOTROPY" in espressomd.features():
+                test_gamma = generateTestForVectorProperty(
+                "gamma", np.array([2., 9., 0.23]))
+            else:
+                test_gamma = generateTestForScalarProperty("gamma", 17.3)
+                
             if "ROTATIONAL_INERTIA" in espressomd.features():
                 test_gamma_rot = generateTestForVectorProperty(
-                    "gamma_rot", np.array([5., 10., 0.33]))
+                "gamma_rot", np.array([5., 10., 0.33]))
             else:
                 test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))

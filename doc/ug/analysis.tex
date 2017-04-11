@@ -97,9 +97,9 @@ between particles of only those types is determined.
 particle \var{pid} (variant \variant{2}), or to the coordinates
 (\var{x}, \var{y}, \var{z}) (Variant \variant{3}).
 
-\subsection{Particles in the neighbourhood}
+\subsection{Particles in the neighborhood}
 \label{analyze:nbhood}
-\analyzeindex{particles in the neighbourhood}
+\analyzeindex{particles in the neighborhood}
 
 \begin{pysyntax}
   \object{
@@ -201,12 +201,12 @@ of the currently identified properties.
 \begin{enumerate}
 \item \var{xbins} is the number of bins along the axis of rotation.
 \item \var{ybins} is the number of bins in the radial direction.
-\item The centre point (\var{centerofrotation}) of the cylinder is
+\item The center point (\var{centerofrotation}) of the cylinder is
   located in the lower cap, i.e., \var{xrange} is the height of the
-  cylinder with respect to this centre point.
+  cylinder with respect to this center point.
 \item The bins are distributed along \var{axisofrotation} starting
   from 0 (\var{centerofrotation}).
-\item The \var{thetabins} seem to average with respect to the centre
+\item The \var{thetabins} seem to average with respect to the center
   of mass of the particles in the individual bins rather than with
   respect to the central axis, which one would think is natural.
 \end{enumerate}
@@ -266,9 +266,9 @@ After knowing what the output looks like we might want to have more
 information on how to input data.
 \begin{itemize}
 \item \var{center} is a double list containing the coordinates of the
-  centre point of the cylinder.
+  center point of the cylinder.
 \item \var{direction} is a double list containing a (not necessarily
-  normalised) vector.
+  normalized) vector.
 \item \var{length} is the total length of the cylinder.
 \item \var{radius} is the radius of the cylinder.
 \item \var{bins\_axial} is the number of bins along the \var{direction}
@@ -1078,7 +1078,7 @@ defined as
 R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
 \end{equation}
 where $\vec r_i$ are position vectors of individual particles constituting a molecule
-and $\vec r_{\mathrm{cm}}$ is the position vector of its centre of mass. The sum runs
+and $\vec r_{\mathrm{cm}}$ is the position vector of its center of mass. The sum runs
 over all $N$ particles comprising the molecule. For more information see
 any polymer science book, e.g.~\cite{rubinstein03a}.
 If \lit{<rg>} is used, the radius of gyration is averaged over all stored
@@ -1136,7 +1136,7 @@ configurations (see section \vref{sec:stored-configs}).
 \{ \var{idf(0)} \var{idf(1)} \dots \var{idf(chain\_length-1)} \}
 \end{code}
 The index corresponds to the number of beads between the two monomers
-considered (0 = next neighbours, 1 = one monomer in between, \dots).
+considered (0 = next neighbors, 1 = one monomer in between, \dots).
 
 \subsubsection{Internal distances II (specific monomer)}
 \analyzeindex{bond distances internal first monomer}

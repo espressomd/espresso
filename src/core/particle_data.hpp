@@ -154,16 +154,20 @@ struct ParticleProperties {
 
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
+#ifndef PARTICLE_ANISOTROPY
   double gamma;
+#else
+  double gamma[3];
+#endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   double gamma_rot;
 #else
   double gamma_rot[3];
-#endif
-#endif
-#endif
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
@@ -208,7 +212,6 @@ struct ParticleProperties {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4];
@@ -715,7 +718,11 @@ int set_particle_temperature(int part, double T);
     @param gamma its new frictional coefficient.
     @return ES_OK if particle existed
 */
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma);
+#else
+int set_particle_gamma(int part, double gamma[3]);
+#endif
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma);
@@ -1018,10 +1025,6 @@ void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
 
 #ifdef MULTI_TIMESTEP
 void pointer_to_smaller_timestep(Particle *p, int *&res);
-#endif
-
-#ifdef MASS
-void pointer_to_mass(Particle *p, double *&res);
 #endif
 
 void pointer_to_dip(Particle *P, double *&res);

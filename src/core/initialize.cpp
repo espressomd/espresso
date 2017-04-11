@@ -56,9 +56,10 @@
 #include "lattice.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
-#include "statistics_observable.hpp"
-#include "statistics_correlation.hpp"
-#include "lb-boundaries.hpp"
+#include "observables/Observable.hpp"
+#include "correlators/Correlator.hpp"
+#include "lbboundaries.hpp"
+#include "lbboundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
@@ -298,7 +299,7 @@ void on_coulomb_change()
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha, box_l);
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
     MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
               sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     break;
@@ -374,14 +375,14 @@ void on_lbboundary_change()
 
 #ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
   }
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries();
+      LBBoundaries::lb_init_boundaries();
     }
   }
 #endif
@@ -459,7 +460,7 @@ void on_boxl_change() {
   if(lattice_switch & LATTICE_LB) {
     lb_init();
 #ifdef LB_BOUNDARIES
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
 #endif
@@ -596,6 +597,7 @@ void on_parameter_change(int field)
     }
 #endif
   case FIELD_LANGEVIN_GAMMA:
+  case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_DPD_GAMMA:
   case FIELD_DPD_TGAMMA:
     reinit_thermo = 1;
@@ -655,7 +657,7 @@ void on_lb_params_change_gpu(int field) {
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
 #ifdef LB_BOUNDARIES_GPU
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
   }
   if (field == LBPAR_DENSITY) {

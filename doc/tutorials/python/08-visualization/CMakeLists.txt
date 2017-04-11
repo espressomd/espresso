@@ -14,3 +14,6 @@ add_custom_command(
 
 add_custom_target(tutorials_py_08 DEPENDS ${BASENAME}.pdf)
 
+configure_file(scripts/plotting.py ${CMAKE_CURRENT_BINARY_DIR}/plotting.py COPYONLY)
+configure_file(scripts/simulation.py ${CMAKE_CURRENT_BINARY_DIR}/simulation.py COPYONLY)
+configure_file(scripts/visualization.py ${CMAKE_CURRENT_BINARY_DIR}/visualization.py COPYONLY)

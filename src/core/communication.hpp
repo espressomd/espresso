@@ -514,7 +514,12 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional
  * coefficient. */
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#else
+void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+#endif
+
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
@@ -524,9 +529,6 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
-/** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
-void mpi_bcast_constraint(int del_num);
-
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lbboundary(int del_num);
@@ -534,9 +536,6 @@ void mpi_bcast_lbboundary(int del_num);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-/** Issue REQ_GET_CONSFOR: get force acting on constraint */
-void mpi_get_constraint_force(int constraint, double force[3]);
 
 #ifdef CONFIGTEMP
 /** Issue REQ_GET_CONFIGTEMP: get configurational temperature */

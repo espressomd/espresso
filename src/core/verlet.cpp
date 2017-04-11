@@ -36,7 +36,7 @@
 #include "energy_inline.hpp"
 #include "pressure.hpp"
 #include "domain_decomposition.hpp"
-#include "constraint.hpp"
+#include "constraints.hpp"
 #include "external_potential.hpp"
 
 /** Granularity of the verlet list */
@@ -92,10 +92,8 @@ void free_pairList(PairList *list)
   list->pair = (Particle **)Utils::realloc(list->pair, 0);
 }
 
-
 /** Returns true if the particles are to be considered for short range 
     interactions */
-
 
 void build_verlet_lists()
 {
