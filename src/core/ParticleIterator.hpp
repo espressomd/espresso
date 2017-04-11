@@ -16,11 +16,6 @@ struct ParticleIterator : public boost::iterator_facade<
     }
   }
 
-public:
-  using cell_type = typename BidirectionalIterator::value_type;
-
-  cell_type const &cell() const { return *m_cell; }
-
 private:
   friend class boost::iterator_core_access;
 

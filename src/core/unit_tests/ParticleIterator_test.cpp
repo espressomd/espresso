@@ -119,25 +119,3 @@ BOOST_AUTO_TEST_CASE(order) {
                           [](Particle const &p) { return p.identity() == 1; }));
 }
 
-BOOST_AUTO_TEST_CASE(cell_access) {
-  auto cells = make_cells(100);
-
-  for (int i = 0; i < 12345; i++) {
-    cells[i % cells.size()]->part.emplace_back(i);
-  }
-
-  /* Set the size */
-  for (auto &c : cells) {
-    c->n = c->part.size();
-  }
-
-  using cells_t = std::vector<std::unique_ptr<Cell>>;
-  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
-
-  auto begin = iterator(cells.begin(), cells.end(), 0);
-  auto end = iterator(cells.end(), cells.end(), 0);
-
-  for (; begin != end; ++begin) {
-    BOOST_CHECK(begin.cell() == cells[begin->identity() % cells.size()]);
-  }
-}
