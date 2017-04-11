@@ -644,7 +644,7 @@ class Analysis:
         if number_of_chains < 0:
             raise ValueError('number_of_chains must be greater than zero')
         c_analyze.sortPartCfg()
-        if chain_start + chain_length * number_of_chains >= len(self._system.part):
+        if chain_start + chain_length * number_of_chains > len(self._system.part):
             raise ValueError(
                 'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
         c_analyze.chain_start = chain_start
