@@ -1678,6 +1678,61 @@ cdef class ParticleList:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
 
+
+    def writevsf(self, fp, types='all'):
+        """
+        writes a VST (VTF Structure Format) to a file.
+        This can be used to write the header of a VTF file.
+
+        Parameters
+        ----------
+        types : str
+                Specifies the particle types. The string 'all' will write all particles
+        fp : file
+                   File pointer to write to.
+
+        """
+        global box_l
+        if not hasattr(types, '__iter__'):
+            types = [types]
+            
+        fp.write("unitcell {} {} {}\n".format(*(box_l)))
+        for p in self:
+            for t in types:
+                if (p.type == t or t == "all"):
+                  fp.write("atom {} radius 1 name {} type {} \n".format(p.id, p.type, p.type))
+        for p in self:
+            for t in types:
+                if (p.type == t or t == "all"):
+                    for b in p.bonds:
+                        if (b[1].type == t or t == "all"):
+                            fp.write("bond {}:{}\n".format(p.id,b[1]))
+
+
+    def writevcf(self, fp, types='all'):
+        """
+        writes a VCF (VTF Coordinate Format) to a file.
+        This can be used to write a stimestep to a VTF file.
+        
+        Parameters
+        ----------
+        types : str
+                Specifies the particle types. The string 'all' will write all particles
+        fp : file
+                   File pointer to write to.
+
+        """
+        global box_l
+        if not hasattr(types, '__iter__'):
+            types = [types]
+
+            fp.write("\ntimestep ordered\n")
+            for p in self:
+                for t in types:
+                    if (p.type == t or t == "all"):
+                        fp.write("{} {} {}\n".format(*(p.pos)))
+
+
     property highest_particle_id:
         """
         Largest particle id.
