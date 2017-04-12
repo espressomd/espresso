@@ -1706,8 +1706,8 @@ cdef class ParticleList:
             for t in types:
                 if (p.type == t or t == "all"):
                     for b in p.bonds:
-                       if (self[b[1]].type == t or t == "all"):
-                           fp.write("bond {}:{}\n".format(p.id,self[b[1]].id))
+                        if (self[b[1]].type == t or t == "all"):
+                            fp.write("bond {}:{}\n".format(p.id,self[b[1]].id))
 
 
     def writevcf(self, fp, types='all'):
