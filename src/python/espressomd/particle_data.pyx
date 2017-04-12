@@ -1700,13 +1700,14 @@ cdef class ParticleList:
         for p in self:
             for t in types:
                 if (p.type == t or t == "all"):
-                  fp.write("atom {} radius 1 name {} type {} \n".format(p.id, p.type, p.type))
+                    fp.write("atom {} radius 1 name {} type {} \n".format(p.id, p.type, p.type))
+ 
         for p in self:
             for t in types:
                 if (p.type == t or t == "all"):
                     for b in p.bonds:
-                        if (b[1].type == t or t == "all"):
-                            fp.write("bond {}:{}\n".format(p.id,b[1]))
+                       if (self[b[1]].type == t or t == "all"):
+                           fp.write("bond {}:{}\n".format(p.id,self[b[1]].id))
 
 
     def writevcf(self, fp, types='all'):
@@ -1726,11 +1727,11 @@ cdef class ParticleList:
         if not hasattr(types, '__iter__'):
             types = [types]
 
-            fp.write("\ntimestep ordered\n")
+            fp.write("\ntimestep indexed\n")
             for p in self:
                 for t in types:
                     if (p.type == t or t == "all"):
-                        fp.write("{} {} {}\n".format(*(p.pos)))
+                        fp.write("{} {} {} {}\n".format(p.id, *(p.pos)))
 
 
     property highest_particle_id:
