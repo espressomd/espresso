@@ -52,5 +52,15 @@ class Constraint(ScriptInterfaceHelper):
       constraint.
     shape : object
       One of the shapes from :mod:`espressomd.shapes`
+    ext_electric_field : double
+      External electric field magnitude along the
+      constraint shape surface normal direction.
+      This feature is currently precisely implemented
+      for the :mod:`espressomd.shapes.Wall` only.
+    ext_magn_field : double
+      External magnetic field magnitude along the
+      constraint shape surface normal direction.
+      This feature is currently precisely implemented
+      for the :mod:`espressomd.shapes.Wall` only.
     """
     _so_name = "Constraints::Constraint"

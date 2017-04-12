@@ -41,14 +41,18 @@ public:
     return {{"only_positive", m_constraint->only_positive()},
             {"penetrable", m_constraint->penetrable()},
             {"particle_type", m_constraint->type()},
-            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
+            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()},
+            {"ext_electric_field", m_constraint->ext_electric_field()},
+            {"ext_magn_field", m_constraint->ext_magn_field()}};
   }
 
   ParameterMap valid_parameters() const override {
     return {{"only_positive", {ParameterType::INT, true}},
             {"penetrable", {ParameterType::INT, true}},
             {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECTID, true}}};
+            {"shape", {ParameterType::OBJECTID, true}},
+            {"ext_electric_field", {ParameterType::DOUBLE, true}},
+            {"ext_magn_field", {ParameterType::DOUBLE, true}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
@@ -63,6 +67,8 @@ public:
     SET_PARAMETER_HELPER("only_positive", m_constraint->only_positive());
     SET_PARAMETER_HELPER("penetrable", m_constraint->penetrable());
     SET_PARAMETER_HELPER("particle_type", m_constraint->type());
+    SET_PARAMETER_HELPER("ext_electric_field", m_constraint->ext_electric_field());
+    SET_PARAMETER_HELPER("ext_magn_field", m_constraint->ext_magn_field());
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
