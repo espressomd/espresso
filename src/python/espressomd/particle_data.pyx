@@ -1723,7 +1723,6 @@ cdef class ParticleList:
                    File pointer to write to.
 
         """
-        global box_l
         if not hasattr(types, '__iter__'):
             types = [types]
 
