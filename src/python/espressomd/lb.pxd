@@ -82,6 +82,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_get_ext_force(double * c_f)
         int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
+        int lb_lbfluid_get_interpolated_velocity_global(double * p, double * v)
         int lb_lbfluid_print_vtk_velocity(char * filename)
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbfluid_print_velocity(char * filename)

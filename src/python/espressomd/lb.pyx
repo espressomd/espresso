@@ -191,7 +191,7 @@ IF LB_GPU or LB:
         # input/output function wrappers for LB nodes
         ####################################################
         # get the fluid velocity at node with coordinates coord
-        def get_u(self, coord):
+        def lbnode_get_u(self, coord):
             if isinstance(coord, list):
                 coord = np.array(coord)
             assert(coord.shape[0]==3)
@@ -201,6 +201,18 @@ IF LB_GPU or LB:
             if(lb_lbnode_get_u(&c_coord[0], p_u)):
                 raise Exception(
                         "lb_lbnode_get_u error at C-level interface")
+            return np.asarray(p_u)
+
+        def get_interpolated_velocity(self, coord):
+            if isinstance(coord, list):
+                coord = np.array(coord)
+            assert(coord.shape[0]==3)
+            cdef double p_u[3]
+            cdef double c_coord[3]
+            c_coord = coord
+            if(lb_lbfluid_get_interpolated_velocity_global(&c_coord[0], p_u)):
+                raise Exception(
+                        "lb_lbfluid_get_interpolated_velocity_global error at C-level interface")
             return np.asarray(p_u)
 
         # Activate Actor
