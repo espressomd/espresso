@@ -6,6 +6,7 @@
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "interaction_data.hpp"
+#include "particle_data.hpp"
 
 namespace Constraints {
 
@@ -58,6 +59,7 @@ void Constraint::reflect_particle(Particle *p, const double *distance_vector,
 void Constraint::add_force(Particle *p, double *folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
   Particle part_rep;
+  Vector3d vec_dip({0., 0., 0.}), vec_field({0., 0., 0.}), torque_ext({0., 0., 0.});
   part_rep.p.type = m_type;
 
   IA_parameters *ia_params = get_ia_param(p->p.type, part_rep.p.type);
@@ -65,8 +67,9 @@ void Constraint::add_force(Particle *p, double *folded_pos) {
   dist = 0.;
   for (int j = 0; j < 3; j++) {
     force[j] = 0;
+    vec_field[j] = 0;
 #ifdef ROTATION
-    torque1[j] = torque2[j] = 0;
+    torque1[j] = torque2[j] = torque_ext[j] = 0;
 #endif
   }
 
@@ -97,9 +100,27 @@ void Constraint::add_force(Particle *p, double *folded_pos) {
       }
     }
   }
+
   for (int j = 0; j < 3; j++) {
+      if (dist) vec_field[j] = vec[j] / dist;
+#ifdef DIPOLES
+      vec_dip[j] = p->r.dip[j];
+#endif
+  }
+
+#ifdef DIPOLES
+  torque_ext = vec_dip.cross(vec_dip,vec_field);
+#endif
+
+  for (int j = 0; j < 3; j++) {
+#ifdef ELECTROSTATICS
+    force[j] += m_ext_electric_field * p->p.q * vec_field[j]; // The constraint electrostatic interaction with particles
+#endif
     p->f.f[j] += force[j];
     m_local_force[j] -= force[j];
+#ifdef DIPOLES
+    torque1[j] += m_ext_magn_field * torque_ext[j];  // The constraint magnetostatic interaction with particles
+#endif
 #ifdef ROTATION
     p->f.torque[j] += torque1[j];
     part_rep.f.torque[j] += torque2[j];
@@ -114,6 +135,7 @@ void Constraint::add_energy(Particle *p, double *folded_pos,
   double nonbonded_en = 0.0;
   Particle part_rep;
   part_rep.p.type = m_type;
+  Vector3d vec_dip, vec_field;
 
   ia_params = get_ia_param(p->p.type, part_rep.p.type);
 
@@ -133,6 +155,22 @@ void Constraint::add_energy(Particle *p, double *folded_pos,
                         << " violated by particle " << p->p.identity;
     }
   }
+
+  for (int j = 0; j < 3; j++) {
+      vec_field[j] = 0;
+      if (dist) vec_field[j] = vec[j] / dist;
+#ifdef DIPOLES
+      vec_dip[j] = p->r.dip[j];
+#endif
+  }
+// The constraint electromagnetic interaction with particles
+#ifdef DIPOLES
+  nonbonded_en += - m_ext_magn_field * vec_field.dot(vec_dip);
+#endif
+#ifdef ELECTROSTATICS
+  nonbonded_en += - m_ext_electric_field * dist * p->p.q;
+#endif
+
   if (part_rep.p.type >= 0)
     *obsstat_nonbonded(&energy, p->p.type, part_rep.p.type) += nonbonded_en;
 }

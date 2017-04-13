@@ -2,6 +2,7 @@ set(py_tests  bondedInteractions.py
               cellsystem.py
               coulomb_cloud_wall.py
               correlation.py
+              electromagnetic_constraints.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
