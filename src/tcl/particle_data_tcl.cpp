@@ -255,6 +255,20 @@ void tclcommand_part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 #endif
 
+#ifdef LANGEVIN_PER_PARTICLE
+void tclcommand_part_print_temp(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part->p.T, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+
+void tclcommand_part_print_gamma(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part->p.gamma, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+#endif
+
 #ifdef VIRTUAL_SITES
 void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -917,6 +931,12 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_PrintDouble(interp, part.p.dipm, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
+#endif
+#ifdef LANGEVIN_PER_PARTICLE
+    else if (ARG0_IS_S("temp"))
+      tclcommand_part_print_temp(&part, buffer, interp);
+    else if (ARG0_IS_S("gamma"))
+      tclcommand_part_print_gamma(&part, buffer, interp);
 #endif
 
 #ifdef VIRTUAL_SITES
