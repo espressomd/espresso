@@ -26,3 +26,21 @@ espressomd._init.setup()
 
 from espressomd.system import System
 from espressomd.code_info import features
+
+def has_features(arg):
+    """Tests whether a list of features is a subset of the compiled-in features"""
+
+    return set(arg) < set(features())
+
+
+def missing_features(arg):
+    """Returns a list of the missing features in the argument"""
+
+    return list(set(arg) - set(features()))
+
+
+def assert_features(arg, ExceptionType = Exception):
+    """Raises an excpetion when a list of features is not a subset of the compiled-in features"""
+
+    if not has_features(arg):
+        raise ExceptionType("Missing features " + ", ".join(missing_features(arg)))
