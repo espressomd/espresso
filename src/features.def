@@ -40,11 +40,12 @@ ENGINE                          implies ROTATION, EXTERNAL_FORCES
 ENGINE                          requires not SEMI_INTEGRATED
 CONFIGTEMP
 VERLET_STEP4_VELOCITY
-PARTICLE_ANISOTROPY
+PARTICLE_ANISOTROPY             requires not SEMI_INTEGRATED
 
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
+ROTATIONAL_INERTIA              requires not SEMI_INTEGRATED
 BOND_CONSTRAINT                 requires not ROTATION
 ROTATION_PER_PARTICLE           implies ROTATION
 
