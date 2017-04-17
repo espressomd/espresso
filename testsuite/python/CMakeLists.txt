@@ -4,6 +4,7 @@ set(py_tests  bondedInteractions.py
               coulomb_cloud_wall.py
               correlation.py
               electrostaticInteractions.py
+              electrostatics-driven-agg-drift.py
               engine_langevin.py
               engine_lb.py
               engine_lbgpu.py
