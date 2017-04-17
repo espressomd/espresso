@@ -675,7 +675,7 @@ cdef class ParticleHandle:
                 if (ext_f[0] == 0 and ext_f[1] == 0 and ext_f[2] == 0):
                     ext_flag = 0
                 else:
-                    ext_flag = PARTICLE_EXT_FORCE
+                    ext_flag += PARTICLE_EXT_FORCE
                 if set_particle_ext_force(self.id, ext_flag, ext_f) == 1:
                     raise Exception("Set particle position first.")
 
@@ -744,7 +744,7 @@ cdef class ParticleHandle:
                     if (ext_t[0] == 0 and ext_t[1] == 0 and ext_t[2] == 0):
                         ext_flag = 0
                     else:
-                        ext_flag = PARTICLE_EXT_TORQUE
+                        ext_flag += PARTICLE_EXT_TORQUE
                     if set_particle_ext_torque(self.id, ext_flag, ext_t) == 1:
                         raise Exception("Set particle position first.")
 
