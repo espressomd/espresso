@@ -29,7 +29,13 @@ proc blockfile_write_particles {channel write particles {info "id pos v type"} {
     if {[regexp "bond" $info]} { error "bonding information cannot be written" }
     if {[regexp "exclusions" $info]} { error "exclusions cannot be written here, use 'blockfile write exclusions'" }
 
-    puts $channel "{$info} "
+    if {[string match *folded_position* $info]} {
+	set head [string map {folded_position pos} $info]
+	puts $channel "{$head} "
+    } else {
+	puts $channel "{$info} "
+    }	
+
     foreach list $range {
 	set list [split $list "-"]
 	set len [llength $list]
