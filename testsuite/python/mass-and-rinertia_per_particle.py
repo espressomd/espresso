@@ -19,6 +19,7 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
             self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
             self.es.cell_system.skin = 0
             self.es.cell_system.set_n_square(use_verlet_lists=True)
+            mass = 12.74
             J = [10.0, 10.0, 10.0]
             
             for i in range(len(self.es.part)):
@@ -26,7 +27,9 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
 
             for i in range(2):
                 self.es.part.add(pos=np.array([0.0, 0.0, 0.0]),id=i)
+                self.es.part[i].v=np.array([1.0, 1.0, 1.0])
                 self.es.part[i].omega_body=np.array([1.0, 1.0, 1.0])
+                self.es.part[i].mass=mass
                 self.es.part[i].rinertia=np.array(J)
 
             print("\n")
@@ -41,6 +44,8 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                 print("------------------------------------------------")
                 print("Test " + str(test_case) +": particle specific gamma but not temperature")
                 print("------------------------------------------------")
+                self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
+                self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
                 self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
                 self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
                 
@@ -58,6 +63,8 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                 print("------------------------------------------------")
                 self.es.part[0].temp = 0.0
                 self.es.part[1].temp = 0.0
+                self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
+                self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
                 self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
                 self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
 
@@ -66,8 +73,10 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
             tol = 0.01
             for i in range(100):
                 for k in range(3):
-                    self.assertTrue(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0]*self.es.time / J[k])) <= tol and \
-                                    abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1]*self.es.time / J[k])) <= tol)
+                    self.assertTrue(abs(self.es.part[0].v[k] - math.exp( - gamma[0] * self.es.time / mass)) <= tol and \
+                                    abs(self.es.part[1].v[k] - math.exp( - gamma[1] * self.es.time / mass)) <= tol)
+                    self.assertTrue(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0] * self.es.time / J[k])) <= tol and \
+                                    abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1] * self.es.time / J[k])) <= tol)
                 self.es.integrator.run(10)
 
             for i in range(len(self.es.part)):
