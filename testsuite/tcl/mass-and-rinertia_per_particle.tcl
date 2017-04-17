@@ -19,6 +19,7 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
+require_feature "PARTICLE_ANISOTROPY"
 require_feature "LANGEVIN_PER_PARTICLE"
 
 puts "------------------------------------------------"
@@ -33,13 +34,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 	  lappend cmd [expr [pid] + $i] }
     eval $cmd
 
-    set gamma0 1.
-    set gamma1 1. 
+    set gamma(0) 1.
+    set gamma(1) 1. 
     
     # Decelleration
     setmd skin 0
     setmd time_step 0.007
-    thermostat langevin 0 $gamma0 
+    thermostat langevin 0 $gamma(0)
     cellsystem nsquare 
     #-no_verlet_lists
     set J "10 10 10"
@@ -54,14 +55,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             puts "------------------------------------------------"
             puts "Test $test_case: no particle specific values"
             puts "------------------------------------------------"
-            set gamma1 $gamma0 
+            set gamma1 $gamma(0)
         }
         1 {
             puts "------------------------------------------------"
             puts "Test $test_case: particle specific gamma but not temperature"
             puts "------------------------------------------------"
-            part 0 gamma $gamma0
-            part 1 gamma $gamma1
+            part 0 gamma $gamma(0)
+            part 1 gamma $gamma(1)
         }
         2 {
             puts "------------------------------------------------"
@@ -69,14 +70,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             puts "------------------------------------------------"
             part 0 temp 0.0
             part 1 temp 0.0
-            set gamma1 $gamma0 
+            set gamma1 $gamma(0)
         }
         3 {
             puts "------------------------------------------------"
             puts "Test $test_case: both particle specific gamma and temperature"
             puts "------------------------------------------------"
-            part 0 gamma $gamma0 temp 0.0
-            part 1 gamma $gamma1 temp 0.0
+            part 0 gamma $gamma(0) $gamma(0) $gamma(0) temp 0.0
+            part 1 gamma $gamma(1) $gamma(1) $gamma(1) temp 0.0
         }
     }
     setmd time 0
@@ -87,8 +88,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             } else {
                 set tolerance_o 1.0E-2
             }
-            set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma0*[setmd time] /[lindex $J $k]))]
-            set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma1*[setmd time] /[lindex $J $k]))]
+            set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma(0)*[setmd time] /[lindex $J $k]))]
+            set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma(1)*[setmd time] /[lindex $J $k]))]
             if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
                 error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
             }
@@ -97,8 +98,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             } else {
                 set tolerance_v 1.0E-2
             }
-            set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma0*[setmd time] / $mass))]
-            set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma1*[setmd time] / $mass))]
+            set dv0 [expr abs([lindex [part 0 print v] $k] -exp(-$gamma(0)*[setmd time] / $mass))]
+            set dv1 [expr abs([lindex [part 1 print v] $k] -exp(-$gamma(1)*[setmd time] / $mass))]
             if { $dv0 > $tolerance_v || $dv1 > $tolerance_v } {
                 error_exit "Friction Deviation in v too large. $i $k $dv0 $dv1"
             }
@@ -117,57 +118,57 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     # mass and inertia tensor are active
 
     # 2 different langevin parameters for particles
-    set gamma(0) [expr (0.2 + [t_random]) * 20]
-    set gamma(1) [expr (0.2 + [t_random]) * 20]
     set temp(0) 2.5
     set temp(1) 2.0
-    set gamma_rot_1(0) [expr (0.2 + [t_random]) * 20]
-    set gamma_rot_2(0) [expr (0.2 + [t_random]) * 20]
-    set gamma_rot_3(0) [expr (0.2 + [t_random]) * 20]
-    set gamma_rot_1(1) [expr (0.2 + [t_random]) * 20]
-    set gamma_rot_2(1) [expr (0.2 + [t_random]) * 20]
-    set gamma_rot_3(1) [expr (0.2 + [t_random]) * 20]
+    
+    for {set j 0} {$j<3} {incr j} {
+        for {set k 0} {$k<2} {incr k} {
+            set gamma_tran($k,$j) [expr (0.4 + [t_random]) * 10]
+            set gamma_rot($k,$j) [expr (0.2 + [t_random]) * 20]
+        }
+    }
 
     set box 10
     setmd box_l $box $box $box
     set kT 1.5
-        
-    for {set k 0} {$k<2} {incr k} {
-        if {$test_case == 2 || $test_case == 3} {
-            set halfkT($k) [expr $temp($k)/2.]
-        } else {
-            set halfkT($k) 0.75
-        }
-
-        
-        if {$test_case == 1 || $test_case == 3} {
-            set gamma_tr($k) $gamma($k)
-        } else {
-            set gamma_tr($k) 1
-        }
-        # translational diffusion
-        set D_tr($k) [expr 2 * $halfkT($k) / $gamma_tr($k)]
-    }
     
-    thermostat langevin $kT 1
+    for {set j 0} {$j<3} {incr j} {
+        for {set k 0} {$k<2} {incr k} {
+            if {$test_case == 2 || $test_case == 3} {
+                set halfkT($k) [expr $temp($k)/2.]
+            } else {
+                set halfkT($k) [expr $kT / 2.0]
+            }
+            
+            if {$test_case == 1 || $test_case == 3} {
+                set gamma_tr($k,$j) $gamma_tran($k,$j)
+            } else {
+                set gamma_tr($k,$j) $gamma(0)
+            }
+            # translational diffusion
+            set D_tr($k,$j) [expr 2 * $halfkT($k) / $gamma_tr($k,$j)]
+        }
+    }
+    thermostat langevin $kT $gamma(0) $gamma(0) $gamma(0)
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
     setmd time_step 0.008
-
     set n 200
+
+    # 0.2 is required to avoid infinitely small requirement [time_step < mass / gamma] and [j / gamma_rot]
     set mass [expr (0.2 + [t_random]) * 7]
     set j1 [expr (0.2 + [t_random]) * 7]
     set j2 [expr (0.2 + [t_random]) * 7]
     set j3 [expr (0.2 + [t_random]) * 7]
-
+    
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
             part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
             switch $test_case {
-                1 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k)}
+                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2)}
                 2 {part [expr $i + $k*$n] temp $temp($k)}
-                3 {part [expr $i + $k*$n] gamma $gamma($k) gamma_rot $gamma_rot_1($k) $gamma_rot_2($k) $gamma_rot_3($k) temp $temp($k)}
+                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
             }
         }
     }
@@ -193,11 +194,9 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     }
 
     set loops 100
-
     puts "Thermalizing..."
     set therm_steps 1200
     integrate $therm_steps
-    puts "Measuring..."
 
     set int_steps 100
     for {set i 0} {$i <$loops} {incr i} {
@@ -218,16 +217,22 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                 set dx2($k) [expr pow([expr [lindex $pos 0] - [lindex $pos0($ind) 0]], 2)]
                 set dy2($k) [expr pow([expr [lindex $pos 1] - [lindex $pos0($ind) 1]], 2)]
                 set dz2($k) [expr pow([expr [lindex $pos 2] - [lindex $pos0($ind) 2]], 2)]
-                set dt0 [expr $mass / $gamma_tr($k)]
+                set dt0(0) [expr $mass / $gamma_tr($k,0)]
+                set dt0(1) [expr $mass / $gamma_tr($k,1)]
+                set dt0(2) [expr $mass / $gamma_tr($k,2)]
                 set dt [expr ($int_steps * ($i + 1) + $therm_steps) * [setmd time_step]]
                 # translational diffusion variance: after a closed-form integration of the Langevin EOM
-                set sigma2_tr($k) [expr $D_tr($k) * (6 * $dt + 3 * $dt0 * (-3 + 4 * exp(-$dt / $dt0) - exp(-2 * $dt / $dt0)))]
+                set sigma2x_tr($k) [expr $D_tr($k,0) * (2 * $dt + $dt0(0) * (-3 + 4 * exp(-$dt / $dt0(0)) - exp(-2 * $dt / $dt0(0))))]
+                set sigma2y_tr($k) [expr $D_tr($k,1) * (2 * $dt + $dt0(1) * (-3 + 4 * exp(-$dt / $dt0(1)) - exp(-2 * $dt / $dt0(1))))]
+                set sigma2z_tr($k) [expr $D_tr($k,2) * (2 * $dt + $dt0(2) * (-3 + 4 * exp(-$dt / $dt0(2)) - exp(-2 * $dt / $dt0(2))))]
+                set sigma2_tr($k) [expr $sigma2x_tr($k) + $sigma2y_tr($k) + $sigma2z_tr($k)]
                 set dr($k) [expr $dr($k) + (($dx2($k)+$dy2($k)+$dz2($k)) - $sigma2_tr($k)) / $sigma2_tr($k)]
             }
         }
     }
 
     set tolerance 0.15
+
     for {set k 0} {$k<2} {incr k} {
         set Evx($k) [expr 0.5 * $mass *$vx2($k)/$n/$loops]
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]
@@ -251,9 +256,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
 
         puts "Deviation in translational energy: $dv($k)"
         puts "Deviation in rotational energy: $do($k)"
-        puts "Deviation in translational diffusion: $dr($k)"
         puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
-        puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k)"
+        puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k,0) $gamma_tr($k,1) $gamma_tr($k,2)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
@@ -263,7 +267,7 @@ proc test_mass-and-rinertia_per_particle {test_case} {
            error "Relative deviation in rotational energy too large: $do($k)"
         }
         if { abs($dr($k)) > $tolerance } {
-           error "Relative deviation in translational diffusion too large: $dr($k) for parameters: mass=$mass gamma_tr=$gamma_tr($k)"
+           error "Relative deviation in translational diffusion too large: $dr($k) for parameters: mass=$mass gamma_tr=$gamma_tr($k,0) $gamma_tr($k,1) $gamma_tr($k,2)"
        }
        
         # SEMI_INTEGRATED is consistent for isotropic particles only

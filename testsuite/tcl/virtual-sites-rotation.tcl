@@ -32,6 +32,7 @@ setmd min_global_cut 1.1
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ROTATIONAL_INERTIA"
+require_feature "PARTICLE_ANISOTROPY"
 require_feature "MASS"
 require_feature "SEMI_INTEGRATED" off
 if { [has_feature "SEMI_INTEGRATED"]} {
@@ -52,7 +53,7 @@ set j3 [expr 10. + abs([t_random] * 10)]
 
 set kT 1.5
 set halfkT 0.75
-thermostat langevin $kT 1 1 1 1
+thermostat langevin $kT 1 1 1
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 0.0

@@ -19,6 +19,7 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "ROTATIONAL_INERTIA"
+require_feature "PARTICLE_ANISOTROPY"
 if { [has_feature "SEMI_INTEGRATED"]} {
     set si_flag 1
 } else {
@@ -29,7 +30,7 @@ if { [has_feature "SEMI_INTEGRATED"]} {
 setmd skin 0
 setmd time_step 0.01
 set time_step_v 0.01
-thermostat langevin 0 1 
+thermostat langevin 0 1 1 1
 set J "10 10 10"
 
 part 0 pos 0 0 0 rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1
@@ -82,18 +83,21 @@ for {set i 0} {$i <1E5} {incr i} {
 part deleteall
 
 # thermlization
-# Cchecks if every degree of freedom has 1/2 kT of energy, even when
+# Checks if every degree of freedom has 1/2 kT of energy, even when
 # mass and inertia tensor are active
 
 set box 10
 setmd box_l $box $box $box
 set kT 1.5
 set halfkT 0.75
+set gamma_tran_1 [expr [t_random] * 20]
+set gamma_tran_2 [expr [t_random] * 20]
+set gamma_tran_3 [expr [t_random] * 20]
 set gamma_rot_1 [expr [t_random] * 20]
 set gamma_rot_2 [expr [t_random] * 20]
 set gamma_rot_3 [expr [t_random] * 20]
 #thermostat langevin $kT 1
-thermostat langevin $kT 1 $gamma_rot_1 $gamma_rot_2 $gamma_rot_3
+thermostat langevin $kT $gamma_tran_1 $gamma_tran_2 $gamma_tran_3 $gamma_rot_1 $gamma_rot_2 $gamma_rot_3
 
 # no need to rebuild Verlet lists, avoid it
 setmd skin 1.0

@@ -679,7 +679,13 @@ void rescale_forces_propagate_vel() {
   Particle *p;
   int i, j, np, c;
   double scale,e_damp,rinertia_m,gamma_rot_m,scale_f,omega_lab[3];
+#ifndef PARTICLE_ANISOTROPY
   double step4_factor = 0.0;
+#else
+  double step4_factor[3] = {0.0, 0.0, 0.0};
+  double vel_body[3] = {0.0, 0.0, 0.0};
+  double force_body[3] =  {0.0, 0.0, 0.0};
+#endif
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -732,6 +738,7 @@ void rescale_forces_propagate_vel() {
         continue;
 #endif
 
+#ifndef PARTICLE_ANISOTROPY
       step4_factor = 1.0; // default
 #ifdef VERLET_STEP4_VELOCITY
       if (thermo_switch & THERMO_LANGEVIN)
@@ -742,7 +749,27 @@ void rescale_forces_propagate_vel() {
           step4_factor = 1.0 / (1.0 - vv_langevin_pref1 * scale / (p[i]).p.mass);
 #endif // LANGEVIN_PER_PARTICLE
       }
-#endif
+#endif // VERLET_STEP4_VELOCITY
+#else // PARTICLE_ANISOTROPY
+      if (p[i].p.aniso_flag)
+      {
+          convert_vel_space_to_body(&(p[i]),vel_body);
+          convert_vec_space_to_body(&(p[i]), p[i].f.f, force_body);
+      }
+      for (j = 0; j < 3; j++) {
+          step4_factor[j] = 1.0; // default
+    #ifdef VERLET_STEP4_VELOCITY
+          if (thermo_switch & THERMO_LANGEVIN)
+          {
+    #ifdef LANGEVIN_PER_PARTICLE
+              step4_factor[j] = 1.0 / (1.0 - (p[i]).p.vv_langevin_pref1[j] * scale / (p[i]).p.mass);
+    #else
+              step4_factor[j] = 1.0 / (1.0 - vv_langevin_pref1[j] * scale / (p[i]).p.mass);
+    #endif // LANGEVIN_PER_PARTICLE
+          }
+    #endif // VERLET_STEP4_VELOCITY
+      }
+#endif // PARTICLE_ANISOTROPY
 
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -765,7 +792,14 @@ void rescale_forces_propagate_vel() {
           {
 #ifndef SEMI_INTEGRATED
             /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+#ifndef PARTICLE_ANISOTROPY
               p[i].m.v[j] += p[i].f.f[j] * step4_factor;
+#else // PARTICLE_ANISOTROPY
+              if (p[i].p.aniso_flag)
+                  vel_body[j] += force_body[j] * step4_factor[j];
+              else
+                  p[i].m.v[j] += p[i].f.f[j] * step4_factor[j];
+#endif // PARTICLE_ANISOTROPY
           }
 #else
               /* only deterministic and non-dissipative part of the force is used here */
@@ -794,6 +828,9 @@ void rescale_forces_propagate_vel() {
         }
 #endif
       } //j
+#ifdef PARTICLE_ANISOTROPY
+    if (p[i].p.aniso_flag) convert_vec_body_to_space(&(p[i]),vel_body,p[i].m.v);
+#endif
 #ifdef SEMI_INTEGRATED
       random_walk_vel(&(p[i]),0.5*time_step);
       //printf("\n 1");

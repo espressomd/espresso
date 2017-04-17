@@ -41,18 +41,45 @@ int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
 
+
+
+
+
 /* LANGEVIN THERMOSTAT */
-/* Langevin friction coefficient gamma. */
-double langevin_gamma = 0.0;
+/* Langevin friction coefficient gamma for translation. */
+#ifndef PARTICLE_ANISOTROPY
+
+double langevin_gamma = -1.0;
+#ifdef VERLET_STEP4_VELOCITY
 double vv_langevin_pref1 = -1.0;
-/* Friction coefficient gamma for rotation */
-#ifndef ROTATIONAL_INERTIA
-double langevin_gamma_rotation = -1.0;
-double vv_langevin_pref1_rot = -1.0;
+#endif
+
 #else
+
+double langevin_gamma[3] = {-1.0,-1.0,-1.0};
+#ifdef VERLET_STEP4_VELOCITY
+double vv_langevin_pref1[3] = {-1.0,-1.0,-1.0};
+#endif
+
+#endif // PARTICLE_ANISOTROPY
+
+/* Friction coefficient gamma for rotation. */
+#ifndef ROTATIONAL_INERTIA
+
+double langevin_gamma_rotation = -1.0;
+#ifdef VERLET_STEP4_VELOCITY
+double vv_langevin_pref1_rot = -1.0;
+#endif
+
+#else
+
 double langevin_gamma_rotation[3] = {-1.0,-1.0,-1.0};
+#ifdef VERLET_STEP4_VELOCITY
 double vv_langevin_pref1_rot[3] = {-1.0,-1.0,-1.0};
 #endif
+
+#endif // ROTATIONAL_INERTIA
+
 /* Langevin for translations */
 bool langevin_trans = true;
 /* Langevin for rotations */
@@ -70,12 +97,18 @@ int ghmc_nmd = 1;
 // phi parameter for partial momentum update step in GHMC
 double ghmc_phi = 0;
 
+#ifndef PARTICLE_ANISOTROPY
 double langevin_pref1, langevin_pref2;
+#else
+double langevin_pref1[3], langevin_pref2[3];
+#endif
+
 #ifndef ROTATIONAL_INERTIA
 double langevin_pref2_rotation;
 #else
 double langevin_pref2_rotation[3];
 #endif
+
 #ifdef MULTI_TIMESTEP
   double langevin_pref1_small, langevin_pref2_small;
   static double langevin_pref2_small_buffer;
@@ -83,7 +116,12 @@ double langevin_pref2_rotation[3];
 
 /** buffers for the work around for the correlated random values which cool the system,
     and require a magical heat up whenever reentering the integrator. */
+#ifndef PARTICLE_ANISOTROPY
 static double langevin_pref2_buffer;
+#else
+static double langevin_pref2_buffer[3];
+#endif
+
 #ifndef ROTATIONAL_INERTIA
 static double langevin_pref2_rotation_buffer;
 #else
@@ -101,6 +139,7 @@ double nptiso_pref4;
 void thermo_init_langevin() 
 {
   int j;
+#ifndef PARTICLE_ANISOTROPY
   langevin_pref1 = -langevin_gamma/time_step;
 #if defined (FLATNOISE)
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
@@ -108,7 +147,21 @@ void thermo_init_langevin()
   langevin_pref2 = sqrt(2.0*temperature*langevin_gamma/time_step);
 #else
 #error No Noise defined
-#endif
+#endif // Noise
+#else
+  for ( j = 0 ; j < 3 ; j++)
+  {
+	  langevin_pref1[j] = -langevin_gamma[j]/time_step;
+#if defined (FLATNOISE)
+  	  langevin_pref2[j] = sqrt(24.0*temperature*langevin_gamma[j]/time_step);
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+  	  langevin_pref2[j] = sqrt(2.0*temperature*langevin_gamma[j]/time_step);
+#else
+#error No Noise defined
+#endif // Noise
+  }
+#endif // PARTICLE_ANISOTROPY
+
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     langevin_pref1_small = -langevin_gamma/smaller_time_step;
@@ -122,7 +175,7 @@ void thermo_init_langevin()
  #endif
   }
 #endif
-  
+
 #ifdef ROTATION 
 #ifndef ROTATIONAL_INERTIA
   if ( langevin_gamma_rotation < 0.0 )
@@ -133,9 +186,14 @@ void thermo_init_langevin()
   if (( langevin_gamma_rotation[0] < 0.0 ) || (langevin_gamma_rotation[1] < 0.0) || (langevin_gamma_rotation[2] < 0.0))
   for ( j = 0 ; j < 3 ; j++)
   {
+#ifdef PARTICLE_ANISOTROPY
+    langevin_gamma_rotation[j] = langevin_gamma[j];
+#else
     langevin_gamma_rotation[j] = langevin_gamma;
+#endif // PARTICLE_ANISOTROPY
   }
-#endif
+#endif // ROTATIONAL_INERTIA
+
 #ifndef ROTATIONAL_INERTIA
 #if defined (FLATNOISE)
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
@@ -143,7 +201,7 @@ void thermo_init_langevin()
   langevin_pref2_rotation = sqrt(2.0*temperature*langevin_gamma_rotation/time_step);
 #else
 #error No Noise defined
-#endif
+#endif // FLATNOISE
 #else
 #if defined (FLATNOISE)
   for ( j = 0 ; j < 3 ; j++) langevin_pref2_rotation[j] = sqrt(24.0*temperature*langevin_gamma_rotation[j]/time_step);
@@ -151,7 +209,7 @@ void thermo_init_langevin()
   for ( j = 0 ; j < 3 ; j++) langevin_pref2_rotation[j] = sqrt(2.0*temperature*langevin_gamma_rotation[j]/time_step);
 #else
 #error No Noise defined
-#endif
+#endif // FLATNOISE
 #endif // ROTATIONAL_INERTIA
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_gamma_rotation=%f, langevin_pref2_rotation=%f",this_node, langevin_gamma_rotation,langevin_pref2_rotation));
 #endif
@@ -213,8 +271,17 @@ void thermo_heat_up()
 {
   int j;
   if(thermo_switch & THERMO_LANGEVIN) {
+#ifndef PARTICLE_ANISOTROPY
     langevin_pref2_buffer          = langevin_pref2;
     langevin_pref2 *= sqrt(3);
+#else
+    for ( j = 0 ; j < 3 ; j++)
+    {
+        langevin_pref2_buffer[j]         = langevin_pref2[j];
+        langevin_pref2[j] *= sqrt(3);
+    }
+#endif // PARTICLE_ANISOTROPY
+
 #ifndef ROTATIONAL_INERTIA
     langevin_pref2_rotation_buffer = langevin_pref2_rotation;
     langevin_pref2_rotation *= sqrt(3);
@@ -224,7 +291,8 @@ void thermo_heat_up()
     	langevin_pref2_rotation_buffer[j] = langevin_pref2_rotation[j];
     	langevin_pref2_rotation[j] *= sqrt(3);
     }
-#endif
+#endif // PARTICLE_ANISOTROPY
+
 #ifdef MULTI_TIMESTEP
     langevin_pref2_small_buffer    = langevin_pref2_small;
     langevin_pref2_small          *= sqrt(3);
@@ -242,15 +310,18 @@ void thermo_cool_down()
 {
   int j;
   if(thermo_switch & THERMO_LANGEVIN) {
-	langevin_pref2          = langevin_pref2_buffer;
+#ifndef PARTICLE_ANISOTROPY
+    langevin_pref2          = langevin_pref2_buffer;
+#else
+    for ( j = 0 ; j < 3 ; j++) langevin_pref2[j] = langevin_pref2_buffer[j];
+#endif
+
 #ifndef ROTATIONAL_INERTIA
     langevin_pref2_rotation = langevin_pref2_rotation_buffer;
 #else
-    for ( j = 0 ; j < 3 ; j++)
-    {
-    	langevin_pref2_rotation[j] = langevin_pref2_rotation_buffer[j];
-    }
+    for ( j = 0 ; j < 3 ; j++) langevin_pref2_rotation[j] = langevin_pref2_rotation_buffer[j];
 #endif
+
 #ifdef MULTI_TIMESTEP
     langevin_pref2_small    = langevin_pref2_small_buffer;
 #endif

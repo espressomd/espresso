@@ -55,6 +55,14 @@ void convert_torques_body_to_space(Particle *p, double *torque);
     to the body-fixed frame */
 void convert_vel_space_to_body(Particle *p, double *vel_body);
 
+/** convert vector form the body-fixed coordinates
+    to the lab-fixed frame */
+void convert_vec_body_to_space(Particle *p, double *vec_body, double *vec_space);
+
+/** convert vector form the lab-fixed coordinates
+    to the body-fixed frame */
+void convert_vec_space_to_body(Particle *p, double *v,double* res);
+
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */  

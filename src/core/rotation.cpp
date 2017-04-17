@@ -508,6 +508,16 @@ void convert_vel_space_to_body(Particle *p, double *vel_body)
   vel_body[2] = A[2 + 3*0]*p->m.v[0] + A[2 + 3*1]*p->m.v[1] + A[2 + 3*2]*p->m.v[2];
 }
 
+void convert_vec_body_to_space(Particle *p, double *vec_body, double *vec_space)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  vec_space[0] = A[0 + 3*0]*vec_body[0] + A[1 + 3*0]*vec_body[1] + A[2 + 3*0]*vec_body[2];
+  vec_space[1] = A[0 + 3*1]*vec_body[0] + A[1 + 3*1]*vec_body[1] + A[2 + 3*1]*vec_body[2];
+  vec_space[2] = A[0 + 3*2]*vec_body[0] + A[1 + 3*2]*vec_body[1] + A[2 + 3*2]*vec_body[2];
+}
+
 void convert_vec_space_to_body(Particle *p, double *v,double* res)
 {
   double A[9];

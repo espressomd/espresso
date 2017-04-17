@@ -154,10 +154,18 @@ struct ParticleProperties {
 
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
+#ifndef PARTICLE_ANISOTROPY
   double gamma;
 #ifdef VERLET_STEP4_VELOCITY
   double vv_langevin_pref1;
 #endif // VERLET_STEP4_VELOCITY
+#else
+  bool aniso_flag;
+  double gamma[3];
+#ifdef VERLET_STEP4_VELOCITY
+  double vv_langevin_pref1[3];
+#endif // VERLET_STEP4_VELOCITY
+#endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
@@ -170,9 +178,9 @@ struct ParticleProperties {
 #ifdef VERLET_STEP4_VELOCITY
   double vv_langevin_pref1_rot[3];
 #endif // VERLET_STEP4_VELOCITY
-#endif
-#endif
-#endif
+#endif // ROTATIONAL_INERTIA
+#endif // ROTATION
+#endif // LANGEVIN_PER_PARTICLE
 
 #ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
@@ -729,7 +737,11 @@ int set_particle_temperature(int part, double T);
     @param gamma its new frictional coefficient.
     @return ES_OK if particle existed
 */
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma);
+#else
+int set_particle_gamma(int part, double gamma[3]);
+#endif
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
 int set_particle_gamma_rot(int part, double gamma);

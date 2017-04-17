@@ -114,8 +114,21 @@ proc test_langevin_per_particle {test_case} {
                 puts "------------------------------------------------"
                 for {set p 0} {$p < $num_part} {incr p} {
                     set temp($p) 1.0
-                    set gamma($p) [expr [t_random] + 0.1]
-                    part $p gamma $gamma($p)
+                    set gammax($p) [expr [t_random] + 0.1]
+                    set gammay($p) [expr [t_random] + 0.1]
+                    set gammaz($p) [expr [t_random] + 0.1]
+                    set gammarotx($p) [expr [t_random] + 0.1]
+                    set gammaroty($p) [expr [t_random] + 0.1]
+                    set gammarotz($p) [expr [t_random] + 0.1]
+                    if { [regexp "PARTICLE_ANISOTROPY" [code_info]] && [regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                        part $p gamma $gammax($p) $gammay($p) $gammaz($p) gamma_rot $gammarotx($p) $gammaroty($p) $gammarotz($p)
+                    } elseif { ![regexp "PARTICLE_ANISOTROPY" [code_info]] && [regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                        part $p gamma $gammax($p) gamma_rot $gammarotx($p) $gammaroty($p) $gammarotz($p)
+                    } elseif { [regexp "PARTICLE_ANISOTROPY" [code_info]] && ![regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                        part $p gamma $gammax($p) $gammay($p) $gammaz($p) gamma_rot $gammarotx($p)
+                    } elseif { ![regexp "PARTICLE_ANISOTROPY" [code_info]] && ![regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                        part $p gamma $gammax($p)
+                    }
                 }
             }
 
@@ -136,8 +149,21 @@ proc test_langevin_per_particle {test_case} {
             puts "------------------------------------------------"
             for {set p 0} {$p < $num_part} {incr p} {
                 set temp($p) [expr [t_random] + 0.1]
-                set gamma($p) [expr [t_random] + 0.1]
-                part $p gamma $gamma($p) temp $temp($p)
+                set gammax($p) [expr [t_random] + 0.1]
+                set gammay($p) [expr [t_random] + 0.1]
+                set gammaz($p) [expr [t_random] + 0.1]
+                set gammarotx($p) [expr [t_random] + 0.1]
+                set gammaroty($p) [expr [t_random] + 0.1]
+                set gammarotz($p) [expr [t_random] + 0.1]
+                if { [regexp "PARTICLE_ANISOTROPY" [code_info]] && [regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                    part $p gamma $gammax($p) $gammay($p) $gammaz($p) gamma_rot $gammarotx($p) $gammaroty($p) $gammarotz($p) temp $temp($p)
+                } elseif { ![regexp "PARTICLE_ANISOTROPY" [code_info]] && [regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                    part $p gamma $gammax($p) gamma_rot $gammarotx($p) $gammaroty($p) $gammarotz($p) temp $temp($p)
+                } elseif { [regexp "PARTICLE_ANISOTROPY" [code_info]] && ![regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                    part $p gamma $gammax($p) $gammay($p) $gammaz($p) gamma_rot $gammarotx($p) temp $temp($p)
+                } elseif { ![regexp "PARTICLE_ANISOTROPY" [code_info]] && ![regexp "ROTATIONAL_INERTIA" [code_info]] } {
+                    part $p gamma $gammax($p) temp $temp($p)
+                }
                 }
             }
         }
