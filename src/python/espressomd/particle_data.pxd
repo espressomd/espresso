@@ -107,9 +107,11 @@ cdef extern from "particle_data.hpp":
         int set_particle_solvation(int part, double * solvation)
         void pointer_to_solvation(particle * p, double * & res)
 
+    void pointer_to_rotational_inertia(particle * p, double * & res)
     IF ROTATIONAL_INERTIA:
         int set_particle_rotational_inertia(int part, double rinertia[3])
-        void pointer_to_rotational_inertia(particle * p, double * & res)
+    ELSE:
+        int set_particle_rotational_inertia(int part, double rinertia)
 
     IF ROTATION_PER_PARTICLE:
         int set_particle_rotation(int part, int rot)

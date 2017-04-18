@@ -810,11 +810,12 @@ void rescale_forces_propagate_vel() {
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
               gamma_rot_m = (p[i].p.gamma_rot[0] + p[i].p.gamma_rot[1] + p[i].p.gamma_rot[2]) / 3.0;
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #else
               gamma_rot_m = p[i].p.gamma_rot;
+              rinertia_m = p[i].p.rinertia;
 #endif
               e_damp = exp(-gamma_rot_m*0.5*time_step/rinertia_m);
               p[i].m.omega[j] = p[i].m.omega[j]*e_damp+(p[i].f.torque[j]/gamma_rot_m)*(1-e_damp);
@@ -1088,11 +1089,12 @@ void propagate_vel() {
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
               gamma_rot_m = (p[i].p.gamma_rot[0] + p[i].p.gamma_rot[1] + p[i].p.gamma_rot[2]) / 3.0;
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #else
               gamma_rot_m = p[i].p.gamma_rot;
+              rinertia_m = p[i].p.rinertia;
 #endif
               e_damp = exp(-gamma_rot_m*0.5*time_step/rinertia_m);
 
@@ -1193,11 +1195,12 @@ void propagate_pos()
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
               gamma_rot_m = (p[i].p.gamma_rot[0] + p[i].p.gamma_rot[1] + p[i].p.gamma_rot[2]) / 3.0;
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #else
               gamma_rot_m = p[i].p.gamma_rot;
+              rinertia_m = p[i].p.rinertia;
 #endif
               e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
 
@@ -1291,11 +1294,12 @@ void propagate_vel_pos() {
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
               gamma_rot_m = (p[i].p.gamma_rot[0] + p[i].p.gamma_rot[1] + p[i].p.gamma_rot[2]) / 3.0;
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #else
               gamma_rot_m = p[i].p.gamma_rot;
+              rinertia_m = p[i].p.rinertia;
 #endif
               e_damp = exp(-gamma_rot_m*0.5*time_step/rinertia_m);
 
@@ -1323,11 +1327,12 @@ void propagate_vel_pos() {
               // WARNING: this method currently is implemented for ball particles only.
               // SEMI_INTEGRATED method is technically not compatible
               // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
               gamma_rot_m = (p[i].p.gamma_rot[0] + p[i].p.gamma_rot[1] + p[i].p.gamma_rot[2]) / 3.0;
+              rinertia_m = (p[i].p.rinertia[0] + p[i].p.rinertia[1] + p[i].p.rinertia[2]) / 3.0;
 #else
               gamma_rot_m = p[i].p.gamma_rot;
+              rinertia_m = p[i].p.rinertia;
 #endif
               e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
 

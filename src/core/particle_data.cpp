@@ -125,6 +125,8 @@ void init_particle(Particle *part)
   part->p.rinertia[0] = 1.0;
   part->p.rinertia[1] = 1.0;
   part->p.rinertia[2] = 1.0;
+#else
+  part->p.rinertia = 1.0;
 #endif
 #ifdef ROTATION_PER_PARTICLE
   part->p.rotation =14;
@@ -733,6 +735,9 @@ int set_particle_mass(int part, double mass)
 
 #ifdef ROTATIONAL_INERTIA
 int set_particle_rotational_inertia(int part, double rinertia[3])
+#else
+int set_particle_rotational_inertia(int part, double rinertia)
+#endif
 {
   int pnode;
   if (!particle_node)
@@ -747,7 +752,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
   mpi_send_rotational_inertia(pnode, part, rinertia);
   return ES_OK;
 }
-#endif
 
 
 #ifdef ROTATION_PER_PARTICLE
@@ -2347,12 +2351,14 @@ void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim)
 }
 #endif
 
-#ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle *p, double*& res)
 {
+#ifdef ROTATIONAL_INERTIA
   res = p->p.rinertia;
-}
+#else
+  res = &(p->p.rinertia);
 #endif
+}
 
 bool particle_exists(int part) {
     if (!particle_node)

@@ -178,9 +178,9 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
   Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
 #else
-  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
-  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
-  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2];
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/(I[0] * p->p.rinertia);
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/(I[1] * p->p.rinertia);
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/(I[2] * p->p.rinertia);
 #endif
 
   S1 = Qd[0]*Qd[0] + Qd[1]*Qd[1] + Qd[2]*Qd[2] + Qd[3]*Qd[3];
@@ -388,7 +388,7 @@ void convert_torques_propagate_omega()
               p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / p[i].p.rinertia[j];
 #else
           for (j = 0; j < 3; j++)
-              p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / I[j];
+              p[i].m.omega[j] += time_step_half*(p[i].f.torque[j] - pref1_temp[j] * p[i].m.omega[j]) / (I[j] * p[i].p.rinertia);
 #endif
       }
       // zeroth estimate of omega
@@ -405,9 +405,9 @@ void convert_torques_propagate_omega()
         Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]) + pref1_temp[1] * p[i].m.omega[1])/p[i].p.rinertia[1];
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]) + pref1_temp[2] * p[i].m.omega[2])/p[i].p.rinertia[2];
 #else
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]) + pref1_temp[0] * p[i].m.omega[0])/I[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]) + pref1_temp[1] * p[i].m.omega[1])/I[1]; 
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]) + pref1_temp[2] * p[i].m.omega[2])/I[2];
+        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]) + pref1_temp[0] * p[i].m.omega[0])/(I[0] * p[i].p.rinertia);
+        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]) + pref1_temp[1] * p[i].m.omega[1])/(I[1] * p[i].p.rinertia);
+        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]) + pref1_temp[2] * p[i].m.omega[2])/(I[2] * p[i].p.rinertia);
 #endif
 
         p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
@@ -684,19 +684,16 @@ void random_walk_rot(Particle *p)
 
 #ifdef ROTATIONAL_INERTIA
           gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
 #else
           gamma_rot_m = p->p.gamma_rot;
+          rinertia_m = p->p.rinertia;
 #endif
 #if defined (FLATNOISE)
 		  sigma_coeff = 24.0*p->p.T/gamma_rot_m;
 #elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
 		  sigma_coeff = 2.0*p->p.T/gamma_rot_m;
 #endif
-		  // WARNING: this method currently is implemented for ball particles only.
-		  // SEMI_INTEGRATED method is technically not compatible
-		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
-
 		  e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
 		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*gamma_rot_m))*(-3+4*e_damp-e_damp*e_damp));
 		  phi = 2*PI*d_random();
@@ -737,14 +734,12 @@ void random_walk_rot_vel(Particle *p, double dt)
 	  if (!(p->p.ext_flag & COORD_FIXED(j)))
 #endif
 	  {
-		  // WARNING: this method currently is implemented for ball particles only.
-		  // SEMI_INTEGRATED method is technically not compatible
-		  // with anisotropic particles due to nonlinear equations of the rotational motion in this case.
-		  rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
 #ifdef ROTATIONAL_INERTIA
           gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
 #else
           gamma_rot_m = p->p.gamma_rot;
+          rinertia_m = p->p.rinertia;
 #endif
 #if defined (FLATNOISE)
 		  sigma_coeff = 12.0*p->p.T/rinertia_m;

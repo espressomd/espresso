@@ -225,6 +225,8 @@ void mpi_send_mu_E(int node, int part, double mu_E[3]);
     \param rinertia its new rotational inertia.
 */
 void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
+#else
+void mpi_send_rotational_inertia(int node, int part, double rinertia);
 #endif
 
 #ifdef AFFINITY

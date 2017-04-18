@@ -93,9 +93,10 @@ void tclcommand_part_print_T(Particle *part, char *buffer, Tcl_Interp *interp) {
 }
 #endif
 
-#ifdef ROTATIONAL_INERTIA
 void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
-  {double rinertia[3];
+  {
+#ifdef ROTATIONAL_INERTIA
+  double rinertia[3];
 
   rinertia[0]=part->p.rinertia[0];
   rinertia[1]=part->p.rinertia[1];
@@ -107,8 +108,15 @@ void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, rinertia[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-}
+#else
+  double rinertia;
+
+  rinertia=part->p.rinertia;
+
+  Tcl_PrintDouble(interp, rinertia, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 #endif
+}
 
 #ifdef AFFINITY
 void tclcommand_part_print_affinity(Particle *part, char *buffer, Tcl_Interp *interp)
@@ -662,11 +670,11 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_rotation(&part, buffer, interp);
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+//#ifdef ROTATIONAL_INERTIA
   /* print information about rotational inertia */
   Tcl_AppendResult(interp, " rinertia ", (char *)NULL);
   tclcommand_part_print_rotational_inertia(&part, buffer, interp);
-#endif
+//#endif
 
 #ifdef AFFINITY
   /* print information about affinity */
@@ -911,10 +919,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_rotation(&part, buffer, interp);
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+//#ifdef ROTATIONAL_INERTIA
     else if (ARG0_IS_S("rinertia"))
       tclcommand_part_print_rotational_inertia(&part, buffer, interp);
-#endif
+//#endif
 
 #ifdef AFFINITY
     else if (ARG0_IS_S("affinity"))
@@ -1168,6 +1176,31 @@ int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char 
 
   /* set rotational inertia */
   if (! ARG_IS_D(0, rinertia[0]) || ! ARG_IS_D(1, rinertia[1]) || ! ARG_IS_D(2, rinertia[2]))
+    return TCL_ERROR;
+
+  if (set_particle_rotational_inertia(part_num, rinertia) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#else
+int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
+                  int part_num, int * change)
+{
+  double rinertia;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "rotational inertia requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set rotational inertia */
+  if (! ARG_IS_D(0, rinertia) )
     return TCL_ERROR;
 
   if (set_particle_rotational_inertia(part_num, rinertia) == TCL_ERROR) {
@@ -2717,10 +2750,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+//#ifdef ROTATIONAL_INERTIA
     else if (ARG0_IS_S("rinertia"))
       err = tclcommand_part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
-#endif
+//#endif
 
 #ifdef ROTATION_PER_PARTICLE
     else if (ARG0_IS_S("rotation"))

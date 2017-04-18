@@ -228,7 +228,7 @@ void calc_kinetic(double *ek_trans , double *ek_rot)
 								SQR(part[i].m.omega[1])*part[i].p.rinertia[1] +
 								SQR(part[i].m.omega[2])*part[i].p.rinertia[2];
 			#else
-				er += SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) + SQR(part[i].m.omega[2]);
+				er += (SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) + SQR(part[i].m.omega[2])) * part[i].p.rinertia;
 			#endif
 			#endif	
     }
@@ -354,6 +354,8 @@ void simple_momentum_update()
 				#ifdef ROTATION
 					#ifdef ROTATIONAL_INERTIA
 						sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+                    #else
+						sigmar = sqrt(temperature / part[i].p.rinertia);
 					#endif
 					part[i].m.omega[j] = sigmar*gaussian_random();
 				#endif	
@@ -387,6 +389,8 @@ void partial_momentum_update()
 				#ifdef ROTATION
 					#ifdef ROTATIONAL_INERTIA
 						sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+                    #else
+						sigmar = sqrt(temperature / part[i].p.rinertia);
 					#endif
 					part[i].m.omega[j] = cosp*(part[i].m.omega[j])+sinp*(sigmar*gaussian_random());
 				#endif	

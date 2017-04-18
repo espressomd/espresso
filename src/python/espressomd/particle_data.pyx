@@ -377,6 +377,23 @@ cdef class ParticleHandle:
                 cdef double * rinertia = NULL
                 pointer_to_rotational_inertia(& (self.particle_data), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
+    ELSE:
+        property rinertia:
+            """Rotational inertia"""
+
+            def __set__(self, _rinertia):
+                cdef double rinertia
+                check_type_or_throw_except(
+                    _rinertia, 1, float, "Rotation_inertia has to be 1 float")
+                rinertia = _rinertia
+                if set_particle_rotational_inertia(self.id, rinertia) == 1:
+                    raise Exception("set particle position first")
+
+            def __get__(self):
+                self.update_particle_data()
+                cdef double * rinertia = NULL
+                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                return rinertia[0]
 
 # Charge
     IF ELECTROSTATICS == 1:

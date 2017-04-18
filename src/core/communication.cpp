@@ -724,10 +724,14 @@ void mpi_send_mass_slave(int pnode, int part) {
 
 /********************* REQ_SET_RINERTIA ********/
 
-void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3]) {
 #ifdef ROTATIONAL_INERTIA
+void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3]) {
+#else
+void mpi_send_rotational_inertia(int pnode, int part, double rinertia) {
+#endif
   mpi_call(mpi_send_rotational_inertia_slave, pnode, part);
 
+#ifdef ROTATIONAL_INERTIA
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.rinertia[0] = rinertia[0];
@@ -736,21 +740,31 @@ void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3]) {
   } else {
     MPI_Send(rinertia, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
   }
-
-  on_particle_change();
+#else
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.rinertia = rinertia;
+  } else {
+    MPI_Send(&rinertia, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
 #endif
+  on_particle_change();
 }
 
 void mpi_send_rotational_inertia_slave(int pnode, int part) {
-#ifdef ROTATIONAL_INERTIA
   if (pnode == this_node) {
     Particle *p = local_particles[part];
+#ifdef ROTATIONAL_INERTIA
     MPI_Recv(p->p.rinertia, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
+#else
+    MPI_Recv(&(p->p.rinertia), 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+                 MPI_STATUS_IGNORE);
+#endif
   }
 
   on_particle_change();
-#endif
+
 }
 
 /********************* REQ_SET_BOND_SITE ********/

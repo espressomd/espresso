@@ -544,6 +544,7 @@ inline void add_kinetic_energy(Particle *p1) {
        at the moment, we assume unit inertia tensor I=(1,1,1)  */
     energy.data.e[0] +=
         (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2])) *
+        p1->p.rinertia *
         time_step * time_step;
 #endif
   }

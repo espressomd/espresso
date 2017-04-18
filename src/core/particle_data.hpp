@@ -97,9 +97,11 @@ struct ParticleProperties {
   double solvation[2 * LB_COMPONENTS];
 #endif
 
-#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
+#ifdef ROTATIONAL_INERTIA
   double rinertia[3];
+#else
+  double rinertia;
 #endif
 
 #ifdef AFFINITY
@@ -578,6 +580,8 @@ int set_particle_solvation(int part, double *solvation);
     @return ES_OK if particle existed
 */
 int set_particle_rotational_inertia(int part, double rinertia[3]);
+#else
+int set_particle_rotational_inertia(int part, double rinertia);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
@@ -1082,9 +1086,9 @@ void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim);
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+//#ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle *p, double *&res);
-#endif
+//#endif
 
 bool particle_exists(int part);
 
