@@ -41,7 +41,8 @@ if CONSTRAINTS == 1:
 
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
-from .lbboundaries import LBBoundaries
+if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+    from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 
 import sys
@@ -71,7 +72,8 @@ cdef class System:
     integrator = integrate.Integrator()
     if CONSTRAINTS == 1:
         constraints = Constraints()
-    lbboundaries = LBBoundaries()
+    if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+        lbboundaries = LBBoundaries()
     ekboundaries = EKBoundaries()
 
     auto_update_observables = AutoUpdateObservables()
