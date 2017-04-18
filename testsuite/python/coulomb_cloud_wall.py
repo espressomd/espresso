@@ -100,7 +100,7 @@ class CoulombCloudWall(ut.TestCase):
                 def test_scafacos_p3m(self):
                     self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p3m", method_params={
                                       "p3m_r_cut": 1.001, "p3m_grid": 64, "p3m_cao": 7, "p3m_alpha": 2.70746}))
-                    S.integrator.run(0)
+                    self.S.integrator.run(0)
                     self.compare("scafacos_p3m", energy=True)
 
             if "p2nfft" in scafacos.available_methods():

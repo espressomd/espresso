@@ -30,13 +30,14 @@ namespace Shapes {
 
 class Maze : public Shape {
 public:
-  Maze() : m_maze(new ::Shapes::Maze()) {}
+  Maze() : m_maze(new ::Shapes::Maze()) {
+    add_parameters({{"nsphere", m_maze->nsphere()},
+                    {"dim", m_maze->dim()},
+                    {"sphrad", m_maze->sphrad()},
+                    {"cylrad", m_maze->cylrad()}});
+  }
 
   const std::string name() const override { return "Shapes::Maze"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_maze; }
 

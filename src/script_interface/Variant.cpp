@@ -45,6 +45,7 @@ bool is_vector(Variant const &v) {
   return v.which() == static_cast<int>(VariantType::VECTOR);
 }
 
+namespace {
 template <typename T>
 std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
   std::vector<T> ret;
@@ -56,6 +57,7 @@ std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
 
   return ret;
 }
+} /* namespace */
 
 void transform_vectors(Variant &v) {
   if (is_vector(v)) {
@@ -93,7 +95,7 @@ std::string print_variant_types(Variant const &v) {
 
     return ret;
   } else {
-    return VariantLabels[v.which()];
+    return get_type_label(v);
   }
 }
 
