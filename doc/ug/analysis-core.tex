@@ -26,7 +26,7 @@ Analysis in the core is a new concept introduced in \es since version
 3.1.  It was motivated by the fact, that sometimes it is desirable
 that the analysis functions do more than just return a value to the
 scripting interface.  For some observables it is desirable to be
-sampled every few integrations steps. In addition, it should be
+sampled every few integration steps. In addition, it should be
 possible to pass the observable values to other functions which
 compute history-dependent quantities, such as correlation functions.
 All this should be done without the need to interrupt the integration
@@ -146,14 +146,14 @@ system:
           The particles are ordered ascending according to their ids and the 
           angular velocity/momentum is specified in the body (co-rotating) frame.
     \item \lit{com_position} \var{particle\_specifications} \opt{blocked \var{size}}\\
-          Position of the centre of mass. 
+          Position of the center of mass. 
           If \lit{blocked \var{size}} is specified,
-          the particles are subdivided into blocks of size \var{size} and the centre
+          the particles are subdivided into blocks of size \var{size} and the center
           of mass position is calculated for each block separately.
     \item \lit{com_velocity} \var{particle\_specifications} \opt{blocked \var{size}}\\
-          Velocity of the centre of mass. 
+          Velocity of the center of mass. 
           If \lit{blocked \var{size}} is specified,
-          the particles are subdivided into blocks of size \var{size} and the centre
+          the particles are subdivided into blocks of size \var{size} and the center
           of mass velocity is calculated for each block separately.
     \item \lit{com_force} \var{particle\_specifications} \opt{blocked \var{size}}\\
           Total force on the specified particles. 
@@ -205,9 +205,9 @@ system:
 % like nobody complained until now.
     \item \lit{interacts_with} \var{particle\_specifications1} \var{particle\_specifications2} \var{cutoff} \\
           For each particle belonging to \var{particle\_specifications1} 
-          the observable is unity if a neighbour of a type from 
+          the observable is unity if a neighbor of a type from 
           \var{particle\_specifications2} is found within the distance 
-          defined by the \var{cutoff}. If no such neighbour is found, the 
+          defined by the \var{cutoff}. If no such neighbor is found, the 
           observable is zero. The observable has one dimension per each 
           particle of \var{particle\_specifications_1}
     \item \lit{density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
@@ -266,7 +266,7 @@ system:
 		\var{rbins <rbins> N <Npoly> poly\_len <poly\_len>} \\
 		Computes the pair correlation of particles on a polymer chain given through
 		the \verb!id_list!, here \verb!k! is the distance (in terms of particles) between
-		the mononers on the chain for which the pair correlation is computed. This
+		the monomers on the chain for which the pair correlation is computed. This
 		is averaged over the whole chain and all the given chains. The number of
 		polymers for which this distribution is computed has to be given as
 		\verb!Npoly! and their length through \verb!poly_len!. The distribution is
@@ -280,7 +280,7 @@ system:
       \end{itemize}
 The tclcommand observable is a helpful tool, that allows to make the 
 analysis framework much more versatile, by allowing
-the evaluation of arbitrary tcl commands.
+the evaluation of arbitrary Tcl commands.
   \begin{itemize}
     \item \lit{tclcommand \var{dimQ} \var{command}} \\
         An arbitrary Tcl function that returns a list of floating point numbers of fixed size
@@ -294,7 +294,7 @@ once their autoupdate feature is enabled.
   \begin{itemize}
     \item \lit{average \var{ref}} \\
       The running average of the reference observable with id \var{ref}. 
-      It can be resetted by \lit{observable \var{no} reset}
+      It can be reset by \lit{observable \var{no} reset}
   \end{itemize}
 \subsection{Printing an observable}
 \begin{essyntax}
@@ -354,7 +354,7 @@ observable \var{id} write_checkpoint \var{filename} \opt{binary}
 Writes the current state of the observable to \lit{filename}.
 If \lit{binary} is given then it does so in binary form. This is useful
 to save the state of statful observables as the average.
-This checkpoing mechanism is not portable, rereading is only guaranteed to work
+This checkpointing mechanism is not portable, rereading is only guaranteed to work
 on the same system with the same Espresso binary.
 
 \begin{essyntax}
@@ -391,10 +391,10 @@ of types) will not be automatically reflected in the observable.
           Requests observable calculation based on all particles in the system.
     \item \lit{types} \var{ type\_list } \\
           Restricts observable calculation to a given particle type(s). The type
-	  list is a tcl list of existing particle types.
+	  list is a Tcl list of existing particle types.
     \item \lit{id} \var{ id\_list } \\
           Restricts observable calculation to a given list of particle id(s). The id 
-	  list is a tcl list of existing particle ids.
+	  list is a Tcl list of existing particle ids.
 % The following two particle specifications have not been implemented yet
 %    \item \lit{blocks} \var{ m } \\
 %          From an $n$-dimensional observable craeates an $n/m$-dimensional one by 
@@ -529,7 +529,7 @@ Its further arguments are described below.
     \item \lit{scalar_product} \\
     Scalar product of $A$ and $B$, \ie $C=\sum\limits_{i} A_i B_i$
     \item \lit{componentwise_product} \\
-    Comnponentwise product of $A$ and $B$, \ie $C_i = A_i B_i$
+    Componentwise product of $A$ and $B$, \ie $C_i = A_i B_i$
     \item \lit{square_distance_componentwise} \\
     Each component of the correlation vector is the square of the difference between the 
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
@@ -545,7 +545,7 @@ Its further arguments are described below.
     G_i(\tau) = \frac{1}{N} \Bigl< \exp \Bigl( - \frac{\Delta x_i^2(\tau) }{w_x^2} - \frac{\Delta y_i^2(\tau)}{w_y^2} - \frac{\Delta z_i^2(\tau)}{w_z^2} \Bigr) \Bigr>\,,
     \label{eq:Gtau}
     \end{equation}
-    where $\Delta x_i^2(\tau) = \bigl(x_i(0) - x_i(\tau) \bigr)^2$ is the square discplacement 
+    where $\Delta x_i^2(\tau) = \bigl(x_i(0) - x_i(\tau) \bigr)^2$ is the square displacement 
     of particle $i$ in the $x$ direction, and $w_x$ is the beam waist of the intensity profile 
     of the exciting laser beam,
     \begin{equation}
@@ -588,7 +588,7 @@ Its further arguments are described below.
   takes one of the observable values and discards the other one. This
   is safe for all observables but produces poor statistics in the
   tail. For some observables, \lit{linear} compression can be used
-  which makes an average of two neighbouring values but produces
+  which makes an average of two neighboring values but produces
   systematic errors.  Depending on the observable, the systematic
   error can be anything between harmless and disastrous. For more
   information, we recommend to read Ref.~\cite{ramirez10a} or to
@@ -629,7 +629,7 @@ system.auto_update_correlators.add(corr)
 \variant{2} correlation n_corr
 \end{essyntax}
 
-Variant \variant{1} returns a tcl list of the defined correlations
+Variant \variant{1} returns a Tcl list of the defined correlations
 including their parameters.  \todo{Maybe not all parameters are
   printed.}  
 
@@ -651,7 +651,7 @@ MSD with a correlator other than the internal.
   binary=\arg{bool}
 }
 \end{pysyntax}
-where \texttt{Observalble} is one of the many obsrvables available.
+where \texttt{Observable} is one of the many observables available.
 
 A simple example for the MSD would be
 \begin{pypresso}
@@ -749,7 +749,7 @@ used by the \lit{uwerr} command).
 \index{Multiple tau correlator}
 
 Here we briefly describe the multiple tau correlator which is implemented in \es.
-For a more detailed description and discussion of its behaviour with respect to
+For a more detailed description and discussion of its behavior with respect to
 statistical and systematic errors, please read the cited literature.
 This type of correlator has been in use for years in the analysis of
 dynamic light scattering~\cite{schatzel88a}. About a decade later it found its way
@@ -787,7 +787,7 @@ to as compression level 0. To compute the correlations for lag times
 $\tau \in [p:2(p-1)]$, the original data are first coarse-grained, so
 that $m$ values of the original data are compressed to produce a single
 data point in the higher compression level. Thus the lag time between
-the neighbouring values in the higher compression level increases
+the neighboring values in the higher compression level increases
 by a factor of $m$, while the number of stored values decreases by
 the same factor and the number of correlation operations at this level
 reduces by a factor of $m^2$. Correlations for lag times 
@@ -819,7 +819,7 @@ can be applied universally to any combination of observables and
 correlation operation. On the other hand, it reduces the
 statistical accuracy as the compression level increases.
 In many cases, the \lit{average} compression operation
-can be applied, which averages the two neighbouring values
+can be applied, which averages the two neighboring values
 and the average then enters the higher level, preserving
 almost the full statistical accuracy of the original data. 
 In general, if averaging can be safely used or not, depends on the 
@@ -839,7 +839,7 @@ discussion is presented in Ref.~\cite{ramirez10a}.
 
 \subsection{Checkpointing the correlator}
 It is possible to checkpoint the correlator. Thereby the data is written
-directly to a file. It may be usefull to write to a binary file, as this
+directly to a file. It may be useful to write to a binary file, as this
 preserves the full bit-value of the variables, whereas the text file 
 representation has a lower accuracy.
 
@@ -850,9 +850,9 @@ representation has a lower accuracy.
 
 In order to load a checkpoint, the correlator has to be initialized. Therefore
 the observable(s) have to be created. Make sure that the correlator is exactly
-initilized as it was when the checkpoint was created. If this is not
-fullfilled, and e.g. the size of an observable has changed, loading the
-checkpoint failes.
+initialized as it was when the checkpoint was created. If this is not
+fulfilled, and e.g. the size of an observable has changed, loading the
+checkpoint fails.
 \begin{essyntax}
 \variant{1} correlation \var{id} read_checkpoint_binary \var{filename}
 \variant{2} correlation \var{id} read_checkpoint_ascii \var{filename}

@@ -22,54 +22,22 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
+#include "ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/shapes/Shape.hpp"
+#include "core/utils/Factory.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
 
 class Constraint : public AutoParameters {
 public:
-  Constraint()
-      : m_constraint(new ::Constraints::Constraint()), m_shape(nullptr) {
-    add_parameters({{"only_positive", m_constraint->only_positive()},
-                    {"penetrable", m_constraint->penetrable()},
-                    {"particle_type", m_constraint->type()},
-                    {"shape",
-                     [this](Variant const &value) {
-                       m_shape =
-                           get_value<std::shared_ptr<Shapes::Shape>>(value);
-
-                       if (m_shape) {
-                         m_constraint->set_shape(m_shape->shape());
-                       };
-                     },
-                     [this]() {
-                       return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }}});
-  }
+  Constraint(){};
 
   const std::string name() const override { return "Constraints::Constraint"; }
 
-  Variant call_method(std::string const &name, VariantMap const &) override {
-    if (name == "total_force") {
-      return m_constraint->total_force();
-    }
-
-    return false;
-  }
-
-  std::shared_ptr<::Constraints::Constraint> constraint() {
-    return m_constraint;
-  }
-
-private:
-  /* The actual constraint */
-  std::shared_ptr<::Constraints::Constraint> m_constraint;
-
-  /* Keep a reference to the shape */
-  std::shared_ptr<Shapes::Shape> m_shape;
+  virtual std::shared_ptr<const ::Constraints::Constraint>
+  constraint() const = 0;
+  virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;
 };
 
 } /* namespace Constraints */
