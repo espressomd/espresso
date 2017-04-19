@@ -22,7 +22,7 @@ Tcl scripting interface. This enables setup of arbitrarily complex
 systems which users might want to simulate in future, as well as
 modifying simulation parameters during runtime.
 
-.. _guiding_principles:
+.. _Guiding principles:
 
 Guiding principles
 ------------------
@@ -82,7 +82,7 @@ set-up system with capped forces, interactively check whether it is safe
 to remove the cap and switch on the full interactions and then perform
 the actual productive simulation.
 
-.. _available_simulation_methods:
+.. _Available simulation methods:
 
 Available simulation methods
 ----------------------------
@@ -220,7 +220,7 @@ report so to the developers.
 | mbtools package                | Group                  | Group            |
 +--------------------------------+------------------------+------------------+
 
-.. _basic_program_structure:
+.. _Basic program structure:
 
 Basic program structure
 -----------------------
@@ -255,7 +255,7 @@ details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
 structure is contained in the Developers’ guide (see section [sec:dg]).
 
-.. _on_units:
+.. _On units:
 
 On units
 --------
@@ -329,7 +329,7 @@ As long as one remains within the same unit system throughout the whole
 |es|-script, there should be no problems.
 
 
-.. _requirements:
+.. _Requirements:
 
 Requirements
 ------------
@@ -347,7 +347,7 @@ MPI
     environment (that implements the MPI standard version 1.2).
 
 
-.. _installing_requirements_on_ubuntu:
+.. Iinstalling Requirements on ubuntu:
 
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -367,7 +367,7 @@ Optionally the ccmake utility can be installed for easier configuration:
     $ sudo apt install cmake-curses-gui
 
 
-.. _installing_requirements_on_mac_os_x:
+.. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
