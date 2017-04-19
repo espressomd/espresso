@@ -186,7 +186,7 @@ enough, the particle will experience the attractive part of the
 potential, mimiking the effective attraction induced by the bad solvent.
 
 
-.. _Generic Lennard-Jones interaction:
+.. _generic_lennard_jones_interaction:
 
 Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1875,7 +1875,7 @@ is maintained between the xy-plane at :math:`z=0` and
 by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
-(:cite:`elc,icelc`) before using it.
+(:cite:`arnold02c,icelc`) before using it.
 
 .. _ICC:
 

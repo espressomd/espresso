@@ -55,16 +55,16 @@ avoided in hope that the overhead in computer time will be more than
 compensated for by saving much of the user time while trying to
 understand what the code is supposed to do.
 
-Hand-in-hand with the extensibility and readability of the code comes
-the flexibility of the whole program. On the one hand, it is provided by
-the generalized functionality of its parts, avoiding highly specialized
-functions. An example can be the implementation of the Generic
-Lennard-Jones potential described in section :ref:`GenLennardJones` where
-the user can change all available parameters. Where possible, default
-values are avoided, providing the user with the possibility of choice.
-|es| cannot be aware whether your particles are representing atoms or
-billiard balls, so it cannot check if the chosen parameters make sense
-and it is the user’s responsibility to make sure they do.
+Hand-in-hand with the extensibility and readability of the code comes the
+flexibility of the whole program. On the one hand, it is provided by the
+generalized functionality of its parts, avoiding highly specialized functions.
+An example can be the implementation of the Generic Lennard-Jones potential
+described in section :ref:`generic_lennard_jones_interaction` where the user
+can change all available parameters. Where possible, default values are
+avoided, providing the user with the possibility of choice.  |es| cannot be
+aware whether your particles are representing atoms or billiard balls, so it
+cannot check if the chosen parameters make sense and it is the user’s
+responsibility to make sure they do.
 
 On the other hand, flexibility of |es| stems from the employment of a
 scripting language at the steering level. Apart from the ability to
@@ -346,6 +346,9 @@ MPI
     Finally, if you want to use in parallel, you need a working MPI
     environment (that implements the MPI standard version 1.2).
 
+
+.. _installing_requirements_on_ubuntu:
+
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -362,6 +365,9 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     $ sudo apt install cmake-curses-gui
+
+
+.. _installing_requirements_on_mac_os_x:
 
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
