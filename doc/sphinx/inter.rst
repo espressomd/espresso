@@ -42,7 +42,7 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
-.. _Non-bonded tabulated interaction:
+.. _Tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
@@ -186,7 +186,7 @@ enough, the particle will experience the attractive part of the
 potential, mimiking the effective attraction induced by the bad solvent.
 
 
-.. _generic_lennard_jones_interaction:
+.. _Generic Lennard-Jones interaction:
 
 Generic Lennard-Jones interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
