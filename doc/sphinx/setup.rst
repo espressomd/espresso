@@ -132,19 +132,6 @@ re-used.
 (int) if non-zero (default), some warnings are printed out. Set this to
 zero if you get annoyed by them.
 
-(double) viscosity of the fluid for the Stokesian Dynamics simulation.
-
-(double) hydrodynamic radius of the particles used in Stokesian
-Dynamics.
-
-(int[2]) seed of the Stokes Dynamics random number generator.
-
-(int[2]) offset of the random number generator. Together with the seed,
-the state of the random number generator is well defined.
-
-(double) precision used for the approximation of the square root of the
-mobility. Sometimes higher accuracy can speedup the simulation.
-
 Setting global variables in Python
 ----------------------------------
 
@@ -507,17 +494,6 @@ Using the CPU thermostat, it is posible to keep your central processing
 unit operating at a constant temperature.
 
 Be aware that this thermostat requires to be given in Kelvin.
-
-Stokesian Dynamics thermostat
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. todo::
-    This is not implemented yet for the python interface
-
-This thermostat should be used together with the Stokesian Dynamics
-implementation. No other thermostat is able to thermalize SD correctly.
-The precision of the farfield contribution of the thermostat can be
-tuned with
 
 .. _nemd:
 
