@@ -13,11 +13,16 @@ using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 /**
  * @brief Possible types for parameters.
  */
-
 typedef boost::make_recursive_variant<
     bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>>::type Variant;
 
+/**
+ * @brief Human readable names for the types in the variant.
+ *
+ * This should be in the same order as the corresponding types in the definition
+ * of Variant. (e.g. Variant(bool{}).which() == VariantType::BOOL).
+ */
 enum class VariantType {
   BOOL = 0,
   INT,
@@ -29,7 +34,74 @@ enum class VariantType {
   VECTOR
 };
 
+namespace detail {
+/**
+ * @brief Implementation of @f infer_type.
+ *
+ * Helper struct is needed because particle specialization
+ * of functions is not allowed. Every specialization deals
+ * with a specific type, to extend just add a new one.
+ */
+template <typename T> struct infer_type_helper {};
+
+template <> struct infer_type_helper<bool> {
+  static constexpr VariantType value{VariantType::BOOL};
+};
+
+template <> struct infer_type_helper<std::string> {
+  static constexpr VariantType value{VariantType::STRING};
+};
+
+template <> struct infer_type_helper<int> {
+  static constexpr VariantType value{VariantType::INT};
+};
+
+template <> struct infer_type_helper<double> {
+  static constexpr VariantType value{VariantType::DOUBLE};
+};
+
+template <> struct infer_type_helper<std::vector<int>> {
+  static constexpr VariantType value{VariantType::INT_VECTOR};
+};
+
+template <> struct infer_type_helper<std::vector<double>> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
+template <size_t N> struct infer_type_helper<Vector<N, double>> {
+  static constexpr VariantType value{VariantType::DOUBLE_VECTOR};
+};
+
+template <size_t N> struct infer_type_helper<Vector<N, int>> {
+  static constexpr VariantType value{VariantType::INT_VECTOR};
+};
+
+template <> struct infer_type_helper<std::vector<Variant>> {
+  static constexpr VariantType value{VariantType::VECTOR};
+};
+
+template <> struct infer_type_helper<ObjectId> {
+  static constexpr VariantType value{VariantType::OBJECTID};
+};
+}
+
+/**
+ * @brief Infer the variant type id from the c++ type.
+ *
+ * infer_type<int>() return VariantType::INT an so on.
+ */
+template <typename T> constexpr VariantType infer_type() {
+  return detail::infer_type_helper<T>::value;
+}
+
+/**
+ * @brief Get a string representation of the current type of a variant.
+ */
 std::string get_type_label(Variant const &);
+
+/**
+ * @brief Get a string representation of VariantType.
+ */
 std::string get_type_label(VariantType);
 
 bool is_bool(Variant const &v);
@@ -41,8 +113,22 @@ bool is_double_vector(Variant const &v);
 bool is_objectid(Variant const &v);
 bool is_vector(Variant const &v);
 
+/**
+ * @brief Combine doubles/ints into respective vectors.
+ *
+ * This function checks recursively for vectors of variants
+ * that are all doubles or ints, and if so combines them into
+ * a single double/int vectors. So if you have a variant with
+ * types { { INT, INT, INT }, STRING, {DOUBLE, DOUBLE}},
+ * this would be reduced to { INT_VECTOR, STRING, DOUBLE_VECTOR }.
+ *
+ * @param v The variant to transform.
+ */
 void transform_vectors(Variant &v);
 
+/**
+ * @brief Recursivly print the type of a variant.
+ */
 std::string print_variant_types(Variant const &v);
 
 } /* namespace ScriptInterface */
