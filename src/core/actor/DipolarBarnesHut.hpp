@@ -41,7 +41,7 @@ public:
 
   };
 
-//virtual ~DipolarBarnesHut() {} // TODO: any memory cleanup?
+//virtual ~DipolarBarnesHut() {}
 
   void computeForces(SystemInterface &s) {
     dds_float box[3];

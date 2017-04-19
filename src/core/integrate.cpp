@@ -140,6 +140,19 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+#ifdef SEMI_INTEGRATED
+
+/** Propagate the positions: random walk part.*/
+void random_walk(Particle *p);
+/** Determine the velocities: random walk part.*/
+void random_walk_vel(Particle *p, double dt);
+/** Propagate the positions: random walk part.*/
+void random_walk_rot(Particle *p);
+/** Determine the angular velocities: random walk part.*/
+void random_walk_rot_vel(Particle *p, double dt);
+
+#endif // SEMI_INTEGRATED
+
 /*@}*/
 
 void integrator_sanity_checks() {
@@ -1640,3 +1653,136 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   mpi_bcast_nptiso_geom();
   return (ES_OK);
 }
+
+#ifdef SEMI_INTEGRATED
+
+/** Propagate the positions: random walk part.*/
+void random_walk(Particle *p)
+{
+    int j;
+    double e_damp, sigma2, sigma_coeff;
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+      if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+#if defined (FLATNOISE)
+          sigma_coeff = 24.0*p->p.T/p->p.gamma;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+          sigma_coeff = 2.0*p->p.T/p->p.gamma;
+#endif
+          e_damp = exp(-p->p.gamma*time_step/p->p.mass);
+          sigma2 = sigma_coeff*(time_step+(p->p.mass/(2*p->p.gamma))*(-3+4*e_damp-e_damp*e_damp));
+          p->r.p[j] += sqrt(sigma2) * noise;
+      }
+    }
+}
+
+/** Determine the velocities: random walk part.*/
+void random_walk_vel(Particle *p, double dt)
+{
+    int j;
+    double e_damp, sigma2, sigma_coeff;
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+      if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+#if defined (FLATNOISE)
+          sigma_coeff = 12.0*p->p.T/p->p.mass;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+          sigma_coeff = p->p.T/p->p.mass;
+#endif
+          e_damp = exp(-2*p->p.gamma*dt/p->p.mass);
+          sigma2 = sigma_coeff*(1-e_damp);
+          // here, the time_step is used only to align with Espresso default dimensionless model
+          p->m.v[j] += sqrt(sigma2) * noise * time_step;
+      }
+    }
+}
+
+/** Propagate the positions: random walk part.*/
+void random_walk_rot(Particle *p)
+{
+    double e_damp, sigma2, sigma_coeff, rinertia_m, gamma_rot_m, phi, theta, dphi_m, m_dphi;
+    double dphi[3], u_dphi[3];
+
+#ifdef ROTATION_PER_PARTICLE
+    if (!p->p.rotation) return;
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+          rinertia_m = p->p.rinertia;
+#endif
+#if defined (FLATNOISE)
+          sigma_coeff = 24.0*p->p.T/gamma_rot_m;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+          sigma_coeff = 2.0*p->p.T/gamma_rot_m;
+#endif
+          e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
+          sigma2 = sigma_coeff*(time_step+(rinertia_m/(2*gamma_rot_m))*(-3+4*e_damp-e_damp*e_damp));
+          phi = 2*PI*d_random();
+          theta = PI*d_random();
+          dphi_m = noise * sqrt(3 * sigma2);
+          dphi[0] = dphi_m*sin(theta)*cos(phi);
+          dphi[1] = dphi_m*sin(theta)*sin(phi);
+          dphi[2] = dphi_m*cos(theta);
+          m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
+          u_dphi[0] = dphi[0] / m_dphi;
+          u_dphi[1] = dphi[1] / m_dphi;
+          u_dphi[2] = dphi[2] / m_dphi;
+          if (m_dphi == 0)
+          {
+              u_dphi[0] = 1.0;
+              u_dphi[1] = 0.0;
+              u_dphi[2] = 0.0;
+          }
+          rotate_particle_body(p,u_dphi,m_dphi);
+}
+
+/** Determine the angular velocities: random walk part.*/
+void random_walk_rot_vel(Particle *p, double dt)
+{
+    int j;
+    double e_damp, sigma2, sigma_coeff, rinertia_m, gamma_rot_m, a[3];
+
+    a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+    if (!p->p.rotation) return;
+    if (!(p->p.rotation & 2)) a[0] = 0.0;
+    if (!(p->p.rotation & 4)) a[1] = 0.0;
+    if (!(p->p.rotation & 8)) a[2] = 0.0;
+#endif
+
+    for(j=0; j < 3; j++){
+#ifdef EXTERNAL_FORCES
+      if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+#ifdef ROTATIONAL_INERTIA
+          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
+          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
+#else
+          gamma_rot_m = p->p.gamma_rot;
+          rinertia_m = p->p.rinertia;
+#endif
+#if defined (FLATNOISE)
+          sigma_coeff = 12.0*p->p.T/rinertia_m;
+#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
+          sigma_coeff = p->p.T/rinertia_m;
+#endif
+          e_damp = exp(-2*gamma_rot_m*dt/rinertia_m);
+          sigma2 = sigma_coeff*(1-e_damp);
+          p->m.omega[j] += a[j] * sqrt(sigma2) * noise;
+          //printf("\n 2 %e %e %e",a[j], sqrt(sigma), noise);
+      }
+    }//j
+}
+
+#endif // SEMI_INTEGRATED

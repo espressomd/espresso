@@ -111,7 +111,9 @@ inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
 void rotate_particle(Particle* p, double* a, double phi);
+
 #ifdef SEMI_INTEGRATED
+
 void rotate_particle_body(Particle* p, double* a, double phi);
 /** Rotate the particle p around the NORMALIZED axes X Y Z by amounts phi[] */
 void rotate_particle_3D(Particle* p, double* phi);
@@ -119,7 +121,23 @@ void rotate_particle_3D(Particle* p, double* phi);
 void random_walk_rot(Particle *p);
 /** Determine the angular velocities: random walk part.*/
 void random_walk_rot_vel(Particle *p, double dt);
+
+// Handle switching of noise function flat vs Gaussian
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
 #endif
+
+#if defined (FLATNOISE)
+  #define noise (d_random() -0.5)
+#elif defined (GAUSSRANDOMCUT)
+  #define noise gaussian_random_cut()
+#elif defined (GAUSSRANDOM)
+  #define noise gaussian_random()
+#else
+ #error "No noise function defined"
+#endif
+
+#endif // SEMI_INTEGRATED
 
 inline void normalize_quaternion(double* q) {
   double tmp=sqrt(q[0]*q[0] +q[1]*q[1] +q[2]*q[2] +q[3]*q[3]); 

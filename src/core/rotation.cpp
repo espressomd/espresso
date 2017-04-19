@@ -636,21 +636,6 @@ void rotate_particle_body(Particle* p, double* a, double phi)
 
 #ifdef SEMI_INTEGRATED
 
-// Handle switching of noise function flat vs Gaussian
-#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
-#define FLATNOISE
-#endif
-
-#if defined (FLATNOISE)
-  #define noise (d_random() -0.5)
-#elif defined (GAUSSRANDOMCUT)
-  #define noise gaussian_random_cut()
-#elif defined (GAUSSRANDOM)
-  #define noise gaussian_random()
-#else
- #error "No noise function defined"
-#endif
-
 /** Rotate the particle p around the NORMALIZED axes X Y Z by amounts phi[] */
 void rotate_particle_3D(Particle* p, double* phi)
 {
@@ -672,87 +657,6 @@ void rotate_particle_3D(Particle* p, double* phi)
 	  rotate_particle(p,aSpaceFrame,phi[2]);
 }
 
-/** Propagate the positions: random walk part.*/
-void random_walk_rot(Particle *p)
-{
-	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, phi, theta, dphi_m, m_dphi;
-	double dphi[3], u_dphi[3];
-
-#ifdef ROTATION_PER_PARTICLE
-    if (!p->p.rotation) return;
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
-          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
-#else
-          gamma_rot_m = p->p.gamma_rot;
-          rinertia_m = p->p.rinertia;
-#endif
-#if defined (FLATNOISE)
-		  sigma_coeff = 24.0*p->p.T/gamma_rot_m;
-#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = 2.0*p->p.T/gamma_rot_m;
-#endif
-		  e_damp = exp(-gamma_rot_m*time_step/rinertia_m);
-		  sigma = sigma_coeff*(time_step+(rinertia_m/(2*gamma_rot_m))*(-3+4*e_damp-e_damp*e_damp));
-		  phi = 2*PI*d_random();
-		  theta = PI*d_random();
-		  dphi_m = noise * sqrt(3 * sigma);
-		  dphi[0] = dphi_m*sin(theta)*cos(phi);
-		  dphi[1] = dphi_m*sin(theta)*sin(phi);
-		  dphi[2] = dphi_m*cos(theta);
-		  m_dphi = sqrt(pow(dphi[0],2)+pow(dphi[1],2)+pow(dphi[2],2));
-		  u_dphi[0] = dphi[0] / m_dphi;
-		  u_dphi[1] = dphi[1] / m_dphi;
-		  u_dphi[2] = dphi[2] / m_dphi;
-		  if (m_dphi == 0)
-		  {
-			  u_dphi[0] = 1.0;
-			  u_dphi[1] = 0.0;
-			  u_dphi[2] = 0.0;
-		  }
-		  rotate_particle_body(p,u_dphi,m_dphi);
-}
-
-/** Determine the angular velocities: random walk part.*/
-void random_walk_rot_vel(Particle *p, double dt)
-{
-	int j;
-	double e_damp, sigma, sigma_coeff, rinertia_m, gamma_rot_m, a[3];
-
-	a[0] = a[1] = a[2] = 1.0;
-#ifdef ROTATION_PER_PARTICLE
-	if (!p->p.rotation) return;
-	if (!(p->p.rotation & 2)) a[0] = 0.0;
-	if (!(p->p.rotation & 4)) a[1] = 0.0;
-	if (!(p->p.rotation & 8)) a[2] = 0.0;
-#endif
-
-    for(j=0; j < 3; j++){
-#ifdef EXTERNAL_FORCES
-	  if (!(p->p.ext_flag & COORD_FIXED(j)))
-#endif
-	  {
-#ifdef ROTATIONAL_INERTIA
-          gamma_rot_m = (p->p.gamma_rot[0] + p->p.gamma_rot[1] + p->p.gamma_rot[2]) / 3.0;
-          rinertia_m = (p->p.rinertia[0] + p->p.rinertia[1] + p->p.rinertia[2]) / 3.0;
-#else
-          gamma_rot_m = p->p.gamma_rot;
-          rinertia_m = p->p.rinertia;
-#endif
-#if defined (FLATNOISE)
-		  sigma_coeff = 12.0*p->p.T/rinertia_m;
-#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-		  sigma_coeff = p->p.T/rinertia_m;
-#endif
-		  e_damp = exp(-2*gamma_rot_m*dt/rinertia_m);
-		  sigma = sigma_coeff*(1-e_damp);
-		  p->m.omega[j] += a[j] * sqrt(sigma) * noise;
-		  //printf("\n 2 %e %e %e",a[j], sqrt(sigma), noise);
-	  }
-    }//j
-}
 #endif // SEMI_INTEGRATED
 
 #endif

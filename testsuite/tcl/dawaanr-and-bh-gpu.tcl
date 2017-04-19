@@ -99,6 +99,7 @@ inter 0 0 lennard-jones 0 0 0 0
 
 setmd skin 0
 setmd time_step 0.01
+thermostat langevin 1.297 10
 
 inter magnetic $pf_dawaanr dawaanr
 integrate 0 recalc_forces
@@ -116,7 +117,6 @@ inter magnetic 0
 
 integrate 0 recalc_forces
 
-#inter magnetic $pf_dds_gpu dds-gpu
 inter magnetic $pf_dds_gpu bh-gpu
 
 integrate 0 recalc_forces
@@ -145,22 +145,6 @@ for {set i 0} {$i<$n} {incr i} {
 if { abs($dawaanr_e - $ddsgpu_e*$ratio_dawaanr_dds_gpu) > 0.05 * abs($dawaanr_e) } {
   error "Energies for dawaanr $dawaanr_e and dds_gpu [expr $ratio_dawaanr_dds_gpu*$ddsgpu_e] don't match."
 }
-
-# Does the energy stay constant when swapping particles
-for {set i 0} {$i<1000} {incr i} {
-  set a [expr int([t_random] *$n)*2]
-  set b [expr int([t_random] *$n)*2]
-  set dipa [part $a print dip]
-  set posa [part $a print pos]
-  eval "part $a pos [part $b print pos] dip [part $b print dip]"
-  eval "part $b pos $posa dip $dipa"
-  integrate 0 recalc_forces
-  set E [analyze energy total]
-  if { abs($E -$ddsgpu_e) / $ddsgpu_e > 5E-2 } {
-    error "energy mismatch: $E $ddsgpu_e"
-  }
-}
-
 
 integrate 0 recalc_forces
 inter magnetic 0 

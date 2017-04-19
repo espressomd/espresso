@@ -677,8 +677,6 @@ void forceCalculationKernel(dds_float pf,
 		__syncthreads();
 
 		// iterate over all bodies assigned to thread
-		// TODO: one seems that this "for" is redundant. Number of blocks in the Grid is anyway a total number of blocks.
-		// TODO: ..same in other "for"s over the gridDim.x
 		for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd; k += blockDim.x * gridDim.x) {
 			i = sortd[k];	// get permuted/sorted index
 			// cache position info
@@ -926,8 +924,6 @@ void energyCalculationKernel(dds_float pf,
 		__syncthreads();
 
 		// iterate over all bodies assigned to thread
-		// TODO: one seems that this "for" is redundant. Number of blocks in the Grid is anyway a total number of blocks.
-		// TODO: ..same in other "for"s over the gridDim.x
 		for (k = threadIdx.x + blockIdx.x * blockDim.x; k < nbodiesd; k += blockDim.x * gridDim.x) {
 			i = sortd[k];	// get permuted/sorted index
 			// cache position info
@@ -1403,8 +1399,8 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 
 	// Sum the results of all blocks
 	// One thread per block in the prev kernel
-	block.x=grid.x; // TODO: redundant ?
-	grid.x=1; // TODO: redundant ?
+	block.x=grid.x;
+	grid.x=1;
 	//KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
 	//printf("\n energyBH 8");
 	thrust::device_ptr<dds_float> t(energySum);
@@ -1420,7 +1416,6 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 }
 
 void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* dipy, float* dipz, int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass) {
-	// TODO: this should be moved to the Espresso CLI parameters
 	//float epssq = 0.05f * 0.05f;
 	//float epssq = 10.0f * 10.0f;
 	//float epssq = 5.0f * 5.0f;
