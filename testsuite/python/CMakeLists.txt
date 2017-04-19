@@ -3,6 +3,7 @@ set(py_tests  bondedInteractions.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
+              dawaanr-and-dds-gpu.py
               electrostaticInteractions.py
               electrostatics-driven-agg-drift.py
               engine_langevin.py
