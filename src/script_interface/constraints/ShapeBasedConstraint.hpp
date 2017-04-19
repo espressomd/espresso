@@ -22,9 +22,9 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
+#include "Constraint.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
-#include "core/utils/Factory.hpp"
 #include "script_interface/shapes/Shape.hpp"
 
 namespace ScriptInterface {
@@ -33,36 +33,27 @@ namespace Constraints {
 class ShapeBasedConstraint : public Constraint {
 public:
   ShapeBasedConstraint()
-      : m_constraint(new ::Constraints::ShapeBasedConstraint()), m_shape(nullptr) {}
+      : m_constraint(new ::Constraints::ShapeBasedConstraint()),
+        m_shape(nullptr) {
+    add_parameters({{"only_positive", m_constraint->only_positive()},
+                    {"penetrable", m_constraint->penetrable()},
+                    {"particle_type", m_constraint->type()},
+                    {"shape",
+                     [this](Variant const &value) {
+                       m_shape =
+                           get_value<std::shared_ptr<Shapes::Shape>>(value);
+                       if (m_shape) {
+                         m_constraint->set_shape(m_shape->shape());
+                       };
 
-  const std::string name() const override { return "Constraints::ShapeBasedConstraint"; }
-
-  VariantMap get_parameters() const override {
-    return {{"only_positive", shape_based_constraint()->only_positive()},
-            {"penetrable", shape_based_constraint()->penetrable()},
-            {"particle_type", shape_based_constraint()->type()},
-            {"shape", (m_shape != nullptr) ? m_shape->id() : ObjectId()}};
+                     },
+                     [this]() {
+                       return (m_shape != nullptr) ? m_shape->id() : ObjectId();
+                     }}});
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"only_positive", {ParameterType::INT, true}},
-            {"penetrable", {ParameterType::INT, true}},
-            {"particle_type", {ParameterType::INT, true}},
-            {"shape", {ParameterType::OBJECTID, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if (name == "shape") {
-      m_shape = get_value<std::shared_ptr<Shapes::Shape>>(value);
-
-      if (m_shape) {
-        m_constraint->set_shape(m_shape->shape());
-      }
-    }
-
-    SET_PARAMETER_HELPER("only_positive", shape_based_constraint()->only_positive());
-    SET_PARAMETER_HELPER("penetrable", shape_based_constraint()->penetrable());
-    SET_PARAMETER_HELPER("particle_type", shape_based_constraint()->type());
+  const std::string name() const override {
+    return "Constraints::ShapeBasedConstraint";
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
@@ -79,7 +70,8 @@ public:
   std::shared_ptr<const ::Constraints::Constraint> constraint() const {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }
-  std::shared_ptr<::Constraints::ShapeBasedConstraint> shape_based_constraint() const {
+  std::shared_ptr<::Constraints::ShapeBasedConstraint>
+  shape_based_constraint() const {
     return m_constraint;
   }
 

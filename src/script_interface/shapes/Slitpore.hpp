@@ -30,13 +30,17 @@ namespace Shapes {
 
 class Slitpore : public Shape {
 public:
-  Slitpore() : m_slitpore(new ::Shapes::Slitpore()) {}
+  Slitpore() : m_slitpore(new ::Shapes::Slitpore()) {
+    add_parameters(
+        {{"pore_mouth", m_slitpore->pore_mouth()},
+         {"upper_smoothing_radius", m_slitpore->upper_smoothing_radius()},
+         {"lower_smoothing_radius", m_slitpore->lower_smoothing_radius()},
+         {"channel_width", m_slitpore->channel_width()},
+         {"pore_width", m_slitpore->pore_width()},
+         {"pore_length", m_slitpore->pore_length()}});
+  }
 
   const std::string name() const override { return "Shapes::Slitpore"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_slitpore; }
 
