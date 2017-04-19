@@ -202,11 +202,6 @@ espressoSystemInterface.update();
     }
 #endif
   
-#ifdef IMMERSED_BOUNDARY
-  // Must be done here. Forces need to be ghost-communicated
-    IBM_VolumeConservation();
-#endif
-
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif

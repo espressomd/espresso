@@ -82,12 +82,6 @@
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
 #endif
-#ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_main.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
-#include "immersed_boundary/ibm_triel.hpp"
-#include "immersed_boundary/ibm_volume_conservation.hpp"
-#endif
 
 /** initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
@@ -627,62 +621,6 @@ inline void add_bonded_force(Particle *p1) {
                                    force3, force4);
       break;
 #endif
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-    /*      case BONDED_IA_IBM_WALL_REPULSION:
-            IBM_WallRepulsion_CalcForce(p1, iaparams);
-            bond_broken = 0;
-            // These may be added later on, but we set them to zero because the
-       force has already been added in IBM_WallRepulsion_CalcForce
-            force[0] = force2[0] = force3[0] = 0;
-            force[1] = force2[1] = force3[1] = 0;
-            force[2] = force2[2] = force3[2] = 0;
-            break;*/
-    case BONDED_IA_IBM_TRIEL:
-      bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
-      // These may be added later on, but we set them to zero because the force
-      // has already been added in IBM_Triel_CalcForce
-      force[0] = force2[0] = force3[0] = 0;
-      force[1] = force2[1] = force3[1] = 0;
-      force[2] = force2[2] = force3[2] = 0;
-      break;
-    case BONDED_IA_IBM_VOLUME_CONSERVATION:
-      bond_broken = 0;
-      // Don't do anything here. We calculate and add the global volume forces
-      // in IBM_VolumeConservation. They cannot be calculated on a per-bond
-      // basis
-      force[0] = force2[0] = force3[0] = 0;
-      force[1] = force2[1] = force3[1] = 0;
-      force[2] = force2[2] = force3[2] = 0;
-      break;
-    case BONDED_IA_IBM_TRIBEND: {
-      // First build neighbor list. This includes all nodes around the central
-      // node.
-      const int numNeighbors = iaparams->num;
-      Particle **neighbors = new Particle *[numNeighbors];
-      // Three are already there
-      neighbors[0] = p2;
-      neighbors[1] = p3;
-      neighbors[2] = p4;
-      // Get rest
-      for (int j = 3; j < numNeighbors; j++)
-        neighbors[j] = local_particles[p1->bl.e[i++]];
-
-      IBM_Tribend_CalcForce(p1, numNeighbors, neighbors, *iaparams);
-      bond_broken = 0;
-
-      // Clean up
-      delete[] neighbors;
-
-      // These may be added later on, but we set them to zero because the force
-      // has
-      force[0] = force2[0] = force3[0] = 0;
-      force[1] = force2[1] = force3[1] = 0;
-      force[2] = force2[2] = force3[2] = 0;
-      break;
-    }
-#endif
-
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);

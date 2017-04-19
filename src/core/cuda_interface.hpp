@@ -94,10 +94,6 @@ typedef struct {
 
   unsigned int fixed;
   
-#ifdef IMMERSED_BOUNDARY
-  bool isVirtual;
-#endif
-
 #ifdef DIPOLES
   float dip[3];
 #endif
