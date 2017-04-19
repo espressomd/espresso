@@ -26,7 +26,7 @@ require_max_nodes_per_side 1
 set tcl_precision 14
 
 puts "------------------------------------------------"
-puts "- Testcase mass-and-rinertia_per_particle_es_constraints.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase mass-and-rinertia_per_particle_bh-gpu_aggregate.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 puts "------------------------------------------------"
 
