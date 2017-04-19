@@ -264,7 +264,7 @@ cdef class Thermostat:
             else:
                 langevin_gamma[0] = gamma[0]
                 langevin_gamma[1] = gamma[1]
-                langevin_gamma[2] = gamma[3]
+                langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
         global thermo_switch
