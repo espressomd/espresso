@@ -5,7 +5,7 @@ import espressomd
 import math
 
 if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.features():
-    class ThermoTest(ut.TestCase):
+    class RotationalInertia(ut.TestCase):
         longMessage = True
         # Handle for espresso system
         es = espressomd.System()
