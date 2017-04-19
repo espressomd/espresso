@@ -245,8 +245,11 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, sys.maxint))
+                #states_on_node_i.append(rng.randint(0, sys.maxint))
+                states_on_node_i.append(rng.randint(0, 2**31-1))
+
             states[i] = " ".join(map(str, states_on_node_i))
+        print( "SETTING mpi_random_set with len: {}".format(len(states[0].split()) ))
         mpi_random_set_stat(states)
 
     property seed:
@@ -264,6 +267,7 @@ cdef class System:
                 seed_array.resize(len(_seed))
                 for i in range(len(_seed)):
                     seed_array[i] = int(_seed[i])
+                print( "SETTING mpi_random_seeds with len: {}".format(len(seed_array) ))
 
                 mpi_random_seed(n_nodes, seed_array)
             else:
@@ -283,6 +287,7 @@ cdef class System:
                 for i in range(n_nodes):
                     states[i] = " ".join(
                         map(str, rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one]))
+                print( "SETTING mpi_random_set with len: {}".format(len(states[0].split()) ))
                 mpi_random_set_stat(states)
             else:
                 raise ValueError("Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
