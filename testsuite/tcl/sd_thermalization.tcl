@@ -52,7 +52,7 @@ set kappa_t 3.0
 set temp 1
 set pdens 0.1
 set box_l 20.0
-set seed [pid]
+set seed 23
 set radius 0.3
 set viscosity 1
 set box_l_y       $box_l

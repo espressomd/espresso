@@ -85,12 +85,6 @@ if { [ catch {
 # System Setup                                              #
 #############################################################
 
-# make real random draw
-set cmd "t_random seed"
-for {set i 0} {$i < [setmd n_nodes]} { incr i } {
-    lappend cmd [expr [pid] + $i] }
-eval $cmd
-
 setmd time_step $time_step
 setmd skin $skin
 
