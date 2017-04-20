@@ -79,8 +79,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             puts "------------------------------------------------"
             puts "Test $test_case: both particle specific gamma and temperature"
             puts "------------------------------------------------"
-            part 0 gamma $gamma(0) temp 0.0
-            part 1 gamma $gamma(1) temp 0.0
+            if {[has_feature "PARTICLE_ANISOTROPY"]} {
+                part 0 gamma $gamma(0) $gamma(0) $gamma(0) temp 0.0
+                part 1 gamma $gamma(1) $gamma(1) $gamma(1) temp 0.0
+            } else {
+                part 0 gamma $gamma(0) temp 0.0
+                part 1 gamma $gamma(1) temp 0.0
+            }
         }
     }
     setmd time 0
