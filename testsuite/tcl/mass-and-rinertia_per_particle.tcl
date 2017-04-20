@@ -18,8 +18,6 @@
 source "tests_common.tcl"
 
 require_feature "MASS"
-require_feature "ROTATIONAL_INERTIA"
-require_feature "PARTICLE_ANISOTROPY"
 require_feature "LANGEVIN_PER_PARTICLE"
 
 puts "------------------------------------------------"
@@ -47,8 +45,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set mass 12.74
 
     part deleteall
-    part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
-    part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    if {[has_feature "ROTATIONAL_INERTIA"]} {
+        part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+        part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
+    } else {
+        part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
+        part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
+    }
     puts "\n"
     switch $test_case {
         0 {
@@ -76,8 +79,8 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             puts "------------------------------------------------"
             puts "Test $test_case: both particle specific gamma and temperature"
             puts "------------------------------------------------"
-            part 0 gamma $gamma(0) $gamma(0) $gamma(0) temp 0.0
-            part 1 gamma $gamma(1) $gamma(1) $gamma(1) temp 0.0
+            part 0 gamma $gamma(0) temp 0.0
+            part 1 gamma $gamma(1) temp 0.0
         }
     }
     setmd time 0
@@ -125,6 +128,15 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         for {set k 0} {$k<2} {incr k} {
             set gamma_tran($k,$j) [expr (0.4 + [t_random]) * 10]
             set gamma_rot($k,$j) [expr (0.2 + [t_random]) * 20]
+            if {![has_feature "PARTICLE_ANISOTROPY"]} {
+                set gamma_tran($k,1) $gamma_tran($k,0)
+                set gamma_tran($k,2) $gamma_tran($k,0)
+            }
+        
+            if {![has_feature "ROTATIONAL_INERTIA"]} {
+                set gamma_rot($k,1) $gamma_rot($k,0)
+                set gamma_rot($k,2) $gamma_rot($k,0)
+            }
         }
     }
 
@@ -149,7 +161,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
             set D_tr($k,$j) [expr 2 * $halfkT($k) / $gamma_tr($k,$j)]
         }
     }
-    thermostat langevin $kT $gamma(0) $gamma(0) $gamma(0)
+    
+    if {[has_feature "PARTICLE_ANISOTROPY"]} {
+        thermostat langevin $kT $gamma(0) $gamma(0) $gamma(0)
+    } else {
+        thermostat langevin $kT $gamma(0)
+    }
 
     # no need to rebuild Verlet lists, avoid it
     setmd skin 1.0
@@ -162,13 +179,46 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     set j2 [expr (0.2 + [t_random]) * 7]
     set j3 [expr (0.2 + [t_random]) * 7]
     
+    if {![has_feature "ROTATIONAL_INERTIA"]} {
+        set j2 $j1
+        set j3 $j1
+    }
+    
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
-            part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
-            switch $test_case {
-                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2)}
-                2 {part [expr $i + $k*$n] temp $temp($k)}
-                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
+            if {[has_feature "ROTATIONAL_INERTIA"]} {
+                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
+            } else {
+                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 mass $mass omega_body 0 0 0 v 0 0 0
+            }
+            if {[has_feature "PARTICLE_ANISOTROPY"]} {
+                    if {[has_feature "ROTATIONAL_INERTIA"]} {
+                        switch $test_case {
+                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2)}
+                            2 {part [expr $i + $k*$n] temp $temp($k)}
+                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
+                        }
+                    } else {
+                        switch $test_case {
+                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0)}
+                            2 {part [expr $i + $k*$n] temp $temp($k)}
+                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                        }
+                    }
+            } else {
+                    if {[has_feature "ROTATIONAL_INERTIA"]} {
+                        switch $test_case {
+                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2)}
+                            2 {part [expr $i + $k*$n] temp $temp($k)}
+                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
+                        }
+                    } else {
+                        switch $test_case {
+                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0)}
+                            2 {part [expr $i + $k*$n] temp $temp($k)}
+                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                        }
+                    }
             }
         }
     }
