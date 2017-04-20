@@ -42,7 +42,7 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
-.. _Non-bonded tabulated interaction:
+.. _Tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1875,7 +1875,7 @@ is maintained between the xy-plane at :math:`z=0` and
 by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
-(:cite:`elc,icelc`) before using it.
+(:cite:`arnold02c,icelc`) before using it.
 
 .. _ICC:
 
