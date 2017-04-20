@@ -507,6 +507,7 @@ proc h5md_observable2D_write { name } {
 # Close all h5md groups and datasets and free memory at the end
 proc h5md_close {} {
     global __h5md_filename __h5md_filename_tmp
+    h5mdfile H5_Fflush
     h5mdfile H5_free_memory
     h5mdfile H5Fclose
     file delete ${__h5md_filename}
