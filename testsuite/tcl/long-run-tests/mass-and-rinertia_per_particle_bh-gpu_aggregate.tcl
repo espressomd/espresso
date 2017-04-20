@@ -22,6 +22,7 @@ require_feature "ROTATIONAL_INERTIA"
 require_feature "LANGEVIN_PER_PARTICLE"
 require_feature "CONSTRAINTS"
 require_feature "DIPOLES"
+require_feature "BARNES_HUT"
 require_max_nodes_per_side 1
 set tcl_precision 14
 
