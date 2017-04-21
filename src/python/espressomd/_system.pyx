@@ -245,7 +245,7 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, numeric_limits[int].max))
+                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
