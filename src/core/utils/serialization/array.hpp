@@ -1,6 +1,7 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
+#include <boost/mpi/datatype.hpp>
 #include <boost/version.hpp>
 
 /* New versions of boost alrady containt this

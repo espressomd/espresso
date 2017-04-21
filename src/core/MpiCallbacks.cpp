@@ -26,7 +26,6 @@
 #include "MpiCallbacks.hpp"
 
 #include "utils/make_unique.hpp"
-#include "utils/serialization/array.hpp"
 
 namespace Communication {
 
@@ -39,7 +38,7 @@ void MpiCallbacks::call(int id, int par1, int par2) const {
     throw std::out_of_range("Callback does not exists.");
   }
 
-  std::array<int, 3> request{id, par1, par2};
+  int request[3] = {id, par1, par2};
 
   /** Send request to slaves */
   boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
@@ -82,7 +81,7 @@ void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
 
 void MpiCallbacks::loop() const {
   for (;;) {
-    std::array<int, 3> request;
+    int request[3];
     /** Communicate callback id and parameters */
     boost::mpi::broadcast(m_comm, request.data(), request.size(), 0);
     /** id == 0 is loop_abort. */
