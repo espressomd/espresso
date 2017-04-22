@@ -68,6 +68,21 @@
 #include <callgrind.h>
 #endif
 
+// Handle switching of noise function flat vs Gaussian
+#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
+#define FLATNOISE
+#endif
+
+#if defined (FLATNOISE)
+  #define noise (d_random() -0.5)
+#elif defined (GAUSSRANDOMCUT)
+  #define noise gaussian_random_cut()
+#elif defined (GAUSSRANDOM)
+  #define noise gaussian_random()
+#else
+ #error "No noise function defined"
+#endif
+
 /*******************  variables  *******************/
 
 int integ_switch = INTEG_METHOD_NVT;
