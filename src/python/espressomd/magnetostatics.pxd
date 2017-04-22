@@ -27,7 +27,7 @@ IF DIPOLES == 1:
         int mdds_set_params(int n_cut)
         int Ncut_off_magnetic_dipolar_direct_sum
 
-    IF CUDA == 1:
+    IF (CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":
             void activate_dipolar_direct_sum_gpu()
 

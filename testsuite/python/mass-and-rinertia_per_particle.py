@@ -235,8 +235,8 @@ if ("MASS" in espressomd.features()) and ("LANGEVIN_PER_PARTICLE" in espressomd.
                         v = self.es.part[ind].v
                         if "ROTATION" in espressomd.features():
                             o = self.es.part[ind].omega_body
+                            o2[k,:] = o2[k,:] + np.power(o[:], 2)
                         pos = self.es.part[ind].pos
-                        o2[k,:] = o2[k,:] + np.power(o[:], 2)
                         v2[k,:] = v2[k,:] + np.power(v[:], 2)
                         dr2[k,:] = np.power((pos[:] - pos0[ind,:]), 2)
                         dt = (int_steps * (i + 1) + therm_steps) * self.es.time_step
