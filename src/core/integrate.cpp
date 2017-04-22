@@ -1328,7 +1328,7 @@ void propagate_vel_pos() {
 #ifdef MULTI_TIMESTEP
         if (smaller_time_step < 0. || current_time_step_is_small==1)
 #endif  
-
+          {
 #ifndef SEMI_INTEGRATED
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt * v(t+0.5*dt) */
               p[i].r.p[j] += p[i].m.v[j];
@@ -1354,7 +1354,8 @@ void propagate_vel_pos() {
               if (dphi[j] != dphi[j]) printf("\n TRACE propagate_vel_pos 1");
               if (p[i].m.omega_0[j] != p[i].m.omega_0[j]) printf("\n TRACE propagate_vel_pos 2");
               if (p[i].f.torque[j] != p[i].f.torque[j]) printf("\n TRACE propagate_vel_pos 3");
-#endif
+#endif // SEMI_INTEGRATED
+          }
         }
 
       } // j
