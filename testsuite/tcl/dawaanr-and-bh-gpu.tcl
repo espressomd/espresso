@@ -37,6 +37,7 @@ require_feature "DIPOLES"
 require_feature "CUDA"
 require_feature "PARTIAL_PERIODIC"
 require_feature "BARNES_HUT"
+require_feature "ROTATION"
 require_max_nodes_per_side 1
 
 source "tests_common.tcl"

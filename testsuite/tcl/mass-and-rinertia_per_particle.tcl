@@ -49,8 +49,13 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
         part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] [lindex $J 1] [lindex $J 2] omega_body 1 1 1 v 1 1 1
     } else {
-        part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
-        part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
+        if {[has_feature "ROTATION"]} {
+            part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
+            part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] omega_body 1 1 1 v 1 1 1
+        } else {
+            part 0 pos 0 0 0 mass $mass rinertia [lindex $J 0] v 1 1 1
+            part 1 pos 0 0 0 mass $mass rinertia [lindex $J 0] v 1 1 1
+        }
     }
     puts "\n"
     switch $test_case {
@@ -91,15 +96,17 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     setmd time 0
     for {set i 0} {$i <100} {incr i} {
         for {set k 0} {$k <3} {incr k} {
-            if {[has_feature "VERLET_STEP4_VELOCITY"]} {
-                set tolerance_o 1.25E-4
-            } else {
-                set tolerance_o 1.0E-2
-            }
-            set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma(0)*[setmd time] /[lindex $J $k]))]
-            set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma(1)*[setmd time] /[lindex $J $k]))]
-            if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
-                error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
+            if {[has_feature "ROTATION"]} {
+                if {[has_feature "VERLET_STEP4_VELOCITY"]} {
+                    set tolerance_o 1.25E-4
+                } else {
+                    set tolerance_o 1.0E-2
+                }
+                set do0 [expr abs([lindex [part 0 print omega_body] $k] -exp(-$gamma(0)*[setmd time] /[lindex $J $k]))]
+                set do1 [expr abs([lindex [part 1 print omega_body] $k] -exp(-$gamma(1)*[setmd time] /[lindex $J $k]))]
+                if { $do0 > $tolerance_o || $do1 > $tolerance_o } {
+                    error_exit "Friction Deviation in omega too large. $i $k $do0 $do1"
+                }
             }
             if {[has_feature "VERLET_STEP4_VELOCITY"]} {
                 set tolerance_v 4.5E-5
@@ -192,9 +199,12 @@ proc test_mass-and-rinertia_per_particle {test_case} {
     for {set i 0} {$i<$n} {incr i} {
         for {set k 0} {$k<2} {incr k} {
             if {[has_feature "ROTATIONAL_INERTIA"]} {
-                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass omega_body 0 0 0 v 0 0 0
+                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 $j2 $j3 mass $mass v 0 0 0
             } else {
-                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 mass $mass omega_body 0 0 0 v 0 0 0
+                part [expr $i + $k*$n] pos [expr [t_random] *$box] [expr [t_random] * $box] [expr [t_random] * $box] rinertia $j1 mass $mass v 0 0 0
+            }
+            if {[has_feature "ROTATION"]} {
+                part [expr $i + $k*$n] omega_body 0 0 0
             }
             if {[has_feature "PARTICLE_ANISOTROPY"]} {
                     if {[has_feature "ROTATIONAL_INERTIA"]} {
@@ -204,10 +214,18 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                             3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
                         }
                     } else {
-                        switch $test_case {
-                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0)}
-                            2 {part [expr $i + $k*$n] temp $temp($k)}
-                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                        if {[has_feature "ROTATION"]} {
+                            switch $test_case {
+                                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0)}
+                                2 {part [expr $i + $k*$n] temp $temp($k)}
+                                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                            }
+                        } else {
+                            switch $test_case {
+                                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2)}
+                                2 {part [expr $i + $k*$n] temp $temp($k)}
+                                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) $gamma_tran($k,1) $gamma_tran($k,2) temp $temp($k)}
+                            }
                         }
                     }
             } else {
@@ -218,10 +236,18 @@ proc test_mass-and-rinertia_per_particle {test_case} {
                             3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) $gamma_rot($k,1) $gamma_rot($k,2) temp $temp($k)}
                         }
                     } else {
-                        switch $test_case {
-                            1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0)}
-                            2 {part [expr $i + $k*$n] temp $temp($k)}
-                            3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                        if {[has_feature "ROTATION"]} {
+                            switch $test_case {
+                                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0)}
+                                2 {part [expr $i + $k*$n] temp $temp($k)}
+                                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) gamma_rot $gamma_rot($k,0) temp $temp($k)}
+                            }
+                        } else {
+                            switch $test_case {
+                                1 {part [expr $i + $k*$n] gamma $gamma_tran($k,0)}
+                                2 {part [expr $i + $k*$n] temp $temp($k)}
+                                3 {part [expr $i + $k*$n] gamma $gamma_tran($k,0) temp $temp($k)}
+                            }
                         }
                     }
             }
@@ -260,12 +286,14 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         for {set p 0} {$p <$n} {incr p} {
             for {set k 0} {$k<2} {incr k} {
                 set ind [expr $p + $k*$n]
-                set v [part [expr $p + $k*$n] print v]
-                set o [part [expr $p + $k*$n] print omega_body]
                 set pos [part [expr $p + $k*$n] print pos]
-                set ox2($k) [expr $ox2($k) +pow([lindex $o 0],2)]
-                set oy2($k) [expr $oy2($k) +pow([lindex $o 1],2)]
-                set oz2($k) [expr $oz2($k) +pow([lindex $o 2],2)]
+                set v [part [expr $p + $k*$n] print v]
+                if {[has_feature "ROTATION"]} {
+                    set o [part [expr $p + $k*$n] print omega_body]
+                    set ox2($k) [expr $ox2($k) +pow([lindex $o 0],2)]
+                    set oy2($k) [expr $oy2($k) +pow([lindex $o 1],2)]
+                    set oz2($k) [expr $oz2($k) +pow([lindex $o 2],2)]
+                }
                 set vx2($k) [expr $vx2($k) +pow([lindex $v 0],2)]
                 set vy2($k) [expr $vy2($k) +pow([lindex $v 1],2)]
                 set vz2($k) [expr $vz2($k) +pow([lindex $v 2],2)]
@@ -293,51 +321,58 @@ proc test_mass-and-rinertia_per_particle {test_case} {
         set Evy($k) [expr 0.5 * $mass *$vy2($k)/$n/$loops]
         set Evz($k) [expr 0.5 * $mass *$vz2($k)/$n/$loops]
 
-        set Eox($k) [expr 0.5 * $j1 *$ox2($k)/$n/$loops]
-        set Eoy($k) [expr 0.5 * $j2 *$oy2($k)/$n/$loops]
-        set Eoz($k) [expr 0.5 * $j3 *$oz2($k)/$n/$loops]
-
+        if {[has_feature "ROTATION"]} {
+            set Eox($k) [expr 0.5 * $j1 *$ox2($k)/$n/$loops]
+            set Eoy($k) [expr 0.5 * $j2 *$oy2($k)/$n/$loops]
+            set Eoz($k) [expr 0.5 * $j3 *$oz2($k)/$n/$loops]
+            set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT($k)-1.]
+            set dox($k) [expr ($Eox($k))/$halfkT($k)-1.]
+            set doy($k) [expr ($Eoy($k))/$halfkT($k)-1.]
+            set doz($k) [expr ($Eoz($k))/$halfkT($k)-1.]
+        }
+        
         set dv($k) [expr 1./3. *($Evx($k) +$Evy($k) +$Evz($k))/$halfkT($k)-1.]
-        set do($k) [expr 1./3. *($Eox($k) +$Eoy($k) +$Eoz($k))/$halfkT($k)-1.]
         set dr($k) [expr $dr($k)/$n/$loops]
         
-        set dox($k) [expr ($Eox($k))/$halfkT($k)-1.]
-        set doy($k) [expr ($Eoy($k))/$halfkT($k)-1.]
-        set doz($k) [expr ($Eoz($k))/$halfkT($k)-1.]
         
         puts "\n"
         puts "1/2 kT = $halfkT($k)"
-        puts "translation: $Evx($k) $Evy($k) $Evz($k) rotation: $Eox($k) $Eoy($k) $Eoz($k)"
+        puts "translation: $Evx($k) $Evy($k) $Evz($k)"
+        if {[has_feature "ROTATION"]} {
+            puts "rotation: $Eox($k) $Eoy($k) $Eoz($k)"
+            puts "Deviation in rotational energy: $do($k)"
+            puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
+            if { abs($do($k)) > $tolerance } {
+                puts "Moment of inertia principal components: $j1 $j2 $j3"
+                error "Relative deviation in rotational energy too large: $do($k)"
+            }
+        }
 
         puts "Deviation in translational energy: $dv($k)"
-        puts "Deviation in rotational energy: $do($k)"
-        puts "Deviation in rotational energy per degrees of freedom: $dox($k) $doy($k) $doz($k)"
         puts "Deviation in translational diffusion: $dr($k) $mass $gamma_tr($k,0) $gamma_tr($k,1) $gamma_tr($k,2)"
 
         if { abs($dv($k)) > $tolerance } {
            error "Relative deviation in translational energy too large: $dv($k)"
         }
-        if { abs($do($k)) > $tolerance } {
-           puts "Moment of inertia principal components: $j1 $j2 $j3"
-           error "Relative deviation in rotational energy too large: $do($k)"
-        }
         if { abs($dr($k)) > $tolerance } {
            error "Relative deviation in translational diffusion too large: $dr($k) for parameters: mass=$mass gamma_tr=$gamma_tr($k,0) $gamma_tr($k,1) $gamma_tr($k,2)"
-       }
+        }
        
-        # SEMI_INTEGRATED is consistent for isotropic particles only
-        if {![has_feature "SEMI_INTEGRATED"]} {
-            if { abs($dox($k)) > $tolerance } {
-            puts "Moment of inertia principal components: $j1 $j2 $j3"
-            error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
-            }
-            if { abs($doy($k)) > $tolerance } {
-            puts "Moment of inertia principal components: $j1 $j2 $j3"
-            error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
-            }
-            if { abs($doz($k)) > $tolerance } {
-            puts "Moment of inertia principal components: $j1 $j2 $j3"
-            error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+       if {[has_feature "ROTATION"]} {
+            # SEMI_INTEGRATED is consistent for isotropic particles only
+            if {![has_feature "SEMI_INTEGRATED"]} {
+                if { abs($dox($k)) > $tolerance } {
+                puts "Moment of inertia principal components: $j1 $j2 $j3"
+                error "Relative deviation in rotational energy per the body axis X is too large: $dox($k)"
+                }
+                if { abs($doy($k)) > $tolerance } {
+                puts "Moment of inertia principal components: $j1 $j2 $j3"
+                error "Relative deviation in rotational energy per the body axis Y is too large: $doy($k)"
+                }
+                if { abs($doz($k)) > $tolerance } {
+                puts "Moment of inertia principal components: $j1 $j2 $j3"
+                error "Relative deviation in rotational energy per the body axis Z is too large: $doz($k)"
+                }
             }
         }
     }
