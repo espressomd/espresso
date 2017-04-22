@@ -35,7 +35,11 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset-gaussrandom-semiintegrated-bh
+      env: myconfig=maxset-gaussrandom-bh
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset-gaussrandom-semiintegrated
     - os: linux
       sudo: required
       services: docker
