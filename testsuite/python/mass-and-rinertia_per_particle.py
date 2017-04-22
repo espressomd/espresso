@@ -174,7 +174,10 @@ if ("MASS" in espressomd.features()) and ("LANGEVIN_PER_PARTICLE" in espressomd.
                     part_pos = np.array(random(3) * box)
                     part_v = np.array([0.0, 0.0, 0.0])
                     part_omega_body = np.array([0.0, 0.0, 0.0])
-                    self.es.part.add(id = ind, mass = mass, rinertia = J[0], pos = part_pos, v = part_v)
+                    if "PARTICLE_ANISOTROPY" in espressomd.features():
+                        self.es.part.add(id = ind, mass = mass, rinertia = J, pos = part_pos, v = part_v)
+                    else:
+                        self.es.part.add(id = ind, mass = mass, rinertia = J[0], pos = part_pos, v = part_v)
                     if "ROTATION" in espressomd.features():
                         self.es.part[ind].omega_body = part_omega_body
                     if test_case == 1:
