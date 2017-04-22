@@ -10,10 +10,10 @@ from espressomd.electrostatics import *
 from espressomd.shapes import *
 from espressomd.constraints import ShapeBasedConstraint
 
-if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.features() \
-and "DIPOLES" in espressomd.features() and "PARTIAL_PERIODIC" in espressomd.features() \
-and "CONSTRAINTS" in espressomd.features() and "ELECTROSTATICS" in espressomd.features() \
-and "EXTERNAL_FORCES" in espressomd.features() :
+if ("MASS" in espressomd.features()) and ("ROTATIONAL_INERTIA" in espressomd.features()) \
+and ("DIPOLES" in espressomd.features()) and ("PARTIAL_PERIODIC" in espressomd.features()) \
+and ("CONSTRAINTS" in espressomd.features()) and ("ELECTROSTATICS" in espressomd.features()) \
+and ("EXTERNAL_FORCES" in espressomd.features()) :
     class ESMSDriftTest(ut.TestCase):
         longMessage = True
         # Handle for espresso system

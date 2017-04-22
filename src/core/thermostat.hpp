@@ -346,6 +346,9 @@ inline void friction_thermo_langevin(Particle *p)
       else
         // Defaut values for both
         langevin_pref2_temp = langevin_pref2;
+#ifdef SEMI_INTEGRATED
+      p->p.gamma = langevin_gamma;
+#endif
     }
 #else
     for ( j = 0 ; j < 3 ; j++)
@@ -407,6 +410,7 @@ inline void friction_thermo_langevin(Particle *p)
     #endif
     {
       // Apply the force
+#ifndef SEMI_INTEGRATED
 #ifndef PARTICLE_ANISOTROPY
       p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
 #else
@@ -416,6 +420,9 @@ inline void friction_thermo_langevin(Particle *p)
       else
           p->f.f[j] = langevin_pref1_temp[j]*velocity[j] + switch_trans*langevin_pref2_temp[j]*noise;
 #endif
+#else
+      p->f.f[j] = 0;
+#endif // SEMI_INTEGRATED
     }
   } // END LOOP OVER ALL COMPONENTS
 
@@ -505,6 +512,9 @@ inline void friction_thermo_langevin_rotation(Particle *p)
       else
         // Default values for both
         langevin_pref2_temp = langevin_pref2_rotation;
+#ifdef SEMI_INTEGRATED
+      p->p.gamma_rot = langevin_gamma_rotation;
+#endif
     }
 #else
     for ( j = 0 ; j < 3 ; j++)
@@ -540,11 +550,15 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   // Here the thermostats happens
   for ( j = 0 ; j < 3 ; j++) 
   {
+#ifndef SEMI_INTEGRATED
 #ifdef ROTATIONAL_INERTIA
     p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*noise;
 #else
     p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
 #endif
+#else
+    p->f.torque[j] = 0;
+#endif // SEMI_INTEGRATED
   }
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));

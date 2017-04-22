@@ -10,7 +10,7 @@ from tests_common import *
 from numpy import linalg as la
 from numpy.random import random
 
-if "DIPOLES" in espressomd.features() and "CUDA" in espressomd.features() and "PARTIAL_PERIODIC" in espressomd.features():
+if ("DIPOLES" in espressomd.features()) and ("CUDA" in espressomd.features()) and ("PARTIAL_PERIODIC" in espressomd.features()) and ("ROTATION" in espressomd.features()):
     class DDSGPUTest(ut.TestCase):
         longMessage = True
         # Handle for espresso system
@@ -45,7 +45,8 @@ if "DIPOLES" in espressomd.features() and "CUDA" in espressomd.features() and "P
             
             part_dip = np.zeros((3))
             
-            for n in [ 110, 111, 540, 541 ]:
+            #for n in [ 110, 111, 540, 541 ]:
+            for n in [ 541 ]:
                 print("{0} particles".format(n))
                 dipole_modulus = 1.3
                 for i in range(n):

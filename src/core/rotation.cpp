@@ -354,6 +354,7 @@ void convert_torques_propagate_omega()
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
+#ifndef SEMI_INTEGRATED
 #ifdef ROTATIONAL_INERTIA
       p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
       p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
@@ -388,7 +389,7 @@ void convert_torques_propagate_omega()
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
+#endif // SEMI_INTEGRATED
     }
   }
 }
@@ -552,6 +553,50 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 #endif
 }
 
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi */
+void rotate_particle_body(Particle* p, double* a, double phi)
+{
+  // Convert rotation axis to body-fixed frame
 
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
+
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+
+#endif
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
 
 #endif

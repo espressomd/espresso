@@ -5,7 +5,7 @@ from numpy.random import random
 import espressomd
 import math
 
-if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.features() and "LANGEVIN_PER_PARTICLE" in espressomd.features():
+if ("MASS" in espressomd.features()) and ("LANGEVIN_PER_PARTICLE" in espressomd.features()):
     class ThermoTest(ut.TestCase):
         longMessage = True
         # Handle for espresso system
@@ -28,9 +28,13 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
             for i in range(2):
                 self.es.part.add(pos=np.array([0.0, 0.0, 0.0]),id=i)
                 self.es.part[i].v=np.array([1.0, 1.0, 1.0])
-                self.es.part[i].omega_body=np.array([1.0, 1.0, 1.0])
+                if "ROTATION" in espressomd.features():
+                    self.es.part[i].omega_body=np.array([1.0, 1.0, 1.0])
                 self.es.part[i].mass=mass
-                self.es.part[i].rinertia=np.array(J)
+                if "ROTATIONAL_INERTIA" in espressomd.features():
+                    self.es.part[i].rinertia=np.array(J)
+                else:
+                    self.es.part[i].rinertia=J[0]
 
             print("\n")
             
@@ -44,10 +48,19 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                 print("------------------------------------------------")
                 print("Test " + str(test_case) +": particle specific gamma but not temperature")
                 print("------------------------------------------------")
-                self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
-                self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
+                if "PARTICLE_ANISOTROPY" in espressomd.features():
+                    self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
+                else:
+                    self.es.part[0].gamma = gamma[0]
+                    self.es.part[1].gamma = gamma[1]
+                if "ROTATION" in espressomd.features():
+                    if "ROTATIONAL_INERTIA" in espressomd.features():
+                        self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
+                        self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
+                    else:
+                        self.es.part[0].gamma_rot = gamma[0]
+                        self.es.part[1].gamma_rot = gamma[1]
                 
             if test_case == 2:
                 print("------------------------------------------------")
@@ -63,20 +76,30 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                 print("------------------------------------------------")
                 self.es.part[0].temp = 0.0
                 self.es.part[1].temp = 0.0
-                self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
-                self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
-                self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
+                if "PARTICLE_ANISOTROPY" in espressomd.features():
+                    self.es.part[0].gamma = np.array([gamma[0], gamma[0], gamma[0]])
+                    self.es.part[1].gamma = np.array([gamma[1], gamma[1], gamma[1]])
+                else:
+                    self.es.part[0].gamma = gamma[0]
+                    self.es.part[1].gamma = gamma[1]
+                if "ROTATION" in espressomd.features():
+                    if "ROTATIONAL_INERTIA" in espressomd.features():
+                        self.es.part[0].gamma_rot = np.array([gamma[0], gamma[0], gamma[0]])
+                        self.es.part[1].gamma_rot = np.array([gamma[1], gamma[1], gamma[1]])
+                    else:
+                        self.es.part[0].gamma_rot = gamma[0]
+                        self.es.part[1].gamma_rot = gamma[1]
 
             self.es.time = 0.0
             
-            tol = 0.01
+            tol = 1.25E-4
             for i in range(100):
                 for k in range(3):
                     self.assertTrue(abs(self.es.part[0].v[k] - math.exp( - gamma[0] * self.es.time / mass)) <= tol and \
                                     abs(self.es.part[1].v[k] - math.exp( - gamma[1] * self.es.time / mass)) <= tol)
-                    self.assertTrue(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0] * self.es.time / J[k])) <= tol and \
-                                    abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1] * self.es.time / J[k])) <= tol)
+                    if "ROTATION" in espressomd.features():
+                        self.assertTrue(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0] * self.es.time / J[k])) <= tol and \
+                                        abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1] * self.es.time / J[k])) <= tol)
                 self.es.integrator.run(10)
 
             for i in range(len(self.es.part)):
@@ -94,8 +117,18 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
             gamma_rot = np.zeros((2,3))
             D_tr = np.zeros((2,3))
             for k in range(2):
-                gamma_tran[k,:] = np.array((0.4 + random(3)) * 10)
-                gamma_rot[k,:] = np.array((0.2 + random(3)) * 20)
+                if "ROTATIONAL_INERTIA" in espressomd.features():
+                    gamma_tran[k,:] = np.array((0.4 + random(3)) * 10)
+                else:
+                    gamma_tran[k,0] = np.array((0.4 + random(1)) * 10)
+                    gamma_tran[k,1] = gamma_tran[k,0]
+                    gamma_tran[k,2] = gamma_tran[k,0]
+                if "PARTICLE_ANISOTROPY" in espressomd.features():
+                    gamma_rot[k,:] = np.array((0.2 + random(3)) * 20)
+                else:
+                    gamma_rot[k,0] = np.array((0.2 + random(1)) * 20)
+                    gamma_rot[k,1] = gamma_rot[k,0]
+                    gamma_rot[k,2] = gamma_rot[k,0]
 
             box = 10.0
             self.es.box_l = [box, box, box]
@@ -117,14 +150,23 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
             for k in range(2):
                 D_tr[k,:] = 2.0 * halfkT[k] / gamma_tr[k,:]
             
-            self.es.thermostat.set_langevin(kT=kT, gamma=[gamma_global[0],gamma_global[1],gamma_global[2]])
+            if "PARTICLE_ANISOTROPY" in espressomd.features():
+                self.es.thermostat.set_langevin(kT=kT, gamma=[gamma_global[0],gamma_global[1],gamma_global[2]])
+            else:
+                self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
             
             # no need to rebuild Verlet lists, avoid it
             self.es.cell_system.skin = 1.0
             self.es.time_step = 0.008
             n = 200
             mass = (0.2 + random()) * 7.0
-            J = np.array((0.2 + random(3)) * 7.0)
+            if "ROTATIONAL_INERTIA" in espressomd.features():
+                J = np.array((0.2 + random(3)) * 7.0)
+            else:
+                J = np.zeros((3))
+                J[0] = (0.2 + random()) * 7.0
+                J[1] = J[0]
+                J[2] = J[0]
 
             for i in range(n):
                 for k in range(2):
@@ -132,15 +174,31 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                     part_pos = np.array(random(3) * box)
                     part_v = np.array([0.0, 0.0, 0.0])
                     part_omega_body = np.array([0.0, 0.0, 0.0])
-                    self.es.part.add(id = ind, mass = mass, rinertia = J, pos = part_pos, v = part_v, omega_body = part_omega_body)
+                    self.es.part.add(id = ind, mass = mass, rinertia = J[0], pos = part_pos, v = part_v)
+                    if "ROTATION" in espressomd.features():
+                        self.es.part[ind].omega_body = part_omega_body
                     if test_case == 1:
-                        self.es.part[ind].gamma = gamma_tran[k,:]
-                        self.es.part[ind].gamma_rot = gamma_rot[k,:]
+                        if "PARTICLE_ANISOTROPY" in espressomd.features():
+                            self.es.part[ind].gamma = gamma_tran[k,:]
+                        else:
+                            self.es.part[ind].gamma = gamma_tran[k,0]
+                        if "ROTATION" in espressomd.features():
+                            if "ROTATIONAL_INERTIA" in espressomd.features():
+                                self.es.part[ind].gamma_rot = gamma_rot[k,:]
+                            else:
+                                self.es.part[ind].gamma_rot = gamma_rot[k,0]
                     if test_case == 2:
                         self.es.part[ind].temp = temp[k]
                     if test_case == 3:
-                        self.es.part[ind].gamma = gamma_tran[k,:]
-                        self.es.part[ind].gamma_rot = gamma_rot[k,:]
+                        if "PARTICLE_ANISOTROPY" in espressomd.features():
+                            self.es.part[ind].gamma = gamma_tran[k,:]
+                        else:
+                            self.es.part[ind].gamma = gamma_tran[k,0]
+                        if "ROTATION" in espressomd.features():
+                            if "ROTATIONAL_INERTIA" in espressomd.features():
+                                self.es.part[ind].gamma_rot = gamma_rot[k,:]
+                            else:
+                                self.es.part[ind].gamma_rot = gamma_rot[k,0]
                         self.es.part[ind].temp = temp[k]
 
             # matrices: [2 types of particless] x [3 dimensions X Y Z]
@@ -172,7 +230,8 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                     for k in range(2):
                         ind = p + k * n
                         v = self.es.part[ind].v
-                        o = self.es.part[ind].omega_body
+                        if "ROTATION" in espressomd.features():
+                            o = self.es.part[ind].omega_body
                         pos = self.es.part[ind].pos
                         o2[k,:] = o2[k,:] + np.power(o[:], 2)
                         v2[k,:] = v2[k,:] + np.power(v[:], 2)
@@ -210,15 +269,17 @@ if "MASS" in espressomd.features() and "PARTICLE_ANISOTROPY" in espressomd.featu
                 print("Rotational energy: {0} {1} {2}".format(Eo[k,0], Eo[k,1], Eo[k,2]))
 
                 print("Deviation in translational energy: " + str(dv[k]))
-                print("Deviation in rotational energy: " + str(do[k]))
-                print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(do_vec[k,0], do_vec[k,1], do_vec[k,2]))
+                if "ROTATION" in espressomd.features():
+                    print("Deviation in rotational energy: " + str(do[k]))
+                    print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(do_vec[k,0], do_vec[k,1], do_vec[k,2]))
                 print("Deviation in translational diffusion: {0} ".format(dr_norm[k]))
                 
                 self.assertTrue(abs(dv[k]) <= tolerance, msg = 'Relative deviation in translational energy too large: {0}'.format(dv[k]))
-                self.assertTrue(abs(do[k]) <= tolerance, msg = 'Relative deviation in rotational energy too large: {0}'.format(do[k]))
-                self.assertTrue(abs(do_vec[k,0]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k,0]))
-                self.assertTrue(abs(do_vec[k,1]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k,1]))
-                self.assertTrue(abs(do_vec[k,2]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k,2]))
+                if "ROTATION" in espressomd.features():
+                    self.assertTrue(abs(do[k]) <= tolerance, msg = 'Relative deviation in rotational energy too large: {0}'.format(do[k]))
+                    self.assertTrue(abs(do_vec[k,0]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k,0]))
+                    self.assertTrue(abs(do_vec[k,1]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k,1]))
+                    self.assertTrue(abs(do_vec[k,2]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k,2]))
                 self.assertTrue(abs(dr_norm[k]) <= tolerance, msg = 'Relative deviation in translational diffusion is too large: {0}'.format(dr_norm[k]))
 
         def test(self):

@@ -27,47 +27,35 @@ from espressomd.observables import *
 from espressomd.observables import *
 from espressomd.correlators import *
 
-class Observables(ut.TestCase):
-    # Error tolerance when comparing arrays/tuples...
-    tol = 1E-9
-
-    # Handle for espresso system
-    es = espressomd.System()
-
-
-    def test_corr(self):
-        s=self.es
-        s.box_l=10,10,10
-        s.cell_system.skin=0.4
-        #s.periodicity=0,0,0
-        s.time_step=0.01
-        s.thermostat.turn_off()
-        s.part.add(id=0,pos=(0,0,0),v=(1,2,3))
-
-        O=ParticlePositions(ids=(0,))
-        C2=Correlator(obs1=O,dt=0.01,tau_lin=10,tau_max=10.0,corr_operation="square_distance_componentwise")
-        s.integrator.run(1000)
-        s.auto_update_correlators.add(C2)
-        s.integrator.run(20000)
-        corr=C2.result()
-        for i in range(corr.shape[0]):
-            t=corr[i,0]
-            self.assertTrue(abs(corr[i,2]-t*t) <0.0001)
-            self.assertTrue(abs(corr[i,3]-4*t*t) <0.0001)
-            self.assertTrue(abs(corr[i,4]-9*t*t) <0.0001)
-
-
-
-
-
-
-
-
-
-
-
-
-
+if ("SEMI_INTEGRATED" not in espressomd.features()):
+    class Observables(ut.TestCase):
+        # Error tolerance when comparing arrays/tuples...
+        tol = 1E-9
+    
+        # Handle for espresso system
+        es = espressomd.System()
+    
+    
+        def test_corr(self):
+            s=self.es
+            s.box_l=10,10,10
+            s.cell_system.skin=0.4
+            #s.periodicity=0,0,0
+            s.time_step=0.01
+            s.thermostat.turn_off()
+            s.part.add(id=0,pos=(0,0,0),v=(1,2,3))
+    
+            O=ParticlePositions(ids=(0,))
+            C2=Correlator(obs1=O,dt=0.01,tau_lin=10,tau_max=10.0,corr_operation="square_distance_componentwise")
+            s.integrator.run(1000)
+            s.auto_update_correlators.add(C2)
+            s.integrator.run(20000)
+            corr=C2.result()
+            for i in range(corr.shape[0]):
+                t=corr[i,0]
+                self.assertTrue(abs(corr[i,2]-t*t) <0.0001)
+                self.assertTrue(abs(corr[i,3]-4*t*t) <0.0001)
+                self.assertTrue(abs(corr[i,4]-9*t*t) <0.0001)
 
 if __name__ == "__main__":
     ut.main()

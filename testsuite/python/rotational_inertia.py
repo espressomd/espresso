@@ -4,7 +4,7 @@ import numpy as np
 import espressomd
 import math
 
-if "MASS" in espressomd.features() and "ROTATIONAL_INERTIA" in espressomd.features():
+if ("MASS" in espressomd.features()) and ("ROTATIONAL_INERTIA" in espressomd.features()):
     class RotationalInertia(ut.TestCase):
         longMessage = True
         # Handle for espresso system
