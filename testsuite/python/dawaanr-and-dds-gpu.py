@@ -10,7 +10,7 @@ from tests_common import *
 from numpy import linalg as la
 from numpy.random import random
 
-if "DIPOLES" in espressomd.features() and "CUDA" in espressomd.features() and "PARTIAL_PERIODIC" in espressomd.features():
+if ("DIPOLES" in espressomd.features()) and ("CUDA" in espressomd.features()) and ("PARTIAL_PERIODIC" in espressomd.features()) and ("ROTATION" in espressomd.features()):
     class DDSGPUTest(ut.TestCase):
         longMessage = True
         # Handle for espresso system
@@ -119,8 +119,9 @@ if "DIPOLES" in espressomd.features() and "CUDA" in espressomd.features() and "P
                 del dds_gpu
                 for i in range(len(self.es.actors.active_actors)):
                     self.es.actors.remove(self.es.actors.active_actors[i])
-                for i in reversed(range(len(self.es.part))):
-                    self.es.part[i].delete()
+                #for i in reversed(range(len(self.es.part))):
+                #    self.es.part[i].delete()
+                self.es.part.clear()
 
         def test(self):
             if (self.es.cell_system.get_state()["n_nodes"] > 1):

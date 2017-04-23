@@ -74,6 +74,7 @@ IF DIPOLES == 1:
             return coulomb.Dmethod
 
         def _deactivate_method(self):
+            dipolar_set_Dbjerrum(0.0)
             coulomb.Dmethod = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
@@ -266,7 +267,7 @@ IF DIPOLES == 1:
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
 
-    IF CUDA == 1:
+    IF (CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
     
             """Calculates magnetostatic interactions by direct summation over all
