@@ -74,6 +74,7 @@ IF DIPOLES == 1:
             return coulomb.Dmethod
 
         def _deactivate_method(self):
+            dipolar_set_Dbjerrum(0.0)
             coulomb.Dmethod = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 

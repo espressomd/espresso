@@ -45,8 +45,7 @@ if ("DIPOLES" in espressomd.features()) and ("CUDA" in espressomd.features()) an
             
             part_dip = np.zeros((3))
             
-            #for n in [ 110, 111, 540, 541 ]:
-            for n in [ 541 ]:
+            for n in [ 110, 111, 540, 541 ]:
                 print("{0} particles".format(n))
                 dipole_modulus = 1.3
                 for i in range(n):
@@ -120,8 +119,9 @@ if ("DIPOLES" in espressomd.features()) and ("CUDA" in espressomd.features()) an
                 del dds_gpu
                 for i in range(len(self.es.actors.active_actors)):
                     self.es.actors.remove(self.es.actors.active_actors[i])
-                for i in reversed(range(len(self.es.part))):
-                    self.es.part[i].delete()
+                #for i in reversed(range(len(self.es.part))):
+                #    self.es.part[i].delete()
+                self.es.part.clear()
 
         def test(self):
             if (self.es.cell_system.get_state()["n_nodes"] > 1):
