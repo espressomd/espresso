@@ -1,5 +1,6 @@
 set(py_tests  bondedInteractions.py
               cellsystem.py
+              constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
               dawaanr-and-dds-gpu.py
@@ -14,6 +15,7 @@ set(py_tests  bondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              rotational_inertia.py
               lbgpu_remove_total_momentum.py
               tabulated.py
 )

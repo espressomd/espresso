@@ -38,6 +38,7 @@
 
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -153,11 +154,14 @@ int constraint_collision(double *p1, double *p2) {
   fold_position(folded_pos2, img);
 
   for (auto &c : Constraints::constraints) {
-    c->calc_dist(folded_pos1, &d1, v);
-    c->calc_dist(folded_pos2, &d2, v);
+    auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    if (cs) {
+      cs->calc_dist(folded_pos1, &d1, v);
+      cs->calc_dist(folded_pos2, &d2, v);
 
     if (d1 * d2 < 0.0)
       return 1;
+    }
   }
   return 0;
 }

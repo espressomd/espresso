@@ -28,7 +28,9 @@
 
 #include "initialize.hpp"
 #include "ScriptInterfaceBase.hpp"
+#include "get_value.hpp"
 #include "utils/Factory.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 
 namespace ScriptInterface {
   template <typename T> static void register_new(std::string const &name) {
