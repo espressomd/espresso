@@ -9,8 +9,9 @@ import math
 from tests_common import *
 from numpy import linalg as la
 from numpy.random import random
+from espressomd import assert_features, has_features, missing_features
 
-if ("DIPOLES" in espressomd.features()) and ("CUDA" in espressomd.features()) and ("PARTIAL_PERIODIC" in espressomd.features()) and ("ROTATION" in espressomd.features()):
+if has_features(["DIPOLES","CUDA","PARTIAL_PERIODIC","ROTATION"]):
     class DDSGPUTest(ut.TestCase):
         longMessage = True
         # Handle for espresso system
