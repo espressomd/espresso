@@ -12,7 +12,6 @@ class LBBoundary : public AutoParameters {
 public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
     add_parameters({{"velocity", m_lbboundary->velocity()},
-                    {"force", m_lbboundary->get_force()},
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =
@@ -40,6 +39,13 @@ public:
     });
 #endif
   }
+
+Variant call_method(const std::string &name, const VariantMap &) {
+  if(name == "get_force") {
+  return m_lbboundary->get_force();
+}
+}
+  
 
   const std::string name() const override { return "LBBoundaries:LBBoundary"; }
 
