@@ -245,7 +245,7 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, sys.maxint))
+                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
@@ -264,7 +264,6 @@ cdef class System:
                 seed_array.resize(len(_seed))
                 for i in range(len(_seed)):
                     seed_array[i] = int(_seed[i])
-
                 mpi_random_seed(n_nodes, seed_array)
             else:
                 raise ValueError(
