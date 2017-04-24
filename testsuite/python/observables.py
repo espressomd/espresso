@@ -57,11 +57,11 @@ class Observables(ut.TestCase):
         if not len(self.es.part):
             for i in range(1000):
               self.es.part.add(pos=random(3),v=random(3),id=i)
-              if "MASS" in espressomd.features():
+              if espressomd.has_features(["MASS"]):
                 self.es.part[i].mass=random()
-              if "DIPOLES" in espressomd.features():
+              if espressomd.has_features(["DIPOLES"]):
                 self.es.part[i].dip=random(3)
-              if "ROTATION" in espressomd.features():
+              if espressomd.has_features(["ROTATION"]):
                 self.es.part[i].omega_lab=random(3)
 
 
@@ -105,14 +105,14 @@ class Observables(ut.TestCase):
     com_force =generate_test_for_pid_observable(ComForce,"f","sum")
     
     # Disabled untile ParticleSlice.dip is implemented
-    #if "DIPOLES" in espressomd.features():
+    #if espressomd.has_features(["DIPOLES"]):
         #test_mag_dip =generate_test_for_pid_observable(MagneticDipoleMoment,"dip","sum")
         
 
 
 
     # This is disabled until ParticleSlice.omega_body is implemented
-    #if "ROTATION" in espressomd.features():
+    #if espressomd.has_features(["ROTATION"]):
        #test_omega_body= generate_test_for_pid_observable(ParticleBodyVelocities,"omega_body") 
 
     def test_stress_tensor(self):
@@ -127,7 +127,7 @@ class Observables(ut.TestCase):
        self.assertTrue(self.arraysNearlyEqual(s,obs_data),"Stress tensor from analysis and observable StressTensorAcf did not agree")
 
     def test_com_position(self):
-        if "MASS" in espressomd.features():
+        if espressomd.has_features(["MASS"]):
             com=sum((self.es.part[:].mass*self.es.part[:].pos.T).T,0)/sum(self.es.part[:].mass)
         else:
             com=sum((self.es.part[:].pos.T).T,0)/len(self.es.part)
@@ -136,7 +136,7 @@ class Observables(ut.TestCase):
         self.assertTrue(self.arraysNearlyEqual(com,obs_data),"Center of mass observable wrong value")
     
     def test_com_velocity(self):
-        if "MASS" in espressomd.features():
+        if espressomd.has_features(["MASS"]):
             com_vel=sum((self.es.part[:].mass*self.es.part[:].v.T).T,0)/sum(self.es.part[:].mass)
         else:
             com_vel=sum((self.es.part[:].v.T).T,0)/len(self.es.part)
