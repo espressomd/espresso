@@ -10,11 +10,13 @@
 # in z direction. We create walls in the xz and yz plane at the box 
 # boundaries, where the velocity is fixed to $v. 
 #
-from espressomd import System, lb, lbboundaries, shapes
+from espressomd import System, lb, lbboundaries, shapes, has_features
 import unittest as ut
 import numpy as np
 import sys
 
+@ut.skipIf(not has_features(["LB_GPU", "LB_BOUNDARIES_GPU"]),
+           "Features not available, skipping test!")
 class Stokes(ut.TestCase):
 
     es = System()	
@@ -64,10 +66,6 @@ class Stokes(ut.TestCase):
 
         system.lbboundaries.add(sphere)
 
-
-        lbf.print_vtk_boundary("./boundary.vtk")
-
-
         def size(vector):
             tmp = 0
             for k in vector:
@@ -76,7 +74,6 @@ class Stokes(ut.TestCase):
 
         system.integrator.run(4000)
 
-
         print("\nIntegration finished.")
 
         # get force that is exerted on the sphere
@@ -84,7 +81,7 @@ class Stokes(ut.TestCase):
         print("Measured force: f=%f" %size(force))
         stokes_force = 6*np.pi*kinematic_visc*radius*size(v)
         print("Stokes' Law says: f=%f" %stokes_force)
-        self.assertTrue(force[2]/stokes_force <1.06)
+        self.assertTrue(size(force)/stokes_force <1.06)
 
 if __name__ == "__main__":
     ut.main()
