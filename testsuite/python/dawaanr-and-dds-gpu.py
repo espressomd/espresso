@@ -9,7 +9,7 @@ import math
 from tests_common import *
 from numpy import linalg as la
 from numpy.random import random
-from espressomd import assert_features, has_features, missing_features
+from espressomd import has_features
 
 @ut.skipIf(not has_features(["DIPOLES","CUDA","PARTIAL_PERIODIC","ROTATION"]),
            "Features not available, skipping test!")
