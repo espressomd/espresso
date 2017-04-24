@@ -18,7 +18,6 @@
 #
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 
 import os 
 import numpy as np
@@ -29,7 +28,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 # System parameters
 #############################################################
