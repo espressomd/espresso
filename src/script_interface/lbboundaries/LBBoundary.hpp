@@ -25,27 +25,27 @@ public:
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
                      }}});
 #ifdef EK_BOUNDARIES
-    add_parameters({
-        {"charge_density",
-         [this](Variant const &value) {
-           m_lbboundary->set_charge_density(boost::get<double>(value));
-         },
-         [this]() { return m_lbboundary->charge_density(); }},
-        {"net_charge",
-         [this](Variant const &value) {
-           m_lbboundary->set_net_charge(boost::get<double>(value));
-         },
-         [this]() { return m_lbboundary->net_charge(); }},
-    });
+    add_parameters(
+        {{"charge_density",
+          [this](Variant const &value) {
+            m_lbboundary->set_charge_density(boost::get<double>(value));
+          },
+          [this]() { return m_lbboundary->charge_density(); },
+          VariantType::DOUBLE, 0},
+         {"net_charge",
+          [this](Variant const &value) {
+            m_lbboundary->set_net_charge(boost::get<double>(value));
+          },
+          [this]() { return m_lbboundary->net_charge(); }, VariantType::DOUBLE,
+          0}});
 #endif
   }
 
-Variant call_method(const std::string &name, const VariantMap &) {
-  if(name == "get_force") {
-  return m_lbboundary->get_force();
-}
-}
-  
+  Variant call_method(const std::string &name, const VariantMap &) {
+    if (name == "get_force") {
+      return m_lbboundary->get_force();
+    }
+  }
 
   const std::string name() const override { return "LBBoundaries:LBBoundary"; }
 
