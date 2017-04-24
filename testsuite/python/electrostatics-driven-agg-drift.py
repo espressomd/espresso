@@ -96,7 +96,8 @@ and ("EXTERNAL_FORCES" in espressomd.features()) :
             self.es.time = 0.0
             
             for i in range(6000):
-                self.es.part[p].ext_torque = np.cross(self.es.part[p].dip,B)
+                for p in range(n):
+                    self.es.part[p].ext_torque = np.cross(self.es.part[p].dip,B)
                 self.es.integrator.run(1)
 
             # The aggregate macroscopic parameters
