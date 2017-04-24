@@ -4,6 +4,8 @@
 #define ELECTROSTATICS
 #define DIPOLES
 #define ROTATION
+
+
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
