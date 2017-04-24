@@ -85,6 +85,9 @@ void init_energies(Observable_stat *stat)
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
  case DIPOLAR_DS_GPU:   n_dipolar = 2; break;
+#ifdef BARNES_HUT
+ case DIPOLAR_BH_GPU:   n_dipolar = 2; break;
+#endif
 #ifdef SCAFACOS_DIPOLES
  case DIPOLAR_SCAFACOS:   n_dipolar = 2; break;
 #endif
