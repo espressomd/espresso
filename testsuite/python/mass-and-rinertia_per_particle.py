@@ -144,9 +144,9 @@ class ThermoTest(ut.TestCase):
                 ind = p + k * n
                 pos0[ind,:] = self.es.part[ind].pos
 
-        loops = 20
+        loops = 100
         print("Thermalizing...")
-        therm_steps = 500
+        therm_steps = 1200
         self.es.integrator.run(therm_steps)
         print("Measuring...")
 
