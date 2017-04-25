@@ -81,7 +81,7 @@ class Stokes(ut.TestCase):
         print("Measured force: f=%f" %size(force))
         stokes_force = 6*np.pi*kinematic_visc*radius*size(v)
         print("Stokes' Law says: f=%f" %stokes_force)
-        self.assertTrue(size(force)/stokes_force <1.06)
+        self.assertTrue(abs(1.0 - size(force)/stokes_force) <0.06)
 
 if __name__ == "__main__":
     ut.main()
