@@ -86,6 +86,7 @@ private:
 
   /* Data members */
   int m_callback_id;
+  /* Payload object */
   std::shared_ptr<ScriptInterfaceBase> m_p;
   map_t obj_map;
 };

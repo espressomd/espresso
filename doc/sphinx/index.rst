@@ -11,7 +11,9 @@ Contents:
 .. toctree::
     :maxdepth: 2
 
-    Userguide <ug>
+    User's Guide <ug>
+
+    Developer's Guide <dg>
 
 espressomd package
 ==================

@@ -18,7 +18,6 @@
 #
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import electrostatics
@@ -30,7 +29,7 @@ except ImportError:
     import pickle
 import os
 
-print(code_info.features())
+print(espressomd.features())
 
 # Seed
 #############################################################

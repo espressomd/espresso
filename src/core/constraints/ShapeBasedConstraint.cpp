@@ -1,6 +1,6 @@
 #include <boost/mpi/collectives.hpp>
 
-#include "Constraint.hpp"
+#include "ShapeBasedConstraint.hpp"
 #include "communication.hpp"
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
@@ -9,15 +9,15 @@
 
 namespace Constraints {
 
-Vector3d Constraint::total_force() const {
-  Vector3d total_force;
-  boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
-                         std::plus<Vector3d>());
+Vector3d ShapeBasedConstraint::total_force() const {
+    Vector3d total_force;
+    boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
+            std::plus<Vector3d>());                                                                         
 
-  return total_force;
+    return total_force;
 }
 
-void Constraint::reflect_particle(Particle *p, const double *distance_vector,
+void ShapeBasedConstraint::reflect_particle(Particle *p, const double *distance_vector,
                                   const double *folded_pos) const {
   double vec[3];
   double norm;
@@ -29,7 +29,7 @@ void Constraint::reflect_particle(Particle *p, const double *distance_vector,
   p->r.p[1] = p->r.p[1] - 2 * vec[1];
   p->r.p[2] = p->r.p[2] - 2 * vec[2];
 
-  /* vec seams to be the vector that points from the wall to the particle*/
+  /* vec seems to be the vector that points from the wall to the particle*/
   /* now normalize it */
   switch (m_reflection_type) {
   case ReflectionType::NORMAL:
@@ -55,7 +55,7 @@ void Constraint::reflect_particle(Particle *p, const double *distance_vector,
   }
 }
 
-void Constraint::add_force(Particle *p, double *folded_pos) {
+void ShapeBasedConstraint::add_force(Particle *p, double *folded_pos) {
   double dist, vec[3], force[3], torque1[3], torque2[3];
   Particle part_rep;
   part_rep.p.type = m_type;
@@ -107,7 +107,7 @@ void Constraint::add_force(Particle *p, double *folded_pos) {
   }
 }
 
-void Constraint::add_energy(Particle *p, double *folded_pos,
+void ShapeBasedConstraint::add_energy(Particle *p, double *folded_pos,
                             Observable_stat &energy) const {
   double dist, vec[3];
   IA_parameters *ia_params;
