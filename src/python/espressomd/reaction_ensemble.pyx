@@ -3,7 +3,7 @@ from libc.stdlib cimport malloc, realloc, calloc
 
 IF REACTION_ENSEMBLE:
     es_error=1
-    class Wang_Landau_has_converged(Exception):
+    class WangLandauHasConverged(Exception):
         pass
 
     cdef _set_params_in_es_core_add_reverse(equilibrium_constant, int* reactant_types, len_reactant_types, int* reactant_coefficients, int* product_types, len_product_types, int* product_coefficients, nu_bar):
@@ -23,7 +23,9 @@ IF REACTION_ENSEMBLE:
         current_reaction_system.nr_single_reactions+=1;
 
     cdef class ReactionEnsemble:
-
+        """
+        This class provides the Reaction Ensemble algorithm, the Wang-Landau Reaction Ensemble algorithm and the constant pH method.
+        """
         def __init__(self,*args,**kwargs):
             """
             initialize the reaction ensemble by setting the standard pressure, temperature, and the exclusion radius. 
@@ -53,6 +55,12 @@ IF REACTION_ENSEMBLE:
                     raise KeyError("%s is not a vaild key" % k)
                 
             self._set_params_in_es_core()
+
+        def __del__(self):
+            self.free()
+            if(current_wang_landau_system.len_histogram!=0):
+                self.wang_landau_free()
+                
 
         def _default_params(self):
             return {"standard_pressure":0,
@@ -107,6 +115,12 @@ IF REACTION_ENSEMBLE:
             """
             current_reaction_system.slab_start_z=slab_start_z
             current_reaction_system.slab_end_z=slab_end_z
+        
+        def get_wall_constraints_in_z_direction(self):
+            """
+            returns the restrictions of the sampling area in z-direction.             
+            """
+            return current_reaction_system.slab_start_z, current_reaction_system.slab_end_z       
          
         def set_volume(volume):
             """
@@ -115,17 +129,28 @@ IF REACTION_ENSEMBLE:
             """
             current_reaction_system.volume=volume
 
-        def print_acceptance_rate_configurational_moves(self):
+        def get_volume(volume):
             """
-            prints the acceptance rate for the configuration changing moves
+            get the volume to be used in the acceptance probability of the reaction ensemble.
+
             """
-            print "acceptance rate for configurational moves is", (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves
+            return current_reaction_system.volume
+
+        def acceptance_rate_configurational_moves(self):
+            """
+            returns the acceptance rate for the configuration changing moves
+            """
+            return (1.0*accepted_configurational_MC_moves)/tried_configurational_MC_moves
 
         def set_non_interacting_type(non_interacting_type):
             """
             sets a type which is assumed to be non interacting in order to hide particles temporarily during a reaction trial move if they are to be deleted. The default value for this non_interacting type is 100. Please change this value if you intend to use a type 100 which has interactions. Please also note that particles in the current implementation of the Reaction Ensemble are only hidden with respect to Lennard-Jones interactions and Coulomb interactions. If there is for example a magnetic interaction hiding for this needs to be implemented in the code.
             """
             current_reaction_system.non_interacting_type=non_interacting_type
+            
+        def get_non_interacting_type(self):
+            """get the type which is used for hiding particles"""
+            return current_reaction_system.non_interacting_type
 
         def add(self,*args,**kwargs):
             """
@@ -204,7 +229,7 @@ IF REACTION_ENSEMBLE:
             #add reverse reaction
             _set_params_in_es_core_add_reverse(1.0/new_reaction.equilibrium_constant, new_reaction.product_types, new_reaction.len_product_types, new_reaction.product_coefficients, new_reaction.reactant_types, new_reaction.len_reactant_types, new_reaction.reactant_coefficients, -1*new_reaction.nu_bar )
 
-        def default_charges(self,*args,**kwargs):
+        def set_default_charges(self,*args,**kwargs):
             """
             sets the charges of the particle types that are created. Note that it has to be called for each type that occurs in the reaction system individually.
             """
@@ -233,50 +258,45 @@ IF REACTION_ENSEMBLE:
             """
             do_reaction()
         
-        def do_global_mc_move_for_one_particle_of_type(type_mc):
+        def global_mc_move_for_one_particle_of_type(type_mc):
             """
             performs a global mc move for one particle of type type_mc.
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
             do_global_mc_move_for_particles_of_type(type_mc, -10, -10, 1, False)
 
-        def print_status(self):
+        def get_status(self):
             """
-            prints the status of the reaction ensemble, e.g. the used reactions
+            returns the status of the reaction ensemble in a dictionary containing the used reactions, the used temperature and the used exclusion radius
             """
             if(current_reaction_system.nr_single_reactions == 0):
-                print("Reaction System is not initialized")
-            else:
-                print("Reaction System is the following:")
-                print("reactant Types")
-                for single_reaction_i in range(current_reaction_system.nr_single_reactions):
-                    print "Reaction Nr.", single_reaction_i
-                    print "reactant Types"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
-                        print current_reaction_system.reactions[single_reaction_i].reactant_types[i]
-
-                    print "reactant coefficients"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
-                        print current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i]
-                    
-                    print "Product Types"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
-                        print current_reaction_system.reactions[single_reaction_i].product_types[i]
-
-                    print "Product coefficients"
-                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
-                        print current_reaction_system.reactions[single_reaction_i].product_coefficients[i]
-                    print "Equilibrium constant"
-                    print current_reaction_system.reactions[single_reaction_i].equilibrium_constant
-                    
-            print "Reaction ensemble temperature:", current_reaction_system.temperature_reaction_ensemble
-            print "Exclusion radius:", current_reaction_system.exclusion_radius
+                raise Exception("Reaction System is not initialized")
             if(check_reaction_ensemble()==es_error):
                 raise ValueError("")
+            else:
+                reactions=[]
+                for single_reaction_i in range(current_reaction_system.nr_single_reactions):
+                    reactant_types=[]
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                        reactant_types.append(current_reaction_system.reactions[single_reaction_i].reactant_types[i])
+                    reactant_coefficients=[]
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_reactant_types):
+                        reactant_coefficients.append(current_reaction_system.reactions[single_reaction_i].reactant_coefficients[i])
+                    
+                    product_types=[]
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
+                        product_types.append(current_reaction_system.reactions[single_reaction_i].product_types[i])
+                    product_coefficients=[]
+                    for i in range(current_reaction_system.reactions[single_reaction_i].len_product_types):
+                        product_coefficients.append(current_reaction_system.reactions[single_reaction_i].product_coefficients[i])
+                    reaction={"reactant_coefficients" : reactant_coefficients, "reactant_types" : reactant_types, "product_types" : product_types, "product_coefficients" : product_coefficients, "reactant_types" : reactant_types, "equilibrium_constant" : current_reaction_system.reactions[single_reaction_i].equilibrium_constant  }
+                    reactions.append(reaction)
+            
+            return {"reactions": reactions, "temperature": current_reaction_system.temperature_reaction_ensemble, "exclusion_radius": current_reaction_system.exclusion_radius }
         
         def free(self):
             """
-            Frees the reaction ensemble data structures in the core.
+            Frees the reaction ensemble data structures in the core. This function may be used if you want to make Espresso forget the previous set up reaction system.
             """
             free_reaction_ensemble()
 
@@ -432,15 +452,15 @@ IF REACTION_ENSEMBLE:
             """
             write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             
-        def do_reaction_wang_landau(self):
+        def reaction_wang_landau(self):
             """
             performs a reaction in the Wang-Landau reaction ensemble.
             """
             status_wang_landau=do_reaction_wang_landau()
             if(status_wang_landau<0):
-                    raise Wang_Landau_has_converged("The Wang-Landau algorithm has converged.")
+                    raise WangLandauHasConverged("The Wang-Landau algorithm has converged.")
 
-        def do_global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
+        def global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
             """
             performs a global mc move for one particle of type type_mc (depending on the energy reweighting scheme)
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
@@ -450,7 +470,6 @@ IF REACTION_ENSEMBLE:
         def wang_landau_free(self):
             """
             frees the Wang-Landau data structures in the core
-            
             """
             free_wang_landau()
         
@@ -483,12 +502,15 @@ IF REACTION_ENSEMBLE:
 
         
         #//////////////////////////constant pH ensemble
-        def set_pH_core(self,pH):
+        property constant_pH:
+            def __set__(self, double pH):
                 """
                 sets the pH that the method assumes for the implicit pH bath
-                """
-                set_pH(pH)      
-        def do_reaction_constant_pH(self):
+                """           
+                global constant_pH     
+                constant_pH=pH
+    
+        def reaction_constant_pH(self):
             """
             performs a reaction according to the constant pH method
             """

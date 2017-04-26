@@ -31,7 +31,7 @@ from espressomd import grand_canonical
 @ut.skipIf('REACTION_ENSEMBLE' not in espressomd.code_info.features(),
            "REACTION_ENSEMBLE not compiled in, can not check functionality.")
 class ReactionEnsembleTest(ut.TestCase):
-    """Test the core implementation of writing hdf5 files."""
+    """Test the core implementation of the reaction ensemble."""
     
     N0=40
     c0=0.00028
@@ -60,8 +60,8 @@ class ReactionEnsembleTest(ut.TestCase):
             cls.system.part.add(id=i+1 ,pos=np.random.random(3) * cls.system.box_l, type=cls.type_H)
         
         cls.RE.add(equilibrium_constant=cls.K_HA_diss_apparent,reactant_types=[cls.type_HA],reactant_coefficients=[1], product_types=[cls.type_A,cls.type_H], product_coefficients=[1,1])
-        cls.RE.default_charges(dictionary={"0":0,"1":-1, "2":+1})
-        cls.RE.set_pH_core(cls.pH)
+        cls.RE.set_default_charges(dictionary={"0":0,"1":-1, "2":+1})
+        cls.RE.constant_pH=cls.pH
 
     @classmethod
     def ideal_degree_of_association(cls,pH):
@@ -78,14 +78,14 @@ class ReactionEnsembleTest(ut.TestCase):
         RE=ReactionEnsembleTest.RE
         """ chemical warmup in order to get to chemical equilibrium before starting to calculate the observable "degree of association" """
         for i in range(40*N0):
-            r=RE.do_reaction_constant_pH()
+            r=RE.reaction_constant_pH()
             
         volume=np.prod(self.system.box_l) #cuboid box
         average_NH=0.0
         average_degree_of_association=0.0
         num_samples=10000
         for i in range(num_samples):
-            RE.do_reaction_constant_pH()
+            RE.reaction_constant_pH()
             average_NH+=grand_canonical.number_of_particles(current_type=type_H)
             average_degree_of_association+=grand_canonical.number_of_particles(current_type=type_HA)/float(N0)
         average_NH/=num_samples
@@ -95,6 +95,5 @@ class ReactionEnsembleTest(ut.TestCase):
         self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
-    suite = ut.TestLoader().loadTestsFromTestCase(ReactionEnsembleTest)
-    result=ut.TextTestRunner(verbosity=2).run(suite)
-    sys.exit(not result.wasSuccessful())
+    print("Features: ", espressomd.features())
+    ut.main()

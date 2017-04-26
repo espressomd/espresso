@@ -1574,12 +1574,8 @@ int load_wang_landau_checkpoint(char* identifier){
 /////////////////////////////////////////////
 */
 double constant_pH=-10;
-void set_pH(double pH){
-	constant_pH=pH;
-}
 
 int do_reaction_constant_pH(){
-	
 	//get a list of reactions where a randomly selected particle type occurs in the reactant list. the selection probability of the particle types has to be proportional to the number of occurances of the number of particles with this type
 	
 	//for optimizations this list could be determined during the initialization
