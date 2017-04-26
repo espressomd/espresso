@@ -308,6 +308,49 @@ IF MEMBRANE_COLLISION == 1:
         def required_keys(self):
             return "membrane_a", "membrane_n", "membrane_cut"
 
+IF SOFT_SPHERE == 1:
+    cdef class SoftSphereInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            if self._params["soft_cut"] < 0:
+                raise ValueError("Soft Sphere cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "soft_a": ia_params.soft_a,
+                "soft_n": ia_params.soft_n,
+                "soft_cut": ia_params.soft_cut,
+                "soft_offset": ia_params.soft_offset}
+
+        def is_active(self):
+            return (self._params["soft_a"] > 0)
+
+        def _set_params_in_es_core(self):
+            if soft_sphere_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["soft_a"],
+                                        self._params["soft_n"],
+                                        self._params["soft_cut"],
+                                        self._params["soft_offset"]):
+                raise Exception("Could not set Soft Sphere parameters")
+
+        def default_params(self):
+            return {
+                "soft_a": 0.,
+                "soft_n": 1.,
+                "soft_cut": 0.,
+                "soft_offset": 0.}
+
+        def type_name(self):
+            return "SoftSphere"
+
+        def valid_keys(self):
+            return "soft_a", "soft_n", "soft_cut", "soft_offset"
+
+        def required_keys(self):
+            return "soft_a", "soft_n", "soft_cut"
 
 IF AFFINITY == 1:
     cdef class AffinityInteraction(NonBondedInteraction):
@@ -517,6 +560,8 @@ class NonBondedInteractionHandle(object):
     lennard_jones = None
     generic_lennard_jones = None
     tabulated = None
+    soft_sphere = None
+    membrane_collision = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -529,7 +574,9 @@ class NonBondedInteractionHandle(object):
         IF LENNARD_JONES:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF MEMBRANE_COLLISION:
-            self.membrane_collsision = MembraneCollisionInteraction(_type1, _type2)
+            self.membrane_collision = MembraneCollisionInteraction(_type1, _type2)
+        IF SOFT_SPHERE:
+            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF AFFINITY:
             self.affinity = AffinityInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
