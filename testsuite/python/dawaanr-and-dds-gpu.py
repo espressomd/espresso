@@ -11,7 +11,7 @@ from numpy import linalg as la
 from numpy.random import random
 from espressomd import assert_features, has_features, missing_features
 
-@ut.skipIf(not has_features(["DIPOLES","CUDA","PARTIAL_PERIODIC","ROTATION"]),
+@ut.skipIf(not has_features(["DIPOLAR_DIRECT_SUM", "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     longMessage = True
@@ -76,7 +76,8 @@ class DDSGPUTest(ut.TestCase):
 
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
-            self.es.thermostat.set_langevin(kT=1.297, gamma=10.0)
+            # gamma should be zero in order to avoid the noise term in force and torque
+            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
             dds_cpu = DipolarDirectSumCpu(bjerrum_length = pf_dawaanr)
             self.es.actors.add(dds_cpu)

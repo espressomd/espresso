@@ -77,7 +77,8 @@ class DDSGPUTest(ut.TestCase):
 
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
-            self.es.thermostat.set_langevin(kT=1.297, gamma=10.0)
+            # gamma should be zero in order to avoid the noise term in force and torque
+            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
             
             dds_cpu = DipolarDirectSumCpu(bjerrum_length = pf_dawaanr)
             self.es.actors.add(dds_cpu)
@@ -96,6 +97,7 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
+            #dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu, epssq = 100.0, itolsq = 4.0)
             dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps = 0,recalc_forces = True)
@@ -114,7 +116,7 @@ class DDSGPUTest(ut.TestCase):
                                 msg = 'Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(i,np.array(dawaanr_t[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i])))
                 self.assertTrue(self.vectorsTheSame(np.array(dawaanr_f[i]),ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])), \
                                 msg = 'Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(i,np.array(dawaanr_f[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])))
-            self.assertTrue(abs(dawaanr_e - ddsgpu_e * ratio_dawaanr_dds_gpu) <= 0.001, \
+            self.assertTrue(abs(dawaanr_e - ddsgpu_e * ratio_dawaanr_dds_gpu) <= abs(0.05 * dawaanr_e), \
                             msg = 'Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dawaanr_e,ratio_dawaanr_dds_gpu * ddsgpu_e))
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
