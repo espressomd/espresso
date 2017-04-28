@@ -27,6 +27,8 @@
     A random generator
 */
 
+#include "errorhandling.hpp"
+
 #include <random>
 #include <string>
 #include <vector>
@@ -38,8 +40,10 @@ extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
 
-const std::runtime_error unseeded_error("Please seed with bleh");
-    
+//const std::runtime_error unseeded_error("Please seed with bleh");
+
+
+
 
 /**
  * @brief Set seed of random number generators on each node.
@@ -88,7 +92,10 @@ void init_random_seed(int seed);
 
 inline double d_random() {
   using namespace Random;
-  if (!user_has_seeded) throw Random::unseeded_error;
+  //if (!user_has_seeded) throw Random::unseeded_error;
+  
+  if (!user_has_seeded) runtimeErrorMsg() <<"Please seed with bleh";
+
 
   return uniform_real_distribution(generator); 
 }
