@@ -172,9 +172,15 @@ enum DipolarInteraction {
   DIPOLAR_MDLC_DS,
   /** Direct summation on gpu */
   DIPOLAR_DS_GPU,
+#ifdef BARNES_HUT
+  /** Scafacos library */
+  DIPOLAR_SCAFACOS,
+  /** Direct summation on gpu by Barnes-Hut algorithm */
+  DIPOLAR_BH_GPU
+#else
   /** Scafacos library */
   DIPOLAR_SCAFACOS
-
+#endif
 };
 #endif
 

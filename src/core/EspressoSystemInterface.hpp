@@ -40,14 +40,14 @@ class EspressoSystemInterface : public SystemInterface {
 public:
   static EspressoSystemInterface &Instance() {
     if(!m_instance)
-      m_instance = new EspressoSystemInterface;
+      m_instance = new EspressoSystemInterface();
 
     return *m_instance;
   };
 
   static EspressoSystemInterface * _Instance() {
       if(!m_instance)
-          m_instance = new EspressoSystemInterface;
+          m_instance = new EspressoSystemInterface();
 
       return m_instance;
   };
@@ -111,8 +111,9 @@ public:
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if(m_gpu)
+    if(m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsRGpu; 
   };
 #ifdef DIPOLES

@@ -9,6 +9,7 @@
 
 #ifdef BARNES_HUT
 
+//void activate_dipolar_barnes_hut(float epssq, float itolsq)
 void activate_dipolar_barnes_hut()
 {
     if (dipolarBarnesHut)
@@ -17,6 +18,7 @@ void activate_dipolar_barnes_hut()
     // also necessary on 1 CPU or GPU, does more than just broadcasting
     mpi_bcast_coulomb_params();
     //std::cout << "Trace activate_dipolar_barnes_hut 1" << std::endl;
+    //dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
     dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface);
     forceActors.push_back(dipolarBarnesHut);
     energyActors.push_back(dipolarBarnesHut);

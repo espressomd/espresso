@@ -267,7 +267,7 @@ IF DIPOLES == 1:
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
 
-    IF (CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
+    IF (DIPOLAR_DIRECT_SUM == 1):
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
     
             """Calculates magnetostatic interactions by direct summation over all
@@ -301,13 +301,14 @@ IF DIPOLES == 1:
             convention is applied."""
     
             def default_params(self):
-                return {}
+                return {"epssq": 100.0,
+                        "itolsq": 4.0}
     
             def required_keys(self):
                 return ()
     
             def valid_keys(self):
-                return ("bjerrum_length", "prefactor")
+                return ("bjerrum_length", "prefactor", "epssq", "itolsq")
     
             def _get_params_from_es_core(self):
                 return {"prefactor": coulomb.Dprefactor}
@@ -317,4 +318,5 @@ IF DIPOLES == 1:
     
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
+                #activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
                 activate_dipolar_barnes_hut()

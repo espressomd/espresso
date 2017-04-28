@@ -69,7 +69,7 @@ __global__ void split_kernel_q(CUDA_particle_data *particles,float *q, int n) {
   if(idx >= n)
     return;
 
-#ifdef ELECTROSTRATICS
+#ifdef ELECTROSTATICS
   CUDA_particle_data p = particles[idx];
 
   q[idx] = p.q;
@@ -122,6 +122,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
 
 
 #ifdef DIPOLES
+#ifndef BARNES_HUT
 // Dipole moment
 __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip, int n) {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
@@ -172,7 +173,7 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
   if ((n != m_gpu_npart) || (m_blocks == 0) || (m_bhnnodes == 0))
   {
       cudaDeviceProp deviceProp;
-      cudaGetDeviceProperties(&deviceProp, 0); // TODO: local MPI node "dev" value should be here
+      cuda_safe_mem(cudaGetDeviceProperties(&deviceProp, 0)); // TODO: local MPI node "dev" value should be here
 
       m_blocks = deviceProp.multiProcessorCount;
       m_bhnnodes = n * 8;
@@ -263,7 +264,6 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
       cuda_safe_mem(cudaFree(m_r_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_r_gpu_begin, 3*n*sizeof(float)));
     m_r_gpu_end = m_r_gpu_begin + 3*n;
-  }
 #else
   if(m_needsRGpu && ( (n != m_gpu_npart) || (m_rx_gpu_begin == 0) || (m_ry_gpu_begin == 0) || (m_rz_gpu_begin == 0) )) {
     if(m_rx_gpu_begin != 0) cuda_safe_mem(cudaFree(m_rx_gpu_begin));
@@ -278,6 +278,7 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     cuda_safe_mem(cudaMalloc(&m_rz_gpu_begin, (m_bhnnodes + 1) * sizeof(float)));
     //m_rz_gpu_end = m_rz_gpu_begin + m_bhnnodes + 1;
 #endif // BARNES_HUT
+  }
 #ifdef DIPOLES
 #ifndef BARNES_HUT
   if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dip_gpu_begin == 0))) {
@@ -285,7 +286,6 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
       cuda_safe_mem(cudaFree(m_dip_gpu_begin));
     cuda_safe_mem(cudaMalloc(&m_dip_gpu_begin, 3*n*sizeof(float)));
     m_dip_gpu_end = m_dip_gpu_begin + 3*n;
-  }
 #else
   if(m_needsDipGpu && ((n != m_gpu_npart) || (m_dipx_gpu_begin == 0) || (m_dipy_gpu_begin == 0) || (m_dipz_gpu_begin == 0))) {
     if(m_dipx_gpu_begin != 0) cuda_safe_mem(cudaFree(m_dipx_gpu_begin));
@@ -300,6 +300,7 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
     cuda_safe_mem(cudaMalloc(&m_dipz_gpu_begin, (m_bhnnodes + 1) * sizeof(float)));
     //m_uz_gpu_end = m_uz_gpu_begin + m_bhnnodes + 1;
 #endif // BARNES_HUT
+  }
 #endif
   if(m_needsVGpu && ((n != m_gpu_npart) || (m_v_gpu_begin == 0))) {
     if(m_v_gpu_begin != 0)

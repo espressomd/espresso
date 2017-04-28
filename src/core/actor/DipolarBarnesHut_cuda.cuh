@@ -78,6 +78,7 @@ struct BHArrays{
 #define WARPSIZE 32
 #define MAXDEPTH 32
 
+void setBHPrecision(float epssq, float itolsq);
 
 void fillConstantPointers(float* rx, float* ry, float* rz,
 		float* dipx, float* dipy, float* dipz,
@@ -111,5 +112,5 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 
 //void getRingStatBH(int blocks, int nRings, int nPart, float** devOldPhy, float* dphy, int* pd);
 
-#endif /* FFLCOMPUTEBH_CUH_ */
-#endif // DIPOLAR_DIRECT_SUM
+#endif /* DIPOLARBARNESHUT_CUH_ */
+#endif // BARNES_HUT

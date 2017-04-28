@@ -19,10 +19,14 @@ typedef float dds_float;
 
 class DipolarBarnesHut : public Actor {
 public:
-  DipolarBarnesHut(SystemInterface &s) {
+  //DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq)
+  DipolarBarnesHut(SystemInterface &s)
+  {
 
 	k = coulomb.Dprefactor;
-
+	//m_epssq = epssq;
+	//m_itolsq = itolsq;
+	//setBHPrecision(m_epssq,m_itolsq);
 	if(!s.requestFGpu())
       std::cerr << "DipolarBarnesHut needs access to forces on GPU!" << std::endl;
 
@@ -48,7 +52,6 @@ public:
     int per[3];
 
     //std::cout << "Trace computeForces 1" << std::endl;
-    //printf("Trace computeForces 1");
 
     for (int i=0;i<3;i++)
     {
@@ -58,6 +61,7 @@ public:
 
 	//cudaThreadSynchronize();
 
+    //printf("\n blocks = %d",s.blocksGpu());
 	buildBoxBH(s.blocksGpu());
 	//cudaThreadSynchronize();
 
@@ -88,6 +92,7 @@ public:
     }
     //cudaThreadSynchronize();
 
+    //printf("\n blocks = %d",s.blocksGpu());
     buildBoxBH(s.blocksGpu());
     //cudaThreadSynchronize();
 
@@ -107,8 +112,11 @@ public:
 
 protected:
   float k;
+  float m_epssq;
+  float m_itolsq;
 };
 
+//void activate_dipolar_barnes_hut(float epssq, float itolsq);
 void activate_dipolar_barnes_hut();
 void deactivate_dipolar_barnes_hut();
 

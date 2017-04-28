@@ -263,6 +263,11 @@ void calc_long_range_energies()
   case DIPOLAR_DS_GPU:
     // Do nothing, it's an actor.
     break;
+#ifdef BARNES_HUT
+  case DIPOLAR_BH_GPU:
+    // Do nothing, it's an actor.
+    break;
+#endif // BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());

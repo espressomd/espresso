@@ -1415,6 +1415,14 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	cuda_safe_mem(cudaFree(periodic_gpu));
 }
 
+void setBHPrecision(float epssq, float itolsq) {
+    float epssq_loc, itolsq_loc;
+    epssq_loc = epssq;
+    itolsq_loc = itolsq;
+    cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq_loc, sizeof(float), 0, cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq_loc, sizeof(float), 0, cudaMemcpyHostToDevice));
+}
+
 void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* dipy, float* dipz, int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass) {
 	//float epssq = 0.05f * 0.05f;
 	//float epssq = 10.0f * 10.0f;
