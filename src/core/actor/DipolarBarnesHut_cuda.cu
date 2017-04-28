@@ -1427,13 +1427,13 @@ void fillConstantPointers(float* rx, float* ry, float* rz, float* dipx, float* d
 	//float epssq = 0.05f * 0.05f;
 	//float epssq = 10.0f * 10.0f;
 	//float epssq = 5.0f * 5.0f;
-	float epssq = 10.0f * 10.0f;
-	float itolsq = 1.0f / (0.5f * 0.5f);
+	//float epssq = 10.0f * 10.0f;
+	//float itolsq = 1.0f / (0.5f * 0.5f);
 
 	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &nbodies, sizeof(int), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq, sizeof(float), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq, sizeof(float), 0, cudaMemcpyHostToDevice));
+	//cuda_safe_mem(cudaMemcpyToSymbol(epssqd, &epssq, sizeof(float), 0, cudaMemcpyHostToDevice));
+	//cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq, sizeof(float), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(errd, &(arrl.err), sizeof(void*), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(sortd, &(arrl.sort), sizeof(void*), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(childd, &(arrl.child), sizeof(void*), 0, cudaMemcpyHostToDevice));

@@ -97,8 +97,8 @@ class DDSGPUTest(ut.TestCase):
                 self.es.actors.remove(self.es.actors.active_actors[i])
             
             self.es.integrator.run(steps = 0,recalc_forces = True)
-            #dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu, epssq = 100.0, itolsq = 4.0)
-            dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu)
+            dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu, epssq = 100.0, itolsq = 4.0)
+            #dds_gpu = DipolarBarnesHutGpu(bjerrum_length = pf_dds_gpu)
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps = 0,recalc_forces = True)
             

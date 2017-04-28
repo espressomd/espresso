@@ -318,5 +318,5 @@ IF DIPOLES == 1:
     
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
-                #activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
-                activate_dipolar_barnes_hut()
+                activate_dipolar_barnes_hut(self._params["epssq"],self._params["itolsq"])
+                #activate_dipolar_barnes_hut()
