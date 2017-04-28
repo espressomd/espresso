@@ -96,6 +96,7 @@ inter 0 0 lennard-jones 0 0 0 0
 
 setmd skin 0
 setmd time_step 0.01
+# gamma should be zero in order to avoid the noise term in force and torque
 thermostat langevin 1.297 0
 
 inter magnetic $pf_dawaanr dawaanr
