@@ -243,16 +243,7 @@ cdef class Thermostat:
             if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
                 raise ValueError(
                     "temperature and diagonal elements of the gamma tensor must be positive numbers")
-        global langevin_gamma_rotation
-        IF ROTATION:
-            if gamma_rotation is not None:
-                IF ROTATIONAL_INERTIA:
-                    langevin_gamma_rotation[0] = gamma_rotation[0]
-                    langevin_gamma_rotation[1] = gamma_rotation[1]
-                    langevin_gamma_rotation[2] = gamma_rotation[2]
-                ELSE:
-                    langevin_gamma_rotation = gamma_rotation
-
+        
         global temperature
         temperature = float(kT)
         global langevin_gamma
@@ -267,11 +258,40 @@ cdef class Thermostat:
                 langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
+        
+        global langevin_gamma_rotation
+        IF ROTATION:
+            if gamma_rotation is not None:
+                IF ROTATIONAL_INERTIA:
+                    langevin_gamma_rotation[0] = gamma_rotation[0]
+                    langevin_gamma_rotation[1] = gamma_rotation[1]
+                    langevin_gamma_rotation[2] = gamma_rotation[2]
+                ELSE:
+                    langevin_gamma_rotation = gamma_rotation
+            else:
+                IF ROTATIONAL_INERTIA:
+                    IF PARTICLE_ANISOTROPY:
+                        langevin_gamma_rotation[0] = langevin_gamma[0]
+                        langevin_gamma_rotation[1] = langevin_gamma[1]
+                        langevin_gamma_rotation[2] = langevin_gamma[2]
+                    ELSE:
+                        langevin_gamma_rotation[0] = langevin_gamma
+                        langevin_gamma_rotation[1] = langevin_gamma
+                        langevin_gamma_rotation[2] = langevin_gamma
+                ELSE:
+                    IF PARTICLE_ANISOTROPY:
+                        raise ValueError(
+                            "gamma_rotation scalar parameter is required")
+                    ELSE:
+                        langevin_gamma_rotation = langevin_gamma
+        
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        IF ROTATION:
+            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
