@@ -64,8 +64,8 @@ and ("EXTERNAL_FORCES" in espressomd.features()) and ("BARNES_HUT" in espressomd
                 self.es.part[p].ext_force = q * Ez * np.array([0.0, 0.0, 1.0])
 
             #Interactions
-            dds_cpu = DipolarBarnesHutGpu(bjerrum_length = 20.0 / kT)
-            self.es.actors.add(dds_cpu)
+            dds_gpu = DipolarBarnesHutGpu(bjerrum_length = 20.0 / kT)
+            self.es.actors.add(dds_gpu)
             mmm2d = MMM2D(bjerrum_length = 1.0 / kT, maxPWerror = 1E-6)
             self.es.actors.add(mmm2d)
             wall = Wall(normal = [0.0, 0.0, 1.0], dist = 0.03 * box)
