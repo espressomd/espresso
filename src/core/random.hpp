@@ -40,8 +40,6 @@ extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
 
-//const std::runtime_error unseeded_error("Please seed with bleh");
-
 
 
 
@@ -93,10 +91,12 @@ void init_random_seed(int seed);
 inline double d_random() {
   using namespace Random;
   //if (!user_has_seeded) throw Random::unseeded_error;
-  
-  if (!user_has_seeded) runtimeErrorMsg() <<"Please seed with bleh";
-
-
+  if (!user_has_seeded) {
+      std::ostringstream errtxt;
+      errtxt << "Random generator not seeded, Please seed with Bleh";
+      runtimeError(errtxt);
+      //runtimeError("Please seed with Bleh!\n");
+      }
   return uniform_real_distribution(generator); 
 }
 
@@ -107,7 +107,7 @@ inline double d_random() {
  */
 inline int i_random(int maxint){
   using namespace Random;
-  if (!user_has_seeded) throw Random::unseeded_error;
+  //if (!user_has_seeded) runtimeError(Random::unseeded_msg);
 
   std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
   return uniform_int_dist(generator);
@@ -118,7 +118,7 @@ inline int i_random(int maxint){
  */
 inline double gaussian_random(void){
   using namespace Random;
-  if (!user_has_seeded) throw Random::unseeded_error;
+  //if (!user_has_seeded) runtimeError(Random::unseeded_msg);
   return normal_distribution(generator);
 }
 
@@ -133,7 +133,7 @@ inline double gaussian_random(void){
  */
 inline double gaussian_random_cut(void){
   using namespace Random;
-  if (!user_has_seeded) throw Random::unseeded_error;
+  //if (!user_has_seeded) runtimeError(Random::unseeded_msg);
 
   const double random_number=1.042267973*normal_distribution(generator);
   
