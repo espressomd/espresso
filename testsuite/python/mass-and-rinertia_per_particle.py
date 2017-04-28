@@ -5,7 +5,7 @@ from numpy.random import random
 import espressomd
 import math
 
-@ut.skipIf(not espressomd.has_features(["MASS","ROTATIONAL_INERTIA","LANGEVIN_PER_PARTICLE"]),
+@ut.skipIf(not espressomd.has_features(["MASS","LANGEVIN_PER_PARTICLE"]),
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
