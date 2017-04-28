@@ -30,13 +30,13 @@ namespace Shapes {
 
 class Sphere : public Shape {
 public:
-  Sphere() : m_sphere(new ::Shapes::Sphere()) {}
+  Sphere() : m_sphere(new ::Shapes::Sphere()) {
+    add_parameters({{"center", m_sphere->pos()},
+                    {"radius", m_sphere->rad()},
+                    {"direction", m_sphere->direction()}});
+  }
 
   const std::string name() const override { return "Shapes::Sphere"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_sphere; }
 

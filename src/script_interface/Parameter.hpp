@@ -47,7 +47,7 @@ public:
     m_n_elements = ARBITRARY_LENGTH;
   }
 
-  Parameter(ParameterType type, int n_elements, bool required)
+  Parameter(ParameterType type, size_t n_elements, bool required)
       : m_type(type), m_n_elements(n_elements), m_required(required) {}
 
   /**
@@ -59,7 +59,7 @@ public:
    * The required number of elements of this parameter,
    * if it is a vector type. Otherwise it is ignored.
    */
-  int n_elements() const { return m_n_elements; }
+  size_t n_elements() const { return m_n_elements; }
 
   /**
    * Whether the parameter is required.
@@ -68,7 +68,7 @@ public:
 
 private:
   ParameterType m_type;
-  int m_n_elements;
+  size_t m_n_elements;
   bool m_required;
 };
 

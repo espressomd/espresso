@@ -35,9 +35,8 @@ public:
                               VariantMap const &parameters) override {
 
     if (method == "add") {
-      Variant par = parameters.at("object");
-      auto so_ptr = ScriptInterface::get_instance(par);
-      auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
+      auto obj_ptr =
+          get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       if (obj_ptr == nullptr)
         throw std::runtime_error("Wrong type");
@@ -47,12 +46,8 @@ public:
     }
 
     if (method == "remove") {
-      Variant par = parameters.at("object");
-      auto so_ptr = ScriptInterface::get_instance(par);
-      auto obj_ptr = std::dynamic_pointer_cast<ManagedType>(so_ptr);
-
-      if (obj_ptr == nullptr)
-        throw std::runtime_error("Wrong type");
+      auto obj_ptr =
+          get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       remove_in_core(obj_ptr);
       m_elements.erase(
@@ -60,11 +55,11 @@ public:
           m_elements.end());
     }
 
-    if(method == "get_elements") {
+    if (method == "get_elements") {
       std::vector<Variant> ret;
       ret.reserve(m_elements.size());
 
-      for(auto const& e : m_elements)
+      for (auto const &e : m_elements)
         ret.emplace_back(e->id());
 
       return ret;
