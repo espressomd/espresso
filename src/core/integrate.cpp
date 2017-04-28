@@ -269,7 +269,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors())
     return;
-
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
     mts_max = time_step / smaller_time_step;
@@ -1524,8 +1523,9 @@ void force_and_velocity_display() {
 
 /** @TODO: This needs to go!! */
 
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
-
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  int reuse_forces;
+  reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
 
   if (recalc_forces) {
