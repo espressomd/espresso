@@ -80,7 +80,7 @@ bool Observable::writable() const
 }
 
 
-void Observable::write() const
+void Observable::write()
 {
   if ( writable() )
   {
@@ -89,7 +89,7 @@ void Observable::write() const
 }
 
 
-void Observable::do_write() const
+void Observable::do_write()
 {
   m_ofile << sim_time;
   for (auto p : last_value)

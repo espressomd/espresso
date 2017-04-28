@@ -30,6 +30,7 @@
 
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "constraints/ShapeBasedConstraint.hpp"
 #include "grid.hpp"
 #include <memory>
 #include "shapes/Wall.hpp"
@@ -93,16 +94,19 @@ static double calc_angledist_param(Particle *p_mid, Particle *p_left,
   double pwdistmin_d = 0.0;
 
   for (auto const &c : Constraints::constraints) {
-    if (dynamic_cast<const Shapes::Wall*>(&(c->shape()))) {
-      const Shapes::Wall* wall =dynamic_cast<const Shapes::Wall*>(&(c->shape()));
-      double dist = -wall->d();
-      for (int j = 0; j < 3; j++) {
-        dist += folded_pos[j] * (wall->n())[j];
-      }
+    auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    if (cs) {
+      if (dynamic_cast<const Shapes::Wall*>(&(cs->shape()))) {
+        const Shapes::Wall* wall = dynamic_cast<const Shapes::Wall*>(&(cs->shape()));
+        double dist = -wall->d();
+        for (int j = 0; j < 3; j++) {
+          dist += folded_pos[j] * (wall->n())[j];
+        }
 
-      if (dist < pwdistmin) {
-        pwdistmin = dist;
-        pwdistmin_d = wall->d();
+        if (dist < pwdistmin) {
+          pwdistmin = dist;
+          pwdistmin_d = wall->d();
+        }
       }
     }
   }
