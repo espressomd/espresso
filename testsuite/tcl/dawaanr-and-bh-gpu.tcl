@@ -28,10 +28,6 @@ proc stopAll {} {
   }
 }
 
-proc error { msg } {
-  puts $msg
-}
-
 source "tests_common.tcl"
 require_feature "DIPOLES"
 require_feature "CUDA"
@@ -100,7 +96,7 @@ inter 0 0 lennard-jones 0 0 0 0
 
 setmd skin 0
 setmd time_step 0.01
-thermostat langevin 1.297 10
+thermostat langevin 1.297 0
 
 inter magnetic $pf_dawaanr dawaanr
 integrate 0 recalc_forces
