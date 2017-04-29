@@ -6,7 +6,7 @@ import math
 
 @ut.skipIf(not espressomd.has_features(["MASS","ROTATIONAL_INERTIA"]),
            "Features not available, skipping test!")
-class ThermoTest(ut.TestCase):
+class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()

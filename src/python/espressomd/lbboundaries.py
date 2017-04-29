@@ -25,3 +25,4 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
 
     class LBBoundary(ScriptInterfaceHelper):
         _so_name = "LBBoundaries::LBBoundary"
+        _so_bind_methods = ("get_force",)
