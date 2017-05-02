@@ -19,7 +19,7 @@ class ThermoTest(ut.TestCase):
         self.es.time_step = 0.007
         self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
         self.es.cell_system.skin = 0
-        self.es.cell_system.set_n_square(use_verlet_lists=True)
+        self.es.cell_system.set_n_square(use_verlet_lists=False)
         mass = 12.74
         J = [10.0, 10.0, 10.0]
         
@@ -194,11 +194,11 @@ class ThermoTest(ut.TestCase):
         
         loops = 100
         print("Thermalizing...")
-        therm_steps = 1200
+        therm_steps = 500
         self.es.integrator.run(therm_steps)
         print("Measuring...")
         
-        int_steps = 100
+        int_steps = 30
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
