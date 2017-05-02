@@ -28,7 +28,6 @@ cdef extern from "grid.hpp":
 cdef extern from "communication.hpp" namespace "Random":
     void mpi_random_seed(int cnt, vector[int] & seed)
 
-
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 ctypedef vector[string] string_vec
@@ -39,6 +38,8 @@ cdef extern from "random.hpp" namespace "Random":
 
 cdef extern from "utils.hpp":
     void get_mi_vector(double* res,double* a, double* b)
+cdef extern from "utils.hpp":
+    void get_mi_vector(double * res, double * a, double * b)
 
 
 cdef bool skin_set

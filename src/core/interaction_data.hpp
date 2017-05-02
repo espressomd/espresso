@@ -1130,7 +1130,6 @@ typedef struct {
   double omega;
   double Prefactor;
 } SinusoidalField;
-
 /** Structure to specify a constraint. */
 struct Constraint {
   Constraint() : type(CONSTRAINT_NONE) {}
@@ -1288,5 +1287,25 @@ int virtual_set_params(int bond_type);
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
+
+inline 
+bool bond_exists(const Particle* p, const Particle* partner, int bond_type)
+{
+  // First check the bonds of p1
+  if (p->bl.e) {
+    int i = 0;
+    while(i < p->bl.n) {
+      int size = bonded_ia_params[p->bl.e[i]].num;
+      
+      if (p->bl.e[i] == bond_type &&
+          p->bl.e[i + 1] == partner->p.identity) {
+        // There's a bond, already. Nothing to do for these particles
+        return true;
+      }
+      i += size + 1;
+    }
+  }
+  return false;
+}
 
 #endif

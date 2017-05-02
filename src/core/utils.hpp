@@ -900,10 +900,11 @@ inline double distance2(double pos1[3], double pos2[3]) {
  *  \param vec  vecotr pos1-pos2.
  *  \return distance squared
 */
-inline double distance2vec(double pos1[3], double pos2[3], double vec[3]) {
-  vec[0] = pos1[0] - pos2[0];
-  vec[1] = pos1[1] - pos2[1];
-  vec[2] = pos1[2] - pos2[2];
+inline double distance2vec(const double pos1[3], const double pos2[3], double vec[3])
+{
+  vec[0] = pos1[0]-pos2[0];
+  vec[1] = pos1[1]-pos2[1];
+  vec[2] = pos1[2]-pos2[2];
   return SQR(vec[0]) + SQR(vec[1]) + SQR(vec[2]);
 }
 
