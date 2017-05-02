@@ -5,6 +5,7 @@
 #include "interaction_data.hpp"
 #include "grid.hpp"
 #include "energy_inline.hpp"
+#include <stdexcept>
 
 
 
@@ -12,15 +13,14 @@
 /** @brief Criterion which provides a true/false for a pair of particles */
 class PairCriterion {
   public: 
-    virtual bool decide(const Particle& p1, const Particle& p2) =0;
+    virtual bool decide(const Particle& p1, const Particle& p2) {
+     throw std::runtime_error("PairCriterion is a base class and cannot be used.");
+    };
 };
 
 /** @brief True if two particles are closer than a cut off distance, respecting minimum image convention */
 class DistanceCriterion : public PairCriterion {
   public: 
-    DistanceCriterion(double _cut_off) {
-      m_cut_off=_cut_off;
-    }
     virtual bool decide(const Particle& p1, const Particle& p2) {
       double vec21[3];
       get_mi_vector(vec21,p1.r.p, p2.r.p); 
@@ -40,9 +40,6 @@ class DistanceCriterion : public PairCriterion {
 /** True if the short range energy is largern than a cut_off */
 class EnergyCriterion : public PairCriterion {
   public: 
-    EnergyCriterion(double _cut_off) {
-      m_cut_off=_cut_off;
-    };
     virtual bool decide(const Particle& p1, const Particle& p2)  {
       double vec21[3];
       const double dist_betw_part =sqrt(distance2vec(p1.r.p, p2.r.p, vec21));
@@ -63,9 +60,6 @@ class EnergyCriterion : public PairCriterion {
 /** True if a bond of given type exists between the two particles */
 class BondCriterion : public PairCriterion {
   public: 
-    BondCriterion(int _bond_type) {
-       m_bond_type=_bond_type;
-    };
     virtual bool decide(const Particle& p1, const Particle& p2) {
       return bond_exists(&p1,&p2,m_bond_type) || bond_exists(&p2,&p1,m_bond_type);
     };
