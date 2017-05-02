@@ -1,19 +1,17 @@
 
-// Cluster structure and individual particles
-
-
-#ifndef CLUSTER_H
-#define CLUSTER_H
+#ifndef CLUSTER_ANALYSIS_HPP
+#define CLUSTER_ANALYSIS_HPP
 
 
 #include <vector>
 #include <valarray>
 #include <map>
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "energy_inline.hpp"
 #include <string>
-#include "grid.hpp"
+
+#include "pair_criteria.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
+
 
 /** @brief Represents a single cluster of particles */
 class Cluster {
@@ -52,7 +50,7 @@ class ClusterStructure {
 
   PairCriterion const &pair_criterion() const { return *m_pair_criterion; }
 
- Private:
+ private:
   /** @brief Clusters that turn out to be the same during the analysis process
   * (i.e., if two particles are neighbors that already belong to different clusters
   */
@@ -65,14 +63,11 @@ class ClusterStructure {
   void add_pair(Particle& p1, Particle& p2);
   /** Merge clusters and populate their structures */
   void merge_clusters();
-  NeighborCriterion* nc;
   /** @brief Follow a chain of cluster identities during analysis */
   inline int find_id_for(int x);
   /** @brief Get next free lucster id */
   inline int get_next_free_cluster_id();
 };
 
-
-ClusterStructure& cluster_analysis();
 #endif
 

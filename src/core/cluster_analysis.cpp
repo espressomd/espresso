@@ -6,7 +6,7 @@
 void ClusterStructure::clear() {
  clusters.clear();
  cluster_id.clear();
- cluster_identities.clear();
+ m_cluster_identities.clear();
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle& p)
@@ -16,7 +16,7 @@ inline bool ClusterStructure::part_of_cluster(const Particle& p)
 }
 
 // Analyze the cluster structure of the given particles
-void ClusterStructure::analyze_pair()
+void ClusterStructure::run_for_all_pairs()
 {
   // clear data structs
   clear();
@@ -32,7 +32,7 @@ void ClusterStructure::analyze_pair()
   merge_clusters();
 }
 
-void ClusterStructure::analyze_bonds() {
+void ClusterStructure::run_for_bonded_particles() {
 clear();
 for (int i=0;i<=max_seen_particle;i++) {
   if (local_particles[i]) {
@@ -65,11 +65,12 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
  //   * None of them belongs to a cluster: Give them both a new cluster id
  //   * Both belong to different clusters: Mark the clusters as identical 
  //   * so that they can be put together later
-  if (! nc) {
+  if (! m_pair_criterion) {
     runtimeErrorMsg() << "No cluster criterion defined"; 
     return;
   }
-  if (nc->are_neighbors(p1,p2)) {
+  // If the two particles are neighbors...
+  if (m_pair_criterion->decide(p1,p2)) {
      
      if // None belongs to a cluster
      ((!part_of_cluster(p1)) && (!part_of_cluster(p2)))
@@ -104,11 +105,11 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
      const int cid2=find_id_for(cluster_id.at(p2.p.identity));
      if (cid1>cid2)
      {
-       cluster_identities[cid1] =cid2;
+       m_cluster_identities[cid1] =cid2;
      }
      else if (cid1<cid2) 
      {
-       cluster_identities[cid2]=cid1;
+       m_cluster_identities[cid2]=cid1;
      }
      // else do nothing. The clusters are already noted for merging.
      // Connected clusters will be merged later
@@ -162,9 +163,9 @@ void ClusterStructure::merge_clusters() {
 int ClusterStructure::find_id_for(int x)
 {
  int tmp=x;
- while (cluster_identities.find(tmp)!=cluster_identities.end())
+ while (m_cluster_identities.find(tmp)!=m_cluster_identities.end())
  {
-  tmp =cluster_identities[tmp];
+  tmp =m_cluster_identities[tmp];
  }
  return tmp;
 }
@@ -188,14 +189,6 @@ ClusterStructure& cluster_analysis() {
   return cluster_structure;
 }
 
-void ClusterStructure::set_criterion(NeighborCriterion* c) {
-  if (nc)
-  {
-    delete nc;
-    nc=0;
-  }
-  nc=c;
-}
 
    
 
