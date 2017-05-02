@@ -34,6 +34,14 @@ public:
   PairCriterion() : m_c(new ::PairCriterion()) {};
   const std::string name() const {return "PairCriteria::PairCriterion";};
   virtual std::shared_ptr<::PairCriterion> pair_criterion() const  { return m_c; }
+  virtual Variant call_method(std::string const &method,
+                              VariantMap const &parameters) {
+      if (method == "decide") {
+        return pair_criterion()->decide(
+          boost::get<int>(parameters.at("id1")),
+          boost::get<int>(parameters.at("id2")));
+      }
+  } 
 private:
   std::shared_ptr<::PairCriterion> m_c;
 };
