@@ -75,7 +75,7 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
      ((!part_of_cluster(p1)) && (!part_of_cluster(p2)))
     {  
       // Both particles belong to the same, new cluster
-      int cid=get_next_free_cluster_id();
+      const int cid=get_next_free_cluster_id();
 
       // assign the cluster_ids 
       cluster_id[p1.p.identity]=cid;
@@ -100,8 +100,8 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
      // Clusters of p1 and p2 are one and the same. Add an identity to the list
      // The higher number must be inserted as first value of tjhe pair
      // because the substituions later have to be done in descending order
-     int cid1=find_id_for(cluster_id.at(p1.p.identity));
-     int cid2=find_id_for(cluster_id.at(p2.p.identity));
+     const int cid1=find_id_for(cluster_id.at(p1.p.identity));
+     const int cid2=find_id_for(cluster_id.at(p2.p.identity));
      if (cid1>cid2)
      {
        cluster_identities[cid1] =cid2;
@@ -121,12 +121,16 @@ void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
 void ClusterStructure::merge_clusters() {
   // Relabel particles according to the cluster identities map
   // Also create empty cluster objects for the final cluster id
+  
+  // Collect needed changes in a separate map, as doing the changes on the fly
+  // would screw up the iterators
   std::map<int,int> to_be_changed;
+  
   for (auto it : cluster_id) { 
     // particle id is in it.first and cluster id in it.second
     // We change the cluster id according to the cluster identities
     // map
-    int cid=find_id_for(it.second);
+    const int cid=find_id_for(it.second);
     // We note the list of changes here, so we don't modify the map
     // while iterating
     to_be_changed[it.first]=cid;
