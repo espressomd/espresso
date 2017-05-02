@@ -274,9 +274,6 @@ IF DIPOLES == 1:
             pairs. If the system has periodic boundaries, the minimum image
             convention is applied."""
 
-            def __del__(self):
-                self.__deactivate_method()
-
             def default_params(self):
                 return {}
     
@@ -292,8 +289,8 @@ IF DIPOLES == 1:
             def _activate_method(self):
                 self._set_params_in_es_core()
                 
-            def __deactivate_method(self):
-                self._deactivate_method()
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
                 deactivate_dipolar_direct_sum_gpu()
     
             def _set_params_in_es_core(self):
