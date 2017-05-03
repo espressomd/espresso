@@ -14,10 +14,8 @@ except ImportError:
     print("Module \"vtk\" not available, skipping test!")
     exit()
 
-if not set(["ENGINE", "LB"]) < set(espressomd.features()):
-    print("Features not available, skipping test!")
-    exit()
-
+@ut.skipIf(not espressomd.has_features(["ENGINE", "LB"]),
+           "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
     def prepare(self,S):
         boxl  = 12

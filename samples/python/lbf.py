@@ -19,7 +19,6 @@
 from __future__ import print_function
 import espressomd
 from espressomd import thermostat
-from espressomd import code_info
 from espressomd import lb
 import numpy as np
 
@@ -29,7 +28,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 
 system = espressomd.System()

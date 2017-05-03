@@ -25,23 +25,26 @@
 #include "config.hpp"
 #ifdef H5MD
 #include "ScriptInterface.hpp"
-#include <string>
+#include "auto_parameters/AutoParameters.hpp"
 #include "io/writer/h5md/h5md_core.hpp"
+#include <string>
 
 namespace ScriptInterface {
 namespace Writer {
 
-class H5mdScript : public ScriptInterfaceBase {
+class H5mdScript : public AutoParameters {
 public:
-  H5mdScript() : m_h5md(new ::Writer::H5md::File()){};
+  H5mdScript() : m_h5md(new ::Writer::H5md::File()) {
+    add_parameters({{"filename", m_h5md->filename()},
+                    {"scriptname", m_h5md->scriptname()},
+                    {"what", m_h5md->what()},
+                    {"write_ordered", m_h5md->write_ordered()}});
+  };
 
   const std::string name() const override {
     return "ScriptInterface::Writer::H5mdScript";
   };
 
-  ParameterMap valid_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
-  VariantMap get_parameters() const override;
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override;
 

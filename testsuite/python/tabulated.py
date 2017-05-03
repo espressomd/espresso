@@ -27,6 +27,8 @@ from espressomd.analyze import *
 import espressomd
 import sys
 
+@ut.skipIf(not espressomd.has_features(["TABULATED"]),
+           "Features not available, skipping test!")
 class Tabulated(ut.TestCase):
     """ Checks the tabulated non bonded interactions """
 
@@ -660,12 +662,8 @@ class Tabulated(ut.TestCase):
         self.assertTrue(np.abs(pressure - totpressure)/totpressure < self.epsilon, "Failed. Pressure difference too large")
 
     
-    if "TABULATED" in espressomd.features():
-        def test_tab(self):
-            self.compare()
-    else:
-        print("TABULATED feature inactive")
-        sys.exit()
+    def test_tab(self):
+        self.compare()
 
 
 if __name__ == "__main__" :

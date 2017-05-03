@@ -87,7 +87,7 @@ see the \texttt{lbfluid} command for further details.
 
 \section{(Almost) generic checkpointing in Python}
 Referring to the previous section, generic checkpointing poses difficulties 
-in many ways. Fortunatelly, the Python checkpointing module presented in 
+in many ways. Fortunately, the Python checkpointing module presented in 
 this section provides a comfortable workflow for an almost generic 
 checkpointing.
 
@@ -687,7 +687,7 @@ The files produced by this command are (assumed \var{filename} is
 
 Currently, these files have to be read by exactly the same number of MPI
 processes that was used to dump them, otherwise an error is
-signalled. Also, the same type of machine (endianess, byte order) has to
+signaled. Also, the same type of machine (endianess, byte order) has to
 be used. Otherwise only garbage will be read. The read command replaces
 the particles, i.e. all previous existent particles will be
 \textit{deleted}.
@@ -935,7 +935,7 @@ method uses the internal box length and topology information from
 espresso. If you wish to shift particles prior to folding then supply
 the optional shift information. \var{shift} should be a three member
 tcl list consisting of x, y, and z shifts respectively and each number
-should be a floating point (ie with decimal point).
+should be a floating point (i.e. with decimal point).
 
 \subsection{\lit{readpdb}: Reading the coordinates and interactions}
 \newescommand{readpdb}
@@ -983,7 +983,7 @@ The command returns the number of particles that were successfully added.
 
 Reading bonded interactions and dihedrals is currently not supported.
 
-\section{Online-visualisation with VMD}
+\section{Online-visualization with VMD}
 \label{sec:IMD}
 \index{IMD}
 
@@ -1129,7 +1129,7 @@ which allows to quickly find the line causing the error.
 However, some errors can only be detected after changing the internal
 structures, so that \es is left in a state such that integration is
 not possible without massive fixes by the users. Especially errors
-occuring on nodes other than the primary node fall under this
+occurring on nodes other than the primary node fall under this
 condition, for example a broken bond or illegal parameter
 combinations.
 
@@ -1141,7 +1141,7 @@ message of the form
 \end{code}
 is returned. Following possibly a normal Tcl error message, after the
 background keyword all severe errors are listed node by node,
-preceeded by the node number. A special error is \lit{<consent>},
+preceded by the node number. A special error is \lit{<consent>},
 which means that one of the slave nodes found exactly the same errors
 as the master node. This happens mainly during the initialization of
 the integrate, \eg if the time step is not set. In this case the error
@@ -1154,7 +1154,7 @@ parts of the internal data also had to be changed to allow \es to
 continue, so you should really know what you do if you try and catch
 these errors.
 
-\section{Online-visualisation with Mayavi or OpenGL}
+\section{Online-visualization with Mayavi or OpenGL}
 \label{sec:visualizer}
 \index{Visualization}
 
@@ -1180,7 +1180,7 @@ setup and equilibration process.
 
 The recommended usage of both tools is similar: Create the visualizer of your
 choice and pass it the \lstinline{espressomd.System()} object. Then write your
-integration loop in a seperate function, which is started in a non-blocking
+integration loop in a separate function, which is started in a non-blocking
 thread. Whenever needed, call \lstinline{update()} to synchronize the renderer
 with your system. Finally start the blocking visualization window with
 \lstinline{start()}. See the following minimal code example:
@@ -1238,7 +1238,7 @@ Starts the blocking visualizer window.
 }
 \end{pysyntax}
 
-Synchonizes system and visualizer, handles keyboard events for openGLLive. 
+Synchronizes system and visualizer, handles keyboard events for openGLLive. 
 
 \begin{pysyntax}
   \object{

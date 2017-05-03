@@ -36,7 +36,7 @@ class Observable {
     int update();
     int calculate();
     virtual int actual_calculate() {
-      throw std::runtime_error("Observable did not override actual_caucluate()\n");
+      throw std::runtime_error("Observable did not override actual_calculate()\n");
     }; 
     virtual int actual_update() {};
 
