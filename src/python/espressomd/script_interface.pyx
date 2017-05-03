@@ -25,6 +25,15 @@ cdef class PScriptInterface:
         self.sip = sip
         self.parameters = self.sip.get().valid_parameters()
 
+    def set_sip_via_oid(self,PObjectId id):
+        """Set the shared_ptr to the script object in the core via the object id"""
+        oid=id.id
+        try:
+            ptr = get_instance(oid).lock()
+            self.set_sip(ptr)
+        except:
+            raise Exception("Could not get sip for given_id")
+    
     def _valid_parameters(self):
         parameters = []
 
@@ -140,8 +149,16 @@ cdef class PScriptInterface:
                 oid = get[ObjectId](value)
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
-                    pobj = PScriptInterface()
-                    pobj.set_sip(ptr)
+                    so_name=str(ptr.get().name())
+                    # Fallback class, if nothing omre specific is registered for the script object name
+                    pclass=ScriptInterfaceHelper
+                    # Look up class
+                    if so_name in _python_class_by_so_name:
+                        pclass =_python_class_by_so_name[so_name]
+                    pobj = pclass()
+                    poid=PObjectId()
+                    poid.id=ptr.get().id()
+                    pobj.set_sip_via_oid(poid)
                     return pobj
                 else:
                     return None
@@ -207,6 +224,25 @@ class ScriptInterfaceHelper(PScriptInterface):
     def define_bound_methods(self):
         for method_name in self._so_bind_methods:
             setattr(self,method_name,self.generate_caller(method_name))
+
+
+
+
+
+# Map from script object names to corresponding python classes
+_python_class_by_so_name ={}
+
+
+def script_interface_register(c):
+    """Decorator used to register script interface classes
+       This will store a name<->class relationship in a registry, so that parameters
+       of type object can be instanciated as the correct python class
+    """
+    if not hasattr(c,"_so_name"):
+        raise Exception("Python classes representing a script object must define an _so_name attribute at class level")
+    _python_class_by_so_name[c._so_name]=c
+    return c
+    
 
 
 
