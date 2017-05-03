@@ -1,46 +1,107 @@
-from __future__ import print_function
+#
+# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import espressomd
+"""
+Testmodule for the VTF file writing.
+"""
+import os
+import sys
+import unittest as ut
 import numpy as np
-from espressomd import interactions
-from espressomd import polymer
+import espressomd  # pylint: disable=import-error
 
-system = espressomd.System()
-
-print( espressomd.code_info.features() )
-
-system.time_step = 0.01
-
-# tuning parameter for frequency of Verlet rebuilds
-system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-system.cell_system.set_n_square(use_verlet_lists=False)
-
-box_l = 100
-system.box_l = [box_l, box_l, box_l]
-
-harmonic_bond = interactions.HarmonicBond(k=100., r_0=1.0)
-system.bonded_inter.add(harmonic_bond)
-
-polymer.create_polymer(N_P = 1, bond_length = 1.0, MPC=10, start_id=0, type_poly_neutral=0, type_poly_charged=0, bond=harmonic_bond,  mode=1)
-polymer.create_polymer(N_P = 1, bond_length = 1.0, MPC=10, start_id=100, type_poly_neutral=1, type_poly_charged=1, bond=harmonic_bond,  mode=1)
-
-# add weird bond with other polymer
-# this is a bond between two different particle types
-system.part[5].add_bond((harmonic_bond,105))
+npart = 50
 
 
-fp_0=open('type_0.vtf', 'w')
-fp_all=open('type_all.vtf', 'w')
+class CommonTests(ut.TestCase):
+    """
+    Class that holds common test methods.
+    """
+    system = espressomd.System()
+    # avoid particles to be set outside of the main box, otherwise particle
+    # positions are folded in the core when writing out and we cannot directly
+    # compare positions in the dataset and where particles were set. One would
+    # need to unfold the positions of the hdf5 file.
+    system.box_l = [npart, npart, npart]
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    written_pos = None
+    types_to_write = None
+    for i in range(npart):
+        system.part.add(id=i, pos=np.array([float(i),
+                                            float(i),
+                                            float(i)]),
+                        v=np.array([1.0, 2.0, 3.0]), type=1+(-1)**i)
+    system.integrator.run(steps=0)
 
-system.part.writevsf(fp_0, types=0)
-system.part.writevsf(fp_all, types='all')
 
-for i in range(20):
-    system.integrator.run(100)
-    system.part.writevcf(fp_0, types=0)
-    system.part.writevcf(fp_all, types='all')
+    def test_pos(self):
+        """Test if positions have been written properly."""
+        if self.types_to_write=='all': simulation_pos=np.array([(float(i), float(i), float(i), float(i)) for i in range(npart)]),
+        elif (2 in self.types_to_write): simulation_pos=np.array([(float(i*2), float(i*2), float(i*2), float(i*2)) for i in range(npart/2)]),
+        self.assertTrue(np.allclose(
+            simulation_pos, self.written_pos),
+            msg="Positions not written correctly by writevcf!")
 
 
-exit()
+class VCFTestAll(CommonTests):
+    """
+    Test the writing VTF files.
+    """
+    @classmethod
+    def tearDownClass(cls):
+        os.remove("test.vtf")
+
+    @classmethod
+    def setUpClass(cls):
+        """Prepare a testsystem."""
+        cls.types_to_write='all'
+        fp=open('test.vtf','w')
+        cls.system.part.writevcf(fp,types=cls.types_to_write)
+        fp.close()
+        cls.written_pos=np.loadtxt("test.vtf",comments="t")
+
+class VCFTestType(CommonTests):
+    """
+    Test the writing VTF files.
+    """
+    @classmethod
+    def tearDownClass(cls):
+        os.remove("test.vtf")
+
+    @classmethod
+    def setUpClass(cls):
+        """Prepare a testsystem."""
+        cls.types_to_write=[2, 23]
+        fp=open('test.vtf','w')
+        cls.system.part.writevcf(fp, types=cls.types_to_write)
+        fp.close()
+        cls.written_pos=np.loadtxt("test.vtf",comments="t")
+
+
+
+if __name__ == "__main__":
+    suite = ut.TestLoader().loadTestsFromTestCase(VCFTestAll)
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
+
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    #if os.path.isfile("test.vtf"):
+    #    os.remove("test.vtf")
+    sys.exit(not result.wasSuccessful())
 

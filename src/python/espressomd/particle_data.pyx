@@ -1726,11 +1726,11 @@ cdef class ParticleList:
         if not hasattr(types, '__iter__'):
             types = [types]
 
-            fp.write("\ntimestep indexed\n")
-            for p in self:
-                for t in types:
-                    if (p.type == t or t == "all"):
-                        fp.write("{} {} {} {}\n".format(p.id, *(p.pos)))
+        fp.write("\ntimestep indexed\n")
+        for p in self:
+            for t in types:
+                if (p.type == t or t == "all"):
+                    fp.write("{} {} {} {}\n".format(p.id, *(p.pos)))
 
 
     property highest_particle_id:
