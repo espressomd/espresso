@@ -1548,15 +1548,7 @@ cdef class ParticleList:
                 P = args[0]
         else:
             if len(args) == 0 and len(kwargs.keys()) != 0:
-                # Check for presence of pos attribute
-                if not "pos" in kwargs:
-                    raise ValueError(
-                        "pos attribute must be specified for new particle")
-
-                if len(np.array(kwargs["pos"]).shape) == 2:
-                    return self._place_new_particles(kwargs)
-                else:
-                    return self._place_new_particle(kwargs)
+                P = kwargs
             else:
                 raise ValueError(
                     "add() takes either a dictionary or a bunch of keyword args.")
@@ -1723,9 +1715,6 @@ cdef class ParticleList:
         Generator returns all pairs of particles.
 
         """
-    
-    def pairs(self):
-        """ Generator returns all pairs of particles"""
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
                 if not (self.exists(i) and self.exists(j)):
