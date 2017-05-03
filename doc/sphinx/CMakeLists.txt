@@ -24,6 +24,7 @@ if(SPHINX_FOUND)
     set(FILE_LIST 
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.rst"
