@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer
+from espressomd.utils import to_char_pointer,to_str
 
 cdef class PObjectId:
     cpdef ObjectId id
@@ -48,7 +48,7 @@ cdef class PScriptInterface:
         parameters = []
 
         for p in self.sip.get().valid_parameters():
-            parameters.append(p.first)
+            parameters.append(to_str(p.first))
 
         return parameters
 
