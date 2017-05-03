@@ -1,5 +1,15 @@
 from espressomd.utils import to_char_pointer
 
+cdef class PObjectId:
+    cpdef ObjectId id
+    
+    def __richcmp__(PObjectId a, PObjectId b, op):
+        if op == 2:
+            return a.id == b.id
+        else:
+            raise NotImplementedError
+
+
 cdef class PScriptInterface:
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
