@@ -1,4 +1,5 @@
 #include "utils.hpp"
+
 namespace ReactionEnsemble{
 
 typedef struct single_reaction{
@@ -142,7 +143,7 @@ public:
 
     /////////////////////////////////////////////  Constant-pH Reactions
     int do_reaction_constant_pH();
-    double m_constant_pH;
+    double m_constant_pH=-10;
     
 private:
 
