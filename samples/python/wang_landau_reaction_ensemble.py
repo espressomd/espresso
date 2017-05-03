@@ -74,10 +74,10 @@ system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
 
 
-RE=reaction_ensemble.ReactionEnsemble(standard_pressure=0.00108, temperature=1, exclusion_radius=0)
+RE=reaction_ensemble.reaction_ensemble(standard_pressure=0.00108, temperature=1, exclusion_radius=0)
 RE.add(equilibrium_constant=K_diss,reactant_types=[0],reactant_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
 RE.set_default_charges(dictionary={"0":0,"1":-1, "2":+1})
-RE.print_status()
+print(RE.get_status())
 grand_canonical.setup([0,1,2,3])
 
 
@@ -87,9 +87,9 @@ np.savetxt("energy_boundaries.dat", np.c_[[0,1],[0,0],[9,9]], header="nbar E_min
 
 RE.add_collective_variable_degree_of_association(associated_type=0,min=0,max=1,corresponding_acid_types=[0,1])
 RE.add_collective_variable_potential_energy(filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=0.00001,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat", use_hybrid_monte_carlo=False)
+RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat", use_hybrid_monte_carlo=False)
 
 i=0
 while True:
-	RE.do_reaction_wang_landau()
-	RE.do_global_mc_move_for_one_particle_of_type_wang_landau(3)
+	RE.reaction_wang_landau()
+	RE.global_mc_move_for_one_particle_of_type_wang_landau(3)

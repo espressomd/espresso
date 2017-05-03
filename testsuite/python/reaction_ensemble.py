@@ -51,8 +51,8 @@ class ReactionEnsembleTest(ut.TestCase):
     system.box_l = np.ones(3)*(N0/c0)**(1.0/3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE=reaction_ensemble.ReactionEnsemble(standard_pressure=standard_pressure_in_simulation_units, temperature=temperature, exclusion_radius=exclusion_radius)
-    volume=np.prod(system.box_l) #cuboid box        
+    RE=reaction_ensemble.reaction_ensemble(standard_pressure=standard_pressure_in_simulation_units, temperature=temperature, exclusion_radius=exclusion_radius)
+    volume=np.prod(system.box_l) #cuboid box    
     
     @classmethod
     def setUpClass(cls):
