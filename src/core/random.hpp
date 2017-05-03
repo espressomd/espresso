@@ -114,7 +114,6 @@ inline int i_random(int maxint){
 inline double gaussian_random(void){
   using namespace Random;
   if (!user_has_seeded) runtimeErrorMsg() <<"Please seed the random number generator.\nESPResSo can choose one for you with set_random_state_PRNG().";
-
   return normal_distribution(generator);
 }
 
