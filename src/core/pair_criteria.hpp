@@ -27,6 +27,7 @@ class PairCriterion {
       const bool res =decide(p1,p2);
       free_particle(&p1);
       free_particle(&p2);
+      return res;
     }
 };
 
@@ -36,7 +37,7 @@ class DistanceCriterion : public PairCriterion {
     virtual bool decide(const Particle& p1, const Particle& p2) const {
       double vec21[3];
       get_mi_vector(vec21,p1.r.p, p2.r.p); 
-      return (sqrt(sqrlen(vec21)<= m_cut_off));
+      return sqrt(sqrlen(vec21))<= m_cut_off;
     };
     double get_cut_off() {
       return m_cut_off;
@@ -53,9 +54,14 @@ class DistanceCriterion : public PairCriterion {
 class EnergyCriterion : public PairCriterion {
   public: 
     virtual bool decide(const Particle& p1, const Particle& p2) const {
+      // Distnace between particles
       double vec21[3];
-      const double dist_betw_part =sqrt(distance2vec(p1.r.p, p2.r.p, vec21));
+      get_mi_vector(vec21,p1.r.p, p2.r.p); 
+      const double dist_betw_part =sqrt(sqrlen(vec21));
+      
+      // Interaction parameters for particle types
       IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
+      
       return (calc_non_bonded_pair_energy(const_cast<Particle*>(&p1), const_cast<Particle*>(&p2), ia_params,
                        vec21, dist_betw_part,dist_betw_part*dist_betw_part)) >= m_cut_off;
     };

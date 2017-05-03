@@ -35,11 +35,15 @@ public:
   const std::string name() const {return "PairCriteria::PairCriterion";};
   virtual std::shared_ptr<::PairCriterion> pair_criterion() const  { return m_c; }
   virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) {
+                              VariantMap const &parameters) override {
       if (method == "decide") {
         return pair_criterion()->decide(
           boost::get<int>(parameters.at("id1")),
           boost::get<int>(parameters.at("id2")));
+      }
+      else
+      {
+        throw std::runtime_error("Unknown method called.");
       }
   } 
 private:
@@ -49,7 +53,7 @@ private:
 class DistanceCriterion : public PairCriterion {
 public:
   DistanceCriterion() : m_c(new ::DistanceCriterion()) {
-    add_parameters({{"cut_off", m_c->get_cut_off()},
+    add_parameters({
                     {"cut_off",
                      [this](Variant const &v) {
                        m_c->set_cut_off(get_value<double>(v));
@@ -67,7 +71,7 @@ private:
 class EnergyCriterion : public PairCriterion {
 public:
   EnergyCriterion() : m_c(new ::EnergyCriterion()) {
-    add_parameters({{"cut_off", m_c->get_cut_off()},
+    add_parameters({
                     {"cut_off",
                      [this](Variant const &v) {
                        m_c->set_cut_off(get_value<double>(v));
@@ -85,7 +89,7 @@ private:
 class BondCriterion : public PairCriterion {
 public:
   BondCriterion() : m_c(new ::BondCriterion()) {
-    add_parameters({{"bond_type", m_c->get_bond_type()},
+    add_parameters({
                     {"bond_type",
                      [this](Variant const &v) {
                        m_c->set_bond_type(get_value<int>(v));

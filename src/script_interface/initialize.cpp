@@ -22,6 +22,7 @@
 #include "initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "shapes/initialize.hpp"
+#include "pair_criteria/initialize.hpp"
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
@@ -45,6 +46,7 @@ void initialize() {
   Observables::initialize();
   Correlators::initialize();
   LBBoundaries::initialize();
+  PairCriteria::initialize();
 
   ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
 }
