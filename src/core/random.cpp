@@ -24,7 +24,6 @@
 #include "communication.hpp"
 #include "debug.hpp"
 
-#define DEBUG_WHEREAMI   printf("HERE: %d \nUser has set: %d\n",__LINE__,user_has_seeded);  
 
 
 namespace Random {
@@ -58,7 +57,6 @@ string get_state() {
  */
 
 void set_state(const string &s) {
-DEBUG_WHEREAMI
     istringstream is(s);
   is >> generator;
 }
@@ -74,9 +72,7 @@ int get_state_size_of_generator() {
 
 /** Communication */
 
-void mpi_random_seed_slave(int pnode, int cnt) {
-  DEBUG_WHEREAMI
-  
+void mpi_random_seed_slave(int pnode, int cnt) {  
   int this_seed;  user_has_seeded=true;
 
   MPI_Scatter(NULL, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
@@ -86,7 +82,6 @@ void mpi_random_seed_slave(int pnode, int cnt) {
 }
 
 void mpi_random_seed(int cnt, vector<int> &seeds) {
-  DEBUG_WHEREAMI
   int this_seed;
   user_has_seeded=true;
   mpi_call(mpi_random_seed_slave, -1, cnt);
@@ -99,7 +94,6 @@ void mpi_random_seed(int cnt, vector<int> &seeds) {
 }
 
 void mpi_random_set_stat_slave(int, int) {
-  DEBUG_WHEREAMI
   user_has_seeded=true;
   string msg;
   mpiCallbacks().comm().recv(0, SOME_TAG, msg);
@@ -108,7 +102,6 @@ void mpi_random_set_stat_slave(int, int) {
 }
 
 void mpi_random_set_stat(const vector<string> &stat) {
-  DEBUG_WHEREAMI
   user_has_seeded=true;
 
   mpi_call(mpi_random_set_stat_slave, 0, 0);
@@ -142,7 +135,6 @@ string mpi_random_get_stat() {
 }
 
 void init_random(void) {
-  DEBUG_WHEREAMI
   /** Set the initial seed */
   init_random_seed(1 + this_node);
 
@@ -154,7 +146,6 @@ void init_random(void) {
 
 void init_random_seed(int seed)
 {
-  DEBUG_WHEREAMI
   
   std::seed_seq seeder{seed}; //come up with "sane" initialization to avoid too many zeros in the internal state of the Mersenne twister
   generator.seed(seeder);
