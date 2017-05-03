@@ -51,7 +51,7 @@
    <li> All cells, real cells as well as ghost cells, are stored in the array
    \ref cells::cells with size \ref
    n_cells. The size of this array has to be changed with \ref realloc_cells.
-   <li> Their are two lists of cell pointers to acces particles and
+   <li> There are two lists of cell pointers to access particles and
    ghost particles on a node: \ref local_cells contains pointers to
    all cells containing the particles physically residing on that
    node. \ref ghost_cells contains pointers to all cells containing

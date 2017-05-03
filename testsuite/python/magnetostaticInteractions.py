@@ -37,7 +37,7 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
         if not self.system.part.exists(1):
             self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
 
-    if "DP3M" in espressomd.features():
+    if espressomd.has_features(["DP3M"]):
         test_DP3M = generate_test_for_class(system, DipolarP3M, dict(prefactor=1.0,
                                                                              epsilon=0.0,
                                                                              inter=1000,
@@ -49,7 +49,7 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
                                                                              accuracy=0.01,
                                                                              tune=False))
 
-    if "DIPOLAR_DIRECT_SUM" in espressomd.features():
+    if espressomd.has_features(["DIPOLAR_DIRECT_SUM"]):
         test_DdsCpu = generate_test_for_class(system,
             DipolarDirectSumCpu, dict(prefactor=3.4))
         test_DdsRCpu = generate_test_for_class(system,

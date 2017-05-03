@@ -72,3 +72,5 @@ cdef extern from "<limits>" namespace "std" nogil:
     cdef cppclass numeric_limits[T]:
         @staticmethod
         T epsilon()
+        @staticmethod
+        T max()
