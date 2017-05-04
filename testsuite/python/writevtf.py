@@ -72,7 +72,7 @@ class VCFTestAll(CommonTests):
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write='all'
-        with open('test.vtf','w') as fp
+        with open('test.vtf','w') as fp:
             cls.system.part.writevcf(fp, types=cls.types_to_write)
         cls.written_pos=np.loadtxt("test.vtf",comments="t")
 
@@ -88,7 +88,7 @@ class VCFTestType(CommonTests):
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write=[2, 23]
-        with open('test.vtf','w') as fp
+        with open('test.vtf','w') as fp:
             cls.system.part.writevcf(fp, types=cls.types_to_write)
         cls.written_pos=np.loadtxt("test.vtf",comments="t")
 
