@@ -319,6 +319,10 @@ IF DIPOLES == 1:
     
             def _activate_method(self):
                 self._set_params_in_es_core()
+            
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
+                deactivate_dipolar_barnes_hut()
     
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
