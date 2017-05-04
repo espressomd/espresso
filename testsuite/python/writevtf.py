@@ -54,7 +54,7 @@ class CommonTests(ut.TestCase):
     def test_pos(self):
         """Test if positions have been written properly."""
         if self.types_to_write=='all': simulation_pos=np.array([((i), float(i), float(i), float(i)) for i in range(npart)]),
-        elif (2 in self.types_to_write): simulation_pos=np.array([i((i*2), float(i*2), float(i*2), float(i*2)) for i in range(npart/2)]),
+        elif (2 in self.types_to_write): simulation_pos=np.array([((i*2), float(i*2), float(i*2), float(i*2)) for i in range(npart/2)]),
         self.assertTrue(np.allclose(
             simulation_pos, self.written_pos),
             msg="Positions not written correctly by writevcf!")
