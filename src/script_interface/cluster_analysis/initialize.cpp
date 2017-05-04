@@ -17,40 +17,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#include "config.hpp"
 #include "initialize.hpp"
-#include "cluster_analysis/initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#include "pair_criteria/initialize.hpp"
-#ifdef H5MD
-#include "h5md/initialize.hpp"
-#endif
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
-#include "lbboundaries/initialize.hpp"
-
-#include "ParallelScriptInterface.hpp"
-#include "VariantTester.hpp"
+#include "ScriptInterface.hpp"
+#include "Cluster.hpp"
+#include "ClusterStructure.hpp"
 
 namespace ScriptInterface {
+namespace ClusterAnalysis {
 
 void initialize() {
-  ParallelScriptInterface::initialize();
-
-  Shapes::initialize();
-  Constraints::initialize();
-#ifdef H5MD
-  Writer::initialize();
-#endif
-  Observables::initialize();
-  ClusterAnalysis::initialize();
-  Correlators::initialize();
-  LBBoundaries::initialize();
-  PairCriteria::initialize();
-
-  ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
+  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::ClusterStructure>(
+      "ClusterAnalysis::ClusterStructure");
+  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::Cluster>(
+      "ClusterAnalysis::Cluster");
 }
-
+} /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */

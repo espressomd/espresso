@@ -137,7 +137,7 @@ void ClusterStructure::merge_clusters() {
     to_be_changed[it.first]=cid;
     // Empty cluster object
     if (clusters.find(cid)==clusters.end()) {
-      clusters[cid]=Cluster();
+      clusters[cid]=std::make_shared<Cluster>();
     }
   }
   
@@ -150,12 +150,16 @@ void ClusterStructure::merge_clusters() {
   // Iterate over particles, fill in the cluster map 
   // to each cluster particle the corresponding cluster id 
   for (auto it : cluster_id) {
-    clusters[it.second].particles.push_back(it.first);
+    // If this is the first particle in this cluster, instance a new cluster object
+    if (clusters.find(it.second)==clusters.end()){
+      clusters[it.second] = std::make_shared<Cluster>();
+    }
+    clusters[it.second]->particles.push_back(it.first);
   }
 
   // Sort particles ids in the cluters
   for (auto c : clusters) {
-    std::sort(c.second.particles.begin(),c.second.particles.end());
+    std::sort(c.second->particles.begin(),c.second->particles.end());
   }
 }
 

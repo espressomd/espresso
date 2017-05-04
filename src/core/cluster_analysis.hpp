@@ -31,9 +31,9 @@ inline void Cluster::add_particle(const Particle& p) {
 /** @brief Holds the result and parameters of a cluster analysis */
 class ClusterStructure {
  public:
-  ClusterStructure() { clear() };
+  ClusterStructure() { clear(); };
   /** @brief Map holding the individual clusters. The key is an interger cluster id */
-  std::map<int,Cluster> clusters;
+  std::map<int,std::shared_ptr<Cluster>> clusters;
   /** @brief Map between particle ids and corresponding cluster ids */
   std::map<int, int> cluster_id;
   /** @brief Clear data strucutres */
