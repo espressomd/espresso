@@ -55,6 +55,10 @@ class ClusterStructure(ScriptInterfaceHelper):
     _so_name="ClusterAnalysis::ClusterStructure"
     _so_bind_methods = ("run_for_bonded_particles","run_for_all_pairs","clear","cluster_ids")
 
+    def __init__(self,*args,**kwargs):
+        super(type(self),self).__init__(*args,**kwargs)
+        self._clusters=Clusters(self)
+    
     def cid_for_particle(self,p):
         """Returns cluster id for the particle (passed as ParticleHandle or particle id)"""
         if isinstance(p,ParticleHandle):
@@ -63,14 +67,23 @@ class ClusterStructure(ScriptInterfaceHelper):
             return self.call_method("cid_for_particle",pid=p)
         else:
             raise TypeError("The particle has to be passed as instance of Particle handle or as an integer particle id")
+            
 
-    class clusters:
-       """Access to the clusters in the cluster structure. Behaves roughly like a dict"""
+    @property 
+    def clusters(self):
+        return self._clusters
 
-       def __getitem__(self,cluster_id):
-           return self.call_method("get_cluster",id=cluster_id)
+class Clusters:
+   """Access to the clusters in the cluster structure. Behaves roughly like a dict"""
 
-       def __iter__:
-           for cid in self.cluster_ids():
-               yield (cid,self.call_method("get_cluster",id=cluster_id)
+   def __init__(self,cluster_structure):
+       self.cluster_structure=cluster_structure
+
+
+   def __getitem__(self,cluster_id):
+       return self.cluster_structure.call_method("get_cluster",id=cluster_id)
+
+   def __iter__(self):
+       for cid in self.cluster_ids():
+           yield (cid,self.cluster_structure.call_method("get_cluster",id=cluster_id))
 

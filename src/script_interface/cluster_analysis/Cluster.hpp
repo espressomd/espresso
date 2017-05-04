@@ -42,6 +42,7 @@ public:
     if (method == "size") {
       return (int)m_cluster->particles.size();
     }
+    return nullptr;
   }                              
   void set_cluster(std::shared_ptr<::Cluster> c) {
     m_cluster=c;
