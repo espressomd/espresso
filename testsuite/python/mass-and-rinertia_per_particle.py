@@ -19,7 +19,8 @@ class ThermoTest(ut.TestCase):
         self.es.time_step = 0.007
         self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
         self.es.cell_system.skin = 0
-        self.es.cell_system.set_n_square(use_verlet_lists=True)
+
+        self.es.cell_system.set_n_square(use_verlet_lists=False)
         mass = 12.74
         J = [10.0, 10.0, 10.0]
         
@@ -118,13 +119,15 @@ class ThermoTest(ut.TestCase):
         gamma_rot = np.zeros((2,3))
         D_tr = np.zeros((2,3))
         for k in range(2):
-            if "ROTATIONAL_INERTIA" in espressomd.features():
+
+            if "PARTICLE_ANISOTROPY" in espressomd.features():
                 gamma_tran[k,:] = np.array((0.4 + random(3)) * 10)
             else:
                 gamma_tran[k,0] = np.array((0.4 + random(1)) * 10)
                 gamma_tran[k,1] = gamma_tran[k,0]
                 gamma_tran[k,2] = gamma_tran[k,0]
-            if "PARTICLE_ANISOTROPY" in espressomd.features():
+
+            if "ROTATIONAL_INERTIA" in espressomd.features():
                 gamma_rot[k,:] = np.array((0.2 + random(3)) * 20)
             else:
                 gamma_rot[k,0] = np.array((0.2 + random(1)) * 20)
@@ -175,10 +178,12 @@ class ThermoTest(ut.TestCase):
                 part_pos = np.array(random(3) * box)
                 part_v = np.array([0.0, 0.0, 0.0])
                 part_omega_body = np.array([0.0, 0.0, 0.0])
+
                 if "PARTICLE_ANISOTROPY" in espressomd.features():
                     self.es.part.add(id = ind, mass = mass, rinertia = J, pos = part_pos, v = part_v)
                 else:
                     self.es.part.add(id = ind, mass = mass, rinertia = J[0], pos = part_pos, v = part_v)
+
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body
                 if test_case == 1:
@@ -191,6 +196,7 @@ class ThermoTest(ut.TestCase):
                             self.es.part[ind].gamma_rot = gamma_rot[k,:]
                         else:
                             self.es.part[ind].gamma_rot = gamma_rot[k,0]
+
                 if test_case == 2:
                     self.es.part[ind].temp = temp[k]
                 if test_case == 3:
@@ -222,11 +228,11 @@ class ThermoTest(ut.TestCase):
         
         loops = 100
         print("Thermalizing...")
-        therm_steps = 1200
+        therm_steps = 500
         self.es.integrator.run(therm_steps)
         print("Measuring...")
-        
-        int_steps = 100
+
+        int_steps = 30
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles

@@ -273,7 +273,7 @@ IF DIPOLES == 1:
             """Calculates magnetostatic interactions by direct summation over all
             pairs. If the system has periodic boundaries, the minimum image
             convention is applied."""
-    
+
             def default_params(self):
                 return {}
     
@@ -288,6 +288,10 @@ IF DIPOLES == 1:
     
             def _activate_method(self):
                 self._set_params_in_es_core()
+                
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
+                deactivate_dipolar_direct_sum_gpu()
     
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
