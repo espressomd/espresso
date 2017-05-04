@@ -22,7 +22,7 @@ private:
   void increment() {
     /* If we are not at the end of the cells,
        there actually are particles in this cells
-       and we're not at the last particle in the
+       and if we are not at the last particle in the
        cell we can just increment the particle id.
     */
     if ((m_cell != m_end) && ((*m_cell)->n > 0) &&

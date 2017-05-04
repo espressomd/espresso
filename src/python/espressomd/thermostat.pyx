@@ -218,11 +218,18 @@ cdef class Thermostat:
         """
 
         scalar_gamma_def = True
+        scalar_gamma_rot_def = True
         IF PARTICLE_ANISOTROPY:
             if isinstance(gamma, list):
                 scalar_gamma_def = False
             else:
                 scalar_gamma_def = True
+
+        IF ROTATIONAL_INERTIA:
+            if isinstance(gamma_rotation, list):
+                scalar_gamma_rot_def = False
+            else:
+                scalar_gamma_rot_def = True
 
         if kT is None or gamma is None:
             raise ValueError(
@@ -234,6 +241,13 @@ cdef class Thermostat:
         else:
             utils.check_type_or_throw_except(
                 gamma, 3, float, "diagonal elements of the gamma tensor must be numbers")
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 1, float, "gamma_rotation must be a number")
+            else:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 3, float, "diagonal elements of the gamma_rotation tensor must be numbers")
 
         if scalar_gamma_def:
             if float(kT) < 0. or float(gamma) < 0.:
@@ -243,16 +257,16 @@ cdef class Thermostat:
             if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
                 raise ValueError(
                     "temperature and diagonal elements of the gamma tensor must be positive numbers")
-        global langevin_gamma_rotation
-        IF ROTATION:
-            if gamma_rotation is not None:
-                IF ROTATIONAL_INERTIA:
-                    langevin_gamma_rotation[0] = gamma_rotation[0]
-                    langevin_gamma_rotation[1] = gamma_rotation[1]
-                    langevin_gamma_rotation[2] = gamma_rotation[2]
-                ELSE:
-                    langevin_gamma_rotation = gamma_rotation
-
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                if float(gamma_rotation) < 0.:
+                    raise ValueError(
+                        "gamma_rotation must be positive number")
+            else:
+                if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                    raise ValueError(
+                        "diagonal elements of the gamma_rotation tensor must be positive numbers")
+        
         global temperature
         temperature = float(kT)
         global langevin_gamma
@@ -264,14 +278,52 @@ cdef class Thermostat:
             else:
                 langevin_gamma[0] = gamma[0]
                 langevin_gamma[1] = gamma[1]
-                langevin_gamma[2] = gamma[3]
+                langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
+        
+        global langevin_gamma_rotation
+        IF ROTATION:
+            if gamma_rotation is not None:
+                IF ROTATIONAL_INERTIA:
+                    if scalar_gamma_rot_def:
+                        langevin_gamma_rotation[0] = gamma_rotation
+                        langevin_gamma_rotation[1] = gamma_rotation
+                        langevin_gamma_rotation[2] = gamma_rotation
+                    else:
+                        langevin_gamma_rotation[0] = gamma_rotation[0]
+                        langevin_gamma_rotation[1] = gamma_rotation[1]
+                        langevin_gamma_rotation[2] = gamma_rotation[2]
+                ELSE:
+                    if scalar_gamma_rot_def:
+                        langevin_gamma_rotation = gamma_rotation
+                    else:
+                        raise ValueError(
+                            "gamma_rotation must be a scalar since feature ROTATIONAL_INERTIA is disabled")
+            else:
+                IF ROTATIONAL_INERTIA:
+                    IF PARTICLE_ANISOTROPY:
+                        langevin_gamma_rotation[0] = langevin_gamma[0]
+                        langevin_gamma_rotation[1] = langevin_gamma[1]
+                        langevin_gamma_rotation[2] = langevin_gamma[2]
+                    ELSE:
+                        langevin_gamma_rotation[0] = langevin_gamma
+                        langevin_gamma_rotation[1] = langevin_gamma
+                        langevin_gamma_rotation[2] = langevin_gamma
+                ELSE:
+                    IF PARTICLE_ANISOTROPY:
+                        raise ValueError(
+                            "gamma_rotation scalar parameter is required")
+                    ELSE:
+                        langevin_gamma_rotation = langevin_gamma
+        
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        IF ROTATION:
+            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
