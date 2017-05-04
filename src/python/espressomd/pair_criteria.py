@@ -1,7 +1,8 @@
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper,script_interface_register
 from .particle_data import ParticleHandle
 
 
+@script_interface_register
 class PairCriterion(ScriptInterfaceHelper):
     """Base class for a criterion which makes a decision based on two particles"""
     _so_name = "PairCriteria::PairCriterion"
@@ -23,6 +24,7 @@ class PairCriterion(ScriptInterfaceHelper):
         return self.call_method("decide",id1=id1,id2=id2)
 
 
+@script_interface_register
 class DistanceCriterion(PairCriterion):
     """Pair criterion returning true, if particles are closer than a cut off.
        Periodic boundaries are treated via minimum image convention.
@@ -35,6 +37,7 @@ class DistanceCriterion(PairCriterion):
     _so_name = "PairCriteria::DistanceCriterion"
 
 
+@script_interface_register
 class EnergyCriterion(PairCriterion):
     """Pair criterion returning true, if the short range energy between the particles is >= the cutoff"
        
@@ -48,6 +51,7 @@ class EnergyCriterion(PairCriterion):
 
 
 
+@script_interface_register
 class BondCriterion(PairCriterion):
     """Pair criterion returning true, if a bond of given type exists between them
        
