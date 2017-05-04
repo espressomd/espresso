@@ -516,40 +516,24 @@ int ReactionEnsemble::hide_particle(int p_id, int previous_type){
 }
 
 /**
-* Deletes the particle with the given p_id. This method is intended to only delete unbonded particles since bonds are coupled to ids. The methods avoids holes in the particle id range. If a particle from within the particle id range is to be deleted it copies the information of the last particle to the to be deleted particle and then deletes the last particle.
+* Deletes the particle with the given p_id. This method is intended to only delete unbonded particles since bonds are coupled to ids. The methods is aware of holes in the particle id range and fills them if a particle gets created.
 */
-int ReactionEnsemble::delete_particle (int p_id) {
+
+int ReactionEnsemble::delete_particle(int p_id) {
 	/**copies last particle to the particle with id p_id and deletes the then last one */
 	if (p_id == max_seen_particle) {
 		// last particle, just delete
-		int status= remove_particle(p_id);
+		remove_particle(p_id);
+		// remove all saved empty p_ids which are greater than the max_seen_particle this is needed in order to avoid the creation of holes
+        for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin(); p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end(); ++p_id_iter){
+            if( (*p_id_iter) >=max_seen_particle)
+                m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
+        }
+	} else if (p_id <= max_seen_particle){
+        remove_particle(p_id);
+        m_empty_p_ids_smaller_than_max_seen_particle.push_back(p_id);
 	} else {
-		// otherwise, copy properties of last particle to particle with given pid, delete last particle
-		// this avoids that the particle identities get excessive
-
-		//read from last particle
-		Particle last_particle;
-		get_particle_data(max_seen_particle,&last_particle);
-		//set pos
-		double ppos[3];
-		memmove(ppos, last_particle.r.p, 3*sizeof(double));
-
-		//write to particle with p_id
-		//set pos
-		place_particle(p_id,ppos);
-		//set velocities
-		set_particle_v(p_id,last_particle.m.v);
-		#ifdef ELECTROSTATICS
-		//set charge
-		set_particle_q(p_id,last_particle.p.q);
-		#endif
-		//set type
-		set_particle_type(p_id,last_particle.p.type);
-		
-		free_particle(&last_particle );
-
-		p_id=max_seen_particle;
-		int status= remove_particle(p_id);
+	    throw std::runtime_error("Particle id is greater than the max seen particle id");
 	}
 	return 0;
 }
@@ -607,7 +591,14 @@ void ReactionEnsemble::get_random_position_in_box_enhanced_proposal_of_small_rad
 * Creates a particle at the end of the observed particle id range.
 */
 int ReactionEnsemble::create_particle(int desired_type){
-	int p_id=max_seen_particle+1;
+    int p_id;
+    if(m_empty_p_ids_smaller_than_max_seen_particle.size()>0){
+        auto p_id_iter= std::min_element(std::begin(m_empty_p_ids_smaller_than_max_seen_particle), std::end(m_empty_p_ids_smaller_than_max_seen_particle));
+        p_id=*p_id_iter;
+        m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
+    }else{
+        p_id=max_seen_particle+1;
+    }
 	double pos_vec[3];
 	
 	//create random velocity vector according to Maxwell Boltzmann distribution for components
@@ -1413,7 +1404,7 @@ double ReactionEnsemble::average_int_list(int* int_number_list, int len_int_nr_l
 /**
 *finds the minimum in an integer array and returns it
 */
-int find_minimum_in_int_list(int* list, int len){
+int ReactionEnsemble::find_minimum_in_int_list(int* list, int len){
 	double minimum =list[0];
 	for (int i=0;i<len;i++){
 		if(minimum<0)

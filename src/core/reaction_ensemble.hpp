@@ -245,6 +245,7 @@ private:
   bool all_reactant_particles_exist(int reaction_id);
   int replace(int p_id, int desired_type);
   int create_particle(int desired_type);
+  std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   int hide_particle(int p_id, int previous_type);
   void remove_bins_that_have_not_been_sampled();
   double average_int_list(int *int_number_list, int len_int_nr_list);
@@ -273,7 +274,8 @@ private:
   void get_random_position_in_box(double *out_pos);
   void
   get_random_position_in_box_enhanced_proposal_of_small_radii(double *out_pos);
-
+  int find_minimum_in_int_list(int* list, int len);
+  
   // declarations wang_landau
   int initialize_wang_landau(); // may first be called after all collective
                                 // variables are added
