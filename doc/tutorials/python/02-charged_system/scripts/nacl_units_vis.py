@@ -25,7 +25,7 @@ from threading import Thread
 import numpy
 
 system = espressomd.System()
-visualizer = openGLLive(system, {'dragForce':5*298, 'background_color': [1,1,1], 'light_pos':[30,30,30]})
+visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30])
 
 #Callbacks to control temperature 
 temperature = 298.0

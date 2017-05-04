@@ -87,7 +87,7 @@ see the \texttt{lbfluid} command for further details.
 
 \section{(Almost) generic checkpointing in Python}
 Referring to the previous section, generic checkpointing poses difficulties 
-in many ways. Fortunatelly, the Python checkpointing module presented in 
+in many ways. Fortunately, the Python checkpointing module presented in 
 this section provides a comfortable workflow for an almost generic 
 checkpointing.
 
@@ -217,16 +217,25 @@ A list of all registered object names can be generated with
 \end{pysyntax}
 
 \vspace{2em}
-A new checkpoint with a consecutive index that contains the latest data of the 
-registered objects can then be created by calling
+A new checkpoint that contains the latest data of the registered
+objects can then be created by calling
 \begin{pysyntax}
   \object{
     checkpoint
   }{
     save
   }{
-  }
+  }[
+    checkpoint_index=\arg{int}
+  ]
 \end{pysyntax}
+A new consecutive index is chosen if the optional
+\texttt{checkpoint_index} is not given.  Using an explicit checkpoint
+index existing ones can be overwritten.  This is useful to save disk
+space if a lot of data is being checkpointed and the files are huge.
+Of course this only works well if then this specific checkpoint is
+loaded again, otherwise the heuristic will choose the one with the
+highest index.
 
 \vspace{2em}
 An existing checkpoint can be loaded with 
@@ -316,88 +325,7 @@ checkpointed user variables (like \var{skin}) or checkpointed \es submodules
 \section{Writing H5MD-files}
 For large amounts of data it's a good idea to store it in the hdf5 (H5MD is
 based on hdf5) file format
-(see \url{https://www.hdfgroup.org/} for details). \es currently supports
-some basic functions for writing simulation data to H5MD files.
-\subsection{\keyword{h5md_init}: Initialize a H5MD data file}
-
-\begin{essyntax}
-h5md_init \var{/where/to/store/data/file} [\var{list\_of\_p\_ids}]
-\end{essyntax}
-The \codebox{h5md_init} command initializes the H5MD file and
-creates groups and datasets according to the conventions of H5MD (see
-\url{http://nongnu.org/h5md/}). In order to safely start from a
-checkpoint the init command automatically copies the old file to a new file
-with a "tmp" suffix. The optional argument \var{list\_of\_p\_ids} can be provided. In
-this case observables are written for these particle ids only.
-
-\subsection{\keyword{h5md_write_positions}: Write particle positions to H5MD
-file}
-
-\begin{essyntax}
-h5md_write_positions
-\opt{folded}
-\end{essyntax}
-Writes the positions of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_write_velocities}: Write particle velocities to H5MD
-file}
-
-\begin{essyntax}
-h5md_write_velocities
-\end{essyntax}
-Writes the velocities of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\begin{essyntax}
-h5md_write_forces
-\end{essyntax}
-Writes the forces of all particles to the dataset which was previously 
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable1D_init}: Initialize a user-defined H5MD
-observable}
-
-\begin{essyntax}
-h5md_observable1D_init \var{name\_of\_observable}
-\end{essyntax}
-Initializes an observable dataset of a zero dimensional, but timedependent, 
-observable with given name in the H5MD file previously
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable1D_write}: Write to a user-defined H5MD
-dataset}
-
-\begin{essyntax}
-h5md_observable1D_write \var{name\_of\_observable} \var{value}
-\end{essyntax}
-Writes \texttt{value} to a user-defined observable dataset with given name.
-
-
-\begin{essyntax}
-h5md_observable2D_init \var{name\_of\_observable}
-\end{essyntax}
-Initializes an observable dataset of a one dimensional, but timedependent, 
-observable with given \textit{property} of particles in Espresso in the H5MD file previously
-initialized by \texttt{h5md_init}.
-
-\subsection{\keyword{h5md_observable2D_write}: Write to a user-defined H5MD
-dataset}
-
-\begin{essyntax}
-h5md_observable2D_write \var{name\_of\_observable} \var{value}
-\end{essyntax}
-Writes \texttt{value} to a user-defined observable dataset with given name.
-
-\subsection{\keyword{h5md_close}: Close H5MD file}
-
-\begin{essyntax}
-h5md_close
-\end{essyntax}
-Closes the H5MD data file.
-
-
-\section{Writing H5MD-files with Python}
+(see \url{https://www.hdfgroup.org/} for details).
 To write data in a hdf5-file, first an object of the class \texttt{H5md} has to
 be created and linked to the respective hdf5-file. This may, for example, look
 like:
@@ -411,7 +339,7 @@ If a file with the given filename exists and has a valid H5MD structures it
 will be backed up to a file with suffix ".bak". This file will be removed by
 the close() method of the class which has to be called at the end of the
 simulation to close the file. The current implementation allows to write the
-following properties: positions, velocities, forces, types, and masses of the
+following properties: positions, velocities, forces, types, masses and charges of the
 particles. In order to write any property, you have to set the respective
 boolean flag as an option to the H5md class. Currently available:
 \begin{itemize}
@@ -419,24 +347,33 @@ boolean flag as an option to the H5md class. Currently available:
     \item write_vel
     \item write_force
     \item write_type
-    \item write_mass.
+    \item write_mass
+    \item write_charge
+    \item write_ordered
 \end{itemize}
-In simulations with varying numbers of particles (MC or reactions), the
+Connectivity Information is written out automatically if there are bonds in the system.
+Additionally you can force \es to write particle based properties ordered according to particle ids via the flag write\_ordered. Typically for particle numbers below or around $10^4$ the ordered, serial output (default) from the master node is faster since only one write access is needed. For very large particle numbers the unordered, parallel output is faster. 
+In simulations with varying numbers of particles (e.g. in the reaction ensemble), the
 size of the dataset will be adapted if the maximum number of particles
 increases but will not be decreased. Instead a negative fill value will 
-be written to the trajectory for the id. If you have a parallel simulation
-please keep in mind that the sequence of particles in general changes
+be written to the trajectory for the id. If you use unordered output please keep in mind that the sequence of particles in general changes
 from timestep to timestep. Therefore you have to always use the dataset
-for the ids to track which position/velocity/force/type/mass entry belongs
+for the ids to track which property entry belongs
 to which particle.
 To write data to the hdf5 file, simply call the H5md objects write method
 without any arguments.
 \begin{pycode}
 h5.write()
 \end{pycode}
+You can flush the h5md file via calling
+\begin{pycode}
+h5.flush()
+\end{pycode}
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
-\section{\texttt{blockfile}: Using the structured file format}
+
+\section{\texttt{blockfile}: Using the structured file format (deprecated)}
+
 \label{sec:structured-file-format}
 \newescommand{blockfile}
 
@@ -750,7 +687,7 @@ The files produced by this command are (assumed \var{filename} is
 
 Currently, these files have to be read by exactly the same number of MPI
 processes that was used to dump them, otherwise an error is
-signalled. Also, the same type of machine (endianess, byte order) has to
+signaled. Also, the same type of machine (endianess, byte order) has to
 be used. Otherwise only garbage will be read. The read command replaces
 the particles, i.e. all previous existent particles will be
 \textit{deleted}.
@@ -998,7 +935,7 @@ method uses the internal box length and topology information from
 espresso. If you wish to shift particles prior to folding then supply
 the optional shift information. \var{shift} should be a three member
 tcl list consisting of x, y, and z shifts respectively and each number
-should be a floating point (ie with decimal point).
+should be a floating point (i.e. with decimal point).
 
 \subsection{\lit{readpdb}: Reading the coordinates and interactions}
 \newescommand{readpdb}
@@ -1046,7 +983,7 @@ The command returns the number of particles that were successfully added.
 
 Reading bonded interactions and dihedrals is currently not supported.
 
-\section{Online-visualisation with VMD}
+\section{Online-visualization with VMD}
 \label{sec:IMD}
 \index{IMD}
 
@@ -1192,7 +1129,7 @@ which allows to quickly find the line causing the error.
 However, some errors can only be detected after changing the internal
 structures, so that \es is left in a state such that integration is
 not possible without massive fixes by the users. Especially errors
-occuring on nodes other than the primary node fall under this
+occurring on nodes other than the primary node fall under this
 condition, for example a broken bond or illegal parameter
 combinations.
 
@@ -1204,7 +1141,7 @@ message of the form
 \end{code}
 is returned. Following possibly a normal Tcl error message, after the
 background keyword all severe errors are listed node by node,
-preceeded by the node number. A special error is \lit{<consent>},
+preceded by the node number. A special error is \lit{<consent>},
 which means that one of the slave nodes found exactly the same errors
 as the master node. This happens mainly during the initialization of
 the integrate, \eg if the time step is not set. In this case the error
@@ -1217,6 +1154,279 @@ parts of the internal data also had to be changed to allow \es to
 continue, so you should really know what you do if you try and catch
 these errors.
 
+\section{Online-visualization with Mayavi or OpenGL}
+\label{sec:visualizer}
+\index{Visualization}
+
+With the python interface, \es features two possibilities for
+online-visualization: 
+
+\begin{enumerate}
+\item Using the mlab module to drive \emph{Mayavi, a "3D scientific data
+visualization and plotting in Python"}. Mayavi has a user-friendly GUI to
+specify the appearance of the output. Additional requirements: python module
+\emph{mayavi}, VTK (package \emph{python-vtk} for Debian/Ubuntu). Note that
+only VTK from version 7.0.0 and higher has Python 3 support.
+\item A direct rendering engine based on \emph{pyopengl}. As it is
+developed for \es, it supports the visualization of several specific features
+like external forces or constraints. It has no GUI to setup the appearance, but
+can be adjusted by a large set of parameters. Additional requirements: python
+module \emph{PyOpenGL}.  
+\end{enumerate}
+Both are not meant to produce high quality renderings, but rather to debug your
+setup and equilibration process.
+
+\subsection{General usage}
+
+The recommended usage of both tools is similar: Create the visualizer of your
+choice and pass it the \lstinline{espressomd.System()} object. Then write your
+integration loop in a separate function, which is started in a non-blocking
+thread. Whenever needed, call \lstinline{update()} to synchronize the renderer
+with your system. Finally start the blocking visualization window with
+\lstinline{start()}. See the following minimal code example:
+
+\begin{pycode}
+import espressomd
+from espressomd import visualization
+from threading import Thread
+
+system = espressomd.System()
+system.cell_system.skin = 0.4
+system.time_step = 0.01
+system.box_l = [10,10,10]
+
+system.part.add(pos = [1,1,1])
+system.part.add(pos = [9,9,9])
+
+visualizer = visualization.mayaviLive(system)
+#visualizer = visualization.openGLLive(system)
+
+def main_thread():
+    while True:
+        system.integrator.run(1)
+        visualizer.update()
+
+t = Thread(target=main_thread)
+t.daemon = True
+t.start()
+
+visualizer.start()
+\end{pycode}
+
+\subsection{Common methods}
+
+
+\begin{pysyntax}
+  \attributes{
+    visualization
+  }{
+    mayaviLive | openGLLive
+  }{
+    start()
+}
+\end{pysyntax}
+
+Starts the blocking visualizer window.
+
+\begin{pysyntax}
+  \attributes{
+    visualization
+  }{
+    mayaviLive | openGLLive
+  }{
+    update()
+}
+\end{pysyntax}
+
+Synchronizes system and visualizer, handles keyboard events for openGLLive. 
+
+\begin{pysyntax}
+  \object{
+    visualization.mayaviLive | openGLLive
+  }{
+    registerCallback
+  }{
+    callback
+  }[
+    interval=\arg{int}
+]
+\end{pysyntax}
+
+Registers the method \keyword{callback}, which is called every \keyword{interval} milliseconds.
+Useful for live plotting (see sample script samples/python/visualization.py)
+
+\subsection{Mayavi visualizer}
+
+The mayavi visualizer is created with the following syntax:
+
+\begin{pysyntax}
+  \object{
+    visualization
+  }{
+    mayaviLive
+  }{
+    system=\arg{object}
+  }[
+    particle_sizes=\arg{"auto" | callable | list}
+  ]
+\end{pysyntax}
+
+\begin{arguments}
+\item[\var{system}] The espressomd.System() object.
+\item[\opt{particle_sizes}] 
+\keyword{"auto"} (default): The Lennard-Jones sigma value of the self-interaction 
+is used for the particle diameter. 
+\keyword{callable}: A lambda function with one argument. Internally, the numerical 
+particle type is passed to the lambda function to determine the particle radius. 
+\keyword{list}: A list of particle radii, indexed by the particle type.
+\end{arguments}
+
+\subsection{OpenGL visualizer}
+
+\begin{pysyntax}
+  \object{
+    visualization
+  }{
+    openGLLive
+  }{
+    system=\arg{str}
+  }[
+    window_size=\arg{array of 2 ints},                        
+    name=\arg{str},	 
+    background_color=\arg{array of 3 floats},
+    periodic_images=\arg{array of 3 floats},
+    draw_box=\arg{bool},
+    quality_spheres=\arg{int},
+    quality_bonds=\arg{int},          
+    quality_arrows=\arg{int},            
+    close_cut_distance=\arg{float},
+    far_cut_distance=\arg{float},       
+    camera_position=\arg{"auto" | array of 3 floats },
+    camera_rotation=\arg{array of 2 floats},
+    particle_sizes=\arg{"auto" | callable | list},
+    particle_coloring=\arg{"auto", "id", "charge", "type"},
+    particle_type_colors=\arg{array of arrays of 4 floats},
+    particle_type_materials=\arg{array of arrays of 3 floats},
+    particle_charge_colors=\arg{array of 2 arrays of 4 floats},	 
+    draw_constraints=\arg{bool},			 
+    rasterize_pointsize=\arg{float},	     
+    rasterize_resolution=\arg{float},	     
+    quality_constraints=\arg{int},          
+    constraint_type_colors=\arg{array of arrays of 4 floats},
+    constraint_type_materials=\arg{array of arrays of 3 floats},
+    draw_bonds=\arg{bool},				 
+    bond_type_radius=\arg{array of floats},		     
+    bond_type_colors=\arg{array of arrays of 4 floats},			 
+    bond_type_materials=\arg{array of arrays of 3 floats},	     
+    ext_force_arrows=\arg{bool}, 		 
+    ext_force_arrows_scale=\arg{array of floats}, 	 
+    drag_enabled=\arg{bool},		   		 
+    drag_force=\arg{float},		   		 
+    light_pos=\arg{"auto" | array of 3 floats},				 
+    light_color=\arg{array of 3 floats},				 
+    light_brightness=\arg{float},   		 
+    light_size=\arg{float}		   		 
+  ]
+\end{pysyntax}
+
+\begin{arguments}
+\item[\var{system}] The espressomd.System() object.
+
+\item[\opt{window_size}] Size of the visualizer window in pixels.
+\item[\opt{name}] The name of the visualizer window.
+
+\item[\opt{background_color}] RGB of the background.
+\item[\opt{periodic_images}] Periodic repetitions on both sides of the box in xyz direction.
+\item[\opt{draw_box}] Draw wireframe boundaries.
+
+\item[\opt{quality_spheres}] The number of subdivisions for spheres.
+\item[\opt{quality_bonds}] The number of subdivisions for cylindrical bonds.
+\item[\opt{quality_arrows}] The number of subdivisions for external force arrows.
+
+\item[\opt{close_cut_distance}] The distance from the viewer to the near clipping plane.
+\item[\opt{far_cut_distance}] The distance from the viewer to the far clipping plane.
+\item[\opt{camera_position}] Initial camera position.
+\item[\opt{camera_rotation}] Initial camera angles.
+
+\item[\opt{particle_sizes}] 
+\keyword{"auto"} (default): The Lennard-Jones sigma value of the self-interaction 
+is used for the particle diameter.\\
+\keyword{callable}: A lambda function with one argument. Internally, the numerical 
+particle type is passed to the lambda function to determine the particle radius.\\
+\keyword{list}: A list of particle radii, indexed by the particle type.
+\item[\opt{particle_coloring}] 
+\keyword{"auto"} (default): Colors of charged particles are specified by 
+\keyword{particle_charge_colors}, neutral particles by \keyword{particle_type_colors}\\
+\keyword{"charge"}: Minimum and maximum charge of all particles is determined by the visualizer.
+All particles are colored by a linear interpolation of the two colors given by 
+\keyword{particle_charge_colors} according to their charge.\\
+\keyword{"type"}: Particle colors are specified by \keyword{particle_type_colors}, 
+indexed by their numerical particle type.
+\item[\opt{particle_type_colors}] Colors for particle types.
+\item[\opt{particle_type_materials}] Materials of the particle types.
+\item[\opt{particle_charge_colors}] Two colors for min/max charged particles.
+
+\item[\opt{draw_constraints}] Enables constraint visualization. For simple constraints.
+(planes, spheres and cylinders), OpenGL primitives are used. Otherwise, visualization by rasterization is used.
+ \item[\opt{rasterize_pointsize}] Point size for the rasterization dots.
+\item[\opt{rasterize_resolution}] Accuracy of the rasterization.
+\item[\opt{quality_constraints}] The number of subdivisions for primitive constraints.
+\item[\opt{constraint_type_colors}] Colors of the constaints by type.
+\item[\opt{constraint_type_materials}] Materials of the constraints by type.
+
+\item[\opt{draw_bonds}] Enables bond visualization.
+\item[\opt{bond_type_radius}] Radii of bonds by type.
+\item[\opt{bond_type_colors}] Color of bonds by type.
+\item[\opt{bond_type_materials}] Materials of bonds by type.
+
+\item[\opt{ext_force_arrows}] Enables external force visualization.
+\item[\opt{ext_force_arrows_scale}] Scale factor for external force arrows.
+\item[\opt{drag_enabled}] Enables mouse-controlled particles dragging (Default: False)
+\item[\opt{drag_force}] Factor for particle dragging 
+
+\item[\opt{light_pos}] If \keyword{"auto"} (default) is used, the light is placed dynamically
+in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
+\item[\opt{light_color}] Light color
+\item[\opt{light_brightness}] Brightness (inverse constant attenuation) of the light.
+\item[\opt{light_size}] Size (inverse linear attenuation) of the light.
+
+\end{arguments}
+
+The optional parameters to adjust the appearance of the visualization
+have suitable default values for most simulations. Colors for particles, bonds
+and constraints are specified by RGBA arrays, materials by an array for the
+ambient, diffuse and specular (ADS) components. To distinguish particle
+groups, arrays of RGBA or ADS entries are used, which are indexed circularly by
+the numerical particle type.
+
+\subsubsection{Keyboard controls}
+
+The camera is controlled via mouse (camera look direction), WASD-Keyboard control
+(WS: move forwards/backwards, AD: move sidewards) and the key pairs QE, RF, ZC (camera roll).
+With the keyword \lstinline{drag_enabled} set to \lstinline{True}, the mouse can be
+used to exert a force on particles in drag direction (scaled by
+\lstinline{drag_force} and the distance of particle and mouse cursor).
+Additional input functionality for mouse and keyboard is possible by assigning 
+callbacks to specified keyboard or mouse buttons. This may be useful for realtime 
+adjustment of system parameters (temperature, interactions, particle properties etc)
+of for demonstration purposes. An example can be found in samples/python/billard.py.
+
+\subsection{Visualization example scripts}
+
+Various example scripts can be found in the samples/python folder or in some tutorials:
+
+\begin{itemize}
+\item samples/python/visualization.py: LJ-Liquid with live plotting.
+\item samples/python/visualization_bonded.py: Sample for bond visualization.
+\item samples/python/billard.py: Simple billard game including many features of the openGL visualizer.
+\item samples/python/visualization_openGL.py: Timer and keyboard callbacks for the openGL visualizer.
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_vis.py: Periodic NaCl crystal, see tutorial "Charged Systems".
+\item doc/tutorials/python/02-charged_system/scripts/nacl_units_confined_vis.py: Confined NaCl with interactively adjustable electric field, see tutorial "Charged Systems".
+\item doc/tutorials/python/08-visualization/scripts/visualization.py: LJ-Liquid visualization along with tutorial "Visualization".
+\end{itemize}
+
+Finally, it is recommended to go through tutorial "Visualization" for further code explanations. 
+Also, the tutorial "Charged Systems" has two visualization examples.
 
 %%% Local Variables: 
 %%% mode: latex

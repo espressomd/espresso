@@ -128,9 +128,11 @@ if (WITH_PYTHON)
                 -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
                 OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} 
+  if(NOT PYTHON_INSTDIR)
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} 
                 -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif(NOT PYTHON_INSTDIR)
   if(PYTHON_VERSION_MAJOR EQUAL 2)
     set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
   else()

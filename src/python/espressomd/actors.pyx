@@ -165,6 +165,15 @@ class Actors:
             actor._activate()
         else:
             raise ThereCanOnlyBeOne(actor)
+            
+    def remove(self, actor):
+        self._remove_actor(actor)
+
+    def _remove_actor(self, actor):
+        if not actor in self.active_actors:
+            raise Exception("Actor is not active")
+        actor._deactivate()
+        self.active_actors.remove(actor)
 
     def __str__(self):
         print("Active Actors:")
@@ -184,7 +193,4 @@ class Actors:
 
     def __delitem__(self, idx):
         actor = self[idx]
-        if not actor in self.active_actors:
-            raise Exception("Actor is not active")
-        actor._deactivate()
-        self.active_actors.remove(actor)
+        self._remove_actor(actor)

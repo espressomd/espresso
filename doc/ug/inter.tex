@@ -198,7 +198,7 @@ A special case of the Lennard--Jones potential is the
 Weeks--Chandler--Andersen (WCA) potential, which one obtains by
 putting the cutoff into the minimum, \ie choosing
 $\var{r_\mathrm{cut}}=2^\frac{1}{6}\var{\sigma}$. The WCA potential is
-purely repulsive, and is often used to mimick hard sphere repulsion.
+purely repulsive, and is often used to mimic hard sphere repulsion.
 
 
 When coupling particles to a Shan-Chen fluid, if the \lit{affinity} interaction is set, the Lennard-Jones potential is multiplied by the function 
@@ -227,7 +227,7 @@ if both particles are in a region rich in the second component,
 then $\phi\simeq-1$, and  $A(r)\simeq 1$, so that the potential
 will be very close to the full LJ one. If the cutoff has been set
 large enough, the particle will experience the attractive part of
-the potential, mimiking the effective attraction induced by the bad
+the potential, mimicking the effective attraction induced by the bad
 solvent.
 
 
@@ -577,7 +577,7 @@ undefined.
   \end{features}
 \end{essyntax}
 This defines an interaction according to the Gaussian potential 
-between particles of the typers \var{type1} and \var{type2}.  The
+between particles of the types \var{type1} and \var{type2}.  The
 Gaussian potential is defined by
 \begin{equation}
   V(r) = 
@@ -1168,12 +1168,12 @@ stretching force between A and B is calculated using
 Here, \var{n_{AB}} is the unit vector pointing from \var{A} to \var{B}, \var{k_s} 
 is the constant for nonlinear stretching, \var{k_{slin}} 
 is the constant for linear stretching, $\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}$, and 
-$\kappa$ is a nonlinear function that resembles neo-Hookean behaviour
+$\kappa$ is a nonlinear function that resembles neo-Hookean behavior
 \begin{equation}
 \kappa(\lambda_{AB}) = \frac{\lambda_{AB}^{0.5} + \lambda_{AB}^{-2.5}}
 {\lambda_{AB} + \lambda_{AB}^{-3}}.
 \end{equation}
-Typicaly, one wants either nonlinear or linear behaviour and therefore one of $k_s, k_{slin}$ is zero. But the interaction will work with both constants non-zero. 
+Typically, one wants either nonlinear or linear behavior and therefore one of $k_s, k_{slin}$ is zero. But the interaction will work with both constants non-zero. 
 \begin{center}
   \includegraphics[width=8cm]{figures/stretching.png}
 \end{center}
@@ -1196,7 +1196,7 @@ Typicaly, one wants either nonlinear or linear behaviour and therefore one of $k
 
 \subsubsection*{Bending}
 The tendency of an elastic object to maintain the resting shape is achieved by 
-prescribing the preferred angles between the neighbouring triangles of the mesh. 
+prescribing the preferred angles between the neighboring triangles of the mesh. 
 
 Denote the angle between two triangles in the resting shape by $\theta^0$. For 
 closed immersed objects, one always has to set the inner angle. The deviation 
@@ -1426,7 +1426,7 @@ For the potential acting between the three particles three variants are possible
   \begin{equation}
     V(\alpha) = K \left[1 - \cos(\phi - \phi0)\right]
   \end{equation}
-  Around $\phi_0$, this potenial is close to a harmonic one (both are
+  Around $\phi_0$, this potential is close to a harmonic one (both are
   $1/2(\phi-\phi_0)^2$ in leading order), but it is periodic and smooth for all
   angles $\phi$.
 \item Cosine square bond angle potential \variant{3}:\\
@@ -1456,7 +1456,7 @@ dihedral potential is given by
 \begin{equation}
   V(\phi) = \var{K}\left[1 - \cos(\var{n}\phi - \var{p})\right],
 \end{equation}
-where \var{n} is the multiplicity of the potential (number of minimas)
+where \var{n} is the multiplicity of the potential (number of minima)
 and can take any integer value (typically from 1 to 6), $p$ is a phase
 parameter and \var{K} is the bending constant of the potential. $\phi$
 is the dihedral angle between the particles defined by the particle
@@ -1610,8 +1610,8 @@ To simplify this, \es{} provides a function to automatically tune the
 algorithm.  Note that for this function to work properly, your system
 should already contain an initial configuration of charges and the
 correct initial box size. Also note that both provided tuning
-algorithms work very well on homogenous charge distributions, but
-might not achieve the requested precision for highly inhomogenous or
+algorithms work very well on homogeneous charge distributions, but
+might not achieve the requested precision for highly inhomogeneous or
 symmetric systems. For example, because of the nature of the P3M
 algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
@@ -1856,7 +1856,7 @@ fluctuations in energy.
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
 
-The second variant combines the coulomb interaction for charges that are closer than $r_0$ with the Debye-Hueckel approximation for charges that are further apart than $r_1$ in a continous way. The used potential is 
+The second variant combines the coulomb interaction for charges that are closer than $r_0$ with the Debye-Hueckel approximation for charges that are further apart than $r_1$ in a continuous way. The used potential is 
 
 \begin{equation}
   U(r)^{C-DHC} = 
@@ -1868,7 +1868,7 @@ The second variant combines the coulomb interaction for charges that are closer 
   \end{cases}
 \end{equation}
 
-The parameter $\alpha$ that controlls the transition from Coulomb- to Debye-H\"uckel potential should be chosen such that the force is continous.
+The parameter $\alpha$ that controls the transition from Coulomb- to Debye-H\"uckel potential should be chosen such that the force is continuous.
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
@@ -2133,7 +2133,7 @@ The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three
 dimensions, which means $\Delta_\text{lattice} \propto a^3$.
 
-Without derivation here, the algorithmis error is proportional to
+Without derivation here, the algorithms error is proportional to
 $1/c^2$, where $c$ is the adjustable speed of light. From the
 stability criterion, this yields
 
@@ -2295,9 +2295,9 @@ Scafacos can be used as Coulomb solver for the system.
 	\end{features}
 \end{pysyntax}
 Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
-\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\texttt{tolerance_field} sets the desired rms accuracy for the electric field if supported by the method.
 \var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
-are not set, and the method supports it, the open parameteres are tuned.
+are not set, and the method supports it, the open parameters are tuned.
 To use the \texttt{ewald} solver from scafacos as electrostatics solver for your system, set its cutoff
 to $1.5$ and tune the other parameters for an accuracy of $10^{-3}$, use the command
 \begin{tclcode}
@@ -2375,7 +2375,7 @@ slab~\cite{ballenegger09a}. Therefore, under normal circumstance, you
 will probably want to disable the neutralization using
 \opt{noneutralization}. This corresponds then to a formal
 regularization of the forces and energies~\cite{ballenegger09a}. Also,
-if you add neutralizing walls explicitely as constraints, you have to
+if you add neutralizing walls explicitly as constraints, you have to
 disable the neutralization.
 
 The dielectric contrast features work exactly the same as for MMM2D,
@@ -2435,7 +2435,7 @@ allows to specify the accuracy of the iteration. It corresponds to the
 maximum relative change of any of the interface particle's
 charge. After \var{max\_iterations} the iteration stops anyways. The
 dielectric constant in bulk, i.~e. outside the dielectric walls is
-specified by \var{eps\_out}. A homogenous electric field can be added
+specified by \var{eps\_out}. A homogeneous electric field can be added
 to the calculation of dielectric boundary forces by specifying it in
 the parameter \var{ext\_field}.
 
@@ -2505,7 +2505,7 @@ with these interactions as efficiently as possible, but almost all of
 them require some knowledge to use them properly.  Uneducated use can
 result in completely unphysical simulations.
 
-The commands above work as their couterparts for the electrostatic
+The commands above work as their counterparts for the electrostatic
 interactions (see section \vref{sec:coulomb}).  Variant \variant{1}
 disables dipolar interactions.  Variant \variant{2} returns the
 current parameters of the dipolar interaction as a Tcl-list using the
@@ -2569,7 +2569,7 @@ Note that dipolar P3M does not work with non-cubic boxes.
 \end{essyntax}
 
 Tuning dipolar P3M works exactly as tuning Coulomb P3M.  Therefore,
-for details on how to tune the algorothm, refer to the documentation
+for details on how to tune the algorithm, refer to the documentation
 of Coulomb P3M (see section \vref{ssec:tunep3m}).
 
 For the magnetic case, the expressions of the error estimate are given
@@ -2591,7 +2591,7 @@ Like ELC but applied to the case of magnetic dipoles, but here the
 accuracy is the one you wish for computing the energy.
 \var{far_cutoff} is set to a value that, assuming all dipoles to be as
 larger as the largest of the dipoles in the system, the error for the
-energy would be smaller thant the value given by accuracy. At this
+energy would be smaller than the value given by accuracy. At this
 moment you cannot compute the accuracy for the forces, or torques,
 nonetheless, usually you will have an error for forces and torques
 smaller than for energies. Thus, the error for the energies is an
@@ -2690,9 +2690,9 @@ That a method is listed there, does not imply that it supports dipolar calculati
   \end{features}
 \end{essyntax}
 Here \var{method} is a scafacos method as returned by \texttt{scafacos_methods}. 
-\texttt{tolerance_field} sets the desisired rms accuracy for the electric field if supported by the method.
+\texttt{tolerance_field} sets the desired rms accuracy for the electric field if supported by the method.
 \var{parameters} is a list of parameters as described by the Scafacos manual. If parameters of the solver
-are not set, and the method supports it, the open parameteres are tuned.
+are not set, and the method supports it, the open parameters are tuned.
 For details of the various methods and their parameters please refer to the Scafacos manual.
 Note that the \texttt{SCAFACOS} feature is only available if you build with cmake. You need
 to build Scafacos as a shared library.

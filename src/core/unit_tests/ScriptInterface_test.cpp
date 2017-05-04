@@ -19,6 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <type_traits>
+
 #define BOOST_TEST_MODULE ScriptInterface test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -52,9 +54,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   }
 
   /* Not needed for testing */
-  map<string, Parameter> valid_parameters() const override {
-    return {};
-  }
+  map<string, Parameter> valid_parameters() const override { return {}; }
 
   void set_parameter(const string &name, const Variant &value) {
     SET_PARAMETER_HELPER("bool_opt", bool_opt);
@@ -64,8 +64,9 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
     SET_PARAMETER_HELPER("vec_int", vec_int);
   }
 
-  Variant call_method(const std::string& name, const VariantMap &params) override {
-    if(name == "test_method") {
+  Variant call_method(const std::string &name,
+                      const VariantMap &params) override {
+    if (name == "test_method") {
       method_called = true;
     }
 
@@ -82,6 +83,11 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
 } /* namespace Testing */
 
 using namespace Testing;
+
+BOOST_AUTO_TEST_CASE(non_copyable) {
+  static_assert(!std::is_copy_constructible<ScriptInterfaceBase>::value, "");
+  static_assert(!std::is_copy_assignable<ScriptInterfaceBase>::value, "");
+}
 
 /**
  * We check the default implementations of set_parameters

@@ -1213,8 +1213,9 @@ void force_and_velocity_display() {
 
 /** @TODO: This needs to go!! */
 
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
-
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  int reuse_forces = 0;
+  reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
 
   if (recalc_forces) {
@@ -1252,6 +1253,12 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
       reuse_forces = 1;
       Observables::auto_update();
       Correlators::auto_update();
+
+      if ( Observables::auto_write_enabled() )
+      {
+        Observables::auto_write();
+      }
+
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))

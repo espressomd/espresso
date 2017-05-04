@@ -21,7 +21,6 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import espressomd._system as es
-from espressomd import code_info
 import numpy as np
 from espressomd.interactions import *
 
@@ -92,7 +91,7 @@ class ParticleProperties(ut.TestCase):
     test_harmonic2 = generateTestForBondParams(
         0, HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
 
-    if "ROTATION" in code_info.features():
+    if espressomd.has_features(["ROTATION"]):
         test_harmonic_dumbbell = generateTestForBondParams(
             0, HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
         test_harmonic_dumbbell2 = generateTestForBondParams(
@@ -101,21 +100,21 @@ class ParticleProperties(ut.TestCase):
     test_dihedral = generateTestForBondParams(
         0, Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
     
-    if "BOND_ANGLE" in espressomd.features():
+    if espressomd.has_features(["BOND_ANGLE"]):
         test_angle_harm = generateTestForBondParams(
             0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
         test_angle_cos = generateTestForBondParams(
             0, Angle_Cosine, {"bend": 5.2, "phi0": 3.2})
         test_angle_cossquare = generateTestForBondParams(
             0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
-    if "LENNARD_JONES" in espressomd.features():
+    if espressomd.has_features(["LENNARD_JONES"]):
         test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
 
-    if "TABULATED" in espressomd.features():
+    if espressomd.has_features(["TABULATED"]):
       test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance", "filename":"lj1.tab"})
 
 
 
 if __name__ == "__main__":
-    print("Features: ", code_info.features())
+    print("Features: ", espressomd.features())
     ut.main()

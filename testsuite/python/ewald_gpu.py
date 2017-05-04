@@ -23,28 +23,29 @@ import unittest as ut
 import numpy as np
 from tests_common import *
 
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS","CUDA","EWALD_GPU"]),
+           "Features not available, skipping test!")
 class ewald_GPU_test(ut.TestCase):
-    if "ELECTROSTATICS" in espressomd.features() and "CUDA" in espressomd.features() and "EWALD_GPU" in espressomd.features():
+    def runTest(self):
         from espressomd.electrostatics import EwaldGpu
 
-        def runTest(self):
-            es = espressomd.System()
-            test_params = {}
-            test_params["bjerrum_length"] = 2
-            test_params["num_kx"] = 2
-            test_params["num_ky"] = 2
-            test_params["num_kz"] = 2
-            test_params["K_max"] = 10
-            test_params["time_calc_steps"] = 100
-            test_params["rcut"] = 0.9
-            test_params["accuracy"] = 1e-1
-            test_params["precision"] = 1e-2
-            test_params["alpha"] = 3.5
-    
-            ewald = EwaldGpu(**test_params)
-            es.actors.add(ewald)
-            self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
+        es = espressomd.System()
+        test_params = {}
+        test_params["bjerrum_length"] = 2
+        test_params["num_kx"] = 2
+        test_params["num_ky"] = 2
+        test_params["num_kz"] = 2
+        test_params["K_max"] = 10
+        test_params["time_calc_steps"] = 100
+        test_params["rcut"] = 0.9
+        test_params["accuracy"] = 1e-1
+        test_params["precision"] = 1e-2
+        test_params["alpha"] = 3.5
 
-    if __name__ == "__main__":
-        print("Features: ", espressomd.features())
-        ut.main()
+        ewald = EwaldGpu(**test_params)
+        es.actors.add(ewald)
+        self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
+
+if __name__ == "__main__":
+    print("Features: ", espressomd.features())
+    ut.main()

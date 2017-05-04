@@ -1,9 +1,12 @@
 from espressomd.utils import to_char_pointer
 
 cdef class PScriptInterface:
-    def __init__(self, name=None):
+    def __init__(self, name=None, policy="GLOBAL"):
         if name:
-            self.sip = make_shared(to_char_pointer(name), GLOBAL)
+            if(policy=="GLOBAL"):
+                self.sip = make_shared(to_char_pointer(name), GLOBAL)
+            else:
+                self.sip = make_shared(to_char_pointer(name), LOCAL)
             self.parameters = self.sip.get().valid_parameters()
         else:
             self.sip = shared_ptr[ScriptInterfaceBase]()
@@ -21,6 +24,14 @@ cdef class PScriptInterface:
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
         self.sip = sip
         self.parameters = self.sip.get().valid_parameters()
+
+    def _valid_parameters(self):
+        parameters = []
+
+        for p in self.sip.get().valid_parameters():
+            parameters.append(p.first)
+
+        return parameters
 
     def id(self):
         oid = PObjectId()
@@ -167,6 +178,24 @@ class ScriptInterfaceHelper(PScriptInterface):
         super(ScriptInterfaceHelper,self).__init__(self._so_name)
         self.set_params(**kwargs)
         self.define_bound_methods()
+
+    def __dir__(self):
+        return self.__dict__.keys() + self._valid_parameters()
+
+    def __getattr__(self, attr):
+        if attr in self._valid_parameters():
+            return self.get_parameter(attr)
+        else:
+            try:
+                return self.__dict__[attr]
+            except KeyError:
+                raise AttributeError
+
+    def __setattr__(self, attr, value):
+        if attr in self._valid_parameters():
+            self.set_params(**{attr:value})
+        else:
+            self.__dict__[attr] = value
 
     def generate_caller(self,method_name):
         def template_method(**kwargs):
