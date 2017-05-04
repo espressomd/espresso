@@ -4,6 +4,7 @@ set(py_tests  bondedInteractions.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
+              dawaanr-and-dds-gpu.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
@@ -17,6 +18,7 @@ set(py_tests  bondedInteractions.py
               particle.py
               pair_criteria.py
               rotational_inertia.py
+              script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
               lb_stokes_sphere_gpu.py
