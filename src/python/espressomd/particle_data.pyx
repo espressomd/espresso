@@ -1693,7 +1693,10 @@ cdef class ParticleList:
 
         """
         global box_l
+
         if not hasattr(types, '__iter__'):
+            types = [types]
+        if types == "all":
             types = [types]
             
         fp.write("unitcell {} {} {}\n".format(*(box_l)))
@@ -1723,7 +1726,10 @@ cdef class ParticleList:
                    File pointer to write to.
 
         """
+
         if not hasattr(types, '__iter__'):
+            types = [types]
+        if types == "all":
             types = [types]
 
         fp.write("\ntimestep indexed\n")
