@@ -34,13 +34,14 @@ namespace ClusterAnalysis {
 class ClusterStructure : public AutoParameters {
 public:
   ClusterStructure(){
+    m_pc = make_shared<PairCriteria::PairCriterion>();
     add_parameters({
                     {"pair_criterion",
                      [this](Variant const &value) {
                        m_pc =
                            get_value<std::shared_ptr<PairCriteria::PairCriterion>>(value);
                        if (m_pc) {
-                         m_cluster_structure->set_pair_criterion(m_pc->pair_criterion());
+                         m_cluster_structure.set_pair_criterion(m_pc->pair_criterion());
                        };
 
                      },
@@ -56,33 +57,39 @@ public:
       // Note: Cluster objects are generated on the fly, to avoid having to store
       // a script interface object for all clusters (which can by thousands)
       std::shared_ptr<Cluster> c = std::make_shared<Cluster>();
-      c->set_cluster(m_cluster_structure->clusters.at(boost::get<int>(parameters.at("id"))));
+      c->set_cluster(m_cluster_structure.clusters.at(boost::get<int>(parameters.at("id"))));
       return Variant(c->id());
     }
     if (method == "cluster_ids") {
       std::vector<int> cluster_ids;
-      for (auto it : m_cluster_structure->clusters) {
+      for (auto it : m_cluster_structure.clusters) {
          cluster_ids.push_back(it.first);
       }
       return cluster_ids;
     }
     if (method == "cid_for_particle") {
-      return m_cluster_structure->cluster_id.at(boost::get<int>(parameters.at("pid")));
+      return m_cluster_structure.cluster_id.at(boost::get<int>(parameters.at("pid")));
     }
-    if ("method"=="clear") {
-      m_cluster_structure->clear();
+    if (method=="clear") {
+      m_cluster_structure.clear();
+      return nullptr;
     }
-    if ("name" == "run_for_all_pairs") {
-      m_cluster_structure->run_for_all_pairs();
+    if (method == "run_for_all_pairs") {
+      m_cluster_structure.run_for_all_pairs();
+      return nullptr;
     }
-    if ("name" == "run_for_bonded_particles") {
-      m_cluster_structure->run_for_bonded_particles();
+    if (method == "run_for_bonded_particles") {
+      m_cluster_structure.run_for_bonded_particles();
+      return nullptr;
     }
+    return nullptr;
   }                              
 private:
-  std::shared_ptr<::ClusterStructure> m_cluster_structure;
+  ::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
 };
+
+
 
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */
