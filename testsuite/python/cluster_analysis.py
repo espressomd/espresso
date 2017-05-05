@@ -43,12 +43,12 @@ class ClusterAnalysis(ut.TestCase):
     # 2nd cluster
     es.part.add(id=4,pos=(0.5,0.5,0.5))
     es.part.add(id=5,pos=(0.55,0.5,0.5))
-    #cs=ClusterStructure()
+    cs=ClusterStructure()
 
-    def atest_00_fails_without_criterion_set(self):
+    def test_00_fails_without_criterion_set(self):
         self.assertRaises(self.cs.run_for_all_pairs())
     
-    def atest_set_criterion(self):
+    def test_set_criterion(self):
         # Test setters/getters for criteria
         dc=DistanceCriterion(cut_off=0.11)
         self.cs.set_params(pair_criterion=dc)
@@ -63,19 +63,19 @@ class ClusterAnalysis(ut.TestCase):
 
     def test_analysis_for_all_pairs(self):
         # Run cluster analysis 
-        dc=DistanceCriterion(cut_off=0.12)
-        self.cs=ClusterStructure()
-        self.cs.set_params(pair_criterion=dc)
+        self.cs.set_params(pair_criterion=DistanceCriterion(cut_off=0.12))
         self.cs.run_for_all_pairs()
 
-
         # Number of clusters
+        self.assertTrue(len(self.cs.clusters)==2)
         cids=self.cs.cluster_ids()
-        self.assertTrue(len(cids)==2)
+        print(cids)
+        print(self.cs.clusters)
+        print(self.cs.clusters[cids[0]])
 
         # Sizes of individual clusters
+        l2=self.cs.clusters[cids[1]].size()
         l1=len(self.cs.clusters[cids[0]].particle_ids())
-        l2=len(self.cs.clusters[cids[1]].size())
         
         # Clusters should contain 2 and 4 particles
         self.assertTrue(min(l1,l2)==2)
@@ -92,31 +92,43 @@ class ClusterAnalysis(ut.TestCase):
             bigger_cluster=self.cs.clusters[cids[0]]
 
         self.assertTrue(bigger_cluster.particle_ids()==[0,1,2,3])
-        self.assertTruegger(smaller_cluster.particle_ids()==[4,5])
+        self.assertTrue(smaller_cluster.particle_ids()==[4,5])
 
         # Test obtaining a ParticleSlice for a cluster
         pids=bigger_cluster.particle_ids()
         particles=bigger_cluster.particles()
         # Do the number of entries match
-        self.assertTrue(len(pids)==len(particles))
+        self.assertTrue(len(pids)==len(particles.id_selection))
         
         # Compare ids of particles in the slice
-        slef.assertTrue(particles.id_selection==pids)
+        self.assertTrue(all(particles.id_selection)==all(pids))
+
+
+        # Test iteration over clusters
+        visited_sizes=[]
+        for c in self.cs.clusters:
+            visited_sizes.append(c[1].size())
+        visited_sizes=sorted(visited_sizes)
+        self.assertTrue(visited_sizes==[2,4])
+        
+
 
         
         
           
     
-    def atest_analysis_for_bonded_particles(self):
+    def test_analysis_for_bonded_particles(self):
         # Run cluster analysis 
         self.cs.set_params(pair_criterion=BondCriterion(bond_type=0))
         self.cs.run_for_bonded_particles()
 
         # There should be one cluster containing particles 0 and 1
         self.assertTrue(len(self.cs.clusters)==1)
-        self.assertTrue(self.clusters[0].particle_ids()==[0,1])
-
-
+        self.assertTrue(self.cs.clusters[self.cs.cluster_ids()[0]].particle_ids()==[0,1])
+        
+        # Check particle to cluster id mapping, once by ParticleHandle, once by id
+        self.assertTrue(self.cs.cid_for_particle(self.es.part[0])==self.cs.cluster_ids()[0])
+        self.assertTrue(self.cs.cid_for_particle(1)==self.cs.cluster_ids()[0])
 
         
 

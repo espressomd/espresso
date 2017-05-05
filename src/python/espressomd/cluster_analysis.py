@@ -14,7 +14,7 @@ class Cluster(ScriptInterfaceHelper):
     _so_name = "ClusterAnalysis::Cluster";
     _so_bind_methods = ("particle_ids","size")
 
-    def particles():
+    def particles(self):
         return ParticleSlice(self.particle_ids())
 
 
@@ -84,6 +84,9 @@ class Clusters:
        return self.cluster_structure.call_method("get_cluster",id=cluster_id)
 
    def __iter__(self):
-       for cid in self.cluster_ids():
-           yield (cid,self.cluster_structure.call_method("get_cluster",id=cluster_id))
+       for cid in self.cluster_structure.cluster_ids():
+           yield (cid,self.cluster_structure.call_method("get_cluster",id=cid))
+           
+   def __len__(self):
+        return self.cluster_structure.call_method("n_clusters")
 

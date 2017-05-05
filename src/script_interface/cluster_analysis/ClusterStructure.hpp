@@ -56,9 +56,17 @@ public:
       
       // Note: Cluster objects are generated on the fly, to avoid having to store
       // a script interface object for all clusters (which can by thousands)
-      std::shared_ptr<Cluster> c = std::make_shared<Cluster>();
+      std::shared_ptr<Cluster> c = ScriptInterfaceBase::make_shared<Cluster>();
       c->set_cluster(m_cluster_structure.clusters.at(boost::get<int>(parameters.at("id"))));
-      return Variant(c->id());
+      
+      // Store a temporary copy of the most recent cluster being returned.
+      // This ensures, that the reference count of the shared_ptr doesn't go
+      // to zero, while it is passed to Python.
+      // (At some point, it is converted to an ObjectId, which is passed
+      //  to Python, where a new script object is construted. While it is
+      // passed as ObjectId, noone holds an instance of the shared_ptr)
+      m_tmp_cluster=c;
+      return Variant(m_tmp_cluster->id());
     }
     if (method == "cluster_ids") {
       std::vector<int> cluster_ids;
@@ -66,6 +74,9 @@ public:
          cluster_ids.push_back(it.first);
       }
       return cluster_ids;
+    }
+    if (method=="n_clusters") {
+      return int(m_cluster_structure.clusters.size());
     }
     if (method == "cid_for_particle") {
       return m_cluster_structure.cluster_id.at(boost::get<int>(parameters.at("pid")));
@@ -87,6 +98,7 @@ public:
 private:
   ::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
+  std::shared_ptr<Cluster> m_tmp_cluster;
 };
 
 
