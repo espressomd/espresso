@@ -104,7 +104,6 @@ typedef struct wang_landau_system {
   int polymer_end_id;
   bool fix_polymer;
   bool do_not_sample_reaction_partition_function;
-  bool use_hybrid_monte_carlo;
 } wang_landau_system;
 
 double calculate_degree_of_association(int index_of_current_collective_variable,
@@ -199,8 +198,7 @@ public:
       .polymer_end_id = -10,
       .fix_polymer = false,
       .do_not_sample_reaction_partition_function = false,
-      .use_hybrid_monte_carlo =
-          false}; // use negative value as fill value since it cannot occur in
+      }; // use negative value as fill value since it cannot occur in
                   // the wang_landau algorithm in the histogram and in the wang
                   // landau potential, use only 1 wang_landau_steps if you want
                   // to record other observables in the tcl script.
@@ -307,6 +305,7 @@ private:
   int m_WL_tries = 0;
 
   // declarations constant pH
+  int get_random_p_id();
   double
   calculate_boltzmann_factor_consant_pH(single_reaction *current_reaction,
                                         double E_pot_old, double E_pot_new);

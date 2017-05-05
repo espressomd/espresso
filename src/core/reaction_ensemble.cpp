@@ -525,9 +525,11 @@ int ReactionEnsemble::delete_particle(int p_id) {
 		// last particle, just delete
 		remove_particle(p_id);
 		// remove all saved empty p_ids which are greater than the max_seen_particle this is needed in order to avoid the creation of holes
-        for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin(); p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end(); ++p_id_iter){
+        for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin(); p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end(); ){
             if( (*p_id_iter) >=max_seen_particle)
-                p_id_iter=m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
+                p_id_iter=m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter); //update iterator after container was modified
+            else
+                ++p_id_iter;
         }
 	} else if (p_id <= max_seen_particle){
         remove_particle(p_id);
@@ -595,7 +597,7 @@ int ReactionEnsemble::create_particle(int desired_type){
     if(m_empty_p_ids_smaller_than_max_seen_particle.size()>0){
         auto p_id_iter= std::min_element(std::begin(m_empty_p_ids_smaller_than_max_seen_particle), std::end(m_empty_p_ids_smaller_than_max_seen_particle));
         p_id=*p_id_iter;
-        p_id_iter=m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter); //update iterator after container was modified
+        m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
     }else{
         p_id=max_seen_particle+1;
     }
@@ -1265,28 +1267,22 @@ bool ReactionEnsemble::do_HMC_move_wang_landau(){
 	
 	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, NULL);
 	
-	double particle_positions[3*(max_seen_particle+1)];
+	double particle_positions[3*n_part];
 
 	//save old_position and set random velocities
-	for(int p_id=0; p_id<max_seen_particle+1; p_id++){
-		//save old positions
-		Particle part;
-		get_particle_data(p_id, &part);
-		double ppos[3];
-		memmove(ppos, part.r.p, 3*sizeof(double));
-		free_particle(&part);
-		particle_positions[3*p_id]=ppos[0];
-		particle_positions[3*p_id+1]=ppos[1];
-		particle_positions[3*p_id+2]=ppos[2];
+	int status=updatePartCfg(WITHOUT_BONDS);
+	for (int i=0; i<n_part; i++) {
+	    //Check whether this loop still runs with holes in the particle id range
+		memmove(&(particle_positions[3*i]), partCfg[i].r.p, 3*sizeof(double));
+		
 		//create random velocity vector according to Maxwell Boltzmann distribution for components
 		double vel[3];
 		//we usse mass=1 for all particles, think about adapting this
 		vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-		set_particle_v(p_id,vel);
-
-	}
+		set_particle_v(partCfg[i].p.identity,vel);
+    }
 	mpi_integrate(20,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on a thermostat	
 	
 	const int new_state_index=get_flattened_index_wang_landau_of_current_state();
@@ -1312,9 +1308,14 @@ bool ReactionEnsemble::do_HMC_move_wang_landau(){
 			update_wang_landau_potential_and_histogram(old_state_index);
 		}
 		//create particles again at the positions they were
-		for(int p_id=0; p_id<max_seen_particle+1; p_id++)
-			place_particle(p_id,&particle_positions[3*p_id]);
+		for (int i=0; i<n_part; i++) {
+	        Particle part =partCfg[i];
+		    memmove(part.r.p, &(particle_positions[3*i]), 3*sizeof(double));
+		    //TODO reset velocities
+        }
+		
 	}
+	printf("00400\n");
 	return got_accepted;
 }
 
@@ -1719,7 +1720,12 @@ int ReactionEnsemble::load_wang_landau_checkpoint(char* identifier){
 
 
 
-
+int ReactionEnsemble::get_random_p_id(){
+    int random_p_id = i_random(max_seen_particle); // only used to determine which reaction is attempted.
+    while(is_in_list(random_p_id, m_empty_p_ids_smaller_than_max_seen_particle.data(), m_empty_p_ids_smaller_than_max_seen_particle.size()))
+        random_p_id = i_random(max_seen_particle);
+    return random_p_id;
+}
 
 
 
@@ -1739,7 +1745,7 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	int* list_of_reaction_ids_with_given_reactant_type=NULL;
 	int found_reactions_with_given_reactant_type=0;
 	while(found_reactions_with_given_reactant_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
-		int random_p_id = i_random(max_seen_particle); // only used to determine which reaction is attempted.
+		int random_p_id =get_random_p_id(); // only used to determine which reaction is attempted.
 		Particle part;
 		int found_particle=get_particle_data(random_p_id,&part);
 		int type_of_random_p_id = part.p.type;

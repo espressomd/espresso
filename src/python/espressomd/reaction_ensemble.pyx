@@ -340,8 +340,6 @@ IF REACTION_ENSEMBLE:
                                            sets the path to the output file of the Wang-Landau algorithm which contains the Wang-Landau potential
             do_not_sample_reaction_partition_function : bool
                                                         avoids sampling the Reaction ensemble partition function in the Wang-Landau algorithm. Therefore this option makes all degrees of association equally probable. This option may be used in the sweeping mode of the reaction ensemble, since the reaction ensemble partition function can be later added analytically.
-            use_hybrid_monte_carlo : bool
-                                     this is an experimental implementation only and per default it is turned off! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).            
             """
             for k in kwargs:
                 if k in self._valid_keys_set_wang_landau_parameters():
@@ -352,7 +350,6 @@ IF REACTION_ENSEMBLE:
             RE.m_current_wang_landau_system.wang_landau_steps=self._params["wang_landau_steps"]
             RE.m_current_wang_landau_system.output_filename=strdup(self._params["filename"])
             RE.m_current_wang_landau_system.do_not_sample_reaction_partition_function=self._params["do_not_sample_reaction_partition_function"]
-            RE.m_current_wang_landau_system.use_hybrid_monte_carlo=self._params["use_hybrid_monte_carlo"]
 
         def _valid_keys_set_wang_landau_parameters(self):
             return "final_wang_landau_parameter", "wang_landau_steps", "full_path_to_output_filename", "do_not_sample_reaction_partition_function", "use_hybrid_monte_carlo"
@@ -400,6 +397,12 @@ IF REACTION_ENSEMBLE:
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
             RE.do_global_mc_move_for_particles_of_type(type_mc, RE.m_current_wang_landau_system.polymer_start_id,RE.m_current_wang_landau_system.polymer_end_id, 1, True)
+        
+        def hybrid_monte_carlo_move(self):
+            """
+            this performs in an experimental implementation only a hybrid Monte Carlo move! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).     
+            """
+            RE.do_HMC_move_wang_landau();
         
         ##specify information for configuration changing monte carlo move
         property polymer_start_id:

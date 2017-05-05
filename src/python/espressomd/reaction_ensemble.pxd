@@ -70,7 +70,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int polymer_end_id
         bool fix_polymer
         bool do_not_sample_reaction_partition_function
-        bool use_hybrid_monte_carlo
 
     cdef cppclass c_reaction_ensemble "ReactionEnsemble::ReactionEnsemble":
         reaction_system m_current_reaction_system
@@ -94,6 +93,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int write_wang_landau_checkpoint(char* identifier)
         int load_wang_landau_checkpoint(char* identifier)
         void write_wang_landau_results_to_file(char* full_path_to_output_filename)
+        bool do_HMC_move_wang_landau()
 
     #///////////////////////////////////////////// Constant-pH ensemble
         double m_constant_pH

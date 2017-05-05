@@ -87,7 +87,7 @@ np.savetxt("energy_boundaries.dat", np.c_[[0,1],[0,0],[9,9]], header="nbar E_min
 
 RE.add_collective_variable_degree_of_association(associated_type=0,min=0,max=1,corresponding_acid_types=[0,1])
 RE.add_collective_variable_potential_energy(filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat", use_hybrid_monte_carlo=False)
+RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat")
 
 i=0
 while True:
