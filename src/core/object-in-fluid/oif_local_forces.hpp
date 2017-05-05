@@ -121,7 +121,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
                         fp3[i] = fp4[i] + CC[i];
                     }
 				} else {
-					printf("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+					printf("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...\n");
 					return 0;
 				}
 			}
@@ -150,7 +150,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         force3[i] = 0;
         force4[i] = 0;
     }
-    
+
     // non-linear stretching
     if (iaparams->p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
         vecsub(fp2,fp3,dx);
