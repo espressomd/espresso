@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer,to_str
+from espressomd.utils import to_char_pointer, to_str
 
 cdef class PObjectId:
     cpdef ObjectId id
