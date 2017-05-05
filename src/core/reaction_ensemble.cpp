@@ -520,12 +520,12 @@ int ReactionEnsemble::hide_particle(int p_id, int previous_type){
 */
 
 int ReactionEnsemble::delete_particle(int p_id) {
-	/**copies last particle to the particle with id p_id and deletes the then last one */
+	/**deletes the particle with the provided id and stores if it created a hole at that position in the particle id range */
 	if (p_id == max_seen_particle) {
 		// last particle, just delete
 		remove_particle(p_id);
 		// remove all saved empty p_ids which are greater than the max_seen_particle this is needed in order to avoid the creation of holes
-        for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin(); p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end(); ++p_id_iter){
+        for (std::vector<int>::iterator p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin(); p_id_iter != m_empty_p_ids_smaller_than_max_seen_particle.end(); ++p_id_iter){
             if( (*p_id_iter) >=max_seen_particle)
                 m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
         }
@@ -593,7 +593,7 @@ void ReactionEnsemble::get_random_position_in_box_enhanced_proposal_of_small_rad
 int ReactionEnsemble::create_particle(int desired_type){
     int p_id;
     if(m_empty_p_ids_smaller_than_max_seen_particle.size()>0){
-        auto p_id_iter= std::min_element(std::begin(m_empty_p_ids_smaller_than_max_seen_particle), std::end(m_empty_p_ids_smaller_than_max_seen_particle));
+        std::vector<int>::iterator p_id_iter= std::min_element(std::begin(m_empty_p_ids_smaller_than_max_seen_particle), std::end(m_empty_p_ids_smaller_than_max_seen_particle));
         p_id=*p_id_iter;
         m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
     }else{
