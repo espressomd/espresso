@@ -1270,10 +1270,11 @@ bool ReactionEnsemble::do_HMC_move_wang_landau(){
 	double particle_positions[3*n_part];
 
 	//save old_position and set random velocities
-	int status=updatePartCfg(WITHOUT_BONDS);
 	for (int i=0; i<n_part; i++) {
-	    //Check whether this loop still runs with holes in the particle id range
-		memmove(&(particle_positions[3*i]), partCfg[i].r.p, 3*sizeof(double));
+	    updatePartCfg(WITHOUT_BONDS);
+	    Particle* part=&(partCfg[i]);
+	    double ppos[3];
+		memmove(&(particle_positions[3*i]), part->r.p, 3*sizeof(double));
 		
 		//create random velocity vector according to Maxwell Boltzmann distribution for components
 		double vel[3];
@@ -1281,7 +1282,7 @@ bool ReactionEnsemble::do_HMC_move_wang_landau(){
 		vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
 		vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-		set_particle_v(partCfg[i].p.identity,vel);
+		set_particle_v(part->p.identity,vel);
     }
 	mpi_integrate(20,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on a thermostat	
 	
@@ -1309,19 +1310,17 @@ bool ReactionEnsemble::do_HMC_move_wang_landau(){
 		}
 		//create particles again at the positions they were
 		for (int i=0; i<n_part; i++) {
-	        Particle part =partCfg[i];
-		    memmove(part.r.p, &(particle_positions[3*i]), 3*sizeof(double));
-		    //TODO reset velocities
+		    updatePartCfg(WITHOUT_BONDS);
+	        Particle* part =&partCfg[i];
+	        place_particle(part->p.identity,&(particle_positions[3*i]));
         }
-		
 	}
-	printf("00400\n");
 	return got_accepted;
 }
 
 
 /** Performs a randomly selected reaction using the Wang-Landau algorithm.
-*make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_one_particle_of_type_wang_landau, or do_HMC_move_wang_landau
+*make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_particles_of_type, or do_HMC_move_wang_landau
 *perform additional Monte-carlo moves to to sample configurational partition function
 *according to "Density-of-states Monte Carlo method for simulation of fluids"
 do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)*/
@@ -1721,7 +1720,7 @@ int ReactionEnsemble::load_wang_landau_checkpoint(char* identifier){
 
 
 int ReactionEnsemble::get_random_p_id(){
-    int random_p_id = i_random(max_seen_particle); // only used to determine which reaction is attempted.
+    int random_p_id = i_random(max_seen_particle); 
     while(is_in_list(random_p_id, m_empty_p_ids_smaller_than_max_seen_particle.data(), m_empty_p_ids_smaller_than_max_seen_particle.size()))
         random_p_id = i_random(max_seen_particle);
     return random_p_id;
