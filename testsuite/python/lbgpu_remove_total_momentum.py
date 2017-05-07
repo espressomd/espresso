@@ -17,6 +17,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
         dens  = 1.0
 
         s = espressomd.System()
+        s.set_random_state_PRNG()
         s.box_l = [10,10,10]
         s.time_step = dt
         s.cell_system.skin = skin

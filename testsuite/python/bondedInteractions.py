@@ -30,6 +30,7 @@ class ParticleProperties(ut.TestCase):
     #    self.pid=particleId
     # the system which will be tested
     system = espressomd.System()
+    system.set_random_state_PRNG()
 
     # Particle id to work on
     pid = 17

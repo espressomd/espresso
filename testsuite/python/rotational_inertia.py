@@ -10,6 +10,7 @@ class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
 
     def define_rotation_matrix(self, part):
         A = np.zeros((3,3))

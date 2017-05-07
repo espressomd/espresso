@@ -22,6 +22,7 @@ class SwimmerTest(ut.TestCase):
         tstep = 0.01
 
         S.box_l = [boxl, boxl, boxl]
+        S.set_random_state_PRNG()
         S.cell_system.skin = 0.1
         S.time_step = tstep
 

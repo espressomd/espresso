@@ -35,6 +35,7 @@ class Tabulated(ut.TestCase):
     epsilon=1e-6
 
     system = espressomd.System()
+    system.set_random_state_PRNG()
 
     def setUp(self):
 

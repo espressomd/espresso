@@ -27,6 +27,7 @@ class SwimmerTest(ut.TestCase):
             return v_swim*(-1./gamma + t + (1./gamma)*np.exp(-gamma*t))+z0
 
         S = espressomd.System()
+        S.set_random_state_PRNG()
 
         S.box_l = [boxl, boxl, boxl]
         S.cell_system.skin = 0.1

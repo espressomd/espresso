@@ -31,6 +31,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
     # Handle to espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
 
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the bond 

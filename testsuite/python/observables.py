@@ -34,6 +34,7 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
 
     def arraysNearlyEqual(self, a, b):
         """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""

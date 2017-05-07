@@ -33,6 +33,7 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
 
 
     def test_corr(self):

@@ -17,6 +17,7 @@ class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
     
     def vectorsTheSame(self,a,b):
         tol = 3E-3

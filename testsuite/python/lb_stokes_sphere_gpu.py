@@ -19,7 +19,8 @@ import sys
            "Features not available, skipping test!")
 class Stokes(ut.TestCase):
 
-    es = System()	
+    es = System()
+    es.set_random_state_PRNG()
 
     def test_stokes(self):
         # System setup

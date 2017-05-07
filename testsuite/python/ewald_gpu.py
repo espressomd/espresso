@@ -30,6 +30,7 @@ class ewald_GPU_test(ut.TestCase):
         from espressomd.electrostatics import EwaldGpu
 
         es = espressomd.System()
+        es.set_random_state_PRNG()
         test_params = {}
         test_params["bjerrum_length"] = 2
         test_params["num_kx"] = 2

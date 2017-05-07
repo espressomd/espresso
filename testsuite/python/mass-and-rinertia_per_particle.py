@@ -11,6 +11,7 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.set_random_state_PRNG()
 
     def run_test_case(self, test_case):
         gamma = np.array([1.0, 1.0])
