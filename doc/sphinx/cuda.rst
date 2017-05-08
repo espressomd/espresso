@@ -14,17 +14,24 @@ to check whether your desired method can be used on the GPU.
 In order to use GPU acceleration
 your GPU should at least have compute capability 2.0.
 
-Selection of Cuda device
+List available CUDA devices
+===========================
+
+If you want to list available CUDA devices
+you should call :attr:`espressomd.cuda_init.CudaInitHandle.device_list`::
+
+    >>> cuda_handle = espressomd.cuda_init.CudaInitHandle()
+    >>> cuda_handle.device_list
+
+Selection of CUDA device
 ========================
 
 When you start ``pypresso`` your first GPU should
 be selected. If you wanted
-In order to use GPU acceleration you first need to select
-the desired Cuda device. 
-If you wanted to use the first GPU, this can be done as follows::
+If you wanted to use the second GPU, this can be done as follows::
 
-    >>> cuda_handle = espressomd.cuda_init.CudaInitHandle()
-    >>> cuda_handle.device = 0
+    >>> CUDA_handle = espressomd.CUDA_init.CUDAInitHandle()
+    >>> CUDA_handle.device = 1
 
 
 

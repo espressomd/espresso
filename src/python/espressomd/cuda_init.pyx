@@ -58,15 +58,22 @@ cdef class CudaInitHandle:
                     raise Exception("cuda device get error")
                 return dev
 
-    def list_devices(self):
+    property device_list:
+        """available cuda devices
+
+        :getter: Returns available devices
+
+        :type: dict"""
         IF CUDA == 1:
-            cdef char gpu_name_buffer[4+64]
-            devices = dict()
-            for i in range(cuda_get_n_gpus()):
-                cuda_get_gpu_name(i, gpu_name_buffer)
-                devices[i] = gpu_name_buffer
-            return devices
-#        print(cuda_get_n_gpus())
+            def __set__(self, dict _dev_dict):
+                raise Exception("cuda device list is read only")
+            def __get__(self):
+                cdef char gpu_name_buffer[4+64]
+                devices = dict()
+                for i in range(cuda_get_n_gpus()):
+                    cuda_get_gpu_name(i, gpu_name_buffer)
+                    devices[i] = gpu_name_buffer
+                return devices
 
 
     # property device_list:
