@@ -5,7 +5,7 @@ Setting up shapes
 In order to use shapes you first have to import the :mod:`espressomd.shapes`
 module. This module provides classes for the different available shapes::
 
-    >>> import espressomd.shapes
+    import espressomd.shapes
 
 Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
@@ -16,7 +16,7 @@ Creating different shapes
 A shape is instantiated by calling its constructor. If you wanted to
 create a wall shape you could do::
 
-    >>> wall = espressomd.shapes.Wall()
+    wall = espressomd.shapes.Wall()
 
 Available shapes are listed below.
 
@@ -45,12 +45,12 @@ Usually you want to use constraints based on a shape.
 The module :mod:`espressomd.constraints` provides the class
 :class:`espressomd.constraints.ShapeBasedConstraint`::
 
-    >>> shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
+    shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
 
 In order to add the constraint to to the system
 invoke the :meth:`espressomd.constraints.add` method::
 
-    >>> system.constraints.add(shape_constraint)
+    system.constraints.add(shape_constraint)
 
 
 Usage example
@@ -59,9 +59,9 @@ Usage example
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
 
-    >>> pore = espressomd.shapes.Pore(axis=[1,0,0], length=2, pos=[15,15,15], smoothing_radius=0.5)
-    >>> pore_constraint = espressomd.constraints.ShapeBasedConstraint(shape=pore, penetrable=0, particle_type=1)
-    >>> system.constraints.add(pore_constraint)
+    pore = espressomd.shapes.Pore(axis=[1,0,0], length=2, pos=[15,15,15], smoothing_radius=0.5)
+    pore_constraint = espressomd.constraints.ShapeBasedConstraint(shape=pore, penetrable=0, particle_type=1)
+    system.constraints.add(pore_constraint)
 
 Interactions between the pore and other particles are then defined
 as usual (:ref:`Setting up interactions`).
@@ -83,15 +83,15 @@ and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
 
 Adding a shape based boundary is straightforward::
 
-    >>> lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
-    >>> system.lbboundaries.add(lbb)
+    lbb = espressomd.lbboundaries.LBBoundary(shape=my_shape, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
 
 or::
 
-    >>> lbb = espressomd.lbboundaries.LBBoundary()
-    >>> lbb.shape = my_shape
-    >>> lbb.velocity = [0,0,0]
-    >>> system.lbboundaries.add(lbb)
+    lbb = espressomd.lbboundaries.LBBoundary()
+    lbb.shape = my_shape
+    lbb.velocity = [0,0,0]
+    system.lbboundaries.add(lbb)
 
 Usage example
 -------------
@@ -99,8 +99,8 @@ Usage example
 In order to add a wall as boundary for a Lattice-Boltzmann fluid
 you could do the following::
 
-    >>> wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
-    >>> lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
-    >>> system.lbboundaries.add(lbb)
+    wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
+    lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
+    system.lbboundaries.add(lbb)
 
 
