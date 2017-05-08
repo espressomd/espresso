@@ -17,6 +17,12 @@ class Constraints(ScriptInterfaceHelper):
         ----------
         Either an :class:`espressomd.constraints.Constraint`, or
         the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
+        
+        Returns
+        ----------
+        constraint : :class:`espressomd.constraints.Constraint`
+            The added constraint
+        
         """
 
         if len(args) == 1:
