@@ -46,7 +46,6 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     * set up system parameters, particles and interactions.
     * warm up and integrate. 
     * write parameters, configurations and observables to files
-    * handle the connection to VMD.
 
 * ``lj_liquid_structurefactor.py``
     Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.

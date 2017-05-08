@@ -549,174 +549,26 @@ returns the number of particles that were successfully added.
 
 Reading bonded interactions and dihedrals is currently not supported.
 
-Online-visualisation with VMD
------------------------------
-
-IMD (Interactive Molecular Dynamics) is the protocol that VMD uses to
-communicate with a simulation. Tcl\_md implements this protocol to allow
-online visual analysis of running simulations.
-
-In IMD, the simulation acts as a data server. That means that a
-simulation can provide the possibility of connecting VMD, but VMD need
-not be connected all the time. You can watch the simulation just from
-time to time.
-
-In the following the setup and usage of IMD is described.
-
-``imd``: Using IMD in the script
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-imd connect imd positions imd listen imd disconnect
-
-In your simulation, the IMD connection is setup up using variant , where
-is an arbitrary port number (which usually has to be between 1024 and
-65000). By default, will try to open port :math:`10000`, but the port
-may be in use already by another simulation. In that case it is a good
-idea to just try another port.
-
-While the simulation is running, variant can be used to transfer the
-current coordinates to VMD, if it is connected. If not, nothing happens
-and the command just consumes a small amount of CPU time. Note, that
-before you can transfer coordinates to VMD, VMD needs to be aware of the
-structure of the system. For that, you first need to load a
-corresponding structure file (PSF or VSF) into VMD. Also note, that the
-command (see section ) can be used to automatically set up the VMD
-connection and transfer the structure file.
-
-By specifying , the unfolded coordinates of the particles will
-transferred, while will fold chains according to their centers of mass
-and retains bonding connectivity. Note that this requires the chain
-structure to be specified first using the analyze command.
-
-Variant can be used to let the simulation wait for seconds or until IMD
-has connected, before the script is continued. This is normally only
-useful in demo scripts, if you want to see all frames of the simulation.
-
-Variant will terminate the IMD session. This is normally not only nice
-but also the operating system will not free the port for some time, so
-that without disconnecting for some 10 seconds you will not be able to
-reuse the port.
-
-Using IMD in VMD
-~~~~~~~~~~~~~~~~
-
-The PDB/PSF files created by via the command and can be loaded into VMD.
-This should bring up an initial configuration.
-
-Then you can use the VMD console to execute the command
-
-imd connect
-
-where is the host running the simulation and is the port it listens to.
-Note that VMD crashes, if you do that without loading a structure file
-before. For more information on how to use VMD to extract more
-information or hide parts of configuration, see the VMD Quick Help.
-
-Automatically setting up a VMD connection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-prepare\_vmd\_connection ... prepare\_vmd\_connection
-
-To reduce the effort involved in setting up the IMD connection, starting
-VMD and loading the structure file, provides the command . It writes out
-the required vsf structure description file to .vsf (default for is ),
-doing some nice stuff such as coloring the molecules, bonds and
-counterions appropriately, rotating your viewpoint, and connecting your
-system to the visualization server.
-
-If the option is given, then the command will create graphics primitives
-in VMD that represent some of the spatial constraints (sphere, rhomboid
-and cylinder at present).
-
-If is given, the command will automatically try to start VMD and connect
-it to the simulation. Otherwise it only writes the VMD setup script .
-You can use this script later to connect to the simulation by running
-either
-
-vmd -e vmd\_start.script
-
-or by running
-
-source “vmd\_start.script”
-
-at VMD’s Tcl console. If you choose to not start VMD automatically, puts
-the hostname into the VMD script, so that you can start it from any
-computer. However, some more recent Linux distributions block any
-incoming transfer even from the computer itself, if it does not come
-from localhost. If you encounter problems to connect to VMD on the very
-same computer, try the option, which will enforce to use the hostname .
-Note that the option implies the option, since VMD is necessarily
-started from the same computer.
-
-If the option is provided, then the command waits for at most seconds
-for VMD to connect. Since VMD usually takes a while to start, it is
-usually a good idea to combine the option with a waiting time of 100, so
-a bit less than a minute.
-
-All remaining parameters are passed to the that is used to setup the
-system, so that you can specify the sizes of particles etc.
-
-also supports an older, deprecated syntax (variant 2) with limited
-functionality. This syntax uses fixed position parameters and boolean
-values for and , as described above.
-
-Error handling
---------------
-
-Errors in the parameters are detected as early as possible, and
-hopefully self-explanatory error messages returned without any changes
-to the data in the internal data of . This include errors such as
-setting nonexistent properties of particles or simply misspelled
-commands. These errors are returned as standard Tcl errors and can be
-caught on the Tcl level via
-
-catch script err
-
-When run noninteractively, Tcl will return a nice stack backtrace which
-allows to quickly find the line causing the error.
-
-However, some errors can only be detected after changing the internal
-structures, so that is left in a state such that integration is not
-possible without massive fixes by the users. Especially errors occuring
-on nodes other than the primary node fall under this condition, for
-example a broken bond or illegal parameter combinations.
-
-For error conditions such as the examples given above, a Tcl error
-message of the form
-
-background 0 1
-
-is returned. Following possibly a normal Tcl error message, after the
-background keyword all severe errors are listed node by node, preceeded
-by the node number. A special error is , which means that one of the
-slave nodes found exactly the same errors as the master node. This
-happens mainly during the initialization of the integrate, if the time
-step is not set. In this case the error message will be
-
-background\_errors 0 {time\_step not set} 1 <consent>
-
-In each case, the current action was not fulfilled, and possibly other
-parts of the internal data also had to be changed to allow to continue,
-so you should really know what you do if you try and catch these errors.
-
 Online-visualisation with Mayavi or OpenGL
 ------------------------------------------
 
-With the python interface, features two possibilities for
+With the python interface, |es| features two possibilities for
 online-visualization:
 
 #. Using the mlab module to drive *Mayavi, a “3D scientific data
    visualization and plotting in Python”*. Mayavi has a user-friendly
-   GUI to specify the appearance of the output. Additional requirements:
+   GUI to specify the appearance of the output.
+   Additional requirements:
    python module *mayavi*, VTK (package *python-vtk* for Debian/Ubuntu).
    Note that only VTK from version 7.0.0 and higher has Python 3
    support.
 
-#. A direct rendering engine based on *pyopengl*. As it is developed for
-   , it supports the visualization of several specific features like
+#. A direct rendering engine based on *pyopengl*. As it is developed for |es|, 
+   it supports the visualization of several specific features like
    external forces or constraints. It has no GUI to setup the
    appearance, but can be adjusted by a large set of parameters.
-   Additional requirements: python module *PyOpenGL*.
+   Additional requirements:
+   python module *PyOpenGL*.
 
 Both are not meant to produce high quality renderings, but rather to
 debug your setup and equilibration process.
@@ -729,162 +581,124 @@ your choice and pass it the ``espressomd.System()`` object. Then write
 your integration loop in a seperate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
-window with ``start()``. See the following minimal code example:
+window with ``start()``. See the following minimal code example::
 
-import espressomd from espressomd import visualization from threading
-import Thread
+    import espressomd 
+    from espressomd import visualization 
+    from threading import Thread
 
-system = espressomd.System() system.cell\_system.skin = 0.4
-system.time\_step = 0.01 system.box\_l = [10,10,10]
+    system = espressomd.System() 
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.box_l = [10,10,10]
 
-system.part.add(pos = [1,1,1]) system.part.add(pos = [9,9,9])
+    system.part.add(pos = [1,1,1]) system.part.add(pos = [9,9,9])
 
-visualizer = visualization.mayaviLive(system) #visualizer =
-visualization.openGLLive(system)
+    visualizer = visualization.mayaviLive(system) 
+    #visualizer = visualization.openGLLive(system)
 
-def main\_thread(): while True: system.integrator.run(1)
-visualizer.update()
+    def main_thread(): 
+        while True: 
+            system.integrator.run(1)
+            visualizer.update()
 
-t = Thread(target=main\_thread) t.daemon = True t.start()
+    t = Thread(target=main_thread) 
+    t.daemon = True 
+    t.start()
+    visualizer.start()
 
-visualizer.start()
+Common methods for openGL and mayavi
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Common methods
-~~~~~~~~~~~~~~
+| :meth:`espressomd.visualization.mayaviLive.update()` 
+| :meth:`espressomd.visualization.openGLLive.update()`
 
-Starts the blocking visualizer window.
-
-Synchonizes system and visualizer, handles keyboard events for
+``update()`` synchonizes system and visualizer, handles keyboard events for
 openGLLive.
 
-[ interval= ]
+| :meth:`espressomd.visualization.mayaviLive.start()` 
+| :meth:`espressomd.visualization.openGLLive.start()`
 
-Registers the method , which is called every milliseconds. Useful for
-live plotting (see sample script samples/python/visualization.py)
+``start()`` starts the blocking visualizer window. 
+Should be called after a seperate thread containing ``update()`` has been started.
+
+| :meth:`espressomd.visualization.mayaviLive.registerCallback()`
+| :meth:`espressomd.visualization.openGLLive.registerCallback()`
+
+Registers the method ``callback()``, which is called every ``interval`` milliseconds. Useful for
+live plotting (see sample script samples/python/visualization.py).
 
 Mayavi visualizer
 ~~~~~~~~~~~~~~~~~
 
 The mayavi visualizer is created with the following syntax:
 
-[ particle\_sizes= ]
+:class:`espressomd.visualization.mayaviLive()`
 
-The espressomd.System() object.
-
-(default): The Lennard-Jones sigma value of the self-interaction is used
-for the particle diameter. : A lambda function with one argument.
-Internally, the numerical particle type is passed to the lambda function
-to determine the particle radius. : A list of particle radii, indexed by
-the particle type.
+Required paramters:
+    * `system`: The espressomd.System() object.
+Optional keywords:
+    * `particle_sizes`:
+        * `"auto"` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
+        * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
+        * `list`: A list of particle radii, indexed by the particle type.
 
 OpenGL visualizer
 ~~~~~~~~~~~~~~~~~
 
-[ window\_size=, name=, background\_color=, periodic\_images=,
-draw\_box=, quality\_spheres=, quality\_bonds=, quality\_arrows=,
-close\_cut\_distance=, far\_cut\_distance=, camera\_position=,
-camera\_rotation=, particle\_sizes=, particle\_coloring=,
-particle\_type\_colors=, particle\_type\_materials=,
-particle\_charge\_colors=, draw\_constraints=, rasterize\_pointsize=,
-rasterize\_resolution=, quality\_constraints=,
-constraint\_type\_colors=, constraint\_type\_materials=, draw\_bonds=,
-bond\_type\_radius=, bond\_type\_colors=, bond\_type\_materials=,
-ext\_force\_arrows=, ext\_force\_arrows\_scale=, drag\_enabled=,
-drag\_force=, light\_pos=, light\_color=, light\_brightness=,
-light\_size= ]
+:class:`espressomd.visualization.openGLLive()`
 
-The espressomd.System() object.
-
-Size of the visualizer window in pixels.
-
-The name of the visualizer window.
-
-RGB of the background.
-
-Periodic repetitions on both sides of the box in xyz direction.
-
-Draw wireframe boundaries.
-
-The number of subdivisions for spheres.
-
-The number of subdivisions for cylindrical bonds.
-
-The number of subdivisions for external force arrows.
-
-The distance from the viewer to the near clipping plane.
-
-The distance from the viewer to the far clipping plane.
-
-Initial camera position.
-
-Initial camera angles.
-
-| (default): The Lennard-Jones sigma value of the self-interaction is
-  used for the particle diameter.
-| : A lambda function with one argument. Internally, the numerical
-  particle type is passed to the lambda function to determine the
-  particle radius.
-| : A list of particle radii, indexed by the particle type.
-
-| (default): Colors of charged particles are specified by , neutral
-  particles by
-| : Minimum and maximum charge of all particles is determined by the
-  visualizer. All particles are colored by a linear interpolation of the
-  two colors given by according to their charge.
-| : Particle colors are specified by , indexed by their numerical
-  particle type.
-
-Colors for particle types.
-
-Materials of the particle types.
-
-Two colors for min/max charged particles.
-
-Enables constraint visualization. For simple constraints. (planes,
-spheres and cylinders), OpenGL primitives are used. Otherwise,
-visualization by rasterization is used.
-
-Point size for the rasterization dots.
-
-Accuracy of the rasterization.
-
-The number of subdivisions for primitive constraints.
-
-Colors of the constaints by type.
-
-Materials of the constraints by type.
-
-Enables bond visualization.
-
-Radii of bonds by type.
-
-Color of bonds by type.
-
-Materials of bonds by type.
-
-Enables external force visualization.
-
-Scale factor for external force arrows.
-
-Enables mouse-controlled particles dragging (Default: False)
-
-Factor for particle dragging
-
-If (default) is used, the light is placed dynamically in the particle
-barycenter of the system. Otherwise, a fixed coordinate can be set.
-
-Light color
-
-Brightness (inverse constant attenuation) of the light.
-
-Size (inverse linear attenuation) of the light.
-
-The optional parameters to adjust the appearance of the visualization
+The optional keywords in ``**kwargs`` to adjust the appearance of the visualization
 have suitable default values for most simulations. Colors for particles,
 bonds and constraints are specified by RGBA arrays, materials by an
 array for the ambient, diffuse and specular (ADS) components. To
 distinguish particle groups, arrays of RGBA or ADS entries are used,
 which are indexed circularly by the numerical particle type.
+
+Required paramters:
+    * `system`: The espressomd.System() object.
+Optional keywords:
+    * `window_size`: Size of the visualizer window in pixels.
+    * `name`: The name of the visualizer window.
+    * `background_color`: RGB of the background.
+    * `periodic_images`: Periodic repetitions on both sides of the box in xyzdirection.
+    * `draw_box`: Draw wireframe boundaries.
+    * `quality_spheres`: The number of subdivisions for spheres.
+    * `quality_bonds`: The number of subdivisions for cylindrical bonds.
+    * `quality_arrows`: The number of subdivisions for external force arrows.
+    * `close_cut_distance`: The distance from the viewer to the near clipping plane.
+    * `far_cut_distance`: The distance from the viewer to the far clipping plane.
+    * `camera_position`: Initial camera position.
+    * `camera_rotation`: Initial camera angles.
+    * `particle_sizes`:     
+        * `"auto"` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
+        * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
+        * `list`: A list of particle radii, indexed by the particle type.
+    * `particle_coloring`:  
+        * `"auto"` (default)`: Colors of charged particles are specified by particle_charge_colors, neutral particles by particle_type_colors
+        * `charge`: Minimum and maximum charge of all particles is determined by the visualizer. All particles are colored by a linear interpolation of the two colors given by particle_charge_colors according to their charge.
+        * `type`: Particle colors are specified by particle_type_colors, indexed by their numerical particle type.
+    * `particle_type_colors`: Colors for particle types.
+    * `particle_type_materials`: Materials of the particle types.
+    * `particle_charge_colors`: Two colors for min/max charged particles.
+    * `draw_constraints`: Enables constraint visualization. For simple constraints (planes, spheres and cylinders), OpenGL primitives are used. Otherwise, visualization by rasterization is used.
+    * `rasterize_pointsize`: Point size for the rasterization dots.
+    * `rasterize_resolution`: Accuracy of the rasterization.
+    * `quality_constraints`: The number of subdivisions for primitive constraints.
+    * `constraint_type_colors`: Colors of the constaints by type.
+    * `constraint_type_materials`: Materials of the constraints by type.
+    * `draw_bonds`: Enables bond visualization.
+    * `bond_type_radius`: Radii of bonds by type.
+    * `bond_type_colors`: Color of bonds by type.
+    * `bond_type_materials`: Materials of bonds by type.
+    * `ext_force_arrows`: Enables external force visualization.
+    * `ext_force_arrows_scale`: Scale factor for external force arrows.
+    * `drag_enabled`: Enables mouse-controlled particles dragging (Default`: False)
+    * `drag_force`: Factor for particle dragging
+    * `light_pos`: If `auto` (default) is used, the light is placed dynamically in the particle barycenter of the system. Otherwise, a fixed coordinate can be set.
+    * `light_color`: Light color
+    * `light_brightness`: Brightness (inverse constant attenuation) of the light.
+    * `light_size`: Size (inverse linear attenuation) of the light.
 
 Keyboard controls
 ^^^^^^^^^^^^^^^^^
@@ -932,11 +746,3 @@ Finally, it is recommended to go through tutorial “Visualization” for
 further code explanations. Also, the tutorial “Charged Systems” has two
 visualization examples.
 
-.. [1]
-   http://www.ks.uiuc.edu/Research/vmd/
-
-.. [2]
-   https://github.com/olenz/vtfplugin/wiki/VTF-format
-
-.. [3]
-   http://www.paraview.org/

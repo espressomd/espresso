@@ -44,14 +44,6 @@ class Constraints(ScriptInterfaceHelper):
 
 class Constraint(ScriptInterfaceHelper):
     """
-    Base class for constraints. A constraint provides a force and
-    an energy contribution for a single particle.
-    """
-
-    _so_name = "Constraints::Constraint"
-
-class ShapeBasedConstraint(Constraint):
-    """
     Attributes
     ----------
     only_positive : bool
@@ -65,5 +57,4 @@ class ShapeBasedConstraint(Constraint):
     shape : object
       One of the shapes from :mod:`espressomd.shapes`
     """
-
-    _so_name = "Constraints::ShapeBasedConstraint"
+    _so_name = "Constraints::Constraint"

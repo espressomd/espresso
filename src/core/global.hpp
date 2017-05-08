@@ -147,8 +147,6 @@ extern const Datafield fields[];
 #define FIELD_TIMESTEP            33
 /** index of \ref timing_samples in  \ref #fields */
 #define FIELD_TIMINGSAMP          34
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE        35
 /** index of \ref max_cut_nonbonded in \ref #fields */
 #define FIELD_MCUT_NONBONDED      36
 /** index of \ref verlet_reuse in  \ref #fields */

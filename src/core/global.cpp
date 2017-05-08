@@ -31,7 +31,6 @@
 #include "npt.hpp"
 #include "tuning.hpp"
 #include "rattle.hpp"
-#include "imd.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
 #include "integrate_sd.hpp"
@@ -80,7 +79,6 @@ const Datafield fields[] = {
   {&sim_time,        TYPE_DOUBLE, 1, "time",              4, false },         /* 32 from integrate.cpp */
   {&time_step,       TYPE_DOUBLE, 1, "time_step",         5, false },         /* 33 from integrate.cpp */
   {&timing_samples,     TYPE_INT, 1, "timings",           4, false },         /* 34 from tuning.cpp */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate",     2, false },         /* 35 from imd.cpp */
   {&max_cut_nonbonded,TYPE_DOUBLE, 1, "max_cut_nonbonded",9, false },         /* 36 from interaction_data.cpp */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",      8, false },         /* 37 from integrate.cpp */
   {&lattice_switch,     TYPE_INT, 1, "lattice_switch",    2, false },         /* 38 from lattice.cpp */
@@ -89,7 +87,6 @@ const Datafield fields[] = {
   {&dpd_twf,            TYPE_INT, 1, "dpd_twf",           6, false },         /* 41 from thermostat.cpp */
   {&dpd_wf,             TYPE_INT, 1, "dpd_wf",            5, false },         /* 42 from thermostat.cpp */
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9, false },         /* 43 from interaction_data.cpp */
-  {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5, false },         /* 44 from imd_tcl.cpp */
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5, false },         /* 45 from interaction_data.cpp */
   {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6, false },         /* 46 from thermostat.cpp */
   {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6, false },         /* 47 from thermostat.cpp */
