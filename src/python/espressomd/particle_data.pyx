@@ -1678,6 +1678,7 @@ cdef class ParticleList:
                     if (p.type == t or t == "all"):
                         vtk.write("{} {} {}\n".format(*p.v))
 
+
     property highest_particle_id:
         """
         Largest particle id.
