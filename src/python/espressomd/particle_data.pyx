@@ -1430,9 +1430,9 @@ cdef class ParticleSlice:
         pl = ParticleList()
         for i in self.id_selection:
             if pl.exists(i):
-                res += str(pl[i]) + "\n"
-        # Remove final newline
-        return res[:-1]
+                res += str(pl[i]) + ", "
+        # Remove final comma
+        return "ParticleSlice([" + res[:-2] + "])"
 
     def update(self, P):
         if "id" in P:
@@ -1625,7 +1625,7 @@ cdef class ParticleList:
                 yield self[i]
 
     def exists(self, idx):
-        if isinstance(idx, int):
+        if isinstance(idx, int) or issubclass(type(idx), np.integer):
             return particle_exists(idx)
         if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
             tf_array = np.zeros(len(idx), dtype=np.bool)
@@ -1640,9 +1640,9 @@ cdef class ParticleList:
         res = ""
         for i in range(max_seen_particle + 1):
             if self.exists(i):
-                res += str(self[i]) + "\n"
-        # Remove final newline
-        return res[:-1]
+                res += str(self[i]) + ", "
+        # Remove final comma
+        return "ParticleList([" + res[:-2] + "])"
 
     def writevtk(self, fname, types='all'):
         """
