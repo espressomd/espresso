@@ -739,21 +739,6 @@ After the new non-bonded interaction works properly, it would be a good
 idea to add a testcase to the testsuite, so that changes breaking your
 interaction can be detected early.
 
-.. _tcl_io_parsing_and_printing:
-
-Tcl I/O - Parsing and Printing
-------------------------------
-
--  ``ARG_0_IS``
-
--  ``Tcl_GetDouble/Int ...``
-
--  ``Tcl_PrintDouble/Int`` (take care of number of arguments)
-
--  ``TCL_INTEGER_SPACE`` ...
-
-.. _particle_data_organization:
-
 Particle Data Organization
 --------------------------
 
