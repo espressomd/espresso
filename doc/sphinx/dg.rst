@@ -4,22 +4,26 @@ Developer's Guide
 
 .. warning::
    The information found in this version of the Developer's Guide is
-   outdated.  Please see the section :ref:`getting_into_contact` and
+   outdated.  Please see the section :ref:contact` and
    ask for advice if you plan to start working on |es|.
 
-.. _getting_into_contact:
+.. _contact:
 
-Getting into Contact
-====================
+Contact the Develoeprs
+======================
 
-The first thing that you should do when you want to start to participate
-is to get into contact with the |es| developers. To do that, subscribe
-to the developers’ mailing list at
-http://lists.nongnu.org/mailman/listinfo/espressomd-devel and write a
-short email to the list address ``espressomd-devel@nongnu.org`` where
-you state your experience with simulations and programming and the
-things that you would like to do in |es|. We do not bite, and we are
-happy about anybody who wants to participate!
+To contact the |es| developers, please write an email to the developerss mailing list:
+espressomd-devel@nongnu.org
+to subscribe to the developers’ mailing list go to
+http://lists.nongnu.org/mailman/listinfo/espressomd-devel 
+
+
+Before you start a development project
+======================================
+Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
+This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
+
+
 
 .. _development_environment:
 
@@ -30,22 +34,12 @@ Development Environment
 
 Required Development Tools
 --------------------------
-
-If you want to participate in the development of |es|, you will
-require the following tools depending on what tasks you want to perform:
+-  First of all, please install the dependencies for compiling |es|. See :ref:`_Getting, comping and running`
 
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system Git [1]_. Section
    :ref:`git_repositories` contains documentation on how we employ
    git.
-
--  To build |es| from the development sources, you will need not too
-   old versions of the “GNU autotools” (*i.e.* automake [2]_ and
-   autoconf [3]_) installed on your system. Section
-   :ref:`building_the_development_code` contains information on how to
-   build the development code, section
-   :ref:`build_system` contains details on how the
-   build system works.
 
 -  To be able to compile the User’s Guide or the Developer’s Guide, you
    will need a LaTeX-installation (all recent ones will do). For
@@ -57,153 +51,67 @@ require the following tools depending on what tasks you want to perform:
 All of these tools should be easy to install on most Unix operating
 systems.
 
-.. _building_the_development_code:
+.. _getting_the_development_code:
 
-Building the Development Code
------------------------------
+Getting the Development Code
+----------------------------
+We use Github for storing the source code and its history, and for managing the development process. 
+The repository is located at
+http://github.com/espressomd/espresso
+To get the current development code, run
+git clone git://github.com/espressomd/espresso
+This will create a directory named "espresso" which contains the code.
+The build process does not differ from the one for release versions described in the users' guide.
 
--  Use ``bootstrap.sh`` before building the code.
-
--  Use configure with ``–enable-maintainer-mode``.
-
--  Possible targets of ``make``
-
-   -  ``check``
-
-   -  ``dist``
-
-   -  ``doc``
-
-   -  ``ug``
-
-   -  ``dg``
-
-   -  ``doxygen``
-
-   -  ``tutorials``
-
-   -  ``distcheck``
-
-   -  ``clean``, ``distclean``
-
-.. _git_repositories:
-
-Git Repositories
-----------------
-
--  Development Repository: https://github.com/espressomd/espresso
-
--  Code hosting at GNU Savannah
-   https://savannah.nongnu.org/projects/espressomd/
-
-.. _jenkins_build_server:
-
-Jenkins Build Server
---------------------
-
-http://espressomd.org/jenkins
-
--  |es| homepage http://espressomd.org
-
--  Jenkins build server
-
-.. _build_system:
 
 Build System
 ------------
 
-The build system of |es| makes use of the GNU autotools suite
-consisting of automake [5]_ and autoconf [6]_. If you want to use the
-development source code of ESPResSo, you first need to install both of
-these tools.
+The build system of |es| is based on CMake.
 
 The central source files of the build system are the following:
 
--  ``configure.ac``
+-  ``CMakeList.txt``
 
--  ``config/*.m4``
+-  Contents of the ``cmake`` directory
 
--  ``Makefile.am``
+-  The CMakeList.txt files in the ``src/``, ``doc/``, and ``testsuite/`` directories and their sub-directories
 
--  the different ``Makefile.am`` in the subdirectories
+The most common reasons for editing these files are:
+-  Adding new source files
+-  Adding new external dependencies
 
-To change the behaviour of the build system, you have to modify any
-these files.
+Adding New SOURCE Files
+^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _running_bootstrapsh:
+To add new files to |es| (like C++ source files or header files) you
+need to look at the CMakeList.txt in the directory where the file is located.
+-  In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this
+   file(GLOB EspressoCore_SRC
+          "*.cpp"
+          )
+   In this case, placing a file with that ending is enough.
+-  Please note that .hpp-header files usually do not have to be added to CMakeList.txt
+-  In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList), 
+   set(py_tests  bondedInteractions.py
+              cellsystem.py
+              constraint_shape_based.py
+              coulomb_cloud_wall.py
+   In that case, add the new file to the list.
+   
 
-Running ``bootstrap.sh``
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The script ``bootstrap.sh`` in the top level source directory can be
-used to run ``automake``, ``autoconf`` and the associated tools to
-generate the ``configure`` script and the ``Makefile.in`` used during
-compilation. Once ``bootstrap.sh``, the |es| development code can be
-build and used like the release code.
-
-.. _creating_a_distribution_package:
-
-Creating a Distribution Package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-As described in the User’s Guide, to create a ``.tar.gz`` distribution
-file that contains all required files, you can simply run ``make dist``.
-This will bundle all files and put them into an archive with the name
-``espresso-version.tar.gz``.
-
-Even better, you can also run ``make distcheck``. This will not only
-create the distribution file, but it will also thoroughly check the
-created distribution, *i.e.*\ it will try to
-
--  unpack the distro into a new directory
-
--  configure and build it (``configure``)
-
--  run the testsuite (``make check``)
-
--  install it into a new directory (``make install``)
-
--  uninstall it (``make uninstall``)
-
-Whenever something goes wrong in these checks, it will give an error
-message that describes the problem. When everything goes fine, you can
-be relatively sure that you have a useful |es| distribution package.
-
-In some cases, it might be necessary to pass some options to the run of
-``configure`` done by ``make distcheck``>. To these ends, the
-environment variable ``DISTCHECK_CONFIGURE_FLAGS`` can be set to the
-required options.
-
-Example
-"""""""
-
-::
-
-    DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
-      make distcheck
-
-.. _build_system_adding_new_files:
-
-Adding New Files
-^^^^^^^^^^^^^^^^
-
-To add new files to |es| (like C source files or header files) you
-need to do the following:
-
--  Add the files to the ``Makefile.am`` in the same directory
-
--  Run ``bootstrap.sh`` in the source directory
-
--  Check the distribution by using ``make distcheck``
-
--  Add the files to the Git repository
-
-.. _testsuite:
 
 Testsuite
 ---------
+-  New or significantly changed features will only be accepted, if they have a test case. 
+   This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
+-  There are two kinds of tests:
+   -  C++-unit tests, testing individual c++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
+   -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
+-  To execute the tests, run
+   make check 
+   in the top build directory.
 
--  How to write tests?
 
 -  How they are called (``runtest.sh``)
 
@@ -211,284 +119,12 @@ Testsuite
 
 Documentation
 =============
+The documentation of |es| consists of three parts:
+-  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
+-  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package
+-  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
 
-.. _users_guide:
 
-User’s Guide
-------------
-
-The User’s Guide is written in LaTeX. The source files reside in the
-subdirectory ``doc/ug/`` of the |es| sources. The master file is
-``ug.tex``, each chapter is contained in its own source file.
-
-.. _general_issues:
-
-General issues
-^^^^^^^^^^^^^^
-
--  Other than usual, in the UG’s ``.tex``-files, the underscore
-   character “\_” is a normal character in most cases, *i.e.* it can be
-   used unquoted. Unfortunately, however, this makes it impossible to
-   use “\_” in LaTeX-labels (don’t ask me why!).
-
--  Headings should start with a capital letter and continue with
-   lower-case letters (“First steps” and *not* “First Steps”).
-
--  Use the “-ing” form in headings, *i.e.*\ “Setting up particles”
-   instead of “Particle setup” or the like.
-
--  To see which parts of the User’s guide need to be fixed or which
-   documentation is missing, there is a ``\todo``-command where one can
-   put notes about what remains to be done. In the release version, the
-   boxes are disabled so that they do not disturb the users. They can be
-   turned on by commenting out the appropriate line in ``ug.tex``:
-
-   ::
-
-       %% For building the distribution docs, disable todo boxes.
-       %\usepackage[disable]{todonotes}
-       \usepackage{todonotes}
-
-.. _building_the_users_guide:
-
-Building the User’s Guide
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
--  To build the User’s Guide, you need to have a LaTeX-installation that
-   includes BibTeX, PDFLaTeX and makeindex. All installations that I
-   know of provide these tools.
-
--  There are two methods to build the User’s Guide:
-
-   -  Use ``make ug`` from the build directory to build it. This will
-      automatically generate the |es| quick reference and call latex,
-      bibtex and makeindex as required.
-
-   -  Use ``perl latexmk`` from the source directory. This will
-      basically do the same, however, it will *not* automatically update
-      the quick reference. The advantage of this method is, that you can
-      use all of ``latexmk``\ ’s nice features, such as ``-pvc``. You
-      can always rebuild the quick reference manually by calling
-
-      ::
-
-          awk -f assemble_quickref.awk > quickref.inp
-              
-
-.. _user_guide_adding_new_files:
-
-Adding New Files
-^^^^^^^^^^^^^^^^
-
-To add new LaTeX-files to the User’s Guide, you need to modify
-
--  ``ug.tex``: add an appropriate include command near the end of the
-   file
-
--  ``Makefile.am``: add the file to the variable ``ug_TEXFILES``.
-
-.. _additional_environments_and_commands:
-
-Additional Environments and Commands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To maintain a consistent layout, a number of environments and commands
-have been defined that should be used where applicable.
-
--  For the description of |es|’s Tcl-commands, read
-   :ref:`documentation_of_tcl_commands`.
-
--  The name of |es| should be set via the command ``|es|``.
-
--  The strings “*i.e.*”, “*e.g.*” and “*et al.*” should be set via
-   ``\ie``, ``\eg`` and ``\etal``.
-
--  For short pieces of code that can be displayed inline, use
-   ``\codebox{``\ *text*\ ``}`` or ``\verb!``\ *text*\ ``!``
-
--  For longer code pieces or the syntax decription of non-Tcl commands,
-   the environment ``code`` exists:
-
-   ::
-
-       \begin{code}
-         ...
-       \end{code}
-
-   Note that this is *not* a verbatim environment, *i.e.*\ it will
-   evaluate LaTeX-commands that are used inside. Therefore, the
-   characters ``\``, ``{`` and ``}`` need to be quoted with backslashes
-   inside the environment! Also, the underscore character “\_” needs to
-   be quoted like ``\_``. On the other hand, it is possible to use other
-   layout commands (like ``\textit``) inside.
-
--  For pieces of Tcl-code that make extensive use of ``{`` and ``}``, a
-   verbatim environment ``tclcode`` exists:
-
-   ::
-
-       \begin{tclcode}
-        ...
-       \end{tclcode}
-
-
-.. _documentation_of_tcl_commands:
-
-Documentation of Tcl commands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _formal_syntax_definition:
-
-Formal Syntax Definition
-""""""""""""""""""""""""
-
-All |es|-commands have to be documented in the User’s Guide.
-
-The command ``\newescommand[``\ *label*\ ``]{``\ *command*\ ``}`` should
-be used at the beginning of a command description to generate a label
-``es:``\ *command* and create appropriate index entries. The optional
-argument *label* is only required, when *command* contains an underscore
-character “\_”. In that case, a label ``es:``\ *label* is generated that
-should not contain an underscore character.
-
-For the *formal syntax definition*, you have to use the environments
-``essyntax`` or ``essyntax*``. Both will generate the headings *Syntax*
-and *Description*. ``essyntax`` will furthermore copy the syntax
-definition to the quick reference guide. For an example, look at the
-documentation of the ``part`` command in the file ``part.tex``. Inside
-the ``essyntax`` environment, you have to use the following commands for
-typesetting the definition:
-
--  ``\variant{``\ *number*\ ``}`` to typeset the label of a command
-   variant
-
--  ``\var{``\ *name*\ ``}`` to typeset a variable argument. Note, that
-   the argument is typeset in math mode. This means, that you can use
-   “\_” to denote a subscript.
-
--  ``\keyword{``\ *text*\ ``}`` or ``\lit{``\ *text*\ ``}`` to typeset
-   keywords or literals.
-
--  ``\opt{``\ *text*\ ``}`` to typeset optional arguments. Note that
-   usually, the text inside the ``opt`` command will not be wrapped. If
-   the optional argument is pretty long and needs to be wrapped, use
-   ``\optlong``.
-
--  ``\optlong{``\ *text*\ ``}`` to typeset long optional argument
-   blocks.
-
--  ``\alt{``\ *alt1* ``\asep`` *alt2* ``\asep`` *alt3* …\ ``}`` to
-   typeset alternatives.
-
--  ``\feature{``\ *feature*\ ``}`` to typeset when a *feature* is
-   referred to.
-
--  ``\require{``\ *number*\ ``}{``\ *text*\ ``}`` to typeset *text* to
-   show that it requires certain features of |es|. *number* denotes
-   the marking that is shown next to *text*. When this command is used,
-   you also have to use the ``features``-environment (see below) at the
-   end of the ``essyntax`` environment, where all of the *number*\ s
-   used are explained.
-
--  The environment ``features`` to typeset which features are required
-   by the Tcl-command. Inside the environment, each feature should be
-   declared via the command
-   ``\required[``\ *number*\ ``]{``\ *feature*\ ``}``, where the
-   optional argument *number* is the number used above and *feature* is
-   the feature in capital letters.
-
-The formal syntax definition should be as simple and as readable as
-possible, as it will be what a user references to. Avoid very long
-definitions and constructs like nested alternatives and options. In
-those cases, prefer to split the syntax definition into several variants
-instead of writing it in a single, complicated definition.
-
-Example
-"""""""
-
-::
-
-    \begin{essyntax}
-    [clip]
-    \variant{5} constraint pore 
-      center \var{c_x} \var{c_y} \var{c_z} 
-      axis \var{n_x} \var{n_y} \var{n_z} 
-      radius \var{rad}
-      length \var{length} 
-      type \var{id} 
-
-    \require{1}{%
-      \variant{6} constraint rod center \var{c_x} \var{c_y} 
-      lambda \var{lambda}
-    } 
-      
-    \require{1}{%
-      \variant{7} constraint plate height \var{h}
-      sigma \var{sigma} 
-    }
-      
-    \require{2,3}{%
-      \variant{8} constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
-    }
-
-      \begin{features}
-      \required{CONSTRAINTS}
-      \required[1]{ELECTROSTATICS}
-      \required[2]{ROTATION}
-      \required[3]{DIPOLES}
-      \end{features}
-    \end{essyntax}
-
-.. _description:
-
-Description
-"""""""""""
-
-In the description, you should use all of the above typesetting commands
-when you refer to them in the text. In particular, every variable
-argument introduced via the ``\var``-command in the definition has to be
-explained in detail:
-
--  state explicitly the *type* of the argument (integer, float, string,
-   Tcl-list)
-
--  explain the meaning of the argument
-
-If the command has a number of different options, *i.e.*\ independent,
-optional arguments, they can be described in the *arguments*
-environment:
-
-::
-
-    \begin{arguments}
-      \item[<arg1>] <description of arg1>
-      \item[<arg2>] <description of arg2>
-      ...
-    \end{arguments}
-
-The environment will generate the subheading *Arguments* and nicely
-format the descriptions.
-
-Example
-"""""""
-
-::
-
-    \begin{arguments}
-      \item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
-        in a human-readable, but somewhat longer format (\keyword{verbose}),
-        or in a more compact form (\keyword{short}). The default is
-        \keyword{verbose}.
-      
-      \item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
-        positions are written in absolute coordinates (\keyword{absolute})
-        or folded into the central image of a periodic system
-        (\keyword{folded}). The default is \keyword{absolute}.
-      
-      ...
-    \end{arguments}
-
-.. _doxygen_code_documentation:
 
 Doxygen Code Documentation
 --------------------------
