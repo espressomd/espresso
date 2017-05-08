@@ -64,6 +64,28 @@ class ShapeBasedConstraint(Constraint):
       constraint.
     shape : object
       One of the shapes from :mod:`espressomd.shapes`
+
+    See Also
+    shapes : shape objects that define mathematical surfaces
+    ----------
+
+    Example
+    ----------
+    >>> import espressomd
+    >>> from espressomd import shapes
+    >>> system = espressomd.System()
+    >>>
+    >>> # create first a shape-object to define the constraint surface
+    >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
+    >>>
+    >>> # now create an un-penetrable shape-based contraint of type 0
+    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
+    >>>
+    >>> #place a trapped particle inside this sphere
+    >>> system.part.add(id=0, pos=[5,5,5], type=1)
+    >>>
+
+    
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
