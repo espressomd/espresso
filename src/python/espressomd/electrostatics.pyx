@@ -507,13 +507,6 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             rcut : float, optional
                     The real space cutoff.
 
-            num_kx : ??
-
-            num_ky : ??
-
-            num_kz : ??
-
-            time_calc_steps : ??
 
             """
             super(type(self), self).__init__(*args, **kwargs)
@@ -532,7 +525,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz", "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
+            return "bjerrum_length", "rcut", "K_max", "alpha", "accuracy", "precision"
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -554,9 +547,16 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                 raise ValueError("Bjerrum_length should be a positive double")
             if isinstance(self._params["K_max"], (list, np.ndarray)):
                 if isinstance(self._params["K_max"], int) and len(self._params["K_max"]) == 3:
+                    self._params["num_kx"] = self._params["K_max"][0]
+                    self._params["num_ky"] = self._params["K_max"][1]
+                    self._params["num_kz"] = self._params["K_max"][2]
                     if self._params["K_max"][0] < 0 or self._params["K_max"][1] < 0 or self._params["K_max"][2] < 0:
                         raise ValueError(
                             "K_max has to be a positive integer or a list of three positive integers")
+                else:
+                    self._params["num_kx"] = self._params["K_max"]
+                    self._params["num_ky"] = self._params["K_max"]
+                    self._params["num_kz"] = self._params["K_max"]
             elif self._params["K_max"] < 0:
                 raise ValueError(
                     "K_max has to be a positive integer or a list of three positive integers")
@@ -610,6 +610,22 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
 
 IF ELECTROSTATICS:
     cdef class MMM1D(electrostatics.ElectrostaticInteraction):
+        """
+        Electrostatics solver for Systems with one periodic direction.
+        See :ref:`mmm1d_guide` for more details.
+
+        Parameters
+        ----------
+        bjerrum_length      : float
+                              Bjerrum length
+        maxWPerror          : float
+                              Maximal pairwise error
+        far_switch_radius   : float, optional
+                              Radius where near-field and far-field calculation are switched
+        bessel_cutoff       : int, optional
+        tune                : bool, optional
+                              Specify whether to automatically tune ore not. The default is True.
+        """
 
         def validate_params(self):
             default_params = self.default_params()
@@ -617,8 +633,6 @@ IF ELECTROSTATICS:
                 raise ValueError("Bjerrum_length should be a positive double")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
-            if self._params["far_switch_radius_2"] < 0 and self._params["far_switch_radius_2"] != default_params["far_switch_radius_2"]:
-                raise ValueError("switch radius shoulb be a positive double")
             if self._params["far_switch_radius"] < 0 and self._params["far_switch_radius"] != default_params["far_switch_radius"]:
                 raise ValueError("switch radius shoulb be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]:
@@ -627,7 +641,6 @@ IF ELECTROSTATICS:
         def default_params(self):
             return {"bjerrum_length": -1,
                     "maxPWerror": -1,
-                    "far_switch_radius_2": -1,
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True}
@@ -641,20 +654,16 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["far_switch_radius"] = np.sqrt(
-                params["far_switch_radius_2"])
+            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
+            del params["far_switch_radius_2"]
             params["bjerrum_length"] = coulomb.bjerrum
+            params["tune"] = self._params["tune"]
             return params
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            if self._params["far_switch_radius"] == -1:
-                self._params["far_switch_radius_2"] = -1
-            else:
-                self._params["far_switch_radius_2"] = self._params[
-                    "far_switch_radius"] * self._params["far_switch_radius"]
             MMM1D_set_params(
-                self._params["far_switch_radius_2"], self._params["maxPWerror"])
+                self._params["far_switch_radius"], self._params["maxPWerror"])
 
         def _tune(self):
             cdef int resp
@@ -673,6 +682,22 @@ IF ELECTROSTATICS:
 
 IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1D_GPU(ElectrostaticInteraction):
+        """
+        Electrostatics solver for Systems with one periodic direction.
+        See :ref:`mmm1d_guide` for more details.
+
+        Parameters
+        ----------
+        bjerrum_length      : float
+                              Bjerrum length
+        maxWPerror          : float
+                              Maximal pairwise error
+        far_switch_radius   : float, optional
+                              Radius where near-field and far-field calculation are switched
+        bessel_cutoff       : int, optional
+        tune                : bool, optional
+                              Specify whether to automatically tune ore not. The default is True.
+        """
         cdef Mmm1dgpuForce * thisptr
         cdef EspressoSystemInterface * interface
         cdef char * log
@@ -703,7 +728,6 @@ IF ELECTROSTATICS and MMM1D_GPU:
             return {"bjerrum_length": -1,
                     "maxPWerror": -1.0,
                     "far_switch_radius": -1.0,
-                    "far_switch_radius_2": -1.0,
                     "bessel_cutoff": -1,
                     "tune": True}
 
@@ -716,19 +740,12 @@ IF ELECTROSTATICS and MMM1D_GPU:
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["far_switch_radius"] = np.sqrt(
-                params["far_switch_radius_2"])
             params["bjerrum_length"] = coulomb.bjerrum
             return params
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             default_params = self.default_params()
-            if self._params["far_switch_radius"] == default_params["far_switch_radius"]:
-                self._params["far_switch_radius_2"] = -1
-            else:
-                self._params["far_switch_radius_2"] = self._params[
-                    "far_switch_radius"] * self._params["far_switch_radius"]
 
             self.thisptr.set_params(globals.box_l[2], globals.temperature * coulomb.bjerrum, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
@@ -748,6 +765,58 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
 IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):
+        """
+        Electrostatics solver for systems with two periodic dimensions. 
+        More detail are in the user guide :ref:`mmm2d_guide`
+
+        Parameters
+        ----------
+        bjerrum_length          : float
+                                  Bjerrum length
+        maxWPerror              : float
+                                  Maximal pairwise error
+        dielectric              : int, optional
+                                  Selector parameter for setting the dielectric
+                                  constants manually (top, mid, bottom), mutually
+                                  exclusive with dielectric-contrast
+        top                     : float, optional
+                                  If dielectric is specified this paramter sets the
+                                  dielectric constant *above* the simulation box
+                                  :math:`\\varepsilon_\\mathrm{top}`
+        mid                     : float, optional
+                                  If dielectric is specified this paramter sets the
+                                  dielectric constant *in* the simulation box
+                                  :math:`\\varepsilon_\\mathrm{mid}`
+        bottom                  : float, optional
+                                  If dielectric is specified this paramter sets the
+                                  dielectric constant *below* the simulation box
+                                  :math:`\\varepsilon_\\mathrm{bot}`
+        dielectric_contrast_on  : int, optional 
+                                  Selector parameter for setting a dielectric
+                                  contrast between the upper simulation boundary
+                                  and the simulation box, and between the lower
+                                  simulation boundary and the simulation box,
+                                  respectively.
+        delta_mid_top           : float, optional
+                                  If dielectric-contrast mode is selected, then
+                                  this parameter sets the dielectric contrast
+                                  between the upper boundary and the simulation
+                                  box :math:`\\Delta_t`.
+        delta_mid_bottom        : float, optional
+                                  If dielectric-contrast mode is selected, then
+                                  this parameter sets the dielectric contrast
+                                  between the lower boundary and the simulation
+                                  box :math:`\\Delta_b`.
+        capacitor               : int, optional
+                                  Selector parameter for setting a constant
+                                  electric potential between the top and bottom
+                                  of the simulation box.
+        pot_diff                : float, optional
+                                  If capacitor mode is selected this parameter
+                                  controls the applied voltage.
+        far_cut                 : float, optional
+                                  Cut off radius, use with care, intended for testing purposes. 
+        """
         def validate_params(self):
             default_params = self.default_params()
             if self._params["bjerrum_length"] < 0:

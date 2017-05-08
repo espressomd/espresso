@@ -1365,12 +1365,14 @@ Tuning Coulomb P3M
 
 The tuning method is called when the handle of the Coulomb P3M is added to the
 actor list. At this point, the system should already contain the charged
-particles. Setted parameters are fixed and not changed by the tuning algorithm.
+particles. Set parameters are fixed and not changed by the tuning algorithm.
 This can be useful to speed up the tuning during testing or if the parameters
 are already known.
 
 To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
 To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
+Note, however, that this is a method the P3M object inherited from
+:attr:`espressomd.electrostatics.ElectrostaticInteraction`. 
 All parameteres passed to the method are fixed in the tuning routine. If not
 specified in the ``Tune()`` method, the parameters ``bjerrum_length`` and
 ``accuracy`` are reused.
@@ -1420,7 +1422,6 @@ does not work in combination with the electrostatic extensions :ref:`ICC` and
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.electrostatics.Ewald_Gpu`
 
 Required paramters:
     * bjerrum_length
@@ -1431,7 +1432,7 @@ Required paramters:
 This uses the Ewald method to compute the electrostatic interactions between
 charged particles. The far field is computed by the GPU with single precision
 and the near field by the CPU with double precision. It only works for the case
-of cubic boxes.
+of cubic boxes. See :attr:`espressomd.electrostatics.EwaldGpu` for detailed parameter list.
 
 .. todo::
 
@@ -1499,23 +1500,23 @@ The parameter :math:`\alpha` that controls the transition from Coulomb-
 to Debye-Hückel potential should be chosen such that the force is
 continous. 
 
-.. note:: The two variants are mutually exclusive. If “COULOMB DEBYE HUECKEL”
-    is defined in the configuration file, variant (1) would not work. However, both methods
+.. note:: The two variants are mutually exclusive. If “COULOMB_DEBYE_HUECKEL”
+    is defined in the configuration file, variant (DH) would not work. However, both methods
     require the feature "ELECTROSTATICS" do be defined.
 
 
 
 .. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
 
+.. _mmm2d_guide:
 
 MMM2D
 ~~~~~
 
-Please cite when using MMM2D, and when using dielectric interfaces.
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
 
-inter coulomb mmm2d
-
-[ far\_cut = ] [ far\_cut = ] [ far\_cut = ]
+Please cite :cite:`mmm2d` when using MMM2D, and when using dielectric interfaces.
 
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the number
@@ -1524,10 +1525,11 @@ automatically ensured that the maximal pairwise error is smaller than
 the given bound. The far cutoff setting should only be used for testing
 reasons, otherwise you are more safe with the automatical tuning. If you
 even don’t know what it is, do not even think of touching the far
-cutoff. For details on the MMM family of algorithms, refer to appendix .
+cutoff. For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
-The last two, mutually exclusive arguments “dielectric” and
-“dielectric-constants” allow to specify dielectric contrasts at the
+For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
+The last two, mutually exclusive parameters “dielectric” and
+“dielectric_constants_on” allow to specify dielectric contrasts at the
 upper and lower boundaries of the simulation box. The first form
 specifies the respective dielectric constants in the media, which
 however is only used to calculate the contrasts. That is, specifying
@@ -1539,50 +1541,65 @@ specifies only the dielectric contrasts at the boundaries, that is
 Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
 to metallic boundary conditions.
 
-Using allows to maintain a constant electric potential difference
-between the xy-plane at :math:`z=0` and :math:`z=L`, where :math:`L`
+Using `capacitor` allows to maintain a constant electric potential difference
+between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction. This is done by
 countering the total dipol moment of the system with the electric field
 :math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain . This mimics the induction
+:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the induction
 of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0` for
 planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor
-connected to a battery with voltage . Using 0 is equivalent to
+connected to a battery with voltage `pot_diff`. Using 0 is equivalent to
 :math:`\Delta_{t/b}=-1`.
 
-efield\_caps
+.. todo::
+    efield\_caps
 
-The electric fields added by can be obtained by calling the above
-command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
-and their sum.
+    The electric fields added by can be obtained by calling the above
+    command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
+    and their sum.
+
+
+.. _mmm1d_guide:
 
 MMM1D
 ~~~~~
 
-Please cite  when using MMM1D.
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
+    the features CUDA and MMM1D_GPU.
 
-[ far\_switch\_radius= ]
+:: 
 
-inter coulomb mmm1d
+    from espressomd.electrostatics import MMM1D
+    from espressomd.electrostatics import MMM1D_GPU
 
-inter coulomb mmm1d tune
+Please cite :cite:`mmm1d`  when using MMM1D.
+
+See :attr:`espressomd.electrostatics.MMM1D` or
+:attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
+paramters.
+
+::
+
+    mmm1d = MMM1D(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = MMM1D(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
-nsquared cell system (see section ). The first form sets parameters
+nsquared cell system (see section :ref:`cellsystem`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the setmd variable , which controls the number of
+change the value of the setmd variable ``timings``, which controls the number of
 test force calculations.
 
-[ far\_switch\_radius = , bessel\_cutoff = ]
+::
 
-inter coulomb mmm1dgpu
-
-inter coulomb mmm1dgpu tune
+    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
 counterpart, it does not need the nsquared cell system. The first form
@@ -1594,7 +1611,7 @@ the near formula. The second tuning form just takes the maximal pairwise
 error and tries out a lot of switching radii to find out the fastest
 one.
 
-For details on the MMM family of algorithms, refer to appendix .
+For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
 Maxwell Equation Molecular Dynamics (MEMD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
