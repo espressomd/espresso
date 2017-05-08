@@ -78,8 +78,8 @@ Iterate
 
 .. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
 
-while the maximal force is bigger than or for at most times. The energy
-is relaxed by , while the change per coordinate per step is limited to .
+while the maximal force is bigger than or for at most ``max_steps`` times. The energy
+is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
 The combination of and can be used to get an poor man’s adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle.
