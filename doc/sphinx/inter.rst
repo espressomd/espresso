@@ -1465,15 +1465,7 @@ chosen for tuning.
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-
-    * Python/Core: DH as actor
-    * Python
-        * Move interface from debje-hueckel.pyx -> electrostatics.pyx
-        * Adapt interface structure
-
-Required paramters:
-    * ? 
+For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`espressomd.electrostatics.CDH`.
 
 Uses the Debye-Hückel electrostatic potential defined by
 
@@ -1489,8 +1481,9 @@ For :math:`\kappa = 0`, this corresponds to the plain coulomb potential.
 
 The second variant combines the coulomb interaction for charges that are
 closer than :math:`r_0` with the Debye-Hueckel approximation for charges
-that are further apart than :math:`r_1` in a continous way. The used
-potential is
+that are further apart than :math:`r_1` in a continous way. The used potential
+introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
+:math:`\varepsilon_\mathrm{ext}` and :math:`\alpha` and reads:
 
 .. math::
 
@@ -1502,9 +1495,14 @@ potential is
        0 & \text{if } r > r_{\text{cut}}.
      \end{cases}
 
-The parameter :math:`\alpha` that controlls the transition from Coulomb-
+The parameter :math:`\alpha` that controls the transition from Coulomb-
 to Debye-Hückel potential should be chosen such that the force is
-continous.
+continous. 
+
+.. note:: The two variants are mutually exclusive. If “COULOMB DEBYE HUECKEL”
+    is defined in the configuration file, variant (1) would not work. However, both methods
+    require the feature "ELECTROSTATICS" do be defined.
+
 
 
 .. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW

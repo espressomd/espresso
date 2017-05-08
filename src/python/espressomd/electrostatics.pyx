@@ -60,6 +60,31 @@ cdef class ElectrostaticInteraction(actors.Actor):
 
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
+        """ Hybrid method to solve electrostatic interactions, on short length
+        scales the full Coulomb potential is used and on longer length scales
+        Debye-Hueckel is applied.  For more details see the formula in the user
+        guide under :ref:`Debye-Hückel potential`.
+
+        Parameters
+        ----------
+        bjerrum_length      : float
+                              Bjerrum length
+        kappa               : float
+                              Inverse Debye screening length
+        r_cut               : float 
+                              Cut off radius for this interaction
+        eps_int             : float
+                              Relative permitivity in the interior region r<r1
+        eps_ext             : float
+                              Relative permitivity in the exterior region r>r1
+        r0                  : float
+                              Radius that defines the region where electrostatics are not screened, classical Coulomb potential.
+        r1                  : float
+                              Radius for the transition region from pure Coulomb to Debye-Hueckel
+        alpha               : float
+                              Controls the transition between the pure Coulomb and Debye Hueckel regions
+
+        """
         def validate_params(self):
             if (self._params["bjerrum_length"] <= 0):
                 raise ValueError("Bjerrum_length should be a positive double")
@@ -98,6 +123,7 @@ IF COULOMB_DEBYE_HUECKEL:
 
         def _activate_method(self):
             coulomb.method = COULOMB_DH
+            self._set_params_in_es_core()
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -112,6 +138,20 @@ IF COULOMB_DEBYE_HUECKEL:
 ELSE:
     IF ELECTROSTATICS:
         cdef class DH(ElectrostaticInteraction):
+            """
+            Solve electrostatics in the Debye-Hueckel framework see :ref:`Debye-Hückel potential`
+            for more details.
+
+            Parameters
+            ----------
+            bjerrum_length  : float
+                              Bjerrum length
+            kappa           : float
+                              Inverse Debye sreening length
+            r_cut           : float
+                              Cut off radius for this interaction
+
+            """
             def validate_params(self):
                 if (self._params["bjerrum_length"] <= 0):
                     raise ValueError(
