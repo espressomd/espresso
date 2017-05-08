@@ -30,15 +30,25 @@ namespace Shapes {
 
 class HollowCone : public Shape {
 public:
-  HollowCone() : m_hollowcone(new ::Shapes::HollowCone()) {}
+  HollowCone() : m_hollowcone(new ::Shapes::HollowCone()) {
+    add_parameters({{"position_x", m_hollowcone->position_x()},
+                    {"position_y", m_hollowcone->position_y()},
+                    {"position_z", m_hollowcone->position_z()},
+                    {"orientation_x", m_hollowcone->orientation_x()},
+                    {"orientation_y", m_hollowcone->orientation_y()},
+                    {"orientation_z", m_hollowcone->orientation_z()},
+                    {"outer_radius", m_hollowcone->outer_radius()},
+                    {"inner_radius", m_hollowcone->inner_radius()},
+                    {"width", m_hollowcone->width()},
+                    {"opening_angle", m_hollowcone->opening_angle()},
+                    {"direction", m_hollowcone->direction()}});
+  }
 
   const std::string name() const override { return "Shapes::HollowCone"; }
 
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
-
-  std::shared_ptr<::Shapes::Shape> shape() const override { return m_hollowcone; }
+  std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_hollowcone;
+  }
 
 private:
   std::shared_ptr<::Shapes::HollowCone> m_hollowcone;

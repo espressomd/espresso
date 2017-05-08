@@ -21,8 +21,9 @@
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
 
-#include "Constraint.hpp"
 #include "Constraints.hpp"
+
+#include "ShapeBasedConstraint.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -31,8 +32,8 @@ void initialize() {
 #ifdef CONSTRAINTS
   ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
       "Constraints::Constraints");
-  ScriptInterface::register_new<ScriptInterface::Constraints::Constraint>(
-      "Constraints::Constraint");
+  ScriptInterface::register_new<ScriptInterface::Constraints::ShapeBasedConstraint>(
+      "Constraints::ShapeBasedConstraint");
 #endif
 }
 } /* namespace Constraints */
