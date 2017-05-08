@@ -120,9 +120,6 @@ a constraint has to be set.
 
 (int) Number of samples to (time-)average over.
 
-(int, *read-only*) Transfer rate for VMD connection. You can use this to
-transfer any integer value to the simulation from VMD.
-
 (bool) Indicates whether the Verlet list will be rebuild. The program
 decides this normally automatically based on your actions on the data.
 
