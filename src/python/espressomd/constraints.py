@@ -19,7 +19,7 @@ class Constraints(ScriptInterfaceHelper):
         the parameters to construct one.
         """
 
-        if isinstance(args[0], Constraint):
+        if args and isinstance(args[0], Constraint):
             constraint = args[0]
         else:
             constraint = Constraint(**kwargs)
