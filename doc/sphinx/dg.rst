@@ -106,14 +106,14 @@ Testsuite
 -  New or significantly changed features will only be accepted, if they have a test case. 
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
 -  There are two kinds of tests:
-   -  C++-unit tests, testing individual c++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
-   -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
+
+  -  C++-unit tests, testing individual c++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
+  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
+
 -  To execute the tests, run
    make check 
    in the top build directory.
 
-
--  How they are called (``runtest.sh``)
 
 .. _documentation:
 
@@ -179,26 +179,6 @@ exhaustive, so for major changes the best documentation are the other
 developers.
 
 .. _adding_global_variables:
-
-Adding Global Variables
------------------------
-
-Global variables are the simplest way to communicate values between the
-Tcl script and the C simulation code. To make a C variable available to
-Tcl, declare the variable ``extern`` in a header file and include in
-``global.c``. Then add a new line to the definition of the constant data
-structure ``fields`` at the beginning of the file ``global.c``. For
-details on the entries, see the definition of ``Datafield`` in
-``global.h``). Basically you have to declare *where* the variable is
-stored, *which type* (INT or DOUBLE) it has and *how many* elements. A
-callback procedure can be provided which checks if the given value is
-valid and stores it. It is also responsible for dispatching the new
-value to the other compute nodes, if necessary. The easiest way to do
-that is by using ``mpi_bcast_parameter``, which will transfer the value
-to the other nodes. A simple example is ``box_l`` with the callback
-procedure ``boxl_callback``. For ``mpi_bcast_parameter`` to work, it is
-necessary that they occur in the list of constant definitions at the
-beginning of ``global.h``. So please keep this list in sync!
 
 .. _adding_new_bonded_interactions:
 
@@ -524,6 +504,34 @@ instead of ``return TCL_OK/TCL_ERROR`` you should use
 ::
 
     return mpi_gather_runtime_errors(interp, TCL_OK/TCL_ERROR); 
+
+
+
+
+
+
+Global Variables which are synchronized across nodes
+-----------------------------------------------------------
+
+Adding new global variables to |es|, is strongly discuraged, because it means that code depends on a purely defined global state and cannot be tested individually.
+Features/Algorithms should instead be encapsulated in a class which is used by the script interface mechnaism.
+
+However, there is a mechanism in the simulation core, to synchronize existing global variables across the mpi cores.
+
+these variables are declared ``extern`` in a header file and include in
+``global.cpp``. Then there is a line to the definition of the constant data
+structure ``fields`` at the beginning of the file ``global.c``. For
+details on the entries, see the definition of ``Datafield`` in
+``global.h``). Basically it is declare *where* the variable is
+stored, *which type* (INT or DOUBLE) it has and *how many* elements. A
+callback procedure can be provided which checks if the given value is
+valid and stores it. It is also responsible for dispatching the new
+value to the other compute nodes, if necessary. This is done via ``mpi_bcast_parameter()``, which will transfer the value
+to the other nodes. A simple example is ``box_l`` with the callback
+procedure ``boxl_callback``. For ``mpi_bcast_parameter`` to work, it is
+necessary that they occur in the list of constant definitions at the
+beginning of ``global.hpp``. So please keep this list in sync!
+
 
 .. [1]
    http://git-scm.com/
