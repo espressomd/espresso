@@ -56,6 +56,12 @@ class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
+  ScriptInterfaceBase() = default;
+  /* Copy has unclear semantics, so it should not be allowed. */
+  ScriptInterfaceBase(ScriptInterfaceBase const &) = delete;
+  ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
+  ScriptInterfaceBase &operator=(ScriptInterfaceBase const &) = delete;
+  ScriptInterfaceBase &operator=(ScriptInterfaceBase &&) = delete;
   virtual ~ScriptInterfaceBase() = default;
 
   /**

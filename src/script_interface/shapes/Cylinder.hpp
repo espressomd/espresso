@@ -30,16 +30,17 @@ namespace Shapes {
 
 class Cylinder : public Shape {
 public:
-  Cylinder() : m_cylinder(new ::Shapes::Cylinder()) {}
+  Cylinder() : m_cylinder(new ::Shapes::Cylinder()) {
+    add_parameters({{"center", m_cylinder->pos()},
+                    {"axis", m_cylinder->axis()},
+                    {"direction", m_cylinder->direction()},
+                    {"length", m_cylinder->length()},
+                    {"radius", m_cylinder->rad()}});
+  }
 
   const std::string name() const override { return "Shapes::Cylinder"; }
 
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_cylinder; }
-
 private:
   std::shared_ptr<::Shapes::Cylinder> m_cylinder;
 };

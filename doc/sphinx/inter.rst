@@ -42,7 +42,7 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
-.. _Non-bonded tabulated interaction:
+.. _Tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1354,7 +1354,7 @@ Required paramters:
 
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In , you can check if it is compiled in by
-checking for the feature ``FFTW`` with ``espressomd.code_info.features()``
+checking for the feature ``FFTW`` with ``espressomd.features()``
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
@@ -1875,7 +1875,7 @@ is maintained between the xy-plane at :math:`z=0` and
 by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
-(:cite:`elc,icelc`) before using it.
+(:cite:`arnold02c,icelc`) before using it.
 
 .. _ICC:
 

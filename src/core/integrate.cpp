@@ -1213,8 +1213,9 @@ void force_and_velocity_display() {
 
 /** @TODO: This needs to go!! */
 
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
-
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  int reuse_forces = 0;
+  reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
 
   if (recalc_forces) {

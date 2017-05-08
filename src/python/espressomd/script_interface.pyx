@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer
+from espressomd.utils import to_char_pointer, to_str
 
 cdef class PScriptInterface:
     def __init__(self, name=None, policy="GLOBAL"):
@@ -29,7 +29,7 @@ cdef class PScriptInterface:
         parameters = []
 
         for p in self.sip.get().valid_parameters():
-            parameters.append(p.first)
+            parameters.append(to_str(p.first))
 
         return parameters
 
@@ -159,14 +159,14 @@ cdef class PScriptInterface:
         raise Exception("Unkown type")
 
     def get_parameter(self, name):
-        cdef Variant value = self.sip.get().get_parameter(name)
+        cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
         return self.variant_to_python_object(value)
 
     def get_params(self):
         cdef map[string, Variant] params = self.sip.get().get_parameters()
         odict = {}
         for pair in params:
-            odict[pair.first] = self.variant_to_python_object(pair.second)
+            odict[to_str(pair.first)] = self.variant_to_python_object(pair.second)
 
         return odict
 
@@ -184,7 +184,7 @@ class ScriptInterfaceHelper(PScriptInterface):
 
     def __getattr__(self, attr):
         if attr in self._valid_parameters():
-            return self.get_parameter(attr)
+            return self.get_parameter(to_char_pointer(attr))
         else:
             try:
                 return self.__dict__[attr]

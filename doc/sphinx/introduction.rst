@@ -22,7 +22,7 @@ Tcl scripting interface. This enables setup of arbitrarily complex
 systems which users might want to simulate in future, as well as
 modifying simulation parameters during runtime.
 
-.. _guiding_principles:
+.. _Guiding principles:
 
 Guiding principles
 ------------------
@@ -55,16 +55,16 @@ avoided in hope that the overhead in computer time will be more than
 compensated for by saving much of the user time while trying to
 understand what the code is supposed to do.
 
-Hand-in-hand with the extensibility and readability of the code comes
-the flexibility of the whole program. On the one hand, it is provided by
-the generalized functionality of its parts, avoiding highly specialized
-functions. An example can be the implementation of the Generic
-Lennard-Jones potential described in section :ref:`GenLennardJones` where
-the user can change all available parameters. Where possible, default
-values are avoided, providing the user with the possibility of choice.
-|es| cannot be aware whether your particles are representing atoms or
-billiard balls, so it cannot check if the chosen parameters make sense
-and it is the user’s responsibility to make sure they do.
+Hand-in-hand with the extensibility and readability of the code comes the
+flexibility of the whole program. On the one hand, it is provided by the
+generalized functionality of its parts, avoiding highly specialized functions.
+An example can be the implementation of the Generic Lennard-Jones potential
+described in section :ref:`generic_lennard_jones_interaction` where the user
+can change all available parameters. Where possible, default values are
+avoided, providing the user with the possibility of choice.  |es| cannot be
+aware whether your particles are representing atoms or billiard balls, so it
+cannot check if the chosen parameters make sense and it is the user’s
+responsibility to make sure they do.
 
 On the other hand, flexibility of |es| stems from the employment of a
 scripting language at the steering level. Apart from the ability to
@@ -82,7 +82,7 @@ set-up system with capped forces, interactively check whether it is safe
 to remove the cap and switch on the full interactions and then perform
 the actual productive simulation.
 
-.. _available_simulation_methods:
+.. _Available simulation methods:
 
 Available simulation methods
 ----------------------------
@@ -220,7 +220,7 @@ report so to the developers.
 | mbtools package                | Group                  | Group            |
 +--------------------------------+------------------------+------------------+
 
-.. _basic_program_structure:
+.. _Basic program structure:
 
 Basic program structure
 -----------------------
@@ -255,7 +255,7 @@ details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
 structure is contained in the Developers’ guide (see section [sec:dg]).
 
-.. _on_units:
+.. _On units:
 
 On units
 --------
@@ -329,7 +329,7 @@ As long as one remains within the same unit system throughout the whole
 |es|-script, there should be no problems.
 
 
-.. _requirements:
+.. _Requirements:
 
 Requirements
 ------------
@@ -345,6 +345,9 @@ FFTW
 MPI
     Finally, if you want to use in parallel, you need a working MPI
     environment (that implements the MPI standard version 1.2).
+
+
+.. Iinstalling Requirements on ubuntu:
 
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -362,6 +365,9 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     $ sudo apt install cmake-curses-gui
+
+
+.. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
