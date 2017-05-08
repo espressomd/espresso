@@ -171,6 +171,7 @@ description of the most common commands we need:
 
 .. _programmers_guide:
 
+
 Programmer’s Guide
 ==================
 
@@ -178,102 +179,99 @@ This chapter provides some hints on how to extend |es|. It is not
 exhaustive, so for major changes the best documentation are the other
 developers.
 
-.. _adding_global_variables:
-
-.. _adding_new_bonded_interactions:
-
 Adding New Bonded Interactions
 ------------------------------
 
-Every interaction resides in its own source file. A simple example for a
-bonded interaction is the FENE bond in ``fene.h``. The data structures,
-however, reside in ``interaction_data.h``. The bonded interactions are
-all stored in a union, ``Bonded_ia_parameters``. For a new interaction,
-just add another struct. Each bonded interaction is assigned a type
-number, which has the form ``BONDED_IA_*``, *e.g.*\ ``BONDED_IA_FENE``.
-The new interaction also has to have such a *unique* number.
+To add a new bonded interaction, the following steps have to be taken
+* Simulatino core:
 
-After the setup of the necessary data structures in
-``interaction_data.h``, write the source file, something like
-``new_interaction.h``. You may want to use ``fene.h`` as a template
-file. Typically, you will have to define the following procedures:
+  * Define a structure holding the parameters (prefactors, etc.) of the interaction
+  * Write functions for calculating force and energy, respectively.
+  * Write a setter function, which takes the parameters of the interactions and stores them in the bonded interactions data structure
+  * Add calls to the force and energy calculatino functions to the force calculation in the integration loop as well as to energy and pressure/stress tensor analysis
 
--  ::
+* Python interface
 
-       int *_set_params(int bond_type, ...)
+  * Import the definition of the bond datastructure from the simulation core
+  * Implement a class for the bonded interaction derived from the BondedInteraction base class
 
-   This function is used to define the parameters of a bonded
-   interaction. ``bond_type`` is the bond type number from the inter
-   command, and not one of the ``BONDED_*``. It is rather an index to
-   the ``bonded_ia_params`` array. ``make_bond_type_exist`` makes sure
-   that all bond types up the given type exist and are preinitialized
-   with ``BONDED_IA_NONE``, *i.e.*\ are empty bond types. Therefore fill
-   ``bonded_ia_params[bond_type]`` with the parameters for your
-   interaction type.
+Defining the data structure for the interaction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The data structures for bonded interactions reside in ``interaction_data.hpp``. 
+* Add your interaction to the 
+  enum BondedInteraction
+  This enumeration is used to identify different bonded interactions.
+* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template:
+  typedef struct {
+    double k;
+    [...]
+  } Fene_bond_parameters;
+* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this:
+  Fene_bond_parameters fene;
 
--  ::
 
-       int calc_*_force(Particle *p1, Particle *p2,..., 
-                        Bonded_ia_parameters *iaparams, 
-                        double dx[3], double force[3], ...)
+Functions for calculating force and energy, and for setting parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   This routine calculate the force between the particles. ``ia_params``
-   represents the parameters to use for this bond, ``dx`` represents the
-   vector pointing from particle 2 to particle 1. The force on particle
-   1 is placed in the force vector (and *not* added to it). The force on
-   particle 2 is obtained from Newton’s law. For many body interactions,
-   just add more particles in the beginning, and return the forces on
-   particles 1 to N-1. Again the force on particle N is obtained from
-   Newton’s law. The procedure should return 0 except when the bond is
-   broken, in which case 1 is returned.
+Every interaction resides in its own source .cpp and .hpp. A simple example for a
+bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``. 
+Use these two files as templates for your interaction.
 
--  ::
+Notes:
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/feine.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction.
+* The setter function gets a ``bond_type`` which is a numerical id identifying the number of the bond type in the simulation. It DOES NOT determine the type of the bond potential (harmonic vs FENE).
+* The setter function must call make_bond_type_exists() with that bond type, to allocate the memory for storing the parameters.
+* Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
+  
+  * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
+  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be
+    bonded_ia_params[bond_tpe].p.fene
+ 
+* At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters jsut set to other compute nodes in a parallel simulation.
+* The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
+* The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
+* The force on particle 1 has to be sotred in the force vector  (not added to it). the force on particle 2 will be obtained from Newton's law.
+* The result of the energy calculation is placed in (NOT added to) the ``_energy`` argument of the erngy calculation function.
 
-       int *_energy(Particle *p1, Particle *p2, ..., 
-                    Bonded_ia_parameters *iaparams, 
-                    double dx[3], double *_energy)
 
-   This calculates the energy originating from this bond. The result is
-   placed in the location ``_energy`` points to, ``ia_params`` and
-   ``dx`` are the same as for the force calculation, and the return
-   value is also the flag for a broken bond.
 
-After the preparation of the header file, the bonded interaction has to
-be linked with the rest of the code. In ``interaction_data.c``, most of
-the work has to be done:
+Including the bonded interaction in the force calculation and the energy and pressure analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*  In ``src/core/interaction_data.cpp``
 
-#. Add a name for the interaction to ``get_name_of_bonded_ia``.
+   #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
+   #. In ``calc_maximal_cutoff()``, add a case for the new interaction which
+      makes sure that ``max_cut`` is larger than the interaction range of
+      the new interaction, typically the bond length. 
+      This is necessary to ensure that, in a parallel simulation, a compute node has access to both bond partners.
+      This value is always
+      used as calculated by ``calc_maximal_cutoff``, therefore it is not
+      strictly necessary that the maximal interaction range is stored
+      explicitly.
 
-#. In ``calc_maximal_cutoff``, add a case for the new interaction which
-   makes sure that ``max_cut`` is larger than the interaction range of
-   the new interaction, typically the bond length. This value is always
-   used as calculated by ``calc_maximal_cutoff``, therefore it is not
-   strictly necessary that the maximal interaction range is stored
-   explicitly.
+   #. Besides this, you have enter the force respectively the energy
+      lculation routines in ``add_bonded_force``, ``add_bonded_energy``,
+      add_bonded_virials`` and ``pressure_calc``. The pressure occurs
+      ice, once for the parallelized isotropic pressure and once for the
+      tensorial pressure calculation. For pair forces, the pressure is
+      calculated using the virials, for many body interactions currently no
+      pressure is calculated.
+   #  Do not forget to include the header file of your interaction.
 
-#. Add a print block for the new interaction to
-   ``tclcommand_inter_print_bonded``. The print format should be such
-   that the output can be used as input to inter, and defines the same
-   bond type.
+* Force calculation: in ``forces_inline.hpp` in the functino ``add_bonded_force()``, add your bond to the switch statement. For the FENE bond, e.g., the code looks like this
+    case BONDED_IA_FENE:
+      bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+* Energy calculation: add similar code to ``add_bonded_energy()`` in ``energy_inline.hpp``
+* Pressur, stress tensor and virial calculation: If your bonded interaction is a pair bond and does not modify the particles involved, add simuilar code as above to presure.hpp:calc_bonded_pair_force(). Otherwise, you have to implement a custom solution for virial calculation.
 
-#. In ``tclcommand_inter_parse_bonded``, add a parser for the
-   parameters. See the section on parsing below.
+Adding the bonded interaciton in the Python interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Besides this, you have enter the force respectively the energy
-   calculation routines in ``add_bonded_force``, ``add_bonded_energy``,
-   ``add_bonded_virials`` and ``pressure_calc``. The pressure occurs
-   twice, once for the parallelized isotropic pressure and once for the
-   tensorial pressure calculation. For pair forces, the pressure is
-   calculated using the virials, for many body interactions currently no
-   pressure is calculated.
 
-After the new bonded interaction works properly, it would be a good idea
-to add a testcase to the testsuite, so that changes breaking your
-interaction can be detected early.
 
 .. _adding_new_nonbonded_interactions:
 
-Adding New Nonbonded Interactions
+Outdated: Adding New Nonbonded Interactions 
 ---------------------------------
 
 Writing nonbonded interactions is similar to writing nonbonded
