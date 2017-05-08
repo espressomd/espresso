@@ -1148,10 +1148,11 @@ cdef class ParticleHandle:
             setattr(self, k, P[k])
 
 
-cdef class ParticleSlice:
+cdef class ParticleSliceImpl:
     """
     Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
 
+    This is the base class that should not be used directly as it lacks some properties. Use :class:`espressomd.ParticleSlice` instead.
     """
 
     def __cinit__(self, slice_):
@@ -1479,6 +1480,13 @@ cdef class ParticleSlice:
             ParticleHandle(id).remove()
 
 
+class ParticleSlice(ParticleSliceImpl):
+    """
+    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
+
+    """
+    pass
+
 cdef class ParticleList:
     """
     Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object.
@@ -1721,3 +1729,34 @@ cdef class ParticleList:
                 if not (self.exists(i) and self.exists(j)):
                     continue
                 yield (self[i], self[j])
+
+class _InjectParticleProperty:
+    def __init__(injector, attribute):
+        injector.attribute = attribute
+
+    def set(injector, particle_slice, values):
+        target = getattr(ParticleHandle(particle_slice.id_selection[0]), injector.attribute)
+        target_shape = np.shape(target)
+        N = len(particle_slice.id_selection)
+
+        if target_shape == np.shape(values):
+            values = np.tile(values,N).reshape((N,-1))
+        if target_shape == tuple(np.shape(values)[1:]) and np.shape(values)[0] == N:
+            for i in range(len(values)):
+                setattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute, values[i])
+        else:
+            raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
+                np.shape(values), target_shape))
+
+    def get(injector, particle_slice):
+        values = []
+        for i in particle_slice.id_selection:
+            values.append(getattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute))
+        return values
+
+# auto-add missing particle properties to ParticleSlice
+for attribute in particle_attributes:
+    if not attribute in dir(ParticleSlice):
+        ipp = _InjectParticleProperty(attribute)
+        new_property = property(ipp.get, ipp.set, doc=getattr(ParticleHandle, attribute).__doc__)
+        setattr(ParticleSlice, attribute, new_property)
