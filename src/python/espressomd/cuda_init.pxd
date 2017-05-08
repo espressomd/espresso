@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from libcpp.vector cimport vector
 cdef extern from "cuda_init.hpp":
     int cuda_set_device(int dev)
     int cuda_get_device()
