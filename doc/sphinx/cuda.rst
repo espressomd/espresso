@@ -23,7 +23,7 @@ List available CUDA devices
 If you want to list available CUDA devices
 you should access :attr:`espressomd._system.cu.device_list`::
 
-    >>> espressomd._system.cu.device_list
+    espressomd._system.cu.device_list
 
 This attribute is read only and will return a dictionary containing
 the device id as key and the device name as its' value.
@@ -36,7 +36,7 @@ be selected. If you wanted
 If you wanted to use the second GPU, this can be done 
 by setting :attr:`espressomd._system.cu.device` as follows::
 
-    >>> espressomd._system.cu.device = 1
+    espressomd._system.cu.device = 1
 
 Setting a device id outside the valid range or a device
 which does not meet the minimum requirements will raise
