@@ -16,15 +16,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _CUDA_INTERFACE_HPP
-#define _CUDA_INTERFACE_HPP
+#ifndef CORE_CUDA_INTERFACE_HPP
+#define CORE_CUDA_INTERFACE_HPP
 
-#include "config.hpp" //this is required so that the ifdefs are actually defined
+#include "config.hpp"
 
 #ifdef CUDA
 
 #include "SystemInterface.hpp"
-#include "ParticleRange_.hpp"
+#include "ParticleRange.hpp"
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a
@@ -127,7 +127,7 @@ typedef struct {
   unsigned int communication_enabled;
 } CUDA_global_part_vars;
 
-void copy_forces_from_GPU(ParticleRange_ particles);
+void copy_forces_from_GPU(ParticleRange particles);
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
@@ -148,9 +148,9 @@ CUDA_particle_seed *gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 
-void cuda_mpi_get_particles(ParticleRange_ particles,
+void cuda_mpi_get_particles(ParticleRange particles,
                             CUDA_particle_data *host_result);
-void copy_part_data_to_gpu(ParticleRange_ particles);
+void copy_part_data_to_gpu(ParticleRange particles);
 
 /**
  * @brief Distribute forces to the slaves, and and them to the particles.
@@ -164,19 +164,19 @@ void copy_part_data_to_gpu(ParticleRange_ particles);
  *
  * This is a collective call.
  */
-void cuda_mpi_send_forces(ParticleRange_ particles, float *host_forces,
+void cuda_mpi_send_forces(ParticleRange particles, float *host_forces,
                           float *host_torques);
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
 
 #ifdef SHANCHEN
-void cuda_mpi_send_composition(ParticleRange_, CUDA_fluid_composition *);
+void cuda_mpi_send_composition(ParticleRange, CUDA_fluid_composition *);
 #endif
 
 #ifdef ENGINE
-void copy_v_cs_from_GPU(ParticleRange_ particles);
-void cuda_mpi_send_v_cs(ParticleRange_ particles, CUDA_v_cs *host_v_cs);
+void copy_v_cs_from_GPU(ParticleRange particles);
+void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs);
 #endif
 
 #endif /* ifdef CUDA */

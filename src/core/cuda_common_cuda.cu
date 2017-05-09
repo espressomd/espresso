@@ -25,7 +25,6 @@
 #include "random.hpp"
 #include "interaction_data.hpp"
 #include "cuda_init.hpp"
-#include "ParticleRange_.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -392,7 +391,7 @@ CUDA_fluid_composition *gpu_get_fluid_composition_pointer() {
   return fluid_composition_device;
 }
 
-void copy_part_data_to_gpu(ParticleRange_ particles) {
+void copy_part_data_to_gpu(ParticleRange particles) {
   COMM_TRACE(printf("global_part_vars_host.communication_enabled = %d && "
                     "global_part_vars_host.number_of_particles = %d\n",
                     global_part_vars_host.communication_enabled,
@@ -412,7 +411,7 @@ void copy_part_data_to_gpu(ParticleRange_ particles) {
 
 /** setup and call kernel to copy particle forces to host
  */
-void copy_forces_from_GPU(ParticleRange_ particles) {
+void copy_forces_from_GPU(ParticleRange particles) {
 
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
@@ -464,7 +463,7 @@ void copy_forces_from_GPU(ParticleRange_ particles) {
 
 #if defined(ENGINE) && defined(LB_GPU)
 // setup and call kernel to copy v_cs to host
-void copy_v_cs_from_GPU(ParticleRange_ particles) {
+void copy_v_cs_from_GPU(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
     // Copy result from device memory to host memory

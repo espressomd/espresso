@@ -17,8 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ParticleRange_.hpp"
-
 #include "communication.hpp"
 #include "config.hpp"
 #include "cuda_interface.hpp"
@@ -38,7 +36,7 @@
 #define REQ_CUDAGETFORCES 0xcc02
 
 #ifdef ENGINE
-static void cuda_mpi_send_v_cs_slave(ParticleRange_ particles);
+static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif
 
 void cuda_bcast_global_part_params() {
@@ -52,7 +50,7 @@ void cuda_bcast_global_part_params() {
          not for those that are barely compiled in. (fw)
 */
 
-static void pack_particles(ParticleRange_ particles,
+static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
   int dummy[3] = {0, 0, 0};
   double pos[3];
@@ -122,7 +120,7 @@ static void pack_particles(ParticleRange_ particles,
   }
 }
 
-void cuda_mpi_get_particles(ParticleRange_ particles,
+void cuda_mpi_get_particles(ParticleRange particles,
                             CUDA_particle_data *particle_data_host) {
   auto const n_part = particles.size();
 
@@ -153,7 +151,7 @@ void cuda_mpi_get_particles(ParticleRange_ particles,
  * @param torques The torques as flat array of size 3 * particls.size(),
  *                this is only touched if ROTATION is active.
  */
-static void add_forces_and_torques(ParticleRange_ particles, float *forces,
+static void add_forces_and_torques(ParticleRange particles, float *forces,
                                    float *torques) {
   int i = 0;
   for (auto &part : particles) {
@@ -167,7 +165,7 @@ static void add_forces_and_torques(ParticleRange_ particles, float *forces,
   }
 }
 
-void cuda_mpi_send_forces(ParticleRange_ particles, float *host_forces,
+void cuda_mpi_send_forces(ParticleRange particles, float *host_forces,
                           float *host_torques = nullptr) {
   auto const n_elements = 3 * particles.size();
 
@@ -201,7 +199,7 @@ void cuda_mpi_send_forces(ParticleRange_ particles, float *host_forces,
 }
 
 #ifdef SHANCHEN
-static void set_composition(ParticleRange_ particles,
+static void set_composition(ParticleRange particles,
                             CUDA_fluid_composition *composition) {
   for (auto &part : particles) {
     for (int ii = 0; ii < LB_COMPONENTS; ii++) {
@@ -211,7 +209,7 @@ static void set_composition(ParticleRange_ particles,
   }
 }
 
-void cuda_mpi_send_composition(ParticleRange_ particles,
+void cuda_mpi_send_composition(ParticleRange particles,
                                CUDA_fluid_composition *host_composition) {
   auto const n_elements = particles.size();
 
@@ -229,7 +227,7 @@ void cuda_mpi_send_composition(ParticleRange_ particles,
 
 #if defined(ENGINE) && defined(LB_GPU)
 namespace {
-void set_v_cs(ParticleRange_ particles, CUDA_v_cs *v_cs) {
+void set_v_cs(ParticleRange particles, CUDA_v_cs *v_cs) {
   for (auto &p : particles) {
     for (int i = 0; i < 3; i++) {
       p.swim.v_center[i] = v_cs->v_cs[0 + i];
@@ -240,7 +238,7 @@ void set_v_cs(ParticleRange_ particles, CUDA_v_cs *v_cs) {
 }
 }
 
-void cuda_mpi_send_v_cs(ParticleRange_ particles, CUDA_v_cs *host_v_cs) {
+void cuda_mpi_send_v_cs(ParticleRange particles, CUDA_v_cs *host_v_cs) {
   // first collect number of particles on each node
   auto const n_part = particles.size();
 
