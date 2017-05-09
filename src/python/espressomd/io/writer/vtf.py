@@ -28,8 +28,8 @@ def writevsf(system, fp, types='all'):
         for t in types:
             if (p.type == t or t == "all"):
                 for b in p.bonds:
-                    if (system.part[b[1]].type == t or t == "all"):
-                        fp.write("bond {}:{}\n".format(p.id,system.part[b[1]].id))
+                    if (self[b[1]].type == t or t == "all"):
+                        fp.write("bond {}:{}\n".format(p.id,self[b[1]].id))
 
 
 def writevcf(system, fp, types='all'):
