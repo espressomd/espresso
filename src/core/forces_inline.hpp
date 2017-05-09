@@ -27,7 +27,6 @@
 #include "topology.hpp"
 #endif
 
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -686,12 +685,6 @@ inline void add_bonded_force(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-      break;
-#endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
 #ifdef BOND_ANGLE
