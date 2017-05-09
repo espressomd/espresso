@@ -137,7 +137,7 @@ if __name__ == "__main__":
     result = ut.TextTestRunner(verbosity=4).run(suite)
     if os.path.isfile("test.vcf"):
         os.remove("test.vcf")
-    #if os.path.isfile("test.vcf"):
-    #    os.remove("test.vcf")
+    #if os.path.isfile("test.vsf"):
+    #    os.remove("test.vsf")
     sys.exit(not result.wasSuccessful())
 
