@@ -25,6 +25,7 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
+from espressomd import interactions
 from espressomd.io.writer import vtf
 
 npart = 50
@@ -43,12 +44,22 @@ class CommonTests(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     written_pos = None
+    written_bonds = None
+    written_atoms = None
+    
+
     types_to_write = None
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
                                             float(i)]),
                         v=np.array([1.0, 2.0, 3.0]), type=1+(-1)**i)
+
+    system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
+    system.part[0].add_bond((0,1))
+    system.part[0].add_bond((0,2))
+    system.part[0].add_bond((0,3))
+
     system.integrator.run(steps=0)
 
 
@@ -56,6 +67,7 @@ class CommonTests(ut.TestCase):
         """Test if positions have been written properly."""
         if self.types_to_write=='all': simulation_pos=np.array([((i), float(i), float(i), float(i)) for i in range(npart)]),
         elif (2 in self.types_to_write): simulation_pos=np.array([((i*2), float(i*2), float(i*2), float(i*2)) for i in range(npart//2)]),
+
         self.assertTrue(np.allclose(
             simulation_pos, self.written_pos),
             msg="Positions not written correctly by writevcf!")
@@ -63,17 +75,26 @@ class CommonTests(ut.TestCase):
 
     def test_bonds(self):
         """Test if bonds have been written properly."""
-        
-        self.types_to_write=='all': 
-            types=[0,2]
+        if self.types_to_write=='all': 
+            simulation_bonds=np.array([1,2,3]) #the two bonded particles 
         elif (2 in self.types_to_write): 
             types=[2]
-            #################
-            # WRITE CODE HERE!
-            #########
+            simulation_bonds=np.array(2) # only this one is type 2
+        
         self.assertTrue(np.allclose(
-            simulation_pos, self.written_pos),
+            simulation_bonds, self.written_bonds),
             msg="Bonds not written correctly by writevsf!")
+
+    def test_atoms(self):
+        """Test if atom declarations have been written properly."""
+        if self.types_to_write=='all': 
+            simulation_atoms=np.array([((i), (1+(-1)**i)) for i in range(npart)])
+        elif (2 in self.types_to_write): 
+            simulation_atoms=np.array([((i*2), 2) for i in range(npart//2)])
+
+        self.assertTrue(np.allclose(
+            simulation_atoms, self.written_atoms),
+            msg="Atoms not written correctly by writevsf!")
 
 
 class VCFTestAll(CommonTests):
@@ -83,7 +104,7 @@ class VCFTestAll(CommonTests):
     @classmethod
     def tearDownClass(cls):
         os.remove("test.vcf")
-#        os.remove("test.vsf")
+        os.remove("test.vsf")
 
     @classmethod
     def setUpClass(cls):
@@ -94,13 +115,11 @@ class VCFTestAll(CommonTests):
         cls.written_pos=np.loadtxt("test.vcf",comments="t")
 
         with open('test.vsf','w') as fp:
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-            
-        ###########
-        ## CODE HERE!
-        ###########
-        cls.written_pos=np.loadtxt("test.vsf", skiplines=1, comments="a")
+            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=1) #just the second bonded member
+        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=(1,7)) #just the part_ID and type_ID
 
+        
 class VCFTestType(CommonTests):
     """
     Test the writing VTF files.
@@ -117,6 +136,10 @@ class VCFTestType(CommonTests):
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
         cls.written_pos=np.loadtxt("test.vcf",comments="t")
 
+        with open('test.vsf','w') as fp:
+            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=1) #just the second bonded member
+        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=(1,7)) #just the part_ID and type_ID
 
 
 if __name__ == "__main__":
@@ -126,7 +149,7 @@ if __name__ == "__main__":
     result = ut.TextTestRunner(verbosity=4).run(suite)
     if os.path.isfile("test.vcf"):
         os.remove("test.vcf")
-    #if os.path.isfile("test.vsf"):
-    #    os.remove("test.vsf")
+    if os.path.isfile("test.vsf"):
+        os.remove("test.vsf")
     sys.exit(not result.wasSuccessful())
 
