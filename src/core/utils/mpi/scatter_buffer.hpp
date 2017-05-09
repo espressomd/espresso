@@ -30,7 +30,7 @@ namespace Utils {
 namespace Mpi {
 
 /**
- * @brief Scatter buffer with differend size on each node.
+ * @brief Scatter buffer with different size on each node.
  *
  * Scatter a buffer to the nodes, where every node gets
  * a different chunk of the buffer, controlled by the slave.

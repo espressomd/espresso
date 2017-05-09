@@ -30,13 +30,14 @@ namespace Utils {
 namespace Mpi {
 
 /**
- * @brief Gather buffer with differend size on each node.
+ * @brief Gather buffer with different size on each node.
  *
  * Gathers buffers with different lengths from all nodes to root.
  * The buffer is assumed to be large enough to hold the data from
  * all the nodes and is owned by the caller. On the root node no
  * data is copied, and the first n_elem elements of buffer are not
- * touched.
+ * touched. This combines a common combination of MPI_Gather and
+ * MPI_{Send,Recv}.
  *
  * @param buffer On the master the target buffer that has to be
           large enough to hold all elements and has the local
@@ -86,7 +87,7 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
 }
 
 /**
- * @brief Gather buffer with differend size on each node.
+ * @brief Gather buffer with different size on each node.
  *
  * Gathers buffers with different lengths from all nodes to root.
  * The buffer is resized to the total size. On the root node no
