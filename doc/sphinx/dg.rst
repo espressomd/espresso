@@ -41,9 +41,11 @@ Required Development Tools
    :ref:`git_repositories` contains documentation on how we employ
    git.
 
--  To be able to compile the User’s Guide or the Developer’s Guide, you
-   will need a LaTeX-installation (all recent ones will do). For
-   details, refer to chapter .
+-  The documentation is currently being converted form Latex to Sphinx. To build the old user and developer guides, you will need LaTex. For building tthe sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+      pip install --user -r requirements.txt
+   Note, that some distributions nonw use ``pip`` for Python3 and ``pip2`` for Python 2. 
+
+-  To build the tutorials, you wil need LaTex.
 
 -  To compile the Doxygen code documentation, you will need to have the
    tool Doxygen\  [4]_.
@@ -81,17 +83,15 @@ The most common reasons for editing these files are:
 -  Adding new source files
 -  Adding new external dependencies
 
-Adding New SOURCE Files
+Adding New Source Files
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
--  In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this
-   file(GLOB EspressoCore_SRC
-          "*.cpp"
-          )
-   In this case, placing a file with that ending is enough.
--  Please note that .hpp-header files usually do not have to be added to CMakeList.txt
+* Please note that .hpp-header files usually do not have to be added to CMakeList.txt
+* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this
+    ``file(GLOB EspressoCore_SRC *.cpp)``
+  In this case, placing a file with that ending is enough.
 -  In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList), 
    set(py_tests  bondedInteractions.py
               cellsystem.py
@@ -110,8 +110,8 @@ Testsuite
   -  C++-unit tests, testing individual c++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
   -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
 
--  To execute the tests, run
-   make check 
+-  To execute the tests, run::
+     make check 
    in the top build directory.
 
 
@@ -119,7 +119,9 @@ Testsuite
 
 Documentation
 =============
-The documentation of |es| consists of three parts:
+Please note that
+
+The documentation of |es| consists of four parts:
 -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
 -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package
 -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
@@ -201,13 +203,13 @@ The data structures for bonded interactions reside in ``interaction_data.hpp``.
 * Add your interaction to the 
   enum BondedInteraction
   This enumeration is used to identify different bonded interactions.
-* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template:
-  typedef struct {
-    double k;
-    [...]
-  } Fene_bond_parameters;
-* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this:
-  Fene_bond_parameters fene;
+* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template::
+    typedef struct {
+      double k;
+      [...]
+    } Fene_bond_parameters;
+* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this::
+    Fene_bond_parameters fene;
 
 
 Functions for calculating force and energy, and for setting parameters
@@ -218,15 +220,25 @@ bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fen
 Use these two files as templates for your interaction.
 
 Notes:
-* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/feine.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction.
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/feine.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The recommended signatures of the force and energy functions are::
+    inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
+                                Bonded_ia_parameters *iaparams, 
+                                double dx[3], double force[3])
+    inline int fene_pair_energy(Particle *p1, Particle *p2, 
+                            Bonded_ia_parameters *iaparams, 
+                            double dx[3], double *_energy)
+  Here, ``fene`` needs to be replaced by the name of the new interaction.
 * The setter function gets a ``bond_type`` which is a numerical id identifying the number of the bond type in the simulation. It DOES NOT determine the type of the bond potential (harmonic vs FENE).
+  The signature of the setter function has to contain the ``bond_type``, the remaining parameters are specific to the interaction. For the FENE bond, e.g., we have::
+    fene_set_params(int bond_type, double k, double drmax, double r0)
+  A return value of ``ES_OK`` is returned on success, ``ES_ERR`` on error, e.g., when parameters are invalid.
 * The setter function must call make_bond_type_exists() with that bond type, to allocate the memory for storing the parameters.
 * Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
   
   * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
-  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be
+  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be::
     bonded_ia_params[bond_tpe].p.fene
- 
 * At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters jsut set to other compute nodes in a parallel simulation.
 * The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
 * The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
@@ -250,7 +262,7 @@ Including the bonded interaction in the force calculation and the energy and pre
       explicitly.
 
    #. Besides this, you have enter the force respectively the energy
-      lculation routines in ``add_bonded_force``, ``add_bonded_energy``,
+      calculation routines in ``add_bonded_force``, ``add_bonded_energy``,
       add_bonded_virials`` and ``pressure_calc``. The pressure occurs
       ice, once for the parallelized isotropic pressure and once for the
       tensorial pressure calculation. For pair forces, the pressure is
@@ -258,7 +270,7 @@ Including the bonded interaction in the force calculation and the energy and pre
       pressure is calculated.
    #  Do not forget to include the header file of your interaction.
 
-* Force calculation: in ``forces_inline.hpp` in the functino ``add_bonded_force()``, add your bond to the switch statement. For the FENE bond, e.g., the code looks like this
+* Force calculation: in ``forces_inline.hpp` in the functino ``add_bonded_force()``, add your bond to the switch statement. For the FENE bond, e.g., the code looks like this::
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
 * Energy calculation: add similar code to ``add_bonded_energy()`` in ``energy_inline.hpp``
@@ -266,6 +278,91 @@ Including the bonded interaction in the force calculation and the energy and pre
 
 Adding the bonded interaciton in the Python interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Pleas note that the following is Cython code (www.cython.org), rather than pure Python.
+* In ``src/python/espressomd/interactions.pxd``:
+
+  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this lookls like::
+      cdef extern from "interaction_data.hpp":
+          ctypedef struct Fene_bond_parameters:
+              double k
+              double drmax
+              double r0
+              double drmax2
+              double drmax2i
+  * Add your bonded interaction to the Cython copy of the BondedInteractions enum analogous to the one in the core:, described above:
+      cdef enum enum_bonded_interaction "BondedInteraction":
+          BONDED_IA_NONE = -1,
+          BONDED_IA_FENE,
+          BONDED_IA_HARMONIC,
+          [...]
+    The spelling has to match the one in the c++ enum exactly.
+  * Adapt the Cython copy of the bond_parameters union analogous to the C++ core.  The member name has to match the one in C++ exactly::
+      ctypedef union bond_parameters "Bond_parameters":
+          Fene_bond_parameters fene
+          Oif_global_forces_bond_parameters oif_global_forces
+          Oif_local_forces_bond_parameters oif_local_forces
+          Harmonic_bond_parameters harmonic
+  * Import the declaration of the setter function implemented in the core. For the FENE bond, this looks like::
+    cdef extern from "fene.hpp":
+        int fene_set_params(int bond_type, double k, double drmax, double r0)
+
+* In ``src/python/espressomd/interactions.pyx``:
+
+  * Implement the Cython class for the bonded interaction, using the one for the FENE bond as template. Please use pep8 naming convention:: 
+    class FeneBond(BondedInteraction):
+    
+        def __init__(self, *args, **kwargs):
+            """ 
+            FeneBond initialiser. Used to instatiate a FeneBond identifier
+            with a given set of parameters.
+    
+            Parameters
+            ----------
+            k : float
+                Specifies the magnitude of the bond interaction.
+            d_r_max : float
+                      Specifies the maximum stretch and compression length of the
+                      bond.
+            r_0 : float, optional
+                  Specifies the equilibrium length of the bond.
+            """
+            super(FeneBond, self).__init__(*args, **kwargs)
+    
+        def type_number(self):
+            return BONDED_IA_FENE
+    
+        def type_name(self):
+            return "FENE"
+    
+        def valid_keys(self):
+            return "k", "d_r_max", "r_0"
+    
+        def required_keys(self):
+            return "k", "d_r_max"
+    
+        def set_default_params(self):
+            self._params = {"r_0": 0.}
+    
+        def _get_params_from_es_core(self):
+            return \
+                {"k": bonded_ia_params[self._bond_id].p.fene.k,
+                 "d_r_max": bonded_ia_params[self._bond_id].p.fene.drmax,
+                 "r_0": bonded_ia_params[self._bond_id].p.fene.r0}
+    
+        def _set_params_in_es_core(self):
+            fene_set_params(
+                self._bond_id, self._params["k"], self._params["d_r_max"], self._params["r_0"])
+    
+* In ``testsuite/python/bondedInteractions.py``:
+  
+  * Add a test case, which verifies that parameters set and gotten from the interaction are consistent::
+    test_fene = generateTestForBondParams(
+        0, FeneBond, {"r_0": 1.1, "k": 5.2, "d_r_max": 3.})
+
+  
+  
+  
+   
 
 
 
@@ -353,8 +450,8 @@ After the new non-bonded interaction works properly, it would be a good
 idea to add a testcase to the testsuite, so that changes breaking your
 interaction can be detected early.
 
-Particle Data Organization
---------------------------
+Outdated: Particle Data Organization
+------------------------------------
 
 The particle data organization is described in the Tcl command
 cellsystem, its implementation is briefly described in ``cells.h`` and
@@ -443,8 +540,8 @@ unique, so here you are completely on your own. Good luck.
 
 .. _errorhandling_for_developers:
 
-Errorhandling for Developers
-----------------------------
+Outdated: Errorhandling for Developers
+--------------------------------------
 
 Developers should use the errorhandling mechanism whenever it is
 possible to recover from an error such that continuing the simulation is
@@ -509,7 +606,7 @@ instead of ``return TCL_OK/TCL_ERROR`` you should use
 
 
 Global Variables which are synchronized across nodes
------------------------------------------------------------
+----------------------------------------------------
 
 Adding new global variables to |es|, is strongly discuraged, because it means that code depends on a purely defined global state and cannot be tested individually.
 Features/Algorithms should instead be encapsulated in a class which is used by the script interface mechnaism.
