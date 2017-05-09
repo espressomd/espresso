@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
-from espressomd import code_info
 import numpy as np
 
 print("""
@@ -29,7 +28,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 dev = "cpu"
 
@@ -85,12 +84,12 @@ print("F\n%s"%system.part[:].f)
 system.part[:2].f=[[3,4,5],[4,5,6]]
 print("F_NEW\n%s"%system.part[:].f)
 
-if "MASS" in code_info.features():
+if espressomd.has_features(["MASS"]):
     print("MASS\n%s"%system.part[:].mass)
     system.part[:2].mass=[2,3]
     print("MASS_NEW\n%s"%system.part[:].mass)
 
-if "ELECTROSTATICS" in code_info.features():
+if espressomd.has_features(["ELECTROSTATICS"]):
     print("Q\n%s"%system.part[:].q)
     system.part[::2].q=np.ones(n_part/2)
     system.part[1::2].q=-np.ones(n_part/2)

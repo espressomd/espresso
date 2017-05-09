@@ -280,7 +280,7 @@ translational motion is effected by the self-propulsion.
 Using the Langevin thermostat, it is posible to set a temperature and a
 friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
-(chapter :ref:`Setting_up_particles`) for information on how to achieve this.
+(chapter :ref:`Setting up particles`) for information on how to achieve this.
 
 GHMC thermostat
 ~~~~~~~~~~~~~~~

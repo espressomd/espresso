@@ -111,10 +111,10 @@ class ParticleProperties(ut.TestCase):
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
 
-    if "MASS" in espressomd.features():
+    if espressomd.has_features(["MASS"]):
         test_mass = generateTestForScalarProperty("mass", 1.3)
 
-    if "ROTATION" in espressomd.features():
+    if espressomd.has_features(["ROTATION"]):
         test_omega_lab = generateTestForVectorProperty(
             "omega_lab", np.array([4., 2., 1.]))
         test_omega_body = generateTestForVectorProperty(
@@ -125,31 +125,31 @@ class ParticleProperties(ut.TestCase):
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
 
-        if "LANGEVIN_PER_PARTICLE" in espressomd.features():
-            if "PARTICLE_ANISOTROPY" in espressomd.features():
+        if espressomd.has_features(["LANGEVIN_PER_PARTICLE"]):
+            if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
                 "gamma", np.array([2., 9., 0.23]))
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
                 
-            if "ROTATIONAL_INERTIA" in espressomd.features():
+            if espressomd.has_features(["ROTATIONAL_INERTIA"]):
                 test_gamma_rot = generateTestForVectorProperty(
                 "gamma_rot", np.array([5., 10., 0.33]))
             else:
                 test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
-    if "ELECTROSTATICS" in espressomd.features():
+    if espressomd.has_features(["ELECTROSTATICS"]):
         test_charge = generateTestForScalarProperty("q", -19.7)
 
-    if "DIPOLES" in espressomd.features():
+    if espressomd.has_features(["DIPOLES"]):
         test_dip = generateTestForVectorProperty(
             "dip", np.array([0.5, -0.5, 3]))
         test_dipm = generateTestForScalarProperty("dipm", -9.7)
 
-    if "VIRTUAL_SITES" in espressomd.features():
+    if espressomd.has_features(["VIRTUAL_SITES"]):
         test_virtual = generateTestForScalarProperty("virtual", 1)
-    if "VIRTUAL_SITES_RELATIVE" in espressomd.features():
+    if espressomd.has_features(["VIRTUAL_SITES_RELATIVE"]):
         def test_zz_vs_relative(self):
             self.es.part.add(id=0, pos=(0, 0, 0))
             self.es.part.add(id=1, pos=(0, 0, 0))

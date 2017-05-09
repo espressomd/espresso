@@ -30,6 +30,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
+from .utils cimport numeric_limits
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -40,7 +41,8 @@ if CONSTRAINTS == 1:
 
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
-from .lbboundaries import LBBoundaries
+if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+    from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 
 import sys
@@ -70,7 +72,8 @@ cdef class System:
     integrator = integrate.Integrator()
     if CONSTRAINTS == 1:
         constraints = Constraints()
-    lbboundaries = LBBoundaries()
+    if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+        lbboundaries = LBBoundaries()
     ekboundaries = EKBoundaries()
 
     auto_update_observables = AutoUpdateObservables()
@@ -186,7 +189,8 @@ cdef class System:
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
-                if lbpar_gpu.tau >= 0.0 and lbpar_gpu.tau - _time_step > 1e-8*abs(lbpar_gpu.tau+_time_step):
+                if ( lbpar_gpu.tau >= 0.0 and
+                     lbpar_gpu.tau-_time_step > numeric_limits[float].epsilon()*abs(lbpar_gpu.tau+_time_step) ):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
             mpi_set_time_step(_time_step)
@@ -241,7 +245,7 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, sys.maxint))
+                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
@@ -260,7 +264,6 @@ cdef class System:
                 seed_array.resize(len(_seed))
                 for i in range(len(_seed)):
                     seed_array[i] = int(_seed[i])
-
                 mpi_random_seed(n_nodes, seed_array)
             else:
                 raise ValueError(

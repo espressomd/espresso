@@ -71,6 +71,51 @@ def validate_params(_params, default):
 
 # wrapper function to expose to the user interface
 def create_polymer(**kwargs):
+    """
+    Wrapper function to setup polymers.
+
+    Parameters
+    ----------
+    N_P                 : int
+                          Number of polymer chains
+    MPC                 : int
+                          Number of monomers per chain
+    bond_length         : float
+                          distance between adjacent monomers in a chain
+    start_id            : int, optional
+                          Particle ID of the first monomer, all other particles will have larger IDs
+    start_pos           : array_like
+                          Position of the first monomer
+    mode                : int, optional
+                          Selects a specific random walk procedure for the
+                          polymer setup mode = 1 uses a common random walk,
+                          mode = 2 produces a pruned self-avoiding random walk,
+                          and mode = 0 a self-avoiding random walk. Note that
+                          mode = 2 does not produce a true self- avoiding
+                          random walk distribution but is much faster than mode = 0
+    shield              : float, optional
+                          Shielding radius for the pruned self-avoiding walk mode
+    max_tries           : int, optional
+                          Maximal number of attempts to set up a polymer,
+                          default value is 30,000. Depending on the random walk
+                          mode and the polymer length this value needs to be
+                          adapted. 
+    val_poly            : float, optional
+                          Valency of the monomers, default is 0.0
+    charge_distance     : int, optional
+                          Distance between charged monomers along the chain. 
+    type_poly_neutral   : int, optional
+                          Particle type of neutal monomers
+    type_poly_charged   : int, optional
+                          Particle type for charged monomers
+    angle               : float, optional
+    angle2              : float, optional
+                          The both angles angle and angle2 allow to set up
+                          planar or helical polymers, they fix the angles
+                          between adjacent bonds.
+    pos2                : array_like, optional
+                          Sets the position of the second monomer. 
+    """
     params=dict()
     default_params=dict()
     default_params["N_P"] = 0 
