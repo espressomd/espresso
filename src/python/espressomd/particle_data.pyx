@@ -85,19 +85,18 @@ cdef class ParticleHandle:
     # Particle Type
     property type:
         """
-        The type id of the Particle.
+        Particle type.
 
-        type : int
-               The particle type is used to set interactions bleh between different particles.
+        The particle type is used to set interactions between different
+        particles.
 
         ..  note::
 
-            The value of `type` has to be an integer >= 0.
+            Type has to be :math:`\geq 0`.
 
         """
 
         def __set__(self, _type):
-            
             if isinstance(_type, int) and _type >= 0:
                 if set_particle_type(self.id, _type) == 1:
                     raise Exception("Set particle position first.")
@@ -111,13 +110,13 @@ cdef class ParticleHandle:
     # Particle MolId
     property mol_id:
         """
-        The molecule id of the Particle.
-         mol_id : int
-                  The particle mol_id is used to differentiate between particles belonging to different molecules, e.g. when virtual sites are used, or object-in-fuid cells.  The default `mol_id` for all particles is 0.
+        Particle mol_id.
+
+        The particle mol_id is used to differentiate between particles belonging to different molecules, e.g. when virtual sites are used, or object-in-fuid cells.  The default `mol_id` for all particles is 0.
 
         ..  note::
 
-            The value of `mol_id` has to be an integer >= 0.
+            mol_id has to be :math:`\geq 0`.
 
         """
 
@@ -135,10 +134,7 @@ cdef class ParticleHandle:
     # Position
     property pos:
         """
-        The unwrapped (not folded into central box) position vector of a Particle.
-
-        pos : list of floats
-              A list of three floats representing the Particles's absolute position    
+        Particle position (not folded into central image).
 
         """
 
@@ -159,51 +155,17 @@ cdef class ParticleHandle:
                 img[i]=self.particle_data.l.i[i]
                 ppos[i]=self.particle_data.r.p[i]
 
+
             unfold_position(ppos,img)
             return np.array([ppos[0],ppos[1],ppos[2]])
 
     property pos_folded:
         """
-        The wrapped (folded into central box) position vector of a Particle.
-
-        pos : list of floats
-              A list of three floats representing the Particles's position 
-
- 
-        ..  note::
-
-            Setting the folded position is ambiguous and is thus not possible, please use `pos`      
-
-        
-        Examples
-        ----------
-
-        >>> import espressomd
-        >>> 
-        >>> system = espressomd.System()
-        >>> 
-        >>> system.box_l=[10,10,10]
-        >>> # add two bonded particles to particle 0 
-        >>> system.part.add(id=0, pos=(5, 0, 0))
-        >>> system.part.add(id=1, pos=(10, 0, 0))
-        >>> system.part.add(id=2, pos=(25, 0, 0))
-        >>> for p in system.part:
-        >>>     print(p.pos)
-        [ 5.  0.  0.]
-        [ 10.   0.   0.]
-        [ 25.   0.   0.]
-        >>>
-        >>> for p in system.part:
-        >>>     print(p.pos_folded)
-        [5.0, 0.0, 0.0]
-        [0.0, 0.0, 0.0]
-        [5.0, 0.0, 0.0]
-
+        Particle position (folded into central image).
 
         """
 
-
-        def __set__(self, pos_folded):
+        def __set__(self, v):
             raise Exception("setting a folded position is not implemented")
 
         def __get__(self):
@@ -216,9 +178,6 @@ cdef class ParticleHandle:
     property v:
         """
         Particle velocity.
-
-        v : list of floats
-              A list of three floats representing the Particles's velocity 
 
         .. note::
 
@@ -259,14 +218,11 @@ cdef class ParticleHandle:
         """
         Particle force.
 
-        f : list of floats
-              A list of three floats representing the current forces on the Particle 
-
         .. note::
 
             Whereas the velocity is modified with respect to the velocity you set
             upon integration, the force it recomputed during the integration step and any
-            force set in this way is immediatly lost at the next integration step.
+            force set in this way is lost during the integration step.
 
         """
 
@@ -292,19 +248,9 @@ cdef class ParticleHandle:
         """
         Bond partners with respect to bonded interactions.
 
-        bonds : tuple of tuples (or list)
-                a bond tuple is specified as a bond identifier associated with a particle `(bond_ID, part_ID)`. a single particle may contain multiple such tuples.
-
-        See Also
-        ----------
-
-        add_bond() : Method to add bonds to a `Particle`
-        delete_bond() : Method to add bonds to a `Particle`
-
-
         ..  note::
 
-            Bond ids have to be an integer >= 0.
+            Bond ids have to be :math:`\geq 0`.
 
         """
 
@@ -352,15 +298,8 @@ cdef class ParticleHandle:
     IF MULTI_TIMESTEP == 1:
         property smaller_timestep:
             """
-            Flag for smaller timestep
-            
-            smaller_timestep : int
-                               Particle flag specifying whether particle trajectory should be integrated with time_step of small_time_step.
-
-            ..  note::
-
-            This needs the feature MULTI_TIMESTEP
-
+            Particle flag specifying whether particle trajectory should be
+            integrated with time_step of small_time_step.
 
             """
 
@@ -380,17 +319,6 @@ cdef class ParticleHandle:
     property mass:
         """
         Particle mass.
-        
-        mass :  float
-               The mass of the particle
-
-        ..  note::
-
-            This needs the feature MASS
-       
-        See Also
-        ----------
-        set_langevin : Setting the parameters of the Langevin thermostat
 
         """
 
@@ -836,11 +764,6 @@ cdef class ParticleHandle:
                 """
                 Rotational friction coefficient per particle in Langevin.
 
-                
-                See Also
-                ----------
-                set_langevin : Setting the parameters of the Langevin thermostat
-
                 """
 
                 def __set__(self, _gamma):
@@ -861,10 +784,6 @@ cdef class ParticleHandle:
             property gamma:
                 """
                 Friction coefficient per particle in Langevin.
-                
-                See Also
-                ----------
-                set_langevin : Setting the parameters of the Langevin thermostat
 
                 """
 
@@ -1135,21 +1054,6 @@ cdef class ParticleHandle:
             handle_errors("Adding the bond failed.")
 
     def delete_verified_bond(self, bond):
-        """
-       
-        delete a single bond from the particle. The validity of which has already been verified.
-        
-        Parameters
-        ----------
-        bond : tuple where the first element is either a bond ID of a bond type, and the last element is the ID of the parter particle to be bonded to.
-
-        
-        See Also
-        ----------
-        delete_bond :  Delete an unverified bond held by the `Particle`
-        
-        """
-        
         cdef int bond_info[5]
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
@@ -1211,40 +1115,7 @@ cdef class ParticleHandle:
 
     def add_bond(self, _bond):
         """
-        
         Add a single bond to the particle.
-        
-        Parameters
-        ----------
-        _bond : tuple where the first element is either a bond ID of a bond type, and the last element is the ID of the parter particle to be bonded to.
-
-
-        
-        See Also
-        ----------
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
-
-        Examples 
-        ----------
-
-        >>> import espressomd
-        >>> from espressomd.interactions import *
-        >>> 
-        >>> system = espressomd.System()
-        >>> 
-        >>> # define a harmonic potential and add it to the system
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
-        >>> system.bonded_inter.add(harm_bond)
-        >>> 
-        >>> # add two particles
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> 
-        >>> # bond them via the bond type
-        >>> system.part[0].add_bond((harm_bond,1))
-        >>> # or via the bond index (zero in this case since it is the first one added)
-        >>> system.part[0].add_bond((0,1))
-        
 
         """
         bond = list(_bond)  # As we will modify it
@@ -1253,44 +1124,7 @@ cdef class ParticleHandle:
 
     def delete_bond(self, _bond):
         """
-        
         Delete a single bond from the particle.
-        
-        Parameters
-        ----------
-        _bond : bond to be deleted 
-        
-        See Also
-        ----------
-        bonds :  `Particle` property, a list of all current bonds help by `Particle`
-
-        Examples
-        ----------
-
-        >>> import espressomd
-        >>> from espressomd.interactions import *
-        >>> 
-        >>> system = espressomd.System()
-        >>> 
-        >>> # define a harmonic potential and add it to the system
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
-        >>> system.bonded_inter.add(harm_bond)
-        >>> 
-        >>> # add two bonded particles to particle 0 
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> system.part.add(id=2, pos=(1, 1, 0))
-        >>> system.part[0].add_bond((harm_bond,1))       
-        >>> system.part[0].add_bond((harm_bond,2))
-        >>> 
-        >>> bonds = system.part[0].bonds
-        >>> print(bonds)
-        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
-        >>> # delete the bond betwen particle 0 and particle 1
-        >>> system.part[0].delete_bond(bonds[0])
-        >>> print(system.part[0].bonds)
-        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
-
 
         """
         bond = list(_bond)  # as we modify it
@@ -1299,12 +1133,7 @@ cdef class ParticleHandle:
 
     def delete_all_bonds(self):
         """
-        
         Delete all bonds from the particle.
-
-        See Also
-        ----------
-        delete_bond :  Delete an unverified bond held by the `Particle`
 
         """
         if change_particle_bond(self.id, NULL, 1):
@@ -1818,7 +1647,6 @@ cdef class ParticleList:
     def writevtk(self, fname, types='all'):
         """
         :todo: `Documentation missing.`
-        :todo: `move to ./io/writer/`
 
         """
         global box_l

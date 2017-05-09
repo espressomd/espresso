@@ -24,7 +24,7 @@ cdef class GalileiTransform:
 
     def kill_particle_motion(self, rotation=0):
         """ 
-        Stop the motion of the particles. 
+        Stop motion of the particles. 
 
         Parameters
         ----------
@@ -50,25 +50,14 @@ cdef class GalileiTransform:
 
     def system_CMS(self):
         """ 
-        Calculate the center of mass of the system. Assumes equal unit mass if the mass feature is not used.
-        
-        Returns
-        ----------
-        cms :  list
-            The of the center of mass position vector as a list of floats 
+        Calculate the CMS of the system.
         """
         mpi_system_CMS()
         return gal.cms
 
     def system_CMS_velocity(self):
         """ 
-        Calculate the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used.
-
-        Returns
-        ----------
-        cms_vel :  list
-            The of the center of mass velocity vector as a list of floats 
-
+        Calculate the CMS velocity of the system.
         """
 
         mpi_system_CMS_velocity()
@@ -76,7 +65,7 @@ cdef class GalileiTransform:
 
     def galilei_transform(self):
         """ 
-        Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann.
+        Remove the CMS velocity of the system.
 
         """
         mpi_galilei_transform()
