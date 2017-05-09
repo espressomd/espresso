@@ -116,8 +116,8 @@ class VCFTestAll(CommonTests):
 
         with open('test.vsf','w') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=1) #just the second bonded member
-        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=(1,7)) #just the part_ID and type_ID
+        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
         
 class VCFTestType(CommonTests):
@@ -138,8 +138,8 @@ class VCFTestType(CommonTests):
 
         with open('test.vsf','w') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=1) #just the second bonded member
-        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=(1,7)) #just the part_ID and type_ID
+        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
 
 if __name__ == "__main__":
