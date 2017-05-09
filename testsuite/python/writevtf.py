@@ -61,45 +61,21 @@ class CommonTests(ut.TestCase):
             msg="Positions not written correctly by writevcf!")
 
 
-    def test_bonds(self):
-        """Test if bonds have been written properly."""
-        
-        self.types_to_write=='all': 
-            types=[0,2]
-        elif (2 in self.types_to_write): 
-            types=[2]
-            #################
-            # WRITE CODE HERE!
-            #########
-        self.assertTrue(np.allclose(
-            simulation_pos, self.written_pos),
-            msg="Bonds not written correctly by writevsf!")
-
-
 class VCFTestAll(CommonTests):
     """
     Test the writing VTF files.
     """
     @classmethod
     def tearDownClass(cls):
-        os.remove("test.vcf")
-#        os.remove("test.vsf")
+        os.remove("test.vtf")
 
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write='all'
-        with open('test.vcf','w') as fp:
+        with open('test.vtf','w') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-        cls.written_pos=np.loadtxt("test.vcf",comments="t")
-
-        with open('test.vsf','w') as fp:
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-            
-        ###########
-        ## CODE HERE!
-        ###########
-        cls.written_pos=np.loadtxt("test.vsf", skiplines=1, comments="a")
+        cls.written_pos=np.loadtxt("test.vtf",comments="t")
 
 class VCFTestType(CommonTests):
     """
@@ -107,15 +83,15 @@ class VCFTestType(CommonTests):
     """
     @classmethod
     def tearDownClass(cls):
-        os.remove("test.vcf")
+        os.remove("test.vtf")
 
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write=[2, 23]
-        with open('test.vcf','w') as fp:
+        with open('test.vtf','w') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-        cls.written_pos=np.loadtxt("test.vcf",comments="t")
+        cls.written_pos=np.loadtxt("test.vtf",comments="t")
 
 
 
@@ -124,7 +100,7 @@ if __name__ == "__main__":
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
 
     result = ut.TextTestRunner(verbosity=4).run(suite)
-    if os.path.isfile("test.vcf"):
-        os.remove("test.vcf")
+    #if os.path.isfile("test.vtf"):
+    #    os.remove("test.vtf")
     sys.exit(not result.wasSuccessful())
 
