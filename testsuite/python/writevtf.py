@@ -35,13 +35,14 @@ class CommonTests(ut.TestCase):
     Class that holds common test methods.
     """
     system = espressomd.System()
-    system.set_random_state_PRNG()
-    # make sure the box is small enough for some to be printed outside
-    system.box_l = [npart*.5, npart*.2, npart*.2]
+    # avoid particles to be set outside of the main box, otherwise particle
+    # positions are folded in the core when writing out and we cannot directly
+    # compare positions in the dataset and where particles were set. One would
+    # need to unfold the positions of the hdf5 file.
+    system.box_l = [npart, npart, npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     written_pos = None
-    written_bonds = None
     types_to_write = None
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
@@ -63,28 +64,16 @@ class CommonTests(ut.TestCase):
     def test_bonds(self):
         """Test if bonds have been written properly."""
         
-        if self.types_to_write=='all': 
+        self.types_to_write=='all': 
             types=[0,2]
         elif (2 in self.types_to_write): 
             types=[2]
-            sim_bonds=[]
-            for p in system.part:
-                if p.type in types:
-                    for b in p.bonds:
-                      if (b[1].type in types)
-                          sim_bonds.append([p.id, b[1].type])
-            sim_bonds=np.array(sim_bonds)
-            print ("sim bonds")
-            print (sim_bonds)
-            print ("Written bonds")
-            print (written_bonds)
-
-            ##########
+            #################
             # WRITE CODE HERE!
             #########
-        #self.assertTrue(np.allclose(
-        #    sim_bonds, written_bonds),
-        #    msg="Bonds not written correctly by writevsf!")
+        self.assertTrue(np.allclose(
+            simulation_pos, self.written_pos),
+            msg="Bonds not written correctly by writevsf!")
 
 
 class VCFTestAll(CommonTests):
@@ -105,12 +94,12 @@ class VCFTestAll(CommonTests):
         cls.written_pos=np.loadtxt("test.vcf",comments="t")
 
         with open('test.vsf','w') as fp:
-            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-        
+            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
+            
         ###########
         ## CODE HERE!
         ###########
-        cls.written_bonds=np.loadtxt("test.vsf", skiplines=1, comments="a", delimiter=':')
+        cls.written_pos=np.loadtxt("test.vsf", skiplines=1, comments="a")
 
 class VCFTestType(CommonTests):
     """
@@ -137,7 +126,5 @@ if __name__ == "__main__":
     result = ut.TextTestRunner(verbosity=4).run(suite)
     if os.path.isfile("test.vcf"):
         os.remove("test.vcf")
-    #if os.path.isfile("test.vcf"):
-    #    os.remove("test.vcf")
     sys.exit(not result.wasSuccessful())
 
