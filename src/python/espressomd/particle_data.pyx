@@ -29,6 +29,7 @@ from .interactions import BondedInteractions
 from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
+import functools
 
 PARTICLE_EXT_FORCE = 1
 
@@ -1518,22 +1519,27 @@ cdef class ParticleList:
                     continue
                 yield (self[i], self[j])
 
-class _InjectParticleProperty:
-    def __init__(injector, attribute):
-        injector.attribute = attribute
+# auto-add missing particle properties to ParticleSlice
+for attribute_name in particle_attributes:
+    if attribute_name in dir(ParticleSlice):
+        continue
 
-    def set(injector, particle_slice, values):
-        target = getattr(ParticleHandle(particle_slice.id_selection[0]), injector.attribute)
+    def seta(particle_slice, values, attribute):
+        """Setter function that sets attribute on every member of particle_slice.
+           If values contains only one element, all members are set to it. If it
+           contains as many elements as there are members, each of them gets set
+           to the corresponding one."""
+        target = getattr(ParticleHandle(particle_slice.id_selection[0]), attribute)
         target_shape = np.shape(target)
         N = len(particle_slice.id_selection)
 
         if not target_shape: # scalar quantity
             if not np.shape(values): # one value provided
                 for i in range(N):
-                    setattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute, values)
+                    setattr(ParticleHandle(particle_slice.id_selection[i]), attribute, values)
             elif np.shape(values)[0] == N: # one value for each particle provided
                 for i in range(N):
-                    setattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute, values[i])
+                    setattr(ParticleHandle(particle_slice.id_selection[i]), attribute, values[i])
             else:
                 raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
                     np.shape(values), target_shape))
@@ -1541,23 +1547,22 @@ class _InjectParticleProperty:
 
         if target_shape == np.shape(values): # one value provided
             for i in range(N):
-                setattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute, values)
+                setattr(ParticleHandle(particle_slice.id_selection[i]), attribute, values)
         elif target_shape == tuple(np.shape(values)[1:]) and np.shape(values)[0] == N: # one value for each particle provided
             for i in range(N):
-                setattr(ParticleHandle(particle_slice.id_selection[i]), injector.attribute, values[i])
+                setattr(ParticleHandle(particle_slice.id_selection[i]), attribute, values[i])
         else:
             raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
                 np.shape(values), target_shape))
 
-    def get(injector, particle_slice):
+    def geta(particle_slice, attribute):
+        """Getter function that copies attribute from every member of particle_slice into an array."""
         values = []
         for i in particle_slice.id_selection:
-            values.append(getattr(ParticleHandle(i), injector.attribute))
+            values.append(getattr(ParticleHandle(i), attribute))
         return np.array(values)
 
-# auto-add missing particle properties to ParticleSlice
-for attribute in particle_attributes:
-    if not attribute in dir(ParticleSlice):
-        ipp = _InjectParticleProperty(attribute)
-        new_property = property(ipp.get, ipp.set, doc=getattr(ParticleHandle, attribute).__doc__)
-        setattr(ParticleSlice, attribute, new_property)
+    # synthesize a new property
+    new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+    # attach the property to ParticleSlice
+    setattr(ParticleSlice, attribute_name, new_property)
