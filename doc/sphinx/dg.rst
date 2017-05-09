@@ -1,11 +1,11 @@
 =================
 Developer's Guide
 =================
-
 .. warning::
    The information found in this version of the Developer's Guide is
    outdated.  Please see the section :ref:contact` and
    ask for advice if you plan to start working on |es|.
+
 
 .. _contact:
 
@@ -56,7 +56,7 @@ systems.
 .. _getting_the_development_code:
 
 Getting the Development Code
-----------------------------
+============================
 We use Github for storing the source code and its history, and for managing the development process. 
 The repository is located at
 http://github.com/espressomd/espresso
@@ -67,7 +67,7 @@ The build process does not differ from the one for release versions described in
 
 
 Build System
-------------
+============
 
 The build system of |es| is based on CMake.
 
@@ -84,7 +84,7 @@ The most common reasons for editing these files are:
 -  Adding new external dependencies
 
 Adding New Source Files
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
@@ -102,7 +102,7 @@ need to look at the CMakeList.txt in the directory where the file is located.
 
 
 Testsuite
----------
+=========
 -  New or significantly changed features will only be accepted, if they have a test case. 
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
 -  There are two kinds of tests:
@@ -119,7 +119,6 @@ Testsuite
 
 Documentation
 =============
-Please note that
 
 The documentation of |es| consists of four parts:
 -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
@@ -198,7 +197,7 @@ To add a new bonded interaction, the following steps have to be taken
   * Implement a class for the bonded interaction derived from the BondedInteraction base class
 
 Defining the data structure for the interaction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The data structures for bonded interactions reside in ``interaction_data.hpp``. 
 * Add your interaction to the 
   enum BondedInteraction
@@ -213,7 +212,7 @@ The data structures for bonded interactions reside in ``interaction_data.hpp``.
 
 
 Functions for calculating force and energy, and for setting parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Every interaction resides in its own source .cpp and .hpp. A simple example for a
 bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``. 
@@ -248,7 +247,7 @@ Notes:
 
 
 Including the bonded interaction in the force calculation and the energy and pressure analysis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *  In ``src/core/interaction_data.cpp``
 
    #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
@@ -277,7 +276,7 @@ Including the bonded interaction in the force calculation and the energy and pre
 * Pressur, stress tensor and virial calculation: If your bonded interaction is a pair bond and does not modify the particles involved, add simuilar code as above to presure.hpp:calc_bonded_pair_force(). Otherwise, you have to implement a custom solution for virial calculation.
 
 Adding the bonded interaciton in the Python interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Pleas note that the following is Cython code (www.cython.org), rather than pure Python.
 * In ``src/python/espressomd/interactions.pxd``:
 
