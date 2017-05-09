@@ -390,7 +390,7 @@ cdef class ParticleHandle:
        
         See Also
         ----------
-        set_langevin : Setting the parameters of the Langevin thermostat
+        espressomd.set_langevin : Setting the parameters of the Langevin thermostat
 
         """
 
@@ -421,9 +421,10 @@ cdef class ParticleHandle:
                 set before setting omega_lab, otherwise the conversion from
                 lab to body frame will not be handled properly.
 
-            .. seealso::
+            See Also
+            ----------
 
-                :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+            espressomd.particle_data.ParticleHandle.omega_body
 
             """
 
@@ -693,6 +694,7 @@ cdef class ParticleHandle:
         property dip:
             """
             Dipole moment as vector.
+            dip : list of floats
 
             """
 
@@ -715,6 +717,7 @@ cdef class ParticleHandle:
         property dipm:
             """
             Dipole moment (magnitude).
+            dipm : float
 
             """
 
@@ -734,6 +737,7 @@ cdef class ParticleHandle:
         property ext_force:
             """
             External force on a particle defined by a vector.
+            ext_force : list of floats 
 
             """
 
@@ -764,6 +768,8 @@ cdef class ParticleHandle:
         property fix:
             """
             Fix the particle at current position.
+            
+            fix : lsit of floats
 
             Fixes the particle in space. By supplying a set of 3 integers as
             ar- guments it is possible to fix motion in x, y, or z coordinates
@@ -799,6 +805,7 @@ cdef class ParticleHandle:
             property ext_torque:
                 """
                 External torque on a particle defined by a vector.
+                ext_torque : list of floats
 
                 ..  note::
 
@@ -836,6 +843,7 @@ cdef class ParticleHandle:
                 """
                 Rotational friction coefficient per particle in Langevin.
 
+                gamma : list of floats
                 
                 See Also
                 ----------
@@ -862,6 +870,8 @@ cdef class ParticleHandle:
                 """
                 Friction coefficient per particle in Langevin.
                 
+                gamma : float
+                
                 See Also
                 ----------
                 set_langevin : Setting the parameters of the Langevin thermostat
@@ -884,6 +894,8 @@ cdef class ParticleHandle:
                 property gamma_rot:
                     """
                     Rotational friction coefficient per particle in Langevin.
+                    
+                    gamma_rot : list of floats
 
                     """
 
@@ -905,6 +917,8 @@ cdef class ParticleHandle:
                 property gamma_rot:
                     """
                     Rotational friction coefficient per particle in Langevin.
+                    
+                    gamma : float
 
                     """
 
@@ -923,6 +937,8 @@ cdef class ParticleHandle:
         property temp:
             """
             Temperature per particle in Langevin.
+            
+            temp: float
 
             """
 
@@ -942,6 +958,8 @@ cdef class ParticleHandle:
         property rotation:
             """
             Friction coefficient per particle in Langevin.
+            
+            rotation : int
 
             """
 
@@ -968,6 +986,7 @@ cdef class ParticleHandle:
         property exclude:
             """
             Exclude particle from interaction.
+           
 
             """
 
@@ -1124,6 +1143,12 @@ cdef class ParticleHandle:
         """
         Add a bond, the validity of which has already been verified.
 
+        See Also
+        ----------
+        add_bond :  Delete an unverified bond held by the `Particle`
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+
+
         """
 
         # If someone adds bond types with more than four partners, this has to be changed
@@ -1147,6 +1172,8 @@ cdef class ParticleHandle:
         See Also
         ----------
         delete_bond :  Delete an unverified bond held by the `Particle`
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+
         
         """
         
@@ -1305,6 +1332,8 @@ cdef class ParticleHandle:
         See Also
         ----------
         delete_bond :  Delete an unverified bond held by the `Particle`
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+
 
         """
         if change_particle_bond(self.id, NULL, 1):
