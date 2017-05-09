@@ -679,7 +679,6 @@ void mpi_mpiio(const char *filename, unsigned fields, int write);
 */
 /*@{*/
 #define P3M_COUNT_CHARGES 0
-#define SORT_PARTICLES 1
 #define CHECK_PARTICLES 2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES 5
