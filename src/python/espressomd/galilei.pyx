@@ -29,7 +29,7 @@ cdef class GalileiTransform:
         Parameters
         ----------
 
-        'rotation': int, optional
+        rotation : integer, optional
             Whether or not to kill the rotations too.
 
         """
@@ -42,7 +42,7 @@ cdef class GalileiTransform:
         Parameters
         ----------
 
-        'torque':   integer, optional
+        torque :   integer, optional
             Whether or not to kill the torques on all particles too.
 
         """
@@ -66,7 +66,7 @@ cdef class GalileiTransform:
 
         Returns
         ----------
-        cms_vel :  list
+        cms_vel :  list of floats
             The of the center of mass velocity vector as a list of floats 
 
         """
@@ -76,7 +76,7 @@ cdef class GalileiTransform:
 
     def galilei_transform(self):
         """ 
-        Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann.
+        Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann. This is due to the random nature of LD that yield a non-zero net system momentum at any given time.
 
         """
         mpi_galilei_transform()
