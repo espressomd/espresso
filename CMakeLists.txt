@@ -58,7 +58,6 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-#option(WITH_PYTHON "Build python interface"  ON)
 set(WITH_PYTHON yes)
 
 option(WITH_GSL "Build with GSL support" ON)
@@ -192,13 +191,12 @@ if(WITH_SCAFACOS)
 endif(WITH_SCAFACOS)
 
 if(WITH_GSL)
-  find_package(PkgConfig)
-  pkg_check_modules(GSL gsl)
-  if(GSL_FOUND)
-    set(GSL 1)
-    include_directories(${GSL_INCLUDE_DIR})
-
-  endif(GSL_FOUND)
+find_package(GSL REQUIRED)
+if (GSL_FOUND)
+  include_directories(${GSL_INCLUDE_DIR})
+  list(APPEND LIBRARIES ${GSL_LIBRARIES})
+  set(GSL 1)
+endif(GSL_FOUND)
 endif(WITH_GSL)
 
 if(WITH_VALGRIND_INSTRUMENTATION)

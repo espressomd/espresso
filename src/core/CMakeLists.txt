@@ -42,6 +42,10 @@ if(GSL)
   target_link_libraries(EspressoCore gsl gslcblas)
 endif(GSL)
 
+if(GSL)
+  target_link_libraries(EspressoCore gsl gslcblas)
+endif(GSL)
+
 set_target_properties(EspressoCore PROPERTIES MACOSX_RPATH TRUE)
 
 if(CUDA)
