@@ -27,6 +27,7 @@ import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import interactions
 from espressomd.io.writer import vtf
+import tempfile
 
 npart = 50
 
@@ -99,47 +100,41 @@ class CommonTests(ut.TestCase):
 
 class VCFTestAll(CommonTests):
     """
-    Test the writing VTF files.
+    Test the writing VTF files: all particle types.
     """
-    @classmethod
-    def tearDownClass(cls):
-        os.remove("test.vcf")
-        os.remove("test.vsf")
 
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write='all'
-        with open('test.vcf','w') as fp:
+        
+        with tempfile.open() as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-        cls.written_pos=np.loadtxt("test.vcf",comments="t")
+            cls.written_pos=np.loadtxt("test.vcf",comments="t")
 
-        with open('test.vsf','w') as fp:
+        with tempfile.open() as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
-        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
         
 class VCFTestType(CommonTests):
     """
-    Test the writing VTF files.
+    Test the writing VTF files: only particle types 2 and 23.
     """
-    @classmethod
-    def tearDownClass(cls):
-        os.remove("test.vcf")
 
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write=[2, 23]
-        with open('test.vcf','w') as fp:
+        with tempfile.open() as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-        cls.written_pos=np.loadtxt("test.vcf",comments="t")
+            cls.written_pos=np.loadtxt("test.vcf",comments="t")
 
-        with open('test.vsf','w') as fp:
+        with tempfile.open() as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-        cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
-        cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
 
 if __name__ == "__main__":
@@ -147,9 +142,5 @@ if __name__ == "__main__":
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
 
     result = ut.TextTestRunner(verbosity=4).run(suite)
-    if os.path.isfile("test.vcf"):
-        os.remove("test.vcf")
-    if os.path.isfile("test.vsf"):
-        os.remove("test.vsf")
     sys.exit(not result.wasSuccessful())
 
