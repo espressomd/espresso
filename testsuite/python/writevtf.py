@@ -107,15 +107,20 @@ class VCFTestAll(CommonTests):
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write='all'
-        
-        with tempfile.open() as fp:
+       
+        with tempfile.TemporaryFile(mode='w+t') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-            cls.written_pos=np.loadtxt("test.vcf",comments="t")
+            fp.flush()
+            fp.seek(0)
+            cls.written_pos=np.loadtxt(fp,comments="t")
 
-        with tempfile.open() as fp:
+        with tempfile.TemporaryFile(mode='w+t') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-            cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
-            cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            fp.flush()
+            fp.seek(0)
+            cls.written_bonds=np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            fp.seek(0)
+            cls.written_atoms=np.loadtxt(fp, skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
         
 class VCFTestType(CommonTests):
@@ -127,14 +132,19 @@ class VCFTestType(CommonTests):
     def setUpClass(cls):
         """Prepare a testsystem."""
         cls.types_to_write=[2, 23]
-        with tempfile.open() as fp:
+        with tempfile.TemporaryFile(mode='w+') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
-            cls.written_pos=np.loadtxt("test.vcf",comments="t")
+            fp.flush()
+            fp.seek(0)
+            cls.written_pos=np.loadtxt(fp,comments="t")
 
-        with tempfile.open() as fp:
+        with tempfile.TemporaryFile(mode='w+') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
-            cls.written_bonds=np.loadtxt("test.vsf", skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
-            cls.written_atoms=np.loadtxt("test.vsf", skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            fp.flush()
+            fp.seek(0)
+            cls.written_bonds=np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            fp.seek(0)
+            cls.written_atoms=np.loadtxt(fp, skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
 
 
 if __name__ == "__main__":
