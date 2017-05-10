@@ -27,12 +27,16 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoCore EspressoConfig)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints cluster_analysis EspressoUtils Correlators Observables)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
   target_link_libraries(EspressoCore Scafacos)
 endif(SCAFACOS)
+if(GSL)
+  include_directories(${GSL_INCLUDE_DIRS})
+endif(GSL)
+
 
 if(GSL)
   target_link_libraries(EspressoCore gsl gslcblas)
@@ -77,6 +81,7 @@ add_subdirectory(lbboundaries)
 add_subdirectory(object-in-fluid)
 add_subdirectory(shapes)
 add_subdirectory(constraints)
+add_subdirectory(cluster_analysis)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)
