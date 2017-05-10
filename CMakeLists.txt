@@ -196,6 +196,8 @@ if(WITH_GSL)
   pkg_check_modules(GSL gsl)
   if(GSL_FOUND)
     set(GSL 1)
+    include_directories(${GSL_INCLUDE_DIR})
+
   endif(GSL_FOUND)
 endif(WITH_GSL)
 
