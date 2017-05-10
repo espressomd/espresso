@@ -27,18 +27,38 @@ cdef extern from "stdlib.h":
     void * realloc(void * ptr, size_t size)
 
 cdef np.ndarray create_nparray_from_int_list(int_list * il):
+    """
+    Returns a numpy array from an int list struct which is provided as argument.
+    
+    Parameters
+    ----------
+    int_list : int_list* which is to be converted
+    """
     numpyArray = np.zeros(il.n)
     for i in range(il.n):
         numpyArray[i] = il.e[i]
-
     return numpyArray
 
 cdef np.ndarray create_nparray_from_double_list(double_list * dl):
+    """
+    Returns a numpy array from an double list struct which is provided as argument.
+    Parameters
+    ----------
+    dl : double_list* which is to be converted
+    """
     numpyArray = np.zeros(dl.n)
     for i in range(dl.n):
         numpyArray[i] = dl.e[i]
+    return numpyArray
 
 cdef int_list * create_int_list_from_python_object(obj):
+    """
+    Returns a int list pointer from a python object which supports subscripts.
+    
+    Parameters
+    ----------
+    obj : python object which supports subscripts
+    """
     cdef int_list * il
     il = <int_list * > malloc(sizeof(int_list))
     init_intlist(il)
@@ -75,9 +95,17 @@ cdef check_type_or_throw_except(x, n, t, msg):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
-cdef np.ndarray create_nparray_from_double_array(double * x, int n):
-    numpyArray = np.zeros(n)
-    for i in range(n):
+cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
+    """
+    Returns a numpy array from double array
+    
+    Parameters
+    ----------
+    x : double* which is to be converted
+    len_x: len of array
+    """
+    numpyArray = np.zeros(len_x)
+    for i in range(len_x):
         numpyArray[i] = x[i]
     return numpyArray
 
@@ -101,11 +129,25 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                              str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
 
 def to_char_pointer(s):
+    """
+    Returns a char pointer which contains the information of the provided python string.
+    
+    Parameters
+    ----------
+    s : string
+    """
     if isinstance(s, unicode):
         s = (<unicode>s).encode('utf8')
     return s
 
 def to_str(s):
+    """
+    Returns a python string
+    
+    Parameters
+    ----------
+    s : char*
+    """
     if type(s) is unicode:
         return <unicode>s
     elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
@@ -117,6 +159,14 @@ def to_str(s):
 
 
 cdef handle_errors(msg):
+    """
+    Gathers runtime errors
+    
+    Parameters
+    ----------
+    msg: string
+         Error message that is to be raised.
+    """
     errors = mpi_gather_runtime_errors()
     for err in errors:
         err.print()

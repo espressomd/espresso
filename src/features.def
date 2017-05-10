@@ -164,18 +164,6 @@ IMMERSED_BOUNDARY               requires not SHANCHEN
 IMMERSED_BOUNDARY               requires not ELECTROKINETICS
 SCAFACOS_DIPOLES                requires SCAFACOS and DIPOLES
 
-/* Obsolete features. To be removed. */
-/* Old Bond angle */
-/* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC             requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE               requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSSQUARE            requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
-BOND_ANGLE_OLD                  equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-BOND_ANGLE_HARMONIC             notest
-BOND_ANGLE_COSINE               notest
-BOND_ANGLE_COSSQUARE            notest
-BOND_ANGLE_OLD                  notest
-
 // Shape of the noise in ther (Langevin) thermostat
 FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
 GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
