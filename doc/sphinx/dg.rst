@@ -7,7 +7,7 @@ Developer's Guide
    ask for advice if you plan to start working on |es|.
 
 
-.. _contact:
+.. _Contact the Develoeprs:
 
 Contact the Develoeprs
 ======================
@@ -18,6 +18,8 @@ to subscribe to the developers’ mailing list go to
 http://lists.nongnu.org/mailman/listinfo/espressomd-devel 
 
 
+.. _Before you start a development project:
+
 Before you start a development project
 ======================================
 Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
@@ -25,12 +27,15 @@ This is to avoid that several people work on the same thing at the same time. Al
 
 
 
-.. _development_environment:
+
+
+.. _Development Environment:
 
 Development Environment
 =======================
 
-.. _required_development_tools:
+
+,, _Required Development Tools:
 
 Required Development Tools
 --------------------------
@@ -41,7 +46,7 @@ Required Development Tools
    :ref:`git_repositories` contains documentation on how we employ
    git.
 
--  The documentation is currently being converted form Latex to Sphinx. To build the old user and developer guides, you will need LaTex. For building tthe sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+-  The documentation is currently being converted from Latex to Sphinx. To build the old user and developer guides, you will need LaTex. For building tthe sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --user -r requirements.txt
    Note, that some distributions nonw use ``pip`` for Python3 and ``pip2`` for Python 2. 
 
@@ -53,7 +58,7 @@ Required Development Tools
 All of these tools should be easy to install on most Unix operating
 systems.
 
-.. _getting_the_development_code:
+.. _Getting the Development Code:
 
 Getting the Development Code
 ============================
@@ -115,14 +120,14 @@ Testsuite
    in the top build directory.
 
 
-.. _documentation:
+.. _Documentation:
 
 Documentation
 =============
 
 The documentation of |es| consists of four parts:
 -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
--  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package
+-  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
 -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
 
 
@@ -170,10 +175,10 @@ description of the most common commands we need:
 -  | ``\return`` *decription*
    | Document the return value of a function.
 
-.. _programmers_guide:
+.. _Programmers's Guide:
 
 
-Programmer’s Guide
+Programmer's Guide
 ==================
 
 This chapter provides some hints on how to extend |es|. It is not
@@ -184,7 +189,7 @@ Adding New Bonded Interactions
 ------------------------------
 
 To add a new bonded interaction, the following steps have to be taken
-* Simulatino core:
+* Simulation core:
 
   * Define a structure holding the parameters (prefactors, etc.) of the interaction
   * Write functions for calculating force and energy, respectively.
@@ -365,7 +370,7 @@ Pleas note that the following is Cython code (www.cython.org), rather than pure 
 
 
 
-.. _adding_new_nonbonded_interactions:
+.. _Outdated: Adding New Nonbonded Interactions:
 
 Outdated: Adding New Nonbonded Interactions 
 ---------------------------------
@@ -537,7 +542,7 @@ cell system. Note, however, that each cell system has its specific part
 of the code, where only this cellsystem does something strange and
 unique, so here you are completely on your own. Good luck.
 
-.. _errorhandling_for_developers:
+.. _Outdated: Errorhandling for Developers:
 
 Outdated: Errorhandling for Developers
 --------------------------------------
