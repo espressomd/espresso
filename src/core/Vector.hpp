@@ -73,6 +73,8 @@ public:
   Scalar &operator[](int i) { return d[i]; }
   Scalar const &operator[](int i) const { return d[i]; }
 
+
+
   iterator begin() { return d.begin(); }
   const_iterator begin() const { return d.begin(); }
 
@@ -142,6 +144,24 @@ public:
     ar &d;
   }
 };
+
+template<size_t n, typename Scalar>
+Vector<n, Scalar> operator*(const Vector<n,Scalar> &v, const Scalar s) {
+    Vector<n,Scalar> res({0,0,0});
+    for (int i=0;i<n;i++){
+      res[i] =v[i] * s;
+    }
+    return res;
+}
+
+template<size_t n, typename Scalar>
+Vector<n, Scalar> operator/(const Vector<n,Scalar> v, const Scalar rhs) {
+    Vector<n,Scalar> res;
+    for (int i=0;i<n;i++){
+      res[i] =v[i] / rhs;
+    }
+    return res;
+}
 
 // Useful typedefs
 
