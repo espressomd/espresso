@@ -6,11 +6,12 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "pair_criteria/pair_criteria.hpp"
 
-#include "pair_criteria.hpp"
+#include "pair_criteria/pair_criteria.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "cluster.hpp"
+#include "Cluster.hpp"
 
 namespace ClusterAnalysis {
 
@@ -33,11 +34,11 @@ class ClusterStructure {
   /** Is particle p part of a cluster */
   bool part_of_cluster(const Particle& p);
   /** Sets the pair criterion which decides if two particles are neighbors */
-  void set_pair_criterion(std::shared_ptr<PairCriterion> const &c) {
+  void set_pair_criterion(std::shared_ptr<PairCriteria::PairCriterion> const &c) {
     m_pair_criterion = c;
   }
 
-  PairCriterion const &pair_criterion() const { return *m_pair_criterion; }
+  PairCriteria::PairCriterion const &pair_criterion() const { return *m_pair_criterion; }
 
  private:
   /** @brief Clusters that turn out to be the same during the analysis process
@@ -46,7 +47,7 @@ class ClusterStructure {
   std::map<int,int> m_cluster_identities;
 
   /** @brief pari criterion which decides whether two particles are neighbors */
-  std::shared_ptr<PairCriterion> m_pair_criterion;
+  std::shared_ptr<PairCriteria::PairCriterion> m_pair_criterion;
   
   /** @brief Consider an individual pair of particles during cluster analysis */
   void add_pair(Particle& p1, Particle& p2);

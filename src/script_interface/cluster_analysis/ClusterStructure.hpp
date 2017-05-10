@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/cluster_analysis.hpp"
+#include "core/cluster_analysis/ClusterStructure.hpp"
 #include "core/utils/Factory.hpp"
 #include "../pair_criteria/pair_criteria.hpp"
 
@@ -96,7 +96,7 @@ public:
     return nullptr;
   }                              
 private:
-  ::ClusterStructure m_cluster_structure;
+  ::ClusterAnalysis::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
   std::shared_ptr<Cluster> m_tmp_cluster;
 };

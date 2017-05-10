@@ -1,7 +1,9 @@
-#include "cluster_analysis.hpp"
+#include "Cluster.hpp"
+#include "ClusterStructure.hpp"
 #include "interaction_data.hpp"
 #include <algorithm>
 
+namespace ClusterAnalysis {
 
 void ClusterStructure::clear() {
  clusters.clear();
@@ -193,7 +195,7 @@ ClusterStructure& cluster_analysis() {
   return cluster_structure;
 }
 
-
+}
    
 
  

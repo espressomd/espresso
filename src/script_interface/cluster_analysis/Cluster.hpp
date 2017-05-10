@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/cluster_analysis.hpp"
+#include "core/cluster_analysis/Cluster.hpp"
 #include "core/utils/Factory.hpp"
 
 
@@ -44,11 +44,11 @@ public:
     }
     return nullptr;
   }                              
-  void set_cluster(std::shared_ptr<::Cluster> c) {
+  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> c) {
     m_cluster=c;
   }
 private:
-  std::shared_ptr<::Cluster> m_cluster;
+  std::shared_ptr<::ClusterAnalysis::Cluster> m_cluster;
 };
 
 } /* namespace ClusterAnalysis */

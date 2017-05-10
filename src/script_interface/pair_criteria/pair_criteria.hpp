@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_PAIR_CRITERIA_PAIR_CRITERIA_HPP
 
 #include "../auto_parameters/AutoParameters.hpp"
-#include "core/pair_criteria.hpp"
+#include "core/pair_criteria/pair_criteria.hpp"
 #include <string>
 
 namespace ScriptInterface {
@@ -31,9 +31,9 @@ namespace PairCriteria {
 
 class PairCriterion : public AutoParameters {
 public:
-  PairCriterion() : m_c(new ::PairCriterion()) {};
+  PairCriterion() : m_c(new ::PairCriteria::PairCriterion()) {};
   const std::string name() const {return "PairCriteria::PairCriterion";};
-  virtual std::shared_ptr<::PairCriterion> pair_criterion() const  { return m_c; }
+  virtual std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const  { return m_c; }
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) override {
       if (method == "decide") {
@@ -47,12 +47,12 @@ public:
       }
   } 
 private:
-  std::shared_ptr<::PairCriterion> m_c;
+  std::shared_ptr<::PairCriteria::PairCriterion> m_c;
 };
 
 class DistanceCriterion : public PairCriterion {
 public:
-  DistanceCriterion() : m_c(new ::DistanceCriterion()) {
+  DistanceCriterion() : m_c(new ::PairCriteria::DistanceCriterion()) {
     add_parameters({
                     {"cut_off",
                      [this](Variant const &v) {
@@ -62,15 +62,15 @@ public:
   }
 
   const std::string name() const override { return "PairCriteria::DistanceCriterion"; }
-  std::shared_ptr<::PairCriterion> pair_criterion() const override { return m_c; }
+  std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:
-  std::shared_ptr<::DistanceCriterion> m_c;
+  std::shared_ptr<::PairCriteria::DistanceCriterion> m_c;
 };
 
 class EnergyCriterion : public PairCriterion {
 public:
-  EnergyCriterion() : m_c(new ::EnergyCriterion()) {
+  EnergyCriterion() : m_c(new ::PairCriteria::EnergyCriterion()) {
     add_parameters({
                     {"cut_off",
                      [this](Variant const &v) {
@@ -80,15 +80,15 @@ public:
   }
 
   const std::string name() const override { return "PairCriteria::EnergyCriterion"; }
-  std::shared_ptr<::PairCriterion> pair_criterion() const override { return m_c; }
+  std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:
-  std::shared_ptr<::EnergyCriterion> m_c;
+  std::shared_ptr<::PairCriteria::EnergyCriterion> m_c;
 };
 
 class BondCriterion : public PairCriterion {
 public:
-  BondCriterion() : m_c(new ::BondCriterion()) {
+  BondCriterion() : m_c(new ::PairCriteria::BondCriterion()) {
     add_parameters({
                     {"bond_type",
                      [this](Variant const &v) {
@@ -98,10 +98,10 @@ public:
   }
 
   const std::string name() const override { return "PairCriteria::BondCriterion"; }
-  std::shared_ptr<::PairCriterion> pair_criterion() const override { return m_c; }
+  std::shared_ptr<::PairCriteria::PairCriterion> pair_criterion() const override { return m_c; }
 
 private:
-  std::shared_ptr<::BondCriterion> m_c;
+  std::shared_ptr<::PairCriteria::BondCriterion> m_c;
 };
 
 } /* namespace PairCriteria */

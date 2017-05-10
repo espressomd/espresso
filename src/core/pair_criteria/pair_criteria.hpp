@@ -9,6 +9,7 @@
 
 
 
+namespace PairCriteria {
 
 /** @brief Criterion which provides a true/false for a pair of particles */
 class PairCriterion {
@@ -90,7 +91,7 @@ class BondCriterion : public PairCriterion {
     private:
       int m_bond_type;
 };
-
+}
 
 #endif
 
