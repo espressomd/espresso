@@ -16,6 +16,10 @@ struct ParticleIterator : public boost::iterator_facade<
     }
   }
 
+  operator Particle *() const {
+    return &((*m_cell)->part[m_part_id]);
+  }
+
 private:
   friend class boost::iterator_core_access;
 
