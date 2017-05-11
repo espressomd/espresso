@@ -26,6 +26,8 @@
 
 #include <boost/mpi/communicator.hpp>
 
+#include "detail/size_and_offset.hpp"
+
 namespace Utils {
 namespace Mpi {
 
@@ -43,27 +45,14 @@ void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
-    sizes.resize(comm.size());
-    displ.resize(comm.size());
 
-    /* Gather sizes */
-    MPI_Gather(&n_elem, 1, MPI_INT, sizes.data(), 1, MPI_INT, root, comm);
-
-    /* Calc offsets */
-    int offset = 0;
-    for (int i = 0; i < sizes.size(); i++) {
-      /* Convert size from logical to physical */
-      sizes[i] *= sizeof(T);
-      displ[i] = offset;
-      offset += sizes[i];
-    }
+    detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Send data */
     MPI_Scatterv(buffer, sizes.data(), displ.data(), MPI_BYTE, MPI_IN_PLACE, 0,
                  MPI_BYTE, root, comm);
   } else {
-    /* Send local size */
-    MPI_Gather(&n_elem, 1, MPI_INT, nullptr, 0, MPI_INT, root, comm);
+    detail::size_and_offset(n_elem, comm, root);
     /* Recv data */
     MPI_Scatterv(nullptr, nullptr, nullptr, MPI_BYTE, buffer,
                  n_elem * sizeof(T), MPI_BYTE, root, comm);

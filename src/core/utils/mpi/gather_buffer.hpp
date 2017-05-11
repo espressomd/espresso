@@ -24,7 +24,10 @@
 #include <algorithm>
 #include <vector>
 
+#include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
+
+#include "detail/size_and_offset.hpp"
 
 namespace Utils {
 namespace Mpi {
@@ -53,31 +56,17 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;
-    sizes.resize(comm.size());
-    displ.resize(comm.size());
 
-    /* Gather sizes */
-    MPI_Gather(&n_elem, 1, MPI_INT, sizes.data(), 1, MPI_INT, root, comm);
-
-    /* Total logical size for return value */
-    auto const tot_size = std::accumulate(sizes.begin(), sizes.end(), 0);
-
-    int offset = 0;
-    for (int i = 0; i < sizes.size(); i++) {
-      /* Convert size from logical to physical */
-      sizes[i] *= sizeof(T);
-      displ[i] = offset;
-      offset += sizes[i];
-    }
+    auto const total_size =
+      detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Gather data */
     MPI_Gatherv(MPI_IN_PLACE, 0, MPI_BYTE, buffer, sizes.data(), displ.data(),
                 MPI_BYTE, root, comm);
 
-    return tot_size;
+    return total_size;
   } else {
-    /* Send local size */
-    MPI_Gather(&n_elem, 1, MPI_INT, nullptr, 0, MPI_INT, root, comm);
+    detail::size_and_offset(n_elem, comm, root);
     /* Send data */
     MPI_Gatherv(buffer, n_elem * sizeof(T), MPI_BYTE, nullptr, nullptr, nullptr,
                 MPI_BYTE, root, comm);
@@ -107,34 +96,20 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
 
   if (comm.rank() == root) {
     static std::vector<int> sizes;
-    sizes.resize(comm.size());
+    static std::vector<int> displ;
 
-    /* Gather sizes */
-    MPI_Gather(&n_elem, 1, MPI_INT, sizes.data(), 1, MPI_INT, root, comm);
-
-    /* Total logical size */
-    auto const tot_size = std::accumulate(sizes.begin(), sizes.end(), 0);
+    auto const tot_size =
+        detail::size_and_offset<T>(sizes, displ, n_elem, comm);
 
     /* Resize the buffer */
     buffer.resize(tot_size);
-
-    static std::vector<int> displ;
-    displ.resize(comm.size());
-
-    int offset = 0;
-    for (int i = 0; i < sizes.size(); i++) {
-      /* Convert size from logical to physical */
-      sizes[i] *= sizeof(T);
-      displ[i] = offset;
-      offset += sizes[i];
-    }
 
     /* Gather data */
     MPI_Gatherv(MPI_IN_PLACE, 0, MPI_BYTE, buffer.data(), sizes.data(),
                 displ.data(), MPI_BYTE, root, comm);
   } else {
     /* Send local size */
-    MPI_Gather(&n_elem, 1, MPI_INT, nullptr, 0, MPI_INT, root, comm);
+    detail::size_and_offset(n_elem, comm, root);
     /* Send data */
     MPI_Gatherv(buffer.data(), n_elem * sizeof(T), MPI_BYTE, nullptr, nullptr,
                 nullptr, MPI_BYTE, root, comm);
