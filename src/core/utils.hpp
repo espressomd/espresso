@@ -75,9 +75,25 @@
  * data types
  ************************************************/
 
+namespace Utils {
+template <typename T> inline T *realloc(T *old, size_t size);
+}
+
+extern int this_node;
+
 /** Integer list.
     Use the functions specified in list operations. */
 typedef struct {
+  int *begin() { return e; }
+  int *end() { return e + n; }
+  int size() const { return n; }
+  void resize(int size) {
+    if (size != this->max) {
+      this->max = size;
+      this->e =
+          static_cast<int *>(Utils::realloc(this->e, sizeof(int) * this->max));
+    }
+  }
   /** Dynamically allocated integer field. */
   int *e;
   /** number of used elements in the integer field. */
@@ -185,7 +201,7 @@ inline void init_intlist(IntList *il) {
   il->max = 0;
   il->e = NULL;
 }
-extern int this_node;
+// extern int this_node;
 
 /** Allocate an \ref IntList of size size. If you need an \ref IntList
     with variable size better use \ref realloc_intlist */
