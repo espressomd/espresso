@@ -223,12 +223,12 @@ bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
+Vector<N, T> operator+(Vector<N, T> const a, Vector<N, T> const b) {
   return detail::binary_op(a, b, std::plus<T>());
 }
 
 template <size_t N, typename T>
-Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
+Vector<N, T> operator-(Vector<N, T> const a, Vector<N, T> const b) {
   return detail::binary_op(a, b, std::minus<T>());
 }
 #endif
