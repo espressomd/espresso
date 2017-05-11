@@ -40,6 +40,7 @@
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
 #include "utils/math/sqr.hpp"
+#include "utils/memory.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -74,10 +75,6 @@
 /************************************************
  * data types
  ************************************************/
-
-namespace Utils {
-template <typename T> inline T *realloc(T *old, size_t size);
-}
 
 extern int this_node;
 
@@ -115,18 +112,6 @@ typedef struct {
   int max;
 } DoubleList;
 
-/*************************************************************/
-/** \name Dynamic memory allocation.                         */
-/*************************************************************/
-/*@{*/
-
-/* to enable us to make sure that freed pointers are invalidated, we normally
-   try to use realloc.
-   Unfortunately allocating zero bytes (which should be avoided) actually
-   allocates 16 bytes, and
-   reallocating to 0 also. To avoid this, we use our own malloc and realloc
-   procedures. */
-
 namespace Utils {
 /**
  * \brief Calculate integer powers.
@@ -151,44 +136,9 @@ template <unsigned n, typename T> inline T int_pow(T x) {
   }
 }
 
-/** used instead of realloc.
-    Makes sure that resizing to zero FREEs pointer */
-template <typename T> inline T *realloc(T *old, size_t size) {
-  if (size <= 0) {
-    ::free(static_cast<void *>(old));
-    return nullptr;
-  }
-
-  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
-/** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
-inline void *malloc(size_t size) {
-  if (size <= 0) {
-    return nullptr;
-  }
-
-  void *p = ::malloc(size);
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 }
-
-/*@}*/
 
 /*************************************************************/
 /** \name List operations .                                  */
