@@ -13,6 +13,8 @@ template <typename Iterator> class Range {
   Iterator m_begin, m_end;
 
 public:
+  using iterator = Iterator;
+
   Range(Iterator begin, Iterator end)
       : m_begin(std::forward<Iterator>(begin)),
         m_end(std::forward<Iterator>(end)) {}
