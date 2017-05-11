@@ -1557,10 +1557,20 @@ for attribute_name in particle_attributes:
 
     def geta(particle_slice, attribute):
         """Getter function that copies attribute from every member of particle_slice into an array."""
-        values = []
-        for i in particle_slice.id_selection:
-            values.append(getattr(ParticleHandle(i), attribute))
-        return np.array(values)
+        N = len(particle_slice.id_selection)
+        if N == 0:
+            return np.empty(0, dtype=type(None))
+
+        target = getattr(ParticleHandle(particle_slice.id_selection[0]), attribute) # get first slice member to determine its type
+        if type(target) is np.ndarray: # vectorial quantity
+            target_type = target.dtype
+        else: # scalar quantity
+            target_type = type(target)
+
+        values = np.empty((N,) + np.shape(target), dtype=target_type)
+        for i in range(N):
+            values[i] = getattr(ParticleHandle(particle_slice.id_selection[i]), attribute)
+        return values
 
     # synthesize a new property
     new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)

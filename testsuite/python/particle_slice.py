@@ -18,6 +18,9 @@ class ParticleSliceTest(ut.TestCase):
 			self.assertTrue( np.array_equal(self.system.part[0].fix, self.state[0]) )
 			self.assertTrue( np.array_equal(self.system.part[1].fix, self.state[1]) )
 			self.assertTrue( np.array_equal(self.system.part[:].fix, self.state) )
+		xs = self.system.part[:].pos
+		for i in range(len(xs)):
+			self.assertTrue( np.array_equal(xs[i], self.system.part[i].pos) )
 
 	@ut.skipIf(not has_features(["EXTERNAL_FORCES"]),"Features not available, skipping test!")
 	def test_1_set_different_values(self):
@@ -62,6 +65,12 @@ class ParticleSliceTest(ut.TestCase):
 		self.system.part[:].q = [-1,1.0]
 		self.assertEqual(self.system.part[0].q, -1)
 		self.assertEqual(self.system.part[1].q, 1)
+		qs = self.system.part[:].q
+		self.assertEqual(qs[0], -1)
+		self.assertEqual(qs[1], 1)
+
+	def test_empty(self):
+		self.assertTrue( np.array_equal(self.system.part[0:0].pos, np.empty(0)) )
 
 if __name__ == "__main__":
     ut.main()
