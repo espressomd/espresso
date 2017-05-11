@@ -7,12 +7,29 @@ class Cluster(ScriptInterfaceHelper):
     """Class representing a cluster of particles
     
     Methods:
-    particle_ids() : Returns list of particle ids in the cluster
-    particles(): Returns an instance of ParticleSlice containing the paritlces in the cluster
-    size(): Returns the number of particles in the cluster
+    particle_ids():
+        Returns list of particle ids in the cluster
+      
+    particles(): 
+        Returns an instance of ParticleSlice containing the paritlces in the cluster
+
+    size(): 
+        Returns the number of particles in the cluster
+
+    center_of_mass(): 
+        center of mass of the cluster
+
+    longest_distance(): 
+        Longest distance between any combination of two particles in the cluster
+
+    fractal_dimension(dr):
+        estimates the cluster's fractal dimension by fitting the number of particles
+        N(r) in a sphere of radius r by c*r^d, where d is the fractal dimensoin.
+        dr: increment for the radius when sampling N(r)
+        Return value: (fractal_dimension, mean_square_residual)
     """
     _so_name = "ClusterAnalysis::Cluster";
-    _so_bind_methods = ("particle_ids","size")
+    _so_bind_methods = ("particle_ids","size","longest_distance","radius_of_gyration","fractal_dimension","center_of_mass")
 
     def particles(self):
         return ParticleSlice(self.particle_ids())

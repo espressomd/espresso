@@ -42,6 +42,21 @@ public:
     if (method == "size") {
       return (int)m_cluster->particles.size();
     }
+    if (method=="longest_distance") {
+        return m_cluster->longest_distance();
+    }
+    if (method == "radius_of_gyration") {
+      return m_cluster->radius_of_gyration();
+    }
+    if (method=="fractal_dimension") {
+      double mean_sq_residual; 
+      double df= m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")),mean_sq_residual);
+      return std::vector<double>({df, mean_sq_residual});
+    }
+    if (method=="center_of_mass") {
+     return m_cluster->center_of_mass();
+    
+    }
     return nullptr;
   }                              
   void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> c) {

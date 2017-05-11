@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -69,9 +68,6 @@ class ClusterAnalysis(ut.TestCase):
         # Number of clusters
         self.assertTrue(len(self.cs.clusters)==2)
         cids=self.cs.cluster_ids()
-        print(cids)
-        print(self.cs.clusters)
-        print(self.cs.clusters[cids[0]])
 
         # Sizes of individual clusters
         l2=self.cs.clusters[cids[1]].size()
@@ -110,6 +106,66 @@ class ClusterAnalysis(ut.TestCase):
             visited_sizes.append(c[1].size())
         visited_sizes=sorted(visited_sizes)
         self.assertTrue(visited_sizes==[2,4])
+
+    def test_zz_single_cluster_analysis(self):
+        self.es.part.clear()
+        # Place particles on a line (crossing periodic boundaries)
+        for x in np.arange(-0.2,0.21,0.01):
+            self.es.part.add(pos=(x,1.1*x,1.2*x))
+        self.cs.pair_criterion=DistanceCriterion(cut_off=0.13)
+        self.cs.run_for_all_pairs()
+        self.assertTrue(len(self.cs.clusters)==1)
+        
+        for c in self.cs.clusters:
+            # Discard cluster id
+            c=c[1]
+            
+            # Center of mass should be at origin
+            self.assertTrue(np.sqrt(np.sum(np.array(c.center_of_mass())**2))<=1E-8)
+            
+            # Longest distance
+            self.assertTrue(
+                abs(c.longest_distance() 
+                - self.es.distance(self.es.part[0],self.es.part[len(self.es.part)-1]))
+                <=1E-8)
+            
+            # Radius of gyration
+            rg=0.
+            com_particle=self.es.part[len(self.es.part)/2]
+            for p in c.particles():
+              rg+=self.es.distance(p,com_particle)**2
+            rg/=len(self.es.part)
+            rg=np.sqrt(rg)
+            self.assertTrue(abs(c.radius_of_gyration()-rg)<=1E-6)
+            
+            
+            # The fractal dimension of a line should be 1
+            
+            dr=float(np.sqrt(0.01**2+0.011**2+0.012**2))
+            self.assertTrue(np.abs(c.fractal_dimension(dr=dr)[0]-1.) <=1.2)
+
+            # Fractal dimension of a disk should be close to 2
+            self.es.part.clear()
+            center=np.array((0.1,.02,0.15))
+            for i in range(3000):
+               r_inv,phi =np.random.random(2) *np.array((0.2,2*np.pi))
+               r=1/r_inv
+               self.es.part.add(pos=center+r*np.array((np.sin(phi),np.cos(phi),0)))
+            self.cs.clear()
+            self.cs.run_for_all_pairs()
+            cid=self.cs.cluster_ids()[0]
+            df=self.cs.clusters[cid].fractal_dimension(dr=0.02)
+            self.assertTrue(abs(df[0]-2.)<=0.15)
+               
+            
+
+            
+            
+
+
+        
+
+
         
 
 
