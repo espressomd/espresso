@@ -44,6 +44,10 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "PartCfg.hpp"
+
+PartCfg<decltype(local_cells)> partCfg_(local_cells);
+
 /************************************************
  * defines
  ************************************************/
@@ -1316,8 +1320,9 @@ void local_place_particle(int part, double p[3], int _new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-                      "does not belong on this node\n",
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
+              "does not belong on this node\n",
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
@@ -1488,8 +1493,9 @@ void remove_all_bonds_to(int identity) {
           i += 1 + partners;
       }
       if (i != bl->n) {
-        fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
-                        "particle %d, exiting...\n",
+        fprintf(stderr,
+                "%d: INTERNAL ERROR: bond information corrupt for "
+                "particle %d, exiting...\n",
                 this_node, part[p].p.identity);
         errexit();
       }
