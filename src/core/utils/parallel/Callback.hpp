@@ -17,15 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef COMMUNICATION_INSTANCE_CALLBACK_HPP
-#define COMMUNICATION_INSTANCE_CALLBACK_HPP
-
-#include <functional>
+#ifndef UTILS_PARALLEL_INSTANCE_CALLBACK_HPP
+#define UTILS_PARALLEL_INSTANCE_CALLBACK_HPP
 
 #include "core/MpiCallbacks.hpp"
 
-namespace Communication {
-
+namespace Utils {
+namespace Parallel {
 /**
  * @brief Add a mpi callback to a class.
  *
@@ -36,20 +34,13 @@ namespace Communication {
  * Clients have to implement the mpi_slave function
  * on the slave nodes, which is the actual callback.
  */
-class InstanceCallback {
+class Callback {
 public:
-  InstanceCallback() {
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    Communication::MpiCallbacks::function_type f;
-
-    /* Bind member function to this instance */
-    auto cb = std::bind(&InstanceCallback::mpi_slave, this, _1, _2);
-
-    m_callback_id = Communication::mpiCallbacks().add(cb);
+  Callback(Communication::MpiCallbacks::function_type callback) {
+    m_callback_id = Communication::mpiCallbacks().add(callback);
   }
 
-  ~InstanceCallback() { Communication::mpiCallbacks().remove(m_callback_id); }
+  ~Callback() { Communication::mpiCallbacks().remove(m_callback_id); }
 
   /**
    * @brief Run the callback function on the slave.
@@ -63,15 +54,11 @@ public:
   }
 
 private:
-  /* mpi_slave should be private because it is virtual,
-   * but the callback system has to call it. */
-  friend Communication::MpiCallbacks;
-  virtual void mpi_slave(int, int) {};
-
   /* Id of the encapsulated callback */
   int m_callback_id;
 };
 
-} /* namespace Communication */
+} /* namespace Parallel */
+} /* namespace Utils */
 
 #endif
