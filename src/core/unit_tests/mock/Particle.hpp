@@ -12,8 +12,6 @@ public:
   explicit Particle(int id) : m_id(id) {}
 
   int identity() const { return m_id; }
-
-  std::vector<int> bl;
 };
 }
 

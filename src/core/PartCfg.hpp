@@ -10,7 +10,18 @@
 #include <utility>
 #include <vector>
 
+#include <boost/iterator/transform_iterator.hpp>
+
 #include "utils/parallel/Callback.hpp"
+
+namespace detail {
+class TakeSecond {
+public:
+  template <typename T, typename U> U &operator()(std::pair<T, U> &p) const {
+    return p.second;
+  }
+};
+}
 
 template <typename Cells,
           typename Range = typename std::remove_reference<decltype(
@@ -18,7 +29,8 @@ template <typename Cells,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
 class PartCfg {
-  std::map<int, std::reference_wrapper<Particle>> mapping;
+  using map_type = std::map<int, std::reference_wrapper<Particle>>;
+  map_type mapping;
   std::vector<Particle> remote_parts;
   std::vector<int> bond_info;
 
@@ -26,8 +38,8 @@ class PartCfg {
 
   Cells &cells;
 
-  void m_update_local() {
-    for (auto &p : cells.particles()) {
+  template <typename Container> void m_update_references(Container &range) {
+    for (auto &p : range) {
       mapping.insert({p.identity(), std::ref(p)});
     }
   }
@@ -75,6 +87,7 @@ class PartCfg {
                Communication::mpiCallbacks().comm());
     auto const remote_size =
         std::accumulate(std::begin(sizes), std::end(sizes), 0);
+
     bond_info.resize(remote_size);
 
     int offset = 0;
@@ -86,13 +99,20 @@ class PartCfg {
 
     auto it = bond_info.begin();
     for (auto &p : remote_parts) {
+      p.bl.e = nullptr;
+      p.bl.max = 0;
       p.bl.resize(p.bl.size());
+
       std::copy_n(it, p.bl.size(), p.bl.begin());
       it += p.bl.size();
     }
   }
 
 public:
+  using value_iterator =
+      boost::transform_iterator<detail::TakeSecond, typename map_type::iterator,
+                                Particle &, Particle>;
+
   PartCfg() = delete;
   PartCfg(Cells &cells)
       : update_cb([this](int with_bonds, int) { this->m_update(with_bonds); }),
@@ -105,6 +125,9 @@ public:
     remote_parts.clear();
     bond_info.clear();
   }
+
+  value_iterator begin() { return value_iterator(mapping.begin()); }
+  value_iterator end() { return value_iterator(mapping.end()); }
 
   void update(int with_bonds) {
     update_cb.call(with_bonds);
@@ -130,13 +153,11 @@ public:
       offset += sizes[i];
     }
 
-    m_update_local();
+    m_update_references(cells.particles());
 
     MPI_Waitall(reqs.size(), reqs.data(), MPI_STATUSES_IGNORE);
 
-    for (auto &p : remote_parts) {
-      mapping.insert({p.identity(), std::ref(p)});
-    }
+    m_update_references(remote_parts);
 
     if (with_bonds) {
       m_recv_bonds();

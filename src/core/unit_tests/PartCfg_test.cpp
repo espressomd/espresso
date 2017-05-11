@@ -30,10 +30,18 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "mock/Particle.hpp"
-using Testing::Particle;
-
 #include "core/PartCfg.hpp"
+#include "utils/List.hpp"
+
+#include "mock/Particle.hpp"
+
+class Particle : public Testing::Particle {
+public:
+  Particle() = default;
+  Particle(int id) : Testing::Particle(id) {}
+
+  IntList bl;
+};
 
 struct Particles {
   std::vector<Particle> parts;
@@ -62,9 +70,89 @@ BOOST_AUTO_TEST_CASE(update) {
 
     BOOST_CHECK(part_cfg.size() == size * n_part);
 
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size * n_part; i++) {
       BOOST_CHECK(i == part_cfg[i].identity());
     }
+  } else
+    Communication::mpiCallbacks().loop();
+}
+
+BOOST_AUTO_TEST_CASE(update_with_bonds) {
+  auto const bond_lengths = std::array<int, 6>{1, 2, 4, 9, 21, 0};
+
+  Particles local_parts;
+
+  auto const rank = Communication::mpiCallbacks().comm().rank();
+  auto const size = Communication::mpiCallbacks().comm().size();
+  auto const n_part = 1234;
+
+  local_parts.parts.reserve(n_part);
+
+  for (int i = 0; i < n_part; i++) {
+    auto const id = rank * n_part + i;
+    local_parts.parts.emplace_back(id);
+    auto const bond_length = bond_lengths[id % bond_lengths.size()];
+    auto &part = local_parts.parts.back();
+    part.bl.e = nullptr;
+    part.bl.max = 0;
+    part.bl.resize(bond_length);
+    part.bl.n = bond_length;
+    std::fill(part.bl.begin(), part.bl.end(), id);
+  }
+
+  PartCfg<Particles> part_cfg{local_parts};
+  if (rank == 0) {
+    part_cfg.update(1);
+    Communication::mpiCallbacks().abort_loop();
+
+    for (int i = 0; i < size * n_part; i++) {
+      /* Check that the length is set correctly */
+      BOOST_CHECK(part_cfg[i].bl.size() ==
+                  bond_lengths[part_cfg[i].identity() % bond_lengths.size()]);
+      /* Check that the content was copied correctly. */
+      BOOST_CHECK(std::all_of(part_cfg[i].bl.begin(), part_cfg[i].bl.end(),
+                              [&i](int j) { return j == i; }));
+    }
+  } else {
+    Communication::mpiCallbacks().loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(iterators) {
+  Particles local_parts;
+
+  auto const rank = Communication::mpiCallbacks().comm().rank();
+  auto const size = Communication::mpiCallbacks().comm().size();
+  auto const n_part = 1000;
+
+  local_parts.parts.reserve(n_part);
+
+  for (int i = 0; i < n_part; i++) {
+    local_parts.parts.emplace_back(rank * n_part + i);
+  }
+
+  PartCfg<Particles> part_cfg{local_parts};
+
+  if (rank == 0) {
+    part_cfg.update(0);
+    Communication::mpiCallbacks().abort_loop();
+
+    BOOST_CHECK(part_cfg.size() == size * n_part);
+
+    std::vector<int> id_counts(size * n_part, 0);
+
+    for (auto &p : part_cfg) {
+      id_counts[p.identity()]++;
+    }
+
+    /* Every id should have been visitied exactly once... */
+    BOOST_CHECK(std::all_of(id_counts.begin(), id_counts.end(),
+                            [](int count) { return count == 1; }));
+    /* and in the correct order. */
+    BOOST_CHECK(std::is_sorted(part_cfg.begin(), part_cfg.end(),
+                               [](Particle const &a, Particle const &b) {
+                                 return a.identity() < b.identity();
+                               }));
   } else
     Communication::mpiCallbacks().loop();
 }
