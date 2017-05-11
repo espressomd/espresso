@@ -1,6 +1,6 @@
 from espressomd.utils import to_char_pointer, to_str
 
-cdef class PScriptInterface:
+cdef class PScriptInterface(object):
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
             if(policy=="GLOBAL"):
