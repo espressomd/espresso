@@ -55,7 +55,6 @@
 #include "bonded_coulomb.hpp"
 #endif
 #include "actor/EwaldGPU_ShortRange.hpp"
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -372,12 +371,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
 #ifdef TWIST_STACK
