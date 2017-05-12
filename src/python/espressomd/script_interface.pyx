@@ -9,7 +9,6 @@ cdef class PObjectId:
         else:
             raise NotImplementedError
 
-
 cdef class PScriptInterface:
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
