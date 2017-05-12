@@ -2,11 +2,11 @@
 #define CORE_UTILS_PART_CFG_HPP
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <iterator>
 #include <map>
 #include <memory>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -30,11 +30,14 @@ template <typename Cells,
               typename Range::iterator>::value_type>
 class PartCfg {
   using map_type = std::map<int, std::reference_wrapper<Particle>>;
+
   map_type mapping;
   std::vector<Particle> remote_parts;
   std::vector<int> bond_info;
+  bool m_valid, m_valid_bonds;
 
   Utils::Parallel::Callback update_cb;
+  Utils::Parallel::Callback update_bonds_cb;
 
   Cells &cells;
 
@@ -58,10 +61,9 @@ class PartCfg {
              Communication::mpiCallbacks().comm());
   }
 
-  void m_update(int with_bonds) {
+  void m_update() {
     auto particles = cells.particles();
-    auto const local_parts =
-        std::distance(std::begin(particles), std::end(particles));
+    auto const local_parts = particles.size();
 
     MPI_Gather(&local_parts, 1, MPI_INT, NULL, 1, MPI_INT, 0,
                Communication::mpiCallbacks().comm());
@@ -73,10 +75,6 @@ class PartCfg {
 
     MPI_Send(remote_parts.data(), remote_parts.size() * sizeof(Particle),
              MPI_BYTE, 0, 42, Communication::mpiCallbacks().comm());
-
-    if (with_bonds) {
-      m_update_bonds();
-    }
   }
 
   void m_recv_bonds() {
@@ -115,8 +113,9 @@ public:
 
   PartCfg() = delete;
   PartCfg(Cells &cells)
-      : update_cb([this](int with_bonds, int) { this->m_update(with_bonds); }),
-        cells(cells) {}
+      : update_cb([this](int, int) { this->m_update(); }),
+        update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
+        cells(cells), m_valid(false), m_valid_bonds(false) {}
   PartCfg(PartCfg const &) = delete;
   PartCfg(PartCfg &&) = delete;
 
@@ -126,21 +125,59 @@ public:
     bond_info.clear();
   }
 
-  value_iterator begin() { return value_iterator(mapping.begin()); }
-  value_iterator end() { return value_iterator(mapping.end()); }
+  value_iterator begin() {
+    assert(Communication::mpiCallbacks().comm().rank() == 0);
 
-  void update(int with_bonds) {
-    update_cb.call(with_bonds);
+    if (!m_valid)
+      update();
 
-    auto particles = cells.particles();
-    auto const local_parts =
-        std::distance(std::begin(particles), std::end(particles));
+    return value_iterator(mapping.begin());
+  }
+
+  value_iterator end() {
+    assert(Communication::mpiCallbacks().comm().rank() == 0);
+
+    if (!m_valid)
+      update();
+
+    return value_iterator(mapping.end());
+  }
+
+  bool valid() const { return m_valid; }
+  bool valid_bonds() const { return m_valid_bonds; }
+
+  void invalidate() {
+    clear();
+    /* Release memory */
+    remote_parts.shrink_to_fit();
+    bond_info.shrink_to_fit();
+    /* Adjust state */
+    m_valid = false;
+    m_valid_bonds = false;
+  }
+
+  void update_bonds() {
+    update();
+
+    if (!m_valid_bonds) {
+      update_bonds_cb.call();
+      m_recv_bonds();
+      m_valid_bonds = true;
+    }
+  }
+
+  void update() {
+    if (m_valid)
+      return;
+
+    update_cb.call();
 
     std::vector<int> sizes(Communication::mpiCallbacks().comm().size());
-    MPI_Gather(&local_parts, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0,
+    int ign{0};
+    MPI_Gather(&ign, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0,
                Communication::mpiCallbacks().comm());
     auto const remote_size =
-        std::accumulate(std::begin(sizes), std::end(sizes), 0) - local_parts;
+        std::accumulate(std::begin(sizes), std::end(sizes), 0);
 
     remote_parts.resize(remote_size);
 
@@ -159,15 +196,43 @@ public:
 
     m_update_references(remote_parts);
 
-    if (with_bonds) {
-      m_recv_bonds();
-    }
+    m_valid = true;
   }
 
-  size_t size() const { return mapping.size(); }
-  bool empty() const { return mapping.empty(); }
+  /** Number of particles in the config. */
+  size_t size() {
+    assert(Communication::mpiCallbacks().comm().rank() == 0);
 
-  Particle const &operator[](int id) const { return mapping.at(id); }
+    if (!m_valid)
+      update();
+
+    return mapping.size();
+  }
+  
+  bool empty() {
+    assert(Communication::mpiCallbacks().comm().rank() == 0);
+
+    if (!m_valid)
+      update();
+
+    return mapping.empty();
+  }
+
+  /**
+   * @brief Access particle by id.
+   * If the particle config is not valid this will trigger
+   * a global update.
+   * Will throw std::out_of_range if the particle does
+   * not exists.
+   */
+  Particle const &operator[](int id) {
+    assert(Communication::mpiCallbacks().comm().rank() == 0);
+
+    if (!m_valid)
+      update();
+
+    return mapping.at(id);
+  }
 };
 
 #endif

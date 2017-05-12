@@ -65,14 +65,13 @@ BOOST_AUTO_TEST_CASE(update) {
   PartCfg<Particles> part_cfg{local_parts};
 
   if (rank == 0) {
-    part_cfg.update(0);
-    Communication::mpiCallbacks().abort_loop();
-
     BOOST_CHECK(part_cfg.size() == size * n_part);
 
     for (int i = 0; i < size * n_part; i++) {
       BOOST_CHECK(i == part_cfg[i].identity());
     }
+
+    Communication::mpiCallbacks().abort_loop();
   } else
     Communication::mpiCallbacks().loop();
 }
@@ -102,8 +101,7 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
 
   PartCfg<Particles> part_cfg{local_parts};
   if (rank == 0) {
-    part_cfg.update(1);
-    Communication::mpiCallbacks().abort_loop();
+    part_cfg.update_bonds();
 
     for (int i = 0; i < size * n_part; i++) {
       /* Check that the length is set correctly */
@@ -112,6 +110,8 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
       /* Check that the content was copied correctly. */
       BOOST_CHECK(std::all_of(part_cfg[i].bl.begin(), part_cfg[i].bl.end(),
                               [&i](int j) { return j == i; }));
+
+      Communication::mpiCallbacks().abort_loop();
     }
   } else {
     Communication::mpiCallbacks().loop();
@@ -134,13 +134,9 @@ BOOST_AUTO_TEST_CASE(iterators) {
   PartCfg<Particles> part_cfg{local_parts};
 
   if (rank == 0) {
-    part_cfg.update(0);
-    Communication::mpiCallbacks().abort_loop();
-
     BOOST_CHECK(part_cfg.size() == size * n_part);
 
     std::vector<int> id_counts(size * n_part, 0);
-
     for (auto &p : part_cfg) {
       id_counts[p.identity()]++;
     }
@@ -153,6 +149,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
                                [](Particle const &a, Particle const &b) {
                                  return a.identity() < b.identity();
                                }));
+    Communication::mpiCallbacks().abort_loop();
   } else
     Communication::mpiCallbacks().loop();
 }
