@@ -529,7 +529,7 @@ __device__ void reset_LB_forces(unsigned int index, LB_node_force_gpu node_f, bo
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   {
 
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+#if defined(EK_DEBUG)
 // Store backup of the node forces
     if (buffer)
     {
@@ -1245,11 +1245,8 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
     
   }
 
-//#if !defined(IMMERSED_BOUNDARY)
   // This must not be done here since we need the forces after LB update for the velocity interpolation
-  // It is done by calling IBM_ResetLBForces_GPU from integrate_vv
   reset_LB_forces(index, node_f);
-//#endif
 
 #ifdef SHANCHEN
   for(int ii=0;ii<LB_COMPONENTS;++ii)
@@ -2891,7 +2888,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *par
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles)
   {
-#if defined(IMMERSED_BOUNDARY) || defined(VIRTUAL_SITES_COM)
+#if defined(VIRTUAL_SITES_COM)
     if ( !particle_data[part_index].isVirtual )
 #endif
     {
@@ -3171,7 +3168,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
   free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
-#if defined(IMMERSED_BOUNDARY) || defined(EK_DEBUG)
+#if defined(EK_DEBUG)
   free_and_realloc(node_f.force_buf    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(lbForceFloat));
 #endif
 #ifdef SHANCHEN

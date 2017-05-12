@@ -328,7 +328,4 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_CG_DNA_BASEPAIR,
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,
-        BONDED_IA_IBM_TRIEL,
-        BONDED_IA_IBM_VOLUME_CONSERVATION,
-        BONDED_IA_IBM_TRIBEND,
         BONDED_IA_UMBRELLA

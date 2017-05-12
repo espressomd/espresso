@@ -851,14 +851,6 @@ void dd_topology_init(CellPList *old)
   dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm) ;
 #endif
   
-#ifdef IMMERSED_BOUNDARY
-  // Immersed boundary needs to communicate the forces from but also to the ghosts
-  // This is different than usual collect_ghost_force_comm (not in reverse order)
-  // Therefore we need our own communicator
-  dd_prepare_comm(&cell_structure.ibm_ghost_force_comm, GHOSTTRANS_FORCE);
-  dd_assign_prefetches(&cell_structure.ibm_ghost_force_comm);
-#endif
-
 #ifdef ENGINE
   dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING) ;
   dd_assign_prefetches(&cell_structure.ghost_swimming_comm) ;
@@ -914,9 +906,6 @@ void dd_topology_release()
 #endif
 #ifdef ENGINE
   free_comm(&cell_structure.ghost_swimming_comm);
-#endif
-#ifdef IMMERSED_BOUNDARY
-  free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
 }
 
