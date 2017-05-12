@@ -44,10 +44,6 @@
 #include <cstring>
 #include <mpi.h>
 
-#include "PartCfg.hpp"
-
-PartCfg<decltype(local_cells)> partCfg_(local_cells);
-
 /************************************************
  * defines
  ************************************************/
