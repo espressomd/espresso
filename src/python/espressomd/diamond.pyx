@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.utils cimport handle_errors
 
-cdef class Diamond:
+cdef class Diamond(object):
     """
     Class to create a diamond like network
     """ 

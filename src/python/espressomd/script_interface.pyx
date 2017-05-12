@@ -1,6 +1,6 @@
 from espressomd.utils import to_char_pointer, to_str
 
-cdef class PObjectId:
+cdef class PObjectId(object):
     cpdef ObjectId id
     
     def __richcmp__(PObjectId a, PObjectId b, op):
@@ -10,7 +10,7 @@ cdef class PObjectId:
             raise NotImplementedError
 
 
-cdef class PScriptInterface:
+cdef class PScriptInterface(object):
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
             if(policy=="GLOBAL"):
