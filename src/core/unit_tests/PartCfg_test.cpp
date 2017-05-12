@@ -110,9 +110,8 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
       /* Check that the content was copied correctly. */
       BOOST_CHECK(std::all_of(part_cfg[i].bl.begin(), part_cfg[i].bl.end(),
                               [&i](int j) { return j == i; }));
-
-      Communication::mpiCallbacks().abort_loop();
     }
+    Communication::mpiCallbacks().abort_loop();
   } else {
     Communication::mpiCallbacks().loop();
   }
@@ -150,8 +149,9 @@ BOOST_AUTO_TEST_CASE(iterators) {
                                  return a.identity() < b.identity();
                                }));
     Communication::mpiCallbacks().abort_loop();
-  } else
+  } else {
     Communication::mpiCallbacks().loop();
+  }
 }
 
 int main(int argc, char **argv) {
