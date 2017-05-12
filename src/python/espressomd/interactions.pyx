@@ -422,7 +422,7 @@ class NonBondedInteractionHandle(object):
             self.tabulated = TabulatedNonBonded(_type1, _type2)
 
 
-cdef class NonBondedInteractions:
+cdef class NonBondedInteractions(object):
 
     """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
     types. Returns NonBondedInteractionHandle.
@@ -1359,7 +1359,7 @@ IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
 
 
-class BondedInteractions:
+class BondedInteractions(object):
 
     """Represents the bonded interactions. Individual interactions can be accessed using
     NonBondedInteractions[i], where i is the bond id. Will return a bonded interaction 
