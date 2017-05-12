@@ -104,6 +104,7 @@ cdef class System:
         """
         Array like, list of three floats
         """
+
         def __set__(self, _box_l):
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
@@ -129,6 +130,7 @@ cdef class System:
         zero for no periodicity in this direction
         one for periodicity
         """
+
         def __set__(self, _periodic):
             global periodic
             if len(_periodic) != 3:
@@ -191,8 +193,8 @@ cdef class System:
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
-                if ( lbpar_gpu.tau >= 0.0 and
-                     lbpar_gpu.tau-_time_step > numeric_limits[float].epsilon()*abs(lbpar_gpu.tau+_time_step) ):
+                if (lbpar_gpu.tau >= 0.0 and
+                        lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
             mpi_set_time_step(_time_step)
@@ -232,6 +234,7 @@ cdef class System:
             global min_global_cut
             min_global_cut = _min_global_cut
             mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+
         def __get__(self):
             return min_global_cut
 
@@ -247,7 +250,8 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
+                states_on_node_i.append(
+                    rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
@@ -312,29 +316,26 @@ cdef class System:
         else:
             raise ValueError(
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
-    
-    def volume(self):
-       """Return box volume"""
-       return self.box_l[0]*self.box_l[1]*self.box_l[2]
 
-    def distance(self,p1,p2):
-       """Return the distance between the particles, respecting periodic boundaries"""
-       cdef double[3] res,a,b
-       a=p1.pos
-       b=p2.pos
-       get_mi_vector(res,a,b)
-       return np.sqrt(res[0]**2+res[1]**2+res[2]**2)
-    
-    def tune_skin(self,min=None,max=None,tol=None,int_steps=None):
+    def volume(self):
+        """Return box volume"""
+        return self.box_l[0] * self.box_l[1] * self.box_l[2]
+
+    def distance(self, p1, p2):
+        """Return the distance between the particles, respecting periodic boundaries"""
+        cdef double[3] res, a, b
+        a = p1.pos
+        b = p2.pos
+        get_mi_vector(res, a, b)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+
+    def tune_skin(self, min=None, max=None, tol=None, int_steps=None):
         """Tunes the skin by running measuring the time for int_steps
            integration steps and bisecting in the interval min..max upt ot an
            interval of tol."""
-        
-        
+
         tuning.tune_skin(min, max, tol, int_steps)
         return self.skin
-
-
 
     def volume(self):
         """Return box volume."""
