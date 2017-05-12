@@ -17,6 +17,7 @@ set(py_tests  bondedInteractions.py
               p3m_gpu.py
               particle.py
               pair_criteria.py
+              particle_slice.py
               rotational_inertia.py
               script_interface_object_params.py
               lbgpu_remove_total_momentum.py
