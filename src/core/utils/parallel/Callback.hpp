@@ -31,8 +31,6 @@ namespace Parallel {
  * per instance. The callback has the same livetime as
  * the instance: It is created in the constructor
  * and removed in the destructor.
- * Clients have to implement the mpi_slave function
- * on the slave nodes, which is the actual callback.
  */
 class Callback {
 public:
@@ -45,11 +43,9 @@ public:
   /**
    * @brief Run the callback function on the slave.
    *
-   * The callback is not run on the calling node,
-   * this can be implemented in the derived class
-   * if needed.
+   * The callback is not run on the calling node.
    */
-  void call(int a, int b = 0) {
+  void call(int a = 0, int b = 0) {
     Communication::mpiCallbacks().call(m_callback_id, a, b);
   }
 
