@@ -1,5 +1,5 @@
-#ifndef CORE_UTILS_PART_CFG_HPP
-#define CORE_UTILS_PART_CFG_HPP
+#ifndef CORE_PART_CFG_HPP
+#define CORE_PART_CFG_HPP
 
 #include <algorithm>
 #include <cassert>
