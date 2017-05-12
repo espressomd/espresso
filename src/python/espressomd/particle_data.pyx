@@ -50,7 +50,7 @@ for d in dir(ParticleHandle):
             particle_attributes.append(d)
 
 
-cdef class ParticleHandle:
+cdef class ParticleHandle(object):
     def __cinit__(self, _id):
         #    utils.init_intlist(self.particle_data.el)
         utils.init_intlist(& (self.particle_data.bl))
@@ -1149,7 +1149,7 @@ cdef class ParticleHandle:
             setattr(self, k, P[k])
 
 
-cdef class _ParticleSliceImpl:
+cdef class _ParticleSliceImpl(object):
     """
     Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
 
@@ -1276,7 +1276,7 @@ class ParticleSlice(_ParticleSliceImpl):
     """
     pass
 
-cdef class ParticleList:
+cdef class ParticleList(object):
     """
     Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object.
 
