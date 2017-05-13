@@ -1360,8 +1360,13 @@ cdef class ParticleList(object):
             # Generate particle id
             P["id"] = max_seen_particle + 1
         else:
-            if particle_exists(P["id"]):
-                raise Exception("Particle %d already exists." % P["id"])
+            if hasattr(P["id"],"__getitem__"):
+                for i in P["id"]:
+                    if particle_exists(i):
+                        raise Exception("Particle %d already exists." % i)
+            else:
+                if particle_exists(P["id"]):
+                    raise Exception("Particle %d already exists." % P["id"])
 
         if len(np.array(P["pos"]).shape) == 2:
             self._place_new_particles(P)
