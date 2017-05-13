@@ -234,3 +234,4 @@ FFTW external
 TK   external
 H5MD external
 SCAFACOS external
+GSL external
