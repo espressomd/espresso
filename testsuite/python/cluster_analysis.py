@@ -144,6 +144,10 @@ class ClusterAnalysis(ut.TestCase):
             dr=float(np.sqrt(0.01**2+0.011**2+0.012**2))
             self.assertTrue(np.abs(c.fractal_dimension(dr=dr)[0]-1.) <=1.2)
 
+            # Fractal dimension calc require gsl
+            if not espressomd.has_features("GSL"):
+                return
+
             # Fractal dimension of a disk should be close to 2
             self.es.part.clear()
             center=np.array((0.1,.02,0.15))
