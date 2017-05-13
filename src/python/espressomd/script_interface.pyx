@@ -9,7 +9,6 @@ cdef class PObjectId(object):
         else:
             raise NotImplementedError
 
-
 cdef class PScriptInterface(object):
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
@@ -19,8 +18,7 @@ cdef class PScriptInterface(object):
                 self.sip = make_shared(to_char_pointer(name), LOCAL)
             self.parameters = self.sip.get().valid_parameters()
         else:
-            self.sip = shared_ptr[ScriptInterfaceBase]()
-            self.parameters = map[string, Parameter]()
+            raise Exception("the name parameter has to be set.")
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -159,7 +157,7 @@ cdef class PScriptInterface(object):
                 oid = get[ObjectId](value)
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
-                    so_name=str(ptr.get().name())
+                    so_name=to_str(ptr.get().name())
                     # Fallback class, if nothing omre specific is registered for the script object name
                     pclass=ScriptInterfaceHelper
                     # Look up class
