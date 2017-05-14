@@ -8,14 +8,18 @@
 #ifndef IBM_CUDA_INTERFACE_HPP
 #define IBM_CUDA_INTERFACE_HPP
 
+#include "config.hpp"
+
 #ifdef IMMERSED_BOUNDARY
+
+#include "ParticleRange.hpp"
 
 // *********** Communication functions ********
 // Implemented in real C++, but called from the ibm_cuda.cu
-void IBM_cuda_mpi_send_velocities();
-void IBM_cuda_mpi_get_particles();
+void IBM_cuda_mpi_send_velocities(ParticleRange particles);
+void IBM_cuda_mpi_get_particles(ParticleRange particles);
 
-void ParticleVelocitiesFromLB_GPU();
+void ParticleVelocitiesFromLB_GPU(ParticleRange particles);
 
 // ******** data types for CUDA and MPI communication ******
 typedef struct {

@@ -1,5 +1,6 @@
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 
+@script_interface_register
 class Cylinder(ScriptInterfaceHelper):
     """
     A cylinder shape.
@@ -24,6 +25,7 @@ class Cylinder(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::Cylinder"
 
+@script_interface_register
 class HollowCone(ScriptInterfaceHelper):
     """
     A hollow cone shape.
@@ -61,6 +63,7 @@ class HollowCone(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::HollowCone"
 
+@script_interface_register
 class Maze(ScriptInterfaceHelper):
     """
     Spherical cavities on a regular grid that are
@@ -79,6 +82,7 @@ class Maze(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::Maze"
 
+@script_interface_register
 class Pore(ScriptInterfaceHelper):
     """
     A cylinder with a conical pore between the faces. The pore openings
@@ -107,6 +111,7 @@ class Pore(ScriptInterfaceHelper):
     _so_name = "Shapes::Pore"
 
 
+@script_interface_register
 class Rhomboid(ScriptInterfaceHelper):
     """
     An parallelepiped.
@@ -128,6 +133,7 @@ class Rhomboid(ScriptInterfaceHelper):
     _so_name = "Shapes::Rhomboid"
 
 
+@script_interface_register
 class Slitpore(ScriptInterfaceHelper):
     """
 
@@ -146,6 +152,7 @@ class Slitpore(ScriptInterfaceHelper):
     _so_name = "Shapes::Slitpore"
 
 
+@script_interface_register
 class Sphere(ScriptInterfaceHelper):
     """
     A sphere.
@@ -163,6 +170,7 @@ class Sphere(ScriptInterfaceHelper):
     _so_name = "Shapes::Sphere"
 
 
+@script_interface_register
 class SpheroCylinder(ScriptInterfaceHelper):
     """
     A cylinder with hemispheres as caps.
@@ -187,6 +195,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
     """
     _so_name = "Shapes::SpheroCylinder"
 
+@script_interface_register
 class Stomatocyte(ScriptInterfaceHelper):
     """
     Attributes
@@ -220,6 +229,7 @@ class Stomatocyte(ScriptInterfaceHelper):
     _so_name = "Shapes::Stomatocyte"
 
 
+@script_interface_register
 class Wall(ScriptInterfaceHelper):
     """
     An infinite plane.

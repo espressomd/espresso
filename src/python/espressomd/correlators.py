@@ -1,8 +1,9 @@
 
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper,script_interface_register
 import numpy as np
 
+@script_interface_register
 class Correlator(ScriptInterfaceHelper):
     _so_name = "Correlators::Correlator"
     _so_bind_methods = ("update","auto_update","finalize", "dim_corr","n_results","hierarchy_depth")
@@ -17,6 +18,7 @@ class Correlator(ScriptInterfaceHelper):
 
 
 
+@script_interface_register
 class AutoUpdateCorrelators(ScriptInterfaceHelper):
     _so_name = "Correlators::AutoUpdateCorrelators"
 
