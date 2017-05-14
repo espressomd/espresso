@@ -186,7 +186,7 @@ IF ELECTROKINETICS:
             raise Exception("This method is not implemented yet.")
 
 
-    cdef class ElectrokineticsRoutines:
+    cdef class ElectrokineticsRoutines(object):
         cdef int node[3]
 
         def __init__(self, key):
@@ -214,7 +214,7 @@ IF ELECTROKINETICS:
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species:
+    class Species(object):
         """Creates a species object that is passed to the ek instance"""
         py_number_of_species = 0
         id = -1
@@ -284,7 +284,7 @@ IF ELECTROKINETICS:
 
 
 
-    cdef class SpecieRoutines:
+    cdef class SpecieRoutines(object):
         cdef int node[3]
         cdef int id
 

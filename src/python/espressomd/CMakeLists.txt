@@ -38,9 +38,8 @@ endif(HDF5_FOUND)
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 add_dependencies(gen_pxiconfig EspressoConfig)
 
-add_custom_command(OUTPUT _espresso/myconfig.pxi
-		   COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/_espresso
-                   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/_espresso/myconfig.pxi
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
+                   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
@@ -87,13 +86,12 @@ foreach(cython_file ${cython_SRC})
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          --directive embedsignature=True
-                         -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
-                         -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
+                         -I ${CMAKE_CURRENT_BINARY_DIR}
                          ${cython_file}
                          -o ${outputpath}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-                         DEPENDS _espresso/myconfig.pxi ${cython_file}
+                         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
       add_library(${basename} SHARED ${outputpath})

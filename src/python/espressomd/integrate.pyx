@@ -21,7 +21,7 @@ include "myconfig.pxi"
 import espressomd.code_info
 from espressomd.utils cimport *
 
-cdef class Integrator:
+cdef class Integrator(object):
     """
     Integrator class
 

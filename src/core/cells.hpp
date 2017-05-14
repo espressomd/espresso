@@ -69,6 +69,9 @@
 #include "utils/Range.hpp"
 #include "verlet.hpp"
 
+#include "Cell.hpp"
+#include "ParticleRange.hpp"
+
 /** \name Cell Structure */
 /** Flag telling which cell structure is used at the moment. */
 /*@{*/
@@ -112,16 +115,9 @@
 /************************************************/
 /*@{*/
 
-/** A cell is a \ref ParticleList representing a particle group with
-    respect to the integration algorithm.
-*/
-typedef ParticleList Cell;
-
 /** List of cell pointers. */
 struct CellPList {
-  using CellParticleIterator = ParticleIterator<Cell **, Particle>;
-
-  Utils::Range<CellParticleIterator> particles() const {
+  ParticleRange particles() const {
     return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
                              CellParticleIterator(cell + n, cell + n, 0));
   }
