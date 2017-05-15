@@ -39,9 +39,9 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
+#include "utils/List.hpp"
 #include "utils/math/sqr.hpp"
 #include "utils/memory.hpp"
-#include "utils/List.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -328,7 +328,8 @@ inline int calc_factors(int n, int *factors, int max) {
 /*@{*/
 
 /** Subtracts vector v2 from vector v1 and stores result in vector dv */
-inline void vecsub(double v1[3], double v2[3], double dv[3]) {
+template <typename T, typename U, typename V>
+inline void vecsub(T const &v1, U const &v2, V &dv) {
   dv[0] = v1[0] - v2[0];
   dv[1] = v1[1] - v2[1];
   dv[2] = v1[2] - v2[2];
@@ -375,7 +376,8 @@ inline double scalar(double a[3], double b[3]) {
 }
 
 /** calculates the vector product c of two vectors a and b */
-inline void vector_product(double a[3], double b[3], double c[3]) {
+template <typename T, typename U, typename V>
+inline void vector_product(T const &a, U const &b, V &c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
