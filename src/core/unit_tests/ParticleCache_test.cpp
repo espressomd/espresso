@@ -25,12 +25,12 @@
 #include <boost/mpi.hpp>
 
 #define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_MODULE PartCfg test
+#define BOOST_TEST_MODULE ParticleCache test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/PartCfg.hpp"
+#include "core/ParticleCache.hpp"
 #include "utils/List.hpp"
 
 #include "mock/Particle.hpp"
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(update) {
     local_parts.parts.emplace_back(rank * n_part + i);
   }
 
-  PartCfg<Particles> part_cfg{local_parts};
+  ParticleCache<Particles> part_cfg{local_parts};
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
     std::fill(part.bl.begin(), part.bl.end(), id);
   }
 
-  PartCfg<Particles> part_cfg{local_parts};
+  ParticleCache<Particles> part_cfg{local_parts};
   if (rank == 0) {
     part_cfg.update_bonds();
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
     local_parts.parts.emplace_back(rank * n_part + i);
   }
 
-  PartCfg<Particles> part_cfg{local_parts};
+  ParticleCache<Particles> part_cfg{local_parts};
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);

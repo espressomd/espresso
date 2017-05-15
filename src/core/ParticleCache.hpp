@@ -28,7 +28,7 @@ template <typename Cells,
               std::declval<Cells>().particles())>::type,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
-class PartCfg {
+class ParticleCache {
   using map_type = std::map<int, std::reference_wrapper<Particle>>;
 
   map_type mapping;
@@ -111,13 +111,13 @@ public:
       boost::transform_iterator<detail::TakeSecond, typename map_type::iterator,
                                 Particle &, Particle>;
 
-  PartCfg() = delete;
-  PartCfg(Cells &cells)
+  ParticleCache() = delete;
+  ParticleCache(Cells &cells)
       : update_cb([this](int, int) { this->m_update(); }),
         update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
         cells(cells), m_valid(false), m_valid_bonds(false) {}
-  PartCfg(PartCfg const &) = delete;
-  PartCfg(PartCfg &&) = delete;
+  ParticleCache(ParticleCache const &) = delete;
+  ParticleCache(ParticleCache &&) = delete;
 
   void clear() {
     mapping.clear();
@@ -208,7 +208,7 @@ public:
 
     return mapping.size();
   }
-  
+
   bool empty() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
 

@@ -68,4 +68,4 @@ unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp ../../script_interf
 unit_test(NAME Variant_test SRC Variant_test.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp)
 unit_test(NAME Range_test SRC Range_test.cpp)
-unit_test(NAME PartCfg_test SRC PartCfg_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
+unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
