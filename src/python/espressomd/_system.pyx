@@ -51,7 +51,7 @@ import random  # for true random numbers from os.urandom()
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
-cdef class System:
+cdef class System(object):
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.

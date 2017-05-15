@@ -49,7 +49,7 @@ class AssertThermostatType():
         return __f
 
 
-cdef class Thermostat:
+cdef class Thermostat(object):
 
     # We have to cdef the state variable because it is a cdef class
     cdef _state

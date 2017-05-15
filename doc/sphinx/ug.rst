@@ -28,5 +28,6 @@ Userguide
     memd.rst
     mmm.rst
     cuda.rst
+    shapes.rst
 
 .. bibliography:: zrefs.bib

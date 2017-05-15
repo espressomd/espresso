@@ -221,7 +221,7 @@ espressoSystemInterface.update();
 #endif
 
 #ifdef CUDA
-  copy_forces_from_GPU();
+  copy_forces_from_GPU(local_cells.particles());
 #endif
 
   // VIRTUAL_SITES distribute forces

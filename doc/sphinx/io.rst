@@ -389,35 +389,51 @@ timesteps. This is a restriction of VMD itself, not of the format.
 ``writevsf``: Writing the topology
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-writevsf
+writevsf(fp,types)
+
 
 Writes a structure block describing the system’s structure to the
-channel given by . must be an identifier for an open channel such as the
-return value of an invocation of . The output of this command can be
+channel given by `fp`. `fp` must be an identifier for an open channel such as the
+return value of an invocation of `open`. The output of this command can be
 used for a standalone VSF file, or at the beginning of a VTF file that
 contains a trajectory of a whole simulation.
+
+
+Specify the coordinates of which particles should be written. If `types` is
+used, all coordinates will be written (in the ordered timestep format).
+Otherwise, has to be a Tcl-list specifying the pids of the particles.
+The default is `types="all"`. 
+Example
+`pids =[0, 23, 42]`
+`pids="all"`
 
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-writevcf
+`writevcf(fp, types)`
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles to the channel given by . must be an identifier
-for an open channel such as the return value of an invocation of .
+the system’s particles to the channel given by `fp`. `fp` must be an identifier
+for an open channel such as the return value of an invocation of `open`.
 
+.. todo:: NOT IMPLEMENTED
 Specify, whether the output is in a human-readable, but somewhat longer
 format (), or in a more compact form (). The default is .
 
+.. todo:: NOT IMPLEMENTED
 Specify whether the particle positions are written in absolute
 coordinates () or folded into the central image of a periodic system ().
 The default is .
 
-Specify the coordinates of which particles should be written. If is
+Specify the coordinates of which particles should be written. If `types` is
 used, all coordinates will be written (in the ordered timestep format).
 Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is . ``pids {0 23 42}``
+The default is `types="all"`. 
+Example
+`pids =[0, 23, 42]`
+`pids="all"`
 
+.. todo:: NOT IMPLEMENTED
 Specify arbitrary user data for the particles. has to be a Tcl list
 containing the user data for every particle. The user data is appended
 to the coordinate line and can be read into VMD via the VMD plugin
@@ -429,6 +445,7 @@ to the coordinate line and can be read into VMD via the VMD plugin
 
 vtfpid
 
+.. todo:: NOT IMPLEMENTED
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 
