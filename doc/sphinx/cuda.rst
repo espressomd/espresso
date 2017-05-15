@@ -11,8 +11,8 @@ GPU Acceleration with CUDA
 Not every simulation method is parallelizable or profits from 
 GPU acceleration. Refer to :ref:`Available simulation methods`
 to check whether your desired method can be used on the GPU.
-In order to use GPU acceleration
-your GPU should at least have compute capability 2.0.
+In order to use GPU acceleration you need a NVIDIA GPU
+and it needs to have at least compute capability 2.0.
 
 For more information please check :attr:`espressomd._system.cu`
 or :class:`espressomd.cuda_init.CudaInitHandle`.
@@ -32,7 +32,7 @@ Selection of CUDA device
 ========================
 
 When you start ``pypresso`` your first GPU should
-be selected. If you wanted
+be selected. 
 If you wanted to use the second GPU, this can be done 
 by setting :attr:`espressomd._system.cu.device` as follows::
 
