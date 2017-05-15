@@ -21,7 +21,7 @@ include "myconfig.pxi"
 import espressomd.code_info
 from espressomd.utils cimport *
 
-cdef class Integrator:
+cdef class Integrator(object):
     """
     Integrator class
 
@@ -111,7 +111,7 @@ cdef class Integrator:
             If this optional parameter is true, a cubic box is assumed.
         """
 
-        if "NPT" in espressomd.code_info.features():
+        if "NPT" not in espressomd.code_info.features():
             raise Exception("NPT is not compiled in")
         check_type_or_throw_except(
             ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")

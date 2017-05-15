@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 #include "Vector.hpp"

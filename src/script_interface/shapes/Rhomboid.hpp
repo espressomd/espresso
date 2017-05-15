@@ -30,13 +30,15 @@ namespace Shapes {
 
 class Rhomboid : public Shape {
 public:
-  Rhomboid() : m_rhomboid(new ::Shapes::Rhomboid()) {}
+  Rhomboid() : m_rhomboid(new ::Shapes::Rhomboid()) {
+    add_parameters({{"corner", m_rhomboid->pos()},
+                    {"a", m_rhomboid->a()},
+                    {"b", m_rhomboid->b()},
+                    {"c", m_rhomboid->c()},
+                    {"direction", m_rhomboid->direction()}});
+  }
 
   const std::string name() const override { return "Shapes::Rhomboid"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_rhomboid; }
 

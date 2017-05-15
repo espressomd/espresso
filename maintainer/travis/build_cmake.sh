@@ -71,6 +71,8 @@ else
     echo ""
     exit $ec
 fi
+# enforce style rules
+grep 'class[^_].*[^\)]\s*:\s*$' $(find . -name '*.py*') && echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
 
 if [ ! $insource ]; then
     if [ ! -d $builddir ]; then

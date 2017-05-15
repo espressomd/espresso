@@ -1,14 +1,14 @@
 try:
     from .visualizationMayavi import mayaviLive
 except ImportError as e:
-    class mayaviLive:
+    class mayaviLive(object):
         def __init__(*args, **kwargs):
             raise e
 
 try:
     from .visualizationOpenGL import openGLLive
 except ImportError as e:
-    class openGLLive:
+    class openGLLive(object):
         def __init__(*args, **kwargs):
             raise e
 

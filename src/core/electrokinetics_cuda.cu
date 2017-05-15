@@ -2641,8 +2641,7 @@ int ek_init() {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.electric_field,
                                ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
   }
-  
-  copy_part_data_to_gpu();
+
 #endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );

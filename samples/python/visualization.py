@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
-from espressomd import code_info
 from espressomd import integrate
 from espressomd import visualization
 import numpy
@@ -33,7 +32,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 dev = "cpu"
 

@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport cuda_init
 
-cdef class CudaInitHandle:
+cdef class CudaInitHandle(object):
     def __init__(self):
         IF CUDA != 1:
             raise Exception("Cuda is not compiled in")
