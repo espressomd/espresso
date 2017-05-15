@@ -20,6 +20,7 @@ class ThermoTest(ut.TestCase):
 
     def run_test_case(self, test_case):
         gamma = np.array([1.0, 1.0])
+        mass = 12.74
         
         # Decelleration
         self.es.time_step = 0.007
