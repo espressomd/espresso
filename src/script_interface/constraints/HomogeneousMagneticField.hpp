@@ -31,25 +31,15 @@ namespace Constraints {
 class HomogeneousMagneticField : public Constraint {
 public:
   HomogeneousMagneticField()
-    : m_constraint(new ::Constraints::HomogeneousMagneticField())
-  {}
+    : m_constraint(new ::Constraints::HomogeneousMagneticField()) {
+    add_parameters({{"H",
+                     [this](Variant const &v) {
+                       m_constraint->set_H(get_value<Vector3d>(v));
+                     },
+                     [this]() {return m_constraint->H(); }}});
+  }
 
   const std::string name() const override { return "Constraints::HomogeneousMagneticField"; }
-
-  VariantMap get_parameters() const override {
-    return {{"H", homogeneous_magnetic_field()->H()}};
-  }
-
-  ParameterMap valid_parameters() const override {
-    return {{"H", {ParameterType::DOUBLE_VECTOR, 3, true}}
-    };
-  }
-
-  void set_parameter(std::string const &name, ScriptInterface::Variant const &value) override {
-    if (name == "H") {
-      homogeneous_magnetic_field()->set_H(get_value<Vector3d>(value));
-    }
-  }
 
   std::shared_ptr<::Constraints::Constraint> constraint() {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
