@@ -1079,13 +1079,6 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
   // Update particles
   updatePartCfg(WITHOUT_BONDS);
 
-  // Make sure particles are folded
-  for (int i = 0 ; i < n_part ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
-  }
-
   // Declare variables for the density calculation
   double height, dist, v_radial, v_axial;
   double norm_direction = utils::veclen(direction);
@@ -1094,9 +1087,8 @@ int calc_cylindrical_average(std::vector<double> center, std::vector<double> dir
   for (int part_id = 0; part_id < n_part; part_id++) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
       if ( types[type_id] == partCfg[part_id].p.type || all_types) {
-        pos[0] = partCfg[part_id].r.p[0];
-        pos[1] = partCfg[part_id].r.p[1];
-        pos[2] = partCfg[part_id].r.p[2];
+        auto const pos = partCfg[part_id].folded_pos();
+
         vel[0] = partCfg[part_id].m.v[0];
         vel[1] = partCfg[part_id].m.v[1];
         vel[2] = partCfg[part_id].m.v[2];
@@ -1177,13 +1169,6 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   /* Update particles */
   updatePartCfg(WITHOUT_BONDS);
 
-  /* Make sure particles are folded */
-  for (i = 0 ; i < n_part ; i++) {
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,0);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,1);
-    fold_coordinate(partCfg[i].r.p,partCfg[i].m.v,partCfg[i].l.i,2);
-  }
-
   beadcount = 0;
   xav = 0.0;
   yav = 0.0;
@@ -1191,7 +1176,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
       if ( beadids->e[bi] == partCfg[pi].p.type ) {
 	/* Find the vector from the point to the center */
-	vecsub(center,partCfg[pi].r.p,pvector);
+        vecsub(center,partCfg[pi].folded_pos(),pvector);
 
 	/* Work out x and y coordinates with respect to rotation axis */
 	
@@ -1206,14 +1191,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 	/* Work out relevant indices for x and y */
 	xindex = (int)(floor(xdist/xbinwidth));
 	yindex = (int)(floor((ydist+yrange*0.5)/ybinwidth));
-	/*
-          printf("x %d y %d \n",xindex,yindex);
-          printf("p %f %f %f \n",partCfg[pi].r.p[0],partCfg[pi].r.p[1],partCfg[pi].r.p[2]);
-          printf("pvec %f %f %f \n",pvector[0],pvector[1],pvector[2]);
-          printf("axis %f %f %f \n",axis[0],axis[1],axis[2]);
-          printf("dists %f %f \n",xdist,ydist);
-          fflush(stdout);
-	*/
+
 	/* Check array bounds */
 	if ( (xindex < xbins && xindex > 0) && (yindex < ybins && yindex > 0) ) {
 	  density_map[bi].e[ybins*xindex+yindex] += 1;
@@ -1257,7 +1235,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
     for ( pi = 0 ; pi < n_part ; pi++ ) {
       for ( bi = 0 ; bi < nbeadtypes ; bi++ ) {
         if ( beadids->e[bi] == partCfg[pi].p.type ) {
-          vecsub(center,partCfg[pi].r.p,pvector);
+          vecsub(center,partCfg[pi].folded_pos(),pvector);
           vector_product(axis,pvector,vectprod);
           xdist = sqrt(sqrlen(vectprod)/sqrlen(axis));
           ydist = scalar(axis,pvector)/sqrt(sqrlen(axis));
