@@ -26,7 +26,13 @@ cdef class CudaInitHandle(object):
             raise Exception("Cuda is not compiled in")
 
     property device:
-        """cuda device to use"""
+        """cuda device to use
+
+        :setter: Specify which device to use
+
+        :getter: Returns the currently selected Cuda device id
+
+        :type: int"""
 
         IF CUDA == 1:
             def __set__(self, int _dev):
@@ -51,6 +57,24 @@ cdef class CudaInitHandle(object):
                 if dev == -1:
                     raise Exception("cuda device get error")
                 return dev
+
+    property device_list:
+        """available cuda devices
+
+        :getter: Returns available devices
+
+        :type: dict"""
+        IF CUDA == 1:
+            def __set__(self, dict _dev_dict):
+                raise Exception("cuda device list is read only")
+            def __get__(self):
+                cdef char gpu_name_buffer[4+64]
+                devices = dict()
+                for i in range(cuda_get_n_gpus()):
+                    cuda_get_gpu_name(i, gpu_name_buffer)
+                    devices[i] = gpu_name_buffer
+                return devices
+
 
     # property device_list:
     #   IF CUDA == 1:

@@ -34,10 +34,10 @@ import functools
 PARTICLE_EXT_FORCE = 1
 
 
-def COORD_FIXED(coord):
+def _COORD_FIXED(coord):
     return 2L << coord
-COORDS_FIX_MASK = COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2)
-COORDS_ALL_FIXED = COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2)
+COORDS_FIX_MASK = _COORD_FIXED(0) | _COORD_FIXED(1) | _COORD_FIXED(2)
+COORDS_ALL_FIXED = _COORD_FIXED(0) & _COORD_FIXED(1) & _COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
 
 # List of particle attributes for pickle and the like
@@ -710,7 +710,7 @@ cdef class ParticleHandle(object):
                     _fixed_coord_flag, 3, int, "Fix has to be 3 ints.")
                 for i in map(long, range(3)):
                     if (_fixed_coord_flag[i]):
-                        ext_flag |= COORD_FIXED(i)
+                        ext_flag |= _COORD_FIXED(i)
                 if set_particle_fix(self.id, ext_flag) == 1:
                     raise Exception("Set particle position first.")
 
@@ -720,7 +720,7 @@ cdef class ParticleHandle(object):
                 cdef int * ext_flag = NULL
                 pointer_to_fix( & (self.particle_data), ext_flag)
                 for i in map(long, range(3)):
-                    if (ext_flag[0] & COORD_FIXED(i)):
+                    if (ext_flag[0] & _COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
                 return fixed_coord_flag
 
@@ -1151,9 +1151,9 @@ cdef class ParticleHandle(object):
 
 cdef class _ParticleSliceImpl(object):
     """
-    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
+    Handles slice inputs.
 
-    This is the base class that should not be used directly as it lacks some properties. Use :class:`espressomd.ParticleSlice` instead.
+    This base class should not be used directly. Use :class:`espressomd.ParticleSlice` instead, which contains all the particle properties.
     """
 
     def __cinit__(self, slice_):
@@ -1524,11 +1524,8 @@ cdef class ParticleList(object):
                     continue
                 yield (self[i], self[j])
 
-# auto-add missing particle properties to ParticleSlice
-for attribute_name in particle_attributes:
-    if attribute_name in dir(ParticleSlice):
-        continue
-
+def _add_particle_slice_properties():
+    """automatically add all of ParticleHandle's properties to ParticleSlice"""
     def seta(particle_slice, values, attribute):
         """Setter function that sets attribute on every member of particle_slice.
            If values contains only one element, all members are set to it. If it
@@ -1577,7 +1574,13 @@ for attribute_name in particle_attributes:
             values[i] = getattr(ParticleHandle(particle_slice.id_selection[i]), attribute)
         return values
 
-    # synthesize a new property
-    new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
-    # attach the property to ParticleSlice
-    setattr(ParticleSlice, attribute_name, new_property)
+    for attribute_name in particle_attributes:
+        if attribute_name in dir(ParticleSlice):
+            continue
+
+        # synthesize a new property
+        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+        # attach the property to ParticleSlice
+        setattr(ParticleSlice, attribute_name, new_property)
+
+_add_particle_slice_properties()

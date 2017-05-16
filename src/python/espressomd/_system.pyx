@@ -355,3 +355,7 @@ cdef class System(object):
 # lbfluid=lb.DeviceList()
 IF CUDA == 1:
     cu = cuda_init.CudaInitHandle()
+    """Cuda Init Handle.
+    Used to list or select cuda devices
+    Also see :class:`espressomd.cuda_init.CudaInitHandle`
+    """
