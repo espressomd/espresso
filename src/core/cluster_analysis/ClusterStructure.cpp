@@ -2,8 +2,17 @@
 #include "ClusterStructure.hpp"
 #include "interaction_data.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 namespace ClusterAnalysis {
+
+
+ClusterStructure::ClusterStructure() {
+  if (n_nodes!=1) {
+    throw std::runtime_error("The cluster analysis only works for a single core.");
+  }
+  clear();
+}
 
 void ClusterStructure::clear() {
  clusters.clear();
@@ -189,11 +198,6 @@ int ClusterStructure::get_next_free_cluster_id(){
 }
 
 
-ClusterStructure cluster_structure;
-
-ClusterStructure& cluster_analysis() {
-  return cluster_structure;
-}
 
 }
    

@@ -20,7 +20,7 @@ namespace ClusterAnalysis {
 /** @brief Holds the result and parameters of a cluster analysis */
 class ClusterStructure {
  public:
-  ClusterStructure() { clear(); };
+  ClusterStructure();
   /** @brief Map holding the individual clusters. The key is an interger cluster id */
   std::map<int,std::shared_ptr<Cluster>> clusters;
   /** @brief Map between particle ids and corresponding cluster ids */
