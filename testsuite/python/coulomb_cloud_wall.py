@@ -113,7 +113,6 @@ class CoulombCloudWall(ut.TestCase):
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
         self.assertTrue(self.S.analysis.energy(self.S)["total"] == 0.0)
->>>>>>> a08b6817a9ca54bb1a88516642b251f191400a17
 
 
 if __name__ == "__main__":
