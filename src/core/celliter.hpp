@@ -103,14 +103,14 @@ struct CellNeighIterator: public boost::iterator_facade<
    * \param cellidx Index of the center
    * \poaram i Index of the neighbor
    */
-  CellNeighIterator(int cellidx, int i): cp(nullptr), cellidx(cellidx), i(i) {}
+  CellNeighIterator(int cellidx, int i);
 
   struct DifferentBaseCellError {};
 
 private:
-  CellProxy cp;
   const int cellidx;
   int i;
+  CellProxy cp;
 
   friend class boost::iterator_core_access;
 
@@ -245,12 +245,12 @@ struct CellIterator: public boost::iterator_facade<
    * \param cells cells array to iterate over (local_cells.cell or ghost_cells.cell)
    * \param i Iteration index
    */
-  CellIterator(Cell **cells, int i): icp(nullptr, -1), cells(cells), i(i) {}
+  CellIterator(Cell **cells, int i): cells(cells), i(i), icp(&cells[i], i) {}
 
 private:
-  IndexedCellProxy icp;
   Cell **cells;
   int i;
+  IndexedCellProxy icp;
 
   friend class boost::iterator_core_access;
 
