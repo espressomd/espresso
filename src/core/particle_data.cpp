@@ -42,7 +42,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
+#include "partCfg.hpp"
 
 /************************************************
  * defines
@@ -71,11 +71,6 @@ int max_particle_node = 0;
 int *particle_node = NULL;
 int max_local_particles = 0;
 Particle **local_particles = NULL;
-Particle *partCfg = NULL;
-int partCfgSorted = 0;
-
-/** bondlist for partCfg, if bonds are needed */
-IntList partCfg_bl = {NULL, 0, 0};
 
 /************************************************
  * local functions
@@ -341,62 +336,6 @@ void free_particle(Particle *part) {
 /************************************************
  * organizational functions
  ************************************************/
-
-int updatePartCfg(int bonds_flag) {
-  if (partCfg)
-    return 1;
-  partCfg = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  if (bonds_flag != WITH_BONDS)
-    mpi_get_particles(partCfg, NULL);
-  else
-    mpi_get_particles(partCfg, &partCfg_bl);
-  for (int j = 0; j < n_part; j++)
-    unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-  partCfgSorted = 0;
-#ifdef VIRTUAL_SITES
-
-  if (!sortPartCfg()) {
-    runtimeErrorMsg() << "could not sort partCfg";
-    return 0;
-  }
-  if (!updatePartCfg(bonds_flag)) {
-    runtimeErrorMsg()
-        << "could not update positions of virtual sites in partcfg";
-    return 0;
-  }
-#endif
-  return 1;
-}
-
-int sortPartCfg() {
-  int i;
-  Particle *sorted;
-
-  if (!partCfg)
-    updatePartCfg(WITHOUT_BONDS);
-
-  if (partCfgSorted)
-    return 1;
-
-  if (n_part != max_seen_particle + 1)
-    return 0;
-
-  sorted = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  for (i = 0; i < n_part; i++)
-    memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
-  free(partCfg);
-  partCfg = sorted;
-
-  partCfgSorted = 1;
-
-  return 1;
-}
-
-void freePartCfg() {
-  free(partCfg);
-  partCfg = NULL;
-  realloc_intlist(&partCfg_bl, 0);
-}
 
 /** resize \ref local_particles.
     \param part the highest existing particle
@@ -1705,12 +1644,10 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 void auto_exclusion(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
   Bonded_ia_parameters *ia_params;
-  Particle *part1;
+
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as a interleaved list */
   IntList *partners;
-
-  updatePartCfg(WITH_BONDS);
 
   /* setup bond partners and distance list. Since we need to identify particles
      via their identity, we use a full sized array */
@@ -1720,13 +1657,12 @@ void auto_exclusion(int distance) {
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_part; p++) {
-    part1 = &partCfg[p];
-    p1 = part1->p.identity;
-    for (i = 0; i < part1->bl.n;) {
-      ia_params = &bonded_ia_params[part1->bl.e[i++]];
+  for (auto const& part1: partCfg) {
+    p1 = part1.p.identity;
+    for (i = 0; i < part1.bl.n;) {
+      ia_params = &bonded_ia_params[part1.bl.e[i++]];
       if (ia_params->num == 1) {
-        p2 = part1->bl.e[i++];
+        p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
         if (p2 != p1) {
@@ -1807,11 +1743,6 @@ int init_type_array(int type) {
       return ES_OK;
     }
 
-  updatePartCfg(WITHOUT_BONDS);
-
-  if (!partCfg)
-    return ES_ERROR;
-
   int type_index = -1;
   type_index = (Type.max_entry++);
   if (type_index == number_of_type_lists) {
@@ -1837,7 +1768,7 @@ int init_type_array(int type) {
 
   // allocates a list for ids for as many entries as there are particles right
   // now
-  if (!(partCfg) || type < 0) {
+  if (type < 0) {
     return ES_ERROR;
   }
   Type.index[type_index] = type;
@@ -1849,9 +1780,9 @@ int init_type_array(int type) {
   int t_c = 0; // index
   type_array[Index.type[type]].id_list =
       (int *)Utils::malloc(sizeof(int) * n_part);
-  for (int i = 0; i < n_part; i++) {
-    if (partCfg[i].p.type == type)
-      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+  for (auto const&p: partCfg) {
+    if (p.p.type == type)
+      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
   }
   int max_size = n_part;
   if (t_c != 0) {
@@ -1931,14 +1862,10 @@ int remove_id_type_array(int part_id, int type) {
 }
 
 int update_particle_array(int type) {
-  updatePartCfg(WITHOUT_BONDS);
-  if (!partCfg)
-    return ES_ERROR;
-
   int t_c = 0;
-  for (int i = 0; i < n_part; i++) {
-    if (partCfg[i].p.type == type) {
-      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+  for (auto const&p : partCfg) {
+    if (p.p.type == type) {
+      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
     }
     if (t_c > (double)type_array[Index.type[type]].cur_size / 2.0) {
       if (reallocate_type_array(type) == ES_ERROR)
