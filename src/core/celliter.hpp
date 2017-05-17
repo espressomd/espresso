@@ -51,6 +51,26 @@ struct CellProxy {
     return Utils::make_range(pbegin(), pend());
   }
 
+  using CellParticlePtrIterator = ParticleIterator<Cell **, Particle, Particle*>;
+  /** Returns a begin iterator to the particles of the encapsulated cell.
+   */
+  CellParticlePtrIterator pptrbegin(int begin_idx = 0) const {
+    return CellParticlePtrIterator(c, c + 1, begin_idx);
+  }
+
+  /** Returns an end iterator to the particles of the encapsulated cell.
+   */
+  CellParticlePtrIterator pptrend() const {
+    return CellParticlePtrIterator(c + 1, c + 1, 0);
+  }
+
+  /** Returns a range object to iterate over particles of the encapsulates cell.
+   * Can be used in range-based for loops.
+   */
+  Utils::Range<CellParticlePtrIterator> particle_ptrs(int begin_idx = 0) const {
+    return Utils::make_range(pptrbegin(begin_idx), pptrend());
+  }
+
   operator Cell*() const { return cellptr(); }
   operator Cell&() const { return cell(); }
 
@@ -62,7 +82,9 @@ struct CellProxy {
     return !(*this == other);
   }
 
+  friend struct CellNeighIterator;
 private:
+  void set_cell(Cell **new_c) { c = new_c; }
   Cell **c;
 };
 
@@ -75,23 +97,24 @@ struct CellNeighIterator: public boost::iterator_facade<
                                    CellNeighIterator,
                                    CellProxy,
                                    boost::random_access_traversal_tag,
-                                   CellProxy> // Returns value, not reference
+                                   const CellProxy&>
 {
   /** Constructor
    * \param cellidx Index of the center
    * \poaram i Index of the neighbor
    */
-  CellNeighIterator(int cellidx, int i): cellidx(cellidx), i(i) {}
+  CellNeighIterator(int cellidx, int i): cp(nullptr), cellidx(cellidx), i(i) {}
 
   struct DifferentBaseCellError {};
 
 private:
+  CellProxy cp;
   const int cellidx;
   int i;
 
   friend class boost::iterator_core_access;
 
-  value_type dereference() const;
+  const CellProxy& dereference() const { return cp; }
 
   bool equal(const CellNeighIterator& other) const {
     return cellidx == other.cellidx && i == other.i;
@@ -99,7 +122,7 @@ private:
 
   void increment() { advance(1); }
   void decrement() { advance(-1); }
-  void advance(difference_type n) { i += n; }
+  void advance(difference_type n);
 
   difference_type distance_to(const CellNeighIterator& other) const {
     if (cellidx != other.cellidx)
@@ -160,6 +183,26 @@ struct IndexedCellProxy {
     return Utils::make_range(pbegin(), pend());
   }
 
+  using CellParticlePtrIterator = ParticleIterator<Cell **, Particle, Particle*>;
+  /** Returns a begin iterator to the particles of the encapsulated cell.
+   */
+  CellParticlePtrIterator pptrbegin() const {
+    return CellParticlePtrIterator(c, c + 1, 0);
+  }
+
+  /** Returns an end iterator to the particles of the encapsulated cell.
+   */
+  CellParticlePtrIterator pptrend() const {
+    return CellParticlePtrIterator(c + 1, c + 1, 0);
+  }
+
+  /** Returns a range object to iterate over particles of the encapsulates cell.
+   * Can be used in range-based for loops.
+   */
+  Utils::Range<CellParticlePtrIterator> particle_ptrs() const {
+    return Utils::make_range(pptrbegin(), pptrend());
+  }
+
   /** Returns a range object to iterate over neighbor cells (half-shell).
    * Can be used in range-based for loops.
    * DO NOT use this for ghost cells.
@@ -179,7 +222,9 @@ struct IndexedCellProxy {
     return !(*this == other);
   }
 
+  friend struct CellIterator;
 private:
+  void set_cell_and_idx(Cell **new_cell, int new_idx) { c = new_cell; idx = new_idx; }
   Cell **c;
   int idx;
 };
@@ -192,7 +237,7 @@ struct CellIterator: public boost::iterator_facade<
                               CellIterator,
                               IndexedCellProxy,
                               boost::random_access_traversal_tag,
-                              IndexedCellProxy> // Returns value, not reference
+                              const IndexedCellProxy&>
 {
   typedef IndexedCellProxy value_type;
 
@@ -200,22 +245,26 @@ struct CellIterator: public boost::iterator_facade<
    * \param cells cells array to iterate over (local_cells.cell or ghost_cells.cell)
    * \param i Iteration index
    */
-  CellIterator(Cell **cells, int i): cells(cells), i(i) {}
+  CellIterator(Cell **cells, int i): icp(nullptr, -1), cells(cells), i(i) {}
 
 private:
+  IndexedCellProxy icp;
   Cell **cells;
   int i;
 
   friend class boost::iterator_core_access;
 
-  value_type dereference() const {
-    return value_type(&cells[i], i);
+  const IndexedCellProxy& dereference() const {
+    return icp;
   }
 
   bool equal(const CellIterator& other) const { return i == other.i; }
   void increment() { advance(1); }
   void decrement() { advance(-1); }
-  void advance(difference_type n) { i += n; }
+  void advance(difference_type n) {
+    i += n;
+    icp.set_cell_and_idx(&cells[i], i);
+  }
 
   difference_type distance_to(const CellIterator& other) const {
     return i - other.i;

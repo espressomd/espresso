@@ -11,8 +11,9 @@ Utils::Range<CellNeighIterator> IndexedCellProxy::hsneigh() const
                            CellNeighIterator(idx, dd.cell_inter[idx].n_neighbors));
 }
 
-CellNeighIterator::value_type CellNeighIterator::dereference() const
+void CellNeighIterator::advance(difference_type n)
 {
-  return value_type(&dd.cell_inter[cellidx].nList[i].pList);
+  i += n;
+  cp.set_cell(&dd.cell_inter[cellidx].nList[i].pList);
 }
 
