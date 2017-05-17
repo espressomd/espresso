@@ -3,23 +3,17 @@
 
 #include "PidObservable.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
-#include <vector>
+#include "partCfg.hpp"
 #include "rotation.hpp"
+#include <vector>
 
 namespace Observables {
 
 class ParticleAngularMomentum : public PidObservable {
 public:
   virtual int actual_calculate() override {
-    if (!sortPartCfg()) {
-      runtimeErrorMsg() << "could not sort partCfg";
-      return -1;
-    }
     last_value.resize(3 * ids.size());
     for (int i = 0; i < ids.size(); i++) {
-      if (ids[i] >= n_part)
-        return 1;
 #ifdef ROTATION
 
       double RMat[9];
