@@ -42,12 +42,6 @@ void update_mol_vel();
 // Recalc positions of virtual particles
 void update_mol_pos();
 
-
-// Update the position of all virutal particles 
-// in the partCfg-array rather than in the local cells.
-int update_mol_pos_cfg();
-
-
 // The following three functions have to be provided by all implementations
 // of virtual sites
 // Update the vel/pos of the given virtual particle as defined by the real 
