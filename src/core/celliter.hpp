@@ -55,7 +55,10 @@ struct CellProxy {
   /** Returns a begin iterator to the particles of the encapsulated cell.
    */
   CellParticlePtrIterator pptrbegin(int begin_idx = 0) const {
-    return CellParticlePtrIterator(c, c + 1, begin_idx);
+    if (begin_idx >= cell().n)
+      return CellParticlePtrIterator(c + 1, c + 1, 0);
+    else
+      return CellParticlePtrIterator(c, c + 1, begin_idx);
   }
 
   /** Returns an end iterator to the particles of the encapsulated cell.
