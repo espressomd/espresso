@@ -288,7 +288,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
             mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
@@ -323,7 +323,7 @@ IF DIPOLES == 1:
             return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
-            self._set_params_in_es_core(self)
+            self._set_params_in_es_core()
             mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
