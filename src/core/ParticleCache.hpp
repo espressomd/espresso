@@ -1,5 +1,5 @@
-#ifndef CORE_PART_CFG_HPP
-#define CORE_PART_CFG_HPP
+#ifndef CORE_PARTICLE_CACHE_HPP
+#define CORE_PARTICLE_CACHE_HPP
 
 #include <algorithm>
 #include <cassert>
@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/mpi/exception.hpp>
 
 #include "utils/parallel/Callback.hpp"
 
@@ -41,7 +42,7 @@ class ParticleCache {
 
   Cells &cells;
 
-  template <typename Container> void m_update_references(Container &range) {
+  template <typename Container> void m_update_references(Container &&range) {
     for (auto &p : range) {
       mapping.insert({p.identity(), std::ref(p)});
     }
@@ -63,15 +64,15 @@ class ParticleCache {
 
   void m_update() {
     auto particles = cells.particles();
-    auto const local_parts = particles.size();
+
+    remote_parts.clear();
+    std::copy(std::begin(particles), std::end(particles),
+              std::back_inserter(remote_parts));
+
+    auto const local_parts = remote_parts.size();
 
     MPI_Gather(&local_parts, 1, MPI_INT, NULL, 1, MPI_INT, 0,
                Communication::mpiCallbacks().comm());
-
-    remote_parts.clear();
-    remote_parts.reserve(local_parts);
-    std::copy(std::begin(particles), std::end(particles),
-              std::back_inserter(remote_parts));
 
     MPI_Send(remote_parts.data(), remote_parts.size() * sizeof(Particle),
              MPI_BYTE, 0, 42, Communication::mpiCallbacks().comm());
@@ -109,7 +110,7 @@ class ParticleCache {
 public:
   using value_iterator =
       boost::transform_iterator<detail::TakeSecond, typename map_type::iterator,
-                                Particle &, Particle>;
+                                Particle const&, const Particle>;
 
   ParticleCache() = delete;
   ParticleCache(Cells &cells)
@@ -233,6 +234,9 @@ public:
 
     return mapping.at(id);
   }
+
+  int min_id() const { return mapping.begin()->first; }
+  int max_id() const { return mapping.rbegin()->first; }
 };
 
 #endif
