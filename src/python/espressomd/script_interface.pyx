@@ -1,6 +1,6 @@
 from espressomd.utils import to_char_pointer,to_str
 
-cdef class PObjectId:
+cdef class PObjectId(object):
     cpdef ObjectId id
     
     def __richcmp__(PObjectId a, PObjectId b, op):
