@@ -47,12 +47,13 @@ function cmd {
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
+[ -z "$make_params" ] && make_params=""
 
 builddir=$srcdir/build
 
 outp insource srcdir builddir \
-    configure_params with_mpi with_fftw \
-    with_tcl with_python_interface myconfig check_procs
+    cmake_params with_fftw \
+    with_tcl with_python_interface myconfig check_procs make_check make_params
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -115,7 +116,7 @@ end "CMAKE"
 # BUILD
 start "BUILD"
 
-cmd "make" || exit $?
+cmd "make $make_params" || exit $?
 
 end "BUILD"
 

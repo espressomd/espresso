@@ -30,7 +30,6 @@ using namespace std;
 
 namespace Shapes {
 int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
-  int i;
   double c_dist[3]; /* cartesian distance from pore center */
   double z, r;      /* cylindrical coordinates, coordinate system parallel to
                        pore, origin at pore centera */
@@ -39,31 +38,34 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
   double e_z[3], e_r[3]; /* unit vectors in the cylindrical coordinate system */
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
-  double slope, slope2, z_left, z_right;
+  double z_left, z_right;
   /* and another helper that is hopefully optmized out */
   double norm;
   double c1_r, c1_z, c2_r, c2_z;
   double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r,
       temp;
 
-  slope = (m_rad_right - m_rad_left) / 2. / (m_length - m_smoothing_radius);
-  slope2 =
-      (m_outer_rad_right - m_outer_rad_left) / 2. / (m_length - m_smoothing_radius);
+  auto const half_length = 0.5 * m_length;
+
+  auto const slope =
+      (m_rad_right - m_rad_left) / 2. / (half_length - m_smoothing_radius);
+  auto const slope2 = (m_outer_rad_right - m_outer_rad_left) / 2. /
+                      (half_length - m_smoothing_radius);
 
   /* compute the position relative to the center of the pore */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     c_dist[i] = ppos[i] - m_pos[i];
   }
 
   /* compute the component parallel to the pore axis */
   z = 0.;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     z += (c_dist[i] * m_axis[i]);
   }
 
   /* decompose the position into parallel and perpendicular to the axis */
   r = 0.;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     z_vec[i] = z * m_axis[i];
     r_vec[i] = c_dist[i] - z_vec[i];
     r += r_vec[i] * r_vec[i];
@@ -72,22 +74,22 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
 
   /* calculate norm and unit vectors for both */
   norm = 0;
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     norm += z_vec[i] * z_vec[i];
   norm = sqrt(norm);
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     e_z[i] = m_axis[i];
   norm = 0;
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     norm += r_vec[i] * r_vec[i];
   norm = sqrt(norm);
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     e_r[i] = r_vec[i] / norm;
 
   /* c?_r/z and are the centers of the circles that are used to smooth
    * the entrance of the pore in cylindrical coordinates*/
-  c1_z = -(m_length - m_smoothing_radius);
-  c2_z = +(m_length - m_smoothing_radius);
+  c1_z = -(half_length - m_smoothing_radius);
+  c2_z = +(half_length - m_smoothing_radius);
   z_left = c1_z -
            Utils::sgn<double>(slope) *
                sqrt(slope * slope / (1 + slope * slope)) * m_smoothing_radius;
@@ -95,9 +97,9 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
             Utils::sgn<double>(slope) *
                 sqrt(slope * slope / (1 + slope * slope)) * m_smoothing_radius;
 
-  c1_r = m_rad_left + slope * (z_left + m_length) +
+  c1_r = m_rad_left + slope * (z_left + half_length) +
          sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_left - c1_z));
-  c2_r = m_rad_left + slope * (z_right + m_length) +
+  c2_r = m_rad_left + slope * (z_right + half_length) +
          sqrt(m_smoothing_radius * m_smoothing_radius - SQR(z_right - c2_z));
   c1_r = m_rad_left + m_smoothing_radius;
   c2_r = m_rad_right + m_smoothing_radius;
@@ -107,19 +109,19 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
 
   /* Check if we are in the region of the left wall */
   if (((r >= c1_r) && (r <= c1_or) && (z <= c1_z))) {
-    dist_vector_z = -z - m_length;
+    dist_vector_z = -z - half_length;
     dist_vector_r = 0;
-    *dist = -z - m_length;
-    for (i = 0; i < 3; i++)
+    *dist = -z - half_length;
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
   /* Check if we are in the region of the right wall */
   if (((r >= c2_r) && (r < c2_or) && (z >= c2_z))) {
-    dist_vector_z = -z + m_length;
+    dist_vector_z = -z + half_length;
     dist_vector_r = 0;
-    *dist = +z - m_length;
-    for (i = 0; i < 3; i++)
+    *dist = +z - half_length;
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
@@ -163,7 +165,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = temp - m_smoothing_radius;
     dist_vector_r -= dist_vector_r / temp * m_smoothing_radius;
     dist_vector_z -= dist_vector_z / temp * m_smoothing_radius;
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
@@ -174,7 +176,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = temp - m_smoothing_radius;
     dist_vector_r_o -= dist_vector_r_o / temp * m_smoothing_radius;
     dist_vector_z_o -= dist_vector_z_o / temp * m_smoothing_radius;
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r_o * e_r[i] - dist_vector_z_o * e_z[i];
     return 0;
   }
@@ -186,7 +188,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = norm - m_smoothing_radius;
     dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c1_r);
     dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c1_z);
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
@@ -197,7 +199,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = norm - m_smoothing_radius;
     dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c1_or);
     dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c1_z);
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
@@ -207,7 +209,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = norm - m_smoothing_radius;
     dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c2_or);
     dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c2_z);
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }
@@ -217,7 +219,7 @@ int Pore::calculate_dist(const double *ppos, double *dist, double *vec) const {
     *dist = norm - m_smoothing_radius;
     dist_vector_r = (m_smoothing_radius / norm - 1) * (r - c2_or);
     dist_vector_z = (m_smoothing_radius / norm - 1) * (z - c2_z);
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       vec[i] = -dist_vector_r * e_r[i] - dist_vector_z * e_z[i];
     return 0;
   }

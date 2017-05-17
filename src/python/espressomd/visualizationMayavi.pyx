@@ -28,7 +28,7 @@ output=vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-cdef class mayaviLive:
+cdef class mayaviLive(object):
     """This class provides live visualization using Enthought Mayavi.
     Use the update method to push your current simulation state after
     integrating. If you run your integrate loop in a separate thread, 
@@ -72,7 +72,7 @@ cdef class mayaviLive:
         # state
         self.data = None
         self.last_N = 1
-        self.last_Nbonds = 1
+        self.last_Nbonds = 0
         self.last_boxl = [0,0,0]
         self.running = False
         self.last_T = -1
@@ -94,15 +94,15 @@ cdef class mayaviLive:
             return radius
 
         radius = 0.
-        try:
-            if self.particle_sizes is 'auto':
-                radius = radius_from_lj(t)
-            elif callable(self.particle_sizes):
-                radius = self.particle_sizes(t)
-            else:
-                radius = self.particle_sizes[t]
-        except:
+        if self.particle_sizes is 'auto':
             radius = radius_from_lj(t)
+        elif callable(self.particle_sizes):
+            radius = self.particle_sizes(t)
+        else:
+            try:
+                radius = self.particle_sizes[t]
+            except:
+                radius = radius_from_lj(t)
         return radius
 
     def _draw(self):
@@ -110,7 +110,7 @@ cdef class mayaviLive:
         This is called periodically in the GUI thread"""
         if self.data is None:
             return
-        
+
         assert isinstance(threading.current_thread(), threading._MainThread)
 
         f = mlab.gcf()
@@ -121,7 +121,6 @@ cdef class mayaviLive:
 
         if box_changed or not self.running:
             self.box.set(bounds=(0,boxl[0], 0,boxl[1], 0,boxl[2]))
-
         if not N_changed:
             self.points.mlab_source.set(x=coords[:,0]%boxl[0], y=coords[:,1]%boxl[1], z=coords[:,2]%boxl[2], u=radii, v=radii, w=radii, scalars=types)
         else:
@@ -132,7 +131,7 @@ cdef class mayaviLive:
 
         if not Nbonds_changed:
             if bonds.shape[0] > 0:
-                self.arrows.mlab_source.set  (x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
+                self.arrows.mlab_source.set(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5])
         else:
             self.arrows.mlab_source.reset(x=bonds[:,0], y=bonds[:,1], z=bonds[:,2], u=bonds[:,3], v=bonds[:,4], w=bonds[:,5], scalars=bonds[:,6])
 
@@ -144,7 +143,7 @@ cdef class mayaviLive:
         if self.last_T is not None and self.last_T == self.system.time:
             return
         self.last_T = self.system.time
-        
+
         cdef int N = len(self.system.part)
         coords = numpy.zeros((N,3))
         types = numpy.empty(N, dtype=int)
@@ -183,7 +182,7 @@ cdef class mayaviLive:
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size()//3
-        
+
         bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n
@@ -201,6 +200,7 @@ cdef class mayaviLive:
             bond_coords[n,6] = t
 
         boxl = self.system.box_l
+
 
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \

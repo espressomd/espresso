@@ -20,7 +20,9 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include "config.hpp"
+#include <fstream>
 #include <vector>
+#include <string>
 #include <stdexcept>
 
 
@@ -34,14 +36,16 @@ class Observable {
     int update();
     int calculate();
     virtual int actual_calculate() {
-      throw std::runtime_error("Observable did not override actual_caucluate()\n");
+      throw std::runtime_error("Observable did not override actual_calculate()\n");
     }; 
     virtual int actual_update() {};
 
 
     /* IO functions for observables */
-    int write(char *filename, bool binary);
-    int read(char *filename, bool binary);
+    void set_filename(std::string const& filename, bool binary);
+    bool writable() const;
+    void write();
+  //void read();
     virtual int n_values() const {return 0;};
     std::vector<double> last_value;
 
@@ -50,6 +54,12 @@ class Observable {
     double last_update;
     int autoupdate;
     double autoupdate_dt;
+
+    virtual void do_write();
+  //virtual void do_read();
+    std::ofstream m_ofile;
+    std::string m_filename;
+    bool        m_binary;
 };
 
 

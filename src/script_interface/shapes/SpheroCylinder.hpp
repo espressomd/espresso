@@ -25,20 +25,19 @@
 #include "Shape.hpp"
 #include "core/shapes/SpheroCylinder.hpp"
 
-#include "Cylinder.hpp"
-
 namespace ScriptInterface {
 namespace Shapes {
 
-class SpheroCylinder : public Cylinder {
+class SpheroCylinder : public Shape {
 public:
-  SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {}
+  SpheroCylinder() : m_spherocylinder(new ::Shapes::SpheroCylinder()) {
+    add_parameters({{"pos", m_spherocylinder->pos()},
+                    {"axis", m_spherocylinder->axis()},
+                    {"length", m_spherocylinder->length()},
+                    {"rad", m_spherocylinder->rad()}});
+  }
 
   const std::string name() const override { return "Shapes::SpheroCylinder"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_spherocylinder;

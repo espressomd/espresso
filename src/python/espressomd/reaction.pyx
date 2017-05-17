@@ -8,7 +8,12 @@ from .highlander import ThereCanOnlyBeOne
 IF CATALYTIC_REACTIONS:
     __reaction_is_initiated = False
 
-    cdef class Reaction:
+    cdef class Reaction(object):
+        """
+        Class that handles catalytic reactions for self propelled particles.
+
+        Requires the features 'CATALYTIC_REACTIONS'.
+        """
 
         def validate_params(self):
             if not isinstance(self._params["product_type"], int):
@@ -86,6 +91,9 @@ IF CATALYTIC_REACTIONS:
             self._params["swap"] = bool(globals.reaction.swap)
 
         def get_params(self):
+            """
+            Get parameters set for the catalytic reactions
+            """
             self._get_params_from_es_core()
             return self._params
 
@@ -104,6 +112,34 @@ IF CATALYTIC_REACTIONS:
             """
             Initialize the reaction.  Keep in mind, that there may be
             only one reaction enabled.  There can be only one.
+
+            Parameters
+            ----------
+
+            'product_type': integer
+                Particle type of the reactions product
+
+            'reactant_type': integer
+                Particle type of the reactant
+
+            'catalyzer_type':   integer
+                Particle type of the catalyst
+
+            'ct_range': float
+                Distance up to which the catalyst affects the reactants
+
+            'ct_rate': float
+                Reaction rate for particle in the vicinity of catalysts
+
+            'eq_rate': float, optional
+                Equilibrium reaction rate
+
+            'react_once':   bool, optional, defaults to False
+                See documentation for explanation
+
+            'swap': bool, optional
+                See documentation for explanation
+
             """
             self._ct_rate = 0.0
 

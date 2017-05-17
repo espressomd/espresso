@@ -195,7 +195,7 @@ The simulation engine is written in C and C++ for the sake
 of computational efficiency. The steering or control
 level is interfaced to the kernel via an interpreter 
 of the Tcl and Python scripting languages.
-Please be aware that th TCL interface is going to be removed soon and new simulations should use Python as scripting language.
+Please be aware that the Tcl interface is going to be removed soon and new simulations should use Python as scripting language.
 
 The kernel performs all computationally demanding tasks. Before all,
 integration of Newton's equations of motion, including calculation of
@@ -206,16 +206,16 @@ modularized so that basic functions are accessed via a set of
 well-defined lean interfaces, hiding the details of the complex
 numerical algorithms.
 
-The scripting interface (Python or Tcl) are used to setup the system (particles, boundary onditions, interactions, ...), control the simulation, run analysis, and store and load results.
-The user has at hand the full rl3sibili5y and functionality of the scripting language. For instance, it is possible to use the SciPy package for analysis and PyPlot for plotting.
+The scripting interface (Python or Tcl) are used to setup the system (particles, boundary conditions, interactions, ...), control the simulation, run analysis, and store and load results.
+The user has at hand the full reliability and functionality of the scripting language. For instance, it is possible to use the SciPy package for analysis and PyPlot for plotting.
 With a certain overhead in efficiency, it can also be
 used to reject/accept new configurations in combined MD/MC schemes. In
 principle, any parameter which is accessible from the scripting level can be
 changed at any moment of runtime.  In this way methods like
 thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the scripting interfacce, its
-behaviour and use in the simulation. It only describes certain
+The focus of the user guide is documenting the scripting interface, its
+behavior and use in the simulation. It only describes certain
 technical details of implementation which are necessary for
 understanding how the script interface works.  Technical documentation of the
 code and program structure is contained in the Developers' guide (see

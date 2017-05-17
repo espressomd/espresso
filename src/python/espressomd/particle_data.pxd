@@ -151,9 +151,9 @@ cdef extern from "particle_data.hpp":
             int set_particle_gamma(int part, double gamma[3])
         ELSE:
             int set_particle_gamma(int part, double gamma)
-        
+
         void pointer_to_gamma(particle * p, double * & res)
-        
+
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
                 int set_particle_gamma_rot(int part, double gamma[3])
@@ -227,7 +227,7 @@ cdef class ParticleHandle(object):
     cdef int update_particle_data(self) except -1
 
 
-cdef class ParticleSlice:
+cdef class _ParticleSliceImpl:
 
     cdef particle particle_data
     cdef int update_particle_data(self, id) except -1

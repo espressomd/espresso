@@ -60,7 +60,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
-        pass
+        bool operator==(const ObjectId& rhs) 
 
     Variant make_variant[T](const T & x)
 
@@ -77,8 +77,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy)
-    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id)
+    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
+    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
     CreationPolicy LOCAL
@@ -91,5 +91,3 @@ cdef class PScriptInterface:
     cdef variant_to_python_object(self, Variant value)
     cdef Variant python_object_to_variant(self, value)
 
-cdef class PObjectId:
-    cpdef ObjectId id

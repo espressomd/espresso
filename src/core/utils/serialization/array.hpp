@@ -9,8 +9,8 @@
  * function
  * */
 #if BOOST_VERSION < 105600
-#include <boost/serialization/serialization.hpp>
 #include <array>
+#include <boost/serialization/serialization.hpp>
 
 namespace boost {
 namespace serialization {

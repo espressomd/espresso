@@ -98,7 +98,7 @@ public:
     return m_observable;
   };
   private:
-    mutable std::shared_ptr<::Observables::ProfileObservable> m_observable;
+    std::shared_ptr<::Observables::ProfileObservable> m_observable;
 };
 
 

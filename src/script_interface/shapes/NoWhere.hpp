@@ -35,10 +35,6 @@ public:
 
   const std::string name() const override { return "Shapes::NoWhere"; }
 
-  ParameterMap valid_parameters() const override { return {}; };
-  VariantMap get_parameters() const override { return {}; };
-  void set_parameter(const std::string &name, const Variant &value) override{};
-
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_nowhere; }
 
 private:
