@@ -29,6 +29,5 @@ S.part.add(pos=[10,10,75])
 print("Integrate")
 for i in range(0,10):
    S.integrator.run(100)
-   integrate.integrate(100)
    print("P1: " + str(S.part[0].pos))
    print("P2: " + str(S.part[1].pos))
