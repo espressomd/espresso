@@ -16,8 +16,17 @@ set(py_tests  bondedInteractions.py
               particle.py
               rotational_inertia.py
               lbgpu_remove_total_momentum.py
-              tabulated.py,
+              tabulated.py
               lb_stokes_sphere.py
+              coulomb_cloud_wall.py
+              lb_gpu.py
+              lb.py
+              lb_test_gpu.py
+              lb_test.py
+              minimize_energy.py
+              tests_common.py
+              variant_conversion.py
+
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)
