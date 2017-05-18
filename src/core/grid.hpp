@@ -351,5 +351,19 @@ inline void unfold_position(double pos[3], int image_box[3]) {
   unfold_position(pos, v, image_box);
 }
 
+class PositionUnfolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    unfold_position(p.r.p, p.l.i);
+  }
+};
+
+class PositionFolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    fold_position(p.r.p, p.l.i);
+  }
+};
+
 /*@}*/
 #endif
