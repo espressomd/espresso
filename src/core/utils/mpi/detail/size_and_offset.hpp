@@ -53,7 +53,7 @@ int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
   return total_size;
 }
 
-void size_and_offset(int n_elem, boost::mpi::communicator comm, int root = 0) {
+inline void size_and_offset(int n_elem, boost::mpi::communicator comm, int root = 0) {
   /* Send local size */
   boost::mpi::gather(comm, n_elem, root);
 }
