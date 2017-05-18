@@ -10,10 +10,16 @@
 #include <utility>
 #include <vector>
 
+#include <boost/container/flat_map.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/mpi/collectives.hpp>
 #include <boost/mpi/exception.hpp>
+#include <boost/serialization/map.hpp>
 
+#include "utils/NoOp.hpp"
+#include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"
+#include "utils/serialization/flat_map.hpp"
 
 namespace detail {
 class TakeSecond {
@@ -21,19 +27,70 @@ public:
   template <typename T, typename U> U &operator()(std::pair<T, U> &p) const {
     return p.second;
   }
+
+  template <typename T, typename U>
+  U const &operator()(std::pair<T, U> const &p) const {
+    return p.second;
+  }
+};
+
+/**
+ * @brief Merge two ordered containers into a new one.
+ *
+ * This implementation has a different tradeoff than
+ * flat_map::merge, here we use O(N) extra memory to
+ * get O(N) time complexity, while the flat_map implementation
+ * avoids extra memory usage, but will cause O(N^2) copies
+ * on average.
+ * Inspired by the example implementation in
+ * http://en.cppreference.com/w/cpp/algorithm/merge.
+ */
+template <typename Container> class Merge {
+public:
+  Container operator()(Container const &a, Container const &b) const {
+    using value_type = typename Container::value_type;
+    Container ret;
+    ret.reserve(a.size() + b.size());
+
+    auto first1 = a.begin();
+    auto last1 = a.end();
+    auto first2 = b.begin();
+    auto last2 = b.end();
+
+    while (first1 != last1) {
+      if (first2 == last2) {
+        for (; first1 != last1; ++first1) {
+          ret.emplace_hint(ret.end(), *first1);
+        }
+        break;
+      }
+
+      if (first2->first < first1->first) {
+        ret.emplace_hint(ret.end(), *first2);
+        ++first2;
+      } else {
+        ret.emplace_hint(ret.end(), *first1);
+        ++first1;
+      }
+    }
+
+    for (; first2 != last2; ++first2)
+      ret.emplace_hint(ret.end(), *first2);
+
+    return ret;
+  }
 };
 }
 
-template <typename Cells,
+template <typename Cells, typename UnaryOp = Utils::NoOp,
           typename Range = typename std::remove_reference<decltype(
               std::declval<Cells>().particles())>::type,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
 class ParticleCache {
-  using map_type = std::map<int, std::reference_wrapper<Particle>>;
+  using map_type = boost::container::flat_map<int, Particle>;
 
-  map_type mapping;
-  std::vector<Particle> remote_parts;
+  map_type remote_parts;
   std::vector<int> bond_info;
   bool m_valid, m_valid_bonds;
 
@@ -41,12 +98,7 @@ class ParticleCache {
   Utils::Parallel::Callback update_bonds_cb;
 
   Cells &cells;
-
-  template <typename Container> void m_update_references(Container &&range) {
-    for (auto &p : range) {
-      mapping.insert({p.identity(), std::ref(p)});
-    }
-  }
+  UnaryOp m_op;
 
   void m_update_bonds() {
     std::vector<int> local_bonds;
@@ -55,49 +107,40 @@ class ParticleCache {
       std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(local_bonds));
     }
 
-    auto const size = local_bonds.size();
-    MPI_Gather(&size, 1, MPI_INT, NULL, 1, MPI_INT, 0,
-               Communication::mpiCallbacks().comm());
-    MPI_Send(local_bonds.data(), local_bonds.size(), MPI_INT, 0, 42,
-             Communication::mpiCallbacks().comm());
+    Utils::Mpi::gather_buffer(local_bonds,
+                              Communication::mpiCallbacks().comm());
   }
 
   void m_update() {
-    auto particles = cells.particles();
-
     remote_parts.clear();
-    std::copy(std::begin(particles), std::end(particles),
-              std::back_inserter(remote_parts));
+    for (auto const &p : cells.particles()) {
+      typename map_type::iterator it;
+      /* Add the particle to the map */
+      std::tie(it, std::ignore) =
+          remote_parts.emplace(std::make_pair(p.identity(), p));
 
-    auto const local_parts = remote_parts.size();
+      /* And run the op on it. */
+      m_op(it->second);
+    }
 
-    MPI_Gather(&local_parts, 1, MPI_INT, NULL, 1, MPI_INT, 0,
-               Communication::mpiCallbacks().comm());
-
-    MPI_Send(remote_parts.data(), remote_parts.size() * sizeof(Particle),
-             MPI_BYTE, 0, 42, Communication::mpiCallbacks().comm());
+    /* Reduce data to the master by merging the flat_maps from the
+     * nodes in a reduction tree. */
+    boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
+                       remote_parts, detail::Merge<map_type>(), 0);
   }
 
   void m_recv_bonds() {
-    std::vector<int> sizes(Communication::mpiCallbacks().comm().size());
-    int ign{0};
+    bond_info.clear();
 
-    MPI_Gather(&ign, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0,
-               Communication::mpiCallbacks().comm());
-    auto const remote_size =
-        std::accumulate(std::begin(sizes), std::end(sizes), 0);
-
-    bond_info.resize(remote_size);
-
-    int offset = 0;
-    for (int i = 1; i < sizes.size(); i++) {
-      MPI_Recv(&(bond_info[offset]), sizes[i], MPI_INT, i, 42,
-               Communication::mpiCallbacks().comm(), MPI_STATUS_IGNORE);
-      offset += sizes[i];
+    for (auto &p : cells.particles()) {
+      std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(bond_info));
     }
 
+    Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
+
     auto it = bond_info.begin();
-    for (auto &p : remote_parts) {
+    for (auto &e : remote_parts) {
+      auto &p = e.second;
       p.bl.e = nullptr;
       p.bl.max = 0;
       p.bl.resize(p.bl.size());
@@ -109,19 +152,20 @@ class ParticleCache {
 
 public:
   using value_iterator =
-      boost::transform_iterator<detail::TakeSecond, typename map_type::iterator,
-                                Particle const&, const Particle>;
+      boost::transform_iterator<detail::TakeSecond,
+                                typename map_type::const_iterator,
+                                Particle const &, const Particle>;
 
   ParticleCache() = delete;
-  ParticleCache(Cells &cells)
+  ParticleCache(Cells &cells, UnaryOp &&op = UnaryOp{})
       : update_cb([this](int, int) { this->m_update(); }),
         update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
-        cells(cells), m_valid(false), m_valid_bonds(false) {}
+        cells(cells), m_valid(false), m_valid_bonds(false),
+        m_op(std::forward<UnaryOp>(op)) {}
   ParticleCache(ParticleCache const &) = delete;
   ParticleCache(ParticleCache &&) = delete;
 
   void clear() {
-    mapping.clear();
     remote_parts.clear();
     bond_info.clear();
   }
@@ -132,7 +176,7 @@ public:
     if (!m_valid)
       update();
 
-    return value_iterator(mapping.begin());
+    return value_iterator(remote_parts.begin());
   }
 
   value_iterator end() {
@@ -141,7 +185,7 @@ public:
     if (!m_valid)
       update();
 
-    return value_iterator(mapping.end());
+    return value_iterator(remote_parts.end());
   }
 
   bool valid() const { return m_valid; }
@@ -173,29 +217,7 @@ public:
 
     update_cb.call();
 
-    std::vector<int> sizes(Communication::mpiCallbacks().comm().size());
-    int ign{0};
-    MPI_Gather(&ign, 1, MPI_INT, sizes.data(), 1, MPI_INT, 0,
-               Communication::mpiCallbacks().comm());
-    auto const remote_size =
-        std::accumulate(std::begin(sizes), std::end(sizes), 0);
-
-    remote_parts.resize(remote_size);
-
-    std::vector<MPI_Request> reqs(sizes.size() - 1);
-
-    int offset = 0;
-    for (int i = 1; i < sizes.size(); i++) {
-      MPI_Irecv(&(remote_parts[offset]), sizes[i] * sizeof(Particle), MPI_BYTE,
-                i, 42, Communication::mpiCallbacks().comm(), &reqs[i - 1]);
-      offset += sizes[i];
-    }
-
-    m_update_references(cells.particles());
-
-    MPI_Waitall(reqs.size(), reqs.data(), MPI_STATUSES_IGNORE);
-
-    m_update_references(remote_parts);
+    m_update();
 
     m_valid = true;
   }
@@ -207,7 +229,7 @@ public:
     if (!m_valid)
       update();
 
-    return mapping.size();
+    return remote_parts.size();
   }
 
   bool empty() {
@@ -216,7 +238,7 @@ public:
     if (!m_valid)
       update();
 
-    return mapping.empty();
+    return remote_parts.empty();
   }
 
   /**
@@ -232,11 +254,11 @@ public:
     if (!m_valid)
       update();
 
-    return mapping.at(id);
+    return remote_parts.at(id);
   }
 
-  int min_id() const { return mapping.begin()->first; }
-  int max_id() const { return mapping.rbegin()->first; }
+  int min_id() const { return remote_parts.begin()->first; }
+  int max_id() const { return remote_parts.rbegin()->first; }
 };
 
 #endif

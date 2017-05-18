@@ -23,6 +23,7 @@
 */
 
 #include <boost/mpi.hpp>
+#include <boost/serialization/access.hpp>
 
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ParticleCache test
@@ -41,6 +42,11 @@ public:
   Particle(int id) : Testing::Particle(id) {}
 
   IntList bl;
+
+  template <typename Archive> void serialize(Archive &ar, unsigned int) {
+    ar &m_id;
+    ar &bl.n;
+  }
 };
 
 struct Particles {
@@ -48,6 +54,51 @@ struct Particles {
 
   std::vector<Particle> &particles() { return parts; }
 };
+
+void check_merge(unsigned size, unsigned split) {
+  boost::container::flat_map<int, int> u, v;
+  using value_type = typename boost::container::flat_map<int, int>::value_type;
+
+  std::mt19937 mersenne_engine(size);
+  std::uniform_int_distribution<int> dist;
+
+  for (int i = 0; i < size; i++) {
+    auto val = value_type{dist(mersenne_engine), dist(mersenne_engine)};
+    if (i % split)
+      u.insert(val);
+    else
+      v.insert(val);
+  }
+
+  auto merge = detail::Merge<boost::container::flat_map<int, int>>{};
+  auto w = merge(u, v);
+
+  BOOST_CHECK(w.size() == u.size() + v.size());
+
+  for(auto const&e : u) {
+    BOOST_CHECK(w.find(e.first) != w.end());
+  }
+
+  for(auto const&e : v) {
+    BOOST_CHECK(w.find(e.first) != w.end());
+  }
+}
+
+BOOST_AUTO_TEST_CASE(detail_merge_equal) {
+  check_merge(2000, 2);
+}
+
+BOOST_AUTO_TEST_CASE(detail_merge_not_equal) {
+  check_merge(2000, 3);
+}
+
+BOOST_AUTO_TEST_CASE(detail_merge_empty_left) {
+  check_merge(2000, 1);
+}
+
+BOOST_AUTO_TEST_CASE(detail_merge_empty_right) {
+  check_merge(2000, 2000);
+}
 
 BOOST_AUTO_TEST_CASE(update) {
   Particles local_parts;

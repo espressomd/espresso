@@ -2,11 +2,12 @@
 #define CORE_PART_CFG_HPP
 
 #include "cells.hpp"
+#include "grid.hpp"
 #include "ParticleCache.hpp"
+#include "utils/serialization/Particle.hpp"
 
-/** Particles' current configuration. Before using that
-    call \ref updatePartCfg or \ref sortPartCfg to allocate
-    the data if necessary (which is decided by \ref updatePartCfg). */
-extern ParticleCache<CellPList> partCfg;
+/** Particles' current configuration. Particle coordinates
+ are unfolded. */
+extern ParticleCache<CellPList, PositionUnfolder> partCfg;
 
 #endif
