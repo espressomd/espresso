@@ -5,21 +5,20 @@
 #include <cassert>
 #include <functional>
 #include <iterator>
-#include <map>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/exception.hpp>
-#include <boost/serialization/map.hpp>
 
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"
-#include "utils/serialization/flat_map.hpp"
+#include "utils/serialization/flat_set.hpp"
 
 namespace detail {
 class TakeSecond {
@@ -34,6 +33,14 @@ public:
   }
 };
 
+class IdCompare {
+public:
+  template <typename Particle>
+  bool operator()(Particle const &a, Particle const &b) const {
+    return a.identity() < b.identity();
+  }
+};
+
 /**
  * @brief Merge two ordered containers into a new one.
  *
@@ -45,10 +52,12 @@ public:
  * Inspired by the example implementation in
  * http://en.cppreference.com/w/cpp/algorithm/merge.
  */
-template <typename Container> class Merge {
+template <typename Container, typename Compare> class Merge {
+  Compare m_comp;
+
 public:
+  Merge(Compare &&comp = Compare{}) : m_comp(comp) {}
   Container operator()(Container const &a, Container const &b) const {
-    using value_type = typename Container::value_type;
     Container ret;
     ret.reserve(a.size() + b.size());
 
@@ -65,7 +74,7 @@ public:
         break;
       }
 
-      if (first2->first < first1->first) {
+      if (m_comp(*first2, *first1)) {
         ret.emplace_hint(ret.end(), *first2);
         ++first2;
       } else {
@@ -88,8 +97,9 @@ template <typename Cells, typename UnaryOp = Utils::NoOp,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
 class ParticleCache {
-  using map_type = boost::container::flat_map<int, Particle>;
+  using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
 
+  std::unordered_map<int, int> id_index;
   map_type remote_parts;
   std::vector<int> bond_info;
   bool m_valid, m_valid_bonds;
@@ -116,17 +126,16 @@ class ParticleCache {
     for (auto const &p : cells.particles()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
-      std::tie(it, std::ignore) =
-          remote_parts.emplace(std::make_pair(p.identity(), p));
+      std::tie(it, std::ignore) = remote_parts.emplace(p);
 
       /* And run the op on it. */
-      m_op(it->second);
+      m_op(*it);
     }
 
     /* Reduce data to the master by merging the flat_maps from the
      * nodes in a reduction tree. */
     boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
-                       remote_parts, detail::Merge<map_type>(), 0);
+                       remote_parts, detail::Merge<map_type, detail::IdCompare>(), 0);
   }
 
   void m_recv_bonds() {
@@ -139,8 +148,7 @@ class ParticleCache {
     Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
 
     auto it = bond_info.begin();
-    for (auto &e : remote_parts) {
-      auto &p = e.second;
+    for (auto &p : remote_parts) {
       p.bl.e = nullptr;
       p.bl.max = 0;
       p.bl.resize(p.bl.size());
@@ -150,11 +158,18 @@ class ParticleCache {
     }
   }
 
+  void m_update_index() {
+    /* Try to avoid rehashing along the way */
+    id_index.reserve(remote_parts.size());
+
+    int index = 0;
+    for (auto const &p : remote_parts) {
+      id_index.insert(std::make_pair(p.identity(), index++));
+    }
+  }
+
 public:
-  using value_iterator =
-      boost::transform_iterator<detail::TakeSecond,
-                                typename map_type::const_iterator,
-                                Particle const &, const Particle>;
+  using value_iterator = typename map_type::const_iterator;
 
   ParticleCache() = delete;
   ParticleCache(Cells &cells, UnaryOp &&op = UnaryOp{})
@@ -166,10 +181,18 @@ public:
   ParticleCache(ParticleCache &&) = delete;
 
   void clear() {
+    id_index.clear();
     remote_parts.clear();
     bond_info.clear();
   }
 
+  /**
+   * @brief Iterator pointing to the particle with the lowest id.
+   *
+   * Returns an random access iterator that traverses the particle
+   * in order of ascending id. If the cache is not up-to-date,
+   * an update is triggered.
+   */
   value_iterator begin() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
 
@@ -179,6 +202,12 @@ public:
     return value_iterator(remote_parts.begin());
   }
 
+  /**
+   * @brief Iterator pointing past the particle with the highest id.
+   *
+   * If the cache is not up-to-date,
+   * an update is triggered.
+   */
   value_iterator end() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
 
@@ -188,9 +217,23 @@ public:
     return value_iterator(remote_parts.end());
   }
 
+  /**
+   * @brief Returns true if the cache is up-to-date.
+   *
+   * If false, particle access will trigger an update.
+   */
   bool valid() const { return m_valid; }
+
+  /**
+   * @brief Returns true if the bond cache is up-to-date.
+   *
+   * If false, particle access will trigger an update.
+   */
   bool valid_bonds() const { return m_valid_bonds; }
 
+  /**
+   * @brief Invalidate the cache and free memory.
+   */
   void invalidate() {
     clear();
     /* Release memory */
@@ -201,6 +244,12 @@ public:
     m_valid_bonds = false;
   }
 
+  /**
+   * @brief Update bond information.
+   *
+   * If the particle data is not valid,
+   * it will be updated first.
+   */
   void update_bonds() {
     update();
 
@@ -211,6 +260,13 @@ public:
     }
   }
 
+  /**
+   * @brief Update particle information.
+   *
+   * This triggers a global update. All nodes
+   * sort their particle by id, and send them
+   * to the master.
+   */
   void update() {
     if (m_valid)
       return;
@@ -218,6 +274,7 @@ public:
     update_cb.call();
 
     m_update();
+    m_update_index();
 
     m_valid = true;
   }
@@ -232,6 +289,9 @@ public:
     return remote_parts.size();
   }
 
+  /**
+   * @brief size() == 0 ?
+   */
   bool empty() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
 
@@ -254,11 +314,8 @@ public:
     if (!m_valid)
       update();
 
-    return remote_parts.at(id);
+    return remote_parts.begin()[id_index.at(id)];
   }
-
-  int min_id() const { return remote_parts.begin()->first; }
-  int max_id() const { return remote_parts.rbegin()->first; }
 };
 
 #endif
