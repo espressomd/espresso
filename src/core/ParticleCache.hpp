@@ -13,7 +13,6 @@
 #include <boost/container/flat_set.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/mpi/collectives.hpp>
-#include <boost/mpi/exception.hpp>
 
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
@@ -21,18 +20,6 @@
 #include "utils/serialization/flat_set.hpp"
 
 namespace detail {
-class TakeSecond {
-public:
-  template <typename T, typename U> U &operator()(std::pair<T, U> &p) const {
-    return p.second;
-  }
-
-  template <typename T, typename U>
-  U const &operator()(std::pair<T, U> const &p) const {
-    return p.second;
-  }
-};
-
 class IdCompare {
 public:
   template <typename Particle>
@@ -132,10 +119,11 @@ class ParticleCache {
       m_op(*it);
     }
 
-    /* Reduce data to the master by merging the flat_maps from the
+    /* Reduce data to the master by merging the flat_sets from the
      * nodes in a reduction tree. */
     boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
-                       remote_parts, detail::Merge<map_type, detail::IdCompare>(), 0);
+                       remote_parts,
+                       detail::Merge<map_type, detail::IdCompare>(), 0);
   }
 
   void m_recv_bonds() {
@@ -179,6 +167,8 @@ public:
         m_op(std::forward<UnaryOp>(op)) {}
   ParticleCache(ParticleCache const &) = delete;
   ParticleCache(ParticleCache &&) = delete;
+  ParticleCache operator=(ParticleCache const &) = delete;
+  ParticleCache operator=(ParticleCache &&) = delete;
 
   void clear() {
     id_index.clear();
