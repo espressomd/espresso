@@ -141,7 +141,7 @@ private:
       int particle_index, int_array_3d &id, int_array_3d &typ,
       double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
       double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-      Particle *current_particle, int write_dat, int_array_3d &bond);
+      Particle const&current_particle, int write_dat, int_array_3d &bond);
   /*
    * @brief Method to write the simulation script to the dataset.
    */
