@@ -8,6 +8,8 @@ from espressomd.interactions import *
 #from espressomd import minimize_energy
 
 
+@ut.skipIf('LENNARD_JONES' not in espressomd.code_info.features(),
+           "LENNARD_JONES not compiled in, can not check functionality.")
 class test_minimize_energy(ut.TestCase):
     system = espressomd.System()
     box_l = 10.0 

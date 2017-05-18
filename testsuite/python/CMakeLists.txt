@@ -1,4 +1,5 @@
 set(py_tests  bondedInteractions.py
+              minimize_energy.py
               cellsystem.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
@@ -23,7 +24,6 @@ set(py_tests  bondedInteractions.py
               lb.py
               lb_test_gpu.py
               lb_test.py
-              minimize_energy.py
               tests_common.py
               variant_conversion.py
 
