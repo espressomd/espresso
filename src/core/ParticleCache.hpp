@@ -158,11 +158,6 @@ class ParticleCache {
   void m_recv_bonds() {
     bond_info.clear();
 
-    for (auto &p : cells.particles()) {
-      bond_info.push_back(p.identity());
-      std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(bond_info));
-    }
-
     Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
 
     for(auto it = bond_info.begin(); it != bond_info.end();)
