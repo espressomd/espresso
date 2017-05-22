@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 #include "dihedral.hpp"
 
 /* should be changed to file containing force caps */

@@ -35,7 +35,7 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
-#include "mol_cut.hpp"
+
 #include "forcecap.hpp"
 
 int ljforcecap_set_params(double ljforcecap);

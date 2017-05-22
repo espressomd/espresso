@@ -30,7 +30,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 #ifdef SMOOTH_STEP
 

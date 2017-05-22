@@ -30,7 +30,6 @@
 #include "../utils.hpp"
 #include "../interaction_data.hpp"
 #include "../particle_data.hpp"
-#include "../mol_cut.hpp"
 #include "../integrate.hpp"
 #include "../random.hpp"
 #include "../grid.hpp"

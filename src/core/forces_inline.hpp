@@ -268,23 +268,6 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 }
 
-inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
-                                       IA_parameters *ia_params, double d[3],
-                                       double dist, double dist2,
-                                       double force[3],
-                                       double torque1[3] = NULL,
-                                       double torque2[3] = NULL) {
-#ifdef MOL_CUT
-  // You may want to put a correction factor and correction term for smoothing
-  // function else then theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 1)
-#endif
-  {
-    calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
-                                     torque1, torque2);
-  }
-}
-
 inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                        double dist, double dist2,
                                        double force[3]) {

@@ -34,7 +34,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
