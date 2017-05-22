@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
   local_parts.parts.reserve(n_part);
 
   for (int i = 0; i < n_part; i++) {
-    auto const id = rank * n_part + i;
+    auto const id = rank * n_part + (n_part - i - 1);
     local_parts.parts.emplace_back(id);
     auto const bond_length = bond_lengths[id % bond_lengths.size()];
     auto &part = local_parts.parts.back();

@@ -20,6 +20,9 @@
 #include "utils/serialization/flat_set.hpp"
 
 namespace detail {
+  /**
+  * @brief Compare particles by id.
+  */
 class IdCompare {
 public:
   template <typename Particle>
@@ -32,7 +35,7 @@ public:
  * @brief Merge two ordered containers into a new one.
  *
  * This implementation has a different tradeoff than
- * flat_map::merge, here we use O(N) extra memory to
+ * flat_set::merge, here we use O(N) extra memory to
  * get O(N) time complexity, while the flat_map implementation
  * avoids extra memory usage, but will cause O(N^2) copies
  * on average.
@@ -55,6 +58,8 @@ public:
 
     while (first1 != last1) {
       if (first2 == last2) {
+        /* The first range has no more elements, so we can
+           just copy the rest of range 2. */
         for (; first1 != last1; ++first1) {
           ret.emplace_hint(ret.end(), *first1);
         }
@@ -70,6 +75,8 @@ public:
       }
     }
 
+/* The first range has no more elements, so we can
+   just copy the rest of range 2. */
     for (; first2 != last2; ++first2)
       ret.emplace_hint(ret.end(), *first2);
 
@@ -78,6 +85,27 @@ public:
 };
 }
 
+/**
+* @brief Particle cache on the master.
+*
+* This class implements cached access to all particles on the
+* master node. This implementation fetches all particles to
+* the master on first access. Updates of the particle data are
+* triggered automatically on access. The data in the cache
+* is invalidated automatically on_particle_change, and then
+* updated on the next access.
+* By default the particles do not have valid bond information
+* on them. If bonds are needed, update_bonds() has to be called
+* explicitly to update the bond cache.
+*
+* To update the cache particles are sorted by id on the nodes,
+* and the sorted arrays a merged in a reduction tree, until the
+* master node recives a complete and sorted particle array.
+*
+* This class can be customized by running a unary opration on
+* the particles. This op is run on all the nodes. It can be used
+* e.g. to fold or unfold the coordinates on the fly.
+*/
 template <typename Cells, typename UnaryOp = Utils::NoOp,
           typename Range = typename std::remove_reference<decltype(
               std::declval<Cells>().particles())>::type,
@@ -101,6 +129,7 @@ class ParticleCache {
     std::vector<int> local_bonds;
 
     for (auto &p : cells.particles()) {
+      local_bonds.push_back(p.identity());
       std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(local_bonds));
     }
 
@@ -130,13 +159,15 @@ class ParticleCache {
     bond_info.clear();
 
     for (auto &p : cells.particles()) {
+      bond_info.push_back(p.identity());
       std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(bond_info));
     }
 
     Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
 
-    auto it = bond_info.begin();
-    for (auto &p : remote_parts) {
+    for(auto it = bond_info.begin(); it != bond_info.end();)
+    {
+      auto &p = remote_parts.begin()[id_index[*it++]];
       p.bl.e = nullptr;
       p.bl.max = 0;
       p.bl.resize(p.bl.size());
@@ -148,7 +179,7 @@ class ParticleCache {
 
   void m_update_index() {
     /* Try to avoid rehashing along the way */
-    id_index.reserve(remote_parts.size());
+    id_index.reserve(remote_parts.size()+1);
 
     int index = 0;
     for (auto const &p : remote_parts) {
@@ -181,7 +212,10 @@ public:
    *
    * Returns an random access iterator that traverses the particle
    * in order of ascending id. If the cache is not up-to-date,
-   * an update is triggered.
+   * an update is triggered. This iterator stays valid as long
+   * as the cache is valid. Since the cache could be invalidated
+   * and updated elsewhere, iterators into the cache should not be
+   * stored.
    */
   value_iterator begin() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
@@ -256,6 +290,9 @@ public:
    * This triggers a global update. All nodes
    * sort their particle by id, and send them
    * to the master.
+   *
+   * Complexity: N/P*log(N/P) for the sorting,
+   * 2*N*(1 - 0.5^(log(p) + 1)) for the merging.
    */
   void update() {
     if (m_valid)
@@ -269,7 +306,10 @@ public:
     m_valid = true;
   }
 
-  /** Number of particles in the config. */
+  /** Number of particles in the config.
+    *
+     * Complexity: O(1)
+  */
   size_t size() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
 
@@ -281,6 +321,8 @@ public:
 
   /**
    * @brief size() == 0 ?
+   *
+   * Complexity: O(1)
    */
   bool empty() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
@@ -297,6 +339,8 @@ public:
    * a global update.
    * Will throw std::out_of_range if the particle does
    * not exists.
+   *
+   * Complexity: O(1)
    */
   Particle const &operator[](int id) {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
