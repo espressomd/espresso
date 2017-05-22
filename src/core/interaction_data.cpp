@@ -360,11 +360,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->rf_on = 0;
 #endif
 
-#ifdef MOL_CUT
-  params->mol_cut_type = 0;
-  params->mol_cut_cutoff = 0.0;
-#endif
-
 #ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
@@ -703,14 +698,6 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
 	max_cut_current = data->REACTION_range;
-#endif
-
-#ifdef MOL_CUT
-      if (data->mol_cut_type != 0) {
-	if (max_cut_current < data->mol_cut_cutoff)
-	  max_cut_current = data->mol_cut_cutoff;
-	max_cut_current += 2.0* max_cut_bonded;
-      }
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);

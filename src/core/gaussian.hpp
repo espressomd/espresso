@@ -29,7 +29,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 #ifdef GAUSSIAN
 
@@ -42,7 +42,7 @@ inline void add_gaussian_pair_force(const Particle * const p1, const Particle * 
 {
   double fac;
   int j;
-  if (CUTOFF_CHECK(dist < ia_params->Gaussian_cut)) {
+  if ((dist < ia_params->Gaussian_cut)) {
     fac = ia_params->Gaussian_eps/pow(ia_params->Gaussian_sig, 2) *
       exp(-0.5* SQR(dist / ia_params->Gaussian_sig));
     
@@ -54,7 +54,7 @@ inline void add_gaussian_pair_force(const Particle * const p1, const Particle * 
 /** calculate Lennard jones energy between particle p1 and p2. */
 inline double gaussian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double dist2)
 {
-  if (CUTOFF_CHECK(dist < ia_params->Gaussian_cut)) {
+  if ((dist < ia_params->Gaussian_cut)) {
     return ia_params->Gaussian_eps *
       exp(-0.5* SQR(dist / ia_params->Gaussian_sig));
   }
