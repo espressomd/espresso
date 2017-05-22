@@ -22,6 +22,9 @@
  *
 */
 
+#include <vector>
+#include <random>
+
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
