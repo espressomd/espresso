@@ -20,7 +20,7 @@
 from __future__ import print_function, absolute_import
 from . cimport galilei
 
-cdef class GalileiTransform:
+cdef class GalileiTransform(object):
 
     def kill_particle_motion(self, rotation=0):
         """ 

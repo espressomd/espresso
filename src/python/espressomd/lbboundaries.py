@@ -1,9 +1,10 @@
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 import espressomd.code_info
 
 
 if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    @script_interface_register
     class LBBoundaries(ScriptInterfaceHelper):
         _so_name = "LBBoundaries::LBBoundaries"
 
@@ -23,6 +24,7 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
             self.call_method("remove", lbboundary=lbboundary)
 
 
+    @script_interface_register
     class LBBoundary(ScriptInterfaceHelper):
         _so_name = "LBBoundaries::LBBoundary"
         _so_bind_methods = ("get_force",)

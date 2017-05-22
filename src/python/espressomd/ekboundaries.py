@@ -1,7 +1,8 @@
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
+@script_interface_register
 class EKBoundaries(ScriptInterfaceHelper):
     _so_name = "LBBoundaries::LBBoundaries"
 
@@ -21,5 +22,6 @@ class EKBoundaries(ScriptInterfaceHelper):
         self.call_method("remove", ekboundary=ekboundary)
 
 
+@script_interface_register
 class EKBoundary(ScriptInterfaceHelper):
     _so_name = "LBBoundaries::LBBoundary"

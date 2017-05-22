@@ -62,6 +62,13 @@ BOOST_AUTO_TEST_CASE(empty) {
   BOOST_CHECK(!s.empty());
 }
 
+BOOST_AUTO_TEST_CASE(size) {
+  int a[10];
+
+  auto r = Range<int *>(a, a + 10);
+  BOOST_CHECK(r.size() == 10);
+}
+
 BOOST_AUTO_TEST_CASE(comparison) {
   int a[10];
 

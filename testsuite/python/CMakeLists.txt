@@ -15,7 +15,9 @@ set(py_tests  bondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              particle_slice.py
               rotational_inertia.py
+              script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
               writevtf.py
