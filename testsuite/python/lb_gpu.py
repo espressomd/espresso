@@ -11,7 +11,8 @@ import espressomd.lb
 from espressomd import *
 import numpy as np
 
-
+@ut.skipIf('LB_GPU' not in espressomd.code_info.features(),
+           "LB_GPU not compiled in, can not check functionality.")
 class lb_test(ut.TestCase):
 
 	es = espressomd.System()
@@ -56,7 +57,7 @@ class lb_test(ut.TestCase):
 			q = particle[2]
 			f = particle[9:]
 			v = particle[6:9]
-			system.part.add(id=int(id), pos=pos, q=q, v=v, type=int(typ))
+			system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
 
 		n_col_part=len(system.part)
 
