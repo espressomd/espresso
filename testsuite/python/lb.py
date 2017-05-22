@@ -13,8 +13,7 @@ import numpy as np
 
 
 
-@ut.skipIf('LB' not in espressomd.code_info.features(),
-           "LB not compiled in, can not check functionality.")
+@ut.skipIf('LB' not in espressomd.code_info.features() or 'LENNARD_JONES' not in 			espressomd.code_info.features(), "LB or LENNARD_JONES not compiled in, can not check functionality.")
 
 class lb_test(ut.TestCase):
 

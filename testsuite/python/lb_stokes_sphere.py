@@ -14,10 +14,14 @@ from espressomd import System, lb, lbboundaries, shapes
 import unittest as ut
 import numpy as np
 import sys
+import espressomd
+
 
 class Stokes(ut.TestCase):
 
     es = System()	
+
+    @ut.skipIf('LB' not in espressomd.code_info.features() or 'LENNARD_JONES' not in espressomd.code_info.features() or 'LB_BOUNDARIES' not in espressomd.code_info.features(), "LB, LB_Boundaries or LENNARD_JONES not compiled in, can not check functionality.")
 
     def test_stokes(self):
         # System setup
@@ -40,7 +44,7 @@ class Stokes(ut.TestCase):
         kinematic_visc = 1.0
 
         # Invoke LB fluid
-        lbf = lb.LBFluid_GPU(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
+        lbf = lb.LBFluid(visc=kinematic_visc, dens=1, agrid=agrid, tau=system.time_step, fric=1)
         system.actors.add(lbf)
 
         # Setup walls
