@@ -12,7 +12,7 @@ Developer's Guide
 Contact the Developers
 ======================
 
-To contact the |es| developers, please write an email to the developerss mailing list:
+To contact the |es| developers, please write an email to the developers mailing list:
 espressomd-devel@nongnu.org
 to subscribe to the developers’ mailing list go to
 http://lists.nongnu.org/mailman/listinfo/espressomd-devel 
@@ -39,18 +39,18 @@ Development Environment
 
 Required Development Tools
 --------------------------
--  First of all, please install the dependencies for compiling |es|. See :ref:`_Getting, comping and running`
+-  First of all, please install the dependencies for compiling |es|. See :ref:`_Getting, compiling and running`
 
 -  To be able to access the development version of |es|, you will need
    the distributed versioning control system Git [1]_. Section
    :ref:`git_repositories` contains documentation on how we employ
    git.
 
--  The documentation is currently being converted from Latex to Sphinx. To build the old user and developer guides, you will need LaTex. For building tthe sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+-  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --user -r requirements.txt
-   Note, that some distributions nonw use ``pip`` for Python3 and ``pip2`` for Python 2. 
+   Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
 
--  To build the tutorials, you wil need LaTex.
+-  To build the tutorials, you will need LaTeX.
 
 -  To compile the Doxygen code documentation, you will need to have the
    tool Doxygen\  [4]_.
@@ -112,7 +112,7 @@ Testsuite
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
 -  There are two kinds of tests:
 
-  -  C++-unit tests, testing individual c++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
+  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
   -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
 
 -  To execute the tests, run::
@@ -194,11 +194,11 @@ To add a new bonded interaction, the following steps have to be taken
   * Define a structure holding the parameters (prefactors, etc.) of the interaction
   * Write functions for calculating force and energy, respectively.
   * Write a setter function, which takes the parameters of the interactions and stores them in the bonded interactions data structure
-  * Add calls to the force and energy calculatino functions to the force calculation in the integration loop as well as to energy and pressure/stress tensor analysis
+  * Add calls to the force and energy calculation functions to the force calculation in the integration loop as well as to energy and pressure/stress tensor analysis
 
 * Python interface
 
-  * Import the definition of the bond datastructure from the simulation core
+  * Import the definition of the bond data structure from the simulation core
   * Implement a class for the bonded interaction derived from the BondedInteraction base class
 
 Defining the data structure for the interaction
@@ -243,11 +243,11 @@ Notes:
   * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
   * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be::
     bonded_ia_params[bond_tpe].p.fene
-* At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters jsut set to other compute nodes in a parallel simulation.
+* At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters just set to other compute nodes in a parallel simulation.
 * The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
 * The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
-* The force on particle 1 has to be sotred in the force vector  (not added to it). the force on particle 2 will be obtained from Newton's law.
-* The result of the energy calculation is placed in (NOT added to) the ``_energy`` argument of the erngy calculation function.
+* The force on particle 1 has to be stored in the force vector  (not added to it). The force on particle 2 will be obtained from Newton's law.
+* The result of the energy calculation is placed in (NOT added to) the ``_energy`` argument of the energy calculation function.
 
 
 
@@ -278,14 +278,14 @@ Including the bonded interaction in the force calculation and the energy and pre
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
 * Energy calculation: add similar code to ``add_bonded_energy()`` in ``energy_inline.hpp``
-* Pressur, stress tensor and virial calculation: If your bonded interaction is a pair bond and does not modify the particles involved, add simuilar code as above to presure.hpp:calc_bonded_pair_force(). Otherwise, you have to implement a custom solution for virial calculation.
+* Pressure, stress tensor and virial calculation: If your bonded interaction is a pair bond and does not modify the particles involved, add similar code as above to pressure.hpp:calc_bonded_pair_force(). Otherwise, you have to implement a custom solution for virial calculation.
 
 Adding the bonded interaciton in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pleas note that the following is Cython code (www.cython.org), rather than pure Python.
+Please note that the following is Cython code (www.cython.org), rather than pure Python.
 * In ``src/python/espressomd/interactions.pxd``:
 
-  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this lookls like::
+  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like::
       cdef extern from "interaction_data.hpp":
           ctypedef struct Fene_bond_parameters:
               double k
@@ -612,12 +612,12 @@ instead of ``return TCL_OK/TCL_ERROR`` you should use
 Global Variables which are synchronized across nodes
 ----------------------------------------------------
 
-Adding new global variables to |es|, is strongly discuraged, because it means that code depends on a purely defined global state and cannot be tested individually.
-Features/Algorithms should instead be encapsulated in a class which is used by the script interface mechnaism.
+Adding new global variables to |es|, is strongly discouraged, because it means that code depends on a purely defined global state and cannot be tested individually.
+Features/Algorithms should instead be encapsulated in a class which is used by the script interface mechanism.
 
 However, there is a mechanism in the simulation core, to synchronize existing global variables across the mpi cores.
 
-these variables are declared ``extern`` in a header file and include in
+These variables are declared ``extern`` in a header file and include in
 ``global.cpp``. Then there is a line to the definition of the constant data
 structure ``fields`` at the beginning of the file ``global.c``. For
 details on the entries, see the definition of ``Datafield`` in
