@@ -66,7 +66,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1, const Particle
     double r_off, fac=0.0, product, angle, ndir;
     double out1[3],out2[3],dir[3];
     
-    if(CUTOFF_CHECK(dist < ia_params->membrane_cut+ia_params->membrane_offset)) {
+    if((dist < ia_params->membrane_cut+ia_params->membrane_offset)) {
         
         r_off = dist - ia_params->membrane_offset;
         // offset needs to be checked for the unphysical case when r_off should be negative

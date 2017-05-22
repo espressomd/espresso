@@ -47,7 +47,7 @@ inline void add_cos2_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 {
   int j;
   double fac=0.0;
-  if(CUTOFF_CHECK(dist < ia_params->COS2_cut)) { 
+  if((dist < ia_params->COS2_cut)) { 
     if (dist > ia_params->COS2_offset) {
       fac = -ia_params->COS2_eps*M_PI/2/ia_params->COS2_w/dist * sin(M_PI*(dist-ia_params->COS2_offset)/ia_params->COS2_w);
     }
@@ -61,7 +61,7 @@ inline double cos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 				double d[3], double dist)
 {
 
-  if(CUTOFF_CHECK(dist < ia_params->COS2_cut)) {
+  if((dist < ia_params->COS2_cut)) {
     if (dist < ia_params->COS2_offset)
       return -ia_params->COS2_eps;
     else

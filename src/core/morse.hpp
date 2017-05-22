@@ -51,7 +51,7 @@ inline void add_morse_pair_force(const Particle * const p1, const Particle * con
 {
   double add1, add2, fac=0.0;
   int j;
-  if(CUTOFF_CHECK(dist < ia_params->MORSE_cut)) { 
+  if((dist < ia_params->MORSE_cut)) { 
     /* normal case: resulting force/energy smaller than capping. */
 
     if(dist > ia_params->MORSE_capradius ) {
@@ -107,7 +107,7 @@ inline double morse_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
 
   double add1, add2, fac;
 
-  if(CUTOFF_CHECK(dist < ia_params->MORSE_cut)) {
+  if((dist < ia_params->MORSE_cut)) {
 
     /* normal case: resulting force/energy smaller than capping. */
     if(dist > ia_params->MORSE_capradius) { 
