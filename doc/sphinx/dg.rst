@@ -39,12 +39,10 @@ Development Environment
 
 Required Development Tools
 --------------------------
--  First of all, please install the dependencies for compiling |es|. See :ref:`_Getting, compiling and running`
+-  First of all, please install the dependencies for compiling |es|. See the section on "Getting, compiling and running" in the user guide.
 
 -  To be able to access the development version of |es|, you will need
-   the distributed versioning control system Git [1]_. Section
-   :ref:`git_repositories` contains documentation on how we employ
-   git.
+   the distributed versioning control system Git [1]_. 
 
 -  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --user -r requirements.txt
