@@ -346,7 +346,8 @@ inline double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-inline double sqrlen(double v[3]) {
+template<typename T>
+double sqrlen(T const& v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
