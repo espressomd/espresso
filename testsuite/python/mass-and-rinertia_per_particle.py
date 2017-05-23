@@ -1,7 +1,7 @@
 from __future__ import print_function
 import unittest as ut
 import numpy as np
-from numpy.random import random
+from numpy.random import random,seed
 import espressomd
 import math
 
@@ -9,18 +9,23 @@ import math
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
+    seed(1)
     # Handle for espresso system
     es = espressomd.System()
+    es.periodicity =0,0,0
+    es.cell_system.max_num_cells=8
+    es.cell_system.set_n_square(use_verlet_lists=False)
+    es.cell_system.skin=1
+    
 
     def run_test_case(self, test_case):
         gamma = np.array([1.0, 1.0])
+        mass = 12.74
         
         # Decelleration
         self.es.time_step = 0.007
         self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
-        self.es.cell_system.skin = 0
-        self.es.cell_system.set_n_square(use_verlet_lists=False)
-        mass = 12.74
+
         J = [10.0, 10.0, 10.0]
         
         for i in range(len(self.es.part)):
@@ -144,7 +149,7 @@ class ThermoTest(ut.TestCase):
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 1.0
         self.es.time_step = 0.008
-        n = 200
+        n = 100
         mass = (0.2 + random()) * 7.0
         J = np.array((0.2 + random(3)) * 7.0)
 
@@ -190,15 +195,15 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 ind = p + k * n
                 pos0[ind,:] = self.es.part[ind].pos
-        dt0 = mass / gamma_tr
-        
-        loops = 100 
+
+        loops = 500
         print("Thermalizing...")
-        therm_steps = 500
+        therm_steps = 120
         self.es.integrator.run(therm_steps)
         print("Measuring...")
-        
-        int_steps = 30
+
+        int_steps = 10
+
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
