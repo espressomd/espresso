@@ -92,7 +92,7 @@ class ClusterStructure(ScriptInterfaceHelper):
         return self._clusters
 
 
-class Clusters:
+class Clusters(object):
     """Access to the clusters in the cluster structure. Behaves roughly like a dict"""
 
     def __init__(self, cluster_structure):
