@@ -191,6 +191,7 @@ if(WITH_SCAFACOS)
 endif(WITH_SCAFACOS)
 
 if(WITH_GSL)
+find_package(PkgConfig REQUIRED)
 find_package(GSL REQUIRED)
 if (GSL_FOUND)
   include_directories(${GSL_INCLUDE_DIR})
