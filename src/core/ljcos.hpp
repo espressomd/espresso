@@ -34,7 +34,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
@@ -46,7 +46,7 @@ inline void add_ljcos_pair_force(const Particle * const p1, const Particle * con
   int j;
   double r_off, frac2, frac6, fac=0.0;
 
-  if(CUTOFF_CHECK(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
+  if((dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
     r_off = dist - ia_params->LJCOS_offset;
     /* cos part of ljcos potential. */
     if(dist > ia_params->LJCOS_rmin+ia_params->LJCOS_offset) {
@@ -93,7 +93,7 @@ inline double ljcos_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
 {
   double r_off, frac2, frac6;
 
-  if(CUTOFF_CHECK(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
+  if((dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
     r_off = dist-ia_params->LJCOS_offset;
     /* lennard-jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin+ia_params->LJCOS_offset)) {

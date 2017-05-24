@@ -67,6 +67,7 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "scafacos.hpp"
+#include "partCfg.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -215,7 +216,7 @@ void on_integration_start()
 
   /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
-  freePartCfg();
+  partCfg.invalidate();
 
   on_observable_calc();
 }
@@ -282,7 +283,7 @@ void on_particle_change()
   invalidate_obs();
 
   /* the particle information is no longer valid */
-  freePartCfg();
+  partCfg.invalidate();
 }
 
 void on_coulomb_change()

@@ -45,9 +45,6 @@ ROTATIONAL_INERTIA              implies ROTATION
 BOND_CONSTRAINT                 requires not ROTATION
 ROTATION_PER_PARTICLE           implies ROTATION
 
-/* Adress */
-MOL_CUT                         implies VIRTUAL_SITES_COM
-
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW

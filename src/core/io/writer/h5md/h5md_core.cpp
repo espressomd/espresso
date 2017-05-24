@@ -20,6 +20,7 @@
 */
 
 #include "h5md_core.hpp"
+#include "partCfg.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -138,7 +139,8 @@ void File::InitFile() {
       throw incompatible_h5mdfile();
     }
   } else {
-    if (backup_file_exists) throw left_backupfile();
+    if (backup_file_exists)
+      throw left_backupfile();
     create_new_file(m_filename);
   }
 }
@@ -300,7 +302,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     int particle_index, int_array_3d &id, int_array_3d &typ,
     double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
     double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-    Particle *current_particle, int write_dat, int_array_3d &bond) {
+    Particle const &current_particle, int write_dat, int_array_3d &bond) {
 #ifdef H5MD_DEBUG
   /* Turn on hdf5 error messages */
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
@@ -312,45 +314,45 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   bool write_mass = write_dat & W_MASS;
   bool write_charge = write_dat & W_CHARGE;
 
-  id[0][particle_index][0] = current_particle->p.identity;
+  id[0][particle_index][0] = current_particle.p.identity;
   if (write_species)
-    typ[0][particle_index][0] = current_particle->p.type;
+    typ[0][particle_index][0] = current_particle.p.type;
   if (write_mass)
-    mass[0][particle_index][0] = current_particle->p.mass;
+    mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    pos[0][particle_index][0] = current_particle->r.p[0];
-    pos[0][particle_index][1] = current_particle->r.p[1];
-    pos[0][particle_index][2] = current_particle->r.p[2];
-    image[0][particle_index][0] = current_particle->l.i[0];
-    image[0][particle_index][1] = current_particle->l.i[1];
-    image[0][particle_index][2] = current_particle->l.i[2];
+    pos[0][particle_index][0] = current_particle.r.p[0];
+    pos[0][particle_index][1] = current_particle.r.p[1];
+    pos[0][particle_index][2] = current_particle.r.p[2];
+    image[0][particle_index][0] = current_particle.l.i[0];
+    image[0][particle_index][1] = current_particle.l.i[1];
+    image[0][particle_index][2] = current_particle.l.i[2];
   }
   if (write_vel) {
-    vel[0][particle_index][0] = current_particle->m.v[0] / time_step;
-    vel[0][particle_index][1] = current_particle->m.v[1] / time_step;
-    vel[0][particle_index][2] = current_particle->m.v[2] / time_step;
+    vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
+    vel[0][particle_index][1] = current_particle.m.v[1] / time_step;
+    vel[0][particle_index][2] = current_particle.m.v[2] / time_step;
   }
   if (write_force) {
     /* Scale the stored force with m/(0.5*dt**2.0) to get a real
      * world force. */
-    double fac = current_particle->p.mass / (0.5 * time_step * time_step);
-    f[0][particle_index][0] = current_particle->f.f[0] * fac;
-    f[0][particle_index][1] = current_particle->f.f[1] * fac;
-    f[0][particle_index][2] = current_particle->f.f[2] * fac;
+    double fac = current_particle.p.mass / (0.5 * time_step * time_step);
+    f[0][particle_index][0] = current_particle.f.f[0] * fac;
+    f[0][particle_index][1] = current_particle.f.f[1] * fac;
+    f[0][particle_index][2] = current_particle.f.f[2] * fac;
   }
   if (write_charge) {
 #ifdef ELECTROSTATICS
-    charge[0][particle_index][0] = current_particle->p.q;
+    charge[0][particle_index][0] = current_particle.p.q;
 #endif
   }
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (int i = 1; i < current_particle->bl.n; i = i + 2) {
+    for (int i = 1; i < current_particle.bl.n; i = i + 2) {
       bond.resize(boost::extents[1][nbonds_local + 1][2]);
-      bond[0][nbonds_local][0] = current_particle->p.identity;
-      bond[0][nbonds_local][1] = current_particle->bl.e[i];
+      bond[0][nbonds_local][0] = current_particle.p.identity;
+      bond[0][nbonds_local][1] = current_particle.bl.e[i];
     }
   }
 }
@@ -366,8 +368,6 @@ void File::Write(int write_dat) {
     num_particles_to_be_written = 0;
   else if (m_write_ordered == false)
     num_particles_to_be_written = cells_get_n_particles();
-  if (m_write_ordered == true && this_node != 0)
-    return;
 
   bool write_species = write_dat & W_TYPE;
   bool write_pos = write_dat & W_POS;
@@ -392,20 +392,15 @@ void File::Write(int write_dat) {
 
   if (m_write_ordered == true) {
     if (this_node == 0) {
+      partCfg.update_bonds();
       // loop over all particles
-      for (int particle_index = 0; particle_index < n_part; particle_index++) {
-        Particle current_particle;
-        get_particle_data(particle_index, &current_particle); // this function
-                                                              // only works when
-                                                              // run with one
-                                                              // process
+      int particle_index = 0;
+      for (auto const &current_particle : partCfg) {
         fill_arrays_for_h5md_write_with_particle_property(
-            particle_index, id, typ, mass, pos, image, vel, f, charge,
-            &current_particle, write_dat, bond);
-        free_particle(&current_particle);
+            particle_index++, id, typ, mass, pos, image, vel, f,
+            charge, current_particle, write_dat, bond);
       }
     }
-
   } else {
     /* Get the number of particles on all other nodes. */
 
@@ -419,7 +414,7 @@ void File::Write(int write_dat) {
         auto &current_particle = local_cell->part[local_part_id];
         fill_arrays_for_h5md_write_with_particle_property(
             particle_index, id, typ, mass, pos, image, vel, f, charge,
-            &current_particle, write_dat, bond);
+            current_particle, write_dat, bond);
         particle_index++;
       }
     }
@@ -490,8 +485,8 @@ void File::Write(int write_dat) {
                count_1d);
 
   if (write_species) {
-    WriteDataset(typ, "particles/atoms/species/value", change_extent_2d, offset_2d,
-                 count_2d);
+    WriteDataset(typ, "particles/atoms/species/value", change_extent_2d,
+                 offset_2d, count_2d);
   }
   if (write_mass) {
     WriteDataset(mass, "particles/atoms/mass/value", change_extent_2d,

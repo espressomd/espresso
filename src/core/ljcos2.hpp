@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 #include "forcecap.hpp"
 
 #include <cmath>
@@ -51,7 +51,7 @@ inline void add_ljcos2_pair_force(const Particle * const p1, const Particle * co
 {
   int j;
   double r_off, frac2, frac6, fac=0.0;
-  if(CUTOFF_CHECK(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) { 
+  if((dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) { 
     r_off = dist - ia_params->LJCOS2_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJCOS2_capradius) {
@@ -106,7 +106,7 @@ inline double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_p
 {
   double r_off, frac2, frac6;
 
-  if(CUTOFF_CHECK(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) {
+  if((dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) {
     r_off = dist - ia_params->LJCOS2_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJCOS2_capradius) {
