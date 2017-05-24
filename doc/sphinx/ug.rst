@@ -27,6 +27,7 @@ Userguide
     examples.rst
     memd.rst
     mmm.rst
+    cuda.rst
     shapes.rst
 
 .. bibliography:: zrefs.bib
