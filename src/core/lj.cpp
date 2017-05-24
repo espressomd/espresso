@@ -23,7 +23,7 @@
 
 #ifdef LENNARD_JONES
 #include "lj.hpp"
-#include "mol_cut.hpp"
+
 #include "communication.hpp"
 
 /** set the force cap for the LJ interaction.

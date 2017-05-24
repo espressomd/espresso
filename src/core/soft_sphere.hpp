@@ -35,7 +35,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 ///
 int soft_sphere_set_params(int part_type_a, int part_type_b,
@@ -61,7 +61,7 @@ inline void add_soft_pair_force(const Particle * const p1, const Particle * cons
 {
   int j;
   double r_off, fac=0.0;
-  if(CUTOFF_CHECK(dist < ia_params->soft_cut+ia_params->soft_offset)) { 
+  if((dist < ia_params->soft_cut+ia_params->soft_offset)) { 
     /* normal case: resulting force/energy smaller than zero. */
     r_off = dist - ia_params->soft_offset;
     if(r_off > 0.0) {
@@ -86,7 +86,7 @@ inline double soft_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 {
   double r_off;
 
-  if(CUTOFF_CHECK(dist < ia_params->soft_cut+ia_params->soft_offset)) {
+  if((dist < ia_params->soft_cut+ia_params->soft_offset)) {
     r_off = dist - ia_params->soft_offset;
     /* normal case: resulting force/energy smaller than zero. */
    

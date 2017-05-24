@@ -35,7 +35,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 ///
 int hat_set_params(int part_type_a, int part_type_b,
@@ -61,7 +61,7 @@ inline void add_hat_pair_force(const Particle * const p1, const Particle * const
 {
   int j;
   double fac=0.0;
-  if(CUTOFF_CHECK(dist < ia_params->HAT_r)) {
+  if((dist < ia_params->HAT_r)) {
     if(dist < ia_params->HAT_r) {
       fac = hat_force_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist)/dist;
       for(j=0;j<3;j++)
@@ -82,7 +82,7 @@ inline void add_hat_pair_force(const Particle * const p1, const Particle * const
 inline double hat_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
-  if(CUTOFF_CHECK(dist < ia_params->HAT_r)) {   
+  if((dist < ia_params->HAT_r)) {   
     return hat_energy_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist);    
   }
   return 0.0;
