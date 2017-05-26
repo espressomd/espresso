@@ -11,7 +11,8 @@ import espressomd.lb
 from espressomd import *
 import numpy as np
 
-@ut.skipIf('LB_GPU' not in espressomd.code_info.features() or 'LENNARD_JONES' not in 			espressomd.code_info.features(), "LB_GPU or LENNARD_JONES not compiled in, can not check functionality.")
+@ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]),
+           "Features not available, skipping test!")
 
 class lb_test(ut.TestCase):
 
