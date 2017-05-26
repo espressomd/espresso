@@ -57,7 +57,6 @@ class lb_test(ut.TestCase):
 			id = particle[0]
 			typ = particle[1]
 			pos = particle[3:6]
-			q = particle[2]
 			f = particle[9:]
 			v = particle[6:9]
 			system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
