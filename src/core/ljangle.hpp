@@ -46,7 +46,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 #include "grid.hpp"
 #include "forcecap.hpp"
 #include "debug.hpp"
@@ -70,7 +70,7 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 inline void add_ljangle_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist)
 {
-  if(!CUTOFF_CHECK(dist < ia_params->LJANGLE_cut)) 
+  if(!(dist < ia_params->LJANGLE_cut)) 
     return;
   int j;
   double frac2=0.0, frac10=0.0, rad=0.0, radprime=0.0;
@@ -265,7 +265,7 @@ inline void add_ljangle_force(Particle *p1, Particle *p2, IA_parameters *ia_para
 inline double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				    double d[3], double dist)
 {
-  if(!CUTOFF_CHECK(dist < ia_params->LJANGLE_cut)) 
+  if(!(dist < ia_params->LJANGLE_cut)) 
     return 0.0;
 
   int j;

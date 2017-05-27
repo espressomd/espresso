@@ -36,7 +36,7 @@
 
 #include "debug.hpp"
 #include "interaction_data.hpp"
-#include "mol_cut.hpp"
+
 #include "particle_data.hpp"
 #include "utils.hpp"
 
@@ -54,7 +54,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double d[3],
                                  double dist, double force[3]) {
-  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
+  if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     int j;
     double r_off, frac, fac = 0.0;
     r_off = dist - ia_params->LJGEN_offset;
@@ -168,7 +168,7 @@ inline double ljgen_pair_energy(Particle *p1, Particle *p2,
                                 double dist) {
   double r_off, frac;
 
-  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
+  if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     r_off = dist - ia_params->LJGEN_offset;
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
