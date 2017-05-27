@@ -1806,36 +1806,27 @@ properties.
 Scafacos
 ~~~~~~~~
 
-Espresso can use the electrostatics methods from the Scafacos *Scalable
-fast Coulomb solvers* library.
+Espresso can use the electrostatics methods from the SCAFACOS *Scalable
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available\_methods()`
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-scafacos.available\_methods()
-
-This shows the methods available at the compile time of . Scafacos can
-be used as Coulomb solver for the system.
-
-inter coulomb scafacos
-
-[ ]
-
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. To use the ``ewald``
-solver from scafacos as electrostatics solver for your system, set its
+To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
-:math:`10^{-3}`, use the command
-
-inter coulomb 1.0 scafacos ewald ewald\_r\_cut 1.5 tolerance\_field 1e-3
+:math:`10^{-3}`, use::
+  from espressomd.electrostatics import Scafacos
+  scafacos=Scafacos(bjerrum_length=1,method_name="ewald", 
+    method_params={"ewald\_r\_cut":1.5, "tolerance\_field":1e-3})
+  system.actors.add(scafacos)
+  
 
 For details of the various methods and their parameters please refer to
-the Scafacos manual. Note that the ``SCAFACOS`` feature is only
-available if you build with cmake. You need to build Scafacos as a
-shared library. Scafacos can be used only once, either for coulomb or
-for dipolar interactions.
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
 .. _ELC:
 
@@ -2080,8 +2071,6 @@ P3M.
 Dipolar direct sum on gpu
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter magnetic dds-gpu
-
 This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
 system is periodic (as defined by ``setmd periodic``), it applies the
@@ -2095,33 +2084,38 @@ particles than the number of threads the gpu can execute simultaneously,
 the rest of the gpu remains idle. Hence, the method will perform poorly
 for small systems.
 
+To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  from espressomd.magnetostatics import DipolarDirectSumGpu
+  dds=DipolarDirectSumGpu(bjerrum_length=1)
+  system.actors.add(dds)
+  
+
+
+
 Scafacos
 ~~~~~~~~
 
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
 calculations. The feature SCAFACOS\_DIPOLES has to be added to
-myconfig.hpp to activate this feature. At the time of this writing (Apr
-2016) dipolar calculations are not part of the official Scafacos
-development branch.
+myconfig.hpp to activate this feature. At the time of this writing (May
+2017) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-This shows the methods available at the compile time of . That a method
-is listed there, does not imply that it supports dipolar calculations.
+For details of the various methods and their parameters please refer to
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
-inter magnetic scafacos
 
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. For details of the
-various methods and their parameters please refer to the Scafacos
-manual. Note that the ``SCAFACOS`` feature is only available if you
-build with cmake. You need to build Scafacos as a shared library.
-Scafacos can be used only once, either for coulomb or for dipolar
-interactions.
+
+
+
+
 
 Special interaction commands
 ----------------------------
