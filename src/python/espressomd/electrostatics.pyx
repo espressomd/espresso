@@ -899,6 +899,7 @@ IF ELECTROSTATICS:
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+            """Calculates Coulomb interactions using method from the SCAFACOs library."""
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance

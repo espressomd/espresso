@@ -1,3 +1,6 @@
+"""Code shared by charge and dipole methods based on the SCAFACOS library."""
+
+
 from __future__ import print_function, absolute_import
 from espressomd.actors cimport *
 from libcpp.string cimport string  # import std::string
@@ -13,6 +16,7 @@ include "myconfig.pxi"
 
 IF SCAFACOS == 1:
     class ScafacosConnector(Actor):
+        """Scafacos interface class shared by charge and dipole methods. Do not use directly."""
 
         def valid_keys(self):
             return "method_name", "method_params", "bjerrum_length"

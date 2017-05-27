@@ -333,6 +333,8 @@ IF DIPOLES == 1:
                     "Could not activate magnetostatics method " + self.__class__.__name__)
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
+            """Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library."""
+
             dipolar = True
 
             # Explicit constructor needed due to multiple inheritance
