@@ -6,8 +6,10 @@ from espressomd.actors cimport *
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
 cimport magnetostatics
+from espressomd.utils import to_char_pointer,to_str
 
 from espressomd.utils cimport handle_errors
+
 
 include "myconfig.pxi"
 
@@ -31,7 +33,7 @@ IF SCAFACOS == 1:
             # Parameters are returned as strings
             # First word is method name, rest are key value pairs
             # which we convert to a dict
-            p = get_method_and_parameters().split(" ")
+            p = to_str(get_method_and_parameters().split(" "))
             res = {}
             res["method_name"] = p[0]
             for i in range((len(p) - 1) / 2):
@@ -59,9 +61,18 @@ IF SCAFACOS == 1:
             param_string = param_string[0:-1]
             param_string = param_string.replace(" ", ",")
 
-            set_parameters(self._params["method_name"],
-                           param_string, self.dipolar)
+            set_parameters(to_char_pointer(self._params["method_name"]),
+                           to_char_pointer(param_string), self.dipolar)
             handle_errors("Scafacos not initialized.")
 
         def default_params(self):
             return {}
+
+def available_methods():
+    """Lists long range methods available in the Scafacos library"""
+    methods=available_methods_core()
+    res=[]
+    for m in methods:
+        res.append(to_str(m))
+    return res
+

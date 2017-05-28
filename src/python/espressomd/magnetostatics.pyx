@@ -23,7 +23,7 @@ from globals cimport temperature
 from .actors cimport *
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
-    cimport scafacos
+    from . cimport scafacos
 
 from espressomd.utils cimport handle_errors
 
