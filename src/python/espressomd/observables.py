@@ -4,6 +4,7 @@ from .script_interface import ScriptInterfaceHelper,script_interface_register
 @script_interface_register
 class AutoUpdateObservables(ScriptInterfaceHelper):
     _so_name = "Observables::AutoUpdateObservables"
+    _policy = "LOCAL"
 
     def add(self, *args, **kwargs):
         if len(args) == 1:
@@ -24,8 +25,7 @@ class AutoUpdateObservables(ScriptInterfaceHelper):
 class Observable(ScriptInterfaceHelper):
     _so_name="Observables::Observable"
     _so_bind_methods = ("value","calculate","update","auto_write_to")
-
-
+    _policy = "LOCAL"
 
 @script_interface_register
 class ComForce(Observable):
