@@ -50,19 +50,19 @@
 
 #include "config.hpp"
 
-#include <string>
-#include <vector>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <cstring>
-#include "initialize.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-#include "integrate.hpp"
 #include "cells.hpp"
-#include "utils.hpp"
+#include "initialize.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
 #include "mpiio.hpp"
+#include "particle_data.hpp"
+#include "utils.hpp"
+#include <cstring>
+#include <errno.h>
+#include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
 
 #include <mpi.h>
 
@@ -76,9 +76,8 @@
  * \param MPI_T The MPI_Datatype corresponding to the template parameter T.
  */
 template <typename T>
-static void mpiio_dump_array(std::string fn, T* arr, size_t len,
-                             size_t pref, MPI_Datatype MPI_T)
-{
+static void mpiio_dump_array(std::string fn, T *arr, size_t len, size_t pref,
+                             MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 
@@ -100,8 +99,7 @@ static void mpiio_dump_array(std::string fn, T* arr, size_t len,
   ret |= MPI_File_write_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
   MPI_File_close(&f);
   if (ret) {
-    fprintf(stderr, "MPI-IO Error: Could not write file \"%s\".\n",
-            fn.c_str());
+    fprintf(stderr, "MPI-IO Error: Could not write file \"%s\".\n", fn.c_str());
     errexit();
   }
 }
@@ -113,8 +111,7 @@ static void mpiio_dump_array(std::string fn, T* arr, size_t len,
  * \param fn The filename to write to
  * \param fields The dumped fields
  */
-static void dump_info(std::string fn, unsigned fields)
-{
+static void dump_info(std::string fn, unsigned fields) {
   static std::vector<int> npartners;
   int success;
   FILE *f = fopen(fn.c_str(), "wb");
@@ -136,8 +133,8 @@ static void dump_info(std::string fn, unsigned fields)
       npartners[i] = bonded_ia_params[i].num;
   }
   success = success && (fwrite(&n_bonded_ia, sizeof(int), 1, f) == 1);
-  success = success && (fwrite(npartners.data(), sizeof(int),
-                               n_bonded_ia, f) == n_bonded_ia);
+  success = success && (fwrite(npartners.data(), sizeof(int), n_bonded_ia, f) ==
+                        n_bonded_ia);
   fclose(f);
   if (!success) {
     fprintf(stderr, "MPI-IO Error: Failed to write %s.\n", fn.c_str());
@@ -145,17 +142,14 @@ static void dump_info(std::string fn, unsigned fields)
   }
 }
 
-
-void mpi_mpiio_common_write(const char *filename, unsigned fields)
-{
+void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   std::string fnam(filename);
   int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
   int rank, ret;
   // Keep static buffers in order not having to allocate them on every
   // function call
-  static std::vector<double>pos, vel;
-  static std::vector<int>id, type, boff, bond;
-  Cell *cell;
+  static std::vector<double> pos, vel;
+  static std::vector<int> id, type, boff, bond;
 
   // Nlocalpart prefixes
   // Prefixes based for arrays: 3 * pref for vel, pos.
@@ -176,37 +170,33 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
   // Pack the necessary information
   // Esp. rescale the velocities.
   int i1 = 0, i3 = 0;
-  for (int c = 0; c < local_cells.n; ++c) {
-    cell = local_cells.cell[c];
-    for (int j = 0; j < cell->n; ++j) {
-      id[i1] = cell->part[j].p.identity;
-      if (fields & MPIIO_OUT_POS) {
-        pos[i3] = cell->part[j].r.p[0];
-        pos[i3 + 1] = cell->part[j].r.p[1];
-        pos[i3 + 2] = cell->part[j].r.p[2];
-      }
-      if (fields & MPIIO_OUT_VEL) {
-        vel[i3] = cell->part[j].m.v[0] / time_step;
-        vel[i3 + 1] = cell->part[j].m.v[1] / time_step;
-        vel[i3 + 2] = cell->part[j].m.v[2] / time_step;
-      }
-      if (fields & MPIIO_OUT_TYP) {
-        type[i1] = cell->part[j].p.type;
-      }
-      if (fields & MPIIO_OUT_BND) {
-        boff[i1 + 1] = cell->part[j].bl.n;
-      }
-      i1++;
-      i3 += 3;
+  for (auto const &p : local_cells.particles()) {
+    id[i1] = p.p.identity;
+    if (fields & MPIIO_OUT_POS) {
+      pos[i3] = p.r.p[0];
+      pos[i3 + 1] = p.r.p[1];
+      pos[i3 + 2] = p.r.p[2];
     }
+    if (fields & MPIIO_OUT_VEL) {
+      vel[i3] = p.m.v[0] / time_step;
+      vel[i3 + 1] = p.m.v[1] / time_step;
+      vel[i3 + 2] = p.m.v[2] / time_step;
+    }
+    if (fields & MPIIO_OUT_TYP) {
+      type[i1] = p.p.type;
+    }
+    if (fields & MPIIO_OUT_BND) {
+      boff[i1 + 1] = p.bl.n;
+    }
+    i1++;
+    i3 += 3;
   }
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0)
     dump_info(fnam + ".head", fields);
   mpiio_dump_array<int>(fnam + ".pref", &pref, 1, rank, MPI_INT);
-  mpiio_dump_array<int>(fnam + ".id", id.data(), nlocalpart, pref,
-                        MPI_INT);
+  mpiio_dump_array<int>(fnam + ".id", id.data(), nlocalpart, pref, MPI_INT);
   if (fields & MPIIO_OUT_POS)
     mpiio_dump_array<double>(fnam + ".pos", pos.data(), 3 * nlocalpart,
                              3 * pref, MPI_DOUBLE);
@@ -230,13 +220,9 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
 
     // Pack the bond information
     int i = 0;
-    for (int c = 0; c < local_cells.n; ++c) {
-      cell = local_cells.cell[c];
-      for (int j = 0; j < cell->n; ++j) {
-        for (int k = 0; k < cell->part[j].bl.n; ++k)
-          bond[i++] = cell->part[j].bl.e[k];
-      }
-    }
+    for (auto const &p : local_cells.particles())
+      for (int k = 0; k < p.bl.n; ++k)
+        bond[i++] = p.bl.e[k];
 
     // Determine the prefixes in the bond file
     MPI_Exscan(&numbonds, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -247,7 +233,6 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
   }
 }
 
-
 /** Get the number of elements in a file by its file size and
  *  elem_sz. I.e. query the file size using stat(2) and divide it by
  *  elem_sz.
@@ -256,8 +241,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields)
  * \param elem_sz Sizeof a single element
  * \return The number of elements stored binary in the file
  */
-static int get_num_elem(std::string fn, size_t elem_sz)
-{
+static int get_num_elem(std::string fn, size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
   // MPI_File_cose.
   struct stat st;
@@ -275,9 +259,8 @@ static int get_num_elem(std::string fn, size_t elem_sz)
  *  have to match!
  */
 template <typename T>
-static void mpiio_read_array(std::string fn, T* arr, size_t len,
-                            size_t pref, MPI_Datatype MPI_T)
-{
+static void mpiio_read_array(std::string fn, T *arr, size_t len, size_t pref,
+                             MPI_Datatype MPI_T) {
   MPI_File f;
   int ret;
 
@@ -295,12 +278,11 @@ static void mpiio_read_array(std::string fn, T* arr, size_t len,
   }
   ret = MPI_File_set_view(f, pref * sizeof(T), MPI_T, MPI_T,
                           const_cast<char *>("native"), MPI_INFO_NULL);
-  
+
   ret |= MPI_File_read_all(f, arr, len, MPI_T, MPI_STATUS_IGNORE);
   MPI_File_close(&f);
   if (ret) {
-    fprintf(stderr, "MPI-IO Error: Could not read file \"%s\".\n",
-            fn.c_str());
+    fprintf(stderr, "MPI-IO Error: Could not read file \"%s\".\n", fn.c_str());
     errexit();
   }
 }
@@ -312,15 +294,14 @@ static void mpiio_read_array(std::string fn, T* arr, size_t len,
  * \param rank The rank of the current process in MPI_COMM_WORLD
  * \param file Pointer to store the fields to
  */
-static void read_head(std::string fn, int rank, unsigned *fields)
-{
+static void read_head(std::string fn, int rank, unsigned *fields) {
   FILE *f;
   if (rank == 0) {
     if (!(f = fopen(fn.c_str(), "rb"))) {
       fprintf(stderr, "MPI-IO: Could not open %s.head.\n", fn.c_str());
       errexit();
     }
-    if (fread((void *) fields, sizeof(unsigned), 1, f) != 1) {
+    if (fread((void *)fields, sizeof(unsigned), 1, f) != 1) {
       fprintf(stderr, "MPI-IO: Read on %s.head failed.\n", fn.c_str());
       errexit();
     }
@@ -340,22 +321,20 @@ static void read_head(std::string fn, int rank, unsigned *fields)
  * \param prefs Pointer to store the prefix to
  * \param nlocalpart Pointer to store the amount of local particles to
  */
-static void read_prefs(std::string fn, int rank, int size,
-                       int nglobalpart, int *pref, int *nlocalpart)
-{
+static void read_prefs(std::string fn, int rank, int size, int nglobalpart,
+                       int *pref, int *nlocalpart) {
   mpiio_read_array<int>(fn, pref, 1, rank, MPI_INT);
   if (rank > 0)
     MPI_Send(pref, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD);
   if (rank < size - 1)
-    MPI_Recv(nlocalpart, 1, MPI_INT, rank + 1, MPI_ANY_TAG,
-             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(nlocalpart, 1, MPI_INT, rank + 1, MPI_ANY_TAG, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   else
     *nlocalpart = nglobalpart;
   *nlocalpart -= *pref;
 }
 
-void mpi_mpiio_common_read(const char *filename, unsigned fields)
-{
+void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   std::string fnam(filename);
   int size, rank;
   int nproc, nglobalpart, pref, nlocalpart, nlocalbond, bpref;
@@ -369,8 +348,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   nglobalpart = get_num_elem(fnam + ".id", sizeof(int));
 
   if (rank == 0 && nproc != size) {
-    fprintf(stderr,
-            "MPI-IO Error: Trying to read a file with a different COMM size than at point of writing.\n");
+    fprintf(stderr, "MPI-IO Error: Trying to read a file with a different COMM "
+                    "size than at point of writing.\n");
     errexit();
   }
 
@@ -379,7 +358,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   // Compare this var to the current fields.
   read_head(fnam + ".head", rank, &avail_fields);
   if (rank == 0 && (fields & avail_fields) != fields) {
-    fprintf(stderr, "MPI-IO Error: Requesting to read fields which were not dumped.\n");
+    fprintf(stderr,
+            "MPI-IO Error: Requesting to read fields which were not dumped.\n");
     errexit();
   }
 
@@ -390,8 +370,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
   // Prepare ESPResSo data structures
-  local_particles = (Particle **) Utils::realloc(local_particles,
-                                                 sizeof(Particle *) * nglobalpart);
+  local_particles = (Particle **)Utils::realloc(
+      local_particles, sizeof(Particle *) * nglobalpart);
   for (int i = 0; i < nglobalpart; ++i)
     local_particles[i] = NULL;
   n_part = nglobalpart;
@@ -400,8 +380,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   // 1.id on all nodes:
   // Read nlocalpart ints at defined prefix.
   std::vector<int> id(nlocalpart);
-  mpiio_read_array<int>(fnam + ".id", id.data(), nlocalpart, pref,
-                        MPI_INT);
+  mpiio_read_array<int>(fnam + ".id", id.data(), nlocalpart, pref, MPI_INT);
 
   if (fields & MPIIO_OUT_POS) {
     // 1.pos on all nodes:
@@ -435,7 +414,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        local_particles[id[i]]->m.v[k] = vel[3*i+k] * time_step;
+        local_particles[id[i]]->m.v[k] = vel[3 * i + k] * time_step;
   }
 
   if (fields & MPIIO_OUT_BND) {
@@ -457,7 +436,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i) {
-      int blen = boff[i+1] - boff[i];
+      int blen = boff[i + 1] - boff[i];
       IntList *il = &local_particles[id[i]]->bl;
       realloc_intlist(il, blen);
       memcpy(il->e, &bond[boff[i]], blen * sizeof(int));
@@ -470,4 +449,3 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields)
   rebuild_verletlist = 1;
   on_particle_change();
 }
-
