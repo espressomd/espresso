@@ -20,9 +20,9 @@
 #include "utils/serialization/flat_set.hpp"
 
 namespace detail {
-  /**
-  * @brief Compare particles by id.
-  */
+/**
+* @brief Compare particles by id.
+*/
 class IdCompare {
 public:
   template <typename Particle>
@@ -75,8 +75,8 @@ public:
       }
     }
 
-/* The first range has no more elements, so we can
-   just copy the rest of range 2. */
+    /* The first range has no more elements, so we can
+       just copy the rest of range 2. */
     for (; first2 != last2; ++first2)
       ret.emplace_hint(ret.end(), *first2);
 
@@ -106,9 +106,9 @@ public:
 * the particles. This op is run on all the nodes. It can be used
 * e.g. to fold or unfold the coordinates on the fly.
 */
-template <typename Cells, typename UnaryOp = Utils::NoOp,
+template <typename GetParticles, typename UnaryOp = Utils::NoOp,
           typename Range = typename std::remove_reference<decltype(
-              std::declval<Cells>().particles())>::type,
+              std::declval<GetParticles>()())>::type,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
 class ParticleCache {
@@ -122,13 +122,13 @@ class ParticleCache {
   Utils::Parallel::Callback update_cb;
   Utils::Parallel::Callback update_bonds_cb;
 
-  Cells &cells;
+  GetParticles parts;
   UnaryOp m_op;
 
   void m_update_bonds() {
     std::vector<int> local_bonds;
 
-    for (auto &p : cells.particles()) {
+    for (auto &p : parts()) {
       local_bonds.push_back(p.identity());
       std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(local_bonds));
     }
@@ -139,7 +139,8 @@ class ParticleCache {
 
   void m_update() {
     remote_parts.clear();
-    for (auto const &p : cells.particles()) {
+
+    for (auto const &p : parts()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
       std::tie(it, std::ignore) = remote_parts.emplace(p);
@@ -148,7 +149,8 @@ class ParticleCache {
       m_op(*it);
     }
 
-    /* Reduce data to the master by merging the flat_sets from the
+    /* Reduce data to the master by merging the flat_sets from
+     * the
      * nodes in a reduction tree. */
     boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
                        remote_parts,
@@ -160,8 +162,7 @@ class ParticleCache {
 
     Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
 
-    for(auto it = bond_info.begin(); it != bond_info.end();)
-    {
+    for (auto it = bond_info.begin(); it != bond_info.end();) {
       auto &p = remote_parts.begin()[id_index[*it++]];
       p.bl.e = nullptr;
       p.bl.max = 0;
@@ -174,7 +175,7 @@ class ParticleCache {
 
   void m_update_index() {
     /* Try to avoid rehashing along the way */
-    id_index.reserve(remote_parts.size()+1);
+    id_index.reserve(remote_parts.size() + 1);
 
     int index = 0;
     for (auto const &p : remote_parts) {
@@ -186,15 +187,13 @@ public:
   using value_iterator = typename map_type::const_iterator;
 
   ParticleCache() = delete;
-  ParticleCache(Cells &cells, UnaryOp &&op = UnaryOp{})
+  ParticleCache(GetParticles parts, UnaryOp &&op = UnaryOp{})
       : update_cb([this](int, int) { this->m_update(); }),
         update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
-        cells(cells), m_valid(false), m_valid_bonds(false),
+        parts(parts), m_valid(false), m_valid_bonds(false),
         m_op(std::forward<UnaryOp>(op)) {}
   ParticleCache(ParticleCache const &) = delete;
-  ParticleCache(ParticleCache &&) = delete;
   ParticleCache operator=(ParticleCache const &) = delete;
-  ParticleCache operator=(ParticleCache &&) = delete;
 
   void clear() {
     id_index.clear();
@@ -203,13 +202,16 @@ public:
   }
 
   /**
-   * @brief Iterator pointing to the particle with the lowest id.
+   * @brief Iterator pointing to the particle with the lowest
+   * id.
    *
-   * Returns an random access iterator that traverses the particle
+   * Returns an random access iterator that traverses the
+   * particle
    * in order of ascending id. If the cache is not up-to-date,
    * an update is triggered. This iterator stays valid as long
    * as the cache is valid. Since the cache could be invalidated
-   * and updated elsewhere, iterators into the cache should not be
+   * and updated elsewhere, iterators into the cache should not
+   * be
    * stored.
    */
   value_iterator begin() {
@@ -222,7 +224,8 @@ public:
   }
 
   /**
-   * @brief Iterator pointing past the particle with the highest id.
+   * @brief Iterator pointing past the particle with the highest
+   * id.
    *
    * If the cache is not up-to-date,
    * an update is triggered.

@@ -52,11 +52,7 @@ public:
   }
 };
 
-struct Particles {
-  std::vector<Particle> parts;
-
-  std::vector<Particle> &particles() { return parts; }
-};
+using Particles = std::vector<Particle>;
 
 void check_merge(unsigned size, unsigned split) {
   boost::container::flat_set<int> u, v;
@@ -102,13 +98,14 @@ BOOST_AUTO_TEST_CASE(update) {
   auto const size = Communication::mpiCallbacks().comm().size();
   auto const n_part = 10000;
 
-  local_parts.parts.reserve(n_part);
+  local_parts.reserve(n_part);
 
   for (int i = 0; i < n_part; i++) {
-    local_parts.parts.emplace_back(rank * n_part + i);
+    local_parts.emplace_back(rank * n_part + i);
   }
 
-  ParticleCache<Particles> part_cfg{local_parts};
+  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);
@@ -131,13 +128,13 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
   auto const size = Communication::mpiCallbacks().comm().size();
   auto const n_part = 1234;
 
-  local_parts.parts.reserve(n_part);
+  local_parts.reserve(n_part);
 
   for (int i = 0; i < n_part; i++) {
     auto const id = rank * n_part + (n_part - i - 1);
-    local_parts.parts.emplace_back(id);
+    local_parts.emplace_back(id);
     auto const bond_length = bond_lengths[id % bond_lengths.size()];
-    auto &part = local_parts.parts.back();
+    auto &part = local_parts.back();
     part.bl.e = nullptr;
     part.bl.max = 0;
     part.bl.resize(bond_length);
@@ -145,7 +142,9 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
     std::fill(part.bl.begin(), part.bl.end(), id);
   }
 
-  ParticleCache<Particles> part_cfg{local_parts};
+  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
+
   if (rank == 0) {
     part_cfg.update_bonds();
 
@@ -170,13 +169,14 @@ BOOST_AUTO_TEST_CASE(iterators) {
   auto const size = Communication::mpiCallbacks().comm().size();
   auto const n_part = 1000;
 
-  local_parts.parts.reserve(n_part);
+  local_parts.reserve(n_part);
 
   for (int i = 0; i < n_part; i++) {
-    local_parts.parts.emplace_back(rank * n_part + i);
+    local_parts.emplace_back(rank * n_part + i);
   }
 
-  ParticleCache<Particles> part_cfg{local_parts};
+  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  ParticleCache<decltype(get_parts)> part_cfg(get_parts);
 
   if (rank == 0) {
     BOOST_CHECK(part_cfg.size() == size * n_part);

@@ -36,13 +36,13 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "partCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
 #include "virtual_sites.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include "partCfg.hpp"
 
 /************************************************
  * defines
@@ -342,11 +342,17 @@ void free_particle(Particle *part) {
 */
 void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
+    auto old_size = max_local_particles;
+
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
     local_particles = (Particle **)Utils::realloc(
         local_particles, sizeof(Particle *) * max_local_particles);
+
+    /* Set new memory to 0 */
+    for (int i = old_size; i < max_local_particles; i++)
+      local_particles[i] = nullptr;
   }
 }
 
@@ -1255,9 +1261,8 @@ void local_place_particle(int part, double p[3], int _new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-              "does not belong on this node\n",
+      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
+                      "does not belong on this node\n",
               this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
@@ -1335,9 +1340,7 @@ void added_particle(int part) {
 
   if (part > max_seen_particle) {
     realloc_local_particles(part);
-    /* fill up possible gap. Part itself is ESSENTIAL!!!  */
-    for (i = max_seen_particle + 1; i <= part; i++)
-      local_particles[i] = NULL;
+
     max_seen_particle = part;
   }
 }
@@ -1428,9 +1431,8 @@ void remove_all_bonds_to(int identity) {
           i += 1 + partners;
       }
       if (i != bl->n) {
-        fprintf(stderr,
-                "%d: INTERNAL ERROR: bond information corrupt for "
-                "particle %d, exiting...\n",
+        fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
+                        "particle %d, exiting...\n",
                 this_node, part[p].p.identity);
         errexit();
       }
@@ -1657,7 +1659,7 @@ void auto_exclusion(int distance) {
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (auto const& part1: partCfg) {
+  for (auto const &part1 : partCfg) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
       ia_params = &bonded_ia_params[part1.bl.e[i++]];
@@ -1780,7 +1782,7 @@ int init_type_array(int type) {
   int t_c = 0; // index
   type_array[Index.type[type]].id_list =
       (int *)Utils::malloc(sizeof(int) * n_part);
-  for (auto const&p: partCfg) {
+  for (auto const &p : partCfg) {
     if (p.p.type == type)
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
   }
@@ -1863,7 +1865,7 @@ int remove_id_type_array(int part_id, int type) {
 
 int update_particle_array(int type) {
   int t_c = 0;
-  for (auto const&p : partCfg) {
+  for (auto const &p : partCfg) {
     if (p.p.type == type) {
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
     }

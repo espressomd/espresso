@@ -392,7 +392,8 @@ void File::Write(int write_dat) {
 
   if (m_write_ordered == true) {
     if (this_node == 0) {
-      partCfg.update_bonds();
+      /* Fetch bond info */
+      //      partCfg.update_bonds();
       // loop over all particles
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {

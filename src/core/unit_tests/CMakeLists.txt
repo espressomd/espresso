@@ -71,3 +71,4 @@ unit_test(NAME Variant_test SRC Variant_test.cpp ../../script_interface/Variant.
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp)
 unit_test(NAME Range_test SRC Range_test.cpp)
 unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
+unit_test(NAME SkipIterator_test SRC SkipIterator_test.cpp)
