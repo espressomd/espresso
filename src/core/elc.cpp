@@ -153,45 +153,35 @@ void ELC_setup_constants() {
 /* SC Cache */
 /************/
 static void prepare_scx_cache() {
-  int np, c, i, ic, freq, o;
+  int ic, freq, o;
   double pref, arg;
-  Particle *part;
 
   for (freq = 1; freq <= n_scxcache; freq++) {
     pref = C_2PI * ux * freq;
     o = (freq - 1) * n_localpart;
     ic = 0;
-    for (c = 0; c < local_cells.n; c++) {
-      np = local_cells.cell[c]->n;
-      part = local_cells.cell[c]->part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[0];
-        scxcache[o + ic].s = sin(arg);
-        scxcache[o + ic].c = cos(arg);
-        ic++;
-      }
+    for (auto const &part : local_cells.particles()) {
+      arg = pref * part.r.p[0];
+      scxcache[o + ic].s = sin(arg);
+      scxcache[o + ic].c = cos(arg);
+      ic++;
     }
   }
 }
 
 static void prepare_scy_cache() {
-  int np, c, i, ic, freq, o;
+  int ic, freq, o;
   double pref, arg;
-  Particle *part;
 
-  for (freq = 1; freq <= n_scycache; freq++) {
+  for (freq = 1; freq <= n_scxcache; freq++) {
     pref = C_2PI * uy * freq;
     o = (freq - 1) * n_localpart;
     ic = 0;
-    for (c = 0; c < local_cells.n; c++) {
-      np = local_cells.cell[c]->n;
-      part = local_cells.cell[c]->part;
-      for (i = 0; i < np; i++) {
-        arg = pref * part[i].r.p[1];
-        scycache[o + ic].s = sin(arg);
-        scycache[o + ic].c = cos(arg);
-        ic++;
-      }
+    for (auto const &part : local_cells.particles()) {
+      arg = pref * part.r.p[1];
+      scxcache[o + ic].s = sin(arg);
+      scxcache[o + ic].c = cos(arg);
+      ic++;
     }
   }
 }
@@ -273,19 +263,12 @@ static void checkpoint(char *text, int p, int q, int e_size) {
 
 #ifdef LOG_FORCES
 static void clear_log_forces(char *where) {
-  int np, c, i, j;
-  Particle *part;
-
   fprintf(stderr, "%s\n", where);
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      fprintf(stderr, "%d %g %g %g\n", part[i].p.identity, part[i].f.f[0],
-              part[i].f.f[1], part[i].f.f[2]);
-      for (j = 0; j < 3; j++)
-        part[i].f.f[j] = 0;
-    }
+  for (auto &p : local_cells.particles()) {
+    fprintf(stderr, "%d %g %g %g\n", p.p.identity, p.f.f[0], p.f.f[1],
+            p.f.f[2]);
+    for (int j = 0; j < 3; j++)
+      p.f.f[j] = 0;
   }
 }
 #else
@@ -311,28 +294,24 @@ static void add_dipole_force() {
   gblcblk[1] = 0; // sum q_i z_i
   gblcblk[2] = 0; // sum q_i
 
-  for (int c = 0; c < local_cells.n; c++) {
-    int np = local_cells.cell[c]->n;
-    Particle *part = local_cells.cell[c]->part;
-    for (int i = 0; i < np; i++) {
-      gblcblk[0] += part[i].p.q * (part[i].r.p[2] - shift);
-      gblcblk[1] += part[i].p.q * part[i].r.p[2];
-      gblcblk[2] += part[i].p.q;
+  for (auto const &p : local_cells.particles()) {
+    gblcblk[0] += p.p.q * (p.r.p[2] - shift);
+    gblcblk[1] += p.p.q * p.r.p[2];
+    gblcblk[2] += p.p.q;
 
-      if (elc_params.dielectric_contrast_on) {
-        if (part[i].r.p[2] < elc_params.space_layer) {
-          gblcblk[0] +=
-              elc_params.di_mid_bot * part[i].p.q * (-part[i].r.p[2] - shift);
-          gblcblk[2] += elc_params.di_mid_bot * part[i].p.q;
-        }
-        if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-          gblcblk[0] += elc_params.di_mid_top * part[i].p.q *
-                        (2 * elc_params.h - part[i].r.p[2] - shift);
-          gblcblk[2] += elc_params.di_mid_top * part[i].p.q;
-        }
+    if (elc_params.dielectric_contrast_on) {
+      if (p.r.p[2] < elc_params.space_layer) {
+        gblcblk[0] += elc_params.di_mid_bot * p.p.q * (-p.r.p[2] - shift);
+        gblcblk[2] += elc_params.di_mid_bot * p.p.q;
+      }
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+        gblcblk[0] += elc_params.di_mid_top * p.p.q *
+                      (2 * elc_params.h - p.r.p[2] - shift);
+        gblcblk[2] += elc_params.di_mid_top * p.p.q;
       }
     }
   }
+
   gblcblk[0] *= pref;
   gblcblk[1] *= pref * height_inverse / uz;
   gblcblk[2] *= pref;
@@ -349,16 +328,12 @@ static void add_dipole_force() {
     field_tot -= field_applied + field_induced;
   }
 
-  for (int c = 0; c < local_cells.n; c++) {
-    int np = local_cells.cell[c]->n;
-    Particle *part = local_cells.cell[c]->part;
-    for (int i = 0; i < np; i++) {
-      part[i].f.f[2] -= field_tot * part[i].p.q;
+  for (auto &p : local_cells.particles()) {
+    p.f.f[2] -= field_tot * p.p.q;
 
-      if (!elc_params.neutralize) {
-        // SUBTRACT the forces of the P3M homogeneous neutralizing background
-        part[i].f.f[2] += gblcblk[2] * part[i].p.q * (part[i].r.p[2] - shift);
-      }
+    if (!elc_params.neutralize) {
+      // SUBTRACT the forces of the P3M homogeneous neutralizing background
+      p.f.f[2] += gblcblk[2] * p.p.q * (p.r.p[2] - shift);
     }
   }
 }
@@ -380,30 +355,24 @@ static double dipole_energy() {
   gblcblk[5] = 0; // sum q_i (z_i - L/2)^2 boundary layers
   gblcblk[6] = 0; // sum q_i z_i           primary box
 
-  for (int c = 0; c < local_cells.n; c++) {
-    int np = local_cells.cell[c]->n;
-    Particle *part = local_cells.cell[c]->part;
-    for (int i = 0; i < np; i++) {
-      gblcblk[0] += part[i].p.q;
-      gblcblk[2] += part[i].p.q * (part[i].r.p[2] - shift);
-      gblcblk[4] += part[i].p.q * (SQR(part[i].r.p[2] - shift));
-      gblcblk[6] += part[i].p.q * part[i].r.p[2];
+  for (auto &p : local_cells.particles()) {
+    gblcblk[0] += p.p.q;
+    gblcblk[2] += p.p.q * (p.r.p[2] - shift);
+    gblcblk[4] += p.p.q * (SQR(p.r.p[2] - shift));
+    gblcblk[6] += p.p.q * p.r.p[2];
 
-      if (elc_params.dielectric_contrast_on) {
-        if (part[i].r.p[2] < elc_params.space_layer) {
-          gblcblk[1] += elc_params.di_mid_bot * part[i].p.q;
-          gblcblk[3] +=
-              elc_params.di_mid_bot * part[i].p.q * (-part[i].r.p[2] - shift);
-          gblcblk[5] += elc_params.di_mid_bot * part[i].p.q *
-                        (SQR(-part[i].r.p[2] - shift));
-        }
-        if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-          gblcblk[1] += elc_params.di_mid_top * part[i].p.q;
-          gblcblk[3] += elc_params.di_mid_top * part[i].p.q *
-                        (2 * elc_params.h - part[i].r.p[2] - shift);
-          gblcblk[5] += elc_params.di_mid_top * part[i].p.q *
-                        (SQR(2 * elc_params.h - part[i].r.p[2] - shift));
-        }
+    if (elc_params.dielectric_contrast_on) {
+      if (p.r.p[2] < elc_params.space_layer) {
+        gblcblk[1] += elc_params.di_mid_bot * p.p.q;
+        gblcblk[3] += elc_params.di_mid_bot * p.p.q * (-p.r.p[2] - shift);
+        gblcblk[5] += elc_params.di_mid_bot * p.p.q * (SQR(-p.r.p[2] - shift));
+      }
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+        gblcblk[1] += elc_params.di_mid_top * p.p.q;
+        gblcblk[3] += elc_params.di_mid_top * p.p.q *
+                      (2 * elc_params.h - p.r.p[2] - shift);
+        gblcblk[5] += elc_params.di_mid_top * p.p.q *
+                      (SQR(2 * elc_params.h - p.r.p[2] - shift));
       }
     }
   }
@@ -470,23 +439,18 @@ static double z_energy() {
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot_on) {
       clear_vec(gblcblk, size);
-      for (int c = 0; c < local_cells.n; c++) {
-        int np = local_cells.cell[c]->n;
-        Particle *part = local_cells.cell[c]->part;
-        for (int i = 0; i < np; i++) {
-          gblcblk[0] += part[i].p.q;
-          gblcblk[1] += part[i].p.q * (part[i].r.p[2] - shift);
-          if (elc_params.dielectric_contrast_on) {
-            if (part[i].r.p[2] < elc_params.space_layer) {
-              gblcblk[2] -= elc_params.di_mid_bot * part[i].p.q;
-              gblcblk[3] -= elc_params.di_mid_bot * part[i].p.q *
-                            (-part[i].r.p[2] - shift);
-            }
-            if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-              gblcblk[2] += elc_params.di_mid_top * part[i].p.q;
-              gblcblk[3] += elc_params.di_mid_top * part[i].p.q *
-                            (2 * elc_params.h - part[i].r.p[2] - shift);
-            }
+      for (auto &p : local_cells.particles()) {
+        gblcblk[0] += p.p.q;
+        gblcblk[1] += p.p.q * (p.r.p[2] - shift);
+        if (elc_params.dielectric_contrast_on) {
+          if (p.r.p[2] < elc_params.space_layer) {
+            gblcblk[2] -= elc_params.di_mid_bot * p.p.q;
+            gblcblk[3] -= elc_params.di_mid_bot * p.p.q * (-p.r.p[2] - shift);
+          }
+          if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+            gblcblk[2] += elc_params.di_mid_top * p.p.q;
+            gblcblk[3] += elc_params.di_mid_top * p.p.q *
+                          (2 * elc_params.h - p.r.p[2] - shift);
           }
         }
       }
@@ -497,48 +461,38 @@ static double z_energy() {
       double fac_delta = delta / (1 - delta);
 
       clear_vec(gblcblk, size);
-      for (int c = 0; c < local_cells.n; c++) {
-        int np = local_cells.cell[c]->n;
-        Particle *part = local_cells.cell[c]->part;
-        for (int i = 0; i < np; i++) {
-          gblcblk[0] += part[i].p.q;
-          gblcblk[1] += part[i].p.q * (part[i].r.p[2] - shift);
-          if (elc_params.dielectric_contrast_on) {
-            if (part[i].r.p[2] < elc_params.space_layer) {
-              gblcblk[2] +=
-                  fac_delta * (elc_params.di_mid_bot + 1) * part[i].p.q;
-              gblcblk[3] +=
-                  part[i].p.q *
-                  (image_sum_b(elc_params.di_mid_bot * delta,
-                               -(2 * elc_params.h + part[i].r.p[2])) +
-                   image_sum_b(delta, -(2 * elc_params.h - part[i].r.p[2])));
-            } else {
-              gblcblk[2] +=
-                  fac_delta_mid_bot * (1 + elc_params.di_mid_top) * part[i].p.q;
-              gblcblk[3] +=
-                  part[i].p.q *
-                  (image_sum_b(elc_params.di_mid_bot, -part[i].r.p[2]) +
-                   image_sum_b(delta, -(2 * elc_params.h - part[i].r.p[2])));
-            }
-            if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-              // note the minus sign here which is required due to |z_i-z_j|
-              gblcblk[2] -=
-                  fac_delta * (elc_params.di_mid_top + 1) * part[i].p.q;
-              gblcblk[3] -=
-                  part[i].p.q *
-                  (image_sum_t(elc_params.di_mid_top * delta,
-                               4 * elc_params.h - part[i].r.p[2]) +
-                   image_sum_t(delta, 2 * elc_params.h + part[i].r.p[2]));
-            } else {
-              // note the minus sign here which is required due to |z_i-z_j|
-              gblcblk[2] -=
-                  fac_delta_mid_top * (1 + elc_params.di_mid_bot) * part[i].p.q;
-              gblcblk[3] -=
-                  part[i].p.q *
-                  (image_sum_t(elc_params.di_mid_top,
-                               2 * elc_params.h - part[i].r.p[2]) +
-                   image_sum_t(delta, 2 * elc_params.h + part[i].r.p[2]));
-            }
+      for (auto &p : local_cells.particles()) {
+        gblcblk[0] += p.p.q;
+        gblcblk[1] += p.p.q * (p.r.p[2] - shift);
+        if (elc_params.dielectric_contrast_on) {
+          if (p.r.p[2] < elc_params.space_layer) {
+            gblcblk[2] += fac_delta * (elc_params.di_mid_bot + 1) * p.p.q;
+            gblcblk[3] +=
+                p.p.q * (image_sum_b(elc_params.di_mid_bot * delta,
+                                     -(2 * elc_params.h + p.r.p[2])) +
+                         image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
+          } else {
+            gblcblk[2] +=
+                fac_delta_mid_bot * (1 + elc_params.di_mid_top) * p.p.q;
+            gblcblk[3] +=
+                p.p.q * (image_sum_b(elc_params.di_mid_bot, -p.r.p[2]) +
+                         image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
+          }
+          if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+            // note the minus sign here which is required due to |z_i-z_j|
+            gblcblk[2] -= fac_delta * (elc_params.di_mid_top + 1) * p.p.q;
+            gblcblk[3] -=
+                p.p.q * (image_sum_t(elc_params.di_mid_top * delta,
+                                     4 * elc_params.h - p.r.p[2]) +
+                         image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
+          } else {
+            // note the minus sign here which is required due to |z_i-z_j|
+            gblcblk[2] -=
+                fac_delta_mid_top * (1 + elc_params.di_mid_bot) * p.p.q;
+            gblcblk[3] -=
+                p.p.q * (image_sum_t(elc_params.di_mid_top,
+                                     2 * elc_params.h - p.r.p[2]) +
+                         image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
           }
         }
       }
@@ -560,16 +514,12 @@ static void add_z_force() {
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot_on) {
       clear_vec(gblcblk, size);
-      for (int c = 0; c < local_cells.n; c++) {
-        int np = local_cells.cell[c]->n;
-        Particle *part = local_cells.cell[c]->part;
-        /* just counter the 2 pi |z| contribution stemming from P3M */
-        for (int i = 0; i < np; i++) {
-          if (part[i].r.p[2] < elc_params.space_layer)
-            gblcblk[0] -= elc_params.di_mid_bot * part[i].p.q;
-          if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer))
-            gblcblk[0] += elc_params.di_mid_top * part[i].p.q;
-        }
+      /* just counter the 2 pi |z| contribution stemming from P3M */
+      for (auto &p : local_cells.particles()) {
+        if (p.r.p[2] < elc_params.space_layer)
+          gblcblk[0] -= elc_params.di_mid_bot * p.p.q;
+        if (p.r.p[2] > (elc_params.h - elc_params.space_layer))
+          gblcblk[0] += elc_params.di_mid_top * p.p.q;
       }
     } else {
       double delta = elc_params.di_mid_top * elc_params.di_mid_bot;
@@ -578,25 +528,19 @@ static void add_z_force() {
       double fac_delta = delta / (1 - delta);
 
       clear_vec(gblcblk, size);
-      for (int c = 0; c < local_cells.n; c++) {
-        int np = local_cells.cell[c]->n;
-        Particle *part = local_cells.cell[c]->part;
-        for (int i = 0; i < np; i++) {
-          if (part[i].r.p[2] < elc_params.space_layer) {
-            gblcblk[0] += fac_delta * (elc_params.di_mid_bot + 1) * part[i].p.q;
-          } else {
-            gblcblk[0] +=
-                fac_delta_mid_bot * (1 + elc_params.di_mid_top) * part[i].p.q;
-          }
+      for (auto &p : local_cells.particles()) {
+        if (p.r.p[2] < elc_params.space_layer) {
+          gblcblk[0] += fac_delta * (elc_params.di_mid_bot + 1) * p.p.q;
+        } else {
+          gblcblk[0] += fac_delta_mid_bot * (1 + elc_params.di_mid_top) * p.p.q;
+        }
 
-          if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-            // note the minus sign here which is required due to |z_i-z_j|
-            gblcblk[0] -= fac_delta * (elc_params.di_mid_top + 1) * part[i].p.q;
-          } else {
-            // note the minus sign here which is required due to |z_i-z_j|
-            gblcblk[0] -=
-                fac_delta_mid_top * (1 + elc_params.di_mid_bot) * part[i].p.q;
-          }
+        if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+          // note the minus sign here which is required due to |z_i-z_j|
+          gblcblk[0] -= fac_delta * (elc_params.di_mid_top + 1) * p.p.q;
+        } else {
+          // note the minus sign here which is required due to |z_i-z_j|
+          gblcblk[0] -= fac_delta_mid_top * (1 + elc_params.di_mid_bot) * p.p.q;
         }
       }
     }
@@ -605,12 +549,8 @@ static void add_z_force() {
 
     distribute(size);
 
-    for (int c = 0; c < local_cells.n; c++) {
-      int np = local_cells.cell[c]->n;
-      Particle *part = local_cells.cell[c]->part;
-      for (int i = 0; i < np; i++) {
-        part[i].f.f[2] += gblcblk[0] * part[i].p.q;
-      }
+    for (auto &p : local_cells.particles()) {
+      p.f.f[2] += gblcblk[0] * p.p.q;
     }
   }
 }
@@ -644,86 +584,80 @@ static void setup_P(int p, double omega) {
   clear_vec(gblcblk, size);
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      e = exp(omega * part[i].r.p[2]);
+  for (auto &p : local_cells.particles()) {
+    e = exp(omega * p.r.p[2]);
 
-      partblk[size * ic + POQESM] = part[i].p.q * scxcache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * scxcache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * scxcache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * scxcache[o + ic].c * e;
+    partblk[size * ic + POQESM] = p.p.q * scxcache[o + ic].s / e;
+    partblk[size * ic + POQESP] = p.p.q * scxcache[o + ic].s * e;
+    partblk[size * ic + POQECM] = p.p.q * scxcache[o + ic].c / e;
+    partblk[size * ic + POQECP] = p.p.q * scxcache[o + ic].c * e;
 
-      add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
-      if (elc_params.dielectric_contrast_on) {
-        if (part[i].r.p[2] <
-            elc_params.space_layer) { // handle the lower case first
-          // negative sign is okay here as the image is located at
-          // -part[i].r.p[2]
+    if (elc_params.dielectric_contrast_on) {
+      if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
+        // negative sign is okay here as the image is located at
+        // -p.r.p[2]
 
-          e = exp(-omega * part[i].r.p[2]);
+        e = exp(-omega * p.r.p[2]);
 
-          scale = part[i].p.q * elc_params.di_mid_bot;
+        scale = p.p.q * elc_params.di_mid_bot;
 
-          lclimgebot[POQESM] = scxcache[o + ic].s / e;
-          lclimgebot[POQESP] = scxcache[o + ic].s * e;
-          lclimgebot[POQECM] = scxcache[o + ic].c / e;
-          lclimgebot[POQECP] = scxcache[o + ic].c * e;
+        lclimgebot[POQESM] = scxcache[o + ic].s / e;
+        lclimgebot[POQESP] = scxcache[o + ic].s * e;
+        lclimgebot[POQECM] = scxcache[o + ic].c / e;
+        lclimgebot[POQECP] = scxcache[o + ic].c * e;
 
-          addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
+        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
-          e = (exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta;
+        e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta;
 
-        } else {
+      } else {
 
-          e = (exp(omega * (-part[i].r.p[2])) +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_top) *
-              fac_delta_mid_bot;
-        }
-
-        lclimge[POQESP] += part[i].p.q * scxcache[o + ic].s * e;
-        lclimge[POQECP] += part[i].p.q * scxcache[o + ic].c * e;
-
-        if (part[i].r.p[2] >
-            (elc_params.h -
-             elc_params.space_layer)) { // handle the upper case now
-
-          e = exp(omega * (2 * elc_params.h - part[i].r.p[2]));
-
-          scale = part[i].p.q * elc_params.di_mid_top;
-
-          lclimgetop[POQESM] = scxcache[o + ic].s / e;
-          lclimgetop[POQESP] = scxcache[o + ic].s * e;
-          lclimgetop[POQECM] = scxcache[o + ic].c / e;
-          lclimgetop[POQECP] = scxcache[o + ic].c * e;
-
-          addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
-
-          e = (exp(omega * (part[i].r.p[2] - 4 * elc_params.h)) *
-                   elc_params.di_mid_top +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta;
-
-        } else {
-
-          e = (exp(omega * (+part[i].r.p[2] - 2 * elc_params.h)) +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot) *
-              fac_delta_mid_top;
-        }
-
-        lclimge[POQESM] += part[i].p.q * scxcache[o + ic].s * e;
-        lclimge[POQECM] += part[i].p.q * scxcache[o + ic].c * e;
+        e = (exp(omega * (-p.r.p[2])) +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_top) *
+            fac_delta_mid_bot;
       }
 
-      ic++;
+      lclimge[POQESP] += p.p.q * scxcache[o + ic].s * e;
+      lclimge[POQECP] += p.p.q * scxcache[o + ic].c * e;
+
+      if (p.r.p[2] > (elc_params.h -
+                      elc_params.space_layer)) { // handle the upper case now
+
+        e = exp(omega * (2 * elc_params.h - p.r.p[2]));
+
+        scale = p.p.q * elc_params.di_mid_top;
+
+        lclimgetop[POQESM] = scxcache[o + ic].s / e;
+        lclimgetop[POQESP] = scxcache[o + ic].s * e;
+        lclimgetop[POQECM] = scxcache[o + ic].c / e;
+        lclimgetop[POQECP] = scxcache[o + ic].c * e;
+
+        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
+
+        e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
+                 elc_params.di_mid_top +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta;
+
+      } else {
+
+        e = (exp(omega * (+p.r.p[2] - 2 * elc_params.h)) +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot) *
+            fac_delta_mid_top;
+      }
+
+      lclimge[POQESM] += p.p.q * scxcache[o + ic].s * e;
+      lclimge[POQECM] += p.p.q * scxcache[o + ic].c * e;
     }
+
+    ic++;
   }
 
   scale_vec(pref, gblcblk, size);
@@ -758,87 +692,83 @@ static void setup_Q(int q, double omega) {
   clear_vec(lclimge, size);
   clear_vec(gblcblk, size);
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      e = exp(omega * part[i].r.p[2]);
+  for (auto &p : local_cells.particles()) {
+    e = exp(omega * p.r.p[2]);
 
-      partblk[size * ic + POQESM] = part[i].p.q * scycache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * scycache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * scycache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * scycache[o + ic].c * e;
+    partblk[size * ic + POQESM] = p.p.q * scycache[o + ic].s / e;
+    partblk[size * ic + POQESP] = p.p.q * scycache[o + ic].s * e;
+    partblk[size * ic + POQECM] = p.p.q * scycache[o + ic].c / e;
+    partblk[size * ic + POQECP] = p.p.q * scycache[o + ic].c * e;
 
-      add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
-      if (elc_params.dielectric_contrast_on) {
-        if (part[i].r.p[2] <
-            elc_params.space_layer) { // handle the lower case first
-          // negative sign before omega is okay here as the image is located at
-          // -part[i].r.p[2]
+    if (elc_params.dielectric_contrast_on) {
+      if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
+        // negative sign before omega is okay here as the image is located
+        // at
+        // -p.r.p[2]
 
-          e = exp(-omega * part[i].r.p[2]);
+        e = exp(-omega * p.r.p[2]);
 
-          scale = part[i].p.q * elc_params.di_mid_bot;
+        scale = p.p.q * elc_params.di_mid_bot;
 
-          lclimgebot[POQESM] = scycache[o + ic].s / e;
-          lclimgebot[POQESP] = scycache[o + ic].s * e;
-          lclimgebot[POQECM] = scycache[o + ic].c / e;
-          lclimgebot[POQECP] = scycache[o + ic].c * e;
+        lclimgebot[POQESM] = scycache[o + ic].s / e;
+        lclimgebot[POQESP] = scycache[o + ic].s * e;
+        lclimgebot[POQECM] = scycache[o + ic].c / e;
+        lclimgebot[POQECP] = scycache[o + ic].c * e;
 
-          addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
+        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
-          e = (exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta;
+        e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta;
 
-        } else {
+      } else {
 
-          e = (exp(omega * (-part[i].r.p[2])) +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_top) *
-              fac_delta_mid_bot;
-        }
-
-        lclimge[POQESP] += part[i].p.q * scycache[o + ic].s * e;
-        lclimge[POQECP] += part[i].p.q * scycache[o + ic].c * e;
-
-        if (part[i].r.p[2] >
-            (elc_params.h -
-             elc_params.space_layer)) { // handle the upper case now
-
-          e = exp(omega * (2 * elc_params.h - part[i].r.p[2]));
-
-          scale = part[i].p.q * elc_params.di_mid_top;
-
-          lclimgetop[POQESM] = scycache[o + ic].s / e;
-          lclimgetop[POQESP] = scycache[o + ic].s * e;
-          lclimgetop[POQECM] = scycache[o + ic].c / e;
-          lclimgetop[POQECP] = scycache[o + ic].c * e;
-
-          addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
-
-          e = (exp(omega * (part[i].r.p[2] - 4 * elc_params.h)) *
-                   elc_params.di_mid_top +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta;
-
-        } else {
-
-          e = (exp(omega * (part[i].r.p[2] - 2 * elc_params.h)) +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot) *
-              fac_delta_mid_top;
-        }
-
-        lclimge[POQESM] += part[i].p.q * scycache[o + ic].s * e;
-        lclimge[POQECM] += part[i].p.q * scycache[o + ic].c * e;
+        e = (exp(omega * (-p.r.p[2])) +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_top) *
+            fac_delta_mid_bot;
       }
 
-      ic++;
+      lclimge[POQESP] += p.p.q * scycache[o + ic].s * e;
+      lclimge[POQECP] += p.p.q * scycache[o + ic].c * e;
+
+      if (p.r.p[2] > (elc_params.h -
+                      elc_params.space_layer)) { // handle the upper case now
+
+        e = exp(omega * (2 * elc_params.h - p.r.p[2]));
+
+        scale = p.p.q * elc_params.di_mid_top;
+
+        lclimgetop[POQESM] = scycache[o + ic].s / e;
+        lclimgetop[POQESP] = scycache[o + ic].s * e;
+        lclimgetop[POQECM] = scycache[o + ic].c / e;
+        lclimgetop[POQECP] = scycache[o + ic].c * e;
+
+        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
+
+        e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
+                 elc_params.di_mid_top +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta;
+
+      } else {
+
+        e = (exp(omega * (p.r.p[2] - 2 * elc_params.h)) +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot) *
+            fac_delta_mid_top;
+      }
+
+      lclimge[POQESM] += p.p.q * scycache[o + ic].s * e;
+      lclimge[POQECM] += p.p.q * scycache[o + ic].c * e;
     }
+
+    ic++;
   }
+
   scale_vec(pref, gblcblk, size);
 
   if (elc_params.dielectric_contrast_on) {
@@ -853,20 +783,16 @@ static void add_P_force() {
   int size = 4;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                        partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                        partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                        partblk[size * ic + POQECP] * gblcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                        partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                        partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                        partblk[size * ic + POQESP] * gblcblk[POQESM];
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    p.f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
+                partblk[size * ic + POQECM] * gblcblk[POQESP] +
+                partblk[size * ic + POQESP] * gblcblk[POQECM] -
+                partblk[size * ic + POQECP] * gblcblk[POQESM];
+    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                partblk[size * ic + POQESM] * gblcblk[POQESP] -
+                partblk[size * ic + POQECP] * gblcblk[POQECM] -
+                partblk[size * ic + POQESP] * gblcblk[POQESM];
+    ic++;
   }
 }
 
@@ -877,16 +803,14 @@ static double P_energy(double omega) {
   double pref = 1 / omega;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    for (i = 0; i < np; i++) {
-      eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                     partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                     partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                     partblk[size * ic + POQESP] * gblcblk[POQESM]);
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
+                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
+                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    ic++;
   }
+
   return eng;
 }
 
@@ -896,20 +820,16 @@ static void add_Q_force() {
   int size = 4;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      part[i].f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                        partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                        partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                        partblk[size * ic + POQECP] * gblcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                        partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                        partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                        partblk[size * ic + POQESP] * gblcblk[POQESM];
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    p.f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
+                partblk[size * ic + POQECM] * gblcblk[POQESP] +
+                partblk[size * ic + POQESP] * gblcblk[POQECM] -
+                partblk[size * ic + POQECP] * gblcblk[POQESM];
+    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                partblk[size * ic + POQESM] * gblcblk[POQESP] -
+                partblk[size * ic + POQECP] * gblcblk[POQECM] -
+                partblk[size * ic + POQESP] * gblcblk[POQESM];
+    ic++;
   }
 }
 
@@ -920,15 +840,12 @@ static double Q_energy(double omega) {
   double pref = 1 / omega;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    for (i = 0; i < np; i++) {
-      eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                     partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                     partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                     partblk[size * ic + POQESP] * gblcblk[POQESM]);
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
+                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
+                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    ic++;
   }
   return eng;
 }
@@ -961,110 +878,104 @@ static void setup_PQ(int p, int q, double omega) {
   clear_vec(gblcblk, size);
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      e = exp(omega * part[i].r.p[2]);
+  for (auto &p : local_cells.particles()) {
+    e = exp(omega * p.r.p[2]);
 
-      partblk[size * ic + PQESSM] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q / e;
-      partblk[size * ic + PQESCM] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q / e;
-      partblk[size * ic + PQECSM] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q / e;
-      partblk[size * ic + PQECCM] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q / e;
+    partblk[size * ic + PQESSM] =
+        scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q / e;
+    partblk[size * ic + PQESCM] =
+        scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q / e;
+    partblk[size * ic + PQECSM] =
+        scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q / e;
+    partblk[size * ic + PQECCM] =
+        scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q / e;
 
-      partblk[size * ic + PQESSP] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
-      partblk[size * ic + PQESCP] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
-      partblk[size * ic + PQECSP] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
-      partblk[size * ic + PQECCP] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+    partblk[size * ic + PQESSP] =
+        scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e;
+    partblk[size * ic + PQESCP] =
+        scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e;
+    partblk[size * ic + PQECSP] =
+        scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e;
+    partblk[size * ic + PQECCP] =
+        scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e;
 
-      add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
 
-      if (elc_params.dielectric_contrast_on) {
-        if (part[i].r.p[2] <
-            elc_params.space_layer) { // handle the lower case first
-          // change e to take into account the z position of the images
+    if (elc_params.dielectric_contrast_on) {
+      if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
+        // change e to take into account the z position of the images
 
-          e = exp(-omega * part[i].r.p[2]);
-          scale = part[i].p.q * elc_params.di_mid_bot;
+        e = exp(-omega * p.r.p[2]);
+        scale = p.p.q * elc_params.di_mid_bot;
 
-          lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-          lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-          lclimgebot[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-          lclimgebot[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
+        lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
+        lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
+        lclimgebot[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
+        lclimgebot[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
 
-          lclimgebot[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-          lclimgebot[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-          lclimgebot[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-          lclimgebot[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
+        lclimgebot[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
+        lclimgebot[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
+        lclimgebot[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
+        lclimgebot[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
 
-          addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
+        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
-          e = (exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta * part[i].p.q;
+        e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta * p.p.q;
 
-        } else {
+      } else {
 
-          e = (exp(omega * (-part[i].r.p[2])) +
-               exp(omega * (part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_top) *
-              fac_delta_mid_bot * part[i].p.q;
-        }
-
-        lclimge[PQESSP] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimge[PQESCP] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimge[PQECSP] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimge[PQECCP] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-        if (part[i].r.p[2] >
-            (elc_params.h -
-             elc_params.space_layer)) { // handle the upper case now
-
-          e = exp(omega * (2 * elc_params.h - part[i].r.p[2]));
-          scale = part[i].p.q * elc_params.di_mid_top;
-
-          lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-          lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-          lclimgetop[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-          lclimgetop[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-          lclimgetop[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-          lclimgetop[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-          lclimgetop[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-          lclimgetop[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-          addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
-
-          e = (exp(omega * (part[i].r.p[2] - 4 * elc_params.h)) *
-                   elc_params.di_mid_top +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h))) *
-              fac_delta * part[i].p.q;
-
-        } else {
-
-          e = (exp(omega * (part[i].r.p[2] - 2 * elc_params.h)) +
-               exp(omega * (-part[i].r.p[2] - 2 * elc_params.h)) *
-                   elc_params.di_mid_bot) *
-              fac_delta_mid_top * part[i].p.q;
-        }
-
-        lclimge[PQESSM] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimge[PQESCM] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimge[PQECSM] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimge[PQECCM] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
+        e = (exp(omega * (-p.r.p[2])) +
+             exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_top) *
+            fac_delta_mid_bot * p.p.q;
       }
 
-      ic++;
+      lclimge[PQESSP] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
+      lclimge[PQESCP] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
+      lclimge[PQECSP] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
+      lclimge[PQECCP] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
+
+      if (p.r.p[2] > (elc_params.h -
+                      elc_params.space_layer)) { // handle the upper case now
+
+        e = exp(omega * (2 * elc_params.h - p.r.p[2]));
+        scale = p.p.q * elc_params.di_mid_top;
+
+        lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
+        lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
+        lclimgetop[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
+        lclimgetop[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
+
+        lclimgetop[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
+        lclimgetop[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
+        lclimgetop[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
+        lclimgetop[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
+
+        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
+
+        e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
+                 elc_params.di_mid_top +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
+            fac_delta * p.p.q;
+
+      } else {
+
+        e = (exp(omega * (p.r.p[2] - 2 * elc_params.h)) +
+             exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
+                 elc_params.di_mid_bot) *
+            fac_delta_mid_top * p.p.q;
+      }
+
+      lclimge[PQESSM] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
+      lclimge[PQESCM] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
+      lclimge[PQECSM] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
+      lclimge[PQECCM] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
     }
+
+    ic++;
   }
 
   scale_vec(pref, gblcblk, size);
@@ -1082,38 +993,32 @@ static void add_PQ_force(int p, int q, double omega) {
   int size = 8;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] +=
-          pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
-                    partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
-                    partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
-                    partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
-                    partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
-                    partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
-      part[i].f.f[1] +=
-          pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
-                    partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
-                    partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
-                    partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
-                    partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
-                    partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
-      part[i].f.f[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                         partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                         partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                         partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
-                         partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
-                         partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
-                         partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
-                         partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
+                          partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
+                          partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
+                          partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
+                          partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
+                          partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
+                          partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
+                          partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
+    p.f.f[1] += pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
+                          partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
+                          partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
+                          partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
+                          partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
+                          partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
+                          partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
+                          partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
+    p.f.f[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+                 partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
+                 partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
+                 partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
+                 partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
+                 partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
+                 partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
+                 partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    ic++;
   }
 }
 
@@ -1124,19 +1029,16 @@ static double PQ_energy(double omega) {
   double pref = 1 / omega;
 
   ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    for (i = 0; i < np; i++) {
-      eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                     partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                     partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                     partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
-                     partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
-                     partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
-                     partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
-                     partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
-      ic++;
-    }
+  for (auto &p : local_cells.particles()) {
+    eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+                   partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
+                   partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
+                   partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
+                   partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
+                   partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
+                   partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
+                   partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    ic++;
   }
   return eng;
 }
@@ -1276,7 +1178,8 @@ int ELC_sanity_checks() {
     runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
     return 1;
   }
-  /* The product of the two dielectric contrasts should be < 1 for ELC to work.
+  /* The product of the two dielectric contrasts should be < 1 for ELC to
+     work.
      This is not the case for
      two parallel boundaries, which can only be treated by the constant
      potential code */
@@ -1312,8 +1215,8 @@ void ELC_init() {
       maxsl = .5 * elc_params.h;
     if (elc_params.space_layer > maxsl) {
       if (maxsl <= 0) {
-        runtimeErrorMsg()
-            << "P3M real space cutoff too large for ELC w/ dielectric contrast";
+        runtimeErrorMsg() << "P3M real space cutoff too large for ELC w/ "
+                             "dielectric contrast";
       } else
         elc_params.space_layer = maxsl;
     }
@@ -1425,37 +1328,29 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 ////////////////////////////////////////////////////////////////////////////////////
 
 void ELC_P3M_self_forces() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
   double pos[3];
   double q, d[3], dist, dist2;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (p[i].r.p[2] < elc_params.space_layer) {
-        q = elc_params.di_mid_bot * p[i].p.q * p[i].p.q;
-        pos[0] = p[i].r.p[0];
-        pos[1] = p[i].r.p[1];
-        pos[2] = -p[i].r.p[2];
-        get_mi_vector(d, p[i].r.p, pos);
-        dist2 = sqrlen(d);
-        dist = sqrt(dist2);
-        p3m_add_pair_force(q, d, dist2, dist, p[i].f.f);
-      }
-      if (p[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        q = elc_params.di_mid_top * p[i].p.q * p[i].p.q;
-        pos[0] = p[i].r.p[0];
-        pos[1] = p[i].r.p[1];
-        pos[2] = 2 * elc_params.h - p[i].r.p[2];
-        get_mi_vector(d, p[i].r.p, pos);
-        dist2 = sqrlen(d);
-        dist = sqrt(dist2);
-        p3m_add_pair_force(q, d, dist2, dist, p[i].f.f);
-      }
+  for (auto &p : local_cells.particles()) {
+    if (p.r.p[2] < elc_params.space_layer) {
+      q = elc_params.di_mid_bot * p.p.q * p.p.q;
+      pos[0] = p.r.p[0];
+      pos[1] = p.r.p[1];
+      pos[2] = -p.r.p[2];
+      get_mi_vector(d, p.r.p, pos);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
+    }
+    if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+      q = elc_params.di_mid_top * p.p.q * p.p.q;
+      pos[0] = p.r.p[0];
+      pos[1] = p.r.p[1];
+      pos[2] = 2 * elc_params.h - p.r.p[2];
+      get_mi_vector(d, p.r.p, pos);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      p3m_add_pair_force(q, d, dist2, dist, p.f.f);
     }
   }
 }
@@ -1463,42 +1358,34 @@ void ELC_P3M_self_forces() {
 ////////////////////////////////////////////////////////////////////////////////////
 
 void ELC_p3m_charge_assign_both() {
-  Cell *cell;
-  Particle *p;
   double pos[3];
-  int i, c, np;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
-  for (i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (p[i].p.q != 0.0) {
-        p3m_assign_charge(p[i].p.q, p[i].r.p, cp_cnt);
+  for (auto &p : local_cells.particles()) {
+    if (p.p.q != 0.0) {
+      p3m_assign_charge(p.p.q, p.r.p, cp_cnt);
 
-        if (p[i].r.p[2] < elc_params.space_layer) {
-          double q = elc_params.di_mid_bot * p[i].p.q;
-          pos[0] = p[i].r.p[0];
-          pos[1] = p[i].r.p[1];
-          pos[2] = -p[i].r.p[2];
-          p3m_assign_charge(q, pos, -1);
-        }
-
-        if (p[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-          double q = elc_params.di_mid_top * p[i].p.q;
-          pos[0] = p[i].r.p[0];
-          pos[1] = p[i].r.p[1];
-          pos[2] = 2 * elc_params.h - p[i].r.p[2];
-          p3m_assign_charge(q, pos, -1);
-        }
-
-        cp_cnt++;
+      if (p.r.p[2] < elc_params.space_layer) {
+        double q = elc_params.di_mid_bot * p.p.q;
+        pos[0] = p.r.p[0];
+        pos[1] = p.r.p[1];
+        pos[2] = -p.r.p[2];
+        p3m_assign_charge(q, pos, -1);
       }
+
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+        double q = elc_params.di_mid_top * p.p.q;
+        pos[0] = p.r.p[0];
+        pos[1] = p.r.p[1];
+        pos[2] = 2 * elc_params.h - p.r.p[2];
+        p3m_assign_charge(q, pos, -1);
+      }
+
+      cp_cnt++;
     }
   }
 #ifdef P3M_STORE_CA_FRAC
@@ -1507,36 +1394,28 @@ void ELC_p3m_charge_assign_both() {
 }
 
 void ELC_p3m_charge_assign_image() {
-  Cell *cell;
-  Particle *p;
   double pos[3];
-  int i, c, np;
   /* prepare local FFT mesh */
-  for (i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (p[i].p.q != 0.0) {
+  for (auto &p : local_cells.particles()) {
+    if (p.p.q != 0.0) {
 
-        if (p[i].r.p[2] < elc_params.space_layer) {
-          double q = elc_params.di_mid_bot * p[i].p.q;
-          pos[0] = p[i].r.p[0];
-          pos[1] = p[i].r.p[1];
-          pos[2] = -p[i].r.p[2];
-          p3m_assign_charge(q, pos, -1);
-        }
+      if (p.r.p[2] < elc_params.space_layer) {
+        double q = elc_params.di_mid_bot * p.p.q;
+        pos[0] = p.r.p[0];
+        pos[1] = p.r.p[1];
+        pos[2] = -p.r.p[2];
+        p3m_assign_charge(q, pos, -1);
+      }
 
-        if (p[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-          double q = elc_params.di_mid_top * p[i].p.q;
-          pos[0] = p[i].r.p[0];
-          pos[1] = p[i].r.p[1];
-          pos[2] = 2 * elc_params.h - p[i].r.p[2];
-          p3m_assign_charge(q, pos, -1);
-        }
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+        double q = elc_params.di_mid_top * p.p.q;
+        pos[0] = p.r.p[0];
+        pos[1] = p.r.p[1];
+        pos[2] = 2 * elc_params.h - p.r.p[2];
+        p3m_assign_charge(q, pos, -1);
       }
     }
   }
@@ -1660,44 +1539,36 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
 //////////////////////////////////////////////////////////////////////////////////
 
 double ELC_P3M_dielectric_layers_energy_self() {
-  int c, np1, i;
-  Cell *cell;
-  Particle *p1;
   double pos[3], q;
   double dist, dist2, d[3];
   double eng = 0.0;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p1 = cell->part;
-    np1 = cell->n;
 
-    // Loop cell neighbors
-    for (i = 0; i < np1; i++) {
-      // Loop neighbor cell particles
+  // Loop cell neighbors
+  for (auto &p : local_cells.particles()) {
+    // Loop neighbor cell particles
 
-      if (p1[i].r.p[2] < elc_params.space_layer) {
-        q = elc_params.di_mid_bot * p1[i].p.q * p1[i].p.q;
-        pos[0] = p1[i].r.p[0];
-        pos[1] = p1[i].r.p[1];
-        pos[2] = -p1[i].r.p[2];
-        get_mi_vector(d, p1[i].r.p, pos);
-        dist2 = sqrlen(d);
-        dist = sqrt(dist2);
-        eng += p3m_pair_energy(q, d, dist2, dist);
-        //	fprintf(stderr,"energy is %f\n",eng);
-      }
+    if (p.r.p[2] < elc_params.space_layer) {
+      q = elc_params.di_mid_bot * p.p.q * p.p.q;
+      pos[0] = p.r.p[0];
+      pos[1] = p.r.p[1];
+      pos[2] = -p.r.p[2];
+      get_mi_vector(d, p.r.p, pos);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      eng += p3m_pair_energy(q, d, dist2, dist);
+      //	fprintf(stderr,"energy is %f\n",eng);
+    }
 
-      if (p1[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        q = elc_params.di_mid_top * p1[i].p.q * p1[i].p.q;
-        pos[0] = p1[i].r.p[0];
-        pos[1] = p1[i].r.p[1];
-        pos[2] = 2 * elc_params.h - p1[i].r.p[2];
-        get_mi_vector(d, p1[i].r.p, pos);
-        dist2 = sqrlen(d);
-        dist = sqrt(dist2);
-        eng += p3m_pair_energy(q, d, dist2, dist);
-        //	fprintf(stderr,"energy is %f\n",eng);
-      }
+    if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+      q = elc_params.di_mid_top * p.p.q * p.p.q;
+      pos[0] = p.r.p[0];
+      pos[1] = p.r.p[1];
+      pos[2] = 2 * elc_params.h - p.r.p[2];
+      get_mi_vector(d, p.r.p, pos);
+      dist2 = sqrlen(d);
+      dist = sqrt(dist2);
+      eng += p3m_pair_energy(q, d, dist2, dist);
+      //	fprintf(stderr,"energy is %f\n",eng);
     }
   }
   return (eng);
@@ -1706,39 +1577,31 @@ double ELC_P3M_dielectric_layers_energy_self() {
 /////////////////////////////////////////////////////////////////////////////////
 
 void ELC_P3M_modify_p3m_sums_both() {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
   double node_sums[3], tot_sums[3];
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     node_sums[i] = 0.0;
     tot_sums[i] = 0.0;
   }
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (part[i].p.q != 0.0) {
+  for (auto &p : local_cells.particles()) {
+    if (p.p.q != 0.0) {
+
+      node_sums[0] += 1.0;
+      node_sums[1] += SQR(p.p.q);
+      node_sums[2] += p.p.q;
+
+      if (p.r.p[2] < elc_params.space_layer) {
 
         node_sums[0] += 1.0;
-        node_sums[1] += SQR(part[i].p.q);
-        node_sums[2] += part[i].p.q;
+        node_sums[1] += SQR(elc_params.di_mid_bot * p.p.q);
+        node_sums[2] += elc_params.di_mid_bot * p.p.q;
+      }
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
-        if (part[i].r.p[2] < elc_params.space_layer) {
-
-          node_sums[0] += 1.0;
-          node_sums[1] += SQR(elc_params.di_mid_bot * part[i].p.q);
-          node_sums[2] += elc_params.di_mid_bot * part[i].p.q;
-        }
-        if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
-
-          node_sums[0] += 1.0;
-          node_sums[1] += SQR(elc_params.di_mid_top * part[i].p.q);
-          node_sums[2] += elc_params.di_mid_top * part[i].p.q;
-        }
+        node_sums[0] += 1.0;
+        node_sums[1] += SQR(elc_params.di_mid_top * p.p.q);
+        node_sums[2] += elc_params.di_mid_top * p.p.q;
       }
     }
   }
@@ -1750,35 +1613,27 @@ void ELC_P3M_modify_p3m_sums_both() {
 }
 
 void ELC_P3M_modify_p3m_sums_image() {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
   double node_sums[3], tot_sums[3];
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     node_sums[i] = 0.0;
     tot_sums[i] = 0.0;
   }
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (part[i].p.q != 0.0) {
+  for (auto &p : local_cells.particles()) {
+    if (p.p.q != 0.0) {
 
-        if (part[i].r.p[2] < elc_params.space_layer) {
+      if (p.r.p[2] < elc_params.space_layer) {
 
-          node_sums[0] += 1.0;
-          node_sums[1] += SQR(elc_params.di_mid_bot * part[i].p.q);
-          node_sums[2] += elc_params.di_mid_bot * part[i].p.q;
-        }
-        if (part[i].r.p[2] > (elc_params.h - elc_params.space_layer)) {
+        node_sums[0] += 1.0;
+        node_sums[1] += SQR(elc_params.di_mid_bot * p.p.q);
+        node_sums[2] += elc_params.di_mid_bot * p.p.q;
+      }
+      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
 
-          node_sums[0] += 1.0;
-          node_sums[1] += SQR(elc_params.di_mid_top * part[i].p.q);
-          node_sums[2] += elc_params.di_mid_top * part[i].p.q;
-        }
+        node_sums[0] += 1.0;
+        node_sums[1] += SQR(elc_params.di_mid_top * p.p.q);
+        node_sums[2] += elc_params.di_mid_top * p.p.q;
       }
     }
   }
@@ -1792,27 +1647,19 @@ void ELC_P3M_modify_p3m_sums_image() {
 
 // this function is required in force.cpp for energy evaluation
 void ELC_P3M_restore_p3m_sums() {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
   double node_sums[3], tot_sums[3];
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     node_sums[i] = 0.0;
     tot_sums[i] = 0.0;
   }
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (part[i].p.q != 0.0) {
+  for (auto &p : local_cells.particles()) {
+    if (p.p.q != 0.0) {
 
-        node_sums[0] += 1.0;
-        node_sums[1] += SQR(part[i].p.q);
-        node_sums[2] += part[i].p.q;
-      }
+      node_sums[0] += 1.0;
+      node_sums[1] += SQR(p.p.q);
+      node_sums[2] += p.p.q;
     }
   }
 
