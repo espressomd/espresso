@@ -111,38 +111,32 @@ void meta_perform() {
   double ppos1[3] = {0, 0, 0}, ppos2[3] = {0, 0, 0}, factor;
   int img1[3], img2[3], c, i, np, flag1 = 0, flag2 = 0;
   Particle *p, *p1 = NULL, *p2 = NULL;
-  Cell *cell;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (p[i].p.identity == meta_pid1) {
-        flag1 = 1;
-        p1 = &p[i];
-        memmove(ppos1, p[i].r.p, 3 * sizeof(double));
-        memmove(img1, p[i].l.i, 3 * sizeof(int));
-        unfold_position(ppos1, img1);
+  for (auto &p : local_cells.particles()) {
+    if (p.p.identity == meta_pid1) {
+      flag1 = 1;
+      p1 = &p;
+      memmove(ppos1, p.r.p, 3 * sizeof(double));
+      memmove(img1, p.l.i, 3 * sizeof(int));
+      unfold_position(ppos1, img1);
 
-        if (flag1 && flag2) {
-          /* vector r2-r1 - Not a minimal image! Unfolded position */
-          vector_subt(meta_cur_xi, ppos2, ppos1);
-          break;
-        }
+      if (flag1 && flag2) {
+        /* vector r2-r1 - Not a minimal image! Unfolded position */
+        vector_subt(meta_cur_xi, ppos2, ppos1);
+        break;
       }
-      if (p[i].p.identity == meta_pid2) {
-        flag2 = 1;
-        p2 = &p[i];
-        memmove(ppos2, p[i].r.p, 3 * sizeof(double));
-        memmove(img2, p[i].l.i, 3 * sizeof(int));
-        unfold_position(ppos2, img2);
+    }
+    if (p.p.identity == meta_pid2) {
+      flag2 = 1;
+      p2 = &p;
+      memmove(ppos2, p.r.p, 3 * sizeof(double));
+      memmove(img2, p.l.i, 3 * sizeof(int));
+      unfold_position(ppos2, img2);
 
-        if (flag1 && flag2) {
-          /* vector r2-r1 - Not a minimal image! Unfolded position */
-          vector_subt(meta_cur_xi, ppos2, ppos1);
-          break;
-        }
+      if (flag1 && flag2) {
+        /* vector r2-r1 - Not a minimal image! Unfolded position */
+        vector_subt(meta_cur_xi, ppos2, ppos1);
+        break;
       }
     }
   }
