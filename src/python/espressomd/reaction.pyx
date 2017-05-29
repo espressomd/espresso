@@ -8,7 +8,7 @@ from .highlander import ThereCanOnlyBeOne
 IF CATALYTIC_REACTIONS:
     __reaction_is_initiated = False
 
-    cdef class Reaction:
+    cdef class Reaction(object):
         """
         Class that handles catalytic reactions for self propelled particles.
 

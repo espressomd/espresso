@@ -39,10 +39,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=molcut
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=rest1
     - os: linux
       sudo: required

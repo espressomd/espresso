@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 
+@script_interface_register
 class Constraints(ScriptInterfaceHelper):
     """
     List of active constraints. Add a :class:`espressomd.constraints.Constraint`
@@ -56,7 +57,7 @@ class Constraint(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraint"
-
+@script_interface_register
 class ShapeBasedConstraint(Constraint):
     """
 
