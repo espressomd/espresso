@@ -63,12 +63,12 @@ bool steepest_descent_step(void) {
     f = 0.0;
     t = 0.0;
     dp2 = 0.0;
+    // For all Cartesian coordinates
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-    // Skip, if coordinate is fixed
-    if (!(p.p.ext_flag & COORD_FIXED(j)))
+      // Skip, if coordinate is fixed
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
-      // For all Cartesian coordinates
-      for (int j = 0; j < 3; j++) {
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
         if (!ifParticleIsVirtual(&p))
@@ -89,7 +89,7 @@ bool steepest_descent_step(void) {
           MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i,
                                        j, dp, params->gamma * p.f.f[j]));
         }
-      }
+    }
 #ifdef ROTATION
     // Rotational increment
     double dq[3]; // Vector parallel to torque
@@ -105,7 +105,7 @@ bool steepest_descent_step(void) {
     // Normalize rotation axis and compute amount of rotation
     double l = normr(dq);
     if (l > 0.0) {
-      for (j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++)
         dq[j] /= l;
 
       if (fabs(l) > params->max_displacement)
