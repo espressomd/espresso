@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
 from globals cimport temperature
-from .actors cimport *
+from .actors cimport Actor
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos

@@ -24,7 +24,7 @@ from . import actors
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
-    from .scafacos import *
+    from .scafacos import ScafacosConnector 
     from . cimport scafacos
 
 

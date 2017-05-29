@@ -2,7 +2,7 @@
 
 
 from __future__ import print_function, absolute_import
-from espressomd.actors cimport *
+from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
 cimport magnetostatics
@@ -68,11 +68,11 @@ IF SCAFACOS == 1:
         def default_params(self):
             return {}
 
-def available_methods():
-    """Lists long range methods available in the Scafacos library"""
-    methods=available_methods_core()
-    res=[]
-    for m in methods:
-        res.append(to_str(m))
-    return res
-
+    def available_methods():
+        """Lists long range methods available in the Scafacos library"""
+        methods=available_methods_core()
+        res=[]
+        for m in methods:
+            res.append(to_str(m))
+        return res
+    
