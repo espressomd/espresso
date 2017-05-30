@@ -138,7 +138,8 @@ void File::InitFile() {
       throw incompatible_h5mdfile();
     }
   } else {
-    if (backup_file_exists) throw left_backupfile();
+    if (backup_file_exists)
+      throw left_backupfile();
     create_new_file(m_filename);
   }
 }
@@ -410,18 +411,12 @@ void File::Write(int write_dat) {
     /* Get the number of particles on all other nodes. */
 
     /* loop over all local cells. */
-    Cell *local_cell;
     int particle_index = 0;
-    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id) {
-      local_cell = local_cells.cell[cell_id];
-      for (int local_part_id = 0; local_part_id < local_cell->n;
-           ++local_part_id) {
-        auto &current_particle = local_cell->part[local_part_id];
-        fill_arrays_for_h5md_write_with_particle_property(
-            particle_index, id, typ, mass, pos, image, vel, f, charge,
-            &current_particle, write_dat, bond);
-        particle_index++;
-      }
+    for (auto &current_particle : local_cells.particles()) {
+      fill_arrays_for_h5md_write_with_particle_property(
+          particle_index, id, typ, mass, pos, image, vel, f, charge,
+          &current_particle, write_dat, bond);
+      particle_index++;
     }
   }
 
@@ -490,8 +485,8 @@ void File::Write(int write_dat) {
                count_1d);
 
   if (write_species) {
-    WriteDataset(typ, "particles/atoms/species/value", change_extent_2d, offset_2d,
-                 count_2d);
+    WriteDataset(typ, "particles/atoms/species/value", change_extent_2d,
+                 offset_2d, count_2d);
   }
   if (write_mass) {
     WriteDataset(mass, "particles/atoms/mass/value", change_extent_2d,
