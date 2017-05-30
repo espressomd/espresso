@@ -20,9 +20,9 @@
 */
 
 #include "virtual_sites.hpp"
-#include "pressure.hpp"
 
 #ifdef VIRTUAL_SITES
+#include "pressure.hpp"
 
 // The following four functions are independent of the specif
 // rules used to place virtual particles
@@ -38,34 +38,17 @@ void update_mol_vel_pos() {
 
 void update_mol_vel() {
 #ifndef VIRTUAL_SITES_NO_VELOCITY
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i]))
-        update_mol_vel_particle(&p[i]);
-    }
+  for (auto &p : local_cells.particles()) {
+    if (ifParticleIsVirtual(&p))
+      update_mol_vel_particle(&p);
   }
 #endif
 }
 
 void update_mol_pos() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i]))
-        update_mol_pos_particle(&p[i]);
-    }
-    // only for real particles
+  for (auto &p : local_cells.particles()) {
+    if (ifParticleIsVirtual(&p))
+      update_mol_pos_particle(&p);
   }
 }
 

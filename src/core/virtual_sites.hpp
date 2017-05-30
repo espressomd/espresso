@@ -21,8 +21,6 @@
 #ifndef _VIRTUAL_SITES_H
 #define _VIRTUAL_SITES_H
 
-#include "particle_data.hpp"
-
 /** \file virtual_sites.hpp
  *  This file contains routine to handle virtual sites
  *  Virtual sites are like particles, but they will be not integrated.
@@ -34,7 +32,12 @@
  *  - update virtual sites
  */
 
+#include "config.hpp"
+
 #ifdef VIRTUAL_SITES
+
+#include "particle_data.hpp"
+
 // Recalculate position and velocity for all virtual particles
 void update_mol_vel_pos();
 // Recalc velocities for virtual particles
