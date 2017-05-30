@@ -51,22 +51,10 @@ static int n_local_particles = 0;
 static double mu_max;
 
 void calc_mu_max() {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
+  mu_max = std::accumulate(
+      local_cells.particles().begin(), local_cells.particles().end(), 0,
+      [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
-  mu_max = -1;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (mu_max < part[i].p.dipm) {
-        mu_max = part[i].p.dipm;
-      }
-    }
-  }
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 }
 
@@ -93,9 +81,6 @@ inline double g2_DLC_dip(double g, double x) {
 /* Subroutine designed to  compute Mx, My, Mz and Mtotal  */
 
 double slab_dip_count_mu(double *mt, double *mx, double *my) {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
   double node_sums[3], tot_sums[3], Mz, M, My, Mx;
 
   node_sums[0] = 0.0;
@@ -105,16 +90,11 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
   node_sums[2] = 0.0;
   tot_sums[2] = 0.0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (part[i].p.dipm != 0.0) {
-        node_sums[0] += part[i].r.dip[0];
-        node_sums[1] += part[i].r.dip[1];
-        node_sums[2] += part[i].r.dip[2];
-      }
+  for (auto const &p : local_cells.particles()) {
+    if (p.p.dipm != 0.0) {
+      node_sums[0] += p.r.dip[0];
+      node_sums[1] += p.r.dip[1];
+      node_sums[2] += p.r.dip[2];
     }
   }
 
@@ -196,38 +176,33 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
         S[0] = S[1] = S[2] = S[3] = 0.0;
 
         ip = 0;
-        for (cc = 0; cc < local_cells.n; cc++) {
-          cell = local_cells.cell[cc];
-          p1 = cell->part;
-          np = cell->n;
 
-          for (j = 0; j < np; j++) {
-            if (p1[j].p.dipm > 0) {
+        for (auto const &p : local_cells.particles()) {
+          if (p.p.dipm > 0) {
 
-              a = gx * p1[j].r.dip[0] + gy * p1[j].r.dip[1];
-              b = gr * p1[j].r.dip[2];
-              er = gx * p1[j].r.p[0] + gy * p1[j].r.p[1];
-              ez = gr * p1[j].r.p[2];
-              c = cos(er);
-              d = sin(er);
-              f = exp(ez);
+            a = gx * p.r.dip[0] + gy * p.r.dip[1];
+            b = gr * p.r.dip[2];
+            er = gx * p.r.p[0] + gy * p.r.p[1];
+            ez = gr * p.r.p[2];
+            c = cos(er);
+            d = sin(er);
+            f = exp(ez);
 
-              ReSjp[ip] = (b * c - a * d) * f;
-              ImSjp[ip] = (c * a + b * d) * f;
-              ReSjm[ip] = (-b * c - a * d) / f;
-              ImSjm[ip] = (c * a - b * d) / f;
-              ReGrad_Mup[ip] = c * f;
-              ReGrad_Mum[ip] = c / f;
-              ImGrad_Mup[ip] = d * f;
-              ImGrad_Mum[ip] = d / f;
+            ReSjp[ip] = (b * c - a * d) * f;
+            ImSjp[ip] = (c * a + b * d) * f;
+            ReSjm[ip] = (-b * c - a * d) / f;
+            ImSjm[ip] = (c * a - b * d) / f;
+            ReGrad_Mup[ip] = c * f;
+            ReGrad_Mum[ip] = c / f;
+            ImGrad_Mup[ip] = d * f;
+            ImGrad_Mum[ip] = d / f;
 
-              S[0] += ReSjp[ip];
-              S[1] += ImSjp[ip];
-              S[2] += ReSjm[ip];
-              S[3] += ImSjm[ip];
-            }
-            ip++;
+            S[0] += ReSjp[ip];
+            S[1] += ImSjp[ip];
+            S[2] += ReSjm[ip];
+            S[3] += ImSjm[ip];
           }
+          ip++;
         }
 
         MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -241,59 +216,53 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
         // ... Now we can compute the contributions to E,Fj,Ej for the current
         // g-value
         ip = 0;
-        for (cc = 0; cc < local_cells.n; cc++) {
-          cell = local_cells.cell[cc];
-          p1 = cell->part;
-          np = cell->n;
+        for (auto &p : local_cells.particles()) {
+          if (p.p.dipm > 0) {
+            // We compute the contributions to the forces ............
 
-          for (j = 0; j < np; j++) {
-            if (p1[j].p.dipm > 0) {
-              // We compute the contributions to the forces ............
+            s1 = -(-ReSjp[ip] * S[3] + ImSjp[ip] * S[2]);
+            s2 = +(ReSjm[ip] * S[1] - ImSjm[ip] * S[0]);
+            s3 = -(-ReSjm[ip] * S[1] + ImSjm[ip] * S[0]);
+            s4 = +(ReSjp[ip] * S[3] - ImSjp[ip] * S[2]);
 
-              s1 = -(-ReSjp[ip] * S[3] + ImSjp[ip] * S[2]);
-              s2 = +(ReSjm[ip] * S[1] - ImSjm[ip] * S[0]);
-              s3 = -(-ReSjm[ip] * S[1] + ImSjm[ip] * S[0]);
-              s4 = +(ReSjp[ip] * S[3] - ImSjp[ip] * S[2]);
+            s1z = +(ReSjp[ip] * S[2] + ImSjp[ip] * S[3]);
+            s2z = -(ReSjm[ip] * S[0] + ImSjm[ip] * S[1]);
+            s3z = -(ReSjm[ip] * S[0] + ImSjm[ip] * S[1]);
+            s4z = +(ReSjp[ip] * S[2] + ImSjp[ip] * S[3]);
 
-              s1z = +(ReSjp[ip] * S[2] + ImSjp[ip] * S[3]);
-              s2z = -(ReSjm[ip] * S[0] + ImSjm[ip] * S[1]);
-              s3z = -(ReSjm[ip] * S[0] + ImSjm[ip] * S[1]);
-              s4z = +(ReSjp[ip] * S[2] + ImSjp[ip] * S[3]);
+            ss = s1 + s2 + s3 + s4;
+            fx[ip] += fa1 * gx * ss;
+            fy[ip] += fa1 * gy * ss;
 
-              ss = s1 + s2 + s3 + s4;
-              fx[ip] += fa1 * gx * ss;
-              fy[ip] += fa1 * gy * ss;
+            fz[ip] += fa1 * gr * (s1z + s2z + s3z + s4z);
 
-              fz[ip] += fa1 * gr * (s1z + s2z + s3z + s4z);
+            // We compute the contributions to the electrical field
+            // ............
 
-              // We compute the contributions to the electrical field
-              // ............
+            s1 = -(-ReGrad_Mup[ip] * S[3] + ImGrad_Mup[ip] * S[2]);
+            s2 = +(ReGrad_Mum[ip] * S[1] - ImGrad_Mum[ip] * S[0]);
+            s3 = -(-ReGrad_Mum[ip] * S[1] + ImGrad_Mum[ip] * S[0]);
+            s4 = +(ReGrad_Mup[ip] * S[3] - ImGrad_Mup[ip] * S[2]);
 
-              s1 = -(-ReGrad_Mup[ip] * S[3] + ImGrad_Mup[ip] * S[2]);
-              s2 = +(ReGrad_Mum[ip] * S[1] - ImGrad_Mum[ip] * S[0]);
-              s3 = -(-ReGrad_Mum[ip] * S[1] + ImGrad_Mum[ip] * S[0]);
-              s4 = +(ReGrad_Mup[ip] * S[3] - ImGrad_Mup[ip] * S[2]);
+            s1z = +(ReGrad_Mup[ip] * S[2] + ImGrad_Mup[ip] * S[3]);
+            s2z = -(ReGrad_Mum[ip] * S[0] + ImGrad_Mum[ip] * S[1]);
+            s3z = -(ReGrad_Mum[ip] * S[0] + ImGrad_Mum[ip] * S[1]);
+            s4z = +(ReGrad_Mup[ip] * S[2] + ImGrad_Mup[ip] * S[3]);
 
-              s1z = +(ReGrad_Mup[ip] * S[2] + ImGrad_Mup[ip] * S[3]);
-              s2z = -(ReGrad_Mum[ip] * S[0] + ImGrad_Mum[ip] * S[1]);
-              s3z = -(ReGrad_Mum[ip] * S[0] + ImGrad_Mum[ip] * S[1]);
-              s4z = +(ReGrad_Mup[ip] * S[2] + ImGrad_Mup[ip] * S[3]);
+            ss = s1 + s2 + s3 + s4;
+            tx[ip] += fa1 * gx * ss;
+            ty[ip] += fa1 * gy * ss;
 
-              ss = s1 + s2 + s3 + s4;
-              tx[ip] += fa1 * gx * ss;
-              ty[ip] += fa1 * gy * ss;
-
-              tz[ip] += fa1 * gr * (s1z + s2z + s3z + s4z);
-            } // if dipm>0 ....
-            ip++;
-          } // loop j
-        }   // loop cc
-
-      } // end of if(ii> ...
+            tz[ip] += fa1 * gr * (s1z + s2z + s3z + s4z);
+          } // if dipm>0 ....
+          ip++;
+        } // loop j
+      }   // end of if(ii> ...
     }
   } // end of loops for gx,gy
 
-  // Convert from the corrections to the Electrical field to the corrections for
+  // Convert from the corrections to the Electrical field to the corrections
+  // for
   // the torques ....
 
   // printf("Electical field: Ex %le, Ey %le, Ez
@@ -301,22 +270,16 @@ double get_DLC_dipolar(int kcut, double *fx, double *fy, double *fz, double *tx,
   //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
 
   ip = 0;
-  for (cc = 0; cc < local_cells.n; cc++) {
-    cell = local_cells.cell[cc];
-    p1 = cell->part;
-    np = cell->n;
-
-    for (j = 0; j < np; j++) {
-      if (p1[j].p.dipm > 0) {
-        a = p1[j].r.dip[1] * tz[ip] - p1[j].r.dip[2] * ty[ip];
-        b = p1[j].r.dip[2] * tx[ip] - p1[j].r.dip[0] * tz[ip];
-        c = p1[j].r.dip[0] * ty[ip] - p1[j].r.dip[1] * tx[ip];
-        tx[ip] = a;
-        ty[ip] = b;
-        tz[ip] = c;
-      }
-      ip++;
+  for (auto const &p : local_cells.particles()) {
+    if (p.p.dipm > 0) {
+      a = p.r.dip[1] * tz[ip] - p.r.dip[2] * ty[ip];
+      b = p.r.dip[2] * tx[ip] - p.r.dip[0] * tz[ip];
+      c = p.r.dip[0] * ty[ip] - p.r.dip[1] * tx[ip];
+      tx[ip] = a;
+      ty[ip] = b;
+      tz[ip] = c;
     }
+    ip++;
   }
 
   // Multiply by the factors we have left during the loops
@@ -370,17 +333,9 @@ double get_DLC_energy_dipolar(int kcut) {
   double s1;
   double energy, piarea, facux, facuy;
   int cc, j, np;
-  Cell *cell = NULL;
-  Particle *p1;
 
-  // FILE *FilePtr;
-  // char File_Name[40];
-
-  n_local_particles = 0;
-  for (cc = 0; cc < local_cells.n; cc++) {
-    cell = local_cells.cell[cc];
-    n_local_particles += cell->n;
-  }
+  n_local_particles = std::distance(local_cells.particles().begin(),
+                                    local_cells.particles().end());
 
   facux = 2.0 * M_PI / box_l[0];
   facuy = 2.0 * M_PI / box_l[1];
@@ -405,32 +360,28 @@ double get_DLC_energy_dipolar(int kcut) {
         S[0] = S[1] = S[2] = S[3] = 0.0;
 
         ip = 0;
-        for (cc = 0; cc < local_cells.n; cc++) {
-          cell = local_cells.cell[cc];
-          p1 = cell->part;
-          np = cell->n;
 
-          for (j = 0; j < np; j++) {
-            if (p1[j].p.dipm > 0) {
+        for (auto const &p : local_cells.particles()) {
+          if (p.p.dipm > 0) {
 
-              a = gx * p1[j].r.dip[0] + gy * p1[j].r.dip[1];
-              {
-                b = gr * p1[j].r.dip[2];
-                er = gx * p1[j].r.p[0] + gy * p1[j].r.p[1];
-                ez = gr * p1[j].r.p[2];
-                c = cos(er);
-                d = sin(er);
-                f = exp(ez);
+            a = gx * p.r.dip[0] + gy * p.r.dip[1];
+            {
+              b = gr * p.r.dip[2];
+              er = gx * p.r.p[0] + gy * p.r.p[1];
+              ez = gr * p.r.p[2];
+              c = cos(er);
+              d = sin(er);
+              f = exp(ez);
 
-                S[0] += (b * c - a * d) * f;
-                S[1] += (c * a + b * d) * f;
-                S[2] += (-b * c - a * d) / f;
-                S[3] += (c * a - b * d) / f;
-              }
+              S[0] += (b * c - a * d) * f;
+              S[1] += (c * a + b * d) * f;
+              S[2] += (-b * c - a * d) / f;
+              S[3] += (c * a - b * d) / f;
             }
-            ip++;
           }
+          ip++;
         }
+
         MPI_Reduce(S, global_S, 4, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
         // We compute the contribution to the energy ............
@@ -472,11 +423,8 @@ void add_mdlc_force_corrections() {
 
   dip_DLC_kcut = dlc_params.far_cut;
 
-  n_local_particles = 0;
-  for (cc = 0; cc < local_cells.n; cc++) {
-    cell = local_cells.cell[cc];
-    n_local_particles += cell->n;
-  }
+  n_local_particles = std::distance(local_cells.particles().begin(),
+                                    local_cells.particles().end());
 
   volume = box_l[0] * box_l[1] * box_l[2];
 
@@ -514,7 +462,8 @@ void add_mdlc_force_corrections() {
 
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
-  // 3D PBC method which uses spherical summation instead of slab-wise sumation.
+  // 3D PBC method which uses spherical summation instead of slab-wise
+  // sumation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -542,60 +491,49 @@ void add_mdlc_force_corrections() {
   //	of the particles
 
   ip = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if ((p[i].p.dipm) != 0.0) {
+  for (auto &p : local_cells.particles()) {
+    if ((p.p.dipm) != 0.0) {
 
-        p[i].f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
-        p[i].f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
-        p[i].f.f[2] +=
-            coulomb.Dprefactor *
-            dip_DLC_f_z[ip]; // SDC correction term is zero for the forces
+      p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
+      p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
+      p.f.f[2] += coulomb.Dprefactor *
+                  dip_DLC_f_z[ip]; // SDC correction term is zero for the forces
 
 #if defined(ROTATION) && defined(DP3M)
-        double correc = 4. * M_PI / volume;
-        // in the Next lines: the second term (correc*...)is the SDC correction
-        // for the torques
-        if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
+      double correc = 4. * M_PI / volume;
+      // in the Next lines: the second term (correc*...)is the SDC
+      // correction
+      // for the torques
+      if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
 
-          dx = 0.0;
-          dy = 0.0;
-          dz = correc * (-1.0) * mz;
+        dx = 0.0;
+        dy = 0.0;
+        dz = correc * (-1.0) * mz;
 
-          p[i].f.torque[0] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_x[ip] + p[i].r.dip[1] * dz - p[i].r.dip[2] * dy);
-          p[i].f.torque[1] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_y[ip] + p[i].r.dip[2] * dx - p[i].r.dip[0] * dz);
-          p[i].f.torque[2] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_z[ip] + p[i].r.dip[0] * dy - p[i].r.dip[1] * dx);
+        p.f.torque[0] += coulomb.Dprefactor *
+                         (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
+        p.f.torque[1] += coulomb.Dprefactor *
+                         (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
+        p.f.torque[2] += coulomb.Dprefactor *
+                         (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
 
-        } else {
+      } else {
 
-          correps = correc / (2.0 * dp3m.params.epsilon + 1.0);
-          dx = correps * mx;
-          dy = correps * my;
-          dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
+        correps = correc / (2.0 * dp3m.params.epsilon + 1.0);
+        dx = correps * mx;
+        dy = correps * my;
+        dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
-          p[i].f.torque[0] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_x[ip] + p[i].r.dip[1] * dz - p[i].r.dip[2] * dy);
-          p[i].f.torque[1] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_y[ip] + p[i].r.dip[2] * dx - p[i].r.dip[0] * dz);
-          p[i].f.torque[2] +=
-              coulomb.Dprefactor *
-              (dip_DLC_t_z[ip] + p[i].r.dip[0] * dy - p[i].r.dip[1] * dx);
-        }
-#endif
+        p.f.torque[0] += coulomb.Dprefactor *
+                         (dip_DLC_t_x[ip] + p.r.dip[1] * dz - p.r.dip[2] * dy);
+        p.f.torque[1] += coulomb.Dprefactor *
+                         (dip_DLC_t_y[ip] + p.r.dip[2] * dx - p.r.dip[0] * dz);
+        p.f.torque[2] += coulomb.Dprefactor *
+                         (dip_DLC_t_z[ip] + p.r.dip[0] * dy - p.r.dip[1] * dx);
       }
-      ip++;
+#endif
     }
+    ip++;
   }
 
   //--- Free the memory used for computing the corrections ----------------
@@ -633,7 +571,8 @@ double add_mdlc_energy_corrections() {
 
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
-  // 3D PBC method which uses spherical summation instead of slab-wise sumation.
+  // 3D PBC method which uses spherical summation instead of slab-wise
+  // sumation.
   // Slab-wise summation is the one
   // required to apply DLC correction.  This correction is often called SDC =
   // Shape Dependent Correction.
@@ -669,7 +608,8 @@ double add_mdlc_energy_corrections() {
 
 /* -------------------------------------------------------------------------------
    Subroutine to compute the cut-off (NCUT) necessary in the DLC dipolar part
-   to get a certain accuracy (acc). We assume particles to have all them a same
+   to get a certain accuracy (acc). We assume particles to have all them a
+   same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
    mu inside the sytem. If we assum the gap has a width gap_size (within which
@@ -757,7 +697,8 @@ int mdlc_sanity_checks() {
     return 1;
   }
 
-  // It will be desirable to have a  checking function that check that the slab
+  // It will be desirable to have a  checking function that check that the
+  // slab
   // geometry is such that
   // the short direction is along the z component.
 
