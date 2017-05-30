@@ -31,9 +31,6 @@
 #ifdef COMFIXED
 
 int comfixed_set_params(int part_type_a, int part_type_b, int flag) {
-  Particle *p;
-  int i, j, np, c;
-  Cell *cell;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)
@@ -47,16 +44,11 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag) {
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (p[i].p.type == part_type_a) {
-        for (j = 0; j < 3; j++) {
-          p[i].m.v[j] = 0.;
-          p[i].f.f[j] = 0.;
-        }
+  for (auto &p : local_cells.particles()) {
+    if (p.p.type == part_type_a) {
+      for (int j = 0; j < 3; j++) {
+        p.m.v[j] = 0.;
+        p.f.f[j] = 0.;
       }
     }
   }
@@ -65,9 +57,6 @@ int comfixed_set_params(int part_type_a, int part_type_b, int flag) {
 }
 
 void calc_comfixed() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
   IA_parameters *ia_params;
   int t0;
   int j;
@@ -80,29 +69,19 @@ void calc_comfixed() {
       for (j = 0; j < 3; j++) {
         fsum0[j] = 0.;
       }
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p = cell->part;
-        np = cell->n;
-        for (i = 0; i < np; i++) {
-          if (p[i].p.type == t0) {
-            type_mass += (p[i]).p.mass;
-            for (j = 0; j < 3; j++) {
-              fsum0[j] += p[i].f.f[j];
-            }
+      for (auto const &p : local_cells.particles()) {
+        if (p.p.type == t0) {
+          type_mass += (p).p.mass;
+          for (j = 0; j < 3; j++) {
+            fsum0[j] += p.f.f[j];
           }
         }
       }
 
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p = cell->part;
-        np = cell->n;
-        for (i = 0; i < np; i++) {
-          if (p[i].p.type == t0) {
-            for (j = 0; j < 3; j++) {
-              p[i].f.f[j] -= fsum0[j] / type_mass * (p[i]).p.mass;
-            }
+      for (auto &p : local_cells.particles()) {
+        if (p.p.type == t0) {
+          for (j = 0; j < 3; j++) {
+            p.f.f[j] -= fsum0[j] / type_mass * (p).p.mass;
           }
         }
       }
