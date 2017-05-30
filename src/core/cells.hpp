@@ -268,9 +268,6 @@ void cells_update_ghosts();
     node. */
 int cells_get_n_particles();
 
-/** Debug function to print ghost positions. */
-void print_ghost_positions();
-
 /** spread the particle resorting criterion across the nodes. */
 void announce_resort_particles();
 

@@ -452,25 +452,3 @@ void cells_update_ghosts()
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
-
-/*************************************************/
-
-void print_ghost_positions()
-{
-  Cell *cell;
-  int c,i,np,cnt=0;
-  Particle *part;
-
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    part = cell->part;
-    np   = cell->n;
-    for(i=0 ; i < np; i++) {
-      fprintf(stderr,"%d: local cell %d contains ghost id=%d pos=(%f,%f,%f)\n",
-	      this_node, c, part[i].p.identity,
-	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr,"%d: found %d ghosts\n",this_node,cnt);
-}
