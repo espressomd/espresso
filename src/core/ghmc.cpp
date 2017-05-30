@@ -85,56 +85,17 @@ void momentum_flip();
 #ifdef GHMC
 
 void save_last_state() {
-
-  int i, c, np;
-  Particle *part;
-
-  // part = local_cells.cell[0]->part;
-  // fprintf(stderr,"%d: save part %d: px_ls before %f, px before
-  // %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-  // fprintf(stderr,"%d: save part %d: mx_ls before %f, mx before
-  // %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
-
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      memmove(&part[i].l.r_ls, &part[i].r, sizeof(ParticlePosition));
-      memmove(&part[i].l.m_ls, &part[i].m, sizeof(ParticleMomentum));
-    }
+  for (auto &p : local_cells.particles()) {
+    memmove(&p.l.r_ls, &p.r, sizeof(ParticlePosition));
+    memmove(&p.l.m_ls, &p.m, sizeof(ParticleMomentum));
   }
-
-  // part = local_cells.cell[0]->part;
-  // fprintf(stderr,"%d: save part %d: px_ls after %f, px after
-  // %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-  // fprintf(stderr,"%d: save part %d: mx_ls after %f, mx after
-  // %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
 }
 
 void load_last_state() {
-
-  int i, c, np;
-  Particle *part;
-
-  // part = local_cells.cell[0]->part;
-  // fprintf(stderr,"%d: load part %d: px_ls before %f, px before
-  // %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-  // fprintf(stderr,"%d: load part %d: mx_ls before %f, mx before
-  // %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
-
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      memmove(&part[i].r, &part[i].l.r_ls, sizeof(ParticlePosition));
-      memmove(&part[i].m, &part[i].l.m_ls, sizeof(ParticleMomentum));
-    }
+  for (auto &p : local_cells.particles()) {
+    memmove(&p.r, &p.l.r_ls, sizeof(ParticlePosition));
+    memmove(&p.m, &p.l.m_ls, sizeof(ParticleMomentum));
   }
-  // part = local_cells.cell[0]->part;
-  // fprintf(stderr,"%d: load part %d: px_ls after %f, px after
-  // %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-  // fprintf(stderr,"%d: load part %d: mx_ls after %f, mx after
-  // %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
 }
 
 void hamiltonian_calc(int ekin_update_flag) {
@@ -178,23 +139,15 @@ void hamiltonian_calc(int ekin_update_flag) {
 
 // get local temperature - here for debbuging purposes
 double calc_local_temp() {
-
-  int i, j, c, np, tot_np = 0;
-  Particle *part;
-
+  int tot_np = 0;
   double temp = 0.0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    tot_np += np;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      for (j = 0; j < 3; j++) {
-        temp += (part[i]).p.mass * SQR(part[i].m.v[j] / time_step);
+  for (auto &p : local_cells.particles()) {
+    for (int j = 0; j < 3; j++) {
+      temp += p.p.mass * SQR(p.m.v[j] / time_step);
 #ifdef ROTATION
-        temp += SQR(part[i].m.omega[j]);
+      temp += SQR(p.m.omega[j]);
 #endif
-      }
     }
   }
 #ifdef ROTATION
@@ -206,37 +159,27 @@ double calc_local_temp() {
 }
 
 void calc_kinetic(double *ek_trans, double *ek_rot) {
-
-  int i, c, np;
-  Particle *part;
   double et = 0.0, er = 0.0;
 
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
+  for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (ifParticleIsVirtual(&part[i]))
-        continue;
+    if (ifParticleIsVirtual(&p))
+      continue;
 #endif
 
-      /* kinetic energy */
-      et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2])) *
-            (part[i]).p.mass;
+    /* kinetic energy */
+    et += (SQR(p.m.v[0]) + SQR(p.m.v[1]) + SQR(p.m.v[2])) * (p).p.mass;
 
 /* rotational energy */
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
-      er += SQR(part[i].m.omega[0]) * part[i].p.rinertia[0] +
-            SQR(part[i].m.omega[1]) * part[i].p.rinertia[1] +
-            SQR(part[i].m.omega[2]) * part[i].p.rinertia[2];
+    er += SQR(p.m.omega[0]) * p.p.rinertia[0] +
+          SQR(p.m.omega[1]) * p.p.rinertia[1] +
+          SQR(p.m.omega[2]) * p.p.rinertia[2];
 #else
-      er += SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) +
-            SQR(part[i].m.omega[2]);
+    er += SQR(p.m.omega[0]) + SQR(p.m.omega[1]) + SQR(p.m.omega[2]);
 #endif
 #endif
-    }
   }
 
   MPI_Allreduce(MPI_IN_PLACE, &et, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -272,18 +215,9 @@ void ghmc_momentum_update() {
 
 /* momentum update step of ghmc with temperature scaling */
 void tscale_momentum_update() {
-
-  int i, j, c, np;
-  Particle *part;
-
-  // fprintf(stderr,"%d: temp before update: %f\n",this_node,calc_local_temp());
-
   save_last_state();
 
   simple_momentum_update();
-
-  // fprintf(stderr,"%d: temp after simple update:
-  // %f\n",this_node,calc_local_temp());
 
   double tempt, tempr;
   calc_kinetic(&tempt, &tempr);
@@ -295,134 +229,93 @@ void tscale_momentum_update() {
   double scaler = sqrt(temperature / tempr);
 #endif
 
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      for (j = 0; j < 3; j++) {
-        part[i].m.v[j] *= scalet;
+  for (auto &p : local_cells.particles()) {
+    for (int j = 0; j < 3; j++) {
+      p.m.v[j] *= scalet;
 #ifdef ROTATION
-        part[i].m.omega[j] *= scaler;
+      p.m.omega[j] *= scaler;
 #endif
-      }
     }
   }
 
-  // fprintf(stderr,"%d: temp after scale: %f\n",this_node,calc_local_temp());
-
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
+  for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (ifParticleIsVirtual(&part[i]))
-        continue;
+    if (ifParticleIsVirtual(&p))
+      continue;
 #endif
 
-      for (j = 0; j < 3; j++) {
-        part[i].m.v[j] = cosp * (part[i].l.m_ls.v[j]) + sinp * (part[i].m.v[j]);
+    for (int j = 0; j < 3; j++) {
+      p.m.v[j] = cosp * (p.l.m_ls.v[j]) + sinp * (p.m.v[j]);
 #ifdef ROTATION
-        part[i].m.omega[j] =
-            cosp * (part[i].l.m_ls.omega[j]) + sinp * (part[i].m.omega[j]);
+      p.m.omega[j] = cosp * (p.l.m_ls.omega[j]) + sinp * (p.m.omega[j]);
 #endif
-      }
     }
   }
-
-  // fprintf(stderr,"%d : temp after partial update:
-  // %f\n",this_node,calc_local_temp());
 }
 
 /* momentum update step of ghmc */
 void simple_momentum_update() {
-
-  int i, j, c, np;
-  Particle *part;
   double sigmat, sigmar;
 
   sigmat = sqrt(temperature);
   sigmar = sqrt(temperature);
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
+
+  for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (ifParticleIsVirtual(&part[i]))
-        continue;
+    if (ifParticleIsVirtual(&p))
+      continue;
 #endif
 
 #ifdef MASS
-      sigmat = sqrt(temperature / (part[i]).p.mass);
+    sigmat = sqrt(temperature / (p).p.mass);
 #endif
-      for (j = 0; j < 3; j++) {
-        part[i].m.v[j] = sigmat * gaussian_random() * time_step;
+    for (int j = 0; j < 3; j++) {
+      p.m.v[j] = sigmat * gaussian_random() * time_step;
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
-        sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+      sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-        part[i].m.omega[j] = sigmar * gaussian_random();
+      p.m.omega[j] = sigmar * gaussian_random();
 #endif
-      }
     }
   }
-
-  // fprintf(stderr,"%d: temp after simple update:
-  // %f\n",this_node,calc_local_temp());
 }
 
 /* partial momentum update step for ghmc */
 void partial_momentum_update() {
-
-  int i, j, c, np;
-  Particle *part;
   double sigmat, sigmar;
 
-  // fprintf(stderr,"%d: temp before partial update: %f. expected:
-  // %f\n",this_node,calc_local_temp(),temperature);
   sigmat = sqrt(temperature);
   sigmar = sqrt(temperature);
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
+
+  for (auto &p : local_cells.particles()) {
 #ifdef MASS
-      sigmat = sqrt(temperature / (part[i]).p.mass);
+    sigmat = sqrt(temperature / (p).p.mass);
 #endif
-      for (j = 0; j < 3; j++) {
-        part[i].m.v[j] = cosp * (part[i].m.v[j]) +
-                         sinp * (sigmat * gaussian_random() * time_step);
+    for (int j = 0; j < 3; j++) {
+      p.m.v[j] =
+          cosp * (p.m.v[j]) + sinp * (sigmat * gaussian_random() * time_step);
 #ifdef ROTATION
 #ifdef ROTATIONAL_INERTIA
-        sigmar = sqrt(temperature / part[i].p.rinertia[j]);
+      sigmar = sqrt(temperature / p.p.rinertia[j]);
 #endif
-        part[i].m.omega[j] =
-            cosp * (part[i].m.omega[j]) + sinp * (sigmar * gaussian_random());
+      p.m.omega[j] =
+          cosp * (p.m.omega[j]) + sinp * (sigmar * gaussian_random());
 #endif
-      }
     }
   }
-  // fprintf(stderr,"%d: temp after partial update: %f\n", this_node,
-  // calc_local_temp());
 }
 
 /* momentum flip for ghmc */
 void momentum_flip() {
-
-  int i, j, c, np;
-  Particle *part;
-
   INTEG_TRACE(fprintf(stderr, "%d: ghmc_momentum_flip:\n", this_node));
 
-  for (c = 0; c < local_cells.n; c++) {
-    np = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      for (j = 0; j < 3; j++) {
-        part[i].m.v[j] = -(part[i].m.v[j]);
+  for (auto &p : local_cells.particles()) {
+    for (int j = 0; j < 3; j++) {
+      p.m.v[j] = -(p.m.v[j]);
 #ifdef ROTATION
-        part[i].m.omega[j] = -(part[i].m.omega[j]);
+      p.m.omega[j] = -(p.m.omega[j]);
 #endif
-      }
     }
   }
 }
