@@ -212,29 +212,16 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 /** Calculate momentum of all particles in the local domain
  * @param result Result for this processor (Output)
  */
-void predict_momentum_particles(double *result)
-{
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
+void predict_momentum_particles(double *result) {
+  double momentum[3] = {0.0, 0.0, 0.0};
 
-  double momentum[3] = { 0.0, 0.0, 0.0 };
+  for (auto const &p : local_cells.particles()) {
+    // Due to weird scaling of units the following is actually correct
+    auto const mass = p[i].p.mass;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    p  = cell->part;
-
-    for(i=0; i < np; i++) {
-      // Due to weird scaling of units the following is actually correct
-      double mass = 1.0;
-#ifdef MASS
-      mass = p[i].p.mass;
-#endif
-      momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
-      momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
-      momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
-    }
+    momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
+    momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
+    momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
   }
 
   momentum[0] /= time_step;
@@ -243,7 +230,6 @@ void predict_momentum_particles(double *result)
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
-
 
 /** Calculate total momentum of the system (particles & LB fluid)
  * inputs are bools to include particles and fluid in the linear momentum calculation
