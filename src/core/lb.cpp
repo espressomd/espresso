@@ -3245,9 +3245,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
  * probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
-  int np;
-  Cell *cell ;
-  Particle *p ;
   double force[3];
 
   if (transfer_momentum) {
@@ -3269,35 +3266,28 @@ void calc_particle_lattice_ia() {
     }
 
     /* draw random numbers for local particles */
-    for (int c = 0; c < local_cells.n; c++) 
-      {
-        cell = local_cells.cell[c] ;
-        p = cell->part ;
-        np = cell->n ;
-        for (int i = 0; i < np; i++) 
-          {
+    for (auto &p : local_cells.particles()) {
 #ifdef GAUSSRANDOM
-            p[i].lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
-            p[i].lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
-            p[i].lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
-#elif defined (GAUSSRANDOMCUT)
-            p[i].lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
-            p[i].lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
-            p[i].lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
-#elif defined (FLATNOISE)
-            p[i].lc.f_random[0] = lb_coupl_pref * (d_random()-0.5);
-            p[i].lc.f_random[1] = lb_coupl_pref * (d_random()-0.5);
-            p[i].lc.f_random[2] = lb_coupl_pref * (d_random()-0.5);
+      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random();
+      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random();
+      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random();
+#elif defined(GAUSSRANDOMCUT)
+      p.lc.f_random[0] = lb_coupl_pref2 * gaussian_random_cut();
+      p.lc.f_random[1] = lb_coupl_pref2 * gaussian_random_cut();
+      p.lc.f_random[2] = lb_coupl_pref2 * gaussian_random_cut();
+#elif defined(FLATNOISE)
+      p.lc.f_random[0] = lb_coupl_pref * (d_random() - 0.5);
+      p.lc.f_random[1] = lb_coupl_pref * (d_random() - 0.5);
+      p.lc.f_random[2] = lb_coupl_pref * (d_random() - 0.5);
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
 #endif // GAUSSRANDOM
-              
+
 #ifdef ADDITIONAL_CHECKS
-            rancounter += 3;
+      rancounter += 3;
 #endif // ADDITIONAL_CHECKS
-          }
-      }
-      
+    }
+
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
 #ifdef ENGINE
@@ -3305,73 +3295,55 @@ void calc_particle_lattice_ia() {
 #endif
 
     /* local cells */
-    for (int c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c] ;
-      p = cell->part ;
-      np = cell->n ;
-      
-      for (int i = 0; i < np; i++) {
-        
+    for (auto &p : local_cells.particles()) {
+
 #ifdef IMMERSED_BOUNDARY
-        // Virtual particles for IBM must not be coupled
-        if(!ifParticleIsVirtual(&p[i]))
+      // Virtual particles for IBM must not be coupled
+      if (!ifParticleIsVirtual(&p))
 #endif
-        {
-          lb_viscous_coupling(&p[i],force);
-        
-          /* add force to the particle */
-          p[i].f.f[0] += force[0];
-          p[i].f.f[1] += force[1];
-          p[i].f.f[2] += force[2];
-        
-          ONEPART_TRACE( if (p->p.identity == check_id)  {
-                          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node, p->f.f[0], p->f.f[1], p->f.f[2]);  } );
-        }
+      {
+        lb_viscous_coupling(&p, force);
+
+        /* add force to the particle */
+        p.f.f[0] += force[0];
+        p.f.f[1] += force[1];
+        p.f.f[2] += force[2];
+
+        ONEPART_TRACE(if (p->p.identity == check_id) {
+          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
+                  p->f.f[0], p->f.f[1], p->f.f[2]);
+        });
       }
     }
-      
+
     /* ghost cells */
-    for (int c = 0; c < ghost_cells.n ;c++) {
-      cell = ghost_cells.cell[c] ;
-      p = cell->part ;
-      np = cell->n ;
-      
-      for (int i = 0; i < np; i++) {
-        /* for ghost particles we have to check if they lie
-         * in the range of the local lattice nodes */
-        if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid[0]
-            && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid[0]
-            && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid[1]
-            && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid[1]
-            && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid[2]
-            && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid[2]) 
-          {
-            ONEPART_TRACE(
-                          if (p[i].p.identity == check_id)
-                            {
-                              fprintf(stderr,
-                                      "%d: OPT: LB coupling of ghost particle:\n",
-                                      this_node);
-                            }
-                          );
+    for (auto &p : ghost_cells.particles()) {
+
+      /* for ghost particles we have to check if they lie
+       * in the range of the local lattice nodes */
+      if (p.r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
+          p.r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
+          p.r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
+          p.r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
+          p.r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
+          p.r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
+        ONEPART_TRACE(if (p.p.identity == check_id) {
+          fprintf(stderr, "%d: OPT: LB coupling of ghost particle:\n",
+                  this_node);
+        });
 #ifdef IMMERSED_BOUNDARY
-            // Virtual particles for IBM must not be coupled
-            if(!ifParticleIsVirtual(&p[i]))
+        // Virtual particles for IBM must not be coupled
+        if (!ifParticleIsVirtual(&p))
 #endif
-            {
-              lb_viscous_coupling(&p[i],force);
-            }
-            
-            /* ghosts must not have the force added! */
-            ONEPART_TRACE(
-                          if (p->p.identity == check_id)
-                            {
-                              fprintf(stderr,
-                                      "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",
-                                      this_node, p->f.f[0], p->f.f[1], p->f.f[2]);
-                            }
-                          );
-          }
+        {
+          lb_viscous_coupling(&p, force);
+        }
+
+        /* ghosts must not have the force added! */
+        ONEPART_TRACE(if (p->p.identity == check_id) {
+          fprintf(stderr, "%d: OPT: LB f = (%.6e,%.3e,%.3e)\n", this_node,
+                  p->f.f[0], p->f.f[1], p->f.f[2]);
+        });
       }
     }
   }
