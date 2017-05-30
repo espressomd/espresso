@@ -3,6 +3,7 @@
 #ifdef EWALD_GPU
 
 #include <iostream>
+#include <algorithm>
 
 #include "tuning.hpp"
 #include "integrate.hpp"
@@ -256,28 +257,11 @@ double EwaldgpuForce::tune_rcut(double accuracy, double precision, double alpha,
   return 0.5 *(rcut_low + rcut_high);
 }
 
-int EwaldgpuForce::determine_calc_time_steps()
-{
-  Cell *cell;
-  Particle *part;
-  int i,c,np;
-  int sum_qpart =0;
-
-  for (c = 0; c < local_cells.n; c++)
-  {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np   = cell->n;
-    for(i=0;i<np;i++)
-    {
-      if( part[i].p.q != 0.0 )
-      {
-      	sum_qpart += 1.0;
-      }
-    }
-  }
-  sum_qpart    = (int)(sum_qpart+0.1);
-  return (1999 + sum_qpart)/sum_qpart;
+int EwaldgpuForce::determine_calc_time_steps() {
+  auto const sum_qpart = std::count_if(
+      local_cells.particles().begin(), local_cells.particles().end(),
+      [](Particle const &p) { return p.p.q != 0.0; });
+  return (1999 + sum_qpart) / sum_qpart;
 }
 
 //Kolaffa compute optimal alpha
