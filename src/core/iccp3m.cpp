@@ -152,9 +152,6 @@ int bcast_iccp3m_cfg(void) {
 
 int iccp3m_iteration() {
     double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0, ex, ey, ez, pref;
-    Cell *cell;
-    int c,np;
-    Particle *part;
     int i, j,id;
     double globalmax;
     double f1, f2 = 0;
@@ -178,68 +175,76 @@ int iccp3m_iteration() {
         ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
         diff=0;
-        for(c = 0; c < local_cells.n; c++) {
-            cell = local_cells.cell[c];
-            part = cell->part;
-            np   = cell->n;
-            for(i=0 ; i < np; i++) {
-                if( part[i].p.identity < iccp3m_cfg.n_ic+iccp3m_cfg.first_id && part[i].p.identity >= iccp3m_cfg.first_id ) {
-                    id = part[i].p.identity - iccp3m_cfg.first_id;
-                    /* the dielectric-related prefactor: */                     
-                    del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
-                    /* calculate the electric field at the certain position */
-                    ex=part[i].f.f[0]/part[i].p.q;
-                    ey=part[i].f.f[1]/part[i].p.q;
-                    ez=part[i].f.f[2]/part[i].p.q;
-                    /* let's add the contribution coming from the external field */
-                    ex += iccp3m_cfg.extx; 
-                    ey += iccp3m_cfg.exty; 
-                    ez += iccp3m_cfg.extz;
-                    if (ex == 0 && ey == 0 && ez == 0) {
-                        ostringstream msg;
-                        msg <<"ICCP3M found zero electric field on a charge. This must never happen";
-                        runtimeError(msg);
-                        /*
-                           fprintf(stderr, "ICCP3M found zero electric field on a charge. This must never happen\n");
-                           ex = 0.00001 * d_random();
-                           ey = 0.00001 * d_random();
-                           ez = 0.00001 * d_random();
-                         */
-                    }
-                    /* the dot product   */
-                    fdot = ex*iccp3m_cfg.nvectorx[id]+
-                        ey*iccp3m_cfg.nvectory[id]+
-                        ez*iccp3m_cfg.nvectorz[id];
-                    /* recalculate the old charge density */
-                    hold=part[i].p.q/iccp3m_cfg.areas[id];
-                    /* determine if it is higher than the previously highest charge density */            
-                    if(fabs(hold)>hmax)
-                        hmax=fabs(hold); 
-                    f1 = del_eps*fdot*pref;
-                    if (iccp3m_cfg.sigma!=0) 
-                        f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
-                    /* relative variation: never use an estimator which can be negative here */
-                    hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
-                    difftemp=fabs( 1*(hnew - hold)/(hmax + fabs(hnew+hold)) ); 				
-                    //if(difftemp > diff && part[i].p.q > 1e-5)
-                    if(difftemp > diff)
-                        diff=difftemp;  /* Take the largest error to check for convergence */
-                    part[i].p.q = hnew * iccp3m_cfg.areas[id];
+        for (auto &p : local_cells.particles()) {
+          if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
+              p.p.identity >= iccp3m_cfg.first_id) {
+            id = p.p.identity - iccp3m_cfg.first_id;
+            /* the dielectric-related prefactor: */
+            del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
+                      (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
+            /* calculate the electric field at the certain position */
+            ex = p.f.f[0] / p.p.q;
+            ey = p.f.f[1] / p.p.q;
+            ez = p.f.f[2] / p.p.q;
+            /* let's add the contribution coming from the external field */
+            ex += iccp3m_cfg.extx;
+            ey += iccp3m_cfg.exty;
+            ez += iccp3m_cfg.extz;
+            if (ex == 0 && ey == 0 && ez == 0) {
+              ostringstream msg;
+              msg << "ICCP3M found zero electric field on a charge. This must "
+                     "never happen";
+              runtimeError(msg);
+              /*
+                 fprintf(stderr, "ICCP3M found zero electric field on a charge.
+                 This must never happen\n");
+                 ex = 0.00001 * d_random();
+                 ey = 0.00001 * d_random();
+                 ez = 0.00001 * d_random();
+               */
+            }
+            /* the dot product   */
+            fdot = ex * iccp3m_cfg.nvectorx[id] + ey * iccp3m_cfg.nvectory[id] +
+                   ez * iccp3m_cfg.nvectorz[id];
+            /* recalculate the old charge density */
+            hold = p.p.q / iccp3m_cfg.areas[id];
+            /* determine if it is higher than the previously highest charge
+             * density */
+            if (fabs(hold) > hmax)
+              hmax = fabs(hold);
+            f1 = del_eps * fdot * pref;
+            if (iccp3m_cfg.sigma != 0)
+              f2 = (2 * iccp3m_cfg.eout) /
+                   (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
+                   (iccp3m_cfg.sigma[id]);
+            /* relative variation: never use an estimator which can be negative
+             * here */
+            hnew =
+                (1. - iccp3m_cfg.relax) * hold + (iccp3m_cfg.relax) * (f1 + f2);
+            difftemp = fabs(1 * (hnew - hold) / (hmax + fabs(hnew + hold)));
+            // if(difftemp > diff && p.p.q > 1e-5)
+            if (difftemp > diff)
+              diff = difftemp; /* Take the largest error to check for
+                                  convergence */
+            p.p.q = hnew * iccp3m_cfg.areas[id];
 
-                    /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
-                    /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
-                    if(fabs(part[i].p.q) > 1e6) {
-                        ostringstream msg;
-                        msg <<"too big charge assignment in iccp3m! q >1e6 , assigned charge= " << part[i].p.q << "\n";
-                        runtimeError(msg);
-                        diff = 1e90; /* A very high value is used as error code */
-                        break;
-                    }
-                }
-            }  /* cell particles */
+            /* check if the charge now is more than 1e6, to determine if ICC
+             * still leads to reasonable results */
+            /* this is kind a arbitrary measure but, does a good job spotting
+             * divergence !*/
+            if (fabs(p.p.q) > 1e6) {
+              ostringstream msg;
+              msg << "too big charge assignment in iccp3m! q >1e6 , assigned "
+                     "charge= "
+                  << p.p.q << "\n";
+              runtimeError(msg);
+              diff = 1e90; /* A very high value is used as error code */
+              break;
+            }
+          }
         } /* local cells */
         iccp3m_cfg.citeration++;
-        MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
+        MPI_Allreduce(&diff, &globalmax, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 
         if (globalmax < iccp3m_cfg.convergence) 
             break; 
@@ -547,11 +552,6 @@ void nsq_calculate_ia_iccp3m()
 
 void init_forces_iccp3m()
 {
-    /* copied from forces.cpp */
-    Cell *cell;
-    Particle *p;
-    int np, c, i;
-
     /* The force initialization depends on the used thermostat and the
        thermodynamic ensemble */
 
@@ -568,25 +568,14 @@ void init_forces_iccp3m()
        or zero depending on the thermostat
        set torque to zero for all and rescale quaternions
      */
-    for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p  = cell->part;
-        np = cell->n;
-        for (i = 0; i < np; i++)
-            init_local_particle_force_iccp3m(&p[i]);
-    }
+    for (auto &p : local_cells.particles())
+      init_local_particle_force_iccp3m(&p);
 
     /* initialize ghost forces with zero
        set torque to zero for all and rescale quaternions
      */
-    for (c = 0; c < ghost_cells.n; c++) {
-        cell = ghost_cells.cell[c];
-        p  = cell->part;
-        np = cell->n;
-        for (i = 0; i < np; i++)
-            init_ghost_force_iccp3m(&p[i]);
-    }
-
+    for (auto &p : ghost_cells.particles())
+            init_ghost_force_iccp3m(&p);
 }
 
 void calc_long_range_forces_iccp3m()
@@ -713,52 +702,31 @@ int imod(int x,int y) {
     return z;
 }
 
-
 void reset_forces() {
-    Cell *cell;    
-    int c,i,np;
-    Particle *part;
-    for(c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        part = cell->part;
-        np   = cell->n;
-        for(i=0 ; i < np; i++) {
-            part[i].f.f[0]=0.0;  part[i].f.f[1]=0.0;  part[i].f.f[2]=0.0;
-        }
-    }
+  for (auto &p : local_cells.particles()) {
+    p.f.f[0] = 0.0;
+    p.f.f[1] = 0.0;
+    p.f.f[2] = 0.0;
+  }
 }
+
 void iccp3m_revive_forces() {
-    /* restore forces that are computed before in Espresso integrate_vv function*/
-    Cell *cell;
-    int c,i,np;
-    Particle *part;
-    for(c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        part = cell->part;
-        np   = cell->n;
-        for(i=0 ; i < np; i++) {
-            part[i].f.f[0]=iccp3m_cfg.fx[part[i].p.identity];
-            part[i].f.f[1]=iccp3m_cfg.fy[part[i].p.identity];
-            part[i].f.f[2]=iccp3m_cfg.fz[part[i].p.identity];
-        }
-    }
+  /* restore forces that are computed before in Espresso integrate_vv function*/
+  for (auto &p : local_cells.particles()) {
+    p.f.f[0] = iccp3m_cfg.fx[p.p.identity];
+    p.f.f[1] = iccp3m_cfg.fy[p.p.identity];
+    p.f.f[2] = iccp3m_cfg.fz[p.p.identity];
+  }
 }
+
 void iccp3m_store_forces() {
-    /* store forces that are computed before in Espresso integrate_vv function */
-    /* iccp3m will re-compute electrostatic-forces on boundary particles */
-    Cell *cell;
-    int c,i,np;
-    Particle *part;
-    for(c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        part = cell->part;
-        np   = cell->n;
-        for(i=0 ; i < np; i++) {
-            iccp3m_cfg.fx[part[i].p.identity]=part[i].f.f[0];
-            iccp3m_cfg.fy[part[i].p.identity]=part[i].f.f[1];
-            iccp3m_cfg.fz[part[i].p.identity]=part[i].f.f[2];
-        }
-    }
+  /* store forces that are computed before in Espresso integrate_vv function */
+  /* iccp3m will re-compute electrostatic-forces on boundary particles */
+  for (auto const &p : local_cells.particles()) {
+    iccp3m_cfg.fx[p.p.identity] = p.f.f[0];
+    iccp3m_cfg.fy[p.p.identity] = p.f.f[1];
+    iccp3m_cfg.fz[p.p.identity] = p.f.f[2];
+  }
 }
 
 int iccp3m_sanity_check()
