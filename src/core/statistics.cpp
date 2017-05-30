@@ -217,11 +217,11 @@ void predict_momentum_particles(double *result) {
 
   for (auto const &p : local_cells.particles()) {
     // Due to weird scaling of units the following is actually correct
-    auto const mass = p[i].p.mass;
+    auto const mass = p.p.mass;
 
-    momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
-    momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
-    momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
   }
 
   momentum[0] /= time_step;
