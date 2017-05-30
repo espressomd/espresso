@@ -272,34 +272,9 @@ void announce_resort_particles()
 
 /*************************************************/
 
-int cells_get_n_particles()
-{
-  int c, cnt = 0;
-  for (c = 0; c < local_cells.n; c++)
-    cnt += local_cells.cell[c]->n;
-  return cnt;
-}
-
-/*************************************************/
-
-void print_local_particle_positions()
-{
-  Cell *cell;
-  int c,i,np,cnt=0;
-  Particle *part;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np   = cell->n;
-    for(i=0 ; i < np; i++) {
-      fprintf(stderr,"%d: local cell %d contains part id=%d pos=(%f,%f,%f)\n",
-	      this_node, c, part[i].p.identity,
-	      part[i].r.p[0], part[i].r.p[1], part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr,"%d: found %d particles\n",this_node,cnt);
+int cells_get_n_particles() {
+  return std::distance(local_cells.particles().begin(),
+                       local_cells.particles().end());
 }
 
 /*************************************************/
