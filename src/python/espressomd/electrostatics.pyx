@@ -525,7 +525,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "K_max", "alpha", "accuracy", "precision"
+            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
         def default_params(self):
             return {"bjerrum_length": -1,
