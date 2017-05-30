@@ -56,18 +56,10 @@ void update_mol_pos_particle(Particle *p) {
 }
 
 void distribute_mol_force() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i])) {
-        if (sqrlen(p[i].f.f) != 0) {
-          put_mol_force_on_parts(&p[i]);
-        }
+  for (auto &p : local_cells.particles()) {
+    if (ifParticleIsVirtual(&p)) {
+      if (sqrlen(p.f.f) != 0) {
+        put_mol_force_on_parts(&p);
       }
     }
   }
