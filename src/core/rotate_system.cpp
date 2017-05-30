@@ -12,22 +12,13 @@ void local_rotate_system(double phi, double theta, double alpha) {
   double com[3] = {0, 0, 0};
   int N = 0; // Num of particles
 
-  int c, np, i;
-  Particle *part;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-
-    for (i = 0; i < np; i++) {
-      for (int j = 0; j < 3; j++) {
-        com[j] += part[i].r.p[j];
-      }
-      N++;
+  for (auto const &p : local_cells.particles()) {
+    for (int j = 0; j < 3; j++) {
+      com[j] += p.r.p[j];
     }
+    N++;
   }
+
   for (int j = 0; j < 3; j++)
     com[j] /= N;
 
@@ -38,27 +29,21 @@ void local_rotate_system(double phi, double theta, double alpha) {
   axis[2] = cos(theta);
 
   // Rotate particle coordinates
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-
-    for (i = 0; i < np; i++) {
-      // Move the center of mass of the system to the origin
-      for (int j = 0; j < 3; j++) {
-        part[i].r.p[j] -= com[j];
-      }
-      // Rotate
-      double res[3];
-      vec_rotate(axis, alpha, part[i].r.p, res);
-      // Write back result and shift back the center of mass
-      for (int j = 0; j < 3; j++) {
-        part[i].r.p[j] = com[j] + res[j];
-      }
-#ifdef ROTATION
-      rotate_particle(part + i, axis, alpha);
-#endif
+  for (auto &p : local_cells.particles()) {
+    // Move the center of mass of the system to the origin
+    for (int j = 0; j < 3; j++) {
+      p.r.p[j] -= com[j];
     }
+    // Rotate
+    double res[3];
+    vec_rotate(axis, alpha, p.r.p, res);
+    // Write back result and shift back the center of mass
+    for (int j = 0; j < 3; j++) {
+      p.r.p[j] = com[j] + res[j];
+    }
+#ifdef ROTATION
+    rotate_particle(&p, axis, alpha);
+#endif
   }
 
   resort_particles = 1;
