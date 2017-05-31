@@ -11,8 +11,10 @@
 #include "utils/SkipIterator.hpp"
 #include "utils/serialization/Particle.hpp"
 
-#include <iostream>
-
+/**
+ * @brief Proxy class that gets a particle range from
+ *        from the global local_particles.
+ */
 class GetLocalParts {
   class SkipIfNull {
   public:
@@ -37,9 +39,13 @@ public:
   }
 };
 
-/** Particles' current configuration. Particle coordinates
- are unfolded. */
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;
+/**
+ * @brief Particles' current configuration.
+ *
+ * Particle coordinates are unfolded.
+ * For documentation see @class ParticleCache
+ */
 extern PartCfg partCfg;
 
 #endif

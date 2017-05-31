@@ -88,8 +88,9 @@ public:
 /**
 * @brief Particle cache on the master.
 *
-* This class implements cached access to all particles on the
-* master node. This implementation fetches all particles to
+* This class implements cached access to all particles in a
+* particle range on the master node.
+* This implementation fetches all particles to
 * the master on first access. Updates of the particle data are
 * triggered automatically on access. The data in the cache
 * is invalidated automatically on_particle_change, and then
@@ -105,6 +106,12 @@ public:
 * This class can be customized by running a unary opration on
 * the particles. This op is run on all the nodes. It can be used
 * e.g. to fold or unfold the coordinates on the fly.
+*
+* To iterate over the particles using the iterators is more
+* efficient than using operator[].
+*
+* All functions in the public interface can only be called on
+* the master node.
 */
 template <typename GetParticles, typename UnaryOp = Utils::NoOp,
           typename Range = typename std::remove_reference<decltype(
@@ -125,6 +132,12 @@ class ParticleCache {
   GetParticles parts;
   UnaryOp m_op;
 
+  /**
+   * @brief Implementation of bond update.
+   *
+   * Particle ids, and the bond info is packed
+   * into a linear buffer and gathet to the master.
+   */
   void m_update_bonds() {
     std::vector<int> local_bonds;
 
@@ -137,6 +150,33 @@ class ParticleCache {
                               Communication::mpiCallbacks().comm());
   }
 
+  /**
+   * @brief Implementation of bond update.
+   *
+   * Master version of m_update_bonds().
+   */
+  void m_recv_bonds() {
+    bond_info.clear();
+
+    Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
+
+    for (auto it = bond_info.begin(); it != bond_info.end();) {
+      auto &p = remote_parts.begin()[id_index[*it++]];
+      p.bl.e = &(*it);
+      p.bl.max = p.bl.size();
+
+      it += p.bl.size();
+    }
+  }
+
+  /**
+   * @brief Actual update implementation.
+   *
+   * This gets a new particle range, packs
+   * the particles into a buffer and then
+   * merges these buffers hierachicaly to the
+   * master node
+   */
   void m_update() {
     remote_parts.clear();
 
@@ -150,27 +190,10 @@ class ParticleCache {
     }
 
     /* Reduce data to the master by merging the flat_sets from
-     * the
-     * nodes in a reduction tree. */
+     * the nodes in a reduction tree. */
     boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
                        remote_parts,
                        detail::Merge<map_type, detail::IdCompare>(), 0);
-  }
-
-  void m_recv_bonds() {
-    bond_info.clear();
-
-    Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
-
-    for (auto it = bond_info.begin(); it != bond_info.end();) {
-      auto &p = remote_parts.begin()[id_index[*it++]];
-      p.bl.e = nullptr;
-      p.bl.max = 0;
-      p.bl.resize(p.bl.size());
-
-      std::copy_n(it, p.bl.size(), p.bl.begin());
-      it += p.bl.size();
-    }
   }
 
   void m_update_index() {
@@ -192,8 +215,12 @@ public:
         update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
         parts(parts), m_valid(false), m_valid_bonds(false),
         m_op(std::forward<UnaryOp>(op)) {}
+  /* Because the this ptr is captured by the callback lambdas,
+   * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;
   ParticleCache operator=(ParticleCache const &) = delete;
+  ParticleCache(ParticleCache &&) = delete;
+  ParticleCache operator=(ParticleCache &&) = delete;
 
   void clear() {
     id_index.clear();
@@ -211,8 +238,7 @@ public:
    * an update is triggered. This iterator stays valid as long
    * as the cache is valid. Since the cache could be invalidated
    * and updated elsewhere, iterators into the cache should not
-   * be
-   * stored.
+   * be stored.
    */
   value_iterator begin() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
@@ -289,8 +315,7 @@ public:
    * sort their particle by id, and send them
    * to the master.
    *
-   * Complexity: N/P*log(N/P) for the sorting,
-   * 2*N*(1 - 0.5^(log(p) + 1)) for the merging.
+   * Complexity: 2*N*(1 - 0.5^(log(p) + 1))
    */
   void update() {
     if (m_valid)
