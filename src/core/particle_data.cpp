@@ -293,9 +293,7 @@ void init_particle(Particle *part) {
     part->p.vs_relative_rel_orientation[i] = 0;
 #endif
 
-#ifdef GHOST_FLAG
   part->l.ghost = 0;
-#endif
 
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;

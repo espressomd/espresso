@@ -271,10 +271,8 @@ typedef struct {
   /** index of the simulation box image where the particle really sits. */
   int i[3];
 
-#ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
   int ghost;
-#endif
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
