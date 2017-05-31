@@ -198,9 +198,10 @@ cdef class PScriptInterface(object):
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_bind_methods =()
+    _so_creation_policy = "GLOBAL"
 
-    def __init__(self,**kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name)
+    def __init__(self, **kwargs):
+        super(ScriptInterfaceHelper,self).__init__(self._so_name, self._so_creation_policy)
         self.set_params(**kwargs)
         self.define_bound_methods()
 
