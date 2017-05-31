@@ -365,7 +365,7 @@ void File::Write(int write_dat) {
   if (m_write_ordered == true && this_node == 0)
     num_particles_to_be_written = n_part;
   else if (m_write_ordered == true && this_node != 0)
-    num_particles_to_be_written = 0;
+    return;
   else if (m_write_ordered == false)
     num_particles_to_be_written = cells_get_n_particles();
 
@@ -393,7 +393,7 @@ void File::Write(int write_dat) {
   if (m_write_ordered == true) {
     if (this_node == 0) {
       /* Fetch bond info */
-      //      partCfg.update_bonds();
+      partCfg.update_bonds();
       // loop over all particles
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {

@@ -331,7 +331,7 @@ public:
 
   /** Number of particles in the config.
     *
-     * Complexity: O(1)
+    * Complexity: O(1)
   */
   size_t size() {
     assert(Communication::mpiCallbacks().comm().rank() == 0);
