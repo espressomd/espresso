@@ -450,9 +450,6 @@ void mpi_bcast_event_slave(int node, int event) {
     maggs_count_charged_particles();
     break;
 #endif
-  case SORT_PARTICLES:
-    local_sort_particles();
-    break;
   case CHECK_PARTICLES:
     check_particles();
     break;
