@@ -27,38 +27,38 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector 
     from . cimport scafacos
 
-
-cdef class ElectrostaticInteraction(actors.Actor):
-    def _tune(self):
-        raise Exception(
-            "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
-
-    def _set_params_in_es_core(self):
-        raise Exception(
-            "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
-
-    def _deactivate_method(self):
-        coulomb.method = COULOMB_NONE
-        mpi_bcast_coulomb_params()
-
-    def Tune(self, **subsetTuneParams):
-
-        # Override default parmas with subset given by user
-        tuneParams = self.default_params()
-        if not subsetTuneParams == None:
-            for k in subsetTuneParams.iterkeys():
-                if k not in self.valid_keys():
-                    raise ValueError(k + " is not a valid parameter")
-            tuneParams.update(subsetTuneParams)
-
-        # If param is 'required', it was set before, so don't change it
-        # Do change it if it's given to Tune() by user
-        for param in tuneParams.iterkeys():
-            if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
-                self._params[param] = tuneParams[param]
-        print(self._params)
-        self._tune()
-
+IF ELECTROSTATICS == 1: 
+    cdef class ElectrostaticInteraction(actors.Actor):
+        def _tune(self):
+            raise Exception(
+                "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
+    
+        def _set_params_in_es_core(self):
+            raise Exception(
+                "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+    
+        def _deactivate_method(self):
+            coulomb.method = COULOMB_NONE
+            mpi_bcast_coulomb_params()
+    
+        def Tune(self, **subsetTuneParams):
+    
+            # Override default parmas with subset given by user
+            tuneParams = self.default_params()
+            if not subsetTuneParams == None:
+                for k in subsetTuneParams.iterkeys():
+                    if k not in self.valid_keys():
+                        raise ValueError(k + " is not a valid parameter")
+                tuneParams.update(subsetTuneParams)
+    
+            # If param is 'required', it was set before, so don't change it
+            # Do change it if it's given to Tune() by user
+            for param in tuneParams.iterkeys():
+                if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
+                    self._params[param] = tuneParams[param]
+            print(self._params)
+            self._tune()
+    
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
         """ Hybrid method to solve electrostatic interactions, on short length
