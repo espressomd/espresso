@@ -4,6 +4,7 @@
 #include <boost/iterator/indirect_iterator.hpp>
 
 #include "ParticleCache.hpp"
+#include "cells.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
@@ -15,7 +16,9 @@
 class GetLocalParts {
   class SkipIfNull {
   public:
-    bool operator()(Particle const *p_ptr) const { return p_ptr == nullptr; }
+    bool operator()(Particle const *p_ptr) const {
+      return (p_ptr == nullptr) or (p_ptr->l.ghost);
+    }
   };
 
   using skip_it = Utils::SkipIterator<Particle **, SkipIfNull>;
@@ -24,8 +27,8 @@ class GetLocalParts {
 
 public:
   Range operator()() const {
-    auto begin = skip_it(local_particles, local_particles + max_seen_particle + 1,
-                         SkipIfNull());
+    auto begin = skip_it(local_particles,
+                         local_particles + max_seen_particle + 1, SkipIfNull());
     auto end = skip_it(local_particles + max_seen_particle + 1,
                        local_particles + max_seen_particle + 1, SkipIfNull());
 
