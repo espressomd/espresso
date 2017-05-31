@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <vector>
 #include <iterator>
+#include <numeric>
 
 #define BOOST_TEST_MODULE SkipIterator test
 #define BOOST_TEST_DYN_LINK
