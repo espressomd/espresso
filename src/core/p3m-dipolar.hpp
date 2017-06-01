@@ -155,7 +155,7 @@ void dp3m_count_magnetic_particles();
     which may be smaller than 0, in which case the charge is assumed to be
    virtual and is not
     stored in the Dca_frac arrays. */
-void dp3m_assign_dipole(double real_pos[3], double mu, double dip[3],
+void dp3m_assign_dipole(double const real_pos[3], double mu, double const dip[3],
                         int cp_cnt);
 
 /** shrink wrap the dipoles grid */
