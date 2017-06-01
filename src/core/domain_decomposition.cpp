@@ -360,8 +360,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-              2 * n_comm_cells[dir] * sizeof(ParticleList *));
+          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+              2 * n_comm_cells[dir] * sizeof(Cell *));
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
@@ -397,8 +397,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-                  n_comm_cells[dir] * sizeof(ParticleList *));
+              comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+                  n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
@@ -421,8 +421,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists = (ParticleList **)Utils::malloc(
-                  n_comm_cells[dir] * sizeof(ParticleList *));
+              comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
+                  n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -447,7 +447,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
-  ParticleList *tmplist;
 
   CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
                      this_node, comm->num));
@@ -467,7 +466,7 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
     else if (comm->comm[i].type == GHOST_LOCL) {
       nlist2 = comm->comm[i].n_part_lists / 2;
       for (j = 0; j < nlist2; j++) {
-        tmplist = comm->comm[i].part_lists[j];
+        auto tmplist = comm->comm[i].part_lists[j];
         comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
         comm->comm[i].part_lists[j + nlist2] = tmplist;
       }

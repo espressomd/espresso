@@ -142,7 +142,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     /* always sending/receiving 1 cell per time step */
     for (c = 0; c < n; c++) {
       comm->comm[c].part_lists =
-          (ParticleList **)Utils::malloc(sizeof(ParticleList *));
+          (Cell **)Utils::malloc(sizeof(Cell *));
       comm->comm[c].n_part_lists = 1;
       comm->comm[c].mpi_comm = comm_cart;
     }
@@ -264,7 +264,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       /* two cells: from and to */
       for (c = 0; c < n; c++) {
         comm->comm[c].part_lists =
-            (ParticleList **)Utils::malloc(2 * sizeof(ParticleList *));
+            (Cell **)Utils::malloc(2 * sizeof(Cell *));
         comm->comm[c].n_part_lists = 2;
         comm->comm[c].mpi_comm = comm_cart;
         comm->comm[c].node = this_node;

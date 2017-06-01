@@ -246,7 +246,7 @@ static void prepare_ghost_cell(Cell *cell, int size)
     }
   }          
 #endif
-  realloc_particlelist(cell, cell->n = size);
+  cell->resize(size);
   // invalidate pointers etc
   {
     int np   = cell->n;
@@ -290,7 +290,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
   for (int pl = 0; pl < gc->n_part_lists; pl++) {
-    ParticleList *cur_list = gc->part_lists[pl];
+    auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, cur_list, *(int *)retrieve, gc->node));
