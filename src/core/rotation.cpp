@@ -274,9 +274,6 @@ void propagate_omega_quat_particle(Particle *p) {
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
 void convert_torques_propagate_omega() {
-  Particle *p;
-  Cell *cell;
-  int np;
   double tx, ty, tz;
   double omega_0[3] = {0.0, 0.0, 0.0};
 
@@ -289,219 +286,198 @@ void convert_torques_propagate_omega() {
   }
 #endif
 
-  for (int c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (int i = 0; i < np; i++) {
+  for (auto &p : local_cells.particles()) {
 #ifdef ROTATION_PER_PARTICLE
-      if (!p[i].p.rotation)
-        continue;
+    if (!p.p.rotation)
+      continue;
 #endif
-      double A[9];
-      define_rotation_matrix(&p[i], A);
+    double A[9];
+    define_rotation_matrix(&p, A);
 
-      tx = A[0 + 3 * 0] * p[i].f.torque[0] + A[0 + 3 * 1] * p[i].f.torque[1] +
-           A[0 + 3 * 2] * p[i].f.torque[2];
-      ty = A[1 + 3 * 0] * p[i].f.torque[0] + A[1 + 3 * 1] * p[i].f.torque[1] +
-           A[1 + 3 * 2] * p[i].f.torque[2];
-      tz = A[2 + 3 * 0] * p[i].f.torque[0] + A[2 + 3 * 1] * p[i].f.torque[1] +
-           A[2 + 3 * 2] * p[i].f.torque[2];
+    tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
+         A[0 + 3 * 2] * p.f.torque[2];
+    ty = A[1 + 3 * 0] * p.f.torque[0] + A[1 + 3 * 1] * p.f.torque[1] +
+         A[1 + 3 * 2] * p.f.torque[2];
+    tz = A[2 + 3 * 0] * p.f.torque[0] + A[2 + 3 * 1] * p.f.torque[1] +
+         A[2 + 3 * 2] * p.f.torque[2];
 
-      if (thermo_switch & THERMO_LANGEVIN) {
+    if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-        if (!ifParticleIsVirtual(&p[i]))
+      if (!ifParticleIsVirtual(&p))
 #endif
-        {
-          friction_thermo_langevin_rotation(&p[i]);
+      {
+        friction_thermo_langevin_rotation(&p);
 
-          p[i].f.torque[0] += tx;
-          p[i].f.torque[1] += ty;
-          p[i].f.torque[2] += tz;
-        }
-      } else {
-        p[i].f.torque[0] = tx;
-        p[i].f.torque[1] = ty;
-        p[i].f.torque[2] = tz;
+        p.f.torque[0] += tx;
+        p.f.torque[1] += ty;
+        p.f.torque[2] += tz;
       }
+    } else {
+      p.f.torque[0] = tx;
+      p.f.torque[1] = ty;
+      p.f.torque[2] = tz;
+    }
 
 #ifdef ROTATION_PER_PARTICLE
-      if (!(p[i].p.rotation & 2))
-        p[i].f.torque[0] = 0;
+    if (!(p.p.rotation & 2))
+      p.f.torque[0] = 0;
 
-      if (!(p[i].p.rotation & 4))
-        p[i].f.torque[1] = 0;
+    if (!(p.p.rotation & 4))
+      p.f.torque[1] = 0;
 
-      if (!(p[i].p.rotation & 8))
-        p[i].f.torque[2] = 0;
+    if (!(p.p.rotation & 8))
+      p.f.torque[2] = 0;
 
 #endif
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
-      double omega_swim[3] = {0, 0, 0};
-      double omega_swim_body[3] = {0, 0, 0};
-      if (p[i].swim.swimming && lattice_switch != 0) {
-        double dip[3];
-        double diff[3];
-        double cross[3];
-        double l_diff, l_cross;
+    double omega_swim[3] = {0, 0, 0};
+    double omega_swim_body[3] = {0, 0, 0};
+    if (p.swim.swimming && lattice_switch != 0) {
+      double dip[3];
+      double diff[3];
+      double cross[3];
+      double l_diff, l_cross;
 
-        dip[0] = p[i].swim.dipole_length * p[i].r.quatu[0];
-        dip[1] = p[i].swim.dipole_length * p[i].r.quatu[1];
-        dip[2] = p[i].swim.dipole_length * p[i].r.quatu[2];
+      dip[0] = p.swim.dipole_length * p.r.quatu[0];
+      dip[1] = p.swim.dipole_length * p.r.quatu[1];
+      dip[2] = p.swim.dipole_length * p.r.quatu[2];
 
-        diff[0] = (p[i].swim.v_center[0] - p[i].swim.v_source[0]);
-        diff[1] = (p[i].swim.v_center[1] - p[i].swim.v_source[1]);
-        diff[2] = (p[i].swim.v_center[2] - p[i].swim.v_source[2]);
+      diff[0] = (p.swim.v_center[0] - p.swim.v_source[0]);
+      diff[1] = (p.swim.v_center[1] - p.swim.v_source[1]);
+      diff[2] = (p.swim.v_center[2] - p.swim.v_source[2]);
 
-        cross[0] = diff[1] * dip[2] - diff[2] * dip[1];
-        cross[1] = diff[0] * dip[2] - diff[2] * dip[0];
-        cross[2] = diff[0] * dip[1] - diff[1] * dip[0];
+      cross[0] = diff[1] * dip[2] - diff[2] * dip[1];
+      cross[1] = diff[0] * dip[2] - diff[2] * dip[0];
+      cross[2] = diff[0] * dip[1] - diff[1] * dip[0];
 
-        l_diff =
-            sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
-        l_cross = sqrt(cross[0] * cross[0] + cross[1] * cross[1] +
-                       cross[2] * cross[2]);
+      l_diff = sqrt(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
+      l_cross =
+          sqrt(cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2]);
 
-        if (l_cross > 0 && p[i].swim.dipole_length > 0) {
-          omega_swim[0] =
-              l_diff * cross[0] / (l_cross * p[i].swim.dipole_length);
-          omega_swim[1] =
-              l_diff * cross[1] / (l_cross * p[i].swim.dipole_length);
-          omega_swim[2] =
-              l_diff * cross[2] / (l_cross * p[i].swim.dipole_length);
+      if (l_cross > 0 && p.swim.dipole_length > 0) {
+        omega_swim[0] = l_diff * cross[0] / (l_cross * p.swim.dipole_length);
+        omega_swim[1] = l_diff * cross[1] / (l_cross * p.swim.dipole_length);
+        omega_swim[2] = l_diff * cross[2] / (l_cross * p.swim.dipole_length);
 
-          omega_swim_body[0] = A[0 + 3 * 0] * omega_swim[0] +
-                               A[0 + 3 * 1] * omega_swim[1] +
-                               A[0 + 3 * 2] * omega_swim[2];
-          omega_swim_body[1] = A[1 + 3 * 0] * omega_swim[0] +
-                               A[1 + 3 * 1] * omega_swim[1] +
-                               A[1 + 3 * 2] * omega_swim[2];
-          omega_swim_body[2] = A[2 + 3 * 0] * omega_swim[0] +
-                               A[2 + 3 * 1] * omega_swim[1] +
-                               A[2 + 3 * 2] * omega_swim[2];
+        omega_swim_body[0] = A[0 + 3 * 0] * omega_swim[0] +
+                             A[0 + 3 * 1] * omega_swim[1] +
+                             A[0 + 3 * 2] * omega_swim[2];
+        omega_swim_body[1] = A[1 + 3 * 0] * omega_swim[0] +
+                             A[1 + 3 * 1] * omega_swim[1] +
+                             A[1 + 3 * 2] * omega_swim[2];
+        omega_swim_body[2] = A[2 + 3 * 0] * omega_swim[0] +
+                             A[2 + 3 * 1] * omega_swim[1] +
+                             A[2 + 3 * 2] * omega_swim[2];
 
-          p[i].f.torque[0] += p[i].swim.rotational_friction *
-                              (omega_swim_body[0] - p[i].m.omega[0]);
-          p[i].f.torque[1] += p[i].swim.rotational_friction *
-                              (omega_swim_body[1] - p[i].m.omega[1]);
-          p[i].f.torque[2] += p[i].swim.rotational_friction *
-                              (omega_swim_body[2] - p[i].m.omega[2]);
-        }
+        p.f.torque[0] +=
+            p.swim.rotational_friction * (omega_swim_body[0] - p.m.omega[0]);
+        p.f.torque[1] +=
+            p.swim.rotational_friction * (omega_swim_body[1] - p.m.omega[1]);
+        p.f.torque[2] +=
+            p.swim.rotational_friction * (omega_swim_body[2] - p.m.omega[2]);
       }
-#endif
-
-      ONEPART_TRACE(if (p[i].p.identity == check_id) fprintf(
-          stderr,
-          "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-          this_node, p[i].f.f[0], p[i].f.f[1], p[i].f.f[2], p[i].m.v[0],
-          p[i].m.v[1], p[i].m.v[2]));
-
-#ifdef ROTATIONAL_INERTIA
-      p[i].m.omega[0] += time_step_half * p[i].f.torque[0] / p[i].p.rinertia[0];
-      p[i].m.omega[1] += time_step_half * p[i].f.torque[1] / p[i].p.rinertia[1];
-      p[i].m.omega[2] += time_step_half * p[i].f.torque[2] / p[i].p.rinertia[2];
-#else
-      p[i].m.omega[0] += time_step_half * p[i].f.torque[0] / I[0];
-      p[i].m.omega[1] += time_step_half * p[i].f.torque[1] / I[1];
-      p[i].m.omega[2] += time_step_half * p[i].f.torque[2] / I[2];
-#endif
-      // zeroth estimate of omega
-      for (int j = 0; j < 3; j++)
-        omega_0[j] = p[i].m.omega[j];
-
-      /* if the tensor of inertia is isotropic, the following refinement is not
-         needed.
-         Otherwise repeat this loop 2-3 times depending on the required accuracy
-         */
-      for (int times = 0; times <= 5; times++) {
-        double Wd[3];
-
-#ifdef ROTATIONAL_INERTIA
-        Wd[0] = (p[i].m.omega[1] * p[i].m.omega[2] *
-                 (p[i].p.rinertia[1] - p[i].p.rinertia[2])) /
-                p[i].p.rinertia[0];
-        Wd[1] = (p[i].m.omega[2] * p[i].m.omega[0] *
-                 (p[i].p.rinertia[2] - p[i].p.rinertia[0])) /
-                p[i].p.rinertia[1];
-        Wd[2] = (p[i].m.omega[0] * p[i].m.omega[1] *
-                 (p[i].p.rinertia[0] - p[i].p.rinertia[1])) /
-                p[i].p.rinertia[2];
-#else
-        Wd[0] = (p[i].m.omega[1] * p[i].m.omega[2] * (I[1] - I[2])) / I[0];
-        Wd[1] = (p[i].m.omega[2] * p[i].m.omega[0] * (I[2] - I[0])) / I[1];
-        Wd[2] = (p[i].m.omega[0] * p[i].m.omega[1] * (I[0] - I[1])) / I[2];
-#endif
-
-        p[i].m.omega[0] = omega_0[0] + time_step_half * Wd[0];
-        p[i].m.omega[1] = omega_0[1] + time_step_half * Wd[1];
-        p[i].m.omega[2] = omega_0[2] + time_step_half * Wd[2];
-      }
-
-      ONEPART_TRACE(if (p[i].p.identity == check_id) fprintf(
-          stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node,
-          p[i].m.v[0], p[i].m.v[1], p[i].m.v[2]));
     }
+#endif
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
+        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
+
+#ifdef ROTATIONAL_INERTIA
+    p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
+    p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
+    p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
+#else
+    p.m.omega[0] += time_step_half * p.f.torque[0] / I[0];
+    p.m.omega[1] += time_step_half * p.f.torque[1] / I[1];
+    p.m.omega[2] += time_step_half * p.f.torque[2] / I[2];
+#endif
+    // zeroth estimate of omega
+    for (int j = 0; j < 3; j++)
+      omega_0[j] = p.m.omega[j];
+
+    /* if the tensor of inertia is isotropic, the following refinement is not
+       needed.
+       Otherwise repeat this loop 2-3 times depending on the required accuracy
+       */
+    for (int times = 0; times <= 5; times++) {
+      double Wd[3];
+
+#ifdef ROTATIONAL_INERTIA
+      Wd[0] =
+          (p.m.omega[1] * p.m.omega[2] * (p.p.rinertia[1] - p.p.rinertia[2])) /
+          p.p.rinertia[0];
+      Wd[1] =
+          (p.m.omega[2] * p.m.omega[0] * (p.p.rinertia[2] - p.p.rinertia[0])) /
+          p.p.rinertia[1];
+      Wd[2] =
+          (p.m.omega[0] * p.m.omega[1] * (p.p.rinertia[0] - p.p.rinertia[1])) /
+          p.p.rinertia[2];
+#else
+      Wd[0] = (p.m.omega[1] * p.m.omega[2] * (I[1] - I[2])) / I[0];
+      Wd[1] = (p.m.omega[2] * p.m.omega[0] * (I[2] - I[0])) / I[1];
+      Wd[2] = (p.m.omega[0] * p.m.omega[1] * (I[0] - I[1])) / I[2];
+#endif
+
+      p.m.omega[0] = omega_0[0] + time_step_half * Wd[0];
+      p.m.omega[1] = omega_0[1] + time_step_half * Wd[1];
+      p.m.omega[2] = omega_0[2] + time_step_half * Wd[2];
+    }
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
+        p.m.v[1], p.m.v[2]));
   }
 }
 
 /** convert the torques to the body-fixed frames before the integration loop */
 void convert_initial_torques() {
-  Particle *p;
-  Cell *cell;
-  int c, i, np;
   double tx, ty, tz;
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
+  for (auto &p : local_cells.particles()) {
 #ifdef ROTATION_PER_PARTICLE
-      if (!p[i].p.rotation)
-        continue;
+    if (!p.p.rotation)
+      continue;
 #endif
-      double A[9];
-      define_rotation_matrix(&p[i], A);
+    double A[9];
+    define_rotation_matrix(&p, A);
 
-      tx = A[0 + 3 * 0] * p[i].f.torque[0] + A[0 + 3 * 1] * p[i].f.torque[1] +
-           A[0 + 3 * 2] * p[i].f.torque[2];
-      ty = A[1 + 3 * 0] * p[i].f.torque[0] + A[1 + 3 * 1] * p[i].f.torque[1] +
-           A[1 + 3 * 2] * p[i].f.torque[2];
-      tz = A[2 + 3 * 0] * p[i].f.torque[0] + A[2 + 3 * 1] * p[i].f.torque[1] +
-           A[2 + 3 * 2] * p[i].f.torque[2];
+    tx = A[0 + 3 * 0] * p.f.torque[0] + A[0 + 3 * 1] * p.f.torque[1] +
+         A[0 + 3 * 2] * p.f.torque[2];
+    ty = A[1 + 3 * 0] * p.f.torque[0] + A[1 + 3 * 1] * p.f.torque[1] +
+         A[1 + 3 * 2] * p.f.torque[2];
+    tz = A[2 + 3 * 0] * p.f.torque[0] + A[2 + 3 * 1] * p.f.torque[1] +
+         A[2 + 3 * 2] * p.f.torque[2];
 
-      if (thermo_switch & THERMO_LANGEVIN) {
+    if (thermo_switch & THERMO_LANGEVIN) {
 
-        friction_thermo_langevin_rotation(&p[i]);
-        p[i].f.torque[0] += tx;
-        p[i].f.torque[1] += ty;
-        p[i].f.torque[2] += tz;
-      } else {
-        p[i].f.torque[0] = tx;
-        p[i].f.torque[1] = ty;
-        p[i].f.torque[2] = tz;
-      }
-
-#ifdef ROTATION_PER_PARTICLE
-      if (!(p[i].p.rotation & 2))
-        p[i].f.torque[0] = 0;
-
-      if (!(p[i].p.rotation & 4))
-        p[i].f.torque[1] = 0;
-
-      if (!(p[i].p.rotation & 8))
-        p[i].f.torque[2] = 0;
-
-#endif
-
-      ONEPART_TRACE(if (p[i].p.identity == check_id) fprintf(
-          stderr,
-          "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-          this_node, p[i].f.f[0], p[i].f.f[1], p[i].f.f[2], p[i].m.v[0],
-          p[i].m.v[1], p[i].m.v[2]));
+      friction_thermo_langevin_rotation(&p);
+      p.f.torque[0] += tx;
+      p.f.torque[1] += ty;
+      p.f.torque[2] += tz;
+    } else {
+      p.f.torque[0] = tx;
+      p.f.torque[1] = ty;
+      p.f.torque[2] = tz;
     }
+
+#ifdef ROTATION_PER_PARTICLE
+    if (!(p.p.rotation & 2))
+      p.f.torque[0] = 0;
+
+    if (!(p.p.rotation & 4))
+      p.f.torque[1] = 0;
+
+    if (!(p.p.rotation & 8))
+      p.f.torque[2] = 0;
+
+#endif
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
+        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
   }
 }
 
