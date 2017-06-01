@@ -24,6 +24,7 @@
  */
 
 #include <cmath>
+#include <numeric>
 #include <mpi.h>
 #include "utils.hpp"
 #include "communication.hpp"
