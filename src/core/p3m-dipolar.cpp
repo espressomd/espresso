@@ -854,9 +854,9 @@ static void P3M_assign_torques(double prefac, int d_rs) {
       }
       cp_cnt++;
 
-      ONEPART_TRACE(if (p[i].p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",
-          this_node, p[i].f.f[0], p[i].f.f[1], p[i].f.f[2], d_rs, -db_fsum));
+      ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n",
+          this_node, p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -895,8 +895,8 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
       cp_cnt++;
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d add %.5f\n",
-          this_node, p.f.f[0], p.f.f[1], p.f.f[2], d_rs, -db_fsum));
+          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n",
+          this_node, p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
