@@ -512,135 +512,137 @@ void gather_collision_queue(int* counts)
     return;
 }
 
-// this looks in all local particles for a particle close to those in a
+
+// this looks in all local particles for a particle close to those in a 
 // 2-particle collision. If it finds them, it performs three particle binding
-void three_particle_binding_full_search() {
-  // first iterate over cells, get one of the cells and find how many particles
-  // in this cell
-  for (auto &p : local_cells.particles())
-    // for all p:
-    for (int ij = 0; ij < total_collisions; ij++) {
-      auto p1 = local_particles[gathered_queue[ij].pp1];
-      auto p2 = local_particles[gathered_queue[ij].pp2];
-
-      // Check, whether p is equal to one of the particles in the
-      // collision. If so, skip
-      if ((p.p.identity == p1->p.identity) ||
-          (p.p.identity == p2->p.identity)) {
-        continue;
-      }
-
-      // The following checks,
-      // if the particle p is closer that the cutoff from p1 and/or p2.
-      // If yes, three particle bonds are created on all particles
-      // which have two other particles within the cutoff distance,
-      // unless such a bond already exists
-
-      // We need all cyclical permutations, here
-      // (bond is placed on 1st particle, order of bond partners
-      // does not matter, so we don't neet non-cyclic permutations):
-      coldet_do_three_particle_bond(&p, p1, p2);
-      coldet_do_three_particle_bond(p1, &p, p2);
-      coldet_do_three_particle_bond(p2, &p, p1);
-    }
+void three_particle_binding_full_search()
+{
+  Cell *cell;
+  Particle *p, *p1, *p2;
+  // first iterate over cells, get one of the cells and find how many particles in this cell
+  for (int c=0; c<local_cells.n; c++) {
+      cell=local_cells.cell[c];
+      // iterate over particles in the cell
+      for (int a=0; a<cell->n; a++) {
+          p=&cell->part[a];
+          // for all p:
+          for (int ij=0; ij<total_collisions; ij++) {
+              p1=local_particles[gathered_queue[ij].pp1];
+              p2=local_particles[gathered_queue[ij].pp2];
+  
+  		   // Check, whether p is equal to one of the particles in the
+  		   // collision. If so, skip
+  		   if ((p->p.identity ==p1->p.identity) || ( p->p.identity == p2->p.identity)) {
+  		     continue;
+  		   }
+  
+             // The following checks, 
+  		 // if the particle p is closer that the cutoff from p1 and/or p2.
+  		 // If yes, three particle bonds are created on all particles
+  		 // which have two other particles within the cutoff distance,
+  		 // unless such a bond already exists
+  		 
+  		 // We need all cyclical permutations, here 
+  		 // (bond is placed on 1st particle, order of bond partners
+  		 // does not matter, so we don't neet non-cyclic permutations):
+             coldet_do_three_particle_bond(p,p1,p2);
+             coldet_do_three_particle_bond(p1,p,p2);
+             coldet_do_three_particle_bond(p2,p,p1);
+  
+         }
+     }
+ }
 }
+
 
 // Goes through the collision queue and for each pair in it
 // looks for a third particle by using the domain decomposition
 // cell system. If found, it performs three particle binding
-void three_particle_binding_domain_decomposition() {
+void three_particle_binding_domain_decomposition()
+{
   // We have domain decomposition
-
+    
   // Indices of the cells in which the colliding particles reside
   int cellIdx[2][3];
-
+    
   // Iterate over collision queue
 
-  for (int id = 0; id < total_collisions; id++) {
+  for (int id=0;id<total_collisions;id++) {
 
-    // Get first cell Idx
-    if ((local_particles[gathered_queue[id].pp1] != NULL) &&
-        (local_particles[gathered_queue[id].pp2] != NULL)) {
+      // Get first cell Idx
+      if ((local_particles[gathered_queue[id].pp1] != NULL) && (local_particles[gathered_queue[id].pp2] != NULL)) {
 
-      Particle *p1 = local_particles[gathered_queue[id].pp1];
-      Particle *p2 = local_particles[gathered_queue[id].pp2];
-      dd_position_to_cell_indices(p1->r.p, cellIdx[0]);
-      dd_position_to_cell_indices(p2->r.p, cellIdx[1]);
+        Particle* p1=local_particles[gathered_queue[id].pp1];
+        Particle* p2=local_particles[gathered_queue[id].pp2];
+        dd_position_to_cell_indices(p1->r.p,cellIdx[0]);
+        dd_position_to_cell_indices(p2->r.p,cellIdx[1]);
 
-      // Iterate over the cells + their neighbors
-      // if p1 and p2 are in the same cell, we don't need to consider it 2x
-      int lim = 1;
+        // Iterate over the cells + their neighbors
+        // if p1 and p2 are in the same cell, we don't need to consider it 2x
+        int lim=1;
 
-      if ((cellIdx[0][0] == cellIdx[1][0]) &&
-          (cellIdx[0][1] == cellIdx[1][1]) && (cellIdx[0][2] == cellIdx[1][2]))
-        lim = 0; // Only consider the 1st cell
+        if ((cellIdx[0][0]==cellIdx[1][0]) && (cellIdx[0][1]==cellIdx[1][1]) && (cellIdx[0][2]==cellIdx[1][2]))
+          lim=0; // Only consider the 1st cell
 
-      for (int j = 0; j <= lim; j++) {
+        for (int j=0;j<=lim;j++) {
 
-        // Iterate the cell with indices cellIdx[j][] and all its neighbors.
-        // code taken from dd_init_cell_interactions()
-        for (int p = cellIdx[j][0] - 1; p <= cellIdx[j][0] + 1; p++)
-          for (int q = cellIdx[j][1] - 1; q <= cellIdx[j][1] + 1; q++)
-            for (int r = cellIdx[j][2] - 1; r <= cellIdx[j][2] + 1; r++) {
-              int ind2 = get_linear_index(p, q, r, dd.ghost_cell_grid);
-              Cell *cell = cells + ind2;
+            // Iterate the cell with indices cellIdx[j][] and all its neighbors.
+            // code taken from dd_init_cell_interactions()
+            for(int p=cellIdx[j][0]-1; p<=cellIdx[j][0]+1; p++)	
+               for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
+	                for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
+	                   int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
+	                   Cell* cell=&cells[ind2];
+ 
+	                   // Iterate over particles in this cell
+                     for(int a=0; a<cell->n; a++) {
+                        Particle* P=&cell->part[a];
+                        // for all p:
+  	                      // Check, whether p is equal to one of the particles in the
+  	                      // collision. If so, skip
+  	                      if ((P->p.identity ==p1->p.identity) || (P->p.identity == p2->p.identity)) {
+                          //TRACE(printf("same particle\n"));
+  		                continue;
+  	                      }
 
-              // Iterate over particles in this cell
-              for (int a = 0; a < cell->n; a++) {
-                Particle *P = &cell->part[a];
-                // for all p:
-                // Check, whether p is equal to one of the particles in the
-                // collision. If so, skip
-                if ((P->p.identity == p1->p.identity) ||
-                    (P->p.identity == p2->p.identity)) {
-                  // TRACE(printf("same particle\n"));
-                  continue;
-                }
+                        // The following checks, 
+                        // if the particle p is closer that the cutoff from p1 and/or p2.
+                        // If yes, three particle bonds are created on all particles
+  	                      // which have two other particles within the cutoff distance,
+                        // unless such a bond already exists
 
-                // The following checks,
-                // if the particle p is closer that the cutoff from p1 and/or
-                // p2.
-                // If yes, three particle bonds are created on all particles
-                // which have two other particles within the cutoff distance,
-                // unless such a bond already exists
+  	                      // We need all cyclical permutations, here 
+                        // (bond is placed on 1st particle, order of bond partners
+  	                      // does not matter, so we don't need non-cyclic permutations):
 
-                // We need all cyclical permutations, here
-                // (bond is placed on 1st particle, order of bond partners
-                // does not matter, so we don't need non-cyclic permutations):
+                        if (P->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, P->p.identity));
+                          continue;
+                        }
+                        //TRACE(printf("%d: LOOP: %d Handling collision of particles FIRST CONFIGURATION %d %d %d\n", this_node, id, p1->p.identity, P->p.identity, p2->p.identity));
+                        coldet_do_three_particle_bond(P,p1,p2);
 
-                if (P->l.ghost) {
-                  // TRACE(printf("%d: center particle is ghost: %d\n",
-                  // this_node, P->p.identity));
-                  continue;
-                }
-                // TRACE(printf("%d: LOOP: %d Handling collision of particles
-                // FIRST CONFIGURATION %d %d %d\n", this_node, id,
-                // p1->p.identity, P->p.identity, p2->p.identity));
-                coldet_do_three_particle_bond(P, p1, p2);
+                        if (p1->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p1->p.identity));
+                          continue;
+                        }
 
-                if (p1->l.ghost) {
-                  // TRACE(printf("%d: center particle is ghost: %d\n",
-                  // this_node, p1->p.identity));
-                  continue;
-                }
+                        coldet_do_three_particle_bond(p1,P,p2);
 
-                coldet_do_three_particle_bond(p1, P, p2);
+                        if (p2->l.ghost) {
+                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p2->p.identity));
+                          continue;
+                        }
 
-                if (p2->l.ghost) {
-                  // TRACE(printf("%d: center particle is ghost: %d\n",
-                  // this_node, p2->p.identity));
-                  continue;
-                }
+  	                      coldet_do_three_particle_bond(p2,P,p1);
 
-                coldet_do_three_particle_bond(p2, P, p1);
+                     } // loop over particles in this cell
 
-              } // loop over particles in this cell
+	                } // Loop over cell
 
-            } // Loop over cell
-
-      } // Loop over particles if they are in different cells
-
-    } // If local particles exist
+        } // Loop over particles if they are in different cells
+    
+      } // If local particles exist
 
   } // Loop over total collisions
 }

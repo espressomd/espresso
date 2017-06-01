@@ -288,7 +288,7 @@ void integrate_reaction_swap() {
 
       // Loop cell neighbors
       // for ( int n = 0; n < dd.cell_inter[*c].n_neighbors; n++ )
-      for (int n = 0; n < n_cells; n++) {
+      for (int n = 0; n < cells.size(); n++) {
         cell = &cells[n]; // dd.cell_inter[*c].nList[n].pList;
         p_neigh = cell->part;
         np = cell->n;
