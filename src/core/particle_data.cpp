@@ -1,47 +1,52 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file particle_data.cpp
-    This file contains everything related to particle storage. If you want to add a new
-    property to the particles, it is probably a good idea to modify \ref Particle to give
-    scripts access to that property. You always have to modify two positions: first the
-    print section, where you should add your new data at the end, and second the read
-    section where you have to find a nice and short name for your property to appear in
+    This file contains everything related to particle storage. If you want to
+   add a new
+    property to the particles, it is probably a good idea to modify \ref
+   Particle to give
+    scripts access to that property. You always have to modify two positions:
+   first the
+    print section, where you should add your new data at the end, and second the
+   read
+    section where you have to find a nice and short name for your property to
+   appear in
     the Tcl code. Then you just parse your part out of argc and argv.
 
     The corresponding header file is particle_data.hpp.
 */
+#include "particle_data.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "interaction_data.hpp"
+#include "rotation.hpp"
+#include "utils.hpp"
+#include "virtual_sites.hpp"
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <cmath>
 #include <mpi.h>
-#include "utils.hpp"
-#include "particle_data.hpp"
-#include "global.hpp"
-#include "communication.hpp"
-#include "grid.hpp"
-#include "interaction_data.hpp"
-#include "integrate.hpp"
-#include "cells.hpp"
-#include "rotation.hpp"
-#include "virtual_sites.hpp"
 
 /************************************************
  * defines
@@ -57,8 +62,8 @@
  * variables
  ************************************************/
 // List of particles for grandcanonical simulations
-TypeOfIndex Type; 
-IndexOfType Index; 
+TypeOfIndex Type;
+IndexOfType Index;
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
@@ -74,7 +79,7 @@ Particle *partCfg = NULL;
 int partCfgSorted = 0;
 
 /** bondlist for partCfg, if bonds are needed */
-IntList partCfg_bl = { NULL, 0, 0 };
+IntList partCfg_bl = {NULL, 0, 0};
 
 /************************************************
  * local functions
@@ -89,35 +94,39 @@ void try_delete_exclusion(Particle *part, int part2);
 /** Insert an exclusion if not already set */
 void try_add_exclusion(Particle *part, int part2);
 
-/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
-    This uses the bond topology obtained directly from the particles, since only this contains
-    the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
-    should be on a single node, therefore the \ref partCfg array is used. With large amounts
-    of particles, you should avoid this function and setup exclusions manually. */
+/** Automatically add the next \<distance\> neighbors in each molecule to the
+   exclusion list.
+    This uses the bond topology obtained directly from the particles, since only
+   this contains
+    the full topology, in contrast to \ref topology::topology. To easily setup
+   the bonds, all data
+    should be on a single node, therefore the \ref partCfg array is used. With
+   large amounts
+    of particles, you should avoid this function and setup exclusions manually.
+   */
 void auto_exclusion(int distance);
 
 /************************************************
  * particle initialization functions
  ************************************************/
 
-void init_particle(Particle *part)
-{
+void init_particle(Particle *part) {
   /* ParticleProperties */
   part->p.identity = -1;
-  part->p.type     = 0;
-  part->p.mol_id   = 0;
+  part->p.type = 0;
+  part->p.mol_id = 0;
 
 #ifdef MASS
-  part->p.mass     = 1.0;
+  part->p.mass = 1.0;
 #endif
 
 #ifdef SHANCHEN
   int ii;
-  for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
-    part->p.solvation[ii]=0.0;
+  for (ii = 0; ii < 2 * LB_COMPONENTS; ii++) {
+    part->p.solvation[ii] = 0.0;
   }
-  for(ii=0;ii<LB_COMPONENTS;ii++){ 
-    part->r.composition[ii]=0.0;
+  for (ii = 0; ii < LB_COMPONENTS; ii++) {
+    part->r.composition[ii] = 0.0;
   }
 #endif
 
@@ -127,7 +136,7 @@ void init_particle(Particle *part)
   part->p.rinertia[2] = 1.0;
 #endif
 #ifdef ROTATION_PER_PARTICLE
-  part->p.rotation =14;
+  part->p.rotation = 14;
 #endif
 
 #ifdef AFFINITY
@@ -135,21 +144,21 @@ void init_particle(Particle *part)
   part->p.bond_site[1] = -1.0;
   part->p.bond_site[2] = -1.0;
 #endif
-    
+
 #ifdef MEMBRANE_COLLISION
-    part->p.out_direction[0] = 0.0;
-    part->p.out_direction[1] = 0.0;
-    part->p.out_direction[2] = 0.0;
+  part->p.out_direction[0] = 0.0;
+  part->p.out_direction[1] = 0.0;
+  part->p.out_direction[2] = 0.0;
 #endif
 
 #ifdef ELECTROSTATICS
-  part->p.q        = 0.0;
+  part->p.q = 0.0;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  part->p.mu_E[0]   = 0.0;
-  part->p.mu_E[1]   = 0.0;
-  part->p.mu_E[2]   = 0.0;
+  part->p.mu_E[0] = 0.0;
+  part->p.mu_E[1] = 0.0;
+  part->p.mu_E[2] = 0.0;
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -157,9 +166,9 @@ void init_particle(Particle *part)
 #endif
 
   /* ParticlePosition */
-  part->r.p[0]     = 0.0;
-  part->r.p[1]     = 0.0;
-  part->r.p[2]     = 0.0;
+  part->r.p[0] = 0.0;
+  part->r.p[1] = 0.0;
+  part->r.p[2] = 0.0;
 
 #ifdef BOND_CONSTRAINT
   part->r.p_old[0] = 0.0;
@@ -168,27 +177,27 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef ROTATION
-  part->r.quat[0]  = 1.0;
-  part->r.quat[1]  = 0.0;
-  part->r.quat[2]  = 0.0;
-  part->r.quat[3]  = 0.0;
+  part->r.quat[0] = 1.0;
+  part->r.quat[1] = 0.0;
+  part->r.quat[2] = 0.0;
+  part->r.quat[3] = 0.0;
 
-  part->r.quatu[0]  = 0.0;
-  part->r.quatu[1]  = 0.0;
-  part->r.quatu[2]  = 1.0;
+  part->r.quatu[0] = 0.0;
+  part->r.quatu[1] = 0.0;
+  part->r.quatu[2] = 1.0;
 #endif
 
 #ifdef DIPOLES
-  part->r.dip[0]    = 0.0;
-  part->r.dip[1]    = 0.0;
-  part->r.dip[2]    = 0.0;
-  part->p.dipm      = 0.0;
+  part->r.dip[0] = 0.0;
+  part->r.dip[1] = 0.0;
+  part->r.dip[2] = 0.0;
+  part->p.dipm = 0.0;
 #endif
 
   /* ParticleMomentum */
-  part->m.v[0]     = 0.0;
-  part->m.v[1]     = 0.0;
-  part->m.v[2]     = 0.0;
+  part->m.v[0] = 0.0;
+  part->m.v[1] = 0.0;
+  part->m.v[2] = 0.0;
 #ifdef ROTATION
   part->m.omega[0] = 0.0;
   part->m.omega[1] = 0.0;
@@ -196,22 +205,22 @@ void init_particle(Particle *part)
 #endif
 
   /* ParticleForce */
-  part->f.f[0]     = 0.0;
-  part->f.f[1]     = 0.0;
-  part->f.f[2]     = 0.0;
+  part->f.f[0] = 0.0;
+  part->f.f[1] = 0.0;
+  part->f.f[2] = 0.0;
 #ifdef ROTATION
   part->f.torque[0] = 0.0;
   part->f.torque[1] = 0.0;
   part->f.torque[2] = 0.0;
 
-  // Swimming parameters
+// Swimming parameters
 #ifdef ENGINE
-  part->swim.swimming            = false;
-  part->swim.v_swim              = 0.0;
-  part->swim.f_swim              = 0.0;
+  part->swim.swimming = false;
+  part->swim.v_swim = 0.0;
+  part->swim.f_swim = 0.0;
 #if defined(LB) || defined(LB_GPU)
-  part->swim.push_pull           = 0;
-  part->swim.dipole_length       = 0.0;
+  part->swim.push_pull = 0;
+  part->swim.dipole_length = 0.0;
   part->swim.rotational_friction = 0.0;
 #endif
 #endif
@@ -219,66 +228,66 @@ void init_particle(Particle *part)
 #endif
 
   /* ParticleLocal */
-  part->l.p_old[0]   = 0.0;
-  part->l.p_old[1]   = 0.0;
-  part->l.p_old[2]   = 0.0;
-  part->l.i[0]       = 0;
-  part->l.i[1]       = 0;
-  part->l.i[2]       = 0;
+  part->l.p_old[0] = 0.0;
+  part->l.p_old[1] = 0.0;
+  part->l.p_old[2] = 0.0;
+  part->l.i[0] = 0;
+  part->l.i[1] = 0;
+  part->l.i[2] = 0;
 
-  #ifdef GHMC
+#ifdef GHMC
 
-    /* Last Saved ParticlePosition */
-    part->l.r_ls.p[0]     = 0.0;
-    part->l.r_ls.p[1]     = 0.0;
-    part->l.r_ls.p[2]     = 0.0;
+  /* Last Saved ParticlePosition */
+  part->l.r_ls.p[0] = 0.0;
+  part->l.r_ls.p[1] = 0.0;
+  part->l.r_ls.p[2] = 0.0;
 
-  #ifdef BOND_CONSTRAINT
-    part->l.r_ls.p_old[0] = 0.0;
-    part->l.r_ls.p_old[1] = 0.0;
-    part->l.r_ls.p_old[2] = 0.0;
-  #endif
+#ifdef BOND_CONSTRAINT
+  part->l.r_ls.p_old[0] = 0.0;
+  part->l.r_ls.p_old[1] = 0.0;
+  part->l.r_ls.p_old[2] = 0.0;
+#endif
 
-  #ifdef ROTATION
-    part->l.r_ls.quat[0]  = 1.0;
-    part->l.r_ls.quat[1]  = 0.0;
-    part->l.r_ls.quat[2]  = 0.0;
-    part->l.r_ls.quat[3]  = 0.0;
+#ifdef ROTATION
+  part->l.r_ls.quat[0] = 1.0;
+  part->l.r_ls.quat[1] = 0.0;
+  part->l.r_ls.quat[2] = 0.0;
+  part->l.r_ls.quat[3] = 0.0;
 
-    part->l.r_ls.quatu[0]  = 0.0;
-    part->l.r_ls.quatu[1]  = 0.0;
-    part->l.r_ls.quatu[2]  = 1.0;
-  #endif
+  part->l.r_ls.quatu[0] = 0.0;
+  part->l.r_ls.quatu[1] = 0.0;
+  part->l.r_ls.quatu[2] = 1.0;
+#endif
 
-  #ifdef DIPOLES
-    part->l.r_ls.dip[0]    = 0.0;
-    part->l.r_ls.dip[1]    = 0.0;
-    part->l.r_ls.dip[2]    = 0.0;
-    //part->l.p_ls.dipm      = 0.0;
-  #endif
+#ifdef DIPOLES
+  part->l.r_ls.dip[0] = 0.0;
+  part->l.r_ls.dip[1] = 0.0;
+  part->l.r_ls.dip[2] = 0.0;
+// part->l.p_ls.dipm      = 0.0;
+#endif
 
-    /* Last Saved ParticleMomentum */
-    part->l.m_ls.v[0]     = 0.0;
-    part->l.m_ls.v[1]     = 0.0;
-    part->l.m_ls.v[2]     = 0.0;
-  #ifdef ROTATION
-    part->l.m_ls.omega[0] = 0.0;
-    part->l.m_ls.omega[1] = 0.0;
-    part->l.m_ls.omega[2] = 0.0;
-  #endif
+  /* Last Saved ParticleMomentum */
+  part->l.m_ls.v[0] = 0.0;
+  part->l.m_ls.v[1] = 0.0;
+  part->l.m_ls.v[2] = 0.0;
+#ifdef ROTATION
+  part->l.m_ls.omega[0] = 0.0;
+  part->l.m_ls.omega[1] = 0.0;
+  part->l.m_ls.omega[2] = 0.0;
+#endif
 
 #endif
 
 #ifdef EXTERNAL_FORCES
-  part->p.ext_flag   = 0;
+  part->p.ext_flag = 0;
   part->p.ext_force[0] = 0.0;
   part->p.ext_force[1] = 0.0;
   part->p.ext_force[2] = 0.0;
-  #ifdef ROTATION
-    part->p.ext_torque[0] = 0.0;
-    part->p.ext_torque[1] = 0.0;
-    part->p.ext_torque[2] = 0.0;
-  #endif
+#ifdef ROTATION
+  part->p.ext_torque[0] = 0.0;
+  part->p.ext_torque[1] = 0.0;
+  part->p.ext_torque[2] = 0.0;
+#endif
 #endif
 
   init_intlist(&(part->bl));
@@ -287,18 +296,18 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef VIRTUAL_SITES
-  part->p.isVirtual      = 0;
+  part->p.isVirtual = 0;
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-  part->p.vs_relative_to_particle_id      = 0;
-  part->p.vs_relative_distance =0;
-  for (int i=0; i<4; i++) 
-   part->p.vs_relative_rel_orientation[i] =0;
+  part->p.vs_relative_to_particle_id = 0;
+  part->p.vs_relative_distance = 0;
+  for (int i = 0; i < 4; i++)
+    part->p.vs_relative_rel_orientation[i] = 0;
 #endif
 
 #ifdef GHOST_FLAG
-  part->l.ghost        = 0;
+  part->l.ghost = 0;
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -337,40 +346,38 @@ void free_particle(Particle *part) {
 #endif
 }
 
-
 /************************************************
  * organizational functions
  ************************************************/
 
-int updatePartCfg(int bonds_flag)
-{
+int updatePartCfg(int bonds_flag) {
   int j;
-  if(partCfg)
+  if (partCfg)
     return 1;
-  partCfg = (Particle*)Utils::malloc(n_part*sizeof(Particle));
+  partCfg = (Particle *)Utils::malloc(n_part * sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
-    mpi_get_particles(partCfg,&partCfg_bl);
-  for(j=0; j<n_part; j++)
+    mpi_get_particles(partCfg, &partCfg_bl);
+  for (j = 0; j < n_part; j++)
     unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
 
   if (!sortPartCfg()) {
-      runtimeErrorMsg() <<"could not sort partCfg";
+    runtimeErrorMsg() << "could not sort partCfg";
     return 0;
   }
   if (!updatePartCfg(bonds_flag)) {
-      runtimeErrorMsg() <<"could not update positions of virtual sites in partcfg";
+    runtimeErrorMsg()
+        << "could not update positions of virtual sites in partcfg";
     return 0;
   }
 #endif
-return 1;
+  return 1;
 }
 
-int sortPartCfg()
-{
+int sortPartCfg() {
   int i;
   Particle *sorted;
 
@@ -383,8 +390,8 @@ int sortPartCfg()
   if (n_part != max_seen_particle + 1)
     return 0;
 
-  sorted = (Particle*)Utils::malloc(n_part*sizeof(Particle));
-  for(i = 0; i < n_part; i++)
+  sorted = (Particle *)Utils::malloc(n_part * sizeof(Particle));
+  for (i = 0; i < n_part; i++)
     memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
   partCfg = sorted;
@@ -394,8 +401,7 @@ int sortPartCfg()
   return 1;
 }
 
-void freePartCfg()
-{
+void freePartCfg() {
   free(partCfg);
   partCfg = NULL;
   realloc_intlist(&partCfg_bl, 0);
@@ -404,12 +410,13 @@ void freePartCfg()
 /** resize \ref local_particles.
     \param part the highest existing particle
 */
-void realloc_local_particles(int part)
-{
+void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
     /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-    local_particles = (Particle **)Utils::realloc(local_particles, sizeof(Particle *)*max_local_particles);
+    max_local_particles =
+        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
+    local_particles = (Particle **)Utils::realloc(
+        local_particles, sizeof(Particle *) * max_local_particles);
   }
 }
 
@@ -417,17 +424,17 @@ void realloc_local_particles(int part)
     This procedure is only used on the master node in Tcl mode.
     \param part the highest existing particle
 */
-static void realloc_particle_node(int part)
-{
+static void realloc_particle_node(int part) {
   if (part >= max_particle_node) {
     /* round up part + 1 in granularity PART_INCREMENT */
-    max_particle_node = PART_INCREMENT*((part + PART_INCREMENT)/PART_INCREMENT);
-    particle_node = (int *)Utils::realloc(particle_node, sizeof(int)*max_particle_node);
+    max_particle_node =
+        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
+    particle_node =
+        (int *)Utils::realloc(particle_node, sizeof(int) * max_particle_node);
   }
 }
 
-void particle_invalidate_part_node()
-{
+void particle_invalidate_part_node() {
   /* invalidate particle->node data */
   if (particle_node) {
     free(particle_node);
@@ -436,26 +443,23 @@ void particle_invalidate_part_node()
   }
 }
 
-void build_particle_node()
-{
+void build_particle_node() {
   realloc_particle_node(max_seen_particle);
   mpi_who_has();
 }
 
-void init_particlelist(ParticleList *pList)
-{
-  pList->n    = 0;
-  pList->max  = 0;
+void init_particlelist(ParticleList *pList) {
+  pList->n = 0;
+  pList->max = 0;
   pList->part = NULL;
 }
 
-int realloc_particlelist(ParticleList *l, int size)
-{
+int realloc_particlelist(ParticleList *l, int size) {
   int old_max = l->max;
   Particle *old_start = l->part;
 
-  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n", this_node,
-		     l, l->n, l->max, size));
+  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
+                     this_node, l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
@@ -463,27 +467,25 @@ int realloc_particlelist(ParticleList *l, int size)
       l->max = 0;
     else
       /* shrink not as fast, just lose half, rounded up */
-      l->max = PART_INCREMENT*(((l->max + size + 1)/2 +
-				PART_INCREMENT - 1)/PART_INCREMENT);
-  }
-  else
+      l->max =
+          PART_INCREMENT *
+          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
+  } else
     /* round up */
-    l->max = PART_INCREMENT*((size + PART_INCREMENT - 1)/PART_INCREMENT);
+    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
   if (l->max != old_max)
-    l->part = (Particle *) Utils::realloc(l->part, sizeof(Particle)*l->max);
+    l->part = (Particle *)Utils::realloc(l->part, sizeof(Particle) * l->max);
   return l->part != old_start;
 }
 
-void update_local_particles(ParticleList *pl)
-{
+void update_local_particles(ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)
     local_particles[p[i].p.identity] = &p[i];
 }
 
-Particle *got_particle(ParticleList *l, int id)
-{
+Particle *got_particle(ParticleList *l, int id) {
   int i;
 
   for (i = 0; i < l->n; i++)
@@ -494,8 +496,7 @@ Particle *got_particle(ParticleList *l, int id)
   return &(l->part[i]);
 }
 
-Particle *append_unindexed_particle(ParticleList *l, Particle *part)
-{
+Particle *append_unindexed_particle(ParticleList *l, Particle *part) {
   Particle *p;
 
   realloc_particlelist(l, ++l->n);
@@ -505,13 +506,12 @@ Particle *append_unindexed_particle(ParticleList *l, Particle *part)
   return p;
 }
 
-Particle *append_indexed_particle(ParticleList *l, Particle *part)
-{
+Particle *append_indexed_particle(ParticleList *l, Particle *part) {
   int re;
   Particle *p;
 
   re = realloc_particlelist(l, ++l->n);
-  p  = &l->part[l->n - 1];
+  p = &l->part[l->n - 1];
 
   memmove(p, part, sizeof(Particle));
 
@@ -522,8 +522,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part)
   return p;
 }
 
-Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
-{
+Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *dst, *src, *end;
 
   realloc_particlelist(dl, ++dl->n);
@@ -531,15 +530,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i)
   src = &sl->part[i];
   end = &sl->part[sl->n - 1];
   memmove(dst, src, sizeof(Particle));
-  if ( src != end )
+  if (src != end)
     memmove(src, end, sizeof(Particle));
   sl->n -= 1;
   realloc_particlelist(sl, sl->n);
   return dst;
 }
 
-Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
-{
+Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   int re = realloc_particlelist(dl, ++dl->n);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
@@ -547,28 +545,32 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
 
   memmove(dst, src, sizeof(Particle));
   if (re) {
-    //fprintf(stderr, "%d: m_i_p: update destination list after realloc\n",this_node);
-    update_local_particles(dl); }
-  else {
-    //fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id %d)\n",this_node,dst->p.identity);
+    // fprintf(stderr, "%d: m_i_p: update destination list after
+    // realloc\n",this_node);
+    update_local_particles(dl);
+  } else {
+    // fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id
+    // %d)\n",this_node,dst->p.identity);
     local_particles[dst->p.identity] = dst;
   }
-  if ( src != end ) {
-    //fprintf(stderr, "%d: m_i_p: copy end particle in source list (id %d)\n",this_node,end->p.identity);
+  if (src != end) {
+    // fprintf(stderr, "%d: m_i_p: copy end particle in source list (id
+    // %d)\n",this_node,end->p.identity);
     memmove(src, end, sizeof(Particle));
-
   }
   if (realloc_particlelist(sl, --sl->n)) {
-    //fprintf(stderr, "%d: m_i_p: update source list after realloc\n",this_node);
-    update_local_particles(sl); }
-  else if ( src != end ) {
-    //fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id %d)\n",this_node,src->p.identity);
-    local_particles[src->p.identity] = src; }
+    // fprintf(stderr, "%d: m_i_p: update source list after
+    // realloc\n",this_node);
+    update_local_particles(sl);
+  } else if (src != end) {
+    // fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id
+    // %d)\n",this_node,src->p.identity);
+    local_particles[src->p.identity] = src;
+  }
   return dst;
 }
 
-int get_particle_data(int part, Particle *data)
-{
+int get_particle_data(int part, Particle *data) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -583,8 +585,7 @@ int get_particle_data(int part, Particle *data)
   return ES_OK;
 }
 
-int place_particle(int part, double p[3])
-{
+int place_particle(int part, double p[3]) {
   int i;
   int pnode, retcode = ES_PART_OK;
 
@@ -618,8 +619,7 @@ int place_particle(int part, double p[3])
   return retcode;
 }
 
-int set_particle_v(int part, double v[3])
-{
+int set_particle_v(int part, double v[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -635,8 +635,7 @@ int set_particle_v(int part, double v[3])
 }
 
 #ifdef ENGINE
-int set_particle_swimming(int part, ParticleParametersSwimming swim)
-{
+int set_particle_swimming(int part, ParticleParametersSwimming swim) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -652,8 +651,7 @@ int set_particle_swimming(int part, ParticleParametersSwimming swim)
 }
 #endif
 
-int set_particle_f(int part, double F[3])
-{
+int set_particle_f(int part, double F[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -668,9 +666,8 @@ int set_particle_f(int part, double F[3])
   return ES_OK;
 }
 
-#ifdef SHANCHEN 
-int set_particle_solvation(int part, double * solvation)
-{
+#ifdef SHANCHEN
+int set_particle_solvation(int part, double *solvation) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -687,10 +684,8 @@ int set_particle_solvation(int part, double * solvation)
 
 #endif
 
-
 #ifdef MASS
-int set_particle_mass(int part, double mass)
-{
+int set_particle_mass(int part, double mass) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -709,8 +704,7 @@ constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-int set_particle_rotational_inertia(int part, double rinertia[3])
-{
+int set_particle_rotational_inertia(int part, double rinertia[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -726,10 +720,8 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
 }
 #endif
 
-
 #ifdef ROTATION_PER_PARTICLE
-int set_particle_rotation(int part, int rot)
-{
+int set_particle_rotation(int part, int rot) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -746,8 +738,7 @@ int set_particle_rotation(int part, int rot)
 #endif
 
 #ifdef AFFINITY
-int set_particle_affinity(int part, double bond_site[3])
-{
+int set_particle_affinity(int part, double bond_site[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -764,26 +755,24 @@ int set_particle_affinity(int part, double bond_site[3])
 #endif
 
 #ifdef MEMBRANE_COLLISION
-int set_particle_out_direction(int part, double out_direction[3])
-{
-    int pnode;
-    if (!particle_node)
-        build_particle_node();
-    
-    if (part < 0 || part > max_seen_particle)
-        return ES_ERROR;
-    pnode = particle_node[part];
-    
-    if (pnode == -1)
-        return ES_ERROR;
-    mpi_send_out_direction(pnode, part, out_direction);
-    return ES_OK;
+int set_particle_out_direction(int part, double out_direction[3]) {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_out_direction(pnode, part, out_direction);
+  return ES_OK;
 }
 #endif
 
 #ifdef DIPOLES
-int set_particle_dipm(int part, double dipm)
-{
+int set_particle_dipm(int part, double dipm) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -798,10 +787,9 @@ int set_particle_dipm(int part, double dipm)
   return ES_OK;
 }
 
-int set_particle_dip(int part, double dip[3])
-{
+int set_particle_dip(int part, double dip[3]) {
   int pnode;
-  
+
   if (!particle_node)
     build_particle_node();
 
@@ -819,8 +807,7 @@ int set_particle_dip(int part, double dip[3])
 #endif
 
 #ifdef VIRTUAL_SITES
-int set_particle_virtual(int part, int isVirtual)
-{
+int set_particle_virtual(int part, int isVirtual) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -831,14 +818,14 @@ int set_particle_virtual(int part, int isVirtual)
 
   if (pnode == -1)
     return ES_ERROR;
-  mpi_send_virtual(pnode, part, isVirtual); 
+  mpi_send_virtual(pnode, part, isVirtual);
   return ES_OK;
 }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double* rel_ori)
-{
+int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
+                             double *rel_ori) {
   // Find out, on what node the particle is
   int pnode;
   if (!particle_node)
@@ -850,16 +837,15 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, d
 
   if (pnode == -1)
     return ES_ERROR;
-  
+
   // Send the stuff
-  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance,rel_ori);
+  mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance, rel_ori);
   return ES_OK;
 }
 #endif
 
 #ifdef MULTI_TIMESTEP
-int set_particle_smaller_timestep(int part, int smaller_timestep)
-{
+int set_particle_smaller_timestep(int part, int smaller_timestep) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -876,8 +862,7 @@ int set_particle_smaller_timestep(int part, int smaller_timestep)
 #endif
 
 #ifdef CONFIGTEMP
-int set_particle_configtemp(int part, int configtemp)
-{
+int set_particle_configtemp(int part, int configtemp) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -893,8 +878,7 @@ int set_particle_configtemp(int part, int configtemp)
 }
 #endif
 
-int set_particle_q(int part, double q)
-{
+int set_particle_q(int part, double q) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -910,8 +894,7 @@ int set_particle_q(int part, double q)
 }
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-int set_particle_mu_E(int part, double mu_E[3])
-{
+int set_particle_mu_E(int part, double mu_E[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -927,8 +910,7 @@ int set_particle_mu_E(int part, double mu_E[3])
 }
 #endif
 
-int set_particle_type(int part, int type)
-{
+int set_particle_type(int part, int type) {
 
   int pnode;
   make_particle_type_exist(type);
@@ -943,24 +925,25 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
 
-  if ( Type_array_init ) {
-	// check if the particle exists already and the type is changed, then remove it from the list which contains it
-	  Particle *cur_par = (Particle *) Utils::malloc( sizeof(Particle) );
-	  if ( cur_par != (Particle *) 0 ) {
-		  if ( get_particle_data(part, cur_par) != ES_ERROR ) {
-			  int prev_type = cur_par->p.type;
-			  if ( prev_type != type ) {
-			  // particle existed before so delete it from the list
-			  remove_id_type_array(part, prev_type);
-			  }
-		  }
-	  }
-	  free(cur_par);
+  if (Type_array_init) {
+    // check if the particle exists already and the type is changed, then remove
+    // it from the list which contains it
+    Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
+    if (cur_par != (Particle *)0) {
+      if (get_particle_data(part, cur_par) != ES_ERROR) {
+        int prev_type = cur_par->p.type;
+        if (prev_type != type) {
+          // particle existed before so delete it from the list
+          remove_id_type_array(part, prev_type);
+        }
+      }
+    }
+    free(cur_par);
 
-	  if ( add_particle_to_list(part, type) ==  ES_ERROR ){
-		  //Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-		  return ES_ERROR;
-	  }
+    if (add_particle_to_list(part, type) == ES_ERROR) {
+      // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+      return ES_ERROR;
+    }
   }
 
   mpi_send_type(pnode, part, type);
@@ -968,8 +951,7 @@ int set_particle_type(int part, int type)
   return ES_OK;
 }
 
-int set_particle_mol_id(int part, int mid)
-{
+int set_particle_mol_id(int part, int mid) {
   int pnode;
 
   if (!particle_node)
@@ -986,8 +968,7 @@ int set_particle_mol_id(int part, int mid)
 }
 
 #ifdef ROTATION
-int set_particle_quat(int part, double quat[4])
-{
+int set_particle_quat(int part, double quat[4]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1002,8 +983,7 @@ int set_particle_quat(int part, double quat[4])
   return ES_OK;
 }
 
-int set_particle_omega_lab(int part, double omega_lab[3])
-{
+int set_particle_omega_lab(int part, double omega_lab[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1025,16 +1005,18 @@ int set_particle_omega_lab(int part, double omega_lab[3])
   get_particle_data(part, &particle);
   define_rotation_matrix(&particle, A);
 
-  omega[0] = A[0 + 3*0]*omega_lab[0] + A[0 + 3*1]*omega_lab[1] + A[0 + 3*2]*omega_lab[2];
-  omega[1] = A[1 + 3*0]*omega_lab[0] + A[1 + 3*1]*omega_lab[1] + A[1 + 3*2]*omega_lab[2];
-  omega[2] = A[2 + 3*0]*omega_lab[0] + A[2 + 3*1]*omega_lab[1] + A[2 + 3*2]*omega_lab[2];
+  omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
+             A[0 + 3 * 2] * omega_lab[2];
+  omega[1] = A[1 + 3 * 0] * omega_lab[0] + A[1 + 3 * 1] * omega_lab[1] +
+             A[1 + 3 * 2] * omega_lab[2];
+  omega[2] = A[2 + 3 * 0] * omega_lab[0] + A[2 + 3 * 1] * omega_lab[1] +
+             A[2 + 3 * 2] * omega_lab[2];
 
   mpi_send_omega(pnode, part, omega);
   return ES_OK;
 }
 
-int set_particle_omega_body(int part, double omega[3])
-{
+int set_particle_omega_body(int part, double omega[3]) {
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
 
@@ -1052,8 +1034,7 @@ int set_particle_omega_body(int part, double omega[3])
   return ES_OK;
 }
 
-int set_particle_torque_lab(int part, double torque_lab[3])
-{
+int set_particle_torque_lab(int part, double torque_lab[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1075,16 +1056,18 @@ int set_particle_torque_lab(int part, double torque_lab[3])
   get_particle_data(part, &particle);
   define_rotation_matrix(&particle, A);
 
-  torque[0] = A[0 + 3*0]*torque_lab[0] + A[0 + 3*1]*torque_lab[1] + A[0 + 3*2]*torque_lab[2];
-  torque[1] = A[1 + 3*0]*torque_lab[0] + A[1 + 3*1]*torque_lab[1] + A[1 + 3*2]*torque_lab[2];
-  torque[2] = A[2 + 3*0]*torque_lab[0] + A[2 + 3*1]*torque_lab[1] + A[2 + 3*2]*torque_lab[2];
+  torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
+              A[0 + 3 * 2] * torque_lab[2];
+  torque[1] = A[1 + 3 * 0] * torque_lab[0] + A[1 + 3 * 1] * torque_lab[1] +
+              A[1 + 3 * 2] * torque_lab[2];
+  torque[2] = A[2 + 3 * 0] * torque_lab[0] + A[2 + 3 * 1] * torque_lab[1] +
+              A[2 + 3 * 2] * torque_lab[2];
 
   mpi_send_torque(pnode, part, torque);
   return ES_OK;
 }
 
-int set_particle_torque_body(int part, double torque[3])
-{
+int set_particle_torque_body(int part, double torque[3]) {
   /* Nothing to be done but pass, since the coordinates
      are already in the proper frame */
 
@@ -1105,20 +1088,19 @@ int set_particle_torque_body(int part, double torque[3])
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-int set_particle_temperature(int part, double T)
-{
+int set_particle_temperature(int part, double T) {
   int pnode;
   if (!particle_node)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
     return ES_ERROR;
-    
+
   pnode = particle_node[part];
 
   if (pnode == -1)
     return ES_ERROR;
-    
+
   mpi_set_particle_temperature(pnode, part, T);
   return ES_OK;
 }
@@ -1130,18 +1112,18 @@ int set_particle_gamma(int part, double gamma[3])
 #endif // PARTICLE_ANISOTROPY
 {
   int pnode;
-  
+
   if (!particle_node)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
     return ES_ERROR;
-    
+
   pnode = particle_node[part];
 
   if (pnode == -1)
     return ES_ERROR;
-    
+
   mpi_set_particle_gamma(pnode, part, gamma);
   return ES_OK;
 }
@@ -1172,27 +1154,25 @@ int set_particle_gamma_rot(int part, double gamma_rot[3])
 #endif // LANGEVIN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  #ifdef ROTATION
-    int set_particle_ext_torque(int part, int flag, double torque[3])
-    {
-      int pnode;
-      if (!particle_node)
-        build_particle_node();
+#ifdef ROTATION
+int set_particle_ext_torque(int part, int flag, double torque[3]) {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
 
-      if (part < 0 || part > max_seen_particle)
-        return ES_ERROR;
-      pnode = particle_node[part];
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
 
-      if (pnode == -1)
-        return ES_ERROR;
+  if (pnode == -1)
+    return ES_ERROR;
 
-      mpi_send_ext_torque(pnode, part, flag, PARTICLE_EXT_TORQUE, torque);
-        return ES_OK;
-    }
-  #endif
+  mpi_send_ext_torque(pnode, part, flag, PARTICLE_EXT_TORQUE, torque);
+  return ES_OK;
+}
+#endif
 
-int set_particle_ext_force(int part, int flag, double force[3])
-{
+int set_particle_ext_force(int part, int flag, double force[3]) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1205,11 +1185,10 @@ int set_particle_ext_force(int part, int flag, double force[3])
     return ES_ERROR;
 
   mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force);
-    return ES_OK;
+  return ES_OK;
 }
 
-int set_particle_fix(int part,  int flag)
-{
+int set_particle_fix(int part, int flag) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1226,8 +1205,7 @@ int set_particle_fix(int part,  int flag)
 
 #endif
 
-int change_particle_bond(int part, int *bond, int _delete)
-{
+int change_particle_bond(int part, int *bond, int _delete) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1238,35 +1216,34 @@ int change_particle_bond(int part, int *bond, int _delete)
 
   if (pnode == -1)
     return ES_ERROR;
-  if(_delete != 0 || bond == NULL)
+  if (_delete != 0 || bond == NULL)
     _delete = 1;
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-        runtimeErrorMsg() <<"invalid/unknown bonded interaction type " << bond[0];
+      runtimeErrorMsg() << "invalid/unknown bonded interaction type "
+                        << bond[0];
       return ES_ERROR;
     }
   }
   return mpi_send_bond(pnode, part, bond, _delete);
 }
 
-void remove_all_particles()
-{
+void remove_all_particles() {
   mpi_remove_particle(-1, -1);
   realloc_particle_node(0);
 }
 
-int remove_particle(int part)
-{
+int remove_particle(int part) {
   int pnode;
 
-  Particle *cur_par = (Particle *) Utils::malloc (sizeof(Particle));
-  if (get_particle_data(part, cur_par) == ES_ERROR )
-	  return ES_ERROR;
+  Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
+  if (get_particle_data(part, cur_par) == ES_ERROR)
+    return ES_ERROR;
   int type = cur_par->p.type;
   free(cur_par);
-  if (remove_id_type_array(part, type) == ES_ERROR )
-	  return ES_ERROR;
+  if (remove_id_type_array(part, type) == ES_ERROR)
+    return ES_ERROR;
 
   if (!particle_node)
     build_particle_node();
@@ -1290,8 +1267,7 @@ int remove_particle(int part)
   return ES_OK;
 }
 
-void local_remove_particle(int part)
-{
+void local_remove_particle(int part) {
   int ind, c;
   Particle *p = local_particles[part];
   ParticleList *pl = NULL, *tmp;
@@ -1308,8 +1284,9 @@ void local_remove_particle(int part)
     }
   }
   if (!pl) {
-    fprintf(stderr, "%d: INTERNAL ERROR: could not find cell of particle %d, exiting\n",
-	    this_node, part);
+    fprintf(stderr,
+            "%d: INTERNAL ERROR: could not find cell of particle %d, exiting\n",
+            this_node, part);
     errexit();
   }
 
@@ -1328,8 +1305,7 @@ void local_remove_particle(int part)
   pl->n--;
 }
 
-void local_place_particle(int part, double p[3], int _new)
-{
+void local_place_particle(int part, double p[3], int _new) {
   Cell *cell;
   double pp[3];
   int i[3], rl;
@@ -1342,15 +1318,16 @@ void local_place_particle(int part, double p[3], int _new)
   pp[1] = p[1];
   pp[2] = p[2];
 
-  double vv[3]={0.,0.,0.};
+  double vv[3] = {0., 0., 0.};
   fold_position(pp, vv, i);
-  
+
   if (_new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
-      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) does not belong on this node\n",
-	      this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
+      fprintf(stderr, "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
+                      "does not belong on this node\n",
+              this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
       errexit();
     }
     rl = realloc_particlelist(cell, ++cell->n);
@@ -1362,35 +1339,34 @@ void local_place_particle(int part, double p[3], int _new)
       update_local_particles(cell);
     else
       local_particles[pt->p.identity] = pt;
-  }
-  else
+  } else
     pt = local_particles[part];
 
-  PART_TRACE(fprintf(stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
-		     this_node, part, p[0], p[1], p[2]));
+  PART_TRACE(fprintf(
+      stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
+      this_node, part, p[0], p[1], p[2]));
 
 #ifdef LEES_EDWARDS
-  pt->m.v[0] += vv[0];  
-  pt->m.v[1] += vv[1];  
-  pt->m.v[2] += vv[2];  
+  pt->m.v[0] += vv[0];
+  pt->m.v[1] += vv[1];
+  pt->m.v[2] += vv[2];
 #endif
 
-  memmove(pt->r.p, pp, 3*sizeof(double));
-  memmove(pt->l.i, i, 3*sizeof(int));
+  memmove(pt->r.p, pp, 3 * sizeof(double));
+  memmove(pt->l.i, i, 3 * sizeof(int));
 #ifdef BOND_CONSTRAINT
-  memmove(pt->r.p_old, pp, 3*sizeof(double));
+  memmove(pt->r.p_old, pp, 3 * sizeof(double));
 #endif
 }
 
-void local_remove_all_particles()
-{
+void local_remove_all_particles() {
   Cell *cell;
   int c;
   n_part = 0;
   max_seen_particle = -1;
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
-    int i,   np;
+    int i, np;
     cell = local_cells.cell[c];
     p = cell->part;
     np = cell->n;
@@ -1401,29 +1377,18 @@ void local_remove_all_particles()
 }
 
 void local_rescale_particles(int dir, double scale) {
-  Particle *p,*p1;
-  int j, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    for(j = 0; j < cell->n; j++) {
-      p1 = &p[j];
-      if(dir < 3)
-	p1->r.p[dir] *= scale;
-      else {
-	p1->r.p[0] *= scale;
-	p1->r.p[1] *= scale;
-	p1->r.p[2] *= scale;
-      }
+  for (auto &p : local_cells.particles()) {
+    if (dir < 3)
+      p.r.p[dir] *= scale;
+    else {
+      p.r.p[0] *= scale;
+      p.r.p[1] *= scale;
+      p.r.p[2] *= scale;
     }
   }
 }
 
-
-void added_particle(int part)
-{
+void added_particle(int part) {
   int i;
 
   n_part++;
@@ -1437,8 +1402,7 @@ void added_particle(int part)
   }
 }
 
-int local_change_bond(int part, int *bond, int _delete)
-{
+int local_change_bond(int part, int *bond, int _delete) {
   IntList *bl;
   Particle *p;
   int bond_size;
@@ -1451,13 +1415,12 @@ int local_change_bond(int part, int *bond, int _delete)
   bond_size = bonded_ia_params[bond[0]].num + 1;
   bl = &(p->bl);
   realloc_intlist(bl, bl->n + bond_size);
-  for(i = 0; i < bond_size; i++)
+  for (i = 0; i < bond_size; i++)
     bl->e[bl->n++] = bond[i];
   return ES_OK;
 }
 
-int try_delete_bond(Particle *part, int *bond)
-{
+int try_delete_bond(Particle *part, int *bond) {
   IntList *bl = &part->bl;
   int i, j, type, partners;
 
@@ -1471,27 +1434,27 @@ int try_delete_bond(Particle *part, int *bond)
   for (i = 0; i < bl->n;) {
     type = bl->e[i];
     partners = bonded_ia_params[type].num;
-    
-    // If the bond type does not match the one, we want to delete, skip 
+
+    // If the bond type does not match the one, we want to delete, skip
     if (type != bond[0])
       i += 1 + partners;
     else {
       // Go over the bond partners
-      for(j = 1; j <= partners; j++)
-      { 
-        // Leave the loop early, if the bond to delete and the bond with in the particle
-	// don't match
-	if (bond[j] != bl->e[i + j])
-	  break;
+      for (j = 1; j <= partners; j++) {
+        // Leave the loop early, if the bond to delete and the bond with in the
+        // particle
+        // don't match
+        if (bond[j] != bl->e[i + j])
+          break;
       }
       // If we did not exit from the loop early, all parameters matched
       // and we go on with deleting
       if (j > partners) {
-	// New length of bond list
-	bl->n -= 1 + partners;
-	memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
-	realloc_intlist(bl, bl->n);
-	return ES_OK;
+        // New length of bond list
+        bl->n -= 1 + partners;
+        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
+        realloc_intlist(bl, bl->n);
+        return ES_OK;
       }
       i += 1 + partners;
     }
@@ -1499,64 +1462,44 @@ int try_delete_bond(Particle *part, int *bond)
   return ES_ERROR;
 }
 
-void remove_all_bonds_to(int identity)
-{
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
+void remove_all_bonds_to(int identity) {
+  for (auto &p : local_cells.particles()) {
+    IntList *bl = &p.bl;
+    int i, j, partners;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    part = cell->part;
-    for (p = 0; p < np; p++) {
-      IntList *bl = &part[p].bl;
-      int i, j, partners;
-
-      for (i = 0; i < bl->n;) {
-	partners = bonded_ia_params[bl->e[i]].num;
-	for(j = 1; j <= partners; j++)
-	  if (bl->e[i + j] == identity)
-	    break;
-	if (j <= partners) {
-	  bl->n -= 1 + partners;
-	  memmove(bl->e + i, bl->e + i + 1 + partners,
-		  sizeof(int)*(bl->n - i));
-	  realloc_intlist(bl, bl->n);
-	}
-	else
-          i += 1 + partners;
-      }
-      if (i != bl->n) {
-	fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for particle %d, exiting...\n",
-		this_node, part[p].p.identity);
-	errexit();
-      }
+    for (i = 0; i < bl->n;) {
+      partners = bonded_ia_params[bl->e[i]].num;
+      for (j = 1; j <= partners; j++)
+        if (bl->e[i + j] == identity)
+          break;
+      if (j <= partners) {
+        bl->n -= 1 + partners;
+        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
+        realloc_intlist(bl, bl->n);
+      } else
+        i += 1 + partners;
+    }
+    if (i != bl->n) {
+      fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
+                      "particle %d, exiting...\n",
+              this_node, p.p.identity);
+      errexit();
     }
   }
 }
 
 #ifdef EXCLUSIONS
-void local_change_exclusion(int part1, int part2, int _delete)
-{
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
-
+void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
-    /* delete all exclusions */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      np = cell->n;
-      part = cell->part;
-      for (p = 0; p < np; p++)
-	realloc_intlist(&part[p].el, part[p].el.n = 0);
+    for (auto &p : local_cells.particles()) {
+      realloc_intlist(&p.el, p.el.n = 0);
     }
+
     return;
   }
 
   /* part1, if here */
-  part = local_particles[part1];
+  auto part = local_particles[part1];
   if (part) {
     if (_delete)
       try_delete_exclusion(part, part2);
@@ -1574,26 +1517,24 @@ void local_change_exclusion(int part1, int part2, int _delete)
   }
 }
 
-void try_add_exclusion(Particle *part, int part2)
-{
+void try_add_exclusion(Particle *part, int part2) {
   int i;
   for (i = 0; i < part->el.n; i++)
     if (part->el.e[i] == part2)
       return;
-  
+
   realloc_intlist(&part->el, part->el.n + 1);
   part->el.e[part->el.n++] = part2;
 }
 
-void try_delete_exclusion(Particle *part, int part2)
-{
+void try_delete_exclusion(Particle *part, int part2) {
   IntList *el = &part->el;
   int i;
 
   for (i = 0; i < el->n; i++) {
     if (el->e[i] == part2) {
       el->n--;
-      memmove(el->e + i, el->e + i + 1, sizeof(int)*(el->n - i));
+      memmove(el->e + i, el->e + i + 1, sizeof(int) * (el->n - i));
       realloc_intlist(el, el->n);
       break;
     }
@@ -1601,38 +1542,39 @@ void try_delete_exclusion(Particle *part, int part2)
 }
 #endif
 
-void send_particles(ParticleList *particles, int node)
-{
+void send_particles(ParticleList *particles, int node) {
   int pc;
   /* Dynamic data, bonds and exclusions */
   IntList local_dyn;
 
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node, particles->n, node));
+  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
+                     particles->n, node));
 
   MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart);
-  MPI_Send(particles->part, particles->n*sizeof(Particle),
-	   MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart);
+  MPI_Send(particles->part, particles->n * sizeof(Particle), MPI_BYTE, node,
+           REQ_SNDRCV_PART, comm_cart);
 
   init_intlist(&local_dyn);
   for (pc = 0; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
-    int size =  local_dyn.n + p->bl.n;
+    int size = local_dyn.n + p->bl.n;
 #ifdef EXCLUSIONS
     size += p->el.n;
 #endif
     realloc_intlist(&local_dyn, size);
-    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n * sizeof(int));
     local_dyn.n += p->bl.n;
 #ifdef EXCLUSIONS
-    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n*sizeof(int));
+    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n * sizeof(int));
     local_dyn.n += p->el.n;
 #endif
   }
 
-  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_dyn.n));
+  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n",
+                     this_node, local_dyn.n));
   if (local_dyn.n > 0) {
-    MPI_Send(local_dyn.e, local_dyn.n*sizeof(int),
-	     MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart);
+    MPI_Send(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
+             REQ_SNDRCV_PART, comm_cart);
     realloc_intlist(&local_dyn, 0);
   }
 
@@ -1645,21 +1587,21 @@ void send_particles(ParticleList *particles, int node)
   realloc_particlelist(particles, particles->n = 0);
 }
 
-void recv_particles(ParticleList *particles, int node)
-{
-  int transfer=0, read, pc;
+void recv_particles(ParticleList *particles, int node) {
+  int transfer = 0, read, pc;
   IntList local_dyn;
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
-  MPI_Recv(&transfer, 1, MPI_INT, node,
-	   REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
+  MPI_Recv(&transfer, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart,
+           MPI_STATUS_IGNORE);
 
-  PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
+  PART_TRACE(
+      fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
 
   realloc_particlelist(particles, particles->n + transfer);
-  MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
-	   REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
+  MPI_Recv(&particles->part[particles->n], transfer * sizeof(Particle),
+           MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
   particles->n += transfer;
 
   init_intlist(&local_dyn);
@@ -1670,10 +1612,12 @@ void recv_particles(ParticleList *particles, int node)
     local_dyn.n += p->el.n;
 #endif
 
-    PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n", this_node, p->p.identity));
+    PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n",
+                       this_node, p->p.identity));
 #ifdef ADDITIONAL_CHECKS
     if (local_particles[p->p.identity] != NULL) {
-      fprintf(stderr, "%d: transmitted particle %d is already here...\n", this_node, p->p.identity);
+      fprintf(stderr, "%d: transmitted particle %d is already here...\n",
+              this_node, p->p.identity);
       errexit();
     }
 #endif
@@ -1681,29 +1625,28 @@ void recv_particles(ParticleList *particles, int node)
 
   update_local_particles(particles);
 
-  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n", this_node, local_dyn.n));
+  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n",
+                     this_node, local_dyn.n));
   if (local_dyn.n > 0) {
     alloc_intlist(&local_dyn, local_dyn.n);
-    MPI_Recv(local_dyn.e, local_dyn.n*sizeof(int), MPI_BYTE, node,
-	     REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
+    MPI_Recv(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
+             REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
   }
   read = 0;
   for (pc = particles->n - transfer; pc < particles->n; pc++) {
     Particle *p = &particles->part[pc];
     if (p->bl.n > 0) {
       alloc_intlist(&p->bl, p->bl.n);
-      memmove(p->bl.e, &local_dyn.e[read], p->bl.n*sizeof(int));
+      memmove(p->bl.e, &local_dyn.e[read], p->bl.n * sizeof(int));
       read += p->bl.n;
-    }
-    else
+    } else
       p->bl.e = NULL;
 #ifdef EXCLUSIONS
     if (p->el.n > 0) {
       alloc_intlist(&p->el, p->el.n);
-      memmove(p->el.e, &local_dyn.e[read], p->el.n*sizeof(int));
+      memmove(p->el.e, &local_dyn.e[read], p->el.n * sizeof(int));
       read += p->el.n;
-    }
-    else
+    } else
       p->el.e = NULL;
 #endif
   }
@@ -1711,75 +1654,70 @@ void recv_particles(ParticleList *particles, int node)
     realloc_intlist(&local_dyn, 0);
 }
 
-void add_partner(IntList *il, int i, int j, int distance)
-{
-    int k;
-    if (j == i) return;
-    for (k = 0; k < il->n; k += 2)
-        if (il->e[k] == j)
-            return;
-    realloc_intlist(il, il->n + 2);
-    il->e[il->n++] = j;
-    il->e[il->n++] = distance;
+void add_partner(IntList *il, int i, int j, int distance) {
+  int k;
+  if (j == i)
+    return;
+  for (k = 0; k < il->n; k += 2)
+    if (il->e[k] == j)
+      return;
+  realloc_intlist(il, il->n + 2);
+  il->e[il->n++] = j;
+  il->e[il->n++] = distance;
 }
 
 #ifdef EXCLUSIONS
 
-int change_exclusion(int part1, int part2, int _delete)
-{
+int change_exclusion(int part1, int part2, int _delete) {
   if (!particle_node)
     build_particle_node();
 
-  if (part1 < 0 || part1 > max_seen_particle ||
-      part2 < 0 || part2 > max_seen_particle ||
-      part1 == part2 ||
-      particle_node[part1] == -1 ||
-      particle_node[part2] == -1)
+  if (part1 < 0 || part1 > max_seen_particle || part2 < 0 ||
+      part2 > max_seen_particle || part1 == part2 ||
+      particle_node[part1] == -1 || particle_node[part2] == -1)
     return ES_ERROR;
 
   mpi_send_exclusion(part1, part2, _delete);
   return ES_OK;
 }
 
-void remove_all_exclusions()
-{
-  mpi_send_exclusion(-1, -1, 1);
-}
+void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
-
-void auto_exclusion(int distance)
-{
+void auto_exclusion(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
   Bonded_ia_parameters *ia_params;
   Particle *part1;
-  /* partners is a list containing the currently found excluded particles for each particle,
+  /* partners is a list containing the currently found excluded particles for
+     each particle,
      and their distance, as a interleaved list */
   IntList *partners;
 
   updatePartCfg(WITH_BONDS);
 
-  /* setup bond partners and distance list. Since we need to identify particles via their identity,
+  /* setup bond partners and distance list. Since we need to identify particles
+     via their identity,
      we use a full sized array */
-  partners    = (IntList*)Utils::malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners =
+      (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
   for (p = 0; p < n_part; p++) {
     part1 = &partCfg[p];
-    p1    = part1->p.identity;
+    p1 = part1->p.identity;
     for (i = 0; i < part1->bl.n;) {
       ia_params = &bonded_ia_params[part1->bl.e[i++]];
       if (ia_params->num == 1) {
-	p2 = part1->bl.e[i++];
-	/* you never know what the user does, may bond a particle to itself...? */
-	if (p2 != p1) {
-	  add_partner(&partners[p1], p1, p2, 1);
-	  add_partner(&partners[p2], p2, p1, 1);
-	}
-      }
-      else
-	i += ia_params->num;
+        p2 = part1->bl.e[i++];
+        /* you never know what the user does, may bond a particle to itself...?
+         */
+        if (p2 != p1) {
+          add_partner(&partners[p1], p1, p2, 1);
+          add_partner(&partners[p2], p2, p1, 1);
+        }
+      } else
+        i += ia_params->num;
     }
   }
 
@@ -1789,30 +1727,37 @@ void auto_exclusion(int distance)
   for (count = 1; count < distance; count++) {
     for (p1 = 0; p1 <= max_seen_particle; p1++) {
       for (i = 0; i < partners[p1].n; i += 2) {
-	p2 = partners[p1].e[i];
-	dist1 = partners[p1].e[i + 1];
-	if (dist1 > distance) continue;
-	/* loop over all partners of the partner */
-	for (j = 0; j < partners[p2].n; j += 2) {
-	  p3 = partners[p2].e[j];
-	  dist2 = dist1 + partners[p2].e[j + 1];
-	  if (dist2 > distance) continue;
-	  add_partner(&partners[p1], p1, p3, dist2);
-	  add_partner(&partners[p3], p3, p1, dist2);
-	}
+        p2 = partners[p1].e[i];
+        dist1 = partners[p1].e[i + 1];
+        if (dist1 > distance)
+          continue;
+        /* loop over all partners of the partner */
+        for (j = 0; j < partners[p2].n; j += 2) {
+          p3 = partners[p2].e[j];
+          dist2 = dist1 + partners[p2].e[j + 1];
+          if (dist2 > distance)
+            continue;
+          add_partner(&partners[p1], p1, p3, dist2);
+          add_partner(&partners[p3], p3, p1, dist2);
+        }
       }
     }
   }
 
-  /* setup the exclusions and clear the arrays. We do not setup the exclusions up there,
-     since on_part_change clears the partCfg, so that we would have to restore it
-     continously. Of course this could be optimized by bundling the exclusions, but this
-     is only done once and the overhead is as much as for setting the bonds, which
+  /* setup the exclusions and clear the arrays. We do not setup the exclusions
+     up there,
+     since on_part_change clears the partCfg, so that we would have to restore
+     it
+     continously. Of course this could be optimized by bundling the exclusions,
+     but this
+     is only done once and the overhead is as much as for setting the bonds,
+     which
      the user apparently accepted.
   */
   for (p = 0; p <= max_seen_particle; p++) {
     for (j = 0; j < partners[p].n; j++)
-      if (p < partners[p].e[j]) change_exclusion(p, partners[p].e[j], 0);
+      if (p < partners[p].e[j])
+        change_exclusion(p, partners[p].e[j], 0);
     realloc_intlist(&partners[p], 0);
   }
   free(partners);
@@ -1820,491 +1765,458 @@ void auto_exclusion(int distance)
 
 #endif
 
+int init_gc(void) {
+  if (type_array == (TypeList *)NULL) {
+    // stores the number of currently available type_list's
+    number_of_type_lists = 10;
 
-int init_gc(void){
-	if ( type_array == (TypeList *) NULL) {
-	//stores the number of currently available type_list's 
-	number_of_type_lists=10;
+    Type.max_entry = 0;
+    Index.max_entry = 0;
 
-	Type.max_entry = 0;
-	Index.max_entry = 0;
+    type_array =
+        (TypeList *)Utils::malloc(sizeof(TypeList) * number_of_type_lists);
+    if (type_array == (TypeList *)0)
+      return ES_ERROR;
 
-	type_array = (TypeList *) Utils::malloc(sizeof(TypeList) * number_of_type_lists);
-	if ( type_array == (TypeList *) 0 )
-		return ES_ERROR;
-
-	GC_init = 1;
-	Type_array_init = 0;
-	}
-	return ES_OK;
+    GC_init = 1;
+    Type_array_init = 0;
+  }
+  return ES_OK;
 }
 
-int init_type_array(int type){
-	if (init_gc() == ES_ERROR)
-		return ES_ERROR;
+int init_type_array(int type) {
+  if (init_gc() == ES_ERROR)
+    return ES_ERROR;
 
+  for (int i = 0; i < Index.max_entry; i++)
+    if (type == Type.index[i]) {
+      // already indexed
+      return ES_OK;
+    }
 
-for ( int i = 0; i<Index.max_entry; i++ )
-	if (type == Type.index[i]) {
-		// already indexed
-		return ES_OK;
-	}
+  updatePartCfg(WITHOUT_BONDS);
 
-	updatePartCfg(WITHOUT_BONDS);
+  if (!partCfg)
+    return ES_ERROR;
 
-	if (!partCfg)
-		return ES_ERROR;
+  int type_index = -1;
+  type_index = (Type.max_entry++);
+  if (type_index == number_of_type_lists) {
+    reallocate_global_type_list(number_of_type_lists * 2);
+  }
 
-	int type_index=-1;
-	type_index= (Type.max_entry++);
-	if ( type_index == number_of_type_lists ) {
-		reallocate_global_type_list(number_of_type_lists*2);
-	}
+  Type.index =
+      (int *)Utils::realloc((void *)Type.index, sizeof(int) * Type.max_entry);
 
-	Type.index = (int *) Utils::realloc ( (void *) Type.index, sizeof(int)*Type.max_entry);
+  // reallocate the array that holds the particle type and points to the type
+  // index used for the type_list
 
-	//reallocate the array that holds the particle type and points to the type index used for the type_list
-	
-	if ( type >= Index.max_entry ) { 
-		Index.type= (int * ) Utils::realloc( (void *) Index.type, (type+1)*sizeof(int));
-		Index.max_entry = type + 1;
-	}
-	for (int i=0; i<Type.max_entry; i++) 
-		Index.type[i]=-1;
+  if (type >= Index.max_entry) {
+    Index.type =
+        (int *)Utils::realloc((void *)Index.type, (type + 1) * sizeof(int));
+    Index.max_entry = type + 1;
+  }
+  for (int i = 0; i < Type.max_entry; i++)
+    Index.type[i] = -1;
 
-	if (Type.index == (int *) 0 || Index.type == (int *) 0)
-		return ES_ERROR;
+  if (Type.index == (int *)0 || Index.type == (int *)0)
+    return ES_ERROR;
 
-	//allocates a list for ids for as many entries as there are particles right now
-	if ( !(partCfg) ||  type < 0 ) { 
-		return ES_ERROR;
-	}
-	Type.index[type_index]=type;
-	//fill in array type_index_of_type
-	for (int i=0; i<Type.max_entry; i++ ) {
-		Index.type[Type.index[i]] = i;
-	}
+  // allocates a list for ids for as many entries as there are particles right
+  // now
+  if (!(partCfg) || type < 0) {
+    return ES_ERROR;
+  }
+  Type.index[type_index] = type;
+  // fill in array type_index_of_type
+  for (int i = 0; i < Type.max_entry; i++) {
+    Index.type[Type.index[i]] = i;
+  }
 
-	int t_c = 0; //index
-	type_array[Index.type[type]].id_list = (int *) Utils::malloc (sizeof (int) * n_part);
-	for (int i=0; i<n_part; i++) {
-		if ( partCfg[i].p.type==type ) 
-			type_array[Index.type[type]].id_list[t_c++]=partCfg[i].p.identity;
-	}
-	int max_size=n_part;
-	if ( t_c != 0 ) { 
-		while ( t_c < (double) max_size/4.0) { 
-			max_size= floor( (double ) max_size/2.0);
-		}
-		// now the array is shrinked to at least 4 times the highest entry
-		type_array[Index.type[type]].id_list= (int *) Utils::realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*2*max_size);
-		type_array[Index.type[type]].max_entry = t_c;
-		type_array[Index.type[type]].cur_size = max_size*2;
-	} else {
-		//no particles of the given type were found, so leave array size fixed at a reasonable start entry 64 ints in this case
-		type_array[Index.type[type]].id_list= (int *) Utils::realloc( (void *) type_array[Index.type[type]].id_list, sizeof(int)*64);
-		type_array[Index.type[type]].max_entry = t_c;
-		type_array[Index.type[type]].cur_size = 64;
-	}
-	//fill remaining entries with -1
-	for (int i=type_array[Index.type[type]].max_entry; i<type_array[Index.type[type]].cur_size; i++) {
-		type_array[Index.type[type]].id_list[i] = -1;
-	}
-	Type_array_init = 1;
-	return ES_OK;
+  int t_c = 0; // index
+  type_array[Index.type[type]].id_list =
+      (int *)Utils::malloc(sizeof(int) * n_part);
+  for (int i = 0; i < n_part; i++) {
+    if (partCfg[i].p.type == type)
+      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+  }
+  int max_size = n_part;
+  if (t_c != 0) {
+    while (t_c < (double)max_size / 4.0) {
+      max_size = floor((double)max_size / 2.0);
+    }
+    // now the array is shrinked to at least 4 times the highest entry
+    type_array[Index.type[type]].id_list =
+        (int *)Utils::realloc((void *)type_array[Index.type[type]].id_list,
+                              sizeof(int) * 2 * max_size);
+    type_array[Index.type[type]].max_entry = t_c;
+    type_array[Index.type[type]].cur_size = max_size * 2;
+  } else {
+    // no particles of the given type were found, so leave array size fixed at a
+    // reasonable start entry 64 ints in this case
+    type_array[Index.type[type]].id_list = (int *)Utils::realloc(
+        (void *)type_array[Index.type[type]].id_list, sizeof(int) * 64);
+    type_array[Index.type[type]].max_entry = t_c;
+    type_array[Index.type[type]].cur_size = 64;
+  }
+  // fill remaining entries with -1
+  for (int i = type_array[Index.type[type]].max_entry;
+       i < type_array[Index.type[type]].cur_size; i++) {
+    type_array[Index.type[type]].id_list[i] = -1;
+  }
+  Type_array_init = 1;
+  return ES_OK;
 }
 
-int reallocate_type_array(int type){
-	type_array[Index.type[type]].id_list = (int *) Utils::realloc ( (void *) type_array[Index.type[type]].id_list, sizeof (int) * type_array[Index.type[type]].cur_size * 2);	
-	if (type_array[Index.type[type]].id_list == (int *) 0) {
-		return ES_ERROR;
-	}
-	type_array[Index.type[type]].cur_size = type_array[Index.type[type]].cur_size*2;
-	return ES_OK;
+int reallocate_type_array(int type) {
+  type_array[Index.type[type]].id_list = (int *)Utils::realloc(
+      (void *)type_array[Index.type[type]].id_list,
+      sizeof(int) * type_array[Index.type[type]].cur_size * 2);
+  if (type_array[Index.type[type]].id_list == (int *)0) {
+    return ES_ERROR;
+  }
+  type_array[Index.type[type]].cur_size =
+      type_array[Index.type[type]].cur_size * 2;
+  return ES_OK;
 }
 
-int remove_id_type_array(int part_id, int type){
+int remove_id_type_array(int part_id, int type) {
 
-	int l_err = 1;
-	for ( int j = 0; j<Type.max_entry; j++){
-		if ( Type.index[j] == type ) {
-			l_err = 0;
-			break;
-		}
-	}
-	if ( l_err ) { 
-		//there is no list which contains this type
-		return ES_OK;
-	}
-	int in_type = Index.type[type];
-	int temp_id = -1;
-	int max = type_array[in_type].max_entry;
-	for (int i=0; i<max; i++){
-		if ( type_array[in_type].id_list[i] == part_id ) {
-			temp_id = i;
-			break;
-		}
-	}
-	if ( temp_id == -1 ){
-		//particle is not in the list
-		return ES_OK;
-	}
-	if ( temp_id == max - 1 ) { 
-		type_array[in_type].id_list[temp_id] = -1;
-	} else {
-		int temp=type_array[in_type].id_list[max-1]; 
-		type_array[in_type].id_list[max-1] = -1;
-		type_array[in_type].id_list[temp_id]=temp;
-	}
-	type_array[in_type].max_entry--;
-	return ES_OK;
+  int l_err = 1;
+  for (int j = 0; j < Type.max_entry; j++) {
+    if (Type.index[j] == type) {
+      l_err = 0;
+      break;
+    }
+  }
+  if (l_err) {
+    // there is no list which contains this type
+    return ES_OK;
+  }
+  int in_type = Index.type[type];
+  int temp_id = -1;
+  int max = type_array[in_type].max_entry;
+  for (int i = 0; i < max; i++) {
+    if (type_array[in_type].id_list[i] == part_id) {
+      temp_id = i;
+      break;
+    }
+  }
+  if (temp_id == -1) {
+    // particle is not in the list
+    return ES_OK;
+  }
+  if (temp_id == max - 1) {
+    type_array[in_type].id_list[temp_id] = -1;
+  } else {
+    int temp = type_array[in_type].id_list[max - 1];
+    type_array[in_type].id_list[max - 1] = -1;
+    type_array[in_type].id_list[temp_id] = temp;
+  }
+  type_array[in_type].max_entry--;
+  return ES_OK;
 }
 
 int update_particle_array(int type) {
-	updatePartCfg(WITHOUT_BONDS);
-	if (!partCfg) 
-		return ES_ERROR;
+  updatePartCfg(WITHOUT_BONDS);
+  if (!partCfg)
+    return ES_ERROR;
 
-	int t_c = 0;
-	for (int i=0; i<n_part; i++) {
-		if (partCfg[i].p.type == type ) {
-			type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
-		}	
-		if ( t_c > (double) type_array[Index.type[type]].cur_size/2.0 ) {
-			if ( reallocate_type_array(type) == ES_ERROR ) 
-				return ES_ERROR;
-		}
-	}
-	type_array[Index.type[type]].max_entry = t_c;
-	for ( int i = t_c; i<type_array[Index.type[type]].cur_size; i++)
-		type_array[Index.type[type]].id_list[i] = -1;
+  int t_c = 0;
+  for (int i = 0; i < n_part; i++) {
+    if (partCfg[i].p.type == type) {
+      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+    }
+    if (t_c > (double)type_array[Index.type[type]].cur_size / 2.0) {
+      if (reallocate_type_array(type) == ES_ERROR)
+        return ES_ERROR;
+    }
+  }
+  type_array[Index.type[type]].max_entry = t_c;
+  for (int i = t_c; i < type_array[Index.type[type]].cur_size; i++)
+    type_array[Index.type[type]].id_list[i] = -1;
 
-	return ES_OK;
+  return ES_OK;
 }
 
-int reallocate_global_type_list(int size){
-	if (size <= 0 ) 
-		return ES_ERROR;
-	type_array = (TypeList *) Utils::realloc( (void *) type_array, sizeof(TypeList)*size);
-	number_of_type_lists=size;
-	if ( type_array == (TypeList *) 0)
-		return ES_ERROR;
+int reallocate_global_type_list(int size) {
+  if (size <= 0)
+    return ES_ERROR;
+  type_array =
+      (TypeList *)Utils::realloc((void *)type_array, sizeof(TypeList) * size);
+  number_of_type_lists = size;
+  if (type_array == (TypeList *)0)
+    return ES_ERROR;
 
-	return ES_OK;
+  return ES_OK;
 }
 
-int find_particle_type(int type, int *id){ 
-	int l_err=1;
-	// type i not indexed, so no list for this particle exists
-	for (int i = 0; i<Type.max_entry; i++){
-		if ( Type.index[i] == type ){
-			l_err=0;
-			break;
-		}
-	}
-	if ( l_err ) {
-		return ES_ERROR;
-	}
-	if ( type_array[Index.type[type]].max_entry == 0 ){ 
-		return ES_ERROR;
-	}
-	int rand_index = i_random ( type_array[Index.type[type]].max_entry );
-	*id = type_array[Index.type[type]].id_list[rand_index];
+int find_particle_type(int type, int *id) {
+  int l_err = 1;
+  // type i not indexed, so no list for this particle exists
+  for (int i = 0; i < Type.max_entry; i++) {
+    if (Type.index[i] == type) {
+      l_err = 0;
+      break;
+    }
+  }
+  if (l_err) {
+    return ES_ERROR;
+  }
+  if (type_array[Index.type[type]].max_entry == 0) {
+    return ES_ERROR;
+  }
+  int rand_index = i_random(type_array[Index.type[type]].max_entry);
+  *id = type_array[Index.type[type]].id_list[rand_index];
 
-	return ES_OK;
+  return ES_OK;
 }
 
-int find_particle_type_id(int type, int *id, int *in_id ){
-	int l_err=1;
-	// type i not indexed, so no list for this particle exists
-	for (int i = 0; i<Type.max_entry; i++){
-		if ( Type.index[i] == type ){
-			l_err=0;
-			break;
-		}
-	}
-	if ( l_err ) {
-		return ES_ERROR;
-	}
-	if ( type_array[Index.type[type]].max_entry == 0 )
-		return ES_ERROR;
+int find_particle_type_id(int type, int *id, int *in_id) {
+  int l_err = 1;
+  // type i not indexed, so no list for this particle exists
+  for (int i = 0; i < Type.max_entry; i++) {
+    if (Type.index[i] == type) {
+      l_err = 0;
+      break;
+    }
+  }
+  if (l_err) {
+    return ES_ERROR;
+  }
+  if (type_array[Index.type[type]].max_entry == 0)
+    return ES_ERROR;
 
-	int rand_index = i_random ( type_array[Index.type[type]].max_entry );
-	if (id == (int *) 0 && in_id == (int *) 0) 
-		return ES_ERROR;
-	else {
-		*in_id = rand_index;
-		*id = type_array[Index.type[type]].id_list[*in_id];
-		return ES_OK;
-	}
+  int rand_index = i_random(type_array[Index.type[type]].max_entry);
+  if (id == (int *)0 && in_id == (int *)0)
+    return ES_ERROR;
+  else {
+    *in_id = rand_index;
+    *id = type_array[Index.type[type]].id_list[*in_id];
+    return ES_OK;
+  }
 }
 
-int delete_particle_of_type(int type) { 
-	int *p_id, *index_id;
-	p_id=(int *) Utils::malloc (sizeof(int));
-	index_id=(int *) Utils::malloc (sizeof(int));
-	if (find_particle_type_id(type, p_id, index_id) == ES_ERROR )
-		return ES_ERROR;
+int delete_particle_of_type(int type) {
+  int *p_id, *index_id;
+  p_id = (int *)Utils::malloc(sizeof(int));
+  index_id = (int *)Utils::malloc(sizeof(int));
+  if (find_particle_type_id(type, p_id, index_id) == ES_ERROR)
+    return ES_ERROR;
 
-	int in_type = Index.type[type];
-	// maximal possible index id
-	int max = type_array[in_type].max_entry - 1;
-	if ( max < 0 ) 
-		return ES_ERROR;
+  int in_type = Index.type[type];
+  // maximal possible index id
+  int max = type_array[in_type].max_entry - 1;
+  if (max < 0)
+    return ES_ERROR;
 
-	if ( remove_particle(*p_id) == ES_ERROR ) {
-		// takes also care of removing the index from the array
-		return ES_ERROR;
-	}
-	return ES_OK;
+  if (remove_particle(*p_id) == ES_ERROR) {
+    // takes also care of removing the index from the array
+    return ES_ERROR;
+  }
+  return ES_OK;
 }
 
-int add_particle_to_list(int part_id, int type){
-	int l_err=1;
-	int already_in = 0;
-//	int already_in_other_list = 0;
-	// type i not indexed, so no list for this particle exists
-	for (int i = 0; i<Type.max_entry; i++){
-		if ( Type.index[i] == type ){
-			l_err=0;
-			break;
-		}
-	}
-	if ( l_err ) {
-		return NOT_INDEXED;
-	}
+int add_particle_to_list(int part_id, int type) {
+  int l_err = 1;
+  int already_in = 0;
+  //	int already_in_other_list = 0;
+  // type i not indexed, so no list for this particle exists
+  for (int i = 0; i < Type.max_entry; i++) {
+    if (Type.index[i] == type) {
+      l_err = 0;
+      break;
+    }
+  }
+  if (l_err) {
+    return NOT_INDEXED;
+  }
 
-	int in_type = Index.type[type];
-	int max = type_array[in_type].max_entry;
-	for ( int i=0; i<max; i++ ) {
-		if ( type_array[in_type].id_list[i] == part_id ) {
-			already_in = 1;
-			break;
-		}
-	}
-	if ( already_in ) { 
-		return ES_OK;
-	}
+  int in_type = Index.type[type];
+  int max = type_array[in_type].max_entry;
+  for (int i = 0; i < max; i++) {
+    if (type_array[in_type].id_list[i] == part_id) {
+      already_in = 1;
+      break;
+    }
+  }
+  if (already_in) {
+    return ES_OK;
+  }
 
-	if ( max >= (double ) type_array[in_type].cur_size/2.0 )
-		if (reallocate_type_array(type)== ES_ERROR)
-			return ES_ERROR;
+  if (max >= (double)type_array[in_type].cur_size / 2.0)
+    if (reallocate_type_array(type) == ES_ERROR)
+      return ES_ERROR;
 
-	//add particle id to list:
-	type_array[in_type].id_list[max]=part_id;
-	type_array[in_type].max_entry++;
-	return ES_OK;
+  // add particle id to list:
+  type_array[in_type].id_list[max] = part_id;
+  type_array[in_type].max_entry++;
+  return ES_OK;
 }
 
-int gc_status(int type){
-	int l_err=1;
-	// type i not indexed, so no list for this particle exists
-	for (int i = 0; i<Type.max_entry; i++){
-		if ( Type.index[i] == type ){
-			l_err=0;
-			break;
-		}
-	}
-	if ( l_err ) {
-		return ES_ERROR;
-	}
-	int in_type = Index.type[type];
-	for (int i = 0; i<type_array[in_type].max_entry; i++) {
-		printf("%d\n", type_array[in_type].id_list[i]);
-	}
-	return ES_OK;
+int gc_status(int type) {
+  int l_err = 1;
+  // type i not indexed, so no list for this particle exists
+  for (int i = 0; i < Type.max_entry; i++) {
+    if (Type.index[i] == type) {
+      l_err = 0;
+      break;
+    }
+  }
+  if (l_err) {
+    return ES_ERROR;
+  }
+  int in_type = Index.type[type];
+  for (int i = 0; i < type_array[in_type].max_entry; i++) {
+    printf("%d\n", type_array[in_type].id_list[i]);
+  }
+  return ES_OK;
 }
 
-int free_particle_lists(void){
-	if (type_array == (TypeList *) 0 || Type.index == (int *) 0){
-		return ES_OK;
-	}
-	for (int i=0; i<Type.max_entry; i++){
-		free(type_array[i].id_list);
-	}
-	free(type_array);
-	free(Type.index);
-	free(Index.type);
-	return ES_OK;
+int free_particle_lists(void) {
+  if (type_array == (TypeList *)0 || Type.index == (int *)0) {
+    return ES_OK;
+  }
+  for (int i = 0; i < Type.max_entry; i++) {
+    free(type_array[i].id_list);
+  }
+  free(type_array);
+  free(Type.index);
+  free(Index.type);
+  return ES_OK;
 }
 
+int number_of_particles_with_type(int type, int *number) {
+  int indexed = 0;
+  if (type_array == (TypeList *)0)
+    init_type_array(type);
 
-int number_of_particles_with_type(int type, int *number){
-	int indexed=0;
-	if ( type_array == (TypeList *) 0 ) 
-		init_type_array(type);
-
-	for ( int i = 0; i<Type.max_entry; i++) {
-		if ( type == Type.index[i] ){
-			indexed=1;
-			break;
-		}
-	}
-	if ( indexed ) {
-		*number = type_array[Index.type[type]].max_entry;
-		return ES_OK;
-	}
-	return NOT_INDEXED;
+  for (int i = 0; i < Type.max_entry; i++) {
+    if (type == Type.index[i]) {
+      indexed = 1;
+      break;
+    }
+  }
+  if (indexed) {
+    *number = type_array[Index.type[type]].max_entry;
+    return ES_OK;
+  }
+  return NOT_INDEXED;
 }
 
-
-
-
-
-
-// The following functions are used by the python interface to obtain 
+// The following functions are used by the python interface to obtain
 // properties of a particle, which are only compiled in in some configurations
-// This is needed, because cython does not support conditional compilation 
+// This is needed, because cython does not support conditional compilation
 // within a ctypedef definition
 
-
 #ifdef ROTATION
-void pointer_to_omega_body(Particle* p, double*&  res)
-{
-  res=p->m.omega;
-}
+void pointer_to_omega_body(Particle *p, double *&res) { res = p->m.omega; }
 
-void pointer_to_torque_lab(Particle* p, double*& res)
-{
-  res=p->f.torque;
-}
+void pointer_to_torque_lab(Particle *p, double *&res) { res = p->f.torque; }
 
-void pointer_to_quat(Particle* p, double*& res)
-{
-  res=p->r.quat;
-}
+void pointer_to_quat(Particle *p, double *&res) { res = p->r.quat; }
 
-void pointer_to_quatu(Particle* p, double*& res)
-{
-  res=p->r.quatu;
-}
+void pointer_to_quatu(Particle *p, double *&res) { res = p->r.quatu; }
 #endif
 
 #ifdef ELECTROSTATICS
-void pointer_to_q(Particle* p, double*& res)
-{
- res =&(p->p.q);
-}
+void pointer_to_q(Particle *p, double *&res) { res = &(p->p.q); }
 #endif
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle* p, int*&  res)
-{
-  res=&(p->p.isVirtual);
-}
+void pointer_to_virtual(Particle *p, int *&res) { res = &(p->p.isVirtual); }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_relative(Particle* p, int*& res1,double*& res2,double*& res3)
-{
-  res1=&(p->p.vs_relative_to_particle_id);
-  res2=&(p->p.vs_relative_distance);
-  res3=(p->p.vs_relative_rel_orientation);
+void pointer_to_vs_relative(Particle *p, int *&res1, double *&res2,
+                            double *&res3) {
+  res1 = &(p->p.vs_relative_to_particle_id);
+  res2 = &(p->p.vs_relative_distance);
+  res3 = (p->p.vs_relative_rel_orientation);
 }
 #endif
 
 #ifdef MULTI_TIMESTEP
-void pointer_to_smaller_timestep(Particle* p, int*&  res)
-{
-  res=&(p->p.smaller_timestep);
+void pointer_to_smaller_timestep(Particle *p, int *&res) {
+  res = &(p->p.smaller_timestep);
 }
 #endif
 
 #ifdef DIPOLES
-void pointer_to_dip(Particle* p, double*& res)
-{
-res=p->r.dip;
-}
+void pointer_to_dip(Particle *p, double *&res) { res = p->r.dip; }
 
-void pointer_to_dipm(Particle* p, double*& res)
-{
-res=&(p->p.dipm);
-}
+void pointer_to_dipm(Particle *p, double *&res) { res = &(p->p.dipm); }
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle *p, int*& res1, double*& res2)
-{
-  res1=&(p->p.ext_flag);
-  res2=p->p.ext_force;
+void pointer_to_ext_force(Particle *p, int *&res1, double *&res2) {
+  res1 = &(p->p.ext_flag);
+  res2 = p->p.ext_force;
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle *p, int*& res1, double*& res2)
-{
-  res1=&(p->p.ext_flag);
-  res2=p->p.ext_torque;
+void pointer_to_ext_torque(Particle *p, int *&res1, double *&res2) {
+  res1 = &(p->p.ext_flag);
+  res2 = p->p.ext_torque;
 }
 #endif
-void pointer_to_fix(Particle *p, int*& res)
-{
-  res=&(p->p.ext_flag);
-}
+void pointer_to_fix(Particle *p, int *&res) { res = &(p->p.ext_flag); }
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle *p, double*& res)
-{
+void pointer_to_gamma(Particle *p, double *&res) {
 #ifndef PARTICLE_ANISOTROPY
-  res=&(p->p.gamma);
+  res = &(p->p.gamma);
 #else
-  res=p->p.gamma; // array [3]
+  res = p->p.gamma; // array [3]
 #endif // PARTICLE_ANISTROPY
 }
 
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle *p, double*& res)
-{
+void pointer_to_gamma_rot(Particle *p, double *&res) {
 #ifndef ROTATIONAL_INERTIA
-  res=&(p->p.gamma_rot);
+  res = &(p->p.gamma_rot);
 #else
-  res=p->p.gamma_rot; // array [3]
+  res = p->p.gamma_rot; // array [3]
 #endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle *p, double*& res)
-{
-  res=&(p->p.T);
-}
+void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #endif // LANGEVIN_PER_PARTICLE
 
 #ifdef ROTATION_PER_PARTICLE
-void pointer_to_rotation(Particle *p, short int*& res)
-{
-  res=&(p->p.rotation);
+void pointer_to_rotation(Particle *p, short int *&res) {
+  res = &(p->p.rotation);
 }
 #endif
 
 #ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int*& res1, int*& res2)
-{
-  res1=&(p->el.n);
-  res2=p->el.e;
+void pointer_to_exclusions(Particle *p, int *&res1, int *&res2) {
+  res1 = &(p->el.n);
+  res2 = p->el.e;
 }
 #endif
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle *p, ParticleParametersSwimming*& swim)
-{
+void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {
   swim = &(p->swim);
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle *p, double*& res)
-{
+void pointer_to_rotational_inertia(Particle *p, double *&res) {
   res = p->p.rinertia;
 }
 #endif
 
 bool particle_exists(int part) {
-    if (!particle_node)
-        build_particle_node();
-    
-    if (part < 0 || part > max_seen_particle)
-        return false;
-    
-    if (particle_node[part]!=-1) 
-        return true;
-   return false;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return false;
+
+  if (particle_node[part] != -1)
+    return true;
+  return false;
 }
