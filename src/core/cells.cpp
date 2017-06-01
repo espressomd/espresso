@@ -270,21 +270,14 @@ void cells_on_geometry_change(int flags) {
 /*************************************************/
 
 void check_resort_particles() {
-  int i, c, np;
-  Cell *cell;
-  Particle *p;
-  double skin2 = SQR(skin / 2.0);
+  const double skin2 = SQR(skin / 2.0);
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      /* Verlet criterion check */
-      if (distance2(p[i].r.p, p[i].l.p_old) > skin2)
-        resort_particles = 1;
-    }
-  }
+  resort_particles =
+      std::any_of(local_cells.particles().begin(),
+                  local_cells.particles().end(), [&skin2](Particle const &p) {
+                    return distance2(p.r.p, p.l.p_old) > skin2;
+                  });
+
   announce_resort_particles();
 }
 
