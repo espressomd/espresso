@@ -439,11 +439,6 @@ inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
   return stat->non_bonded_inter + stat->chunk_size_nb*(((2 * n_particle_types - 1 - p1) * p1) / 2  +  p2);
 }
 
-inline double *obsstat_dipolar(Observable_stat *stat, int j)
-{
-  return stat->dipolar + stat->chunk_size*j;
-}
-
 void invalidate_obs();
 
 /** Docs missing

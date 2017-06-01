@@ -18,8 +18,7 @@ void HomogeneousMagneticField::add_force(Particle *p, double *folded_pos) {
 
 void HomogeneousMagneticField::add_energy(Particle *p, double *folded_pos, Observable_stat &energy) const {
 #ifdef DIPOLES
-    double nonbonded_en = -1.0 * utils::dot_product(&m_field.front(), p->r.dip);
-    *obsstat_dipolar(&energy, p->p.type) += nonbonded_en;
+    energy.dipolar[0] += -1.0 * utils::dot_product(&m_field.front(), p->r.dip);
 #endif
 }
 
