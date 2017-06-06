@@ -4,15 +4,23 @@ import unittest as ut
 
 import espressomd
 import numpy
+import sys 
 
 from espressomd import interactions
 
-@ut.skipIf(not set(["CONSTRAINTS", "DIPOLES"]) < set(espressomd.features()),
-        "Features not available, skipping test!")
+@ut.skipIf(not espressomd.has_features(["CONSTRAINTS"]),
+        "Feature CONSTRAINTS not available, skipping test!")
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
+    S = espressomd.System()
+
+    def setUp(self):
+        self.S.box_l = [3.0, 3.0, 3.0]
+        self.S.time_step = 0.01
+        self.S.cell_system.skin = 0.4
+    
     def test_setter_and_getter(self):
-        H_field1 = [0., 1. ,0.]
+        H_field1 = [0.0, 1.0, 0.0]
         H_field2 = [3.533, 5.842, 0.127]
 
         H_constraint = espressomd.constraints.HomogeneousMagneticField(H=H_field1)
@@ -23,35 +31,42 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
             self.assertAlmostEqual(H_constraint.H[i], H_field2[i])
 
     def test_default_value(self):
-        H_field_default = [1., 0., 0.] # defined in C++ core
+        H_field_default = [1.0, 0.0, 0.0] # defined in C++ core
         H_constraint = espressomd.constraints.HomogeneousMagneticField()
         self.assertEqual(H_constraint.H, H_field_default)
 
-    @ut.skipIf("ROTATION" not in espressomd.features(),
-            "Feature ROTATION not available, skipping test!")
-    def test_add_forces(self):
-        S = espressomd.System()
-        S.box_l = [3., 3., 3.]
-        S.time_step = 0.01
-        S.cell_system.skin = 0.4
+    @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
+            "Features DIPOLES not available, skipping test!")
+    def test_add_energy_and_forces(self):
+        H_field = [5.0, 3.0, 2.0]
+        dip_mom0 = [ 2.0, 6.0, 1.]
+        dip_mom1 = [-1.0, 0.5, -0.2]
 
-        H_field = [5., 3., 2.]
-        dip_mom = [2., 6., 1.]
+        # check that the dipolar energy is zero initially, ...
+        self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
+
         H_constraint = espressomd.constraints.HomogeneousMagneticField(H=H_field)
-        S.constraints.add(H_constraint)
-        S.part.add(pos=[0,0,0], dip=dip_mom)
+        self.S.constraints.add(H_constraint)
 
-        # check that dipole moment is set and no torque is applied
-        for i in range(3):
-            self.assertEqual(S.part[0].dip[i], dip_mom[i])
-            self.assertEqual(S.part[0].torque_lab[i], 0.)
+        # ... and also after adding the constraint
+        self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
 
-        # check that running the integrator leads to expected torque
-        S.integrator.run(0)
-        torque_expected = numpy.cross(dip_mom, H_field)
-        for i in range(3):
-            self.assertAlmostEqual(S.part[0].torque_lab[i], torque_expected[i], places=10)
+        # check dipolar energy when adding dipole moments
+        self.S.part.add(id=0, pos=[0,0,0], dip=dip_mom0)
+        self.assertEqual(self.S.analysis.energy()["dipolar"], -1.0*numpy.dot(H_field, dip_mom0))
+        
+        self.S.part.add(id=1, pos=[1,1,1], dip=dip_mom1)
+        self.assertEqual(self.S.analysis.energy()["dipolar"],
+                (-1.0*numpy.dot(H_field, dip_mom0) - 1.0*numpy.dot(H_field, dip_mom1)))
 
-
+        if espressomd.has_features(["ROTATION"]):
+        # check that running the integrator leads to expected torques
+            self.S.integrator.run(0)
+            torque_expected0 = numpy.cross(dip_mom0, H_field)
+            torque_expected1 = numpy.cross(dip_mom1, H_field)
+            for i in range(3):
+                self.assertAlmostEqual(self.S.part[0].torque_lab[i], torque_expected0[i], places=10)
+                self.assertAlmostEqual(self.S.part[1].torque_lab[i], torque_expected1[i], places=10)
+    
 if __name__ == "__main__":
     ut.main()
