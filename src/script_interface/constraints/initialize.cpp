@@ -24,10 +24,7 @@
 #include "Constraints.hpp"
 
 #include "ShapeBasedConstraint.hpp"
-
-#ifdef DIPOLES
 #include "HomogeneousMagneticField.hpp"
-#endif
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -40,11 +37,8 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Constraints::ShapeBasedConstraint>(
       "Constraints::ShapeBasedConstraint");
 
-#ifdef DIPOLES
   ScriptInterface::register_new<ScriptInterface::Constraints::HomogeneousMagneticField>(
       "Constraints::HomogeneousMagneticField");
-#endif
-
 #endif
 }
 } /* namespace Constraints */
