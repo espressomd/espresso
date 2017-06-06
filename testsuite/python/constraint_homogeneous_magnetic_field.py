@@ -6,8 +6,6 @@ import espressomd
 import numpy
 import sys 
 
-from espressomd import interactions
-
 @ut.skipIf(not espressomd.has_features(["CONSTRAINTS"]),
         "Feature CONSTRAINTS not available, skipping test!")
 class HomogeneousMagneticFieldTest(ut.TestCase):
@@ -69,4 +67,5 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
                 self.assertAlmostEqual(self.S.part[1].torque_lab[i], torque_expected1[i], places=10)
     
 if __name__ == "__main__":
+    print("Features: ", espressomd.features())
     ut.main()
