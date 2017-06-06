@@ -108,7 +108,7 @@ class CoulombCloudWall(ut.TestCase):
                 self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={
                                   "p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
                 self.S.integrator.run(0)
-                self.compare("p3m_gpu", energy=False)
+                self.compare("scafacos_p2nfft", energy=True)
 
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
