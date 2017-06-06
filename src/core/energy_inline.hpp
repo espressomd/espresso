@@ -100,13 +100,6 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
     return 0;
 #endif
 
-#ifdef MOL_CUT
-  // You may want to put a correction factor for smoothing function else then
-  // theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 0)
-    return 0;
-#endif
-
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1, p2, ia_params, d, dist);
