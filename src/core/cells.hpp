@@ -133,7 +133,7 @@ struct CellPList {
     positions and the cell system. All other properties of the cell
     system which are not common between different cell systems have to
     be stored in seperate structures. */
-typedef struct {
+struct CellStructure {
   /** type descriptor */
   int type;
 
@@ -169,7 +169,7 @@ typedef struct {
       \return pointer to cell  where to put the particle.
   */
   Cell *(*position_to_cell)(double pos[3]);
-} CellStructure;
+};
 
 /*@}*/
 
@@ -179,9 +179,8 @@ typedef struct {
 /*@{*/
 
 /** list of all cells. */
-extern Cell *cells;
-/** size of \ref cells::cells */
-extern int n_cells;
+extern std::vector<Cell> cells;
+
 /** list of all cells containing particles physically on the local
     node */
 extern CellPList local_cells;
