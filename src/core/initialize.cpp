@@ -703,6 +703,10 @@ void on_ghost_flags_change()
   //VIRUTAL_SITES need v to update v of virtual sites
   ghosts_have_v = 1;
 #endif
+#ifdef DRUDE 
+  //DRUDE needs v to calculate v_com and v_dist for thermostats
+  ghosts_have_v = 1;
+#endif
 
   if (old_have_v != ghosts_have_v)
     cells_re_init(CELL_STRUCTURE_CURRENT);    

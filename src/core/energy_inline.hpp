@@ -29,6 +29,7 @@
 #include "bmhtf-nacl.hpp"
 #include "buckingham.hpp"
 #include "dihedral.hpp"
+#include "drude.hpp"
 #include "fene.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
@@ -356,6 +357,11 @@ inline void add_bonded_energy(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      bond_broken = drude_energy(p1, p2, iaparams, dx, &ret);
+      break;
+#endif
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);

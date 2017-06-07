@@ -97,6 +97,8 @@ enum BondedInteraction {
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
   BONDED_IA_UMBRELLA
+  /** Type of bonded interaction is drude. */
+  BONDED_IA_DRUDE
 };
 
 /** Specify tabulated bonded interactions  */
@@ -640,6 +642,19 @@ typedef struct {
   double r_cut;
 } Harmonic_bond_parameters;
 
+#ifdef DRUDE
+/** Parameters for drude bond **/
+typedef struct {
+    double temp_core;
+    double gamma_core;
+    double temp_drude;
+    double gamma_drude;
+    double k;
+    double mass_drude;
+    double r_cut;
+} Drude_parameters;
+#endif
+
 #ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
 typedef struct {
@@ -864,6 +879,9 @@ typedef union {
   Overlap_bond_parameters overlap;
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
+#endif
+#ifdef DRUDE
+    Drude_parameters drude;
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;

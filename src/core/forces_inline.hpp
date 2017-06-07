@@ -38,6 +38,7 @@
 #include "comforce.hpp"
 #include "constraints.hpp"
 #include "dihedral.hpp"
+#include "drude.hpp"
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
@@ -585,6 +586,11 @@ inline void add_bonded_force(Particle *p1) {
     case BONDED_IA_QUARTIC:
       bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
       break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      bond_broken = calc_drude_forces(p1, p2, iaparams, dx, force,force2);
+      break;
+#endif
 #ifdef ELECTROSTATICS
     case BONDED_IA_BONDED_COULOMB:
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
@@ -795,6 +801,12 @@ inline void add_bonded_force(Particle *p1) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
+#ifdef DRUDE
+	case BONDED_IA_DRUDE:
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+	  break;
+#endif
 #ifdef ROTATION
           p1->f.torque[j] += torque1[j];
           p2->f.torque[j] += torque2[j];
