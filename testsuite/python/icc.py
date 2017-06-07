@@ -34,13 +34,13 @@ class test_icc(ut.TestCase):
         iccEpsilons=[]
 
         l=box_l/nicc
-        for xi in xrange(nicc):
-            for yi in xrange(nicc):
+        for xi in range(nicc):
+            for yi in range(nicc):
                 S.part.add(pos=[l*xi,l*yi,0],q=-0.0001,fix=[1,1,1]) 
                 iccNormals.append([0,0,1])
 
-        for xi in xrange(nicc):
-            for yi in xrange(nicc):
+        for xi in range(nicc):
+            for yi in range(nicc):
                 S.part.add(pos=[l*xi,l*yi,box_l],q=0.0001,fix=[1,1,1]) 
                 iccNormals.append([0,0,-1])
 
