@@ -16,41 +16,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-
 #include "config.hpp"
-#include "initialize.hpp"
-#include "constraints/initialize.hpp"
-#include "shapes/initialize.hpp"
-#ifdef H5MD
-#include "h5md/initialize.hpp"
-#endif
-#include "observables/initialize.hpp" 
-#include "correlators/initialize.hpp" 
-#include "lbboundaries/initialize.hpp"
-#include "collision_detection/initialize.hpp"
 
-#include "ParallelScriptInterface.hpp"
-#include "VariantTester.hpp"
+#include "initialize.hpp"
+#include "ScriptInterface.hpp"
+
+#include "CollisionDetection.hpp"
+
 
 namespace ScriptInterface {
+namespace CollisionDetection {
+
 
 void initialize() {
-  ParallelScriptInterface::initialize();
-
-  Shapes::initialize();
-  Constraints::initialize();
-#ifdef H5MD
-  Writer::initialize();
+#ifdef COLLISION_DETECTION
+  ScriptInterface::register_new<ScriptInterface::CollisionDetection::CollisionDetection>(
+      "CollisionDetection::CollisionDetection");
 #endif
-  Observables::initialize();
-  Correlators::initialize();
-  LBBoundaries::initialize();
-
-  CollisionDetection::initialize();
- 
-
-  ScriptInterface::register_new<Testing::VariantTester>("Testing::VariantTester");
 }
-
+} /* namespace CollisionDetection */
 } /* namespace ScriptInterface */
