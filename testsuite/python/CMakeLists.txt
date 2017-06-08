@@ -16,6 +16,8 @@ set(py_tests  bondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              scafacos_dipoles_1d_2d.py
+	            tabulated.py
               particle_slice.py
               rotational_inertia.py
               script_interface_object_params.py

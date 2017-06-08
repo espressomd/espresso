@@ -1,6 +1,8 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
+#include <array>
+
 #include <boost/version.hpp>
 
 /* New versions of boost alrady containt this
