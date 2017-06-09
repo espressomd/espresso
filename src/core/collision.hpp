@@ -57,8 +57,12 @@ typedef struct {
   int bond_vs;
   /// particle type for virtual sites created on collision
   int vs_particle_type;
+
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
+  /** Raise exception on collision */
+  bool exception_on_collision;
+
   /// distance at which particles are bound
   double distance;
   /// For mode "glue to surface": The distance from the particle which is to be glued to the new virtual site
@@ -91,20 +95,8 @@ void prepare_collision_queue();
 /// Handle the collisions recorded in the queue
 void handle_collisions();
 
-/** set the parameters for the collision detection
-    @param mode is a bitset out of the COLLISION_MODE_* bits
-    @param d is the collision distance, below that a bond is generated
-    @param bond_centers is the type of the bond between the real particles
-    @param bond_vs is the type of the bond between the virtual particles,
-    if using noslip bonds
-    @param t is the type of the virtual sites, if using noslip bonds
-    @param d2 for the "glue to surface" mode is the distance between the particle to be glued and the new virtual site
-    @param tg for the "glue to surface" is the type of the particle being glued
-    @param tv for the "glue to surface" is the type of the particle to which the virtual site is attached
-    @param bond_three_particles is the three-particle-bond parameter
-    @param angle_resolution is the three_particle_angle_resolution parameter in order to define different angle bonds
- */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution);
+/** @brief Validates collision parameters and creates particle types if needed */
+bool validate_collision_parameters();
 
 #endif
 

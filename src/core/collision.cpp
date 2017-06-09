@@ -55,89 +55,101 @@ static int number_of_collisions, total_collisions;
 /// Parameters for collision detection
 Collision_parameters collision_params = { 0, };
 
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution)
+
+/** @brief Return true if a bond between the centers of the colliding particles needs to be placed. At this point, all modes need this */
+inline bool bind_centers() {
+  return  collision_params.mode >0;
+}
+
+
+bool validate_collision_params()
 {
   // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
-  // particles, hence, we turn that on.
-  if ((mode & COLLISION_MODE_VS) ||(mode & COLLISION_MODE_GLUE_TO_SURF))
-    mode |= COLLISION_MODE_BOND;
-
-  if (mode & COLLISION_MODE_BIND_THREE_PARTICLES)
-    mode |= COLLISION_MODE_BOND;
-
   // If we don't have virtual sites, virtual site binding isn't possible.
 #ifndef VIRTUAL_SITES_RELATIVE
-  if ((mode & COLLISION_MODE_VS) || (mode & COLLISION_MODE_GLUE_TO_SURF))
-    return 1;
+  if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
+    runtimeErrorMsg() << "Virtual sites based collisoin modes modes require the VIRTUAL_SITES feature";
+    return false;
+  }
 #endif
 
   // For vs based methods, Binding so far only works on a single cpu
-  if ((mode & COLLISION_MODE_VS) ||(mode & COLLISION_MODE_GLUE_TO_SURF))
-    if (n_nodes != 1)
-      return 2;
+  if ((collision_params.mode & COLLISION_MODE_VS) ||(collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
+    if (n_nodes != 1) {
+      runtimeErrorMsg() << "Virtual sites based collision modes only work on a single node.";
+      return false;
+    }
 
   // Check if bonded ia exist
-  if ((mode & COLLISION_MODE_BOND) &&
-      (bond_centers >= n_bonded_ia))
-    return 3;
-  if ((mode & COLLISION_MODE_VS) &&
-      (bond_vs >= n_bonded_ia))
-    return 3;
+  if ((collision_params.mode & COLLISION_MODE_BOND) &&
+      (collision_params.bond_centers >= n_bonded_ia)) {
+    runtimeErrorMsg() << "The bond type to be used for binding particle centers does not exist"; 
+    return false;
+  }
+  
+  if ((collision_params.mode & COLLISION_MODE_VS) &&
+      (collision_params.bond_vs >= n_bonded_ia)) {
+    runtimeErrorMsg() << "The bond type to be used for binding virtual sites does not exist"; 
+    return false;
+  }
   
   // If the bond type to bind particle centers is not a pair bond...
   // Check that the bonds have the right number of partners
-  if ((mode & COLLISION_MODE_BOND) &&
-      (bonded_ia_params[bond_centers].num != 1))
-    return 4;
+  if ((collision_params.mode & COLLISION_MODE_BOND) &&
+      (bonded_ia_params[collision_params.bond_centers].num != 1)) {
+    runtimeErrorMsg() << "The bond type to be used for binding particle centers needs to be a pair bond"; 
+    return false;
+  }
   
   // The bond between the virtual sites can be pair or triple
-  if ((mode & COLLISION_MODE_VS) && !(bonded_ia_params[bond_vs].num == 1 ||
-				      bonded_ia_params[bond_vs].num == 2))
-    return 5;
+  if ((collision_params.mode & COLLISION_MODE_VS) && !(bonded_ia_params[collision_params.bond_vs].num == 1 ||
+				      bonded_ia_params[collision_params.bond_vs].num == 2)) {
+    runtimeErrorMsg() << "The bond type to be used for binding virtual sites needs to be a pair or three-particle bond"; 
+    return false;
+  }
   
-  if (mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
-    if (bond_three_particles + angle_resolution >= n_bonded_ia)
-      return 6;
-    
-    for (int i = bond_three_particles; i <= bond_three_particles + angle_resolution; i++) {
-      if (bonded_ia_params[i].num != 2)
-        return 7;
+  if (collision_params.mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
+    if (collision_params.bond_three_particles + collision_params.three_particle_angle_resolution >= n_bonded_ia) {
+      runtimeErrorMsg() << "Insufficient bonds defined for three particle binding.";
+      return false;
     }
   }
 
-  // Set params
-  collision_params.mode=mode;
-  collision_params.bond_centers=bond_centers;
-  collision_params.bond_vs=bond_vs;
-  collision_params.distance=d;
-  collision_params.vs_particle_type=t;
-  collision_params.dist_glued_part_to_vs =d2;
-  collision_params.part_type_to_be_glued =tg;
-  collision_params.part_type_to_attach_vs_to =tv;
-  collision_params.part_type_after_glueing =ta;
-  collision_params.bond_three_particles=bond_three_particles;
-  collision_params.three_particle_angle_resolution=angle_resolution;
+    for (int i = collision_params.bond_three_particles; i <= collision_params.bond_three_particles + collision_params.three_particle_angle_resolution; i++) {
+      if (bonded_ia_params[i].num != 2) {
+        runtimeErrorMsg() << "The bonds for three particle binding need to be angle bonds.";
+        return false;
+      }
+    }
+  
+  // Create particle types
 
-  if (mode & COLLISION_MODE_VS)
-    make_particle_type_exist(t);
+
+    if (collision_params.mode & COLLISION_MODE_VS) {
+      if (n_nodes>1)
+      {
+        throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
+      }
+      make_particle_type_exist(collision_params.vs_particle_type);
+    }
+
   
   
-  if (mode & COLLISION_MODE_GLUE_TO_SURF)
-  {
-    make_particle_type_exist(t);
-    make_particle_type_exist(tg);
-    make_particle_type_exist(tv);
-    make_particle_type_exist(ta);
-  }
-
-
-  mpi_bcast_collision_params();
-
-
+    if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+    {
+      if (n_nodes>1)
+      {
+        throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
+      }
+      make_particle_type_exist(collision_params.vs_particle_type);
+      make_particle_type_exist(collision_params.part_type_to_be_glued);
+      make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
+      make_particle_type_exist(collision_params.part_type_after_glueing);
+    }
   
   recalc_forces = 1;
 
-  return 0;
+  return true;
 }
 
 //* Allocate memory for the collision queue /
@@ -148,7 +160,7 @@ void prepare_collision_queue()
 }
 
 
-bool bond_exists(Particle* p, Particle* partner, int bond_type)
+bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type)
 {
   // First check the bonds of p1
   if (p->bl.e) {
@@ -184,14 +196,21 @@ void queue_collision(int part1,int part2, double* point_of_collision) {
     TRACE(printf("%d: Added to queue: Particles %d and %d at %lf %lf %lf\n",this_node,part1,part2,point_of_collision[0],point_of_collision[1],point_of_collision[2]));
 }
 
+bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p2) {
+    return  (
+       ((p1->p.type==collision_params.part_type_to_be_glued)
+       && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+      ||
+       ((p2->p.type==collision_params.part_type_to_be_glued)
+       && (p1->p.type ==collision_params.part_type_to_attach_vs_to)));
+}
 
 // Detect a collision between the given particles.
 // Add it to the queue in case virtual sites should be added at the point of collision
-void detect_collision(Particle* p1, Particle* p2)
+void detect_collision(const Particle* const p1, const Particle* const p2)
 {
   // The check, whether collision detection is actually turned on is performed in forces.hpp
 
-  int part1, part2, size;
   int counts[n_nodes];
   //TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
 
@@ -205,26 +224,14 @@ void detect_collision(Particle* p1, Particle* p2)
   //TRACE(printf("%d: particles %d and %d within bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-    if (! (
-       ((p1->p.type==collision_params.part_type_to_be_glued)
-       && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
-      ||
-       ((p2->p.type==collision_params.part_type_to_be_glued)
-       && (p1->p.type ==collision_params.part_type_to_attach_vs_to)))
-     ) { 
+  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+    if (!glue_to_surface_criterion(p1,p2))
        return;
-     }
-   }
+   
 
-  part1 = p1->p.identity;
-  part2 = p2->p.identity;
+  int part1 = p1->p.identity;
+  int part2 = p2->p.identity;
       
-  // Retrieving the particles from local_particles is necessary, because the particle might be a
-  // ghost, and those can't store bonding info.
-  p1 = local_particles[part1];
-  p2 = local_particles[part2];
-
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
   if ((p1->p.isVirtual) || (p2->p.isVirtual))
@@ -247,7 +254,7 @@ void detect_collision(Particle* p1, Particle* p2)
   /* If we're still here, there is no previous bond between the particles,
      we have a new collision */
 
-  if (collision_params.mode & COLLISION_MODE_BOND) {
+  if (bind_centers()) {
 
     // do not create bond between ghost particles
     if (p1->l.ghost && p2->l.ghost) {
@@ -654,13 +661,13 @@ void handle_collisions ()
 
   TRACE(printf("%d: handle_collisions: number of collisions in queue %d\n",this_node,number_of_collisions));  
 
-  if (collision_params.mode & COLLISION_MODE_EXCEPTION)
+  if (collision_params.exception_on_collision)
     for (int i=0;i<number_of_collisions;i++) {
       handle_exception_throwing_for_single_collision(i);
     }  
     
     
-  if (collision_params.mode & COLLISION_MODE_BOND) 
+  if (bind_centers()) 
   {
     for (int i=0;i<number_of_collisions;i++) {
       // put the bond to the physical particle; at least one partner always is
