@@ -68,6 +68,8 @@
 #include "particle_data.hpp"
 #include "utils/Range.hpp"
 #include "verlet.hpp"
+#include "celliter.hpp"
+
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
@@ -120,6 +122,10 @@ struct CellPList {
   ParticleRange particles() const {
     return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
                              CellParticleIterator(cell + n, cell + n, 0));
+  }
+
+  Utils::Range<CellIterator> cells() const {
+    return Utils::make_range(CellIterator(cell, 0), CellIterator(cell, n));
   }
 
   Cell **cell;

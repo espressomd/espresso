@@ -3,10 +3,29 @@
 
 #include <boost/iterator/iterator_facade.hpp>
 
-template <typename BidirectionalIterator, typename Particle>
+namespace __particle_iterator_util {
+template <typename ReturnType, typename It, typename Particle>
+struct CellDeref;
+
+template <typename It, typename Particle>
+struct CellDeref<Particle&, It, Particle> {
+  static inline Particle& get_particle(It m_cell, int m_part_id) {
+    return (*m_cell)->part[m_part_id];
+  }
+};
+
+template <typename It, typename Particle>
+struct CellDeref<Particle*, It, Particle> {
+  static inline Particle* get_particle(It m_cell, int m_part_id) {
+    return &((*m_cell)->part[m_part_id]);
+  }
+};
+}
+
+template <typename BidirectionalIterator, typename Particle, typename DerefType = Particle&>
 struct ParticleIterator : public boost::iterator_facade<
-                              ParticleIterator<BidirectionalIterator, Particle>,
-                              Particle, boost::forward_traversal_tag> {
+                              ParticleIterator<BidirectionalIterator, Particle, DerefType>,
+                              Particle, boost::forward_traversal_tag, DerefType> {
   ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end,
                    int part_id)
       : m_cell(cell), m_end(end), m_part_id(part_id) {
@@ -47,7 +66,11 @@ private:
     return (*m_cell == *(rhs.m_cell)) && (m_part_id == rhs.m_part_id);
   }
 
-  Particle &dereference() const { return (*m_cell)->part[m_part_id]; }
+  DerefType dereference() const {
+      return __particle_iterator_util
+                ::CellDeref<DerefType, BidirectionalIterator, Particle>
+                ::get_particle(m_cell, m_part_id);
+  }
 
   BidirectionalIterator m_cell, m_end;
   int m_part_id;
