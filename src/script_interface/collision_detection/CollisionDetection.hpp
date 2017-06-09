@@ -35,6 +35,7 @@ public:
   CollisionDetection() {
     add_parameters({
       {"mode", collision_params.mode},
+      {"exception_on_collision", collision_params.exception_on_collision},
       
       {"bond_centers",collision_params.bond_centers},
       {"bond_vs",collision_params.bond_vs},
