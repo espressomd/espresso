@@ -5,10 +5,10 @@ import espressomd
 @ut.skipIf(not espressomd.has_features(["P3M"]),
            "Features not available, skipping test!")
 
-from espressomd.electrostatics import P3M
-from espressomd.electrostatic_extensions import ICC
-
 class test_icc(ut.TestCase):
+           
+    from espressomd.electrostatics import P3M
+    from espressomd.electrostatic_extensions import ICC
 
     def runTest(self):
 
