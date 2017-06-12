@@ -96,7 +96,7 @@ enum BondedInteraction {
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA
+  BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is drude. */
   BONDED_IA_DRUDE
 };
@@ -645,12 +645,11 @@ typedef struct {
 #ifdef DRUDE
 /** Parameters for drude bond **/
 typedef struct {
-    double temp_core;
-    double gamma_core;
+    double temp_com;
+    double gamma_com;
     double temp_drude;
     double gamma_drude;
     double k;
-    double mass_drude;
     double r_cut;
 } Drude_parameters;
 #endif

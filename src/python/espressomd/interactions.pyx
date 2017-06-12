@@ -733,6 +733,61 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+if DRUDE:
+    class DrudeBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            DrudeBond initialiser. Used to instatiate a DrudeBond identifier
+            with a given set of parameters. 
+
+            Parameters
+            ----------
+
+            temp_com : float
+                        Sets the temerature of the Langevin thermostat for the com of the core-drude pair.
+            gamma_com: float
+                        Sets the friction coefficient of the Langevin thermostat for the com of the core-drude pair.
+            temp_drude: float 
+                        Sets the temerature of the Langevin thermostat for the distance vector of the core-drude pair.
+            gamma_drude: float 
+                         Sets the friction coefficient of the Langevin thermostat for the distance vector of the core-drude pair.
+            k: float
+               Specifies the spring constant of the harmonic bond between core and drude particle.
+            r_cut: float, optional
+                    Specifies maximum distance beyond which the bond is considered
+                    broken.
+            """
+            super(DrudeBond, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_DRUDE
+
+        def type_name(self):
+            return "DRUDE"
+
+        def valid_keys(self):
+            return "temp_com", "gamma_com", "temp_drude", "gamma_drude", "k", "r_cut"
+
+        def required_keys(self):
+            return "temp_com", "gamma_com", "temp_drude", "gamma_drude", "k"
+
+        def set_default_params(self):
+            self._params = {"temp_com": 1., "gamma_com": 1., "temp_drude": 1., "gamma_drude": 1., "k": 1., "r_cut": 0.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"temp_com": bonded_ia_params[self._bond_id].p.drude.temp_com,
+                 "gamma_com": bonded_ia_params[self._bond_id].p.drude.gamma_com,
+                 "temp_drude": bonded_ia_params[self._bond_id].p.drude.temp_drude,
+                 "gamma_drude": bonded_ia_params[self._bond_id].p.drude.gamma_drude,
+                 "k": bonded_ia_params[self._bond_id].p.drude.k,
+                 "r_cut": bonded_ia_params[self._bond_id].p.drude.r_cut}
+
+        def _set_params_in_es_core(self):
+            drude_set_params(
+                self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_drude"],  self._params["gamma_drude"], self._params["k"], self._params["r_cut"])
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
@@ -1342,6 +1397,7 @@ class Oif_Local_Forces(BondedInteraction):
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
+    int(BONDED_IA_DRUDE): DrudeBond,
     int(BONDED_IA_HARMONIC_DUMBBELL): HarmonicDumbbellBond,
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,

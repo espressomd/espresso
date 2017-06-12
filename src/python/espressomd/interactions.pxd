@@ -116,7 +116,7 @@ cdef extern from "interaction_data.hpp":
         double A02
         double kal
 
-#* Parameters for harmonic bond Potential */
+#* Parameters for harmonic bond potential */
     ctypedef struct Harmonic_bond_parameters:
         double k
         double r
@@ -127,6 +127,15 @@ cdef extern from "interaction_data.hpp":
         double k1
         double k2
         double r
+        double r_cut
+
+#* Parameters for drude bond potential */
+    ctypedef struct Drude_bond_parameters:
+        double temp_com
+        double gamma_com
+        double temp_drude
+        double gamma_drude
+        double k
         double r_cut
 
 #* Parameters for three body angular potential (bond-angle potentials).
@@ -230,6 +239,7 @@ cdef extern from "interaction_data.hpp":
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
+        Drude_bond_parameters drude
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -257,6 +267,8 @@ cdef extern from "fene.hpp":
     int fene_set_params(int bond_type, double k, double drmax, double r0)
 cdef extern from "harmonic.hpp":
     int harmonic_set_params(int bond_type, double k, double r, double r_cut)
+cdef extern from "drude.hpp":
+    int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
 cdef extern from "dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
@@ -309,6 +321,7 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
+        BONDED_IA_DRUDE,
         BONDED_IA_QUARTIC,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_ANGLE_OLD,
