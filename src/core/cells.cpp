@@ -37,10 +37,13 @@
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#include "algorithm/link_cell.hpp"
+#include "utils/NoOp.hpp"
+#include <boost/iterator/indirect_iterator.hpp>
 
 /* Variables */
 
@@ -53,11 +56,72 @@ CellPList local_cells = {NULL, 0, 0};
 CellPList ghost_cells = {NULL, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {CELL_STRUCTURE_NONEYET};
+CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
+                                /* use_verlet_list*/ false};
 
 double max_range = 0.0;
 
-int rebuild_verletlist = 0;
+int rebuild_verletlist = 1;
+
+/**
+ * @brief Get pairs closer than distance from the cells.
+ *
+ * This is mostly for testing purposes and uses link_cell
+ * to get pairs out of the cellsystem by a simple distance
+ * criterion. This only works for n_nodes == 1, and should
+ * not be used in production code.
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>> get_pairs(double distance) {
+  std::vector<std::pair<int, int>> ret;
+  auto const cutoff2 = distance * distance;
+
+  auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
+                                      double dist2) {
+    if (dist2 < cutoff2)
+      ret.emplace_back(p1.p.identity, p2.p.identity);
+  };
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                         boost::make_indirect_iterator(local_cells.end()),
+                         Utils::NoOp{}, pair_kernel,
+                         [](Particle const &p1, Particle const &p2) {
+                           return distance2(p1.r.p, p2.r.p);
+                         });
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                         boost::make_indirect_iterator(local_cells.end()),
+                         Utils::NoOp{}, pair_kernel,
+                         [](Particle const &p1, Particle const &p2) {
+                           double vec21[3];
+                           get_mi_vector(vec21, p1.r.p, p2.r.p);
+                           return sqrlen(vec21);
+                         });
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                         boost::make_indirect_iterator(local_cells.end()),
+                         Utils::NoOp{}, pair_kernel,
+                         [](Particle const &p1, Particle const &p2) {
+                           double vec21[3];
+                           get_mi_vector(vec21, p1.r.p, p2.r.p);
+                           vec21[2] = p1.r.p[2] - p2.r.p[2];
+                           return sqrlen(vec21);
+                         });
+  }
+
+  /* Sort pairs */
+  for (auto &pair : ret) {
+    if (pair.first > pair.second)
+      std::swap(pair.first, pair.second);
+  }
+
+  return ret;
+}
 
 /************************************************************/
 /** \name Privat Functions */
@@ -147,7 +211,7 @@ void cells_re_init(int new_cs) {
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local, 0);
   for (auto &cell : tmp_cells) {
-    realloc_particlelist(&cell, 0);
+    cell.resize(0);
   }
 
   CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
@@ -163,8 +227,8 @@ void cells_re_init(int new_cs) {
 void realloc_cells(int size) {
   CELL_TRACE(fprintf(stderr, "%d: realloc_cells %d\n", this_node, size));
   /* free all memory associated with cells to be deleted. */
-  for (int i = size; i < cells.size(); i++) {
-    realloc_particlelist(&cells[i], 0);
+  for (auto &c : cells) {
+    c.resize(0);
   }
 
   auto const old_size = cells.size();
@@ -275,6 +339,8 @@ void cells_resort_particles(int global_flag) {
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
+  /* Particles are now sorted, but verlet lists are invalid
+     and p_old has to be reset. */
   resort_particles = 0;
   rebuild_verletlist = 1;
 

@@ -70,3 +70,6 @@ unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp ../../script_interf
 unit_test(NAME Variant_test SRC Variant_test.cpp ../../script_interface/Variant.cpp)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp)
 unit_test(NAME Range_test SRC Range_test.cpp)
+unit_test(NAME link_cell_test SRC link_cell_test.cpp)
+unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp)
+unit_test(NAME Batch_test SRC Batch_test.cpp)

@@ -21,8 +21,10 @@
 
 /** \file iccp3m.cpp
   Detailed Information about the method is included in the corresponding header file \ref iccp3m.hpp.
+*/
 
- */
+
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -40,15 +42,15 @@
 #include "communication.hpp"
 
 #include "utils.hpp"
-#include "verlet.hpp"
 #include "cells.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
-#include "domain_decomposition.hpp"
-#include "verlet.hpp"
 #include "forces.hpp"
 #include "config.hpp"
 #include "global.hpp"
+
+#include "short_range_loop.hpp"
+#include "utils/NoOp.hpp"
 
 using std::ostringstream;
 
@@ -61,22 +63,69 @@ int iccp3m_initialized = 0;
  * excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
 void calc_long_range_forces_iccp3m();
-inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2);
-void resize_verlet_list_iccp3m(PairList *pl);
+
 inline void init_local_particle_force_iccp3m(Particle *part);
 inline void init_ghost_force_iccp3m(Particle *part);
 extern void on_particle_change();
-
-Cell *local_icc;
-CellPList me_do_ghosts_icc;
 
 /* other icc*  functions */
 int imod(int x,int y);
 void iccp3m_revive_forces();
 void iccp3m_store_forces();
 
-/** Granularity of the verlet list */
-#define LIST_INCREMENT 20
+/** Calculation of the electrostatic forces between source charges (= real charges) and wall charges.
+ *  For each electrostatic method the proper functions for short and long range parts are called.
+ *  Long Range Parts are calculated directly, short range parts need helper functions according
+ *  to the particle data organisation. A modified version of \ref force_calc in \ref forces.hpp.
+ */
+void force_calc_iccp3m();
+
+/** Variant of add_non_bonded_pair_force where only coulomb 
+ *  contributions are calculated   */
+inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2, 
+					double d[3], double dist, double dist2)
+{
+  /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
+  double force[3] = { 0, 0, 0 };
+  int j;
+
+  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
+
+  /***********************************************/
+  /* long range electrostatics                   */
+  /***********************************************/
+
+  /* real space coulomb */
+  double q1q2 = p1->p.q*p2->p.q;
+  switch (coulomb.method) {
+#ifdef P3M
+  case COULOMB_ELC_P3M:
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
+    break;
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
+    break;
+#endif /* P3M */
+  case COULOMB_MMM1D:
+    if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+    break;
+  case COULOMB_MMM2D:
+    if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+    break;
+  default:
+    break;
+  }
+
+  /***********************************************/
+  /* add total nonbonded forces to particle      */
+  /***********************************************/
+   for (j = 0; j < 3; j++) { 
+      p1->f.f[j] += force[j];
+      p2->f.f[j] -= force[j];
+   }
+   /***********************************************/
+}
 
 void iccp3m_set_initialized() {
     iccp3m_initialized = 1;
@@ -262,288 +311,22 @@ convert_quat_to_dip_all();
 
      */
 
-    init_forces_iccp3m(); 
-    switch (cell_structure.type) {
-        case CELL_STRUCTURE_LAYERED:
-            layered_calculate_ia_iccp3m();
-            break;
-        case CELL_STRUCTURE_DOMDEC:
-            if(dd.use_vList) {
-                if (rebuild_verletlist) {
-                    build_verlet_lists_and_calc_verlet_ia_iccp3m();
-                } else  {
-                    calculate_verlet_ia_iccp3m();
-                }
-            }
-            else
-                calc_link_cell_iccp3m();
-            break;
-        case CELL_STRUCTURE_NSQUARE:
-            nsq_calculate_ia_iccp3m();
-    }
+    init_forces_iccp3m();
+
+    short_range_loop(
+        Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
+          auto const cutoff2 =
+              SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + skin);
+
+          if (d.dist2 < cutoff2) {
+            /* calc non bonded interactions */
+            add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21,
+                                             sqrt(d.dist2), d.dist2);
+          }
+        });
 
     calc_long_range_forces_iccp3m();
 }
-
-/** nonbonded and bonded force calculation using the verlet list */
-void layered_calculate_ia_iccp3m()
-{
-    int c, i, j;
-    Cell  *celll, *cellb;
-    int      npl,    npb;
-    Particle *pl,    *pb, *p1;
-    double dist2, d[3];
-
-    CELL_TRACE(fprintf(stderr, "%d: rebuild_v=%d\n", this_node, rebuild_verletlist));
-
-    for (c = 1; c <= n_layers; c++) {
-        celll = &cells[c];
-        pl    = celll->part;
-        npl   = celll->n;
-
-        cellb = &cells[c-1];
-        pb    = cellb->part;
-        npb   = cellb->n;
-
-        for(i = 0; i < npl; i++) {
-            p1 = &pl[i];
-
-            if (rebuild_verletlist)
-                memmove(p1->l.p_old, p1->r.p, 3*sizeof(double));
-
-            /* cell itself. No bonded / constraints considered in ICCP3M */
-            for(j = i+1; j < npl; j++) {
-                layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
-                dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-                if (do_nonbonded(p1, &pl[j])) {
-#endif
-                    /* avoid source-source computation */
-                    add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-#ifdef EXCLUSIONS  
-                }
-#endif
-            }
-
-            /* bottom neighbor */
-            for(j = 0; j < npb; j++) {
-                layered_get_mi_vector(d, p1->r.p, pb[j].r.p);
-                dist2 = sqrlen(d);
-#ifdef EXCLUSIONS
-                if (do_nonbonded(p1, &pl[j])) {
-#endif
-                    /* avoid source-source computation */
-                    add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-#ifdef EXCLUSIONS
-                }
-#endif
-            }
-        }
-    }
-    rebuild_verletlist = 0;
-}
-
-void build_verlet_lists_and_calc_verlet_ia_iccp3m()
-{
-    int c, np1, n, np2, i ,j, j_start=0;
-    Cell *cell;
-    IA_Neighbor *neighbor;
-    Particle *p1, *p2;
-    PairList *pl;
-    double dist2, vec21[3];
-
-#ifdef VERLET_DEBUG 
-    int estimate, sum=0;
-    fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
-    /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-    estimate = 0.5*n_part*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_part/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
-
-    if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
-#endif
-
-    /* Loop local cells */
-    for (c = 0; c < local_cells.n; c++) {
-        VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
-
-        /* Loop local cells */
-        for (c = 0; c < local_cells.n; c++) {
-            VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
-
-            cell = local_cells.cell[c];
-            p1   = cell->part;
-            np1  = cell->n;
-            /* Loop cell neighbors */
-            for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-                neighbor = &dd.cell_inter[c].nList[n];
-                p2  = neighbor->pList->part;
-                np2 = neighbor->pList->n;
-                VERLET_TRACE(fprintf(stderr,"%d: neighbor %d contains %d parts\n",this_node,n,np2));
-                /* init pair list */
-                pl  = &neighbor->vList;
-                pl->n = 0;
-                /* Loop cell particles */
-                for(i=0; i < np1; i++) {
-                    j_start = 0;
-                    /* Tasks within cell: (no bonded forces) store old position, avoid double counting */
-                    if(n == 0) {
-                        memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
-                        j_start = i+1;
-                    }
-                    /* Loop neighbor cell particles */
-                    for(j = j_start; j < np2; j++) {
-#ifdef EXCLUSIONS
-                        if(do_nonbonded(&p1[i], &p2[j]))
-#endif
-                        {
-                            dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-
-                            VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
-                            if(verlet_list_criterion(p1+i,p2+j, dist2)) {
-                                ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
-                                ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
-
-                                add_pair_iccp3m(pl, &p1[i], &p2[j]);
-                                /* calc non bonded interactions */ 
-                                add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                            }
-                        }
-                    }
-                }
-                resize_verlet_list_iccp3m(pl);
-                VERLET_TRACE(fprintf(stderr,"%d: neighbor %d has %d pairs\n",this_node,n,pl->n));
-                VERLET_TRACE(sum += pl->n);
-            }
-        }
-    }
-
-    VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
-
-    rebuild_verletlist = 0;
-}
-
-void calculate_verlet_ia_iccp3m()
-{
-    int c, np, n, i;
-    Cell *cell;
-    Particle *p1, *p2, **pairs;
-    double dist2, vec21[3];
-
-    /* Loop local cells */
-    for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
-        /* Loop cell neighbors */
-        for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-            pairs = dd.cell_inter[c].nList[n].vList.pair;
-            np    = dd.cell_inter[c].nList[n].vList.n;
-            /* verlet list loop */
-            for(i=0; i<2*np; i+=2) {
-                p1 = pairs[i];                    /* pointer to particle 1 */
-                p2 = pairs[i+1];                  /* pointer to particle 2 */
-                dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
-                add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
-            }
-        }
-    }
-}
-
-void calc_link_cell_iccp3m()
-{
-    int c, np1, n, np2, i ,j, j_start=0;
-    Cell *cell;
-    IA_Neighbor *neighbor;
-    Particle *p1, *p2;
-    double dist2, vec21[3];
-
-    /* Loop local cells */
-    for (c = 0; c < local_cells.n; c++) {
-
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np1  = cell->n;
-        /* Loop cell neighbors */
-        for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-            neighbor = &dd.cell_inter[c].nList[n];
-            p2  = neighbor->pList->part;
-            np2 = neighbor->pList->n;
-            /* Loop cell particles */
-            for(i=0; i < np1; i++) {
-                j_start = 0;
-                /* Tasks within cell: bonded forces */
-                if(n == 0) {
-                    if (rebuild_verletlist)
-                        memmove(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
-
-                    j_start = i+1;
-                }
-                /* Loop neighbor cell particles */
-                for(j = j_start; j < np2; j++) {
-                    dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-                    if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
-                        /* calc non bonded interactions */
-                        add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                    }
-                }
-            }
-        }
-        /* Loop neighbor cell particles */
-        for(j = j_start; j < np2; j++) {
-            {
-                dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-                if(verlet_list_criterion(p1+i,p2+j,dist2)) {
-                    /* calc non bonded interactions */
-                    add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                }
-            }
-        }
-    }
-    rebuild_verletlist = 0;
-}
-
-void nsq_calculate_ia_iccp3m()
-{
-    Particle *partl, *partg;
-    Particle *pt1, *pt2;
-    int p, p2, npl, npg, c;
-    double d[3], dist2, dist;
-
-    npl   = local_icc->n;
-    partl = local_icc->part;
-
-    /* calculate bonded interactions and non bonded node-node */
-    for (p = 0; p < npl; p++) {
-        pt1 = &partl[p];
-
-        if (rebuild_verletlist)
-            memmove(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
-
-        /* other particles, same node */
-        for (p2 = p + 1; p2 < npl; p2++) {
-            pt2 = &partl[p2];
-            get_mi_vector(d, pt1->r.p, pt2->r.p);
-            dist2 = sqrlen(d);
-            dist = sqrt(dist2);
-            add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
-        }
-
-        /* calculate with my ghosts */
-        for (c = 0; c < me_do_ghosts_icc.n; c++) {
-            npg   = me_do_ghosts_icc.cell[c]->n;
-            partg = me_do_ghosts_icc.cell[c]->part;
-
-            for (p2 = 0; p2 < npg; p2++) {
-                pt2 = &partg[p2];
-                get_mi_vector(d, pt1->r.p, pt2->r.p);
-                dist2 = sqrlen(d);
-                dist = sqrt(dist2);
-                add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
-            }
-        }
-    }
-    rebuild_verletlist = 0;
-}
-
 
 void init_forces_iccp3m()
 {
@@ -641,37 +424,6 @@ void calc_long_range_forces_iccp3m()
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
-/** Add a particle pair to a verlet pair list.
-  Checks verlet pair list size and reallocates memory if necessary.
- *  \param p1 Pointer to paricle one.
- *  \param p2 Pointer to paricle two.
- *  \param pl Pointer to the verlet pair list.
- */
-inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2)
-{
-    /* check size of verlet List */
-    if(pl->n+1 >= pl->max) {
-        pl->max += LIST_INCREMENT;
-        pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
-    }
-    /* add pair */
-    pl->pair[(2*pl->n)  ] = p1;
-    pl->pair[(2*pl->n)+1] = p2;
-    /* increase number of pairs */
-    pl->n++;
-}
-
-void resize_verlet_list_iccp3m(PairList *pl)
-{
-    int diff;
-    diff = pl->max - pl->n;
-    if( diff > 2*LIST_INCREMENT ) {
-        diff = (diff/LIST_INCREMENT)-1;
-        pl->max -= diff*LIST_INCREMENT;
-        pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
-    }
-}
 
 /** initialize the forces for a real particle */
 inline void init_local_particle_force_iccp3m(Particle *part)

@@ -136,6 +136,8 @@ cdef class CellSystem(object):
 
         return s
 
+    def get_pairs_(self, distance):
+        return get_pairs(distance)
 
     property max_num_cells:
         """

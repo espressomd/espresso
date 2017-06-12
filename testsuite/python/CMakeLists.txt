@@ -22,6 +22,7 @@ set(py_tests  bondedInteractions.py
               tabulated.py
               writevtf.py
               lb_stokes_sphere_gpu.py
+	      pairs.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

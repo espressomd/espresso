@@ -3,8 +3,6 @@
 
 #include <utility>
 
-#include "cells.hpp"
-
 namespace Algorithm {
 namespace detail {
 
@@ -34,11 +32,10 @@ void update_and_kernel(CellIterator first, CellIterator last,
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors()) {
-        auto &n = neighbor.get();
-        if (&n == &(*first))
+        if (&neighbor == &(*first))
           continue;
-        for (int j = 0; j < n.n; j++) {
-          auto &p2 = n.part[j];
+        for (int j = 0; j < neighbor.n; j++) {
+          auto &p2 = neighbor.part[j];
           auto dist = distance_function(p1, p2);
           if (verlet_criterion(p1, p2, dist.dist2)) {
             pair_kernel(p1, p2, dist);
@@ -48,8 +45,6 @@ void update_and_kernel(CellIterator first, CellIterator last,
       }
     }
   }
-
-  rebuild_verletlist = 0;
 }
 
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
@@ -59,9 +54,7 @@ void kernel(CellIterator first, CellIterator last,
             DistanceFunction distance_function) {
   for (; first != last; ++first) {
     for (int i = 0; i != first->n; i++) {
-      auto &p1 = first->part[i];
-
-      particle_kernel(p1);
+      particle_kernel(first->part[i]);
     }
 
     for (auto &pair : first->m_verlet_list) {
@@ -75,15 +68,18 @@ void kernel(CellIterator first, CellIterator last,
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
 void verlet_ia(CellIterator first, CellIterator last,
-               ParticleKernel particle_kernel, PairKernel pair_kernel,
+               ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                DistanceFunction &&distance_function,
-               VerletCriterion &&verlet_criterion) {
-  if (rebuild_verletlist) {
-    detail::update_and_kernel(first, last, particle_kernel, pair_kernel,
+               VerletCriterion &&verlet_criterion, bool rebuild) {
+  if (rebuild) {
+    detail::update_and_kernel(first, last,
+                              std::forward<ParticleKernel>(particle_kernel),
+                              std::forward<PairKernel>(pair_kernel),
                               std::forward<DistanceFunction>(distance_function),
                               std::forward<VerletCriterion>(verlet_criterion));
   } else {
-    detail::kernel(first, last, particle_kernel, pair_kernel,
+    detail::kernel(first, last, std::forward<ParticleKernel>(particle_kernel),
+                   std::forward<PairKernel>(pair_kernel),
                    std::forward<DistanceFunction>(distance_function));
   }
 }

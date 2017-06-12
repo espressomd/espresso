@@ -28,10 +28,10 @@
  *  For more information see forces.cpp .
  */
 
-#include "iccp3m.hpp"
-#include "external_potential.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
+#include "interaction_data.hpp"
+
 extern ActorList forceActors;
 
 /** \name Exported Functions */
@@ -47,6 +47,33 @@ void init_forces();
 /** Set forces of all ghosts to zero
  */
 void init_forces_ghosts();
+
+/** Calculate forces.
+ *
+ *  A short list, what the function is doing:
+ *  <ol>
+ *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
+ with zero).
+ *  <li> Calculate bonded interaction forces:<br>
+ *       Loop all local particles (not the ghosts).
+ *       <ul>
+ *       <li> FENE
+ *       <li> ANGLE (cos bend potential)
+ *       </ul>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
+ *       <ul>
+ *       <li> Lennard-Jones.
+ *       <li> Buckingham.
+ *       <li> Real space part: Coulomb.
+ *       <li> Ramp.
+ *       </ul>
+ *  <li> Calculate long range interaction forces:<br>
+ Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  </ol>
+ */
+
+void force_calc();
 
 /** Check if forces are NAN 
  */

@@ -37,6 +37,7 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "forces_inline.hpp"
+#include "domain_decomposition.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100

@@ -345,14 +345,15 @@ typedef struct {
     (we hope) algorithm to avoid unnecessary resizes.
     Access using \ref realloc_particlelist, \ref got_particle,...
 */
-typedef struct {
+struct ParticleList {
+  ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
   Particle *part;
   /** Number of particles contained */
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
-} ParticleList;
+};
 
 /************************************************
  * exported variables
@@ -887,7 +888,7 @@ void recv_particles(ParticleList *particles, int node);
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be
  * calculated */
-inline int do_nonbonded(Particle *p1, Particle *p2) {
+inline int do_nonbonded(Particle const *p1, Particle const *p2) {
   int i, i2;
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */

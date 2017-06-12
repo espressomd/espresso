@@ -29,7 +29,6 @@
 #include "utils.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
-#include "verlet.hpp"
 #include "thermostat.hpp"
 #include "lees_edwards_comms_manager.hpp"
 

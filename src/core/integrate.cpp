@@ -57,7 +57,6 @@
 #include "observables.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include "virtual_sites.hpp"
 #include <cmath>
 #include <cstdio>

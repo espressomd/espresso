@@ -27,6 +27,11 @@
 #include "topology.hpp"
 #endif
 
+#include "thermostat.hpp"
+#include "mmm1d.hpp"
+#include "mmm2d.hpp"
+#include "p3m.hpp"
+#include "external_potential.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -41,7 +46,7 @@
 #include "elc.hpp"
 #include "endangledist.hpp"
 #include "fene.hpp"
-#include "forces.hpp"
+//#include "forces.hpp"
 #include "gaussian.hpp"
 #include "gb.hpp"
 #include "harmonic.hpp"
@@ -167,33 +172,6 @@ inline void init_local_particle_force(Particle *part) {
   }
 #endif
 }
-
-/** Calculate forces.
- *
- *  A short list, what the function is doing:
- *  <ol>
- *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
- with zero).
- *  <li> Calculate bonded interaction forces:<br>
- *       Loop all local particles (not the ghosts).
- *       <ul>
- *       <li> FENE
- *       <li> ANGLE (cos bend potential)
- *       </ul>
- *  <li> Calculate non-bonded short range interaction forces:<br>
- *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
- *       <ul>
- *       <li> Lennard-Jones.
- *       <li> Buckingham.
- *       <li> Real space part: Coulomb.
- *       <li> Ramp.
- *       </ul>
- *  <li> Calculate long range interaction forces:<br>
-         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
- *  </ol>
- */
-
-void force_calc();
 
 inline void calc_non_bonded_pair_force_parts(
     const Particle *const p1, const Particle *const p2,
@@ -378,7 +356,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef ELECTROSTATICS
 
   /* real space coulomb */
-  double q1q2 = p1->p.q * p2->p.q;
+  const double q1q2 = p1->p.q * p2->p.q;
 
   switch (coulomb.method) {
 #ifdef P3M

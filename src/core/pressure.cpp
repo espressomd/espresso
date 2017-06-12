@@ -21,14 +21,14 @@
 /** \file pressure.cpp
     Implementation of \ref pressure.hpp "pressure.h".
 */
+
 #include "pressure.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
-#include "domain_decomposition.hpp"
-#include "nsquare.hpp"
-#include "layered.hpp"
 #include "virtual_sites_relative.hpp" 
+
+#include "short_range_loop.hpp"
 
 Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0,0};
 Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0,0};
@@ -98,25 +98,32 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   on_observable_calc();
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_calculate_virials(v_comp);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if(dd.use_vList) {
-      if (rebuild_verletlist)  
-	build_verlet_lists();
-      calculate_verlet_virials(v_comp);
-    }
-    else
-      calculate_link_cell_virials(v_comp);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_virials(v_comp);
-  }
-  /* rescale kinetic energy (=ideal contribution) */
+  short_range_loop(
+      [&v_comp](Particle &p) {
+        add_kinetic_virials(&p, v_comp);
+        add_bonded_virials(&p);
+#ifdef BOND_ANGLE_OLD
+        add_three_body_bonded_stress(&p);
+#endif
+#ifdef BOND_ANGLE
+        add_three_body_bonded_stress(&p);
+#endif
+      },
+      [](Particle &p1, Particle &p2, Distance &d) {
+#ifdef EXCLUSIONS
+        if (do_nonbonded(&p1, &p2))
+#endif
+        {
+          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                      d.dist2);
+        }
+      });
+
+/* rescale kinetic energy (=ideal contribution) */
 #ifdef ROTATION_PER_PARTICLE
-    fprintf(stderr, "Switching rotation per particle (#define ROTATION_PER_PARTICLE) and pressure calculation are incompatible.\n");
+  fprintf(stderr, "Switching rotation per particle (#define "
+                  "ROTATION_PER_PARTICLE) and pressure calculation are "
+                  "incompatible.\n");
 #endif
 
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
@@ -817,7 +824,7 @@ int whichbin(double pos[3], int bins[3], double centre[3], double range[3], int 
   return 1;
 }
 
-int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
+int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force, Distance &)
 {
   /* returns the non_bonded interaction between two particles */
 
@@ -899,31 +906,32 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
   return 0;
 }
 
-int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3])
-{
+int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
+                             int periodic[3], double range_start[3],
+                             double range[3]) {
   /*calculates local stress tensors in cuboid bins
     uses Irving Kirkwood method
-    we consider a cube of space starting with a corner at position range_start extending to 
+    we consider a cube of space starting with a corner at position range_start
+    extending to
       range_start + range
-    if the variable periodic is set to 1 in dimension i then the cube is assumed to span the periodic box
-    this cube is divided into bins[0] bins in the x direction bins[1] in the y direction, and bins[2] in the z direction
+    if the variable periodic is set to 1 in dimension i then the cube is assumed
+    to span the periodic box
+    this cube is divided into bins[0] bins in the x direction bins[1] in the y
+    direction, and bins[2] in the z direction
   */
 
-  int i,j;                       /*counter for dimension */
   double binvolume;
-  int c, np, n, bin;
   double centre[3];
   Cell *cell;
   Particle *p1, *p2, **pairs;
   Particle *particles;
   double force[3];
-  int k,l;
+  int k, l;
   int type_num;
   Bonded_ia_parameters *iaparams;
   double dx[3];
 
-  
-  for (i = 0; i < 3; i ++) {
+  for (int i = 0; i < 3; i++) {
     if (periodic[i]) {
       range[i] = box_l[i];
       range_start[i] = 0;
@@ -931,97 +939,100 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
   }
 
   /* find centre of analyzed cube */
-  for (i=0;i<3;i++) {
-    centre[i] = range_start[i] + range[i]/2.0;
+  for (int i = 0; i < 3; i++) {
+    centre[i] = range_start[i] + range[i] / 2.0;
   }
 
-  /* We consider all particles that are within a certain distance of the cube. The skin is used as this distance.  If the
-     skin from on opposite sides of the box overlaps then we produce an error message.  To code dround this would be
+  /* We consider all particles that are within a certain distance of the cube.
+     The skin is used as this distance.  If the
+     skin from on opposite sides of the box overlaps then we produce an error
+     message.  To code dround this would be
      creating unnecessary work since I can't imagine when we might want that */
 
-  for (i=0;i<3;i++) {
-    if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
-        runtimeErrorMsg() <<"analyze stress_profile: Analyzed box (" << range[i] << ") with skin+max_cut(" << skin+max_cut << ") is larger than simulation box (" << box_l[i] << ").\n";
+  for (int i = 0; i < 3; i++) {
+    if ((!periodic[i]) && (range[i] + 2 * skin + 2 * max_cut > box_l[i])) {
+      runtimeErrorMsg() << "analyze stress_profile: Analyzed box (" << range[i]
+                        << ") with skin+max_cut(" << skin + max_cut
+                        << ") is larger than simulation box (" << box_l[i]
+                        << ").\n";
       return 0;
     }
-    range_start[i] = drem_down(range_start[i],box_l[i]);
+    range_start[i] = drem_down(range_start[i], box_l[i]);
   }
-  PTENSOR_TRACE(fprintf(stderr,"%d: Running stress_profile\n",this_node));
+  PTENSOR_TRACE(fprintf(stderr, "%d: Running stress_profile\n", this_node));
 
-  binvolume = range[0]*range[1]*range[2]/(double)bins[0]/(double)bins[1]/(double)bins[2];
+  binvolume = range[0] * range[1] * range[2] / (double)bins[0] /
+              (double)bins[1] / (double)bins[2];
 
-  /* this next bit loops over all pair of particles, calculates the force between them, and distributes it amongst the tensors */
+  /* this next bit loops over all pair of particles, calculates the force
+   * between them, and distributes it amongst the tensors */
+  short_range_loop(
+      [&bins, &centre, &range, &TensorInBin, &range_start](Particle &p) {
+        int bin;
+        whichbin(p.r.p, bins, centre, range, &bin);
+        if (bin >= 0) {
+          PTENSOR_TRACE(fprintf(
+              stderr, "%d:Got particle number %d i is %d pos is %f %f %f \n",
+              this_node, p.p.identity, i, p.r.p[0], p.r.p[1], p.r.p[2]));
+          PTENSOR_TRACE(
+              fprintf(stderr, "%d:Ideal gas component is {", this_node));
+          for (int k = 0; k < 3; k++) {
+            for (int l = 0; l < 3; l++) {
+              TensorInBin[bin].e[k * 3 + l] +=
+                  (p.m.v[k]) * (p.m.v[l]) * p.p.mass / time_step / time_step;
+              PTENSOR_TRACE(fprintf(stderr, "%f ",
+                                    (p.m.v[k]) * (p.m.v[l]) * (*p1).p.mass /
+                                        time_step / time_step));
+            }
+          }
 
-  // loop over all local cells
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    particles   = cell->part;
-    np  = cell->n;
-    // loop over all particles in this cell
-    for(i = 0; i < np; i++)  {
-      p1 = &(particles[i]);
-      whichbin(p1->r.p,bins,centre, range, &bin); 
-      if (bin >= 0) {
-	PTENSOR_TRACE(fprintf(stderr,"%d:Got particle number %d i is %d pos is %f %f %f \n",this_node,p1->p.identity,i,p1->r.p[0],p1->r.p[1],p1->r.p[2]));
-	PTENSOR_TRACE(fprintf(stderr,"%d:Ideal gas component is {",this_node));
-	for(k=0;k<3;k++) {
-	  for(l=0;l<3;l++) {
-	    TensorInBin[bin].e[k*3 + l] += (p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step;
-	    PTENSOR_TRACE(fprintf(stderr,"%f ",(p1->m.v[k])*(p1->m.v[l])*(*p1).p.mass/time_step/time_step));
-	  }
-	}
+          PTENSOR_TRACE(fprintf(stderr, "}\n"));
+        }
 
-	PTENSOR_TRACE(fprintf(stderr,"}\n"));
-      }
-      
-      /* bonded contributions */
-      j = 0;
-      while(j < p1->bl.n) {
-	type_num = p1->bl.e[j++];
-	iaparams = &bonded_ia_params[type_num];
+        /* bonded contributions */
+        int j = 0;
+        while (j < p.bl.n) {
+          auto type_num = p.bl.e[j++];
+          auto iaparams = &bonded_ia_params[type_num];
 
-	/* fetch particle 2 */
-	p2 = local_particles[p1->bl.e[j++]];
-	get_mi_vector(dx, p1->r.p, p2->r.p);
-	calc_bonded_force(p1,p2,iaparams,&j,dx,force);
-	PTENSOR_TRACE(fprintf(stderr,"%d: Bonded to particle %d with force %f %f %f\n",this_node,p2->p.identity,force[0],force[1],force[2]));
-	if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
-	  if (distribute_tensors(TensorInBin,force,bins,range_start,range,p1->r.p, p2->r.p) != 1) return 0;
-	}
-      }
-    }
+          /* fetch particle 2 */
+          auto p2 = local_particles[p.bl.e[j++]];
+          double dx[3];
+          get_mi_vector(dx, p.r.p, p2->r.p);
+          double force[3];
+          calc_bonded_force(&p, p2, iaparams, &j, dx, force);
+          PTENSOR_TRACE(
+              fprintf(stderr, "%d: Bonded to particle %d with force %f %f %f\n",
+                      this_node, p2->p.identity, force[0], force[1], force[2]));
+          if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
+            if (distribute_tensors(TensorInBin, force, bins, range_start, range,
+                                   p.r.p, p2->r.p) != 1)
+              return 0;
+          }
+        }
+      },
+      [&centre, &range, &TensorInBin, &range_start,
+       &bins](Particle &p1, Particle &p2, Distance &d) {
+        if ((incubewithskin(p1.r.p, centre, range)) &&
+            (incubewithskin(p2.r.p, centre, range))) {
+          double force[3];
+          get_nonbonded_interaction(&p1, &p2, force, d);
+          if ((pow(force[0], 2) + pow(force[1], 2) + pow(force[2], 2)) > 0) {
+            if (distribute_tensors(TensorInBin, force, bins, range_start, range,
+                                   p1.r.p, p2.r.p) != 1)
+              return 0;
+          }
+        }
+      });
 
-    // Loop cell neighbors
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np    = dd.cell_inter[c].nList[n].vList.n;
-
-      // verlet list loop //
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    // pointer to particle 1
-	p2 = pairs[i+1];                  // pointer to particle 2
-	if ((incubewithskin(p1->r.p,centre,range)) && (incubewithskin(p2->r.p,centre,range))) {
-	  get_nonbonded_interaction(p1,p2, force);
-	  PTENSOR_TRACE(fprintf(stderr,"%d:Looking at pair %d %d force is %f %f %f\n",this_node,p1->p.identity, p2->p.identity,force[0],force[1], force[2]));
-	  if ((pow(force[0],2)+pow(force[1],2)+pow(force[2],2)) > 0) {
-	    if (distribute_tensors(TensorInBin,force,bins,range_start,range,p1->r.p, p2->r.p) != 1) return 0;
-	  }
-	} else {
-	  // PTENSOR_TRACE(fprintf(stderr,"%d:Looking at pair %d %d not in cube with skin\n",this_node,p1->p.identity, p2->p.identity));
-	}
-      }
-    }
-  }
-
-  for (i=0;i<bins[0]*bins[1]*bins[2];i++) {
-    for (j=0;j<9;j++) {
-	TensorInBin[i].e[j] /= binvolume;
+  for (int i = 0; i < bins[0] * bins[1] * bins[2]; i++) {
+    for (int j = 0; j < 9; j++) {
+      TensorInBin[i].e[j] /= binvolume;
     }
   }
 
   return 1;
 }
-
 
 /************************************************************/
 int observable_compute_stress_tensor(int v_comp, double *A)

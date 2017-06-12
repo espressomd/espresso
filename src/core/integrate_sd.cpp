@@ -41,7 +41,6 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "cells.hpp"
-#include "verlet.hpp"
 #include "rotation.hpp"
 #include "ghosts.hpp"
 #include "pressure.hpp"

@@ -39,10 +39,12 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 #include "domain_decomposition.hpp"
-#include "verlet.hpp"
 #include "lb.hpp"
 #include "virtual_sites.hpp"
 #include "initialize.hpp"
+
+#include "short_range_loop.hpp"
+#include "utils/NoOp.hpp"
 
 #include <vector>
 #include <string>
@@ -121,73 +123,66 @@ void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid, int p2
     link_list[target1]=head_p1;
 }
 
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_id, int *head_list, int *link_list, int *agg_id_list, int *agg_num, int *agg_size, int *agg_max, int *agg_min, int *agg_avg, int *agg_std, int charge)
-{
-  int c, np, n, i;
-  Particle *p1, *p2, **pairs;
-  double dist2;
+int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
+                int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
+                int *agg_num, int *agg_size, int *agg_max, int *agg_min,
+                int *agg_avg, int *agg_std, int charge) {
   int target1;
-  int p1molid, p2molid;
   int *contact_num, ind;
 
   if (min_contact > 1) {
-    contact_num = (int *) Utils::malloc(n_molecules*n_molecules *sizeof(int));
-    for (i = 0; i < n_molecules *n_molecules; i++) contact_num[i]=0;
+    contact_num = (int *)Utils::malloc(n_molecules * n_molecules * sizeof(int));
+    for (int i = 0; i < n_molecules * n_molecules; i++)
+      contact_num[i] = 0;
   } else {
-    contact_num = (int *) 0; /* Just to keep the compiler happy */
+    contact_num = (int *)0; /* Just to keep the compiler happy */
   }
 
   on_observable_calc();
-  build_verlet_lists();
 
-  for (i = s_mol_id; i <= f_mol_id; i++) {
-    head_list[i]=i;
-    link_list[i]=-1;
-    agg_id_list[i]=i;
-    agg_size[i]=0;
+  for (int i = s_mol_id; i <= f_mol_id; i++) {
+    head_list[i] = i;
+    link_list[i] = -1;
+    agg_id_list[i] = i;
+    agg_size[i] = 0;
   }
-  
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      pairs = dd.cell_inter[c].nList[n].vList.pair;
-      np    = dd.cell_inter[c].nList[n].vList.n;
-      /* verlet list loop */
-      for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	p1molid = p1->p.mol_id;
-	p2molid = p2->p.mol_id;
-	if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) && ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-	  if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-	    dist2 = min_distance2(p1->r.p, p2->r.p);
 
+  short_range_loop(Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
+    auto p1molid = p1.p.mol_id;
+    auto p2molid = p2.p.mol_id;
+    if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
+        ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
+      if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
 #ifdef ELECTROSTATICS
-	    if (charge && (p1->p.q * p2->p.q >= 0)) {continue;}
+        if (charge && (p1.p.q * p2.p.q >= 0)) {
+          return;
+        }
 #endif
-	    if (dist2 < dist_criteria2) {
-	      if ( p1molid > p2molid ) { ind=p1molid*n_molecules + p2molid;} 
-	      else { ind=p2molid*n_molecules +p1molid;}
-	      if (min_contact > 1) {
-		contact_num[ind] ++;
-		if (contact_num[ind] >= min_contact) {
-		    merge_aggregate_lists( head_list, agg_id_list, p1molid, p2molid, link_list);				    
-		}
-	      } else {
-		  merge_aggregate_lists( head_list, agg_id_list, p1molid, p2molid, link_list);				    
-	      }
-	    }
-	  }
-	}
+        if (d.dist2 < dist_criteria2) {
+          if (p1molid > p2molid) {
+            ind = p1molid * n_molecules + p2molid;
+          } else {
+            ind = p2molid * n_molecules + p1molid;
+          }
+          if (min_contact > 1) {
+            contact_num[ind]++;
+            if (contact_num[ind] >= min_contact) {
+              merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                    link_list);
+            }
+          } else {
+            merge_aggregate_lists(head_list, agg_id_list, p1molid, p2molid,
+                                  link_list);
+          }
+        }
       }
     }
-  }
-  
+  });
+
   /* count number of aggregates 
      find aggregate size
      find max and find min size, and std */
-  for (i = s_mol_id ; i <= f_mol_id ; i++) {
+  for (int i = s_mol_id ; i <= f_mol_id ; i++) {
     if (head_list[i] != -2) {
       (*agg_num)++;
       agg_size[*agg_num -1]++;
@@ -199,7 +194,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
     }
   }
   
-  for (i = 0 ; i < *agg_num; i++) {
+  for (int i = 0 ; i < *agg_num; i++) {
     *agg_avg += agg_size[i];
     *agg_std += agg_size[i] * agg_size[i];
     if (*agg_min > agg_size[i]) { *agg_min = agg_size[i]; }

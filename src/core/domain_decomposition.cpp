@@ -26,16 +26,11 @@
  */
 
 #include "domain_decomposition.hpp"
-#include "constraints.hpp"
-#include "energy_inline.hpp"
 #include "errorhandling.hpp"
-#include "external_potential.hpp"
-#include "forces.hpp"
 #include "initialize.hpp"
 #include "lees_edwards.hpp"
 #include "lees_edwards_comms_manager.hpp"
 #include "lees_edwards_domain_decomposition.hpp"
-#include "pressure.hpp"
 
 /************************************************/
 /** \name Defines */
@@ -55,7 +50,7 @@
 #ifdef LEES_EDWARDS
 le_dd_comms_manager le_mgr;
 #endif
-DomainDecomposition dd = {1, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, NULL};
+DomainDecomposition dd;
 
 int max_num_cells = CELLS_MAX_NUM_CELLS;
 int min_num_cells = 1;
@@ -360,8 +355,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
-              2 * n_comm_cells[dir] * sizeof(Cell *));
+          comm->comm[cnt].part_lists =
+              (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
@@ -397,8 +392,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
-                  n_comm_cells[dir] * sizeof(Cell *));
+              comm->comm[cnt].part_lists =
+                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
@@ -421,8 +416,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists = (Cell **)Utils::malloc(
-                  n_comm_cells[dir] * sizeof(Cell *));
+              comm->comm[cnt].part_lists =
+                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -541,76 +536,30 @@ void dd_update_communicators_w_boxl() {
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions() {
-  int m, n, o, p, q, r, ind1, ind2, c_cnt = 0, n_cnt;
-
-  /* initialize cell neighbor structures */
-  dd.cell_inter = (IA_Neighbor_List *)Utils::realloc(
-      dd.cell_inter, local_cells.n * sizeof(IA_Neighbor_List));
-  for (m = 0; m < local_cells.n; m++) {
-    dd.cell_inter[m].nList = NULL;
-    dd.cell_inter[m].n_neighbors = 0;
-  }
+  int m, n, o, p, q, r, ind1, ind2;
 
   /* loop all local cells */
   DD_LOCAL_CELLS_LOOP(m, n, o) {
-    dd.cell_inter[c_cnt].nList = (IA_Neighbor *)Utils::realloc(
-        dd.cell_inter[c_cnt].nList, CELLS_MAX_NEIGHBORS * sizeof(IA_Neighbor));
 
-    n_cnt = 0;
     ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+
+    cells[ind1].m_neighbors.clear();
+    cells[ind1].m_neighbors.reserve(CELLS_MAX_NEIGHBORS);
+
     /* loop all neighbor cells */
     for (p = o - 1; p <= o + 1; p++)
       for (q = n - 1; q <= n + 1; q++)
         for (r = m - 1; r <= m + 1; r++) {
           ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
           if (ind2 >= ind1) {
-            dd.cell_inter[c_cnt].nList[n_cnt].cell_ind = ind2;
-            dd.cell_inter[c_cnt].nList[n_cnt].pList = &cells[ind2];
-            init_pairList(&dd.cell_inter[c_cnt].nList[n_cnt].vList);
-#ifdef CELL_DEBUG
-            dd.cell_inter[c_cnt].nList[n_cnt].my_pos[0] =
-                my_left[0] + r * dd.cell_size[0];
-            dd.cell_inter[c_cnt].nList[n_cnt].my_pos[1] =
-                my_left[1] + q * dd.cell_size[1];
-            dd.cell_inter[c_cnt].nList[n_cnt].my_pos[2] =
-                my_left[2] + p * dd.cell_size[2];
-#endif
-            n_cnt++;
+            cells[ind1].m_neighbors.emplace_back(std::ref(cells[ind2]));
+
           }
         }
 
-    dd.cell_inter[c_cnt].n_neighbors = n_cnt;
-    c_cnt++;
+    /* Release excess memory */
+    cells[ind1].m_neighbors.shrink_to_fit();
   }
-
-#ifdef CELL_DEBUG
-  FILE *cells_fp;
-  char cLogName[64];
-  int c, nn, this_n;
-  double myPos[3];
-  sprintf(cLogName, "cells_map%i.dat", this_node);
-  cells_fp = fopen(cLogName, "w");
-
-  for (c = 0; c < c_cnt; c++) {
-    myPos[0] = my_left[0] + dd.cell_size[0] * (1 + c % dd.cell_grid[0]);
-    myPos[1] = my_left[1] +
-               dd.cell_size[1] * (1 + (c / dd.cell_grid[0]) % dd.cell_grid[1]);
-    myPos[2] =
-        my_left[2] +
-        dd.cell_size[2] * (1 + (c / (dd.cell_grid[0] * dd.cell_grid[1])));
-
-    for (nn = 0; nn < dd.cell_inter[c].n_neighbors; nn++) {
-
-      this_n = dd.cell_inter[c].nList[nn].cell_ind;
-
-      fprintf(cells_fp, "%i %i %f %f %f %f %f %f\n", c, nn, myPos[0], myPos[1],
-              myPos[2], dd.cell_inter[c].nList[nn].my_pos[0],
-              dd.cell_inter[c].nList[nn].my_pos[1],
-              dd.cell_inter[c].nList[nn].my_pos[2]);
-    }
-  }
-  fclose(cells_fp);
-#endif
 }
 
 /*************************************************/
@@ -870,6 +819,7 @@ void dd_topology_init(CellPList *old) {
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = dd_position_to_cell;
+  cell_structure.use_verlet_list = dd.use_vList;
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
@@ -961,13 +911,7 @@ void dd_topology_release() {
   int i, j;
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
   /* release cell interactions */
-  for (i = 0; i < local_cells.n; i++) {
-    for (j = 0; j < dd.cell_inter[i].n_neighbors; j++)
-      free_pairList(&dd.cell_inter[i].nList[j].vList);
-    dd.cell_inter[i].nList =
-        (IA_Neighbor *)Utils::realloc(dd.cell_inter[i].nList, 0);
-  }
-  dd.cell_inter = (IA_Neighbor_List *)Utils::realloc(dd.cell_inter, 0);
+
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
@@ -984,6 +928,7 @@ void dd_topology_release() {
 #ifdef IMMERSED_BOUNDARY
   free_comm(&cell_structure.ibm_ghost_force_comm);
 #endif
+  cell_structure.use_verlet_list = false;
 }
 
 /************************************************************/
@@ -1239,165 +1184,6 @@ int calc_processor_min_num_cells() {
     if (node_grid[i] == 1)
       min *= 2;
   return min;
-}
-
-void calc_link_cell() {
-  int c, np1, n, np2, i, j, j_start;
-  Cell *cell;
-  IA_Neighbor *neighbor;
-  Particle *p1, *p2;
-  double dist2, vec21[3];
-
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-
-    cell = local_cells.cell[c];
-    p1 = cell->part;
-    np1 = cell->n;
-
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      neighbor = &dd.cell_inter[c].nList[n];
-      p2 = neighbor->pList->part;
-      np2 = neighbor->pList->n;
-      /* Loop cell particles */
-      for (i = 0; i < np1; i++) {
-        j_start = 0;
-        /* Tasks within cell: bonded forces */
-        if (n == 0) {
-          add_single_particle_force(&p1[i]);
-          if (rebuild_verletlist)
-            memcpy(p1[i].l.p_old, p1[i].r.p, 3 * sizeof(double));
-
-          j_start = i + 1;
-        }
-        /* Loop neighbor cell particles */
-        for (j = j_start; j < np2; j++) {
-#ifdef EXCLUSIONS
-          if (do_nonbonded(&p1[i], &p2[j]))
-#endif
-          {
-            dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-            add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2),
-                                      dist2);
-          }
-        }
-      }
-    }
-  }
-  rebuild_verletlist = 0;
-}
-
-/************************************************************/
-
-void calculate_link_cell_energies() {
-  int c, np1, np2, n, i, j, j_start;
-  Cell *cell;
-  IA_Neighbor *neighbor;
-  Particle *p1, *p2;
-  double dist2, vec21[3];
-
-  CELL_TRACE(fprintf(stderr, "%d: calculate link-cell energies\n", this_node));
-
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p1 = cell->part;
-    np1 = cell->n;
-    /* calculate bonded interactions (loop local particles) */
-    for (i = 0; i < np1; i++) {
-      add_single_particle_energy(&p1[i]);
-
-      if (rebuild_verletlist)
-        memcpy(p1[i].l.p_old, p1[i].r.p, 3 * sizeof(double));
-    }
-
-    CELL_TRACE(fprintf(stderr, "%d: cell %d with %d neighbors\n", this_node, c,
-                       dd.cell_inter[c].n_neighbors));
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      neighbor = &dd.cell_inter[c].nList[n];
-      p2 = neighbor->pList->part;
-      np2 = neighbor->pList->n;
-      /* Loop cell particles */
-      for (i = 0; i < np1; i++) {
-        j_start = 0;
-        if (n == 0)
-          j_start = i + 1;
-        /* Loop neighbor cell particles */
-        for (j = j_start; j < np2; j++) {
-#ifdef EXCLUSIONS
-          if (do_nonbonded(&p1[i], &p2[j]))
-#endif
-          {
-            dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-            add_non_bonded_pair_energy(&(p1[i]), &(p2[j]), vec21, sqrt(dist2),
-                                       dist2);
-          }
-        }
-      }
-    }
-  }
-  rebuild_verletlist = 0;
-}
-
-/************************************************************/
-
-void calculate_link_cell_virials(int v_comp) {
-  int c, np1, np2, n, i, j, j_start;
-  Cell *cell;
-  IA_Neighbor *neighbor;
-  Particle *p1, *p2;
-  double dist2, vec21[3];
-
-  CELL_TRACE(fprintf(stderr, "%d: calculate link-cell energies\n", this_node));
-
-  /* Loop local cells */
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p1 = cell->part;
-    np1 = cell->n;
-    /* calculate bonded interactions (loop local particles) */
-    for (i = 0; i < np1; i++) {
-      add_kinetic_virials(&p1[i], v_comp);
-      add_bonded_virials(&p1[i]);
-#ifdef BOND_ANGLE_OLD
-      add_three_body_bonded_stress(&p1[i]);
-#endif
-#ifdef BOND_ANGLE
-      add_three_body_bonded_stress(&p1[i]);
-#endif
-      if (rebuild_verletlist)
-        memcpy(p1[i].l.p_old, p1[i].r.p, 3 * sizeof(double));
-    }
-
-    CELL_TRACE(fprintf(stderr, "%d: cell %d with %d neighbors\n", this_node, c,
-                       dd.cell_inter[c].n_neighbors));
-    /* Loop cell neighbors */
-    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-      neighbor = &dd.cell_inter[c].nList[n];
-      p2 = neighbor->pList->part;
-      np2 = neighbor->pList->n;
-      /* Loop cell particles */
-      for (i = 0; i < np1; i++) {
-        j_start = 0;
-        if (n == 0)
-          j_start = i + 1;
-        /* Loop neighbor cell particles */
-        for (j = j_start; j < np2; j++) {
-#ifdef EXCLUSIONS
-          if (do_nonbonded(&p1[i], &p2[j]))
-#endif
-          {
-            dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-            add_non_bonded_pair_virials(&(p1[i]), &(p2[j]), vec21, sqrt(dist2),
-                                        dist2);
-          }
-        }
-      }
-    }
-  }
-  rebuild_verletlist = 0;
 }
 
 /************************************************************/

@@ -100,11 +100,11 @@ enum BondedInteraction {
 };
 
 /** Specify tabulated bonded interactions  */
-enum TabulatedBondedInteraction{
-    TAB_UNKNOWN = 0,
-    TAB_BOND_LENGTH = 1,
-    TAB_BOND_ANGLE = 2,
-    TAB_BOND_DIHEDRAL = 3
+enum TabulatedBondedInteraction {
+  TAB_UNKNOWN = 0,
+  TAB_BOND_LENGTH = 1,
+  TAB_BOND_ANGLE = 2,
+  TAB_BOND_DIHEDRAL = 3
 };
 
 /** Specify overlapped bonded interactions  */
@@ -140,7 +140,7 @@ enum CoulombMethod {
   COULOMB_RF,        //< Coulomb method is Reaction-Field
   COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
   COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     //calculation
+                     // calculation
   COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
   COULOMB_EWALD_GPU, //< Coulomb method is Ewald running on GPU
   COULOMB_EK,        //< Coulomb method is electrokinetics
@@ -1252,8 +1252,7 @@ void realloc_ia_params(int nsize);
     electrostatics. The result is stored in the global variable
     max_cut. The maximal cutoff of the non-bonded + real space
     electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the verlet pair list algorithm (see \ref
-    verlet.hpp). */
+    value is used in the verlet pair list algorithm. */
 void recalc_maximal_cutoff();
 
 /** call when the temperature changes, for Bjerrum length adjusting. */
@@ -1284,4 +1283,42 @@ int virtual_set_params(int bond_type);
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
 
+/** Returns true if the particles are to be considered for short range
+    interactions */
+class VerletCriterion {
+  const double m_skin;
+
+public:
+  explicit VerletCriterion(double skin) : m_skin(skin) {}
+
+  bool operator()(const Particle &p1, const Particle &p2, double dist2) const {
+    if (dist2 > SQR(max_cut + m_skin))
+      return false;
+
+#ifdef EXCLUSIONS
+    if (!do_nonbonded(&p1, &p2))
+      return false;
+#endif
+
+    // Within short-range distance (incl dpd and the like)
+    if (dist2 <= SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + m_skin))
+      return true;
+
+// Within real space cutoff of electrostatics and both charged
+#ifdef ELECTROSTATICS
+    if ((dist2 <= SQR(coulomb_cutoff + m_skin)) && (p1.p.q != 0) &&
+        (p2.p.q != 0))
+      return true;
+#endif
+
+// Within dipolar cutoff and both cary magnetic moments
+#ifdef DIPOLES
+    if ((dist2 <= SQR(dipolar_cutoff + m_skin)) && (p1.p.dipm != 0) &&
+        (p2.p.dipm != 0))
+      return true;
+#endif
+
+    return false;
+  }
+};
 #endif
