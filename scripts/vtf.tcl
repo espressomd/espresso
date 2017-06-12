@@ -55,7 +55,9 @@ proc writevsf { file args } {
 		    # guess the radius from the self-lj-interaction
 		    set lj_sigma [lindex $l 4]
 		    set lj_offset [lindex $l 7]
-		    set r [expr 0.5*($lj_sigma+$lj_offset)]
+            #workaround of the VMD issue
+            #set r [expr 0.5*($lj_sigma+$lj_offset)]
+            set r [expr ($lj_sigma+$lj_offset)]
 		    lset list $type $r
 		} else {
 		    # default radius is 0.5
