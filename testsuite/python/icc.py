@@ -7,10 +7,9 @@ import espressomd
 
 class test_icc(ut.TestCase):
            
-    from espressomd.electrostatics import P3M
-    from espressomd.electrostatic_extensions import ICC
-
     def runTest(self):
+        from espressomd.electrostatics import P3M
+        from espressomd.electrostatic_extensions import ICC
 
         S=espressomd.System()
         #Parameters
