@@ -1,11 +1,12 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
+
+@ut.skipIf(not espressomd.has_features(["P3M"]),
+           "Features not available, skipping test!")
+
 from espressomd.electrostatics import P3M
 from espressomd.electrostatic_extensions import ICC
-
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "P3M"]),
-           "Features not available, skipping test!")
 
 class test_icc(ut.TestCase):
 
