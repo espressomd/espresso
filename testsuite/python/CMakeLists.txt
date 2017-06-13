@@ -1,5 +1,6 @@
 set(py_tests  bondedInteractions.py
               cellsystem.py
+              collision_detection.py
               constraint_homogeneous_magnetic_field.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
