@@ -44,6 +44,7 @@ public:
 
       {"distance",collision_params.distance},
       {"distance_glued_part_to_vs",collision_params.dist_glued_part_to_vs},
+      {"vs_placement", collision_params.vs_placement},
 
       {"part_type_vs",collision_params.vs_particle_type},
       {"part_type_to_be_glued",collision_params.part_type_to_be_glued},
