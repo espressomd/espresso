@@ -1,5 +1,6 @@
 set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/collision_detection/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/constraints/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/correlators/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/lbboundaries/initialize.cpp"

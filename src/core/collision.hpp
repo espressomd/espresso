@@ -36,9 +36,10 @@
 /** raise a background error on collision, to allow further processing in Tcl.
     Can be combined with a bonding mode, if desired
  */
-#define COLLISION_MODE_EXCEPTION 1
+
+#define COLLISION_MODE_OFF 0
 /// just create bond between centers of colliding particles
-#define COLLISION_MODE_BOND  2
+#define COLLISION_MODE_BOND 2
 /** create a bond between the centers of the colloiding particles,
     plus two virtual sites at the point of collision and bind them
     together. This prevents the particles from sliding against each
@@ -79,6 +80,8 @@ typedef struct {
   /// different angle bonds with different equilibrium angles
   /// Are expected to have ids immediately following to bond_three_particles
   int three_particle_angle_resolution;
+  /** Placement of virtual sites for MODE_VS. 0=on same particle as related to, 1=on collision partner. 0.5=in the middle between */
+  double vs_placement;
 } Collision_parameters;
 
 /// Parameters for collision detection
@@ -88,7 +91,7 @@ extern Collision_parameters collision_params;
     a bond between the particles is added as marker and the collision is
     recorded in the queue for later processing.
 */
-void detect_collision(Particle* p1, Particle* p2);
+void detect_collision(const Particle* const p1, const Particle* const p2);
 
 void prepare_collision_queue();
 

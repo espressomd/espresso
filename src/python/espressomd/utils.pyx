@@ -160,7 +160,7 @@ def to_str(s):
         return s
 
 
-cdef handle_errors(msg):
+cpdef handle_errors(msg):
     """
     Gathers runtime errors
     

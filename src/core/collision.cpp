@@ -23,6 +23,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
+#include "interaction_data.hpp" 
 
 
 using namespace std;
@@ -62,14 +63,42 @@ inline bool bind_centers() {
 }
 
 
-bool validate_collision_params()
+bool validate_collision_parameters()
 {
+  // If mode is OFF, no further checks
+  if (collision_params.mode ==COLLISION_MODE_OFF) {
+    return true;
+  }
+  // Validate distance
+  if (collision_params.mode != COLLISION_MODE_OFF) {
+    if (collision_params.distance<=0.) {
+      runtimeErrorMsg() << "collision_detection distance must be >0";
+      return false;
+    }
+    if (collision_params.distance >min_global_cut) {
+      runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) must be larger or equal the collision detection distance.";
+    }
+  }
+
+
+
+#ifndef VIRTUAL_SITES_RELATIVE
   // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
   // If we don't have virtual sites, virtual site binding isn't possible.
-#ifndef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
     runtimeErrorMsg() << "Virtual sites based collisoin modes modes require the VIRTUAL_SITES feature";
     return false;
+  }
+#endif
+
+
+  // Check vs placement parameter
+#ifdef VIRTUAL_SITES
+  if (collision_params.mode & COLLISION_MODE_VS) {
+    if ((collision_params.vs_placement<0) || (collision_params.vs_placement >1)) {
+       runtimeErrorMsg() << "The collision detection vs_placement parameter needs to be between 0 and 1."; 
+       return false;
+    }
   }
 #endif
 
@@ -113,7 +142,6 @@ bool validate_collision_params()
       runtimeErrorMsg() << "Insufficient bonds defined for three particle binding.";
       return false;
     }
-  }
 
     for (int i = collision_params.bond_three_particles; i <= collision_params.bond_three_particles + collision_params.three_particle_angle_resolution; i++) {
       if (bonded_ia_params[i].num != 2) {
@@ -121,6 +149,7 @@ bool validate_collision_params()
         return false;
       }
     }
+  }
   
   // Create particle types
 
@@ -129,6 +158,10 @@ bool validate_collision_params()
       if (n_nodes>1)
       {
         throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
+      }
+      if (collision_params.vs_particle_type<0){
+        runtimeErrorMsg() << "Collision detection particle type for virtual sites needs to be >=0";
+        return false;
       }
       make_particle_type_exist(collision_params.vs_particle_type);
     }
@@ -141,9 +174,28 @@ bool validate_collision_params()
       {
         throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
       }
+      if (collision_params.vs_particle_type<0){
+        runtimeErrorMsg() << "Collision detection particle type for virtual sites needs to be >=0";
+        return false;
+      }
       make_particle_type_exist(collision_params.vs_particle_type);
+
+      if (collision_params.part_type_to_be_glued<0){
+        runtimeErrorMsg() << "Collision detection particle type to be glued needs to be >=0";
+        return false;
+      }
       make_particle_type_exist(collision_params.part_type_to_be_glued);
+      
+      if (collision_params.part_type_to_attach_vs_to<0){
+        runtimeErrorMsg() << "Collision detection particle type to attach the virtual site to  needs to be >=0";
+        return false;
+      }
       make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
+      
+      if (collision_params.part_type_after_glueing<0){
+        runtimeErrorMsg() << "Collision detection particle type after glueing needs to be >=0";
+        return false;
+      }
       make_particle_type_exist(collision_params.part_type_after_glueing);
     }
   
@@ -209,10 +261,6 @@ bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p
 // Add it to the queue in case virtual sites should be added at the point of collision
 void detect_collision(const Particle* const p1, const Particle* const p2)
 {
-  // The check, whether collision detection is actually turned on is performed in forces.hpp
-
-  int counts[n_nodes];
-  //TRACE(printf("%d: consider particles %d and %d\n", this_node, p1->p.identity, p2->p.identity));
 
   double vec21[3];
   // Obtain distance between particles
@@ -412,7 +460,7 @@ void coldet_do_three_particle_bond(Particle* p, Particle* p1, Particle* p2)
 // parsed by the script interface
 void handle_exception_throwing_for_single_collision(int i)
 {
-    if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
+    if (collision_params.exception_on_collision) {
 
       int id1, id2;
       if (collision_queue[i].pp1 > collision_queue[i].pp2) {
