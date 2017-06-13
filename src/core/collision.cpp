@@ -26,7 +26,6 @@
 #include "interaction_data.hpp" 
 
 
-using namespace std;
 
 
 #ifdef COLLISION_DETECTION_DEBUG
@@ -41,7 +40,6 @@ using namespace std;
 typedef struct {
   int pp1; // 1st particle id
   int pp2; // 2nd particle id
-  double point_of_collision[3]; 
 } collision_struct;
 
 // During force calculation, colliding particles are recorded in thequeue
@@ -59,7 +57,7 @@ Collision_parameters collision_params = { 0, };
 
 /** @brief Return true if a bond between the centers of the colliding particles needs to be placed. At this point, all modes need this */
 inline bool bind_centers() {
-  return  collision_params.mode >0;
+  return  collision_params.mode !=COLLISION_MODE_OFF;
 }
 
 
@@ -212,7 +210,7 @@ void prepare_collision_queue()
 }
 
 
-bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type)
+inline bool bond_exists(const Particle* const p, const Particle* const partner, int bond_type)
 {
   // First check the bonds of p1
   if (p->bl.e) {
@@ -232,7 +230,7 @@ bool bond_exists(const Particle* const p, const Particle* const partner, int bon
 }
 
 
-void queue_collision(int part1,int part2, double* point_of_collision) {
+inline void queue_collision(int part1,int part2) {
 
     //Get memory for the new entry in the collision queue
     number_of_collisions++;
@@ -243,12 +241,11 @@ void queue_collision(int part1,int part2, double* point_of_collision) {
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
     collision_queue[number_of_collisions-1].pp2 = part2;
-    memcpy(collision_queue[number_of_collisions-1].point_of_collision,point_of_collision, 3*sizeof(double));
     
     TRACE(printf("%d: Added to queue: Particles %d and %d at %lf %lf %lf\n",this_node,part1,part2,point_of_collision[0],point_of_collision[1],point_of_collision[2]));
 }
 
-bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p2) {
+inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p2) {
     return  (
        ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
@@ -259,13 +256,9 @@ bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p
 
 // Detect a collision between the given particles.
 // Add it to the queue in case virtual sites should be added at the point of collision
-void detect_collision(const Particle* const p1, const Particle* const p2)
+void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)
 {
 
-  double vec21[3];
-  // Obtain distance between particles
-  double dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
-  //TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %f\n",this_node,vec21[0],vec21[1],vec21[2], dist_betw_part));
   if (dist_betw_part > collision_params.distance)
     return;
 
@@ -277,8 +270,6 @@ void detect_collision(const Particle* const p1, const Particle* const p2)
        return;
    
 
-  int part1 = p1->p.identity;
-  int part2 = p2->p.identity;
       
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
@@ -286,8 +277,6 @@ void detect_collision(const Particle* const p1, const Particle* const p2)
     return;
 #endif
 
-  if (p1==p2)
-    return;
 
   // Check, if there's already a bond between the particles
   if (bond_exists(p1,p2, collision_params.bond_centers))
@@ -302,60 +291,61 @@ void detect_collision(const Particle* const p1, const Particle* const p2)
   /* If we're still here, there is no previous bond between the particles,
      we have a new collision */
 
-  if (bind_centers()) {
+  
 
-    // do not create bond between ghost particles
-    if (p1->l.ghost && p2->l.ghost) {
-       TRACE(printf("Both particles %d and %d are ghost particles", p1->p.identity, p2->p.identity));
-       return;
-    }
+  // do not create bond between ghost particles
+  if (p1->l.ghost && p2->l.ghost) {
+     TRACE(printf("Both particles %d and %d are ghost particles", p1->p.identity, p2->p.identity));
+     return;
+  }
+  queue_collision(p1->p.identity,p2->p.identity);
 
   
-  double new_position[3];
-    /* If we also create virtual sites or bind three particles, or throw an exception, we add the collision
-       to the queue to process later */
-    // Point of collision
-    double c;
+}
 
-    // If not in the glue_to_surface-mode, the point of collision
-    // is in the middle of the vecotr connecting the particle
-    // centers
-    if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
-      c=0.5;
-    else
-    {
-      // Find out, which is the particle to be glued.
-      // Swap particle, if need be
+/** @brief Calculate position of vs for GLUE_TO_SURFACE mode 
+*    Reutnrs id of particle to bind vs to */
+int glue_to_surface_calc_vs_pos(const Particle* const p1, const Particle* const p2, double pos[3]) 
+{
+    int bind_vs_to_pid;
+    double vec21[3];
+    double c;
+    get_mi_vector(vec21,p1->r.p,p2->r.p);
+    const double dist_betw_part=sqrt(sqrlen(vec21));
+    
+    // Find out, which is the particle to be glued.
     if ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
-       { 
-	   c = collision_params.dist_glued_part_to_vs/dist_betw_part;
-       }
-       else if ((p2->p.type==collision_params.part_type_to_be_glued)
-          && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
-       { 
-         // we swap the particle ids so that the virtual site is always attached to p2
-         int tmp=part1;
-         part1=part2;
-         part2=tmp;
-	 // We need the negative sign for the prefactor, as we di
-	 // we did not flip the vec21 when swapping particles
-	 c = -collision_params.dist_glued_part_to_vs/dist_betw_part;
-       }
-       else
-       {
-        printf("Something is wrong %s: %d\n", __FILE__, __LINE__);
-       }
-     }
-     for (int i=0;i<3;i++) {
-       new_position[i] = p1->r.p[i] - vec21[i] * c;
+    { 
+	       c = collision_params.dist_glued_part_to_vs/dist_betw_part;
+         bind_vs_to_pid=p2->p.identity;
     }
-
-
-
-    queue_collision(part1,part2,new_position);
-  }
+    else if ((p2->p.type==collision_params.part_type_to_be_glued)
+          && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
+    { 
+	       c = -collision_params.dist_glued_part_to_vs/dist_betw_part;
+         bind_vs_to_pid=p1->p.identity;
+    }
+    else
+       {
+         throw std::runtime_error("This should never be thrown. Bug.");
+    }
+    for (int i=0;i<3;i++) {
+       pos[i] = p1->r.p[i] - vec21[i] * c;
+    }
+   return bind_vs_to_pid;
 }
+
+void bind_at_point_of_collision_calc_vs_pos(const Particle* const p1, const Particle* const p2, double pos1[3],double pos2[3]) {
+    double vec21[3];
+    get_mi_vector(vec21,p1->r.p,p2->r.p);
+    for (int i=0;i<3;i++) {
+       pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
+       pos2[i] = p1->r.p[i] - vec21[i] * (1.-collision_params.vs_placement);
+    }
+}
+
+
 
 
 
@@ -471,7 +461,7 @@ void handle_exception_throwing_for_single_collision(int i)
 	id1 = collision_queue[i].pp1;
 	id2 = collision_queue[i].pp2;
       }
-      ostringstream msg;
+      std::ostringstream msg;
       msg << "collision between particles " << id1 << " and " <<id2;
       runtimeError(msg);
     }
@@ -709,10 +699,11 @@ void handle_collisions ()
 
   TRACE(printf("%d: handle_collisions: number of collisions in queue %d\n",this_node,number_of_collisions));  
 
-  if (collision_params.exception_on_collision)
+  if (collision_params.exception_on_collision) {
     for (int i=0;i<number_of_collisions;i++) {
       handle_exception_throwing_for_single_collision(i);
-    }  
+    } 
+  }
     
     
   if (bind_centers()) 
@@ -739,27 +730,28 @@ void handle_collisions ()
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
     for (int i=0;i<number_of_collisions;i++) {
 	// Create virtual site(s) 
+  const int primary=collision_queue[i].pp1;
+  const int secondary=collision_queue[i].pp2;
+  const Particle* const p1=local_particles[primary];
+  const Particle* const p2=local_particles[secondary];
 	
 	// If we are in the two vs mode
 	// Virtual site related to first particle in the collision
 	if (collision_params.mode & COLLISION_MODE_VS)
 	{
-	 place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
+   double pos1[3],pos2[3];
+
+   bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
+	 place_vs_and_relate_to_particle(pos1,primary);
+	 place_vs_and_relate_to_particle(pos2,secondary);
+   bind_at_poc_create_bond_between_vs(i);
 	}
-	// The virtual site related to p2 is needed independently on which of the vs-related modes is active
-        place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
-  
-	// If we are in the two vs mode, we need a bond between the virtual sites
-	if (collision_params.mode & COLLISION_MODE_VS)
-	{
-          bind_at_poc_create_bond_between_vs(i);
-        }
-	
-	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
-	{
-           glue_to_surface_bind_vs_to_pp1(i);
-        }
+	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+      double pos[3];
+      const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
+      place_vs_and_relate_to_particle(pos,pid);
+      glue_to_surface_bind_vs_to_pp1(i);
+    }
       } // Loop over all collisions in the queue
     } // are we in one of the vs_based methods
 #endif //defined VIRTUAL_SITES_RELATIVE

@@ -91,7 +91,7 @@ extern Collision_parameters collision_params;
     a bond between the particles is added as marker and the collision is
     recorded in the queue for later processing.
 */
-void detect_collision(const Particle* const p1, const Particle* const p2);
+void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part);
 
 void prepare_collision_queue();
 
