@@ -922,9 +922,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
 
   double binvolume;
   double centre[3];
-  Cell *cell;
-  Particle *p1, *p2, **pairs;
-  Particle *particles;
+
   double force[3];
   int k, l;
   int type_num;
@@ -972,8 +970,8 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
         whichbin(p.r.p, bins, centre, range, &bin);
         if (bin >= 0) {
           PTENSOR_TRACE(fprintf(
-              stderr, "%d:Got particle number %d i is %d pos is %f %f %f \n",
-              this_node, p.p.identity, i, p.r.p[0], p.r.p[1], p.r.p[2]));
+              stderr, "%d:Got particle %d pos is %f %f %f \n",
+              this_node, p.p.identity, p.r.p[0], p.r.p[1], p.r.p[2]));
           PTENSOR_TRACE(
               fprintf(stderr, "%d:Ideal gas component is {", this_node));
           for (int k = 0; k < 3; k++) {
@@ -981,7 +979,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
               TensorInBin[bin].e[k * 3 + l] +=
                   (p.m.v[k]) * (p.m.v[l]) * p.p.mass / time_step / time_step;
               PTENSOR_TRACE(fprintf(stderr, "%f ",
-                                    (p.m.v[k]) * (p.m.v[l]) * (*p1).p.mass /
+                                    (p.m.v[k]) * (p.m.v[l]) * p.p.mass /
                                         time_step / time_step));
             }
           }
