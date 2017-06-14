@@ -37,7 +37,7 @@ from collections import OrderedDict
 from ._system import System
 
 
-class Analysis:
+class Analysis(object):
 
     _systemp =None
 

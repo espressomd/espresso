@@ -505,11 +505,6 @@ typedef struct {
   int rf_on;
 #endif
 
-#ifdef MOL_CUT
-  int mol_cut_type;
-  double mol_cut_cutoff;
-#endif
-
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp;
   double TUNABLE_SLIP_gamma;

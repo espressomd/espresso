@@ -35,7 +35,6 @@
 # 1. Setup and equilibrate LJ liquid
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 
 import cPickle as pickle
 import os 

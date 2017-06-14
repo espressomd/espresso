@@ -41,7 +41,8 @@ if CONSTRAINTS == 1:
 
 from .correlators import AutoUpdateCorrelators
 from .observables import AutoUpdateObservables
-from .lbboundaries import LBBoundaries
+if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+    from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 
 import sys
@@ -50,7 +51,7 @@ import random  # for true random numbers from os.urandom()
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
-cdef class System:
+cdef class System(object):
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.
@@ -71,7 +72,8 @@ cdef class System:
     integrator = integrate.Integrator()
     if CONSTRAINTS == 1:
         constraints = Constraints()
-    lbboundaries = LBBoundaries()
+    if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+        lbboundaries = LBBoundaries()
     ekboundaries = EKBoundaries()
 
     auto_update_observables = AutoUpdateObservables()
@@ -243,7 +245,7 @@ cdef class System:
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, sys.maxint))
+                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
@@ -262,7 +264,6 @@ cdef class System:
                 seed_array.resize(len(_seed))
                 for i in range(len(_seed)):
                     seed_array[i] = int(_seed[i])
-
                 mpi_random_seed(n_nodes, seed_array)
             else:
                 raise ValueError(
@@ -328,3 +329,7 @@ cdef class System:
 # lbfluid=lb.DeviceList()
 IF CUDA == 1:
     cu = cuda_init.CudaInitHandle()
+    """Cuda Init Handle.
+    Used to list or select cuda devices
+    Also see :class:`espressomd.cuda_init.CudaInitHandle`
+    """

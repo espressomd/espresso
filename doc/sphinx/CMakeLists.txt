@@ -24,6 +24,7 @@ if(SPHINX_FOUND)
     set(FILE_LIST 
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/introduction.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/firststeps.rst"
@@ -47,6 +48,8 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/examples.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/memd.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/mmm.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cuda.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/shapes.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
         )
 

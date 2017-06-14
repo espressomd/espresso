@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Sphere.hpp"
 #include "shapes/Shape.hpp"
