@@ -133,7 +133,7 @@ HAT
 UMBRELLA
 GAY_BERNE                       implies ROTATION
 OVERLAPPED
-DRUDE                           requires ELECTROSTATICS and MASS and LANGEVIN_PER_PARTICLE and EXCLUSIONS
+DRUDE                           requires P3M and MASS and LANGEVIN_PER_PARTICLE
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES

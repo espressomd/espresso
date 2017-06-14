@@ -789,6 +789,49 @@ if DRUDE:
             drude_set_params(
                 self._bond_id,  self._params["temp_com"],  self._params["gamma_com"],  self._params["temp_drude"],  self._params["gamma_drude"], self._params["k"], self._params["r_cut"])
 
+if P3M:
+    class Subt_CoulombP3MBond(BondedInteraction):
+
+        def __init__(self, *args, **kwargs):
+            """ 
+            Subt_CoulombP3MBond initialiser. Used to instatiate a Subt_CoulombP3MBond identifier
+            with a given set of parameters. 
+
+            Parameters
+            ----------
+
+            res : int
+                  Number of bins for the precalculated long range ewald sum      
+            r_max: float
+                   Distance up to where the bond can be computed 
+            """
+            super(Subt_CoulombP3MBond, self).__init__(*args, **kwargs)
+
+
+        def type_number(self):
+            return BONDED_IA_SUBT_COULOMB_P3M
+
+        def type_name(self):
+            return "SUBT_COULOMB_P3M"
+
+        def valid_keys(self):
+            return "res", "r_max"
+
+        def required_keys(self):
+            return "res", "r_max"
+
+        def set_default_params(self):
+            self._params = {"res": 1, "r_max": 1.}
+
+        def _get_params_from_es_core(self):
+            return \
+                {"res": bonded_ia_params[self._bond_id].p.subt_coulomb_p3m.res,
+                 "r_max": bonded_ia_params[self._bond_id].p.subt_coulomb_p3m.r_max}
+
+        def _set_params_in_es_core(self):
+            subt_coulomb_p3m_set_params(
+                self._bond_id,  self._params["res"],  self._params["r_max"])
+
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
@@ -1398,6 +1441,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
     int(BONDED_IA_DRUDE): DrudeBond,
+    int(BONDED_IA_SUBT_COULOMB_P3M): Subt_CoulombP3MBond,
     int(BONDED_IA_HARMONIC_DUMBBELL): HarmonicDumbbellBond,
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,

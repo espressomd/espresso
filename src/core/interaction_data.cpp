@@ -394,6 +394,12 @@ static void recalc_maximal_cutoff_bonded()
       if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
 	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
+#ifdef DRUDE
+    case BONDED_IA_DRUDE:
+      if(max_cut_bonded < bonded_ia_params[i].p.drude.r_cut)
+	max_cut_bonded = bonded_ia_params[i].p.drude.r_cut;
+      break;
+#endif
     case BONDED_IA_SUBT_LJ:
       if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
 	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
@@ -761,12 +767,16 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
 #endif
   case BONDED_IA_HARMONIC:
     return "HARMONIC";    
+  case BONDED_IA_DRUDE:
+    return "DRUDE";    
   case BONDED_IA_QUARTIC:
     return "QUARTIC";
   case BONDED_IA_BONDED_COULOMB:
     return "BONDED_COULOMB";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
+  case BONDED_IA_SUBT_COULOMB_P3M:
+    return "SUBT_COULOMB_P3M";
   case BONDED_IA_TABULATED:
     return "tabulated";
   case BONDED_IA_UMBRELLA:

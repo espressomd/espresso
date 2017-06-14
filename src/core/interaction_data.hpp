@@ -98,7 +98,9 @@ enum BondedInteraction {
   /** Type of bonded interaction is umbrella. */
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is drude. */
-  BONDED_IA_DRUDE
+  BONDED_IA_DRUDE,
+  /** Type of bonded interaction is a approx. -COULOMB P3M. */
+  BONDED_IA_SUBT_COULOMB_P3M
 };
 
 /** Specify tabulated bonded interactions  */
@@ -762,6 +764,16 @@ typedef struct {
   double r2;
 } Subt_lj_bond_parameters;
 
+#ifdef P3M
+/** Parameters for -COULOMB_P3M Potential */
+typedef struct {
+  int res;
+  double r_max;
+  double* long_range_energies;
+  double* long_range_forces;
+} Subt_coulomb_p3m_bond_parameters;
+#endif
+
 /**Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
 typedef struct {
   /**Length of rigid bond/Constrained Bond*/
@@ -881,6 +893,9 @@ typedef union {
 #endif
 #ifdef DRUDE
     Drude_parameters drude;
+#endif
+#ifdef P3M
+  Subt_coulomb_p3m_bond_parameters subt_coulomb_p3m;
 #endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
