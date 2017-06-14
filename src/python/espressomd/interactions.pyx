@@ -1368,9 +1368,12 @@ class BondedInteractions(object):
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] hast to be an integer referring to a bond id")
+                "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Find out the type of the interaction from Espresso
+        if key >= n_bonded_ia:
+            raise IndexError(
+                "Index to BondedInteractions[] out of range")
         bond_type = bonded_ia_params[key].type
 
         # Check if the bonded interaction exists in Espresso core
