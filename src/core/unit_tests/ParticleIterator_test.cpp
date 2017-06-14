@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <vector>
+#include <numeric>
 
 #include "core/utils/make_unique.hpp"
 
