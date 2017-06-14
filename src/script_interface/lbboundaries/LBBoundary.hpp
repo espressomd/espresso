@@ -61,56 +61,25 @@ private:
   std::shared_ptr<Shapes::Shape> m_shape;
 }; // class LBBoundary
 
-class LBMovingBoundary : public ScriptInterfaceBase {
+class LBMovingBoundary : public AutoParameters {
 public:
-  LBMovingBoundary() : m_lbboundary(new ::LBBoundaries::LBMovingBoundary()) {}
+  LBMovingBoundary() : m_lbboundary(new ::LBBoundaries::LBMovingBoundary()) {
+    add_parameters(
+      { {"velocity"    , m_lbboundary->velocity()    },
+        {"force"       , m_lbboundary->force()       },
+        {"center"      , m_lbboundary->shape().pos() },
+        {"radius"      , m_lbboundary->shape().rad() },
+        {"torque"      , m_lbboundary->torque()      },
+        {"omega"       , m_lbboundary->omega()       },
+        {"quat"        , m_lbboundary->quat()        },
+        {"mass"        , m_lbboundary->mass()        },
+        {"anchors"     , m_lbboundary->anchors()     },
+        {"rinertia"    , m_lbboundary->rinertia()    },
+        {"body_torque" , m_lbboundary->body_torque() },
+        {"body_force"  , m_lbboundary->body_force()  } } );
+  }
 
   const std::string name() const override { return "LBBoundaries:LBMovingBoundary"; }
-
-  VariantMap get_parameters() const override {
-    return {{"velocity"    , m_lbboundary->velocity()    },
-            {"force"       , m_lbboundary->force()       },
-            {"center"      , m_lbboundary->shape().pos() },
-            {"radius"      , m_lbboundary->shape().rad() },
-            {"torque"      , m_lbboundary->torque()      },
-            {"omega"       , m_lbboundary->omega()       },
-            {"quat"        , m_lbboundary->quat()        },
-            {"mass"        , m_lbboundary->mass()        },
-            {"anchors"     , m_lbboundary->anchors()     },
-            {"rinertia"    , m_lbboundary->rinertia()    },
-            {"body_torque" , m_lbboundary->body_torque() },
-            {"body_force"  , m_lbboundary->body_force()  }};
-  }
-
-  ParameterMap valid_parameters() const override {
-    return {{"velocity"    , {ParameterType::DOUBLE_VECTOR, 3, true } },
-            {"force"       , {ParameterType::DOUBLE_VECTOR, 3, true } },
-            {"center"      , {ParameterType::DOUBLE_VECTOR, 3, true } },
-            {"radius"      , {ParameterType::DOUBLE          , true } },
-            {"torque"      , {ParameterType::DOUBLE_VECTOR, 3, false} },
-            {"omega"       , {ParameterType::DOUBLE_VECTOR, 3, false} },
-            {"quat"        , {ParameterType::DOUBLE_VECTOR, 4, false} },
-            {"mass"        , {ParameterType::DOUBLE          , false} },
-            {"anchors"     , {ParameterType::DOUBLE_VECTOR   , false} },
-            {"rinertia"    , {ParameterType::DOUBLE_VECTOR, 3, false} },
-            {"body_torque" , {ParameterType::DOUBLE_VECTOR, 3, false} },
-            {"body_force"  , {ParameterType::DOUBLE_VECTOR, 3, false} }};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("velocity"    , m_lbboundary->velocity()    );
-    SET_PARAMETER_HELPER("force"       , m_lbboundary->force()       );
-    SET_PARAMETER_HELPER("center"      , m_lbboundary->shape().pos() );
-    SET_PARAMETER_HELPER("radius"      , m_lbboundary->shape().rad() );
-    SET_PARAMETER_HELPER("torque"      , m_lbboundary->torque()      );
-    SET_PARAMETER_HELPER("omega"       , m_lbboundary->omega()       );
-    SET_PARAMETER_HELPER("quat"        , m_lbboundary->quat()        );
-    SET_PARAMETER_HELPER("mass"        , m_lbboundary->mass()        );
-    SET_PARAMETER_HELPER("anchors"     , m_lbboundary->anchors()     );
-    SET_PARAMETER_HELPER("rinertia"    , m_lbboundary->rinertia()    );
-    SET_PARAMETER_HELPER("body_torque" , m_lbboundary->body_torque() );
-    SET_PARAMETER_HELPER("body_force"  , m_lbboundary->body_force()  );
-  }
 
   std::shared_ptr<::LBBoundaries::LBMovingBoundary> lbboundary() {
     return m_lbboundary;
