@@ -802,8 +802,6 @@ if P3M:
 
             res : int
                   Number of bins for the precalculated long range ewald sum      
-            r_max: float
-                   Distance up to where the bond can be computed 
             """
             super(Subt_CoulombP3MBond, self).__init__(*args, **kwargs)
 
@@ -815,22 +813,21 @@ if P3M:
             return "SUBT_COULOMB_P3M"
 
         def valid_keys(self):
-            return "res", "r_max"
+            return {"n_bins"}
 
         def required_keys(self):
-            return "res", "r_max"
+            return {"n_bins"}
 
         def set_default_params(self):
-            self._params = {"res": 1, "r_max": 1.}
+            self._params = {"n_bins": 1}
 
         def _get_params_from_es_core(self):
             return \
-                {"res": bonded_ia_params[self._bond_id].p.subt_coulomb_p3m.res,
-                 "r_max": bonded_ia_params[self._bond_id].p.subt_coulomb_p3m.r_max}
+                {"n_bins": bonded_ia_params[self._bond_id].p.subt_coulomb_p3m.n_bins}
 
         def _set_params_in_es_core(self):
             subt_coulomb_p3m_set_params(
-                self._bond_id,  self._params["res"],  self._params["r_max"])
+                self._bond_id,  self._params["n_bins"])
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):

@@ -767,10 +767,9 @@ typedef struct {
 #ifdef P3M
 /** Parameters for -COULOMB_P3M Potential */
 typedef struct {
-  int res;
-  double r_max;
+  int n_bins;
   double* long_range_energies;
-  double* long_range_forces;
+  double** long_range_forces;
 } Subt_coulomb_p3m_bond_parameters;
 #endif
 

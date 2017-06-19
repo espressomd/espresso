@@ -39,9 +39,9 @@
 #include "grid.hpp"
 
 /// set the parameters for the subtract_coulomb_p3m potential
-int subt_coulomb_p3m_set_params(int bond_type, int res, double r_max);
+int subt_coulomb_p3m_set_params(int bond_type, int n_bins);
 
-/** Computes the negative of the LENNARD-JONES pair forces 
+/** Computes the negative P3M Coulomb pair force
   and adds this force to the particle forces (see \ref tclcommand_inter). 
   @param p1        Pointer to first particle.
   @param p2        Pointer to second/middle particle.
@@ -55,29 +55,27 @@ inline int calc_subt_coulomb_p3m_pair_force(Particle *p1, Particle *p2, Bonded_i
     IA_parameters *ia_params;
     double dist2 = sqrlen(dx);
     double dist = sqrt(dist2);
-    double r_max = iaparams->p.subt_coulomb_p3m.r_max;
-    double res = iaparams->p.subt_coulomb_p3m.res;
+    double n_bins = iaparams->p.subt_coulomb_p3m.n_bins;
 
-    double bin_size = 1.0*r_max/res;
-    if (dist >= r_max - bin_size)
-        return 1;
-    else if (dist > 0) {
+    if (dist > 0) {
 
         double force_subtr[3] = {0,0,0};
         double q1q2 = p1->p.q*p2->p.q;
 
-        //Add short range to force
+        //Add short range to force_subtr
         if (q1q2)
             p3m_add_pair_force(q1q2, dx, dist2, dist, force_subtr);
 
-        //Add long range from precalculated array
-        int dist_bin = dist/r_max * res; //The lower bin index of the array
-        double d_bin = r_max * dist_bin / res; //Position of the lower bin
-        double sp = (dist - d_bin) / bin_size; //Splitting factor to next bin for linear interpol.
-        //Long range calulation: e(p1,p2) * q1*q2/V * F_Ewald_precomputed
-        double lr = q1q2 / (box_l[0]*box_l[1]*box_l[2]) / dist * ((1.0-sp) * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin] + sp * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin+1]);
         for(int i=0; i<3; i++)
         {
+            double bin_size = box_l[i]/2.0/n_bins;
+            //Add long range from precalculated array
+            int dist_bin = int(fabs(dx[i]) / bin_size); //The lower bin index of the array
+            double d_bin = bin_size*dist_bin; //Position of the lower bin
+            double sp = (fabs(dx[i]) - d_bin) / bin_size; //Splitting factor to next bin for linear interpolation
+            //printf("dist_bin %d   d_bin %f   dist %f   sp %f   bin_size %f  dx[%d] %f\n", dist_bin, d_bin, dist, sp, bin_size,i, dx[i]);
+            //Long range calulation: e(p1,p2) * q1*q2/V * F_Ewald_precomputed
+            double lr = q1q2 / (box_l[0]*box_l[1]*box_l[2]) / dist * ((1.0-sp) * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin][i] + sp * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin+1][i]);
             force_subtr[i] += dx[i] * lr;
             //Invert
             force[i] -= force_subtr[i];

@@ -140,8 +140,7 @@ cdef extern from "interaction_data.hpp":
 
 #* Parameters for subt_coulomb_p3m bond */
     ctypedef struct Subt_CoulombP3MBond_parameters:
-        double res
-        double r_max
+        int n_bins
 
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
@@ -276,7 +275,7 @@ cdef extern from "harmonic.hpp":
 cdef extern from "drude.hpp":
     int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
 cdef extern from "subt_coulomb_p3m.hpp":
-    int subt_coulomb_p3m_set_params(int bond_type, double res, double r_max)
+    int subt_coulomb_p3m_set_params(int bond_type, int n_bins)
 cdef extern from "dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":

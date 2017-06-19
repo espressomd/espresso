@@ -31,7 +31,7 @@
 #include "p3m-common.hpp"
 #include "grid.hpp"
 
-int subt_coulomb_p3m_set_params(int bond_type, int res, double r_max)
+int subt_coulomb_p3m_set_params(int bond_type, int n_bins)
 {
     if (bond_type < 0)
         return ES_ERROR;
@@ -50,44 +50,46 @@ int subt_coulomb_p3m_set_params(int bond_type, int res, double r_max)
     /*Precompute long-range forces
 
     Issues:
-    -Box len changes
-    -Alpha changes
+    -Box len changes -> initialize.cpp onboxchange
+    -Alpha changes -> Oder nur onCoulombChange
     -Proper resolution ? User ?
     -Bond deleted ?
     
     */ 
-
-    bonded_ia_params[bond_type].p.subt_coulomb_p3m.res = res;
-    bonded_ia_params[bond_type].p.subt_coulomb_p3m.r_max = r_max;
     
-    bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces = (double*)Utils::malloc(res*sizeof(double));
+    bonded_ia_params[bond_type].p.subt_coulomb_p3m.n_bins = n_bins;
+    bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces = (double**)Utils::malloc((n_bins+1)*sizeof(double*));
+
+    for(int i = 0; i <= n_bins; i++)
+        bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[i] = (double*)Utils::malloc(3 * sizeof(double));
 
     double pre1 = 1.0/(4.0*p3m.params.alpha*p3m.params.alpha);
 
-    int sn = 10;
-    double kvec[3];
+    int sn = 20;
+    double kvec[3], F[3], dx[3];
     double ksq;
 
-    for (int di = 0; di < res; ++di) {
-        double d = r_max*di/res;
-        double F = 0;
-        for (int m=-sn; m<sn; ++m) {
-            for (int n=-sn; n<sn; ++n) {
-                for (int o=-sn; o<sn; ++o) {
+    for (int di = 0; di <= n_bins; ++di) {
+        for(int i = 0; i < 3; i++)
+            dx[i] = box_l[i]/2.0*di/n_bins;
+        F[0] = F[1] = F[2] = 0;
+        for (int m=-sn; m<=sn; ++m) {
+            for (int n=-sn; n<=sn; ++n) {
+                for (int o=-sn; o<=sn; ++o) {
                     if (m==0 && n==0 && o==0) 
                         continue;
                     kvec[0] = 2.0 * PI/box_l[0] * m;
                     kvec[1] = 2.0 * PI/box_l[1] * n;
                     kvec[2] = 2.0 * PI/box_l[2] * o;
-                    ksq = kvec[0]*kvec[0] + kvec[1]*kvec[1] + kvec[2]*kvec[2];
-
-                    F += exp(-ksq*pre1)*4.0*PI/ksq*kvec[0]*sin(kvec[0]*d);
+                    ksq = sqrlen(kvec);
+                    double pre2 = exp(-ksq*pre1)*4.0*PI/ksq;
+                    for(int i = 0; i < 3; i++)
+                        F[i] += pre2*kvec[i]*sin(utils::dot_product(kvec,dx));
                 }
             }
         }
-        //for(i=0;i<3;i++)
-        //    F[i] *= q1*q2/V
-        bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[di] = F;
+        for(int i = 0; i < 3; i++)
+            bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[di][i] = F[i];
     }
 
 
