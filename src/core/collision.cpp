@@ -136,12 +136,12 @@ bool validate_collision_parameters()
   }
   
   if (collision_params.mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
-    if (collision_params.bond_three_particles + collision_params.three_particle_angle_resolution >= n_bonded_ia) {
+    if (collision_params.bond_three_particles + collision_params.three_particle_angle_resolution > n_bonded_ia) {
       runtimeErrorMsg() << "Insufficient bonds defined for three particle binding.";
       return false;
     }
 
-    for (int i = collision_params.bond_three_particles; i <= collision_params.bond_three_particles + collision_params.three_particle_angle_resolution; i++) {
+    for (int i = collision_params.bond_three_particles; i < collision_params.bond_three_particles + collision_params.three_particle_angle_resolution; i++) {
       if (bonded_ia_params[i].num != 2) {
         runtimeErrorMsg() << "The bonds for three particle binding need to be angle bonds.";
         return false;

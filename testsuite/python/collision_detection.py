@@ -87,6 +87,7 @@ class CollisionDetection(ut.TestCase):
     
     
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
+    @ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
     def test_bind_at_point_of_collision(self):
         self.s.part.clear()
         self.s.part.add(pos=(0,0,0),id=0)
@@ -142,9 +143,141 @@ class CollisionDetection(ut.TestCase):
           else:
             dist_centers=self.s.part[0].pos-self.s.part[1].pos
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
-          print( p.pos,expected_pos)
           self.assertTrue(np.sqrt(np.sum((p.pos-expected_pos)**2))<=1E-5)
-          
+
+    #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
+    def test_angle_harmonic(self):
+        # Setup particles
+        self.s.part.clear()
+        dx=np.array((1,0,0))
+        dy=np.array((0,1,0))
+        dz=np.array((0,0,1))
+        a=np.array((0.499,0.499,0.499))
+        b=a+0.1*dx
+        c=a+0.03*dx +0.03*dy
+        d=a+0.03*dx -0.03*dy
+        e=a-0.1*dx
+
+        self.s.part.add(id=0,pos=a)
+        self.s.part.add(id=1,pos=b)
+        self.s.part.add(id=2,pos=c)
+        self.s.part.add(id=3,pos=d)
+        self.s.part.add(id=4,pos=e)
+
+
+        # Setup bonds
+        res=181
+        for i in range(0,res,1):
+           self.s.bonded_inter[i+2]=Angle_Harmonic(bend=1,phi0=float(i)/(res-1)*np.pi)
+        cutoff=0.11
+        self.s.collision_detection.set_params(mode=CollisionMode.bind_three_particles,bond_centers=self.H,bond_three_particles=2,three_particle_binding_angle_resolution=res,distance=cutoff)
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_triangle_binding(cutoff,self.s.bonded_inter[2],res)
+
+        # Make sure no extra bonds appear
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_triangle_binding(cutoff,self.s.bonded_inter[2],res)
+
+        # Place the particles in two steps and make sure, the bonds are the same
+        self.s.part.clear()
+        self.s.part.add(id=0,pos=a)
+        self.s.part.add(id=2,pos=c)
+        self.s.part.add(id=3,pos=d)
+        self.s.integrator.run(0,recalc_forces=True)
+        
+        self.s.part.add(id=4,pos=e)
+        self.s.part.add(id=1,pos=b)
+        self.s.integrator.run(0,recalc_forces=True)
+        self.verify_triangle_binding(cutoff,self.s.bonded_inter[2],res)
+
+    def verify_triangle_binding(self,distance,first_bond,angle_res):
+        # Gather pairs
+        n=len(self.s.part)
+        angle_res=angle_res-1
+
+        expected_pairs=[]
+        for i in range(n):
+            for j in range(i+1,n,1):
+                if self.s.distance(self.s.part[i],self.s.part[j])<=distance:
+                    expected_pairs.append((i,j))
+        
+        # Find triangles
+        # Each elemtn is a particle id, a bond id and two bond partners in ascending order
+        expected_angle_bonds=[]
+        for i in range(n):
+            for j in range(i+1,n,1):
+                for k in range(j+1,n,1):
+                    # Ref to particles 
+                    p_i=self.s.part[i]
+                    p_j=self.s.part[j]
+                    p_k=self.s.part[k]
+                    
+                    # Normalized distnace vectors
+                    d_ij=p_j.pos-p_i.pos
+                    d_ik=p_k.pos-p_i.pos
+                    d_jk=p_k.pos-p_j.pos
+                    d_ij/=np.sqrt(np.sum(d_ij**2))
+                    d_ik/=np.sqrt(np.sum(d_ik**2))
+                    d_jk/=np.sqrt(np.sum(d_jk**2))
+
+                    if self.s.distance(p_i,p_j)<=distance and self.s.distance(p_i,p_k)<=distance:
+                        id_i=first_bond._bond_id+int(np.round(np.arccos(np.dot(d_ij,d_ik))*angle_res/np.pi))
+                        expected_angle_bonds.append((i,id_i,j,k))
+                        
+                    if self.s.distance(p_i,p_j)<=distance and self.s.distance(p_j,p_k)<=distance:
+                        id_j=first_bond._bond_id+int(np.round(np.arccos(np.dot(-d_ij,d_jk))*angle_res/np.pi))
+                        expected_angle_bonds.append((j,id_j,i,k))
+                    if self.s.distance(p_i,p_k)<=distance and self.s.distance(p_j,p_k)<=distance:
+                        id_k=first_bond._bond_id+int(np.round(np.arccos(np.dot(-d_ik,-d_jk))*angle_res/np.pi))
+                        expected_angle_bonds.append((k,id_k,i,j))
+                       
+
+        # Gather actual pairs and actual triangles
+        found_pairs=[]
+        found_angle_bonds=[]
+        for i in range(n):
+            for b in self.s.part[i].bonds:
+                if len(b)==2:
+                    self.assertEquals(b[0]._bond_id,self.H._bond_id)
+                    found_pairs.append(tuple(sorted((i,b[1]))))
+                elif len(b)==3:
+                    partners=sorted(b[1:])
+                    found_angle_bonds.append((i,b[0]._bond_id,partners[0],partners[1]))
+                else:
+                    raise Exception("There should be only 2 and three particle bonds")
+        
+        # The order between expected and found bonds does not malways match
+        # because collisions occur in random order. Sort stuff
+        found_pairs=sorted(found_pairs)
+        found_angle_bonds=sorted(found_angle_bonds)
+        expected_angle_bonds=sorted(expected_angle_bonds)
+        self.assertEquals(expected_pairs,found_pairs)
+        
+        if not  expected_angle_bonds == found_angle_bonds:
+            # Verbose info
+            print("expected:",expected_angle_bonds)
+            missing=[]
+            for b in expected_angle_bonds:
+                if b in found_angle_bonds:
+                    found_angle_bonds.remove(b)
+                else:
+                    missing.append(b)
+            print("missing",missing)
+            print("extra:",found_angle_bonds)
+            print()
+        
+        self.assertEquals(expected_angle_bonds,found_angle_bonds)
+            
+                
+                    
+
+                  
+
+
+            
+        
+        
+
 
 
 
@@ -157,5 +290,4 @@ class CollisionDetection(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

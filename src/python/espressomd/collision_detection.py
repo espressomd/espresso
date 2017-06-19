@@ -81,8 +81,8 @@ class CollisionDetection(ScriptInterfaceHelper):
             return ("mode","bond_centers","bond_vs","part_type_vs","distance","vs_placement")
         if mode == CollisionMode.glue_to_surface:
             return ("mode","bond_centers","bond_vs","part_type_vs","part_type_to_be_glued","part_type_to_attach_vs_to","part_type_after_glueing","distance","distance_glued_particle_to_vs")
-        if mode == "bind_three_particles":
-            return ("mode","bond_centers","distance","bond_trhee_particles","three_particle_binding_angle_resolution")
+        if mode == CollisionMode.bind_three_particles:
+            return ("mode","bond_centers","distance","bond_three_particles","three_particle_binding_angle_resolution")
         raise Exception("Mode not hanled: "+mode.__str__())
             
             
