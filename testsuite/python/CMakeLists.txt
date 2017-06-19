@@ -10,6 +10,7 @@ set(py_tests  bondedInteractions.py
               engine_lb.py
               engine_lbgpu.py
               ewald_gpu.py
+              icc.py
               magnetostaticInteractions.py
               mass-and-rinertia_per_particle.py
               nonBondedInteractions.py
