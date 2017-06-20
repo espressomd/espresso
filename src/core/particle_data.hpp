@@ -180,12 +180,6 @@ struct ParticleProperties {
   int smaller_timestep;
 #endif
 
-#ifdef CONFIGTEMP
-  /** is the particle included in the configurational temperature?
-  * 1 = yes
-  * 0 = no (Default) */
-  int configtemp;
-#endif
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -600,15 +594,6 @@ int set_particle_out_direction(int part, double out_direction[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_smaller_timestep(int part, int small_timestep);
-#endif
-
-#ifdef CONFIGTEMP
-/** Call only on the master node: include particle in configurational T.
-    @param part the particle.
-    @param configtemp flag for configurational temperature inclusion.
-    @return TCL_OK if particle existed
-*/
-int set_particle_configtemp(int part, int configtemp);
 #endif
 
 /** Call only on the master node: set particle charge.

@@ -101,9 +101,6 @@ double virial_store[3] = {0., 0., 0.};
 #endif
 #endif
 
-/** For configurational temperature only */
-double configtemp[2] = {0., 0.};
-
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
@@ -218,9 +215,6 @@ void integrate_ensemble_init() {
       nptiso.p_inst = 0.0;
       nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
       nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-#ifdef CONFIGTEMP
-      configtemp[0] = configtemp[1] = 0.0;
-#endif
     }
   }
 #endif

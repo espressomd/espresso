@@ -324,10 +324,6 @@ void init_particle(Particle *part)
 #ifdef MULTI_TIMESTEP
   part->p.smaller_timestep = 0;
 #endif
-
-#ifdef CONFIGTEMP
-  part->p.configtemp = 0;
-#endif
 }
 
 void free_particle(Particle *part) {
@@ -871,24 +867,6 @@ int set_particle_smaller_timestep(int part, int smaller_timestep)
   if (pnode == -1)
     return ES_ERROR;
   mpi_send_smaller_timestep_flag(pnode, part, smaller_timestep);
-  return ES_OK;
-}
-#endif
-
-#ifdef CONFIGTEMP
-int set_particle_configtemp(int part, int configtemp)
-{
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return ES_ERROR;
-  mpi_send_configtemp_flag(pnode, part, configtemp);
   return ES_OK;
 }
 #endif

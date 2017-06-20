@@ -105,7 +105,6 @@ const Datafield fields[] = {
   {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4, false },         /* 57 from integrate_sd.cpp */
   {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4, false },         /* 58 from integrate_sd.cpp */
   {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 59 from integrate.cpp */
-  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1, false },         /* 60 from integrate.cpp */
   {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 61 from thermostat.cpp */
   {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 62 from thermostat.cpp */
 #ifndef ROTATIONAL_INERTIA

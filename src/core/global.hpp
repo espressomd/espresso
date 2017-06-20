@@ -197,8 +197,6 @@ extern const Datafield fields[];
 #define FIELD_SD_RANDOM_PRECISION 58
 /** index of \ref smaller_timestep in \ref #fields */
 #define FIELD_SMALLERTIMESTEP     59
-/** index of \ref configtemp in \ref #fields */
-#define FIELD_CONFIGTEMP          60
 /** index of \ref langevin_trans in \ref #fields */
 #define FIELD_LANGEVIN_TRANS_SWITCH 61
 /** index of \ref langevin_rotate in \ref #fields */
