@@ -177,6 +177,7 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
+  CB(mpi_scafacos_free_slave)                                        \
   CB(mpi_mpiio_slave)
 
 // create the forward declarations
@@ -449,9 +450,6 @@ void mpi_bcast_event_slave(int node, int event) {
     maggs_count_charged_particles();
     break;
 #endif
-  case SORT_PARTICLES:
-    local_sort_particles();
-    break;
   case CHECK_PARTICLES:
     check_particles();
     break;

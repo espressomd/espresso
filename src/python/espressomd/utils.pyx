@@ -81,7 +81,9 @@ cdef check_type_or_throw_except(x, n, t, msg):
         if hasattr(x, "__getitem__"):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
-                    if not (t == float and isinstance(x[i], int)) and not (t == int and issubclass(type(x[i]), np.integer)):
+                    if not ((t == float and isinstance(x[i], int)) 
+                      or (t == float and issubclass(type(x[i]), np.integer))) \
+                      and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
                             msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
         else:

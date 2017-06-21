@@ -97,6 +97,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_node_print_velocity(int x, int y, int z, double* velocity)
         int ek_node_print_density(int species, int x, int y, int z, double* density)
         int ek_node_print_flux(int species, int x, int y, int z, double* flux)
+        int ek_node_print_potential(int x, int y, int z, double* potential)
         int ek_node_set_density(int species, int x, int y, int z, double density)
         ekfloat ek_calculate_net_charge() 
         int ek_neutralize_system(int species) 

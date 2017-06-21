@@ -64,7 +64,7 @@ cdef class Integrator(object):
                                  self._steepest_descent_params["gamma"],
                                  steps,
                                  self._steepest_descent_params["max_displacement"])
-            minimize_energy()
+            mpi_minimize_energy()
 
     def set_steepest_descent(self, *args, **kwargs):
         """
