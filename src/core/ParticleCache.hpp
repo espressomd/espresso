@@ -58,8 +58,8 @@ public:
 
     while (first1 != last1) {
       if (first2 == last2) {
-        /* The first range has no more elements, so we can
-           just copy the rest of range 2. */
+        /* The 2nd range has no more elements, so we can
+           just copy the rest of range 1. */
         for (; first1 != last1; ++first1) {
           ret.emplace_hint(ret.end(), *first1);
         }
@@ -121,15 +121,24 @@ template <typename GetParticles, typename UnaryOp = Utils::NoOp,
 class ParticleCache {
   using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
 
+  /** Index mapping particle ids to the position
+      in remote_parts. */
   std::unordered_map<int, int> id_index;
+  /** The particle data */
   map_type remote_parts;
+  /** Bond info for remote_parts */
   std::vector<int> bond_info;
+  /** State */
   bool m_valid, m_valid_bonds;
 
   Utils::Parallel::Callback update_cb;
   Utils::Parallel::Callback update_bonds_cb;
 
+  /** Functor to get a particle range */
   GetParticles parts;
+  /** Functor which is applied to the
+      particles before they are gathered,
+      e.g. position folding */
   UnaryOp m_op;
 
   /**
@@ -161,10 +170,15 @@ class ParticleCache {
     Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
 
     for (auto it = bond_info.begin(); it != bond_info.end();) {
-      auto &p = remote_parts.begin()[id_index[*it++]];
+      /* Particle id for which the next bond info is for */
+      auto const id = *it++;
+      /* Use the index to find the particle in remote_parts */
+      auto &p = remote_parts.begin()[id_index[id]];
+      /* Update the bond list of the particle with the bond_info */
       p.bl.e = &(*it);
       p.bl.max = p.bl.size();
 
+      /* Jump to the next record */
       it += p.bl.size();
     }
   }
@@ -222,6 +236,9 @@ public:
   ParticleCache(ParticleCache &&) = delete;
   ParticleCache operator=(ParticleCache &&) = delete;
 
+  /**
+   * @brief Clear cache.
+   */
   void clear() {
     id_index.clear();
     remote_parts.clear();
@@ -371,6 +388,10 @@ public:
     if (!m_valid)
       update();
 
+    /* Fetch the particle using the index. Here
+       begin()[] with the position is used to
+       get constant time access. remote_parts[id]
+       would also be correct, but is O(n*log(n)). */
     return remote_parts.begin()[id_index.at(id)];
   }
 };
