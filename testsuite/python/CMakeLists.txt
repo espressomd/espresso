@@ -26,9 +26,9 @@ set(py_tests  bondedInteractions.py
               tabulated.py
               writevtf.py
               lb_stokes_sphere_gpu.py
-              ek_eof_one_x.py
-              ek_eof_one_y.py
-              ek_eof_one_z.py
+              ek_eof_one_species_x.py
+              ek_eof_one_species_y.py
+              ek_eof_one_species_z.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)
