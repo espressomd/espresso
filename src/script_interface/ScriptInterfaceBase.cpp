@@ -47,4 +47,9 @@ ScriptInterfaceBase::make_shared(std::string const &name,
 
   return sp;
 }
+
+std::weak_ptr<ScriptInterfaceBase> &
+ScriptInterfaceBase::get_instance(ObjectId id) {
+  return Utils::AutoObjectId<ScriptInterfaceBase>::get_instance(id);
+}
 }
