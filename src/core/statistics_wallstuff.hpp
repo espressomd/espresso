@@ -19,7 +19,8 @@
 
 #ifndef _STATISTICS_WALLSTUFF_H
 #define _STATISTICS_WALLSTUFF_H
-#include "statistics.hpp"
+
+#include "utils/List.hpp"
 
 /// list of the currently specified box boundaries for layerwise analysis
 extern DoubleList wallstuff_boundaries;
