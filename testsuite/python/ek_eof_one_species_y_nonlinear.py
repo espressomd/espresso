@@ -63,13 +63,14 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 # creates a small error in the direction normal to the wall, which
 # should decay with the simulation time.
 
-def hydrostatic_pressure (ek, x, xi, bjerrum_length, tensor_entry, box_x,box_y,box_z,agrid):
+def hydrostatic_pressure (ek, x, xi, bjerrum_length, tensor_entry, box_x,box_y,box_z,agrid,temperature):
   offset = ek[int(box_x/(2*agrid)),int(box_y/(2*agrid)),int(box_z/(2*agrid))].pressure[tensor_entry]
-  return 0.0 + offset
+  return temperature*xi*xi*math.tan(xi*x)*math.tan(xi*x)/(2.0*math.pi*bjerrum_length) + offset
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS","EK_BOUNDARIES"]),
 "Features not available, skipping test!")
+
 
 class ek_eof_one_species_x(ut.TestCase):
 
@@ -81,21 +82,21 @@ class ek_eof_one_species_x(ut.TestCase):
 
     pi=math.pi
     box_z = 6
-    box_x = 6
+    box_y = 6
     width = 50
 
     padding = 6
-    box_y = width+2*padding
+    box_x = width+2*padding
 
 # Set the electrokinetic parameters
-    agrid = 1.0/3.0
-    dt = 1.0/13.0
-    force = 0.07
-    sigma = -0.04
-    viscosity_kinematic = 1.7
-    friction = 1.9
-    temperature = 1.1
-    bjerrum_length = 0.8
+    agrid = 0.5
+    dt = 1.0/11.0
+    force = 0.13
+    sigma = -0.03
+    viscosity_kinematic = 1.0
+    friction = 1.0
+    temperature = 2.3
+    bjerrum_length = 0.7
 
     temperature_LB = agrid*agrid/(3.0*dt*dt)
     kB_LB = 1.0
@@ -109,7 +110,7 @@ class ek_eof_one_species_x(ut.TestCase):
     system.time_step = dt
     system.cell_system.skin = 0.1
     system.thermostat.turn_off()
-    integration_length = 20000
+    integration_length = 40000
 
 # Output density, velocity, and pressure tensor profiles
 
@@ -123,17 +124,17 @@ class ek_eof_one_species_x(ut.TestCase):
 
 # Set up the (LB) electrokinetics fluid
 
-    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = friction, T = temperature, bjerrum_length = bjerrum_length, stencil = "linkcentered")
+    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = friction, T = temperature, bjerrum_length = bjerrum_length, stencil = "nonlinear")
 
-    counterions = electrokinetics.Species(density=density_counterions, D=0.3, valency=valency, ext_force = [0,0,force])
+    counterions = electrokinetics.Species(density=density_counterions, D=0.3, valency=valency, ext_force = [0,force,0])
     ek.add_species(counterions)
 
 
 # Set up the walls confining the fluid and carrying charge
 
-    ek_wall1 = electrokinetics.EKBoundary(charge_density=sigma/(padding),shape=shapes.Wall(normal=[0, 1, 0], dist=padding))
+    ek_wall1 = electrokinetics.EKBoundary(charge_density=sigma/(padding),shape=shapes.Wall(normal=[1, 0, 0], dist=padding))
     system.ekboundaries.add(ek_wall1)
-    ek_wall2 = electrokinetics.EKBoundary(charge_density=sigma/(padding),shape=shapes.Wall(normal=[0, -1, 0], dist=-(padding+width)))
+    ek_wall2 = electrokinetics.EKBoundary(charge_density=sigma/(padding),shape=shapes.Wall(normal=[-1, 0, 0], dist=-(padding+width)))
     system.ekboundaries.add(ek_wall2)
 
     system.actors.add(ek)
@@ -197,31 +198,31 @@ class ek_eof_one_species_x(ut.TestCase):
     if (output_profiles):
       fp = open("ek_eof_profile.dat","w")
 
-    for i in range(int(box_y/agrid)):
+    for i in range(int(box_x/agrid)):
 
-      if (i*agrid >= padding and i*agrid < box_y - padding):
+      if (i*agrid >= padding and i*agrid < box_x - padding):
         xvalue = i*agrid - padding
         position = i*agrid - padding - width/2.0 + agrid/2.0
 
       # density
-        measured_density = counterions[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].density
+        measured_density = counterions[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].density
         calculated_density = density(position,xi, bjerrum_length)
         density_difference = abs(measured_density - calculated_density)
         total_density_difference = total_density_difference + density_difference
       # velocity
-        measured_velocity = ek[int(box_x/(2*agrid)), i ,int(box_z/(2*agrid))].velocity[2]
+        measured_velocity = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].velocity[1]
         calculated_velocity = velocity(position, xi, width, bjerrum_length, force, viscosity_kinematic, density_water)
         velocity_difference = abs(measured_velocity - calculated_velocity)
         total_velocity_difference = total_velocity_difference + velocity_difference
 
       # diagonal pressure tensor
 
-        measured_pressure_xx = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(0,0)]
-        calculated_pressure_xx = hydrostatic_pressure(ek,position, xi, bjerrum_length, (0,0),box_x,box_y,box_z,agrid)
-        measured_pressure_yy = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(1,1)]
-        calculated_pressure_yy = hydrostatic_pressure(ek,position, xi, bjerrum_length, (1,1),box_x,box_y,box_z,agrid)
-        measured_pressure_zz = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(2,2)]
-        calculated_pressure_zz = hydrostatic_pressure(ek,position, xi, bjerrum_length, (2,2),box_x,box_y,box_z,agrid)
+        measured_pressure_xx = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(0,0)]
+        calculated_pressure_xx = hydrostatic_pressure(ek,position, xi, bjerrum_length, (0,0),box_x,box_y,box_z,agrid,temperature)
+        measured_pressure_yy = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(1,1)]
+        calculated_pressure_yy = hydrostatic_pressure(ek,position, xi, bjerrum_length, (1,1),box_x,box_y,box_z,agrid,temperature)
+        measured_pressure_zz = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(2,2)]
+        calculated_pressure_zz = hydrostatic_pressure(ek,position, xi, bjerrum_length, (2,2),box_x,box_y,box_z,agrid,temperature)
 
         pressure_difference_xx = abs(measured_pressure_xx - calculated_pressure_xx)
         pressure_difference_yy = abs(measured_pressure_yy - calculated_pressure_yy)
@@ -232,19 +233,19 @@ class ek_eof_one_species_x(ut.TestCase):
         total_pressure_difference_zz = total_pressure_difference_zz + pressure_difference_zz
 
       # xy component pressure tensor
-        measured_pressure_xy = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(0,1)]
-        calculated_pressure_xy = 0.0
+        measured_pressure_xy = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(0,1)]
+        calculated_pressure_xy = pressure_tensor_offdiagonal(position, xi, bjerrum_length, force)
         pressure_difference_xy = abs(measured_pressure_xy - calculated_pressure_xy)
         total_pressure_difference_xy = total_pressure_difference_xy + pressure_difference_xy
 
       # yz component pressure tensor
-        measured_pressure_yz = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(1,2)]
-        calculated_pressure_yz = pressure_tensor_offdiagonal(position, xi, bjerrum_length, force)
+        measured_pressure_yz = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(1,2)]
+        calculated_pressure_yz = 0.0
         pressure_difference_yz = abs(measured_pressure_yz - calculated_pressure_yz)
         total_pressure_difference_yz = total_pressure_difference_yz + pressure_difference_yz
 
       # xz component pressure tensor
-        measured_pressure_xz = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(0,2)]
+        measured_pressure_xz = ek[i,int(box_y/(2*agrid)), int(box_z/(2*agrid))].pressure[(0,2)]
         calculated_pressure_xz = 0.0
         pressure_difference_xz = abs(measured_pressure_xz - calculated_pressure_xz)
         total_pressure_difference_xz = total_pressure_difference_xz + pressure_difference_xz
@@ -273,15 +274,14 @@ class ek_eof_one_species_x(ut.TestCase):
     print("Pressure deviation yz component: {}".format(total_pressure_difference_yz))
     print("Pressure deviation xz component: {}".format(total_pressure_difference_xz))
 
-    self.assertTrue(total_density_difference < 1.5e-06,"Density accuracy not achieved")
-    self.assertTrue(total_velocity_difference < 3.5e-07,"Velocity accuracy not achieved")
-    self.assertTrue(total_pressure_difference_xx < 2.5e-07,"Pressure accuracy xx component not achieved")
-    self.assertTrue(total_pressure_difference_yy < 2.5e-07,"Pressure accuracy yy component not achieved")
-    self.assertTrue(total_pressure_difference_zz < 4.0e-06,"Pressure accuracy zz component not achieved")
-    self.assertTrue(total_pressure_difference_xy < 1.0e-09,"Pressure accuracy xy component not achieved")
-    self.assertTrue(total_pressure_difference_yz < 2.0e-06,"Pressure accuracy yz component not achieved")
-    self.assertTrue(total_pressure_difference_xz < 1.5e-09,"Pressure accuracy xz component not achieved")
-
+    self.assertTrue(total_density_difference < 1.0e-06,"Density accuracy not achieved")
+    self.assertTrue(total_velocity_difference < 1.0e-06,"Velocity accuracy not achieved")
+    self.assertTrue(total_pressure_difference_xx < 1.0e-05,"Pressure accuracy xx component not achieved")
+    self.assertTrue(total_pressure_difference_yy < 2.5e-05,"Pressure accuracy yy component not achieved")
+    self.assertTrue(total_pressure_difference_zz < 1.0e-05,"Pressure accuracy zz component not achieved")
+    self.assertTrue(total_pressure_difference_xy < 2.0e-06,"Pressure accuracy xy component not achieved")
+    self.assertTrue(total_pressure_difference_yz < 1.0e-10,"Pressure accuracy yz component not achieved")
+    self.assertTrue(total_pressure_difference_xz < 1.0e-10,"Pressure accuracy xz component not achieved")
 
 
 if __name__ == "__main__":
