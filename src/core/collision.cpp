@@ -592,7 +592,7 @@ void three_particle_binding_domain_decomposition()
                for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
 	                for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
 	                   int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
-	                   Cell* cell=cells+ind2;
+	                   Cell* cell=&cells[ind2];
  
 	                   // Iterate over particles in this cell
                      for(int a=0; a<cell->n; a++) {

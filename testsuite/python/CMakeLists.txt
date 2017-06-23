@@ -1,21 +1,28 @@
 set(py_tests  bondedInteractions.py
               minimize_energy.py
               cellsystem.py
+              constraint_homogeneous_magnetic_field.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
+              dawaanr-and-dds-gpu.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
               engine_lbgpu.py
               ewald_gpu.py
+              icc.py
               magnetostaticInteractions.py
               mass-and-rinertia_per_particle.py
               nonBondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              scafacos_dipoles_1d_2d.py
+	            tabulated.py
+              particle_slice.py
               rotational_inertia.py
+              script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
               coulomb_cloud_wall.py
@@ -23,7 +30,8 @@ set(py_tests  bondedInteractions.py
               lb.py
               tests_common.py
               variant_conversion.py
-
+              writevtf.py
+              lb_stokes_sphere_gpu.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

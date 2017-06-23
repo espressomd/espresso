@@ -2641,8 +2641,7 @@ int ek_init() {
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.electric_field,
                                ek_parameters.number_of_nodes * 3 * sizeof( float ) ) );
   }
-  
-  copy_part_data_to_gpu();
+
 #endif
 
     lb_get_device_values_pointer( &ek_lb_device_values );
@@ -3286,6 +3285,19 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
+int ek_node_print_potential( int x, int y, int z, double* potential ) {
+  int i = z * ek_parameters.dim_y * ek_parameters.dim_x + y * ek_parameters.dim_x + x;
+  float pot;
+  
+  cuda_safe_mem( cudaMemcpy( &pot, 
+                             &ek_parameters.charge_potential[i],
+                             1 * sizeof( cufftReal ),
+                             cudaMemcpyDeviceToHost )                          
+               );
+  
+  *potential = pot;
+  return 0;
+}
 
 int ek_print_vtk_potential( char* filename ) {
 

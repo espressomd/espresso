@@ -30,7 +30,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 #ifdef GAY_BERNE
 
@@ -45,7 +45,7 @@ inline void add_gb_pair_force(const Particle * const p1, const Particle * const 
                               double torque1[3], double torque2[3])
 
 {
-  if (!CUTOFF_CHECK(dist < ia_params->GB_cut))   
+  if (!(dist < ia_params->GB_cut))   
     return;
   
   double a,b,c, X, Xcut,
@@ -154,7 +154,7 @@ inline void add_gb_pair_force(const Particle * const p1, const Particle * const 
 inline double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 			       double d[3], double dist)
 {
-  if (!CUTOFF_CHECK(dist < ia_params->GB_cut))   
+  if (!(dist < ia_params->GB_cut))   
     return 0.0;
   
   double a,b,c, X, Xcut,

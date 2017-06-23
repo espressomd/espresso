@@ -20,7 +20,7 @@
 #
 import fileinput, string, re
 
-class SyntaxError:
+class SyntaxError(object):
     def __init__(self, message, instead):
         self.message = message
         self.filename = fileinput.filename()
@@ -37,7 +37,7 @@ def toCPPExpr(expr):
     expr = re.sub('([A-Z0-9_]+)', 'defined(\\1)', expr)
     return expr
 
-class defs:
+class defs(object):
     def __init__(self, filename):
         # complete set of all defined features
         allfeatures = set()

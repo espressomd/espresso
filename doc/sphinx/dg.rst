@@ -1,55 +1,54 @@
 =================
 Developer's Guide
 =================
-
 .. warning::
    The information found in this version of the Developer's Guide is
-   outdated.  Please see the section :ref:`getting_into_contact` and
+   outdated.  Please see the section :ref:`Contact the Developers` and
    ask for advice if you plan to start working on |es|.
 
-.. _getting_into_contact:
 
-Getting into Contact
-====================
+.. _Contact the Developers:
 
-The first thing that you should do when you want to start to participate
-is to get into contact with the |es| developers. To do that, subscribe
-to the developers’ mailing list at
-http://lists.nongnu.org/mailman/listinfo/espressomd-devel and write a
-short email to the list address ``espressomd-devel@nongnu.org`` where
-you state your experience with simulations and programming and the
-things that you would like to do in |es|. We do not bite, and we are
-happy about anybody who wants to participate!
+Contact the Developers
+======================
 
-.. _development_environment:
+To contact the |es| developers, please write an email to the developers mailing list:
+espressomd-devel@nongnu.org
+to subscribe to the developers’ mailing list go to
+http://lists.nongnu.org/mailman/listinfo/espressomd-devel 
+
+
+.. _Before you start a development project:
+
+Before you start a development project
+======================================
+Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
+This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
+
+
+
+
+
+.. _Development Environment:
 
 Development Environment
 =======================
 
-.. _required_development_tools:
+
+,, _Required Development Tools:
 
 Required Development Tools
 --------------------------
-
-If you want to participate in the development of |es|, you will
-require the following tools depending on what tasks you want to perform:
+-  First of all, please install the dependencies for compiling |es|. See the section on "Getting, compiling and running" in the user guide.
 
 -  To be able to access the development version of |es|, you will need
-   the distributed versioning control system Git [1]_. Section
-   :ref:`git_repositories` contains documentation on how we employ
-   git.
+   the distributed versioning control system Git [1]_. 
 
--  To build |es| from the development sources, you will need not too
-   old versions of the “GNU autotools” (*i.e.* automake [2]_ and
-   autoconf [3]_) installed on your system. Section
-   :ref:`building_the_development_code` contains information on how to
-   build the development code, section
-   :ref:`build_system` contains details on how the
-   build system works.
+-  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+      pip install --user -r requirements.txt
+   Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
 
--  To be able to compile the User’s Guide or the Developer’s Guide, you
-   will need a LaTeX-installation (all recent ones will do). For
-   details, refer to chapter .
+-  To build the tutorials, you will need LaTeX.
 
 -  To compile the Doxygen code documentation, you will need to have the
    tool Doxygen\  [4]_.
@@ -57,438 +56,79 @@ require the following tools depending on what tasks you want to perform:
 All of these tools should be easy to install on most Unix operating
 systems.
 
-.. _building_the_development_code:
+.. _Getting the Development Code:
 
-Building the Development Code
------------------------------
+Getting the Development Code
+============================
+We use Github for storing the source code and its history, and for managing the development process. 
+The repository is located at
+http://github.com/espressomd/espresso
+To get the current development code, run
+git clone git://github.com/espressomd/espresso
+This will create a directory named "espresso" which contains the code.
+The build process does not differ from the one for release versions described in the users' guide.
 
--  Use ``bootstrap.sh`` before building the code.
-
--  Use configure with ``–enable-maintainer-mode``.
-
--  Possible targets of ``make``
-
-   -  ``check``
-
-   -  ``dist``
-
-   -  ``doc``
-
-   -  ``ug``
-
-   -  ``dg``
-
-   -  ``doxygen``
-
-   -  ``tutorials``
-
-   -  ``distcheck``
-
-   -  ``clean``, ``distclean``
-
-.. _git_repositories:
-
-Git Repositories
-----------------
-
--  Development Repository: https://github.com/espressomd/espresso
-
--  Code hosting at GNU Savannah
-   https://savannah.nongnu.org/projects/espressomd/
-
-.. _jenkins_build_server:
-
-Jenkins Build Server
---------------------
-
-http://espressomd.org/jenkins
-
--  |es| homepage http://espressomd.org
-
--  Jenkins build server
-
-.. _build_system:
 
 Build System
-------------
+============
 
-The build system of |es| makes use of the GNU autotools suite
-consisting of automake [5]_ and autoconf [6]_. If you want to use the
-development source code of ESPResSo, you first need to install both of
-these tools.
+The build system of |es| is based on CMake.
 
 The central source files of the build system are the following:
 
--  ``configure.ac``
+-  ``CMakeList.txt``
 
--  ``config/*.m4``
+-  Contents of the ``cmake`` directory
 
--  ``Makefile.am``
+-  The CMakeList.txt files in the ``src/``, ``doc/``, and ``testsuite/`` directories and their sub-directories
 
--  the different ``Makefile.am`` in the subdirectories
+The most common reasons for editing these files are:
+-  Adding new source files
+-  Adding new external dependencies
 
-To change the behaviour of the build system, you have to modify any
-these files.
+Adding New Source Files
+-----------------------
 
-.. _running_bootstrapsh:
+To add new files to |es| (like C++ source files or header files) you
+need to look at the CMakeList.txt in the directory where the file is located.
+* Please note that .hpp-header files usually do not have to be added to CMakeList.txt
+* In some cases (e.g., src/core/CMakeList.txt), the CMakeList.txt contains a wild-card include like this
+    ``file(GLOB EspressoCore_SRC *.cpp)``
+  In this case, placing a file with that ending is enough.
+-  In other cases, the files are explicitly included (e.g., testsuite/python/CMakeList), 
+   set(py_tests  bondedInteractions.py
+              cellsystem.py
+              constraint_shape_based.py
+              coulomb_cloud_wall.py
+   In that case, add the new file to the list.
+   
 
-Running ``bootstrap.sh``
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The script ``bootstrap.sh`` in the top level source directory can be
-used to run ``automake``, ``autoconf`` and the associated tools to
-generate the ``configure`` script and the ``Makefile.in`` used during
-compilation. Once ``bootstrap.sh``, the |es| development code can be
-build and used like the release code.
-
-.. _creating_a_distribution_package:
-
-Creating a Distribution Package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-As described in the User’s Guide, to create a ``.tar.gz`` distribution
-file that contains all required files, you can simply run ``make dist``.
-This will bundle all files and put them into an archive with the name
-``espresso-version.tar.gz``.
-
-Even better, you can also run ``make distcheck``. This will not only
-create the distribution file, but it will also thoroughly check the
-created distribution, *i.e.*\ it will try to
-
--  unpack the distro into a new directory
-
--  configure and build it (``configure``)
-
--  run the testsuite (``make check``)
-
--  install it into a new directory (``make install``)
-
--  uninstall it (``make uninstall``)
-
-Whenever something goes wrong in these checks, it will give an error
-message that describes the problem. When everything goes fine, you can
-be relatively sure that you have a useful |es| distribution package.
-
-In some cases, it might be necessary to pass some options to the run of
-``configure`` done by ``make distcheck``>. To these ends, the
-environment variable ``DISTCHECK_CONFIGURE_FLAGS`` can be set to the
-required options.
-
-Example
-"""""""
-
-::
-
-    DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
-      make distcheck
-
-.. _build_system_adding_new_files:
-
-Adding New Files
-^^^^^^^^^^^^^^^^
-
-To add new files to |es| (like C source files or header files) you
-need to do the following:
-
--  Add the files to the ``Makefile.am`` in the same directory
-
--  Run ``bootstrap.sh`` in the source directory
-
--  Check the distribution by using ``make distcheck``
-
--  Add the files to the Git repository
-
-.. _testsuite:
 
 Testsuite
----------
+=========
+-  New or significantly changed features will only be accepted, if they have a test case. 
+   This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
+-  There are two kinds of tests:
 
--  How to write tests?
+  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in ``src/core/unit_tests`
+  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in ``testsuite/python``
 
--  How they are called (``runtest.sh``)
+-  To execute the tests, run::
+     make check 
+   in the top build directory.
 
-.. _documentation:
+
+.. _Documentation:
 
 Documentation
 =============
 
-.. _users_guide:
+The documentation of |es| consists of four parts:
+-  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
+-  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+-  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
 
-User’s Guide
-------------
 
-The User’s Guide is written in LaTeX. The source files reside in the
-subdirectory ``doc/ug/`` of the |es| sources. The master file is
-``ug.tex``, each chapter is contained in its own source file.
-
-.. _general_issues:
-
-General issues
-^^^^^^^^^^^^^^
-
--  Other than usual, in the UG’s ``.tex``-files, the underscore
-   character “\_” is a normal character in most cases, *i.e.* it can be
-   used unquoted. Unfortunately, however, this makes it impossible to
-   use “\_” in LaTeX-labels (don’t ask me why!).
-
--  Headings should start with a capital letter and continue with
-   lower-case letters (“First steps” and *not* “First Steps”).
-
--  Use the “-ing” form in headings, *i.e.*\ “Setting up particles”
-   instead of “Particle setup” or the like.
-
--  To see which parts of the User’s guide need to be fixed or which
-   documentation is missing, there is a ``\todo``-command where one can
-   put notes about what remains to be done. In the release version, the
-   boxes are disabled so that they do not disturb the users. They can be
-   turned on by commenting out the appropriate line in ``ug.tex``:
-
-   ::
-
-       %% For building the distribution docs, disable todo boxes.
-       %\usepackage[disable]{todonotes}
-       \usepackage{todonotes}
-
-.. _building_the_users_guide:
-
-Building the User’s Guide
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
--  To build the User’s Guide, you need to have a LaTeX-installation that
-   includes BibTeX, PDFLaTeX and makeindex. All installations that I
-   know of provide these tools.
-
--  There are two methods to build the User’s Guide:
-
-   -  Use ``make ug`` from the build directory to build it. This will
-      automatically generate the |es| quick reference and call latex,
-      bibtex and makeindex as required.
-
-   -  Use ``perl latexmk`` from the source directory. This will
-      basically do the same, however, it will *not* automatically update
-      the quick reference. The advantage of this method is, that you can
-      use all of ``latexmk``\ ’s nice features, such as ``-pvc``. You
-      can always rebuild the quick reference manually by calling
-
-      ::
-
-          awk -f assemble_quickref.awk > quickref.inp
-              
-
-.. _user_guide_adding_new_files:
-
-Adding New Files
-^^^^^^^^^^^^^^^^
-
-To add new LaTeX-files to the User’s Guide, you need to modify
-
--  ``ug.tex``: add an appropriate include command near the end of the
-   file
-
--  ``Makefile.am``: add the file to the variable ``ug_TEXFILES``.
-
-.. _additional_environments_and_commands:
-
-Additional Environments and Commands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To maintain a consistent layout, a number of environments and commands
-have been defined that should be used where applicable.
-
--  For the description of |es|’s Tcl-commands, read
-   :ref:`documentation_of_tcl_commands`.
-
--  The name of |es| should be set via the command ``|es|``.
-
--  The strings “*i.e.*”, “*e.g.*” and “*et al.*” should be set via
-   ``\ie``, ``\eg`` and ``\etal``.
-
--  For short pieces of code that can be displayed inline, use
-   ``\codebox{``\ *text*\ ``}`` or ``\verb!``\ *text*\ ``!``
-
--  For longer code pieces or the syntax decription of non-Tcl commands,
-   the environment ``code`` exists:
-
-   ::
-
-       \begin{code}
-         ...
-       \end{code}
-
-   Note that this is *not* a verbatim environment, *i.e.*\ it will
-   evaluate LaTeX-commands that are used inside. Therefore, the
-   characters ``\``, ``{`` and ``}`` need to be quoted with backslashes
-   inside the environment! Also, the underscore character “\_” needs to
-   be quoted like ``\_``. On the other hand, it is possible to use other
-   layout commands (like ``\textit``) inside.
-
--  For pieces of Tcl-code that make extensive use of ``{`` and ``}``, a
-   verbatim environment ``tclcode`` exists:
-
-   ::
-
-       \begin{tclcode}
-        ...
-       \end{tclcode}
-
-
-.. _documentation_of_tcl_commands:
-
-Documentation of Tcl commands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _formal_syntax_definition:
-
-Formal Syntax Definition
-""""""""""""""""""""""""
-
-All |es|-commands have to be documented in the User’s Guide.
-
-The command ``\newescommand[``\ *label*\ ``]{``\ *command*\ ``}`` should
-be used at the beginning of a command description to generate a label
-``es:``\ *command* and create appropriate index entries. The optional
-argument *label* is only required, when *command* contains an underscore
-character “\_”. In that case, a label ``es:``\ *label* is generated that
-should not contain an underscore character.
-
-For the *formal syntax definition*, you have to use the environments
-``essyntax`` or ``essyntax*``. Both will generate the headings *Syntax*
-and *Description*. ``essyntax`` will furthermore copy the syntax
-definition to the quick reference guide. For an example, look at the
-documentation of the ``part`` command in the file ``part.tex``. Inside
-the ``essyntax`` environment, you have to use the following commands for
-typesetting the definition:
-
--  ``\variant{``\ *number*\ ``}`` to typeset the label of a command
-   variant
-
--  ``\var{``\ *name*\ ``}`` to typeset a variable argument. Note, that
-   the argument is typeset in math mode. This means, that you can use
-   “\_” to denote a subscript.
-
--  ``\keyword{``\ *text*\ ``}`` or ``\lit{``\ *text*\ ``}`` to typeset
-   keywords or literals.
-
--  ``\opt{``\ *text*\ ``}`` to typeset optional arguments. Note that
-   usually, the text inside the ``opt`` command will not be wrapped. If
-   the optional argument is pretty long and needs to be wrapped, use
-   ``\optlong``.
-
--  ``\optlong{``\ *text*\ ``}`` to typeset long optional argument
-   blocks.
-
--  ``\alt{``\ *alt1* ``\asep`` *alt2* ``\asep`` *alt3* …\ ``}`` to
-   typeset alternatives.
-
--  ``\feature{``\ *feature*\ ``}`` to typeset when a *feature* is
-   referred to.
-
--  ``\require{``\ *number*\ ``}{``\ *text*\ ``}`` to typeset *text* to
-   show that it requires certain features of |es|. *number* denotes
-   the marking that is shown next to *text*. When this command is used,
-   you also have to use the ``features``-environment (see below) at the
-   end of the ``essyntax`` environment, where all of the *number*\ s
-   used are explained.
-
--  The environment ``features`` to typeset which features are required
-   by the Tcl-command. Inside the environment, each feature should be
-   declared via the command
-   ``\required[``\ *number*\ ``]{``\ *feature*\ ``}``, where the
-   optional argument *number* is the number used above and *feature* is
-   the feature in capital letters.
-
-The formal syntax definition should be as simple and as readable as
-possible, as it will be what a user references to. Avoid very long
-definitions and constructs like nested alternatives and options. In
-those cases, prefer to split the syntax definition into several variants
-instead of writing it in a single, complicated definition.
-
-Example
-"""""""
-
-::
-
-    \begin{essyntax}
-    [clip]
-    \variant{5} constraint pore 
-      center \var{c_x} \var{c_y} \var{c_z} 
-      axis \var{n_x} \var{n_y} \var{n_z} 
-      radius \var{rad}
-      length \var{length} 
-      type \var{id} 
-
-    \require{1}{%
-      \variant{6} constraint rod center \var{c_x} \var{c_y} 
-      lambda \var{lambda}
-    } 
-      
-    \require{1}{%
-      \variant{7} constraint plate height \var{h}
-      sigma \var{sigma} 
-    }
-      
-    \require{2,3}{%
-      \variant{8} constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
-    }
-
-      \begin{features}
-      \required{CONSTRAINTS}
-      \required[1]{ELECTROSTATICS}
-      \required[2]{ROTATION}
-      \required[3]{DIPOLES}
-      \end{features}
-    \end{essyntax}
-
-.. _description:
-
-Description
-"""""""""""
-
-In the description, you should use all of the above typesetting commands
-when you refer to them in the text. In particular, every variable
-argument introduced via the ``\var``-command in the definition has to be
-explained in detail:
-
--  state explicitly the *type* of the argument (integer, float, string,
-   Tcl-list)
-
--  explain the meaning of the argument
-
-If the command has a number of different options, *i.e.*\ independent,
-optional arguments, they can be described in the *arguments*
-environment:
-
-::
-
-    \begin{arguments}
-      \item[<arg1>] <description of arg1>
-      \item[<arg2>] <description of arg2>
-      ...
-    \end{arguments}
-
-The environment will generate the subheading *Arguments* and nicely
-format the descriptions.
-
-Example
-"""""""
-
-::
-
-    \begin{arguments}
-      \item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
-        in a human-readable, but somewhat longer format (\keyword{verbose}),
-        or in a more compact form (\keyword{short}). The default is
-        \keyword{verbose}.
-      
-      \item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
-        positions are written in absolute coordinates (\keyword{absolute})
-        or folded into the central image of a periodic system
-        (\keyword{folded}). The default is \keyword{absolute}.
-      
-      ...
-    \end{arguments}
-
-.. _doxygen_code_documentation:
 
 Doxygen Code Documentation
 --------------------------
@@ -533,131 +173,204 @@ description of the most common commands we need:
 -  | ``\return`` *decription*
    | Document the return value of a function.
 
-.. _programmers_guide:
+.. _Programmers's Guide:
 
-Programmer’s Guide
+
+Programmer's Guide
 ==================
 
 This chapter provides some hints on how to extend |es|. It is not
 exhaustive, so for major changes the best documentation are the other
 developers.
 
-.. _adding_global_variables:
-
-Adding Global Variables
------------------------
-
-Global variables are the simplest way to communicate values between the
-Tcl script and the C simulation code. To make a C variable available to
-Tcl, declare the variable ``extern`` in a header file and include in
-``global.c``. Then add a new line to the definition of the constant data
-structure ``fields`` at the beginning of the file ``global.c``. For
-details on the entries, see the definition of ``Datafield`` in
-``global.h``). Basically you have to declare *where* the variable is
-stored, *which type* (INT or DOUBLE) it has and *how many* elements. A
-callback procedure can be provided which checks if the given value is
-valid and stores it. It is also responsible for dispatching the new
-value to the other compute nodes, if necessary. The easiest way to do
-that is by using ``mpi_bcast_parameter``, which will transfer the value
-to the other nodes. A simple example is ``box_l`` with the callback
-procedure ``boxl_callback``. For ``mpi_bcast_parameter`` to work, it is
-necessary that they occur in the list of constant definitions at the
-beginning of ``global.h``. So please keep this list in sync!
-
-.. _adding_new_bonded_interactions:
-
 Adding New Bonded Interactions
 ------------------------------
 
-Every interaction resides in its own source file. A simple example for a
-bonded interaction is the FENE bond in ``fene.h``. The data structures,
-however, reside in ``interaction_data.h``. The bonded interactions are
-all stored in a union, ``Bonded_ia_parameters``. For a new interaction,
-just add another struct. Each bonded interaction is assigned a type
-number, which has the form ``BONDED_IA_*``, *e.g.*\ ``BONDED_IA_FENE``.
-The new interaction also has to have such a *unique* number.
+To add a new bonded interaction, the following steps have to be taken
+* Simulation core:
 
-After the setup of the necessary data structures in
-``interaction_data.h``, write the source file, something like
-``new_interaction.h``. You may want to use ``fene.h`` as a template
-file. Typically, you will have to define the following procedures:
+  * Define a structure holding the parameters (prefactors, etc.) of the interaction
+  * Write functions for calculating force and energy, respectively.
+  * Write a setter function, which takes the parameters of the interactions and stores them in the bonded interactions data structure
+  * Add calls to the force and energy calculation functions to the force calculation in the integration loop as well as to energy and pressure/stress tensor analysis
 
--  ::
+* Python interface
 
-       int *_set_params(int bond_type, ...)
+  * Import the definition of the bond data structure from the simulation core
+  * Implement a class for the bonded interaction derived from the BondedInteraction base class
 
-   This function is used to define the parameters of a bonded
-   interaction. ``bond_type`` is the bond type number from the inter
-   command, and not one of the ``BONDED_*``. It is rather an index to
-   the ``bonded_ia_params`` array. ``make_bond_type_exist`` makes sure
-   that all bond types up the given type exist and are preinitialized
-   with ``BONDED_IA_NONE``, *i.e.*\ are empty bond types. Therefore fill
-   ``bonded_ia_params[bond_type]`` with the parameters for your
-   interaction type.
+Defining the data structure for the interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The data structures for bonded interactions reside in ``interaction_data.hpp``. 
+* Add your interaction to the 
+  enum BondedInteraction
+  This enumeration is used to identify different bonded interactions.
+* Add a typedef struct containing the parameters of the interaction. Use the one for the FENE interaction as template::
+    typedef struct {
+      double k;
+      [...]
+    } Fene_bond_parameters;
+* Add a member to the typedef union Bond_parameters. For the FENE bond it looks like this::
+    Fene_bond_parameters fene;
 
--  ::
 
-       int calc_*_force(Particle *p1, Particle *p2,..., 
-                        Bonded_ia_parameters *iaparams, 
-                        double dx[3], double force[3], ...)
+Functions for calculating force and energy, and for setting parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   This routine calculate the force between the particles. ``ia_params``
-   represents the parameters to use for this bond, ``dx`` represents the
-   vector pointing from particle 2 to particle 1. The force on particle
-   1 is placed in the force vector (and *not* added to it). The force on
-   particle 2 is obtained from Newton’s law. For many body interactions,
-   just add more particles in the beginning, and return the forces on
-   particles 1 to N-1. Again the force on particle N is obtained from
-   Newton’s law. The procedure should return 0 except when the bond is
-   broken, in which case 1 is returned.
+Every interaction resides in its own source .cpp and .hpp. A simple example for a
+bonded interaction is the FENE bond in ``src/core/fene.cpp``` and ``src/core/fene.hpp``. 
+Use these two files as templates for your interaction.
 
--  ::
+Notes:
+* The names of function arguments mentioned below are taken from the FENE bond in ``src/core/feine.cpp`` and ``src/core/fene.hpp``. It is recommended to use the same names for the corresponding functions for your interaction. 
+* The recommended signatures of the force and energy functions are::
+    inline int calc_fene_pair_force(Particle *p1, Particle *p2, 
+                                Bonded_ia_parameters *iaparams, 
+                                double dx[3], double force[3])
+    inline int fene_pair_energy(Particle *p1, Particle *p2, 
+                            Bonded_ia_parameters *iaparams, 
+                            double dx[3], double *_energy)
+  Here, ``fene`` needs to be replaced by the name of the new interaction.
+* The setter function gets a ``bond_type`` which is a numerical id identifying the number of the bond type in the simulation. It DOES NOT determine the type of the bond potential (harmonic vs FENE).
+  The signature of the setter function has to contain the ``bond_type``, the remaining parameters are specific to the interaction. For the FENE bond, e.g., we have::
+    fene_set_params(int bond_type, double k, double drmax, double r0)
+  A return value of ``ES_OK`` is returned on success, ``ES_ERR`` on error, e.g., when parameters are invalid.
+* The setter function must call make_bond_type_exists() with that bond type, to allocate the memory for storing the parameters.
+* Afterwards, the bond parameters can be stored in the global variable bonded_ia_params[bond_type]
+  
+  * bonded_ia_params[bond_type].num is the number of particles involved in the bond -1. I.e., 1 for a pairwise bonded potential such as the FENE bond.
+  * The parameters for the individual bonded interaction go to the member of Bond_parameters for your interaction defined in the previous step. For the FENE bond, this would be::
+    bonded_ia_params[bond_tpe].p.fene
+* At the end of the parameter setter function, do not forget the call to mpi_bcast_ia_params(), which will sync the parameters just set to other compute nodes in a parallel simulation.
+* The routines for calculating force and energy return an integer. A return value of 0 means OK, a value of 1 means that the particles are too far apart and the bond is broken. This will stop the integration with a runtime error.
+* The functions for calculating force and energy can make use of a pre-calculated distance vector (dx) pointing from particle 2 to particle 1.
+* The force on particle 1 has to be stored in the force vector  (not added to it). The force on particle 2 will be obtained from Newton's law.
+* The result of the energy calculation is placed in (NOT added to) the ``_energy`` argument of the energy calculation function.
 
-       int *_energy(Particle *p1, Particle *p2, ..., 
-                    Bonded_ia_parameters *iaparams, 
-                    double dx[3], double *_energy)
 
-   This calculates the energy originating from this bond. The result is
-   placed in the location ``_energy`` points to, ``ia_params`` and
-   ``dx`` are the same as for the force calculation, and the return
-   value is also the flag for a broken bond.
 
-After the preparation of the header file, the bonded interaction has to
-be linked with the rest of the code. In ``interaction_data.c``, most of
-the work has to be done:
+Including the bonded interaction in the force calculation and the energy and pressure analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*  In ``src/core/interaction_data.cpp``
 
-#. Add a name for the interaction to ``get_name_of_bonded_ia``.
+   #. Add a name for the interaction to ``get_name_of_bonded_ia()``.
+   #. In ``calc_maximal_cutoff()``, add a case for the new interaction which
+      makes sure that ``max_cut`` is larger than the interaction range of
+      the new interaction, typically the bond length. 
+      This is necessary to ensure that, in a parallel simulation, a compute node has access to both bond partners.
+      This value is always
+      used as calculated by ``calc_maximal_cutoff``, therefore it is not
+      strictly necessary that the maximal interaction range is stored
+      explicitly.
 
-#. In ``calc_maximal_cutoff``, add a case for the new interaction which
-   makes sure that ``max_cut`` is larger than the interaction range of
-   the new interaction, typically the bond length. This value is always
-   used as calculated by ``calc_maximal_cutoff``, therefore it is not
-   strictly necessary that the maximal interaction range is stored
-   explicitly.
+   #. Besides this, you have enter the force respectively the energy
+      calculation routines in ``add_bonded_force``, ``add_bonded_energy``,
+      add_bonded_virials`` and ``pressure_calc``. The pressure occurs
+      ice, once for the parallelized isotropic pressure and once for the
+      tensorial pressure calculation. For pair forces, the pressure is
+      calculated using the virials, for many body interactions currently no
+      pressure is calculated.
+   #  Do not forget to include the header file of your interaction.
 
-#. Add a print block for the new interaction to
-   ``tclcommand_inter_print_bonded``. The print format should be such
-   that the output can be used as input to inter, and defines the same
-   bond type.
+* Force calculation: in ``forces_inline.hpp` in the functino ``add_bonded_force()``, add your bond to the switch statement. For the FENE bond, e.g., the code looks like this::
+    case BONDED_IA_FENE:
+      bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+* Energy calculation: add similar code to ``add_bonded_energy()`` in ``energy_inline.hpp``
+* Pressure, stress tensor and virial calculation: If your bonded interaction is a pair bond and does not modify the particles involved, add similar code as above to pressure.hpp:calc_bonded_pair_force(). Otherwise, you have to implement a custom solution for virial calculation.
 
-#. In ``tclcommand_inter_parse_bonded``, add a parser for the
-   parameters. See the section on parsing below.
+Adding the bonded interaciton in the Python interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Please note that the following is Cython code (www.cython.org), rather than pure Python.
+* In ``src/python/espressomd/interactions.pxd``:
 
-#. Besides this, you have enter the force respectively the energy
-   calculation routines in ``add_bonded_force``, ``add_bonded_energy``,
-   ``add_bonded_virials`` and ``pressure_calc``. The pressure occurs
-   twice, once for the parallelized isotropic pressure and once for the
-   tensorial pressure calculation. For pair forces, the pressure is
-   calculated using the virials, for many body interactions currently no
-   pressure is calculated.
+  * import the parameter data structure from the C++ header file for your interaction. For the FENE bond, this looks like::
+      cdef extern from "interaction_data.hpp":
+          ctypedef struct Fene_bond_parameters:
+              double k
+              double drmax
+              double r0
+              double drmax2
+              double drmax2i
+  * Add your bonded interaction to the Cython copy of the BondedInteractions enum analogous to the one in the core:, described above:
+      cdef enum enum_bonded_interaction "BondedInteraction":
+          BONDED_IA_NONE = -1,
+          BONDED_IA_FENE,
+          BONDED_IA_HARMONIC,
+          [...]
+    The spelling has to match the one in the c++ enum exactly.
+  * Adapt the Cython copy of the bond_parameters union analogous to the C++ core.  The member name has to match the one in C++ exactly::
+      ctypedef union bond_parameters "Bond_parameters":
+          Fene_bond_parameters fene
+          Oif_global_forces_bond_parameters oif_global_forces
+          Oif_local_forces_bond_parameters oif_local_forces
+          Harmonic_bond_parameters harmonic
+  * Import the declaration of the setter function implemented in the core. For the FENE bond, this looks like::
+    cdef extern from "fene.hpp":
+        int fene_set_params(int bond_type, double k, double drmax, double r0)
 
-After the new bonded interaction works properly, it would be a good idea
-to add a testcase to the testsuite, so that changes breaking your
-interaction can be detected early.
+* In ``src/python/espressomd/interactions.pyx``:
 
-.. _adding_new_nonbonded_interactions:
+  * Implement the Cython class for the bonded interaction, using the one for the FENE bond as template. Please use pep8 naming convention:: 
+    class FeneBond(BondedInteraction):
+    
+        def __init__(self, *args, **kwargs):
+            """ 
+            FeneBond initialiser. Used to instatiate a FeneBond identifier
+            with a given set of parameters.
+    
+            Parameters
+            ----------
+            k : float
+                Specifies the magnitude of the bond interaction.
+            d_r_max : float
+                      Specifies the maximum stretch and compression length of the
+                      bond.
+            r_0 : float, optional
+                  Specifies the equilibrium length of the bond.
+            """
+            super(FeneBond, self).__init__(*args, **kwargs)
+    
+        def type_number(self):
+            return BONDED_IA_FENE
+    
+        def type_name(self):
+            return "FENE"
+    
+        def valid_keys(self):
+            return "k", "d_r_max", "r_0"
+    
+        def required_keys(self):
+            return "k", "d_r_max"
+    
+        def set_default_params(self):
+            self._params = {"r_0": 0.}
+    
+        def _get_params_from_es_core(self):
+            return \
+                {"k": bonded_ia_params[self._bond_id].p.fene.k,
+                 "d_r_max": bonded_ia_params[self._bond_id].p.fene.drmax,
+                 "r_0": bonded_ia_params[self._bond_id].p.fene.r0}
+    
+        def _set_params_in_es_core(self):
+            fene_set_params(
+                self._bond_id, self._params["k"], self._params["d_r_max"], self._params["r_0"])
+    
+* In ``testsuite/python/bondedInteractions.py``:
+  
+  * Add a test case, which verifies that parameters set and gotten from the interaction are consistent::
+    test_fene = generateTestForBondParams(
+        0, FeneBond, {"r_0": 1.1, "k": 5.2, "d_r_max": 3.})
 
-Adding New Nonbonded Interactions
+  
+  
+  
+   
+
+
+
+.. _Outdated: Adding New Nonbonded Interactions:
+
+Outdated: Adding New Nonbonded Interactions 
 ---------------------------------
 
 Writing nonbonded interactions is similar to writing nonbonded
@@ -739,23 +452,8 @@ After the new non-bonded interaction works properly, it would be a good
 idea to add a testcase to the testsuite, so that changes breaking your
 interaction can be detected early.
 
-.. _tcl_io_parsing_and_printing:
-
-Tcl I/O - Parsing and Printing
-------------------------------
-
--  ``ARG_0_IS``
-
--  ``Tcl_GetDouble/Int ...``
-
--  ``Tcl_PrintDouble/Int`` (take care of number of arguments)
-
--  ``TCL_INTEGER_SPACE`` ...
-
-.. _particle_data_organization:
-
-Particle Data Organization
---------------------------
+Outdated: Particle Data Organization
+------------------------------------
 
 The particle data organization is described in the Tcl command
 cellsystem, its implementation is briefly described in ``cells.h`` and
@@ -842,10 +540,10 @@ cell system. Note, however, that each cell system has its specific part
 of the code, where only this cellsystem does something strange and
 unique, so here you are completely on your own. Good luck.
 
-.. _errorhandling_for_developers:
+.. _Outdated: Errorhandling for Developers:
 
-Errorhandling for Developers
-----------------------------
+Outdated: Errorhandling for Developers
+--------------------------------------
 
 Developers should use the errorhandling mechanism whenever it is
 possible to recover from an error such that continuing the simulation is
@@ -903,6 +601,34 @@ instead of ``return TCL_OK/TCL_ERROR`` you should use
 ::
 
     return mpi_gather_runtime_errors(interp, TCL_OK/TCL_ERROR); 
+
+
+
+
+
+
+Global Variables which are synchronized across nodes
+----------------------------------------------------
+
+Adding new global variables to |es|, is strongly discouraged, because it means that code depends on a purely defined global state and cannot be tested individually.
+Features/Algorithms should instead be encapsulated in a class which is used by the script interface mechanism.
+
+However, there is a mechanism in the simulation core, to synchronize existing global variables across the mpi cores.
+
+These variables are declared ``extern`` in a header file and include in
+``global.cpp``. Then there is a line to the definition of the constant data
+structure ``fields`` at the beginning of the file ``global.c``. For
+details on the entries, see the definition of ``Datafield`` in
+``global.h``). Basically it is declare *where* the variable is
+stored, *which type* (INT or DOUBLE) it has and *how many* elements. A
+callback procedure can be provided which checks if the given value is
+valid and stores it. It is also responsible for dispatching the new
+value to the other compute nodes, if necessary. This is done via ``mpi_bcast_parameter()``, which will transfer the value
+to the other nodes. A simple example is ``box_l`` with the callback
+procedure ``boxl_callback``. For ``mpi_bcast_parameter`` to work, it is
+necessary that they occur in the list of constant definitions at the
+beginning of ``global.hpp``. So please keep this list in sync!
+
 
 .. [1]
    http://git-scm.com/

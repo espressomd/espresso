@@ -48,6 +48,8 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/examples.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/memd.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/mmm.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cuda.rst"
+        "${CMAKE_CURRENT_SOURCE_DIR}/shapes.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
         )
 

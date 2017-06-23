@@ -30,7 +30,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 #ifdef HERTZIAN
 
@@ -44,7 +44,7 @@ inline void add_hertzian_pair_force(const Particle * const p1, Particle const * 
 {
   double fac;
   int j;
-  if (CUTOFF_CHECK(dist < ia_params->Hertzian_sig)) {
+  if ((dist < ia_params->Hertzian_sig)) {
     fac = 5./2.*ia_params->Hertzian_eps/ia_params->Hertzian_sig *
       pow(1 - dist/ia_params->Hertzian_sig, 3./2.)/dist;
 
@@ -57,7 +57,7 @@ inline void add_hertzian_pair_force(const Particle * const p1, Particle const * 
 inline double hertzian_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist, double dist2)
 {
-  if (CUTOFF_CHECK(dist < ia_params->Hertzian_sig)) {
+  if ((dist < ia_params->Hertzian_sig)) {
     return ia_params->Hertzian_eps *
       pow(1 - dist/ia_params->Hertzian_sig, 5./2.);
   }

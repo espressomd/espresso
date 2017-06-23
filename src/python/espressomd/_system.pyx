@@ -51,7 +51,7 @@ import random  # for true random numbers from os.urandom()
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
-cdef class System:
+cdef class System(object):
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.
@@ -329,3 +329,7 @@ cdef class System:
 # lbfluid=lb.DeviceList()
 IF CUDA == 1:
     cu = cuda_init.CudaInitHandle()
+    """Cuda Init Handle.
+    Used to list or select cuda devices
+    Also see :class:`espressomd.cuda_init.CudaInitHandle`
+    """

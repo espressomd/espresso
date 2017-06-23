@@ -220,7 +220,7 @@ IF LB_GPU:
 
 
 IF LB or LB_GPU:
-    cdef class LBFluidRoutines:
+    cdef class LBFluidRoutines(object):
         cdef int node[3]
         def __init__(self, key):
             self.node[0] = key[0]
