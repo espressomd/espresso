@@ -203,4 +203,22 @@ cdef class CellSystem(object):
         def __get__(self):
             return skin
 
+    def tune_skin(self,min_skin=None,max_skin=None,tol=None,int_steps=None):
+        """Tunes the skin by measuring the integration time and bisecting over the
+           given range of skins. The best skin is set in the simulation core.
 
+           Parameters
+           -----------
+           'min_skin': float
+             Minimum skin to test
+           'max_skin': float
+             Maximum skin
+           'tol': float
+             Accuracy in skin to tune to
+           'int_steps": int
+             Integration steps to time
+
+           Returns the final skin
+        """
+        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        return self.skin

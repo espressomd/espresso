@@ -19,8 +19,12 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from .actors cimport Actor
 from globals cimport temperature
+from .actors cimport Actor
+IF SCAFACOS == 1:
+    from .scafacos import ScafacosConnector
+    from . cimport scafacos
+
 from espressomd.utils cimport handle_errors
 
 IF DIPOLES == 1:
@@ -214,6 +218,7 @@ IF DP3M == 1:
                 self._tune()
 
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
@@ -284,6 +289,7 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -318,12 +324,36 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
             if mdds_set_params(self._params["n_replica"]):
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
+    IF SCAFACOS_DIPOLES == 1:
+        class Scafacos(ScafacosConnector, MagnetostaticInteraction):
+            """Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library."""
+
+            dipolar = True
+
+            # Explicit constructor needed due to multiple inheritance
+            def __init__(self, *args, **kwargs):
+                Actor.__init__(self, *args, **kwargs)
+
+            def _activate_method(self):
+                coulomb.Dmethod = DIPOLAR_SCAFACOS
+                dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+                self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
+            
+            def _deactivate_method(self):
+                coulomb.Dmethod = DIPOLAR_NONE
+                scafacos.free_handle()
+                mpi_bcast_coulomb_params()
+
+            def default_params(self):
+                return {}
 
     IF (CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
