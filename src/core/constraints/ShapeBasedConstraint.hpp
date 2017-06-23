@@ -40,7 +40,7 @@ public:
 
   ReflectionType const &reflection_type() const;
 
-  void reset_force() { m_local_force = Vector3d{0, 0, 0}; }
+  void reset_force() override { m_local_force = Vector3d{0, 0, 0}; }
   int &only_positive() { return m_only_positive; }
   int &penetrable() { return m_penetrable; }
   int &type() { return m_type; }

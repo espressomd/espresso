@@ -4,7 +4,6 @@ import espressomd
 
 @ut.skipIf(not espressomd.has_features(["P3M"]),
            "Features not available, skipping test!")
-
 class test_icc(ut.TestCase):
            
     def runTest(self):
@@ -54,7 +53,7 @@ class test_icc(ut.TestCase):
         S.part.add(pos=[b2,b2,b2+q_dist/2],q=-q_test,fix=[1,1,1])
 
         #Actors
-        p3m=P3M(bjerrum_length=1,accuracy=1e-5)
+        p3m=P3M(bjerrum_length=1,accuracy=1e-5, mesh=[20,20,24], cao=6)
         icc=ICC(n_icc=nicc_tot , convergence=1e-6, relaxation=0.75, ext_field=[0,0,0], max_iterations=100, first_id=0, eps_out=1, normals=iccNormals, areas=iccAreas, sigmas=iccSigmas, epsilons=iccEpsilons)
         S.actors.add(p3m)
         S.actors.add(icc)
