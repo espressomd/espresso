@@ -25,6 +25,7 @@
     see \ref particle_data.cpp "particle_data.c"
 */
 
+#include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
 
@@ -270,10 +271,8 @@ typedef struct {
   /** index of the simulation box image where the particle really sits. */
   int i[3];
 
-#ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
   int ghost;
-#endif
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
@@ -308,7 +307,18 @@ typedef struct {
 } ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
-typedef struct {
+struct Particle {
+  int &identity() { return p.identity; }
+  int const &identity() const { return p.identity; }
+
+  bool operator==(Particle const &rhs) const {
+    return identity() == rhs.identity();
+  }
+
+  bool operator!=(Particle const &rhs) const {
+    return identity() != rhs.identity();
+  }
+
   ///
   ParticleProperties p;
   ///
@@ -338,8 +348,7 @@ typedef struct {
 #ifdef ENGINE
   ParticleParametersSwimming swim;
 #endif
-
-} Particle;
+};
 
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
@@ -376,15 +385,7 @@ extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
-
-/** Particles' current configuration. Before using that
-    call \ref updatePartCfg or \ref sortPartCfg to allocate
-    the data if necessary (which is decided by \ref updatePartCfg). */
-extern Particle *partCfg;
-
-/** if non zero, \ref partCfg is sorted by particle order, and
-    the particles are stored consecutively starting with 0. */
-extern int partCfgSorted;
+extern int max_local_particles;
 
 /** Particles' current bond partners. \ref partBondPartners is
     sorted by particle order, and the particles are stored
@@ -799,30 +800,6 @@ void remove_all_particles();
     @param part     identity of the particle to free from bonds
 */
 void remove_all_bonds_to(int part);
-
-/** Get the complete unsorted informations on all particles into \ref
-    partCfg if something's changed. This is a severe performance
-    drawback and might even fail for lack of memory for large systems.
-    If you need the particle info sorted, call \ref sortPartCfg
-    instead.  This function is lazy. If you would like the bonding
-    information in \ref partCfg to be valid you should set the value
-    of  to \ref WITH_BONDS.
-*/
-int updatePartCfg(int bonds_flag);
-
-/** release the partCfg array. Use this function, since it also frees the
-    bonds, if they are used.
-*/
-void freePartCfg();
-
-/** sorts the \ref partCfg array. This is indicated by setting
-    \ref partCfgSorted to 1. Note that for this to work the particles
-    have to be stored consecutively starting with 0.
-    This function is lazy.
-    @return 1 iff sorting was possible, i. e. the particles were stored
-    consecutively.
-*/
-int sortPartCfg();
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Move a particle to a new position.

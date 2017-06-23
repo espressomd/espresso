@@ -56,9 +56,6 @@ class Analysis(object):
             raise Exception("No particles to append!")
         if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
             raise Exception("All configurations stored must have the same length")
-        #sorPartCfg() has to be called before analyze_append()
-        if not c_analyze.sortPartCfg():
-            raise Exception("for analyze, store particles consecutively starting with 0.")
 
         c_analyze.analyze_append()
 
@@ -643,7 +640,6 @@ class Analysis(object):
             raise ValueError('chain_length must be greater than zero')
         if number_of_chains < 0:
             raise ValueError('number_of_chains must be greater than zero')
-        c_analyze.sortPartCfg()
         if chain_start + chain_length * number_of_chains > len(self._system.part):
             raise ValueError(
                 'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
@@ -875,9 +871,6 @@ class Analysis(object):
         if (r_max <= r_min):
             raise Exception("<r_max> has to be larger than <r_min>")
 
-        # Used to take the WITHOUT_BONDS define
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         c_analyze.analyze_rdfchain(r_min, r_max, r_bins, & f1, & f2, & f3)
 
         rdfchain = np.empty((r_bins, 4))

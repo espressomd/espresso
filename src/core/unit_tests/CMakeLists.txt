@@ -73,3 +73,6 @@ unit_test(NAME Range_test SRC Range_test.cpp)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp)
 unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp)
 unit_test(NAME Batch_test SRC Batch_test.cpp)
+unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp ../MpiCallbacks.cpp NUM_PROC 2)
+unit_test(NAME SkipIterator_test SRC SkipIterator_test.cpp)
+
