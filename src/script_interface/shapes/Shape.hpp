@@ -43,6 +43,8 @@ public:
       shape()->calculate_dist(pos.data(), &dist, vec);
       return std::vector<Variant>{dist, Vector3d{vec}};
     }
+
+    return {};
   }
 };
 
