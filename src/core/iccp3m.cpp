@@ -302,30 +302,15 @@ int iccp3m_iteration() {
 }
 
 void force_calc_iccp3m() {
-    /* The following ist mostly copied from forces.cpp */
+  init_forces_iccp3m();
 
-    /*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
-#ifdef DIPOLES
-convert_quat_to_dip_all();
-#endif
+  short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
+    /* calc non bonded interactions */
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                     d.dist2);
+  });
 
-     */
-
-    init_forces_iccp3m();
-
-    short_range_loop(
-        Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
-          auto const cutoff2 =
-              SQR(get_ia_param(p1.p.type, p2.p.type)->max_cut + skin);
-
-          if (d.dist2 < cutoff2) {
-            /* calc non bonded interactions */
-            add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21,
-                                             sqrt(d.dist2), d.dist2);
-          }
-        });
-
-    calc_long_range_forces_iccp3m();
+  calc_long_range_forces_iccp3m();
 }
 
 void init_forces_iccp3m()
