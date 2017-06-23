@@ -38,9 +38,11 @@ typedef float ekfloat;
 
 #ifdef __CUDACC__
 #include <cufft.h>
+#include <curand_kernel.h>
 #else
 typedef void cufftComplex;
 typedef void cufftReal;
+typedef void curandStatePhilox4_32_10_t;
 #endif
 
 /* Data structure holding parameters and memory pointers for the link flux system. */
@@ -75,6 +77,8 @@ typedef struct {
   float mass_product1;
   int stencil;
   int number_of_boundary_nodes;
+  float fluctuation_amplitude;
+  bool fluctuations;
   bool advection;
   bool fluidcoupling_ideal_contribution;
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -96,6 +100,7 @@ typedef struct {
 #ifdef EK_REACTION
   float* pressure;
 #endif
+  curandStatePhilox4_32_10_t *rnd_state;
 } EK_parameters;
 
 #endif
@@ -183,6 +188,8 @@ int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double
 int ek_set_stencil(int stencil);
 int ek_set_advection(bool advection);
 int ek_set_fluidcoupling(bool ideal_contribution);
+int ek_set_fluctuations(bool fluctuations);
+int ek_set_fluctuation_amplitude(float fluctuation_amplitude);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);

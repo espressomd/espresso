@@ -41,6 +41,8 @@ IF ELECTROKINETICS and CUDA:
             float mass_product1
             int stencil
             int number_of_boundary_nodes
+            float fluctuation_amplitude
+            bool fluctuations
             bool advection
             bool fluidcoupling_ideal_contribution
             float* charge_potential
@@ -93,6 +95,8 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z)
         int ek_set_stencil(int stencil)
         int ek_set_advection(bool advection)
+        int ek_set_fluctuations(bool fluctuations)
+        int ek_set_fluctuation_amplitude(float fluctuation_amplitude)
         int ek_set_fluidcoupling(bool ideal_contribution)
         int ek_node_print_velocity(int x, int y, int z, double* velocity)
         int ek_node_print_density(int species, int x, int y, int z, double* density)

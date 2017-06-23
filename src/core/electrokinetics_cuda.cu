@@ -22,6 +22,7 @@
 
 #include <cuda.h>
 #include <cufft.h>
+#include <curand_kernel.h>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -82,6 +83,7 @@ extern EK_parameters* lb_ek_parameters_gpu;
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0,
                                   0, -1,
+                                  0.0, false,
                                   true,
                                   true,
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -1617,6 +1619,23 @@ __device__ void ek_add_advection_to_flux(unsigned int index, unsigned int *neigh
                dx[0] * dx[1] * dx[2] * not_boundary );
 }
 
+__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index) {
+  if(index < ek_parameters_gpu.number_of_nodes)
+  {
+    float density = ek_parameters_gpu.rho[species_index][index];
+    float* flux = ek_parameters_gpu.j;
+    float random = curand_uniform(&ek_parameters_gpu.rnd_state[index]);
+
+    for(int i = 0; i < 13; i++)
+    {
+      //printf("%d,%d: density=%f, fluct_ampl=%f, rnd=%f, flux=%f\n", index, i, density, ek_parameters_gpu.fluctuation_amplitude, random, flux[i]);
+      flux[jindex_getByRhoLinear(index, i)] += density * ek_parameters_gpu.fluctuation_amplitude * random;
+      //printf("%d,%d: flux=%f\n", index, i, flux[i]);
+    }
+  }
+}
+
+
 __global__ void ek_calculate_quantities( unsigned int species_index,
                                          LB_nodes_gpu lb_node,
                                          LB_node_force_gpu node_f,
@@ -1625,6 +1644,9 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                                        ) {
   
   unsigned int index = ek_getThreadIndex ();
+
+//  if(index == 0)
+//    printf("%s: %f\n", ek_parameters_gpu.fluctuations ? "true" : "false" , ek_parameters_gpu.fluctuation_amplitude);
 
   if(index < ek_parameters_gpu.number_of_nodes)
   {
@@ -1782,6 +1804,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     /* advective contribution to flux */
     if(ek_parameters_gpu.advection)
       ek_add_advection_to_flux(index, neighborindex, coord, species_index, node_f, lb_node, ek_lbparameters_gpu);
+
+    /* fluctuation contribution to flux */
+    if(ek_parameters_gpu.fluctuations)
+      ek_add_fluctuations_to_flux(index, species_index);
   }
 }
 
@@ -2410,6 +2436,11 @@ __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
   }
 }
 
+__global__ void initialize_random_generator(int seed) {
+  int index = ek_getThreadIndex();
+  /* Each thread gets same seed, a different sequence number, no offset */
+  curand_init(seed, index, 0, &ek_parameters_gpu.rnd_state[index]);
+}
 
 #ifdef EK_REACTION
 __global__ void ek_reaction( ) {
@@ -2728,7 +2759,19 @@ int ek_init() {
 
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.j,
                              ek_parameters.number_of_nodes * 13 * sizeof( ekfloat ) ) );
+    cuda_safe_mem(cudaMalloc( (void **) &ek_parameters.rnd_state, 
+                             ek_parameters.number_of_nodes * 13 * sizeof(curandStatePhilox4_32_10_t))); 
+
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+
+    //initializing random number generator states
+    unsigned long long seed = 0;
+    blocks_per_grid_x =
+      ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x ) +
+        threads_per_block * blocks_per_grid_y - 1
+      ) / ( threads_per_block * blocks_per_grid_y );
+    dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+    KERNELCALL( initialize_random_generator, dim_grid, threads_per_block, (seed) );
     
     lb_get_para_pointer( &ek_lbparameters_gpu );
     lb_set_ek_pointer( ek_parameters_gpu_pointer );
@@ -3863,6 +3906,15 @@ int ek_set_advection( bool advection ) {
   return 0;
 }
 
+int ek_set_fluctuations(bool fluctuations) {
+  ek_parameters.fluctuations = fluctuations;
+  return 0;
+}
+
+int ek_set_fluctuation_amplitude(float fluctuation_amplitude) {
+  ek_parameters.fluctuation_amplitude = fluctuation_amplitude;
+  return 0;
+}
 
 int ek_set_fluidcoupling( bool ideal_contribution ) {
   if(ek_parameters.stencil != 0)
@@ -3874,24 +3926,16 @@ int ek_set_fluidcoupling( bool ideal_contribution ) {
 
 
 int ek_set_density( int species, double density ) {
-
   ek_init_species( species );
-
   ek_parameters.density[ ek_parameters.species_index[ species ] ] = density;
-   
   return 0;
 }
 
 
 int ek_set_D( int species, double D ) {
-
-
   ek_init_species( species );
-  
   ek_parameters.D[ ek_parameters.species_index[ species ] ] = D;
   ek_parameters.d[ ek_parameters.species_index[ species ] ] = D / ( 1.0 + 2.0 * sqrt(2.0)) ;
-
-  
   return 0;
 }
 

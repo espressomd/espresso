@@ -29,7 +29,7 @@ IF ELECTROKINETICS:
 
 
         def valid_keys(self):
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "bjerrum_length", "stencil", "advection", "fluid_coupling"
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "bjerrum_length", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude"
 
         def required_keys(self):
             return ["agrid", "lb_density", "viscosity", "friction", "T", "bjerrum_length"]
@@ -46,7 +46,9 @@ IF ELECTROKINETICS:
                     "bjerrum_length": -1,
                     "stencil": "linkcentered",
                     "advection": True,
-                    "fluid_coupling": "friction"}
+                    "fluid_coupling": "friction",
+                    "fluctuations" : False,
+                    "fluctuation_amplitude" : 0.0}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -74,7 +76,9 @@ IF ELECTROKINETICS:
                     "bjerrum_length":ek_parameters.bjerrumlength,
                     "stencil": stencil,
                     "advection": ek_parameters.advection,
-                    "fluid_coupling": fluid_coupling}
+                    "fluid_coupling": fluid_coupling,
+                    "fluctuations": ek_parameters.fluctuations,
+                    "fluctuation_amplitude": ek_parameters.fluctuation_amplitude}
 
 
         def _set_params_in_es_core(self):
@@ -100,6 +104,8 @@ IF ELECTROKINETICS:
             ek_set_gamma_odd(self._params["gamma_odd"])
             ek_set_gamma_even(self._params["gamma_even"])
             ek_set_advection(self._params["advection"])
+            ek_set_fluctuations(self._params["fluctuations"])
+            ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
 
 
         def set_density(self, species=None, density=None, node=None):
