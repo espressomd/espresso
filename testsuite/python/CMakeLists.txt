@@ -29,6 +29,9 @@ set(py_tests  bondedInteractions.py
               ek_eof_one_species_x.py
               ek_eof_one_species_y.py
               ek_eof_one_species_z.py
+              ek_eof_one_species_x_nonlinear.py
+              ek_eof_one_species_y_nonlinear.py
+              ek_eof_one_species_z_nonlinear.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

@@ -24,8 +24,6 @@ import sys
 import math
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROKINETICS","EK_BOUNDARIES"]),
-"Features not available, skipping test!")
 
 ################################################################################
 #                              Set up the System                               # 
@@ -69,6 +67,10 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 def hydrostatic_pressure (ek, x, xi, bjerrum_length, tensor_entry, box_x,box_y,box_z,agrid):
   offset = ek[int(box_x/(2*agrid)),int(box_y/(2*agrid)),int(box_z/(2*agrid))].pressure[tensor_entry]
   return 0.0 + offset
+
+
+@ut.skipIf(not espressomd.has_features(["ELECTROKINETICS","EK_BOUNDARIES"]),
+"Features not available, skipping test!")
 
 class ek_eof_one_species_x(ut.TestCase):
 
@@ -254,14 +256,14 @@ class ek_eof_one_species_x(ut.TestCase):
     if (output_profiles):
       fp.close
 
-    total_density_difference = agrid*total_density_difference/box_z
-    total_velocity_difference = agrid*total_velocity_difference/box_z
-    total_pressure_difference_xx = agrid*total_pressure_difference_xx/box_z
-    total_pressure_difference_yy = agrid*total_pressure_difference_yy/box_z
-    total_pressure_difference_zz = agrid*total_pressure_difference_zz/box_z
-    total_pressure_difference_xy = agrid*total_pressure_difference_xy/box_z
-    total_pressure_difference_yz = agrid*total_pressure_difference_yz/box_z
-    total_pressure_difference_xz = agrid*total_pressure_difference_xz/box_z
+    total_density_difference = agrid*total_density_difference/width
+    total_velocity_difference = agrid*total_velocity_difference/width
+    total_pressure_difference_xx = agrid*total_pressure_difference_xx/width
+    total_pressure_difference_yy = agrid*total_pressure_difference_yy/width
+    total_pressure_difference_zz = agrid*total_pressure_difference_zz/width
+    total_pressure_difference_xy = agrid*total_pressure_difference_xy/width
+    total_pressure_difference_yz = agrid*total_pressure_difference_yz/width
+    total_pressure_difference_xz = agrid*total_pressure_difference_xz/width
 
     print("Density deviation: {}".format(total_density_difference))
     print("Velocity deviation: {}".format(total_velocity_difference))
@@ -272,15 +274,14 @@ class ek_eof_one_species_x(ut.TestCase):
     print("Pressure deviation yz component: {}".format(total_pressure_difference_yz))
     print("Pressure deviation xz component: {}".format(total_pressure_difference_xz))
 
-
-    self.assertTrue(total_density_difference < 6.0e-06,"Density accuracy not achieved")
-    self.assertTrue(total_velocity_difference < 3.0e-06,"Velocity accuracy not achieved")
-    self.assertTrue(total_pressure_difference_xx < 6.0e-07,"Pressure accuracy xx component not achieved")
-    self.assertTrue(total_pressure_difference_yy < 2.0e-04,"Pressure accuracy yy component not achieved")
-    self.assertTrue(total_pressure_difference_zz < 6.0e-07,"Pressure accuracy zz component not achieved")
-    self.assertTrue(total_pressure_difference_xy < 2.0e-05,"Pressure accuracy xy component not achieved")
-    self.assertTrue(total_pressure_difference_yz < 5.0e-09,"Pressure accuracy yz component not achieved")
-    self.assertTrue(total_pressure_difference_xz < 5.0e-09,"Pressure accuracy xz component not achieved")
+    self.assertTrue(total_density_difference < 1.5e-06,"Density accuracy not achieved")
+    self.assertTrue(total_velocity_difference < 5.0e-07,"Velocity accuracy not achieved")
+    self.assertTrue(total_pressure_difference_xx < 1.5e-07,"Pressure accuracy xx component not achieved")
+    self.assertTrue(total_pressure_difference_yy < 3.5e-05,"Pressure accuracy yy component not achieved")
+    self.assertTrue(total_pressure_difference_zz < 1.5e-07,"Pressure accuracy zz component not achieved")
+    self.assertTrue(total_pressure_difference_xy < 3.0e-06,"Pressure accuracy xy component not achieved")
+    self.assertTrue(total_pressure_difference_yz < 1.5e-09,"Pressure accuracy yz component not achieved")
+    self.assertTrue(total_pressure_difference_xz < 7.5e-10,"Pressure accuracy xz component not achieved")
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ import sys
 import math
 
 
+
 ################################################################################
 #                              Set up the System                               # 
 ################################################################################
@@ -63,9 +64,9 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 # creates a small error in the direction normal to the wall, which
 # should decay with the simulation time.
 
-def hydrostatic_pressure (ek, x, xi, bjerrum_length, tensor_entry, box_x,box_y,box_z,agrid):
+def hydrostatic_pressure (ek, x, xi, bjerrum_length, tensor_entry, box_x,box_y,box_z,agrid,temperature):
   offset = ek[int(box_x/(2*agrid)),int(box_y/(2*agrid)),int(box_z/(2*agrid))].pressure[tensor_entry]
-  return 0.0 + offset
+  return temperature*xi*xi*math.tan(xi*x)*math.tan(xi*x)/(2.0*math.pi*bjerrum_length) + offset
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROKINETICS","EK_BOUNDARIES"]),
@@ -123,7 +124,7 @@ class ek_eof_one_species_x(ut.TestCase):
 
 # Set up the (LB) electrokinetics fluid
 
-    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = friction, T = temperature, bjerrum_length = bjerrum_length, stencil = "linkcentered")
+    ek = electrokinetics.Electrokinetics(agrid = agrid, lb_density = density_water, viscosity = viscosity_kinematic, friction = friction, T = temperature, bjerrum_length = bjerrum_length, stencil = "nonlinear")
 
     counterions = electrokinetics.Species(density=density_counterions, D=0.3, valency=valency, ext_force = [0,0,force])
     ek.add_species(counterions)
@@ -217,11 +218,11 @@ class ek_eof_one_species_x(ut.TestCase):
       # diagonal pressure tensor
 
         measured_pressure_xx = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(0,0)]
-        calculated_pressure_xx = hydrostatic_pressure(ek,position, xi, bjerrum_length, (0,0),box_x,box_y,box_z,agrid)
+        calculated_pressure_xx = hydrostatic_pressure(ek,position, xi, bjerrum_length, (0,0),box_x,box_y,box_z,agrid,temperature)
         measured_pressure_yy = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(1,1)]
-        calculated_pressure_yy = hydrostatic_pressure(ek,position, xi, bjerrum_length, (1,1),box_x,box_y,box_z,agrid)
+        calculated_pressure_yy = hydrostatic_pressure(ek,position, xi, bjerrum_length, (1,1),box_x,box_y,box_z,agrid,temperature)
         measured_pressure_zz = ek[int(box_x/(2*agrid)),i, int(box_z/(2*agrid))].pressure[(2,2)]
-        calculated_pressure_zz = hydrostatic_pressure(ek,position, xi, bjerrum_length, (2,2),box_x,box_y,box_z,agrid)
+        calculated_pressure_zz = hydrostatic_pressure(ek,position, xi, bjerrum_length, (2,2),box_x,box_y,box_z,agrid,temperature)
 
         pressure_difference_xx = abs(measured_pressure_xx - calculated_pressure_xx)
         pressure_difference_yy = abs(measured_pressure_yy - calculated_pressure_yy)
@@ -274,14 +275,13 @@ class ek_eof_one_species_x(ut.TestCase):
     print("Pressure deviation xz component: {}".format(total_pressure_difference_xz))
 
     self.assertTrue(total_density_difference < 1.5e-06,"Density accuracy not achieved")
-    self.assertTrue(total_velocity_difference < 3.5e-07,"Velocity accuracy not achieved")
-    self.assertTrue(total_pressure_difference_xx < 2.5e-07,"Pressure accuracy xx component not achieved")
-    self.assertTrue(total_pressure_difference_yy < 2.5e-07,"Pressure accuracy yy component not achieved")
+    self.assertTrue(total_velocity_difference < 4.0e-07,"Velocity accuracy not achieved")
+    self.assertTrue(total_pressure_difference_xx < 5.0e-06,"Pressure accuracy xx component not achieved")
+    self.assertTrue(total_pressure_difference_yy < 5.0e-06,"Pressure accuracy yy component not achieved")
     self.assertTrue(total_pressure_difference_zz < 4.0e-06,"Pressure accuracy zz component not achieved")
-    self.assertTrue(total_pressure_difference_xy < 1.0e-09,"Pressure accuracy xy component not achieved")
-    self.assertTrue(total_pressure_difference_yz < 2.0e-06,"Pressure accuracy yz component not achieved")
-    self.assertTrue(total_pressure_difference_xz < 1.5e-09,"Pressure accuracy xz component not achieved")
-
+    self.assertTrue(total_pressure_difference_xy < 1.0e-10,"Pressure accuracy xy component not achieved")
+    self.assertTrue(total_pressure_difference_yz < 1.5e-06,"Pressure accuracy yz component not achieved")
+    self.assertTrue(total_pressure_difference_xz < 1.0e-10,"Pressure accuracy xz component not achieved")
 
 
 if __name__ == "__main__":
