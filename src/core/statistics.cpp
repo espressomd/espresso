@@ -39,7 +39,6 @@
 #include "statistics_fluid.hpp"
 #include "statistics_molecule.hpp"
 #include "utils.hpp"
-#include "verlet.hpp"
 #include "virtual_sites.hpp"
 #include <cstdlib>
 #include <cstring>
