@@ -9,7 +9,7 @@ IF REACTION_ENSEMBLE:
     class wang_landau_has_converged(Exception):
         pass
 
-    cdef class reaction_ensemble:
+    cdef class reaction_ensemble(object):
         """
         This class provides the Reaction Ensemble algorithm, the Wang-Landau Reaction Ensemble algorithm and the constant pH method.
         """
