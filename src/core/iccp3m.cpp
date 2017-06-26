@@ -67,11 +67,6 @@ inline void init_local_particle_force_iccp3m(Particle *part);
 inline void init_ghost_force_iccp3m(Particle *part);
 extern void on_particle_change();
 
-/* other icc*  functions */
-int imod(int x, int y);
-void iccp3m_revive_forces();
-void iccp3m_store_forces();
-
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
  * for short and long range parts are called. Long Range Parts are calculated
@@ -87,7 +82,6 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              double dist2) {
   /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
   double force[3] = {0, 0, 0};
-  int j;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
                       p1->p.identity, p2->p.identity, dist));
@@ -97,7 +91,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /***********************************************/
 
   /* real space coulomb */
-  double q1q2 = p1->p.q * p2->p.q;
+  auto const q1q2 = p1->p.q * p2->p.q;
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -125,7 +119,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /***********************************************/
   /* add total nonbonded forces to particle      */
   /***********************************************/
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     p1->f.f[j] += force[j];
     p2->f.f[j] -= force[j];
   }
@@ -461,66 +455,6 @@ inline void init_ghost_force_iccp3m(Particle *part) {
   part->f.torque[1] = 0;
   part->f.torque[2] = 0;
 #endif
-}
-
-/* integer mod*/
-int imod(int x, int y) {
-  double p, q, m;
-  int z;
-  p = x;
-  q = y;
-  m = fmod(p, q);
-  z = m;
-  return z;
-}
-
-void reset_forces() {
-  Cell *cell;
-  int c, i, np;
-  Particle *part;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] = 0.0;
-      part[i].f.f[1] = 0.0;
-      part[i].f.f[2] = 0.0;
-    }
-  }
-}
-void iccp3m_revive_forces() {
-  /* restore forces that are computed before in Espresso integrate_vv function*/
-  Cell *cell;
-  int c, i, np;
-  Particle *part;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] = iccp3m_cfg.fx[part[i].p.identity];
-      part[i].f.f[1] = iccp3m_cfg.fy[part[i].p.identity];
-      part[i].f.f[2] = iccp3m_cfg.fz[part[i].p.identity];
-    }
-  }
-}
-void iccp3m_store_forces() {
-  /* store forces that are computed before in Espresso integrate_vv function */
-  /* iccp3m will re-compute electrostatic-forces on boundary particles */
-  Cell *cell;
-  int c, i, np;
-  Particle *part;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      iccp3m_cfg.fx[part[i].p.identity] = part[i].f.f[0];
-      iccp3m_cfg.fy[part[i].p.identity] = part[i].f.f[1];
-      iccp3m_cfg.fz[part[i].p.identity] = part[i].f.f[2];
-    }
-  }
 }
 
 int iccp3m_sanity_check() {
