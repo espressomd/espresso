@@ -1365,6 +1365,13 @@ void mpi_bcast_ia_params(int i, int j) {
                 comm_cart);
     }
 #endif
+#ifdef P3M
+    /* For subtract coulomb p3m we have to send the forces extra */
+    if (bonded_ia_params[i].type == BONDED_IA_SUBT_COULOMB_P3M) {
+      int size = bonded_ia_params[i].p.subt_coulomb_p3m.n_bins+1;
+      MPI_Bcast(bonded_ia_params[i].p.subt_coulomb_p3m.long_range_forces, size, MPI_DOUBLE, 0, comm_cart);
+    }
+#endif
   }
 
   on_short_range_ia_change();
@@ -1429,6 +1436,16 @@ void mpi_bcast_ia_params_slave(int i, int j) {
                 comm_cart);
       MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0,
                 comm_cart);
+    }
+#endif
+#ifdef P3M
+    /* For tabulated potentials we have to send the tables extra */
+    if (bonded_ia_params[i].type == BONDED_IA_SUBT_COULOMB_P3M) {
+      int size = bonded_ia_params[i].p.subt_coulomb_p3m.n_bins+1;
+      /* alloc force tables on slave nodes! */
+      bonded_ia_params[i].p.subt_coulomb_p3m.long_range_forces =
+          (double *)Utils::malloc(size * sizeof(double));
+      MPI_Bcast(bonded_ia_params[i].p.subt_coulomb_p3m.long_range_forces, size, MPI_DOUBLE, 0, comm_cart);
     }
 #endif
   }

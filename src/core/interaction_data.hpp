@@ -769,7 +769,7 @@ typedef struct {
 typedef struct {
   int n_bins;
   double* long_range_energies;
-  double** long_range_forces;
+  double* long_range_forces;
 } Subt_coulomb_p3m_bond_parameters;
 #endif
 

@@ -805,13 +805,13 @@ inline void add_bonded_force(Particle *p1) {
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
           break;
+#endif // BOND_ENDANGLEDIST
 #ifdef DRUDE
 	    case BONDED_IA_DRUDE:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
 	      break;
 #endif
-#endif // BOND_ENDANGLEDIST
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];

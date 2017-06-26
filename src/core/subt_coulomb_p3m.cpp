@@ -58,10 +58,7 @@ int subt_coulomb_p3m_set_params(int bond_type, int n_bins)
     */ 
     
     bonded_ia_params[bond_type].p.subt_coulomb_p3m.n_bins = n_bins;
-    bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces = (double**)Utils::malloc((n_bins+1)*sizeof(double*));
-
-    for(int i = 0; i <= n_bins; i++)
-        bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[i] = (double*)Utils::malloc(3 * sizeof(double));
+    bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces = (double*)Utils::malloc((n_bins+1)*sizeof(double));
 
     double pre1 = 1.0/(4.0*p3m.params.alpha*p3m.params.alpha);
 
@@ -88,10 +85,8 @@ int subt_coulomb_p3m_set_params(int bond_type, int n_bins)
                 }
             }
         }
-        for(int i = 0; i < 3; i++)
-            bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[di][i] = F[i];
+        bonded_ia_params[bond_type].p.subt_coulomb_p3m.long_range_forces[di] = utils::veclen(F);
     }
-
 
     mpi_bcast_ia_params(bond_type, -1); 
 

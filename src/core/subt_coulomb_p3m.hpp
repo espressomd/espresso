@@ -57,10 +57,13 @@ inline int calc_subt_coulomb_p3m_pair_force(Particle *p1, Particle *p2, Bonded_i
     double dist = sqrt(dist2);
     double n_bins = iaparams->p.subt_coulomb_p3m.n_bins;
 
-    if (dist > 0) {
+    if (dx[0] > box_l[0]/2.0 || dx[1] > box_l[1]/2.0 || dx[2] > box_l[2]/2.0)
+        return 1;
+    else if (dist > 0) {
 
         double force_subtr[3] = {0,0,0};
         double q1q2 = p1->p.q*p2->p.q;
+        double pre1 = coulomb.prefactor * q1q2 / (box_l[0]*box_l[1]*box_l[2]) / dist;
 
         //Add short range to force_subtr
         if (q1q2)
@@ -69,13 +72,10 @@ inline int calc_subt_coulomb_p3m_pair_force(Particle *p1, Particle *p2, Bonded_i
         for(int i=0; i<3; i++)
         {
             double bin_size = box_l[i]/2.0/n_bins;
-            //Add long range from precalculated array
             int dist_bin = int(fabs(dx[i]) / bin_size); //The lower bin index of the array
             double d_bin = bin_size*dist_bin; //Position of the lower bin
             double sp = (fabs(dx[i]) - d_bin) / bin_size; //Splitting factor to next bin for linear interpolation
-            //printf("dist_bin %d   d_bin %f   dist %f   sp %f   bin_size %f  dx[%d] %f\n", dist_bin, d_bin, dist, sp, bin_size,i, dx[i]);
-            //Long range calulation: e(p1,p2) * q1*q2/V * F_Ewald_precomputed
-            double lr = q1q2 / (box_l[0]*box_l[1]*box_l[2]) / dist * ((1.0-sp) * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin][i] + sp * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin+1][i]);
+            double lr = pre1 * ((1.0-sp) * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin] + sp * iaparams->p.subt_coulomb_p3m.long_range_forces[dist_bin+1]);
             force_subtr[i] += dx[i] * lr;
             //Invert
             force[i] -= force_subtr[i];
