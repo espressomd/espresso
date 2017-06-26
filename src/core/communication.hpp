@@ -60,6 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
+#include "utils/serialization/array.hpp" 
 
 /**************************************************
  * exported variables
@@ -470,19 +471,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]);
 
-/** Issue REQ_GETPARTS: gather all particle informations (except bonds).
-    This is slow and may use huge amounts of memory. If il is non-NULL, also
-    the bonding information is also fetched and stored in a single intlist
-    pointed to by il. The particles bonding information references this array,
-    which is the only data you have to free later (besides the result array
-    you allocated). YOU MUST NOT CALL \ref free_particle on any of these
-  particles!
-
-  \param result where to store the gathered particles
-  \param il if non-NULL, the integerlist where to store the bonding info
-*/
-void mpi_get_particles(Particle *result, IntList *il);
-
 /** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
     velocities accordingly.
 */
@@ -679,7 +667,6 @@ void mpi_mpiio(const char *filename, unsigned fields, int write);
 */
 /*@{*/
 #define P3M_COUNT_CHARGES 0
-#define SORT_PARTICLES 1
 #define CHECK_PARTICLES 2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES 5

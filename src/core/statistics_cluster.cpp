@@ -29,6 +29,8 @@
 
 #include "statistics_cluster.hpp"
 #include "grid.hpp"
+#include "interaction_data.hpp"
+#include "partCfg.hpp"
 
 /** NULL terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;
@@ -254,9 +256,9 @@ int test_mesh_elements(double pos[3], int probe_part_type)
   int i;
   double dist,vec[3];
 
-  for (i=0; i<n_part; i++) {
-    IA_parameters *ia_params = get_ia_param(partCfg[i].p.type,probe_part_type);
-    get_mi_vector(vec, pos, partCfg[i].r.p);
+  for (auto &p: partCfg) {
+    IA_parameters *ia_params = get_ia_param(p.p.type,probe_part_type);
+    get_mi_vector(vec, pos, p.r.p);
     dist = sqrt(sqrlen(vec));
 
     if ( dist < (ia_params->LJ_cut+ia_params->LJ_offset) ) return -2;

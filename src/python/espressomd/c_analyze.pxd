@@ -22,7 +22,6 @@
 # TODO: Merge blocks of cdef extern for same headers.
 #
 
-
 from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
@@ -31,7 +30,6 @@ from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "particle_data.hpp":
-    cdef int updatePartCfg(int bonds_flag)
     int n_particle_types
 
 cdef extern from "statistics.hpp":
@@ -67,7 +65,6 @@ cdef extern from "statistics.hpp":
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
-
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
     cdef Observable_stat_non_bonded total_pressure_non_bonded
@@ -83,7 +80,6 @@ cdef extern from "energy.hpp":
     cdef void init_energies(Observable_stat * stat)
 
 cdef extern from "statistics_chain.hpp":
-    int sortPartCfg()
     int chain_start
     int chain_n_chains
     int chain_length

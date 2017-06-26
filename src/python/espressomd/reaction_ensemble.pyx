@@ -397,12 +397,7 @@ IF REACTION_ENSEMBLE:
             If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
             """
             RE.do_global_mc_move_for_particles_of_type(type_mc, RE.m_current_wang_landau_system.polymer_start_id,RE.m_current_wang_landau_system.polymer_end_id, 1, True)
-        
-        def hybrid_monte_carlo_move(self):
-            """
-            this performs in an experimental implementation only a hybrid Monte Carlo move! Check the implementation again before using HMC here. Make sure not to use an MD thermostat in the case of using the Wang-Landau algorithm with Hybrid-Monte-Carlo moves. Wang-Landau moves with the Hybrid-Monte-Carlo moves are interesting for polymer systems since they avoid trapping in the energy reweighting case. However it is stressed here again that the implementation is experimental only. Sets whether the conformation changing Monte-Carlo moves should use a hybrid Monte Carlo scheme (use MD to propose new configurations and accept these proposed configurations with a probability proportional to :math:`\exp(-\\beta \\Delta E_\\text{pot})`).     
-            """
-            RE.do_HMC_move_wang_landau();
+
         
         ##specify information for configuration changing monte carlo move
         property polymer_start_id:

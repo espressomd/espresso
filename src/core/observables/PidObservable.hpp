@@ -2,13 +2,9 @@
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "Observable.hpp"
-#include "particle_data.hpp" 
 #include <vector>
-#include "integrate.hpp"  
-
 
 namespace Observables {
-
 
 // Observable which acts on a given list of particle ids
 class PidObservable : public Observable {

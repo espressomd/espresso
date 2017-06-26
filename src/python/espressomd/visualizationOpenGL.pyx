@@ -12,7 +12,7 @@ import collections
 import scipy.spatial
 include "myconfig.pxi"
 
-class openGLLive:
+class openGLLive(object):
 
     def __init__(self, system, **kwargs):
 
@@ -935,7 +935,7 @@ def drawArrow(pos, d, radius, color, quality):
 
 
 #MOUSE EVENT MANAGER
-class MouseFireEvent:
+class MouseFireEvent(object):
 
     ButtonPressed = 0
     FreeMotion = 1
@@ -943,7 +943,7 @@ class MouseFireEvent:
     ButtonReleased = 3
 
 
-class MouseButtonEvent:
+class MouseButtonEvent(object):
 
     def __init__(self, button, fireEvent, callback):
         self.button = button
@@ -951,7 +951,7 @@ class MouseButtonEvent:
         self.callback = callback
 
 
-class MouseManager:
+class MouseManager(object):
 
     def __init__(self):
         self.mousePos = np.array([0, 0])
@@ -994,14 +994,14 @@ class MouseManager:
 
 
 #KEYBOARD EVENT MANAGER
-class KeyboardFireEvent:
+class KeyboardFireEvent(object):
 
     Pressed = 0
     Hold = 1
     Released = 2
 
 
-class KeyboardButtonEvent:
+class KeyboardButtonEvent(object):
 
     def __init__(self, button, fireEvent, callback):
         self.button = button
@@ -1009,7 +1009,7 @@ class KeyboardButtonEvent:
         self.callback = callback
 
 
-class KeyboardManager:
+class KeyboardManager(object):
 
     def __init__(self):
         self.pressedKeys = set([])
@@ -1064,7 +1064,7 @@ class KeyboardManager:
             self.keyStateOld[button] = 0
 
 #CAMERA
-class Camera:
+class Camera(object):
 
     def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed

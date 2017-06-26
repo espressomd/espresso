@@ -120,7 +120,7 @@ int convert_quatu_to_quat(double d[3], double quat[4])
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */  
-void define_rotation_matrix(Particle *p, double A[9])
+void define_rotation_matrix(Particle const *p, double A[9])
 {
   double q0q0 =p->r.quat[0];
   q0q0 *=q0q0;
@@ -253,7 +253,7 @@ void convert_torques_propagate_omega()
 
 #if defined(LB_GPU) && defined(ENGINE)
   if (lattice_switch & LATTICE_LB_GPU) {
-    copy_v_cs_from_GPU();
+    copy_v_cs_from_GPU(local_cells.particles());
   }
 #endif
 

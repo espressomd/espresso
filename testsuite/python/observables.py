@@ -104,16 +104,15 @@ class Observables(ut.TestCase):
 
     com_force =generate_test_for_pid_observable(ComForce,"f","sum")
     
-    # Disabled untile ParticleSlice.dip is implemented
-    #if espressomd.has_features(["DIPOLES"]):
-        #test_mag_dip =generate_test_for_pid_observable(MagneticDipoleMoment,"dip","sum")
+    if espressomd.has_features(["DIPOLES"]):
+        test_mag_dip = generate_test_for_pid_observable(MagneticDipoleMoment,"dip","sum")
         
 
 
 
-    # This is disabled until ParticleSlice.omega_body is implemented
+    # This is disabled as it does not currently work
     #if espressomd.has_features(["ROTATION"]):
-       #test_omega_body= generate_test_for_pid_observable(ParticleBodyVelocities,"omega_body") 
+    #    test_omega_body = generate_test_for_pid_observable(ParticleBodyVelocities,"omega_body")
 
     def test_stress_tensor(self):
        s=self.es.analysis.stress_tensor()["total"].reshape(9)

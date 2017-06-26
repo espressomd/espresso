@@ -121,13 +121,13 @@ IF ELECTROSTATICS and P3M:
                 self._params["areas"], self._params["n_icc"], float, "Error in area list.")
 
             # Not Required
-            if self._params.has_key("sigmas"):
+            if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
             else:
                 self._params["sigmas"] = np.zeros(self._params["n_icc"])
 
-            if self._params.has_key("epsilons"):
+            if "epsilons" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
             else:

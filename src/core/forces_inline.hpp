@@ -27,7 +27,6 @@
 #include "topology.hpp"
 #endif
 
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -275,15 +274,8 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
                                        double force[3],
                                        double torque1[3] = NULL,
                                        double torque2[3] = NULL) {
-#ifdef MOL_CUT
-  // You may want to put a correction factor and correction term for smoothing
-  // function else then theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 1)
-#endif
-  {
     calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
                                      torque1, torque2);
-  }
 }
 
 inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
@@ -686,12 +678,6 @@ inline void add_bonded_force(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
-      break;
-#endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
 #ifdef BOND_ANGLE

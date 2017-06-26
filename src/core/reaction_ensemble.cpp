@@ -12,6 +12,7 @@
 #include "external_potential.hpp" //for energies
 #include "global.hpp" //for access to global variables
 #include "particle_data.hpp" //for particle creation, modification
+#include "partCfg.hpp"
 #include "statistics.hpp" //for distto
 #include "integrate.hpp" //for time_step
 #include <stdio.h> //for getline()
@@ -1255,72 +1256,9 @@ void ReactionEnsemble::update_wang_landau_potential_and_histogram(int index_of_s
 
 }
 
-/**
-* Performs a hybrid Monte Carlo move using the Wang-Landau acceptance probability. The implementation of the hybrid move is experimental. Check this function before production runs!
-*/
-bool ReactionEnsemble::do_HMC_move_wang_landau(){
-	const int old_state_index=get_flattened_index_wang_landau_of_current_state();
-	if(old_state_index>=0){
-		if(m_current_wang_landau_system.histogram[old_state_index]>=0)
-			m_current_wang_landau_system.monte_carlo_trial_moves+=1;
-	}
-	
-	const double E_pot_old=calculate_current_potential_energy_of_system_wrap(0, NULL);
-	
-	double particle_positions[3*n_part];
-
-	//save old_position and set random velocities
-	for (int i=0; i<n_part; i++) {
-	    updatePartCfg(WITHOUT_BONDS);
-	    Particle* part=&(partCfg[i]);
-	    double ppos[3];
-		memmove(&(particle_positions[3*i]), part->r.p, 3*sizeof(double));
-		
-		//create random velocity vector according to Maxwell Boltzmann distribution for components
-		double vel[3];
-		//we usse mass=1 for all particles, think about adapting this
-		vel[0]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-		vel[1]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-		vel[2]=std::pow(2*PI*m_current_reaction_system.temperature_reaction_ensemble,-3.0/2.0)*gaussian_random()*time_step;//scale for internal use in espresso
-		set_particle_v(part->p.identity,vel);
-    }
-	mpi_integrate(20,-1); //-1 for recalculating forces, this should be a velocity verlet NVE-MD move => do not turn on a thermostat	
-	
-	const int new_state_index=get_flattened_index_wang_landau_of_current_state();
-	const double E_pot_new=calculate_current_potential_energy_of_system_wrap(0, NULL);
-	
-//	printf("E_pot_old %f E_pot_new %f\n",E_pot_old, E_pot_new); //use this to check wether your MD timestep is big enough. There needs to be a change in the energy bigger than Delta E. If there is no change increase the timestep.
-	
-	const double beta =1.0/m_current_reaction_system.temperature_reaction_ensemble;
-	std::vector<int> dummy_old_particle_numbers;
-	double bf=calculate_boltzmann_factor_reaction_ensemble_wang_landau(NULL, E_pot_old, E_pot_new, dummy_old_particle_numbers, old_state_index, new_state_index, true);
-	
-	bool got_accepted=false;
-	if(d_random()<bf){
-		//accept
-		if(m_current_wang_landau_system.do_energy_reweighting==true){
-			update_wang_landau_potential_and_histogram(new_state_index);
-			if(m_current_wang_landau_system.histogram[new_state_index]>=0)
-				got_accepted=true;
-		}
-	}else{
-		//reject
-		if(m_current_wang_landau_system.do_energy_reweighting==true){
-			update_wang_landau_potential_and_histogram(old_state_index);
-		}
-		//create particles again at the positions they were
-		for (int i=0; i<n_part; i++) {
-		    updatePartCfg(WITHOUT_BONDS);
-	        Particle* part =&partCfg[i];
-	        place_particle(part->p.identity,&(particle_positions[3*i]));
-        }
-	}
-	return got_accepted;
-}
-
 
 /** Performs a randomly selected reaction using the Wang-Landau algorithm.
-*make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_particles_of_type, or do_HMC_move_wang_landau
+*make sure to perform additional configuration changing steps, after the reaction step! like in Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo. this can be done with MD in the case of the no-energy-reweighting case, or with the functions do_global_mc_move_for_particles_of_type
 *perform additional Monte-carlo moves to to sample configurational partition function
 *according to "Density-of-states Monte Carlo method for simulation of fluids"
 do as many steps as needed to get to a new conformation (compare Density-of-states Monte Carlo method for simulation of fluids Yan, De Pablo)*/

@@ -21,7 +21,7 @@ include "myconfig.pxi"
 import espressomd.code_info
 from espressomd.utils cimport *
 
-cdef class Integrator:
+cdef class Integrator(object):
     """
     Integrator class
 
@@ -64,7 +64,7 @@ cdef class Integrator:
                                  self._steepest_descent_params["gamma"],
                                  steps,
                                  self._steepest_descent_params["max_displacement"])
-            minimize_energy()
+            mpi_minimize_energy()
 
     def set_steepest_descent(self, *args, **kwargs):
         """

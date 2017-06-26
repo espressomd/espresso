@@ -3,7 +3,7 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 
 
-cdef class Actor:
+cdef class Actor(object):
 
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
@@ -39,7 +39,6 @@ cdef class Actor:
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
-        #self._set_params_in_es_core()
 
     def _activate(self):
         inter = self._get_interaction_type()
@@ -151,7 +150,7 @@ cdef class Actor:
             "Subclasses of %s must define the _deactivate_method() method." % self._get_interaction_type())
 
 
-class Actors:
+class Actors(object):
 
     active_actors = []
 

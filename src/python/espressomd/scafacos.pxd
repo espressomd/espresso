@@ -9,6 +9,7 @@ from libcpp cimport bool
 from libcpp.list cimport list
 IF SCAFACOS == 1:
     cdef extern from "scafacos.hpp" namespace "Scafacos":
-        cdef void set_parameters(string & method_name, string & params, bool dipolar)
-        cdef string get_parameters()
-        cpdef list[string] available_methods()
+        void set_parameters(string & method_name, string & params, bool dipolar)
+        string get_method_and_parameters()
+        list[string] available_methods_core "Scafacos::available_methods" ()
+        void free_handle()
