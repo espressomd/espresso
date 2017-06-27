@@ -2,8 +2,36 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.utils cimport handle_errors
 
-cdef class Diamond:
+cdef class Diamond(object):
+    """
+    Class to create a diamond like network
+    """ 
     def __init__(self, *args, **kwargs):
+        """
+        Wrapper object to create a diamond like polymer network. 
+        
+        Parameters 
+        ----------
+        a:              float
+                        size of the unit cell
+        bond_length:    float
+                        distance between adjacent monomers in the chains
+        MPC:            int 
+                        monomers per chain
+        cM_dist:        int, optional
+                        distance between charged monomers
+        N_CI:           int, optional
+                        Number of counter ions
+        val_nodes:      float, optional
+                        charge valency of the 8 node particles (crosslinker)
+        val_cM:         float, optional
+                        valency of the charge bearing monomers
+        val_CI:         float, optional
+                        valency of the counterions
+        nonet:          int, optional 
+                        0 creates network, 1 does not crosslink the individual polymers
+
+        """
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:

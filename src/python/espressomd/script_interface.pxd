@@ -60,7 +60,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
-        pass
+        bool operator==(const ObjectId& rhs) 
 
     Variant make_variant[T](const T & x)
 
@@ -91,5 +91,3 @@ cdef class PScriptInterface:
     cdef variant_to_python_object(self, Variant value)
     cdef Variant python_object_to_variant(self, value)
 
-cdef class PObjectId:
-    cpdef ObjectId id

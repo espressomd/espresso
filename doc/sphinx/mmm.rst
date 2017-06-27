@@ -1,3 +1,5 @@
+.. _mmm_appendix:
+
 The MMM family of algorithms
 ============================
 
