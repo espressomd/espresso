@@ -34,9 +34,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
 #include "forcecap.hpp"
-
 
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,
@@ -64,7 +62,7 @@ inline void add_buck_pair_force(const Particle * const p1, const Particle * cons
 {
   int j;
   double fac;
-  if(CUTOFF_CHECK(dist < ia_params->BUCK_cut)) {
+  if((dist < ia_params->BUCK_cut)) {
     if(ia_params->BUCK_capradius==0.0)
     {
      /* case: resulting force/energy greater than discontinuity and
@@ -119,7 +117,7 @@ inline double buck_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 				double d[3], double dist)
 {
 
-  if(CUTOFF_CHECK(dist < ia_params->BUCK_cut)) {
+  if((dist < ia_params->BUCK_cut)) {
     if(ia_params->BUCK_capradius==0.0)
     {
      /* case: resulting force/energy greater than discont and

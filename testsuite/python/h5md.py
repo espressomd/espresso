@@ -51,7 +51,7 @@ class CommonTests(ut.TestCase):
                         v=np.array([1.0, 2.0, 3.0]), type=23)
         if espressomd.has_features(['MASS']):
             system.part[i].mass = 2.3
-        if espressomd.has_features(['EXTERNAL_FORCE']):
+        if espressomd.has_features(['EXTERNAL_FORCES']):
             system.part[i].ext_force = [0.1, 0.2, 0.3]
     system.integrator.run(steps=0)
 
@@ -69,8 +69,8 @@ class CommonTests(ut.TestCase):
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
                         msg="Velocities not written correctly by H5md!")
 
-    @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCE']),
-               "EXTERNAL_FORCE not compiled in, can not check writing forces.")
+    @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
+               "EXTERNAL_FORCES not compiled in, can not check writing forces.")
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(

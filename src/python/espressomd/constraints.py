@@ -16,8 +16,15 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
+
         Either an :class:`espressomd.constraints.Constraint`, or
         the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
+        
+        Returns
+        ----------
+        constraint : :class:`espressomd.constraints.Constraint`
+            The added constraint
+        
         """
 
         if len(args) == 1:
@@ -53,6 +60,7 @@ class Constraint(ScriptInterfaceHelper):
 @script_interface_register
 class ShapeBasedConstraint(Constraint):
     """
+
     Attributes
     ----------
     only_positive : bool
@@ -65,6 +73,41 @@ class ShapeBasedConstraint(Constraint):
       constraint.
     shape : object
       One of the shapes from :mod:`espressomd.shapes`
+
+    See Also
+    ----------
+
+    espressomd.shapes : shape module that define mathematical surfaces
+
+    Examples
+    ----------
+    
+    >>> import espressomd
+    >>> from espressomd import shapes
+    >>> system = espressomd.System()
+    >>> 
+    >>> # create first a shape-object to define the constraint surface
+    >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
+    >>> 
+    >>> # now create an un-penetrable shape-based contraint of type 0
+    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
+    >>> 
+    >>> #place a trapped particle inside this sphere
+    >>> system.part.add(id=0, pos=[5,5,5], type=1)
+    >>> 
+
+    
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
+
+class HomogeneousMagneticField(Constraint):
+    """
+    Attributes
+    ----------
+    H : array_like
+      Magnetic field vector. Describes both field direction and
+      strength of the magnetic field (via length of the vector).
+    """
+
+    _so_name = "Constraints::HomogeneousMagneticField"

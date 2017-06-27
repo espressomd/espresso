@@ -21,7 +21,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-
+import espressomd
 from espressomd.magnetostatics import *
 from tests_common import *
 

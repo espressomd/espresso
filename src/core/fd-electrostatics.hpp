@@ -3,11 +3,15 @@
 
 
 #ifdef __CUDACC__
+
 #include <cuda.h>
 #include <cufft.h>
+
 #else
+
 typedef void cufftComplex;
 typedef void cufftReal;
+
 #endif
 
 #define PI_FLOAT 3.14159265358979323846f
@@ -27,10 +31,12 @@ class FdElectrostatics {
       {
         charge_potential = 0;
         greensfcn = 0;
+        dim_x_padded = (inputParameters.dim_x/2+1)*2;
       }
 
       cufftComplex *charge_potential;
       cufftReal *greensfcn;
+      int dim_x_padded;
     };
 
     struct Grid {
@@ -54,6 +60,17 @@ class FdElectrostatics {
     cufftHandle plan_ifft;
     bool initialized;
 };
+
+#ifdef __CUDACC__
+
+//extern __device__ __constant__ FdElectrostatics::Parameters fde_parameters_gpu;
+
+__device__ cufftReal fde_getNode(int x, int y, int z);
+__device__ cufftReal fde_getNode(int i);
+__device__ void fde_setNode(int x, int y, int z, cufftReal value);
+__device__ void fde_setNode(int i, cufftReal value);
+
+#endif //__CUDACC__
 
 
 #endif

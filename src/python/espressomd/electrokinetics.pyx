@@ -194,6 +194,15 @@ IF ELECTROKINETICS:
             self.node[1] = key[1]
             self.node[2] = key[2]
 
+        property potential:
+            def __get__(self):
+                cdef double potential
+                ek_node_print_potential(self.node[0], self.node[1], self.node[2], &potential)
+                return potential
+
+            def __set__(self, value):
+                raise Exception("Potential can not be set.")
+
         property velocity:
             def __get__(self):
                 cdef double velocity[3]
