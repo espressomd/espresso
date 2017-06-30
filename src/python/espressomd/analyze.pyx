@@ -900,25 +900,25 @@ class Analysis(object):
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
         if (mode == "reset"):
-            _Vkappa["Vk1"] = 0.0
-            _Vkappa["Vk2"] = 0.0
-            _Vkappa["avk"] = 0.0
+            self._Vkappa["Vk1"] = 0.0
+            self._Vkappa["Vk2"] = 0.0
+            self._Vkappa["avk"] = 0.0
         elif (mode == "read"):
-            return _Vkappa
+            return self._Vkappa
         elif (mode == "set"):
             check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
-            _Vkappa["Vk1"] = Vk1
+            self._Vkappa["Vk1"] = Vk1
             check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
-            _Vkappa["Vk2"] = Vk2
+            self._Vkappa["Vk2"] = Vk2
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
-            _Vkappa["avk"] = avk
-            if (_Vkappa["avk"] <= 0.0):
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
+            self._Vkappa["avk"] = avk
+            if (self._Vkappa["avk"] <= 0.0):
+                result = self._Vkappa["Vk1"] = self._Vkappa["Vk2"] = self._Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
             else:
-                result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
-                    (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+                result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
+                    (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
             raise Exception("ERROR: Unknown mode.")
