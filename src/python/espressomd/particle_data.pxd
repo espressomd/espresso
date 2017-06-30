@@ -22,6 +22,7 @@ from espressomd._system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
 from libcpp cimport bool
+from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
@@ -81,6 +82,7 @@ cdef extern from "particle_data.hpp":
     # Setter/getter/modifier functions functions
 
     int get_particle_data(int part, particle * data)
+    unique_ptr[particle] get_particle_data(int part)
 
     int place_particle(int part, double p[3])
 
@@ -220,16 +222,13 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-
     cdef public int id
     cdef bint valid
-    cdef particle particle_data
+    cdef unique_ptr[particle] particle_data
     cdef int update_particle_data(self) except -1
 
-
 cdef class _ParticleSliceImpl:
-
-    cdef particle particle_data
+    cdef unique_ptr[particle] particle_data
     cdef int update_particle_data(self, id) except -1
     cdef public id_selection
 
