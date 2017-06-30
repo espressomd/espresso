@@ -1619,17 +1619,28 @@ __device__ void ek_add_advection_to_flux(unsigned int index, unsigned int *neigh
                dx[0] * dx[1] * dx[2] * not_boundary );
 }
 
-__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index) {
+__device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int species_index, unsigned int *neighborindex) {
   if(index < ek_parameters_gpu.number_of_nodes)
   {
     float density = ek_parameters_gpu.rho[species_index][index];
     float* flux = ek_parameters_gpu.j;
-    float random = curand_uniform(&ek_parameters_gpu.rnd_state[index]);
+    //float random = (curand_uniform(&ek_parameters_gpu.rnd_state[index]) - 0.0f) * 3.46410161514;
+    //float random2 = (curand_uniform(&ek_parameters_gpu.rnd_state[index]) - 0.0f) * 3.46410161514;
+    float random =abs(curand_normal(&ek_parameters_gpu.rnd_state[index]));
+    float random2 = abs(curand_normal(&ek_parameters_gpu.rnd_state[index]));
 
-    for(int i = 0; i < 13; i++)
+
+    for(int i = 0; i < 9; i++)
     {
       //printf("%d,%d: density=%f, fluct_ampl=%f, rnd=%f, flux=%f\n", index, i, density, ek_parameters_gpu.fluctuation_amplitude, random, flux[i]);
-      flux[jindex_getByRhoLinear(index, i)] += density * ek_parameters_gpu.fluctuation_amplitude * random;
+        if(i > 2)
+        {
+            flux[jindex_getByRhoLinear(index, i)] += (density * random - ek_parameters_gpu.rho[species_index][neighborindex[i]] * random2) * 0.70710678118654752f*ek_parameters_gpu.fluctuation_amplitude;
+        }
+        else
+        {
+            flux[jindex_getByRhoLinear(index, i)] += (density * random - ek_parameters_gpu.rho[species_index][neighborindex[i]]  * random2) * ek_parameters_gpu.fluctuation_amplitude;
+        }
       //printf("%d,%d: flux=%f\n", index, i, flux[i]);
     }
   }
@@ -1807,7 +1818,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 
     /* fluctuation contribution to flux */
     if(ek_parameters_gpu.fluctuations)
-      ek_add_fluctuations_to_flux(index, species_index);
+      ek_add_fluctuations_to_flux(index, species_index, neighborindex);
   }
 }
 
