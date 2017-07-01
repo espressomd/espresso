@@ -100,3 +100,14 @@ class ShapeBasedConstraint(Constraint):
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
+
+class HomogeneousMagneticField(Constraint):
+    """
+    Attributes
+    ----------
+    H : array_like
+      Magnetic field vector. Describes both field direction and
+      strength of the magnetic field (via length of the vector).
+    """
+
+    _so_name = "Constraints::HomogeneousMagneticField"

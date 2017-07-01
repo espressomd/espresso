@@ -23,41 +23,42 @@ from espressomd cimport actors
 from . import actors
 cimport globals
 import numpy as np
-from .scafacos import *
-from . cimport scafacos
+IF SCAFACOS == 1:
+    from .scafacos import ScafacosConnector 
+    from . cimport scafacos
 
-
-cdef class ElectrostaticInteraction(actors.Actor):
-    def _tune(self):
-        raise Exception(
-            "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
-
-    def _set_params_in_es_core(self):
-        raise Exception(
-            "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
-
-    def _deactivate_method(self):
-        coulomb.method = COULOMB_NONE
-        mpi_bcast_coulomb_params()
-
-    def Tune(self, **subsetTuneParams):
-
-        # Override default parmas with subset given by user
-        tuneParams = self.default_params()
-        if not subsetTuneParams == None:
-            for k in subsetTuneParams.iterkeys():
-                if k not in self.valid_keys():
-                    raise ValueError(k + " is not a valid parameter")
-            tuneParams.update(subsetTuneParams)
-
-        # If param is 'required', it was set before, so don't change it
-        # Do change it if it's given to Tune() by user
-        for param in tuneParams.iterkeys():
-            if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
-                self._params[param] = tuneParams[param]
-        print(self._params)
-        self._tune()
-
+IF ELECTROSTATICS == 1: 
+    cdef class ElectrostaticInteraction(actors.Actor):
+        def _tune(self):
+            raise Exception(
+                "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
+    
+        def _set_params_in_es_core(self):
+            raise Exception(
+                "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
+    
+        def _deactivate_method(self):
+            coulomb.method = COULOMB_NONE
+            mpi_bcast_coulomb_params()
+    
+        def Tune(self, **subsetTuneParams):
+    
+            # Override default parmas with subset given by user
+            tuneParams = self.default_params()
+            if not subsetTuneParams == None:
+                for k in subsetTuneParams.iterkeys():
+                    if k not in self.valid_keys():
+                        raise ValueError(k + " is not a valid parameter")
+                tuneParams.update(subsetTuneParams)
+    
+            # If param is 'required', it was set before, so don't change it
+            # Do change it if it's given to Tune() by user
+            for param in tuneParams.iterkeys():
+                if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
+                    self._params[param] = tuneParams[param]
+            print(self._params)
+            self._tune()
+    
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
         """ Hybrid method to solve electrostatic interactions, on short length
@@ -427,6 +428,9 @@ IF P3M == 1:
             def required_keys(self):
                 return ["bjerrum_length", "accuracy"]
 
+            def _deactivate_method(self):
+                coulomb.method = COULOMB_NONE
+
             def default_params(self):
                 return {"cao": 0,
                         "inter": -1,
@@ -525,7 +529,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "K_max", "alpha", "accuracy", "precision"
+            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -895,6 +899,7 @@ IF ELECTROSTATICS:
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+            """Calculates Coulomb interactions using method from the SCAFACOs library."""
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
@@ -908,3 +913,7 @@ IF ELECTROSTATICS:
 
             def default_params(self):
                 return {}
+            
+            def _deactivate_method(self):
+                coulomb.method = COULOMB_NONE
+                scafacos.free_handle()

@@ -1,5 +1,6 @@
 set(py_tests  bondedInteractions.py
               cellsystem.py
+              constraint_homogeneous_magnetic_field.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
               correlation.py
@@ -16,6 +17,8 @@ set(py_tests  bondedInteractions.py
               observables.py
               p3m_gpu.py
               particle.py
+              scafacos_dipoles_1d_2d.py
+	            tabulated.py
               particle_slice.py
               rotational_inertia.py
               script_interface_object_params.py
@@ -23,6 +26,12 @@ set(py_tests  bondedInteractions.py
               tabulated.py
               writevtf.py
               lb_stokes_sphere_gpu.py
+              ek_eof_one_species_x.py
+              ek_eof_one_species_y.py
+              ek_eof_one_species_z.py
+              ek_eof_one_species_x_nonlinear.py
+              ek_eof_one_species_y_nonlinear.py
+              ek_eof_one_species_z_nonlinear.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

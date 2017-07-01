@@ -101,7 +101,6 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 					// remaining neighbors fetched
 					
 					// getting unfolded positions of all particles
-					#ifdef GHOST_FLAG
 					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
 					if (p1->l.ghost != 1) {
 						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
@@ -136,17 +135,7 @@ inline void calc_oif_global(double *area_volume, int molType){ //first-fold-then
 							}
 						}
 					}
-					#endif
-					#ifndef GHOST_FLAG
-						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
-						memmove(p11, p1->r.p, 3*sizeof(double));
-						memmove(img, p1->l.i, 3*sizeof(int));
-						unfold_position(p11,img);
-						// other coordinates are obtained from its relative positions to the reference particle
-						get_mi_vector(AA, p2->r.p, p11);
-						get_mi_vector(BB, p3->r.p, p11);
-						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
-					#endif
+
 					// unfolded positions correct
 					VOL_A=area_triangle(p11,p22,p33);
 					partArea += VOL_A;
@@ -229,7 +218,6 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					}
 					
 					// getting unfolded positions of all particles
-					#ifdef GHOST_FLAG
 					// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p1, however, it might be other one. we call this particle reference particle.
 					if (p1->l.ghost != 1) {
 						//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
@@ -264,17 +252,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 							}
 						}
 					}
-					#endif
-					#ifndef GHOST_FLAG
-						// if ghost flag was not defined we have no other option than to assume the first particle is a physical one.
-						memmove(p11, p1->r.p, 3*sizeof(double));
-						memmove(img, p1->l.i, 3*sizeof(int));
-						unfold_position(p11,img);
-						// other coordinates are obtained from its relative positions to the reference particle
-						get_mi_vector(AA, p2->r.p, p11);
-						get_mi_vector(BB, p3->r.p, p11);
-						for (int i=0; i < 3; i++) { p22[i] = p11[i] + AA[i]; p33[i] = p11[i] + BB[i]; }
-					#endif
+
 					// unfolded positions correct
 					/// starting code from volume force
 					get_n_triangle(p11,p22,p33,VOL_norm);

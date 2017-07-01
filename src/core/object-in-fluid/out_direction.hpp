@@ -22,12 +22,14 @@
  *  using a particle quadruple (one particle and its 3 strategically placed neighbors)
 */
 
+#include "config.hpp"
+
+#ifdef MEMBRANE_COLLISION
+
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "grid.hpp"
-
-#ifdef MEMBRANE_COLLISION
 
 // set out_direction parameters
 int out_direction_set_params(int bond_type);
@@ -52,7 +54,6 @@ inline int calc_out_direction(Particle *p1, Particle *p2, Particle *p3, Particle
 	int img[3];
     double AA[3],BB[3],CC[3];
 
-#ifdef GHOST_FLAG
     // first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p2, however, it might be other one. we call this particle reference particle.
     if (p2->l.ghost != 1) {
         //unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
@@ -101,22 +102,6 @@ inline int calc_out_direction(Particle *p1, Particle *p2, Particle *p3, Particle
             }
         }
     }
-#endif
-#ifndef GHOST_FLAG
-    // if ghost flag was not defined we have no other option than to assume the first particle (p1) is a physical one.
-    memmove(fp1, p1->r.p, 3*sizeof(double));
-    memmove(img, p1->l.i, 3*sizeof(int));
-    unfold_position(fp1,img);
-    // other coordinates are obtained from its relative positions to the reference particle
-    get_mi_vector(AA, p2->r.p, fp1);
-    get_mi_vector(BB, p3->r.p, fp1);
-    get_mi_vector(CC, p4->r.p, fp1);
-    for (int i=0; i < 3; i++) {
-        fp2[i] = fp1[i] + AA[i];
-        fp3[i] = fp1[i] + BB[i];
-        fp4[i] = fp1[i] + CC[i];
-    }
-#endif
 	
 	get_n_triangle(fp2,fp3,fp4,n);
 	dn=normr(n);

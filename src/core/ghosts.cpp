@@ -262,10 +262,8 @@ static void prepare_ghost_cell(Cell *cell, int size)
       pt->el.n = 0;
       pt->el.max = 0;
 #endif
-#ifdef GHOST_FLAG
       //init ghost variable
       pt->l.ghost=1;
-#endif
     }
   }
 }
