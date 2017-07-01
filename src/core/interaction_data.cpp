@@ -775,8 +775,6 @@ const char *get_name_of_bonded_ia(BondedInteraction type) {
     return "BONDED_COULOMB";
   case BONDED_IA_SUBT_LJ:
     return "SUBT_LJ";
-  case BONDED_IA_SUBT_COULOMB_P3M:
-    return "SUBT_COULOMB_P3M";
   case BONDED_IA_TABULATED:
     return "tabulated";
   case BONDED_IA_UMBRELLA:

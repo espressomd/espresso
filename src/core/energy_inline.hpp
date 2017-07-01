@@ -69,9 +69,6 @@
 #include "morse.hpp"
 #include "reaction_field.hpp"
 #include "scafacos.hpp"
-#ifdef P3M
-#include "subt_coulomb_p3m.hpp"
-#endif
 #include "subt_lj.hpp"
 #include "twist_stack.hpp"
 
@@ -373,11 +370,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef P3M
-    case BONDED_IA_SUBT_COULOMB_P3M:
-      bond_broken = subt_coulomb_p3m_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
 #ifdef TWIST_STACK

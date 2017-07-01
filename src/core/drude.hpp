@@ -53,45 +53,33 @@ int drude_set_params(int bond_type, double temp_com, double gamma_com, double te
 
 inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force1[3], double force2[3])
 {
-  int dummy,i;
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
-
-  if ((iaparams->p.drude.r_cut > 0.0) && (dist > iaparams->p.drude.r_cut))
+  //Bond broke?
+  double dist = utils::veclen(dx);
+  if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut)
     return 1;
 
-  double force_harmonic[3] = {0., 0., 0.};
-  double force_subt_elec[3] = {0., 0., 0.};
-  double force_lv_com[3] = {0., 0., 0.};
-  double force_lv_dist[3] = {0., 0., 0.};
-
+  double force_harmonic, force_lv_com, force_lv_dist, com_vel, dist_vel;
   double chgfac = p1->p.q*p2->p.q;
-
   double fac_harmonic = -iaparams->p.drude.k;
-  double gamma_c = iaparams->p.drude.gamma_com;
-  double gamma_d = iaparams->p.drude.gamma_drude;
-  double temp_c = iaparams->p.drude.temp_com;
-  double temp_d = iaparams->p.drude.temp_drude;
+  double mass_tot_inv = 1.0 / (p1->p.mass + p2->p.mass);
 
-  double mass_c = p1->p.mass;
-  double mass_d = p2->p.mass;
-  double mass_tot = mass_d + mass_c;
-  double mass_tot_inv = 1.0 / mass_tot;
-  double mass_red = mass_d * mass_c / mass_tot;
-  double mass_red_inv = 1.0 / mass_red;
+  for (int i=0; i<3; i++) {
 
-  for (i=0;i<3;i++)  {
-    double com_vel = mass_tot_inv * (mass_c * p1->m.v[i] + mass_d * p2->m.v[i]);
-    force_lv_com[i] =  -gamma_c / time_step * com_vel + sqrt(2.0 * gamma_c / time_step * temp_c) * gaussian_random();
-    double dist_vel = p2->m.v[i] - p1->m.v[i];
-    force_lv_dist[i] =  -gamma_d / time_step * dist_vel + sqrt(2.0 * gamma_d / time_step * temp_d) * gaussian_random();
-  }
+      //Langevin thermostat for center of mass
+      com_vel = mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
+      force_lv_com =  -iaparams->p.drude.gamma_com / time_step * com_vel + sqrt(2.0 * iaparams->p.drude.gamma_com / time_step * iaparams->p.drude.temp_com) * gaussian_random_cut();
+  
+      //Langevin thermostat for distance core->drude
+      dist_vel = p2->m.v[i] - p1->m.v[i];
+      force_lv_dist =  -iaparams->p.drude.gamma_drude / time_step * dist_vel + sqrt(2.0 * iaparams->p.drude.gamma_drude / time_step * iaparams->p.drude.temp_drude) * gaussian_random_cut();
 
-  for (i=0;i<3;i++)  {
-     force_harmonic[i] = fac_harmonic*dx[i];
-    
-     force1[i] = mass_c * mass_tot_inv * force_lv_com[i] - force_lv_dist[i] + force_harmonic[i]; //Core
-     force2[i] = mass_d * mass_tot_inv * force_lv_com[i] + force_lv_dist[i] - force_harmonic[i]; //Drude
+      //Spring
+      force_harmonic = fac_harmonic * dx[i];
+
+      //Add forces
+      force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist + force_harmonic; //Core
+      force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist - force_harmonic; //Drude
+
   }
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: DRUDE f = (%.3e,%.3e,%.3e)\n",this_node,p1->f.f[0]+force1[0],p1->f.f[1]+force1[1],p1->f.f[2]+force1[2]));
@@ -107,8 +95,7 @@ inline int drude_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *iapara
   double dist = sqrt(dist2);
   double chgfac = p1->p.q*p2->p.q;
 
-  if ((iaparams->p.drude.r_cut > 0.0) && 
-      (dist > iaparams->p.drude.r_cut)) 
+  if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut) 
     return 1;
    //Harmonic 
   *_energy = 0.5*iaparams->p.drude.k*dist2;

@@ -71,9 +71,6 @@
 #include "quartic.hpp"
 #include "soft_sphere.hpp"
 #include "steppot.hpp"
-#ifdef P3M
-#include "subt_coulomb_p3m.hpp"
-#endif
 #include "subt_lj.hpp"
 #include "tab.hpp"
 #include "twist_stack.hpp"
@@ -592,11 +589,6 @@ inline void add_bonded_force(Particle *p1) {
 #ifdef DRUDE
     case BONDED_IA_DRUDE:
       bond_broken = calc_drude_forces(p1, p2, iaparams, dx, force, force2);
-      break;
-#endif
-#ifdef P3M
-    case BONDED_IA_SUBT_COULOMB_P3M:
-      bond_broken = calc_subt_coulomb_p3m_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
 #ifdef ELECTROSTATICS

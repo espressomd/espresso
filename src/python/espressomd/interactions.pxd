@@ -138,10 +138,6 @@ cdef extern from "interaction_data.hpp":
         double k
         double r_cut
 
-#* Parameters for subt_coulomb_p3m bond */
-    ctypedef struct Subt_CoulombP3MBond_parameters:
-        int n_bins
-
 #* Parameters for three body angular potential (bond-angle potentials).
     ctypedef struct Angle_bond_parameters:
         double bend
@@ -244,7 +240,6 @@ cdef extern from "interaction_data.hpp":
         Oif_global_forces_bond_parameters oif_global_forces
         Oif_local_forces_bond_parameters oif_local_forces
         Drude_bond_parameters drude
-        Subt_CoulombP3MBond_parameters subt_coulomb_p3m
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -274,8 +269,6 @@ cdef extern from "harmonic.hpp":
     int harmonic_set_params(int bond_type, double k, double r, double r_cut)
 cdef extern from "drude.hpp":
     int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut)
-cdef extern from "subt_coulomb_p3m.hpp":
-    int subt_coulomb_p3m_set_params(int bond_type, int n_bins)
 cdef extern from "dihedral.hpp":
     int dihedral_set_params(int bond_type, int mult, double bend, double phase)
 cdef extern from "angle_harmonic.hpp":
@@ -351,5 +344,4 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
         BONDED_IA_UMBRELLA,
-        BONDED_IA_DRUDE,
-        BONDED_IA_SUBT_COULOMB_P3M
+        BONDED_IA_DRUDE
