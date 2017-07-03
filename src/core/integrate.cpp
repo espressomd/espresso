@@ -1238,7 +1238,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = 0.4 * max_cut;
+    skin = std::min(0.4 * max_cut,max_skin);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
