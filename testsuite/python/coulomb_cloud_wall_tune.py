@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2017 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,8 +28,7 @@ from espressomd import scafacos
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class CoulombCloudWallTune(ut.TestCase):
-    """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft 
-       electrostatic forces and energy against stored data."""
+    """This compares p3m, p3m_gpu electrostatic forces against stored data."""
     S = espressomd.System()
     forces = {}
     tolerance = 1E-3
@@ -56,9 +55,7 @@ class CoulombCloudWallTune(ut.TestCase):
             self.forces[id] = f
 
     def compare(self, method_name):
-        # Compare forces and energy now in the system to stored ones
-
-        # Force
+        # Compare forces now in the system to stored ones
         force_abs_diff = 0.
         for p in self.S.part:
             force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
