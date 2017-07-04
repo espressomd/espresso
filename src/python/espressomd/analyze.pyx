@@ -634,15 +634,10 @@ class Analysis(object):
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
         check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
-        if chain_start < 0:
-            raise ValueError('chain_start must be greater than zero')
-        if chain_length < 0:
-            raise ValueError('chain_length must be greater than zero')
-        if number_of_chains < 0:
-            raise ValueError('number_of_chains must be greater than zero')
-        if chain_start + chain_length * number_of_chains > len(self._system.part):
-            raise ValueError(
-                'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
+        id_min=chain_start; id_max=chain_start + chain_length * number_of_chains;
+        for i in range(id_min,id_max):
+            if (not self._system.part.exists(i)):
+                raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(i,chain_start,number_of_chains,chain_length));
         c_analyze.chain_start = chain_start
         c_analyze.chain_n_chains = number_of_chains
         c_analyze.chain_length = chain_length
