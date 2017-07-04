@@ -42,9 +42,22 @@ endif(PY_H5PY)
 add_custom_target(python_tests
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+if(NOT DEFINED TEST_NP)
+  include(ProcessorCount)
+  ProcessorCount(NP)
+  math(EXPR TEST_NP "${NP}/2 + 1")
+endif()
+
+message("Np ${NP}")
+
 foreach(testfile ${py_tests})
   get_filename_component(basename ${testfile} NAME_WE)
-  add_test(${basename} ${CMAKE_BINARY_DIR}/pypresso ${testfile})
+
+  if(EXISTS ${MPIEXEC})
+    add_test(${basename} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NP} ${CMAKE_BINARY_DIR}/pypresso ${testfile})
+  else()
+    add_test(${basename} ${CMAKE_BINARY_DIR}/pypresso ${testfile})
+  endif()
 endforeach(testfile ${py_tests})
 
 add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND})
