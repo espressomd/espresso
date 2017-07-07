@@ -44,7 +44,7 @@ private:
   }
 
   bool equal(ParticleIterator const &rhs) const {
-    return (*m_cell == *(rhs.m_cell)) && (m_part_id == rhs.m_part_id);
+    return (m_cell == (rhs.m_cell)) && (m_part_id == rhs.m_part_id);
   }
 
   Particle &dereference() const { return (*m_cell)->part[m_part_id]; }
