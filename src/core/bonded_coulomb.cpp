@@ -24,6 +24,7 @@
  */
 #include "bonded_coulomb.hpp"
 #include "communication.hpp"
+#include "bond_exist.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -40,6 +41,15 @@ int bonded_coulomb_set_params(int bond_type, double prefactor)
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
+
+  //bond classes part
+  //create the placeholders in bond vector
+  if(make_bond_exist_bond_class(bond_type)){
+    // only if type +1 > size
+    // this means: type number does not overlapp with existing entry
+    BONEDED_COULOMB* new_coulomb_bond = new BONDED_COULOMB(prefactor);
+    bonds_ia.push_back(new_coulomb_bond);
+  };
 
   return ES_OK;
 }

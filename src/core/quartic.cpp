@@ -24,6 +24,7 @@
  */
 #include "quartic.hpp"
 #include "communication.hpp"
+#include "bond_exist.hpp"
 
 int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cut)
 {
@@ -44,6 +45,15 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cu
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
+
+  //bond classes part
+  //create the placeholders in bond vector
+  if(make_bond_exist_bond_class(bond_type)){
+    // only if type +1 > size
+    // this means: type number does not overlapp with existing entry
+    QUARTIC* new_quart_bond = new QUARTIC(k0, k1, r, r_cut);
+    bonds_ia.push_back(new_quart_bond);
+  };
 
   return ES_OK;
 }

@@ -24,6 +24,7 @@
  */
 #include "harmonic_dumbbell.hpp"
 #include "communication.hpp"
+#include "bond_exist.hpp"
 
 #ifdef ROTATION
 
@@ -43,6 +44,15 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, 
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
+
+  //bond classes part
+  //create the placeholders in bond vector
+  if(make_bond_exist_bond_class(bond_type)){
+    // only if type +1 > size
+    // this means: type number does not overlapp with existing entry
+    HARMONIC_DUMBBELL* new_harm_dumb_bond = new HARMONIC_DUMBBELL(k1, k2, r, r_cut);
+    bonds_ia.push_back(new_harm_dumb_bond);
+  };
 
   return ES_OK;
 }

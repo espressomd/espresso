@@ -475,6 +475,19 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
+/*class Bond {
+public:
+  virtual bool add_bonded_force(Particle &, Particle &, Vector dist) = 0;
+};
+
+class Fene : public Bond {
+public:
+bool  add_bonded_force(Particle &, Particle &, Vector dist) override {
+...
+  };
+};
+*/
+
 /** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
 */
@@ -500,13 +513,13 @@ inline void add_bonded_force(Particle *p1) {
   double torque2[3] = {0., 0., 0.};
 #endif
   Particle *p2 = NULL, *p3 = NULL, *p4 = NULL;
-  Bonded_ia_parameters *iaparams;
+
   int i, j, type_num, type, n_partners, bond_broken;
 
   i = 0;
   while (i < p1->bl.n) {
     type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
     n_partners = iaparams->num;
 
@@ -569,14 +582,17 @@ inline void add_bonded_force(Particle *p1) {
       get_mi_vector(dx, p1->r.p, p2->r.p);
     }
 
+    //test!!!!!!!
+    if(type == 1){
+      bond_broken = bonds_ia[type_num]->add_bonded_force(p1, p2, dx, force);
+    };
     switch (type) {
     case BONDED_IA_FENE:
-      bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+      //bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
 #ifdef ROTATION
     case BONDED_IA_HARMONIC_DUMBBELL:
-      bond_broken =
-          calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+      bond_broken = calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
     case BONDED_IA_HARMONIC:

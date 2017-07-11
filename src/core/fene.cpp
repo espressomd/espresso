@@ -26,6 +26,9 @@
 #include "fene.hpp"
 #include "communication.hpp"
 
+//for bond exist bond class function
+#include "bond_exist.hpp"
+
 /// set the parameters for the fene potential
 int fene_set_params(int bond_type, double k, double drmax, double r0)
 {
@@ -46,6 +49,15 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
-  
+
+  //bond classes part
+  //create the placeholders in bond vector
+  if(make_bond_exist_bond_class(bond_type)){
+    // only if type +1 > size
+    // this means: type number does not overlapp with existing entry
+    double drmax2 = SQR(drmax);
+    FENE* new_fene_bond = new FENE(r0, drmax, drmax2, 1.0/drmax2, k) ;
+    bonds_ia.push_back(new_fene_bond);
+  };
   return ES_OK;
 }
