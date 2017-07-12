@@ -24,7 +24,7 @@
 #include "partCfg.hpp"
 
 // list of the currently specified box boundaries
-DoubleList wallstuff_boundaries = { NULL, 0 };
+DoubleList wallstuff_boundaries;
 // the boxes with the particle identities
 IntList *wallstuff_part_in_bin = NULL;
 
