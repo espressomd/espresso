@@ -49,8 +49,6 @@ const char init_errors[][64] = {
   "dt is smaller than the MD timestep",//15
   "dt is not a multiple of the MD timestep", //16
   "cannot set compress2 for autocorrelation", //17
-  "dim_A must be divisible by 3 for fcs_acf", //18
-  "fcs_acf requires 3 additional parameters"  //19
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -67,7 +65,6 @@ const char double_correlation_get_data_errors[][64] = {
   "Error calculating correlation\n",                                 // 4
   "Error allocating temporary memory\n",                             // 4
   "Error in corr_operation: observable dimensions do not match\n",   // 5
-  "Error: dim_corr and dim_A do not match for fcs_acf\n"             // 6
 };
 
 int correlations_autoupdate=0;
@@ -219,14 +216,6 @@ void Correlator::initialize() {
     dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
     args = NULL;
-  } else if ( corr_operation_name=="fcs_acf")  {
-    if (dim_A %3 )
-       throw std::runtime_error( init_errors[18]);
-    dim_corr = dim_A/3;
-    corr_operation = &fcs_acf;
-// square_distance will be removed -- will be replaced by strides and blocks
-//  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
-//    corr_operation = &square_distance;
   } else if ( corr_operation_name=="scalar_product")  {
     dim_corr=1;
     corr_operation = &scalar_product;
@@ -269,14 +258,7 @@ void Correlator::initialize() {
   } else {
     throw std::runtime_error( init_errors[13]);
   }
- 
-//  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
-//    is_from_file = 1;
-//  } else {
-//    is_from_file = 0;
-//  }
-
-  
+   
   // Memmory allocation
   A_data = (double*)Utils::malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   if (autocorrelation) 
@@ -855,29 +837,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   }
   return 0;
 }
-
-int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
-  DoubleList *wsquare = (DoubleList*)args;
-  if (args == NULL )
-    return 1;
-  if (!(dim_A == dim_B )) {
-    return 5;
-  }
-  if ( dim_A / dim_corr != 3) {
-    return 6; 
-  }
-  for (unsigned i = 0; i < dim_corr; i++ ) 
-    C[i] = 0;
-  for (unsigned i = 0; i < dim_A; i++ ) {
-    C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare->e[i%3];
-  }
-  for (unsigned i = 0; i < dim_corr; i++ ) 
-    C[i] = exp(C[i]);
-  return 0;
-}
-
-
-
 } // Namespace Correlators
 
 
