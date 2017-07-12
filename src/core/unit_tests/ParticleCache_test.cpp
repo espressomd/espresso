@@ -135,10 +135,8 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
     local_parts.emplace_back(id);
     auto const bond_length = bond_lengths[id % bond_lengths.size()];
     auto &part = local_parts.back();
-    part.bl.e = nullptr;
-    part.bl.max = 0;
     part.bl.resize(bond_length);
-    part.bl.n = bond_length;
+
     std::fill(part.bl.begin(), part.bl.end(), id);
   }
 
