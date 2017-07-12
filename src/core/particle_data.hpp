@@ -309,20 +309,6 @@ typedef struct {
 
 /** Struct holding all information for one particle. */
 struct Particle {
-  Particle() {
-    init_intlist(&bl);
-#ifdef EXCLUSIONS
-    init_intlist(&el);
-#endif
-  }
-
-  ~Particle() {
-    bl.resize(0);
-#ifdef EXCLUSIONS
-    el.resize(0);
-#endif
-  }
-
   int &identity() { return p.identity; }
   int const &identity() const { return p.identity; }
 
