@@ -56,6 +56,7 @@ public:
   size_type size() const { return n; }
   bool empty() const { n == 0; }
   size_type capacity() const { return max; }
+  void clear() { resize(0); }
 
 private:
   /**
