@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
+#include <iterator>
+#include <algorithm>
 
 #include "memory.hpp"
 
