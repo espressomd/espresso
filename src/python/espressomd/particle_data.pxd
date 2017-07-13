@@ -80,8 +80,6 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-
-    int get_particle_data(int part, particle * data)
     unique_ptr[particle] get_particle_data(int part)
 
     int place_particle(int part, double p[3])
