@@ -1124,12 +1124,11 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int * num_partners = NULL
-                cdef int * partners = NULL
+                cdef int_list exclusions = self.particle_data.get()[0].exclusions()
+
                 py_partners = []
-                pointer_to_exclusions(self.particle_data.get(), num_partners, partners)
-                for i in range(num_partners[0]):
-                    py_partners.append(partners[i])
+                for i in range(exclusions.n):
+                    py_partners.append(exclusions.e[i])
                 return np.array(py_partners)
 
         def add_exclusion(self, *_partners):
