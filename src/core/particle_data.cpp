@@ -43,6 +43,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include "utils/make_unique.hpp"
 
 /************************************************
  * defines
@@ -513,6 +514,17 @@ int get_particle_data(int part, Particle *data) {
     return ES_ERROR;
   mpi_recv_part(pnode, part, data);
   return ES_OK;
+}
+
+std::unique_ptr<Particle> get_particle_data(int part) {
+  auto pp = Utils::make_unique<Particle>();
+
+  auto ret = get_particle_data(part, pp.get());
+
+  if(ret == ES_OK)
+    return pp;
+  else
+    return nullptr;
 }
 
 int place_particle(int part, double p[3]) {

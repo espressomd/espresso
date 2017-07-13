@@ -355,15 +355,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef SD
-    if (thermo_switch & THERMO_SD) {
-      runtimeWarning("Use integrate_sd to use Stokesian Dynamics Thermalizer.");
-    }
-    if (thermo_switch & THERMO_BD) {
-      runtimeWarning("Use integrate_sd to use Brownian Dynamics Thermalizer.");
-    }
-#endif
-
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)

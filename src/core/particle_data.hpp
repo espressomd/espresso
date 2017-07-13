@@ -28,6 +28,7 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include <memory>
 
 /************************************************
  * defines
@@ -302,6 +303,20 @@ typedef struct {
 
 /** Struct holding all information for one particle. */
 struct Particle {
+  Particle() {
+    init_intlist(&bl);
+#ifdef EXCLUSIONS
+    init_intlist(&el);
+#endif
+  }
+
+  ~Particle() {
+    bl.resize(0);
+#ifdef EXCLUSIONS
+    el.resize(0);
+#endif
+  }
+
   int &identity() { return p.identity; }
   int const &identity() const { return p.identity; }
 
@@ -495,13 +510,21 @@ void particle_invalidate_part_node();
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data. Note that the bond intlist is
+/** Get particle data. Note that the bond intlist and
+    potentially the exclusion list are
     allocated so that you are responsible to free it later.
     @param part the identity of the particle to fetch
     @param data where to store its contents.
     @return ES_OK if particle existed
 */
 int get_particle_data(int part, Particle *data);
+
+/** Get particle data.
+    @param part the identity of the particle to fetch
+    @return Pointer to copy of particle if it exists,
+            nullptr otherwise;
+*/
+std::unique_ptr<Particle> get_particle_data(int part);
 
 /** Call only on the master node.
     Move a particle to a new position.
