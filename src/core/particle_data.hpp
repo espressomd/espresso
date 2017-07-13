@@ -320,6 +320,34 @@ struct Particle {
     return identity() != rhs.identity();
   }
 
+  /**
+   * @brief Return a copy of the particle with
+   *        only the fixed size parts.
+   *
+   * This creates a copy of the particle with
+   * only the parts than can be copied w/o heap
+   * allocation, e.g. w/o bonds and exlusions.
+   * This is more efficient if these parts are
+   * not actually needed.
+   */
+  Particle flat_copy() const {
+    Particle ret{};
+
+    ret.p = p;
+    ret.r = r;
+    ret.m = m;
+    ret.f = f;
+    ret.l = l;
+#ifdef LB
+    ret.lc = lc;
+#endif
+#ifdef ENGINE
+    ret.swim = swim;
+#endif
+
+    return ret;
+  }
+
   ///
   ParticleProperties p;
   ///
@@ -341,6 +369,7 @@ struct Particle {
   IntList bl;
 
   IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
 
   IntList &exclusions() {
 #ifdef EXCLUSIONS
