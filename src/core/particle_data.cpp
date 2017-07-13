@@ -874,17 +874,15 @@ int set_particle_type(int part, int type) {
   if (Type_array_init) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-    if (cur_par != (Particle *)0) {
-      if (get_particle_data(part, cur_par) != ES_ERROR) {
-        int prev_type = cur_par->p.type;
+    Particle cur_par;
+      if (get_particle_data(part, &cur_par) != ES_ERROR) {
+        int prev_type = cur_par.p.type;
         if (prev_type != type) {
           // particle existed before so delete it from the list
           remove_id_type_array(part, prev_type);
         }
       }
-    }
-    free(cur_par);
+    free_particle(&cur_par);
 
     if (add_particle_to_list(part, type) == ES_ERROR) {
       // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -1183,11 +1181,11 @@ void remove_all_particles() {
 int remove_particle(int part) {
   int pnode;
 
-  Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-  if (get_particle_data(part, cur_par) == ES_ERROR)
+  Particle cur_par;
+  if (get_particle_data(part, &cur_par) == ES_ERROR)
     return ES_ERROR;
-  int type = cur_par->p.type;
-  free(cur_par);
+  int type = cur_par.p.type;
+  free_particle(&cur_par);
   if (remove_id_type_array(part, type) == ES_ERROR)
     return ES_ERROR;
 
@@ -1750,7 +1748,7 @@ int init_type_array(int type) {
     return ES_ERROR;
 
   for (int i = 0; i < Index.max_entry; i++)
-    if (type == Type.index[i]) {
+    if (type == Type.index[i] && Index.type[type]!=-1) {
       // already indexed
       return ES_OK;
     }
@@ -1947,26 +1945,6 @@ int find_particle_type_id(int type, int *id, int *in_id) {
     *id = type_array[Index.type[type]].id_list[*in_id];
     return ES_OK;
   }
-}
-
-int delete_particle_of_type(int type) {
-  int *p_id, *index_id;
-  p_id = (int *)Utils::malloc(sizeof(int));
-  index_id = (int *)Utils::malloc(sizeof(int));
-  if (find_particle_type_id(type, p_id, index_id) == ES_ERROR)
-    return ES_ERROR;
-
-  int in_type = Index.type[type];
-  // maximal possible index id
-  int max = type_array[in_type].max_entry - 1;
-  if (max < 0)
-    return ES_ERROR;
-
-  if (remove_particle(*p_id) == ES_ERROR) {
-    // takes also care of removing the index from the array
-    return ES_ERROR;
-  }
-  return ES_OK;
 }
 
 int add_particle_to_list(int part_id, int type) {

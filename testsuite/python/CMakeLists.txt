@@ -25,6 +25,8 @@ set(py_tests  bondedInteractions.py
               script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
+              reaction_ensemble.py
+              constant_pH.py
               writevtf.py
               lb_stokes_sphere_gpu.py
               ek_eof_one_species_x.py

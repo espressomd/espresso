@@ -275,3 +275,21 @@ void calc_long_range_energies()
 
 }
 
+double calculate_current_potential_energy_of_system(){
+	//calculate potential energy
+	if (total_energy.init_status == 0) {
+		init_energies(&total_energy);
+		master_energy_calc();
+	}
+  	int num_energies=total_energy.data.n;
+	double kinetic_energy =total_energy.data.e[0];
+	double sum_all_energies=0;
+	for(int i=0;i<num_energies;i++){
+		sum_all_energies+= total_energy.data.e[i];
+	}
+	for (int i = 0; i < n_external_potentials; i++) {
+        	sum_all_energies += external_potentials[i].energy;
+        }
+
+	return sum_all_energies-kinetic_energy;
+}
