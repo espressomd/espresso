@@ -340,6 +340,8 @@ struct Particle {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &bonds() { return bl; }
+
   IntList &exclusions() {
 #ifdef EXCLUSIONS
     return el;
