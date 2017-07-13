@@ -22,8 +22,8 @@
  *
 */
 
-#include <vector>
 #include <random>
+#include <vector>
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
@@ -45,6 +45,11 @@ public:
   Particle(int id) : Testing::Particle(id) {}
 
   IntList bl;
+
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  Particle flat_copy() const { return Particle(m_id); }
 
   template <typename Archive> void serialize(Archive &ar, unsigned int) {
     ar &m_id;
@@ -104,7 +109,9 @@ BOOST_AUTO_TEST_CASE(update) {
     local_parts.emplace_back(rank * n_part + i);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
   ParticleCache<decltype(get_parts)> part_cfg(get_parts);
 
   if (rank == 0) {
@@ -140,7 +147,9 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
     std::fill(part.bl.begin(), part.bl.end(), id);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
   ParticleCache<decltype(get_parts)> part_cfg(get_parts);
 
   if (rank == 0) {
@@ -173,7 +182,9 @@ BOOST_AUTO_TEST_CASE(iterators) {
     local_parts.emplace_back(rank * n_part + i);
   }
 
-  auto get_parts = [&local_parts]() -> Particles const& { return local_parts; };
+  auto get_parts = [&local_parts]() -> Particles const & {
+    return local_parts;
+  };
   ParticleCache<decltype(get_parts)> part_cfg(get_parts);
 
   if (rank == 0) {
