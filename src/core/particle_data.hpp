@@ -340,8 +340,17 @@ struct Particle {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &exclusions() {
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded interactions
+    return el;
+#endif
+
+    throw std::runtime_error{"Exclusions not enabled."};
+  }
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded
+   * interactions
    */
   IntList el;
 #endif
@@ -1035,10 +1044,6 @@ void pointer_to_gamma_rot(Particle *p, double *&res);
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res);
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 #endif
 
 #ifdef ENGINE

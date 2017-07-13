@@ -2142,13 +2142,6 @@ void pointer_to_rotation(Particle *p, short int *&res) {
 }
 #endif
 
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2) {
-  res1 = &(p->el.n);
-  res2 = p->el.e;
-}
-#endif
-
 #ifdef ENGINE
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {
   swim = &(p->swim);
