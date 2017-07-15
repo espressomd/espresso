@@ -1,57 +1,37 @@
-#include"bond.hpp"
-//headers from fene.hpp
+#include"Bond.hpp"
 #include "utils.hpp"
-//#include "interaction_data.hpp"
-#include "particle_data.hpp"
-#include "bonded_interaction.hpp"
 #include "random.hpp"
-#include "errorhandling.hpp"
-#include "debug.hpp"
+
 /*
 Member functions and construcor of concrete classes in bond.hpp
  */
 
-//---BOND---
-//abstract class
-BondedInteraction Bond::get_interaction_code(){
-  return interaction_type_code;
-}
-
-//---NO BOND---
-NO_BOND::NO_BOND(){
-  interaction_type_code = BONDED_IA_NONE;
-}
-
-int NO_BOND::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
-  return 1;
-}
-
-int NO_BOND::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
-  return 1;
-}
-
-
 //---FENE---
 //constructor needs parameters of fene bond
 FENE::FENE(double r0_input, double drmax_input, double drmax2_input, double drmax2i_input, double k_input){
-  r0 = r0_input;
-  drmax = drmax_input;
-  drmax2 = drmax2_input;
-  drmax2i = drmax2i_input;
-  k = k_input;
-  interaction_type_code = BONDED_IA_FENE;
+  m_r0 = r0_input;
+  m_drmax = drmax_input;
+  m_drmax2 = drmax2_input;
+  m_drmax2i = drmax2i_input;
+  m_k = k_input;
+  m_interaction_type_code = BondType::FENE;
 }
+
+BondType FENE::get_interaction_code(){
+  return m_interaction_type_code;
+}
+
 //calculating the fene bond force: virtual function
 int FENE::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
   int i;
  
   const double len2 = sqrlen(dx);
   const double len = sqrt(len2);
-  const double dr = r0;
+  const double dr = m_r0;
 
-  if (dr >= drmax) return 1;
+  if (dr >= m_drmax) return 1;
 
-  double fac = k * dr / ((1.0 - dr*dr*drmax2i));
+  double fac = m_k * dr / ((1.0 - dr*dr*m_drmax2i));
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(len > ROUND_ERROR_PREC) {  /* Regular case */
 	fac /= len ; 
@@ -76,16 +56,16 @@ int FENE::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double forc
 //calculating FENE Energy: virtual function
 int FENE::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
   /* compute bond stretching (r-r0) */
-  double dr = sqrt(sqrlen(dx))-r0;
+  double dr = sqrt(sqrlen(dx))-m_r0;
 
   /* check bond stretching */
-  if(dr >= drmax) {
+  if(dr >= m_drmax) {
     runtimeErrorMsg() <<"FENE bond broken between particles "<< p1->p.identity << " and " << p2->p.identity;
     return 1;
   }
 
-  double energy = -0.5*k*drmax2;
-  energy *= log((1.0 - dr*dr*drmax2i));
+  double energy = -0.5*m_k*m_drmax2;
+  energy *= log((1.0 - dr*dr*m_drmax2i));
   *_energy = energy;
   return 0;
 
@@ -94,11 +74,15 @@ int FENE::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_e
 //---HARMONIC DUMBBELL
 // consturctor
 HARMONIC_DUMBBELL::HARMONIC_DUMBBELL(double k1_i, double k_2_i, double r_i, double r_cut_i){
-  k1 = k1_i;
-  k2 = k_2_i;
-  r = r_i;
-  r_cut = r_cut_i;
-  interaction_type_code = BONDED_IA_HARMONIC_DUMBBELL;
+  m_k1 = k1_i;
+  m_k2 = k_2_i;
+  m_r = r_i;
+  m_r_cut = r_cut_i;
+  m_interaction_type_code = BondType::HARMONIC_DUMBBELL;
+}
+
+BondType HARMONIC_DUMBBELL::get_interaction_code(){
+  return m_interaction_type_code;
 }
 
 int HARMONIC_DUMBBELL::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
@@ -109,12 +93,12 @@ int HARMONIC_DUMBBELL::add_bonded_force(Particle *p1, Particle *p2, double dx[3]
   double dist = sqrt(dist2);
   double dr;
 
-  if ((r_cut > 0.0) &&
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) &&
+      (dist > m_r_cut)) 
     return 1;
 
-  dr = dist - r;
-  fac = -k1 * dr;
+  dr = dist - m_r;
+  fac = -m_k1 * dr;
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if (dist > ROUND_ERROR_PREC)  /* Regular case */
         fac /= dist;
@@ -156,8 +140,8 @@ int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((r_cut > 0.0) && 
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) && 
+      (dist > m_r_cut)) 
     return 1;
 
   double dhat[3];
@@ -180,8 +164,8 @@ int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3
   diff[1] = dhat[1] - p1->r.quatu[1];
   diff[2] = dhat[2] - p1->r.quatu[2];
 
-  *_energy = 0.5*k1*SQR(dist - r)
-           + 0.5*k2*(torque[0]*diff[0] + torque[1]*diff[1] + torque[2]*diff[2]);
+  *_energy = 0.5*m_k1*SQR(dist - m_r)
+           + 0.5*m_k2*(torque[0]*diff[0] + torque[1]*diff[1] + torque[2]*diff[2]);
   #endif
   return 0;
 
@@ -190,11 +174,15 @@ int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3
 //---HARMONIC BOND---
 // constuctor
 HARMONIC::HARMONIC(double k_i, double r_i, double r_cut_i){
-  k = k_i;
-  r = r_i;
-  r_cut = r_cut_i;
-  interaction_type_code = BONDED_IA_HARMONIC;
+  m_k = k_i;
+  m_r = r_i;
+  m_r_cut = r_cut_i;
+  m_interaction_type_code = BondType::HARMONIC;
 } 
+
+BondType HARMONIC::get_interaction_code(){
+  return m_interaction_type_code;
+}
 
 int HARMONIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
   int i;
@@ -203,12 +191,12 @@ int HARMONIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double 
   double dist = sqrt(dist2);
   double dr;
 
-  if ((r_cut > 0.0) &&
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) &&
+      (dist > m_r_cut)) 
     return 1;
 
-  dr = dist - r;
-  fac = -k * dr;
+  dr = dist - m_r;
+  fac = -m_k * dr;
   if (fabs(dr) > ROUND_ERROR_PREC) {
      if(dist>ROUND_ERROR_PREC) {  /* Regular case */
         fac /= dist;
@@ -230,8 +218,8 @@ int HARMONIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double 
   int numfac = 0;
   if (p1->p.configtemp) numfac+=1;
   if (p2->p.configtemp) numfac+=1;
-  configtemp[0] += numfac*SQR(k * dr);
-  configtemp[1] -= numfac*k*(3-2.*r/dist);
+  configtemp[0] += numfac*SQR(m_k * dr);
+  configtemp[1] -= numfac*m_k*(3-2.*m_r/dist);
 #endif
 
   return 0;
@@ -241,22 +229,26 @@ int HARMONIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((r_cut > 0.0) && 
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) && 
+      (dist > m_r_cut)) 
     return 1;
 
-  *_energy = 0.5*k*SQR(dist - r);
+  *_energy = 0.5*m_k*SQR(dist - m_r);
   return 0;
 }
 
 //---QUARTIC BOND---
 //constructor
 QUARTIC::QUARTIC(double k0_i, double k_1_i, double r_i, double r_cut_i){
-  k0 = k0_i;
-  k1 = k_1_i;
-  r = r_i;
-  r_cut = r_cut_i;
-  interaction_type_code = BONDED_IA_QUARTIC;
+  m_k0 = k0_i;
+  m_k1 = k_1_i;
+  m_r = r_i;
+  m_r_cut = r_cut_i;
+  m_interaction_type_code = BondType::QUARTIC;
+}
+
+BondType QUARTIC::get_interaction_code(){
+  return m_interaction_type_code;
 }
 
 int QUARTIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
@@ -268,13 +260,13 @@ int QUARTIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double f
 
   // printf("Quartic dist2 %e, dist %e\n", dist2, dist);
 
-  if ((r_cut > 0.0) &&
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) &&
+      (dist > m_r_cut)) 
     return 1;
 
-  dr = dist - r;
+  dr = dist - m_r;
 
-  fac = (k0 * dr + k1 * dr * dr * dr)/dist;
+  fac = (m_k0 * dr + m_k1 * dr * dr * dr)/dist;
   
   for(i=0;i<3;i++)
     force[i] = -fac*dx[i];
@@ -291,21 +283,25 @@ int QUARTIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double 
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((r_cut > 0.0) && 
-      (dist > r_cut)) 
+  if ((m_r_cut > 0.0) && 
+      (dist > m_r_cut)) 
     return 1;
  
-  double dr2 = SQR(dist -r);
+  double dr2 = SQR(dist -m_r);
 
-  *_energy = 0.5*k0*dr2 + 0.25 * k1 * SQR(dr2);
+  *_energy = 0.5*m_k0*dr2 + 0.25 * m_k1 * SQR(dr2);
   return 0;
 }
 
 //---BONDED_COULOMB---
 //constructor
 BONDED_COULOMB::BONDED_COULOMB(double prefactor_i){
-  prefactor = prefactor_i;
-  interaction_type_code = BONDED_IA_BONDED_COULOMB;
+  m_prefactor = prefactor_i;
+  m_interaction_type_code = BondType::BONDED_COULOMB;
+}
+
+BondType BONDED_COULOMB::get_interaction_code(){
+  return m_interaction_type_code;
 }
 
 int BONDED_COULOMB::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
@@ -315,7 +311,7 @@ int BONDED_COULOMB::add_bonded_force(Particle *p1, Particle *p2, double dx[3], d
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  fac = prefactor * p1->p.q * p2->p.q / (dist*dist2);
+  fac = m_prefactor * p1->p.q * p2->p.q / (dist*dist2);
 
   for(i=0;i<3;i++)
     force[i] = fac*dx[i];
@@ -328,7 +324,7 @@ int BONDED_COULOMB::add_bonded_force(Particle *p1, Particle *p2, double dx[3], d
 int BONDED_COULOMB::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
 #ifdef ELECTROSTATICS
   double dist = sqrt(sqrlen(dx));
-  *_energy = prefactor * p1->p.q * p2->p.q / dist;
+  *_energy = m_prefactor * p1->p.q * p2->p.q / dist;
 #endif
   return 0;
 }

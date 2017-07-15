@@ -24,7 +24,7 @@
  */
 #include "bonded_coulomb.hpp"
 #include "communication.hpp"
-#include "bond_exist.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 #ifdef ELECTROSTATICS
 
@@ -42,14 +42,8 @@ int bonded_coulomb_set_params(int bond_type, double prefactor)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  //bond classes part
-  //create the placeholders in bond vector
-  if(make_bond_exist_bond_class(bond_type)){
-    // only if type +1 > size
-    // this means: type number does not overlapp with existing entry
-    BONEDED_COULOMB* new_coulomb_bond = new BONDED_COULOMB(prefactor);
-    bonds_ia.push_back(new_coulomb_bond);
-  };
+  //create new bond class in bond vector with params
+  set_bond_by_type(bond_type, Utils::make_unique<BONDED_COULOMB>(prefactor));
 
   return ES_OK;
 }

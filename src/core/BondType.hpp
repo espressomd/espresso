@@ -1,68 +1,68 @@
-#ifndef BONDED_INTERACTION_H
-#define BONDED_INTERACTION_H
-enum BondedInteraction {
+#ifndef BOND_TYPE_H
+#define BOND_TYPE_H
+enum class BondType {
   /** This bonded interaction was not set. */
-  BONDED_IA_NONE = -1,
+  NONE,
   /** Type of bonded interaction is a FENE potential
       (to be combined with Lennard Jones). */
-  BONDED_IA_FENE,
+  FENE,
   /** Type of bonded interaction is a HARMONIC potential. */
-  BONDED_IA_HARMONIC,
+  HARMONIC,
   /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
-  BONDED_IA_HARMONIC_DUMBBELL,
+  HARMONIC_DUMBBELL,
   /** Type of bonded interaction is a QUARTIC potential. */
-  BONDED_IA_QUARTIC,
+  QUARTIC,
   /** Type of bonded interaction is a BONDED_COULOMB */
-  BONDED_IA_BONDED_COULOMB,
+  BONDED_COULOMB,
   /** Type of bonded interaction is a bond angle potential. */
-  BONDED_IA_ANGLE_OLD,
+  ANGLE_OLD,
   /** Type of bonded interaction is a dihedral potential. */
-  BONDED_IA_DIHEDRAL,
+  DIHEDRAL,
   /** Type of tabulated bonded interaction potential,
       may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_TABULATED,
+  TABULATED,
   /** Type of bonded interaction is a (-LJ) potential. */
-  BONDED_IA_SUBT_LJ,
+  SUBT_LJ,
   /** Type of a Rigid/Constrained bond*/
-  BONDED_IA_RIGID_BOND,
+  RIGID_BOND,
   /** Type of a virtual bond*/
-  BONDED_IA_VIRTUAL_BOND,
+  VIRTUAL_BOND,
   /** Type of bonded interaction is a bond angle -- constraint distance
      potential. */
-  BONDED_IA_ANGLEDIST,
+  ANGLEDIST,
   /** Type of bonded interaction is a bond angle -- chain ends have angle with
      wall constraint */
-  BONDED_IA_ENDANGLEDIST,
+  ENDANGLEDIST,
   /** Type of overlapped bonded interaction potential,
       may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_OVERLAPPED,
+  OVERLAPPED,
   /** Type of bonded interaction is a bond angle cosine potential. */
-  BONDED_IA_ANGLE_HARMONIC,
+  ANGLE_HARMONIC,
   /** Type of bonded interaction is a bond angle cosine potential. */
-  BONDED_IA_ANGLE_COSINE,
+  ANGLE_COSINE,
   /** Type of bonded interaction is a bond angle cosine potential. */
-  BONDED_IA_ANGLE_COSSQUARE,
+  ANGLE_COSSQUARE,
   /** Type of bonded interaction: oif local forces. */
-  BONDED_IA_OIF_LOCAL_FORCES,
+  OIF_LOCAL_FORCES,
   /** Type of bonded interaction: oif global forces. */
-  BONDED_IA_OIF_GLOBAL_FORCES,
+  OIF_GLOBAL_FORCES,
   /** Type of bonded interaction: determining outward direction of oif membrane.
      */
-  BONDED_IA_OIF_OUT_DIRECTION,
+  OIF_OUT_DIRECTION,
   /** Type of bonded interaction for cg DNA */
-  BONDED_IA_CG_DNA_BASEPAIR,
+  CG_DNA_BASEPAIR,
   /** Type of bonded interaction for cg DNA */
-  BONDED_IA_CG_DNA_STACKING,
+  CG_DNA_STACKING,
   /** Type of bonded interaction for cg DNA */
-  BONDED_IA_CG_DNA_BACKBONE,
+  CG_DNA_BACKBONE,
   /** Type of bonded interaction is a wall repulsion (immersed boundary). */
-  BONDED_IA_IBM_TRIEL,
+  IBM_TRIEL,
   /** Type of bonded interaction is volume conservation force (immersed
      boundary). */
-  BONDED_IA_IBM_VOLUME_CONSERVATION,
+  IBM_VOLUME_CONSERVATION,
   /** Type of bonded interaction is bending force (immersed boundary). */
-  BONDED_IA_IBM_TRIBEND,
+  IBM_TRIBEND,
   /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA
+  UMBRELLA
 };
 #endif

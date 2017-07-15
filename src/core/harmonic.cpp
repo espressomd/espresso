@@ -24,7 +24,7 @@
  */
 #include "harmonic.hpp"
 #include "communication.hpp"
-#include "bond_exist.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 int harmonic_set_params(int bond_type, double k, double r,double r_cut)
 {
@@ -42,13 +42,8 @@ int harmonic_set_params(int bond_type, double k, double r,double r_cut)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  //bond classes part
-  //create the placeholders in bond vector
-  if(make_bond_exist_bond_class(bond_type)){
-    // only if type +1 > size
-    // this means: type number does not overlapp with existing entry
-    HARMONIC* new_harm_bond = new HARMONIC(k, r, r_cut);
-    bonds_ia.push_back(new_harm_bond);
-  };
+  //create new bond class in bond vector with params
+  set_bond_by_type(bond_type, Utils::make_unique<HARMONIC>(k, r, r_cut));
+
   return ES_OK;
 }
