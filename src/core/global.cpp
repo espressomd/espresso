@@ -99,13 +99,12 @@ const Datafield fields[] = {
   {&warnings,           TYPE_INT, 1, "warnings",          1, false },         /* 52 from global.cpp */
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1, false },         /* 53 from global.cpp */
   {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 54 from integrate.cpp */
-  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1, false },         /* 55 from integrate.cpp */
-  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 56 from thermostat.cpp */
-  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 57 from thermostat.cpp */
+  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 55 from thermostat.cpp */
+  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 56 from thermostat.cpp */
 #ifndef ROTATIONAL_INERTIA
-  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 58 from thermostat.cpp */
+  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 57 from thermostat.cpp */
 #else
-  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 58 from thermostat.cpp */
+  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 57 from thermostat.cpp */
 #endif
   { NULL, 0, 0, NULL, 0, false }
 };

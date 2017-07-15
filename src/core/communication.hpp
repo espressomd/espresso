@@ -325,16 +325,6 @@ void mpi_send_smaller_timestep_flag(int node, int part,
                                     int smaller_timestep_flag);
 #endif
 
-#ifdef CONFIGTEMP
-/** Issue REQ_SET_CONFIGTEMP: send configurational temperature flag.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param configtemp the configurational temperature flag.
-*/
-void mpi_send_configtemp_flag(int node, int part, int configtemp_flag);
-#endif
-
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -524,11 +514,6 @@ void mpi_bcast_lbboundary(int del_num);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-#ifdef CONFIGTEMP
-/** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
-void mpi_get_configtemp(double cfgtmp[2]);
-#endif
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */

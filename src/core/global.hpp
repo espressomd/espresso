@@ -187,14 +187,12 @@ extern const Datafield fields[];
 #define FIELD_DPD_IGNORE_FIXED_PARTICLES 53
 /** index of \ref smaller_timestep in \ref #fields */
 #define FIELD_SMALLERTIMESTEP     54
-/** index of \ref configtemp in \ref #fields */
-#define FIELD_CONFIGTEMP          55
 /** index of \ref langevin_trans in \ref #fields */
-#define FIELD_LANGEVIN_TRANS_SWITCH 56
+#define FIELD_LANGEVIN_TRANS_SWITCH 55
 /** index of \ref langevin_rotate in \ref #fields */
-#define FIELD_LANGEVIN_ROT_SWITCH 57
+#define FIELD_LANGEVIN_ROT_SWITCH 56
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
-#define FIELD_LANGEVIN_GAMMA_ROTATION 58
+#define FIELD_LANGEVIN_GAMMA_ROTATION 57
 
 /*@}*/
 
