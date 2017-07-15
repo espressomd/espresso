@@ -475,18 +475,6 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-/*class Bond {
-public:
-  virtual bool add_bonded_force(Particle &, Particle &, Vector dist) = 0;
-};
-
-class Fene : public Bond {
-public:
-bool  add_bonded_force(Particle &, Particle &, Vector dist) override {
-...
-  };
-};
-*/
 
 /** Calculate bonded forces for one particle.
     @param p1 particle for which to calculate forces
