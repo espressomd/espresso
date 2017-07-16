@@ -126,8 +126,6 @@ class ParticleCache {
   std::unordered_map<int, int> id_index;
   /** The particle data */
   map_type remote_parts;
-  /** Bond info for remote_parts */
-  std::vector<int> bond_info;
   /** State */
   bool m_valid, m_valid_bonds;
 
@@ -145,18 +143,23 @@ class ParticleCache {
    * @brief Implementation of bond update.
    *
    * Particle ids, and the bond info is packed
-   * into a linear buffer and gathet to the master.
+   * into a linear buffer and gather to the master.
    */
-  void m_update_bonds() {
+  std::vector<int> m_update_bonds() {
     std::vector<int> local_bonds;
 
-    for (auto &p : parts()) {
+    for (auto const &p : parts()) {
       local_bonds.push_back(p.identity());
-      std::copy(p.bl.begin(), p.bl.end(), std::back_inserter(local_bonds));
+
+      auto const& bonds = p.bonds();
+      local_bonds.push_back(bonds.size());
+      std::copy(std::begin(bonds), std::end(bonds), std::back_inserter(local_bonds));
     }
 
     Utils::Mpi::gather_buffer(local_bonds,
                               Communication::mpiCallbacks().comm());
+
+    return local_bonds;
   }
 
   /**
@@ -165,21 +168,20 @@ class ParticleCache {
    * Master version of m_update_bonds().
    */
   void m_recv_bonds() {
-    bond_info.clear();
-
-    Utils::Mpi::gather_buffer(bond_info, Communication::mpiCallbacks().comm());
+    auto bond_info = m_update_bonds();
 
     for (auto it = bond_info.begin(); it != bond_info.end();) {
       /* Particle id for which the next bond info is for */
       auto const id = *it++;
+      auto const n_bonds = *it++;
       /* Use the index to find the particle in remote_parts */
       auto &p = remote_parts.begin()[id_index[id]];
       /* Update the bond list of the particle with the bond_info */
-      p.bl.e = &(*it);
-      p.bl.max = p.bl.size();
+      p.bonds().resize(n_bonds);
+      std::copy_n(it, n_bonds, p.bonds().begin());
 
       /* Jump to the next record */
-      it += p.bl.size();
+      it += n_bonds;
     }
   }
 
@@ -197,7 +199,7 @@ class ParticleCache {
     for (auto const &p : parts()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
-      std::tie(it, std::ignore) = remote_parts.emplace(p);
+      std::tie(it, std::ignore) = remote_parts.emplace(p.flat_copy());
 
       /* And run the op on it. */
       m_op(*it);
@@ -242,7 +244,6 @@ public:
   void clear() {
     id_index.clear();
     remote_parts.clear();
-    bond_info.clear();
   }
 
   /**
@@ -303,7 +304,6 @@ public:
     clear();
     /* Release memory */
     remote_parts.shrink_to_fit();
-    bond_info.shrink_to_fit();
     /* Adjust state */
     m_valid = false;
     m_valid_bonds = false;

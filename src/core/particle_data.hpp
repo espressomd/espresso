@@ -303,20 +303,6 @@ typedef struct {
 
 /** Struct holding all information for one particle. */
 struct Particle {
-  Particle() {
-    init_intlist(&bl);
-#ifdef EXCLUSIONS
-    init_intlist(&el);
-#endif
-  }
-
-  ~Particle() {
-    bl.resize(0);
-#ifdef EXCLUSIONS
-    el.resize(0);
-#endif
-  }
-
   int &identity() { return p.identity; }
   int const &identity() const { return p.identity; }
 
@@ -326,6 +312,34 @@ struct Particle {
 
   bool operator!=(Particle const &rhs) const {
     return identity() != rhs.identity();
+  }
+
+  /**
+   * @brief Return a copy of the particle with
+   *        only the fixed size parts.
+   *
+   * This creates a copy of the particle with
+   * only the parts than can be copied w/o heap
+   * allocation, e.g. w/o bonds and exlusions.
+   * This is more efficient if these parts are
+   * not actually needed.
+   */
+  Particle flat_copy() const {
+    Particle ret{};
+
+    ret.p = p;
+    ret.r = r;
+    ret.m = m;
+    ret.f = f;
+    ret.l = l;
+#ifdef LB
+    ret.lc = lc;
+#endif
+#ifdef ENGINE
+    ret.swim = swim;
+#endif
+
+    return ret;
   }
 
   ///
@@ -348,8 +362,20 @@ struct Particle {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  IntList &exclusions() {
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded interactions
+    return el;
+#endif
+
+    throw std::runtime_error{"Exclusions not enabled."};
+  }
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded
+   * interactions
    */
   IntList el;
 #endif
@@ -1030,10 +1056,6 @@ void pointer_to_gamma_rot(Particle *p, double *&res);
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res);
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 #endif
 
 #ifdef ENGINE

@@ -61,6 +61,7 @@ cdef extern from "particle_data.hpp":
         particle_force f
         particle_local l
         int_list bl
+        int_list exclusions() except +
 
     IF ENGINE:
         IF LB or LB_GPU:
@@ -185,8 +186,6 @@ cdef extern from "particle_data.hpp":
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)
-        void pointer_to_exclusions(particle * p, int * & res1, int * & res2)
-
         void remove_all_exclusions()
 
     IF ENGINE:
