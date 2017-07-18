@@ -20,7 +20,7 @@ enum class BondType {
   DIHEDRAL,
   /** Type of tabulated bonded interaction potential,
       may be of bond length, of bond angle or of dihedral type. */
-  TABULATED,
+  TABULATED_BOND,
   /** Type of bonded interaction is a (-LJ) potential. */
   SUBT_LJ,
   /** Type of a Rigid/Constrained bond*/
