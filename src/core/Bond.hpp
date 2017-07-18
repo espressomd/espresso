@@ -7,19 +7,20 @@ This is the basis class for bonded interactions.
 It is abstract and all classes inheriting from it
 are concrete classes.
  */
-class Bond{
+class Bond {
 public:
-
   // virtual desctructor
-  virtual ~Bond();
-  //no definition of these functions because this is an abstract class
-  //force calculation
-  virtual int add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3])=0;
-  //energy calculation
-  virtual int add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy)=0;
-  
-  //get interaction type of bond
-  virtual BondType get_interaction_code();
+  virtual ~Bond() = default;
+  // no definition of these functions because this is an abstract class
+  // force calculation
+  virtual int add_bonded_force(Particle *p1, Particle *p2, double dx[3],
+                               double force[3]) = 0;
+  // energy calculation
+  virtual int add_bonded_energy(Particle *p1, Particle *p2, double dx[3],
+                                double *_energy) = 0;
+
+  // get interaction type of bond
+  virtual BondType get_interaction_code() = 0;
 };
 
 /*
@@ -32,7 +33,6 @@ class FENE : public Bond{
 public:
   //constructor
   FENE(double r0_input, double drmax_input, double drmax2_input, double drmax2i_input, double k_input);
-  ~FENE();
   // Member function
   int add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) override;
   int add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) override;
@@ -52,7 +52,6 @@ private:
 class HARMONIC_DUMBBELL : public Bond{
 public: 
   HARMONIC_DUMBBELL(double k1_i, double k_2_i, double r_i, double r_cut_i);
-  ~HARMONIC_DUMBBELL();
     // Member function
   int add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) override;
   int add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) override;
@@ -86,7 +85,6 @@ private:
 class QUARTIC : public Bond{
 public: 
   QUARTIC(double k0_i, double k_1_i, double r_i, double r_cut_i);
-  ~QUARTIC();
     // Member function
   int add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) override;
   int add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) override;
@@ -103,7 +101,6 @@ private:
 class BONDED_COULOMB : public Bond{
 public:
   BONDED_COULOMB(double prefactor_i);
-  ~BONDED_COULOMB();
     // Member function
   int add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) override;
   int add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) override;
