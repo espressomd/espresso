@@ -49,7 +49,7 @@ int fene_set_params(int bond_type, double k, double drmax, double r0)
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<FENE>(r0, drmax, SQR(drmax), 1./SQR(drmax), k));
+  set_bond_by_type(bond_type, Utils::make_unique<Fene>(r0, drmax, SQR(drmax), 1./SQR(drmax), k));
 
   return ES_OK;
 }

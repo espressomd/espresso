@@ -43,7 +43,7 @@ int bonded_coulomb_set_params(int bond_type, double prefactor)
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<BONDED_COULOMB>(prefactor));
+  set_bond_by_type(bond_type, Utils::make_unique<BondedCoulomb>(prefactor));
 
   return ES_OK;
 }

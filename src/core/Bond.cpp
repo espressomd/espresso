@@ -1,6 +1,9 @@
 #include"Bond.hpp"
 #include "utils.hpp"
 #include "random.hpp"
+#include "communication.hpp"
+#include "debug.hpp"
+#include "config.hpp"
 
 /*
 Member functions and construcor of concrete classes in bond.hpp
@@ -8,21 +11,21 @@ Member functions and construcor of concrete classes in bond.hpp
 
 //---FENE---
 //constructor needs parameters of fene bond
-FENE::FENE(double r0_input, double drmax_input, double drmax2_input, double drmax2i_input, double k_input){
+Fene::Fene(double r0_input, double drmax_input, double drmax2_input, double drmax2i_input, double k_input){
   m_r0 = r0_input;
   m_drmax = drmax_input;
   m_drmax2 = drmax2_input;
   m_drmax2i = drmax2i_input;
   m_k = k_input;
-  m_interaction_type_code = BondType::FENE;
+  m_interaction_type_code = BondType::FENE_BOND;
 }
 
-BondType FENE::get_interaction_code(){
+BondType Fene::get_interaction_code(){
   return m_interaction_type_code;
 }
 
 //calculating the fene bond force: virtual function
-int FENE::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
+int Fene::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
   int i;
  
   const double len2 = sqrlen(dx);
@@ -54,7 +57,7 @@ int FENE::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double forc
 }
 
 //calculating FENE Energy: virtual function
-int FENE::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
+int Fene::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
   /* compute bond stretching (r-r0) */
   double dr = sqrt(sqrlen(dx))-m_r0;
 
@@ -73,20 +76,21 @@ int FENE::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_e
 
 //---HARMONIC DUMBBELL
 // consturctor
-HARMONIC_DUMBBELL::HARMONIC_DUMBBELL(double k1_i, double k_2_i, double r_i, double r_cut_i){
+HarmonicDumbbell::HarmonicDumbbell(double k1_i, double k_2_i, double r_i, double r_cut_i){
   m_k1 = k1_i;
   m_k2 = k_2_i;
   m_r = r_i;
   m_r_cut = r_cut_i;
-  m_interaction_type_code = BondType::HARMONIC_DUMBBELL;
+  m_interaction_type_code = BondType::HARMONIC_DUMBBELL_BOND;
 }
 
-BondType HARMONIC_DUMBBELL::get_interaction_code(){
+BondType HarmonicDumbbell::get_interaction_code(){
+  int x;
   return m_interaction_type_code;
 }
 
-int HARMONIC_DUMBBELL::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
-  #ifdef ROTATION
+int HarmonicDumbbell::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
+#ifdef ROTATION
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -124,9 +128,9 @@ int HARMONIC_DUMBBELL::add_bonded_force(Particle *p1, Particle *p2, double dx[3]
   da[1] = dhat[2]*p1->r.quatu[0] - dhat[0]*p1->r.quatu[2];
   da[2] = dhat[0]*p1->r.quatu[1] - dhat[1]*p1->r.quatu[0];
 
-  p1->f.torque[0] += k2 * da[0];
-  p1->f.torque[1] += k2 * da[1];
-  p1->f.torque[2] += k2 * da[2];
+  p1->f.torque[0] += m_k2 * da[0];
+  p1->f.torque[1] += m_k2 * da[1];
+  p1->f.torque[2] += m_k2 * da[2];
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist2,fac));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist2,fac));
@@ -134,7 +138,7 @@ int HARMONIC_DUMBBELL::add_bonded_force(Particle *p1, Particle *p2, double dx[3]
   return 0;
 }
 
-int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
+int HarmonicDumbbell::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
 
   #ifdef ROTATION
   double dist2 = sqrlen(dx);
@@ -155,9 +159,9 @@ int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3
   da[2] = dhat[0]*p1->r.quatu[1] - dhat[1]*p1->r.quatu[0];
 
   double torque[3];
-  torque[0] = k2 * da[0];
-  torque[1] = k2 * da[1];
-  torque[2] = k2 * da[2];
+  torque[0] = m_k2 * da[0];
+  torque[1] = m_k2 * da[1];
+  torque[2] = m_k2 * da[2];
 
   double diff[3];
   diff[0] = dhat[0] - p1->r.quatu[0];
@@ -173,18 +177,18 @@ int HARMONIC_DUMBBELL::add_bonded_energy(Particle *p1, Particle *p2, double dx[3
 
 //---HARMONIC BOND---
 // constuctor
-HARMONIC::HARMONIC(double k_i, double r_i, double r_cut_i){
+Harmonic::Harmonic(double k_i, double r_i, double r_cut_i){
   m_k = k_i;
   m_r = r_i;
   m_r_cut = r_cut_i;
-  m_interaction_type_code = BondType::HARMONIC;
+  m_interaction_type_code = BondType::HARMONIC_BOND;
 } 
 
-BondType HARMONIC::get_interaction_code(){
+BondType Harmonic::get_interaction_code(){
   return m_interaction_type_code;
 }
 
-int HARMONIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
+int Harmonic::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -225,7 +229,7 @@ int HARMONIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double 
   return 0;
 }
 
-int HARMONIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
+int Harmonic::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
@@ -239,19 +243,19 @@ int HARMONIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double
 
 //---QUARTIC BOND---
 //constructor
-QUARTIC::QUARTIC(double k0_i, double k_1_i, double r_i, double r_cut_i){
+Quartic::Quartic(double k0_i, double k_1_i, double r_i, double r_cut_i){
   m_k0 = k0_i;
   m_k1 = k_1_i;
   m_r = r_i;
   m_r_cut = r_cut_i;
-  m_interaction_type_code = BondType::QUARTIC;
+  m_interaction_type_code = BondType::QUARTIC_BOND;
 }
 
-BondType QUARTIC::get_interaction_code(){
+BondType Quartic::get_interaction_code(){
   return m_interaction_type_code;
 }
 
-int QUARTIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
+int Quartic::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -279,7 +283,7 @@ int QUARTIC::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double f
   return 0;
 }
 
-int QUARTIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
+int Quartic::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
@@ -295,16 +299,16 @@ int QUARTIC::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double 
 
 //---BONDED_COULOMB---
 //constructor
-BONDED_COULOMB::BONDED_COULOMB(double prefactor_i){
+BondedCoulomb::BondedCoulomb(double prefactor_i){
   m_prefactor = prefactor_i;
-  m_interaction_type_code = BondType::BONDED_COULOMB;
+  m_interaction_type_code = BondType::BONDED_COULOMB_BOND;
 }
 
-BondType BONDED_COULOMB::get_interaction_code(){
+BondType BondedCoulomb::get_interaction_code(){
   return m_interaction_type_code;
 }
 
-int BONDED_COULOMB::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
+int BondedCoulomb::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]){
 #ifdef ELECTROSTATICS
   int i;
   double fac;
@@ -321,7 +325,7 @@ int BONDED_COULOMB::add_bonded_force(Particle *p1, Particle *p2, double dx[3], d
   return 0;
 }
 
-int BONDED_COULOMB::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
+int BondedCoulomb::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy){
 #ifdef ELECTROSTATICS
   double dist = sqrt(sqrlen(dx));
   *_energy = m_prefactor * p1->p.q * p2->p.q / dist;
