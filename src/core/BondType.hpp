@@ -1,5 +1,5 @@
 #ifndef BOND_TYPE_H
-#define BOND_TYPE_enum
+#define BOND_TYPE_H
 
 enum class BondType {
 
