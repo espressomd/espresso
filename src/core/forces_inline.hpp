@@ -569,9 +569,8 @@ inline void add_bonded_force(Particle *p1) {
          and the pressure calculation not yet clear. */
       get_mi_vector(dx, p1->r.p, p2->r.p);
     }
-
     //test!!!!!!!
-    if(type == 1){
+    if(type == BONDED_IA_FENE){
       bond_broken = bonds_ia[type_num]->add_bonded_force(p1, p2, dx, force);
     };
     switch (type) {

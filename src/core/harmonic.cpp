@@ -25,6 +25,7 @@
 #include "harmonic.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "bond/Harmonic.cpp"
 
 int harmonic_set_params(int bond_type, double k, double r,double r_cut)
 {
@@ -43,7 +44,7 @@ int harmonic_set_params(int bond_type, double k, double r,double r_cut)
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Harmonic>(k, r, r_cut));
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::Harmonic>(k, r, r_cut));
 
   return ES_OK;
 }

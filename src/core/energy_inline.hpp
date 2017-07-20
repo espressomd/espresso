@@ -341,7 +341,7 @@ inline void add_bonded_energy(Particle *p1) {
     if (n_partners == 1)
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
-    if(type == 1){
+    if(type == BONDED_IA_FENE){
       bond_broken = bonds_ia[type_num]->add_bonded_energy(p1, p2, dx, &ret);
     };
 

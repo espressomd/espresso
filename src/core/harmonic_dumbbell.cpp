@@ -25,6 +25,7 @@
 #include "harmonic_dumbbell.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "bond/HarmonicDumbbell.cpp"
 
 #ifdef ROTATION
 
@@ -46,7 +47,7 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, 
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<HarmonicDumbbell>(k1, k2, r, r_cut));
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::HarmonicDumbbell>(k1, k2, r, r_cut));
 
   return ES_OK;
 }

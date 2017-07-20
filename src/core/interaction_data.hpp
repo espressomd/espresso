@@ -27,7 +27,19 @@
 #include "particle_data.hpp" /* needed for constraints */
 #include "utils.hpp"
 #include <memory> //for unique pointer -> vector of bond classes
-#include "Bond.hpp"
+//Bond classes header
+#include "bond/Bond.hpp"
+#include "bond/Fene.hpp"
+#include "bond/HarmonicDumbbell.hpp"
+#include "bond/Harmonic.hpp"
+#include "bond/Quartic.hpp"
+#include "bond/BondedCoulomb.hpp"
+//Bond classes cpp files
+//#include "bond/Fene.cpp"
+//#include "bond/HarmonicDumbbell.cpp"
+//#include "bond/Harmonic.cpp"
+//#include "bond/Quartic.cpp"
+//#include "bond/BondedCoulomb.cpp"
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -1179,7 +1191,7 @@ extern int n_bonded_ia;
 extern Bonded_ia_parameters *bonded_ia_params;
 
 /*vector of unique pointers because bond is an abstact class*/
-extern std::vector<std::unique_ptr<Bond> > bonds_ia;
+extern std::vector<std::unique_ptr<Bond::Bond> > bonds_ia;
 
 /** Array containing all tabulated forces*/
 extern DoubleList tabulated_forces;
@@ -1247,7 +1259,7 @@ void make_particle_type_exist(int type);
 void make_bond_type_exist(int type);
 
 /** create new bond in bond class vector **/
-void set_bond_by_type(int type, std::unique_ptr<Bond> && bond);
+void set_bond_by_type(int type, std::unique_ptr<Bond::Bond> && bond);
 
 /** This function increases the LOCAL ia_params field
     to the given size. Better use

@@ -25,6 +25,7 @@
 #include "quartic.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "bond/Quartic.cpp"
 
 int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cut)
 {
@@ -44,7 +45,7 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cu
   mpi_bcast_ia_params(bond_type, -1); 
 
   //create new bond class in bond vector with params
-  set_bond_by_type(bond_type, Utils::make_unique<Quartic>(k0, k1, r, r_cut));
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::Quartic>(k0, k1, r, r_cut));
 
   return ES_OK;
 }

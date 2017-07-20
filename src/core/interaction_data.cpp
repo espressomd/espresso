@@ -100,7 +100,7 @@ int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
 /** definition of Bond unique pointer vector **/
-std::vector<std::unique_ptr<Bond> > bonds_ia;
+std::vector<std::unique_ptr<Bond::Bond>> bonds_ia;
 
 double min_global_cut = 0.0;
 
@@ -887,7 +887,7 @@ void make_bond_type_exist(int type)
   n_bonded_ia = ns;
 }
 
-void set_bond_by_type(int type, std::unique_ptr<Bond> && bond) {
+void set_bond_by_type(int type, std::unique_ptr<Bond::Bond> && bond) {
 
   /* ifdef cases must be here*/
   if(type >= bonds_ia.size()) {

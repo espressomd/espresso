@@ -25,28 +25,6 @@
  *  see \ref integrate.hpp "integrate.hpp".
 */
 
-/*
-#########################################
-Fragen:
--rescale vel/force: warum rescaling?
--bei calc_forces: warum jedes mal erneut init_forces? 
--warum inline fkt für inline force???
--wo werden forces hingeschrieben?
--warum bond forces bei single particle force?
--was macht ONEPART_TRACE z.B. bei fene.hpp?
--was macht die actor list?
--Particle classe wo ist diese?
-- wo werden observablen berechnet in integrate.cpp?
-########################################
-
-FILES:
-interaction_data.hpp
-fene.cpp ->set params
-interaction_data.cpp -> makebondexist
-forces_inline.hpp
-energy_inline.hpp
- */
-
 #include "integrate.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
