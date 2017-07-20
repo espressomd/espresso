@@ -1,3 +1,5 @@
+whoami;
+nvidia-smi;
 cd ${CI_PROJECT_DIR};
 cp maintainer/configs/maxset.hpp myconfig.hpp;
 mkdir build && cd build;
