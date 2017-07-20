@@ -50,6 +50,7 @@ typedef struct {
   float time_step; //MD time step
   float lb_density;
   unsigned int dim_x;
+  unsigned int dim_x_padded;
   unsigned int dim_y;
   unsigned int dim_z;
   unsigned int number_of_nodes;
@@ -185,6 +186,7 @@ int ek_set_fluidcoupling(bool ideal_contribution);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
+int ek_node_print_potential(int x, int y, int z, double* potential);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 ekfloat ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 

@@ -185,26 +185,14 @@ extern const Datafield fields[];
 #define FIELD_WARNINGS            52
 /** DPD_IGNORE_FIXED_PARTICLES */
 #define FIELD_DPD_IGNORE_FIXED_PARTICLES 53
-/** index of \ref sd_viscosity in \ref #fields */
-#define FIELD_SD_VISCOSITY        54
-/** index of \ref sd_radius in \ref_#fields */
-#define FIELD_SD_RADIUS           55
-/** index of \ref sd_seed in \ref #fields */
-#define FIELD_SD_SEED             56
-/** index of \ref sd_random_state i_ \ref #fields */
-#define FIELD_SD_RANDOM_STATE     57
-/** index of \ref sd_precision_random in \ref #fields */
-#define FIELD_SD_RANDOM_PRECISION 58
 /** index of \ref smaller_timestep in \ref #fields */
-#define FIELD_SMALLERTIMESTEP     59
-/** index of \ref configtemp in \ref #fields */
-#define FIELD_CONFIGTEMP          60
+#define FIELD_SMALLERTIMESTEP     54
 /** index of \ref langevin_trans in \ref #fields */
-#define FIELD_LANGEVIN_TRANS_SWITCH 61
+#define FIELD_LANGEVIN_TRANS_SWITCH 55
 /** index of \ref langevin_rotate in \ref #fields */
-#define FIELD_LANGEVIN_ROT_SWITCH 62
+#define FIELD_LANGEVIN_ROT_SWITCH 56
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
-#define FIELD_LANGEVIN_GAMMA_ROTATION 63
+#define FIELD_LANGEVIN_GAMMA_ROTATION 57
 
 /*@}*/
 

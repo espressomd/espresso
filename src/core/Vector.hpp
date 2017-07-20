@@ -133,7 +133,7 @@ public:
   }
 
   inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a) const {
-    return cross(this, a);
+    return cross(*this, a);
   }
 
   friend boost::serialization::access;
