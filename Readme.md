@@ -1,3 +1,44 @@
+
+# Fork information and quick start guide.
+
+This fork of the Tcl version of ESPResSo has been made by
+Dr. Bogdan Tanygin for his scientific publication method algorithm
+reference with new features implemented: analytical
+fluctuative-dissipative integrator and Barnes-Hut GPU dipole-dipole
+method. These features are available in Python ESPResSo version fork as
+well and will be even merged to the main ESPResSo repo in case if it
+will be approved by the community.
+
+This fork is ready for usage in a real soft matter scientific
+problems: either physical or biophysical ones.
+Following notes are provided to simplify a start. Please, also
+refer to [firststeps](http://espressomd.org/html/doc/firststeps.html).
+Ferrofluid simulation related scripts and configuration 
+are available in `samples/tcl/ferrofluid/`. New features could be
+activated by:
+
+```
+#define SEMI_INTEGRATED
+#define BARNES_HUT
+```
+
+in `samples/tcl/ferrofluid/myconfig.hpp` which should be placed to this
+folder root before the build which can be run as:
+
+```
+./maintainer/travis/build_cmake.sh > build.log
+```
+
+The ferrofluid simulation could be run by the command:
+
+```
+./Espresso mag-cuda-27-1-compare-methods\[RELEASE\].tcl > simulation.log
+
+```
+File ```sim-motion-eq-dim-less-08.wxmx``` contains a description of the
+dimensionless physical quantities used here. It can be opened by the
+wxMaxima math package.
+
 # ESPResSo
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
