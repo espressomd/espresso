@@ -22,8 +22,9 @@ activated by:
 #define BARNES_HUT
 ```
 
-in `samples/tcl/ferrofluid/myconfig.hpp` which should be placed to this
-folder root before the build which can be run as:
+in `samples/tcl/ferrofluid/myconfig-ferrofluid-sample.hpp` which should
+be placed to this folder root as `myconfig.hpp` before the build which
+can be run as:
 
 ```
 ./maintainer/travis/build_cmake.sh > build.log
