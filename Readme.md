@@ -1,5 +1,5 @@
 
-# Fork information and quick start guide.
+# Fork information and Quick Start guide
 
 This fork of the Tcl version of ESPResSo has been made by
 Dr. Bogdan Tanygin for his scientific publication method algorithm
