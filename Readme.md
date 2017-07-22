@@ -1,3 +1,36 @@
+# Fork information and Quick Start guide
+
+This fork of the Python version of ESPResSo has been made by
+Dr. Bogdan Tanygin for his scientific publication method algorithm
+reference with new features implemented: analytical
+fluctuative-dissipative integrator and Barnes-Hut GPU dipole-dipole
+method.
+
+This fork is ready for usage in a real soft matter scientific
+problems: either physical or biophysical ones.
+Following notes are provided to simplify a start. Please, also
+refer to [firststeps](http://espressomd.org/html/doc/firststeps.html).
+Ferrofluid simulation related scripts and configuration 
+are available in `samples/python/ferrofluid/`. New features could be
+activated by:
+
+```
+#define SEMI_INTEGRATED
+#define BARNES_HUT
+```
+
+in `samples/python/ferrofluid/myconfig-ferrofluid-sample.hpp` which
+should be placed to this folder root as `myconfig.hpp` before the build
+which can be run as:
+
+```
+./maintainer/travis/build_cmake.sh > build.log
+```
+
+File ```sim-motion-eq-dim-less-08.wxmx``` contains a description of the
+dimensionless physical quantities used here. It can be opened by the
+wxMaxima math package.
+
 # ESPResSo
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
