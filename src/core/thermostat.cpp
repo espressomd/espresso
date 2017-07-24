@@ -35,22 +35,18 @@ int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
 
-/* LANGEVIN THERMOSTAT */
-#ifndef PARTICLE_ANISOTROPY
-/* Langevin friction coefficient gamma for translation. */
-double langevin_gamma = -1.0;
-#else
-/* Langevin friction coefficient gamma for translation. */
-double langevin_gamma[3] = {-1.0,-1.0,-1.0};
-#endif // PARTICLE_ANISOTROPY
+using Thermostat::GammaType;
 
-#ifndef ROTATIONAL_INERTIA
+/* LANGEVIN THERMOSTAT */
+
+/* Langevin friction coefficient gamma for translation. */
+GammaType langevin_gamma = {-1.0,-1.0,-1.0};
 /* Friction coefficient gamma for rotation. */
-double langevin_gamma_rotation = -1.0;
-#else
-/* Friction coefficient gamma for rotation. */
-double langevin_gamma_rotation[3] = {-1.0,-1.0,-1.0};
-#endif // ROTATIONAL_INERTIA
+GammaType langevin_gamma_rotation = {-1.0,-1.0,-1.0};
+GammaType langevin_pref1;
+GammaType langevin_pref2;
+GammaType langevin_pref2_rotation;
+
 /* Langevin for translations */
 bool langevin_trans = true;
 /* Langevin for rotations */
@@ -68,36 +64,16 @@ int ghmc_nmd = 1;
 // phi parameter for partial momentum update step in GHMC
 double ghmc_phi = 0;
 
-#ifndef PARTICLE_ANISOTROPY
-double langevin_pref1, langevin_pref2;
-#else
-double langevin_pref1[3], langevin_pref2[3];
-#endif
-
-#ifndef ROTATIONAL_INERTIA
-double langevin_pref2_rotation;
-#else
-double langevin_pref2_rotation[3];
-#endif
-
 #ifdef MULTI_TIMESTEP
-  double langevin_pref1_small, langevin_pref2_small;
-  static double langevin_pref2_small_buffer;
+GammaType langevin_pref1_small, langevin_pref2_small;
+static GammaType langevin_pref2_small_buffer;
 #endif
 
 /** buffers for the work around for the correlated random values which cool the system,
     and require a magical heat up whenever reentering the integrator. */
-#ifndef PARTICLE_ANISOTROPY
-static double langevin_pref2_buffer;
-#else
-static double langevin_pref2_buffer[3];
-#endif
+static GammaType langevin_pref2_buffer;
 
-#ifndef ROTATIONAL_INERTIA
-static double langevin_pref2_rotation_buffer;
-#else
-static double langevin_pref2_rotation_buffer[3];
-#endif
+static GammaType langevin_pref2_rotation_buffer;
 
 #ifdef NPT
 double nptiso_pref1;
@@ -110,16 +86,9 @@ double nptiso_pref4;
 void thermo_init_langevin() 
 {
   int j;
-#ifndef PARTICLE_ANISOTROPY
+
   langevin_pref1 = -langevin_gamma/time_step;
   langevin_pref2 = sqrt(24.0*temperature*langevin_gamma/time_step);
-#else
-  for (j = 0; j < 3; j++) {
-    langevin_pref1[j] = -langevin_gamma[j] / time_step;
-    langevin_pref2[j] =
-        sqrt(24.0 * temperature * langevin_gamma[j] / time_step);
-}
-#endif // PARTICLE_ANISOTROPY
 
 #ifdef MULTI_TIMESTEP
   if (smaller_time_step > 0.) {
