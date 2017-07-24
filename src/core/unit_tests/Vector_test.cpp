@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(normalize) {
   BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
 }
 
-BOOST_AUTO_TEST_CASE(operators) {
+BOOST_AUTO_TEST_CASE(comparison_operators) {
   Vector<5, int> v1{1, 2, 3, 4, 5};
   Vector<5, int> v2{6, 7, 8, 9, 10};
 
@@ -99,4 +99,29 @@ BOOST_AUTO_TEST_CASE(operators) {
   BOOST_CHECK(v1 != v2);
   BOOST_CHECK(!(v1 == v2));
   BOOST_CHECK(v1 == v1);
+}
+
+BOOST_AUTO_TEST_CASE(algebraic_operators) {
+  Vector<3, int> v1{1, 2, 3};
+  Vector<3, int> v2{4, 5, 6};
+
+  BOOST_CHECK((v1 * v2) ==
+              std::inner_product(v1.begin(), v1.end(), v2.begin(), 0));
+
+  BOOST_CHECK(((v1 + v2) == Vector<3, int>{5, 7, 9}));
+  BOOST_CHECK(((v1 - v2) == Vector<3, int>{-3, -3, -3}));
+
+  {
+    auto v3 = v1;
+    v3 += v2;
+    BOOST_CHECK(((v1 + v2) == v3));
+  }
+
+  {
+    auto v3 = v1;
+    v3 -= v2;
+    BOOST_CHECK(((v1 - v2) == v3));
+  }
+
+  BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
 }
