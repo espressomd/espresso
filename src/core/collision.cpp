@@ -24,6 +24,7 @@
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
 #include "interaction_data.hpp" 
+#include "initialize.hpp"
 
 
 
@@ -101,12 +102,12 @@ bool validate_collision_parameters()
 #endif
 
   // For vs based methods, Binding so far only works on a single cpu
-  if ((collision_params.mode & COLLISION_MODE_VS) ||(collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
-    if (n_nodes != 1) {
-      runtimeErrorMsg() << "Virtual sites based collision modes only work on a single node.";
-      return false;
-    }
-
+//  if ((collision_params.mode & COLLISION_MODE_VS) ||(collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
+//    if (n_nodes != 1) {
+//      runtimeErrorMsg() << "Virtual sites based collision modes only work on a single node.";
+//      return false;
+//    }
+//
   // Check if bonded ia exist
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
       (collision_params.bond_centers >= n_bonded_ia)) {
@@ -152,49 +153,41 @@ bool validate_collision_parameters()
   // Create particle types
 
 
-    if (collision_params.mode & COLLISION_MODE_VS) {
-      if (n_nodes>1)
-      {
-        throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
-      }
+  if (collision_params.mode & COLLISION_MODE_VS) {
       if (collision_params.vs_particle_type<0){
         runtimeErrorMsg() << "Collision detection particle type for virtual sites needs to be >=0";
         return false;
       }
-      make_particle_type_exist(collision_params.vs_particle_type);
-    }
+      if (this_node==0) make_particle_type_exist(collision_params.vs_particle_type);
+  }
 
   
   
     if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
     {
-      if (n_nodes>1)
-      {
-        throw std::runtime_error("The make_particle_type_exists() logic in validate_collision_params() needs to be adapted once vs based methods support parallel simulations in the 1st place.");
-      }
       if (collision_params.vs_particle_type<0){
         runtimeErrorMsg() << "Collision detection particle type for virtual sites needs to be >=0";
         return false;
       }
-      make_particle_type_exist(collision_params.vs_particle_type);
+      if (this_node==0) make_particle_type_exist(collision_params.vs_particle_type);
 
       if (collision_params.part_type_to_be_glued<0){
         runtimeErrorMsg() << "Collision detection particle type to be glued needs to be >=0";
         return false;
       }
-      make_particle_type_exist(collision_params.part_type_to_be_glued);
+      if (this_node==0) make_particle_type_exist(collision_params.part_type_to_be_glued);
       
       if (collision_params.part_type_to_attach_vs_to<0){
         runtimeErrorMsg() << "Collision detection particle type to attach the virtual site to  needs to be >=0";
         return false;
       }
-      make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
+      if (this_node==0) make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
       
       if (collision_params.part_type_after_glueing<0){
         runtimeErrorMsg() << "Collision detection particle type after glueing needs to be >=0";
         return false;
       }
-      make_particle_type_exist(collision_params.part_type_after_glueing);
+      if (this_node==0) make_particle_type_exist(collision_params.part_type_after_glueing);
     }
   
   recalc_forces = 1;
@@ -468,21 +461,27 @@ void handle_exception_throwing_for_single_collision(int i)
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void place_vs_and_relate_to_particle(double* pos, int relate_to)
+void place_vs_and_relate_to_particle(const int current_vs_pid, const double* const pos, const int relate_to, const double* const initial_pos)
 {
  
-	  place_particle(max_seen_particle+1,pos);
-	  vs_relate_to(max_seen_particle,relate_to);
+	  // The virtual site is placed at initial_pos which will be in the local 
+    // node's domain. It will then be moved to its final position.
+    // A resort occurs after vs-based collisions anyway, which will move the vs into the right cell.
+    added_particle(current_vs_pid);
+    local_place_particle(current_vs_pid,initial_pos,1);
+    memmove(local_particles[current_vs_pid]->r.p,pos,3*sizeof(double));
+	  local_vs_relate_to(current_vs_pid,relate_to);
 	  
-	  (local_particles[max_seen_particle])->p.isVirtual=1;
+	  (local_particles[current_vs_pid])->p.isVirtual=1;
 	  #ifdef ROTATION_PER_PARTICLE
 	    (local_particles[relate_to])->p.rotation=14;
 	  #endif
-	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+	  (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
+    on_particle_change();
 }
 
 
-void bind_at_poc_create_bond_between_vs(int i)
+void bind_at_poc_create_bond_between_vs(const int current_vs_pid, const int i)
 {
    int bondG[3];
 
@@ -490,8 +489,8 @@ void bind_at_poc_create_bond_between_vs(int i)
    case 1: {
      // Create bond between the virtual particles
      bondG[0] = collision_params.bond_vs;
-     bondG[1] = max_seen_particle-1;
-     local_change_bond(max_seen_particle, bondG, 0);
+     bondG[1] = current_vs_pid-2;
+     local_change_bond(current_vs_pid-1, bondG, 0);
      break;
    }
    case 2: {
@@ -499,19 +498,19 @@ void bind_at_poc_create_bond_between_vs(int i)
      bondG[0] = collision_params.bond_vs;
      bondG[1] = collision_queue[i].pp1;
      bondG[2] = collision_queue[i].pp2;
-     local_change_bond(max_seen_particle,   bondG, 0);
-     local_change_bond(max_seen_particle-1, bondG, 0);
+     local_change_bond(current_vs_pid-1,   bondG, 0);
+     local_change_bond(current_vs_pid-2, bondG, 0);
      break;
    }
   }
 }
 
-void glue_to_surface_bind_vs_to_pp1(int i)
+void glue_to_surface_bind_vs_to_pp1(const int current_vs_pid, const int i)
 {
 	 int bondG[3];
          // Create bond between the virtual particles
          bondG[0] = collision_params.bond_vs;
-         bondG[1] = max_seen_particle;
+         bondG[1] = current_vs_pid-1;
          local_change_bond(collision_queue[i].pp1, bondG, 0);
 	 local_particles[collision_queue[i].pp1]->p.type=collision_params.part_type_after_glueing;
 }
@@ -726,14 +725,62 @@ void handle_collisions ()
   }
 
 #ifdef VIRTUAL_SITES_RELATIVE
-  // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
+  // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
+  
+  // Number of vs to create on this node based on length of collision queue
+  int vs_to_be_created;
+  if (collision_params.mode & COLLISION_MODE_VS)
+    vs_to_be_created=2*number_of_collisions;
+  else
+    if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+      vs_to_be_created=number_of_collisions;
+    else
+      throw std::runtime_error("Unexpected collision mode");
+  int first_local_pid_to_use;
+  if (this_node==0) {
+    vs_to_be_created+=max_seen_particle+1;
+    first_local_pid_to_use=max_seen_particle+1;
+  }
+  MPI_Exscan(&vs_to_be_created, &first_local_pid_to_use,1,MPI_INT, MPI_SUM,comm_cart);
+  
+  // Communicate highest particle id after vs creation to head node
+  int new_highest_pid;
+  MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
+  new_highest_pid-=1;
+  printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
+
+  // On the head node, call added_particle, before any particles are created
+  if (this_node==0) {
+    for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
+      added_particle(i);
+      printf("added_particle(%d)\n",i);
+    }
+  }
+
+  
+  printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+
+  
+      
+
+   int current_vs_pid=first_local_pid_to_use;
     for (int i=0;i<number_of_collisions;i++) {
 	// Create virtual site(s) 
   const int primary=collision_queue[i].pp1;
   const int secondary=collision_queue[i].pp2;
   const Particle* const p1=local_particles[primary];
   const Particle* const p2=local_particles[secondary];
+  
+  // Calculate initial position for new vs, which is in the local node's domain
+  // Vs is moved afterwards and resorted after all collision s are handled
+  // Use position of non-ghost colliding particle.
+
+  double initial_pos[3];
+  if (p1->l.ghost)
+    memmove(initial_pos,p2->r.p,3*sizeof(double));
+  else
+    memmove(initial_pos,p1->r.p,3*sizeof(double));
 	
 	// If we are in the two vs mode
 	// Virtual site related to first particle in the collision
@@ -742,18 +789,22 @@ void handle_collisions ()
    double pos1[3],pos2[3];
 
    bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
-	 place_vs_and_relate_to_particle(pos1,primary);
-	 place_vs_and_relate_to_particle(pos2,secondary);
-   bind_at_poc_create_bond_between_vs(i);
+	 place_vs_and_relate_to_particle(current_vs_pid,pos1,primary,initial_pos);
+   current_vs_pid++;
+	 place_vs_and_relate_to_particle(current_vs_pid,pos2,secondary,initial_pos);
+   current_vs_pid++;
+   bind_at_poc_create_bond_between_vs(current_vs_pid,i);
 	}
 	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
       double pos[3];
       const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
-      place_vs_and_relate_to_particle(pos,pid);
-      glue_to_surface_bind_vs_to_pp1(i);
+      place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
+      current_vs_pid++;
+      glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
     }
       } // Loop over all collisions in the queue
     } // are we in one of the vs_based methods
+    printf("Node %d: end of vs based methods\n");
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 
@@ -792,8 +843,9 @@ void handle_collisions ()
 
     if (number_of_collisions >0)
     {
-      announce_resort_particles();
+      on_particle_change();
     }
+    announce_resort_particles();
   }
   
   // Reset the collision queue

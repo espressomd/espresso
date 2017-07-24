@@ -86,26 +86,26 @@ class CollisionDetection(ut.TestCase):
         self.assertEquals(self.s.collision_detection.mode,CollisionMode.off)
     
     
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
-    @ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
-    def test_bind_at_point_of_collision(self):
+    def run_test_bind_at_point_of_collision_for_pos(self,pos):
         self.s.part.clear()
-        self.s.part.add(pos=(0,0,0),id=0)
-        self.s.part.add(pos=(0.1,0,0),id=1)
-        self.s.part.add(pos=(0.1,0.3,0),id=2)
+        self.s.part.add(pos=pos+(0,0,0),id=0)
+        self.s.part.add(pos=pos+(0.1,0,0),id=1)
+        self.s.part.add(pos=pos+(0.1,0.3,0),id=2)
 
         
         self.s.collision_detection.set_params(mode=CollisionMode.bind_at_point_of_collision,distance=0.11,bond_centers=self.H,bond_vs=self.H2,part_type_vs=1,vs_placement=0.4)
+        self.s.integrator.run(0,recalc_forces=True)
         self.verify_state_after_bind_at_poc()
 
+
         # Integrate again and check that nothing has changed
-        self.s.integrator.run(1)
+        self.s.integrator.run(0,recalc_forces=True)
         self.verify_state_after_bind_at_poc()
 
     def verify_state_after_bind_at_poc(self):
-        self.s.integrator.run(1,recalc_forces=True)
         bond0=((self.s.bonded_inter[0],1),)
         bond1=((self.s.bonded_inter[0],0),)
+        print(bond0,bond1,self.s.part[0].bonds,self.s.part[1].bonds)
         self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
         self.assertTrue(self.s.part[2].bonds==())
 
@@ -142,8 +142,16 @@ class CollisionDetection(ut.TestCase):
             dist_centers=self.s.part[1].pos-self.s.part[0].pos
           else:
             dist_centers=self.s.part[0].pos-self.s.part[1].pos
+          print("distance",dist_centers)
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
+          print("Pos found vs expected:", p.pos,expected_pos)
           self.assertTrue(np.sqrt(np.sum((p.pos-expected_pos)**2))<=1E-5)
+    
+    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
+    #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
+    def test_bind_at_point_of_collision(self):
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)))
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
 
     #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
     def test_angle_harmonic(self):
