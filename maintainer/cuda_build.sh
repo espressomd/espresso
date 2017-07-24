@@ -5,3 +5,8 @@ cp maintainer/configs/maxset.hpp myconfig.hpp;
 mkdir build && cd build;
 cmake .. -DCUDA_NVCC_FLAGS="-D_FORCE_INLINES";
 make -j 4 && make check_python; cat testsuite/python/Testing/Temporary/LastTest.log
+GIT_COMMIT=$(git rev-parse HEAD)
+curl "https://api.github.com/repos/kaiszuttor/espresso/statuses/$GIT_COMMIT?access_token=$GITHUB_TOKEN" \
+      -H "Content-Type: application/json" \
+      -X POST \
+      -d "{\"state\": \"$STATUS\", \"description\": \"ICP build\", \"target_url\": \"$CI_ENVIRONMENT_URL\"}"
