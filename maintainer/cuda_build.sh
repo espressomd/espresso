@@ -12,9 +12,10 @@ else
     STATUS="failure"
     cat testsuite/python/Testing/Temporary/LastTest.log
 fi
+echo "result was $result\n"
 GIT_COMMIT=$(git rev-parse HEAD)
 URL=$(echo "https://gitlab.icp.uni-stuttgart.de/kai/espresso-build/pipelines/${CI_JOB_ID}")
 curl "https://api.github.com/repos/kaiszuttor/espresso/statuses/$GIT_COMMIT?access_token=$GITHUB_TOKEN" \
       -H "Content-Type: application/json" \
       -X POST \
-      -d "{\"state\": \"$STATUS\", \"description\": \"ICP build\", \"target_url\": \"$CI_ENVIRONMENT_URL\"}"
+      -d "{\"state\": \"$STATUS\", \"context\": \"ICP CUDA build\", \"target_url\": \"$URL\"}"
