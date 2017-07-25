@@ -152,6 +152,7 @@ class CollisionDetection(ut.TestCase):
     def test_bind_at_point_of_collision(self):
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)))
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
+        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.55,0,0)))
 
     #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
     def test_angle_harmonic(self):

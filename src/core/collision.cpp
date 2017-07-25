@@ -752,7 +752,7 @@ void handle_collisions ()
 
   // On the head node, call added_particle, before any particles are created
   if (this_node==0) {
-    for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
+    for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
       added_particle(i);
       printf("added_particle(%d)\n",i);
     }
