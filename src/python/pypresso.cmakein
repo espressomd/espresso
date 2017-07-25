@@ -18,6 +18,9 @@ export PYTHONPATH
 if [ "$1" = "--gdb" ]; then
   shift
   exec gdb -ex run --args @PYTHON_FRONTEND@ $@
+elif [ "$1" = "--lldb" ]; then
+  shift
+  exec lldb -o "run $@" @PYTHON_FRONTEND@
 elif [ "$1" = "--cuda-gdb" ]; then
   shift
   exec cuda-gdb -ex run --args @PYTHON_FRONTEND@ $@

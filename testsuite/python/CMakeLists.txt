@@ -3,6 +3,7 @@ set(py_tests  bondedInteractions.py
               constraint_homogeneous_magnetic_field.py
               constraint_shape_based.py
               coulomb_cloud_wall.py
+              coulomb_cloud_wall_tune.py
               correlation.py
               dawaanr-and-dds-gpu.py
               electrostaticInteractions.py
@@ -24,8 +25,16 @@ set(py_tests  bondedInteractions.py
               script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
+              reaction_ensemble.py
+              constant_pH.py
               writevtf.py
               lb_stokes_sphere_gpu.py
+              ek_eof_one_species_x.py
+              ek_eof_one_species_y.py
+              ek_eof_one_species_z.py
+              ek_eof_one_species_x_nonlinear.py
+              ek_eof_one_species_y_nonlinear.py
+              ek_eof_one_species_z_nonlinear.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)

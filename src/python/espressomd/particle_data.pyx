@@ -52,15 +52,11 @@ for d in dir(ParticleHandle):
 
 cdef class ParticleHandle(object):
     def __cinit__(self, _id):
-        #    utils.init_intlist(self.particle_data.el)
-        utils.init_intlist(& (self.particle_data.bl))
         self.id = _id
 
     cdef int update_particle_data(self) except -1:
-        #    utils.realloc_intlist(self.particle_data.el, 0)
-        utils.realloc_intlist(& (self.particle_data.bl), 0)
-
-        if get_particle_data(self.id, & self.particle_data):
+        self.particle_data = get_particle_data(self.id)
+        if not self.particle_data:
             raise Exception("Error updating particle data for id "+str(self.id))
         else:
             return 0
@@ -107,7 +103,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.type
+            return self.particle_data.get()[0].p.type
 
     # Particle MolId
     property mol_id:
@@ -131,7 +127,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mol_id
+            return self.particle_data.get()[0].p.mol_id
 
     # Position
     property pos:
@@ -157,8 +153,8 @@ cdef class ParticleHandle(object):
             cdef double ppos[3]
             cdef int img[3]
             for i in range(3):
-                img[i]=self.particle_data.l.i[i]
-                ppos[i]=self.particle_data.r.p[i]
+                img[i]=self.particle_data.get()[0].l.i[i]
+                ppos[i]=self.particle_data.get()[0].r.p[i]
 
             unfold_position(ppos,img)
             return np.array([ppos[0],ppos[1],ppos[2]])
@@ -210,7 +206,7 @@ cdef class ParticleHandle(object):
         def __get__(self):
             cdef double pos[3]
             pos = self.pos
-            fold_position(pos, self.particle_data.l.i)
+            fold_position(pos, self.particle_data.get()[0].l.i)
             return pos
 
     # Velocity
@@ -242,18 +238,18 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             IF MULTI_TIMESTEP:
                 if smaller_time_step > 0. and self.smaller_timestep:
-                    return np.array([self.particle_data.m.v[0] / smaller_time_step,
-                                     self.particle_data.m.v[
+                    return np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
+                                     self.particle_data.get()[0].m.v[
                                          1] / smaller_time_step,
-                                     self.particle_data.m.v[2] / smaller_time_step])
+                                     self.particle_data.get()[0].m.v[2] / smaller_time_step])
                 else:
-                    return np.array([self.particle_data.m.v[0] / time_step,
-                                     self.particle_data.m.v[1] / time_step,
-                                     self.particle_data.m.v[2] / time_step])
+                    return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                                     self.particle_data.get()[0].m.v[1] / time_step,
+                                     self.particle_data.get()[0].m.v[2] / time_step])
             ELSE:
-                return np.array([self.particle_data.m.v[0] / time_step,
-                                 self.particle_data.m.v[1] / time_step,
-                                 self.particle_data.m.v[2] / time_step])
+                return np.array([self.particle_data.get()[0].m.v[0] / time_step,
+                                 self.particle_data.get()[0].m.v[1] / time_step,
+                                 self.particle_data.get()[0].m.v[2] / time_step])
 
     # Force
     property f:
@@ -284,9 +280,9 @@ cdef class ParticleHandle(object):
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.f.f[0] * self.particle_data.p.mass / (0.5 * time_step**2),
-                             self.particle_data.f.f[1] * self.particle_data.p.mass / (0.5 * time_step**2),
-                             self.particle_data.f.f[2] * self.particle_data.p.mass / (0.5 * time_step**2)])
+            return np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
+                             self.particle_data.get()[0].f.f[1] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
+                             self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)])
 
     # Bonds
     property bonds:
@@ -330,10 +326,10 @@ cdef class ParticleHandle(object):
             bonds = []
             # Go through the bond list of the particle
             i = 0
-            while i < self.particle_data.bl.n:
+            while i < self.particle_data.get()[0].bl.n:
                 bond = []
                 # Bond type:
-                bond_id = self.particle_data.bl.e[i]
+                bond_id = self.particle_data.get()[0].bl.e[i]
                 bond.append(BondedInteractions()[bond_id])
                 # Number of partners
                 nPartners = bonded_ia_params[bond_id].num
@@ -342,7 +338,7 @@ cdef class ParticleHandle(object):
 
                 # Copy bond partners
                 for j in range(nPartners):
-                    bond.append(self.particle_data.bl.e[i])
+                    bond.append(self.particle_data.get()[0].bl.e[i])
                     i += 1
                 bonds.append(tuple(bond))
 
@@ -374,7 +370,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef int * x = NULL
-                pointer_to_smaller_timestep(& (self.particle_data), x)
+                pointer_to_smaller_timestep(self.particle_data.get(), x)
                 return x[0]
 
     # MASS
@@ -404,7 +400,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mass
+            return self.particle_data.get()[0].p.mass
 
     IF ROTATION == 1:
         property omega_lab:
@@ -443,7 +439,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double o[3]
-                convert_omega_body_to_space( & (self.particle_data), o)
+                convert_omega_body_to_space( self.particle_data.get(), o)
                 return np.array([o[0], o[1], o[2]])
 
         property quat:
@@ -473,7 +469,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quat( & (self.particle_data), x)
+                pointer_to_quat( self.particle_data.get(), x)
                 return np.array([x[0], x[1], x[2], x[3]])
 
 # Director ( z-axis in body fixed frame)
@@ -500,7 +496,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_quatu( & (self.particle_data), x)
+                pointer_to_quatu( self.particle_data.get(), x)
                 return np.array([x[0], x[1], x[2]])
 
     # ROTATIONAL_INERTIA
@@ -531,7 +527,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * o = NULL
-                pointer_to_omega_body(& (self.particle_data), o)
+                pointer_to_omega_body(self.particle_data.get(), o)
                 return np.array([o[0], o[1], o[2]])
 
 
@@ -567,7 +563,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double x[3]
-                convert_torques_body_to_space( & (self.particle_data), x)
+                convert_torques_body_to_space( self.particle_data.get(), x)
                 return np.array([x[0], x[1], x[2]])
 
     IF ROTATIONAL_INERTIA == 1:
@@ -601,7 +597,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * rinertia = NULL
-                pointer_to_rotational_inertia(& (self.particle_data), rinertia)
+                pointer_to_rotational_inertia(self.particle_data.get(), rinertia)
                 return np.array([rinertia[0], rinertia[1], rinertia[2]])
 
 # Charge
@@ -628,7 +624,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_q( & (self.particle_data), x)
+                pointer_to_q( self.particle_data.get(), x)
                 return x[0]
 
     def delete(self):
@@ -668,7 +664,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef int * x = NULL
-                pointer_to_virtual( & (self.particle_data), x)
+                pointer_to_virtual( self.particle_data.get(), x)
                 return x[0]
 
     IF VIRTUAL_SITES_RELATIVE == 1:
@@ -713,7 +709,7 @@ cdef class ParticleHandle(object):
                 cdef int * rel_to = NULL
                 cdef double * dist = NULL
                 cdef double * q = NULL
-                pointer_to_vs_relative(& (self.particle_data), rel_to, dist, q)
+                pointer_to_vs_relative(self.particle_data.get(), rel_to, dist, q)
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
@@ -768,7 +764,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dip( & (self.particle_data), x)
+                pointer_to_dip( self.particle_data.get(), x)
                 return np.array([x[0], x[1], x[2]])
 
         # Scalar magnitude of dipole moment
@@ -793,7 +789,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * x = NULL
-                pointer_to_dipm( & (self.particle_data), x)
+                pointer_to_dipm( self.particle_data.get(), x)
                 return x[0]
 
     IF EXTERNAL_FORCES:
@@ -829,7 +825,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 cdef double * ext_f = NULL
                 cdef int * ext_flag = NULL
-                pointer_to_ext_force(& (self.particle_data), ext_flag, ext_f)
+                pointer_to_ext_force(self.particle_data.get(), ext_flag, ext_f)
                 if (ext_flag[0] & PARTICLE_EXT_FORCE):
                     return np.array([ext_f[0], ext_f[1], ext_f[2]])
                 else:
@@ -871,7 +867,7 @@ cdef class ParticleHandle(object):
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
                 cdef int * ext_flag = NULL
-                pointer_to_fix( & (self.particle_data), ext_flag)
+                pointer_to_fix( self.particle_data.get(), ext_flag)
                 for i in map(long, range(3)):
                     if (ext_flag[0] & _COORD_FIXED(i)):
                         fixed_coord_flag[i] = 1
@@ -910,7 +906,7 @@ cdef class ParticleHandle(object):
                     self.update_particle_data()
                     cdef double * ext_t = NULL
                     cdef int * ext_flag = NULL
-                    pointer_to_ext_torque(& (self.particle_data), ext_flag, ext_t)
+                    pointer_to_ext_torque(self.particle_data.get(), ext_flag, ext_t)
                     if (ext_flag[0] & PARTICLE_EXT_TORQUE):
                         return np.array([ext_t[0], ext_t[1], ext_t[2]])
                     else:
@@ -948,7 +944,7 @@ cdef class ParticleHandle(object):
                 def __get__(self):
                     self.update_particle_data()
                     cdef double * gamma = NULL
-                    pointer_to_gamma(& (self.particle_data), gamma)
+                    pointer_to_gamma(self.particle_data.get(), gamma)
                     return np.array([gamma[0], gamma[1], gamma[2]])
         ELSE:
             property gamma:
@@ -978,7 +974,7 @@ cdef class ParticleHandle(object):
                 def __get__(self):
                     self.update_particle_data()
                     cdef double * gamma = NULL
-                    pointer_to_gamma( & (self.particle_data), gamma)
+                    pointer_to_gamma( self.particle_data.get(), gamma)
                     return gamma[0]
         IF ROTATION:
             IF ROTATIONAL_INERTIA:
@@ -1007,7 +1003,7 @@ cdef class ParticleHandle(object):
                     def __get__(self):
                         self.update_particle_data()
                         cdef double * gamma_rot = NULL
-                        pointer_to_gamma_rot(& (self.particle_data), gamma_rot)
+                        pointer_to_gamma_rot(self.particle_data.get(), gamma_rot)
                         return np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
             ELSE:
                 property gamma_rot:
@@ -1032,7 +1028,7 @@ cdef class ParticleHandle(object):
                     def __get__(self):
                         self.update_particle_data()
                         cdef double * gamma_rot = NULL
-                        pointer_to_gamma_rot( & (self.particle_data), gamma_rot)
+                        pointer_to_gamma_rot( self.particle_data.get(), gamma_rot)
                         return gamma_rot[0]
 
         property temp:
@@ -1057,7 +1053,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef double * temp = NULL
-                pointer_to_temperature( & (self.particle_data), temp)
+                pointer_to_temperature( self.particle_data.get(), temp)
                 return temp[0]
 
     IF ROTATION_PER_PARTICLE:
@@ -1087,7 +1083,7 @@ cdef class ParticleHandle(object):
             def __get__(self):
                 self.update_particle_data()
                 cdef short int * _rot = NULL
-                pointer_to_rotation( & (self.particle_data), _rot)
+                pointer_to_rotation( self.particle_data.get(), _rot)
                 if _rot[0] == 1:
                     rot = True
                 else:
@@ -1128,12 +1124,11 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int * num_partners = NULL
-                cdef int * partners = NULL
+                cdef int_list exclusions = self.particle_data.get()[0].exclusions()
+
                 py_partners = []
-                pointer_to_exclusions(& (self.particle_data), num_partners, partners)
-                for i in range(num_partners[0]):
-                    py_partners.append(partners[i])
+                for i in range(exclusions.n):
+                    py_partners.append(exclusions.e[i])
                 return np.array(py_partners)
 
         def add_exclusion(self, *_partners):
@@ -1239,7 +1234,7 @@ cdef class ParticleHandle(object):
                 swim = {}
                 mode = "N/A"
                 cdef particle_parameters_swimming * _swim = NULL
-                pointer_to_swimming(& (self.particle_data), _swim)
+                pointer_to_swimming(self.particle_data.get(), _swim)
                 IF LB or LB_GPU:
                     if _swim.push_pull == -1:
                         mode = 'pusher'
@@ -1511,9 +1506,8 @@ cdef class _ParticleSliceImpl(object):
 
 
     cdef int update_particle_data(self, id) except -1:
-        utils.realloc_intlist(& (self.particle_data.bl), 0)
-
-        if get_particle_data(id, & self.particle_data):
+        self.particle_data = get_particle_data(id)
+        if not self.particle_data:
             raise Exception("Error updating particle data.")
         else:
             return 0

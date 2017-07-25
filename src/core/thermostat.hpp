@@ -48,8 +48,6 @@
 #define THERMO_INTER_DPD  16
 #define THERMO_GHMC       32
 #define THERMO_CPU        64
-#define THERMO_SD         128
-#define THERMO_BD         256
 /*@}*/
 
 // Handle switching of noise function flat vs Gaussian

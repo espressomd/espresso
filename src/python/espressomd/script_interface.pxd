@@ -60,6 +60,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "boost":
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
+        string to_string()
         bool operator==(const ObjectId& rhs) 
 
     Variant make_variant[T](const T & x)
@@ -88,6 +89,6 @@ cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef map[string, Parameter] parameters
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
-    cdef variant_to_python_object(self, Variant value)
+    cdef variant_to_python_object(self, Variant value)  except +
     cdef Variant python_object_to_variant(self, value)
 
