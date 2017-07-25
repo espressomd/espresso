@@ -58,7 +58,6 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
     double dx[3],fac,dr,len2,len,lambda;
     double A,h[3],rh[3],hn;
 
-	#ifdef GHOST_FLAG
 	// first find out which particle out of p1, p2 (possibly p3, p4) is not a ghost particle. In almost all cases it is p2, however, it might be other one. we call this particle reference particle.
 	if (p2->l.ghost != 1) {
 		//unfold non-ghost particle using image, because for physical particles, the structure p->l.i is correctly set
@@ -123,22 +122,6 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 			}
 		}
 	}
-	#endif
-	#ifndef GHOST_FLAG
-		// if ghost flag was not defined we have no other option than to assume the first particle (p2) is a physical one.
-		memmove(fp2, p2->r.p, 3*sizeof(double));
-		memmove(img, p2->l.i, 3*sizeof(int));
-		unfold_position(fp2,img);
-		// other coordinates are obtained from its relative positions to the reference particle
-		get_mi_vector(AA, p1->r.p, fp2);
-		get_mi_vector(BB, p3->r.p, fp2);
-		get_mi_vector(CC, p4->r.p, fp2);
-		for (i=0; i<3; i++) {
-            fp1[i] = fp2[i] + AA[i];
-            fp3[i] = fp2[i] + BB[i];
-            fp4[i] = fp2[i] + CC[i];
-        }
-	#endif
 	
     for(i=0; i<3; i++) {
         force[i] = 0;

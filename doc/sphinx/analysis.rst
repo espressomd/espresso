@@ -608,41 +608,6 @@ The command is implemented in parallel.
 specifying the local pressure tensor in each bin.
 
 
-.. _Configurational temperature:
-
-Configurational temperature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Estimates the temperature using the potential energy, instead of the
-kinetic energy (i.e., “kinetic temperature”). The configurational
-temperature has been shown a more stringent criterion to reproduce a
-canonical ensemble in certain cases
-:cite:`allen06,bereau15`. The configurational temperature,
-:math:`T_\textrm{conf}`, is estimated using first and second derivatives
-of the potential energy of the system
-
-.. math::
-
-   \label{eq:configtemp}
-     \frac{1}{k_\textrm{B}T_\textrm{conf}} = - \frac{\langle \sum_i \nabla_i \cdot
-       \mathbf{F}_i \rangle}{\langle \sum_j F_j^2 \rangle},
-
-where :math:`F_i` is the force exerted on particle :math:`i`, and
-angular brackets denote canonical averages. Just like the conventional
-kinetic temperature, the configurational temperature can be estimated
-from a subsystem, e.g., a subset of particles in the box. To activate
-the calculation of the configurational temperature for particle
-:math:`i`, use
-
-part i configtemp 1
-
-The command will return a list of two terms: the instantaneous values of
-the (:math:`i`) denominator and (:math:`ii`) numerator of the expression
-in Equation [eq:configtemp]. Due to the reliance on second derivatives
-of the potential energy (i.e., first derivative of the force), a limited
-set of interaction potentials have so far been implemented.
-
-
 .. _Analyzing groups of particles:
 
 Analyzing groups of particles (molecules)

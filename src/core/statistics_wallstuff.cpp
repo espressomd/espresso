@@ -18,12 +18,13 @@
 */
 
 #include "statistics_wallstuff.hpp"
-
+#include "statistics.hpp"
 #include "utils.hpp"
 #include "grid.hpp"
+#include "partCfg.hpp"
 
 // list of the currently specified box boundaries
-DoubleList wallstuff_boundaries = { NULL, 0 };
+DoubleList wallstuff_boundaries;
 // the boxes with the particle identities
 IntList *wallstuff_part_in_bin = NULL;
 
@@ -45,8 +46,8 @@ void wall_sort_particles()
 
   // 2. for each particle, find the box and put its
   // identity there
-  for(int i=0; i<n_part; i++) {
-    double x = partCfg[i].r.p[0];
+  for(auto const&p : partCfg) {
+    double x = p.r.p[0];
     // ignore particles outside the wallstuff_boundaries
     if (x < wallstuff_boundaries.e[0] || x > wallstuff_boundaries.e[wallstuff_boundaries.n-1])
       continue;
@@ -59,7 +60,7 @@ void wall_sort_particles()
     }
     // and add the particle to the resulting list
     realloc_grained_intlist(&wallstuff_part_in_bin[s], wallstuff_part_in_bin[s].n + 1, 8);
-    wallstuff_part_in_bin[s].e[wallstuff_part_in_bin[s].n++] = i;
+    wallstuff_part_in_bin[s].e[wallstuff_part_in_bin[s].n++] = p.p.identity;
   }
 }
 
@@ -265,25 +266,18 @@ void calc_scaling(double *g, int bin, int boxes, double rclocal)
     else {
       sai_r = sai_m = 0.0;
     }
-    //printf("bin %d   nb %d  i %d  sin %e cos %e\n", bin,nb, i, sinus, cosinus);
-    fold_position(partCfg[p].r.p,partCfg[p].m.v,partCfg[p].l.i);
 
-    double y=partCfg[p].r.p[1];
-    double z=partCfg[p].r.p[2];
-    int line=(int)(y/ystep);
-    int col=(int)(z/zstep);
-    //if (line!=0||col!=0){
-    //printf("id %d  line %d col %d y %e  z %e  yc %e  zc %e \n",p,line,col,y,z,ycheck,zcheck);
-    // break;
-    //}
+    auto const folded_pos = folded_position(partCfg[p]);
+
+    int line=static_cast<int>(folded_pos[1]/ystep);
+    int col=static_cast<int>(folded_pos[2]/zstep);
+
     sum_sai_r[line][col] = sum_sai_r[line][col] + sai_r;
     sum_sai_m[line][col] = sum_sai_m[line][col] + sai_m;
     division[line][col]++;
-    //printf("bin %d  part %d  sai %e  saim %e\n", bin,i, sum_sai_r, sum_sai_m);
-    
     // end of outer particle
   }
-  //printf("tot_sai %e parts   %d\n",  tot_sai_m, wallstuff_part_in_bin[bin].n);
+
   int cnt=0;
   for (int j = 0; j < limit; ++j) {
     for (int i = 0; i <limit; ++i) {
@@ -368,18 +362,12 @@ void calc_scaling2 (double *g, int bin, int boxes, double rclocal)
     else {
       sai_r = sai_m = 0.0;
     }
-    //printf("bin %d   nb %d  i %d  sin %e cos %e\n", bin,nb, i, sinus, cosinus);
-    
-    fold_position(partCfg[p].r.p,partCfg[p].m.v,partCfg[p].l.i);
 
-    double y=partCfg[p].r.p[1];
-    double z=partCfg[p].r.p[2];
-    int line=(int)(y/ystep);
-    int col=(int)(z/zstep);
-    //if (line!=0||col!=0){
-    //printf("id %d  line %d col %d y %e  z %e  yc %e  zc %e \n",p,line,col,y,z,ycheck,zcheck);
-    // break;
-    //}
+    auto const folded_pos = folded_position(partCfg[p]);
+
+    int line=static_cast<int>(folded_pos[1]/ystep);
+    int col=static_cast<int>(folded_pos[2]/zstep);
+
     sum_sai_r[line][col] = sum_sai_r[line][col] + sai_r;
     sum_sai_m[line][col] = sum_sai_m[line][col] + sai_m;
     division[line][col]++;

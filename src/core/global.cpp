@@ -34,7 +34,6 @@
 #include "imd.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
-#include "integrate_sd.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -99,19 +98,13 @@ const Datafield fields[] = {
   {&lb_components,      TYPE_INT, 1, "lb_components",     2, false },         /* 51 from ghmc.cpp */
   {&warnings,           TYPE_INT, 1, "warnings",          1, false },         /* 52 from global.cpp */
   {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1, false },         /* 53 from global.cpp */
-  {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",              4, false },         /* 54 from integrate_sd.cpp */
-  {&sd_radius,               TYPE_DOUBLE, 1, "sd_radius",                  4, false },         /* 55 from integrate_sd.cpp */
-  {&sd_seed,                    TYPE_INT, 2, "sd_seed",                    4, false },         /* 56 from integrate_sd.cpp */
-  {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4, false },         /* 57 from integrate_sd.cpp */
-  {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4, false },         /* 58 from integrate_sd.cpp */
-  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 59 from integrate.cpp */
-  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1, false },         /* 60 from integrate.cpp */
-  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 61 from thermostat.cpp */
-  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 62 from thermostat.cpp */
+  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 54 from integrate.cpp */
+  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 55 from thermostat.cpp */
+  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 56 from thermostat.cpp */
 #ifndef ROTATIONAL_INERTIA
-  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 63 from thermostat.cpp */
+  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 57 from thermostat.cpp */
 #else
-  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 63 from thermostat.cpp */
+  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 57 from thermostat.cpp */
 #endif
   { NULL, 0, 0, NULL, 0, false }
 };

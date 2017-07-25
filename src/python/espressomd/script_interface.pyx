@@ -1,6 +1,15 @@
-from espressomd.utils import to_char_pointer, to_str
+from espressomd.utils import to_char_pointer,to_str
 
-cdef class PScriptInterface:
+cdef class PObjectId(object):
+    cdef ObjectId id
+
+    def __richcmp__(PObjectId a, PObjectId b, op):
+        if op == 2:
+            return a.id == b.id
+        else:
+            raise NotImplementedError
+
+cdef class PScriptInterface(object):
     def __init__(self, name=None, policy="GLOBAL"):
         if name:
             if(policy=="GLOBAL"):
@@ -9,8 +18,7 @@ cdef class PScriptInterface:
                 self.sip = make_shared(to_char_pointer(name), LOCAL)
             self.parameters = self.sip.get().valid_parameters()
         else:
-            self.sip = shared_ptr[ScriptInterfaceBase]()
-            self.parameters = map[string, Parameter]()
+            raise Exception("the name parameter has to be set.")
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -25,6 +33,15 @@ cdef class PScriptInterface:
         self.sip = sip
         self.parameters = self.sip.get().valid_parameters()
 
+    def set_sip_via_oid(self,PObjectId id):
+        """Set the shared_ptr to the script object in the core via the object id"""
+        oid=id.id
+        try:
+            ptr = get_instance(oid).lock()
+            self.set_sip(ptr)
+        except:
+            raise Exception("Could not get sip for given_id")
+    
     def _valid_parameters(self):
         parameters = []
 
@@ -116,7 +133,7 @@ cdef class PScriptInterface:
         else:
             raise TypeError("Unkown type for conversion to Variant")
 
-    cdef variant_to_python_object(self, Variant value):
+    cdef variant_to_python_object(self, Variant value) except +:
         cdef ObjectId oid
         cdef vector[Variant] vec
         cdef int type = value.which()
@@ -140,8 +157,16 @@ cdef class PScriptInterface:
                 oid = get[ObjectId](value)
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
-                    pobj = PScriptInterface()
-                    pobj.set_sip(ptr)
+                    so_name=to_str(ptr.get().name())
+                    # Fallback class, if nothing omre specific is registered for the script object name
+                    pclass=ScriptInterfaceHelper
+                    # Look up class
+                    if so_name in _python_class_by_so_name:
+                        pclass =_python_class_by_so_name[so_name]
+                    pobj = pclass()
+                    poid=PObjectId()
+                    poid.id=ptr.get().id()
+                    pobj.set_sip_via_oid(poid)
                     return pobj
                 else:
                     return None
@@ -173,9 +198,10 @@ cdef class PScriptInterface:
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_bind_methods =()
+    _so_creation_policy = "GLOBAL"
 
-    def __init__(self,**kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name)
+    def __init__(self, **kwargs):
+        super(ScriptInterfaceHelper,self).__init__(self._so_name, self._so_creation_policy)
         self.set_params(**kwargs)
         self.define_bound_methods()
 
@@ -207,6 +233,25 @@ class ScriptInterfaceHelper(PScriptInterface):
     def define_bound_methods(self):
         for method_name in self._so_bind_methods:
             setattr(self,method_name,self.generate_caller(method_name))
+
+
+
+
+
+# Map from script object names to corresponding python classes
+_python_class_by_so_name ={}
+
+
+def script_interface_register(c):
+    """Decorator used to register script interface classes
+       This will store a name<->class relationship in a registry, so that parameters
+       of type object can be instanciated as the correct python class
+    """
+    if not hasattr(c,"_so_name"):
+        raise Exception("Python classes representing a script object must define an _so_name attribute at class level")
+    _python_class_by_so_name[c._so_name]=c
+    return c
+    
 
 
 

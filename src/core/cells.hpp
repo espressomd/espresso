@@ -69,6 +69,9 @@
 #include "utils/Range.hpp"
 #include "verlet.hpp"
 
+#include "Cell.hpp"
+#include "ParticleRange.hpp"
+
 /** \name Cell Structure */
 /** Flag telling which cell structure is used at the moment. */
 /*@{*/
@@ -112,16 +115,9 @@
 /************************************************/
 /*@{*/
 
-/** A cell is a \ref ParticleList representing a particle group with
-    respect to the integration algorithm.
-*/
-typedef ParticleList Cell;
-
 /** List of cell pointers. */
 struct CellPList {
-  using CellParticleIterator = ParticleIterator<Cell **, Particle>;
-
-  Utils::Range<CellParticleIterator> particles() const {
+  ParticleRange particles() const {
     return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
                              CellParticleIterator(cell + n, cell + n, 0));
   }
@@ -137,7 +133,7 @@ struct CellPList {
     positions and the cell system. All other properties of the cell
     system which are not common between different cell systems have to
     be stored in seperate structures. */
-typedef struct {
+struct CellStructure {
   /** type descriptor */
   int type;
 
@@ -173,7 +169,7 @@ typedef struct {
       \return pointer to cell  where to put the particle.
   */
   Cell *(*position_to_cell)(double pos[3]);
-} CellStructure;
+};
 
 /*@}*/
 
@@ -183,9 +179,8 @@ typedef struct {
 /*@{*/
 
 /** list of all cells. */
-extern Cell *cells;
-/** size of \ref cells::cells */
-extern int n_cells;
+extern std::vector<Cell> cells;
+
 /** list of all cells containing particles physically on the local
     node */
 extern CellPList local_cells;

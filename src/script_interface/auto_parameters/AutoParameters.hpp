@@ -64,7 +64,8 @@ namespace ScriptInterface {
  * int m_i;
  * };
  * ~~~
- * (this has to be caputerd in the lambdas to have acces to the member functions of the class).
+ * (this has to be caputerd in the lambdas to have acces to the member functions
+ * of the class).
  */
 class AutoParameters : public ScriptInterfaceBase {
 public:

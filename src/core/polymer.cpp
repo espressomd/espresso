@@ -44,6 +44,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "partCfg.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -54,60 +55,35 @@
  *************************************************************/
 
 int mindist3(int part_id, double r_catch, int *ids) {
-  Particle *partCfgMD;
-  double dx, dy, dz;
-  int i, me, caught = 0;
+  int caught = 0;
 
-  partCfgMD = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(partCfgMD, NULL);
-  me = -1; /* Since 'mpi_get_particles' returns the particles unsorted, it's
-              most likely that 'partCfgMD[i].p.identity != i'
-              --> prevent that! */
-  for (i = 0; i < n_part; i++)
-    if (partCfgMD[i].p.identity == part_id)
-      me = i;
-  if (me == -1) {
-    runtimeErrorMsg() << "failed to find desired particle " << part_id;
-    return 0;
-  }
-  for (i = 0; i < n_part; i++) {
-    if (i != me) {
-      dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];
-      dx -= dround(dx / box_l[0]) * box_l[0];
-      dy = partCfgMD[me].r.p[1] - partCfgMD[i].r.p[1];
-      dy -= dround(dy / box_l[1]) * box_l[1];
-      dz = partCfgMD[me].r.p[2] - partCfgMD[i].r.p[2];
-      dz -= dround(dz / box_l[2]) * box_l[2];
-      if (sqrt(SQR(dx) + SQR(dy) + SQR(dz)) < r_catch)
-        ids[caught++] = partCfgMD[i].p.identity;
+  auto const r_catch2 = r_catch * r_catch;
+  auto const &part = partCfg[part_id];
+
+  for (auto const &p : partCfg) {
+    if (p != part) {
+      if (get_mi_vector(part.r.p, p.r.p).norm2() < r_catch2)
+        ids[caught++] = p.p.identity;
     }
   }
-  free(partCfgMD);
-  return (caught);
+
+  return caught;
 }
 
 double mindist4(double pos[3]) {
-  Particle *partCfgMD;
-  double mindist = 30000.0, dx, dy, dz;
-  int i;
-
-  if (n_part == 0)
-    return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
-  partCfgMD = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(partCfgMD, NULL);
-  for (i = 0; i < n_part; i++) {
-    dx = pos[0] - partCfgMD[i].r.p[0];
-    dx -= dround(dx / box_l[0]) * box_l[0];
-    dy = pos[1] - partCfgMD[i].r.p[1];
-    dy -= dround(dy / box_l[1]) * box_l[1];
-    dz = pos[2] - partCfgMD[i].r.p[2];
-    dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = std::min(mindist, SQR(dx) + SQR(dy) + SQR(dz));
+  if (partCfg.size() == 0) {
+    return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
-  free(partCfgMD);
-  if (mindist < 30000.0)
-    return (sqrt(mindist));
-  return (-1.0);
+
+  auto const mindist = std::accumulate(
+      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
+      [&pos](double mindist, Particle const &p) {
+        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
+      });
+
+  if (mindist < std::numeric_limits<double>::infinity())
+    return std::sqrt(mindist);
+  return -1.0;
 }
 
 double buf_mindist4(double pos[3], int n_add, double *add) {
@@ -154,13 +130,14 @@ int constraint_collision(double *p1, double *p2) {
   fold_position(folded_pos2, img);
 
   for (auto &c : Constraints::constraints) {
-    auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    auto cs =
+        std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
     if (cs) {
       cs->calc_dist(folded_pos1, &d1, v);
       cs->calc_dist(folded_pos2, &d2, v);
 
-    if (d1 * d2 < 0.0)
-      return 1;
+      if (d1 * d2 < 0.0)
+        return 1;
     }
   }
   return 0;
@@ -651,19 +628,7 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
                  int **bond_out, int ***bonds_out) {
   int i, j, k, ii, size, *bond = NULL, **bonds = NULL;
 
-  /* Get particle and bonding informations. */
-  IntList *bl;
-  Particle *prt, *sorted;
-  bl = (IntList *)Utils::malloc(1 * sizeof(IntList));
-  prt = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(prt, bl);
-
-  /* Sort the received informations. */
-  sorted = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  for (i = 0; i < n_part; i++)
-    memmove(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
-  free(prt);
-  prt = sorted;
+  partCfg.update_bonds();
 
   if (mode == 1) {
     /* Find all the bonds leading to and from the ending monomers of the chains.
@@ -676,25 +641,25 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
-      while (i < prt[k].bl.n) {
-        size = bonded_ia_params[prt[k].bl.e[i]].num;
-        if (prt[k].bl.e[i++] == type_bond) {
+      while (i < partCfg[k].bl.n) {
+        size = bonded_ia_params[partCfg[k].bl.e[i]].num;
+        if (partCfg[k].bl.e[i++] == type_bond) {
           for (j = 0; j < size; j++) {
-            if ((prt[k].p.identity % MPC == 0) ||
-                ((prt[k].p.identity + 1) % MPC == 0)) {
-              ii = prt[k].p.identity % MPC
-                       ? 2 * (prt[k].p.identity + 1) / MPC - 1
-                       : 2 * prt[k].p.identity / MPC;
+            if ((partCfg[k].p.identity % MPC == 0) ||
+                ((partCfg[k].p.identity + 1) % MPC == 0)) {
+              ii = partCfg[k].p.identity % MPC
+                       ? 2 * (partCfg[k].p.identity + 1) / MPC - 1
+                       : 2 * partCfg[k].p.identity / MPC;
               bonds[i] =
                   (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
-              bonds[ii][bond[ii]++] = prt[k].bl.e[i];
-            } else if ((prt[k].bl.e[i] % MPC == 0) ||
-                       ((prt[k].bl.e[i] + 1) % MPC == 0)) {
-              ii = prt[k].bl.e[i] % MPC ? 2 * (prt[k].bl.e[i] + 1) / MPC - 1
-                                        : 2 * prt[k].bl.e[i] / MPC;
+              bonds[ii][bond[ii]++] = partCfg[k].bl.e[i];
+            } else if ((partCfg[k].bl.e[i] % MPC == 0) ||
+                       ((partCfg[k].bl.e[i] + 1) % MPC == 0)) {
+              ii = partCfg[k].bl.e[i] % MPC ? 2 * (partCfg[k].bl.e[i] + 1) / MPC - 1
+                                        : 2 * partCfg[k].bl.e[i] / MPC;
               bonds[i] =
                   (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
-              bonds[ii][bond[ii]++] = prt[k].p.identity;
+              bonds[ii][bond[ii]++] = partCfg[k].p.identity;
             }
             i++;
           }
@@ -719,11 +684,11 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
-      while (i < prt[k].bl.n) {
-        size = bonded_ia_params[prt[k].bl.e[i]].num;
-        if (prt[k].bl.e[i++] == type_bond) {
+      while (i < partCfg[k].bl.n) {
+        size = bonded_ia_params[partCfg[k].bl.e[i]].num;
+        if (partCfg[k].bl.e[i++] == type_bond) {
           for (j = 0; j < size; j++) {
-            ii = prt[k].bl.e[i];
+            ii = partCfg[k].bl.e[i];
             bonds[k] =
                 (int *)Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
             bonds[k][bond[k]++] = ii;
@@ -748,8 +713,7 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     fflush(NULL);
     return (-2);
   }
-  free(prt);
-  realloc_intlist(bl, 0);
+
   *bond_out = bond;
   *bonds_out = bonds;
   return (0);
