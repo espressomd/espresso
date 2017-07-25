@@ -242,3 +242,7 @@ class Wall(ScriptInterfaceHelper):
        Normal vector of the plan (needs not to be length 1).
     """
     _so_name = "Shapes::Wall"
+
+@script_interface_register
+class SimplePore(ScriptInterfaceHelper):
+    _so_name = "Shapes::SimplePore"
