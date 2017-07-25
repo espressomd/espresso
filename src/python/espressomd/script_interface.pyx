@@ -1,8 +1,8 @@
 from espressomd.utils import to_char_pointer, to_str
 
 cdef class PObjectId(object):
-    cpdef ObjectId id
-    
+    cdef ObjectId id
+
     def __richcmp__(PObjectId a, PObjectId b, op):
         if op == 2:
             return a.id == b.id
@@ -133,7 +133,7 @@ cdef class PScriptInterface(object):
         else:
             raise TypeError("Unkown type for conversion to Variant")
 
-    cdef variant_to_python_object(self, Variant value):
+    cdef variant_to_python_object(self, Variant value) except +:
         cdef ObjectId oid
         cdef vector[Variant] vec
         cdef int type = value.which()
@@ -198,9 +198,10 @@ cdef class PScriptInterface(object):
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_bind_methods =()
+    _so_creation_policy = "GLOBAL"
 
-    def __init__(self,**kwargs):
-        super(ScriptInterfaceHelper,self).__init__(self._so_name)
+    def __init__(self, **kwargs):
+        super(ScriptInterfaceHelper,self).__init__(self._so_name, self._so_creation_policy)
         self.set_params(**kwargs)
         self.define_bound_methods()
 

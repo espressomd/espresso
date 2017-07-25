@@ -27,6 +27,7 @@ from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
+from espressomd.visualizationMayavi import mlab
 
 try:
     import midi
@@ -186,8 +187,8 @@ class Controls(HasTraits):
     number_of_particles = Range(min_n, max_n, n_part, )
     ensemble = Enum('NVT', 'NPT')
 
-    midi_input = midi.Input(inputs[0][0]) if len(inputs) > 1 else None
-    midi_output = midi.Output(outputs[0][0]) if len(outputs) > 1 else None
+    midi_input = midi.Input(default_input[0]) if len(inputs) > 1 else None
+    midi_output = midi.Output(default_output[0]) if len(outputs) > 1 else None
 
     MIDI_BASE = 224
     MIDI_NUM_TEMPERATURE = MIDI_BASE + 0
@@ -241,7 +242,7 @@ class Controls(HasTraits):
         self.midi_input = midi.Input(self.input_device[0])
 
     def _output_device_fired(self):
-        if self.midi_input is not None:
+        if self.midi_output is not None:
             self.midi_output.close()
         self.midi_output = midi.Output(self.output_device[0])
         self.push_current_values()
@@ -281,10 +282,11 @@ class Controls(HasTraits):
             self.midi_output.write_short(status, data1, data2)
     
     def _ensemble_fired(self):
-        self.midi_output.write_short(144, 0, 127) # T
-        self.midi_output.write_short(144, 1, 127 * (self.ensemble != 'NPT')) # V
-        self.midi_output.write_short(144, 2, 127 * (self.ensemble == 'NPT')) # P
-        self.midi_output.write_short(144, 3, 127) # N
+        if self.midi_output is not None:
+                self.midi_output.write_short(144, 0, 127) # T
+                self.midi_output.write_short(144, 1, 127 * (self.ensemble != 'NPT')) # V
+                self.midi_output.write_short(144, 2, 127 * (self.ensemble == 'NPT')) # P
+                self.midi_output.write_short(144, 3, 127) # N
 
 #############################################################
 #  Warmup Integration                                       #
@@ -317,7 +319,7 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 
 # get initial observables
 pressure = system.analysis.pressure()
-temperature = system.temperature
+temperature = (system.part[:].v**2).sum()/3.0
 
 # TODO: this is some terrible polynomial fit, replace it with a better expression
 # equation of state
@@ -339,7 +341,7 @@ pyplot.plot(xx, 16.72 * xx**4 - 88.28 * xx**3 +
             168 * xx**2 - 122.4 * xx + 29.79, 'k-')
 
 cursor = pyplot.scatter(temperature, pressure['total'], 200, 'g')
-cursor2 = pyplot.scatter(-1, -1, 200, 'r')
+#cursor2 = pyplot.scatter(-1, -1, 200, 'r')
 pyplot.text(0.6, 10, 'solid')
 pyplot.text(1, 1, 'liquid')
 pyplot.text(1, 10**-3, 'gas')
@@ -425,7 +427,7 @@ def main_loop():
         
         new_box = numpy.ones(3) * controls.volume**(1./3.)
         if numpy.any(numpy.array(system.box_l) != new_box):
-            for i in range(system.n_part):
+            for i in range(len(system.part)):
                 system.part[i].pos *= new_box / system.box_l[0]
         system.box_l = new_box
 
@@ -448,7 +450,7 @@ def main_loop():
     if show_real_system_temperature:
         plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], 2./(3. * len(system.part))*system.analysis.energy()["ideal"])
     else:
-        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], system.temperature)
+        plt1_y_data = numpy.append(plt1_y_data[-plot_max_data_len+1:], (system.part[:].v**2).sum())
     plt2_x_data = numpy.append(plt2_x_data[-plot_max_data_len+1:], system.time)
     plt2_y_data = numpy.append(plt2_y_data[-plot_max_data_len+1:], pressure['total'])
     
@@ -517,18 +519,18 @@ def rotate_scene():
     global mayavi_rotation_angle
 
     if mayavi_rotation_angle:
-        #visualization.mlab.yaw(mayavi_rotation_angle)
+        #mlab.yaw(mayavi_rotation_angle)
         if mayavi_autozoom:
-            visualization.mlab.view(azimuth=mayavi_rotation_angle, distance='auto')
+            mlab.view(azimuth=mayavi_rotation_angle, distance='auto')
         else:
-            current_view_vals = visualization.mlab.view()
-            visualization.mlab.view(azimuth=mayavi_rotation_angle, elevation=current_view_vals[1], distance=current_view_vals[2], focalpoint=current_view_vals[3])
+            current_view_vals = mlab.view()
+            mlab.view(azimuth=mayavi_rotation_angle, elevation=current_view_vals[1], distance=current_view_vals[2], focalpoint=current_view_vals[3])
     mayavi_rotation_angle%=360.
 
 def zoom_scene():
     global mayavi_zoom
     
-    visualization.mlab.view(distance=mayavi_zoom)
+    mlab.view(distance=mayavi_zoom)
 
 def update_plot():
     global last_plotted
@@ -543,7 +545,7 @@ def update_plot():
     plot2.set_ydata(plt2_y_data[:data_len])
     
     cursor.set_offsets([plt1_y_data[data_len-1], plt2_y_data[data_len-1]])
-    cursor2.set_offsets([controls.temperature, controls.pressure])
+#    cursor2.set_offsets([controls.temperature, controls.pressure])
     
     current_time = plot1.get_xdata()[-1]
     if last_plotted == current_time:

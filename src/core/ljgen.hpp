@@ -36,7 +36,7 @@
 
 #include "debug.hpp"
 #include "interaction_data.hpp"
-#include "mol_cut.hpp"
+
 #include "particle_data.hpp"
 #include "utils.hpp"
 
@@ -54,7 +54,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double d[3],
                                  double dist, double force[3]) {
-  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
+  if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     int j;
     double r_off, frac, fac = 0.0;
     r_off = dist - ia_params->LJGEN_offset;
@@ -89,27 +89,6 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                 this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
 
-#ifdef CONFIGTEMP
-      extern double configtemp[2];
-      int numfac = 0;
-      if (p1->p.configtemp)
-        numfac += 1;
-      if (p2->p.configtemp)
-        numfac += 1;
-      configtemp[0] += numfac * SQR(ia_params->LJGEN_eps *
-                                    (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
-                                         pow(frac, ia_params->LJGEN_a1) -
-                                     ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
-                                         pow(frac, ia_params->LJGEN_a2)) /
-                                    r_off);
-      configtemp[1] +=
-          numfac * ia_params->LJGEN_eps *
-          (-ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
-               (ia_params->LJGEN_a1 - 1) * pow(frac, ia_params->LJGEN_a1) +
-           ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
-               (ia_params->LJGEN_a2 - 1) * pow(frac, ia_params->LJGEN_a2)) /
-          (SQR(r_off));
-#endif
     }
     /* capped part of lj potential. */
     else if (dist > 0.0) {
@@ -168,7 +147,7 @@ inline double ljgen_pair_energy(Particle *p1, Particle *p2,
                                 double dist) {
   double r_off, frac;
 
-  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
+  if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     r_off = dist - ia_params->LJGEN_offset;
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;

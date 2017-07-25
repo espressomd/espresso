@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 #include "dihedral.hpp"
 
 /* should be changed to file containing force caps */
@@ -87,7 +87,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
 inline void add_tabulated_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				       double d[3], double dist, double force[3])
 {
-  if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)){ 
+  if ((dist < ia_params->TAB_maxval)){ 
     double phi, dindex, fac;
     int tablepos, table_start,j;
     double rescaled_force_cap = force_cap/dist;
@@ -132,7 +132,7 @@ inline double tabulated_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
   int tablepos, table_start;
   double x0, b;
   
-  if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)) { 
+  if ((dist < ia_params->TAB_maxval)) { 
     dindex = (dist-ia_params->TAB_minval)/ia_params->TAB_stepsize;
     tablepos = (int)(floor(dindex)); 
     table_start = ia_params->TAB_startindex;

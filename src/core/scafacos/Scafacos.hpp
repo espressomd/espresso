@@ -18,6 +18,9 @@ struct Scafacos {
   void parse_parameters(const std::string &s);
   /** Get the parameters from the library */
   std::string get_parameters();
+  /** Get active method name */
+  std::string get_method();
+
   /** Set parameters common to all methods */
   void set_common_parameters(double *box_l, int *periodicity, int total_particles);
   /** Calulate short range pair force if supported by the method */

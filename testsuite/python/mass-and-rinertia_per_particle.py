@@ -25,7 +25,9 @@ class ThermoTest(ut.TestCase):
         # Decelleration
         self.es.time_step = 0.007
         self.es.thermostat.set_langevin(kT=0.0, gamma=gamma[0])
-
+        self.es.cell_system.skin = 5.0
+        seed(1)
+        mass = 12.74
         J = [10.0, 10.0, 10.0]
         
         for i in range(len(self.es.part)):
@@ -123,6 +125,8 @@ class ThermoTest(ut.TestCase):
 
         box = 10.0
         self.es.box_l = [box, box, box]
+        if espressomd.has_features(("PARTIAL_PERIODIC",)): 
+            self.es.periodicity=0,0,0
         kT = 1.5
         gamma_global = np.ones((3))
         
@@ -147,9 +151,9 @@ class ThermoTest(ut.TestCase):
             self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
         
         # no need to rebuild Verlet lists, avoid it
-        self.es.cell_system.skin = 1.0
-        self.es.time_step = 0.008
-        n = 100
+        self.es.cell_system.skin = 5.0
+        self.es.time_step = 0.03
+        n = 200 
         mass = (0.2 + random()) * 7.0
         J = np.array((0.2 + random(3)) * 7.0)
 
@@ -160,7 +164,6 @@ class ThermoTest(ut.TestCase):
                 part_v = np.array([0.0, 0.0, 0.0])
                 part_omega_body = np.array([0.0, 0.0, 0.0])
                 self.es.part.add(id = ind, mass = mass, rinertia = J, pos = part_pos, v = part_v)
-
                 if "ROTATION" in espressomd.features():
                     self.es.part[ind].omega_body = part_omega_body
                 if test_case == 1:
@@ -182,6 +185,10 @@ class ThermoTest(ut.TestCase):
                         self.es.part[ind].gamma_rot = gamma_rot[k,:]
                     self.es.part[ind].temp = temp[k]
 
+        # Get rid of short range calculations if exclusions are on
+        #if espressomd.has_features("EXCLUSIONS"):
+
+
         # matrices: [2 types of particless] x [3 dimensions X Y Z]
         # velocity^2, omega^2, position^2
         v2 = np.zeros((2,3))
@@ -195,15 +202,15 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 ind = p + k * n
                 pos0[ind,:] = self.es.part[ind].pos
-
-        loops = 500
+        dt0 = mass / gamma_tr
+        
+        loops = 200 
         print("Thermalizing...")
-        therm_steps = 120
+        therm_steps = 150
         self.es.integrator.run(therm_steps)
         print("Measuring...")
-
-        int_steps = 10
-
+        
+        int_steps = 5
         for i in range(loops):
             self.es.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles

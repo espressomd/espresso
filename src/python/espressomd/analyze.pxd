@@ -21,3 +21,5 @@
 from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
+cdef extern from "energy.hpp":
+    double calculate_current_potential_energy_of_system()

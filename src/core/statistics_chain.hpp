@@ -169,20 +169,6 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
     */
 void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_rdf_d);
 
-#ifdef ELECTROSTATICS
-/** Calculates the (charge weighted) velocity auto-correlation function from the stored configurations.
- *  The charge weighted velocity auto-correlation function is used to determine
- *  the electrophoretic mobility of a chain using Green-Kubo relation.
- * 
- *  cwvac(tau) = < sum_i^N ( q_i*v_i(t0)*v_CM(t0+tau) ) >
-  @param maxtau maximal tau
-  @param interval step between t0, sampling frequency
-  @param _avac contains the averaged(=over all chains in the system) velocity auto-correlation
-  @param _evac contains the error associated with the averaged velocity auto-correlation function
-  */
-void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac); 
-#endif
-
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
 
