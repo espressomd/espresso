@@ -14,7 +14,8 @@ mkdir build && cd build;
 cmake .. -DCUDA_NVCC_FLAGS="-D_FORCE_INLINES";
 make -j 4 && make check_python;
 result=$?;
-if (( result == 0 )); then
+echo $result
+if (( $result == 0 )); then
     STATUS="success"
 else
     STATUS="failure"
