@@ -25,7 +25,31 @@ from threading import Thread
 import numpy
 
 system = espressomd.System()
-visualizer = openGLLive(system, {'dragForce':5*298, 'background_color': [1,1,1], 'light_pos':[30,30,30]})
+visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30])
+
+#Callbacks to control temperature 
+temperature = 298.0
+def increaseTemp():
+        global temperature
+        temperature += 10
+        system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+        print temperature 
+
+def decreaseTemp():
+    global temperature
+    temperature -= 10
+
+    if temperature > 0:
+        system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+    else:
+        temperature = 0
+        system.thermostat.turn_off()
+    print temperature 
+
+#Register buttons
+visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
+visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+
 
 def main():
 

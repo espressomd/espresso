@@ -120,7 +120,7 @@ int convert_quatu_to_quat(double d[3], double quat[4])
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
     the body-fixed frames */  
-void define_rotation_matrix(Particle *p, double A[9])
+void define_rotation_matrix(Particle const *p, double A[9])
 {
   double q0q0 =p->r.quat[0];
   q0q0 *=q0q0;
@@ -247,12 +247,13 @@ void convert_torques_propagate_omega()
   Cell *cell;
   int np;
   double tx, ty, tz;
+  double omega_0[3] = {0.0, 0.0, 0.0};
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
 
 #if defined(LB_GPU) && defined(ENGINE)
   if (lattice_switch & LATTICE_LB_GPU) {
-    copy_v_cs_from_GPU();
+    copy_v_cs_from_GPU(local_cells.particles());
   }
 #endif
 
@@ -362,6 +363,9 @@ void convert_torques_propagate_omega()
       p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
       p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/I[2];
 #endif
+      // zeroth estimate of omega
+      for (int j = 0; j < 3; j++) omega_0[j] = p[i].m.omega[j];
+
       /* if the tensor of inertia is isotropic, the following refinement is not needed.
          Otherwise repeat this loop 2-3 times depending on the required accuracy */
       for(int times=0; times <= 5; times++)
@@ -378,9 +382,9 @@ void convert_torques_propagate_omega()
         Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
 
-        p[i].m.omega[0]+= time_step_half*Wd[0];
-        p[i].m.omega[1]+= time_step_half*Wd[1];
-        p[i].m.omega[2]+= time_step_half*Wd[2];
+        p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
+        p[i].m.omega[1] = omega_0[1] + time_step_half*Wd[1];
+        p[i].m.omega[2] = omega_0[2] + time_step_half*Wd[2];
       }
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));

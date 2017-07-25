@@ -55,7 +55,6 @@
 #include "bonded_coulomb.hpp"
 #endif
 #include "actor/EwaldGPU_ShortRange.hpp"
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -73,7 +72,7 @@
 #include "twist_stack.hpp"
 
 #ifdef CONSTRAINTS
-#include "constraint.hpp"
+#include "constraints.hpp"
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -98,13 +97,6 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
-    return 0;
-#endif
-
-#ifdef MOL_CUT
-  // You may want to put a correction factor for smoothing function else then
-  // theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 0)
     return 0;
 #endif
 
@@ -372,12 +364,6 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
-      break;
-#endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
 #ifdef TWIST_STACK

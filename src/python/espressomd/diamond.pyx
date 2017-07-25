@@ -1,11 +1,42 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-cdef class Diamond:
+from espressomd.utils cimport handle_errors
+
+cdef class Diamond(object):
+    """
+    Class to create a diamond like network
+    """ 
     def __init__(self, *args, **kwargs):
+        """
+        Wrapper object to create a diamond like polymer network. 
+        
+        Parameters 
+        ----------
+        a:              float
+                        size of the unit cell
+        bond_length:    float
+                        distance between adjacent monomers in the chains
+        MPC:            int 
+                        monomers per chain
+        cM_dist:        int, optional
+                        distance between charged monomers
+        N_CI:           int, optional
+                        Number of counter ions
+        val_nodes:      float, optional
+                        charge valency of the 8 node particles (crosslinker)
+        val_cM:         float, optional
+                        valency of the charge bearing monomers
+        val_CI:         float, optional
+                        valency of the counterions
+        nonet:          int, optional 
+                        0 creates network, 1 does not crosslink the individual polymers
+
+        """
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:
-                raise ValueError("At least the following keys have to be given as keyword arguments: " +self.required_keys().__str__() + " got " + kwargs.__str__())
+                raise ValueError("At least the following keys have to be given as keyword arguments: " +
+                                 self.required_keys().__str__() + " got " + kwargs.__str__())
         for k in kwargs:
             if k in self.valid_keys():
                 self._params[k] = kwargs[k]
@@ -58,6 +89,7 @@ cdef class Diamond:
 
     def _set_params_in_es_core(self):
         tmp_try = self.__set_params_in_es_core()
+        handle_errors("Failed changing bonds in diamondC")
         if(tmp_try == -3):
             raise Exception(
                 "Failed upon creating one of the monomers in Espresso!\nAborting...\n")

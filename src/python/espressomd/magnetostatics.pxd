@@ -13,7 +13,8 @@ IF DIPOLES == 1:
             DIPOLAR_MDLC_P3M,
             DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
             DIPOLAR_DS,
-            DIPOLAR_MDLC_DS
+            DIPOLAR_MDLC_DS,
+            DIPOLAR_SCAFACOS
 
         int dipolar_set_Dbjerrum(double bjerrum)
 
@@ -26,6 +27,11 @@ IF DIPOLES == 1:
         int dawaanr_set_params()
         int mdds_set_params(int n_cut)
         int Ncut_off_magnetic_dipolar_direct_sum
+
+    IF (CUDA == 1) and (ROTATION == 1):
+        cdef extern from "actor/DipolarDirectSum.hpp":
+            void activate_dipolar_direct_sum_gpu()
+            void deactivate_dipolar_direct_sum_gpu()
 
 IF DP3M == 1:
     from p3m_common cimport p3m_parameter_struct

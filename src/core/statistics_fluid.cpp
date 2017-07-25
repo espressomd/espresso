@@ -29,7 +29,7 @@
 #include "utils.hpp"
 #include "communication.hpp"
 #include "lb.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "statistics_fluid.hpp"
 
 #ifdef LB
@@ -123,11 +123,13 @@ void lb_calc_fluid_temp(double *result) {
 
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
+  int n_lb_boundaries = LBBoundaries::lbboundaries.size();
   double* boundary_forces = (double*) Utils::malloc(3*n_lb_boundaries*sizeof(double));
 
-  for (int i = 0; i < n_lb_boundaries; i++) 
+  int i = 0;
+  for (auto it = LBBoundaries::lbboundaries.begin(); it != LBBoundaries::lbboundaries.end(); ++it, i++) 
     for (int j = 0; j < 3; j++)
-      boundary_forces[3*i+j]=lb_boundaries[i].force[j];
+      boundary_forces[3*i+j]=(**it).force()[j];
 
   MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, 
              MPI_DOUBLE, MPI_SUM, 0, comm_cart);

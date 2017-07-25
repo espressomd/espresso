@@ -10,7 +10,7 @@
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "halo.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_cuda_interface.hpp"
 
@@ -125,12 +125,12 @@ This function is called from the integrate right after the LB update
 Interpolates LB velocity at the particle positions and propagates the particles
 **************/
 
-void IBM_UpdateParticlePositions()
+void IBM_UpdateParticlePositions(ParticleRange particles)
 {
   // Get velocities
   if (lattice_switch & LATTICE_LB) ParticleVelocitiesFromLB_CPU();
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) ParticleVelocitiesFromLB_GPU();
+  if (lattice_switch & LATTICE_LB_GPU) ParticleVelocitiesFromLB_GPU(particles);
 #endif
   
   

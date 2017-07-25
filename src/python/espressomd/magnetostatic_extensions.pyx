@@ -28,16 +28,43 @@ IF DIPOLES == 1:
         pass
 
     class DLC(MagnetostaticExtension):
+        """Provide the Dipolar Layer Correction (DLC) method.
+
+        DLC works like ELC for electrostatics
+        (:class:`espressomd.electrostatic_extensions.ELC`),
+        but applied to magnetic dipoles.
+
+        Notes
+        -----
+        At present, the empty gap (volume without any particles), is assumed to be
+        along the z-axis. As a reference for the DLC method, see :cite:`brodka04a`.
+
+        Attributes
+        ----------
+        far_cut : float
+            Cutoff of the exponential sum.
+
+        gap_size : float
+            Size of the empty gap. Note that DLC relies on the user to make sure that
+            this condition is fulfilled.
+
+        maxPWerror : float
+            Maximal pairwise error of the potential and force.
+
+        """
 
         def validate_params(self):
+            """Check validity of class attributes.
+
+            """
             default_params = self.default_params()
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")
             check_range_or_except(
-                self._params,"maxPWerror", 0, False, "inf", True)
+                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float, "")
             check_range_or_except(
-                self._params,"gap_size", 0, False, "inf", True)
+                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):
@@ -60,6 +87,7 @@ IF DIPOLES == 1:
             if mdlc_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
                 raise ValueError(
                     "Choose a 3d magnetostatics method prior to DLC")
+            handle_errors("mdlc tuning failed, gap size too small")
 
         def _activate_method(self):
             self._set_params_in_es_core()

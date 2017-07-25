@@ -38,7 +38,7 @@
 #include "thermostat.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "lb.hpp"
 #include "immersed_boundary/ibm_main.hpp"
 
@@ -406,6 +406,24 @@ int lb_lbfluid_set_couple_flag(int couple_flag) {
     if ( couple_flag != LB_COUPLE_TWO_POINT )
       return -1;
 #endif // LB
+  }
+  return 0;
+}
+
+
+int lb_lbfluid_get_couple_flag(int * couple_flag) {
+  *couple_flag = LB_COUPLE_NULL;
+  if (lattice_switch & LATTICE_LB_GPU)
+  {
+#ifdef LB_GPU
+    *couple_flag = lbpar_gpu.lb_couple_switch;
+#endif
+  }
+  else
+  {
+#ifdef LB
+    *couple_flag = LB_COUPLE_TWO_POINT;
+#endif
   }
   return 0;
 }
@@ -1323,13 +1341,13 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
         index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
         mpi_recv_fluid(node,index,&rho,j,pi);
-        // unit conversion // TODO: Check Unit Conversion!
-        p_pi[0] = pi[0]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[1] = pi[1]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[2] = pi[2]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[3] = pi[3]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[4] = pi[4]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-        p_pi[5] = pi[5]/lbpar.tau/lbpar.tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+        // unit conversion
+        p_pi[0] = pi[0]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[1] = pi[1]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[2] = pi[2]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[3] = pi[3]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[4] = pi[4]/lbpar.tau/lbpar.tau/lbpar.agrid;
+        p_pi[5] = pi[5]/lbpar.tau/lbpar.tau/lbpar.agrid;
 #endif // LB
     }
     return 0;
@@ -1363,7 +1381,16 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
     if (lattice_switch & LATTICE_LB_GPU) {
-        fprintf(stderr, "Not implemented for GPU\n");
+#ifdef LB_GPU
+      float population[19];
+
+      // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
+      int c = 0;
+      lb_lbfluid_get_population( ind, population, c );
+
+      for (int i = 0; i < LBQ; ++i)
+        p_pop[i] = population[i];
+#endif // LB_GPU
     } else {
 #ifdef LB
         index_t index;
@@ -1457,7 +1484,16 @@ int lb_lbnode_set_pi_neq(int* ind, double* pi_neq) {
 
 int lb_lbnode_set_pop(int* ind, double* p_pop) {
     if (lattice_switch & LATTICE_LB_GPU) {
-        printf("Not implemented in the LB GPU code!\n");
+#ifdef LB_GPU
+      float population[19];
+
+      for (int i = 0; i < LBQ; ++i)
+        population[i] = p_pop[i];
+
+      // c is the LB_COMPONENT for SHANCHEN (not yet interfaced)
+      int c = 0;
+      lb_lbfluid_set_population( ind, population, c );
+#endif // LB_GPU
     } else {
 #ifdef LB
         index_t index;
@@ -2005,10 +2041,8 @@ void lb_reinit_forces() {
 #endif // EXTERNAL_FORCES
     }
 #ifdef LB_BOUNDARIES
-    for (int i = 0; i < n_lb_boundaries; i++) {
-      lb_boundaries[i].force[0]=0.;
-      lb_boundaries[i].force[1]=0.;
-      lb_boundaries[i].force[2]=0.;
+    for (auto it = LBBoundaries::lbboundaries.begin(); it != LBBoundaries::lbboundaries.end(); ++it) {
+      (**it).reset_force();
     }
 #endif // LB_BOUNDARIES
 }
@@ -2037,7 +2071,7 @@ void lb_reinit_fluid() {
 
     lbpar.resend_halo = 0;
 #ifdef LB_BOUNDARIES
-    lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
 }
 
@@ -2703,10 +2737,8 @@ inline void lb_collide_stream() {
 
     /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-    for (int i = 0; i < n_lb_boundaries; i++) {
-        lb_boundaries[i].force[0]=0.;
-        lb_boundaries[i].force[1]=0.;
-        lb_boundaries[i].force[2]=0.;
+    for (auto it = LBBoundaries::lbboundaries.begin(); it != LBBoundaries::lbboundaries.end(); ++it) {
+      (**it).reset_force();
     }
 #endif // LB_BOUNDARIES
   
@@ -2775,7 +2807,7 @@ inline void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
-    lb_bounce_back();
+    LBBoundaries::lb_bounce_back();
 #endif // LB_BOUNDARIES
 
     /* swap the pointers for old and new population fields */
@@ -3090,7 +3122,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   int boundary_no;
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0
 
-  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  LBBoundaries::lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
   if (lbboundary_mindist > 0.5 * lbpar.agrid) {
     boundary_flag=0;
     pos[0]=p[0];
@@ -3103,9 +3135,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
     pos[2] = p[2] - distvec[2] + distvec[2]/lbboundary_mindist * lbpar.agrid/2.;
   } else {
     boundary_flag=2;
-    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
-    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
-    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    v[0]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0]*lbpar.agrid/lbpar.tau;
+    v[1]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1]*lbpar.agrid/lbpar.tau;
+    v[2]= (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2]*lbpar.agrid/lbpar.tau;
     return 0; // we can return without interpolating
   }
 #else // LB_BOUNDARIES
@@ -3131,9 +3163,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[1];
-          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[2];
+          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*(*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[0]; // TODO
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*(*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[1]; // TODO This might not work properly
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*(*LBBoundaries::lbboundaries[lbfields[index].boundary-1]).velocity()[2]; // TODO
         } else {
           lb_calc_modes(index, modes);
           local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
@@ -3157,11 +3189,11 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
 #ifdef LB_BOUNDARIES
   if (boundary_flag==1) {
     v[0] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[0] 
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[0];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * (*LBBoundaries::lbboundaries[boundary_no]).velocity()[0];
     v[1] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[1]
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[1];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * (*LBBoundaries::lbboundaries[boundary_no]).velocity()[1];
     v[2] = lbboundary_mindist / (0.5 * lbpar.agrid) * interpolated_u[2]
-      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * lb_boundaries[boundary_no].velocity[2];
+      + (1 - lbboundary_mindist/(0.5 * lbpar.agrid)) * (*LBBoundaries::lbboundaries[boundary_no]).velocity()[2];
   } else {
     v[0] = interpolated_u[0];
     v[1] = interpolated_u[1];

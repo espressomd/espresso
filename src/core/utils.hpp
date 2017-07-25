@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef UTILS_HPP
+#define UTILS_HPP
 /** \file utils.hpp
  *    Small functions that are useful not only for one modul.
 
@@ -28,14 +28,20 @@
  *
 */
 
+#include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <exception>
 #include <vector>
-#include <cmath>
 
 #include "config.hpp"
 
+#include "debug.hpp"
 #include "errorhandling.hpp"
-
+#include "lees_edwards.hpp"
+#include "utils/List.hpp"
+#include "utils/math/sqr.hpp"
+#include "utils/memory.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -71,41 +77,7 @@
  * data types
  ************************************************/
 
-/** Integer list.
-    Use the functions specified in list operations. */
-typedef struct {
-  /** Dynamically allocated integer field. */
-  int *e;
-  /** number of used elements in the integer field. */
-  int n;
-  /** allocated size of the integer field. This value is ONLY changed
-      in the routines specified in list operations ! */
-  int max;
-} IntList;
-
-/** Double list.
-    Use the functions specified in list operations. */
-typedef struct {
-  /** Dynamically allocated double field. */
-  double *e;
-  /** number of used elements in the double field. */
-  int n;
-  /** allocated size of the double field. This value is ONLY changed
-      in the routines specified in list operations ! */
-  int max;
-} DoubleList;
-
-/*************************************************************/
-/** \name Dynamic memory allocation.                         */
-/*************************************************************/
-/*@{*/
-
-/* to enable us to make sure that freed pointers are invalidated, we normally
-   try to use realloc.
-   Unfortunately allocating zero bytes (which should be avoided) actually
-   allocates 16 bytes, and
-   reallocating to 0 also. To avoid this, we use our own malloc and realloc
-   procedures. */
+extern int this_node;
 
 namespace Utils {
 /**
@@ -131,44 +103,9 @@ template <unsigned n, typename T> inline T int_pow(T x) {
   }
 }
 
-/** used instead of realloc.
-    Makes sure that resizing to zero FREEs pointer */
-template <typename T> inline T *realloc(T *old, size_t size) {
-  if (size <= 0) {
-    ::free(static_cast<void *>(old));
-    return nullptr;
-  }
-
-  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
-/** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
-inline void *malloc(size_t size) {
-  if (size <= 0) {
-    return nullptr;
-  }
-
-  void *p = ::malloc(size);
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 }
-
-/*@}*/
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -181,7 +118,7 @@ inline void init_intlist(IntList *il) {
   il->max = 0;
   il->e = NULL;
 }
-extern int this_node;
+// extern int this_node;
 
 /** Allocate an \ref IntList of size size. If you need an \ref IntList
     with variable size better use \ref realloc_intlist */
@@ -316,9 +253,6 @@ inline void permute_ifield(int *field, int size, int permute) {
 /** Mathematically rounds 'double'-typed x, returning 'double'. */
 inline double dround(double x) { return floor(x + 0.5); }
 
-/** Calculates the SQuaRe of 'double' x, returning 'double'. */
-inline double SQR(double x) { return x * x; }
-
 /** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
     (9. ed.), chapter 7 */
@@ -394,7 +328,8 @@ inline int calc_factors(int n, int *factors, int max) {
 /*@{*/
 
 /** Subtracts vector v2 from vector v1 and stores result in vector dv */
-inline void vecsub(double v1[3], double v2[3], double dv[3]) {
+template <typename T, typename U, typename V>
+inline void vecsub(T const &v1, U const &v2, V &dv) {
   dv[0] = v1[0] - v2[0];
   dv[1] = v1[1] - v2[1];
   dv[2] = v1[2] - v2[2];
@@ -411,7 +346,8 @@ inline double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-inline double sqrlen(double v[3]) {
+template<typename T>
+double sqrlen(T const& v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -441,7 +377,8 @@ inline double scalar(double a[3], double b[3]) {
 }
 
 /** calculates the vector product c of two vectors a and b */
-inline void vector_product(double a[3], double b[3], double c[3]) {
+template <typename T, typename U, typename V>
+inline void vector_product(T const &a, U const &b, V &c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
@@ -851,7 +788,8 @@ inline void print_block(double *data, int start[3], int size[3], int dim[3],
   for (b = 0; b < divide; b++) {
     start1 = b * block1 + start[1];
     for (i0 = start[0] + size[0] - 1; i0 >= start[0]; i0--) {
-      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]); i1++) {
+      for (i1 = start1; i1 < std::min(start1 + block1, start[1] + size[1]);
+           i1++) {
         for (i2 = start[2]; i2 < start[2] + size[2]; i2++) {
           tmp = data[num + (element * (i2 + dim[2] * (i1 + dim[1] * i0)))];
           if (tmp < 0)

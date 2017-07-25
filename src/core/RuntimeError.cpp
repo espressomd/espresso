@@ -20,6 +20,7 @@
 #include "RuntimeError.hpp"
 
 #include <sstream>
+#include <iostream>
 
 namespace ErrorHandling {
 
@@ -51,6 +52,9 @@ std::string RuntimeError::format() const {
 #endif
 
   return ostr.str();
+}
+void RuntimeError::print() {
+std::cerr << format() << std::endl; 
 }
 
 } /* ErrorHandling */

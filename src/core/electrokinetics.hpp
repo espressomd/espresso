@@ -21,7 +21,7 @@
 #define _ELECTROKINETICS_HPP
 
 #include "config.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 
 //note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
 //to compile when electrokinetics is not compiled in. This seemed more elegant than
@@ -50,6 +50,7 @@ typedef struct {
   float time_step; //MD time step
   float lb_density;
   unsigned int dim_x;
+  unsigned int dim_x_padded;
   unsigned int dim_y;
   unsigned int dim_z;
   unsigned int number_of_nodes;
@@ -185,6 +186,7 @@ int ek_set_fluidcoupling(bool ideal_contribution);
 int ek_node_print_velocity(int x, int y, int z, double* velocity);
 int ek_node_print_density(int species, int x, int y, int z, double* density);
 int ek_node_print_flux(int species, int x, int y, int z, double* flux);
+int ek_node_print_potential(int x, int y, int z, double* potential);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 ekfloat ek_calculate_net_charge(); 
 int ek_neutralize_system(int species); 
@@ -196,6 +198,8 @@ void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int
 #endif
 
 #ifdef EK_REACTION
+#error The EK_REACTION feature has not been adjusted to the new lb boundaries. Hence, this feature is unavailable at this point.
+
 int ek_print_vtk_reaction_tags(char* filename);
 int ek_set_reaction( int reactant, int product0, int product1, 
                      float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, 

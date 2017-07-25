@@ -39,7 +39,7 @@ void EspressoSystemInterface::gatherParticles() {
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       ESIF_TRACE(puts("Calling copy_part_data_to_gpu()"));
-      copy_part_data_to_gpu();
+      copy_part_data_to_gpu(local_cells.particles());
       reallocDeviceMemory(
           gpu_get_global_particle_vars_pointer_host()->number_of_particles);
       if (m_splitParticleStructGpu && (this_node == 0))
@@ -85,7 +85,6 @@ void EspressoSystemInterface::gatherParticles() {
 #endif
 
       for (i = 0; i < np; i++) {
-
         if (needsR())
           R.push_back(Vector3(p[i].r.p));
 
@@ -94,14 +93,14 @@ void EspressoSystemInterface::gatherParticles() {
           Q.push_back(p[i].p.q);
 #endif
 #ifdef DIPOLES
-
         if (needsDip())
-          Dip.push_back(Vector3{p[i].r.dip});
+          Dip.emplace_back(
+              Vector3{p[i].r.dip[0], p[i].r.dip[1], p[i].r.dip[2]});
 #endif
 #ifdef ROTATION
         if (needsQuatu())
-          Quatu.push_back(
-              Vector3{p[i].r.quatu});
+          Quatu.emplace_back(
+              Vector3{p[i].r.quatu[0], p[i].r.quatu[1], p[i].r.quatu[2]});
 #endif
       }
     }
@@ -161,5 +160,5 @@ const SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuEnd() {
 unsigned int EspressoSystemInterface::npart() { return m_npart; }
 
 SystemInterface::Vector3 EspressoSystemInterface::box() {
-  return Vector3(box_l);
+  return Vector3d{box_l[0], box_l[1], box_l[2]};
 }

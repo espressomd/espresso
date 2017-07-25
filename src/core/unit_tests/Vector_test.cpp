@@ -1,22 +1,22 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /** \file Vector_test.cpp Unit tests for the Utils::Vector class.
@@ -28,72 +28,46 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <numeric>
+#include <vector>
 
 #include "../Vector.hpp"
 
 /** Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
-#define TEST_NUMBERS { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
-#define TEST_NUMBERS_PARTIAL_NORM2 { 0, 1, 2, 51, 492, 13036 }
-const int test_numbers[] = TEST_NUMBERS;
-const int test_numbers_partial_norm2[] = TEST_NUMBERS_PARTIAL_NORM2;
-const int n_test_numbers = sizeof(test_numbers) / sizeof(int);
+#define TEST_NUMBERS                                                           \
+  { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
+#define TEST_NUMBERS_PARTIAL_NORM2                                             \
+  { 0, 1, 2, 51, 492, 13036 }
+constexpr int test_numbers[] = TEST_NUMBERS;
+constexpr int n_test_numbers = sizeof(test_numbers) / sizeof(int);
 
-template <int n>
-bool il_constructor() {
-  bool pass = true;
-  Vector<n, int> v(TEST_NUMBERS);
+template <int n> bool norm2() {
+  Vector<n, int> v(std::begin(test_numbers), test_numbers + n);
 
-  pass &= v.size() == n;
-  
-  for (int i = 0; i < std::min(n_test_numbers, n); i++)
-    pass &= v[i] == test_numbers[i];
-    
-  return pass;
+  return v.norm2() == std::inner_product(v.begin(), v.end(), v.begin(), 0);
 }
 
-template<int n>
-bool default_constructor() {
-  bool pass = true;
-  Vector<n, int> v;
+BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
+  Vector<n_test_numbers, int> v(TEST_NUMBERS);
 
-  for (int i = 0; i < n; i++) {
-    v[i] = i;
-  }
-  
-  return pass;
+  BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 }
 
-template<int n>
-bool norm2() {
-  Vector<n, int> v(test_numbers);
-
-  return v.norm2() == test_numbers_partial_norm2[n-1];
+BOOST_AUTO_TEST_CASE(iterator_constructor) {
+  Vector<n_test_numbers, int> v(std::begin(test_numbers),
+                                std::end(test_numbers));
+  BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 }
 
-BOOST_AUTO_TEST_CASE(test_constructor) {
-#ifdef HAVE_CXX11
-  BOOST_CHECK(il_constructor<1>());
-  BOOST_CHECK(il_constructor<2>());
-  BOOST_CHECK(il_constructor<3>());
-  BOOST_CHECK(il_constructor<4>());
-  BOOST_CHECK(il_constructor<5>());
-  BOOST_CHECK(il_constructor<6>());
-  BOOST_CHECK(il_constructor<7>());
-  BOOST_CHECK(il_constructor<8>());
-  BOOST_CHECK(il_constructor<9>());
-  BOOST_CHECK(il_constructor<10>());
-#endif
-
-  BOOST_CHECK(default_constructor<1>());
-  BOOST_CHECK(default_constructor<2>());
-  BOOST_CHECK(default_constructor<3>());
-  BOOST_CHECK(default_constructor<4>());
-  BOOST_CHECK(default_constructor<5>());
-  BOOST_CHECK(default_constructor<6>());
-  BOOST_CHECK(default_constructor<7>());
-  BOOST_CHECK(default_constructor<8>());
-  BOOST_CHECK(default_constructor<9>());
-  BOOST_CHECK(default_constructor<10>());
+BOOST_AUTO_TEST_CASE(default_constructor_test) {
+  Vector<0, int> v1;
+  BOOST_CHECK(v1.size() == 0);
+  Vector<1, int> v2;
+  BOOST_CHECK(v2.size() == 1);
+  Vector<2, int> v3;
+  BOOST_CHECK(v3.size() == 2);
+  Vector<11, int> v4;
+  BOOST_CHECK(v4.size() == 11);
 }
 
 BOOST_AUTO_TEST_CASE(test_norm2) {
@@ -101,6 +75,28 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
   BOOST_CHECK(norm2<2>());
   BOOST_CHECK(norm2<3>());
   BOOST_CHECK(norm2<4>());
-  BOOST_CHECK(norm2<5>());
-  BOOST_CHECK(norm2<6>());
+}
+
+BOOST_AUTO_TEST_CASE(normalize) {
+  Vector<3, double> v{1, 2, 3};
+  v.normalize();
+
+  BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
+}
+
+BOOST_AUTO_TEST_CASE(operators) {
+  Vector<5, int> v1{1, 2, 3, 4, 5};
+  Vector<5, int> v2{6, 7, 8, 9, 10};
+
+  BOOST_CHECK(v1 < v2);
+  BOOST_CHECK(!(v1 < v1));
+  BOOST_CHECK(v1 <= v2);
+  BOOST_CHECK(v1 <= v1);
+  BOOST_CHECK(v2 > v1);
+  BOOST_CHECK(!(v2 > v2));
+  BOOST_CHECK(v2 >= v1);
+  BOOST_CHECK(v2 >= v2);
+  BOOST_CHECK(v1 != v2);
+  BOOST_CHECK(!(v1 == v2));
+  BOOST_CHECK(v1 == v1);
 }

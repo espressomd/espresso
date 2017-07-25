@@ -67,6 +67,9 @@ void energy_calc(double *result);
 void calc_long_range_energies();
 
 
+/** Calculate the total energy */
+double calculate_current_potential_energy_of_system();
+
 /*@}*/
 
 #endif

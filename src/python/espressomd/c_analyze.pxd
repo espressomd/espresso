@@ -22,7 +22,6 @@
 # TODO: Merge blocks of cdef extern for same headers.
 #
 
-
 from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
@@ -31,11 +30,10 @@ from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "particle_data.hpp":
-    cdef int updatePartCfg(int bonds_flag)
     int n_particle_types
 
 cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(int *p_types, int n_types, int order, double **sf)
+    cdef void calc_structurefactor(int * p_types, int n_types, int order, double ** sf)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
 
 cdef extern from "statistics.hpp":
@@ -67,33 +65,21 @@ cdef extern from "statistics.hpp":
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
-
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
     cdef Observable_stat_non_bonded total_pressure_non_bonded
     cdef Observable_stat total_p_tensor
     cdef Observable_stat_non_bonded total_p_tensor_non_bonded
     cdef void update_pressure(int)
-    cdef void analyze_pressure_all(vector[string] & pressure_labels, vector[double] & pressures, int v_comp)
-    cdef double analyze_pressure(string pressure_to_calc, int v_comp)
-    cdef double analyze_pressure_pair(string pressure_to_calc, int type1, int type2, int v_comp)
-    cdef double analyze_pressure_single(string pressure_to_calc, int bond_or_type, int v_comp)
-    cdef void analyze_stress_tensor_all(vector[string] & stressTensorLabel, vector[double] & stressTensorValues, int v_comp)
-    cdef int analyze_stress_tensor(string pressure_to_calc, int v_comp, vector[double] & stress)
-    cdef int analyze_stress_pair(string pressure_to_calc, int type1, int type2, int v_comp, vector[double] & stress)
-    cdef int analyze_stress_single(string pressure_to_calc, int bond_or_type, int v_comp, vector[double] & stress)
     cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
     cdef Observable_stat_non_bonded total_energy_non_bonded
-
-cdef extern from "energy.hpp":
     cdef void master_energy_calc()
     cdef void init_energies(Observable_stat * stat)
 
 cdef extern from "statistics_chain.hpp":
-    int sortPartCfg()
     int chain_start
     int chain_n_chains
     int chain_length
@@ -115,8 +101,8 @@ cdef extern from "statistics.hpp":
                               double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
     void angularmomentum(int p_type, double * com)
     void calc_gyration_tensor(int p_type, vector[double] gt)
-    void momentofinertiamatrix(int p_type, double* MofImatrix)
-    void analyze_rdfchain(double r_min, double r_max, int r_bins, double **f1, double **f2, double **f3)
+    void momentofinertiamatrix(int p_type, double * MofImatrix)
+    void analyze_rdfchain(double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
 
 cdef extern from "statistics.hpp":
     int n_part

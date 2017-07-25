@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
 import numpy as np
+from espressomd.utils cimport handle_errors
 
 IF ELECTROSTATICS and P3M:
     cdef class ElectrostaticExtensions(actors.Actor):
@@ -65,8 +66,7 @@ IF ELECTROSTATICS and P3M:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
             if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
-                raise ValueError(
-                    "Choose a 3d electrostatics method prior to ELC")
+                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -121,13 +121,13 @@ IF ELECTROSTATICS and P3M:
                 self._params["areas"], self._params["n_icc"], float, "Error in area list.")
 
             # Not Required
-            if self._params.has_key("sigmas"):
+            if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
             else:
                 self._params["sigmas"] = np.zeros(self._params["n_icc"])
 
-            if self._params.has_key("epsilons"):
+            if "epsilons" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
             else:

@@ -21,6 +21,10 @@
 #include "cuda_utils.hpp"
 #include <stdio.h>
 
+#if defined(OMPI_MPI_H) || defined(_MPI_H)
+#error CU-file includes mpi.h! This should not happen!
+#endif
+
 __global__ void HarmonicOrientationWell_kernel(float x, float y, float z, float k,
 				     int n, float *quatu, float *torque) {
 

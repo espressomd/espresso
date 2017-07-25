@@ -1,5 +1,5 @@
 % Do magic that \bfseries for keywords actually works
-\DeclareFontShape{OT1}{cmtt}{bx}{n}{<5><6><7><8><9><10><10.95><12><14.4><17.28><20.74><24.88>cmttb10}{}
+\usepackage{lmodern} % use the Latin Modern fonts
 
 % Custom colors
 \definecolor{stringblue}{rgb}{0.09,0.211,0.57}
@@ -42,7 +42,6 @@
         box_l,
         cellsystem,
         CellSystem,
-        code_info,
         COORDS_ALL_FIXED,
         COORDS_FIX_MASK,
         COORD_FIXED,
@@ -114,5 +113,13 @@
   rulecolor=\color{framegray},
   showstringspaces=false            % 
 }
-\lstnewenvironment{pypresso}{%
-  \lstset{style=pypressostyle}}{}
+
+% Python environment
+\lstnewenvironment{pypresso}{\lstset{style=pypressostyle}}{}
+
+% Python for external files
+\newcommand\pypressoexternal[2][]{{
+\lstset{style=pypressostyle}\lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pypressoinline[1]{{\lstset{style=pypressostyle}\lstinline!#1!}}

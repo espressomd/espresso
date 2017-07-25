@@ -25,15 +25,9 @@ matrix:
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset
-      cache:
-        directories:
-        - /usr/local/Cellar/boost
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset image=python3
-      cache:
-        directories:
-        - /usr/local/Cellar/boost
     - os: linux
       sudo: required
       services: docker
@@ -42,10 +36,6 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=maxset-gaussrandomcut
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=molcut
     - os: linux
       sudo: required
       services: docker
