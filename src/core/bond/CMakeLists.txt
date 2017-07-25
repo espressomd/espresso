@@ -1,0 +1,6 @@
+file(GLOB Bonds_SRC *.cpp)
+add_library(Bonds SHARED ${Bonds_SRC})
+install(TARGETS Bonds LIBRARY DESTINATION ${LIBDIR})
+set_target_properties(Bonds PROPERTIES SOVERSION ${SOVERSION})
+add_dependencies(Bonds EspressoConfig)
+set_target_properties(Bonds PROPERTIES MACOSX_RPATH TRUE)
