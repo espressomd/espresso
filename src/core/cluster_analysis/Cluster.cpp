@@ -28,7 +28,7 @@ Vector3d Cluster::center_of_mass()
   double total_mass=0.;
   for (int pid : particles)  //iterate over all particle ids within a cluster
   {
-    get_mi_vector(&dist_to_reference.front(), local_particles[pid]->r.p, &reference_position.front()); //add current particle positions
+    get_mi_vector(dist_to_reference, local_particles[pid]->r.p, reference_position); //add current particle positions
     com = com + dist_to_reference *local_particles[pid]->p.mass;
     total_mass += local_particles[pid]->p.mass;
   }
