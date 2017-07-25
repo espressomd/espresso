@@ -24,8 +24,9 @@
 
 */
 
+#include "config.hpp"
+
 #include <cmath>
-//#include "utils.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
@@ -384,7 +385,7 @@ inline void friction_thermo_langevin(Particle *p)
     {
       // Apply the force
 #ifndef PARTICLE_ANISOTROPY
-      p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+      p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*Thermostat::noise();
 #else
       // In case of anisotropic particle: body-fixed reference frame. Otherwise: lab-fixed reference frame.
       if (aniso_flag)
@@ -513,7 +514,7 @@ auto const constexpr langevin_temp_coeff = 24.0;
 #ifdef ROTATIONAL_INERTIA
     p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*Thermostat::noise();
 #else
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
+    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*Thermostat::noise();
 #endif
   }
 
