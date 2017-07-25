@@ -2112,14 +2112,3 @@ void pointer_to_rotational_inertia(Particle *p, double *&res) {
 }
 #endif
 
-bool particle_exists(int part) {
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return false;
-
-  if (particle_node[part] != -1)
-    return true;
-  return false;
-}
