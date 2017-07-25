@@ -28,3 +28,4 @@ curl "https://api.github.com/repos/kaiszuttor/espresso/statuses/$GIT_COMMIT?acce
       -H "Content-Type: application/json" \
       -X POST \
       -d "{\"state\": \"$STATUS\", \"context\": \"ICP CUDA build\", \"target_url\": \"$URL\"}"
+exit $result
