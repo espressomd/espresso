@@ -1,5 +1,7 @@
 #include"Fene.hpp"
 
+#include "core/random.hpp"
+
 //---FENE---
 //calculating the fene bond force: virtual function
 int Bond::Fene::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {

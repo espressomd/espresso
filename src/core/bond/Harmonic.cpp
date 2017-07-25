@@ -1,5 +1,6 @@
 #include"Harmonic.hpp"
-#include "integrate.hpp"
+
+#include "core/random.hpp"
 
 //---HARMONIC BOND---
 int Bond::Harmonic::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
