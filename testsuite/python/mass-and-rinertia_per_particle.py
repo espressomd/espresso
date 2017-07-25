@@ -9,18 +9,11 @@ import math
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
-    seed(1)
     # Handle for espresso system
     es = espressomd.System()
-    es.periodicity =0,0,0
-    es.cell_system.max_num_cells=8
-    es.cell_system.set_n_square(use_verlet_lists=False)
-    es.cell_system.skin=1
-    
 
     def run_test_case(self, test_case):
         gamma = np.array([1.0, 1.0])
-        mass = 12.74
         
         # Decelleration
         self.es.time_step = 0.007
