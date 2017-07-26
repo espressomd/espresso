@@ -3,14 +3,12 @@
 #include "interaction_data.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include "partCfg.hpp" 
 
 namespace ClusterAnalysis {
 
 
 ClusterStructure::ClusterStructure() {
-  if (n_nodes!=1) {
-    throw std::runtime_error("The cluster analysis only works for a single core.");
-  }
   clear();
 }
 
@@ -32,12 +30,12 @@ void ClusterStructure::run_for_all_pairs()
   // clear data structs
   clear();
   
-  // Iterate over pairs
+  // Iteraeover pairs
   for (int i=0;i<=max_seen_particle;i++) {
-    if (! local_particles[i]) continue;
+    if (! particle_exists(i)) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
-      if (! local_particles[j]) continue;
-      add_pair(*local_particles[i],*local_particles[j]); 
+      if (! particle_exists(j)) continue;
+      add_pair(partCfg[i],partCfg[j]); 
     }
   }
   merge_clusters();
@@ -45,19 +43,20 @@ void ClusterStructure::run_for_all_pairs()
 
 void ClusterStructure::run_for_bonded_particles() {
 clear();
+partCfg.update_bonds();
 for (int i=0;i<=max_seen_particle;i++) {
-  if (local_particles[i]) {
-    auto p=local_particles[i];
+  if (particle_exists(i)) {
+    auto p=partCfg[i];
     int j=0;
-    while (j<p->bl.n) {
-      int bond_type=p->bl.e[j];
+    while (j<p.bl.n) {
+      int bond_type=p.bl.e[j];
       int partners =bonded_ia_params[bond_type].num;
       if (partners!=1) {
         j+=1+partners;
         continue;
       }
       // We are only here if bond has one partner
-      add_pair(*p,*(local_particles[p->bl.e[j+1]]));
+      add_pair(p,partCfg[p.bl.e[j+1]]);
       j+=2; // Type id + one prtner
     }
   }
@@ -67,7 +66,7 @@ merge_clusters();
 
 
 
-void ClusterStructure::add_pair(Particle& p1, Particle& p2) {
+void ClusterStructure::add_pair(const Particle& p1, const Particle& p2) {
 // * check, if there's a neighbor
  //   * No: Then go on to the next particle
  // * Yes: Then if

@@ -6,6 +6,7 @@ from .particle_data import ParticleHandle
 class PairCriterion(ScriptInterfaceHelper):
     """Base class for a criterion which makes a decision based on two particles"""
     _so_name = "PairCriteria::PairCriterion"
+    _so_creation_policy="LOCAL"
 
     def decide(self, p1, p2):
         """Makes a decision based on the two particles specified.

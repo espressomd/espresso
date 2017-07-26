@@ -72,6 +72,7 @@ class ClusterStructure(ScriptInterfaceHelper):
     _so_name = "ClusterAnalysis::ClusterStructure"
     _so_bind_methods = ("run_for_bonded_particles",
                         "run_for_all_pairs", "clear", "cluster_ids")
+    _so_creation_policy="LOCAL"
 
     def __init__(self, *args, **kwargs):
         super(type(self), self).__init__(*args, **kwargs)

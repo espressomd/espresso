@@ -50,7 +50,7 @@ class ClusterStructure {
   std::shared_ptr<PairCriteria::PairCriterion> m_pair_criterion;
   
   /** @brief Consider an individual pair of particles during cluster analysis */
-  void add_pair(Particle& p1, Particle& p2);
+  void add_pair(const Particle& p1, const Particle& p2);
   /** Merge clusters and populate their structures */
   void merge_clusters();
   /** @brief Follow a chain of cluster identities during analysis */
