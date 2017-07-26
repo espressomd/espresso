@@ -782,7 +782,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename, std::vector<int> bb1, std::vec
             bb_low = {0, 0, 0};
             if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-            bb_high = {lbpar_gpu.dim_x-1, lbpar_gpu.dim_y-1, lbpar_gpu.dim_z-1};
+            bb_high = {static_cast<int>(lbpar_gpu.dim_x)-1, static_cast<int>(lbpar_gpu.dim_y)-1, static_cast<int>(lbpar_gpu.dim_z)-1};
 #endif // LB_GPU
             } else {
 #ifdef LB
