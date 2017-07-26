@@ -64,7 +64,7 @@ cdef class PScriptInterface(object):
         return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
 
     def name(self):
-        return self.sip.get().name()
+        return to_str(self.sip.get().name())
 
     def set_params(self, **kwargs):
         cdef ParameterType type
@@ -146,7 +146,7 @@ cdef class PScriptInterface(object):
         if < int > type == <int > DOUBLE:
             return get[double](value)
         if < int > type == <int > STRING:
-            return get[string](value)
+            return to_str(get[string](value))
         if < int > type == <int > INT_VECTOR:
             return get[vector[int]](value)
         if < int > type == <int > DOUBLE_VECTOR:
