@@ -368,9 +368,9 @@ struct Particle {
   IntList &exclusions() {
 #ifdef EXCLUSIONS
     return el;
-#endif
-
+#else
     throw std::runtime_error{"Exclusions not enabled."};
+#endif
   }
 
 #ifdef EXCLUSIONS
