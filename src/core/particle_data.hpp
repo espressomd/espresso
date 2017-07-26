@@ -536,15 +536,6 @@ void particle_invalidate_part_node();
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data. Note that the bond intlist and
-    potentially the exclusion list are
-    allocated so that you are responsible to free it later.
-    @param part the identity of the particle to fetch
-    @param data where to store its contents.
-    @return ES_OK if particle existed
-*/
-int get_particle_data(int part, Particle *data);
-
 /** Get particle data.
     @param part the identity of the particle to fetch
     @return Pointer to copy of particle if it exists,
