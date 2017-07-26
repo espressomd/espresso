@@ -56,7 +56,7 @@ public:
   T *end() { return e + n; }
   T const *end() const { return e + n; }
   size_type size() const { return n; }
-  bool empty() const { n == 0; }
+  bool empty() const { return n == 0; }
   size_type capacity() const { return max; }
   void clear() { resize(0); }
 
