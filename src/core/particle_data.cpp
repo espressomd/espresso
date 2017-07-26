@@ -346,7 +346,7 @@ void realloc_local_particles(int part) {
         local_particles, sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
-    for (int i = old_size; i < max_local_particles; i++)
+    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
 }
@@ -1288,6 +1288,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
+  std::fill(local_particles, local_particles + max_local_particles, nullptr);
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
