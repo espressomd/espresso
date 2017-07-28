@@ -1,4 +1,35 @@
-image: kaiszuttor/ubuntu1604_cuda7_5:latest
+image: espressomd/buildenv-espresso-ubuntu-cuda:python
 job1:
+  stage: build
   script:
     - bash maintainer/cuda_build.sh
+
+
+sphinx_documentation:
+  stage: deploy
+  before_script:
+    # Install ssh-agent if not already installed, it is required by Docker.
+    # (change apt-get to yum if you use a CentOS-based image)
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+    # Run ssh-agent (inside the build environment)
+    - eval $(ssh-agent -s)
+
+    # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+
+    # For Docker builds disable host key checking. Be aware that by adding that
+    # you are suspectible to man-in-the-middle attacks.
+    # WARNING: Use this only with the Docker executor, if you use it with shell
+    # you will overwrite your user's SSH config.
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/espresso_rsa && chmod 600 ~/.ssh/espresso_rsa
+    - echo "$SSH_PUBLIC_KEY" > ~/.ssh/espresso_rsa.pub && chmod 600 ~/.ssh/espresso_rsa.pub
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - mkdir build && cp maintainer/configs/maxset.hpp build/myconfig.hpp
+  script:
+    - cd build && cmake .. && make -j 4 && make sphinx && make doxygen && cd doc/sphinx/html && 
+      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+    - cd ../../doxygen/html &&
+      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+
