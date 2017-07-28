@@ -1,5 +1,5 @@
 image: espressomd/buildenv-espresso-ubuntu-cuda:python
-job1:
+build_and_test:
   stage: build
   script:
     - bash maintainer/cuda_build.sh
@@ -7,6 +7,8 @@ job1:
 
 sphinx_documentation:
   stage: deploy
+  only:
+    - doc
   before_script:
     # Install ssh-agent if not already installed, it is required by Docker.
     # (change apt-get to yum if you use a CentOS-based image)
@@ -26,10 +28,8 @@ sphinx_documentation:
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/espresso_rsa && chmod 600 ~/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ~/.ssh/espresso_rsa.pub && chmod 600 ~/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-    - mkdir build && cp maintainer/configs/maxset.hpp build/myconfig.hpp
   script:
-    - cd build && cmake .. && make -j 4 && make sphinx && make doxygen && cd doc/sphinx/html && 
+    - cd ${CI_PROJECT_DIR}; cd build && make sphinx && make doxygen && cd doc/sphinx/html && 
       rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
     - cd ../../doxygen/html &&
       rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
-
