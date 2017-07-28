@@ -25,7 +25,7 @@ fi
 echo "result was $result\n"
 GIT_COMMIT=$(git rev-parse HEAD)
 URL=$(echo "https://gitlab.icp.uni-stuttgart.de/kai/espresso-build/-/jobs/${CI_JOB_ID}")
-curl "https://api.github.com/repos/kaiszuttor/espresso/statuses/$GIT_COMMIT?access_token=$GITHUB_TOKEN" \
+curl "https://api.github.com/repos/espressomd/espresso/statuses/$GIT_COMMIT?access_token=$GITHUB_TOKEN" \
       -H "Content-Type: application/json" \
       -X POST \
       -d "{\"state\": \"$STATUS\", \"context\": \"ICP CUDA build\", \"target_url\": \"$URL\"}"
