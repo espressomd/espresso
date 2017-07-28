@@ -209,10 +209,6 @@ cdef class System(object):
         def __get__(self):
             return timing_samples
 
-    property transfer_rate:
-        def __get__(self):
-            return transfer_rate
-
     property max_cut_nonbonded:
         def __get__(self):
             return max_cut_nonbonded

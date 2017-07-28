@@ -44,7 +44,7 @@ public:
 
     friend boost::serialization::access;
     template <class Archive>
-    void serialize(Archive &ar, const unsigned int version) {
+    void serialize(Archive &ar, const unsigned int /* version */) {
       ar &m_avg;
       ar &m_sig;
       ar &m_var;

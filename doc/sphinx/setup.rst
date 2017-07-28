@@ -120,9 +120,6 @@ a constraint has to be set.
 
 (int) Number of samples to (time-)average over.
 
-(int, *read-only*) Transfer rate for VMD connection. You can use this to
-transfer any integer value to the simulation from VMD.
-
 (bool) Indicates whether the Verlet list will be rebuild. The program
 decides this normally automatically based on your actions on the data.
 
@@ -148,7 +145,6 @@ Variables of the system class
     * :py:attr:`~espressomd._system.System.periodicity`
     * :py:attr:`~espressomd._system.System.time_step`
     * :py:attr:`~espressomd._system.System.time`
-    * :py:attr:`~espressomd._system.System.transfer_rate`
     * :py:attr:`~espressomd._system.System.max_cut_bonded`
     * :py:attr:`~espressomd._system.System.max_cut_nonbonded`
     * :py:attr:`~espressomd._system.System.min_global_cut`

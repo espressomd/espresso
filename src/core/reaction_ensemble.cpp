@@ -754,11 +754,11 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 				find_particle_type(type, &p_id); //check wether you already touched this p_id
 			}
 		}
-		Particle part;
-		get_particle_data(p_id, &part);
+
+		auto part = get_particle_data(p_id);
 		double ppos[3];
-		memmove(ppos, part.r.p, 3*sizeof(double));
-		free_particle(&part);
+		memmove(ppos, part->r.p, 3*sizeof(double));
+
 		particle_positions[3*changed_particle_counter]=ppos[0];
 		particle_positions[3*changed_particle_counter+1]=ppos[1];
 		particle_positions[3*changed_particle_counter+2]=ppos[2];
@@ -801,13 +801,11 @@ bool ReactionEnsemble::do_global_mc_move_for_particles_of_type(int type, int sta
 	if(start_id_polymer>=0 && end_id_polymer >=0 ){
 		
 		for(int i=start_id_polymer;i<=end_id_polymer;i++){
-			Particle part;
-			get_particle_data(i, &part);
+			auto part = get_particle_data(i);
 			//move particle to new position nearby
 			const double length_of_displacement=0.05;
-			add_random_vector(part.r.p, 3, length_of_displacement);
-			place_particle(i,part.r.p);
-			free_particle(&part);
+			add_random_vector(part->r.p, 3, length_of_displacement);
+			place_particle(i,part->r.p);
 		}
 		
 	}
@@ -1683,12 +1681,13 @@ int ReactionEnsemble::do_reaction_constant_pH(){
 	int found_reactions_with_given_reactant_type=0;
 	while(found_reactions_with_given_reactant_type==0) { // avoid selecting a (e.g. salt) particle which does not take part in a reaction
 		int random_p_id =get_random_p_id(); // only used to determine which reaction is attempted.
-		Particle part;
-		int found_particle=get_particle_data(random_p_id,&part);
-		int type_of_random_p_id = part.p.type;
-		free_particle(&part);
-		if(found_particle==ES_ERROR)
+		auto part = get_particle_data(random_p_id);
+
+		if(!part)
 			continue;
+
+		int type_of_random_p_id = part->p.type;
+
 		//construct list of reactions with the above reactant type
 		for(int reaction_i=0;reaction_i<m_current_reaction_system.nr_single_reactions;reaction_i++){
 			single_reaction* current_reaction=m_current_reaction_system.reactions[reaction_i];

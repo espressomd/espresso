@@ -658,9 +658,6 @@ class Analysis(object):
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        # Used to take the WITHOUT_BONDS define
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
 
         return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
@@ -696,8 +693,6 @@ class Analysis(object):
         cdef vector[int] p1_types = type_list_a
         cdef vector[int] p2_types = type_list_b
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         if rdf_type == 'rdf':
             c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
@@ -749,8 +744,6 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         c_analyze.calc_part_distribution(p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
 

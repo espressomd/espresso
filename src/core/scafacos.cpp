@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <numeric>
 
 #include "cells.hpp"
 #include "errorhandling.hpp"
@@ -222,6 +223,8 @@ double long_range_energy() {
 #endif	
     }
   }
+
+  return 0.0;
 }
 
 /** Determine runtime for a specific cutoff */
