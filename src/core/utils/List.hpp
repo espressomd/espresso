@@ -1,12 +1,12 @@
 #ifndef CORE_UTILS_LIST_HPP
 #define CORE_UTILS_LIST_HPP
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <type_traits>
-#include <iterator>
-#include <algorithm>
 
 #include "memory.hpp"
 
@@ -16,7 +16,13 @@ namespace Utils {
 template <typename T> struct List {
   static_assert(std::is_pod<T>::value, "");
 
+  using value_type = T;
   using size_type = uint32_t;
+  using difference_type = typename std::make_signed<size_type>::type;
+  using iterator = T *;
+  using const_iterator = T const *;
+  using pointer = T *;
+  using reference = T &;
 
   List() : e{nullptr}, n{0}, max{0} {}
   explicit List(size_type size) : List() { resize(n = size); }
