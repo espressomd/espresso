@@ -348,7 +348,7 @@ Writing VTF files
 The formats VTF (**V**\ TF **T**\ rajectory **F**\ ormat), VSF
 (**V**\ TF **S**\ tructure **F**\ ormat) and VCF (**V**\ TF
 **C**\ oordinate **F**\ ormat) are formats for the visualization
-software VMD:raw-latex:`\cite{humphrey96a}` [1]_. They are intended to
+software VMD:raw-latex:`\cite{humphrey96a}`. They are intended to
 be human-readable and easy to produce automatically and modify.
 
 The format distinguishes between *structure blocks* that contain the
@@ -363,7 +363,7 @@ VCF format contain at least one coordinate block, while files in the VTF
 format contain a single structure block first and an arbitrary number of
 coordinate blocks afterwards, thus allowing to store all information for
 a whole simulation in a single file. For more details on the format,
-refer to the homepage of the format [2]_.
+refer to the homepage of the format .
 
 Creating files in these formats from within is supported by the commands
 and , that write a structure respectively a coordinate block to the
@@ -410,30 +410,34 @@ Example
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`writevcf(fp, types)`
+``writevcf(fp, types)``
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles to the channel given by `fp`. `fp` must be an identifier
-for an open channel such as the return value of an invocation of `open`.
+the system’s particles to the channel given by ``fp``. ``fp`` must be an identifier
+for an open channel such as the return value of an invocation of ``open``.
 
 .. todo:: NOT IMPLEMENTED
+
 Specify, whether the output is in a human-readable, but somewhat longer
 format (), or in a more compact form (). The default is .
 
 .. todo:: NOT IMPLEMENTED
+
 Specify whether the particle positions are written in absolute
 coordinates () or folded into the central image of a periodic system ().
 The default is .
 
-Specify the coordinates of which particles should be written. If `types` is
+Specify the coordinates of which particles should be written. If ``types`` is
 used, all coordinates will be written (in the ordered timestep format).
 Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is `types="all"`. 
-Example
-`pids =[0, 23, 42]`
-`pids="all"`
+The default is ``types="all"``. 
+Example::
+
+    pids =[0, 23, 42]
+    pids="all"
 
 .. todo:: NOT IMPLEMENTED
+
 Specify arbitrary user data for the particles. has to be a Tcl list
 containing the user data for every particle. The user data is appended
 to the coordinate line and can be read into VMD via the VMD plugin
@@ -446,6 +450,7 @@ to the coordinate line and can be read into VMD via the VMD plugin
 vtfpid
 
 .. todo:: NOT IMPLEMENTED
+
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 
