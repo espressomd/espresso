@@ -355,8 +355,8 @@ installed with:
 
 .. code-block:: bash
 
-    $ sudo apt install build-essential cmake cython python-numpy tcl-dev
-    tk-dev libboost-all-dev openmpi-common
+    sudo apt install build-essential cmake cython python-numpy \
+    tcl-dev tk-dev libboost-all-dev openmpi-common
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -378,11 +378,13 @@ following commands:
 
 .. code-block:: bash
 
-    $ sudo xcode-select –install sudo xcodebuild -license accept port
-    selfupdate port install cmake python27 python27-cython python27-numpy
-    tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27 port
-    select –set cython cython27 port select –set python python27 port select
-    –set mpi openmpi-mp-fortran
+    sudo xcode-select –install sudo xcodebuild -license accept
+    sudo port selfupdate
+    sudo port port install cmake python27 python27-cython python27-numpy \
+    tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27
+    sudo port select –set cython cython27
+    sudo port select –set python python27
+    sudo port select–set mpi openmpi-mp-fortran
 
 .. [1]
    http://www.fftw.org/
