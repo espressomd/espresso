@@ -23,6 +23,10 @@
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#ifdef BARNES_HUT
+// just for the required BH data types
+#include "actor/DipolarBarnesHut_cuda.cuh"
+#endif
 
 // This debug header has to be the last thing to include, because it
 // #defines malloc to be something else (!!!) which will lead to
@@ -50,6 +54,9 @@ public:
   };
 
   void init();
+#ifdef BARNES_HUT
+  void initBH();
+#endif
   void update();
 
   SystemInterface::Vector3 box();
@@ -204,9 +211,31 @@ public:
 #endif
   };
 
+#ifdef BARNES_HUT
+  unsigned int bhnnodes() {
+    return m_bhnnodes;
+  };
+
+  BHBox BHboxl() {
+      return m_boxl;
+  };
+
+  BHArrays BHarrl() {
+      return m_arrl;
+  };
+
+  float *massGpuBegin(void) { return m_mass; };
+  int    blocksGpu(void) { return m_blocks; };
+#endif // BARNES_HUT
+
 protected:
   static EspressoSystemInterface *m_instance;
-  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)  {};
+  EspressoSystemInterface() : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0), m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),  m_q_gpu_end(0), m_quatu_gpu_begin(0),  m_quatu_gpu_end(0), m_needsParticleStructGpu(false), m_splitParticleStructGpu(false)
+  {
+#ifdef BARNES_HUT
+      initBH();
+#endif
+  };
   virtual ~EspressoSystemInterface() {}
 
   void gatherParticles();
@@ -253,6 +282,13 @@ protected:
 
   int m_gpu_npart;
   bool m_gpu;
+#ifdef BARNES_HUT
+  int m_blocks;
+  int m_bhnnodes; // Barnes-Hut tree build nodes
+  BHBox m_boxl;
+  BHArrays m_arrl;
+  float *m_mass;
+#endif
 
   float *m_r_gpu_begin;
   float *m_r_gpu_end;

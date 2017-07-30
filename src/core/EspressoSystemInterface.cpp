@@ -108,6 +108,24 @@ void EspressoSystemInterface::gatherParticles() {
 }
 
 void EspressoSystemInterface::init() { gatherParticles(); }
+#ifdef BARNES_HUT
+void EspressoSystemInterface::initBH() {
+    m_blocks = 0;
+    m_bhnnodes = 0;
+    m_arrl.err = 0;
+    m_arrl.child = 0;
+    m_arrl.count = 0;
+    m_arrl.start = 0;
+    m_arrl.sort = 0;
+    m_mass = 0;
+    m_boxl.maxx = 0;
+    m_boxl.maxy = 0;
+    m_boxl.maxz = 0;
+    m_boxl.minx = 0;
+    m_boxl.miny = 0;
+    m_boxl.minz = 0;
+}
+#endif
 
 void EspressoSystemInterface::update() { gatherParticles(); }
 
