@@ -51,7 +51,9 @@ int SimplePore::calculate_dist(const double *ppos, double *dist,
 
   *dist = std::sqrt(dr * dr + dz * dz);
   for (int i = 0; i < 3; i++) {
-    dist[i] = dr * e_r[i] + dz * e_z[i];
+    vec[i] = dr * e_r[i] + dz * e_z[i];
   }
+
+  return 0;
 }
 }

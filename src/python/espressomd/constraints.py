@@ -57,6 +57,7 @@ class Constraint(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraint"
+
 @script_interface_register
 class ShapeBasedConstraint(Constraint):
     """
