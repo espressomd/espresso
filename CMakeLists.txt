@@ -201,6 +201,17 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 include(RequireCXX11)
 
 #######################################################################
+# Process MPI settings
+#######################################################################
+
+find_package(MPI REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
+include_directories(${MPI_INCLUDE_PATH})
+list(APPEND LIBRARIES ${MPI_LIBRARIES})
+add_definitions(-DH5XX_USE_MPI)
+
+#######################################################################
 # Boost
 #######################################################################
 
@@ -222,17 +233,6 @@ if(WITH_TESTS)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
-
-#######################################################################
-# Process MPI settings
-#######################################################################
-
-find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
-list(APPEND LIBRARIES ${MPI_LIBRARIES})
-add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Paths
