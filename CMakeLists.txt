@@ -120,7 +120,7 @@ if (WITH_CUDA)
   endif(CUDA_FOUND)
 endif(WITH_CUDA)
 
-find_package(PythonInterp)
+find_package(PythonInterp REQUIRED)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
