@@ -191,6 +191,75 @@ This chapter provides some hints on how to extend |es|. It is not
 exhaustive, so for major changes the best documentation are the other
 developers.
 
+
+Source code structure
+---------------------
+The source tree has the following structure:
+* src: The actual source code
+  * core: The C++ source code of the simulation core
+  * python/espressomd: Source of the espressomd Python module and its submodules
+  * script_interface: C++ source code of the script_interface component, which links Python classes to functionality in the simulation core
+
+* doc: Documentation
+  * sphinx: The sphinx-based documentation, consisting of user and developer guide.
+  * tutorials/python: Source and pdf files for the introductory tutorials
+  * doxygen: Build directory for the C++ in-code documentation
+
+* testsuite/python: Python integration tests. Note that some C++ unit tests for individual core components are in src/core/unittests
+
+* samples/python: Some sample scripts
+
+* libs: External dependencies (at this point h5xx)
+* maintainer: Files used by the maintainers
+  * configs: Collection of myconfig.hpp files which activate different sets of features for testing.
+  * docker: Definitions of the docker images for various distributions used for continuous integration testing
+  * travis: Support files for the continuous integration testing run on the Travis-CI service.
+  * jenkins: Outdated support files for the Jenkins continuous integration testing
+		
+
+Flow control and communications architecture
+--------------------------------------------
+Espresso uses two communication models, namely master-slave and synchronous.
+
+* When Espresso does not run an integration, it works in the master-slave mode. I.e., the head node (0) in a parallel simulation runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation, changing of particle properties and changing global simulation parameters.
+  When a Python command such as:::
+    system.part.add(pos=(1,2,3))
+  the head node determines,  which node is responsible for the given position, and then sends th node the command to place the particle.
+
+* When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
+  Then, Espresso switches into the synchronous mode, in which all nodes run the same code in the integration loop at the same time.
+  The code of the main integration loop is in integrate.cpp:integrate_vv().
+  When writing code which is run during the main integration loop, no commands making use of the master-slave mechanism can be called.
+  When code during the integration loop executes mpi communication, it has to be ensured, that the mpi call is executed on all nodes involving the communication. If this is not done, a deadlock will result.
+
+Adding calls to the master-slae framework
+-----------------------------------------
+
+Using an instance of MpiCallback
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Write the callback slave function, which will be executed on all nodes except the head node (0):::
+    void my_callback(int p1, int p2) {
+      // Do something. The two int-parameters can be usued for anything
+    }
+* On all nodes, the callback has to be registered:::
+    #include "MpiCallbacks.hpp"
+    void register_my_callback() {
+      Communication::mpiCallbacks().add(my_callback);
+    }
+  You can, e.g., call your registration from initialize.cpp:on_program_start()
+* Then, you can use your callback from the head node:::
+    #include "MpiCallbacks.hpp"
+    void call_my_callback() {
+      Communication::mpiCallbacks.call(my_callback, param1, param2);
+    }
+  This only works outside the integration loop. After the callback has been called, synchronous mpi communication can be done.
+
+Legacy callbacks
+~~~~~~~~~~~~~~~~
+Older code uses callbacks defined in the CALLBACK_LIST preprocessor macro in communications.cpp. They are called via mpi_call().
+See communications.cpp:mpi_place_particle() for an example.
+
 Adding New Bonded Interactions
 ------------------------------
 
