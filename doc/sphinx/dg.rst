@@ -221,34 +221,48 @@ Flow control and communications architecture
 --------------------------------------------
 Espresso uses two communication models, namely master-slave and synchronous.
 
-* When Espresso does not run an integration, it works in the master-slave mode. I.e., the head node (0) in a parallel simulation runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation, changing of particle properties and changing global simulation parameters.
+* When Espresso does not run an integration, it works in the master-slave mode, i.e. the head node (MPI rank 0) in a parallel simulation
+  runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation,
+  changing of particle properties and changing global simulation parameters.
   When a Python command such as:::
     system.part.add(pos=(1,2,3))
-  the head node determines,  which node is responsible for the given position, and then sends th node the command to place the particle.
+  is issued, the head node determines, which node is responsible for the given position, and then sends the node the command to place the particle.
 
 * When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
   Then, Espresso switches into the synchronous mode, in which all nodes run the same code in the integration loop at the same time.
   The code of the main integration loop is in integrate.cpp:integrate_vv().
   When writing code which is run during the main integration loop, no commands making use of the master-slave mechanism can be called.
-  When code during the integration loop executes mpi communication, it has to be ensured, that the mpi call is executed on all nodes involving the communication. If this is not done, a deadlock will result.
+  When code during the integration loop executes MPI communication, it has to be ensured, that the MPI call is executed on all nodes
+  involved in the communication. If this is not done, a deadlock will result.
 
-Adding calls to the master-slae framework
+Adding calls to the master-slave framework
 -----------------------------------------
 
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Write the callback slave function, which will be executed on all nodes except the head node (0):::
+* Write the callback slave function, which will be executed on all nodes except the head node (0)::
+
     void my_callback(int p1, int p2) {
       // Do something. The two int-parameters can be usued for anything
     }
-* On all nodes, the callback has to be registered:::
+* On all nodes, the callback has to be registered::
+
     #include "MpiCallbacks.hpp"
     void register_my_callback() {
       Communication::mpiCallbacks().add(my_callback);
     }
   You can, e.g., call your registration from initialize.cpp:on_program_start()
-* Then, you can use your callback from the head node:::
+  Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
+  be used. For example::
+
+    #include "MpiCallbacks.hpp"
+    void register_my_callback() {
+      Communication::mpiCallbacks().add([](int, int){ /* Do something */ });
+    }
+  can be used to add a lambda function as callback.
+* Then, you can use your callback from the head node::
+
     #include "MpiCallbacks.hpp"
     void call_my_callback() {
       Communication::mpiCallbacks.call(my_callback, param1, param2);
