@@ -3,6 +3,9 @@ build_and_test:
   stage: build
   script:
     - bash maintainer/cuda_build.sh
+  cache:
+    paths:
+    - build/
 
 sphinx_documentation:
   stage: deploy
