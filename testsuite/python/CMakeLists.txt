@@ -62,7 +62,7 @@ python_test(FILE ek_eof_one_species_y_nonlinear.py MAX_NUM_PROC 1)
 python_test(FILE ek_eof_one_species_z_nonlinear.py MAX_NUM_PROC 1)
 
 if(PY_H5PY)
-  python_test(FILE h5md.pu MAX_NUM_PROC 8)
+  python_test(FILE h5md.pu MAX_NUM_PROC 2)
 endif(PY_H5PY)
 
 add_custom_target(python_tests
