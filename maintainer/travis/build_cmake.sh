@@ -48,6 +48,8 @@ function cmd {
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
 
+cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
+
 if $insource; then
     builddir=$srcdir
 elif [ -z "$builddir" ]; then
@@ -113,7 +115,7 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
-cmd "cmake $cmake_params $srcdir" || exit $?
+cmd "cmake ${cmake_params} ${srcdir}" || exit $?
 end "CONFIGURE"
 
 # BUILD
