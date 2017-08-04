@@ -1,12 +1,16 @@
 image: espressomd/buildenv-espresso-ubuntu-cuda:python
-cache:
-  paths:
-  - build/
+
+stages:
+  - build
+  - deploy
 
 build_and_test:
   stage: build
   script:
     - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
 
 sphinx_documentation:
   stage: deploy
