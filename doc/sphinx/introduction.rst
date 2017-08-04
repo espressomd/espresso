@@ -87,7 +87,7 @@ the actual productive simulation.
 Available simulation methods
 ----------------------------
 
-provides a number of useful methods. The following table shows the
+|es| provides a number of useful methods. The following table shows the
 various methods as well as their status. The table distinguishes between
 the state of the development of a certain feature and the state of its
 use. We distinguish between five levels:
@@ -237,7 +237,7 @@ that basic functions are accessed via a set of well-defined lean
 interfaces, hiding the details of the complex numerical algorithms.
 
 The scripting interface (Python) is used to setup the system
-(particles, boundary onditions, interactions, ...), control the
+(particles, boundary conditions, interactions, ...), control the
 simulation, run analysis, and store and load results. The user has at
 hand the full readability and functionality of the scripting language.
 For instance, it is possible to use the SciPy package for analysis and
