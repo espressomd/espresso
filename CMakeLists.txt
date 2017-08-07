@@ -171,10 +171,10 @@ endif(WITH_HDF5)
 
 # Check for the h5xx submodule
 # and try to check it out if not found.
-if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+if(WITH_HDF5 AND NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
   # Try to find git
   find_package(Git)
-  if(GIT_FOUND AND EXISTS ".git")
+  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   endif()
