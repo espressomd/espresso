@@ -912,5 +912,5 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                supert(ElectrostaticInteraction,self)._deactivate_method()
+                super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()
