@@ -27,6 +27,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "shapes/Wall.hpp"
+#include "shapes/SimplePore.hpp"
 
 template <class T>
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
@@ -75,5 +76,17 @@ BOOST_AUTO_TEST_CASE(dist_function) {
 
   BOOST_CHECK(check_distance_function(w));
 }
+
+BOOST_AUTO_TEST_CASE(simple_pore_dist_function) {
+  Shapes::SimplePore p;
+  p.set_axis(Vector3d{3., 5., 7.});
+  p.set_radius(2.);
+  p.set_length(8.);
+  p.set_smoothing_radius(1.);
+  p.center() = Vector3d{4.,5.,6.};
+
+  BOOST_CHECK(check_distance_function(p));
+}
+
 
 /* @TODO: Functional unit test of the distance function */

@@ -257,7 +257,7 @@ class SimplePore(ScriptInterfaceHelper):
     length: float
        The distance between the planes.
     smoothing_radius: float
-       Radious of the torus segments
+       Radius of the torus segments
     axis: array_like
        Axis of the cylinder and normal of the planes
     center: array_like

@@ -1,4 +1,5 @@
 #include "SimplePore.hpp"
+#include "random.hpp"
 
 #include <cassert>
 
@@ -32,13 +33,17 @@ int SimplePore::calculate_dist(const double *ppos, double *dist,
      with origin at m_center. */
   Vector3d const c_dist = Vector3d(ppos, ppos + 3) - m_center;
   auto const z = e_z * c_dist;
-  auto const r_vec = c_dist - z * e_z;
+  auto r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
 
-  /* Exactly on axis */
-  // if (r == 0) {
-  //   r_vec = Vector3d{1., 2., 3.};
-  // }
+  /* Exactly on axis, chose
+   a r_vec orthogonal to e_z. */
+  if (r == 0) {
+    if ((Vector3d{1., 0., 0} * e_z) < 1.)
+      r_vec = Vector3d{1., 0., 0};
+    else
+      r_vec = Vector3d{0., 1., 0};
+  }
 
   auto const e_r = r_vec / r;
 
