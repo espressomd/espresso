@@ -112,6 +112,8 @@ class H5mdTestOrdered(CommonTests):
             self.py_id), msg="ids correctly ordered and written by H5md!")
 
 
+@ut.skipIf(not espressomd.has_features(['H5MD']),
+           "H5MD not compiled in, can not check functionality.")
 class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
