@@ -269,7 +269,9 @@ void File::create_new_file(const std::string &filename) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  this->WriteScript(filename);
+  if (this_node == 0)
+    this->WriteScript(filename);
+  MPI_Barrier(m_hdf5_comm);
   /* Create a new h5xx file object. */
   m_h5md_file =
       h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL, h5xx::file::out);
@@ -592,8 +594,7 @@ void File::WriteScript(std::string const &filename) {
   dset = H5Dcreate(file_id, "parameters/files/script", dtype, space,
                    link_crt_plist, H5P_DEFAULT, H5P_DEFAULT);
   /* Write data from buffer to dataset. */
-  if (this_node == 0)
-    H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
+  H5Dwrite(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data());
   /* Clean up. */
   H5Dclose(dset);
   H5Sclose(space);

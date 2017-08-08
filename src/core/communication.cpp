@@ -118,7 +118,6 @@ static int terminated = 0;
   CB(mpi_set_time_step_slave)                                                  \
   CB(mpi_set_smaller_time_step_slave)                                          \
   CB(mpi_send_smaller_timestep_flag_slave)                                     \
-  CB(mpi_send_configtemp_flag_slave)                                           \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_bcast_collision_params_slave)                                         \
   CB(mpi_send_ext_force_slave)                                                 \
@@ -126,7 +125,6 @@ static int terminated = 0;
   CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_cap_forces_slave)                                                     \
-  CB(mpi_get_configtemp_slave)                                                 \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_send_quat_slave)                                                      \
@@ -1723,33 +1721,6 @@ void mpi_send_smaller_timestep_flag_slave(int pnode, int part) {
 #endif
 }
 
-void mpi_send_configtemp_flag(int pnode, int part, int configtemp) {
-#ifdef CONFIGTEMP
-  mpi_call(mpi_send_configtemp_flag_slave, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->p.configtemp = configtemp;
-  } else {
-    MPI_Send(&configtemp, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_configtemp_flag_slave(int pnode, int part) {
-#ifdef CONFIGTEMP
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Status status;
-    MPI_Recv(&p->p.configtemp, 1, MPI_INT, 0, SOME_TAG, comm_cart, &status);
-  }
-
-  on_particle_change();
-#endif
-}
-
 int mpi_check_runtime_errors(void) {
   mpi_call(mpi_check_runtime_errors_slave, 0, 0);
   return check_runtime_errors();
@@ -2045,22 +2016,6 @@ void mpi_cap_forces_slave(int node, int parm) {
     check_tab_forcecap(force_cap);
   */
   on_short_range_ia_change();
-#endif
-}
-
-/*************** REQ_GET_CONFIGTEMP ************/
-void mpi_get_configtemp(double cfgtmp[2]) {
-#ifdef CONFIGTEMP
-  extern double configtemp[2];
-  mpi_call(mpi_get_configtemp_slave, -1, 0);
-  MPI_Reduce(configtemp, cfgtmp, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-#endif
-}
-
-void mpi_get_configtemp_slave(int node, int cnt) {
-#ifdef CONFIGTEMP
-  extern double configtemp[2];
-  MPI_Reduce(configtemp, NULL, 2, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 #endif
 }
 

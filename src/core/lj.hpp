@@ -85,14 +85,6 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
 #endif
 
-#ifdef CONFIGTEMP
-      extern double configtemp[2];
-      int numfac = 0;
-      if (p1->p.configtemp) numfac+=1;
-      if (p2->p.configtemp) numfac+=1;
-      configtemp[0] += numfac*SQR(48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / r_off);
-      configtemp[1] += numfac*24.0 * ia_params->LJ_eps * frac6*(-22.0*frac6+5.0) / (SQR(r_off));
-#endif
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {

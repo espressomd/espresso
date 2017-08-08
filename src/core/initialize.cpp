@@ -30,7 +30,6 @@
 #include "statistics.hpp"
 #include "energy.hpp"
 #include "pressure.hpp"
-#include "imd.hpp"
 #include "random.hpp"
 #include "communication.hpp"
 #include "cells.hpp"
@@ -56,6 +55,7 @@
 #include "lattice.hpp"
 #include "iccp3m.hpp" /* -iccp3m- */
 #include "metadynamics.hpp"
+#include "reaction_ensemble.hpp"
 #include "observables/Observable.hpp"
 #include "correlators/Correlator.hpp"
 #include "lbboundaries.hpp"

@@ -613,7 +613,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
-    cdef class MMM1D(electrostatics.ElectrostaticInteraction):
+    cdef class MMM1D(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
         See :ref:`mmm1d_guide` for more details.

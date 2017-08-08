@@ -28,6 +28,7 @@
 #include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include <memory>
 
 /************************************************
  * defines
@@ -181,12 +182,6 @@ struct ParticleProperties {
   int smaller_timestep;
 #endif
 
-#ifdef CONFIGTEMP
-  /** is the particle included in the configurational temperature?
-  * 1 = yes
-  * 0 = no (Default) */
-  int configtemp;
-#endif
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -319,6 +314,34 @@ struct Particle {
     return identity() != rhs.identity();
   }
 
+  /**
+   * @brief Return a copy of the particle with
+   *        only the fixed size parts.
+   *
+   * This creates a copy of the particle with
+   * only the parts than can be copied w/o heap
+   * allocation, e.g. w/o bonds and exlusions.
+   * This is more efficient if these parts are
+   * not actually needed.
+   */
+  Particle flat_copy() const {
+    Particle ret{};
+
+    ret.p = p;
+    ret.r = r;
+    ret.m = m;
+    ret.f = f;
+    ret.l = l;
+#ifdef LB
+    ret.lc = lc;
+#endif
+#ifdef ENGINE
+    ret.swim = swim;
+#endif
+
+    return ret;
+  }
+
   ///
   ParticleProperties p;
   ///
@@ -339,8 +362,20 @@ struct Particle {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  IntList &exclusions() {
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded interactions
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded
+   * interactions
    */
   IntList el;
 #endif
@@ -501,13 +536,12 @@ void particle_invalidate_part_node();
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data. Note that the bond intlist is
-    allocated so that you are responsible to free it later.
+/** Get particle data.
     @param part the identity of the particle to fetch
-    @param data where to store its contents.
-    @return ES_OK if particle existed
+    @return Pointer to copy of particle if it exists,
+            nullptr otherwise;
 */
-int get_particle_data(int part, Particle *data);
+std::unique_ptr<Particle> get_particle_data(int part);
 
 /** Call only on the master node.
     Move a particle to a new position.
@@ -601,15 +635,6 @@ int set_particle_out_direction(int part, double out_direction[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_smaller_timestep(int part, int small_timestep);
-#endif
-
-#ifdef CONFIGTEMP
-/** Call only on the master node: include particle in configurational T.
-    @param part the particle.
-    @param configtemp flag for configurational temperature inclusion.
-    @return TCL_OK if particle existed
-*/
-int set_particle_configtemp(int part, int configtemp);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -962,10 +987,6 @@ int find_particle_type(int type, int *id);
  * typelist */
 int find_particle_type_id(int type, int *id, int *in_id);
 
-/** delete one randomly chosen particle of given type
- * returns ES_OK if succesful or else ES_ERROR		*/
-int delete_particle_of_type(int type);
-
 int remove_id_type_array(int part_id, int type);
 int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
@@ -1026,10 +1047,6 @@ void pointer_to_gamma_rot(Particle *p, double *&res);
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res);
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 #endif
 
 #ifdef ENGINE
