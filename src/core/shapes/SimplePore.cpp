@@ -1,23 +1,23 @@
 #include "SimplePore.hpp"
-#include "random.hpp"
 
 #include <cassert>
 
 namespace Shapes {
 std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
-  assert(z > 0.0);
-  assert(r > 0.0);
+  assert(z >= 0.0);
+  assert(r >= 0.0);
 
   if (z <= c_z) {
     /* Cylinder section */
     return {m_rad - r, 0};
-  } else if (r >= c_r) {
+  } else if ((r >= c_r) && (z >= m_half_length)) {
     /* Wall section */
-    return {0, z - m_half_length};
+    return {0, m_half_length - z};
   } else {
-    /* Vector to center */
+    /* Smoothing area */
+    /* Vector to center of torus segment */
     auto const dr = c_r - r;
-    auto const dz = z - c_z;
+    auto const dz = c_z - z;
 
     /* Rescale to surface */
     auto const d = std::sqrt(dr * dr + dz * dz);
@@ -33,20 +33,16 @@ int SimplePore::calculate_dist(const double *ppos, double *dist,
      with origin at m_center. */
   Vector3d const c_dist = Vector3d(ppos, ppos + 3) - m_center;
   auto const z = e_z * c_dist;
-  auto r_vec = c_dist - z * e_z;
+  auto const r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
 
-  /* Exactly on axis, chose
-   a r_vec orthogonal to e_z. */
-  if (r == 0) {
-    if ((Vector3d{1., 0., 0} * e_z) < 1.)
-      r_vec = Vector3d{1., 0., 0};
-    else
-      r_vec = Vector3d{0., 1., 0};
-  }
+  /* If exactly on the axis, chose e_r orthogonal
+     to e_z. */
+  auto const e_r = (r == 0) ? e_r_axis : r_vec / r;
 
-  auto const e_r = r_vec / r;
-
+  /* The pore has mirror symmetry in z with regard to
+     the center in the {r,z} system. We calculate always
+     for the z > 0 case, and flip the result if appropriate. */
   double dr, dz;
   std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
 
@@ -56,7 +52,7 @@ int SimplePore::calculate_dist(const double *ppos, double *dist,
 
   *dist = std::sqrt(dr * dr + dz * dz);
   for (int i = 0; i < 3; i++) {
-    vec[i] = dr * e_r[i] + dz * e_z[i];
+    vec[i] = -dr * e_r[i] + -dz * e_z[i];
   }
 
   return 0;

@@ -38,11 +38,24 @@ class SimplePore : public Shape {
   /* Unit vector in z direction */
   Vector3d e_z;
 
+  /* Alternative e_r for corner case */
+  Vector3d e_r_axis;
+
   /** @brief Calculate derived parameters. */
   void precalc() {
     m_half_length = 0.5 * m_length;
 
     e_z = m_axis / m_axis.norm();
+
+    /* Find a vector orthogonal to e_z, since {1,0,0} and
+       {0,1,0} are independent, e_z can not be parallel to both
+       of them. Then we can do Gram-Schmidt */
+    if ((Vector3d{1., 0., 0} * e_z) < 1.)
+      e_r_axis = Vector3d{1., 0., 0} - (e_z * Vector3d{1., 0., 0}) * e_z;
+    else
+      e_r_axis = Vector3d{0., 1., 0} - (e_z * Vector3d{0., 1., 0}) * e_z;
+
+    e_r_axis.normalize();
 
     c_r = m_rad + m_smoothing_rad;
     c_z = m_half_length - m_smoothing_rad;
