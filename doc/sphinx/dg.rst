@@ -236,7 +236,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
   involved in the communication. If this is not done, a deadlock will result.
 
 Adding calls to the master-slave framework
------------------------------------------
+------------------------------------------
 
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
