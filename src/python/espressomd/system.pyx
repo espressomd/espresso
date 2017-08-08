@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from libcpp cimport bool
 include "myconfig.pxi"
 
 from globals cimport *
@@ -51,6 +52,8 @@ import random  # for true random numbers from os.urandom()
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
+cdef bool _system_created = False
+
 cdef class System(object):
     """ The base class for espressomd.system.System().
 
@@ -60,32 +63,83 @@ cdef class System(object):
               indentation level, either as method, property or reference.
 
     """
-    part = particle_data.ParticleList()
-    non_bonded_inter = interactions.NonBondedInteractions()
-    bonded_inter = interactions.BondedInteractions()
-    cell_system = CellSystem()
-    thermostat = Thermostat()
-    minimize_energy = MinimizeEnergy()
-    actors = None
-    analysis = None
-    galilei = GalileiTransform()
-    integrator = integrate.Integrator()
-    if CONSTRAINTS == 1:
-        constraints = Constraints()
-    if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-        lbboundaries = LBBoundaries()
-    ekboundaries = EKBoundaries()
+    cdef public:
+        part
+        non_bonded_inter
+        bonded_inter
+        cell_system
+        thermostat
+        minimize_energy
+        actors
+        analysis
+        galilei
+        integrator
+        auto_update_observables
+        auto_update_correlators
+        constraints
+        lbboundaries
+        ekboundaries
+        __seed
 
-    auto_update_observables = AutoUpdateObservables()
-    auto_update_correlators = AutoUpdateCorrelators()
 
     def __init__(self):
-        self.actors = Actors(_system=self)
-        self.analysis = Analysis(self)
+        global _system_created
+        if (not _system_created):
+            self.part = particle_data.ParticleList()
+            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.bonded_inter = interactions.BondedInteractions()
+            self.cell_system = CellSystem()
+            self.thermostat = Thermostat()
+            self.minimize_energy = MinimizeEnergy()
+            self.actors = Actors(_system=self)
+            self.analysis = Analysis(self)
+            self.galilei = GalileiTransform()
+            self.integrator = integrate.Integrator()
+            self.auto_update_observables = AutoUpdateObservables()
+            self.auto_update_correlators = AutoUpdateCorrelators()
+            if CONSTRAINTS:
+                self.constraints = Constraints()
+            if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+                self.lbboundaries = LBBoundaries()
+                self.ekboundaries = EKBoundaries()
+            _system_created = True
+        else:
+            raise RuntimeError("You can only have one instance of the system class at a time.")
 
-#        self.part = particle_data.particleList()
-#        self.non_bonded_inter = interactions.NonBondedInteractions()
-#        self.bonded_inter = interactions.BondedInteractions()
+#    def __setattr__(self, name, value):
+#        if hasattr(self, name):
+#            self.name = value
+#            #__setattr__(name, value)
+#        else:
+#            raise AttributeError(
+#                "System does not have the attribute " + name + "."
+#                + "\nIf you know what you're doing, use "
+#                + "system.create_attr()"
+#            )
+#
+#    def create_attr(self, *args, **kwargs):
+#        """
+#            Circumvents the ``__setattr__`` lock. Allows to create and set new
+#            attributes to System instances.
+#            For ``*args``, it initializes an attribute with None value, if the
+#            attribute does not already exist.
+#            For ``**kwargs``, it simply calls ``super().__setattr__``.
+#        """
+#        for arg in args:
+#            try: name = str(arg)
+#            except ValueError:
+#                print("Please pass either **kwargs or string *args to"
+#                      + "create_attr()"
+#                      )
+#                continue
+#
+#            if hasattr(self, name):
+#                print("Attribute " + name + " already exists.")
+#            else:
+#                __setattr__(name, None)
+#
+#        for name, value in list(kwargs.items()):
+#            __setattr__(name, value)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -228,8 +282,6 @@ cdef class System(object):
             mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
         def __get__(self):
             return min_global_cut
-
-    __seed = None
 
     def _get_PRNG_state_size(self):
         return get_state_size_of_generator()

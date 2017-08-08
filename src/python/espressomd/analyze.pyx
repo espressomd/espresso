@@ -34,7 +34,7 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from ._system import System
+from .system import System
 
 
 class Analysis(object):

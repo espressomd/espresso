@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from espressomd._system cimport *
+from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
 from espressomd.utils cimport *
