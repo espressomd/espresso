@@ -115,6 +115,8 @@ def verify_lj_forces(system,tolerance,ids_to_skip=[]):
     
     # Go over all pairs of particles
     for pair in system.part.pairs():
+        if pair[0].id in ids_to_skip or pair[1].id in ids_to_skip: continue
+
         # Distance and distance vec
         v_d=system.distance_vec(pair[0],pair[1])
         d=system.distance(pair[0],pair[1])
@@ -126,7 +128,6 @@ def verify_lj_forces(system,tolerance,ids_to_skip=[]):
         f=lj_force(v_d,d,lj_params)
         f_expected[pair[0].id]+=f
         f_expected[pair[1].id]-=f
-        #print(pair[0].id,pair[1].id,d,f,f_expected[pair[0].id])
     # Check actual forces agaisnt expected
     for id in system.part[:].id:
        if id in ids_to_skip: continue

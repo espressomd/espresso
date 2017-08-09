@@ -95,7 +95,7 @@ class VirtualSites(ut.TestCase):
         s.min_global_cut=0.23
         self.assertEquals(s.min_global_cut,0.23)
 
-        # Place central particle + 2 vs
+        # Place central particle + 3 vs
         s.part.add(pos=(0.5,0.5,0.5),id=1,quat=(1,0,0,0),omega_lab=(1,2,3))
         pos2=(0.5,0.4,0.5)
         pos3=(0.3,0.5,0.4)
@@ -114,19 +114,24 @@ class VirtualSites(ut.TestCase):
             self.assertTrue(abs(vs_r[1]-s.distance(s.part[1],s.part[cur_id]))<=1E-6)
             cur_id+=1
 
-        # Check vs placement
-        s.part[1].pos=(0.4, 0.4,0.4)
+        # Move central particle and Check vs placement
+        s.part[1].pos=(0, 0,0)
+        # linear and rotation velocity on central particle
         s.part[1].v=(0.45, 0.14,0.447)
+        s.part[1].omega_lab=(0.45, 0.14,0.447)
         s.integrator.run(0,recalc_forces=True)
+        # Ceck
         for i in 2,3,4:
             self.verify_vs(s.part[i])
+        
         # Check if still true, when non-virtual particle has rotated and a linear motion
-        s.part[1].v=-5,3,8.4
-        s.integrator.run(0)
+        s.part[1].omega_lab=-5,3,8.4
+        s.integrator.run(10)
         for i in 2,3,4:
             self.verify_vs(s.part[i])
 
-        # Test transformation of forces accumulating on virtual sites
+        # Test transfer of forces accumulating on virtual sites
+        # to central particle
         f2=np.array((3,4,5))
         f3=np.array((-4,5,6))
         # Add forces to vs
@@ -142,8 +147,10 @@ class VirtualSites(ut.TestCase):
         self.assertTrue(np.linalg.norm(f-f2-f3)<1E-6)
     
         # Expected torque
+        # Radial components of forces on a rigid body add to the torque
         t_exp=np.cross(s.distance_vec(s.part[1],s.part[2]),f2)
         t_exp+=np.cross(s.distance_vec(s.part[1],s.part[3]),f3)
+        # Check
         self.assertTrue(np.linalg.norm(t_exp-t)<=1E-6)
     
     def run_test_lj(self):
@@ -151,18 +158,20 @@ class VirtualSites(ut.TestCase):
           integrates and verifies forces. This is to make sure, that no pairs
           get lost or are outdated in the short range loop"""
         s=self.s
-        print("test_lj",s.cell_system.get_state())
-        n=70
+        # Parameters
+        n=30
         phi=0.6
-        sigma=1
+        sigma=1.
         eps=.025
         cut=sigma *2**(1./6.)
         
-        kT=1
-        gamma=1
+        kT=2
+        gamma=.5
         
         # box
         l=(n/6. *np.pi *sigma**3/phi)**(1./3.)
+        
+        # Setup
         s.box_l=l,l,l
         s.min_global_cut=0.501
         s.part.clear()
@@ -174,11 +183,12 @@ class VirtualSites(ut.TestCase):
         # interactions
         s.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=eps,sigma=sigma,cutoff=cut,shift="auto")
         
-        # Dumbells consist of 2 spheres, i.e. n/2 dumbells = n spheres
+        # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
+        # For n sphers n/2 dumbells.
         for i in range(n/2):
           # Type=1, i.e., no lj ia for the center of mass particles
           s.part.add(id=3*i, pos=random.random(3)*l,type=1,omega_lab=0.3*random.random(3),v=random.random(3))
-          # lj sphers
+          # lj spheres
           s.part.add(id=3*i+1,pos=s.part[3*i].pos+s.part[3*i].director/2.,type=0)
           s.part.add(id=3*i+2,pos=s.part[3*i].pos-s.part[3*i].director/2.,type=0)
           s.part[3*i+1].vs_auto_relate_to(3*i)
@@ -187,34 +197,48 @@ class VirtualSites(ut.TestCase):
         # Remove overlap
         s.integrator.set_steepest_descent(f_max=0,gamma=0.1,max_displacement=0.1)
         while s.analysis.energy()["total"] > 10*n:
-          s.integrator.run(100)
+          s.integrator.run(20)
+        # Integrate
         s.integrator.set_vv()
-        for i in range(20):
+        for i in range(10):
+          # Langevin to maintain stability
           s.thermostat.set_langevin(kT=kT,gamma=gamma)
-          s.integrator.run(500)
+          s.integrator.run(300)
           s.thermostat.turn_off()
-          s.integrator.run(0)
+          # Constant energy to get rid of thermostat forces in the verification
+          s.integrator.run(2)
+          # Theck the virtual sites config,pos and vel of the lj spheres
           for j in range(n/2):
             self.verify_vs(s.part[3*j+1])
             self.verify_vs(s.part[3*j+2])
           
-          verify_lj_forces(s,1E-8,3*np.arange(n/2,dtype=int))
+          # Verify lj forces on the particles. The non-virtual particles are skipeed
+          # because the forces on them originate from the vss and not the lj interaction
+          verify_lj_forces(s,1E-10,3*np.arange(n/2,dtype=int))
+        
+        # Turn off lj interaction
         s.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=0,sigma=0,cutoff=0,shift=0)
         
     def test_lj(self):
+        """Run LJ fluid test for different cell systems and skins."""
         s=self.s
         
-        
-        s.cell_system.set_n_square(use_verlet_lists=False)
-        self.run_test_lj()
-        
         s.cell_system.set_n_square(use_verlet_lists=True)
+        s.cell_system.skin=0 
+        self.run_test_lj()
+        s.cell_system.skin=0.3 
         self.run_test_lj()
         
         s.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        s.cell_system.skin=0 
+        self.run_test_lj()
+        s.cell_system.skin=0.3
         self.run_test_lj()
         
         s.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        s.cell_system.skin=0
+        self.run_test_lj()
+        s.cell_system.skin=0.3
         self.run_test_lj()
         
     
