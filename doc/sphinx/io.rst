@@ -38,29 +38,13 @@ the script the checkpointing function was called to be able to return
 there. All this is even further complicated by the fact that is running
 in parallel.
 
-Instead, in , the user has to specify what information needs to be saved
-to a file to be able to restore the simulation state. The ``blockfile``
-and ``writemd`` commands help you to do that. ``blockfile`` writes text
-files. When floating point numbers are stored in such files (the
-particle positions), there is only a limited precision. Therefore, it is
-not possible to bitwise reproduce a simulation state using this
-function. When you need bitwise reproducibility, you will have to use
-the command , which stores positions, forces and velocities in binary
-format. Note that there is no command to write other MD parameters like
-time step or interactions in binary format. You should restore these
-using exactly the same Tcl command that you used to create them.
-
-Finally, there is one more complication: random forces are computed in
-the order the particles are stored in memory. This order usually differs
-after reading a blockfile back, since the particles are stored in
-consecutive identity order. In memory, they are usually not in a
-specific order. Therefore, you need to use ``sort_particles`` after
-writing a blockfile that you want to use for checkpointing, so that the
-particles are resorted to the same consecutive order. Note that this
-does not change physics, just the order the random numbers are applied.
-
-When using an LB fluid, you need to also write out the fluid nodes, see
-the ``lbfluid`` command for further details.
+Instead, in |es| the user has to specify what information needs to be saved to a
+file to be able to restore the simulation state. When floating point numbers
+are stored in text files (the particle positions), there is only a limited
+precision. Therefore, it is not possible to bitwise reproduce a simulation
+state using this text files. When you need bitwise reproducibility, you will have
+to use checkpointing , which stores positions, forces and velocities in binary
+format. 
 
 (Almost) generic checkpointing in Python
 ----------------------------------------
@@ -83,120 +67,113 @@ In addition, the checkpointing module is also able to catch signals that
 are invoked for example when the simulation is aborted by the user or by
 a timeout.
 
-The checkpointing module can be imported with
+The checkpointing module can be imported with::
 
-from espressomd import checkpointing
+    from espressomd import checkpointing
 
-[ checkpoint\_path= ]
+    [ checkpoint_path= ]
 
 Determines the identifier for a checkpoint. Legal characters for an id
-are “0-9”, “a-zA-Z”, “-”, “\_”.
+are “0-9”, “a-zA-Z”, “-”, “_”.
 
 Specifies the relative or absolute path where the checkpoints are
 stored.
 
-For example,
-
-checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
-
+For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id=“mycheckpoint”)``
 would create the new checkpoint with id “mycheckpoint” and all the
 checkpointing data will be stored in the current directory.
 
 After the system and checkpointing user variables are set up they can be
-registered for checkpointing:
-
-[ , ]
-
-Name string of the object or user variable that should be registered for
+registered for checkpointing.
+Name the string of the object or user variable that should be registered for
 checkpointing.
 
-To give an example,
+To give an example::
 
-myvar = “some variable value” skin = 0.4 checkpoint.register(“myvar”)
-checkpoint.register(“skin”)
+    myvar = “some variable value”
+    skin = 0.4
+    checkpoint.register(“myvar”)
+    checkpoint.register(“skin”)
 
-system = espressomd.System() # ... set system properties like box\_l or
-timestep here ... checkpoint.register(“system”)
+    system = espressomd.System()
+    # ... set system properties like box_l or
+    timestep here ... checkpoint.register(“system”)
 
-system.thermostat.set\_langevin(kT=1.0, gamma=1.0)
-checkpoint.register(“system.thermostat”)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    checkpoint.register(“system.thermostat”)
 
-# ... set system.non\_bonded\_inter here ...
-checkpoint.register(“system.non\_bonded\_inter”)
+    # ... set system.non_bonded_inter here ...
+    checkpoint.register(“system.non_bonded_inter”)
 
-# ... add particles to the system with system.part.add(...) here ...
-checkpoint.register(“system.part”)
+    # ... add particles to the system with system.part.add(...) here ...
+    checkpoint.register(“system.part”)
 
-# ... set charges of particles here ... from espressomd import
-electrostatics p3m = electrostatics.P3M(bjerrum\_length=1.0,
-accuracy=1e-2) system.actors.add(p3m) checkpoint.register(“p3m”)
+    # ... set charges of particles here ... from espressomd import
+    electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    system.actors.add(p3m)
+    checkpoint.register(“p3m”)
 
-will register the user variables and , system properties, a langevin
-thermostat, non-bonded interactions, particle properties and a p3m
-object for checkpointing. It is important to note that the checkpointing
-of will only save basic system properties. This excludes for example the
-system thermostat or the particle data. For this reason one has to
-explicitly register and for checkpointing.
+will register the user variables ``skin`` and ``myvar``, system properties, a
+langevin thermostat, non-bonded interactions, particle properties and a p3m
+object for checkpointing. It is important to note that the checkpointing of
+|es| will only save basic system properties. This excludes for example the
+system thermostat or the particle data. For this reason one has to explicitly
+register and for checkpointing.
 
-Analogous to this, objects that have been registered for checkpointing
-but are no longer needed in the next checkpoints can be unregistered
-with
+Analogous to this, objects that have been registered for checkpointing but are
+no longer needed in the next checkpoints can be unregistered with ``checkpoint
+unregister var``.  A list of all registered object names can be generated with
+``checkpoint get_registered_objects``.  A new checkpoint with a consecutive
+index that contains the latest data of the registered objects can then be
+created by calling ``checkpoint save [checkpoint_index]``.
 
-[ , ]
+An existing checkpoint can be loaded with ``checkpoint load
+[checkpoint_index]``.
 
-A list of all registered object names can be generated with
+If no is passed the last checkpoint will be loaded. Concerning the procedure of
+registering objects for checkpointing it is good to know that all registered
+objects saved in a checkpoint will be automatically re-registered after loading
+this checkpoint.
 
-A new checkpoint with a consecutive index that contains the latest data
-of the registered objects can then be created by calling
+In practical implementations it might come in handy to check if there are any
+available checkpoints for a given checkpoint id. This can be done with
+``checkpoint has_checkpoints`` which returns a bool value.
 
-An existing checkpoint can be loaded with
-
-[ checkpoint\_index= ]
-
-If no is passed the last checkpoint will be loaded. Concerning the
-procedure of registering objects for checkpointing it is good to know
-that all registered objects saved in a checkpoint will be automatically
-re-registered after loading this checkpoint.
-
-In practical implementations it might come in handy to check if there
-are any available checkpoints for a given checkpoint id. This can be
-done with
-
-which returns a bool value.
-
-As mentioned in the introduction the checkpointing module also enables
+As mentioned in the introduction, the checkpointing module also enables
 to catch signals in order to save a checkpoint and quit the simulation.
 Therefore one has to register the signal which should be caught with
+``checkpoint register_signal signum=int_number``.
 
-The registered signals are associated with the and will be automatically
+The registered signals are associated with the checkpoint id and will be automatically
 re-registered when the same checkpoint id is used later.
 
 Following the example above, the next example loads the last checkpoint,
 restores the state of all checkpointed objects and registers a signal.
 
-import espressomd from espressomd import checkpointing import signal
+.. code:: python
+    import espressomd from espressomd import checkpointing import signal
 
-checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
-checkpoint.load()
+    checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
+    checkpoint.load()
 
-system = espressomd.System() system.cell\_system.skin = skin
-system.actors.add(p3m)
+    system = espressomd.System() system.cell\_system.skin = skin
+    system.actors.add(p3m)
 
-#signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-checkpoint.register\_signal(signal.SIGINT)
+    #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+    checkpoint.register\_signal(signal.SIGINT)
 
-# integrate system until user presses ctrl+c while True:
-system.integrator.run(1000)
+    # integrate system until user presses ctrl+c while True:
+    system.integrator.run(1000)
 
 The above example runs as long as the user interrupts by pressing
 ctrl+c. In this case a new checkpoint is written and the simulation
 quits.
 
-It is perhaps surprising that one has to explicitly create again. But
-this is necessary as not all modules like or have implementations for
-checkpointing yet. By calling these modules are created and can be
-easily initialized with checkpointed user variables (like ) or
-checkpointed submodules (like ).
+It is perhaps surprising that one has to explicitly create ``system`` again.
+But this is necessary as not all |es| modules like ``cell_system`` or
+``actors`` have implementations for checkpointing yet. By calling ``System()`` these modules
+are created and can be easily initialized with checkpointed user variables
+(like ``skin``) or checkpointed submodules (like ``p3m``).
 
 .. _Writing H5MD-Files:
 
@@ -348,7 +325,7 @@ Writing VTF files
 The formats VTF (**V**\ TF **T**\ rajectory **F**\ ormat), VSF
 (**V**\ TF **S**\ tructure **F**\ ormat) and VCF (**V**\ TF
 **C**\ oordinate **F**\ ormat) are formats for the visualization
-software VMD:raw-latex:`\cite{humphrey96a}` [1]_. They are intended to
+software VMD:raw-latex:`\cite{humphrey96a}`. They are intended to
 be human-readable and easy to produce automatically and modify.
 
 The format distinguishes between *structure blocks* that contain the
@@ -363,7 +340,7 @@ VCF format contain at least one coordinate block, while files in the VTF
 format contain a single structure block first and an arbitrary number of
 coordinate blocks afterwards, thus allowing to store all information for
 a whole simulation in a single file. For more details on the format,
-refer to the homepage of the format [2]_.
+refer to the homepage of the format .
 
 Creating files in these formats from within is supported by the commands
 and , that write a structure respectively a coordinate block to the
@@ -410,30 +387,34 @@ Example
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`writevcf(fp, types)`
+``writevcf(fp, types)``
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles to the channel given by `fp`. `fp` must be an identifier
-for an open channel such as the return value of an invocation of `open`.
+the system’s particles to the channel given by ``fp``. ``fp`` must be an identifier
+for an open channel such as the return value of an invocation of ``open``.
 
 .. todo:: NOT IMPLEMENTED
+
 Specify, whether the output is in a human-readable, but somewhat longer
 format (), or in a more compact form (). The default is .
 
 .. todo:: NOT IMPLEMENTED
+
 Specify whether the particle positions are written in absolute
 coordinates () or folded into the central image of a periodic system ().
 The default is .
 
-Specify the coordinates of which particles should be written. If `types` is
+Specify the coordinates of which particles should be written. If ``types`` is
 used, all coordinates will be written (in the ordered timestep format).
 Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is `types="all"`. 
-Example
-`pids =[0, 23, 42]`
-`pids="all"`
+The default is ``types="all"``. 
+Example::
+
+    pids =[0, 23, 42]
+    pids="all"
 
 .. todo:: NOT IMPLEMENTED
+
 Specify arbitrary user data for the particles. has to be a Tcl list
 containing the user data for every particle. The user data is appended
 to the coordinate line and can be read into VMD via the VMD plugin
@@ -446,6 +427,7 @@ to the coordinate line and can be read into VMD via the VMD plugin
 vtfpid
 
 .. todo:: NOT IMPLEMENTED
+
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 

@@ -1,4 +1,4 @@
-.. _GPU Acceleration with CUDA
+.. _GPU Acceleration with CUDA:
 
 GPU Acceleration with CUDA
 **************************
@@ -17,6 +17,8 @@ and it needs to have at least compute capability 2.0.
 For more information please check :attr:`espressomd._system.cu`
 or :class:`espressomd.cuda_init.CudaInitHandle`.
 
+.. _List available CUDA devices:
+
 List available CUDA devices
 ===========================
 
@@ -27,6 +29,8 @@ you should access :attr:`espressomd._system.cu.device_list`::
 
 This attribute is read only and will return a dictionary containing
 the device id as key and the device name as its' value.
+
+.. _Selection of CUDA device:
 
 Selection of CUDA device
 ========================

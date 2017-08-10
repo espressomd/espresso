@@ -35,7 +35,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``lbf.py``
 
 * ``lj-demo.py``
-    Lennard-Jones liquid used for demonstration purposes to showcase |Es|. Sliders from a MIDI controller can change system variables such as temperature and volume. Some thermodynamic observables are analyzed and plotted live.
+    Lennard-Jones liquid used for demonstration purposes to showcase |es|.
+    Sliders from a MIDI controller can change system variables such as
+    temperature and volume. Some thermodynamic observables are analyzed and
+    plotted live.
 
 * ``lj_liquid_distribution.py``
     Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.

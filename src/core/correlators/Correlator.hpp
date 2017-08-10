@@ -120,6 +120,7 @@
 #include <map>
 #include <memory>
 #include "utils.hpp" 
+#include "Vector.hpp"
 
 
 namespace Correlators {
@@ -167,6 +168,7 @@ class Correlator {
      *
      */
     Correlator();
+
     void initialize();
     /** Restore a correlation from a checkpoint - the observable has to be created first ordinary
     */
@@ -225,7 +227,7 @@ class Correlator {
         
         
     // A lot of the following should be private
-    void *args; // arbitrary additional arguments, which the correlation may need
+	Vector3d correlation_args; // additional arguments, which the correlation may need (currently only used by fcs_acf)
     unsigned int autocorrelation;    // autocorrelation flag
     unsigned int finalized;          // non-zero of correlation is finialized
     int hierarchy_depth;    // maximum level of data compression
@@ -286,7 +288,7 @@ class Correlator {
     int A_obs_id;
     int B_obs_id;
     
-    int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+    int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
     
     // compressing functions
     int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
@@ -351,23 +353,23 @@ int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int
 * Functions for correlation operations
 *
 **************************/
-int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
 
-int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
+int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ); 
 
-int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ); 
 
-int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
+int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ); 
 
-int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d correlation_args );
 
-int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
 
-int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
 
-int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
 
-int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d );
 
 } // Namespace correlators
 #endif

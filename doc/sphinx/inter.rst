@@ -907,7 +907,7 @@ This creates a bond type identifier with a two-body bond length,
 three-body angle or four-body dihedral 
 tabulated potential. The tabulated forces and energies have to be
 provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Non-bonded tabulated interaction`).
+non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
 
 
 The bonded interaction can be based on a distance, a bond angle or a
@@ -1819,6 +1819,7 @@ Additionally, methods supporting tuning have the parameter ``tolerance_field`` w
 To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
+
   from espressomd.electrostatics import Scafacos
   scafacos=Scafacos(bjerrum_length=1,method_name="ewald", 
     method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})

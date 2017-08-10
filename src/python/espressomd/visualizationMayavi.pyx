@@ -5,7 +5,7 @@ from libcpp cimport bool
 from espressomd.particle_data import ParticleHandle
 from particle_data cimport *
 from espressomd.interactions cimport *
-from espressomd._system cimport *
+from espressomd.system cimport *
 from libcpp.vector cimport vector
 
 cdef extern from "utils.hpp":
