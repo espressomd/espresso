@@ -41,7 +41,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/electrokinetics.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/oif.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ibm.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/mbtools.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/internal.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/contributing.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/features.rst"

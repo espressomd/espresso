@@ -20,7 +20,6 @@ Userguide
     electrokinetics.rst
     oif.rst
     ibm.rst
-    mbtools.rst
     internal.rst
     contributing.rst
     features.rst
