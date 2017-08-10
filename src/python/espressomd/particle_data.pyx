@@ -1099,36 +1099,23 @@ cdef class ParticleHandle(object):
                 return rot
 
     IF EXCLUSIONS:
-        property exclude:
+        property exclusions:
             """
-            Exclude particle from interaction.
-            
-            exclude : 
-            .. todo::
-            document this
-           
+            Particles excluded from non-bonded interactions with this particle
+
             .. note::
-                 
+
             This needs the feature EXCLUSIONS
 
             """
 
             def __set__(self, _partners):
-                if isinstance(_partners, int):
-                    _partners = [_partners]
-                elif isinstance(_partners, tuple):
-                    if isinstance(_partners[0], list) or isinstance(_partners[0], np.ndarray):
-                        _partners = _partners[0]
-                if len(_partners) == 0:
-                    return
-                for partner in _partners:
-                    check_type_or_throw_except(
-                        partner, 1, int, "PID of partner has to be an int.")
-                    if self.id == partner:
-                        raise Exception(
-                            "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
-                    if change_exclusion(self.id, partner, 0) == 1:
-                        raise Exception("Set particle position first.")
+                # Delete all
+                for e in self.exclusions:
+                    self.delete_exclusion(e)
+
+                # Set new exlusion list
+                self.add_exclusion(_partners)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1137,29 +1124,31 @@ cdef class ParticleHandle(object):
                 py_partners = []
                 for i in range(exclusions.n):
                     py_partners.append(exclusions.e[i])
-                return np.array(py_partners)
+                return py_partners
 
-        def add_exclusion(self, *_partners):
+        def add_exclusion(self, _partners):
             """
             Excluding interaction with given partners.
-            
+
             Parameters
             ----------
             _partners : list of partners
-            
 
             """
-            self.exclude = _partners
+            if isinstance(_partners, int):
+                _partners = [_partners]
 
-        def delete_exclusion(self, *_partners):
             for partner in _partners:
+
                 check_type_or_throw_except(
                     partner, 1, int, "PID of partner has to be an int.")
-                if change_exclusion(self.id, partner, 1) == 1:
+                if self.id == partner:
+                    raise Exception(
+                        "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
+                if change_exclusion(self.id, partner, 0) == 1:
                     raise Exception("Set particle position first.")
 
-        def delete_exclusions(self):
-            _partners = self.exclude
+        def delete_exclusion(self, *_partners):
             for partner in _partners:
                 check_type_or_throw_except(
                     partner, 1, int, "PID of partner has to be an int.")
