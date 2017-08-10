@@ -32,6 +32,7 @@
 #include "interaction_data.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
+#include "p3m.hpp"
 
 #ifdef DRUDE
 
@@ -55,13 +56,20 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 {
   //Bond broke?
   double dist = utils::veclen(dx);
-  if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut)
+  if (iaparams->p.drude.r_cut > 0.0 && dist > iaparams->p.drude.r_cut) {
     return 1;
+  }
 
   double force_harmonic, force_lv_com, force_lv_dist, com_vel, dist_vel;
   double chgfac = p1->p.q*p2->p.q;
   double fac_harmonic = -iaparams->p.drude.k;
   double mass_tot_inv = 1.0 / (p1->p.mass + p2->p.mass);
+
+  double force_p3m_sr[3] = {0,0,0}; 
+
+  //Coulomb Shortrange
+  p3m_add_pair_force(chgfac, dx, dist*dist, dist, force_p3m_sr);
+  //printf("p3m in drude: F  %f %f %f   d %f %f %f dist2 %f dist %f q1q2 %f \n", force_p3m_sr[0], force_p3m_sr[1], force_p3m_sr[2], dx[0],dx[1],dx[2], dist*dist,dist, chgfac);
 
   for (int i=0; i<3; i++) {
 
@@ -77,8 +85,8 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
       force_harmonic = fac_harmonic * dx[i];
 
       //Add forces
-      force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist + force_harmonic; //Core
-      force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist - force_harmonic; //Drude
+      force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist + force_harmonic - force_p3m_sr[i]; //Core
+      force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist - force_harmonic + force_p3m_sr[i]; //Drude
 
   }
 

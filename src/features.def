@@ -134,6 +134,8 @@ UMBRELLA
 GAY_BERNE                       implies ROTATION
 OVERLAPPED
 DRUDE                           requires P3M and MASS and LANGEVIN_PER_PARTICLE
+THOLE                           implies GHOSTS_HAVE_BONDS
+THOLE                           requires P3M
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES

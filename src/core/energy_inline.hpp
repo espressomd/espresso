@@ -50,6 +50,7 @@
 #include "statistics.hpp"
 #include "steppot.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "thermostat.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
@@ -159,6 +160,11 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef LJCOS2
   /* lennard jones */
   ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
+#endif
+
+#ifdef THOLE
+  /* thole damping */
+  ret += thole_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
 #ifdef TABULATED

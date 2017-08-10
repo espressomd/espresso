@@ -264,7 +264,7 @@ IF LENNARD_JONES == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift"
 
-# Lennard Jones
+# Gay Berne
 
 IF GAY_BERNE:
     cdef class GayBerneInteraction(NonBondedInteraction):
@@ -469,6 +469,62 @@ IF LENNARD_JONES_GENERIC == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
+# Thole damping
+
+IF THOLE:
+    cdef class TholeInteraction(NonBondedInteraction):
+
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "scaling_coeff": ia_params.THOLE_scaling_coeff
+            }
+
+        def is_active(self):
+            return (self._params["scaling_coeff"] != 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Thole interaction.
+
+            Parameters
+            ----------
+
+            scaling_coeff : float
+                            The facor used in the thole damping function between 
+                            polarizable particles i and j. Usually caluclated by 
+                            the polarizabilities alpha_i, alpha_j and damping 
+                            parameters  a_i, a_j via
+                            scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+            q1q2: float
+                  charge factor of the involved charges. Has to be set because 
+                  it acts only on the portion of the drude core charge that is 
+                  associated to the dipole of the atom. For charged, polarizable 
+                  atoms that charge is not equal to the particle charge property.
+            """
+            super(TholeInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            # Handle the case of shift="auto"
+            if thole_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["scaling_coeff"],
+                                        self._params["q1q2"]):
+                raise Exception("Could not set Thole parameters")
+
+        def default_params(self):
+            return {"scaling_coeff": 0., "q1q2": 0.}
+
+        def type_name(self):
+            return "Thole"
+
+        def valid_keys(self):
+            return "scaling_coeff", "q1q2"
+
+        def required_keys(self):
+            return "scaling_coeff", "q1q2"
 
 class NonBondedInteractionHandle(object):
 
@@ -483,6 +539,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     tabulated = None
     gay_berne = None
+    thole = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -501,6 +558,8 @@ class NonBondedInteractionHandle(object):
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
+        IF THOLE:
+            self.thole = TholeInteraction(_type1, _type2)
 
 
 cdef class NonBondedInteractions(object):

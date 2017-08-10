@@ -1,0 +1,103 @@
+/*
+  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+#ifndef _THOLE_H
+#define _THOLE_H
+/** \file thole.hpp
+ *  Routines to calculate the thole dampingi energy and/or force 
+ *  for a particle pair.
+ *  \ref forces.cpp
+*/
+
+#include "config.hpp"
+
+#ifdef THOLE
+
+#include "utils.hpp"
+#include "debug.hpp"
+#include "interaction_data.hpp"
+#include "particle_data.hpp"
+#include "p3m.hpp"
+
+extern bool thole_active;
+
+int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2);
+
+inline void add_thole_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
+				   double d[3], double dist, double force[3])
+{
+  if (thole_active && dist < p3m.params.r_cut) {
+    
+    //printf("THOLE %f ID1 %d ID2 %d 1.bl.n %d 2.bl.n %d \n",dist, p1->p.identity, p2->p.identity, p1->bl.n, p2->bl.n);
+    
+    if (bond_between_particles(p1,p2, BONDED_IA_DRUDE))
+        return;
+
+    double dist2 = dist*dist;
+    double thole_s = ia_params->THOLE_scaling_coeff;
+    double q1q2 = ia_params->THOLE_q1q2;
+    //double chgfac = p1->p.q*p2->p.q;
+
+    //Subtract p3m shortrange
+    p3m_add_pair_force(-q1q2, d, dist2, dist, force);
+
+    //Calc damping function
+    // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r); 
+    // Calc F = - d/dr ( S(r)*q1q2/r) =  -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2
+    // Everything before q1q2/r^2 can be used as a factor for the p3m_add_pair_force method
+    double sr = thole_s * dist;
+    double dS_r = 0.5 * (  2.0 - ( exp(-sr) * (sr * (sr + 2.0) + 2.0) ) ); 
+
+    //printf("THOLE dist %f  dS_r %e \n", dist, dS_r);
+    
+    //Add damped p3m shortrange
+    p3m_add_pair_force(q1q2*dS_r, d, dist2, dist, force);
+
+    ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+    ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: THOLE   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+
+  }
+}
+
+
+inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+        double d[3], double dist)
+{
+    double e_thole = 0;
+
+    if (dist < p3m.params.r_cut) {
+
+        double dist2 = dist*dist;
+        double thole_s = ia_params->THOLE_scaling_coeff;
+        double thole_q1q2 = ia_params->THOLE_q1q2;
+
+        //Subtract p3m shortrange energy
+        e_thole += p3m_pair_energy(-thole_q1q2, d, dist2, dist);
+
+        //Add damped p3m shortrange energy
+        double S_r = 1.0 - (1.0 + thole_s*dist/2.0) * exp(-thole_s*dist); 
+        e_thole += p3m_pair_energy(thole_q1q2*S_r, d, dist2, dist);
+    }
+    return e_thole;
+
+}
+
+#endif
+#endif

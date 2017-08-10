@@ -73,6 +73,7 @@
 #include "steppot.hpp"
 #include "subt_lj.hpp"
 #include "tab.hpp"
+#include "thole.hpp"
 #include "twist_stack.hpp"
 #include "umbrella.hpp"
 #ifdef ELECTROSTATICS
@@ -255,6 +256,10 @@ inline void calc_non_bonded_pair_force_parts(
 /* lennard jones cosine */
 #ifdef LJCOS2
   add_ljcos2_pair_force(p1, p2, ia_params, d, dist, force);
+#endif
+/* thole damping */
+#ifdef THOLE
+  add_thole_pair_force(p1, p2, ia_params, d, dist, force);
 #endif
 /* tabulated */
 #ifdef TABULATED

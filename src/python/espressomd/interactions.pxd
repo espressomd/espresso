@@ -62,6 +62,9 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        double THOLE_scaling_coeff
+        double THOLE_q1q2
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -78,6 +81,10 @@ IF GAY_BERNE:
                                  double eps, double sig, double cut,
                                  double k1, double k2,
                                  double mu, double nu);
+
+IF THOLE:
+    cdef extern from "thole.hpp":
+        int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, double q1q2);
 
 cdef extern from "forcecap.hpp":
     double force_cap

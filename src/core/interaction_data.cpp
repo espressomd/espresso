@@ -62,6 +62,7 @@
 #include "morse.hpp"
 #include "dpd.hpp"
 #include "tunable_slip.hpp"
+#include "thole.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
@@ -331,6 +332,11 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
   params->dpd_r_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef THOLE
+  params->THOLE_scaling_coeff = 0.0;
+  params->THOLE_q1q2 = 0.0;
 #endif
 
 #ifdef TUNABLE_SLIP

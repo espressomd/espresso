@@ -507,6 +507,11 @@ typedef struct {
   int rf_on;
 #endif
 
+#ifdef THOLE
+  double THOLE_scaling_coeff;
+  double THOLE_q1q2;
+#endif
+
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp;
   double TUNABLE_SLIP_gamma;
@@ -1301,5 +1306,41 @@ int virtual_set_params(int bond_type);
 #ifdef DIPOLES
 void set_dipolar_method_local(DipolarInteraction method);
 #endif
+
+//Checks if there is a specific bond between p1 and p2. Needs GHOSTS_HAVE_BONDS if particles are ghosts.
+inline bool bond_between_particles(const Particle * const p1, const Particle * const p2, BondedInteraction bond)
+{
+    if (p1==p2 || (p1->bl.n == 0 && p2->bl.n == 0))
+        return false;
+    else {
+        //Bond is saved only on one of the particles. Check which..
+        const Particle * p_bond;
+        const Particle * p_partner;
+        if (p1->bl.n > 0) {
+            p_bond = p1;
+            p_partner = p2;
+        } else {
+            p_bond = p2;
+            p_partner = p1;
+        }
+       
+
+        Bonded_ia_parameters *iaparams;
+        int type_num ;
+        int i = 0;
+        while (i < p_bond->bl.n) {
+
+            type_num = p_bond->bl.e[i];
+            iaparams = &bonded_ia_params[type_num];
+
+            if (iaparams->type == (int)bond && p_bond->bl.e[i+1] == p_partner->p.identity) {
+                return true;
+            } else {
+                i+= iaparams->num + 1;
+            }
+        }
+    }
+    return false;
+}
 
 #endif
