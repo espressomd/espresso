@@ -195,8 +195,9 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  return std::distance(local_cells.particles().begin(),
-                       local_cells.particles().end());
+  using std::distance;
+  return distance(local_cells.particles().begin(),
+                  local_cells.particles().end());
 }
 
 /*************************************************/

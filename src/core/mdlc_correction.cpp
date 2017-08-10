@@ -334,8 +334,7 @@ double get_DLC_energy_dipolar(int kcut) {
   double energy, piarea, facux, facuy;
   int cc, j, np;
 
-  n_local_particles = std::distance(local_cells.particles().begin(),
-                                    local_cells.particles().end());
+  n_local_particles = local_cells.particles().size();
 
   facux = 2.0 * M_PI / box_l[0];
   facuy = 2.0 * M_PI / box_l[1];
@@ -423,8 +422,7 @@ void add_mdlc_force_corrections() {
 
   dip_DLC_kcut = dlc_params.far_cut;
 
-  n_local_particles = std::distance(local_cells.particles().begin(),
-                                    local_cells.particles().end());
+  n_local_particles = local_cells.particles().size();
 
   volume = box_l[0] * box_l[1] * box_l[2];
 
