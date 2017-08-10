@@ -74,13 +74,13 @@ The checkpointing module can be imported with::
     [ checkpoint_path= ]
 
 Determines the identifier for a checkpoint. Legal characters for an id
-are “0-9”, “a-zA-Z”, “-”, “_”.
+are "0-9", "a-zA-Z", "-", "_".
 
 Specifies the relative or absolute path where the checkpoints are
 stored.
 
-For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id=“mycheckpoint”)``
-would create the new checkpoint with id “mycheckpoint” and all the
+For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")``
+would create the new checkpoint with id "mycheckpoint" and all the
 checkpointing data will be stored in the current directory.
 
 After the system and checkpointing user variables are set up they can be
@@ -90,28 +90,28 @@ checkpointing.
 
 To give an example::
 
-    myvar = “some variable value”
+    myvar = "some variable value"
     skin = 0.4
-    checkpoint.register(“myvar”)
-    checkpoint.register(“skin”)
+    checkpoint.register("myvar")
+    checkpoint.register("skin")
 
     system = espressomd.System()
     # ... set system properties like box_l or
-    timestep here ... checkpoint.register(“system”)
+    timestep here ... checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-    checkpoint.register(“system.thermostat”)
+    checkpoint.register("system.thermostat")
 
     # ... set system.non_bonded_inter here ...
-    checkpoint.register(“system.non_bonded_inter”)
+    checkpoint.register("system.non_bonded_inter")
 
     # ... add particles to the system with system.part.add(...) here ...
-    checkpoint.register(“system.part”)
+    checkpoint.register("system.part")
 
     # ... set charges of particles here ... from espressomd import
     electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
     system.actors.add(p3m)
-    checkpoint.register(“p3m”)
+    checkpoint.register("p3m")
 
 will register the user variables ``skin`` and ``myvar``, system properties, a
 langevin thermostat, non-bonded interactions, particle properties and a p3m
@@ -154,7 +154,7 @@ restores the state of all checkpointed objects and registers a signal.
 
     import espressomd from espressomd import checkpointing import signal
 
-    checkpoint = checkpointing.Checkpointing(checkpoint_id=“mycheckpoint”)
+    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
     system = espressomd.System()
@@ -198,10 +198,10 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System()
     # ... add particles here
-    h5 = h5md.H5md(filename=“trajectory.h5”, write_pos=True, write_vel=True)
+    h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
 If a file with the given filename exists and has a valid H5MD structures
-it will be backed up to a file with suffix “.bak”. This file will be
+it will be backed up to a file with suffix ".bak". This file will be
 removed by the close() method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
@@ -358,8 +358,8 @@ Online-visualisation with Mayavi or OpenGL
 With the python interface, |es| features two possibilities for
 online-visualization:
 
-#. Using the mlab module to drive *Mayavi, a “3D scientific data
-   visualization and plotting in Python”*. Mayavi has a user-friendly
+#. Using the mlab module to drive *Mayavi, a "3D scientific data
+   visualization and plotting in Python"*. Mayavi has a user-friendly
    GUI to specify the appearance of the output.
    Additional requirements:
    python module *mayavi*, VTK (package *python-vtk* for Debian/Ubuntu).
@@ -536,15 +536,15 @@ some tutorials:
    for the openGL visualizer.
 
 -  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_vis.py:
-   Periodic NaCl crystal, see tutorial “Charged Systems”.
+   Periodic NaCl crystal, see tutorial "Charged Systems".
 
 -  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_confined\_vis.py:
    Confined NaCl with interactively adjustable electric field, see
-   tutorial “Charged Systems”.
+   tutorial "Charged Systems".
 
 -  doc/tutorials/python/08-visualization/scripts/visualization.py:
-   LJ-Liquid visualization along with tutorial “Visualization”.
+   LJ-Liquid visualization along with tutorial "Visualization".
 
-Finally, it is recommended to go through tutorial “Visualization” for
-further code explanations. Also, the tutorial “Charged Systems” has two
+Finally, it is recommended to go through tutorial "Visualization" for
+further code explanations. Also, the tutorial "Charged Systems" has two
 visualization examples.
