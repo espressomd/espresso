@@ -140,4 +140,6 @@ BOOST_AUTO_TEST_CASE(distance_overload) {
   auto end = iterator(cells.end(), cells.end(), 0);
 
   BOOST_CHECK(distance(begin, end) == std::distance(begin, end));
+  BOOST_CHECK(distance(begin, begin) == 0);
+  BOOST_CHECK(distance(end, end) == 0);
 }

@@ -185,7 +185,7 @@ compilation process significantly.
 ``myconfig.hpp``: Activating and deactivating features
 ------------------------------------------------------
 
-has a large number of features that can be compiled into the binary.
+|es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
 features, as this will slow down significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be

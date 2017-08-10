@@ -8,8 +8,12 @@ namespace Scafacos {
 #define handle_error(stmt) { const FCSResult res = stmt; if(res) runtimeError(fcs_result_get_message(res)); }
 
 std::string Scafacos::get_parameters() {
-  return method + " " + m_last_parameters;
+  return m_last_parameters;
 }
+std::string Scafacos::get_method() {
+  return method;
+}
+
 
 std::list<std::string> Scafacos::available_methods() {
   std::list<std::string> methods;
@@ -143,8 +147,6 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
    // Scafacos does near field calc
    sr=1;
   }
-  int d=dipolar();
-//  printf("Short range switch %d, dipolar=%d, has_near=%d\n",sr,d,has_near);
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
 }
 

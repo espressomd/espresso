@@ -837,7 +837,7 @@ Bonded coulomb
 .. todo::
     Not implemented.
 
-inter bonded\_coulomb
+inter bonded_coulomb
 
 This creates a bond type with identificator with a coulomb pair
 potential. It is given by
@@ -854,7 +854,7 @@ Subtracted Lennard-Jones bond
 .. todo::
     Not implemented.
 
-inter subt\_lj
+inter subt_lj
 
 This creates a "bond” type with identificator , which acts between two
 particles and actually subtracts the Lennard-Jones interaction between
@@ -907,7 +907,7 @@ This creates a bond type identifier with a two-body bond length,
 three-body angle or four-body dihedral 
 tabulated potential. The tabulated forces and energies have to be
 provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Non-bonded tabulated interaction`).
+non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
 
 
 The bonded interaction can be based on a distance, a bond angle or a
@@ -981,7 +981,7 @@ modeling objects are described in section [sec:oif].
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-inter oif\_local\_force
+inter oif_local_force
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1103,7 +1103,7 @@ larger than :math:`\pi`, then the inner angle is concave.
 OIF global forces
 ~~~~~~~~~~~~~~~~~
 
-inter oif\_global\_force
+inter oif_global_force
 
 This type of interaction is available solely for closed 3D immersed
 objects.
@@ -1173,7 +1173,7 @@ point inside the immersed object.
 Out direction
 ~~~~~~~~~~~~~
 
-inter oif\_out\_direction
+inter oif_out_direction
 
 This type of interaction is primarily for closed 3D immersed objects to
 compute the input for membrane collision. After creating the interaction
@@ -1192,20 +1192,20 @@ in the correct order. Command
 calculates the outward normal vector of triangle defined by particles 1,
 2, 3 (these should be selected in such a way that particle 0 lies
 approximately at its centroid - for OIF objects, this is automatically
-handled by oif\_create\_template command, see Section
+handled by oif_create_template command, see Section
 [ssec:oif-create-template]). In order for the direction to be outward
 with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
-oif\_global\_forces interaction).
+oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
 
 [sec:angle]
 
-[ phi\_0 = ]
+[ phi_0 = ]
 
-inter angle\_harmonic inter angle\_cosine inter angle\_cossquare
+inter angle_harmonic inter angle_cosine inter angle_cossquare
 
 This creates a bond type with identificator with an angle dependent
 potential. This potential is defined between three particles. The
@@ -1217,7 +1217,7 @@ radian ranging from 0 to :math:`\pi`. If this parameter is not given, it
 defaults to :math:`\var{\phi_0} = \pi`, which corresponds to a stretched
 configuration. For example, for a bond defined by
 
-part $p\_2 bond 4 $p\_1 $p\_3
+part $p_2 bond 4 $p_1 $p_3
 
 the minimal energy configurations are the following:
 
@@ -1289,7 +1289,7 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
-If you enable the feature OLD\_DIHEDRAL, then the old, less general form
+If you enable the feature OLD_DIHEDRAL, then the old, less general form
 of the potential is used:
 
 .. math:: V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
@@ -1553,7 +1553,7 @@ connected to a battery with voltage `pot_diff`. Using 0 is equivalent to
 :math:`\Delta_{t/b}=-1`.
 
 .. todo::
-    efield\_caps
+    efield_caps
 
     The electric fields added by can be obtained by calling the above
     command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
@@ -1651,7 +1651,7 @@ leads to the following rule of thumb for the parameter choices:
 
 -  The lattice should be of the size of your particle size (i.e. the
    lennard jones epsilon). That means: 
-   :math:`\text{mesh} \approx \text{box\_l} / \text{lj\_sigma}`
+   :math:`\text{mesh} \approx \text{box_l} / \text{lj_sigma}`
 
 -  The integration timestep should be in a range where no particle moves
    more than one lattice box (i.e. lennard jones sigma) per timestep.
@@ -1659,7 +1659,7 @@ leads to the following rule of thumb for the parameter choices:
 -  The speed of light should satisfy the stability criterion
    :math:`c\ll a/dt`, where :math:`a` is the lattice spacing and
    :math:`dt` is the timestep. For the second parameter, this means
-   :math:`\text{f\_mass} \gg dt^2/a^2`.
+   :math:`\text{f_mass} \gg dt^2/a^2`.
 
 The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three
@@ -1806,36 +1806,28 @@ properties.
 Scafacos
 ~~~~~~~~
 
-Espresso can use the electrostatics methods from the Scafacos *Scalable
-fast Coulomb solvers* library.
+Espresso can use the electrostatics methods from the SCAFACOS *Scalable
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods()`
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-scafacos.available\_methods()
-
-This shows the methods available at the compile time of . Scafacos can
-be used as Coulomb solver for the system.
-
-inter coulomb scafacos
-
-[ ]
-
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. To use the ``ewald``
-solver from scafacos as electrostatics solver for your system, set its
+To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
-:math:`10^{-3}`, use the command
+:math:`10^{-3}`, use::
 
-inter coulomb 1.0 scafacos ewald ewald\_r\_cut 1.5 tolerance\_field 1e-3
+  from espressomd.electrostatics import Scafacos
+  scafacos=Scafacos(bjerrum_length=1,method_name="ewald", 
+    method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})
+  system.actors.add(scafacos)
+  
 
 For details of the various methods and their parameters please refer to
-the Scafacos manual. Note that the ``SCAFACOS`` feature is only
-available if you build with cmake. You need to build Scafacos as a
-shared library. Scafacos can be used only once, either for coulomb or
-for dipolar interactions.
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
 .. _ELC:
 
@@ -1845,7 +1837,7 @@ Electrostatic Layer Correction (ELC)
 Please cite when using ELC, and in addition if you use dielectric
 interfaces.
 
-[ neutralize = , far\_cut = ]
+[ neutralize = , far_cut = ]
 
 inter coulomb elc
 
@@ -1886,7 +1878,7 @@ neutralization.
 The dielectric contrast features work exactly the same as for MMM2D, see
 the documentation above. Same accounts for , but the constant potential
 is maintained between the xy-plane at :math:`z=0` and
-:math:`z=L-gap\_size`. The command to read out the electric fields added
+:math:`z=L-gap_size`. The command to read out the electric fields added
 by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
@@ -1931,9 +1923,9 @@ Quick setup of dielectric interfaces
 
 dielectric sphere center radius res dielectric wall normal dist res
 dielectric cylinder center axis radius direction dielectric pore center
-axis radius length smoothing\_radius res dielectric slitpore pore\_mouth
-channel\_width pore\_width pore\_length upper\_smoothing\_radius
-lower\_smoothing\_radius
+axis radius length smoothing_radius res dielectric slitpore pore_mouth
+channel_width pore_width pore_length upper_smoothing_radius
+lower_smoothing_radius
 
 The command allows to conveniently create dielectric interfaces similar
 to the constraint and the lbboundary command. Currently the creation of
@@ -1942,11 +1934,11 @@ slitpore geometry is supported. Please check the documentation of the
 corresponding constraint for the detailed geometry. It is implemented in
 Tcl and places particles in the right positions and adds the correct
 values to the global Tcl variables and increases the global Tcl variable
-varn\_induced\_charges. Thus after setting up the shapes, it is still
+varn_induced_charges. Thus after setting up the shapes, it is still
 necessary to register them by calling , usually in the following way:
 
-| iccp3m $n\_induced\_charges epsilons $icc\_epsilons normals
-| $icc\_normals areas $icc\_areas sigmas $icc\_sigmas
+| iccp3m $n_induced_charges epsilons $icc_epsilons normals
+| $icc_normals areas $icc_areas sigmas $icc_sigmas
 
 Dipolar interaction
 -------------------
@@ -1978,8 +1970,8 @@ interactions (see section ). Variant disables dipolar interactions.
 Variant returns the current parameters of the dipolar interaction as a
 Tcl-list using the same syntax as used to setup the method,
 
-coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n\_interpol
-32768 mesh\_off 0.5 0.5 0.5
+coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n_interpol
+32768 mesh_off 0.5 0.5 0.5
 
 Variant is the generic syntax to set up a specific method or its
 parameters, the details of which are described in the following
@@ -2065,7 +2057,7 @@ DAWAANR-method gives the exact result.
 Magnetic Dipolar Direct Sum (MDDS) on CPU
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter magnetic mdds n\_cut
+inter magnetic mdds n_cut
 
 The command enables the “magnetic dipolar direct sum”. The dipole-dipole
 interaction is computed by explicitly summing over all pairs. If the
@@ -2080,8 +2072,6 @@ P3M.
 Dipolar direct sum on gpu
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter magnetic dds-gpu
-
 This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
 system is periodic (as defined by ``setmd periodic``), it applies the
@@ -2095,33 +2085,38 @@ particles than the number of threads the gpu can execute simultaneously,
 the rest of the gpu remains idle. Hence, the method will perform poorly
 for small systems.
 
+To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  from espressomd.magnetostatics import DipolarDirectSumGpu
+  dds=DipolarDirectSumGpu(bjerrum_length=1)
+  system.actors.add(dds)
+  
+
+
+
 Scafacos
 ~~~~~~~~
 
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
-calculations. The feature SCAFACOS\_DIPOLES has to be added to
-myconfig.hpp to activate this feature. At the time of this writing (Apr
-2016) dipolar calculations are not part of the official Scafacos
-development branch.
+calculations. The feature SCAFACOS_DIPOLES has to be added to
+myconfig.hpp to activate this feature. At the time of this writing (May
+2017) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-This shows the methods available at the compile time of . That a method
-is listed there, does not imply that it supports dipolar calculations.
+For details of the various methods and their parameters please refer to
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
-inter magnetic scafacos
 
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. For details of the
-various methods and their parameters please refer to the Scafacos
-manual. Note that the ``SCAFACOS`` feature is only available if you
-build with cmake. You need to build Scafacos as a shared library.
-Scafacos can be used only once, either for coulomb or for dipolar
-interactions.
+
+
+
+
 
 Special interaction commands
 ----------------------------
@@ -2129,7 +2124,7 @@ Special interaction commands
 Tunable-slip boundary interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter tunable\_slip
+inter tunable_slip
 
 Simulating microchannel flow phenomena like the Plane Poiseuille and the
 Plane Couette Flow require accurate boundary conditions. There are two
@@ -2182,7 +2177,7 @@ reference :cite:`smiatek08a` before using this interaction.
 DPD interaction
 ~~~~~~~~~~~~~~~
 
-inter inter\_dpd
+inter inter_dpd
 
 This is a special interaction that is to be used in conjunction with the
 Dissipative Particle Dynamics algorithm [sec:DPD] when the

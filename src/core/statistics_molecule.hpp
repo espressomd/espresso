@@ -27,8 +27,6 @@
     the file \ref topology.hpp.
 */
 
-#include "utils.hpp"
-#include "statistics.hpp"
 #include "topology.hpp"
 
 /** Using the topology information stored in \ref topology::topology

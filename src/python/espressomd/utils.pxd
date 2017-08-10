@@ -31,11 +31,11 @@ cdef extern from "stdlib.h":
 cdef extern from "utils.hpp":
     ctypedef struct int_list "IntList":
         int * e
-        int n
+        unsigned n
 
     ctypedef struct double_list "DoubleList":
         double * e
-        int n
+        unsigned n
 
     cdef void init_intlist(int_list * il)
     cdef void alloc_intlist(int_list * il, int size)

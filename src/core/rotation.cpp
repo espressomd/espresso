@@ -125,37 +125,32 @@ int convert_quatu_to_quat(double d[3], double quat[4]) {
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
-    the body-fixed frames */
-void define_rotation_matrix(Particle *p, double A[9]) {
-  double q0q0 = p->r.quat[0];
-  q0q0 *= q0q0;
+    the body-fixed frames */  
+void define_rotation_matrix(Particle const *p, double A[9])
+{
+  double q0q0 =p->r.quat[0];
+  q0q0 *=q0q0;
 
-  double q1q1 = p->r.quat[1];
-  q1q1 *= q1q1;
+  double q1q1 =p->r.quat[1];
+  q1q1 *=q1q1;
 
-  double q2q2 = p->r.quat[2];
-  q2q2 *= q2q2;
+  double q2q2 =p->r.quat[2];
+  q2q2 *=q2q2;
 
-  double q3q3 = p->r.quat[3];
-  q3q3 *= q3q3;
+  double q3q3 =p->r.quat[3];
+  q3q3 *=q3q3;
 
-  A[0 + 3 * 0] = q0q0 + q1q1 - q2q2 - q3q3;
-  A[1 + 3 * 1] = q0q0 - q1q1 + q2q2 - q3q3;
-  A[2 + 3 * 2] = q0q0 - q1q1 - q2q2 + q3q3;
+  A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
+  A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
+  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
 
-  A[0 + 3 * 1] =
-      2 * (p->r.quat[1] * p->r.quat[2] + p->r.quat[0] * p->r.quat[3]);
-  A[0 + 3 * 2] =
-      2 * (p->r.quat[1] * p->r.quat[3] - p->r.quat[0] * p->r.quat[2]);
-  A[1 + 3 * 0] =
-      2 * (p->r.quat[1] * p->r.quat[2] - p->r.quat[0] * p->r.quat[3]);
+  A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
+  A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
+  A[1 + 3*0] = 2*(p->r.quat[1]*p->r.quat[2] - p->r.quat[0]*p->r.quat[3]);
 
-  A[1 + 3 * 2] =
-      2 * (p->r.quat[2] * p->r.quat[3] + p->r.quat[0] * p->r.quat[1]);
-  A[2 + 3 * 0] =
-      2 * (p->r.quat[1] * p->r.quat[3] + p->r.quat[0] * p->r.quat[2]);
-  A[2 + 3 * 1] =
-      2 * (p->r.quat[2] * p->r.quat[3] - p->r.quat[0] * p->r.quat[1]);
+  A[1 + 3*2] = 2*(p->r.quat[2]*p->r.quat[3] + p->r.quat[0]*p->r.quat[1]);
+  A[2 + 3*0] = 2*(p->r.quat[1]*p->r.quat[3] + p->r.quat[0]*p->r.quat[2]);
+  A[2 + 3*1] = 2*(p->r.quat[2]*p->r.quat[3] - p->r.quat[0]*p->r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle

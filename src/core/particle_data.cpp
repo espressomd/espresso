@@ -20,16 +20,12 @@
 */
 /** \file particle_data.cpp
     This file contains everything related to particle storage. If you want to
-   add a new
-    property to the particles, it is probably a good idea to modify \ref
-   Particle to give
-    scripts access to that property. You always have to modify two positions:
-   first the
-    print section, where you should add your new data at the end, and second the
-   read
-    section where you have to find a nice and short name for your property to
-   appear in
-    the Tcl code. Then you just parse your part out of argc and argv.
+   add a new property to the particles, it is probably a good idea to modify
+   \ref Particle to give scripts access to that property. You always have to
+   modify two positions: first the print section, where you should add your new
+   data at the end, and second the read section where you have to find a nice
+   and short name for your property to appear in the Tcl code. Then you just
+   parse your part out of argc and argv.
 
     The corresponding header file is particle_data.hpp.
 */
@@ -40,13 +36,14 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "partCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+#include "utils/make_unique.hpp"
 #include "virtual_sites.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 
 /************************************************
  * defines
@@ -75,11 +72,6 @@ int max_particle_node = 0;
 int *particle_node = NULL;
 int max_local_particles = 0;
 Particle **local_particles = NULL;
-Particle *partCfg = NULL;
-int partCfgSorted = 0;
-
-/** bondlist for partCfg, if bonds are needed */
-IntList partCfg_bl = {NULL, 0, 0};
 
 /************************************************
  * local functions
@@ -95,15 +87,11 @@ void try_delete_exclusion(Particle *part, int part2);
 void try_add_exclusion(Particle *part, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
-   exclusion list.
-    This uses the bond topology obtained directly from the particles, since only
-   this contains
-    the full topology, in contrast to \ref topology::topology. To easily setup
-   the bonds, all data
-    should be on a single node, therefore the \ref partCfg array is used. With
-   large amounts
-    of particles, you should avoid this function and setup exclusions manually.
-   */
+   exclusion list. This uses the bond topology obtained directly from the
+   particles, since only this contains the full topology, in contrast to \ref
+   topology::topology. To easily setup the bonds, all data should be on a single
+   node, therefore the \ref partCfg array is used. With large amounts of
+   particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusion(int distance);
 
 /************************************************
@@ -306,9 +294,7 @@ void init_particle(Particle *part) {
     part->p.vs_relative_rel_orientation[i] = 0;
 #endif
 
-#ifdef GHOST_FLAG
   part->l.ghost = 0;
-#endif
 
 #ifdef LANGEVIN_PER_PARTICLE
   part->p.T = -1.0;
@@ -333,10 +319,6 @@ void init_particle(Particle *part) {
 #ifdef MULTI_TIMESTEP
   part->p.smaller_timestep = 0;
 #endif
-
-#ifdef CONFIGTEMP
-  part->p.configtemp = 0;
-#endif
 }
 
 void free_particle(Particle *part) {
@@ -350,73 +332,22 @@ void free_particle(Particle *part) {
  * organizational functions
  ************************************************/
 
-int updatePartCfg(int bonds_flag) {
-  int j;
-  if (partCfg)
-    return 1;
-  partCfg = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  if (bonds_flag != WITH_BONDS)
-    mpi_get_particles(partCfg, NULL);
-  else
-    mpi_get_particles(partCfg, &partCfg_bl);
-  for (j = 0; j < n_part; j++)
-    unfold_position(partCfg[j].r.p, partCfg[j].m.v, partCfg[j].l.i);
-  partCfgSorted = 0;
-#ifdef VIRTUAL_SITES
-
-  if (!sortPartCfg()) {
-    runtimeErrorMsg() << "could not sort partCfg";
-    return 0;
-  }
-  if (!updatePartCfg(bonds_flag)) {
-    runtimeErrorMsg()
-        << "could not update positions of virtual sites in partcfg";
-    return 0;
-  }
-#endif
-  return 1;
-}
-
-int sortPartCfg() {
-  int i;
-  Particle *sorted;
-
-  if (!partCfg)
-    updatePartCfg(WITHOUT_BONDS);
-
-  if (partCfgSorted)
-    return 1;
-
-  if (n_part != max_seen_particle + 1)
-    return 0;
-
-  sorted = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  for (i = 0; i < n_part; i++)
-    memmove(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
-  free(partCfg);
-  partCfg = sorted;
-
-  partCfgSorted = 1;
-
-  return 1;
-}
-
-void freePartCfg() {
-  free(partCfg);
-  partCfg = NULL;
-  realloc_intlist(&partCfg_bl, 0);
-}
-
 /** resize \ref local_particles.
     \param part the highest existing particle
 */
 void realloc_local_particles(int part) {
   if (part >= max_local_particles) {
+    auto old_size = max_local_particles;
+
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
     local_particles = (Particle **)Utils::realloc(
         local_particles, sizeof(Particle *) * max_local_particles);
+
+    /* Set new memory to 0 */
+    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
+      local_particles[i] = nullptr;
   }
 }
 
@@ -570,19 +501,21 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-int get_particle_data(int part, Particle *data) {
-  int pnode;
+std::unique_ptr<Particle> get_particle_data(int part) {
+  if (part < 0 || part > max_seen_particle)
+    return nullptr;
+
   if (!particle_node)
     build_particle_node();
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
+  int pnode = particle_node[part];
   if (pnode == -1)
-    return ES_ERROR;
-  mpi_recv_part(pnode, part, data);
-  return ES_OK;
+    return nullptr;
+
+  auto pp = Utils::make_unique<Particle>();
+
+  mpi_recv_part(pnode, part, pp.get());
+  return pp;
 }
 
 int place_particle(int part, double p[3]) {
@@ -861,23 +794,6 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 }
 #endif
 
-#ifdef CONFIGTEMP
-int set_particle_configtemp(int part, int configtemp) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return ES_ERROR;
-  mpi_send_configtemp_flag(pnode, part, configtemp);
-  return ES_OK;
-}
-#endif
-
 int set_particle_q(int part, double q) {
   int pnode;
   if (!particle_node)
@@ -928,17 +844,14 @@ int set_particle_type(int part, int type) {
   if (Type_array_init) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-    if (cur_par != (Particle *)0) {
-      if (get_particle_data(part, cur_par) != ES_ERROR) {
-        int prev_type = cur_par->p.type;
-        if (prev_type != type) {
-          // particle existed before so delete it from the list
-          remove_id_type_array(part, prev_type);
-        }
+    auto cur_par = get_particle_data(part);
+    if (cur_par) {
+      int prev_type = cur_par->p.type;
+      if (prev_type != type) {
+        // particle existed before so delete it from the list
+        remove_id_type_array(part, prev_type);
       }
     }
-    free(cur_par);
 
     if (add_particle_to_list(part, type) == ES_ERROR) {
       // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -1000,10 +913,9 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
 
   double A[9];
   double omega[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
              A[0 + 3 * 2] * omega_lab[2];
@@ -1051,10 +963,9 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
 
   double A[9];
   double torque[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
               A[0 + 3 * 2] * torque_lab[2];
@@ -1237,13 +1148,15 @@ void remove_all_particles() {
 int remove_particle(int part) {
   int pnode;
 
-  Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-  if (get_particle_data(part, cur_par) == ES_ERROR)
+  auto cur_par = get_particle_data(part);
+
+  if (cur_par) {
+    int type = cur_par->p.type;
+    if (remove_id_type_array(part, type) == ES_ERROR)
+      return ES_ERROR;
+  } else {
     return ES_ERROR;
-  int type = cur_par->p.type;
-  free(cur_par);
-  if (remove_id_type_array(part, type) == ES_ERROR)
-    return ES_ERROR;
+  }
 
   if (!particle_node)
     build_particle_node();
@@ -1364,6 +1277,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
+  std::fill(local_particles, local_particles + max_local_particles, nullptr);
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
@@ -1395,9 +1309,7 @@ void added_particle(int part) {
 
   if (part > max_seen_particle) {
     realloc_local_particles(part);
-    /* fill up possible gap. Part itself is ESSENTIAL!!!  */
-    for (i = max_seen_particle + 1; i <= part; i++)
-      local_particles[i] = NULL;
+
     max_seen_particle = part;
   }
 }
@@ -1442,8 +1354,7 @@ int try_delete_bond(Particle *part, int *bond) {
       // Go over the bond partners
       for (j = 1; j <= partners; j++) {
         // Leave the loop early, if the bond to delete and the bond with in the
-        // particle
-        // don't match
+        // particle don't match
         if (bond[j] != bl->e[i + j])
           break;
       }
@@ -1493,9 +1404,8 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : local_cells.particles()) {
       realloc_intlist(&p.el, p.el.n = 0);
+      return;
     }
-
-    return;
   }
 
   /* part1, if here */
@@ -1686,30 +1596,25 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 void auto_exclusion(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
   Bonded_ia_parameters *ia_params;
-  Particle *part1;
+
   /* partners is a list containing the currently found excluded particles for
-     each particle,
-     and their distance, as a interleaved list */
+     each particle, and their distance, as a interleaved list */
   IntList *partners;
 
-  updatePartCfg(WITH_BONDS);
-
   /* setup bond partners and distance list. Since we need to identify particles
-     via their identity,
-     we use a full sized array */
+     via their identity, we use a full sized array */
   partners =
       (IntList *)Utils::malloc((max_seen_particle + 1) * sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (p = 0; p < n_part; p++) {
-    part1 = &partCfg[p];
-    p1 = part1->p.identity;
-    for (i = 0; i < part1->bl.n;) {
-      ia_params = &bonded_ia_params[part1->bl.e[i++]];
+  for (auto const &part1 : partCfg) {
+    p1 = part1.p.identity;
+    for (i = 0; i < part1.bl.n;) {
+      ia_params = &bonded_ia_params[part1.bl.e[i++]];
       if (ia_params->num == 1) {
-        p2 = part1->bl.e[i++];
+        p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
         if (p2 != p1) {
@@ -1745,14 +1650,10 @@ void auto_exclusion(int distance) {
   }
 
   /* setup the exclusions and clear the arrays. We do not setup the exclusions
-     up there,
-     since on_part_change clears the partCfg, so that we would have to restore
-     it
-     continously. Of course this could be optimized by bundling the exclusions,
-     but this
-     is only done once and the overhead is as much as for setting the bonds,
-     which
-     the user apparently accepted.
+     up there, since on_part_change clears the partCfg, so that we would have to
+     restore it continously. Of course this could be optimized by bundling the
+     exclusions, but this is only done once and the overhead is as much as for
+     setting the bonds, which the user apparently accepted.
   */
   for (p = 0; p <= max_seen_particle; p++) {
     for (j = 0; j < partners[p].n; j++)
@@ -1789,15 +1690,10 @@ int init_type_array(int type) {
     return ES_ERROR;
 
   for (int i = 0; i < Index.max_entry; i++)
-    if (type == Type.index[i]) {
+    if (type == Type.index[i] && Index.type[type] != -1) {
       // already indexed
       return ES_OK;
     }
-
-  updatePartCfg(WITHOUT_BONDS);
-
-  if (!partCfg)
-    return ES_ERROR;
 
   int type_index = -1;
   type_index = (Type.max_entry++);
@@ -1824,7 +1720,7 @@ int init_type_array(int type) {
 
   // allocates a list for ids for as many entries as there are particles right
   // now
-  if (!(partCfg) || type < 0) {
+  if (type < 0) {
     return ES_ERROR;
   }
   Type.index[type_index] = type;
@@ -1836,9 +1732,9 @@ int init_type_array(int type) {
   int t_c = 0; // index
   type_array[Index.type[type]].id_list =
       (int *)Utils::malloc(sizeof(int) * n_part);
-  for (int i = 0; i < n_part; i++) {
-    if (partCfg[i].p.type == type)
-      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+  for (auto const &p : partCfg) {
+    if (p.p.type == type)
+      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
   }
   int max_size = n_part;
   if (t_c != 0) {
@@ -1918,14 +1814,10 @@ int remove_id_type_array(int part_id, int type) {
 }
 
 int update_particle_array(int type) {
-  updatePartCfg(WITHOUT_BONDS);
-  if (!partCfg)
-    return ES_ERROR;
-
   int t_c = 0;
-  for (int i = 0; i < n_part; i++) {
-    if (partCfg[i].p.type == type) {
-      type_array[Index.type[type]].id_list[t_c++] = partCfg[i].p.identity;
+  for (auto const &p : partCfg) {
+    if (p.p.type == type) {
+      type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
     }
     if (t_c > (double)type_array[Index.type[type]].cur_size / 2.0) {
       if (reallocate_type_array(type) == ES_ERROR)
@@ -1995,26 +1887,6 @@ int find_particle_type_id(int type, int *id, int *in_id) {
     *id = type_array[Index.type[type]].id_list[*in_id];
     return ES_OK;
   }
-}
-
-int delete_particle_of_type(int type) {
-  int *p_id, *index_id;
-  p_id = (int *)Utils::malloc(sizeof(int));
-  index_id = (int *)Utils::malloc(sizeof(int));
-  if (find_particle_type_id(type, p_id, index_id) == ES_ERROR)
-    return ES_ERROR;
-
-  int in_type = Index.type[type];
-  // maximal possible index id
-  int max = type_array[in_type].max_entry - 1;
-  if (max < 0)
-    return ES_ERROR;
-
-  if (remove_particle(*p_id) == ES_ERROR) {
-    // takes also care of removing the index from the array
-    return ES_ERROR;
-  }
-  return ES_OK;
 }
 
 int add_particle_to_list(int part_id, int type) {
@@ -2187,13 +2059,6 @@ void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res) {
   res = &(p->p.rotation);
-}
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2) {
-  res1 = &(p->el.n);
-  res2 = p->el.e;
 }
 #endif
 

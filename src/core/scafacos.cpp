@@ -30,6 +30,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <numeric>
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -202,15 +203,13 @@ double long_range_energy() {
                                 particles.potentials.begin(), 0.0);
     } else {
 #ifdef SCAFACOS_DIPOLES
-      scafacos->run_dipolar(particles.charges, particles.positions,
-                            particles.fields, particles.potentials);
-      return -0.5 * coulomb.Dprefactor *
-             std::inner_product(particles.dipoles.begin(),
-                                particles.dipoles.end(),
-                                particles.potentials.begin(), 0.0);
+      scafacos->run_dipolar(particles.dipoles, particles.positions, particles.fields,particles.potentials);
+      return -0.5* coulomb.Dprefactor * std::inner_product(particles.dipoles.begin(),particles.dipoles.end(),particles.potentials.begin(),0.0);
 #endif
     }
   }
+
+  return 0.0;
 }
 
 /** Determine runtime for a specific cutoff */
@@ -274,34 +273,35 @@ void tune() {
   }
 }
 
-static void set_params_safe(const std::string &method,
-                            const std::string &params, bool dipolar_ia) {
-  if (scafacos && (scafacos->method != method)) {
+static void set_params_safe(const std::string &method, const std::string &params, bool dipolar_ia) {
+  if(scafacos) {
     delete scafacos;
     scafacos = 0;
   }
 
   scafacos = new Scafacos(method, comm_cart, params);
 
-  scafacos->parse_parameters(params);
-  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
+  int per[3] = { PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0 };
+
   scafacos->set_dipolar(dipolar_ia);
   scafacos->set_common_parameters(box_l, per, n_part);
 
   on_coulomb_change();
 
-  tune();
+  if (!dipolar_ia) {
+    tune();
 
-  on_coulomb_change();
+    on_coulomb_change();
+  }
 }
 
 /** Bend result from scafacos back to original format */
-std::string get_parameters() {
-  if (!scafacos) {
+std::string get_method_and_parameters() {
+  if(!scafacos) {
     return std::string();
   }
 
-  std::string p = scafacos->get_parameters();
+  std::string p = scafacos->get_method()+" "+scafacos->get_parameters();
 
   std::replace(p.begin(), p.end(), ',', ' ');
 
@@ -309,7 +309,8 @@ std::string get_parameters() {
 }
 
 double get_r_cut() {
-  if (scafacos) {
+  if(scafacos) {
+    if (!scafacos->has_near) return 0;
     return scafacos->r_cut();
   }
   return 0.0;
@@ -351,7 +352,34 @@ void set_dipolar(bool d) {
   } else
     runtimeErrorMsg() << "Scafacos not initialized.";
 }
+
+void free_handle() {
+
+  if (this_node==0) 
+    mpi_call(mpi_scafacos_free_slave, 0,0);
+  if(scafacos) {
+delete scafacos;
+    scafacos = 0;
+  }
 }
+
+void on_boxl_change() {
+// If scafacos is not active, do nothing
+if (!scafacos) return;
+
+// Get current parameters and re_initialize
+std::string params=scafacos->get_parameters();
+std::string method=scafacos->get_method();
+bool dip=scafacos->dipolar();
+
+// Delete existing scafacos instance
+free_handle();
+
+// And make a new one
+set_parameters(method,params,dip);
+}
+
+} // namespace scafacos
 #endif /* SCAFACOS */
 
 void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
@@ -377,4 +405,11 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
   set_dipolar(dip);
 #endif
 #endif /* SCAFACOS */
+}
+
+void mpi_scafacos_free_slave(int a, int b) {
+  #if defined(SCAFACOS) 
+  using namespace Scafacos;
+  free_handle();
+  #endif
 }

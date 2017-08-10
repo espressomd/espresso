@@ -6,8 +6,7 @@ from . import utils
 import numpy as np
 
 IF ELECTROKINETICS:
-
-    cdef class Electrokinetics(lb.HydrodynamicInteraction):
+    cdef class Electrokinetics(HydrodynamicInteraction):
         species_list = []
 
         def __getitem__(self, key):
@@ -193,6 +192,15 @@ IF ELECTROKINETICS:
             self.node[0] = key[0]
             self.node[1] = key[1]
             self.node[2] = key[2]
+
+        property potential:
+            def __get__(self):
+                cdef double potential
+                ek_node_print_potential(self.node[0], self.node[1], self.node[2], &potential)
+                return potential
+
+            def __set__(self, value):
+                raise Exception("Potential can not be set.")
 
         property velocity:
             def __get__(self):

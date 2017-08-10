@@ -20,6 +20,9 @@ struct ParticleIterator : public boost::iterator_facade<
 public:
   friend typename std::iterator_traits<ParticleIterator>::difference_type
   distance(ParticleIterator const &begin, ParticleIterator const &end) {
+    if(begin == end)
+      return 0;
+    
     /* Remaining parts in this cell */
     auto dist = ((*begin.m_cell)->n - begin.m_part_id);
     /* Now add the size of all cells between the next
@@ -65,7 +68,7 @@ private:
   }
 
   bool equal(ParticleIterator const &rhs) const {
-    return (*m_cell == *(rhs.m_cell)) && (m_part_id == rhs.m_part_id);
+    return (m_cell == (rhs.m_cell)) && (m_part_id == rhs.m_part_id);
   }
 
   Particle &dereference() const { return (*m_cell)->part[m_part_id]; }

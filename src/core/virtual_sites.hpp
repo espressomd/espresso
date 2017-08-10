@@ -21,6 +21,8 @@
 #ifndef _VIRTUAL_SITES_H
 #define _VIRTUAL_SITES_H
 
+#include "particle_data.hpp"
+
 /** \file virtual_sites.hpp
  *  This file contains routine to handle virtual sites
  *  Virtual sites are like particles, but they will be not integrated.
@@ -32,22 +34,13 @@
  *  - update virtual sites
  */
 
-#include "config.hpp"
-
 #ifdef VIRTUAL_SITES
-
-#include "particle_data.hpp"
-
 // Recalculate position and velocity for all virtual particles
 void update_mol_vel_pos();
 // Recalc velocities for virtual particles
 void update_mol_vel();
 // Recalc positions of virtual particles
 void update_mol_pos();
-
-// Update the position of all virutal particles
-// in the partCfg-array rather than in the local cells.
-int update_mol_pos_cfg();
 
 // The following three functions have to be provided by all implementations
 // of virtual sites
@@ -58,16 +51,23 @@ int update_mol_pos_cfg();
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-// void distribute_mol_force();
+//void distribute_mol_force();
+
 
 // Checks, if a particle is virtual
-inline int ifParticleIsVirtual(Particle *p) {
-  if (p->p.isVirtual == 0) {
-    return 0;
-  } else {
-    return 1;
-  }
+inline int ifParticleIsVirtual(Particle const*p){
+   if (p->p.isVirtual == 0) {
+      return 0;
+   }
+   else{
+      return 1;
+   }
 }
+
+inline int ifParticleIsVirtual(Particle  const& p){
+   return ifParticleIsVirtual(&p);
+}
+
 
 // According to what rules the virtual particles are placed and the forces and
 // torques accumulating on the virtual particles distributed back to real
@@ -75,12 +75,12 @@ inline int ifParticleIsVirtual(Particle *p) {
 
 // Virtual particles in center of mass of molecule
 #ifdef VIRTUAL_SITES_COM
-#include "virtual_sites_com.hpp"
+ #include "virtual_sites_com.hpp"
 #endif
 
 // Virtual particles relative to position and orientation of a real particle
 #ifdef VIRTUAL_SITES_RELATIVE
-#include "virtual_sites_relative.hpp"
+ #include "virtual_sites_relative.hpp"
 #endif
 
 #endif

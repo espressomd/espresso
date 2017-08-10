@@ -31,7 +31,7 @@ system.bonded_inter.add(fene)
 
 # Setup polymer of part_id 0 with fene bond
 
-poly = polymer.Polymer(N_P=1, MPC=mpc, bond=fene, bond_length=1)
+polymer.create_polymer(N_P=1, MPC=mpc, bond=fene, bond_length=1)
 
 
 print("Warming up the polymer chain.")

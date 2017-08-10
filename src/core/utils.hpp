@@ -39,7 +39,9 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "lees_edwards.hpp"
+#include "utils/List.hpp"
 #include "utils/math/sqr.hpp"
+#include "utils/memory.hpp"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -75,41 +77,7 @@
  * data types
  ************************************************/
 
-/** Integer list.
-    Use the functions specified in list operations. */
-typedef struct {
-  /** Dynamically allocated integer field. */
-  int *e;
-  /** number of used elements in the integer field. */
-  int n;
-  /** allocated size of the integer field. This value is ONLY changed
-      in the routines specified in list operations ! */
-  int max;
-} IntList;
-
-/** Double list.
-    Use the functions specified in list operations. */
-typedef struct {
-  /** Dynamically allocated double field. */
-  double *e;
-  /** number of used elements in the double field. */
-  int n;
-  /** allocated size of the double field. This value is ONLY changed
-      in the routines specified in list operations ! */
-  int max;
-} DoubleList;
-
-/*************************************************************/
-/** \name Dynamic memory allocation.                         */
-/*************************************************************/
-/*@{*/
-
-/* to enable us to make sure that freed pointers are invalidated, we normally
-   try to use realloc.
-   Unfortunately allocating zero bytes (which should be avoided) actually
-   allocates 16 bytes, and
-   reallocating to 0 also. To avoid this, we use our own malloc and realloc
-   procedures. */
+extern int this_node;
 
 namespace Utils {
 /**
@@ -135,44 +103,9 @@ template <unsigned n, typename T> inline T int_pow(T x) {
   }
 }
 
-/** used instead of realloc.
-    Makes sure that resizing to zero FREEs pointer */
-template <typename T> inline T *realloc(T *old, size_t size) {
-  if (size <= 0) {
-    ::free(static_cast<void *>(old));
-    return nullptr;
-  }
-
-  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
-/** used instead of malloc.
-    Makes sure that a zero size allocation returns a NULL pointer */
-inline void *malloc(size_t size) {
-  if (size <= 0) {
-    return nullptr;
-  }
-
-  void *p = ::malloc(size);
-
-  if (p == nullptr) {
-    fprintf(stderr, "Could not allocate memory.\n");
-    errexit();
-  }
-  return p;
-}
-
 /** Calculate signum of val, if supported by T */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 }
-
-/*@}*/
 
 /*************************************************************/
 /** \name List operations .                                  */
@@ -185,7 +118,7 @@ inline void init_intlist(IntList *il) {
   il->max = 0;
   il->e = NULL;
 }
-extern int this_node;
+// extern int this_node;
 
 /** Allocate an \ref IntList of size size. If you need an \ref IntList
     with variable size better use \ref realloc_intlist */
@@ -395,7 +328,8 @@ inline int calc_factors(int n, int *factors, int max) {
 /*@{*/
 
 /** Subtracts vector v2 from vector v1 and stores result in vector dv */
-inline void vecsub(double v1[3], double v2[3], double dv[3]) {
+template <typename T, typename U, typename V>
+inline void vecsub(T const &v1, U const &v2, V &dv) {
   dv[0] = v1[0] - v2[0];
   dv[1] = v1[1] - v2[1];
   dv[2] = v1[2] - v2[2];
@@ -412,7 +346,8 @@ inline double normr(double v[3]) {
 }
 
 /** calculates the squared length of a vector */
-inline double sqrlen(double v[3]) {
+template<typename T>
+double sqrlen(T const& v) {
   double d2 = 0.0;
   int i;
   for (i = 0; i < 3; i++)
@@ -442,7 +377,8 @@ inline double scalar(double a[3], double b[3]) {
 }
 
 /** calculates the vector product c of two vectors a and b */
-inline void vector_product(double a[3], double b[3], double c[3]) {
+template <typename T, typename U, typename V>
+inline void vector_product(T const &a, U const &b, V &c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
