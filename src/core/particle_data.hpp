@@ -102,6 +102,8 @@ struct ParticleProperties {
 #if defined(ROTATIONAL_INERTIA) || defined(LB_BOUNDARIES_GPU)
   /** rotational inertia */
   double rinertia[3];
+#else
+  static constexpr const double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
@@ -195,16 +197,16 @@ struct ParticleProperties {
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 
-  #if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
+#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
   double ext_torque[3];
-  #endif
-  #ifdef LB_BOUNDARIES_GPU
+#endif
+#ifdef LB_BOUNDARIES_GPU
   /** External force & torque in body-frame for LB_boundaries. */
   double body_force[3];
   double lab_force[3]; /** this one needs to be converted && stored */
   double body_torque[3];
-  #endif
+#endif
 #endif
 
 #ifdef LB_BOUNDARIES_GPU
