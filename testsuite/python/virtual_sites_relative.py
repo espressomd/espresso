@@ -185,7 +185,7 @@ class VirtualSites(ut.TestCase):
         
         # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
         # For n sphers n/2 dumbells.
-        for i in range(n/2):
+        for i in range(int(n/2)):
           # Type=1, i.e., no lj ia for the center of mass particles
           s.part.add(id=3*i, pos=random.random(3)*l,type=1,omega_lab=0.3*random.random(3),v=random.random(3))
           # lj spheres
@@ -208,17 +208,18 @@ class VirtualSites(ut.TestCase):
           # Constant energy to get rid of thermostat forces in the verification
           s.integrator.run(2)
           # Theck the virtual sites config,pos and vel of the lj spheres
-          for j in range(n/2):
+          for j in range(int(n/2)):
             self.verify_vs(s.part[3*j+1])
             self.verify_vs(s.part[3*j+2])
           
           # Verify lj forces on the particles. The non-virtual particles are skipeed
           # because the forces on them originate from the vss and not the lj interaction
-          verify_lj_forces(s,1E-10,3*np.arange(n/2,dtype=int))
+          verify_lj_forces(s,1E-10,3*np.arange(int(n/2),dtype=int))
         
         # Turn off lj interaction
         s.non_bonded_inter[0,0].lennard_jones.set_params(epsilon=0,sigma=0,cutoff=0,shift=0)
         
+    @ut.skipIf(espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"),"LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
     def test_lj(self):
         """Run LJ fluid test for different cell systems and skins."""
         s=self.s
