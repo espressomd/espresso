@@ -66,6 +66,7 @@ option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
+option(WITH_COVERAGE "Generate code coverage report" OFF)
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -200,6 +201,12 @@ if(WITH_VALGRIND_INSTRUMENTATION)
     include_directories(${VALGRIND_INCLUDE_DIRS})
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
+
+if( WITH_COVERAGE )
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+  link_libraries(gcov)
+endif( )
 
 include(RequireCXX11)
 

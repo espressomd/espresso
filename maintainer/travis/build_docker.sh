@@ -2,11 +2,13 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
+
 cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
 with_fftw=$with_fftw
 with_python_interface=yes
+with_coverage=$with_coverage
 myconfig=$myconfig
 check_procs=$check_procs
 make_check=$make_check
@@ -45,4 +47,9 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 
 	export TMPDIR=/tmp
 	maintainer/travis/build_cmake.sh
+fi
+
+if [ $with_coverage = "true" ]; then
+    cd ${PWD}
+    curl -s https://codecov.io/bash | bash -
 fi
