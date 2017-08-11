@@ -112,6 +112,8 @@ class H5mdTestOrdered(CommonTests):
             self.py_id), msg="ids correctly ordered and written by H5md!")
 
 
+@ut.skipIf(not espressomd.has_features(['H5MD']),
+           "H5MD not compiled in, can not check functionality.")
 class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
@@ -139,9 +141,8 @@ class H5mdTestUnordered(CommonTests):
 
 
 if __name__ == "__main__":
-    suite = ut.TestLoader().loadTestsFromTestCase(H5mdTestUnordered)
+    suite = ut.TestSuite() 
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestUnordered))
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestOrdered))
     result = ut.TextTestRunner(verbosity=4).run(suite)
-    if os.path.isfile("test.h5"):
-        os.remove("test.h5")
     sys.exit(not result.wasSuccessful())

@@ -215,9 +215,6 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+
 | Catalytic Reactions            | Single                 | Single           |
 +--------------------------------+------------------------+------------------+
-| mbtools package                | Group                  | Group            |
-+--------------------------------+------------------------+------------------+
-
 .. _Basic program structure:
 
 Basic program structure

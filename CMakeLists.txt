@@ -112,6 +112,9 @@ if (WITH_CUDA)
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
     list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+      list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
+    endif()
     SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     if (APPLE)
@@ -171,10 +174,10 @@ endif(WITH_HDF5)
 
 # Check for the h5xx submodule
 # and try to check it out if not found.
-if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+if(WITH_HDF5 AND NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
   # Try to find git
   find_package(Git)
-  if(GIT_FOUND AND EXISTS ".git")
+  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   endif()
