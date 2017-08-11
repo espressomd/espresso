@@ -1,3 +1,4 @@
+=================
 Developer's Guide
 =================
 .. warning::
@@ -225,7 +226,9 @@ Espresso uses two communication models, namely master-slave and synchronous.
   runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation,
   changing of particle properties and changing global simulation parameters.
   When a Python command such as:::
+
     system.part.add(pos=(1,2,3))
+
   is issued, the head node determines, which node is responsible for the given position, and then sends the node the command to place the particle.
 
 * When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
@@ -236,7 +239,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
   involved in the communication. If this is not done, a deadlock will result.
 
 Adding calls to the master-slave framework
------------------------------------------
+------------------------------------------
 
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +255,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add(my_callback);
     }
+
   You can, e.g., call your registration from initialize.cpp:on_program_start()
   Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
   be used. For example::
@@ -260,6 +264,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add([](int, int){ /* Do something */ });
     }
+
   can be used to add a lambda function as callback.
 * Then, you can use your callback from the head node::
 
@@ -267,6 +272,7 @@ Using an instance of MpiCallback
     void call_my_callback() {
       Communication::mpiCallbacks.call(my_callback, param1, param2);
     }
+
   This only works outside the integration loop. After the callback has been called, synchronous mpi communication can be done.
 
 Legacy callbacks
