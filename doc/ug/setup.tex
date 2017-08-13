@@ -151,17 +151,6 @@ set:
   verlet list has been re-used.
 \item[warnings] (int) if non-zero (default), some warnings are printed
   out. Set this to zero if you get annoyed by them.
-\item[sd_viscosity] (double) viscosity of the fluid for the Stokesian Dynamics
-  simulation.
-\item[sd_radius] (double) hydrodynamic radius of the particles used in
-  Stokesian Dynamics.
-\item[sd_seed] (int[2]) seed of the Stokes Dynamics random number generator.
-\item[sd_random_state] (int[2]) offset of the random number
-  generator. Together with the seed, the state of the random number generator
-  is well defined.
-\item[sd_precision_random] (double) precision used for the approximation of
-  the square root of the mobility. Sometimes higher accuracy can speedup the
-  simulation.
 \end{globvar}
 
 
@@ -601,21 +590,6 @@ processing unit operating at a constant temperature.
 
 Be aware that this thermostat requires \var{temperature} to be given
 in Kelvin.
-
-\subsection{Stokesian Dynamics thermostat}
-\label{ssec:SDthermostat}
-\begin{essyntax}
-  thermostat sd \var{temperature}
-  \begin{features}
-    \required{CUDA} and \required{SD}
-  \end{features}
-\end{essyntax}
-
-This thermostat should be used together with the Stokesian Dynamics
-implementation.
-No other thermostat is able to thermalize SD correctly.
-The precision of the farfield contribution of the thermostat can be tuned
-with
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}

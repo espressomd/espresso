@@ -34,7 +34,7 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from ._system import System
+from .system import System
 
 
 class Analysis(object):
@@ -539,14 +539,13 @@ class Analysis(object):
         # Total energy
         cdef int i
         cdef double tmp
-        tmp = 0
-        for i in range(c_analyze.total_energy.data.n):
-            tmp += c_analyze.total_energy.data.e[i]
+        tmp = c_analyze.total_energy.data.e[0]
+        tmp += calculate_current_potential_energy_of_system()
 
         e["total"] = tmp
 
-        # Ideal
-        e["ideal"] = c_analyze.total_energy.data.e[0]
+        # Kinetic energy
+        e["kinetic"] = c_analyze.total_energy.data.e[0]
 
         # Nonbonded
         cdef double total_bonded
@@ -634,15 +633,10 @@ class Analysis(object):
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
         check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
-        if chain_start < 0:
-            raise ValueError('chain_start must be greater than zero')
-        if chain_length < 0:
-            raise ValueError('chain_length must be greater than zero')
-        if number_of_chains < 0:
-            raise ValueError('number_of_chains must be greater than zero')
-        if chain_start + chain_length * number_of_chains > len(self._system.part):
-            raise ValueError(
-                'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
+        id_min=chain_start; id_max=chain_start + chain_length * number_of_chains;
+        for i in range(id_min,id_max):
+            if (not self._system.part.exists(i)):
+                raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(i,chain_start,number_of_chains,chain_length));
         c_analyze.chain_start = chain_start
         c_analyze.chain_n_chains = number_of_chains
         c_analyze.chain_length = chain_length
@@ -664,9 +658,6 @@ class Analysis(object):
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        # Used to take the WITHOUT_BONDS define
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
 
         return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
@@ -702,8 +693,6 @@ class Analysis(object):
         cdef vector[int] p1_types = type_list_a
         cdef vector[int] p2_types = type_list_b
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         if rdf_type == 'rdf':
             c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
@@ -755,8 +744,6 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         c_analyze.calc_part_distribution(p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
 
@@ -900,25 +887,25 @@ class Analysis(object):
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
         if (mode == "reset"):
-            _Vkappa["Vk1"] = 0.0
-            _Vkappa["Vk2"] = 0.0
-            _Vkappa["avk"] = 0.0
+            self._Vkappa["Vk1"] = 0.0
+            self._Vkappa["Vk2"] = 0.0
+            self._Vkappa["avk"] = 0.0
         elif (mode == "read"):
-            return _Vkappa
+            return self._Vkappa
         elif (mode == "set"):
             check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
-            _Vkappa["Vk1"] = Vk1
+            self._Vkappa["Vk1"] = Vk1
             check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
-            _Vkappa["Vk2"] = Vk2
+            self._Vkappa["Vk2"] = Vk2
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
-            _Vkappa["avk"] = avk
-            if (_Vkappa["avk"] <= 0.0):
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
+            self._Vkappa["avk"] = avk
+            if (self._Vkappa["avk"] <= 0.0):
+                result = self._Vkappa["Vk1"] = self._Vkappa["Vk2"] = self._Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
             else:
-                result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
-                    (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+                result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
+                    (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
             raise Exception("ERROR: Unknown mode.")

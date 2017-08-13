@@ -73,16 +73,6 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_paramet
       frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
       frac6 = frac2*frac2*frac2;
       fac_lj = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (ia_params->LJ_capradius * dist);
-
-// #ifdef CONFIGTEMP
-//       extern double configtemp[2];
-//       int numfac = 0;
-//       if (p1->p.configtemp) numfac+=1;
-//       if (p2->p.configtemp) numfac+=1;
-//       configtemp[0] -= numfac*SQR(48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / r_off);
-//       configtemp[1] -= numfac*24.0 * ia_params->LJ_eps * frac6*(-22.0*frac6+5.0) / (SQR(r_off));
-// #endif
-
     }
   } 
 

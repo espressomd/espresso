@@ -31,14 +31,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset-gaussrandom
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset-gaussrandomcut
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=rest1
     - os: linux
       sudo: required

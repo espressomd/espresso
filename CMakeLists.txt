@@ -112,6 +112,9 @@ if (WITH_CUDA)
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
     list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
+      list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
+    endif()
     SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     if (APPLE)
@@ -120,7 +123,7 @@ if (WITH_CUDA)
   endif(CUDA_FOUND)
 endif(WITH_CUDA)
 
-find_package(PythonInterp)
+find_package(PythonInterp REQUIRED)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -171,13 +174,13 @@ endif(WITH_HDF5)
 
 # Check for the h5xx submodule
 # and try to check it out if not found.
-if(WITH_HDF5 AND NOT EXISTS "libs/h5xx/.git")
+if(WITH_HDF5 AND NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
   # Try to find git
   find_package(Git)
-  if(GIT_FOUND)
+  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  endif(GIT_FOUND)
+  endif()
 endif()
 
 if(WITH_SCAFACOS)
@@ -201,6 +204,17 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 include(RequireCXX11)
 
 #######################################################################
+# Process MPI settings
+#######################################################################
+
+find_package(MPI REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
+include_directories(${MPI_INCLUDE_PATH})
+list(APPEND LIBRARIES ${MPI_LIBRARIES})
+add_definitions(-DH5XX_USE_MPI)
+
+#######################################################################
 # Boost
 #######################################################################
 
@@ -222,17 +236,6 @@ if(WITH_TESTS)
   add_custom_target(check)
   add_subdirectory(testsuite)
 endif(WITH_TESTS)
-
-#######################################################################
-# Process MPI settings
-#######################################################################
-
-find_package(MPI REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
-list(APPEND LIBRARIES ${MPI_LIBRARIES})
-add_definitions(-DH5XX_USE_MPI)
 
 #######################################################################
 # Paths

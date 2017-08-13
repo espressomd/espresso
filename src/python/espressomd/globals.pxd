@@ -127,9 +127,6 @@ cdef extern from "rattle.hpp":
 cdef extern from "tuning.hpp":
     extern int timing_samples
 
-cdef extern from "imd.hpp":
-    extern int transfer_rate
-
 
 cdef extern from "grid.hpp":
     double box_l[3]

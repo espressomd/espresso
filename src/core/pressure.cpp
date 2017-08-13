@@ -30,17 +30,17 @@
 
 #include "short_range_loop.hpp"
 
-Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0,0};
-Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0,0};
-Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0,0};
-Observable_stat total_p_tensor = {0, {NULL,0,0},0,0,0,0,0};
+Observable_stat virials  = {0, {}, 0,0,0,0,0};
+Observable_stat total_pressure = {0, {}, 0,0,0,0,0};
+Observable_stat p_tensor = {0, {},0,0,0,0,0};
+Observable_stat total_p_tensor = {0, {},0,0,0,0,0};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded  = {0, {NULL,0,0}, 0,0,0};
-Observable_stat_non_bonded total_pressure_non_bonded = {0, {NULL,0,0}, 0,0,0};
-Observable_stat_non_bonded p_tensor_non_bonded = {0, {NULL,0,0},0,0,0};
-Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {NULL,0,0},0,0,0};
+Observable_stat_non_bonded virials_non_bonded  = {0, {}, 0,0,0};
+Observable_stat_non_bonded total_pressure_non_bonded = {0, {}, 0,0,0};
+Observable_stat_non_bonded p_tensor_non_bonded = {0, {},0,0,0};
+Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {},0,0,0};
 
 nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0.0},1, 0 ,{NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},0,0,0};
 

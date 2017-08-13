@@ -39,6 +39,7 @@
 #include "partCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+#include "utils/make_unique.hpp"
 #include "virtual_sites.hpp"
 #include <cmath>
 #include <cstdlib>
@@ -318,10 +319,6 @@ void init_particle(Particle *part) {
 #ifdef MULTI_TIMESTEP
   part->p.smaller_timestep = 0;
 #endif
-
-#ifdef CONFIGTEMP
-  part->p.configtemp = 0;
-#endif
 }
 
 void free_particle(Particle *part) {
@@ -349,7 +346,7 @@ void realloc_local_particles(int part) {
         local_particles, sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
-    for (int i = old_size; i < max_local_particles; i++)
+    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
 }
@@ -504,19 +501,21 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-int get_particle_data(int part, Particle *data) {
-  int pnode;
+std::unique_ptr<Particle> get_particle_data(int part) {
+  if (part < 0 || part > max_seen_particle)
+    return nullptr;
+
   if (!particle_node)
     build_particle_node();
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
+  int pnode = particle_node[part];
   if (pnode == -1)
-    return ES_ERROR;
-  mpi_recv_part(pnode, part, data);
-  return ES_OK;
+    return nullptr;
+
+  auto pp = Utils::make_unique<Particle>();
+
+  mpi_recv_part(pnode, part, pp.get());
+  return pp;
 }
 
 int place_particle(int part, double p[3]) {
@@ -795,24 +794,8 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 }
 #endif
 
-#ifdef CONFIGTEMP
-int set_particle_configtemp(int part, int configtemp) {
-  int pnode;
-  if (!particle_node)
-    build_particle_node();
-
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-  pnode = particle_node[part];
-
-  if (pnode == -1)
-    return ES_ERROR;
-  mpi_send_configtemp_flag(pnode, part, configtemp);
-  return ES_OK;
-}
-#endif
-
-int set_particle_q(int part, double q) {
+int set_particle_q(int part, double q)
+{
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -862,17 +845,14 @@ int set_particle_type(int part, int type) {
   if (Type_array_init) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-    if (cur_par != (Particle *)0) {
-      if (get_particle_data(part, cur_par) != ES_ERROR) {
-        int prev_type = cur_par->p.type;
-        if (prev_type != type) {
-          // particle existed before so delete it from the list
-          remove_id_type_array(part, prev_type);
-        }
+    auto cur_par = get_particle_data(part);
+    if (cur_par) {
+      int prev_type = cur_par->p.type;
+      if (prev_type != type) {
+        // particle existed before so delete it from the list
+        remove_id_type_array(part, prev_type);
       }
     }
-    free(cur_par);
 
     if (add_particle_to_list(part, type) == ES_ERROR) {
       // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -934,10 +914,9 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
 
   double A[9];
   double omega[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
              A[0 + 3 * 2] * omega_lab[2];
@@ -985,10 +964,9 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
 
   double A[9];
   double torque[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
               A[0 + 3 * 2] * torque_lab[2];
@@ -1171,13 +1149,15 @@ void remove_all_particles() {
 int remove_particle(int part) {
   int pnode;
 
-  Particle *cur_par = (Particle *)Utils::malloc(sizeof(Particle));
-  if (get_particle_data(part, cur_par) == ES_ERROR)
+  auto cur_par = get_particle_data(part);
+
+  if (cur_par) {
+    int type = cur_par->p.type;
+    if (remove_id_type_array(part, type) == ES_ERROR)
+      return ES_ERROR;
+  } else {
     return ES_ERROR;
-  int type = cur_par->p.type;
-  free(cur_par);
-  if (remove_id_type_array(part, type) == ES_ERROR)
-    return ES_ERROR;
+  }
 
   if (!particle_node)
     build_particle_node();
@@ -1298,6 +1278,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
+  std::fill(local_particles, local_particles + max_local_particles, nullptr);
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
@@ -1738,7 +1719,7 @@ int init_type_array(int type) {
     return ES_ERROR;
 
   for (int i = 0; i < Index.max_entry; i++)
-    if (type == Type.index[i]) {
+    if (type == Type.index[i] && Index.type[type] != -1) {
       // already indexed
       return ES_OK;
     }
@@ -1937,26 +1918,6 @@ int find_particle_type_id(int type, int *id, int *in_id) {
   }
 }
 
-int delete_particle_of_type(int type) {
-  int *p_id, *index_id;
-  p_id = (int *)Utils::malloc(sizeof(int));
-  index_id = (int *)Utils::malloc(sizeof(int));
-  if (find_particle_type_id(type, p_id, index_id) == ES_ERROR)
-    return ES_ERROR;
-
-  int in_type = Index.type[type];
-  // maximal possible index id
-  int max = type_array[in_type].max_entry - 1;
-  if (max < 0)
-    return ES_ERROR;
-
-  if (remove_particle(*p_id) == ES_ERROR) {
-    // takes also care of removing the index from the array
-    return ES_ERROR;
-  }
-  return ES_OK;
-}
-
 int add_particle_to_list(int part_id, int type) {
   int l_err = 1;
   int already_in = 0;
@@ -2127,13 +2088,6 @@ void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res) {
   res = &(p->p.rotation);
-}
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2) {
-  res1 = &(p->el.n);
-  res2 = p->el.e;
 }
 #endif
 
