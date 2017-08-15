@@ -36,7 +36,7 @@ assert_features(["ENGINE","LB_GPU","MASS","ROTATION","ROTATIONAL_INERTIA"])
 # Read in the hydrodynamic type (pusher/puller) and position
 
 if len(sys.argv) != 3:
-    print("Usage: Espresso $argv0 <type> <pos>")
+    print("Usage:",sys.argv[0],"<type> <pos>")
     exit()
 
 mode = sys.argv[1]

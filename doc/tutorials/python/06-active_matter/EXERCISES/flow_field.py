@@ -98,6 +98,11 @@ force    = 0.1
 system.part.add(pos=[x0,y0,z0],type=0,mass=sph_mass, rinertia=[Ixyz,Ixyz,Ixyz],
                 swimming={'f_swim':force, 'mode':mode, 'dipole_length':sph_size + 0.5})
 
+## Exercise 5 ##
+# Why is the dipole_length chosen in this way?
+# What happens if you make the length go to zero?
+# Why does this happen?
+
 ################################################################################
 
 # Setup the fluid (quiescent)

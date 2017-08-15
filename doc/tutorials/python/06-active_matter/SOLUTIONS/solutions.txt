@@ -1,6 +1,6 @@
 Solutions:
 
-enhanced_diffusion.py
+--- enhanced_diffusion.py ---
 
 E1. ESPResSo is C++-based where the maximum possible integer is
     2^31-1.  If we naively used sys.maxint from Python we would obtain a
@@ -11,21 +11,21 @@ E2. To determine the bulk diffusive properties of a single particle that
     does not experience long-ranged interactions, one requires a box that
     is at least larger than the short range interactions. In this case 
     the box is still quite big.
-E3. See example script
-E4. See example script
+E3. See solution script
+E4. See solution script
 
-rectification_geometry.py
+--- rectification_geometry.py ---
 
-E1. See example script
+E1. See solution script
 E2. The 'clip' feature of paraview is particularly suited to the task.
 
-rectification_simulation.py
+--- rectification_simulation.py ---
 
 E1. The Langevin thermostat has a limited range of stablitity, the choices
     for the friction, time step, and temperature respect this range.
-E2. See example script
-E3. See example script
-E4. See example script
+E2. See solution script
+E3. See solution script
+E4. See solution script
 E5. Rectification should be detectable when vel = 0.0 and vel = 5.0 are
     compared. The time it takes to evaluate the script is rather long,
     about 20 minutes. It is suggested that the student does one of the 
@@ -33,11 +33,11 @@ E5. Rectification should be detectable when vel = 0.0 and vel = 5.0 are
     using paraview. This can also be combined with the visualization you 
     have of the boundaries from the rectification_geometry.py script.
 
-flow_field.py
+--- flow_field.py ---
 
-E1. See example script
-E2. See example script
-E3. See example script (needlessly convoluted)
+E1. See solution script
+E2. See solution script
+E3. See solution script (needlessly convoluted)
 E4. The coupling point inherits an effective hydrodynamic size from
     being interpolated on the lattice, roughly 0.5 (agrid = 1) for this
     choice of friction coefficient. The mass and rotational interia do

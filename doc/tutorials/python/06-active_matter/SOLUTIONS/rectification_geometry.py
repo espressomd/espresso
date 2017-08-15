@@ -34,11 +34,11 @@ import numpy as np
 import os
 import sys
 
-assert_features(["LB","LB_BOUNDARIES"])
+assert_features(["LB_GPU","LB_BOUNDARIES_GPU"])
 
 # Setup constants
 
-outdir = "./RESULTS_RECTIFICATION/"
+outdir = "./RESULTS_RECTIFICATION_GEOMETRY/"
 try:
     os.makedirs(outdir)
 except:
@@ -67,7 +67,7 @@ frict = 20.0
 visco = 1.0
 densi = 1.0
 
-lbf = lb.LBFluid(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict)
+lbf = lb.LBFluid_GPU(agrid=agrid, dens=densi, visc=visco, tau=dt, fric=frict)
 system.actors.add(lbf)
 
 ################################################################################

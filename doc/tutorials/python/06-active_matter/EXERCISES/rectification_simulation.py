@@ -60,7 +60,7 @@ def a2quat(phi,theta):
 # Read in the active velocity from the command prompt
 
 if len(sys.argv) != 2:
-    print("Usage: Espresso $argv0 <vel> (0 <= vel < 10.0)")
+    print("Usage:",sys.argv[0],"<vel> (0 <= vel < 10.0)")
     exit()
 
 vel = float(sys.argv[1])
