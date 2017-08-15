@@ -32,7 +32,7 @@
 #include "utils.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "mol_cut.hpp"
+
 
 #ifdef ELECTROSTATICS
 
@@ -121,7 +121,7 @@ inline void add_interrf_pair_force(const Particle * const p1, const Particle * c
 #ifdef ONEPART_DEBUG
   double fac=0.0 ; /* TODO: this  variable was not declared. Now the code compiles, but I have no idea of what value to assign to it (MS) */
 #endif
-  if ((ia_params->rf_on ==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
+  if ((ia_params->rf_on ==1) && (dist < rf_params.r_cut)) {
      add_rf_coulomb_pair_force_no_cutoff(p1,p2,d, dist,force);
   }
 
@@ -132,7 +132,7 @@ inline void add_interrf_pair_force(const Particle * const p1, const Particle * c
 inline double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double val;
-  if ((ia_params->rf_on==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
+  if ((ia_params->rf_on==1) && (dist < rf_params.r_cut)) {
      val=rf_coulomb_pair_energy_no_cutoff(p1,p2,dist);
      return val;
   }

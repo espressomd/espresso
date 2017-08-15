@@ -96,7 +96,7 @@ pagesize,                       % set the pagesize in a DVI document
 \lstset{numbers=left, numberstyle=\tiny, numbersep=5pt, showspaces=false, showstringspaces=false,postbreak=\space, breakindent=5pt, breaklines}
 \lstset{language=python, keywordstyle=\color{blue}\bfseries ,emphstyle=\color{green}, commentstyle=\color{red}\itshape }
 \lstset{keywordsprefix=setmd}
-\lstset{keywords=[6]{thermostat,part,inter,integrate,rescale_velocities,code_info,save_sim,writepdb,analyze,uwerr}}
+\lstset{keywords=[6]{thermostat,part,inter,integrate,rescale_velocities,save_sim,writepdb,analyze,uwerr}}
 
 \newtheorem{task}{Task}
 
@@ -220,7 +220,7 @@ Using the pypresso script in the build directory, python simulation scripts can 
         \begin{task} 
              You can check the features, that are compiled in the \es{} core by
              issuing \texttt{print(espressomd.features())} after having imported the 
-             \texttt{espressomd} Module. Features can be switched on or off via the \tt{myconfig.hpp} file. See the chapter on installation in the user's guide.
+             \texttt{espressomd} Module. Features can be switched on or off via the \texttt{myconfig.hpp} file. See the chapter on installation in the user's guide.
         \end{task}
     \end{minipage}
 }\vspace{1cm}
@@ -263,9 +263,7 @@ system.box_l = [box_l_x, box_l_y, box_l_z]
 \end{pypresso}
 
 \subsection{Choosing the thermodynamic ensemble, thermostat}
-Simulations can be carried out in different thermodynamic ensembles such as NVE (particle
-Number, Velocity, Energy) or NVT (particle Number, Velocity, Temperature)
-as well as NPT-isotropic (particle Number, Pressure, Temperature). 
+Simulations can be carried out in different thermodynamic ensembles such as NVE (particle Number, Volume, Energy) or NVT (particle Number, Volume, Temperature) as well as NPT-isotropic (particle Number, Pressure, Temperature).
 The ensemble is maintained by a thermostat. In this tutorial we use the Langevin thermostat.
 
 In \es{}, the thermostat is set as follows:
@@ -367,7 +365,6 @@ First, we include necessary modules with \lstinline|import|.
 \begin{pypresso}
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 
 import os 
 import numpy as np
@@ -378,7 +375,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 \end{pypresso}\vspace{0,2cm}
 

@@ -27,17 +27,21 @@
 namespace Shapes {
 class Slitpore : public Shape {
 public:
-  Slitpore() : m_pore_mouth(0.0), m_upper_smoothing_radius(0.0), m_lower_smoothing_radius(0.0), 
-	           m_channel_width(0.0), m_pore_width(0.0), m_pore_length(0.0) {}
+  Slitpore()
+      : m_pore_mouth(0.0), m_upper_smoothing_radius(0.0),
+        m_lower_smoothing_radius(0.0), m_channel_width(0.0), m_pore_width(0.0),
+        m_pore_length(0.0) {}
 
-  int calculate_dist(const double *ppos, double *dist, double *vec) const override;
+  int calculate_dist(const double *ppos, double *dist,
+                     double *vec) const override;
 
-  double  &pore_mouth()  { return m_pore_mouth; }
-  double  &upper_smoothing_radius()  { return m_upper_smoothing_radius; }
-  double  &lower_smoothing_radius()  { return m_lower_smoothing_radius; }
-  double  &channel_width()  { return m_channel_width; }
-  double  &pore_width()  { return m_pore_width; }
-  double  &pore_length()  { return m_pore_length; }
+  double &pore_mouth() { return m_pore_mouth; }
+  double &upper_smoothing_radius() { return m_upper_smoothing_radius; }
+  double &lower_smoothing_radius() { return m_lower_smoothing_radius; }
+  double &channel_width() { return m_channel_width; }
+  double &pore_width() { return m_pore_width; }
+  double &pore_length() { return m_pore_length; }
+
 private:
   double m_pore_mouth;
   double m_upper_smoothing_radius;

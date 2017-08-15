@@ -101,9 +101,6 @@ double virial_store[3] = {0., 0., 0.};
 #endif
 #endif
 
-/** For configurational temperature only */
-double configtemp[2] = {0., 0.};
-
 #ifdef ADDITIONAL_CHECKS
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
@@ -218,9 +215,6 @@ void integrate_ensemble_init() {
       nptiso.p_inst = 0.0;
       nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
       nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-#ifdef CONFIGTEMP
-      configtemp[0] = configtemp[1] = 0.0;
-#endif
     }
   }
 #endif
@@ -361,15 +355,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef SD
-    if (thermo_switch & THERMO_SD) {
-      runtimeWarning("Use integrate_sd to use Stokesian Dynamics Thermalizer.");
-    }
-    if (thermo_switch & THERMO_BD) {
-      runtimeWarning("Use integrate_sd to use Brownian Dynamics Thermalizer.");
-    }
-#endif
-
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
@@ -470,7 +455,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       IBM_ForcesIntoFluid_CPU();
 #ifdef LB_GPU
     if (lattice_switch & LATTICE_LB_GPU)
-      IBM_ForcesIntoFluid_GPU();
+      IBM_ForcesIntoFluid_GPU(local_cells.particles());
 #endif
 #endif
 
@@ -536,7 +521,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
 
-    IBM_UpdateParticlePositions();
+    IBM_UpdateParticlePositions(local_cells.particles());
 // We reset all since otherwise the halo nodes may not be reset
 // NB: the normal Espresso reset is also done after applying the forces
 //    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
@@ -1213,8 +1198,9 @@ void force_and_velocity_display() {
 
 /** @TODO: This needs to go!! */
 
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
-
+int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+  int reuse_forces = 0;
+  reuse_forces = reuse_forces_par;
   INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
 
   if (recalc_forces) {
@@ -1237,7 +1223,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = 0.4 * max_cut;
+    skin = std::min(0.4 * max_cut,max_skin);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 

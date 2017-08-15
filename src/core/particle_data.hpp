@@ -25,8 +25,10 @@
     see \ref particle_data.cpp "particle_data.c"
 */
 
+#include "Vector.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include <memory>
 
 /************************************************
  * defines
@@ -86,7 +88,7 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type;
 
-#ifdef MASS
+#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
   /** particle mass */
   double mass;
 #else
@@ -97,9 +99,11 @@ struct ParticleProperties {
   double solvation[2 * LB_COMPONENTS];
 #endif
 
-#ifdef ROTATIONAL_INERTIA
+#if defined(ROTATIONAL_INERTIA) || defined(LB_BOUNDARIES_GPU)
   /** rotational inertia */
   double rinertia[3];
+#else
+  static constexpr const double rinertia[3] = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
@@ -180,12 +184,6 @@ struct ParticleProperties {
   int smaller_timestep;
 #endif
 
-#ifdef CONFIGTEMP
-  /** is the particle included in the configurational temperature?
-  * 1 = yes
-  * 0 = no (Default) */
-  int configtemp;
-#endif
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:
@@ -199,11 +197,21 @@ struct ParticleProperties {
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
 
-#ifdef ROTATION
+#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
   double ext_torque[3];
 #endif
+#ifdef LB_BOUNDARIES_GPU
+  /** External force & torque in body-frame for LB_boundaries. */
+  double body_force[3];
+  double lab_force[3]; /** this one needs to be converted && stored */
+  double body_torque[3];
+#endif
+#endif
 
+#ifdef LB_BOUNDARIES_GPU
+  std::vector<float> anchors;
+  std::vector<float> anchors_out;
 #endif
 };
 
@@ -212,7 +220,8 @@ struct ParticleProperties {
 typedef struct {
   /** periodically folded position. */
   double p[3];
-#ifdef ROTATION
+
+#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** quaternions to define particle orientation */
   double quat[4];
   /** unit director calculated from the quaternions */
@@ -246,6 +255,10 @@ typedef struct {
   double torque[3];
 #endif
 
+#ifdef LB_BOUNDARIES_GPU
+  float sf[3];
+  float storque[3];
+#endif
 } ParticleForce;
 
 /** Momentum information on a particle. Information not contained in
@@ -260,6 +273,10 @@ typedef struct {
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 #endif
+#ifdef LB_BOUNDARIES_GPU
+  /* single precision omega */
+  float somega[3];
+#endif
 } ParticleMomentum;
 
 /** Information on a particle that is needed only on the
@@ -270,10 +287,8 @@ typedef struct {
   /** index of the simulation box image where the particle really sits. */
   int i[3];
 
-#ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
   int ghost;
-#endif
 
 #ifdef GHMC
   /** Data for the ghmc thermostat, last saved
@@ -308,7 +323,46 @@ typedef struct {
 } ParticleParametersSwimming;
 
 /** Struct holding all information for one particle. */
-typedef struct {
+struct Particle {
+  int &identity() { return p.identity; }
+  int const &identity() const { return p.identity; }
+
+  bool operator==(Particle const &rhs) const {
+    return identity() == rhs.identity();
+  }
+
+  bool operator!=(Particle const &rhs) const {
+    return identity() != rhs.identity();
+  }
+
+  /**
+   * @brief Return a copy of the particle with
+   *        only the fixed size parts.
+   *
+   * This creates a copy of the particle with
+   * only the parts than can be copied w/o heap
+   * allocation, e.g. w/o bonds and exlusions.
+   * This is more efficient if these parts are
+   * not actually needed.
+   */
+  Particle flat_copy() const {
+    Particle ret{};
+
+    ret.p = p;
+    ret.r = r;
+    ret.m = m;
+    ret.f = f;
+    ret.l = l;
+#ifdef LB
+    ret.lc = lc;
+#endif
+#ifdef ENGINE
+    ret.swim = swim;
+#endif
+
+    return ret;
+  }
+
   ///
   ParticleProperties p;
   ///
@@ -329,8 +383,20 @@ typedef struct {
       easily from the bonded_ia_params entry for the type. */
   IntList bl;
 
+  IntList &bonds() { return bl; }
+  IntList const &bonds() const { return bl; }
+
+  IntList &exclusions() {
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded interactions
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+#ifdef EXCLUSIONS
+  /** list of particles, with which this particle has no nonbonded
+   * interactions
    */
   IntList el;
 #endif
@@ -338,8 +404,7 @@ typedef struct {
 #ifdef ENGINE
   ParticleParametersSwimming swim;
 #endif
-
-} Particle;
+};
 
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
@@ -378,15 +443,7 @@ extern int *particle_node;
 /** id->particle mapping on all nodes. This is used to find partners
     of bonded interactions. */
 extern Particle **local_particles;
-
-/** Particles' current configuration. Before using that
-    call \ref updatePartCfg or \ref sortPartCfg to allocate
-    the data if necessary (which is decided by \ref updatePartCfg). */
-extern Particle *partCfg;
-
-/** if non zero, \ref partCfg is sorted by particle order, and
-    the particles are stored consecutively starting with 0. */
-extern int partCfgSorted;
+extern int max_local_particles;
 
 /** Particles' current bond partners. \ref partBondPartners is
     sorted by particle order, and the particles are stored
@@ -500,13 +557,12 @@ void particle_invalidate_part_node();
 /** Realloc \ref local_particles. */
 void realloc_local_particles();
 
-/** Get particle data. Note that the bond intlist is
-    allocated so that you are responsible to free it later.
+/** Get particle data.
     @param part the identity of the particle to fetch
-    @param data where to store its contents.
-    @return ES_OK if particle existed
+    @return Pointer to copy of particle if it exists,
+            nullptr otherwise;
 */
-int get_particle_data(int part, Particle *data);
+std::unique_ptr<Particle> get_particle_data(int part);
 
 /** Call only on the master node.
     Move a particle to a new position.
@@ -600,15 +656,6 @@ int set_particle_out_direction(int part, double out_direction[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_smaller_timestep(int part, int small_timestep);
-#endif
-
-#ifdef CONFIGTEMP
-/** Call only on the master node: include particle in configurational T.
-    @param part the particle.
-    @param configtemp flag for configurational temperature inclusion.
-    @return TCL_OK if particle existed
-*/
-int set_particle_configtemp(int part, int configtemp);
 #endif
 
 /** Call only on the master node: set particle charge.
@@ -802,30 +849,6 @@ void remove_all_particles();
 */
 void remove_all_bonds_to(int part);
 
-/** Get the complete unsorted informations on all particles into \ref
-    partCfg if something's changed. This is a severe performance
-    drawback and might even fail for lack of memory for large systems.
-    If you need the particle info sorted, call \ref sortPartCfg
-    instead.  This function is lazy. If you would like the bonding
-    information in \ref partCfg to be valid you should set the value
-    of  to \ref WITH_BONDS.
-*/
-int updatePartCfg(int bonds_flag);
-
-/** release the partCfg array. Use this function, since it also frees the
-    bonds, if they are used.
-*/
-void freePartCfg();
-
-/** sorts the \ref partCfg array. This is indicated by setting
-    \ref partCfgSorted to 1. Note that for this to work the particles
-    have to be stored consecutively starting with 0.
-    This function is lazy.
-    @return 1 iff sorting was possible, i. e. the particles were stored
-    consecutively.
-*/
-int sortPartCfg();
-
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Move a particle to a new position.
     If it does not exist, it is created. the position must
@@ -985,10 +1008,6 @@ int find_particle_type(int type, int *id);
  * typelist */
 int find_particle_type_id(int type, int *id, int *in_id);
 
-/** delete one randomly chosen particle of given type
- * returns ES_OK if succesful or else ES_ERROR		*/
-int delete_particle_of_type(int type);
-
 int remove_id_type_array(int part_id, int type);
 int add_particle_to_list(int part_id, int type);
 // print out a list of currently indexed ids
@@ -1049,10 +1068,6 @@ void pointer_to_gamma_rot(Particle *p, double *&res);
 
 #ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res);
-#endif
-
-#ifdef EXCLUSIONS
-void pointer_to_exclusions(Particle *p, int *&res1, int *&res2);
 #endif
 
 #ifdef ENGINE

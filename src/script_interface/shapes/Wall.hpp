@@ -30,13 +30,16 @@ namespace Shapes {
 
 class Wall : public Shape {
 public:
-  Wall() : m_wall(new ::Shapes::Wall()) {}
+  Wall() : m_wall(new ::Shapes::Wall()) {
+    add_parameters({{"dist", m_wall->d()},
+                    {"normal",
+                     [this](Variant const &v) {
+                       m_wall->set_normal(get_value<Vector3d>(v));
+                     },
+                     [this]() { return m_wall->n(); }}});
+  }
 
   const std::string name() const override { return "Shapes::Wall"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_wall; }
 

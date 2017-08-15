@@ -20,26 +20,63 @@
 from __future__ import print_function, absolute_import
 from . cimport galilei
 
-cdef class GalileiTransform:
+cdef class GalileiTransform(object):
 
     def kill_particle_motion(self, rotation=0):
-        """ Stop motion of the particles """
+        """ 
+        Stop the motion of the particles. 
+
+        Parameters
+        ----------
+
+        rotation : integer, optional
+            Whether or not to kill the rotations too.
+
+        """
         mpi_kill_particle_motion(rotation)
 
     def kill_particle_forces(self, torque=0):
-        """ Set the forces on the particles to zero """
+        """ 
+        Set the forces on the particles to zero.
+
+        Parameters
+        ----------
+
+        torque :   integer, optional
+            Whether or not to kill the torques on all particles too.
+
+        """
         mpi_kill_particle_forces(torque)
 
     def system_CMS(self):
-        """ Calculate the CMS of the system"""
+        """ 
+        Calculate the center of mass of the system. Assumes equal unit mass if the mass feature is not used.
+        
+        Returns
+        ----------
+        cms :  list
+            The of the center of mass position vector as a list of floats 
+        """
         mpi_system_CMS()
         return gal.cms
 
     def system_CMS_velocity(self):
-        """ Calculate the CMS velocity of the system"""
+        """ 
+        Calculate the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used.
+
+        Returns
+        ----------
+        cms_vel :  list of floats
+            The of the center of mass velocity vector as a list of floats 
+
+        """
+
         mpi_system_CMS_velocity()
         return gal.cms_vel
 
     def galilei_transform(self):
-        """ Remove the CMS velocity of the system """
+        """ 
+        Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann. This is due to the random nature of LD that yield a non-zero net system momentum at any given time.
+
+        """
         mpi_galilei_transform()

@@ -55,7 +55,6 @@
 #include "bonded_coulomb.hpp"
 #endif
 #include "actor/EwaldGPU_ShortRange.hpp"
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -98,13 +97,6 @@ inline double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
-    return 0;
-#endif
-
-#ifdef MOL_CUT
-  // You may want to put a correction factor for smoothing function else then
-  // theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 0)
     return 0;
 #endif
 
@@ -374,12 +366,6 @@ inline void add_bonded_energy(Particle *p1) {
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
-      break;
-#endif
 #ifdef TWIST_STACK
     case BONDED_IA_CG_DNA_STACKING:
       bond_broken = calc_twist_stack_energy(p1, p2, p3, p4, p5, p6, p7, p8,
@@ -532,7 +518,6 @@ inline void add_kinetic_energy(Particle *p1) {
   if (p1->p.rotation)
 #endif
   {
-#ifdef ROTATIONAL_INERTIA
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
@@ -540,13 +525,6 @@ inline void add_kinetic_energy(Particle *p1) {
                          SQR(p1->m.omega[1]) * p1->p.rinertia[1] +
                          SQR(p1->m.omega[2]) * p1->p.rinertia[2]) *
                         time_step * time_step;
-#else
-    /* the rotational part is added to the total kinetic energy;
-       at the moment, we assume unit inertia tensor I=(1,1,1)  */
-    energy.data.e[0] +=
-        (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2])) *
-        time_step * time_step;
-#endif
   }
 #endif
 }

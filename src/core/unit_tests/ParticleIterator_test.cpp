@@ -1,0 +1,121 @@
+#include <algorithm>
+#include <random>
+#include <type_traits>
+#include <vector>
+
+#include "core/utils/make_unique.hpp"
+
+#define BOOST_TEST_MODULE ParticleIterator test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
+
+#include "mock/Particle.hpp"
+using Testing::Particle;
+
+#include "mock/Cell.hpp"
+using Cell = Testing::Cell<Particle>;
+
+#include "ParticleIterator.hpp"
+
+std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
+  std::vector<std::unique_ptr<Cell>> cells(n);
+
+  for (auto &c : cells) {
+    c = Utils::make_unique<Cell>();
+  }
+
+  return cells;
+}
+
+BOOST_AUTO_TEST_CASE(empty_cells) {
+  using cells_t = std::vector<std::unique_ptr<Cell>>;
+  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
+
+  auto cells = make_cells(1000);
+
+  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto end = iterator(cells.end(), cells.end(), 0);
+
+  BOOST_CHECK(begin == end);
+}
+
+BOOST_AUTO_TEST_CASE(completeness) {
+  using cells_t = std::vector<std::unique_ptr<Cell>>;
+  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
+
+  auto const n_part = 123456;
+  auto cells = make_cells(1000);
+
+  /* Fill the cells */
+  for (int i = 0; i < n_part; i++) {
+    cells[i % cells.size()]->part.emplace_back(i);
+  }
+
+  /* Set the size */
+  for (auto &c : cells) {
+    c->n = c->part.size();
+  }
+
+  std::vector<int> counts(n_part, 0);
+
+  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto end = iterator(cells.end(), cells.end(), 0);
+
+  /* Iterator over parts and count occurence */
+  for (; begin != end; ++begin) {
+    counts[begin->identity()]++;
+  }
+
+  /* Every particle should be visited exactly once. */
+  BOOST_CHECK(
+      std::all_of(counts.begin(), counts.end(), [](int i) { return i == 1; }));
+}
+
+BOOST_AUTO_TEST_CASE(skip_empty) {
+  using cells_t = std::vector<std::unique_ptr<Cell>>;
+  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
+  auto cells = make_cells(3);
+
+  cells[0]->part.emplace_back(0);
+  cells[0]->n = 1;
+  cells[2]->part.emplace_back(1);
+  cells[2]->n = 1;
+
+  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto end = iterator(cells.end(), cells.end(), 0);
+
+  BOOST_CHECK(begin->identity() == 0);
+  ++begin;
+  BOOST_CHECK(begin->identity() == 1);
+}
+
+BOOST_AUTO_TEST_CASE(order) {
+  using cells_t = std::vector<std::unique_ptr<Cell>>;
+  using iterator = ParticleIterator<typename cells_t::iterator, Particle>;
+  auto const n_cells = 10;
+
+  auto cells = make_cells(n_cells);
+
+  /* Fill the cells */
+  for (int i = 0; i < n_cells; i++) {
+    cells[i % cells.size()]->part.emplace_back(i);
+  }
+
+  /* Set the size */
+  for (auto &c : cells) {
+    c->n = c->part.size();
+  }
+
+  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto end = iterator(cells.end(), cells.end(), 0);
+
+  std::vector<Particle> id_diff(n_cells, Particle{0});
+  std::adjacent_difference(begin, end, id_diff.begin(),
+                           [](Particle const &a, Particle const &b) {
+                             return Particle{a.identity() - b.identity()};
+                           });
+
+  BOOST_CHECK(std::all_of(id_diff.begin() + 1, id_diff.end(),
+                          [](Particle const &p) { return p.identity() == 1; }));
+}
+

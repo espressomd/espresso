@@ -104,12 +104,12 @@ char const *mmm2d_errors[] = {
 static double part_error;
 
 /** cutoffs for the bessel sum */
-static IntList besselCutoff = {NULL, 0, 0};
+static IntList besselCutoff;
 
 /** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
-static DoubleList  bon = {NULL, 0, 0};
+static DoubleList  bon;
 
 /** inverse box dimensions */
 /*@{*/
@@ -1946,7 +1946,7 @@ void MMM2D_on_resort_particles()
     scycache = (SCCache*)Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
     partblk   = (double*)Utils::realloc(partblk,  n_localpart*8*sizeof(double));
-    lclcblk   = (double*)Utils::realloc(lclcblk,  n_cells*8*sizeof(double));
+    lclcblk   = (double*)Utils::realloc(lclcblk,  cells.size()*8*sizeof(double));
     gblcblk   = (double*)Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
   }
   MMM2D_self_energy();

@@ -114,7 +114,7 @@ system.actors.add(p3m)
 print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(num_steps_equilibration/100):
-    temp_measured = system.analysis.energy()['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
@@ -124,7 +124,7 @@ for i in range(num_steps_equilibration/100):
 print("\n--->Integration")
 system.time = 0.0
 for i in range(num_configs):
-    temp_measured = system.analysis.energy()['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],

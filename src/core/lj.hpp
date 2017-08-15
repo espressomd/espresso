@@ -35,7 +35,7 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
-#include "mol_cut.hpp"
+
 #include "forcecap.hpp"
 
 int ljforcecap_set_params(double ljforcecap);
@@ -55,8 +55,8 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
   double order;
   double SixtRootOfTwo=1.12246204830937;
 #endif 
-  if (CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
-	  CUTOFF_CHECK(dist > ia_params->LJ_min+ia_params->LJ_offset))
+  if ((dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
+	  (dist > ia_params->LJ_min+ia_params->LJ_offset))
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
@@ -85,14 +85,6 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
 #endif
 
-#ifdef CONFIGTEMP
-      extern double configtemp[2];
-      int numfac = 0;
-      if (p1->p.configtemp) numfac+=1;
-      if (p2->p.configtemp) numfac+=1;
-      configtemp[0] += numfac*SQR(48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / r_off);
-      configtemp[1] += numfac*24.0 * ia_params->LJ_eps * frac6*(-22.0*frac6+5.0) / (SQR(r_off));
-#endif
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
@@ -128,8 +120,8 @@ inline double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_param
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;
-  if (CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
-	  CUTOFF_CHECK(dist > ia_params->LJ_min+ia_params->LJ_offset))
+  if ((dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
+	  (dist > ia_params->LJ_min+ia_params->LJ_offset))
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */

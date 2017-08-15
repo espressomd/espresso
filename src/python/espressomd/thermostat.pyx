@@ -23,11 +23,60 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 
-cdef class Thermostat:
+
+class AssertThermostatType():
+    """Assert that only a certain thermostat is active
+
+    Decorator class to assure that only a given thermostat is active
+    at a time.  Usage:
+
+        @AssertThermostatType(THERMO_LANGEVIN)
+        def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+
+    This will prefix an assertion for THERMO_LANGEVIN to the call.
+
+    """
+
+    def __init__(self, *args):
+        self.thermo_type = args
+
+    def __call__(self, f):
+        def __f(*args, **kwargs):
+            if (not (thermo_switch in self.thermo_type) and
+                  (thermo_switch != THERMO_OFF)):
+                raise Exception("A different thermostat is already set!")
+            f(*args, **kwargs)
+        return __f
+
+
+cdef class Thermostat(object):
+
+    # We have to cdef the state variable because it is a cdef class
+    cdef _state
 
     def __init__(self):
+        self._state = None
         pass
 
+    def suspend(self):
+        """Suspend the thermostat
+
+        The thermostat can be suspended, e.g. to perform an energy
+        minimization.
+
+        """
+        self._state = self.__getstate__()
+        self.turn_off()
+
+    def recover(self):
+        """Recover a suspended thermostat
+
+        If the thermostat had been suspended using .suspend(), it can
+        be reovered with this method.
+
+        """
+        if self._state is not None:
+            self.__setstate__(self._state)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -43,17 +92,18 @@ cdef class Thermostat:
             if thmst["type"] == "OFF":
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
-                self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"], gamma_rotation=thmst["gamma_rotation"])
+                self.set_langevin(kT=thmst["kT"], gamma=thmst[
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
             if thmst["type"] == "LB":
                 self.set_lb(kT=thmst["kT"])
             if thmst["type"] == "NPT_ISO":
-                self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"], piston=thmst["piston"])
+                self.set_npt(kT=thmst["kT"], p_diff=thmst[
+                             "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
                 pass
 
     def get_ts(self):
         return thermo_switch
-
 
     def get_state(self):
         """Returns the thermostat status."""
@@ -79,6 +129,8 @@ cdef class Thermostat:
                                                    langevin_gamma_rotation[2]]
                 ELSE:
                     lang_dict["gamma_rotation"] = langevin_gamma_rotation
+            ELSE:
+                lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
         if thermo_switch & THERMO_LB:
@@ -115,7 +167,6 @@ cdef class Thermostat:
             thermo_list.append(dpd_dict)
         return thermo_list
 
-
     def turn_off(self):
         """Turns off all the thermostat and sets all the thermostat variables to zero"""
 
@@ -144,42 +195,78 @@ cdef class Thermostat:
         # here other thermostats stuff
         return True
 
-    def set_langevin(self, kT="", gamma="", gamma_rotation=""):
+    @AssertThermostatType(THERMO_LANGEVIN)
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
         """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'"""
-        
+        and optional parameter 'gamma_rotation'.
+
+        Parameters
+        -----------
+        'kT': float
+            Thermal energy of the simulated heat bath.
+
+        'gamma': float
+            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+            is compiled in then 'gamma' can be a list of three positive floats, for the friction
+            coefficient in each cardinal direction.
+
+        gamma_rotation: float, optional
+            The same applies to 'gamma_rotation', which requires the feature
+            'ROTATION' to work properly. But also accepts three floating point numbers
+            if 'PARTICLE_ANISOTROPY' is also compiled in.
+
+        """
+
         scalar_gamma_def = True
+        scalar_gamma_rot_def = True
         IF PARTICLE_ANISOTROPY:
-            if isinstance(gamma,list):
+            if isinstance(gamma, list):
                 scalar_gamma_def = False
             else:
                 scalar_gamma_def = True
 
-        if kT == "" or gamma == "":
+        IF ROTATIONAL_INERTIA:
+            if isinstance(gamma_rotation, list):
+                scalar_gamma_rot_def = False
+            else:
+                scalar_gamma_rot_def = True
+
+        if kT is None or gamma is None:
             raise ValueError(
                 "Both, kT and gamma have to be given as keyword args")
-        utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+        utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
         if scalar_gamma_def:
-            utils.check_type_or_throw_except(gamma,1,float,"gamma must be a number")
+            utils.check_type_or_throw_except(
+                gamma, 1, float, "gamma must be a number")
         else:
-            utils.check_type_or_throw_except(gamma,3,float,"diagonal elements of the gamma tensor must be numbers")
-        
+            utils.check_type_or_throw_except(
+                gamma, 3, float, "diagonal elements of the gamma tensor must be numbers")
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 1, float, "gamma_rotation must be a number")
+            else:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 3, float, "diagonal elements of the gamma_rotation tensor must be numbers")
+
         if scalar_gamma_def:
             if float(kT) < 0. or float(gamma) < 0.:
-                raise ValueError("temperature and gamma must be positive numbers")
+                raise ValueError(
+                    "temperature and gamma must be positive numbers")
         else:
             if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
-                raise ValueError("temperature and diagonal elements of the gamma tensor must be positive numbers")
-        global langevin_gamma_rotation
-        IF ROTATION:
-            if gamma_rotation != "":
-                IF ROTATIONAL_INERTIA:
-                    langevin_gamma_rotation[0] = gamma_rotation[0]
-                    langevin_gamma_rotation[1] = gamma_rotation[1]
-                    langevin_gamma_rotation[2] = gamma_rotation[2]
-                ELSE:
-                    langevin_gamma_rotation = gamma_rotation
-
+                raise ValueError(
+                    "temperature and diagonal elements of the gamma tensor must be positive numbers")
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                if float(gamma_rotation) < 0.:
+                    raise ValueError(
+                        "gamma_rotation must be positive number")
+            else:
+                if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                    raise ValueError(
+                        "diagonal elements of the gamma_rotation tensor must be positive numbers")
+        
         global temperature
         temperature = float(kT)
         global langevin_gamma
@@ -191,21 +278,70 @@ cdef class Thermostat:
             else:
                 langevin_gamma[0] = gamma[0]
                 langevin_gamma[1] = gamma[1]
-                langevin_gamma[2] = gamma[3]
+                langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
+        
+        global langevin_gamma_rotation
+        IF ROTATION:
+            if gamma_rotation is not None:
+                IF ROTATIONAL_INERTIA:
+                    if scalar_gamma_rot_def:
+                        langevin_gamma_rotation[0] = gamma_rotation
+                        langevin_gamma_rotation[1] = gamma_rotation
+                        langevin_gamma_rotation[2] = gamma_rotation
+                    else:
+                        langevin_gamma_rotation[0] = gamma_rotation[0]
+                        langevin_gamma_rotation[1] = gamma_rotation[1]
+                        langevin_gamma_rotation[2] = gamma_rotation[2]
+                ELSE:
+                    if scalar_gamma_rot_def:
+                        langevin_gamma_rotation = gamma_rotation
+                    else:
+                        raise ValueError(
+                            "gamma_rotation must be a scalar since feature ROTATIONAL_INERTIA is disabled")
+            else:
+                IF ROTATIONAL_INERTIA:
+                    IF PARTICLE_ANISOTROPY:
+                        langevin_gamma_rotation[0] = langevin_gamma[0]
+                        langevin_gamma_rotation[1] = langevin_gamma[1]
+                        langevin_gamma_rotation[2] = langevin_gamma[2]
+                    ELSE:
+                        langevin_gamma_rotation[0] = langevin_gamma
+                        langevin_gamma_rotation[1] = langevin_gamma
+                        langevin_gamma_rotation[2] = langevin_gamma
+                ELSE:
+                    IF PARTICLE_ANISOTROPY:
+                        raise ValueError(
+                            "gamma_rotation scalar parameter is required")
+                    ELSE:
+                        langevin_gamma_rotation = langevin_gamma
+        
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        IF ROTATION:
+            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
     IF LB_GPU or LB:
-        def set_lb(self, kT=""):
-            """Sets the LB thermostat with required parameter 'temperature'"""
+        @AssertThermostatType(THERMO_LB)
+        def set_lb(self, kT=None):
+            """
+            Sets the LB thermostat with required parameter 'kT'.
 
-            if kT == "":
+            This thermostat requires the feature LB or LB_GPU.
+
+            Parameters
+            ----------
+            'kT':   float
+                Specifies the thermal energy of the heat bath
+
+            """
+
+            if kT is None:
                 raise ValueError(
                     "kT has to be given as keyword arg")
             utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
@@ -220,9 +356,25 @@ cdef class Thermostat:
             return True
 
     IF NPT:
-        def set_npt(self, kT="", gamma0="", gammav=""):
-            """Sets the NPT thermostat with required parameters 'temperature' 'gamma0' 'gammav'"""
-            if kT == "" or gamma0 == "" or gammav == "":
+        @AssertThermostatType(THERMO_NPT_ISO)
+        def set_npt(self, kT=None, gamma0=None, gammav=None):
+            """
+            Sets the NPT thermostat with required parameters 'temperature', 'gamma0', 'gammav'.
+
+            Parameters
+            ----------
+
+            'kT': float
+                Thermal energy of the heat bath
+
+            'gamma0': float
+                Friction coefficient of the bath
+
+            'gammav': float
+                Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+            """
+
+            if kT is None or gamma0 is None or gammav is None:
                 raise ValueError(
                     "kT, gamma0 and gammav have to be given as keyword args")
             if not isinstance(kT, float):
@@ -242,8 +394,36 @@ cdef class Thermostat:
         
             
     IF DPD or INTER_DPD:
+        @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
         def set_dpd(self, **kwargs):
-            """Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'"""
+            """
+            Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
+            
+            Parameters
+            ----------
+            'kT': float 
+                Thermal energy of the heat bath, floating point number
+
+            'gamma': float 
+                Friction the particles experience in the bath, floating point number
+
+            'r_cut': float
+                Cut off value, floating point number
+
+            'wf'   : integer, optional
+                Integer value zero or one, affects scaling of the random forces
+        
+            'tgamma': float, optional
+                Friction coefficient for the transverse DPD algorithm
+
+            'tr_cut': float, optional
+                Cut off radius for the transverse DPD
+
+            'twf'   : integer 
+                Interger value zero or one, affects the scaling of the random forces
+                in the transverse DPD algorithm
+
+            """
             req = ["kT","gamma","r_cut"]
             valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
             raise Exception("Not implemented yet.")

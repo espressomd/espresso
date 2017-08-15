@@ -28,8 +28,35 @@ IF DIPOLES == 1:
         pass
 
     class DLC(MagnetostaticExtension):
+        """Provide the Dipolar Layer Correction (DLC) method.
+
+        DLC works like ELC for electrostatics
+        (:class:`espressomd.electrostatic_extensions.ELC`),
+        but applied to magnetic dipoles.
+
+        Notes
+        -----
+        At present, the empty gap (volume without any particles), is assumed to be
+        along the z-axis. As a reference for the DLC method, see :cite:`brodka04a`.
+
+        Attributes
+        ----------
+        far_cut : float
+            Cutoff of the exponential sum.
+
+        gap_size : float
+            Size of the empty gap. Note that DLC relies on the user to make sure that
+            this condition is fulfilled.
+
+        maxPWerror : float
+            Maximal pairwise error of the potential and force.
+
+        """
 
         def validate_params(self):
+            """Check validity of class attributes.
+
+            """
             default_params = self.default_params()
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float, "")

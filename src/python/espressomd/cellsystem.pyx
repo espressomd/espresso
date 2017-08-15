@@ -25,8 +25,15 @@ from espressomd.utils cimport handle_errors
 
 cdef class CellSystem(object):
     def set_domain_decomposition(self, use_verlet_lists=True):
-        """Activates domain decomposition cell system
-        set_domain_decomposition(useVerletList=True)
+        """
+        Activates domain decomposition cell system.
+
+        Parameters
+        ----------
+
+        'use_verlet_lists' : bool, optional, defaults to True
+            Activates or deactivates the usage of Verlet lists in the algorithm
+
         """
         if use_verlet_lists:
             dd.use_vList = 1
@@ -41,7 +48,14 @@ cdef class CellSystem(object):
         return True
 
     def set_n_square(self, use_verlet_lists=True):
-        """Activates the nsquare force calculation
+        """
+        Activates the nsquare force calculation.
+
+        Parameters
+        ----------
+        'use_verlet_lists': bool, optional, defaults to True
+            Activates or deactivates the usage of the verlet lists for this algorithm
+
         """
         if use_verlet_lists:
             dd.use_vList = 1
@@ -53,8 +67,16 @@ cdef class CellSystem(object):
         return True
 
     def set_layered(self, n_layers=None):
-        """set_layered(n_layers=None)
-        Set the layerd cell system with n_layers layers"""
+        """
+        Activates the layered cell system.
+
+        Parameters
+        ----------
+
+        'n_layers': int, optional, positive
+           Sets the number of layers in the z-direction
+
+        """
         if n_layers:
             if not isinstance(n_layers, int):
                 raise ValueError("layer height should be positive")
@@ -116,6 +138,9 @@ cdef class CellSystem(object):
 
 
     property max_num_cells:
+        """
+        Maximum number for the cells
+        """
         def __set__(self, int _max_num_cells):
             global max_num_cells
             if _max_num_cells < min_num_cells:
@@ -128,6 +153,9 @@ cdef class CellSystem(object):
             return max_num_cells
 
     property min_num_cells:
+        """
+        Minimal number of the cells
+        """
         def __set__(self, int _min_num_cells):
             global min_num_cells
             min = calc_processor_min_num_cells()
@@ -146,6 +174,9 @@ cdef class CellSystem(object):
 
     # setter deprecated
     property node_grid:
+        """
+        Node grid
+        """
         def __set__(self, _node_grid):
             raise Exception('node_grid is not settable by the user.')
 
@@ -154,6 +185,11 @@ cdef class CellSystem(object):
 
 
     property skin:
+        """
+        Value of the skin layer expects a floating point number.
+
+        Mandatory to set.
+        """
         def __set__(self, double _skin):
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
@@ -165,4 +201,22 @@ cdef class CellSystem(object):
         def __get__(self):
             return skin
 
+    def tune_skin(self,min_skin=None,max_skin=None,tol=None,int_steps=None):
+        """Tunes the skin by measuring the integration time and bisecting over the
+           given range of skins. The best skin is set in the simulation core.
 
+           Parameters
+           -----------
+           'min_skin': float
+             Minimum skin to test
+           'max_skin': float
+             Maximum skin
+           'tol': float
+             Accuracy in skin to tune to
+           'int_steps": int
+             Integration steps to time
+
+           Returns the final skin
+        """
+        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        return self.skin

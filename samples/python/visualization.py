@@ -20,7 +20,6 @@ from __future__ import print_function
 import espressomd._system as es
 import espressomd
 from espressomd import thermostat
-from espressomd import code_info
 from espressomd import integrate
 from espressomd import visualization
 import numpy
@@ -33,7 +32,7 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 dev = "cpu"
 
@@ -158,7 +157,6 @@ while (i < warm_n_times and act_min_dist < min_dist):
 #n_part        {0.n_part}
 #n_part_types  {0.n_part_types}
 #periodicity   {0.periodicity}
-#transfer_rate {0.transfer_rate}
 #verlet_reuse  {0.verlet_reuse}
 #""".format(system))
 

@@ -27,23 +27,24 @@ using namespace std;
 #define SQR(A) ((A) * (A))
 
 namespace Shapes {
-int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec) const {
-  int i;
+int Cylinder::calculate_dist(const double *ppos, double *dist,
+                             double *vec) const {
   double d_per, d_par, d_real, d_per_vec[3], d_par_vec[3], d_real_vec[3];
+  auto const half_length = 0.5 * m_length;
 
   d_real = 0.0;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     d_real_vec[i] = ppos[i] - m_pos[i];
     d_real += SQR(d_real_vec[i]);
   }
   d_real = sqrt(d_real);
 
   d_par = 0.;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     d_par += (d_real_vec[i] * m_axis[i]);
   }
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     d_par_vec[i] = d_par * m_axis[i];
     d_per_vec[i] = ppos[i] - (m_pos[i] + d_par_vec[i]);
   }
@@ -54,37 +55,37 @@ int Cylinder::calculate_dist(const double *ppos, double *dist, double *vec) cons
   if (m_direction == -1) {
     /*apply force towards inside cylinder */
     d_per = m_rad - d_per;
-    d_par = m_length - d_par;
+    d_par = half_length - d_par;
     if (d_per < d_par) {
       *dist = d_per;
-      for (i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         vec[i] = -d_per_vec[i] * d_per / (m_rad - d_per);
       }
     } else {
       *dist = d_par;
-      for (i = 0; i < 3; i++) {
-        vec[i] = -d_par_vec[i] * d_par / (m_length - d_par);
+      for (int i = 0; i < 3; i++) {
+        vec[i] = -d_par_vec[i] * d_par / (half_length - d_par);
       }
     }
   } else {
     /*apply force towards outside cylinder */
     d_per = d_per - m_rad;
-    d_par = d_par - m_length;
+    d_par = d_par - half_length;
     if (d_par < 0) {
       *dist = d_per;
-      for (i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         vec[i] = d_per_vec[i] * d_per / (d_per + m_rad);
       }
     } else if (d_per < 0) {
       *dist = d_par;
-      for (i = 0; i < 3; i++) {
-        vec[i] = d_par_vec[i] * d_par / (d_par + m_length);
+      for (int i = 0; i < 3; i++) {
+        vec[i] = d_par_vec[i] * d_par / (d_par + half_length);
       }
     } else {
       *dist = sqrt(SQR(d_par) + SQR(d_per));
-      for (i = 0; i < 3; i++) {
+      for (int i = 0; i < 3; i++) {
         vec[i] = d_per_vec[i] * d_per / (d_per + m_rad) +
-                 d_par_vec[i] * d_par / (d_par + m_length);
+                 d_par_vec[i] * d_par / (d_par + half_length);
       }
     }
   }

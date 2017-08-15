@@ -1,24 +1,24 @@
 * Script Interface
 ** Purpose
 The generic script interface should make common tasks like setting and getting parameters from objects easier.
-It provides facilities to set parameters on datastructures on all nodes, and call methods on all nodes.
+It provides facilities to set parameters on data structures on all nodes, and call methods on all nodes.
 
 ** Steps to add a new class for parameter setting.
 1. Create file for a new class implementation in src/script_interface/<namespace>/.
 2. #include "ScriptInterface.hpp"
-3. Create a new class that derieves from ScriptInterfaceBase
+3. Create a new class that derives from ScriptInterfaceBase
 4. Implement the required functions (get_parameters(), set_parameter(), name(), valid_parameters()).
-   - name() shoud return the full name for the class
-   - optionally add implmentations for get_parameter() and set_parameters() and call_method()
+   - name() should return the full name for the class
+   - optionally add implementations for get_parameter() and set_parameters() and call_method()
    - valid_parameters() should return a list of all accepted parameters. ParameterMap is an associative
      array of parameter names and their corresponding description. For a list of supported parameter
      types see src/script_interface/Parameter.hpp. A compact form for this implementation uses curled braces
      initialization as shown in the HelloWorld example and e.g. in Wall.hpp.
-   - get_parameters() should return a map of parameters. Again, curled brace init can be used for a shor notation.
+   - get_parameters() should return a map of parameters. Again, curled brace init can be used for a short notation.
    - set_parameter() should set the named parameter.
 
 5. Add the new class to the initialization functions
-   - if they dont exist add initialize.{hpp, cpp} to src/script_interface/<namespace>/
+   - if they don't exist add initialize.{hpp, cpp} to src/script_interface/<namespace>/
    - if it does not exist add a function initialize (c.f. src/script_interface/shapes/initialize.{hpp,cpp})
    - include the header for your new class
    - Register the class, use
@@ -91,7 +91,7 @@ For a more elaborate example that creates a c++ class have a look at src/script_
 
 ** Variant
 The implementation uses a specialization of boost::variant to hand over parameters and return values of different types.
-It currently supports the type bool, int, double, string, vector<int>, vector<double> and object. THe lattter means that
+It currently supports the type bool, int, double, string, vector<int>, vector<double> and object. The latter means that
 this parameter is an other script object.
 
 In c++ the variants can simply assigned a value of any supported type. To get the value back it hast to be fetched via
@@ -109,7 +109,7 @@ Example:
 #+END_SRC
 
 To reduce boiler plate there exists a macro SET_PARAMETER_HELPER(NAME, MEMBER) is to be used in the set_parameter implementation.
-It gets the value of the variant variable called value and assings it to MEMBER if name == NAME. Member can allso be a reference,
+It gets the value of the variant variable called value and assigns it to MEMBER if name == NAME. Member can also be a reference,
 so that the helper can be used with setters.
 
 With the macro the set_parameter function of the example class could read

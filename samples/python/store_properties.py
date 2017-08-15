@@ -19,7 +19,6 @@
 from __future__ import print_function
 import espressomd._system as es
 import espressomd
-from espressomd import code_info
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 import numpy
@@ -30,9 +29,8 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
-if not "ELECTROSTATICS" in code_info.features():
-    raise Exception("Sample script requires ELECTROSTATICS")
+print(espressomd.features())
+espressomd.assert_features(["ELECTROSTATICS"])
 
 dev = "cpu"
 

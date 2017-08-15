@@ -5,7 +5,7 @@ from libcpp cimport bool
 from espressomd.particle_data import ParticleHandle
 from particle_data cimport *
 from espressomd.interactions cimport *
-from espressomd._system cimport *
+from espressomd.system cimport *
 from libcpp.vector cimport vector
 
 cdef extern from "utils.hpp":
@@ -28,7 +28,7 @@ output=vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-cdef class mayaviLive:
+cdef class mayaviLive(object):
     """This class provides live visualization using Enthought Mayavi.
     Use the update method to push your current simulation state after
     integrating. If you run your integrate loop in a separate thread, 
@@ -110,7 +110,7 @@ cdef class mayaviLive:
         This is called periodically in the GUI thread"""
         if self.data is None:
             return
-        
+
         assert isinstance(threading.current_thread(), threading._MainThread)
 
         f = mlab.gcf()
@@ -143,7 +143,7 @@ cdef class mayaviLive:
         if self.last_T is not None and self.last_T == self.system.time:
             return
         self.last_T = self.system.time
-        
+
         cdef int N = len(self.system.part)
         coords = numpy.zeros((N,3))
         types = numpy.empty(N, dtype=int)
@@ -152,50 +152,51 @@ cdef class mayaviLive:
         cdef int i=0,j=0,k=0 
         cdef int t 
         cdef int partner
-        cdef particle p
+        cdef unique_ptr[particle] p
         cdef ia_parameters* ia
         cdef vector[int] bonds
 
     # Using (additional) untyped variables and python constructs in the loop 
     # will slow it down considerably. 
         for i in range(N):
-            if not particle_exists(i):
+            p = get_particle_data(i)
+            if not p:
                 continue
-            get_particle_data(i,&p)
-            coords[j,:] = p.r.p
-            t = p.p.type
+
+            coords[j,:] = p.get()[0].r.p
+            t = p.get()[0].p.get()[0].type
             types[j] = t +1
             radii[j] = self._determine_radius(t)
 
             # Iterate over bonds
             k = 0        
-            while k<p.bl.n:
+            while k<p.get()[0].bl.n:
                 # Bond type
-                t = p.bl.e[k]
+                t = p.get()[0].bl.e[k]
                 k += 1
                 # Iterate over bond partners and store each connection
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
-                    bonds.push_back(p.bl.e[k])
+                    bonds.push_back(p.get()[0].bl.e[k])
                     bonds.push_back(t)
                     k += 1
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size()//3
-        
+
         bond_coords = numpy.empty((Nbonds,7))
 
         cdef int n
-        cdef particle p1,p2
+        cdef unique_ptr[particle] p1,p2
         cdef double bond_vec[3]
         for n in range(Nbonds):
             i = bonds[3*n]
             j = bonds[3*n+1]
             t = bonds[3*n+2]
-            get_particle_data(i,&p1)
-            get_particle_data(j,&p2)
-            bond_coords[n,:3] = p1.r.p 
-            get_mi_vector(bond_vec,p2.r.p,p1.r.p)
+            p1 = get_particle_data(i)
+            p2 = get_particle_data(j)
+            bond_coords[n,:3] = p1.get()[0].r.p 
+            get_mi_vector(bond_vec,p2.get()[0].r.p,p1.get()[0].r.p)
             bond_coords[n,3:6] = bond_vec
             bond_coords[n,6] = t
 

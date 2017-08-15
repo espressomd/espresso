@@ -3,7 +3,7 @@ from libcpp cimport bool
 
 IF ELECTROKINETICS and CUDA:
     cdef extern from "electrokinetics.hpp":
-    
+
         IF EK_DOUBLE_PREC:
             ctypedef double ekfloat
         ELSE:
@@ -97,6 +97,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_node_print_velocity(int x, int y, int z, double* velocity)
         int ek_node_print_density(int species, int x, int y, int z, double* density)
         int ek_node_print_flux(int species, int x, int y, int z, double* flux)
+        int ek_node_print_potential(int x, int y, int z, double* potential)
         int ek_node_set_density(int species, int x, int y, int z, double density)
         ekfloat ek_calculate_net_charge() 
         int ek_neutralize_system(int species) 
@@ -107,7 +108,7 @@ IF ELECTROKINETICS and CUDA:
             int ek_set_electrostatics_coupling( bool electrostatics_coupling )
             void ek_calculate_electrostatic_coupling()
             int ek_print_vtk_particle_potential( char* filename )
-  
+
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat* wallcharge_species_density, int wallcharge_species)
 

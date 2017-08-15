@@ -64,7 +64,7 @@ for as many platforms as you want.
 \paragraph{Example}
 When the source directory is \codebox{srcdir} (\ie the files where
 unpacked to this directory), then the user can create a build directory
-\codebox{build} below that path by calling the \codebox{mkdir srcdir/build}. In the build direcotry cmake is to be executed, followed by a call of make. None of the files in the source directory is ever modified when by the build process.
+\codebox{build} below that path by calling the \codebox{mkdir srcdir/build}. In the build directory cmake is to be executed, followed by a call of make. None of the files in the source directory is ever modified when by the build process.
 \begin{code}
 cd build
 cmake srcdir
@@ -75,7 +75,7 @@ Afterwards Espresso can be run via calling Espresso from the command line.
 \subsection{ccmake}
 Optionally and for easier use the curses interface to cmake can be used to configure ESPResSo interactively. 
 \paragraph{Example}
-Alternatively to the previous example instead of \codebox{cmake}, the \codebox{ccmake} executable is called in the build direcotry to configure ESPResSo previous to its compilation followed by a call of make:
+Alternatively to the previous example instead of \codebox{cmake}, the \codebox{ccmake} executable is called in the build directory to configure ESPResSo previous to its compilation followed by a call of make:
 \begin{code}
 cd build
 ccmake srcdir
@@ -92,7 +92,7 @@ Fig.~\ref{fig:ccmake} shows the interactive ccmake UI.
 
 
 \subsection{Options and Variables}
-The behaviour of \codebox{cmake} can be
+The behavior of \codebox{cmake} can be
 controlled by the means of options and variables in the CMakeLists.txt file. Also options are defined there.
 The following options are available:
 \begin{description}
@@ -104,7 +104,7 @@ The following options are available:
 	\item WITH_SCAFACOS: Build with Scafacos support
 	\item WITH_VALGRIND_INSTRUMENTATION: Build with valgrind instrumentation markers
 \end{description}
-When the value in the CMakeLists.txt file is set to ON the corresponding option is created if the value of the opition is set to OFF the corresponding option is not created. 
+When the value in the CMakeLists.txt file is set to ON the corresponding option is created if the value of the option is set to OFF the corresponding option is not created. 
 These options can also be modified by calling cmake with the command line argument -D:
 \begin{code}
 cmake -D WITH_TCL=OFF srcdir 
@@ -130,10 +130,10 @@ following targets are available:
   run can be controlled by means of the variable \texttt{tests}, which
   processor numbers are to be used can be controlled via the variable
   \texttt{processors}. Note that depending on your MPI installation,
-  MPI jobs can only be run in the queueing system, so that \es{} will
+  MPI jobs can only be run in the queuing system, so that \es{} will
   not run from the command line. In that case, you may not be able to
   run the testsuite, or you have to directly submit the testsuite script
-  \verb!testsuite/test.sh! to the queueing system.\\
+  \verb!testsuite/test.sh! to the queuing system.\\
   \textbf{Example:} \verb!make check tests="madelung.tcl" processors="1 2"!\\
   will run the test \texttt{madlung.tcl} on one and two processors.
 \item[\texttt{clean}] Deletes all files that were created during the
@@ -203,7 +203,7 @@ mpiexec -n \var{n\_nodes} Espresso [\var{tcl\_script} [\var{args}]]
 \end{code}
 where \var{n\_nodes} denotes the number of MPI nodes to be used.
 However, note that depending on your MPI installation, MPI jobs can
-only be run in a queueing system, so that \es will not run from the
+only be run in a queuing system, so that \es will not run from the
 command line. Also, older installations sometimes require ``-np''
 instead of ``-n'' or ``mpirun'' instead of ``mpiexec''. 
 

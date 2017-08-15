@@ -1,34 +1,34 @@
 /*
   Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
-  
+
   This file is part of ESPResSo.
-  
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef _CELLS_H
 #define _CELLS_H
 /** \file cells.hpp
     This file contains everything related to the cell structure / cell
     system.
-    
+
     The cell system (\ref Cell Structure) describes how particles are
     distributed on the cells and how particles of different cells
     (regardless if they reside on the same or different nodes)
     interact with each other. The following cell systems are implemented:
-  
+
     <ul>
     <li> domain decomposition: The simulation box is divided spatially
     ino cells (see \ref domain_decomposition.hpp). This is suitable for
@@ -37,19 +37,21 @@
     regardless their spatial position (see \ref nsquare.hpp). This is
     suitable for long range interactions that can not be treated by a
     special method like P3M (see \ref p3m.hpp).
-    <li> layered: in x and y directions, it uses a nsquared type of interaction calculation,
+    <li> layered: in x and y directions, it uses a nsquared type of interaction
+   calculation,
                   but in z it has a domain decomposition into layers.
     </ul>
-  
+
     One can switch between different cell systems with the tcl command
     cellsystem implemented in \ref cells.cpp .
-  
-    Some structures are common to all cell systems: 
-  
+
+    Some structures are common to all cell systems:
+
    <ul>
-   <li> All cells, real cells as well as ghost cells, are stored in the array \ref cells::cells with size \ref
+   <li> All cells, real cells as well as ghost cells, are stored in the array
+   \ref cells::cells with size \ref
    n_cells. The size of this array has to be changed with \ref realloc_cells.
-   <li> Their are two lists of cell pointers to acces particles and
+   <li> There are two lists of cell pointers to access particles and
    ghost particles on a node: \ref local_cells contains pointers to
    all cells containing the particles physically residing on that
    node. \ref ghost_cells contains pointers to all cells containing
@@ -61,9 +63,14 @@
    </ul>
 */
 
-#include "particle_data.hpp"
+#include "ParticleIterator.hpp"
 #include "ghosts.hpp"
+#include "particle_data.hpp"
+#include "utils/Range.hpp"
 #include "verlet.hpp"
+
+#include "Cell.hpp"
+#include "ParticleRange.hpp"
 
 /** \name Cell Structure */
 /** Flag telling which cell structure is used at the moment. */
@@ -74,7 +81,7 @@
 /** Flag indicating that the current cell structure will be used furthor on */
 #define CELL_STRUCTURE_CURRENT 0
 /** cell structure domain decomposition */
-#define CELL_STRUCTURE_DOMDEC  1
+#define CELL_STRUCTURE_DOMDEC 1
 /** cell structure n square */
 #define CELL_STRUCTURE_NSQUARE 2
 /** cell structure layered */
@@ -95,39 +102,38 @@
 /*@{*/
 
 /** Flag for cells_on_geometry_change: the processor grid has changed. */
-#define CELL_FLAG_GRIDCHANGED  1
+#define CELL_FLAG_GRIDCHANGED 1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
-#define CELL_FLAG_FAST         2
+#define CELL_FLAG_FAST 2
 /** Flag for cells_on_geometry_change: Lees-Edwards offset has changed. */
 #define CELL_FLAG_LEES_EDWARDS 4
 
 /*@}*/
-
 
 /************************************************/
 /** \name Data Types */
 /************************************************/
 /*@{*/
 
-/** A cell is a \ref ParticleList representing a particle group with
-    respect to the integration algorithm.
-*/
-typedef ParticleList Cell;
-
 /** List of cell pointers. */
-typedef struct {
+struct CellPList {
+  ParticleRange particles() const {
+    return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
+                             CellParticleIterator(cell + n, cell + n, 0));
+  }
+
   Cell **cell;
   int n;
   int max;
-} CellPList;
+};
 
 /** Describes a cell structure / cell system. Contains information
-    about the communication of cell contents (particles, ghosts, ...) 
+    about the communication of cell contents (particles, ghosts, ...)
     between different nodes and the relation between particle
     positions and the cell system. All other properties of the cell
     system which are not common between different cell systems have to
     be stored in seperate structures. */
-typedef struct {
+struct CellStructure {
   /** type descriptor */
   int type;
 
@@ -152,18 +158,18 @@ typedef struct {
 #endif
 
   /** Cell system dependent function to find the right node for a
-      particle at position pos. 
+      particle at position pos.
       \param  pos Position of a particle.
-      \return number of the node where to put the particle. 
+      \return number of the node where to put the particle.
   */
-  int   (*position_to_node)(double pos[3]);
+  int (*position_to_node)(double pos[3]);
   /** Cell system dependent function to find the right cell for a
-      particle at position pos. 
+      particle at position pos.
       \param  pos Position of a particle.
       \return pointer to cell  where to put the particle.
   */
   Cell *(*position_to_cell)(double pos[3]);
-} CellStructure;
+};
 
 /*@}*/
 
@@ -173,9 +179,8 @@ typedef struct {
 /*@{*/
 
 /** list of all cells. */
-extern Cell *cells;
-/** size of \ref cells::cells */
-extern int n_cells;
+extern std::vector<Cell> cells;
+
 /** list of all cells containing particles physically on the local
     node */
 extern CellPList local_cells;
@@ -213,22 +218,23 @@ void realloc_cells(int size);
 
 /** Initialize a list of cell pointers */
 inline void init_cellplist(CellPList *cpl) {
-  cpl->n    = 0;
-  cpl->max  = 0;
+  cpl->n = 0;
+  cpl->max = 0;
   cpl->cell = NULL;
 }
 
 /** Reallocate a list of cell pointers */
-inline void realloc_cellplist(CellPList *cpl, int size)
-{
-  if(size != cpl->max) {
+inline void realloc_cellplist(CellPList *cpl, int size) {
+  if (size != cpl->max) {
     cpl->max = size;
-    cpl->cell = (Cell **) Utils::realloc(cpl->cell, sizeof(Cell *)*cpl->max);
+    cpl->cell = (Cell **)Utils::realloc(cpl->cell, sizeof(Cell *) * cpl->max);
   }
 }
 
-/** sort the particles into the cells and initialize the ghost particle structures.
-    @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can have changed
+/** sort the particles into the cells and initialize the ghost particle
+   structures.
+    @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can
+   have changed
     arbitrarly, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
@@ -246,7 +252,7 @@ void cells_resort_particles(int global_flag);
     If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
     has changed, i. e. the grid or periodicity. In this case a full
     reorganization is due.
-    
+
     If bit CELL_FLAG_LEES_EDWARDS is set, it means the nodes' topology
     has changed, but only on the period wrap in the y direction.
 

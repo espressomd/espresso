@@ -27,7 +27,6 @@
 # 1. Setup and equilibrate LJ liquid
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 
 import os 
 import numpy as np
@@ -39,7 +38,7 @@ from threading import Thread
 n_part  = 200
 density = 0.4442
 
-skin        = 0.1
+skin        = 0.4
 time_step   = 0.01 
 eq_tstep    = 0.01
 temperature = 0.728

@@ -84,7 +84,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
         return func
 
-    if "LENNARD_JONES" in espressomd.features():
+    if espressomd.has_features(["LENNARD_JONES"]):
         test_lj1 = generateTestForNon_bonded_interaction(
             0, 0, LennardJonesInteraction,
             {"epsilon": 1., "sigma": 2., "cutoff": 3.,
@@ -101,7 +101,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
             "shift": 4.1, "offset": 5.1, "min": 7.1},
             "lennard_jones")
 
-    if "LENNARD_JONES_GENERIC" in espressomd.features():
+    if espressomd.has_features(["LENNARD_JONES_GENERIC"]):
         test_ljgen1 = generateTestForNon_bonded_interaction(
             0, 0, GenericLennardJonesInteraction,
             {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
@@ -117,6 +117,12 @@ class Non_bonded_interactionsTests(ut.TestCase):
             {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
              "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2},
             "generic_lennard_jones")
+
+    if espressomd.has_features(["GAY_BERNE"]):
+        test_gb = generateTestForNon_bonded_interaction(
+            0, 0, GayBerneInteraction,
+            {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0, "k2": 5.0, "mu": 2.0, "nu": 1.0},
+            "gay_berne")
 
     def test_forcecap(self):
         self.es.non_bonded_inter.set_force_cap(17.5)

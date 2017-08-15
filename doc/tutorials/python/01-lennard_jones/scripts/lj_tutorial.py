@@ -18,7 +18,6 @@
 #
 from __future__ import print_function
 import espressomd
-from espressomd import code_info
 
 import os 
 import numpy as np
@@ -29,14 +28,14 @@ print("""
 =======================================================
 
 Program Information:""")
-print(code_info.features())
+print(espressomd.features())
 
 # System parameters
 #############################################################
 n_part  = 500
 density = 0.8442
 
-skin        = 0.1
+skin        = 0.4
 time_step   = 0.01 
 eq_tstep    = 0.001
 temperature = 0.728
@@ -157,9 +156,9 @@ for i in range(1, sampling_iterations + 1):
     r, rdf = system.analysis.rdf(rdf_type="rdf", type_list_a=[0], type_list_b=[0], r_min=r_min, r_max=r_max, r_bins=r_bins)
     avg_rdf+= rdf/sampling_iterations
 
-    kinetic_temperature = energies['ideal']/( 1.5 * n_part)
+    kinetic_temperature = energies['kinetic']/( 1.5 * n_part)
 
-    en_fp.write("%f\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (system.time, energies['total'], energies['ideal'], energies['total'] - energies['ideal'], kinetic_temperature))
+    en_fp.write("%f\t%1.5e\t%1.5e\t%1.5e\t%1.5e\n" % (system.time, energies['total'], energies['kinetic'], energies['total'] - energies['kinetic'], kinetic_temperature))
 
     etotal[i-1] = energies['total']
 

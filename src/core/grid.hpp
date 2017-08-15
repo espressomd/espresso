@@ -186,14 +186,21 @@ void rescale_boxl(int dir, double d_new);
   *  @param b the vector to subtract
   *  @param res where to store the result
 */
-inline void get_mi_vector(double res[3], double a[3], double b[3]) {
-  int i;
-
-  for (i = 0; i < 3; i++) {
+template <typename T, typename U, typename V>
+inline void get_mi_vector(T &res, U const &a, V const &b) {
+  for (int i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
     if (PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
   }
+}
+
+template <typename T, typename U>
+Vector3d get_mi_vector(T const &a, U const &b) {
+  Vector3d res;
+  get_mi_vector(res, a, b);
+
+  return res;
 }
 
 /** fold a coordinate to primary simulation box, including velocity (in case of
@@ -227,7 +234,6 @@ inline void fold_coordinate(double pos[3], double vel[3], int image_box[3],
     }
 
 #ifdef LEES_EDWARDS
-
     if (dir == 1) {
       /* must image y and v_x at same time as x */
       pos[0] -= (lees_edwards_offset * img_count);
@@ -282,6 +288,24 @@ inline void fold_position(double pos[3], int image_box[3]) {
     fold_coordinate(pos, image_box, i);
 }
 
+/** fold particle coordinates to primary simulation box.
+ * The particle is not changed.
+ */
+template <typename Particle> Vector3d folded_position(Particle const &p) {
+  Vector3d pos{p.r.p};
+
+  for (int dir = 0; dir < 3; dir++) {
+    if (PERIODIC(dir)) {
+      const int img_count =
+          static_cast<int>(std::floor(pos[dir] * box_l_i[dir]));
+
+      pos[dir] -= img_count * box_l[dir];
+    }
+  }
+
+  return pos;
+}
+
 /** unfold coordinates to physical position.
     \param pos the position
     \param pos the velocity
@@ -326,6 +350,20 @@ inline void unfold_position(double pos[3], int image_box[3]) {
   double v[3];
   unfold_position(pos, v, image_box);
 }
+
+class PositionUnfolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    unfold_position(p.r.p, p.l.i);
+  }
+};
+
+class PositionFolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    fold_position(p.r.p, p.l.i);
+  }
+};
 
 /*@}*/
 #endif
