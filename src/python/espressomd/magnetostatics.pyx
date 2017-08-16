@@ -158,7 +158,7 @@ IF DP3M == 1:
                 raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":
-                self._params = 0.0
+                self._params["epsilon"] = 0.0
 
             if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
