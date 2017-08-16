@@ -6,6 +6,7 @@ set(py_tests  bondedInteractions.py
               coulomb_cloud_wall_tune.py
               correlation.py
               dawaanr-and-dds-gpu.py
+              dipolar_mdlc_p3m_scafacos_p2nfft.py
               electrostaticInteractions.py
               engine_langevin.py
               engine_lb.py
