@@ -54,7 +54,7 @@ if (active != 0) and (active != 1):
 box_l  = 10
 radius = 3.0
 csmall = 0.1
-rate   = 1000
+rate   = 1000.0
 
 # Print input parameters
 
@@ -127,7 +127,7 @@ z0pnt = ...
 
 cent = len(system.part)
 system.part.add(id=cent,pos=[x0pnt,y0pnt,z0pnt],type=0,temp=temp,
-                gamma=[frict_trans_colloid,frict_trans_colloid,frict_trans_colloid],
+                gamma=frict_trans_colloid,
                 gamma_rot=[frict_rot_colloid,frict_rot_colloid,frict_rot_colloid])
 
 # Set up the particles
@@ -156,7 +156,7 @@ for i in range(nA):
         z = box_l*np.random.random()
 
     system.part.add(pos=[x,y,z],type=1,temp=temp,
-                    gamma=[frict_trans_part,frict_trans_part,frict_trans_part],
+                    gamma=frict_trans_part,
                     gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
 
 for i in range(nB):
@@ -171,7 +171,7 @@ for i in range(nB):
         z = box_l*np.random.random()
 
     system.part.add(pos=[x,y,z],type=2,temp=temp,
-                    gamma=[frict_trans_part,frict_trans_part,frict_trans_part],
+                    gamma=frict_trans_part,
                     gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
 
 print("box: {}, npart: {}".format(system.box_l,len(system.part)))
@@ -183,9 +183,6 @@ print("box: {}, npart: {}".format(system.box_l,len(system.part)))
 ## Exercise 3 ##
 # Why are there two different cutoff lengths for the LJ interaction
 # catalyzer/product and catalyzer/reactant?
-
-## Answer 3 ##
-# To achieve the asymmetry necessary for self-propulsion.
 
 eps   = 5.0
 sig   = 1.0
@@ -229,12 +226,6 @@ warm_length = 100
 # Consult the User Guide for minimize_energy to find out the
 # difference to warmup with explicit force-capping.
 
-## Answer 5 ##
-# Force capping truncates the interaction at a maximum value of the
-# force, allowing for more controlled MD steps, until 'overlaps' have
-# been removed. Minimize_energy uses a steepest-descent method to
-# remove such overlapping configurations.
-
 system.minimize_energy.init(f_max=cap,max_steps=warm_length,gamma=1.0/20.0,max_displacement=0.05)
 system.minimize_energy.minimize()
 
@@ -244,11 +235,6 @@ system.minimize_energy.minimize()
 
 ## Exercise 6 ##
 # Why do we enable the thermostat only after warmup?
-
-## Answer 6 ##
-# Because of the use of minimize_energy. Had we instead used force
-# capping, a seperate integration loop with thermostating would have
-# been used to remove offending configurations.
 
 system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)
 

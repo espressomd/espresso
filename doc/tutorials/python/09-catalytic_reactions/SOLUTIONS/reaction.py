@@ -60,7 +60,7 @@ if (active != 0) and (active != 1):
 box_l  = 10
 radius = 3.0
 csmall = 0.1
-rate   = 1000
+rate   = 1000.0
 
 # Print input parameters
 
@@ -133,7 +133,7 @@ z0pnt = 0.5*box_l
 
 cent = len(system.part)
 system.part.add(id=cent,pos=[x0pnt,y0pnt,z0pnt],type=0,temp=temp,
-                gamma=[frict_trans_colloid,frict_trans_colloid,frict_trans_colloid],
+                gamma=frict_trans_colloid,
                 gamma_rot=[frict_rot_colloid,frict_rot_colloid,frict_rot_colloid])
 
 # Set up the particles
@@ -162,7 +162,7 @@ for i in range(nA):
         z = box_l*np.random.random()
 
     system.part.add(pos=[x,y,z],type=1,temp=temp,
-                    gamma=[frict_trans_part,frict_trans_part,frict_trans_part],
+                    gamma=frict_trans_part,
                     gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
 
 for i in range(nB):
@@ -177,7 +177,7 @@ for i in range(nB):
         z = box_l*np.random.random()
 
     system.part.add(pos=[x,y,z],type=2,temp=temp,
-                    gamma=[frict_trans_part,frict_trans_part,frict_trans_part],
+                    gamma=frict_trans_part,
                     gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
 
 print("box: {}, npart: {}".format(system.box_l,len(system.part)))
