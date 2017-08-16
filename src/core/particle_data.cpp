@@ -205,24 +205,14 @@ Particle *got_particle(ParticleList *l, int id) {
   return &(l->part[i]);
 }
 
-Particle *append_unindexed_particle(ParticleList *l, Particle *part) {
-  Particle *p;
-
+void append_unindexed_particle(ParticleList *l, Particle &&part) {
   realloc_particlelist(l, ++l->n);
-  p = &l->part[l->n - 1];
-
-  memmove(p, part, sizeof(Particle));
-  return p;
+  new(&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
-Particle *append_indexed_particle(ParticleList *l, Particle *part) {
-  int re;
-  Particle *p;
-
-  re = realloc_particlelist(l, ++l->n);
-  p = &l->part[l->n - 1];
-
-  memmove(p, part, sizeof(Particle));
+Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
+  auto const re = realloc_particlelist(l, ++l->n);
+  auto p = new(&(l->part[l->n - 1])) Particle(std::move(part));
 
   if (re)
     update_local_particles(l);
@@ -232,15 +222,16 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part) {
 }
 
 Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  Particle *dst, *src, *end;
-
   realloc_particlelist(dl, ++dl->n);
-  dst = &dl->part[dl->n - 1];
-  src = &sl->part[i];
-  end = &sl->part[sl->n - 1];
-  memmove(dst, src, sizeof(Particle));
-  if (src != end)
-    memmove(src, end, sizeof(Particle));
+  auto dst = &dl->part[dl->n - 1];
+  auto src = &sl->part[i];
+  auto end = &sl->part[sl->n - 1];
+
+  *dst = std::move(*src);
+  if (src != end) {
+    *src = std::move(*end);
+  }
+
   sl->n -= 1;
   realloc_particlelist(sl, sl->n);
   return dst;
@@ -252,28 +243,18 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  memmove(dst, src, sizeof(Particle));
+  *dst = std::move(*src);
   if (re) {
-    // fprintf(stderr, "%d: m_i_p: update destination list after
-    // realloc\n",this_node);
     update_local_particles(dl);
   } else {
-    // fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id
-    // %d)\n",this_node,dst->p.identity);
     local_particles[dst->p.identity] = dst;
   }
   if (src != end) {
-    // fprintf(stderr, "%d: m_i_p: copy end particle in source list (id
-    // %d)\n",this_node,end->p.identity);
-    memmove(src, end, sizeof(Particle));
+    *src = std::move(*end);
   }
   if (realloc_particlelist(sl, --sl->n)) {
-    // fprintf(stderr, "%d: m_i_p: update source list after
-    // realloc\n",this_node);
     update_local_particles(sl);
   } else if (src != end) {
-    // fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id
-    // %d)\n",this_node,src->p.identity);
     local_particles[src->p.identity] = src;
   }
   return dst;
@@ -989,7 +970,8 @@ void local_remove_particle(int part) {
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
-    memmove(p, &pl->part[pl->n - 1], sizeof(Particle));
+    *p = pl->part[pl->n - 1];
+
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
