@@ -45,6 +45,7 @@ Required Development Tools
    the distributed versioning control system Git [1]_. 
 
 -  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
+
       pip install --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
@@ -195,12 +196,15 @@ developers.
 Source code structure
 ---------------------
 The source tree has the following structure:
+
 * src: The actual source code
+
   * core: The C++ source code of the simulation core
   * python/espressomd: Source of the espressomd Python module and its submodules
   * script_interface: C++ source code of the script_interface component, which links Python classes to functionality in the simulation core
 
 * doc: Documentation
+
   * sphinx: The sphinx-based documentation, consisting of user and developer guide.
   * tutorials/python: Source and pdf files for the introductory tutorials
   * doxygen: Build directory for the C++ in-code documentation
@@ -211,6 +215,7 @@ The source tree has the following structure:
 
 * libs: External dependencies (at this point h5xx)
 * maintainer: Files used by the maintainers
+
   * configs: Collection of myconfig.hpp files which activate different sets of features for testing.
   * docker: Definitions of the docker images for various distributions used for continuous integration testing
   * travis: Support files for the continuous integration testing run on the Travis-CI service.
@@ -225,7 +230,9 @@ Espresso uses two communication models, namely master-slave and synchronous.
   runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation,
   changing of particle properties and changing global simulation parameters.
   When a Python command such as:::
+
     system.part.add(pos=(1,2,3))
+
   is issued, the head node determines, which node is responsible for the given position, and then sends the node the command to place the particle.
 
 * When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
@@ -236,7 +243,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
   involved in the communication. If this is not done, a deadlock will result.
 
 Adding calls to the master-slave framework
------------------------------------------
+------------------------------------------
 
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +259,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add(my_callback);
     }
+
   You can, e.g., call your registration from initialize.cpp:on_program_start()
   Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
   be used. For example::
@@ -260,6 +268,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add([](int, int){ /* Do something */ });
     }
+
   can be used to add a lambda function as callback.
 * Then, you can use your callback from the head node::
 
@@ -267,6 +276,7 @@ Using an instance of MpiCallback
     void call_my_callback() {
       Communication::mpiCallbacks.call(my_callback, param1, param2);
     }
+
   This only works outside the integration loop. After the callback has been called, synchronous mpi communication can be done.
 
 Legacy callbacks
@@ -278,6 +288,7 @@ Adding New Bonded Interactions
 ------------------------------
 
 To add a new bonded interaction, the following steps have to be taken
+
 * Simulation core:
 
   * Define a structure holding the parameters (prefactors, etc.) of the interaction
