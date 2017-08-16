@@ -3,10 +3,11 @@
 Setting up interactions
 =======================
 
-In |es|, interactions are set up and investigated by the``interactions`` module. There are
+In |es|, interactions are set up and investigated by the ``interactions`` module. There are
 mainly two types of interactions: non-bonded and bonded interactions.
-Non-bonded interactions only depend on the *type* of the two involved
-particles. This also applies to the electrostatic interaction; however,
+
+Non-bonded interactions only depend on the *type* of the two particles
+involved. This also applies to the electrostatic interaction; however,
 due to its long-ranged nature, it requires special care and |es| handles it
 separately with a number of state-of-the-art algorithms. To specify particle
 type and charge see :ref:`Setting up particles`.
@@ -254,30 +255,30 @@ specifies a Lennard-Jones interaction with cosine
 tail :cite:`soddeman01a` between particles of the types and
 . The first variant behaves as follows: Until the minimum of the
 Lennard-Jones potential at
-:math:`\var{r_\mathrm{min}} = r_\mathrm{off} +
+:math:`r_\mathrm{min} = r_\mathrm{off} +
 2^{\frac{1}{6}}\sigma`, it behaves identical to the unshifted
-Lennard-Jones potential (:math:`\var{c_\mathrm{shift}}=0`). Between and
+Lennard-Jones potential (:math:`c_\mathrm{shift}=0`). Between and
 , a cosine is used to smoothly connect the potential to 0,
 
-.. math:: V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(\var{r}-\var{r_\mathrm{off}})^2 + \beta\right]-1\right),
+.. math:: V(r)=\frac{1}{2}\epsilon\left(cos\left[\alpha(r - r_\mathrm{off})^2 + \beta\right]-1\right),
 
 where
-:math:`\alpha = \pi\left[(\var{r_\mathrm{cut}}-\var{r_\mathrm{off}})^2-(\var{r_\mathrm{min}}-\var{r_\mathrm{off}})^2\right]^{-1}`
+:math:`\alpha = \pi\left[(r_\mathrm{cut} - r_\mathrm{off})^2-(r_\mathrm{min} - r_\mathrm{off})^2\right]^{-1}`
 and
-:math:`\beta = \pi - \left(\var{r_\mathrm{min}}-\var{r_\mathrm{off}}\right)^2\alpha`.
+:math:`\beta = \pi - \left(r_\mathrm{min} - r_\mathrm{off}\right)^2\alpha`.
 
 In the second variant, the cutoff radius is
-:math:`\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega`, where
-:math:`\var{r_\mathrm{min}} =  r_\mathrm{off} +
+:math:`r_\mathrm{cut}=r_\mathrm{min} + \omega`, where
+:math:`r_\mathrm{min} =  r_\mathrm{off} +
 2^{\frac{1}{6}}\sigma` as in the first variant. The potential between
-:math:`\var{r_\mathrm{min}}` and :math:`\var{r_\mathrm{cut}}` is given
+:math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}` is given
 by
 
-.. math:: V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(\var{r} - \var{r_\mathrm{min}})\right].
+.. math:: V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(r - r_\mathrm{min})\right].
 
-For :math:`\var{r} < \var{r_\mathrm{min}}`, :math:`V(r)` is implemented
+For :math:`r < r_\mathrm{min}`, :math:`V(r)` is implemented
 as normal Lennard-Jones potential, see equation [eq:lj] with
-:math:`\var{c_\mathrm{shift}} = 0`.
+:math:`c_\mathrm{shift} = 0`.
 
 Only the second variant allows capping the force using , see
 section [sec:forcecap].
@@ -294,9 +295,9 @@ inter smooth-step
 This defines a smooth step interaction between particles of the types
 and , for which the potential is
 
-.. math:: V(r)= \left(\var{\sigma_1}/d\right)^\var{n} + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
+.. math:: V(r)= \left(\sigma_1/d\right)^n + \epsilon/(1 + \exp\left[2k_0 (r - \sigma_2)\right])
 
-for :math:`r<r_\mathrm{\var{cut}}`, and :math:`V(r)=0` elsewhere. With
+for :math:`r<r_\mathrm{cut}`, and :math:`V(r)=0` elsewhere. With
 :math:`n` around 10, the first term creates a short range repulsion
 similar to the Lennard-Jones potential, while the second term provides a
 much softer repulsion. This potential therefore introduces two length
@@ -320,12 +321,12 @@ defined by:
 
 .. math::
 
-   V(r)= \var{A}\exp\left[\var{B}(\var{\sigma} - \var{r})\right] -
-     \var{C} \var{r}^{-6} - \var{D} \var{r}^{-8} + \epsilon_\mathrm{shift},
+   V(r)= A\exp\left[B(\sigma - r)\right] -
+     C r^{-6} - D r^{-8} + \epsilon_\mathrm{shift},
 
 where :math:`\epsilon_\mathrm{shift}` is chosen such that
-:math:`V(\var{r_\mathrm{cut}})=0`. For
-:math:`r\ge \var{r_\mathrm{cut}}`, the :math:`V(r)=0`.
+:math:`V(r_\mathrm{cut})=0`. For
+:math:`r\ge r_\mathrm{cut}`, the :math:`V(r)=0`.
 
 For NaCl, the parameters should be chosen as follows:
 
@@ -364,16 +365,16 @@ models the potential energy in a diatomic molecule. This potential
 allows capping the force using ``inter forcecap``, see
 section [sec:forcecap].
 
-For :math:`r < \var{r_\mathrm{cut}}`, this potential is given by
+For :math:`r < r_\mathrm{cut}`, this potential is given by
 
 .. math::
 
-   V(r)=\var{\epsilon}\left(\exp\left[-2 \var{\alpha} \left(r - \var{r_\mathrm{min}}\right)\right]
+   V(r)=\epsilon\left(\exp\left[-2 \alpha \left(r - r_\mathrm{min}\right)\right]
        - 2\exp\left[-\alpha\left(r - r_\mathrm{min}\right)\right]\right) -
      \epsilon_\mathrm{shift},
 
-where is again chosen such that :math:`V(\var{r_\mathrm{cut}})=0`. For
-:math:`r\ge \var{r_\mathrm{cut}}`, the :math:`V(r)=0`.
+where is again chosen such that :math:`V(r_\mathrm{cut})=0`. For
+:math:`r\ge r_\mathrm{cut}`, the :math:`V(r)=0`.
 
 Buckingham interaction
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -387,11 +388,11 @@ inter buckingham
 This defines a Buckingham interaction between particles of the types and
 , for which the potential is given by
 
-.. math:: V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \var{\epsilon_\mathrm{shift}}
+.. math:: V(r)= A\exp(-B r) - Cr^{-6} - Dr^{-4} + \epsilon_\mathrm{shift}
 
-for :math:`\var{r_\mathrm{discont}} < r < \var{r_\mathrm{cut}}`. Below ,
+for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below ,
 the potential is linearly continued towards :math:`r=0`, similarly to
-force capping, see below. Above :math:`r=\var{r_\mathrm{cut}}`, the
+force capping, see below. Above :math:`r=r_\mathrm{cut}`, the
 potential is :math:`0`. This potential allows capping the force using ,
 see section [sec:forcecap].
 
@@ -407,11 +408,11 @@ inter soft-sphere
 This defines a soft sphere interaction between particles of the types
 and , which is defined by a single power law:
 
-.. math:: V(r)=a\left(r-r_\mathrm{\var{offset}}\right)^{-n}
+.. math:: V(r)=a\left(r-r_\mathrm{offset}\right)^{-n}
 
-for :math:`r<\var{r_\mathrm{cut}}`, and :math:`V(r)=0` above. There is
+for :math:`r<r_\mathrm{cut}`, and :math:`V(r)=0` above. There is
 no shift implemented currently, which means that the potential is
-discontinuous at :math:`r=\var{r_\mathrm{cut}}`. Therefore energy
+discontinuous at :math:`r=r_\mathrm{cut}`. Therefore energy
 calculations should be used with great caution.
 
 Membrane-collision interaction
@@ -442,12 +443,12 @@ vector.
 The membrane-collision interaction for non-intersected membranes is then
 defined by:
 
-.. math:: V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{\var{offset}}\right)}},
+.. math:: V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{offset}\right)}},
 
-for :math:`d<\var{d_\mathrm{cut}}` and :math:`V(d)=0` above. For
+for :math:`d<d_\mathrm{cut}` and :math:`V(d)=0` above. For
 intersected membranes, it is defined as :math:`V(-d)`. There is no shift
 implemented currently, which means that the potential is discontinuous
-at :math:`d=\var{d_\mathrm{cut}}`. Therefore energy calculations should
+at :math:`d=d_\mathrm{cut}`. Therefore energy calculations should
 be used with great caution.
 
 Hat interaction
@@ -519,8 +520,8 @@ particles of the typers and . The Gaussian potential is defined by
 
    V(r) = 
      \begin{cases} \epsilon\,e^{-\frac{1}{2}\left(\frac{r}{\sigma}\right)^{2}}
-       & r < \var{r_\mathrm{cut}}\\
-     0 & r \ge \var{r_\mathrm{cut}}
+       & r < r_\mathrm{cut}\\
+     0 & r \ge r_\mathrm{cut}
      \end{cases}
 
 The Gaussian potential is smooth except at the cutoff, and has a finite
@@ -528,7 +529,7 @@ overlap energy of :math:`\epsilon`. It can be used to model overlapping
 polymer coils.
 
 Currently, there is no shift implemented, which means that the potential
-is discontinuous at :math:`r=\var{r_\mathrm{cut}}`. Therefore use
+is discontinuous at :math:`r=r_\mathrm{cut}`. Therefore use
 caution when performing energy calculations. However, you can often
 choose the cutoff such that the energy difference at the cutoff is less
 than a desired accuracy, since the potential decays very rapidly.
@@ -631,7 +632,7 @@ orientational dependence of the range and the well-depth .
 Assume two particles with orientations given by the unit vectors
 :math:`\mathbf{\hat{u}}_i` and :math:`\mathbf{\hat{u}}_j` and
 intermolecular vector :math:`\mathbf{r} = r\mathbf{\hat{r}}`. If
-:math:`r<r_\mathrm{\var{cut}}`, then the interaction between these two
+:math:`r<r_\mathrm{cut}`, then the interaction between these two
 particles is given by
 
 .. math::
@@ -683,8 +684,8 @@ are responsible for the degree of anisotropy of the molecular properties. is
 the molecular elongation, and is the ratio of the potential well depths for the
 side-by-side and end-to-end configurations. The exponents and are adjustable
 parameters of the potential. Several Gay-Berne parametrizations exist, the
-original one being :math:`\var{k_1} = 3`, :math:`\var{k_2} = 5`,
-:math:`\var{\mu} = 2` and :math:`\var{\nu} = 1`.
+original one being :math:`k_1 = 3`, :math:`k_2 = 5`,
+:math:`\mu = 2` and :math:`\nu = 1`.
 
 .. _Affinity interaction:
 
@@ -1003,16 +1004,16 @@ Stretching
 For each edge of the mesh, is the current distance between point A and
 point B. is the distance between these points in the relaxed state, that
 is if the current edge has the length exactly , then no forces are
-added. :math:`\Delta \var{L_{AB}}` is the deviation from the relaxed
+added. :math:`\Delta L_{AB}` is the deviation from the relaxed
 state, that is
-:math:`\Delta \var{L_{AB}} = \var{L_{AB}} - \var{L_{AB}^0}`. The
+:math:`\Delta L_{AB} = L_{AB} - L_{AB}^0`. The
 stretching force between A and B is calculated using
 
-.. math:: \var{F_s(A,B)} = (\var{k_s}\kappa(\lambda_{AB}) + \var{k_{slin}})\Delta \var{L_{AB}}\var{n_{AB}}.
+.. math:: F_s(A,B) = (k_s\kappa(\lambda_{AB}) + k_{slin})\Delta L_{AB}n_{AB}.
 
 Here, is the unit vector pointing from to , is the constant for
 nonlinear stretching, is the constant for linear stretching,
-:math:`\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}`, and :math:`\kappa`
+:math:`\lambda_{AB} = L_{AB}/L_{AB}^0`, and :math:`\kappa`
 is a nonlinear function that resembles neo-Hookean behaviour
 
 .. math::
@@ -1039,13 +1040,13 @@ inner angle. The deviation of this angle
 :math:`\Delta \theta = \theta - \theta^0` defines two bending forces for
 two triangles and
 
-.. math:: \var{F_{bi}(A_iBC)} = \var{k_b}\frac{\Delta \theta}{\theta^0} \var{n_{A_iBC}}
+.. math:: F_{bi}(A_iBC) = k_b\frac{\Delta \theta}{\theta^0} n_{A_iBC}
 
 Here, is the unit normal vector to the triangle . The force is assigned
 to the vertex not belonging to the common edge. The opposite force
 divided by two is assigned to the two vertices lying on the common edge.
-This procedure is done twice, for :math:`\var{i}=1` and for
-:math:`\var{i}=2`.
+This procedure is done twice, for :math:`i=1` and for
+:math:`i=2`.
 
 |image3|
 
@@ -1057,11 +1058,11 @@ triangulation.
 
 The deviation of the triangle surface is computed from the triangle
 surface in the resting shape
-:math:`\Delta \var{S_{ABC}} = \var{S_{ABC}} - \var{S_{ABC}^0}`. The area
+:math:`\Delta S_{ABC} = S_{ABC} - S_{ABC}^0`. The area
 constraint assigns the following shrinking/expanding force to every
 vertex
 
-.. math:: \var{F_{al}(A)} = -\var{k_{al}}\frac{\Delta \var{S_{ABC}}}{\var{\sqrt{S_{ABC}}}}\var{w_{A}}
+.. math:: F_{al}(A) = -k_{al}\frac{\Delta S_{ABC}}{\sqrt{S_{ABC}}}w_{A}
 
 where is the area constraint coefficient, and is the unit vector
 pointing from the centroid of triangle to the vertex . Similarly the
@@ -1109,9 +1110,9 @@ This type of interaction is available solely for closed 3D immersed
 objects.
 
 This interaction comprises two concepts: preservation of global surface
-and of volume of the object. Parameters :math:`\var{S^0}, \var{k_{ag}}`
+and of volume of the object. Parameters :math:`S^0, k_{ag}`
 define preservation of the surface and parameters
-:math:`  \var{V^0}, \var{k_{v}}` define volume preservation. They can be
+:math:`  V^0, k_{v}` define volume preservation. They can be
 used together, or, by setting any :math:`k_{ag}` or :math:`k_{v}` to
 zero, the corresponding modulus can be turned off.
 
@@ -1120,10 +1121,10 @@ Global area conservation
 
 Denote by the current surface of the immersed object, by the surface in
 the relaxed state and define
-:math:`\Delta \var{S} = \var{S} - \var{S_0}`. The global area
+:math:`\Delta S = S - S_0`. The global area
 conservation force is defined as
 
-.. math:: \var{F_{ag}(A)} = - \var{k_{ag}}\frac{\Delta \var{S}}{\var{S}}\var{w_{A}}
+.. math:: F_{ag}(A) = - k_{ag}\frac{\Delta S}{S}w_{A}
 
 Here, the above mentioned force divided by 3 is added to all three
 particles.
@@ -1134,21 +1135,21 @@ Volume conservation
 ^^^^^^^^^^^^^^^^^^^
 
 The deviation of the objects volume is computed from the volume in the
-resting shape :math:`\Delta \var{V} = \var{V} - \var{V^0}`. For each
+resting shape :math:`\Delta V = V - V^0`. For each
 triangle the following force is computed
 
-.. math:: \var{F_v(ABC)} = -\var{k_v}\frac{\Delta \var{V}}{\var{V^0}} \var{S_{ABC}}\ \var{n_{ABC}}
+.. math:: F_v(ABC) = -k_v\frac{\Delta V}{V^0} S_{ABC}\ n_{ABC}
 
 where is the area of triangle , is the normal unit vector of plane , and
 is the volume constraint coefficient. The volume of one immersed object
 is computed from
 
-.. math:: \var{V} = \sum_{\var{ABC}}\var{S_{ABC}}\ \var{n_{ABC}}\cdot \var{h_{ABC}}
+.. math:: V = \sum_{ABC}S_{ABC}\ n_{ABC}\cdot h_{ABC}
 
 where the sum is computed over all triangles of the mesh and is the
 normal vector from the centroid of triangle to any plane which does not
 cross the cell. The force is equally distributed to all three vertices
-:math:`\var{A},\var{B},\var{C}.`
+:math:`A,B,C.`
 
 |image4|
 
@@ -1212,9 +1213,9 @@ potential. This potential is defined between three particles. The
 particle for which the bond is created, is the central particle, and the
 angle :math:`\phi` between the vectors from this particle to the two
 others determines the interaction. is the bending constant, and the
-optional parameter :math:`\var{\phi_0}` is the equilibirum bond angle in
+optional parameter :math:`\phi_0` is the equilibirum bond angle in
 radian ranging from 0 to :math:`\pi`. If this parameter is not given, it
-defaults to :math:`\var{\phi_0} = \pi`, which corresponds to a stretched
+defaults to :math:`\phi_0 = \pi`, which corresponds to a stretched
 configuration. For example, for a bond defined by
 
 part $p_2 bond 4 $p_1 $p_3
@@ -1273,7 +1274,7 @@ bond is created be particle :math:`p_2`, and the other bond partners
 :math:`p_1`, :math:`p_3`, :math:`p_4`, in this order, . Then, the
 dihedral potential is given by
 
-.. math:: V(\phi) = \var{K}\left[1 - \cos(\var{n}\phi - \var{p})\right],
+.. math:: V(\phi) = K\left[1 - \cos(n\phi - p)\right],
 
 where is the multiplicity of the potential (number of minimas) and can
 take any integer value (typically from 1 to 6), :math:`p` is a phase
@@ -1292,7 +1293,7 @@ mimic a large number of atomic torsion potentials.
 If you enable the feature OLD_DIHEDRAL, then the old, less general form
 of the potential is used:
 
-.. math:: V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
+.. math:: V(\phi) = K\left[1 + p\,\cos(n\phi)\right],
 
 where :math:`p` is rather a phase factor and can only take values
 :math:`p=\pm 1`.
@@ -2222,8 +2223,8 @@ molecule as of type . Using comforce one can apply a force such that t2
 can be pulled away from the bundle. The is set to 1 to turn on the
 interaction, and to 0 otherwise. The pulling can be done in two
 different directions. Either parallel to the major axis of the bundle
-(:math:`\var{dir} = 0`) or perpendicular to the major axis of the bundle
-(:math:`\var{dir} = 1`). is used to set the magnitude of the force. is
+(:math:`dir = 0`) or perpendicular to the major axis of the bundle
+(:math:`dir = 1`). is used to set the magnitude of the force. is
 used to set the ratio of the force applied on particles of vs. . This is
 useful if one has to keep the total applied force on the bundle and on
 the target molecule the same. A force of magnitude is applied on
@@ -2251,12 +2252,12 @@ configuration.
 
 This command will cap the force to , for particle distances which would
 lead to larger forces than , the force remains at . Accordingly, the
-potential is replaced by :math:`r \var{F_\mathrm{max}}`. Particles
+potential is replaced by :math:`r F_\mathrm{max}`. Particles
 placed exactly on top of each other will be subject to a force of
 magnitude along the first coordinate axis.
 
 The force capping is switched off by setting
-:math:`\var{F_\mathrm{max}}=0`. Note that force capping always applies
+:math:`F_\mathrm{max}=0`. Note that force capping always applies
 to all Lennard-Jones, tabulated, Morse and Buckingham interactions
 regardless of the particle types.
 
