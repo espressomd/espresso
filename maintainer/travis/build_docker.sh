@@ -2,7 +2,6 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
-
 cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
