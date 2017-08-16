@@ -1264,6 +1264,12 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, L
       atomicAdd(lb_moving_boundary[boundary_index].torque + 1, -torque[1] );
       atomicAdd(lb_moving_boundary[boundary_index].torque + 2, -torque[2] );
     }
+    else
+    {
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+0], -boundary_force[0]/para.tau);
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+1], -boundary_force[1]/para.tau);
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+2], -boundary_force[2]/para.tau);
+    }
   }
 }
 
