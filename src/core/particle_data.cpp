@@ -395,7 +395,7 @@ int set_particle_solvation(int part, double *solvation) {
 
 #endif
 
-#ifdef MASS
+#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
 int set_particle_mass(int part, double mass) {
   int pnode;
   if (!particle_node)
