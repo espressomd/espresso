@@ -221,7 +221,7 @@ struct ParticlePosition {
   /** periodically folded position. */
   double p[3] = {0.,0.,0.};
 
-#ifdef ROTATION|| defined(LB_BOUNDARIES_GPU)
+#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
   /** quaternions to define particle orientation */
   double quat[4] = {1.,0.,0.,0.} ;
   /** unit director calculated from the quaternions */

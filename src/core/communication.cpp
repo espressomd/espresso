@@ -27,25 +27,27 @@
 #endif
 
 #include <boost/mpi.hpp>
-#include <boost/serialization/string.hpp>
 #include <boost/serialization/array.hpp>
+#include <boost/serialization/string.hpp>
 
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
+#include "utils/serialization/Particle.hpp"
 
 #include "EspressoSystemInterface.hpp"
 #include "actor/EwaldGPU.hpp"
 #include "buckingham.hpp"
 #include "cells.hpp"
+#include "correlators.hpp"
 #include "cuda_interface.hpp"
 #include "elc.hpp"
 #include "energy.hpp"
 #include "external_potential.hpp"
-#include "forces.hpp"
 #include "forcecap.hpp"
+#include "forces.hpp"
 #include "galilei.hpp"
 #include "gb.hpp"
 #include "global.hpp"
@@ -54,9 +56,9 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "lb.hpp"
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
-#include "lb.hpp"
 #include "lj.hpp"
 #include "ljangle.hpp"
 #include "ljcos.hpp"
@@ -68,6 +70,8 @@
 #include "molforces.hpp"
 #include "morse.hpp"
 #include "mpiio.hpp"
+#include "observables/LbRadialVelocityProfile.hpp"
+#include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m.hpp"
 #include "particle_data.hpp"
@@ -77,13 +81,10 @@
 #include "scafacos.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "correlators.hpp"
 #include "statistics_fluid.hpp"
-#include "observables/Observable.hpp"
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
-#include "observables/LbRadialVelocityProfile.hpp"
 
 using namespace std;
 using Communication::mpiCallbacks;
@@ -175,7 +176,7 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
-  CB(mpi_scafacos_free_slave)                                        \
+  CB(mpi_scafacos_free_slave)                                                  \
   CB(mpi_mpiio_slave)
 
 // create the forward declarations
@@ -269,7 +270,6 @@ void mpi_init(int *argc, char ***argv) {
 
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-
   Communication::mpiCallbacks().set_comm(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
@@ -277,7 +277,7 @@ void mpi_init(int *argc, char ***argv) {
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  
+
   /* Create the datatype cache before registering atexit(mpi_stop). This is
      necessary as it is a static variable that would otherwise be destructed
      before mpi_stop is called. mpi_stop however needs to communicate and thus
@@ -1198,62 +1198,20 @@ void mpi_send_bond_slave(int pnode, int part) {
 
 /****************** REQ_GET_PART ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata) {
-  IntList *bl = &(pdata->bl);
-#ifdef EXCLUSIONS
-  IntList *el = &(pdata->el);
-#endif
-
   /* fetch fixed data */
-  if (pnode == this_node)
-    memmove(pdata, local_particles[part], sizeof(Particle));
-  else {
+  if (pnode == this_node) {
+    *pdata = *local_particles[part];
+  } else {
     mpi_call(mpi_recv_part_slave, pnode, part);
-    MPI_Recv(pdata, sizeof(Particle), MPI_BYTE, pnode, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
+    comm_cart.recv(pnode, SOME_TAG, *pdata);
   }
-
-  /* copy dynamic data */
-  /* bonds */
-  bl->max = bl->n;
-  if (bl->n > 0) {
-    alloc_intlist(bl, bl->n);
-    if (pnode == this_node)
-      memmove(bl->e, local_particles[part]->bl.e, sizeof(int) * bl->n);
-    else
-      MPI_Recv(bl->e, bl->n, MPI_INT, pnode, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-  } else
-    bl->e = NULL;
-
-#ifdef EXCLUSIONS
-  /* exclusions */
-  el->max = el->n;
-  if (el->n > 0) {
-    alloc_intlist(el, el->n);
-    if (pnode == this_node)
-      memmove(el->e, local_particles[part]->el.e, sizeof(int) * el->n);
-    else
-      MPI_Recv(el->e, el->n, MPI_INT, pnode, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-  } else
-    el->e = NULL;
-#endif
 }
 
 void mpi_recv_part_slave(int pnode, int part) {
-  Particle *p;
   if (pnode != this_node)
     return;
 
-  p = local_particles[part];
-
-  MPI_Send(p, sizeof(Particle), MPI_BYTE, 0, SOME_TAG, comm_cart);
-  if (p->bl.n > 0)
-    MPI_Send(p->bl.e, p->bl.n, MPI_INT, 0, SOME_TAG, comm_cart);
-#ifdef EXCLUSIONS
-  if (p->el.n > 0)
-    MPI_Send(p->el.e, p->el.n, MPI_INT, 0, SOME_TAG, comm_cart);
-#endif
+  comm_cart.send(0, SOME_TAG, *local_particles[part]);
 }
 
 /****************** REQ_REM_PART ************/
@@ -1975,7 +1933,6 @@ void mpi_send_ext_force_slave(int pnode, int part) {
 #endif
 }
 
-
 void mpi_cap_forces(double fc) {
   force_cap = fc;
   mpi_call(mpi_cap_forces_slave, 1, 0);
@@ -2465,12 +2422,13 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    /* here the setting actually happens, if the particle belongs to the local
-     * node */
+/* here the setting actually happens, if the particle belongs to the local
+ * node */
 #ifndef PARTICLE_ANISOTROPY
     p->p.gamma = gamma;
 #else
-    for ( j = 0 ; j < 3 ; j++) p->p.gamma[j] = gamma[j];
+    for (j = 0; j < 3; j++)
+      p->p.gamma[j] = gamma[j];
 #endif
 
   } else {
@@ -2492,7 +2450,7 @@ void mpi_set_particle_gamma_slave(int pnode, int part) {
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    /* here the setting happens for nonlocal nodes */
+/* here the setting happens for nonlocal nodes */
 #ifndef PARTICLE_ANISOTROPY
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma = s_buf;
@@ -2548,7 +2506,7 @@ void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     p->p.gamma_rot = s_buf;
 #else
-  	MPI_Recv(p->p.gamma_rot, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
+    MPI_Recv(p->p.gamma_rot, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
 #endif
   }
   on_particle_change();
