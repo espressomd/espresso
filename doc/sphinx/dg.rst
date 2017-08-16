@@ -1,3 +1,4 @@
+=================
 Developer's Guide
 =================
 .. warning::
@@ -20,7 +21,7 @@ http://lists.nongnu.org/mailman/listinfo/espressomd-devel
 .. _Before you start a development project:
 
 Before you start a development project
-======================================
+--------------------------------------
 Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
 This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
 
@@ -45,7 +46,7 @@ Required Development Tools
    the distributed versioning control system Git [1]_. 
 
 -  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
-      pip install --user -r requirements.txt
+      pip install --upgrade --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
 
@@ -60,7 +61,7 @@ systems.
 .. _Getting the Development Code:
 
 Getting the Development Code
-============================
+----------------------------
 We use Github for storing the source code and its history, and for managing the development process. 
 The repository is located at
 http://github.com/espressomd/espresso
@@ -71,7 +72,7 @@ The build process does not differ from the one for release versions described in
 
 
 Build System
-============
+------------
 
 The build system of |es| is based on CMake.
 
@@ -88,7 +89,7 @@ The most common reasons for editing these files are:
 -  Adding new external dependencies
 
 Adding New Source Files
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
@@ -111,7 +112,8 @@ need to look at the CMakeList.txt in the directory where the file is located.
 
 
 Testsuite
-=========
+---------
+
 -  New or significantly changed features will only be accepted, if they have a test case. 
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
 -  There are two kinds of tests:
@@ -132,9 +134,10 @@ Documentation
 =============
 
 The documentation of |es| consists of four parts:
--  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
--  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
--  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
+
+  -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
+  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+  -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
 
 
 
@@ -194,23 +197,25 @@ developers.
 
 Source code structure
 ---------------------
+
 The source tree has the following structure:
 * src: The actual source code
+
   * core: The C++ source code of the simulation core
   * python/espressomd: Source of the espressomd Python module and its submodules
   * script_interface: C++ source code of the script_interface component, which links Python classes to functionality in the simulation core
 
 * doc: Documentation
+
   * sphinx: The sphinx-based documentation, consisting of user and developer guide.
   * tutorials/python: Source and pdf files for the introductory tutorials
   * doxygen: Build directory for the C++ in-code documentation
 
 * testsuite/python: Python integration tests. Note that some C++ unit tests for individual core components are in src/core/unittests
-
 * samples/python: Some sample scripts
-
 * libs: External dependencies (at this point h5xx)
 * maintainer: Files used by the maintainers
+
   * configs: Collection of myconfig.hpp files which activate different sets of features for testing.
   * docker: Definitions of the docker images for various distributions used for continuous integration testing
   * travis: Support files for the continuous integration testing run on the Travis-CI service.
@@ -225,7 +230,9 @@ Espresso uses two communication models, namely master-slave and synchronous.
   runs the Python script, whereas all other nodes are idle until they receive a command from the head node. Such commands include particle creation,
   changing of particle properties and changing global simulation parameters.
   When a Python command such as:::
+
     system.part.add(pos=(1,2,3))
+
   is issued, the head node determines, which node is responsible for the given position, and then sends the node the command to place the particle.
 
 * When an integration is started in Python on the head node, a command to start the integration is sent to all nodes, in the master-slave framework described above.
@@ -236,7 +243,7 @@ Espresso uses two communication models, namely master-slave and synchronous.
   involved in the communication. If this is not done, a deadlock will result.
 
 Adding calls to the master-slave framework
------------------------------------------
+------------------------------------------
 
 Using an instance of MpiCallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +259,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add(my_callback);
     }
+
   You can, e.g., call your registration from initialize.cpp:on_program_start()
   Instead of a static function, from which a ``std::function<void(int,int)>`` can be constructed can
   be used. For example::
@@ -260,6 +268,7 @@ Using an instance of MpiCallback
     void register_my_callback() {
       Communication::mpiCallbacks().add([](int, int){ /* Do something */ });
     }
+
   can be used to add a lambda function as callback.
 * Then, you can use your callback from the head node::
 
@@ -267,10 +276,12 @@ Using an instance of MpiCallback
     void call_my_callback() {
       Communication::mpiCallbacks.call(my_callback, param1, param2);
     }
+
   This only works outside the integration loop. After the callback has been called, synchronous mpi communication can be done.
 
 Legacy callbacks
 ~~~~~~~~~~~~~~~~
+
 Older code uses callbacks defined in the CALLBACK_LIST preprocessor macro in communications.cpp. They are called via mpi_call().
 See communications.cpp:mpi_place_particle() for an example.
 
@@ -292,6 +303,7 @@ To add a new bonded interaction, the following steps have to be taken
 
 Defining the data structure for the interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The data structures for bonded interactions reside in ``interaction_data.hpp``.
 
 * Add your interaction to the ``enum BondedInteraction``.
@@ -386,6 +398,7 @@ Including the bonded interaction in the force calculation and the energy and pre
 
 Adding the bonded interaciton in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
 * In ``src/python/espressomd/interactions.pxd``:
 
