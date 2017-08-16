@@ -25,10 +25,15 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <numeric>
 #include <iterator>
+#include <numeric>
+#include <sstream>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #include "core/utils/List.hpp"
+#include "core/utils/serialization/List.hpp"
 
 using List = Utils::List<int>;
 
@@ -110,6 +115,15 @@ BOOST_AUTO_TEST_CASE(constructors) {
     /* Check that there was no realloc */
     BOOST_CHECK(d_ptr == u.data());
     BOOST_CHECK(std::equal(l.begin(), l.end(), u.begin()));
+  }
+
+  /* List::List(std::initializer_list) */
+  {
+    auto il = {1, 2, 3, 4};
+    auto l = List(il);
+
+    BOOST_CHECK(l.size() == il.size());
+    BOOST_CHECK(std::equal(l.begin(), l.end(), il.begin()));
   }
 }
 
@@ -256,7 +270,7 @@ BOOST_AUTO_TEST_CASE(operator_backets) {
     auto l = List(32);
     std::iota(l.begin(), l.end(), 0);
 
-    for(List::size_type i = 0; i < l.size(); i++ ) {
+    for (List::size_type i = 0; i < l.size(); i++) {
       BOOST_CHECK(l[i] == i);
     }
   }
@@ -267,7 +281,7 @@ BOOST_AUTO_TEST_CASE(operator_backets) {
     std::iota(i.begin(), i.end(), 0);
     auto const l = i;
 
-    for(List::size_type i = 0; i < l.size(); i++ ) {
+    for (List::size_type i = 0; i < l.size(); i++) {
       BOOST_CHECK(l[i] == i);
     }
   }
@@ -369,4 +383,20 @@ BOOST_AUTO_TEST_CASE(shrink_to_fit) {
     BOOST_CHECK(l.capacity() == 32);
     BOOST_CHECK(l.size() == 32);
   }
+}
+
+BOOST_AUTO_TEST_CASE(serialization) {
+  auto l = List(32);
+  std::iota(l.begin(), l.end(), 0);
+
+  std::stringstream stream;
+  boost::archive::text_oarchive out_ar(stream);
+  out_ar << l;
+
+  boost::archive::text_iarchive in_ar(stream);
+  auto m = List();
+  in_ar >> m;
+
+  BOOST_CHECK(l.size() == m.size());
+  BOOST_CHECK(std::equal(l.begin(), l.end(), m.begin()));
 }

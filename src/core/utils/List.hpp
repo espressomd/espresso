@@ -38,6 +38,10 @@ public:
     std::copy(std::begin(array), std::end(array), begin());
   }
 
+  List(std::initializer_list<T> il) : List(il.size()) {
+    std::copy(std::begin(il), std::end(il), begin());
+  }
+
 private:
   void copy(List const &rhs) {
     resize(rhs.n);

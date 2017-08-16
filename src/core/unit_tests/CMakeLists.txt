@@ -48,11 +48,9 @@ endfunction(UNIT_TEST)
 unit_test(NAME Vector_test SRC Vector_test.cpp)
 unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)
-
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp ../RuntimeErrorCollector.cpp ../RuntimeError.cpp)
 
 unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp)
-
 unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp)
 unit_test(NAME Factory_test SRC Factory_test.cpp)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp)
