@@ -8,10 +8,8 @@
 namespace boost {
 namespace serialization {
 template <typename T, class Archive>
-void load(Archive &ar, Utils::List<T> &v,
-          const unsigned int file_version) {
+void load(Archive &ar, Utils::List<T> &v, const unsigned int file_version) {
   typename Utils::List<T>::size_type n;
-
   ar >> n;
   v.resize(n);
 
@@ -21,7 +19,8 @@ void load(Archive &ar, Utils::List<T> &v,
 template <typename T, class Archive>
 void save(Archive &ar, Utils::List<T> const &v,
           const unsigned int file_version) {
-  ar << v.size();
+  typename Utils::List<T>::size_type n = v.size();
+  ar << n;
   ar << make_array(v.data(), v.size());
 }
 
