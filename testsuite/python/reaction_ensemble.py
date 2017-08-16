@@ -47,7 +47,7 @@ class ReactionEnsembleTest(ut.TestCase):
     product_types=[type_A,type_H]
     product_coefficients=[1,1]
     system = espressomd.System()
-    system.seed=np.random.randint(0, 2**31-1)
+    system.seed=system.cell_system.get_state()['n_nodes'] * [np.random.randint(0, 2**31-1)]
     system.box_l = np.ones(3)*(N0/c0)**(1.0/3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01
