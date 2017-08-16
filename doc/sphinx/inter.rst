@@ -25,11 +25,12 @@ define the interaction parameters.
 
 Isotropic non-bonded interactions
 ---------------------------------
-Nonbonded interaction are configured by the :class:`espressomd.interactions.NonBondedInteractions` class, which is a member of :class:`espressomd.system.System`::
+Nonbonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
+
     system.non_bonded_inter[type1, type2]
 
 This command defines an interaction between all particles of type *type1* and
-*type2*. The possible interaction types and their parameters are
+*type2*. Possible interaction types and their parameters are
 listed below. 
 
 .. todo::
@@ -37,7 +38,6 @@ listed below.
     If the interaction is omitted, the command returns the
     currently defined interaction between the two types using the syntax to
     define the interaction
-
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
@@ -57,14 +57,13 @@ The interface for tabulated interactions are implemented
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated(filename = 'filename')
-
+    system.non_bonded_inter[type1, type2].tabulated(filename='filename')
 
 This defines an interaction between particles of the types *type1* and *type2* according
 to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
 separation distance. The tabulated potential allows capping the force
-using , see section :ref:`Capping the force during warmup`.
+using TODO:MISSING, see section :ref:`Capping the force during warmup`.
 
 At present the required file format is simply an ordered list separated
 by whitespace. The data reader first looks for a ``#`` character and
@@ -74,16 +73,16 @@ will be ignored.
 The first three parameters after the ``#`` specify the number of data
 points :math:`N_\mathrm{points}` and the minimal and maximal tabulated
 separation distances :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}`.
-The number of data points obviously should be an integer, the two other
-can be arbitrary positive floating points. Take care when choosing the number of
+The number of data points has to be given as an integer, the two others
+can be arbitrary positive floating-point numbers. Take care when choosing the number of
 points, since a copy of each lookup table is kept on each node and must
 be referenced very frequently. The maximal tabulated separation distance
 also acts as the effective cutoff value for the potential.
 
-The remaining data in the file should consist of n data triples
+The remaining data in the file should consist of :math:`N_\mathrm{points}` data triples
 :math:`r`, :math:`F(r)` and :math:`V(r)`. :math:`r` gives the particle
 separation, :math:`V(r)` specifies the interaction potential, and
-:math:`F(r)= -V'(r)/r` the force (note the factor :math:`1/r`!). The
+:math:`F(r)= -V'(r)/r` the force (note the factor :math:`r^{-1}`!). The
 values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
 of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`; the
@@ -99,11 +98,10 @@ Lennard-Jones interaction
     `Feature LENNARD_JONES required.`
 
 The interface for the Lennard-Jones interaction is implemented in 
-:class:`espressomd.interactions.LennardJonesInteraction`. They are 
-configured via the following syntax::
+:class:`espressomd.interactions.LennardJonesInteraction`. The Lennard-Jones parameters
+can be set via::
 
     system.non_bonded_inter[type1, type2].lennard_jones.set_params(**kwargs)
-
 
 This command defines the traditional (12-6)-Lennard-Jones interaction
 between particles of the types *type1* and *type2*. For a description of the input arguments
@@ -112,18 +110,18 @@ see :class:`espressomd.interactions.LennardJonesInteraction`. The potential is d
 .. math::
 
    \label{eq:lj}
-     V_\mathrm{LJ}(r) = \Biggl\{
-       \begin{array}{ll}
-         4\epsilon\left[(\frac{\sigma}{r-r_\mathrm{off}})^{12}
-         - (\frac{\sigma}{r-r_\mathrm{off}})^6+c_\mathrm{shift}\right], 
-         & \mathrm{ if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         \mathit{0}, 
-         & \mathrm{ otherwise}\\
-       \end{array}\ .
+     V_\mathrm{LJ}(r) =
+       \begin{cases}
+         4 \epsilon \left[ \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{12}
+         - \left(\frac{\sigma}{r-r_\mathrm{off}}\right)^6+c_\mathrm{shift}\right]
+         & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
+         0 
+         & \mathrm{otherwise}
+       \end{cases}.
 
-The traditional Lennard–Jones potential is the “work–horse” potential of
-particle–particle interactions in coarse–grained simulations. It is a
-simple model of the van–der–Waals interaction, and is attractive at
+The traditional Lennard-Jones potential is the “work-horse” potential of
+particle--particle interactions in coarse-grained simulations. It is a
+simple model for the van-der-Waals interaction, and is attractive at
 large distance, but strongly repulsive at short distances.
 :math:`r_\mathrm{off} + \sigma` corresponds to the sum of
 the radii of the interaction particles. At this distance, the potential is
@@ -142,14 +140,14 @@ The Lennard-Jones force on a particle can be capped by setting :math:`r_\mathrm{
 When :math:`r_\mathrm{cap}` is set *and* individual force capping has been issued the Lennard-Jones interaction is capped by the force at :math:`r_\mathrm{cap}`.
 For further information on force capping see :ref:`Capping the force during warmup`.
 By default, force capping
-is off and the cap radius is set to 0.
+is off and the cap radius is set to :math:`0`.
 
 An optional additional parameter can be used to restrict the interaction
 from a *minimal* distance :math:`r_\mathrm{min}`. This is an
-optional parameter, set to 0 by default.
+optional parameter, set to :math:`0` by default.
 
-A special case of the Lennard–Jones potential is the
-Weeks–Chandler–Andersen (WCA) potential, which one obtains by putting
+A special case of the Lennard-Jones potential is the
+Weeks-Chandler-Andersen (WCA) potential, which one obtains by putting
 the cutoff into the minimum, choosing
 :math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma`. The WCA
 potential is purely repulsive, and is often used to mimick hard sphere
@@ -161,13 +159,13 @@ the Lennard-Jones potential is multiplied by the function
 .. math::
 
    \label{eq:lj-affinity}
-     A(r) = \Biggl\{
-       \begin{array}{ll}
-         \frac{(1-\alpha_1)}{2} [1+\tanh(2\phi)]  +  \frac{(1-\alpha_2)}{2} [1+\tanh(-2\phi)]
-         & \mathrm{, if~}  r > r_\mathrm{cut}+2^{\frac{1}{6}}\sigma\\
+     A(r) =
+       \begin{cases}
+         \frac{(1-\alpha_1)}{2} \left[1+\tanh(2\phi)\right]  +  \frac{(1-\alpha_2)}{2} \left[1+\tanh(-2\phi)\right]
+         & \mathrm{if~}  r > r_\mathrm{cut}+2^{\frac{1}{6}}\sigma \\
          1
-         & \mathrm{, otherwise~} \\
-       \end{array}\ ,
+         & \mathrm{otherwise}
+       \end{cases}\ ,
 
 where :math:`\alpha_i` is the affinity to the :math:`i`-th fluid
 component (see :ref:`Affinity interaction`), and the order parameter :math:`\phi` is
@@ -209,14 +207,14 @@ types *type1* and *type2*. The potential is defined by
 .. math::
 
    \label{eq:lj-generic}
-     V_\mathrm{LJ}(r) = \Biggl\{
-       \begin{array}{ll}
-         \epsilon\left[b_1(\frac{\sigma}{r-r_\mathrm{off}})^{e_1}
-         -b_2(\frac{\sigma}{r-r_\mathrm{off}})^{e_2}+c_\mathrm{shift}\right]
-         & \mathrm{, if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
-         \mathit{0} 
-         & \mathrm{, otherwise}\\
-       \end{array}\ .
+     V_\mathrm{LJ}(r) =
+       \begin{cases}
+         \epsilon\left[b_1\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_1}
+         -b_2\left(\frac{\sigma}{r-r_\mathrm{off}}\right)^{e_2}+c_\mathrm{shift}\right]
+         & \mathrm{if~} r_\mathrm{min}+r_\mathrm{off} < r < r_\mathrm{cut}+r_\mathrm{off}\\
+         0 
+         & \mathrm{otherwise}
+       \end{cases}\ .
 
 Note that the prefactor 4 of the standard LJ potential is missing, so
 the normal LJ potential is recovered for :math:`b_1=b_2=4`,
@@ -344,9 +342,9 @@ The cutoff can be chosen relatively freely because the potential decays
 fast; a value around 10 seems reasonable.
 
 In addition to this short ranged interaction, one needs to add a
-Coulombic, long–ranged part. If one uses elementary charges, a charge of
-:math:`q=+1` for the Na–particles, and :math:`q=-1` for the
-Cl–particles, the corresponding prefactor of the Coulomb interaction is
+Coulombic, long-ranged part. If one uses elementary charges, a charge of
+:math:`q=+1` for the Na-particles, and :math:`q=-1` for the
+Cl-particles, the corresponding prefactor of the Coulomb interaction is
 :math:`\approx 1389.3549 \AA\,kJ/mol`.
 
 Morse interaction
@@ -867,7 +865,7 @@ capping the Lennard-Jones potential appropriately so that round-off
 errors can be avoided.
 
 This interaction is useful when using other bond potentials which
-already include the short–ranged repulsion. This often the case for
+already include the short-ranged repulsion. This often the case for
 force fields or in general tabulated potentials.
 
 Rigid bonds
@@ -1799,8 +1797,8 @@ concentration is sampled. If this volume is set too small, harsh changes
 in the local dielectric properties can occur and the algorithm may
 become unstable, or worse, produce incorrect electrostatic forces.
 
-The calculation of local permittivity will for the same parameters –
-depending on your computer – run roughly a factor of :math:`2` to
+The calculation of local permittivity will for the same parameters --
+depending on your computer -- run roughly a factor of :math:`2` to
 :math:`4` longer than MEMD without temporally varying dielectric
 properties.
 
