@@ -37,9 +37,8 @@ function cmd {
     eval $1
 }
 
-
 # handle environment variables
-[ -z "$insource" ] && insource="true"
+[ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
