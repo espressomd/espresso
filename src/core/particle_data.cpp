@@ -100,10 +100,7 @@ void auto_exclusion(int distance);
 
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) {
-  part->bl.resize(0);
-#ifdef EXCLUSIONS
-  part->el.resize(0);
-#endif
+  part->~Particle();
 }
 
 /************************************************
@@ -1038,6 +1035,7 @@ void local_remove_all_particles() {
   n_part = 0;
   max_seen_particle = -1;
   std::fill(local_particles, local_particles + max_local_particles, nullptr);
+
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
@@ -1045,7 +1043,7 @@ void local_remove_all_particles() {
     p = cell->part;
     np = cell->n;
     for (i = 0; i < np; i++)
-      realloc_intlist(&p[i].bl, 0);
+      free_particle(&p[i]);
     cell->n = 0;
   }
 }
@@ -1240,44 +1238,16 @@ void try_delete_exclusion(Particle *part, int part2) {
 }
 #endif
 
-void send_particles(ParticleList *particles, int node) {
-  int pc;
-  /* Dynamic data, bonds and exclusions */
-  IntList local_dyn;
+#include "utils/serialization/ParticleList.hpp"
 
+void send_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
                      particles->n, node));
 
-  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart);
-  MPI_Send(particles->part, particles->n * sizeof(Particle), MPI_BYTE, node,
-           REQ_SNDRCV_PART, comm_cart);
-
-  init_intlist(&local_dyn);
-  for (pc = 0; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    int size = local_dyn.n + p->bl.n;
-#ifdef EXCLUSIONS
-    size += p->el.n;
-#endif
-    realloc_intlist(&local_dyn, size);
-    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n * sizeof(int));
-    local_dyn.n += p->bl.n;
-#ifdef EXCLUSIONS
-    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n * sizeof(int));
-    local_dyn.n += p->el.n;
-#endif
-  }
-
-  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n",
-                     this_node, local_dyn.n));
-  if (local_dyn.n > 0) {
-    MPI_Send(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
-             REQ_SNDRCV_PART, comm_cart);
-    realloc_intlist(&local_dyn, 0);
-  }
+  comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
   /* remove particles from this nodes local list and free data */
-  for (pc = 0; pc < particles->n; pc++) {
+  for (int pc = 0; pc < particles->n; pc++) {
     local_particles[particles->part[pc].p.identity] = NULL;
     free_particle(&particles->part[pc]);
   }
@@ -1286,70 +1256,11 @@ void send_particles(ParticleList *particles, int node) {
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  int transfer = 0, read, pc;
-  IntList local_dyn;
-
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
-  MPI_Recv(&transfer, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart,
-           MPI_STATUS_IGNORE);
-
-  PART_TRACE(
-      fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
-
-  realloc_particlelist(particles, particles->n + transfer);
-  MPI_Recv(&particles->part[particles->n], transfer * sizeof(Particle),
-           MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
-  particles->n += transfer;
-
-  init_intlist(&local_dyn);
-  for (pc = particles->n - transfer; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    local_dyn.n += p->bl.n;
-#ifdef EXCLUSIONS
-    local_dyn.n += p->el.n;
-#endif
-
-    PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n",
-                       this_node, p->p.identity));
-#ifdef ADDITIONAL_CHECKS
-    if (local_particles[p->p.identity] != NULL) {
-      fprintf(stderr, "%d: transmitted particle %d is already here...\n",
-              this_node, p->p.identity);
-      errexit();
-    }
-#endif
-  }
+  comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
-
-  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n",
-                     this_node, local_dyn.n));
-  if (local_dyn.n > 0) {
-    alloc_intlist(&local_dyn, local_dyn.n);
-    MPI_Recv(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
-             REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
-  }
-  read = 0;
-  for (pc = particles->n - transfer; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    if (p->bl.n > 0) {
-      alloc_intlist(&p->bl, p->bl.n);
-      memmove(p->bl.e, &local_dyn.e[read], p->bl.n * sizeof(int));
-      read += p->bl.n;
-    } else
-      p->bl.e = NULL;
-#ifdef EXCLUSIONS
-    if (p->el.n > 0) {
-      alloc_intlist(&p->el, p->el.n);
-      memmove(p->el.e, &local_dyn.e[read], p->el.n * sizeof(int));
-      read += p->el.n;
-    } else
-      p->el.e = NULL;
-#endif
-  }
-  if (local_dyn.n > 0)
-    realloc_intlist(&local_dyn, 0);
 }
 
 void add_partner(IntList *il, int i, int j, int distance) {

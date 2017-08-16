@@ -7,7 +7,6 @@
 
 namespace boost {
 namespace serialization {
-
 /* Pod serialize for Particle */
 template <typename Archive>
 void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
