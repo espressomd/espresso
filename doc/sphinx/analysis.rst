@@ -1,3 +1,5 @@
+.. _Analysis:
+
 Analysis
 ========
 
@@ -24,10 +26,16 @@ definition and analysis of topologies in the system (). In addition,
 offers the command (see section [sec:uwerr] for computing statistical
 errors in time series.
 
+
+.. _Available observables:
+
 Available observables
 ---------------------
 
 The command provides online-calculation of local and global observables.
+
+
+.. _Minimal distances between particles:
 
 Minimal distances between particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,6 +51,9 @@ particles of only those types is determined.
 returns the minimal distance of all particles to particle (variant ), or
 to the coordinates (, , ) (Variant ).
 
+
+.. _Particles in the neighbourhood:
+
 Particles in the neighbourhood
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -51,6 +62,8 @@ analyze nbhood analyze nbhood
 Returns a Tcl-list of the particle ids of all particles within a given
 radius around the position of the particle with number in variant or
 around the spatial coordinate (, , ) in variant .
+
+.. _Particle distribution:
 
 Particle distribution
 ~~~~~~~~~~~~~~~~~~~~~
@@ -72,6 +85,9 @@ group.
 The output corresponds to the blockfile format (see section ):
 
 { } { { } }
+
+
+.. _Radial density map:
 
 Radial density map
 ~~~~~~~~~~~~~~~~~~
@@ -113,6 +129,9 @@ the currently identified properties.
 #. The seem to average with respect to the centre of mass of the
    particles in the individual bins rather than with respect to the
    central axis, which one would think is natural.
+
+
+.. _Cylndrical average:
 
 Cylindrical Average
 ~~~~~~~~~~~~~~~~~~~
@@ -173,6 +192,9 @@ node[dot,label=above:center] – (0,1.5) node[above] direction; in 0, (2,)
 
 (0,) – node[right] radius (2,); (-2,-) – node[above] length (-2,);
 
+
+.. _Modes:
+
 Modes
 ~~~~~
 
@@ -184,20 +206,32 @@ numbers in the order:
 
 .. math:: ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
 
+
+.. _Lipid orientation:
+
 Lipid orientation
 ~~~~~~~~~~~~~~~~~
 
 analyze get\_lipid\_orients analyze lipid\_orient\_order
+
+
+.. _Bilayers:
 
 Bilayers
 ~~~~~~~~
 
 analyze bilayer\_set analyze bilayer\_density\_profile
 
+
+.. _GPB:
+
 GPB
 ~~~
 
 analyze cell\_gpb
+
+
+.. _Get folded positions:
 
 Get folded positions
 ~~~~~~~~~~~~~~~~~~~~
@@ -209,6 +243,9 @@ positions of all particles are given, folded to the box length. The
 optional parameter ensures that molecules (particle groups) are kept
 intact. The optional shift parameters can be used to shift the not
 separated molecules if needed.
+
+
+.. _Vkappa:
 
 Vkappa
 ~~~~~~
@@ -225,6 +262,9 @@ cumulative mean volume, cumulative mean squared volume and how many
 samples were used can be retrieved. Likewise the option enables you to
 set those.
 
+
+.. _Radial distribution function:
+
 Radial distribution function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -240,6 +280,8 @@ The output corresponds to the blockfile format (see section ):
 
 { } { { } }
 
+.. _Structure factor:
+
 Structure factor
 ~~~~~~~~~~~~~~~~
 
@@ -254,6 +296,9 @@ grows as :math:`\var{order}^3`.
 The output corresponds to the blockfile format (see section ):
 
 { }
+
+
+.. _Van-Hove autocorrelation function:
 
 Van-Hove autocorrelation function :math:`G(r,t)`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,12 +328,18 @@ The output corresponds to the blockfile format (see section ):
 The :math:`G(r,t)` are normalized such that the integral over space
 always yields :math:`1`.
 
+
+.. _Center of mass:
+
 Center of mass
 ~~~~~~~~~~~~~~
 
 analyze centermass
 
 Returns the center of mass of particles of the given type.
+
+
+.. _Moment of inertia matrix:
 
 Moment of inertia matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,6 +351,9 @@ analyze momentofinertiamatrix analyze find\_principal\_axis
 Variant returns the moment of inertia matrix for particles of given type
 . The output is a list of all the elements of the 3x3 matrix. Variant
 returns the eigenvalues and eigenvectors of the matrix.
+
+
+.. _Gyration tensor:
 
 Gyration tensor
 ~~~~~~~~~~~~~~~
@@ -313,6 +367,9 @@ containing the squared radius of gyration, three shape descriptors
 of the gyration tensor and their corresponding eigenvectors. The
 eigenvalues are sorted in descending order.
 
+
+.. _Aggregation:
+
 Aggregation
 ~~~~~~~~~~~
 
@@ -325,6 +382,9 @@ the optional parameter to specify a minimum number of contacts such that
 only molecules having at least contacts will be considered to be in the
 same aggregate. The second optional parameter enables one to consider
 aggregation state of only oppositely charged particles.
+
+
+.. _Identifying pearl necklace structures:
 
 Identifying pearl-necklace structures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,6 +405,9 @@ is defined by the identity first of its first monomer and the chain
 length length. Attention: This function is very specific to the problem
 and might not give useful results for other cases with similar
 structures.
+
+
+.. _Finding holes:
 
 Finding holes
 ~~~~~~~~~~~~~
@@ -381,6 +444,9 @@ mesh point in the linear representation of the 3D grid (coordinates are
 in the order x, y, z). Attention: the algorithm assumes a cubic box.
 Surface results have not been tested. .
 
+
+.. _Temperature of the lb fluid:
+
 Temperature of the LB fluid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -388,6 +454,9 @@ This command returns the temperature of the lattice-Boltzmann (LB)
 fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
 or are compiled in and boundaries are defined, only the available fluid
 volume is taken into account.
+
+
+.. _Momentum of the system:
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -398,6 +467,9 @@ This command returns the total linear momentum of the particles and the
 lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
 parameters either causes the command to ignore the contribution of LB or
 of the particles.
+
+
+.. _Energies:
 
 Energies
 ~~~~~~~~
@@ -412,6 +484,9 @@ only. Variants and return the energy contributions of the bonded resp.
 non-bonded interactions.
 
 { energy } { kinetic } { interaction } …
+
+
+.. _Pressure:
 
 Pressure
 ~~~~~~~~
@@ -466,6 +541,9 @@ specifying the pressure, the ideal gas pressure, the contributions from
 bonded interactions, the contributions from non-bonded interactions and
 the electrostatic contributions.
 
+
+.. _Stress Tensor:
+
 Stress Tensor
 ~~~~~~~~~~~~~
 
@@ -495,6 +573,9 @@ The command is implemented in parallel.
 specifying the pressure tensor, the ideal gas pressure tensor, the
 contributions from bonded interactions, the contributions from
 non-bonded interactions and the electrostatic contributions.
+
+
+.. _Local Stress Tensor:
 
 Local Stress Tensor
 ~~~~~~~~~~~~~~~~~~~
@@ -526,37 +607,8 @@ The command is implemented in parallel.
 
 specifying the local pressure tensor in each bin.
 
-Configurational temperature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Estimates the temperature using the potential energy, instead of the
-kinetic energy (i.e., “kinetic temperature”). The configurational
-temperature has been shown a more stringent criterion to reproduce a
-canonical ensemble in certain cases
-:cite:`allen06,bereau15`. The configurational temperature,
-:math:`T_\textrm{conf}`, is estimated using first and second derivatives
-of the potential energy of the system
-
-.. math::
-
-   \label{eq:configtemp}
-     \frac{1}{k_\textrm{B}T_\textrm{conf}} = - \frac{\langle \sum_i \nabla_i \cdot
-       \mathbf{F}_i \rangle}{\langle \sum_j F_j^2 \rangle},
-
-where :math:`F_i` is the force exerted on particle :math:`i`, and
-angular brackets denote canonical averages. Just like the conventional
-kinetic temperature, the configurational temperature can be estimated
-from a subsystem, e.g., a subset of particles in the box. To activate
-the calculation of the configurational temperature for particle
-:math:`i`, use
-
-part i configtemp 1
-
-The command will return a list of two terms: the instantaneous values of
-the (:math:`i`) denominator and (:math:`ii`) numerator of the expression
-in Equation [eq:configtemp]. Due to the reliance on second derivatives
-of the potential energy (i.e., first derivative of the force), a limited
-set of interaction potentials have so far been implemented.
+.. _Analyzing groups of particles:
 
 Analyzing groups of particles (molecules)
 -----------------------------------------
@@ -587,12 +639,18 @@ particles.
 
 Variant will return the chains currently stored.
 
+
+.. _Chains:
+
 Chains
 ~~~~~~
 
 All analysis functions in this section require the topology of the
 chains to be set correctly. The topology can be provided upon calling.
 This (re-)sets the structure info permanently, it is only required once.
+
+
+.. _End to end distance:
 
 End-to-end distance
 ^^^^^^^^^^^^^^^^^^^
@@ -604,6 +662,9 @@ chains. If is used, the distance is averaged over all stored
 configurations (see section ).
 
 { }
+
+
+.. _Radius of gyration:
 
 Radius of gyration
 ^^^^^^^^^^^^^^^^^^
@@ -628,6 +689,9 @@ gyration is averaged over all stored configurations (see section ).
 
 { }
 
+
+.. _Hydrodynamic radius:
+
 Hydrodynamic radius
 ^^^^^^^^^^^^^^^^^^^
 
@@ -648,6 +712,9 @@ in :cite:`doi86a`.
 
 { }
 
+
+.. _Internal distances:
+
 Internal distances
 ^^^^^^^^^^^^^^^^^^
 
@@ -662,6 +729,9 @@ configurations (see section ).
 The index corresponds to the number of beads between the two monomers
 considered (0 = next neighbours, 1 = one monomer in between, …).
 
+
+.. _Internal distances II (specific monomer):
+
 Internal distances II (specific monomer)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -674,6 +744,9 @@ distances are calculated. If is used, the values will be averaged over
 all stored configurations (see section ).
 
 { … }
+
+
+.. _Bond lengths:
 
 Bond lengths
 ^^^^^^^^^^^^
@@ -690,6 +763,9 @@ configurations (see section ). This function assumes linear chain
 topology and does not check if the bonds really exist!
 
 { }
+
+
+.. _Form factor:
 
 Form factor
 ^^^^^^^^^^^
@@ -714,6 +790,9 @@ used, the form factor will be averaged over all stored configurations
 
 with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
 
+
+.. _Chain radial distribution function:
+
 Chain radial distribution function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -727,6 +806,9 @@ shortest monomer-monomer distances). The distance range is given by and
 and it is divided into equidistant bins.
 
 { { } }
+
+
+.. _Mean square displacement of chains:
 
 Mean square displacement of chains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -758,6 +840,10 @@ is set, when the option is used.
 
 { }
 
+
+
+.. _Storing configurations:
+
 Storing configurations
 ----------------------
 
@@ -774,6 +860,9 @@ expect that the configurations are taken at equidistant timesteps.
 
 Note also, that the stored configurations can be written to a file and
 read from it via the command (see section ).
+
+
+.. _Storing and removing configurations:
 
 Storing and removing configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -801,6 +890,9 @@ format:
 
 { …}
 
+
+.. _Getting the stored configurations:
+
 Getting the stored configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -813,7 +905,11 @@ the number of stored configurations.
 
 { { …} }
 
-: Computing statistical errors in time series
+
+
+.. _Computing statistical errors in time series:
+
+Computing statistical errors in time series
 ---------------------------------------------
 
 uwerr

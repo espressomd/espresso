@@ -6,8 +6,7 @@ from . import utils
 import numpy as np
 
 IF ELECTROKINETICS:
-
-    cdef class Electrokinetics(lb.HydrodynamicInteraction):
+    cdef class Electrokinetics(HydrodynamicInteraction):
         species_list = []
 
         def __getitem__(self, key):
@@ -186,13 +185,22 @@ IF ELECTROKINETICS:
             raise Exception("This method is not implemented yet.")
 
 
-    cdef class ElectrokineticsRoutines:
+    cdef class ElectrokineticsRoutines(object):
         cdef int node[3]
 
         def __init__(self, key):
             self.node[0] = key[0]
             self.node[1] = key[1]
             self.node[2] = key[2]
+
+        property potential:
+            def __get__(self):
+                cdef double potential
+                ek_node_print_potential(self.node[0], self.node[1], self.node[2], &potential)
+                return potential
+
+            def __set__(self, value):
+                raise Exception("Potential can not be set.")
 
         property velocity:
             def __get__(self):
@@ -214,7 +222,7 @@ IF ELECTROKINETICS:
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species:
+    class Species(object):
         """Creates a species object that is passed to the ek instance"""
         py_number_of_species = 0
         id = -1
@@ -284,7 +292,7 @@ IF ELECTROKINETICS:
 
 
 
-    cdef class SpecieRoutines:
+    cdef class SpecieRoutines(object):
         cdef int node[3]
         cdef int id
 

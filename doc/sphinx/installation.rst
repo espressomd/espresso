@@ -1,4 +1,4 @@
-.. _getting, compiling and running:
+.. _Getting, compiling and running:
 
 Getting, compiling and running |es| 
 ===================================
@@ -11,7 +11,7 @@ packages is tested and known to run on a number of platforms.
 Alternatively, people that want to use the newest features of or that
 want to start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from ’s project page at Github  [3]_. This code might be not as well
+from |es| ’s project page at Github  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -185,7 +185,7 @@ compilation process significantly.
 ``myconfig.hpp``: Activating and deactivating features
 ------------------------------------------------------
 
-has a large number of features that can be compiled into the binary.
+|es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
 features, as this will slow down significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be
@@ -237,6 +237,19 @@ Then you can simply compile two different versions of via::
     make
 
 .. _running a simulation script:
+
+
+Installing python dependencies
+------------------------------
+
+There are a few python packages needed to e.g. build the documentation.
+To install the required packages as a non-root user execute the following
+command in |es| 's source directory:
+
+.. code-block:: bash
+
+    pip install -r requirements.txt --user --upgrade
+
 
 Running a simulation script
 ---------------------------

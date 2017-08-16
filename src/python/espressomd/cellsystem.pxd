@@ -40,3 +40,8 @@ cdef extern from "layered.hpp":
 
 cdef extern from "grid.hpp":
     int node_grid[3]
+
+
+
+cdef extern from "tuning.hpp":
+    cdef void c_tune_skin "tune_skin" (double min, double max, double tol, int steps)

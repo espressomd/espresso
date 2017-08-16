@@ -30,15 +30,24 @@ namespace Shapes {
 
 class Stomatocyte : public Shape {
 public:
-  Stomatocyte() : m_stomatocyte(new ::Shapes::Stomatocyte()) {}
+  Stomatocyte() : m_stomatocyte(new ::Shapes::Stomatocyte()) {
+    add_parameters({{"position_x", m_stomatocyte->position_x()},
+         {"position_y", m_stomatocyte->position_y()},
+         {"position_z", m_stomatocyte->position_z()},
+         {"orientation_x", m_stomatocyte->orientation_x()},
+         {"orientation_y", m_stomatocyte->orientation_y()},
+         {"orientation_z", m_stomatocyte->orientation_z()},
+         {"outer_radius", m_stomatocyte->outer_radius()},
+         {"inner_radius", m_stomatocyte->inner_radius()},
+         {"layer_width", m_stomatocyte->layer_width()},
+         {"direction", m_stomatocyte->direction()}});
+  }
 
   const std::string name() const override { return "Shapes::Stomatocyte"; }
 
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
-
-  std::shared_ptr<::Shapes::Shape> shape() const override { return m_stomatocyte; }
+  std::shared_ptr<::Shapes::Shape> shape() const override {
+    return m_stomatocyte;
+  }
 
 private:
   std::shared_ptr<::Shapes::Stomatocyte> m_stomatocyte;

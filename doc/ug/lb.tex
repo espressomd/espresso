@@ -103,7 +103,7 @@ The parameters \var{dens} and \var{visc} set up the density and
 (kinematic) viscosity of the LB fluid in (usual) MD units.  Internally the LB
 implementation works with a different set of units: all lengths are
 expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
-changing \var{agrid} and \var{tau}, might change the behaviour of the
+changing \var{agrid} and \var{tau}, might change the behavior of the
 LB fluid, \eg at boundaries, due to characteristics of the LBM
 itself. It should also be noted that the LB nodes are located at 0.5, 1.5, 2.5,
 etc (in terms of \var{agrid}).  This has important implications for the
@@ -143,7 +143,7 @@ of the options \lit{dens}, \lit{visc}, \lit{bulk_viscosity}, \lit{friction},
 they are set to the default values. The three elements of the
 coupling matrix can be supplied with the option \lit{sc_coupling},
 and the mobility coefficient can be
-specified with the option \lit{mobility}. By default no copuling is activated,
+specified with the option \lit{mobility}. By default no coupling is activated,
 and the relaxation parameter associated to the mobility is zero, corresponding
 to an infinite value for \lit{mobility}. Additional details are given in
 \ref{sec:shanchen} and \ref{sec:scmd-coupling}.
@@ -151,7 +151,7 @@ to an infinite value for \lit{mobility}. Additional details are given in
 \begin{essyntax}
   lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
 \end{essyntax}
-This variant returns the velocity at point in countinous space. 
+This variant returns the velocity at point in continuous space. 
 This can make it easier to calculate flow profiles independent of
 the lattice constant.
 
@@ -169,7 +169,7 @@ be taken when using the binary format as the format of doubles can depend
 on both the computer being used as well as the compiler. One thing that one
 needs to be aware of is that loading the checkpoint also requires the used to
 reuse the old forces. This is necessary since the coupling force between the
-paricles and the fluid has already been applied to the fluid. Failing to reuse
+particles and the fluid has already been applied to the fluid. Failing to reuse
 the old forces breaks momentum conservation, which is in general a problem. It
 is particularly problematic for bulk simulations as the system as a whole
 acquires a drift of the center of mass, causing errors in the calculation of
@@ -199,7 +199,7 @@ implementation the force can alternatively be interpolated using a three point
 scheme which couples the particles to the nearest 27 LB nodes.  This can be
 called using ``lbfluid \lit{couple} 3pt'' and is described in D\"{u}nweg and
 Ladd by equation 301\cite{duenweg08a}. Note that the three point coupling
-scheme is incompatible with the Shan Chen Lattice Boltmann.  The frictional
+scheme is incompatible with the Shan Chen Lattice Boltzmann.  The frictional
 force tends to decrease the relative velocity between the fluid and the
 particle whereas the random forces are chosen so large that the average kinetic
 energy per particle corresponds to the given temperature, according to a
@@ -212,7 +212,7 @@ nonconserved modes, including the pressure tensor, fluctuate correctly
 according to the given temperature and the relaxation parameters. All
 fluctuations can be switched off by setting the temperature to 0.
 
-Regarind the unit of the temperature, please refer to
+Regarding the unit of the temperature, please refer to
 Section~\ref{sec:units}.
 
 \section{The Shan Chen bicomponent fluid\label{sec:shanchen}}
@@ -240,7 +240,7 @@ also for the momentum modes, since they are not conserved quantities in the
 Shan-Chen method, by using the option \lit{mobility}. The mobility transport
 coefficient expresses the propensity of the two components to mutually diffuse,
 and, differently from other transport coefficients, only one value is needed,
-as it carachterizes the mixture as a whole. When thermal fluctuations are
+as it characterizes the mixture as a whole. When thermal fluctuations are
 switched on, a random noise is added, in addition, also to the momentum modes.
 Differently from the other modes, a correlated noise is added to the momentum
 ones, in order to preserve the \emph{total} momentum. 
@@ -262,7 +262,7 @@ the fluid (baricentric) velocity, $\rho=\sum_\zeta\rho_\zeta$ is
 the total density, and $p=\sum_{\zeta} p_{\zeta}=\sum_{\zeta} c_s^2
 \rho_{\zeta}$ is the internal pressure of the mixture ($c_s$ being
 the sound speed). Two fluctuating terms $\hat{{\vec{\sigma}}}$ and
-$\hat{{\vec{\xi}}}_{\zeta}$ are associated, respectivelu, to the
+$\hat{{\vec{\xi}}}_{\zeta}$ are associated, respectively, to the
 diffusive current ${\vec{D}}_{\zeta}$ and to the viscous stress
 tensor ${\vec{\Pi}}$.
 
@@ -322,7 +322,7 @@ around a particle.  The particle property \lit{solvation}
 (Chap.~\ref{chap:part}) sets the coupling constants
 $\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and $B$
 denote the first and second fluid component, respectively.  A complete
-description of the copuling scheme can be found in \cite{sega13c}.
+description of the coupling scheme can be found in \cite{sega13c}.
 
 \section{SC component-dependent interactions between particles}
 \label{sec:scmd-affinity}
@@ -422,7 +422,7 @@ mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot
 readable data will be 
 exported. If you plan to use paraview for visualization, note that also the 
 particle positions can be exported in the VTK format \ref{sec:writevtk}.
-\variant{2} allows you to only output part of the flow field by specifiying an
+\variant{2} allows you to only output part of the flow field by specifying an
 axis aligned bounding box through the coordinates of two of its corners. This
 bounding box can be used to output a slice of the flow field. As an example,
 executing \texttt{lbfluid print vtk velocity 0 0 5 10 10 5 filename} will
@@ -447,7 +447,7 @@ or external) boundaries.
 
 The \lit{lbboundary} command syntax is very close to the
 \lit{constraint} syntax, as usually one wants the hydrodynamic
-boundary conditions to be shaped similarily to the MD
+boundary conditions to be shaped similarly to the MD
 boundaries. Currently the shapes mentioned above are available and
 their syntax exactly follows the syntax of the constraint command. For
 example
@@ -476,7 +476,7 @@ viscosity. This can \eg be seen when using the sample script
 The bounce back boundary conditions allow to set velocity at a boundary to a nonzero
 value. This allows to create shear flow and boundaries moving relative to 
 each other. This could be a fixed sphere in a channel moving at a finite speed -- 
-corresponding to the galilei-transform of a moving sphere in a fixed channel.
+corresponding to the Galilei-transform of a moving sphere in a fixed channel.
 The velocity boundary conditions are implemented according to \cite{succi01a}
 eq.~12.58. Using this implementation as a blueprint for the boundary treatment 
 an implementation of the Ladd-Coupling should be relatively straightforward.
@@ -525,7 +525,7 @@ activated.
 \end{essyntax}
 
 If the feature \lit{LB_ELECTROHYDRODYNAMICS} is activated, the
-(non-GPU) Lattice Boltzmann Code can be used to implicitely model
+(non-GPU) Lattice Boltzmann Code can be used to implicitly model
 surrounding salt ions in an external electric field by having the
 charged particles create flow.
 

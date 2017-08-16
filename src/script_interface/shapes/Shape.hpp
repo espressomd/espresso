@@ -22,15 +22,13 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
 #define SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
 
-#include "ScriptInterface.hpp"
-#include <memory>
-
+#include "auto_parameters/AutoParameters.hpp"
 #include "core/shapes/Shape.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
 
-class Shape : public ScriptInterfaceBase {
+class Shape : public AutoParameters {
 public:
   /**
    * @brief Return the Shape that we are wrapping.
@@ -38,13 +36,15 @@ public:
   virtual std::shared_ptr<::Shapes::Shape> shape() const = 0;
 
   Variant call_method(std::string const &name,
-          VariantMap const &params) override {
-      if (name == "calc_distance") {
-          std::array<double, 3> pos = get_value<Vector3d>(params.at("position"));
-          double dist, vec[3];
-          shape()->calculate_dist(pos.data(), &dist, vec);
-          return std::vector<Variant>{dist, Vector3d{vec}};
-      }
+                      VariantMap const &params) override {
+    if (name == "calc_distance") {
+      std::array<double, 3> pos = get_value<Vector3d>(params.at("position"));
+      double dist, vec[3];
+      shape()->calculate_dist(pos.data(), &dist, vec);
+      return std::vector<Variant>{dist, Vector3d{vec}};
+    }
+
+    return {};
   }
 };
 

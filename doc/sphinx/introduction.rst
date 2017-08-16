@@ -18,11 +18,11 @@ software.
 
 The kernel of |es| is written in C with computational efficiency in mind.
 Interaction between the user and the simulation engine is provided via a
-Tcl scripting interface. This enables setup of arbitrarily complex
+Python scripting interface. This enables setup of arbitrarily complex
 systems which users might want to simulate in future, as well as
 modifying simulation parameters during runtime.
 
-.. _guiding_principles:
+.. _Guiding principles:
 
 Guiding principles
 ------------------
@@ -55,16 +55,16 @@ avoided in hope that the overhead in computer time will be more than
 compensated for by saving much of the user time while trying to
 understand what the code is supposed to do.
 
-Hand-in-hand with the extensibility and readability of the code comes
-the flexibility of the whole program. On the one hand, it is provided by
-the generalized functionality of its parts, avoiding highly specialized
-functions. An example can be the implementation of the Generic
-Lennard-Jones potential described in section :ref:`GenLennardJones` where
-the user can change all available parameters. Where possible, default
-values are avoided, providing the user with the possibility of choice.
-|es| cannot be aware whether your particles are representing atoms or
-billiard balls, so it cannot check if the chosen parameters make sense
-and it is the user’s responsibility to make sure they do.
+Hand-in-hand with the extensibility and readability of the code comes the
+flexibility of the whole program. On the one hand, it is provided by the
+generalized functionality of its parts, avoiding highly specialized functions.
+An example can be the implementation of the Generic Lennard-Jones potential
+described in section :ref:`generic_lennard_jones_interaction` where the user
+can change all available parameters. Where possible, default values are
+avoided, providing the user with the possibility of choice.  |es| cannot be
+aware whether your particles are representing atoms or billiard balls, so it
+cannot check if the chosen parameters make sense and it is the user’s
+responsibility to make sure they do.
 
 On the other hand, flexibility of |es| stems from the employment of a
 scripting language at the steering level. Apart from the ability to
@@ -77,17 +77,17 @@ flexibility is the possibility to integrate system setup, simulation and
 analysis in one single control script. |es| provides commands to create
 particles and set up interactions between them. Capping of forces helps
 prevent system blow-up when initially some particles are placed on top
-of each other. Using the Tcl interface, one can simulate the randomly
+of each other. Using the Python interface, one can simulate the randomly
 set-up system with capped forces, interactively check whether it is safe
 to remove the cap and switch on the full interactions and then perform
 the actual productive simulation.
 
-.. _available_simulation_methods:
+.. _Available simulation methods:
 
 Available simulation methods
 ----------------------------
 
-provides a number of useful methods. The following table shows the
+|es| provides a number of useful methods. The following table shows the
 various methods as well as their status. The table distinguishes between
 the state of the development of a certain feature and the state of its
 use. We distinguish between five levels:
@@ -183,8 +183,6 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+
 | Tunable Slip Boundary          | Single                 | Single           |
 +--------------------------------+------------------------+------------------+
-| Stokesian Dynamics             | Single                 | Single           |
-+--------------------------------+------------------------+------------------+
 |                             **Analysis**                                   |
 +--------------------------------+------------------------+------------------+
 | uwerr                          | None                   | Good             |
@@ -217,10 +215,7 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+
 | Catalytic Reactions            | Single                 | Single           |
 +--------------------------------+------------------------+------------------+
-| mbtools package                | Group                  | Group            |
-+--------------------------------+------------------------+------------------+
-
-.. _basic_program_structure:
+.. _Basic program structure:
 
 Basic program structure
 -----------------------
@@ -239,7 +234,7 @@ that basic functions are accessed via a set of well-defined lean
 interfaces, hiding the details of the complex numerical algorithms.
 
 The scripting interface (Python) is used to setup the system
-(particles, boundary onditions, interactions, ...), control the
+(particles, boundary conditions, interactions, ...), control the
 simulation, run analysis, and store and load results. The user has at
 hand the full readability and functionality of the scripting language.
 For instance, it is possible to use the SciPy package for analysis and
@@ -255,7 +250,7 @@ details of implementation which are necessary for understanding how the
 script interface works. Technical documentation of the code and program
 structure is contained in the Developers’ guide (see section [sec:dg]).
 
-.. _on_units:
+.. _On units:
 
 On units
 --------
@@ -329,22 +324,30 @@ As long as one remains within the same unit system throughout the whole
 |es|-script, there should be no problems.
 
 
-.. _requirements:
+.. _Requirements:
 
 Requirements
 ------------
 
-The following libraries and tools are required to be able to compile and
-use :
+The following libraries, including header files, are required to be able
+to compile and use |es|:
+
+Boost
+    A number of advanced C++ features used by |es| is provided by Boost.
 
 FFTW
-    For some algorithms (P:math:`^3`\ M), needs the FFTW library version
-    3 or later  [1]_ for Fourier transforms. Again, the header files are
-    required.
+    For some algorithms (P:math:`^3`\ M), |es| needs the FFTW library
+    version 3 or later  [1]_ for Fourier transforms, including header
+    files.
 
 MPI
-    Finally, if you want to use in parallel, you need a working MPI
-    environment (that implements the MPI standard version 1.2).
+    Because |es| is parallelized with MPI, you need a working MPI
+    environment that implements the MPI standard version 1.2.
+
+Python
+    |es|'s main user interface is via the Python scripting interface.
+
+.. Iinstalling Requirements on ubuntu:
 
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -354,14 +357,17 @@ installed with:
 
 .. code-block:: bash
 
-    $ sudo apt install build-essential cmake cython python-numpy tcl-dev
-    tk-dev libboost-all-dev openmpi-common
+    sudo apt install build-essential cmake cython python-numpy \
+    libboost-all-dev openmpi-common
 
 Optionally the ccmake utility can be installed for easier configuration:
 
 .. code-block:: bash
 
     $ sudo apt install cmake-curses-gui
+
+
+.. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -374,11 +380,13 @@ following commands:
 
 .. code-block:: bash
 
-    $ sudo xcode-select –install sudo xcodebuild -license accept port
-    selfupdate port install cmake python27 python27-cython python27-numpy
-    tcl tk openmpi-default fftw-3 +openmpi boost +openmpi +python27 port
-    select –set cython cython27 port select –set python python27 port select
-    –set mpi openmpi-mp-fortran
+    sudo xcode-select –install sudo xcodebuild -license accept
+    sudo port selfupdate
+    sudo port port install cmake python27 python27-cython python27-numpy \
+    openmpi-default fftw-3 +openmpi boost +openmpi +python27
+    sudo port select –set cython cython27
+    sudo port select –set python python27
+    sudo port select–set mpi openmpi-mp-fortran
 
 .. [1]
    http://www.fftw.org/

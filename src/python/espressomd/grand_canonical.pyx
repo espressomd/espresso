@@ -21,44 +21,80 @@ from espressomd.utils cimport *
 cimport globals
 from globals cimport max_seen_particle
 
+es_error=1
+def is_valid_type(current_type):
+    return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.n_particle_types))
 
-def is_valid_type(type_id):
-    return (not isinstance(type_id, int) or type_id < 0 or type_id > globals.n_particle_types)
 
-
-def check_valid_type(type_id):
-    if is_valid_type(type_id):
-        raise ValueError("type", type_id, "does not exist!")
+def check_valid_type(current_type):
+    if is_valid_type(current_type):
+        raise ValueError("type", current_type, "does not exist!")
 
 
 def setup(type_list=None):
+    """
+    For using Espresso conveniently for simulations in the grand canonical ensemble, or
+    other purposes, when particles of certain types are created and deleted frequently.
+    Particle ids can be stored in lists for each individual type and so random ids of
+    particles of a certain type can be drawn.
+    If you want Espresso to keep track of particle ids of a certain type you have to
+    initialize the method by calling the setup function. After that Espresso will keep track of particle ids of that type.
+    """
     if not hasattr(type_list, "__iter__"):
         raise ValueError("type_list has to be iterable.")
 
-    for type_id in type_list:
-        if (type_id < 0):
-            raise ValueError("type", type_id, "is invalid!")
+    for current_type in type_list:
+        if (current_type < 0):
+            raise ValueError("type", current_type, "is invalid!")
         if (max_seen_particle < 0):
             raise ValueError(
                 "The system contains no particles. Create one particle with arbitrary type first!")
-        init_type_array(type_id)
+        status=init_type_array(current_type)
+        if status==es_error:
+            raise Exception("gc init failed")
         handle_errors("init_type_array -> updatePartCfg failed")
 
 
-def delete_particles(type_id=None):
-    check_valid_type(type_id)
-    delete_particle_of_type(type_id)
-
-
-def find_particle(type_id=None):
-    check_valid_type(type_id)
-    cdef int pid
-    find_particle_type(type_id, & pid)
-    return int(pid)
-
-
-def number_of_particles(type_id=None):
-    check_valid_type(type_id)
+def number_of_particles(current_type=None):
+    """
+    return the number of particles which share the given type.
+    """
+    check_valid_type(current_type)
     cdef int number
-    number_of_particles_with_type(type_id, & number)
+    if ( number_of_particles_with_type(current_type, &number) == -3 ):
+        raise Exception("no list for particle type ", current_type)
+    number_of_particles_with_type(current_type, & number)
     return int(number)
+
+def find_particle(current_type=None):
+    """
+    The command will return a randomly chosen particle id, for a particle of the given type. 
+    """
+    check_valid_type(current_type)
+    cdef int pid
+    status=find_particle_type(current_type, & pid)
+    if(status== es_error):
+        print("error no particle found")
+        return -1
+    else:
+        return int(pid)
+
+def status(current_type=None):
+    """
+    returns a list with all particles with the given type
+    """
+    check_valid_type(current_type)
+    if ( (type_array!=NULL) and type_array[Index.type[current_type]].max_entry!= 0 ):
+        indexed=0;
+        for i in range(Type.max_entry):
+            if (current_type==Type.index[i]):
+                indexed=1;
+                break;
+    if ( indexed==1 ):
+        id_list=[]
+        for i in range( type_array[Index.type[current_type]].max_entry):
+            id_list.append(type_array[Index.type[current_type]].id_list[i])
+        return id_list
+    else:
+        print("no list for particle")
+        return []

@@ -25,7 +25,8 @@
 using namespace std;
 
 namespace Shapes {
-int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) const {
+int Stomatocyte::calculate_dist(const double *ppos, double *dist,
+                                double *vec) const {
   // Parameters
 
   int io0, io1, io2, io3, io4, number;
@@ -49,7 +50,8 @@ int Stomatocyte::calculate_dist(const double *ppos, double *dist, double *vec) c
 
   // Set the position and orientation of the stomatocyte
 
-  double stomatocyte_3D_position[3] = {m_position_x, m_position_y, m_position_z};
+  double stomatocyte_3D_position[3] = {m_position_x, m_position_y,
+                                       m_position_z};
 
   double stomatocyte_3D_orientation[3] = {m_orientation_x, m_orientation_y,
                                           m_orientation_z};

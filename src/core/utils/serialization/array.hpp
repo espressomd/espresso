@@ -1,14 +1,16 @@
 #ifndef UTILS_SERIALIZATION_ARRAY_HPP
 #define UTILS_SERIALIZATION_ARRAY_HPP
 
+#include <array>
+
 #include <boost/version.hpp>
 
 /* New versions of boost alrady containt this
  * function
  * */
 #if BOOST_VERSION < 105600
-#include <boost/serialization/serialization.hpp>
 #include <array>
+#include <boost/serialization/serialization.hpp>
 
 namespace boost {
 namespace serialization {

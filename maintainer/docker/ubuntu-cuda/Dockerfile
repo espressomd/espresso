@@ -16,14 +16,14 @@ RUN apt-get update && apt-get install -y \
     python-pip \
     libpython-dev \
     libhdf5-openmpi-dev \
-&& pip install cython \
+    doxygen \
+&& pip2 install cython sphinx sphinxcontrib-bibtex numpydoc --upgrade \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
 RUN cd /usr/local \
 && curl -sL https://cmake.org/files/v3.1/cmake-3.1.0-Linux-x86_64.tar.gz | tar --strip-components=1 -xz
 
-RUN useradd -m espresso
+RUN useradd -m espresso && usermod -a -G www-data espresso
 USER espresso
 WORKDIR /home/espresso
-

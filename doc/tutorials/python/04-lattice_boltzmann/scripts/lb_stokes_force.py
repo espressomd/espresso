@@ -76,7 +76,7 @@ for i in range(40):
 print("\nIntegration finished.")
 
 # get force that is exerted on the sphere
-force = sphere.get_params()["force"]
+force = sphere.get_force()
 print("Measured force: f=%f" %size(force))
 
 stokes_force = 6*np.pi*kinematic_visc*radius*size(v)

@@ -24,7 +24,6 @@ import numpy as np
 from numpy.random import random
 from espressomd.interactions import FeneBond
 from espressomd.observables import *
-from espressomd.observables import *
 from espressomd.correlators import *
 
 class Observables(ut.TestCase):
@@ -33,7 +32,6 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
-
 
     def test_corr(self):
         s=self.es

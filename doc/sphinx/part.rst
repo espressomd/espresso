@@ -1,4 +1,4 @@
-.. _Setting_up_particles:
+.. _Setting up particles:
 
 Setting up particles
 ********************
@@ -341,85 +341,42 @@ Creating groups of particle
 ``polymer``: Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| polymer
+:: 
 
-import espressomd.polymer [ start\_id = , start\_pos = , mode = 0 or 1
-or 2, shield = , max\_tries = , val\_poly = , charge\_distance = ,
-type\_poly\_neutral = , type\_poly\_charged = , angle = , angle2 = ,
-pos2 = , constraint = 0 or 1 ]
+    from espressomd.polymer import create_polymer
 
-This command will create N\_P polymer or polyelectrolyte chains with MPC
-monomers per chain. The length of the bond between two adjacent monomers
-will be set up to be .
+A function that allow to create a number of polymers and polyelectrolytes. 
+See :attr:`espressomd.polymer.create_polymer()` for a detailed list of 
+arguments. 
 
-N\_P Sets the number of polymer chains.
-
-MPC Sets the number of monomers per chain.
-
-Sets the initial distance between two adjacent monomers. The distance
+The distance between adjacent monomers
 during the course of the simulation depends on the applied potentials.
 For fixed bond length please refer to the Rattle Shake
 algorithm:raw-latex:`\cite{andersen83a}`. The algorithm is based on
 Verlet algorithm and satisfy internal constraints for molecular models
 with internal constrains, using Lagrange multipliers.
 
-start\_id Sets the particle number of the start monomer to be used with
-the command. This defaults to 0.
-
-start\_pos Sets the position of the first monomer in the chain to , ,
-(defaults to a randomly chosen value)
-
-Selects the setup mode:
+The polymer can be created using several different random walk modes:
 
  (Random walk)
     mode = 1 The monomers are randomly placed by a random walk with a
-    steps size of .
+    steps size of ``bond_length``.
 
  (Pruned self-avoiding walk)
     mode = 2 The position of a monomer is randomly chosen in a distance
     of to the previous monomer. If the position is closer to another
-    particle than , the attempt is repeated up to times. Note, that this
+    particle than ``shield``, the attempt is repeated up to ``max_tries`` times. Note, that this
     is not a real self-avoiding random walk, as the particle
-    distribution is not the same. If you want a real self-avoiding walk,
-    use the mode. However, is several orders of magnitude faster than ,
-    especially for long chains.
+    distribution is not the same. If you want a real self-avoiding walk, use
+    the mode 0. However, this mode is several orders of magnitude faster than a
+    true self-avoiding random walk, especially for long chains.
 
  (Self-avoiding random walk)
     mode = 0 The positions of the monomers are chosen as in the plain
     random walk. However, if this results in a chain that has a monomer
-    that is closer to another particle than , a new attempt of setting
-    up the whole chain is done, up to times.
+    that is closer to another particle than ``shield``, a new attempt of setting
+    up the whole chain is done, up to ``max_tries`` times.
 
-The default for the mode is , the default for the is :math:`1.0`, and
-the default for is :math:`30000`, which is usually enough for .
-Depending on the length of the chain, for the mode, has to be increased
-by several orders of magnitude.
-
-Sets the valency of the charged monomers. If the valency of the charged
-polymers is smaller than :math:`10^{-10}`, the charge is assumed to be
-zero, and the types are set to :math:`\var{typeid_\mathrm{charged}} =
-\var{typeid_\mathrm{neutral}}`. If charge is not set, it defaults to
-0.0.
-
-charge\_distance Sets the stride between the indices of two charged
-monomers. This defaults defaults to 1, meaning that all monomers in the
-chain are charged.
-
-Sets the type ids of the neutral and charged monomer types to be used
-with the command. If only is defined, defaults to :math:`1`. If the
-option is omitted, both monomer types default to :math:`0`.
-
-bond\_id Sets the type number of the bonded interaction to be set up
-between the monomers. This defaults to :math:`0`. Any bonded
-interaction, no matter how many bonding-partners needed, is stored with
-the second particle in this bond. See chapter [sec:inter-bonded].
-
-angle angle2 pos2 Allows for setting up helices or planar polymers: and
-are the angles between adjacent bonds. , and set the position of the
-second monomer of the first chain.
-
-If this option is specified, the particle setup-up tries to obey
-previously defined constraints (see section ).
 
 ``counterions``: Setting up counterions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -466,16 +423,13 @@ The salt ions are only placed in a sphere with radius around the origin.
 
 ``diamond``: Setting up diamond polymer networks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::
 
-| diamond
-
-from espressomd import diamond
-
-[ N\_CI=, val\_nodes=, val\_cM=, val\_CI=, cM\_dist=, nonet ]
+    from espressomd import Diamond
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
 connected by :math:`2*8` polymer chains of length (MPC) in a unit cell
-of length . Chain monomers are placed at a mutual distance along the
+of length :math:`a`. Chain monomers are placed at a mutual distance along the
 vector connecting network nodes. The polymer is created starting from
 particle ID 0. Nodes are assigned type 0, monomers (both charged and
 uncharged) are type 1 and counterions type 2. For inter-particle bonds
@@ -483,29 +437,13 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
 
 .. figure:: figures/diamond.png
-   :alt: Diamond-like polymer network with =15.
+   :alt: Diamond-like polymer network with MPC=15.
    :align: center
    :height: 6.00000cm
 
-   Diamond-like polymer network with =15.
+   Diamond-like polymer network with MPC=15.
 
-Determines the size of the of the unit cell.
-
-Specifies the bond length of the polymer chains connecting the 8
-tetra-functional nodes.
-
-(MPC) Sets the number of chain monomers between the functional nodes.
-
-Adds counterions to the system.
-
-Sets the charge of the nodes to , the charge of the connecting monomers
-to (val\_cM), and the charge of the counterions to .
-
-(cM\_dist) Specifies the distance between charged monomers along the
-interconnecting chains. If :math:`\var{d_\mathrm{charged}} > 1` the
-remaining chain monomers are uncharged.
-
-Do not create bonds between the chains.
+See :meth:`espressomd.diamond.Diamond` for more details. 
 
 ``icosaeder``: Setting up an icosaeder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

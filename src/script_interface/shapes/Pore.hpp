@@ -30,13 +30,19 @@ namespace Shapes {
 
 class Pore : public Shape {
 public:
-  Pore() : m_pore(new ::Shapes::Pore()) {}
+  Pore() : m_pore(new ::Shapes::Pore()) {
+
+    add_parameters({{"pos", m_pore->pos()},
+                    {"axis", m_pore->axis()},
+                    {"rad_left", m_pore->rad_left()},
+                    {"rad_right", m_pore->rad_right()},
+                    {"smoothing_radius", m_pore->smoothing_radius()},
+                    {"length", m_pore->length()},
+                    {"outer_rad_left", m_pore->outer_rad_left()},
+                    {"outer_rad_right", m_pore->outer_rad_right()}});
+  }
 
   const std::string name() const override { return "Shapes::Pore"; }
-
-  ParameterMap valid_parameters() const override;
-  VariantMap get_parameters() const override;
-  void set_parameter(const std::string &name, const Variant &value) override;
 
   std::shared_ptr<::Shapes::Shape> shape() const override { return m_pore; }
 

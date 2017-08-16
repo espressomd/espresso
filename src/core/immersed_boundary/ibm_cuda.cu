@@ -9,7 +9,7 @@
 #ifdef IMMERSED_BOUNDARY
 
 #include "lbgpu.hpp"
-#include "lb-boundaries.hpp"
+#include "lbboundaries.hpp"
 #include "particle_data.hpp"
 #include "cuda_utils.hpp"
 #include "cuda_interface.hpp"
@@ -68,7 +68,7 @@ Called from integrate_vv to put the forces into the fluid
 This must be the first CUDA-IBM function to be called because it also does some initialization
 *******************/
 
-void IBM_ForcesIntoFluid_GPU()
+void IBM_ForcesIntoFluid_GPU(ParticleRange particles)
 {
   // This function does
   // (1) Gather forces from all particles via MPI
@@ -82,7 +82,7 @@ void IBM_ForcesIntoFluid_GPU()
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
-  IBM_cuda_mpi_get_particles();
+  IBM_cuda_mpi_get_particles(particles);
 
 
   // ***** GPU stuff only on master *****
@@ -198,7 +198,7 @@ Calls a kernel function to interpolate the velocity at each IBM particle's posit
 Store velocity in the particle data structure
 **************/
 
-void ParticleVelocitiesFromLB_GPU()
+void ParticleVelocitiesFromLB_GPU(ParticleRange particles)
 {
   // This function performs three steps:
   // (1) interpolate velocities on GPU
@@ -226,7 +226,7 @@ void ParticleVelocitiesFromLB_GPU()
 
   // ***** Back to all nodes ****
   // Spread using MPI
-  IBM_cuda_mpi_send_velocities();
+  IBM_cuda_mpi_send_velocities(particles);
 
 }
 

@@ -42,7 +42,7 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
-.. _Non-bonded tabulated interaction:
+.. _Tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
@@ -686,6 +686,8 @@ parameters of the potential. Several Gay-Berne parametrizations exist, the
 original one being :math:`\var{k_1} = 3`, :math:`\var{k_2} = 5`,
 :math:`\var{\mu} = 2` and :math:`\var{\nu} = 1`.
 
+.. _Affinity interaction:
+
 Affinity interaction
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -835,7 +837,7 @@ Bonded coulomb
 .. todo::
     Not implemented.
 
-inter bonded\_coulomb
+inter bonded_coulomb
 
 This creates a bond type with identificator with a coulomb pair
 potential. It is given by
@@ -852,7 +854,7 @@ Subtracted Lennard-Jones bond
 .. todo::
     Not implemented.
 
-inter subt\_lj
+inter subt_lj
 
 This creates a "bond” type with identificator , which acts between two
 particles and actually subtracts the Lennard-Jones interaction between
@@ -905,7 +907,7 @@ This creates a bond type identifier with a two-body bond length,
 three-body angle or four-body dihedral 
 tabulated potential. The tabulated forces and energies have to be
 provided in a file which is formatted identically as the files for
-non-bonded tabulated potentials (see :ref:`Non-bonded tabulated interaction`).
+non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
 
 
 The bonded interaction can be based on a distance, a bond angle or a
@@ -979,7 +981,7 @@ modeling objects are described in section [sec:oif].
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-inter oif\_local\_force
+inter oif_local_force
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1101,7 +1103,7 @@ larger than :math:`\pi`, then the inner angle is concave.
 OIF global forces
 ~~~~~~~~~~~~~~~~~
 
-inter oif\_global\_force
+inter oif_global_force
 
 This type of interaction is available solely for closed 3D immersed
 objects.
@@ -1171,7 +1173,7 @@ point inside the immersed object.
 Out direction
 ~~~~~~~~~~~~~
 
-inter oif\_out\_direction
+inter oif_out_direction
 
 This type of interaction is primarily for closed 3D immersed objects to
 compute the input for membrane collision. After creating the interaction
@@ -1190,20 +1192,20 @@ in the correct order. Command
 calculates the outward normal vector of triangle defined by particles 1,
 2, 3 (these should be selected in such a way that particle 0 lies
 approximately at its centroid - for OIF objects, this is automatically
-handled by oif\_create\_template command, see Section
+handled by oif_create_template command, see Section
 [ssec:oif-create-template]). In order for the direction to be outward
 with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
-oif\_global\_forces interaction).
+oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
 
 [sec:angle]
 
-[ phi\_0 = ]
+[ phi_0 = ]
 
-inter angle\_harmonic inter angle\_cosine inter angle\_cossquare
+inter angle_harmonic inter angle_cosine inter angle_cossquare
 
 This creates a bond type with identificator with an angle dependent
 potential. This potential is defined between three particles. The
@@ -1215,7 +1217,7 @@ radian ranging from 0 to :math:`\pi`. If this parameter is not given, it
 defaults to :math:`\var{\phi_0} = \pi`, which corresponds to a stretched
 configuration. For example, for a bond defined by
 
-part $p\_2 bond 4 $p\_1 $p\_3
+part $p_2 bond 4 $p_1 $p_3
 
 the minimal energy configurations are the following:
 
@@ -1287,7 +1289,7 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
-If you enable the feature OLD\_DIHEDRAL, then the old, less general form
+If you enable the feature OLD_DIHEDRAL, then the old, less general form
 of the potential is used:
 
 .. math:: V(\phi) = \var{K}\left[1 + \var{p}\,\cos(\var{n}\phi)\right],
@@ -1352,7 +1354,7 @@ Required paramters:
 
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In , you can check if it is compiled in by
-checking for the feature ``FFTW`` with ``espressomd.code_info.features()``
+checking for the feature ``FFTW`` with ``espressomd.features()``
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
@@ -1363,12 +1365,14 @@ Tuning Coulomb P3M
 
 The tuning method is called when the handle of the Coulomb P3M is added to the
 actor list. At this point, the system should already contain the charged
-particles. Setted parameters are fixed and not changed by the tuning algorithm.
+particles. Set parameters are fixed and not changed by the tuning algorithm.
 This can be useful to speed up the tuning during testing or if the parameters
 are already known.
 
 To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
 To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
+Note, however, that this is a method the P3M object inherited from
+:attr:`espressomd.electrostatics.ElectrostaticInteraction`. 
 All parameteres passed to the method are fixed in the tuning routine. If not
 specified in the ``Tune()`` method, the parameters ``bjerrum_length`` and
 ``accuracy`` are reused.
@@ -1418,7 +1422,6 @@ does not work in combination with the electrostatic extensions :ref:`ICC` and
 Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.electrostatics.Ewald_Gpu`
 
 Required paramters:
     * bjerrum_length
@@ -1429,7 +1432,7 @@ Required paramters:
 This uses the Ewald method to compute the electrostatic interactions between
 charged particles. The far field is computed by the GPU with single precision
 and the near field by the CPU with double precision. It only works for the case
-of cubic boxes.
+of cubic boxes. See :attr:`espressomd.electrostatics.EwaldGpu` for detailed parameter list.
 
 .. todo::
 
@@ -1458,18 +1461,12 @@ If and are given by the user, then computes the optimal with the chosen
 as described in :cite:`kolafa92`. But in general tune should be
 chosen for tuning.
 
+.. _Debye-Hückel potential:
+
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-
-    * Python/Core: DH as actor
-    * Python
-        * Move interface from debje-hueckel.pyx -> electrostatics.pyx
-        * Adapt interface structure
-
-Required paramters:
-    * ? 
+For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`espressomd.electrostatics.CDH`.
 
 Uses the Debye-Hückel electrostatic potential defined by
 
@@ -1485,8 +1482,9 @@ For :math:`\kappa = 0`, this corresponds to the plain coulomb potential.
 
 The second variant combines the coulomb interaction for charges that are
 closer than :math:`r_0` with the Debye-Hueckel approximation for charges
-that are further apart than :math:`r_1` in a continous way. The used
-potential is
+that are further apart than :math:`r_1` in a continous way. The used potential
+introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
+:math:`\varepsilon_\mathrm{ext}` and :math:`\alpha` and reads:
 
 .. math::
 
@@ -1498,22 +1496,27 @@ potential is
        0 & \text{if } r > r_{\text{cut}}.
      \end{cases}
 
-The parameter :math:`\alpha` that controlls the transition from Coulomb-
+The parameter :math:`\alpha` that controls the transition from Coulomb-
 to Debye-Hückel potential should be chosen such that the force is
-continous.
+continous. 
+
+.. note:: The two variants are mutually exclusive. If “COULOMB_DEBYE_HUECKEL”
+    is defined in the configuration file, variant (DH) would not work. However, both methods
+    require the feature "ELECTROSTATICS" do be defined.
+
 
 
 .. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
 
+.. _mmm2d_guide:
 
 MMM2D
 ~~~~~
 
-Please cite when using MMM2D, and when using dielectric interfaces.
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
 
-inter coulomb mmm2d
-
-[ far\_cut = ] [ far\_cut = ] [ far\_cut = ]
+Please cite :cite:`mmm2d` when using MMM2D, and when using dielectric interfaces.
 
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the number
@@ -1522,10 +1525,11 @@ automatically ensured that the maximal pairwise error is smaller than
 the given bound. The far cutoff setting should only be used for testing
 reasons, otherwise you are more safe with the automatical tuning. If you
 even don’t know what it is, do not even think of touching the far
-cutoff. For details on the MMM family of algorithms, refer to appendix .
+cutoff. For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
-The last two, mutually exclusive arguments “dielectric” and
-“dielectric-constants” allow to specify dielectric contrasts at the
+For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
+The last two, mutually exclusive parameters “dielectric” and
+“dielectric_constants_on” allow to specify dielectric contrasts at the
 upper and lower boundaries of the simulation box. The first form
 specifies the respective dielectric constants in the media, which
 however is only used to calculate the contrasts. That is, specifying
@@ -1537,50 +1541,65 @@ specifies only the dielectric contrasts at the boundaries, that is
 Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
 to metallic boundary conditions.
 
-Using allows to maintain a constant electric potential difference
-between the xy-plane at :math:`z=0` and :math:`z=L`, where :math:`L`
+Using `capacitor` allows to maintain a constant electric potential difference
+between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
 denotes the box length in :math:`z`-direction. This is done by
 countering the total dipol moment of the system with the electric field
 :math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain . This mimics the induction
+:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the induction
 of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0` for
 planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor
-connected to a battery with voltage . Using 0 is equivalent to
+connected to a battery with voltage `pot_diff`. Using 0 is equivalent to
 :math:`\Delta_{t/b}=-1`.
 
-efield\_caps
+.. todo::
+    efield_caps
 
-The electric fields added by can be obtained by calling the above
-command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
-and their sum.
+    The electric fields added by can be obtained by calling the above
+    command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
+    and their sum.
+
+
+.. _mmm1d_guide:
 
 MMM1D
 ~~~~~
 
-Please cite  when using MMM1D.
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC for MMM1D, the GPU version additionally needs
+    the features CUDA and MMM1D_GPU.
 
-[ far\_switch\_radius= ]
+:: 
 
-inter coulomb mmm1d
+    from espressomd.electrostatics import MMM1D
+    from espressomd.electrostatics import MMM1D_GPU
 
-inter coulomb mmm1d tune
+Please cite :cite:`mmm1d`  when using MMM1D.
+
+See :attr:`espressomd.electrostatics.MMM1D` or
+:attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
+paramters.
+
+::
+
+    mmm1d = MMM1D(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = MMM1D(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D coulomb method for systems with periodicity 0 0 1. Needs the
-nsquared cell system (see section ). The first form sets parameters
+nsquared cell system (see section :ref:`cellsystem`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the setmd variable , which controls the number of
+change the value of the setmd variable ``timings``, which controls the number of
 test force calculations.
 
-[ far\_switch\_radius = , bessel\_cutoff = ]
+::
 
-inter coulomb mmm1dgpu
-
-inter coulomb mmm1dgpu tune
+    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, far_switch_radius = fr, maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d_gpu = MMM1D_GPU(bjerrum_length=lb, maxPWerror=err)
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
 counterpart, it does not need the nsquared cell system. The first form
@@ -1592,7 +1611,7 @@ the near formula. The second tuning form just takes the maximal pairwise
 error and tries out a lot of switching radii to find out the fastest
 one.
 
-For details on the MMM family of algorithms, refer to appendix .
+For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
 Maxwell Equation Molecular Dynamics (MEMD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1632,7 +1651,7 @@ leads to the following rule of thumb for the parameter choices:
 
 -  The lattice should be of the size of your particle size (i.e. the
    lennard jones epsilon). That means: 
-   :math:`\text{mesh} \approx \text{box\_l} / \text{lj\_sigma}`
+   :math:`\text{mesh} \approx \text{box_l} / \text{lj_sigma}`
 
 -  The integration timestep should be in a range where no particle moves
    more than one lattice box (i.e. lennard jones sigma) per timestep.
@@ -1640,7 +1659,7 @@ leads to the following rule of thumb for the parameter choices:
 -  The speed of light should satisfy the stability criterion
    :math:`c\ll a/dt`, where :math:`a` is the lattice spacing and
    :math:`dt` is the timestep. For the second parameter, this means
-   :math:`\text{f\_mass} \gg dt^2/a^2`.
+   :math:`\text{f_mass} \gg dt^2/a^2`.
 
 The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three
@@ -1787,36 +1806,30 @@ properties.
 Scafacos
 ~~~~~~~~
 
-Espresso can use the electrostatics methods from the Scafacos *Scalable
-fast Coulomb solvers* library.
+Espresso can use the electrostatics methods from the SCAFACOS *Scalable
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods()`
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-scafacos.available\_methods()
-
-This shows the methods available at the compile time of . Scafacos can
-be used as Coulomb solver for the system.
-
-inter coulomb scafacos
-
-[ ]
-
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. To use the ``ewald``
-solver from scafacos as electrostatics solver for your system, set its
+To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
-:math:`10^{-3}`, use the command
+:math:`10^{-3}`, use::
 
-inter coulomb 1.0 scafacos ewald ewald\_r\_cut 1.5 tolerance\_field 1e-3
+  from espressomd.electrostatics import Scafacos
+  scafacos=Scafacos(bjerrum_length=1,method_name="ewald", 
+    method_params={"ewald_r_cut":1.5, "tolerance_field":1e-3})
+  system.actors.add(scafacos)
+  
 
 For details of the various methods and their parameters please refer to
-the Scafacos manual. Note that the ``SCAFACOS`` feature is only
-available if you build with cmake. You need to build Scafacos as a
-shared library. Scafacos can be used only once, either for coulomb or
-for dipolar interactions.
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
+
+.. _ELC:
 
 Electrostatic Layer Correction (ELC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1824,7 +1837,7 @@ Electrostatic Layer Correction (ELC)
 Please cite when using ELC, and in addition if you use dielectric
 interfaces.
 
-[ neutralize = , far\_cut = ]
+[ neutralize = , far_cut = ]
 
 inter coulomb elc
 
@@ -1865,11 +1878,13 @@ neutralization.
 The dielectric contrast features work exactly the same as for MMM2D, see
 the documentation above. Same accounts for , but the constant potential
 is maintained between the xy-plane at :math:`z=0` and
-:math:`z=L-gap\_size`. The command to read out the electric fields added
+:math:`z=L-gap_size`. The command to read out the electric fields added
 by also applies for the capacitor-feature of ELC.
 
 Make sure that you read the papers on ELC
-(:cite:`elc,icelc`) before using it.
+(:cite:`arnold02c,icelc`) before using it.
+
+.. _ICC:
 
 Dielectric interfaces with the ICC\ :math:`\star` algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1908,9 +1923,9 @@ Quick setup of dielectric interfaces
 
 dielectric sphere center radius res dielectric wall normal dist res
 dielectric cylinder center axis radius direction dielectric pore center
-axis radius length smoothing\_radius res dielectric slitpore pore\_mouth
-channel\_width pore\_width pore\_length upper\_smoothing\_radius
-lower\_smoothing\_radius
+axis radius length smoothing_radius res dielectric slitpore pore_mouth
+channel_width pore_width pore_length upper_smoothing_radius
+lower_smoothing_radius
 
 The command allows to conveniently create dielectric interfaces similar
 to the constraint and the lbboundary command. Currently the creation of
@@ -1919,11 +1934,11 @@ slitpore geometry is supported. Please check the documentation of the
 corresponding constraint for the detailed geometry. It is implemented in
 Tcl and places particles in the right positions and adds the correct
 values to the global Tcl variables and increases the global Tcl variable
-varn\_induced\_charges. Thus after setting up the shapes, it is still
+varn_induced_charges. Thus after setting up the shapes, it is still
 necessary to register them by calling , usually in the following way:
 
-| iccp3m $n\_induced\_charges epsilons $icc\_epsilons normals
-| $icc\_normals areas $icc\_areas sigmas $icc\_sigmas
+| iccp3m $n_induced_charges epsilons $icc_epsilons normals
+| $icc_normals areas $icc_areas sigmas $icc_sigmas
 
 Dipolar interaction
 -------------------
@@ -1955,8 +1970,8 @@ interactions (see section ). Variant disables dipolar interactions.
 Variant returns the current parameters of the dipolar interaction as a
 Tcl-list using the same syntax as used to setup the method,
 
-coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n\_interpol
-32768 mesh\_off 0.5 0.5 0.5
+coulomb 1.0 p3m 7.75 8 5 0.1138 0.0 coulomb epsilon 0.1 n_interpol
+32768 mesh_off 0.5 0.5 0.5
 
 Variant is the generic syntax to set up a specific method or its
 parameters, the details of which are described in the following
@@ -2042,7 +2057,7 @@ DAWAANR-method gives the exact result.
 Magnetic Dipolar Direct Sum (MDDS) on CPU
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter magnetic mdds n\_cut
+inter magnetic mdds n_cut
 
 The command enables the “magnetic dipolar direct sum”. The dipole-dipole
 interaction is computed by explicitly summing over all pairs. If the
@@ -2057,8 +2072,6 @@ P3M.
 Dipolar direct sum on gpu
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter magnetic dds-gpu
-
 This interaction calculates energies and forces between dipoles by
 explicitly summing over all pairs. For the directions in which the
 system is periodic (as defined by ``setmd periodic``), it applies the
@@ -2072,33 +2085,38 @@ particles than the number of threads the gpu can execute simultaneously,
 the rest of the gpu remains idle. Hence, the method will perform poorly
 for small systems.
 
+To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  from espressomd.magnetostatics import DipolarDirectSumGpu
+  dds=DipolarDirectSumGpu(bjerrum_length=1)
+  system.actors.add(dds)
+  
+
+
+
 Scafacos
 ~~~~~~~~
 
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
-calculations. The feature SCAFACOS\_DIPOLES has to be added to
-myconfig.hpp to activate this feature. At the time of this writing (Apr
-2016) dipolar calculations are not part of the official Scafacos
-development branch.
+calculations. The feature SCAFACOS_DIPOLES has to be added to
+myconfig.hpp to activate this feature. At the time of this writing (May
+2017) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
 
-scafacos\_methods
+To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+* method_name: name of the SCAFACOS method being used.
+* method_params: dictionary containing the method-specific parameters
+* bjerrum_length
+The method-specific parameters are described in the SCAFACOS manual.
+Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field 
 
-This shows the methods available at the compile time of . That a method
-is listed there, does not imply that it supports dipolar calculations.
+For details of the various methods and their parameters please refer to
+the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
-inter magnetic scafacos
 
-Here is a scafacos method as returned by ``scafacos_methods``.
-``tolerance_field`` sets the desisired rms accuracy for the electric
-field if supported by the method. is a list of parameters as described
-by the Scafacos manual. If parameters of the solver are not set, and the
-method supports it, the open parameteres are tuned. For details of the
-various methods and their parameters please refer to the Scafacos
-manual. Note that the ``SCAFACOS`` feature is only available if you
-build with cmake. You need to build Scafacos as a shared library.
-Scafacos can be used only once, either for coulomb or for dipolar
-interactions.
+
+
+
+
 
 Special interaction commands
 ----------------------------
@@ -2106,7 +2124,7 @@ Special interaction commands
 Tunable-slip boundary interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter tunable\_slip
+inter tunable_slip
 
 Simulating microchannel flow phenomena like the Plane Poiseuille and the
 Plane Couette Flow require accurate boundary conditions. There are two
@@ -2159,7 +2177,7 @@ reference :cite:`smiatek08a` before using this interaction.
 DPD interaction
 ~~~~~~~~~~~~~~~
 
-inter inter\_dpd
+inter inter_dpd
 
 This is a special interaction that is to be used in conjunction with the
 Dissipative Particle Dynamics algorithm [sec:DPD] when the
@@ -2210,6 +2228,8 @@ used to set the ratio of the force applied on particles of vs. . This is
 useful if one has to keep the total applied force on the bundle and on
 the target molecule the same. A force of magnitude is applied on
 particles, and a force of magnitude ( \* ) is applied on particles.
+
+.. _Capping the force during warmup:
 
 Capping the force during warmup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

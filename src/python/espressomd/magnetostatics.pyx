@@ -19,14 +19,36 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
-from .actors cimport Actor
 from globals cimport temperature
+from .actors cimport Actor
+IF SCAFACOS == 1:
+    from .scafacos import ScafacosConnector
+    from . cimport scafacos
+
 from espressomd.utils cimport handle_errors
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
+        """Provide magnetostatic interactions.
+
+        Attributes
+        ----------
+        bjerrum_length : float
+            Similar to the Bjerrum length in electrostatics.
+            Gives the separation at which the dipolar interaction energy
+            corrensponds to a thermal energy of :math:`1 k_B T`.
+            If not set, an explicit choice for the `prefactor` has to be made.
+
+        prefactor : float, optional
+            If given, the magnetostatic prefactor is explicitly set to
+            this value. Non-optional if `bjerrum_length` is not set.
+
+        """
 
         def validate_params(self):
+            """Check validity of given parameters.
+
+            """
             if not (("bjerrum_length" in self._params) ^ ("prefactor" in self._params)):
                 raise ValueError(
                     "Either the bjerrum length or the explicit prefactor has to be given")
@@ -40,9 +62,10 @@ IF DIPOLES == 1:
                     raise ValueError("prefactor should be a positive double")
 
         def set_magnetostatics_prefactor(self):
-            """changes the magnetostatics prefactor, using either the bjrerrum
-               length or the explicit prefactor given in the _params dictionary
-               of the class."""
+            """Set the magnetostatics prefactor using either the `bjrerrum_length`
+            or, if given, `prefactor`.
+
+            """
             if "bjerrum_length" in self._params:
                 if temperature == 0:
                     raise Exception(
@@ -63,6 +86,8 @@ IF DIPOLES == 1:
                     else:
                         self._params["bjerrum_length"] = self.params[
                             "prefactor"] / temperature
+            # also necessary on 1 CPU or GPU, does more than just broadcasting
+            mpi_bcast_coulomb_params()
 
         def get_params(self):
             self._params = self._get_params_from_es_core()
@@ -72,13 +97,44 @@ IF DIPOLES == 1:
             return coulomb.Dmethod
 
         def _deactivate_method(self):
+            dipolar_set_Dbjerrum(0.0)
             coulomb.Dmethod = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
     cdef class DipolarP3M(MagnetostaticInteraction):
+        """Calculate magnetostatic interactions using the dipolar P3M method.
+
+        Attributes
+        ----------
+        accuracy : float
+            P3M tunes its parameters to provide this target accuracy.
+
+        alpha : float
+            Ewald parameter.
+
+        cao : int
+            Charge-assignment order, an integer between -1 and 7.
+
+        mesh : int or array_like
+            Number of mesh points.
+
+        mesh_off : array_like
+            Mesh offset.
+
+        r_cut : float
+            Real space cutoff.
+
+        tune : bool, optional
+            Activate/deactivate the tuning method on activation
+            (default is True, i.e., activated).
+
+        """
 
         def validate_params(self):
+            """Check validity of parameters.
+
+            """
             super(DipolarP3M, self).validate_params()
             default_params = self.default_params()
 
@@ -162,6 +218,7 @@ IF DP3M == 1:
                 self._tune()
 
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
@@ -211,10 +268,12 @@ IF DP3M == 1:
 
 IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):
+        """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        """Calculates magnetostatic interactions by direct summation over all
-           pairs. If the system has periodic boundaries, the minimum image
-           convention is applied."""
+        If the system has periodic boundaries, the minimum image convention is applied
+        in the respective directions.
+
+        """
 
         def default_params(self):
             return {}
@@ -230,6 +289,7 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
@@ -238,10 +298,17 @@ IF DIPOLES == 1:
                     "Could not activate magnetostatics method " + self.__class__.__name__)
 
     cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+        """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        """Calculates magnetostatic interactions by direct summation over all
-           pairs. If the system has periodic boundaries, n_replica
-           copies are attached on each side. Spherical cutoff is applied."""
+        If the system has periodic boundaries, `n_replica` copies of the system are
+        taken into account in the respective directions. Spherical cutoff is applied.
+
+        Attributes
+        ----------
+        n_replica : int
+            Number of replicas to be taken into account at periodic boundaries.
+
+        """
 
         def default_params(self):
             return {}
@@ -257,9 +324,67 @@ IF DIPOLES == 1:
 
         def _activate_method(self):
             self._set_params_in_es_core()
+            mpi_bcast_coulomb_params()
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
             if mdds_set_params(self._params["n_replica"]):
                 raise Exception(
                     "Could not activate magnetostatics method " + self.__class__.__name__)
+    IF SCAFACOS_DIPOLES == 1:
+        class Scafacos(ScafacosConnector, MagnetostaticInteraction):
+            """Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library."""
+
+            dipolar = True
+
+            # Explicit constructor needed due to multiple inheritance
+            def __init__(self, *args, **kwargs):
+                Actor.__init__(self, *args, **kwargs)
+
+            def _activate_method(self):
+                coulomb.Dmethod = DIPOLAR_SCAFACOS
+                dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+                self._set_params_in_es_core()
+                mpi_bcast_coulomb_params()
+            
+            def _deactivate_method(self):
+                coulomb.Dmethod = DIPOLAR_NONE
+                scafacos.free_handle()
+                mpi_bcast_coulomb_params()
+
+            def default_params(self):
+                return {}
+
+    IF (CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
+        cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
+            """Calculate magnetostatic interactions by direct summation over all pairs.
+
+            If the system has periodic boundaries, the minimum image convention is applied
+            in the respective directions.
+
+            GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`.
+
+            """
+
+            def default_params(self):
+                return {}
+    
+            def required_keys(self):
+                return ()
+    
+            def valid_keys(self):
+                return ("bjerrum_length", "prefactor")
+    
+            def _get_params_from_es_core(self):
+                return {"prefactor": coulomb.Dprefactor}
+    
+            def _activate_method(self):
+                self._set_params_in_es_core()
+                
+            def _deactivate_method(self):
+                super(type(self),self)._deactivate_method()
+                deactivate_dipolar_direct_sum_gpu()
+    
+            def _set_params_in_es_core(self):
+                self.set_magnetostatics_prefactor()
+                activate_dipolar_direct_sum_gpu()

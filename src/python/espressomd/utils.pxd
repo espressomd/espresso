@@ -31,11 +31,11 @@ cdef extern from "stdlib.h":
 cdef extern from "utils.hpp":
     ctypedef struct int_list "IntList":
         int * e
-        int n
+        unsigned n
 
     ctypedef struct double_list "DoubleList":
         double * e
-        int n
+        unsigned n
 
     cdef void init_intlist(int_list * il)
     cdef void alloc_intlist(int_list * il, int size)
@@ -66,3 +66,11 @@ cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError]mpi_gather_runtime_errors()
 
 cdef handle_errors(msg)
+
+# https://github.com/cython/cython/blob/master/Cython/Includes/libcpp/limits.pxd
+cdef extern from "<limits>" namespace "std" nogil:
+    cdef cppclass numeric_limits[T]:
+        @staticmethod
+        T epsilon()
+        @staticmethod
+        T max()

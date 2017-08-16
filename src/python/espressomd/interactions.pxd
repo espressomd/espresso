@@ -20,7 +20,7 @@
 
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd._system cimport *
+from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
 
@@ -52,7 +52,15 @@ cdef extern from "interaction_data.hpp":
         double TAB_minval2;
         double TAB_maxval;
         double TAB_stepsize;
-        char TAB_filename[256]; 
+        char TAB_filename[256];
+
+        double GB_eps
+        double GB_sig
+        double GB_cut
+        double GB_k1
+        double GB_k2
+        double GB_mu
+        double GB_nu
 
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
@@ -63,6 +71,13 @@ cdef extern from "lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double cap_radius, double min)
+
+IF GAY_BERNE:
+    cdef extern from "gb.hpp":
+        int gay_berne_set_params(int part_type_a, int part_type_b,
+                                 double eps, double sig, double cut,
+                                 double k1, double k2,
+                                 double mu, double nu);
 
 cdef extern from "forcecap.hpp":
     double force_cap
