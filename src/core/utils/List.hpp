@@ -1,29 +1,45 @@
 #ifndef CORE_UTILS_LIST_HPP
 #define CORE_UTILS_LIST_HPP
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <type_traits>
-#include <iterator>
-#include <algorithm>
 
 #include "memory.hpp"
 
 namespace Utils {
 /** List.
     Use the functions specified in list operations. */
-template <typename T> struct List {
+  template <typename T, typename SizeType = uint32_t> class List {
   static_assert(std::is_pod<T>::value, "");
+  static_assert(std::is_unsigned<SizeType>::value, "");
 
-  using size_type = uint32_t;
+public:
+  using value_type = T;
+  using size_type = SizeType;
+  using difference_type = typename std::make_signed<size_type>::type;
+  using iterator = T *;
+  using const_iterator = T const *;
+  using pointer = T *;
+  using reference = T &;
 
+public:
   List() : e{nullptr}, n{0}, max{0} {}
-  explicit List(size_type size) : List() { resize(n = size); }
+  explicit List(size_type size) : List() { resize(size); }
+  List(size_type size, T const &value) : List(size) {
+    std::fill(begin(), end(), value);
+  }
   ~List() { resize(0); }
 
   template <size_t N> explicit List(T (&array)[N]) : List(N) {
     std::copy(std::begin(array), std::end(array), begin());
+  }
+
+  List(std::initializer_list<T> il) : List(il.size()) {
+    std::copy(std::begin(il), std::end(il), begin());
   }
 
 private:
@@ -55,10 +71,19 @@ public:
   T const *begin() const { return e; }
   T *end() { return e + n; }
   T const *end() const { return e + n; }
+
+  T &front() { return this->e[0]; }
+  T const &front() const { return this->e[0]; }
+
+  T &back() { return this->e[size() - 1]; }
+  T const &back() const { return this->e[size() - 1]; }
+
   size_type size() const { return n; }
   bool empty() const { return n == 0; }
   size_type capacity() const { return max; }
   void clear() { resize(0); }
+  T *data() { return e; }
+  T const *data() const { return e; }
 
 private:
   /**
@@ -79,7 +104,7 @@ private:
 public:
   void reserve(size_type size) {
     assert(size <= max_size());
-    if (size < this->max) {
+    if (size > this->max) {
       realloc(size);
     }
   }
@@ -95,9 +120,52 @@ public:
    */
   void resize(size_type size) {
     assert(size <= max_size());
-    if (size != this->max) {
+    if (size != capacity()) {
       realloc(size);
       this->n = size;
+    }
+  }
+
+  void push_back(T const &v) {
+    auto const new_size = size() + 1;
+
+    if (new_size > capacity()) {
+      resize(new_size);
+    } else {
+      this->n = new_size;
+    }
+
+    this->back() = v;
+  }
+
+  template <typename... Args> void emplace_back(Args &&... args) {
+    auto const new_size = size() + 1;
+
+    if (new_size > capacity()) {
+      resize(new_size);
+    } else {
+      this->n = new_size;
+    }
+
+    new (&(this->back())) T(std::forward<Args>(args)...);
+  }
+
+  /**
+   * @brief Erase elements [first, last).
+   */
+  iterator erase(iterator first, iterator last) {
+    auto const n_elem = std::distance(first, last);
+    assert(n_elem >= 0);
+
+    auto r = std::copy(last, end(), first);
+
+    this->n -= n_elem;
+    return --r;
+  }
+
+  void shrink_to_fit() {
+    if (size() < capacity()) {
+      resize(size());
     }
   }
 
