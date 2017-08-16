@@ -21,6 +21,7 @@ set(py_tests  bondedInteractions.py
               scafacos_dipoles_1d_2d.py
 	            tabulated.py
               particle_slice.py
+              rigid_bond.py
               rotational_inertia.py
               virtual_sites_relative.py
               script_interface_object_params.py
