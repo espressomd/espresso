@@ -4950,15 +4950,21 @@ void lb_integrate_GPU() {
 
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbmovingboundaries.size())
-    {
+  {
       #ifdef EXTERNAL_FORCES
       calc_MD_force_and_set_ia_vel();
       #endif
-      KERNELCALL(apply_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, lb_boundary_velocity, lb_boundary_force));
-      lb_integrate_moving_boundaries();
-      KERNELCALL(propagate_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, d_lab_anchors));
-      KERNELCALL(update_boundaries_from_buffer, dim_grid, threads_per_block,(*current_nodes, *next_nodes, lb_moving_boundary));
-    }
+  }
+  if (LBBoundaries::lbmovingboundaries.size() || LBBoundaries::lbboundaries.size())
+  {
+    KERNELCALL(apply_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, lb_boundary_velocity, lb_boundary_force));
+  }
+  if (LBBoundaries::lbmovingboundaries.size())
+  {
+    lb_integrate_moving_boundaries();
+    KERNELCALL(propagate_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, d_lab_anchors));
+    KERNELCALL(update_boundaries_from_buffer, dim_grid, threads_per_block,(*current_nodes, *next_nodes, lb_moving_boundary));
+  }
 #endif
 }
 
