@@ -63,7 +63,9 @@ This defines an interaction between particles of the types *type1* and *type2* a
 to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
 separation distance. The tabulated potential allows capping the force
-using TODO:MISSING, see section :ref:`Capping the force during warmup`.
+using MISSING, see section :ref:`Capping the force during warmup`.
+
+.. todo:: replace MISSING above.
 
 At present the required file format is simply an ordered list separated
 by whitespace. The data reader first looks for a ``#`` character and
@@ -979,9 +981,7 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-The :class:`espressomd.interactions.Oif_Local_Forces` class
-
-inter oif_local_force
+OIF local forces are available through the :class:`espressomd.interactions.Oif_Local_Forces` class.
 
 This type of interaction is available for closed 3D immersed objects as
 well as for 2D sheet flowing in the 3D flow.
@@ -1000,29 +1000,28 @@ can be turned off.
 Stretching
 ^^^^^^^^^^
 
-For each edge of the mesh, is the current distance between point A and
-point B. is the distance between these points in the relaxed state, that
+For each edge of the mesh, :math:`L_{AB}` is the current distance between point :math:`A` and
+point :math:`B`. :math:`L^0_{AB}` is the distance between these points in the relaxed state, that
 is if the current edge has the length exactly , then no forces are
 added. :math:`\Delta L_{AB}` is the deviation from the relaxed
-state, that is
-:math:`\Delta L_{AB} = L_{AB} - L_{AB}^0`. The
-stretching force between A and B is calculated using
+state, that is :math:`\Delta L_{AB} = L_{AB} - L_{AB}^0`. The
+stretching force between :math:`A` and :math:`B` is calculated using
 
-.. math:: F_s(A,B) = (k_s\kappa(\lambda_{AB}) + k_{slin})\Delta L_{AB}n_{AB}.
+.. math:: F_s(A,B) = (k_s\kappa(\lambda_{AB}) + k_{s,\mathrm{lin}})\Delta L_{AB}n_{AB}.
 
-Here, is the unit vector pointing from to , is the constant for
-nonlinear stretching, is the constant for linear stretching,
-:math:`\lambda_{AB} = L_{AB}/L_{AB}^0`, and :math:`\kappa`
-is a nonlinear function that resembles neo-Hookean behaviour
+Here, :math:`n_{AB}` is the unit vector pointing from :math:`A` to :math:`B`, `k_s` is the
+constant for nonlinear stretching, :math:`k_{s,\mathrm{lin}}` is the constant for 
+linear stretching, :math:`\lambda_{AB} = L_{AB}/L_{AB}^0`, and :math:`\kappa`
+is a nonlinear function that resembles neo-Hookean behavior
 
 .. math::
 
    \kappa(\lambda_{AB}) = \frac{\lambda_{AB}^{0.5} + \lambda_{AB}^{-2.5}}
    {\lambda_{AB} + \lambda_{AB}^{-3}}.
 
-Typicaly, one wants either nonlinear or linear behaviour and therefore
-one of :math:`k_s, k_{slin}` is zero. But the interaction will work with
-both constants non-zero.
+Typically, one wants either nonlinear or linear behavior and therefore
+one of :math:`k_s, k_{s,\mathrm{lin}}` is zero. Nonetheless the interaction will work if
+both constants are non-zero.
 
 |image2|
 
@@ -1030,18 +1029,19 @@ Bending
 ^^^^^^^
 
 The tendency of an elastic object to maintain the resting shape is
-achieved by prescribing the preferred angles between the neighbouring
+achieved by prescribing the preferred angles between neighboring
 triangles of the mesh.
 
 Denote the angle between two triangles in the resting shape by
 :math:`\theta^0`. For closed immersed objects, one always has to set the
 inner angle. The deviation of this angle
 :math:`\Delta \theta = \theta - \theta^0` defines two bending forces for
-two triangles and
+two triangles :math:`A_1BC` and :math:`A_2BC`
 
 .. math:: F_{bi}(A_iBC) = k_b\frac{\Delta \theta}{\theta^0} n_{A_iBC}
 
-Here, is the unit normal vector to the triangle . The force is assigned
+Here, :math:`n_{A_iBC}` is the unit normal vector to the triangle :math:`A_iBC`.
+The force :math:`F_{bi}(A_iBC)` is assigned
 to the vertex not belonging to the common edge. The opposite force
 divided by two is assigned to the two vertices lying on the common edge.
 This procedure is done twice, for :math:`i=1` and for
@@ -1055,7 +1055,7 @@ Local area conservation
 This interaction conserves the area of the triangles in the
 triangulation.
 
-The deviation of the triangle surface is computed from the triangle
+The deviation of the triangle surface :math:`S_{ABC}` is computed from the triangle
 surface in the resting shape
 :math:`\Delta S_{ABC} = S_{ABC} - S_{ABC}^0`. The area
 constraint assigns the following shrinking/expanding force to every
@@ -1063,9 +1063,11 @@ vertex
 
 .. math:: F_{al}(A) = -k_{al}\frac{\Delta S_{ABC}}{\sqrt{S_{ABC}}}w_{A}
 
-where is the area constraint coefficient, and is the unit vector
-pointing from the centroid of triangle to the vertex . Similarly the
-analogical forces are assigned to and .
+where :math:`k_{al}` is the area constraint coefficient, and :math:`w_{A}` is the unit vector
+pointing from the centroid of triangle :math:`ABC` to the vertex :math:`A`. Similarly the
+analogical forces are assigned to :math:`B` and :math:`C`.
+
+.. todo:: Rest of this section is still Tcl syntax
 
 OIF local force is asymmetric. After creating the interaction
 
@@ -1103,27 +1105,28 @@ larger than :math:`\pi`, then the inner angle is concave.
 OIF global forces
 ~~~~~~~~~~~~~~~~~
 
-inter oif_global_force
+OIF global forces are available through the
+:class:`espressomd.interactions.Oif_Global_Forces` class.
 
 This type of interaction is available solely for closed 3D immersed
 objects.
 
-This interaction comprises two concepts: preservation of global surface
-and of volume of the object. Parameters :math:`S^0, k_{ag}`
-define preservation of the surface and parameters
-:math:`  V^0, k_{v}` define volume preservation. They can be
-used together, or, by setting any :math:`k_{ag}` or :math:`k_{v}` to
+It comprises two concepts: preservation of global surface
+and of volume of the object. The parameters :math:`S^0, k_{ag}`
+define preservation of the surface while parameters
+:math:`V^0, k_{v}` define volume preservation. They can be
+used together, or, by setting either :math:`k_{ag}` or :math:`k_{v}` to
 zero, the corresponding modulus can be turned off.
 
 Global area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Denote by the current surface of the immersed object, by the surface in
-the relaxed state and define
-:math:`\Delta S = S - S_0`. The global area
-conservation force is defined as
+The global area conservation force is defined as
 
-.. math:: F_{ag}(A) = - k_{ag}\frac{\Delta S}{S}w_{A}
+.. math:: F_{ag}(A) = - k_{ag}\frac{\Delta S}{S}w_{A},
+
+where :math:`S` denotes the current surface of the immersed object, :math:`S_0` the surface in
+the relaxed state and :math:`\Delta S = S - S_0`.
 
 Here, the above mentioned force divided by 3 is added to all three
 particles.
@@ -1133,24 +1136,27 @@ particles.
 Volume conservation
 ^^^^^^^^^^^^^^^^^^^
 
-The deviation of the objects volume is computed from the volume in the
+The deviation of the objects volume :math:`V` is computed from the volume in the
 resting shape :math:`\Delta V = V - V^0`. For each
 triangle the following force is computed
 
-.. math:: F_v(ABC) = -k_v\frac{\Delta V}{V^0} S_{ABC}\ n_{ABC}
+.. math:: F_v(ABC) = -k_v\frac{\Delta V}{V^0} S_{ABC} n_{ABC}
 
-where is the area of triangle , is the normal unit vector of plane , and
+where :math:`S_{ABC}` is the area of triangle :math:`ABC`, :math:`n_{ABC}` is the
+normal unit vector of the plane spanned by :math:`ABC`, and :math:`k_v`
 is the volume constraint coefficient. The volume of one immersed object
 is computed from
 
-.. math:: V = \sum_{ABC}S_{ABC}\ n_{ABC}\cdot h_{ABC}
+.. math:: V = \sum_{ABC}S_{ABC}\ n_{ABC}\cdot h_{ABC},
 
-where the sum is computed over all triangles of the mesh and is the
-normal vector from the centroid of triangle to any plane which does not
-cross the cell. The force is equally distributed to all three vertices
-:math:`A,B,C.`
+where the sum is computed over all triangles of the mesh and :math:`h_{ABC}` is the
+normal vector from the centroid of triangle :math:`ABC` to any plane which does not
+cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three vertices
+:math:`A, B, C.`
 
 |image4|
+
+.. todo:: Rest of section still Tcl syntax
 
 This interaction is symmetric. After the definition of the interaction
 by
@@ -1263,21 +1269,19 @@ possible
 Dihedral interactions
 ---------------------
 
-[sec:dihedral]
-
-inter dihedral
+Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class.
 
 This creates a bond type with identificator with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
 bond is created be particle :math:`p_2`, and the other bond partners
-:math:`p_1`, :math:`p_3`, :math:`p_4`, in this order, . Then, the
+:math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
 dihedral potential is given by
 
 .. math:: V(\phi) = K\left[1 - \cos(n\phi - p)\right],
 
-where is the multiplicity of the potential (number of minimas) and can
+where :math:`n` is the multiplicity of the potential (number of minima) and can
 take any integer value (typically from 1 to 6), :math:`p` is a phase
-parameter and is the bending constant of the potential. :math:`\phi` is
+parameter and :math:`K` is the bending constant of the potential. :math:`\phi` is
 the dihedral angle between the particles defined by the particle
 quadrupel :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
 angle between the planes defined by the particle triples :math:`p_1`,
@@ -1289,13 +1293,6 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
-If you enable the feature OLD_DIHEDRAL, then the old, less general form
-of the potential is used:
-
-.. math:: V(\phi) = K\left[1 + p\,\cos(n\phi)\right],
-
-where :math:`p` is rather a phase factor and can only take values
-:math:`p=\pm 1`.
 
 .. _Coulomb interaction:
 
