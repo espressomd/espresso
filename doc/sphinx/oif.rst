@@ -1,3 +1,5 @@
+.. _Object-in-fluid:
+
 Object-in-fluid
 ===============
 

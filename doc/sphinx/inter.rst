@@ -719,17 +719,16 @@ the following syntax to activate and assign a bonded interaction::
     system.bonded_inter.add(bond)
     system.part[pid1].add_bond((bond, pid2...))
 
-Generally, one instantiates an interaction object *bond* and subsequently pass it 
+In general, one instantiates an interaction object *bond* and subsequently passes it 
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
 bonded interaction and allows the user to assign bonds between particle ids *pidX*. 
 Bonded interactions are identified by either their *bondid* or their appropriate object.
 
-
-Defining a bond between two particles always
-involves three steps: defining the interaction, adding it to the system
-and applying it to the particles. Assuming
-that three particles with ids 42, 43 and 12 already exist, one can create a
-FENE-bond between them using::
+Defining a bond between two particles always involves three steps:
+defining the interaction, adding it to the system and applying it to the particles.
+To illustrate this, assume that three particles with ids 42, 43 and 12 already exist.
+One could for example create FENE bonds (more information about the FENE bond
+is provided in subsection :ref:`FENE bond`) between them using::
 
     fene = FeneBond(k=1, d_r_max=1)
     system.bonded_inter.add(fene)
@@ -752,18 +751,18 @@ A FENE (finite extension nonlinear expander) bond can be instantiated via
     from espressomd.interactions import FeneBond
     fene = FeneBond(k = <float>, d_r_max = <float>, r_0 = <float>)
 
-
-This creates a bond type identifier with a FENE (finite
-extension nonlinear expander) interaction. This is a rubber-band-like,
-symmetric interaction between two particles with magnitude :math:`K`, maximal
-stretching length :math:`\Delta r_0` and equilibrium bond length :math:`r_0`. The bond potential diverges at
-a particle distance :math:`r=r_0-\Delta r_\mathrm{max}` and
-:math:`r=r_0+\Delta r_\mathrm{max}`. It is given by
+This command creates a bond type identifier with a FENE
+interaction. The FENE potential
 
 .. math::
 
    V(r) = -\frac{1}{2} K \Delta r_\mathrm{max}^2\ln \left[ 1 - \left(
-         \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right].
+         \frac{r-r_0}{\Delta r_\mathrm{max}} \right)^2 \right]
+
+models a rubber-band-like, symmetric interaction between two particles with magnitude 
+:math:`K`, maximal stretching length :math:`\Delta r_0` and equilibrium bond length
+:math:`r_0`. The bond potential diverges at a particle distance
+:math:`r=r_0-\Delta r_\mathrm{max}` and :math:`r=r_0+\Delta r_\mathrm{max}`.
 
 Harmonic bond
 ~~~~~~~~~~~~~
@@ -808,7 +807,7 @@ controlled by the second harmonic constant :math:`k2`. Keep in mind that orienta
 oscillate around the distance vector and some kind of
 friction needs to be present for it to relax.
 
-The roles of the parameters :math:`k1,\ r_0,\ r_\mathrm{cut}` are exactly the same as for the
+The roles of the parameters :math:`k1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
 Quartic bond
@@ -967,18 +966,20 @@ displayed in VMD.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite  when using the interactions in this section in order to
+Please cite :cite:`cimrak` when using the interactions in this section in order to
 simulate extended objects embedded in a LB fluid. For more details also
-see the documentation at cell-in-fluid.fri.uniza.sk/oif-documentation
+see the documentation at http://cell-in-fluid.fri.uniza.sk/oif-documentation.
 
 The following interactions are implemented in order to mimic the
 mechanics of elastic or rigid objects immersed in the LB fluid flow.
 Their mathematical formulations were inspired by
 :cite:`dupin07`. Details on how the bonds can be used for
-modeling objects are described in section [sec:oif].
+modeling objects are described in section :ref:`Object-in-fluid`.
 
 OIF local forces
 ~~~~~~~~~~~~~~~~
+
+The :class:`espressomd.interactions.Oif_Local_Forces` class
 
 inter oif_local_force
 
