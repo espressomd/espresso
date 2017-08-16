@@ -34,8 +34,15 @@ import unittest as ut
 @ut.skipIf(not espressomd.has_features(["DIPOLES","FFTW"]),
            "Features not available, skipping test!")
 class mdlc(ut.TestCase):
+    s=espressomd.System()
+    s.time_step= 0.01
+    s.cell_system.skin =.4
+    s.periodicity= 1,1,1
+    s.thermostat.turn_off()
 
-    def test_mdlc(self):
+    def atest_mdlc(self):
+        s=self.s
+        s.part.clear()
         rho =0.3
         
         # This is only for box size calculation. The actual particle numbwe is
@@ -43,20 +50,8 @@ class mdlc(ut.TestCase):
         n_particle =100
         
         particle_radius= 0.5
-        dipole_lambda= 3.0
-        
-        #################################################
-        
         box_l = pow(((4 * n_particle * 3.141592654) / (3*rho)), 1.0/3.0)*particle_radius
-        skin =0.5
-        
-        s=espressomd.System()
-        # give Espresso some parameters
-        s.time_step= 0.01
-        s.cell_system.skin =skin
         s.box_l =box_l, box_l, box_l
-        # Read reference data
-        s.periodicity= 1,1,1
         f =open("mdlc_reference_data_energy.dat")
         ref_E =float(f.readline())
         f.close()
@@ -90,7 +85,51 @@ class mdlc(ut.TestCase):
     
         s.part.clear()
         del s.actors[0]
+        del s.actors[1]
     
+    def test_p3m(self):
+        s=self.s
+        s.part.clear()
+        rho =0.09
+        
+        # This is only for box size calculation. The actual particle numbwe is
+        # lower, because particles are removed from the mdlc gap region
+        n_particle =1000
+        
+        particle_radius= 1
+        box_l = pow(((4 * n_particle * 3.141592654) / (3*rho)), 1.0/3.0)*particle_radius
+        s.box_l =box_l, box_l, box_l
+        
+        # Particles
+        data= np.genfromtxt("p3m_magnetostatics_system.data")
+        for p in data[:,:]:
+            s.part.add(id=int(p[0]),pos=p[1:4],dip=p[4:7])
+            
+        p3m = magnetostatics.DipolarP3M(prefactor=1,mesh=32,accuracy=1E-4)
+        s.actors.add(p3m)
+        s.integrator.run(0)
+        expected=np.genfromtxt("p3m_magnetostatics_expected.data")
+        err_f=np.sum(np.sqrt(np.sum((s.part[:].f-expected[:,0:3])**2,1)),0)/np.sqrt(data.shape[0])
+        err_t=np.sum(np.sqrt(np.sum((s.part[:].torque_lab-expected[:,3:6])**2,1)),0)/np.sqrt(data.shape[0])
+        #err_e=s.analysis.energy()["dipolar"]-ref_E
+        #print("Energy difference",err_e)
+        print("Force difference",err_f)
+        print("Torque difference",err_t)
+    
+        tol_f=2E-3
+        tol_t=2E-3
+        tol_e=1E-3
+
+        #self.assertTrue(abs(err_e)<=tol_e,"Energy difference too large")
+        self.assertTrue(abs(err_t)<=tol_t,"Torque difference too large")
+        self.assertTrue(abs(err_f)<=tol_f,"Force difference too large")
+    
+        s.part.clear()
+        del s.actors[0]
+    
+
+
+
     
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
