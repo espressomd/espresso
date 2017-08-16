@@ -616,16 +616,14 @@ weak, and in a lipid bilayer, where it is comparatively stronger.
 Gay-Berne interaction
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+The interface for a Gay-Berne interaction is provided by the :class:`espressomd.interactions.GayBerneInteraction` class. Interaction parameters can be set via::
 
-inter gay-berne
+    system.non_bonded_inter[type1, type2].gay_berne.set_params(**kwargs)
 
 This defines a Gay-Berne potential for prolate and oblate particles
-between particles of the types and . The Gay-Berne potential is an
+between particles types *type1* and *type2*. The Gay-Berne potential is an
 anisotropic version of the classic Lennard-Jones potential, with
-orientational dependence of the range and the well-depth .
+orientational dependence of the range :math:`\sigma_0` and the well-depth :math:`\epsilon_0`.
 
 Assume two particles with orientations given by the unit vectors
 :math:`\mathbf{\hat{u}}_i` and :math:`\mathbf{\hat{u}}_j` and
@@ -647,6 +645,8 @@ otherwise :math:`V(r)=0`. The reduced radius is
    \tilde{r}=\frac{r - \sigma(\mathbf{\hat{r}},
        \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j)+\sigma_0}{\sigma_0},
 
+where
+
 .. math::
 
    \sigma( \mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
@@ -659,7 +659,7 @@ otherwise :math:`V(r)=0`. The reduced radius is
          {1 - \chi \mathbf{\hat{u}}_i \cdot \mathbf{\hat{u}}_j}
        \right] \right\}^{-\frac{1}{2}}
 
- and
+and
 
 .. math::
 
@@ -678,8 +678,8 @@ otherwise :math:`V(r)=0`. The reduced radius is
 
 The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)` 
 and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)` 
-are responsible for the degree of anisotropy of the molecular properties. is
-the molecular elongation, and is the ratio of the potential well depths for the
+are responsible for the degree of anisotropy of the molecular properties. :math:`k_1` is
+the molecular elongation, and :math:`k_2` is the ratio of the potential well depths for the
 side-by-side and end-to-end configurations. The exponents and are adjustable
 parameters of the potential. Several Gay-Berne parametrizations exist, the
 original one being :math:`k_1 = 3`, :math:`k_2 = 5`,
