@@ -25,7 +25,7 @@ define the interaction parameters.
 
 Isotropic non-bonded interactions
 ---------------------------------
-Nonbonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
+Non-bonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
 
     system.non_bonded_inter[type1, type2]
 
@@ -68,7 +68,7 @@ using MISSING, see section :ref:`Capping the force during warmup`.
 .. todo:: replace MISSING above.
 
 At present the required file format is simply an ordered list separated
-by whitespace. The data reader first looks for a ``#`` character and
+by whitespaces. The data reader first looks for a ``#`` character and
 begins reading from that point in the file. Anything before the ``#``
 will be ignored.
 
@@ -152,7 +152,7 @@ A special case of the Lennard-Jones potential is the
 Weeks-Chandler-Andersen (WCA) potential, which one obtains by putting
 the cutoff into the minimum, choosing
 :math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma`. The WCA
-potential is purely repulsive, and is often used to mimick hard sphere
+potential is purely repulsive, and is often used to mimic hard sphere
 repulsion.
 
 When coupling particles to a Shan-Chen fluid, if the *affinity* interaction is set,
@@ -184,7 +184,7 @@ both particles are in a region rich in the second component, then
 :math:`\phi\simeq-1`, and :math:`A(r)\simeq 1`, so that the potential
 will be very close to the full LJ one. If the cutoff has been set large
 enough, the particle will experience the attractive part of the
-potential, mimiking the effective attraction induced by the bad solvent.
+potential, mimicking the effective attraction induced by the bad solvent.
 
 
 .. _Generic Lennard-Jones interaction:
@@ -845,7 +845,7 @@ potential. It is given by
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
 
 where and are the charges of the bound particles. There is no cutoff,
-the bejerrum length of other coulomb interactions is not taken into
+the Bjerrum length of other coulomb interactions is not taken into
 account.
 
 Subtracted Lennard-Jones bond
@@ -913,7 +913,7 @@ non-bonded tabulated potentials (see :ref:`Tabulated interaction`).
 The bonded interaction can be based on a distance, a bond angle or a
 dihedral angle. This is determined by the ``type`` argument, which can
 be one of ``distance``, ``angle`` or ``dihedral``. The data is read from
-th file given by the ``filename`` argument.
+the file given by the ``filename`` argument.
 
 Calculation of the force and energy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1219,7 +1219,7 @@ particle for which the bond is created, is the central particle, and the
 angle :math:`\phi` between the vectors from this particle to the two
 others determines the interaction. is the bending constant, and the
 optional parameter :math:`\phi_0` is the equilibirum bond angle in
-radian ranging from 0 to :math:`\pi`. If this parameter is not given, it
+radians ranging from 0 to :math:`\pi`. If this parameter is not given, it
 defaults to :math:`\phi_0 = \pi`, which corresponds to a stretched
 configuration. For example, for a bond defined by
 
@@ -1253,7 +1253,7 @@ possible
 
      .. math:: V(\alpha) = K \left[1 - \cos(\phi - \phi0)\right]
 
-     Around :math:`\phi_0`, this potenial is close to a harmonic one
+     Around :math:`\phi_0`, this potential is close to a harmonic one
      (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
      periodic and smooth for all angles :math:`\phi`.
 
@@ -1308,7 +1308,7 @@ follows. For a pair of particles at distance :math:`r` with charges
 where :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` denotes the Bjerrum
 length, which measures the strength of the electrostatic interaction. As
 a special case, when the thermostat is switched off, the value of
-bjerrum length you enter is treated as :math:`l_B k_B T` rather than
+Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
 :math:`l_B`. This is used to perform an NVE integration (see also
 section :ref:`thermostat`).
 
@@ -1328,7 +1328,7 @@ the particles via the particle property
 :py:attr:`espressomd.particle_data.ParticleHandle.q`.
 
 This example shows the general usage of an electrostatic method ``<SOLVER>``.
-All of them need the bjerrum length and a set of other required paramters.
+All of them need the Bjerrum length and a set of other required parameters.
 First, an instance of the solver is created and only after adding it to the actors
 list, it is activated. Internally the method calls a tuning routine on
 activation to achieve the given accuracy::
@@ -1345,7 +1345,7 @@ Coulomb P3M
 
 :class:`espressomd.electrostatics.P3M`
 
-Required paramters:
+Required parameters:
     * bjerrum_length
     * accuracy
 
@@ -1370,7 +1370,7 @@ To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
 To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
 Note, however, that this is a method the P3M object inherited from
 :attr:`espressomd.electrostatics.ElectrostaticInteraction`. 
-All parameteres passed to the method are fixed in the tuning routine. If not
+All parameters passed to the method are fixed in the tuning routine. If not
 specified in the ``Tune()`` method, the parameters ``bjerrum_length`` and
 ``accuracy`` are reused.
 
@@ -1380,8 +1380,8 @@ simplify this, it provides a function to automatically tune the algorithm.
 Note that for this function to work properly, your system should already
 contain an initial configuration of charges and the correct initial box
 size. Also note that the provided tuning algorithms works very well on
-homogenous charge distributions, but might not achieve the requested
-precision for highly inhomogenous or symmetric systems. For example,
+homogeneous charge distributions, but might not achieve the requested
+precision for highly inhomogeneous or symmetric systems. For example,
 because of the nature of the P3M algorithm, systems are problematic
 where most charges are placed in one plane, one small region, or on a
 regular grid.
@@ -1402,12 +1402,12 @@ Coulomb P3M on GPU
 
 :class:`espressomd.electrostatics.P3M_GPU`
 
-Required paramters:
+Required parameters:
     * bjerrum_length
     * accuracy
 
 The GPU implementation of P3M calculates the far field portion on the GPU. 
-It uses the same parameters and interface funcionality as the CPU version of
+It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
 increase in performance.  Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
@@ -1420,7 +1420,7 @@ Coulomb Ewald GPU
 ~~~~~~~~~~~~~~~~~
 
 
-Required paramters:
+Required parameters:
     * bjerrum_length
     * accuracy
     * precision
@@ -1433,7 +1433,7 @@ of cubic boxes. See :attr:`espressomd.electrostatics.EwaldGpu` for detailed para
 
 .. todo::
 
-    * Check pyhton interface:
+    * Check python interface:
         * Clean up parameters
         * missing tunealpha method (from usersguide)
         * Test automatic / manual tuning
@@ -1479,7 +1479,7 @@ For :math:`\kappa = 0`, this corresponds to the plain coulomb potential.
 
 The second variant combines the coulomb interaction for charges that are
 closer than :math:`r_0` with the Debye-Hueckel approximation for charges
-that are further apart than :math:`r_1` in a continous way. The used potential
+that are further apart than :math:`r_1` in a continuous way. The used potential
 introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
 :math:`\varepsilon_\mathrm{ext}` and :math:`\alpha` and reads:
 
@@ -1495,7 +1495,7 @@ introduces three new parameters :math:`\varepsilon_\mathrm{int}`,
 
 The parameter :math:`\alpha` that controls the transition from Coulomb-
 to Debye-Hückel potential should be chosen such that the force is
-continous. 
+continuous. 
 
 .. note:: The two variants are mutually exclusive. If “COULOMB_DEBYE_HUECKEL”
     is defined in the configuration file, variant (DH) would not work. However, both methods
@@ -1520,7 +1520,7 @@ layered cell system. The performance of the method depends on the number
 of slices of the cell system, which has to be tuned manually. It is
 automatically ensured that the maximal pairwise error is smaller than
 the given bound. The far cutoff setting should only be used for testing
-reasons, otherwise you are more safe with the automatical tuning. If you
+reasons, otherwise you are more safe with the automatic tuning. If you
 even don’t know what it is, do not even think of touching the far
 cutoff. For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
@@ -1575,7 +1575,7 @@ Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
 :attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
-paramters.
+parameters.
 
 ::
 
@@ -1662,7 +1662,7 @@ The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three
 dimensions, which means :math:`\Delta_\text{lattice} \propto a^3`.
 
-Without derivation here, the algorithmis error is proportional to
+Without derivation here, the algorithms error is proportional to
 :math:`1/c^2`, where :math:`c` is the adjustable speed of light. From
 the stability criterion, this yields
 
@@ -1696,7 +1696,7 @@ inter coulomb memd localeps node dir eps
 The keyword after the command offers the possibility to assign any value
 of :math:`\varepsilon` to any lattice site.
 
-is the bjerrum length of the background. It defines the reference value
+is the Bjerrum length of the background. It defines the reference value
 :math:`\varepsilon_\text{bg}` via the formula . This is a global
 variable.
 
@@ -1713,7 +1713,7 @@ is the relative permittivity change in respect to the background
 permittivity set by the parameter .
 
 The permittivity on each lattice site is set relatively. By defining the
-(global) bjerrum length of the system, the reference
+(global) Bjerrum length of the system, the reference
 permittivity \ :math:`\varepsilon` is fixed via the formula
 
 .. math::
@@ -1768,7 +1768,7 @@ inter coulomb memd adaptive parameters
 The keyword after the command will use the implementation with
 dielectric permittivity dependent on the local salt concentration.
 
-is the bjerrum length of the background. It defines the reference value
+is the Bjerrum length of the background. It defines the reference value
 :math:`\varepsilon_\text{bg}` via the formula . Since the permittivity
 in this case is set adaptively, it essentially determined the
 temperature for the Coulomb interaction. This is a global variable and
@@ -1912,7 +1912,7 @@ element. The parameter allows to specify the accuracy of the iteration.
 It corresponds to the maximum relative change of any of the interface
 particle’s charge. After the iteration stops anyways. The dielectric
 constant in bulk, i. e. outside the dielectric walls is specified by . A
-homogenous electric field can be added to the calculation of dielectric
+homogeneous electric field can be added to the calculation of dielectric
 boundary forces by specifying it in the parameter .
 
 Quick setup of dielectric interfaces
@@ -1962,7 +1962,7 @@ interactions as efficiently as possible, but almost all of them require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-The commands above work as their couterparts for the electrostatic
+The commands above work as their counterparts for the electrostatic
 interactions (see section ). Variant disables dipolar interactions.
 Variant returns the current parameters of the dipolar interaction as a
 Tcl-list using the same syntax as used to setup the method,
@@ -2009,7 +2009,7 @@ Tuning dipolar P3M
 | inter magnetic p3m accuracy
 
 Tuning dipolar P3M works exactly as tuning Coulomb P3M. Therefore, for
-details on how to tune the algorothm, refer to the documentation of
+details on how to tune the algorithm, refer to the documentation of
 Coulomb P3M (see section ).
 
 For the magnetic case, the expressions of the error estimate are given
@@ -2023,7 +2023,7 @@ inter magnetic mdlc
 Like ELC but applied to the case of magnetic dipoles, but here the
 accuracy is the one you wish for computing the energy. is set to a value
 that, assuming all dipoles to be as larger as the largest of the dipoles
-in the system, the error for the energy would be smaller thant the value
+in the system, the error for the energy would be smaller than the value
 given by accuracy. At this moment you cannot compute the accuracy for
 the forces, or torques, nonetheless, usually you will have an error for
 forces and torques smaller than for energies. Thus, the error for the
@@ -2123,7 +2123,7 @@ Tunable-slip boundary interaction
 
 inter tunable_slip
 
-Simulating microchannel flow phenomena like the Plane Poiseuille and the
+Simulating micro-channel flow phenomena like the Plane Poiseuille and the
 Plane Couette Flow require accurate boundary conditions. There are two
 main boundary conditions in use:
 
