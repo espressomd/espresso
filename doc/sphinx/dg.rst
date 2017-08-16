@@ -1,3 +1,4 @@
+=================
 Developer's Guide
 =================
 .. warning::
@@ -20,7 +21,7 @@ http://lists.nongnu.org/mailman/listinfo/espressomd-devel
 .. _Before you start a development project:
 
 Before you start a development project
-======================================
+--------------------------------------
 Before you start a development project for |es|, please always write to the developers mailing list and describe the project. 
 This is to avoid that several people work on the same thing at the same time. Also, implementation details can be discussed in advance. In many cases, existing developers can point to re-usable code and simpler solutions.
 
@@ -45,8 +46,7 @@ Required Development Tools
    the distributed versioning control system Git [1]_. 
 
 -  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
-
-      pip install --user -r requirements.txt
+      pip install --upgrade --user -r requirements.txt
 
    Note, that some distributions now use ``pip`` for Python3 and ``pip2`` for Python 2. 
 
@@ -61,7 +61,7 @@ systems.
 .. _Getting the Development Code:
 
 Getting the Development Code
-============================
+----------------------------
 We use Github for storing the source code and its history, and for managing the development process. 
 The repository is located at
 http://github.com/espressomd/espresso
@@ -72,7 +72,7 @@ The build process does not differ from the one for release versions described in
 
 
 Build System
-============
+------------
 
 The build system of |es| is based on CMake.
 
@@ -89,7 +89,7 @@ The most common reasons for editing these files are:
 -  Adding new external dependencies
 
 Adding New Source Files
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 To add new files to |es| (like C++ source files or header files) you
 need to look at the CMakeList.txt in the directory where the file is located.
@@ -112,7 +112,8 @@ need to look at the CMakeList.txt in the directory where the file is located.
 
 
 Testsuite
-=========
+---------
+
 -  New or significantly changed features will only be accepted, if they have a test case. 
    This is to make sure, the feature is not broken by future changes to |es|, and so other users can get an impression of what behaviour is guaranteed to work.
 -  There are two kinds of tests:
@@ -133,9 +134,10 @@ Documentation
 =============
 
 The documentation of |es| consists of four parts:
--  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
--  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
--  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/sr/core`` and its sub-directories and makes use of Doxygen.
+
+  -  The users' guide and developers' guide are located in ``doc/sphinx``, and make use of the Sphinx Python package
+  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We also make use of the extensions in the numpydoc package and use the NumPy documentation style.
+  -  In-code documentation of the C++ core is located in the .cpp and .hpp files in ``/src/core`` and its sub-directories and makes use of Doxygen.
 
 
 
@@ -195,8 +197,8 @@ developers.
 
 Source code structure
 ---------------------
-The source tree has the following structure:
 
+The source tree has the following structure:
 * src: The actual source code
 
   * core: The C++ source code of the simulation core
@@ -210,9 +212,7 @@ The source tree has the following structure:
   * doxygen: Build directory for the C++ in-code documentation
 
 * testsuite/python: Python integration tests. Note that some C++ unit tests for individual core components are in src/core/unittests
-
 * samples/python: Some sample scripts
-
 * libs: External dependencies (at this point h5xx)
 * maintainer: Files used by the maintainers
 
@@ -281,6 +281,7 @@ Using an instance of MpiCallback
 
 Legacy callbacks
 ~~~~~~~~~~~~~~~~
+
 Older code uses callbacks defined in the CALLBACK_LIST preprocessor macro in communications.cpp. They are called via mpi_call().
 See communications.cpp:mpi_place_particle() for an example.
 
@@ -288,7 +289,6 @@ Adding New Bonded Interactions
 ------------------------------
 
 To add a new bonded interaction, the following steps have to be taken
-
 * Simulation core:
 
   * Define a structure holding the parameters (prefactors, etc.) of the interaction
@@ -303,6 +303,7 @@ To add a new bonded interaction, the following steps have to be taken
 
 Defining the data structure for the interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The data structures for bonded interactions reside in ``interaction_data.hpp``.
 
 * Add your interaction to the ``enum BondedInteraction``.
@@ -397,6 +398,7 @@ Including the bonded interaction in the force calculation and the energy and pre
 
 Adding the bonded interaciton in the Python interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Please note that the following is Cython code (www.cython.org), rather than pure Python.
 * In ``src/python/espressomd/interactions.pxd``:
 
