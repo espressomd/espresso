@@ -36,7 +36,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/analysis.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/analysis-core.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/io.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/aux.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/lb.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/electrokinetics.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/oif.rst"
