@@ -29,7 +29,6 @@
 #include "energy.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
-#include "forces_inline.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
