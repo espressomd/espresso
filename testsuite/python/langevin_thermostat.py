@@ -98,24 +98,24 @@ class LangevinThermostat(ut.TestCase):
         kT2=1.5
         s.thermostat.set_langevin(kT=kT,gamma=gamma)
         # Set different kT on 2nd half of particles
-        s.part[N/2:].temp =kT2
+        s.part[int(N/2):].temp =kT2
         # Set different gamma on half of the partiles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            s.part[N/4:3*N/4].gamma=gamma2,gamma2,gamma2
+            s.part[int(N/4):int(3*N/4)].gamma=gamma2,gamma2,gamma2
         else:    
-            s.part[N/4:3*N/4].gamma=gamma2
+            s.part[int(N/4):int(3*N/4)].gamma=gamma2
 
 
         s.integrator.run(50)
         loops=8000
         
-        v_kT=np.zeros((N/2*loops,3))
-        v_kT2=np.zeros((N/2*loops,3))
+        v_kT=np.zeros((int(N/2)*loops,3))
+        v_kT2=np.zeros((int(N/2*loops),3))
 
         for i in range(loops):
             s.integrator.run(2)
-            v_kT[i*N/2:(i+1)*N/2,:]=s.part[:N/2].v
-            v_kT2[i*N/2:(i+1)*N/2,:]=s.part[N/2:].v
+            v_kT[int(i*N/2):int((i+1)*N/2),:]=s.part[:int(N/2)].v
+            v_kT2[int(i*N/2):int((i+1)*N/2),:]=s.part[int(N/2):].v
         v_minmax=5
         bins=5
         error_tol=0.014
