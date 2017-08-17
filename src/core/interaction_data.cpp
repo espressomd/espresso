@@ -40,7 +40,6 @@
 #include "actor/EwaldGPU.hpp"
 #include "lj.hpp"
 #include "ljgen.hpp"
-#include "ljangle.hpp"
 #include "steppot.hpp"
 #include "hertzian.hpp"
 #include "gaussian.hpp"
@@ -173,22 +172,6 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_softrad = 0.0;
 #endif
   params->LJGEN_cut = INACTIVE_CUTOFF;
-#endif
-
-#ifdef LJ_ANGLE
-  params->LJANGLE_eps =
-    params->LJANGLE_sig =
-    params->LJANGLE_bonded1type=
-    params->LJANGLE_bonded1pos = 
-    params->LJANGLE_bonded1neg = 
-    params->LJANGLE_bonded2pos = 
-    params->LJANGLE_bonded2neg = 
-    params->LJANGLE_capradius =
-    params->LJANGLE_z0 =
-    params->LJANGLE_kappa =
-    params->LJANGLE_epsprime = 0.0;
-  params->LJANGLE_dz = -1.0;
-  params->LJANGLE_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SMOOTH_STEP
@@ -599,11 +582,6 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef LENNARD_JONES_GENERIC
       if (max_cut_current < (data->LJGEN_cut+data->LJGEN_offset))
 	max_cut_current = (data->LJGEN_cut+data->LJGEN_offset);
-#endif
-
-#ifdef LJ_ANGLE
-      if (max_cut_current < (data->LJANGLE_cut))
-	max_cut_current = (data->LJANGLE_cut);
 #endif
 
 #ifdef SMOOTH_STEP

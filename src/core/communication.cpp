@@ -60,7 +60,6 @@
 #include "lbboundaries.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 #include "lj.hpp"
-#include "ljangle.hpp"
 #include "ljcos.hpp"
 #include "maggs.hpp"
 #include "mdlc_correction.hpp"
@@ -1949,11 +1948,6 @@ void mpi_cap_forces_slave(int node, int parm) {
 #ifdef LJCOS2
   calc_ljcos2_cap_radii();
 #endif
-  on_short_range_ia_change();
-#endif
-#ifdef LJ_ANGLE
-  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_ljangle_cap_radii();
   on_short_range_ia_change();
 #endif
 #ifdef MORSE
