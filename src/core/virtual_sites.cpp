@@ -21,6 +21,7 @@
 
 #include "virtual_sites.hpp"
 #include "pressure.hpp"
+#include "cells.hpp"
 
 #ifdef VIRTUAL_SITES
 

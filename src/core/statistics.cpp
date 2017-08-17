@@ -42,6 +42,7 @@
 #include "virtual_sites.hpp"
 #include <cstdlib>
 #include <cstring>
+#include "npt.hpp"
 
 #include "partCfg.hpp"
 
