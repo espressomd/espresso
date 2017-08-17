@@ -25,6 +25,7 @@ from espressomd.interactions import FeneBond
 from time import time
 
 
+@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),"Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
 class LangevinThermostat(ut.TestCase):
     """Tests the velocity distribution created by the Langevin thermostat agaisnt 
        the single component Maxwell distribution."""
@@ -106,7 +107,7 @@ class LangevinThermostat(ut.TestCase):
 
 
         s.integrator.run(50)
-        loops=6000
+        loops=8000
         
         v_kT=np.zeros((N/2*loops,3))
         v_kT2=np.zeros((N/2*loops,3))
