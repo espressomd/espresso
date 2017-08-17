@@ -224,9 +224,9 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
 
-  *dst = std::move(*src);
+  new(dst) Particle(std::move(*src));
   if (src != end) {
-    *src = std::move(*end);
+    new(src) Particle(std::move(*end));
   }
 
   sl->n -= 1;
@@ -240,14 +240,14 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  *dst = std::move(*src);
+  new(dst) Particle(std::move(*src));
   if (re) {
     update_local_particles(dl);
   } else {
     local_particles[dst->p.identity] = dst;
   }
   if (src != end) {
-    *src = std::move(*end);
+    new(src) Particle(std::move(*end));
   }
   if (realloc_particlelist(sl, --sl->n)) {
     update_local_particles(sl);
