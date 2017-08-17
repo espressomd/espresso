@@ -43,7 +43,7 @@ class CoulombCloudWallTune(ut.TestCase):
             del self.S.actors[0]
         self.S.part.clear()
 
-        with open('data/coulomb_tuning_system.data') as f:
+        with open('data/coulomb_tuning_system.data', 'rb') as f:
             data = pickle.load(f)
 
         self.forces = []
