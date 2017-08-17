@@ -33,6 +33,7 @@
 
 #include "domain_decomposition.hpp"
 #include "magnetic_non_p3m_methods.hpp"
+#include "thermostat.hpp"
 
 #ifdef DIPOLES
 
