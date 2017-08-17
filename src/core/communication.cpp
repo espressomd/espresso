@@ -2115,14 +2115,20 @@ void mpi_sync_topo_part_info_slave(int node, int parm) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field) {
+void mpi_bcast_lb_params(int field, int value) {
 #ifdef LB
-  mpi_call(mpi_bcast_lb_params_slave, -1, field);
-  mpi_bcast_lb_params_slave(-1, field);
+  mpi_call(mpi_bcast_lb_params_slave, field, value);
+  mpi_bcast_lb_params_slave(field, value);
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int node, int field) {
+void mpi_bcast_lb_params_slave(int field, int value) {
+#if defined(LB) || defined(LB_GPU)
+  if(field == LBPAR_LATTICE_SWITCH) {
+    lattice_switch = value;
+  }
+#endif
+
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);

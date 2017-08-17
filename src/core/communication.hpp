@@ -543,7 +543,7 @@ int mpi_sync_topo_part_info(void);
  * @param field References the parameter field to be broadcasted. The references
  * are defined in \ref lb.hpp "lb.hpp"
  */
-void mpi_bcast_lb_params(int field);
+void mpi_bcast_lb_params(int field, int value = -1);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA
  */
