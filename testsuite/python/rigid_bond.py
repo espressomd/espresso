@@ -30,26 +30,28 @@ class RigidBondTest(ut.TestCase):
 
 
     def test(self):
+        target_acc=1E-3
+        tol=1.2*target_acc
         s=espressomd.System()
         s.box_l=10,10,10
         s.cell_system.skin=0.4
-        s.time_step=0.001
+        s.time_step=0.01
         s.thermostat.set_langevin(kT=1,gamma=1)
-        r=RigidBond(r=1.2,ptol=1E-3,vtol=1E-3)
+        r=RigidBond(r=1.2,ptol=1E-3,vtol=target_acc)
         s.bonded_inter.add(r)
 
         for i in range(5):
             s.part.add(id=i,pos=(i*1.2,0,0))
             if i>0:
                 s.part[i].bonds=((r,i-1),)
-        s.integrator.run(1000)
+        s.integrator.run(5000)
         for i in range(1,5):
             d=s.distance(s.part[i],s.part[i-1])
             v_d=s.distance_vec(s.part[i],s.part[i-1])
-            self.assertLess(abs(d-1.2),1E-3)
+            self.assertLess(abs(d-1.2),tol)
             # Velocity projection on distance vector
             vel_proj=np.dot(s.part[i].v-s.part[i-1].v,v_d)/d
-            self.assertLess(vel_proj,1E-3)
+            self.assertLess(vel_proj,tol)
 
 
 
