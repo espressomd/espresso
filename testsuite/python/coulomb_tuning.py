@@ -43,8 +43,7 @@ class CoulombCloudWallTune(ut.TestCase):
             del self.S.actors[0]
         self.S.part.clear()
 
-        with open('data/coulomb_tuning_system.data', 'rb') as f:
-            data = pickle.load(f)
+        data = np.load('data/coulomb_tuning_system.npz')
 
         self.forces = []
         # Add particles to system and store reference forces in hash
