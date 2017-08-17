@@ -2,9 +2,8 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 
-@ut.skipIf(not espressomd.has_features(["P3M"]),
+@ut.skipIf(not espressomd.has_features(["P3M", "EXTERNAL_FORCES"]),
            "Features not available, skipping test!")
-
 class test_icc(ut.TestCase):
            
     def runTest(self):
@@ -75,6 +74,4 @@ class test_icc(ut.TestCase):
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
-
-
 
