@@ -44,7 +44,6 @@ function(UNIT_TEST)
 endfunction(UNIT_TEST)
 
 # Add tests here
-
 unit_test(NAME Vector_test SRC Vector_test.cpp)
 unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp)

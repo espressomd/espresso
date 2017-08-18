@@ -238,6 +238,7 @@ void on_observable_calc()
     case COULOMB_ELC_P3M:
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
+      EVENT_TRACE(fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
       p3m_count_charged_particles();
       break;
 #endif

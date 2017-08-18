@@ -18,7 +18,7 @@ from espressomd.shapes import Wall
 class ShapeBasedConstraintTest(ut.TestCase):
 
     def prepare(self, S):
-        S.box_l = [3., 3., 3.]
+        S.box_l = [10., 10., 10.]
         S.time_step = 0.01
         S.cell_system.skin = 0.4
 
