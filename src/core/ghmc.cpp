@@ -172,13 +172,9 @@ void calc_kinetic(double *ek_trans, double *ek_rot) {
 
 /* rotational energy */
 #ifdef ROTATION
-#ifdef ROTATIONAL_INERTIA
     er += SQR(p.m.omega[0]) * p.p.rinertia[0] +
           SQR(p.m.omega[1]) * p.p.rinertia[1] +
           SQR(p.m.omega[2]) * p.p.rinertia[2];
-#else
-    er += SQR(p.m.omega[0]) + SQR(p.m.omega[1]) + SQR(p.m.omega[2]);
-#endif
 #endif
   }
 

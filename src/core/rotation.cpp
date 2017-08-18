@@ -59,16 +59,6 @@
 
 #ifdef ROTATION
 
-#ifndef ROTATIONAL_INERTIA
-/** moment of inertia. Currently we define the inertia tensor here to be
-   constant.
-    If it is not spherical the angular velocities have to be refined several
-   times
-    in the \ref convert_torques_propagate_omega. Also the kinetic energy in file
-    \ref statistics.cpp is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
-static double I[3] = {1, 1, 1};
-#endif
-
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -157,8 +147,6 @@ void define_rotation_matrix(Particle const *p, double A[9])
     as well as Wd vector which is the angular acceleration of this particle */
 void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
-  double S1;
-
   /* calculate the first derivative of the quaternion */
   Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
                  p->r.quat[3] * p->m.omega[2]);
@@ -172,31 +160,12 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   Qd[3] = 0.5 * (-p->r.quat[2] * p->m.omega[0] + p->r.quat[1] * p->m.omega[1] +
                  p->r.quat[0] * p->m.omega[2]);
 
-/* calculate the second derivative of the quaternion */
+  /* calculate the second derivative of the quaternion */  
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(p->p.rinertia[1]-p->p.rinertia[2]))/p->p.rinertia[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(p->p.rinertia[2]-p->p.rinertia[0]))/p->p.rinertia[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(p->p.rinertia[0]-p->p.rinertia[1]))/p->p.rinertia[2];
 
-#ifdef ROTATIONAL_INERTIA
-  Wd[0] =
-      (p->f.torque[0] +
-       p->m.omega[1] * p->m.omega[2] * (p->p.rinertia[1] - p->p.rinertia[2])) /
-      p->p.rinertia[0];
-  Wd[1] =
-      (p->f.torque[1] +
-       p->m.omega[2] * p->m.omega[0] * (p->p.rinertia[2] - p->p.rinertia[0])) /
-      p->p.rinertia[1];
-  Wd[2] =
-      (p->f.torque[2] +
-       p->m.omega[0] * p->m.omega[1] * (p->p.rinertia[0] - p->p.rinertia[1])) /
-      p->p.rinertia[2];
-#else
-  Wd[0] =
-      (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] * (I[1] - I[2])) / I[0];
-  Wd[1] =
-      (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] * (I[2] - I[0])) / I[1];
-  Wd[2] =
-      (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] * (I[0] - I[1])) / I[2];
-#endif
-
-  S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
+  auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
   Qdd[0] = 0.5 * (-p->r.quat[1] * Wd[0] - p->r.quat[2] * Wd[1] -
                   p->r.quat[3] * Wd[2]) -
@@ -379,15 +348,10 @@ void convert_torques_propagate_omega() {
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
 
-#ifdef ROTATIONAL_INERTIA
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
     p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
-#else
-    p.m.omega[0] += time_step_half * p.f.torque[0] / I[0];
-    p.m.omega[1] += time_step_half * p.f.torque[1] / I[1];
-    p.m.omega[2] += time_step_half * p.f.torque[2] / I[2];
-#endif
+
     // zeroth estimate of omega
     for (int j = 0; j < 3; j++)
       omega_0[j] = p.m.omega[j];
@@ -399,7 +363,6 @@ void convert_torques_propagate_omega() {
     for (int times = 0; times <= 5; times++) {
       double Wd[3];
 
-#ifdef ROTATIONAL_INERTIA
       Wd[0] =
           (p.m.omega[1] * p.m.omega[2] * (p.p.rinertia[1] - p.p.rinertia[2])) /
           p.p.rinertia[0];
@@ -409,11 +372,6 @@ void convert_torques_propagate_omega() {
       Wd[2] =
           (p.m.omega[0] * p.m.omega[1] * (p.p.rinertia[0] - p.p.rinertia[1])) /
           p.p.rinertia[2];
-#else
-      Wd[0] = (p.m.omega[1] * p.m.omega[2] * (I[1] - I[2])) / I[0];
-      Wd[1] = (p.m.omega[2] * p.m.omega[0] * (I[2] - I[0])) / I[1];
-      Wd[2] = (p.m.omega[0] * p.m.omega[1] * (I[0] - I[1])) / I[2];
-#endif
 
       p.m.omega[0] = omega_0[0] + time_step_half * Wd[0];
       p.m.omega[1] = omega_0[1] + time_step_half * Wd[1];
