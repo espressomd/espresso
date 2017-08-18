@@ -23,6 +23,7 @@
 
 #ifdef VIRTUAL_SITES
 #include "pressure.hpp"
+#include "cells.hpp"
 
 // The following four functions are independent of the specif
 // rules used to place virtual particles

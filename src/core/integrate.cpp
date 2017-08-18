@@ -32,7 +32,7 @@
 #include "domain_decomposition.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
+#include "forces_inline.hpp"
 #include "ghmc.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -59,6 +59,8 @@
 #include "utils.hpp"
 #include "verlet.hpp"
 #include "virtual_sites.hpp"
+#include "npt.hpp"
+#include "collision.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

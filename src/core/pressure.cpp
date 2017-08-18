@@ -21,7 +21,7 @@
 /** \file pressure.cpp
     Implementation of \ref pressure.hpp "pressure.h".
 */
-#include "pressure.hpp"
+#include "pressure_inline.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
@@ -29,6 +29,9 @@
 #include "nsquare.hpp"
 #include "layered.hpp"
 #include "virtual_sites_relative.hpp" 
+#include "npt.hpp"
+#include "p3m.hpp"
+#include "p3m-dipolar.hpp"
 
 Observable_stat virials  = {0, {}, 0,0,0,0,0};
 Observable_stat total_pressure = {0, {}, 0,0,0,0,0};

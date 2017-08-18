@@ -85,6 +85,13 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "p3m-dipolar.hpp"
+#include "debye_hueckel.hpp"
+#include "reaction_field.hpp"
+#include "collision.hpp"
+#include "ljgen.hpp"
+#include "ljcos2.hpp"
+#include "npt.hpp"
 
 using namespace std;
 using Communication::mpiCallbacks;
