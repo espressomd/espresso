@@ -848,6 +848,182 @@ where and are the charges of the bound particles. There is no cutoff,
 the bejerrum length of other coulomb interactions is not taken into
 account.
 
+Drude bond
+~~~~~~~~~~
+
+.. note::
+
+    Requires features DRUDE, THOLE, ELECTROSTATICS, LANGEVIN_PER_PARTICLE.
+
+.. note::
+
+    DRUDE is only implemented for the P3M electrostatics solver and the Langevin thermostat.
+
+This bond implements **thermalized cold drude oszillators** and can be used to
+simulate polarizable particles.  The basic idea is to add a
+'charge-on-a-spring' (Drude charge) to a particle (Drude core) that mimics an
+electron cloud and can be elongated to create a dynamically inducible dipole.
+The energetic minimum of the Drude charge can be obtained self-consistently,
+which requires several iterations of the system's electrostatics and is usually
+considered computational expensive. In the thermalized cold Drude
+oszillators, the distance between Drude charge and core is coupled to a
+thermostat so that it fluctuates around the SCF solution.  This thermostat is
+kept at a low temperature compared to the global temperature to minimize the
+heat flow into the system. A second thermostat is applied on the centre of mass
+of the Drude charge + core system. The downside of this approach is that
+usually a smaller time step has to be used to get stable behaviour for the
+spring.
+
+In |es|, the *Drude bond* that takes care of the harmonic bond and the correct
+thermalization of the Drude complex. Therefore, the particles have to be
+excluded from the global thermostating.  With ``LANGEVIN_PER_PARTICLE``, we set
+the temperature and friction coefficient of the Drude complex to zero, which
+allows to still use a global Langevin thermostat for non-polarizable particles.
+Additionally, the short-range electrostatic interaction between Drude charge
+and core is subtracted.
+
+A Drude bond is configured with::
+
+    from espressomd.interactions import DrudeBond
+    db = DrudeBond(temp_com = <float>, gamma_com = <float>, temp_drude = <float>, gamma_drude = <float>, k = <float>, r_cut = <float>)
+
+The parameters are:
+
+    * temp_com : Temerature of the Langevin thermostat for the COM of the core-drude pair.
+    * gamma_com: Friction coefficient of the Langevin thermostat for the COM of the core-drude pair.
+    * temp_drude: Temerature of the Langevin thermostat for the distance vector of the core-drude pair.
+    * gamma_drude: Friction coefficient of the Langevin thermostat for the distance vector of the core-drude pair.
+    * k: Spring constant of the harmonic bond between core and drude charge.
+    * r_cut:  Specifies maximum distance beyond which the bond is considered broken.
+
+As the Drude charge should not alter the charge or mass of the Drude complex, both properties
+have to be subtracted from the core when adding the drude particle. In the following convention,
+we assume that the Drude charge is always negative. It is calculated via the
+spring constant :math:`k` and polarizability :math:`\alpha` (in units of
+inverse volume) with :math:`q_d =  -\sqrt{k \cdot \alpha}`.
+
+The following helper function takes into account all the preceding
+considerations and can be used to convenientely add polarizability to a given
+core particle::
+
+    def add_drude_particle_to_core(p_core, drude_bond, id_drude, type_drude, alpha, mass_drude):
+        
+        k = drude_bond.params["k"]
+        q_drude = -pow(k * alpha, 0.5)
+
+        S.part.add(id=id_drude, pos=p_core.pos, type = type_drude,  q = q_drude, mass = mass_drude, temp = 0, gamma = 0)
+        #print("Adding to core ID", p_core.id, "drude particle with id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
+
+        p_core.q -= q_drude
+        p_core.mass -= mass_drude   
+        p_core.add_bond((drude_bond, id_drude))
+        p_core.temp = 0
+        p_core.gamma = 0
+
+Thole correction
+~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Requires features THOLE and ELECTROSTATICS.
+
+.. note::
+
+    THOLE is only implemented for the P3M electrostatics solver.
+
+
+Although a nonbondend interaction, the Thole correction is closely related to
+simulations with polarizable particles and is therefore placed here after the *Drude bond* section.
+It is used to correct for overestimation of induced dipoles at short distances.
+Internally, it alters the short-range electrostatics of P3M to result in a
+damped coulomb interaction potential 
+:math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.
+The thole scaling coefficient :math:`s` is related to the polarizabilies :math:`\alpha`
+and thole damping parameters :math:`a` of the interacting species via 
+:math:`s = \frac{ (a_i + a_j) / 2 }{ (\alpha_i \alpha_j)^{1/6} }`.
+Note that for the Drude oszillators, the Thole correction should be applied
+only for the dipole part :math:`\pm q_d` added by the Drude charge and not on
+the total core charge, which can be different for polarizable ions.
+It is configured by::
+
+    system = espressomd.System()
+    system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff = <float>, q1q2 = <float>)
+
+with parameters:
+    * scaling_coeff: The scaling coefficient :math:`s`.
+    * q1q2: The charge factor of the involved charges.
+
+Because the scaling coefficient depends on the *mixed* polarizabilies and 
+the nonbonded interaction is controlled by particle types, each Drude charge with 
+a unique polarizability has to have a unique type. So each Drude charge type has a Thole correction
+interaction with all other Drude charges and all Drude cores, except the one it's connected to.
+This exeption is handeled internally. Also, each Drude core has a Thole
+correction interaction with all other Drude cores and Drude charges.
+To assist with this bookkeeping, the helper method from the *Drude bond* section 
+can be extended to collect all core types, drude types and parameters when a
+drude particle is created::
+
+    #Dict with drude type infos
+    drude_dict={}
+    #Lists with unique drude and core types
+    core_type_list=[]
+    drude_type_list=[]
+
+    def add_drude_particle_to_core(p_core, drude_bond, id_drude, type_drude, alpha, mass_drude):
+
+        ...
+
+       #Drude particles with different drude charges(or alphas)/thole_damping have to have different types for thole:
+       if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
+           print("ERROR: Drude particles with different drude charges have to have different types for thole..Aborting")
+           exit()
+
+       #Bookkepping of q, alphas and damping parameter
+       if not type_drude in drude_dict:
+       
+           drude_dict[type_drude] = {}
+           drude_dict[type_drude]["q"] = q_drude
+           drude_dict[type_drude]["alpha"] = alpha
+           drude_dict[type_drude]["thole_damping"] = thole_damping
+
+           #Save same information to get lazy access to the parameters via core types
+           drude_dict[p_core.type] = drude_dict[type_drude]
+
+       #Collect unique drude types
+       if not type_drude in drude_type_list:
+           drude_type_list.append(type_drude)
+       
+       #Collect unique core types
+       if not p_core.type in core_type_list:
+           core_type_list.append(p_core.type)
+
+             
+Finally, the ``add_all_thole()`` function uses this information to 
+create all necessary Thole interactions after all calls of ``add_drude_particle_to_core()``::
+
+    def add_thole_pair_damping(t1,t2):
+        qq = drude_dict[t1]["q"] * drude_dict[t2]["q"]
+        s = 0.5 * (drude_dict[t1]["thole_damping"] * drude_dict[t2]["thole_damping"]) / (drude_dict[t1]["alpha"] * drude_dict[t2]["alpha"])**(1.0/6.0) 
+        S.non_bonded_inter[t1,t2].thole.set_params(scaling_coeff=s, q1q2 = qq)
+        #print("Added THOLE",t1,"<->",t2, "S",s, "q1q2",qq)
+
+    def add_all_thole():
+        #drude <-> drude
+        for i in range(len(drude_type_list)):
+            for j in range(i,len(drude_type_list)):
+                add_thole_pair_damping(drude_type_list[i],drude_type_list[j])
+        #core <-> core
+        for i in range(len(core_type_list)):
+            for j in range(i,len(core_type_list)):
+                add_thole_pair_damping(core_type_list[i],core_type_list[j])
+        #drude <-> core
+        for i in drude_type_list:
+            for j in core_type_list:
+                add_thole_pair_damping(i,j)
+
+The samples section contains a script with a fully polarizable, coarse grained
+ionic liquid where this approach is applied.
+
 Subtracted Lennard-Jones bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

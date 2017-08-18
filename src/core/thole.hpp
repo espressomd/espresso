@@ -87,9 +87,10 @@ inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
         double dist2 = dist*dist;
         double thole_s = ia_params->THOLE_scaling_coeff;
         double thole_q1q2 = ia_params->THOLE_q1q2;
+        double chgfac = p1->p.q*p2->p.q;
 
         //Subtract p3m shortrange energy
-        e_thole += p3m_pair_energy(-thole_q1q2, d, dist2, dist);
+        e_thole += p3m_pair_energy(-chgfac, d, dist2, dist);
 
         //Add damped p3m shortrange energy
         double S_r = 1.0 - (1.0 + thole_s*dist/2.0) * exp(-thole_s*dist); 
