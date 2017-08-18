@@ -22,6 +22,7 @@ set(py_tests  bondedInteractions.py
 	            tabulated.py
               particle_slice.py
               rotational_inertia.py
+              virtual_sites_relative.py
               script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
