@@ -17,7 +17,14 @@ if(H5MD)
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
         )
-endif(H5MD)
+    endif(H5MD)
+
+if( WITH_COVERAGE )
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+  link_libraries(gcov)
+endif()
+
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
