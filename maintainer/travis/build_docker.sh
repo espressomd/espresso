@@ -18,11 +18,7 @@ if [ -z "$image" ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	if [ "$image" = "centos" -o "$image" = "opensuse" ]; then
-		image=mkuron/buildenv-espresso-$image:docker
-	else
-		image=espressomd/buildenv-espresso-$image:python
-	fi
+	image=espressomd/buildenv-espresso-$image:python
 	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
