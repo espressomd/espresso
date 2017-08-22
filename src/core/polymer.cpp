@@ -117,7 +117,6 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 int constraint_collision(double *p1, double *p2) {
   Particle part1, part2;
   double d1, d2, v[3];
-  Constraint *c;
   int i;
   double folded_pos1[3];
   double folded_pos2[3];

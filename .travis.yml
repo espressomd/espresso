@@ -40,6 +40,10 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=nocheck-maxset make_check=false
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset with_coverage=true
 
 
 script:
