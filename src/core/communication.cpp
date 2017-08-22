@@ -100,7 +100,6 @@ static int terminated = 0;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
-  CB(mpi_stop_slave)                                                           \
   CB(mpi_bcast_parameter_slave)                                                \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_bcast_event_slave)                                                    \
@@ -230,6 +229,8 @@ void mpi_add_callback(SlaveCallback *cb) {
 #endif
 }
 
+std::unique_ptr<boost::mpi::environment> mpi_env;
+
 void mpi_init(int *argc, char ***argv) {
 #ifdef OPEN_MPI
   void *handle = 0;
@@ -257,7 +258,8 @@ void mpi_init(int *argc, char ***argv) {
   }
 #endif
 
-  MPI_Init(argc, argv);
+  //  MPI_Init(argc, argv);
+  mpi_env = Utils::make_unique<boost::mpi::environment>(*argc, *argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
@@ -317,21 +319,10 @@ void mpi_stop() {
   if (terminated)
     return;
 
-  mpi_call(mpi_stop_slave, -1, 0);
+  mpiCallbacks().abort_loop();
 
-  MPI_Barrier(comm_cart);
-  MPI_Finalize();
   regular_exit = 1;
   terminated = 1;
-}
-
-void mpi_stop_slave(int node, int param) {
-  COMM_TRACE(fprintf(stderr, "%d: exiting\n", this_node));
-
-  MPI_Barrier(comm_cart);
-  MPI_Finalize();
-  regular_exit = 1;
-  exit(0);
 }
 
 /*************** REQ_BCAST_PAR ************/
