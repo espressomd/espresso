@@ -18,8 +18,12 @@ if [ -z "$image" ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	image=espressomd/buildenv-espresso-$image:python
-	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone --recursive /travis && cd travis && maintainer/travis/build_cmake.sh"
+	if [ "$image" = "centos" -o "$image" = "opensuse" ]; then
+		image=mkuron/buildenv-espresso-$image:docker
+	else
+		image=espressomd/buildenv-espresso-$image:python
+	fi
+	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
@@ -45,10 +49,10 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install homebrew/science/hdf5 --with-mpi --without-cxx
 
 	export TMPDIR=/tmp
-	maintainer/travis/build_cmake.sh
+	maintainer/travis/build_cmake.sh || exit 1
 fi
 
-if [ $with_coverage = "true" ]; then
+if [ "$with_coverage" = "true" ]; then
     cd ${PWD}
     curl -s https://codecov.io/bash | bash -
 fi
