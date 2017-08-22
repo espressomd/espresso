@@ -37,13 +37,13 @@ function cmd {
     eval $1
 }
 
-
 # handle environment variables
-[ -z "$insource" ] && insource="true"
+[ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
+[ -z "$with_coverage" ] && with_coverage="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
@@ -58,7 +58,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface myconfig check_procs
+    with_python_interface with_coverage myconfig check_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -102,6 +102,10 @@ else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
 fi
 
+if [ $with_coverage = "true" ]; then
+    cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
 MYCONFIG_DIR=$srcdir/maintainer/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
@@ -143,4 +147,13 @@ if $make_check; then
     fi
 
     end "TEST"
+fi
+
+if $with_coverage; then
+    cd $builddir
+    lcov --directory . --capture --output-file coverage.info # capture coverage info
+    lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov --list coverage.info #debug info
+    # Uploading report to CodeCov
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
 fi
