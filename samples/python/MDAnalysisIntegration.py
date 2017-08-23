@@ -3,6 +3,7 @@
 """
     This example shows how to integrate MDAnalysis in ESPResSo
 """
+from __future__ import print_function
 import espressomd
 from espressomd import MDA_ESP
 import numpy as np
@@ -37,25 +38,25 @@ u =  mda.Universe( eos.topology, eos.trajectory )
 
 
 ### let's have a look at the universe
-print u
+print(u)
 
 ### Inspect atoms
-print u.atoms
+print(u.atoms)
 
-print "Positions:"
-print u.atoms.positions
-print "Velocities:"
-print u.atoms.velocities
-print "Forces:"
-print u.atoms.forces
-print "Names:"
-print u.atoms.names
-print "IDs:"
-print u.atoms.ids
-print "Types:"
-print u.atoms.types
-print "Charges:"
-print u.atoms.charges
+print("Positions:")
+print(u.atoms.positions)
+print("Velocities:")
+print(u.atoms.velocities)
+print("Forces:")
+print(u.atoms.forces)
+print("Names:")
+print(u.atoms.names)
+print("IDs:")
+print(u.atoms.ids)
+print("Types:")
+print(u.atoms.types)
+print("Charges:")
+print(u.atoms.charges)
 
 #
 # ========================================================="
@@ -65,7 +66,7 @@ print u.atoms.charges
 
 
 u.atoms.write("system.pdb")
-print "===> The initial configuration has been written on system.pdb "
+print("===> The initial configuration has been written on system.pdb ")
 
 
 
@@ -102,6 +103,6 @@ for i in range(100):
     # append it to the .trr trajectory
     W.write_next_timestep(u.trajectory.ts)
 
-print "===> The trajectory has been saved in the traj.trr file"
+print("===> The trajectory has been saved in the traj.trr file")
 
 #
