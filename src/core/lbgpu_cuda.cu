@@ -1264,6 +1264,12 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, LB_rho_v_gpu *d_v, L
       atomicAdd(lb_moving_boundary[boundary_index].torque + 1, -torque[1] );
       atomicAdd(lb_moving_boundary[boundary_index].torque + 2, -torque[2] );
     }
+    else
+    {
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+0], -boundary_force[0]/para.tau);
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+1], -boundary_force[1]/para.tau);
+      atomicadd(&lb_boundary_force[3*(boundary_index-1)+2], -boundary_force[2]/para.tau);
+    }
   }
 }
 
@@ -4950,15 +4956,21 @@ void lb_integrate_GPU() {
 
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbmovingboundaries.size())
-    {
+  {
       #ifdef EXTERNAL_FORCES
       calc_MD_force_and_set_ia_vel();
       #endif
-      KERNELCALL(apply_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, lb_boundary_velocity, lb_boundary_force));
-      lb_integrate_moving_boundaries();
-      KERNELCALL(propagate_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, d_lab_anchors));
-      KERNELCALL(update_boundaries_from_buffer, dim_grid, threads_per_block,(*current_nodes, *next_nodes, lb_moving_boundary));
-    }
+  }
+  if (LBBoundaries::lbmovingboundaries.size() || LBBoundaries::lbboundaries.size())
+  {
+    KERNELCALL(apply_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, lb_boundary_velocity, lb_boundary_force));
+  }
+  if (LBBoundaries::lbmovingboundaries.size())
+  {
+    lb_integrate_moving_boundaries();
+    KERNELCALL(propagate_boundaries, dim_grid, threads_per_block, (*current_nodes, device_rho_v, lb_moving_boundary, d_lab_anchors));
+    KERNELCALL(update_boundaries_from_buffer, dim_grid, threads_per_block,(*current_nodes, *next_nodes, lb_moving_boundary));
+  }
 #endif
 }
 
