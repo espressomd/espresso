@@ -32,6 +32,12 @@ void initialize() {
 
   ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
       "LBBoundaries::LBBoundary");
+
+  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBMovingBoundaries>(
+      "LBBoundaries::LBMovingBoundaries");
+
+  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBMovingBoundary>(
+      "LBBoundaries::LBMovingBoundary");
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
