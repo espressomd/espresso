@@ -25,7 +25,6 @@
 #include "bonded_coulomb.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
-#include "bond/BondedCoulomb.cpp"
 
 #ifdef ELECTROSTATICS
 

@@ -26,6 +26,8 @@
 
 #ifdef TABULATED
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
+#include "bond/TabulatedBondedInteraction.hpp" //for TabulatedBondedInteraction
 
 int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
 {
@@ -111,6 +113,9 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
 
 int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
 {
+
+  /*OLD CODE -> just for testing*/
+  // This will be deleted
   int i, token = 0, size;
   double dummr;
   FILE* fp;
@@ -166,7 +171,7 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
     if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
 	std::abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
       fclose(fp);
-      return 6;
+     return 6;
     }
     bonded_ia_params[bond_type].p.tab.maxval = PI+ROUND_ERROR_PREC;
   }
@@ -195,9 +200,129 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   }
   fclose(fp);
 
-  mpi_bcast_ia_params(bond_type, -1); 
+  /* End of OLD CODE*/
 
+
+
+  /* NEW CODE */
+  //New Code for getting class parameters
+
+  //parameters for class initialization
+  char* input_filename;
+  double input_minval;
+  double input_maxval;
+  int input_npoints;
+  double input_invstepsize;
+  double* input_f;
+  double* input_e;
+
+  token = 0;
+  
+  fp = fopen( filename , "r");
+  if ( !fp ){
+    return 3;
+  }
+  /*Look for a line starting with # */
+  while ( token != EOF) {
+    token = fgetc(fp);
+    if ( token == '#' ) { break; } // magic number for # symbol
+  }
+  if ( token == EOF ) { 
+    fclose(fp);
+    return 4;
+  }
+
+  /* check unsupported tabulated bond type */
+  if(tab_type != TAB_BOND_LENGTH && 
+     tab_type != TAB_BOND_ANGLE && 
+     tab_type != TAB_BOND_DIHEDRAL)
+    {
+      runtimeError("Unsupported tabulated bond type.");
+      return 1;
+    };
+
+  /* copy filename */
+  size = strlen(filename);
+  input_filename = (char*)Utils::malloc((size+1)*sizeof(char));
+  strcpy(input_filename,filename);
+
+  /* read basic parameters from file */
+  if (fscanf( fp , "%d %lf %lf", &size,
+	      &input_minval,
+	      &input_maxval) != 3) {
+    return 5;
+  }
+
+  input_npoints = size;
+
+  /* Check interval for angle and dihedral potentials.  With adding
+     ROUND_ERROR_PREC to the upper boundary we make sure, that during
+     the calculation we do not leave the defined table!
+  */
+  if(tab_type == TAB_BOND_ANGLE ) {
+    if( input_minval != 0.0 || 
+	std::abs(input_maxval-PI) > 1e-5 ) {
+      fclose(fp);
+     return 6;
+    }
+    input_maxval = PI+ROUND_ERROR_PREC;
+  }
+  /* check interval for angle and dihedral potentials */
+  if(tab_type == TAB_BOND_DIHEDRAL ) {
+    if( input_minval != 0.0 || 
+	std::abs(input_maxval-(2*PI)) > 1e-5 ) {
+      fclose(fp);
+      return 6;
+    }
+    input_maxval = (2*PI)+ROUND_ERROR_PREC;
+  }
+
+  /* calculate dependent parameters */
+  input_invstepsize = (double)(size-1)/(input_maxval-input_minval);
+
+  /* allocate force and energy tables */
+  input_f = (double*)Utils::malloc(size*sizeof(double));
+  input_e = (double*)Utils::malloc(size*sizeof(double));
+
+  /* Read in the new force and energy table data */
+  for (i =0 ; i < size ; i++) {
+    if (fscanf(fp,"%lf %lf %lf", &dummr,
+	       &input_f[i],
+	       &input_e[i]) != 3){ 
+
+      return 5;
+    }
+  }
+
+  fclose(fp);
+  /*End of NEW CODE */
+
+
+  // this structure is just for testing the code with old iaparams stuff
+  switch(tab_type){
+  case TAB_BOND_LENGTH:    
+    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondLength>
+		     (Bond::TabulatedBondedInteraction::TAB_BOND_LENGTH, input_filename,
+		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
+		      input_e));
+  case TAB_BOND_ANGLE:    
+    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondAngle>
+		     (Bond::TabulatedBondedInteraction::TAB_BOND_ANGLE, input_filename,
+		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
+		      input_e));
+  case TAB_BOND_DIHEDRAL:    
+    set_bond_by_type(bond_type, Utils::make_unique<Bond::TabulatedBondDihedral>
+		     (Bond::TabulatedBondedInteraction::TAB_BOND_DIHEDRAL, input_filename,
+		      input_minval, input_maxval, input_npoints, input_invstepsize, input_f, 
+		      input_e));
+  default:
+    runtimeError("Unsupported tabulated bond type.");
+    return 1;
+  };
+
+  mpi_bcast_ia_params(bond_type, -1); 
   return ES_OK;
+
 }
 
 void check_tab_forcecap(double forcecap)

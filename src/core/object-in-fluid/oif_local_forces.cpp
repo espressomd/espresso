@@ -25,6 +25,7 @@
 
 #include "communication.hpp"
 #include "oif_local_forces.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 /** set parameters for the OIF_LOCAL_FORCES potential.*/
 
@@ -46,6 +47,8 @@ int oif_local_forces_set_params(int bond_type, double r0, double ks, double ksli
     
   bonded_ia_params[bond_type].type = BONDED_IA_OIF_LOCAL_FORCES;
   bonded_ia_params[bond_type].num  = 3;
+
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::OifLocalForces>(phi0, kb, r0, ks, kslin, A01, A02, kal));
 
   mpi_bcast_ia_params(bond_type, -1); 
 

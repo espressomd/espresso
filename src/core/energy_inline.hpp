@@ -282,6 +282,7 @@ inline void add_bonded_energy(Particle *p1) {
 
   i = 0;
   while (i < p1->bl.n) {
+    int bl_id = i;
     type_num = p1->bl.e[i++];
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -342,7 +343,7 @@ inline void add_bonded_energy(Particle *p1) {
       get_mi_vector(dx, p1->r.p, p2->r.p);
 
     if(type == BONDED_IA_FENE){
-      bond_broken = bonds_ia[type_num]->add_bonded_energy(p1, p2, dx, &ret);
+      bond_broken = bond_map[type_num]->add_bonded_energy(p1, bl_id, &ret);
     };
 
     switch (type) {

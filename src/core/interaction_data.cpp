@@ -99,8 +99,8 @@ double field_applied;
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
-/** definition of Bond unique pointer vector **/
-std::vector<std::unique_ptr<Bond::Bond>> bonds_ia;
+/** definition of Bond map with all bonds**/
+std::map<int, std::unique_ptr<Bond::Bond>> bond_map;
 
 double min_global_cut = 0.0;
 
@@ -890,11 +890,9 @@ void make_bond_type_exist(int type)
 void set_bond_by_type(int type, std::unique_ptr<Bond::Bond> && bond) {
 
   /* ifdef cases must be here*/
-  if(type >= bonds_ia.size()) {
-    bonds_ia.resize(type + 1);
-  }
-
-  bonds_ia[type] = std::move(bond);
+  
+  //insert bond with key "type"
+  bond_map.insert(std::pair<int, std::unique_ptr<Bond::Bond>>(type, std::move(bond)));
 }
 
 int interactions_sanity_checks()

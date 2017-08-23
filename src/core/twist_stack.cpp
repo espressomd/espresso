@@ -21,6 +21,7 @@
 
 #include "twist_stack.hpp"
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 #ifdef TWIST_STACK
 
@@ -658,10 +659,23 @@ int twist_stack_set_params(int bond_type, DoubleList *params) {
   const double dt = PI*36./180.;
   const double *a = bonded_ia_params[bond_type].p.twist_stack.a;
   const double *b = bonded_ia_params[bond_type].p.twist_stack.b;
+  
+  double ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
 
-  bonded_ia_params[bond_type].p.twist_stack.ref_pot = a[0] + a[1] * cos(dt) + a[2] * cos(2*dt) + a[3] * cos(3*dt) + a[4] * cos(4*dt) + a[5] * cos(5*dt) + a[6] * cos(6*dt) + a[7] * cos(7*dt) + b[0] * sin(dt) + b[1] * sin(2*dt) + b[2] * sin(3*dt) + b[3] * sin(4*dt) + b[5] * sin(5*dt) + b[6] * sin(6*dt);
+  bonded_ia_params[bond_type].p.twist_stack.ref_pot = ref_pot;
   bonded_ia_params[bond_type].type = BONDED_IA_CG_DNA_STACKING;
   bonded_ia_params[bond_type].num = 7;
+
+  double input_a[8], input_b[7];
+
+  for(int i = 0; i < 8; i++)
+    input_a[i] = params->e[2+i];
+
+  for(int i = 0; i < 7; i++)
+    input_b[i] = params->e[10+i];
+
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::TwistStack>
+		   (params->e[0], params->e[1], ref_pot, input_a, input_b));
 
   mpi_bcast_ia_params(bond_type, -1);
 

@@ -24,6 +24,7 @@
  */
 #include "umbrella.hpp"
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 #ifdef UMBRELLA
 
@@ -43,6 +44,9 @@ int umbrella_set_params(int bond_type, double k,
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1);
+
+  //create new bond class in bond vector with params
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::Umbrella>(k, dir, r));
 
   return ES_OK;
 

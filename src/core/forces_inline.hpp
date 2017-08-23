@@ -506,6 +506,7 @@ inline void add_bonded_force(Particle *p1) {
 
   i = 0;
   while (i < p1->bl.n) {
+    int bl_id = i;
     type_num = p1->bl.e[i++];
     Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
@@ -571,7 +572,7 @@ inline void add_bonded_force(Particle *p1) {
     }
     //test!!!!!!!
     if(type == BONDED_IA_FENE){
-      bond_broken = bonds_ia[type_num]->add_bonded_force(p1, p2, dx, force);
+      bond_broken = bond_map[type_num]->add_bonded_force(p1, bl_id);
     };
     switch (type) {
     case BONDED_IA_FENE:
@@ -702,12 +703,12 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
-#ifdef BOND_ENDANGLEDIST
+      /*#ifdef BOND_ENDANGLEDIST
     case BONDED_IA_ENDANGLEDIST:
       bond_broken =
           calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
       break;
-#endif
+      #endif*/
     case BONDED_IA_DIHEDRAL:
       bond_broken =
           calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
@@ -789,12 +790,12 @@ inline void add_bonded_force(Particle *p1) {
 
       for (j = 0; j < 3; j++) {
         switch (type) {
-#ifdef BOND_ENDANGLEDIST
+	  /*#ifdef BOND_ENDANGLEDIST
         case BONDED_IA_ENDANGLEDIST:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
           break;
-#endif // BOND_ENDANGLEDIST
+	  #endif*/ // BOND_ENDANGLEDIST
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];

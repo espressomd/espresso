@@ -23,6 +23,7 @@
 
 #include "../communication.hpp"
 #include "out_direction.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 #ifdef MEMBRANE_COLLISION
 
@@ -36,6 +37,8 @@ int out_direction_set_params(int bond_type)
 
   bonded_ia_params[bond_type].type = BONDED_IA_OIF_OUT_DIRECTION;
   bonded_ia_params[bond_type].num  = 3;
+
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::MembraneCollision>());
 
   mpi_bcast_ia_params(bond_type, -1); 
 

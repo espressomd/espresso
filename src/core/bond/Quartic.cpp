@@ -1,7 +1,7 @@
 #include "Quartic.hpp"
 
 //---QUARTIC BOND---
-int Bond::Quartic::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::Quartic::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
   int i;
   double fac;
   double dist2 = sqrlen(dx);
@@ -29,7 +29,7 @@ int Bond::Quartic::add_bonded_force(Particle *p1, Particle *p2, double dx[3], do
   return 0;
 }
 
-int Bond::Quartic::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::Quartic::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 

@@ -22,10 +22,10 @@
  *
  *  Implementation of \ref harmonic_dumbbell.hpp
  */
-#include "harmonic_dumbbell.hpp"
+
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
-#include "bond/HarmonicDumbbell.cpp"
+#include "harmonic_dumbbell.hpp"
 
 #ifdef ROTATION
 

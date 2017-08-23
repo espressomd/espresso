@@ -1,7 +1,7 @@
 #include"BondedCoulomb.hpp"
 
 //---BONDED_COULOMB---
-int Bond::BondedCoulomb::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::BondedCoulomb::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
 #ifdef ELECTROSTATICS
   int i;
   double fac;
@@ -18,7 +18,7 @@ int Bond::BondedCoulomb::add_bonded_force(Particle *p1, Particle *p2, double dx[
   return 0;
 }
 
-int Bond::BondedCoulomb::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::BondedCoulomb::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
 #ifdef ELECTROSTATICS
   double dist = sqrt(sqrlen(dx));
   *_energy = m_prefactor * p1->p.q * p2->p.q / dist;

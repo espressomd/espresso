@@ -27,19 +27,35 @@
 #include "particle_data.hpp" /* needed for constraints */
 #include "utils.hpp"
 #include <memory> //for unique pointer -> vector of bond classes
-//Bond classes header
-#include "bond/Bond.hpp"
+#include <map> // for bond classes
+//***Bond classes header***
+//**pairbonds**
 #include "bond/Fene.hpp"
 #include "bond/HarmonicDumbbell.hpp"
 #include "bond/Harmonic.hpp"
 #include "bond/Quartic.hpp"
 #include "bond/BondedCoulomb.hpp"
-//Bond classes cpp files
-//#include "bond/Fene.cpp"
-//#include "bond/HarmonicDumbbell.cpp"
-//#include "bond/Harmonic.cpp"
-//#include "bond/Quartic.cpp"
-//#include "bond/BondedCoulomb.cpp"
+#include "bond/SubtLj.hpp"
+#include "bond/Umbrella.hpp"
+#include "bond/TabulatedBondLength.hpp"
+#include "bond/OverlapBondLength.hpp"
+//**three particle bonds**
+#include "bond/IbmTriel.hpp"
+#include "bond/AngleHarmonic.hpp"
+#include "bond/AngleCosine.hpp"
+#include "bond/AngleCosSquare.hpp"
+#include "bond/AngleDist.hpp"
+#include "bond/TabulatedBondAngle.hpp"
+#include "bond/OverlapBondAngle.hpp"
+//**four particle bonds**
+#include "bond/HydrogenBond.hpp"
+#include "bond/MembraneCollision.hpp"
+#include "bond/OifLocalForces.hpp"
+#include "bond/Dihedral.hpp"
+#include "bond/TabulatedBondDihedral.hpp"
+#include "bond/OverlapBondDihedral.hpp"
+//**Eight particle bonds**
+#include "bond/TwistStack.hpp"
 
 /** \name Type codes of bonded interactions
     Enumeration of implemented bonded interactions.
@@ -1190,8 +1206,8 @@ extern int n_bonded_ia;
 /** Field containing the paramters of the bonded ia types */
 extern Bonded_ia_parameters *bonded_ia_params;
 
-/*vector of unique pointers because bond is an abstact class*/
-extern std::vector<std::unique_ptr<Bond::Bond> > bonds_ia;
+/*map for bonds: unique pointers because bond is an abstracr class */
+extern std::map<int, std::unique_ptr<Bond::Bond>> bond_map;
 
 /** Array containing all tabulated forces*/
 extern DoubleList tabulated_forces;

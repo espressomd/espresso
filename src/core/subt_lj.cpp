@@ -26,6 +26,7 @@
 
 #ifdef LENNARD_JONES
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 int subt_lj_set_params(int bond_type, double k, double r)
 {
@@ -41,6 +42,9 @@ int subt_lj_set_params(int bond_type, double k, double r)
   bonded_ia_params[bond_type].num = 1;
 
   mpi_bcast_ia_params(bond_type, -1); 
+
+  //create new bond class in bond vector with params
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::SubtLj>(r));
 
   return ES_OK;
 }

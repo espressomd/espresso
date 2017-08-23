@@ -25,7 +25,6 @@
 #include "quartic.hpp"
 #include "communication.hpp"
 #include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
-#include "bond/Quartic.cpp"
 
 int quartic_set_params(int bond_type, double k0, double k1, double r,double r_cut)
 {

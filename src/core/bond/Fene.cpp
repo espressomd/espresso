@@ -1,10 +1,12 @@
 #include"Fene.hpp"
+#include "core/random.hpp"
+
 
 #include "core/random.hpp"
 
 //---FENE---
 //calculating the fene bond force: virtual function
-int Bond::Fene::add_bonded_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
+int Bond::Fene::add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], double force[3]) const {
 
   int i;
  
@@ -38,7 +40,7 @@ int Bond::Fene::add_bonded_force(Particle *p1, Particle *p2, double dx[3], doubl
 }
 
 //calculating FENE Energy: virtual function
-int Bond::Fene::add_bonded_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
+int Bond::Fene::add_bonded_pair_energy(Particle *p1, Particle *p2, double dx[3], double *_energy) const {
   /* compute bond stretching (r-r0) */
   double dr = sqrt(sqrlen(dx))-m_r0;
 

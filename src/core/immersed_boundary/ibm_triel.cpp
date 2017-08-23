@@ -1,4 +1,3 @@
-
 #include "config.hpp"
 
 #ifdef IMMERSED_BOUNDARY
@@ -8,6 +7,7 @@
 #include "grid.hpp"
 #include "communication.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 // Internal function
 void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3], double f2[3], double v12[3], double v13[3]);
@@ -294,6 +294,9 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, con
 //  free_particle(&part1);
 //  free_particle(&part2);
 //  free_particle(&part3);
+
+  //create new bond class in bond vector with params
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::IbmTriel>(a1, a2, b1, b2, l0, lp0, sinPhi0, cosPhi0, 0.5*area2, max, elasticLaw, k1, k2));
   
   return ES_OK;
 }

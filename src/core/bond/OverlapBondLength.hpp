@@ -1,0 +1,26 @@
+#ifndef OVERLAP_BOND_LENGTH_BOND_CLASS_H
+#define OVERLAP_BOND_LENGTH_BOND_CLASS_H
+#include "PairBond.hpp"
+#include "Overlap.hpp"
+
+namespace Bond {
+
+  class OverlapBondLength : public PairBond, public Overlap {
+  public:
+    // constructor
+    OverlapBondLength(char* filename, OverlappedBondedInteraction type, double maxval, 
+		      int noverlaps, double* para_a, double* para_b, double* para_c) : 
+      Overlap{filename, type, maxval, noverlaps, para_a, para_b, para_c} 
+    {m_bondtype = BondType::BONDED_IA_OVERLAPPED;}
+
+    // Member function
+    int add_bonded_pair_force(Particle *p1, Particle *p2, double dx[3], 
+			      double force[3]) const override;
+    int add_bonded_pair_energy(Particle *p1, Particle *p2, 
+			       double dx[3], double *_energy) const override;
+
+  };
+
+}
+
+#endif

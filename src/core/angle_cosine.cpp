@@ -26,6 +26,7 @@
 
 #ifdef BOND_ANGLE
 #include "communication.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 /** set parameters for the angle potential.
 
@@ -45,6 +46,8 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0)
   bonded_ia_params[bond_type].p.angle_cosine.sin_phi0 = sin(phi0);
   bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_COSINE;
   bonded_ia_params[bond_type].num = 2;
+
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleCosine>(bend, phi0));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 

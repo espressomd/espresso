@@ -34,6 +34,7 @@
 #include "grid.hpp"
 #include <memory>
 #include "shapes/Wall.hpp"
+#include "utils/make_unique.hpp" //for creating a unique ptr to a bond class object
 
 int angledist_set_params(int bond_type, double bend, double phimin,
                          double distmin, double phimax, double distmax) {
@@ -49,6 +50,8 @@ int angledist_set_params(int bond_type, double bend, double phimin,
   bonded_ia_params[bond_type].p.angledist.distmax = distmax;
   bonded_ia_params[bond_type].type = BONDED_IA_ANGLEDIST;
   bonded_ia_params[bond_type].num = 2;
+
+  set_bond_by_type(bond_type, Utils::make_unique<Bond::AngleDist>(bend, phimin, distmin, phimax, distmax));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1);
