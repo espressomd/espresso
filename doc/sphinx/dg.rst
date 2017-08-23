@@ -43,7 +43,7 @@ Required Development Tools
 -  First of all, please install the dependencies for compiling |es|. See the section on "Getting, compiling and running" in the user guide.
 
 -  To be able to access the development version of |es|, you will need
-   the distributed versioning control system Git [1]_. 
+   the distributed versioning control system git_. 
 
 -  The documentation is currently being converted from LaTeX to Sphinx. To build the old user and developer guides, you will need LaTeX. For building the sphinx documentation, you will need the Python packages listed in ``requirements.txt`` in the top-level source directory. To install them, issue::
       pip install --upgrade --user -r requirements.txt
@@ -53,7 +53,7 @@ Required Development Tools
 -  To build the tutorials, you will need LaTeX.
 
 -  To compile the Doxygen code documentation, you will need to have the
-   tool Doxygen\  [4]_.
+   tool doxygen_.
 
 All of these tools should be easy to install on most Unix operating
 systems.
@@ -172,7 +172,7 @@ description of the most common commands we need:
 -  | ``\image html`` *image*
    | Include a picture. The picture file should reside in the subdir
      ``doc/doxygen/figs``. Do not use the HTML ``<img>``-tag to include
-     pictures, as doxygen will not copy the pictures into the
+     pictures, as doxygen_ will not copy the pictures into the
      documentation.
 
 -  | ``<ul> <li>List entry 1</li> <li>List entry 2</li></ul>``
@@ -199,6 +199,7 @@ Source code structure
 ---------------------
 
 The source tree has the following structure:
+
 * src: The actual source code
 
   * core: The C++ source code of the simulation core
@@ -209,7 +210,7 @@ The source tree has the following structure:
 
   * sphinx: The sphinx-based documentation, consisting of user and developer guide.
   * tutorials/python: Source and pdf files for the introductory tutorials
-  * doxygen: Build directory for the C++ in-code documentation
+  * doxygen_: Build directory for the C++ in-code documentation
 
 * testsuite/python: Python integration tests. Note that some C++ unit tests for individual core components are in src/core/unittests
 * samples/python: Some sample scripts
@@ -253,6 +254,7 @@ Using an instance of MpiCallback
     void my_callback(int p1, int p2) {
       // Do something. The two int-parameters can be usued for anything
     }
+
 * On all nodes, the callback has to be registered::
 
     #include "MpiCallbacks.hpp"
@@ -289,6 +291,7 @@ Adding New Bonded Interactions
 ------------------------------
 
 To add a new bonded interaction, the following steps have to be taken
+
 * Simulation core:
 
   * Define a structure holding the parameters (prefactors, etc.) of the interaction
@@ -754,20 +757,6 @@ necessary that they occur in the list of constant definitions at the
 beginning of ``global.hpp``. So please keep this list in sync!
 
 
-.. [1]
-   http://git-scm.com/
+.. _git: http://git-scm.com/
 
-.. [2]
-   http://www.gnu.org/software/automake/
-
-.. [3]
-   http://www.gnu.org/software/autoconf/autoconf.html
-
-.. [4]
-   http://www.doxygen.org/
-
-.. [5]
-   http://www.gnu.org/software/automake/
-
-.. [6]
-   http://www.gnu.org/software/autoconf/autoconf.html
+.. _doxygen: http://www.doxygen.org/
