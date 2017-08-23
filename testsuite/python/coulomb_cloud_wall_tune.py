@@ -19,6 +19,7 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
+import os
 import unittest as ut
 import espressomd
 import numpy as np

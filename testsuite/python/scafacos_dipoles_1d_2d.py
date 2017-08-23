@@ -24,6 +24,7 @@
 
 
 from __future__ import print_function
+import os
 import espressomd 
 import espressomd.magnetostatics as magnetostatics
 import numpy as np
