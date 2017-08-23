@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from espressomd._system cimport *
+from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
 from espressomd.utils cimport *
@@ -81,8 +81,6 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-
-    int get_particle_data(int part, particle * data)
     unique_ptr[particle] get_particle_data(int part)
 
     int place_particle(int part, double p[3])
@@ -232,5 +230,5 @@ cdef class _ParticleSliceImpl:
     cdef public id_selection
 
 cdef extern from "grid.hpp":
-    cdef inline void fold_position(double *, int*)
+    cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3]) 

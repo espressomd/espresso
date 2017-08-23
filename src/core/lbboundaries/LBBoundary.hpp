@@ -5,6 +5,7 @@
 
 #include "config.hpp"
 #include "shapes/NoWhere.hpp"
+#include "shapes/Sphere.hpp"
 #include "shapes/Shape.hpp"
 #include "Vector.hpp"
 
@@ -73,6 +74,46 @@ private:
   float m_charge_density;
   float m_net_charge;
 #endif
+};
+
+
+class LBMovingBoundary : public LBBoundary
+{
+public:
+  LBMovingBoundary()
+  : m_shape(std::make_shared<Shapes::Sphere>())
+  , m_torque(Vector3d{0, 0, 0})
+  , m_omega(Vector3d{0, 0, 0})
+  , m_quat(Vector4d{1, 0, 0, 0})
+  , m_mass(1)
+  , m_rinertia(Vector3d{0, 0, 0})
+  , m_body_torque(Vector3d{0, 0, 0})
+  , m_body_force(Vector3d{0, 0, 0})
+  , m_anchors()
+  {}
+
+  Vector3d & torque()      { return m_torque;      }
+  Vector3d & omega()       { return m_omega;       }
+  Vector4d & quat()        { return m_quat;        }
+  double   & mass()        { return m_mass;        }
+  Vector3d & rinertia()    { return m_rinertia;    }
+  Vector3d & body_torque() { return m_body_torque; }
+  Vector3d & body_force()  { return m_body_force;  }
+  std::vector<double> & anchors() { return m_anchors; }
+
+  Shapes::Sphere & shape() { return *m_shape; }
+
+private:
+  std::shared_ptr<Shapes::Sphere> m_shape;
+
+  Vector3d m_torque;
+  Vector3d m_omega;
+  Vector4d m_quat;
+  double   m_mass;
+  Vector3d m_rinertia;
+  Vector3d m_body_torque;
+  Vector3d m_body_force;
+  std::vector<double> m_anchors;
 };
 
 } /* namespace LBBoundaries */

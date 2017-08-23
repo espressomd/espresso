@@ -34,7 +34,7 @@ import numpy as np
 n_part  = 200
 density = 0.8442
 
-skin        = 0.1
+skin        = 0.4
 time_step   = 0.01 
 eq_tstep    = 0.01
 temperature = 0.728
@@ -46,10 +46,10 @@ warm_n_time = 2000
 min_dist    = 0.87
 
 # integration
-sampling_interval       = 10
+sampling_interval       = 100
 equilibration_interval  = 1000
 
-sampling_iterations     = 10000
+sampling_iterations     = 100
 equilibration_iterations= 10
 
 

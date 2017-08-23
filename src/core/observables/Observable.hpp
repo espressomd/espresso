@@ -1,71 +1,56 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014,2015,2016 The ESPResSo project
-  
+  Copyright (C) 2016,2017 The ESPResSo project
+
   This file is part of ESPResSo.
-  
+
+
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   ESPResSo is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifndef OBSERVABLES_OBSERVABLE_HPP
 #define OBSERVABLES_OBSERVABLE_HPP
 
-#include "config.hpp"
 #include <fstream>
 #include <vector>
 #include <string>
-#include <stdexcept>
-
 
 namespace Observables {
-
-#define CONST_UNITITIALIZED 1e-23
-
 class Observable {
-  public:
-    Observable();
-    int update();
-    int calculate();
-    virtual int actual_calculate() {
-      throw std::runtime_error("Observable did not override actual_calculate()\n");
-    }; 
-    virtual int actual_update() {};
+public:
+  Observable();
+  virtual ~Observable() = default;
+  int calculate();
 
+  /* IO functions for observables */
+  void set_filename(std::string const &filename, bool binary);
+  bool writable() const;
+  void write();
 
-    /* IO functions for observables */
-    void set_filename(std::string const& filename, bool binary);
-    bool writable() const;
-    void write();
-  //void read();
-    virtual int n_values() const {return 0;};
-    std::vector<double> last_value;
+  virtual int n_values() const { return 0; }
+  std::vector<double> last_value;
 
-  protected:
-    int n;
-    double last_update;
-    int autoupdate;
-    double autoupdate_dt;
+private:
+  virtual int actual_calculate() = 0;
 
-    virtual void do_write();
-  //virtual void do_read();
-    std::ofstream m_ofile;
-    std::string m_filename;
-    bool        m_binary;
+  int n;
+  double last_update;
+
+  virtual void do_write();
+  std::ofstream m_ofile;
+  std::string m_filename;
+  bool m_binary;
 };
-
-
-
-void autoupdate_observables(); 
-
 
 //\//\typedef struct {
 //\  Observable* reference_observable;
@@ -101,40 +86,40 @@ void autoupdate_observables();
 //\
 //\
 //\typedef struct { 
-//\	IntList *id_list;
-//\	int type;
-//\	double minr;
-//\	double maxr;
-//\	int rbins;
-//\	int start_point_id;
-//\	int end_point_id;
-//\	// id_flag == 0 : actual positions given, otherwise two particle ids for the start- and 
-//\	// end-point are given
-//\	int id_flag;
-//\	double start_point[3];
-//\	double end_point[3];
+//\    IntList *id_list;
+//\    int type;
+//\    double minr;
+//\    double maxr;
+//\    int rbins;
+//\    int start_point_id;
+//\    int end_point_id;
+//\    // id_flag == 0 : actual positions given, otherwise two particle ids for the start- and 
+//\    // end-point are given
+//\    int id_flag;
+//\    double start_point[3];
+//\    double end_point[3];
 //\} radial_density_data;
 //\
-//\
-//\typedef struct { 
-//\	IntList *id_list;
-//\	int npoly;
-//\	int cut_off;
+ //\
+ //\typedef struct { 
+//\    IntList *id_list;
+//\    int npoly;
+//\    int cut_off;
 //\} spatial_polym_data;
 //\
-//\// uses the same data as spatial_polymer_properties
+ //\// uses the same data as spatial_polymer_properties
 //\
-//\typedef struct {
-//\	IntList *id_list;
-//\	int poly_len;
-//\	int npoly;
-//\	int k;
-//\	int n_bins;
-//\	double r_min;
-//\	double r_max;
+ //\typedef struct {
+//\    IntList *id_list;
+//\    int poly_len;
+//\    int npoly;
+//\    int k;
+//\    int n_bins;
+//\    double r_min;
+//\    double r_max;
 //\} k_dist_data;
 //\
-//\typedef struct {
+ //\typedef struct {
 //\  int *p1_types;
 //\  int n_p1;
 //\  int *p2_types;
@@ -146,4 +131,3 @@ void autoupdate_observables();
 
 } // Namespace Observables
 #endif
-
