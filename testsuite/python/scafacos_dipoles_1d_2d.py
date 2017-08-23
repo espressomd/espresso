@@ -64,13 +64,14 @@ class Scafacos1d2d(ut.TestCase):
             else:
               s.periodicity =1,0,0
               file_prefix ="scafacos_dipoles_1d"
-            f =open(file_prefix+"_reference_data_energy.dat")
+              
+            f = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), file_prefix + "_reference_data_energy.dat"))
             ref_E =float(f.readline())
             f.close()
             
             
             # Particles
-            data= np.genfromtxt(file_prefix+"_reference_data_forces_torques.dat")
+            data = np.genfromtxt(os.path.join(os.path.dirname(os.path.abspath(__file__)), file_prefix + "_reference_data_forces_torques.dat"))
             for p in data[:,:]:
                 s.part.add(id=int(p[0]),pos=p[1:4],dip=p[4:7])
             
