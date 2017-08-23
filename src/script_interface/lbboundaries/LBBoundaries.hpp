@@ -30,28 +30,6 @@ class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
     return "LBBoundaries::LBBoundaries"; 
   };
 };
-
-class LBMovingBoundaries : public ScriptObjectRegistry<LBMovingBoundary> {
-  virtual void add_in_core(std::shared_ptr<LBMovingBoundary> obj_ptr) {
-    ::LBBoundaries::lbmovingboundaries.push_back(obj_ptr->lbboundary());
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-    ::LBBoundaries::lb_init_boundaries();
-#endif
-  }
-
-  virtual void remove_in_core(std::shared_ptr<LBMovingBoundary> obj_ptr) {
-    auto it = std::find(std::begin(::LBBoundaries::lbmovingboundaries), std::end(::LBBoundaries::lbmovingboundaries), obj_ptr->lbboundary());
-
-    if (it != std::end(::LBBoundaries::lbmovingboundaries)) {
-      ::LBBoundaries::lbmovingboundaries.erase(it);
-    }
-  };
-  public:
-  virtual const std::string name() const override {
-    return "LBBoundaries::LBMovingBoundaries"; 
-  };
-};
-
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
 
