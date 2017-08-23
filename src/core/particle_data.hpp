@@ -209,7 +209,7 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  double p[3];
+  double p[3] = {0, 0, 0};
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4] = {1.,0.,0.,0.} ;
@@ -244,7 +244,7 @@ struct ParticleForce {
   double torque[3] = {0., 0., 0.};
 #endif
 
-} ParticleForce;
+};
 
 /** Momentum information on a particle. Information not contained in
     communication of ghost particles so far, but a communication would
@@ -258,8 +258,7 @@ struct ParticleMomentum {
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3] = {0., 0., 0.};
 #endif
-
-} ParticleMomentum;
+};
 
 /** Information on a particle that is needed only on the
     node the particle belongs to */
