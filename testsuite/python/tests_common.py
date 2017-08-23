@@ -92,3 +92,47 @@ def generate_test_for_class(_system, _interClass, _params):
 
     return func
 
+def lj_force(v_d,d,lj_params):
+    """Returns lj force for distnace d and distance vecotr v_d based on the given lj_params.
+    Supports epsilon and cutoff."""
+
+    if d>=lj_params["cutoff"]:
+        return np.array((0.,0.,0.))
+    
+    return 4.*lj_params["epsilon"] * v_d/d *(-12*d**-13+6*d**-7)
+
+     
+def verify_lj_forces(system,tolerance,ids_to_skip=[]):
+    """Goes over all pairs of paritcles in system and compares the forces on them
+       to what would be expected based on the systems lj parametes.
+       Particle ids listed in ids_to_skip are not checked
+       Do not run this with a thermostat enabled."""
+    
+    # Initialize dict with expected forces
+    f_expected={}
+    for id in system.part[:].id:
+        f_expected[id]=np.zeros(3)
+    
+    # Go over all pairs of particles
+    for pair in system.part.pairs():
+        if pair[0].id in ids_to_skip or pair[1].id in ids_to_skip: continue
+
+        # Distance and distance vec
+        v_d=system.distance_vec(pair[0],pair[1])
+        d=system.distance(pair[0],pair[1])
+        
+        # get lj params for the type combination from system
+        lj_params=system.non_bonded_inter[pair[0].type,pair[1].type].lennard_jones.get_params()
+
+        # calc and add expected lj force
+        f=lj_force(v_d,d,lj_params)
+        f_expected[pair[0].id]+=f
+        f_expected[pair[1].id]-=f
+    # Check actual forces agaisnt expected
+    for id in system.part[:].id:
+       if id in ids_to_skip: continue
+       if np.linalg.norm(system.part[id].f-f_expected[id]) >=tolerance:
+           raise Exception("LJ force verification failed on particle "+str(id)+". Got "+str(system.part[id].f)+", expected "+str(f_expected[id]))
+
+
+   
