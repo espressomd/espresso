@@ -39,11 +39,11 @@
 #include "partCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
+#include "utils/make_unique.hpp"
 #include "virtual_sites.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include "utils/make_unique.hpp"
 
 /************************************************
  * defines
@@ -98,233 +98,11 @@ void auto_exclusion(int distance);
  * particle initialization functions
  ************************************************/
 
-void init_particle(Particle *part) {
-  /* ParticleProperties */
-  part->p.identity = -1;
-  part->p.type = 0;
-  part->p.mol_id = 0;
-
-#ifdef MASS
-  part->p.mass = 1.0;
-#endif
-
-#ifdef SHANCHEN
-  int ii;
-  for (ii = 0; ii < 2 * LB_COMPONENTS; ii++) {
-    part->p.solvation[ii] = 0.0;
-  }
-  for (ii = 0; ii < LB_COMPONENTS; ii++) {
-    part->r.composition[ii] = 0.0;
-  }
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-  part->p.rinertia[0] = 1.0;
-  part->p.rinertia[1] = 1.0;
-  part->p.rinertia[2] = 1.0;
-#endif
-#ifdef ROTATION_PER_PARTICLE
-  part->p.rotation = 14;
-#endif
-
-#ifdef AFFINITY
-  part->p.bond_site[0] = -1.0;
-  part->p.bond_site[1] = -1.0;
-  part->p.bond_site[2] = -1.0;
-#endif
-
-#ifdef MEMBRANE_COLLISION
-  part->p.out_direction[0] = 0.0;
-  part->p.out_direction[1] = 0.0;
-  part->p.out_direction[2] = 0.0;
-#endif
-
-#ifdef ELECTROSTATICS
-  part->p.q = 0.0;
-#endif
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-  part->p.mu_E[0] = 0.0;
-  part->p.mu_E[1] = 0.0;
-  part->p.mu_E[2] = 0.0;
-#endif
-
-#ifdef CATALYTIC_REACTIONS
-  part->p.catalyzer_count = 0;
-#endif
-
-  /* ParticlePosition */
-  part->r.p[0] = 0.0;
-  part->r.p[1] = 0.0;
-  part->r.p[2] = 0.0;
-
-#ifdef BOND_CONSTRAINT
-  part->r.p_old[0] = 0.0;
-  part->r.p_old[1] = 0.0;
-  part->r.p_old[2] = 0.0;
-#endif
-
-#ifdef ROTATION
-  part->r.quat[0] = 1.0;
-  part->r.quat[1] = 0.0;
-  part->r.quat[2] = 0.0;
-  part->r.quat[3] = 0.0;
-
-  part->r.quatu[0] = 0.0;
-  part->r.quatu[1] = 0.0;
-  part->r.quatu[2] = 1.0;
-#endif
-
-#ifdef DIPOLES
-  part->r.dip[0] = 0.0;
-  part->r.dip[1] = 0.0;
-  part->r.dip[2] = 0.0;
-  part->p.dipm = 0.0;
-#endif
-
-  /* ParticleMomentum */
-  part->m.v[0] = 0.0;
-  part->m.v[1] = 0.0;
-  part->m.v[2] = 0.0;
-#ifdef ROTATION
-  part->m.omega[0] = 0.0;
-  part->m.omega[1] = 0.0;
-  part->m.omega[2] = 0.0;
-#endif
-
-  /* ParticleForce */
-  part->f.f[0] = 0.0;
-  part->f.f[1] = 0.0;
-  part->f.f[2] = 0.0;
-#ifdef ROTATION
-  part->f.torque[0] = 0.0;
-  part->f.torque[1] = 0.0;
-  part->f.torque[2] = 0.0;
-
-// Swimming parameters
-#ifdef ENGINE
-  part->swim.swimming = false;
-  part->swim.v_swim = 0.0;
-  part->swim.f_swim = 0.0;
-#if defined(LB) || defined(LB_GPU)
-  part->swim.push_pull = 0;
-  part->swim.dipole_length = 0.0;
-  part->swim.rotational_friction = 0.0;
-#endif
-#endif
-
-#endif
-
-  /* ParticleLocal */
-  part->l.p_old[0] = 0.0;
-  part->l.p_old[1] = 0.0;
-  part->l.p_old[2] = 0.0;
-  part->l.i[0] = 0;
-  part->l.i[1] = 0;
-  part->l.i[2] = 0;
-
-#ifdef GHMC
-
-  /* Last Saved ParticlePosition */
-  part->l.r_ls.p[0] = 0.0;
-  part->l.r_ls.p[1] = 0.0;
-  part->l.r_ls.p[2] = 0.0;
-
-#ifdef BOND_CONSTRAINT
-  part->l.r_ls.p_old[0] = 0.0;
-  part->l.r_ls.p_old[1] = 0.0;
-  part->l.r_ls.p_old[2] = 0.0;
-#endif
-
-#ifdef ROTATION
-  part->l.r_ls.quat[0] = 1.0;
-  part->l.r_ls.quat[1] = 0.0;
-  part->l.r_ls.quat[2] = 0.0;
-  part->l.r_ls.quat[3] = 0.0;
-
-  part->l.r_ls.quatu[0] = 0.0;
-  part->l.r_ls.quatu[1] = 0.0;
-  part->l.r_ls.quatu[2] = 1.0;
-#endif
-
-#ifdef DIPOLES
-  part->l.r_ls.dip[0] = 0.0;
-  part->l.r_ls.dip[1] = 0.0;
-  part->l.r_ls.dip[2] = 0.0;
-// part->l.p_ls.dipm      = 0.0;
-#endif
-
-  /* Last Saved ParticleMomentum */
-  part->l.m_ls.v[0] = 0.0;
-  part->l.m_ls.v[1] = 0.0;
-  part->l.m_ls.v[2] = 0.0;
-#ifdef ROTATION
-  part->l.m_ls.omega[0] = 0.0;
-  part->l.m_ls.omega[1] = 0.0;
-  part->l.m_ls.omega[2] = 0.0;
-#endif
-
-#endif
-
-#ifdef EXTERNAL_FORCES
-  part->p.ext_flag = 0;
-  part->p.ext_force[0] = 0.0;
-  part->p.ext_force[1] = 0.0;
-  part->p.ext_force[2] = 0.0;
-#ifdef ROTATION
-  part->p.ext_torque[0] = 0.0;
-  part->p.ext_torque[1] = 0.0;
-  part->p.ext_torque[2] = 0.0;
-#endif
-#endif
-
-  init_intlist(&(part->bl));
-#ifdef EXCLUSIONS
-  init_intlist(&(part->el));
-#endif
-
-#ifdef VIRTUAL_SITES
-  part->p.isVirtual = 0;
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-  part->p.vs_relative_to_particle_id = 0;
-  part->p.vs_relative_distance = 0;
-  for (int i = 0; i < 4; i++)
-    part->p.vs_relative_rel_orientation[i] = 0;
-#endif
-
-  part->l.ghost = 0;
-
-#ifdef LANGEVIN_PER_PARTICLE
-  part->p.T = -1.0;
-#ifndef PARTICLE_ANISOTROPY
-  part->p.gamma = -1.0;
-#else
-  part->p.gamma[0] = -1.0;
-  part->p.gamma[1] = -1.0;
-  part->p.gamma[2] = -1.0;
-#endif
-#ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
-  part->p.gamma_rot = -1.0;
-#else
-  part->p.gamma_rot[0] = -1.0;
-  part->p.gamma_rot[1] = -1.0;
-  part->p.gamma_rot[2] = -1.0;
-#endif // ROTATIONAL_INERTIA
-#endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE
-
-#ifdef MULTI_TIMESTEP
-  part->p.smaller_timestep = 0;
-#endif
-}
-
+/** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) {
-  realloc_intlist(&(part->bl), 0);
+  part->bl.resize(0);
 #ifdef EXCLUSIONS
-  realloc_intlist(&(part->el), 0);
+  part->el.resize(0);
 #endif
 }
 
@@ -346,7 +124,7 @@ void realloc_local_particles(int part) {
         local_particles, sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
-    for (int i = old_size; i < max_local_particles; i++)
+    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
 }
@@ -501,30 +279,21 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-int get_particle_data(int part, Particle *data) {
-  int pnode;
+std::unique_ptr<Particle> get_particle_data(int part) {
+  if (part < 0 || part > max_seen_particle)
+    return nullptr;
+
   if (!particle_node)
     build_particle_node();
 
-  if (part < 0 || part > max_seen_particle)
-    return ES_ERROR;
-
-  pnode = particle_node[part];
+  int pnode = particle_node[part];
   if (pnode == -1)
-    return ES_ERROR;
-  mpi_recv_part(pnode, part, data);
-  return ES_OK;
-}
+    return nullptr;
 
-std::unique_ptr<Particle> get_particle_data(int part) {
   auto pp = Utils::make_unique<Particle>();
 
-  auto ret = get_particle_data(part, pp.get());
-
-  if(ret == ES_OK)
-    return pp;
-  else
-    return nullptr;
+  mpi_recv_part(pnode, part, pp.get());
+  return pp;
 }
 
 int place_particle(int part, double p[3]) {
@@ -854,15 +623,14 @@ int set_particle_type(int part, int type) {
   if (Type_array_init) {
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
-    Particle cur_par;
-      if (get_particle_data(part, &cur_par) != ES_ERROR) {
-        int prev_type = cur_par.p.type;
-        if (prev_type != type) {
-          // particle existed before so delete it from the list
-          remove_id_type_array(part, prev_type);
-        }
+    auto cur_par = get_particle_data(part);
+    if (cur_par) {
+      int prev_type = cur_par->p.type;
+      if (prev_type != type) {
+        // particle existed before so delete it from the list
+        remove_id_type_array(part, prev_type);
       }
-    free_particle(&cur_par);
+    }
 
     if (add_particle_to_list(part, type) == ES_ERROR) {
       // Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
@@ -924,10 +692,9 @@ int set_particle_omega_lab(int part, double omega_lab[3]) {
 
   double A[9];
   double omega[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   omega[0] = A[0 + 3 * 0] * omega_lab[0] + A[0 + 3 * 1] * omega_lab[1] +
              A[0 + 3 * 2] * omega_lab[2];
@@ -975,10 +742,9 @@ int set_particle_torque_lab(int part, double torque_lab[3]) {
 
   double A[9];
   double torque[3];
-  Particle particle;
 
-  get_particle_data(part, &particle);
-  define_rotation_matrix(&particle, A);
+  auto particle = get_particle_data(part);
+  define_rotation_matrix(particle.get(), A);
 
   torque[0] = A[0 + 3 * 0] * torque_lab[0] + A[0 + 3 * 1] * torque_lab[1] +
               A[0 + 3 * 2] * torque_lab[2];
@@ -1161,13 +927,15 @@ void remove_all_particles() {
 int remove_particle(int part) {
   int pnode;
 
-  Particle cur_par;
-  if (get_particle_data(part, &cur_par) == ES_ERROR)
+  auto cur_par = get_particle_data(part);
+
+  if (cur_par) {
+    int type = cur_par->p.type;
+    if (remove_id_type_array(part, type) == ES_ERROR)
+      return ES_ERROR;
+  } else {
     return ES_ERROR;
-  int type = cur_par.p.type;
-  free_particle(&cur_par);
-  if (remove_id_type_array(part, type) == ES_ERROR)
-    return ES_ERROR;
+  }
 
   if (!particle_node)
     build_particle_node();
@@ -1255,8 +1023,7 @@ void local_place_particle(int part, double p[3], int _new) {
       errexit();
     }
     rl = realloc_particlelist(cell, ++cell->n);
-    pt = &cell->part[cell->n - 1];
-    init_particle(pt);
+    pt = new(&cell->part[cell->n - 1]) Particle;
 
     pt->p.identity = part;
     if (rl)
@@ -1288,6 +1055,7 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
+  std::fill(local_particles, local_particles + max_local_particles, nullptr);
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
@@ -1728,7 +1496,7 @@ int init_type_array(int type) {
     return ES_ERROR;
 
   for (int i = 0; i < Index.max_entry; i++)
-    if (type == Type.index[i] && Index.type[type]!=-1) {
+    if (type == Type.index[i] && Index.type[type] != -1) {
       // already indexed
       return ES_OK;
     }

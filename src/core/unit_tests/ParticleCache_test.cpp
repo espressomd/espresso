@@ -25,6 +25,13 @@
 #include <random>
 #include <vector>
 
+#include <boost/version.hpp>
+/* Work around bug in boost, see
+   https://github.com/boostorg/container/commit/5e4a107e82ab3281688311d22d2bfc2fddcf84a3 */
+#if BOOST_VERSION < 106400
+#include <boost/container/detail/pair.hpp>
+#endif
+
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 

@@ -22,12 +22,11 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 
-
 #include "ScriptInterface.hpp"
 
 #include <memory>
 
-#include "Observable.hpp" 
+#include "Observable.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
 #include "core/observables/StressTensorAcf.hpp"
@@ -35,25 +34,25 @@
 namespace ScriptInterface {
 namespace Observables {
 
-#define NEW_PARAMLESS_OBSERVABLE(obs_name) \
-class obs_name : public Observable { \
-public: \
-  obs_name() : m_observable(new ::Observables::obs_name()) {}; \
-  \
-  const std::string name() const override { return "Observables::" #obs_name; } \
-  \
-  std::shared_ptr<::Observables::Observable> observable() { \
-    return m_observable; \
-  }; \
-  private: \
-  std::shared_ptr<::Observables::obs_name> m_observable; \
-};
+#define NEW_PARAMLESS_OBSERVABLE(obs_name)                                     \
+  class obs_name : public Observable {                                         \
+  public:                                                                      \
+    obs_name() : m_observable(new ::Observables::obs_name()){};                \
+                                                                               \
+    const std::string name() const override {                                  \
+      return "Observables::" #obs_name;                                        \
+    }                                                                          \
+                                                                               \
+    std::shared_ptr<::Observables::Observable> observable() const override {   \
+      return m_observable;                                                     \
+    };                                                                         \
+                                                                               \
+  private:                                                                     \
+    std::shared_ptr<::Observables::obs_name> m_observable;                     \
+  };
 
 NEW_PARAMLESS_OBSERVABLE(StressTensor);
 NEW_PARAMLESS_OBSERVABLE(StressTensorAcf);
-
-
-
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

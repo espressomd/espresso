@@ -78,7 +78,7 @@ the build directory.
 
 ::
 
-    $ pypresso simulation.py
+    $ ./pypresso simulation.py
 
 
 Python: Basic concepts

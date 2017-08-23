@@ -6,8 +6,7 @@ from . import utils
 import numpy as np
 
 IF ELECTROKINETICS:
-
-    cdef class Electrokinetics(lb.HydrodynamicInteraction):
+    cdef class Electrokinetics(HydrodynamicInteraction):
         species_list = []
 
         def __getitem__(self, key):

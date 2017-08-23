@@ -22,6 +22,7 @@ set(py_tests  bondedInteractions.py
 	            tabulated.py
               particle_slice.py
               rotational_inertia.py
+              virtual_sites_relative.py
               script_interface_object_params.py
               lbgpu_remove_total_momentum.py
               tabulated.py
@@ -35,6 +36,7 @@ set(py_tests  bondedInteractions.py
               ek_eof_one_species_x_nonlinear.py
               ek_eof_one_species_y_nonlinear.py
               ek_eof_one_species_z_nonlinear.py
+              exclusions.py
 )
 if(PY_H5PY)
   set(py_tests ${py_tests} h5md.py)
