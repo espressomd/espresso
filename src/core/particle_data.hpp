@@ -87,7 +87,7 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type = 0;
 
-#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
+#ifdef MASS
   /** particle mass */
   double mass = 1.0;
 #else
@@ -99,7 +99,7 @@ struct ParticleProperties {
       std::array<double, 2 * LB_COMPONENTS>{};
 #endif
 
-#if defined(ROTATIONAL_INERTIA) || defined(LB_BOUNDARIES_GPU)
+#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3] = {1., 1., 1.};
 #else
@@ -197,21 +197,10 @@ struct ParticleProperties {
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3] = {0, 0, 0};
 
-#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
+#ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
   double ext_torque[3] = {0, 0, 0};
 #endif
-#ifdef LB_BOUNDARIES_GPU
-  /** External force & torque in body-frame for LB_boundaries. */
-  double body_force[3];
-  double lab_force[3]; /** this one needs to be converted && stored */
-  double body_torque[3];
-#endif
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  std::vector<float> anchors;
-  std::vector<float> anchors_out;
 #endif
 };
 
@@ -219,9 +208,9 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  double p[3] = {0., 0., 0.};
-
-#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
+  double p[3] = {0, 0, 0};
+  
+#ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4] = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
@@ -255,10 +244,6 @@ struct ParticleForce {
   double torque[3] = {0., 0., 0.};
 #endif
 
-#ifdef LB_BOUNDARIES_GPU
-  float sf[3];
-  float storque[3];
-#endif
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -272,11 +257,6 @@ struct ParticleMomentum {
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3] = {0., 0., 0.};
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  /* single precision omega */
-  float somega[3];
 #endif
 };
 

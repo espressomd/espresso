@@ -76,16 +76,20 @@ fi
 # enforce style rules
 grep 'class[^_].*[^\)]\s*:\s*$' $(find . -name '*.py*') && echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
 
-if [ ! $insource ]; then
+if ! $insource; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
 fi
 
-if [ ! $insource ]; then
+if ! $insource; then
     cd $builddir
 fi
+
+# load MPI module if necessary
+grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
+grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
 
 # CONFIGURE
 start "CONFIGURE"
@@ -145,6 +149,12 @@ if $make_check; then
         cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
         exit $ec
     fi
+
+    end "TEST"
+else
+    start "TEST"
+
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
 
     end "TEST"
 fi
