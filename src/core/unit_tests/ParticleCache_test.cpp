@@ -27,7 +27,8 @@
 
 #include <boost/version.hpp>
 /* Work around bug in boost, see
-   https://github.com/boostorg/container/commit/5e4a107e82ab3281688311d22d2bfc2fddcf84a3 */
+   https://github.com/boostorg/container/commit/5e4a107e82ab3281688311d22d2bfc2fddcf84a3
+   */
 #if BOOST_VERSION < 106400
 #include <boost/container/detail/pair.hpp>
 #endif
@@ -35,7 +36,7 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
-#define BOOST_TEST_NO_MAIN
+// #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ParticleCache test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
@@ -45,6 +46,8 @@
 #include "utils/List.hpp"
 
 #include "mock/Particle.hpp"
+
+boost::mpi::environment mpi_env;
 
 class Particle : public Testing::Particle {
 public:
@@ -214,10 +217,4 @@ BOOST_AUTO_TEST_CASE(iterators) {
   } else {
     Communication::mpiCallbacks().loop();
   }
-}
-
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
-
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

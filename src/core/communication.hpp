@@ -105,9 +105,6 @@ void mpi_call(SlaveCallback cb, int node, int param);
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Stop Espresso, all slave nodes exit. */
-void mpi_stop();
-
 /** Abort Espresso using MPI_Abort. */
 void mpi_abort();
 

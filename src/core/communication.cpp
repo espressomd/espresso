@@ -258,7 +258,6 @@ void mpi_init(int *argc, char ***argv) {
   }
 #endif
 
-  //  MPI_Init(argc, argv);
   mpi_env = Utils::make_unique<boost::mpi::environment>(*argc, *argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -280,11 +279,7 @@ void mpi_init(int *argc, char ***argv) {
 
   ErrorHandling::init_error_handling(mpiCallbacks());
 
-  /* Create the datatype cache before registering atexit(mpi_stop). This is
-     necessary as it is a static variable that would otherwise be destructed
-     before mpi_stop is called. mpi_stop however needs to communicate and thus
-     depends on the cache. */
-  boost::mpi::detail::mpi_datatype_cache();
+  on_program_start();
 }
 
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
@@ -311,18 +306,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   mpiCallbacks().call(cb, node, param);
 
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
-
-/**************** REQ_TERM ************/
-
-void mpi_stop() {
-  if (terminated)
-    return;
-
-  mpiCallbacks().abort_loop();
-
-  regular_exit = 1;
-  terminated = 1;
 }
 
 /*************** REQ_BCAST_PAR ************/
@@ -2115,7 +2098,7 @@ void mpi_bcast_lb_params(int field, int value) {
 
 void mpi_bcast_lb_params_slave(int field, int value) {
 #if defined(LB) || defined(LB_GPU)
-  if(field == LBPAR_LATTICE_SWITCH) {
+  if (field == LBPAR_LATTICE_SWITCH) {
     lattice_switch = value;
   }
 #endif
@@ -2665,7 +2648,10 @@ void mpi_thermalize_cpu_slave(int node, int temp) { set_cpu_temp(temp); }
 
 /*********************** MAIN LOOP for slaves ****************/
 
-void mpi_loop() { mpiCallbacks().loop(); }
+void mpi_loop() {
+  if (this_node != 0)
+    mpiCallbacks().loop();
+}
 
 /*********************** error abort ****************/
 

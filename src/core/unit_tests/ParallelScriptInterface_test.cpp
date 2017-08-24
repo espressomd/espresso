@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <boost/mpi.hpp>
 
 #define BOOST_TEST_NO_MAIN
@@ -11,6 +9,8 @@
 #include "MpiCallbacks.hpp"
 
 #include "../../script_interface/ParallelScriptInterface.hpp"
+
+boost::mpi::environment mpi_env;
 
 using Communication::mpiCallbacks;
 using namespace ScriptInterface;
@@ -200,7 +200,6 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
   ParallelScriptInterface::initialize();
   register_new<TestClass>("TestClass");
 

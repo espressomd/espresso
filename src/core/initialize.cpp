@@ -94,10 +94,6 @@ void on_program_start()
 
   ErrorHandling::register_sigint_handler();
 
-  if (this_node == 0) {
-    /* master node */
-    atexit(mpi_stop);
-  }
 #ifdef CUDA
   cuda_init();
 #endif
