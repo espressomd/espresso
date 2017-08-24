@@ -69,6 +69,6 @@ endif(PY_H5PY)
 add_custom_target(python_tests
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND})
+add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
 add_dependencies(check_python pypresso python_tests)
 add_dependencies(check check_python)
