@@ -196,9 +196,9 @@ int vs_relate_to(int part_num, int relate_to)
 {
     // Get the data for the particle we act on and the one we wnat to relate
     // it to.
-    Particle  p_current,p_relate_to;
-    if ((get_particle_data(relate_to,&p_relate_to)!=ES_OK) || 
-        (get_particle_data(part_num,&p_current)!=ES_OK)) {
+    auto p_current = get_particle_data(part_num);
+    auto p_relate_to = get_particle_data(relate_to);
+    if (!p_current || !p_relate_to) {
         ostringstream msg;
         msg <<"Could not retrieve particle data for the given id";
         runtimeError(msg);
@@ -207,7 +207,7 @@ int vs_relate_to(int part_num, int relate_to)
     
     // get teh distance between the particles
     double d[3];
-    get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
+    get_mi_vector(d, p_current->r.p,p_relate_to->r.p);
     
     
     
@@ -251,31 +251,31 @@ int vs_relate_to(int part_num, int relate_to)
       // Define quat as described above:
       double x=0;
       for (i=0;i<4;i++)
-       x+=p_relate_to.r.quat[i]*p_relate_to.r.quat[i];
+       x+=p_relate_to->r.quat[i]*p_relate_to->r.quat[i];
   
       quat[0]=0;
       for (i=0;i<4;i++)
-       quat[0] +=p_relate_to.r.quat[i]*quat_director[i];
+       quat[0] +=p_relate_to->r.quat[i]*quat_director[i];
       
-      quat[1] =-quat_director[0] *p_relate_to.r.quat[1] 
-         +quat_director[1] *p_relate_to.r.quat[0]
-         +quat_director[2] *p_relate_to.r.quat[3]
-         -quat_director[3] *p_relate_to.r.quat[2];
-      quat[2] =p_relate_to.r.quat[1] *quat_director[3] 
-        + p_relate_to.r.quat[0] *quat_director[2] 
-        - p_relate_to.r.quat[3] *quat_director[1] 
-        - p_relate_to.r.quat[2] * quat_director[0];
-      quat[3] =quat_director[3] *p_relate_to.r.quat[0]
-        - p_relate_to.r.quat[3] *quat_director[0] 
-        + p_relate_to.r.quat[2] * quat_director[1] 
-        - p_relate_to.r.quat[1] *quat_director[2];
+      quat[1] =-quat_director[0] *p_relate_to->r.quat[1] 
+         +quat_director[1] *p_relate_to->r.quat[0]
+         +quat_director[2] *p_relate_to->r.quat[3]
+         -quat_director[3] *p_relate_to->r.quat[2];
+      quat[2] =p_relate_to->r.quat[1] *quat_director[3] 
+        + p_relate_to->r.quat[0] *quat_director[2] 
+        - p_relate_to->r.quat[3] *quat_director[1] 
+        - p_relate_to->r.quat[2] * quat_director[0];
+      quat[3] =quat_director[3] *p_relate_to->r.quat[0]
+        - p_relate_to->r.quat[3] *quat_director[0] 
+        + p_relate_to->r.quat[2] * quat_director[1] 
+        - p_relate_to->r.quat[1] *quat_director[2];
       for (i=0;i<4;i++)
        quat[i]/=x;
      
      
      // Verify result
      double qtemp[4];
-     multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
+     multiply_quaternions(p_relate_to->r.quat,quat,qtemp);
      for (i=0;i<4;i++)
        if (fabs(qtemp[i]-quat_director[i])>1E-9)
          fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
@@ -286,8 +286,6 @@ int vs_relate_to(int part_num, int relate_to)
      quat[0]=1;
      quat[1]=quat[2]=quat[3]=0;
     }
-    free_particle(&p_relate_to);
-    free_particle(&p_current);
 
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
@@ -297,6 +295,7 @@ int vs_relate_to(int part_num, int relate_to)
       runtimeError(msg);
       return ES_ERROR;
     }
+    set_particle_virtual(part_num,1);
    
    return ES_OK;
 }

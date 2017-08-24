@@ -64,9 +64,6 @@ extern double virial_store[3];
 #endif
 #endif
 
-/** Store configurational temperature terms (numerator/denominator) */
-extern double configtemp[2];
-
 /** Old time step needed for rescaling of forces. */
 extern double old_time_step;
 /** Actual simulation time (only on MASTER NODE). */

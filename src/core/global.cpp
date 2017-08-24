@@ -31,10 +31,8 @@
 #include "npt.hpp"
 #include "tuning.hpp"
 #include "rattle.hpp"
-#include "imd.hpp"
 #include "ghmc.hpp"
 #include "lb.hpp"
-#include "integrate_sd.hpp"
 
 /** This array contains the description of all global variables.
 
@@ -80,38 +78,30 @@ const Datafield fields[] = {
   {&sim_time,        TYPE_DOUBLE, 1, "time",              4, false },         /* 32 from integrate.cpp */
   {&time_step,       TYPE_DOUBLE, 1, "time_step",         5, false },         /* 33 from integrate.cpp */
   {&timing_samples,     TYPE_INT, 1, "timings",           4, false },         /* 34 from tuning.cpp */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate",     2, false },         /* 35 from imd.cpp */
-  {&max_cut_nonbonded,TYPE_DOUBLE, 1, "max_cut_nonbonded",9, false },         /* 36 from interaction_data.cpp */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",      8, false },         /* 37 from integrate.cpp */
-  {&lattice_switch,     TYPE_INT, 1, "lattice_switch",    2, false },         /* 38 from lattice.cpp */
-  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",        6, false },         /* 39 from thermostat.cpp */
-  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",        6, false },         /* 40 from thermostat.cpp */
-  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",           6, false },         /* 41 from thermostat.cpp */
-  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",            5, false },         /* 42 from thermostat.cpp */
-  {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9, false },         /* 43 from interaction_data.cpp */
-  {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5, false },         /* 44 from imd_tcl.cpp */
-  {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5, false },         /* 45 from interaction_data.cpp */
-  {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6, false },         /* 46 from thermostat.cpp */
-  {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6, false },         /* 47 from thermostat.cpp */
-  {&ghmc_mc_res,        TYPE_INT, 1, "ghmc_mc_res",       7, false },         /* 48 from ghmc.cpp */
-  {&ghmc_mflip,         TYPE_INT, 1, "ghmc_mflip",        7, false },         /* 49 from ghmc.cpp */
-  {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6, false },         /* 50 from ghmc.cpp */
-  {&lb_components,      TYPE_INT, 1, "lb_components",     2, false },         /* 51 from ghmc.cpp */
-  {&warnings,           TYPE_INT, 1, "warnings",          1, false },         /* 52 from global.cpp */
-  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1, false },         /* 53 from global.cpp */
-  {&sd_viscosity,            TYPE_DOUBLE, 1, "sd_viscosoity",              4, false },         /* 54 from integrate_sd.cpp */
-  {&sd_radius,               TYPE_DOUBLE, 1, "sd_radius",                  4, false },         /* 55 from integrate_sd.cpp */
-  {&sd_seed,                    TYPE_INT, 2, "sd_seed",                    4, false },         /* 56 from integrate_sd.cpp */
-  {&sd_random_state,            TYPE_INT, 2, "sd_random_state",            4, false },         /* 57 from integrate_sd.cpp */
-  {&sd_random_precision,     TYPE_DOUBLE, 1, "sd_precision_random",        4, false },         /* 58 from integrate_sd.cpp */
-  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 59 from integrate.cpp */
-  {configtemp,       TYPE_DOUBLE, 2, "configtemp",        1, false },         /* 60 from integrate.cpp */
-  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 61 from thermostat.cpp */
-  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 62 from thermostat.cpp */
+  {&max_cut_nonbonded,TYPE_DOUBLE, 1, "max_cut_nonbonded",9, false },         /* 35 from interaction_data.cpp */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",      8, false },         /* 36 from integrate.cpp */
+  {&lattice_switch,     TYPE_INT, 1, "lattice_switch",    2, false },         /* 37 from lattice.cpp */
+  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",        6, false },         /* 38 from thermostat.cpp */
+  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",        6, false },         /* 39 from thermostat.cpp */
+  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",           6, false },         /* 40 from thermostat.cpp */
+  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",            5, false },         /* 41 from thermostat.cpp */
+  {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9, false },         /* 42 from interaction_data.cpp */
+  {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5, false },         /* 43 from interaction_data.cpp */
+  {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6, false },         /* 44 from thermostat.cpp */
+  {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6, false },         /* 45 from thermostat.cpp */
+  {&ghmc_mc_res,        TYPE_INT, 1, "ghmc_mc_res",       7, false },         /* 46 from ghmc.cpp */
+  {&ghmc_mflip,         TYPE_INT, 1, "ghmc_mflip",        7, false },         /* 47 from ghmc.cpp */
+  {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6, false },         /* 48 from ghmc.cpp */
+  {&lb_components,      TYPE_INT, 1, "lb_components",     2, false },         /* 49 from ghmc.cpp */
+  {&warnings,           TYPE_INT, 1, "warnings",          1, false },         /* 50 from global.cpp */
+  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1, false },         /* 51 from global.cpp */
+  {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 52 from integrate.cpp */
+  {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 53 from thermostat.cpp */
+  {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 54 from thermostat.cpp */
 #ifndef ROTATIONAL_INERTIA
-  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 63 from thermostat.cpp */
+  {&langevin_gamma_rotation,  TYPE_DOUBLE, 1, "gamma_rot",1, false },    /* 55 from thermostat.cpp */
 #else
-  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 63 from thermostat.cpp */
+  {langevin_gamma_rotation,  TYPE_DOUBLE, 3, "gamma_rot",1, false },    /* 55 from thermostat.cpp */
 #endif
   { NULL, 0, 0, NULL, 0, false }
 };

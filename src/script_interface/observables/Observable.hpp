@@ -23,9 +23,9 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/utils/Factory.hpp"
 
 #include <memory>
+#include <stdexcept>
 
 #include "core/observables/Observable.hpp"
 
@@ -36,21 +36,16 @@ typedef ::Observables::Observable CoreObs;
 
 class Observable : public ScriptInterfaceBase {
 public:
-  Observable(){};
-
   const std::string name() const override { return "Observables::Observable"; }
 
-  virtual std::shared_ptr<CoreObs> observable() { return m_observable; }
+  virtual std::shared_ptr<CoreObs> observable() const = 0;
   virtual Variant call_method(std::string const &method,
                               VariantMap const &parameters) {
     if (method == "calculate") {
       observable()->calculate();
       return observable()->last_value;
     }
-    if (method == "update") {
-      observable()->update();
-      return observable()->last_value;
-    }
+
     if (method == "value") {
       return observable()->last_value;
     }
@@ -75,10 +70,7 @@ public:
     }
 
     return {};
-  };
-
-private:
-  std::shared_ptr<::Observables::Observable> m_observable;
+  }
 };
 } /* namespace Observables */
 } /* namespace ScriptInterface */
