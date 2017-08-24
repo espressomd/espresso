@@ -351,6 +351,42 @@ vtfpid
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 
+.. _MDAnalysis:
+
+Writing various formats using MDAnalysis
+----------------------------------------
+
+If the MDAnalysis package (http://mdanalysis.org) is installed, it
+is possible to use it to convert frames to any of the supported
+configuration/trajectory formats, including PDB, GROMACS, GROMOS,
+CHARMM/NAMD, AMBER, LAMMPS, ...)
+
+To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
+the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
+using MDAnalysis. A simple example is the following:
+
+.. code:: python
+
+    import espressomd
+    import MDAnalysis as mda
+    from espressomd import MDA_ESP
+    system = espressomd.System()
+    # ... add particles here
+    eos = MDA_ESP.Stream(system) # create the stream
+    u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
+
+    # example: write a single frame to PDB
+    u.atoms.write("system.pdb")
+
+    # example: save the trajectory to GROMACS format
+    from MDAnalysis.coordinates.TRR import TRRWriter
+    W = TRRWriter("traj.trr",n_atoms=len(system.part)) # open the trajectory file
+    for i in range(100):
+        system.integrator.run(1)
+        u.load_new(eos.trajectory) # load the frame to the MDA universe
+        W.write_next_timestep(u.trajectory.ts) # append it to the trajectory
+
+For other examples see samples/python/MDAnalysisIntegration.py
 
 Online-visualisation with Mayavi or OpenGL
 ------------------------------------------
