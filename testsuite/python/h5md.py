@@ -42,7 +42,6 @@ class CommonTests(ut.TestCase):
     system.box_l = [npart, npart, npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    py_file = py_pos = py_vel = py_f = py_id = None
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
@@ -53,6 +52,10 @@ class CommonTests(ut.TestCase):
         if espressomd.has_features(['EXTERNAL_FORCES']):
             system.part[i].ext_force = [0.1, 0.2, 0.3]
     system.integrator.run(steps=0)
+
+    @classmethod
+    def setUpClass(self):
+        self.py_file = self.py_pos = self.py_vel = self.py_f = self.py_id = None
 
     def test_pos(self):
         """Test if positions have been written properly."""
@@ -84,26 +87,25 @@ class H5mdTestOrdered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
+    def setUp(self):
+        write_ordered = True
+        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
+                           write_force=True, write_species=True, write_mass=True,
+                           write_ordered=write_ordered)
+        self.h5.write()
+        self.h5.flush()
+        self.h5.close()
+        self.py_file = h5py.File("test.h5", 'r')
+        self.py_pos = self.py_file['particles/atoms/position/value']
+        self.py_vel = self.py_file['particles/atoms/velocity/value']
+        self.py_f = self.py_file['particles/atoms/force/value']
+        self.py_id = self.py_file['particles/atoms/id/value']
+
     @classmethod
     def tearDownClass(cls):
         os.remove("test.h5")
 
-    @classmethod
-    def setUpClass(cls):
-        """Prepare a testsystem."""
-        write_ordered = True
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
-        cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
-        cls.h5.write()
-        cls.h5.close()
-        del cls.h5
-        cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
 
     def test_ids(self):
         """Test if ids have been written properly."""
@@ -118,26 +120,24 @@ class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
+    def setUp(self):
+        write_ordered = False
+        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
+                           write_force=True, write_species=True, write_mass=True,
+                           write_ordered=write_ordered)
+        self.h5.write()
+        self.h5.flush()
+        self.h5.close()
+        self.py_file = h5py.File("test.h5", 'r')
+        self.py_pos = self.py_file['particles/atoms/position/value']
+        self.py_vel = self.py_file['particles/atoms/velocity/value']
+        self.py_f = self.py_file['particles/atoms/force/value']
+        self.py_id = self.py_file['particles/atoms/id/value']
+
     @classmethod
     def tearDownClass(cls):
         os.remove("test.h5")
-
-    @classmethod
-    def setUpClass(cls):
-        """Prepare a testsystem."""
-        write_ordered = False
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
-        cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
-        cls.h5.write()
-        cls.h5.close()
-        del cls.h5
-        cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
 
 
 if __name__ == "__main__":
