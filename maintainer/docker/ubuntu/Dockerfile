@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     openmpi-bin \
     libfftw3-dev \
     libboost-dev libboost-serialization-dev libboost-mpi-dev libboost-filesystem-dev libboost-test-dev \
-    cython python python-numpy python-h5py \
+    cython python python-numpy python-h5py python-enum \
     lcov \
     git \
     pep8 \

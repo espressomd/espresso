@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     git \
     pep8 \
     python-pip \
+    python-enum \
     libpython-dev \
     libhdf5-openmpi-dev \
 && pip install cython \

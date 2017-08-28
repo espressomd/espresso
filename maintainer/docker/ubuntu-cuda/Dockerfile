@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     pep8 \
     python-pyvtk \
     python-pip \
+    python-enum \
     libpython-dev \
     libhdf5-openmpi-dev \
     doxygen \
