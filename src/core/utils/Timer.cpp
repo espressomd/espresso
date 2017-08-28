@@ -40,7 +40,7 @@ Timer::get_all_stats() {
 
   Communication::mpiCallbacks().call(Timer::mpi_callback);
 
-  for (int i = 1; i < ret.size(); ++i) {
+  for (unsigned i = 1; i < ret.size(); ++i) {
     comm.recv(i, 42, ret[i]);
   }
 

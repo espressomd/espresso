@@ -164,12 +164,12 @@ cdef class ParticleHandle(object):
         The wrapped (folded into central box) position vector of a Particle.
 
         pos : list of floats
-              A list of three floats representing the Particles's position 
+              A list of three floats representing the Particles's position.
 
  
         ..  note::
 
-            Setting the folded position is ambiguous and is thus not possible, please use `pos`      
+            Setting the folded position is ambiguous and is thus not possible, please use `pos`.
 
         
         Examples
@@ -384,7 +384,7 @@ cdef class ParticleHandle(object):
        
         See Also
         ----------
-        espressomd.set_langevin : Setting the parameters of the Langevin thermostat
+        espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
 
         """
 
@@ -406,13 +406,13 @@ cdef class ParticleHandle(object):
         property omega_lab:
             """
             Angular velocity in lab frame.
+
             omega_lab : list of floats
                 list of three floats giving the particle angular velocity as measured from the lab frame.
 
             .. note::
 
-            This needs the feature ROTATION
-
+                This needs the feature ROTATION
 
                 If you set the angular velocity of the particle in the lab
                 frame, the orientation of the particle
@@ -422,7 +422,6 @@ cdef class ParticleHandle(object):
 
             See Also
             ----------
-
             espressomd.particle_data.ParticleHandle.omega_body
 
             """
@@ -445,14 +444,14 @@ cdef class ParticleHandle(object):
         property quat:
             """
             Quaternions.
+
             quat : list fo floats (of length four)
-            
                 This list of four floats sets the quaternion representation of the rotational position of
                 this particle.
                 
             ..note::
             
-            This needs the feature ROTATION
+                This needs the feature ROTATION.
 
 
             """
@@ -478,8 +477,9 @@ cdef class ParticleHandle(object):
             Director.
             
             .. note::
-            Seeting the director not implemented
-            This needs the feature ROTATION
+
+                Seeting the director is not implemented.
+                This needs the feature ROTATION.
 
             """
 
@@ -503,15 +503,16 @@ cdef class ParticleHandle(object):
         property omega_body:
             """
             Angular velocity in body frame.
+
             omega_body : list of floats
 
 
             This property sets the angular momentum of this particle in the
-            particle’s co-rotating frame (or body frame).
+            particles co-rotating frame (or body frame).
 
             .. note::
 
-            This needs the feature ROTATION
+                This needs the feature ROTATION.
 
 
             """
@@ -534,6 +535,7 @@ cdef class ParticleHandle(object):
         property torque_lab:
             """
             Torque in lab frame.
+
             torque_lab : list of floats
 
             This property defines the torque of this particle
@@ -570,6 +572,7 @@ cdef class ParticleHandle(object):
         property rinertia:
             """
             Rotational inertia.
+
             rintertia : list fo floats
 
             Sets the diagonal elements of this particles rotational inertia
@@ -580,7 +583,7 @@ cdef class ParticleHandle(object):
 
             .. note::
 
-            This needs the feature ROTATIONAL_INTERIA
+                This needs the feature ROTATIONAL_INERTIA.
 
 
             """
@@ -605,10 +608,12 @@ cdef class ParticleHandle(object):
         property q:
             """
             Particle charge.
+
             q : float
             
             .. note::
-            This needs the feature ELECTROSTATICS
+
+                This needs the feature ELECTROSTATICS.
 
 
             """
@@ -632,9 +637,9 @@ cdef class ParticleHandle(object):
         Delete the particle.
         
         See Also
-        ----------
+        --------
         add
-        remove,clear
+        remove, clear
 
         """
         if remove_particle(self.id):
@@ -646,10 +651,12 @@ cdef class ParticleHandle(object):
         property virtual:
             """
             Virtual flag.
+
             virtual : integer
 
             .. note::
-            This needs the feature VIRTUAL_SITES
+
+                This needs the feature VIRTUAL_SITES
 
 
             """
@@ -675,11 +682,11 @@ cdef class ParticleHandle(object):
             
             ..todo ::
             
-            document this
+                document this
  
             .. note::
             
-            This needs the feature VIRTUAL_SITES_RELATIVE
+                This needs the feature VIRTUAL_SITES_RELATIVE
 
 
             """
@@ -742,13 +749,13 @@ cdef class ParticleHandle(object):
         property dip:
             """
             Dipole moment as vector.
+
             dip : list of floats
             
             .. note::
             
-            This needs the feature DIPOLES
+                This needs the feature DIPOLES
 
-            
 
             """
 
@@ -771,11 +778,12 @@ cdef class ParticleHandle(object):
         property dipm:
             """
             Dipole moment (magnitude).
+
             dipm : float
            
             .. note::
             
-            This needs the feature DIPOLES
+               This needs the feature DIPOLES.
 
 
             """
@@ -796,13 +804,12 @@ cdef class ParticleHandle(object):
         property ext_force:
             """
             External force on a particle defined by a vector.
+
             ext_force : list of floats 
             
-            
-           
             .. note::
             
-            This needs the feature EXTERNAL_FORCES
+                This needs the feature EXTERNAL_FORCES.
 
 
             """
@@ -877,6 +884,7 @@ cdef class ParticleHandle(object):
             property ext_torque:
                 """
                 External torque on a particle defined by a vector.
+
                 ext_torque : list of floats
 
                 ..  note::
@@ -922,13 +930,13 @@ cdef class ParticleHandle(object):
                 
                 .. note::
                  
-                This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY
+                    This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY
 
  
  
                 See Also
                 ----------
-                set_langevin : Setting the parameters of the Langevin thermostat
+                espressomd.thermostat.Thermostat.set_langevin : Setting the parameters of the Langevin thermostat
 
                 """
 
@@ -961,7 +969,7 @@ cdef class ParticleHandle(object):
  
                 See Also
                 ----------
-                set_langevin : Setting the parameters of the Langevin thermostat
+                espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
 
                 """
 
@@ -1091,36 +1099,23 @@ cdef class ParticleHandle(object):
                 return rot
 
     IF EXCLUSIONS:
-        property exclude:
+        property exclusions:
             """
-            Exclude particle from interaction.
-            
-            exclude : 
-            .. todo::
-            document this
-           
+            Particles excluded from non-bonded interactions with this particle
+
             .. note::
-                 
+
             This needs the feature EXCLUSIONS
 
             """
 
             def __set__(self, _partners):
-                if isinstance(_partners, int):
-                    _partners = [_partners]
-                elif isinstance(_partners, tuple):
-                    if isinstance(_partners[0], list) or isinstance(_partners[0], np.ndarray):
-                        _partners = _partners[0]
-                if len(_partners) == 0:
-                    return
-                for partner in _partners:
-                    check_type_or_throw_except(
-                        partner, 1, int, "PID of partner has to be an int.")
-                    if self.id == partner:
-                        raise Exception(
-                            "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
-                    if change_exclusion(self.id, partner, 0) == 1:
-                        raise Exception("Set particle position first.")
+                # Delete all
+                for e in self.exclusions:
+                    self.delete_exclusion(e)
+
+                # Set new exlusion list
+                self.add_exclusion(_partners)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1129,29 +1124,31 @@ cdef class ParticleHandle(object):
                 py_partners = []
                 for i in range(exclusions.n):
                     py_partners.append(exclusions.e[i])
-                return np.array(py_partners)
+                return py_partners
 
-        def add_exclusion(self, *_partners):
+        def add_exclusion(self, _partners):
             """
             Excluding interaction with given partners.
-            
+
             Parameters
             ----------
             _partners : list of partners
-            
 
             """
-            self.exclude = _partners
+            if isinstance(_partners, int):
+                _partners = [_partners]
 
-        def delete_exclusion(self, *_partners):
             for partner in _partners:
+
                 check_type_or_throw_except(
                     partner, 1, int, "PID of partner has to be an int.")
-                if change_exclusion(self.id, partner, 1) == 1:
+                if self.id == partner:
+                    raise Exception(
+                        "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
+                if change_exclusion(self.id, partner, 0) == 1:
                     raise Exception("Set particle position first.")
 
-        def delete_exclusions(self):
-            _partners = self.exclude
+        def delete_exclusion(self, *_partners):
             for partner in _partners:
                 check_type_or_throw_except(
                     partner, 1, int, "PID of partner has to be an int.")
@@ -1164,7 +1161,7 @@ cdef class ParticleHandle(object):
             Set swimming parameters.
             
             swimming :
-            ..todo:: document this
+            .. todo:: document this
             
             .. note::
                  
@@ -1278,8 +1275,8 @@ cdef class ParticleHandle(object):
 
         See Also
         ----------
-        add_bond :  Delete an unverified bond held by the `Particle`
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+        add_bond :  Delete an unverified bond held by the `Particle`.
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
 
         """
@@ -1294,18 +1291,19 @@ cdef class ParticleHandle(object):
 
     def delete_verified_bond(self, bond):
         """
-       
-        delete a single bond from the particle. The validity of which has already been verified.
+        Delete a single bond from the particle. The validity of which has already been verified.
         
         Parameters
         ----------
-        bond : tuple where the first element is either a bond ID of a bond type, and the last element is the ID of the parter particle to be bonded to.
+        bond : tuple where the first element is either a bond ID of a bond
+            type, and the last element is the ID of the parter particle to be
+            bonded to.
 
         
         See Also
-        ----------
-        delete_bond :  Delete an unverified bond held by the `Particle`
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+        --------
+        delete_bond :  Delete an unverified bond held by the `Particle`.
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
         
         """
@@ -1371,22 +1369,20 @@ cdef class ParticleHandle(object):
 
     def add_bond(self, _bond):
         """
-        
         Add a single bond to the particle.
         
         Parameters
         ----------
-        _bond : tuple where the first element is either a bond ID of a bond type, and the last element is the ID of the parter particle to be bonded to.
+        _bond : tuple where the first element is either a bond ID of a bond
+            type, and the last element is the ID of the parter particle to be
+            bonded to.
 
-
-        
         See Also
-        ----------
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
+        --------
+        bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
         Examples 
-        ----------
-
+        --------
         >>> import espressomd
         >>> from espressomd.interactions import *
         >>> 
@@ -1405,7 +1401,6 @@ cdef class ParticleHandle(object):
         >>> # or via the bond index (zero in this case since it is the first one added)
         >>> system.part[0].add_bond((0,1))
         
-
         """
         bond = list(_bond)  # As we will modify it
         self.check_bond_or_throw_exception(bond)
@@ -1413,7 +1408,6 @@ cdef class ParticleHandle(object):
 
     def delete_bond(self, _bond):
         """
-        
         Delete a single bond from the particle.
         
         Parameters
@@ -1421,22 +1415,23 @@ cdef class ParticleHandle(object):
         _bond : bond to be deleted 
         
         See Also
-        ----------
-        bonds :  `Particle` property, a list of all current bonds help by `Particle`
+        --------
+        bonds :  Particle property, a list of all current bonds.
 
         Examples
-        ----------
-
+        --------
         >>> import espressomd
         >>> from espressomd.interactions import *
         >>> 
         >>> system = espressomd.System()
-        >>> 
-        >>> # define a harmonic potential and add it to the system
+         
+        define a harmonic potential and add it to the system
+
         >>> harm_bond = HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-        >>> 
-        >>> # add two bonded particles to particle 0 
+         
+        add two bonded particles to particle 0
+
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
         >>> system.part.add(id=2, pos=(1, 1, 0))
@@ -1446,11 +1441,12 @@ cdef class ParticleHandle(object):
         >>> bonds = system.part[0].bonds
         >>> print(bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
-        >>> # delete the bond betwen particle 0 and particle 1
+
+        delete the bond betwen particle 0 and particle 1
+
         >>> system.part[0].delete_bond(bonds[0])
         >>> print(system.part[0].bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
-
 
         """
         bond = list(_bond)  # as we modify it
@@ -1464,9 +1460,8 @@ cdef class ParticleHandle(object):
 
         See Also
         ----------
-        delete_bond :  Delete an unverified bond held by the `Particle`
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`
-
+        delete_bond :  Delete an unverified bond held by the Particle.
+        bonds :  Particle property containing a list of all current bonds help by Particle.
 
         """
         if change_particle_bond(self.id, NULL, 1):

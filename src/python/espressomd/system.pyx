@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from libcpp cimport bool
 include "myconfig.pxi"
 
 from globals cimport *
@@ -53,6 +54,8 @@ cimport tuning
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings"]
 
+cdef bool _system_created = False
+
 cdef class System(object):
     """ The base class for espressomd.system.System().
 
@@ -62,32 +65,48 @@ cdef class System(object):
               indentation level, either as method, property or reference.
 
     """
-    part = particle_data.ParticleList()
-    non_bonded_inter = interactions.NonBondedInteractions()
-    bonded_inter = interactions.BondedInteractions()
-    cell_system = CellSystem()
-    thermostat = Thermostat()
-    minimize_energy = MinimizeEnergy()
-    actors = None
-    analysis = None
-    galilei = GalileiTransform()
-    integrator = integrate.Integrator()
-    if CONSTRAINTS == 1:
-        constraints = Constraints()
-    if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-        lbboundaries = LBBoundaries()
-    ekboundaries = EKBoundaries()
+    cdef public:
+        part
+        non_bonded_inter
+        bonded_inter
+        cell_system
+        thermostat
+        minimize_energy
+        actors
+        analysis
+        galilei
+        integrator
+        auto_update_observables
+        auto_update_correlators
+        constraints
+        lbboundaries
+        ekboundaries
+        __seed
 
-    auto_update_observables = AutoUpdateObservables()
-    auto_update_correlators = AutoUpdateCorrelators()
 
     def __init__(self):
-        self.actors = Actors(_system=self)
-        self.analysis = Analysis(self)
-
-#        self.part = particle_data.particleList()
-#        self.non_bonded_inter = interactions.NonBondedInteractions()
-#        self.bonded_inter = interactions.BondedInteractions()
+        global _system_created
+        if (not _system_created):
+            self.part = particle_data.ParticleList()
+            self.non_bonded_inter = interactions.NonBondedInteractions()
+            self.bonded_inter = interactions.BondedInteractions()
+            self.cell_system = CellSystem()
+            self.thermostat = Thermostat()
+            self.minimize_energy = MinimizeEnergy()
+            self.actors = Actors(_system=self)
+            self.analysis = Analysis(self)
+            self.galilei = GalileiTransform()
+            self.integrator = integrate.Integrator()
+            self.auto_update_observables = AutoUpdateObservables()
+            self.auto_update_correlators = AutoUpdateCorrelators()
+            if CONSTRAINTS:
+                self.constraints = Constraints()
+            if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+                self.lbboundaries = LBBoundaries()
+                self.ekboundaries = EKBoundaries()
+            _system_created = True
+        else:
+            raise RuntimeError("You can only have one instance of the system class at a time.")
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -213,10 +232,6 @@ cdef class System(object):
         def __get__(self):
             return timing_samples
 
-    property transfer_rate:
-        def __get__(self):
-            return transfer_rate
-
     property max_cut_nonbonded:
         def __get__(self):
             return max_cut_nonbonded
@@ -237,8 +252,6 @@ cdef class System(object):
 
         def __get__(self):
             return min_global_cut
-
-    __seed = None
 
     def _get_PRNG_state_size(self):
         return get_state_size_of_generator()
@@ -343,13 +356,18 @@ cdef class System(object):
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the distance between the particles, respecting periodic boundaries."""
+        """Return the scalar distance between the particles, respecting periodic boundaries."""
+        res=self.distance_vec(p1,p2)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+    
+    def distance_vec(self, p1, p2):
+        """Return the distance vector between the particles, respecting periodic boundaries."""
 
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
-        get_mi_vector(res, a, b)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+        get_mi_vector(res, b,a)
+        return np.array((res[0],res[1],res[2]))
 
 
 # lbfluid=lb.DeviceList()

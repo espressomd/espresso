@@ -185,7 +185,7 @@ compilation process significantly.
 ``myconfig.hpp``: Activating and deactivating features
 ------------------------------------------------------
 
-has a large number of features that can be compiled into the binary.
+|es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
 features, as this will slow down significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be
@@ -265,6 +265,16 @@ self built python modules to the systems python interpreter by
 modifying the  ``PYTHONPATH``.
 Please see the following chapters describing how to actually write
 a simulation script for |es|.
+
+
+Listing the features compiled into ESPResSo
+-------------------------------------------
+To see, what features were activated in myconfig.hpp, run:::
+    ./pypresso
+and then in the Python interpreter:
+    import espressomd
+    print(espressomd.features())
+
 
 
 .. [1]
