@@ -81,7 +81,7 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>

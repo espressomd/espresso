@@ -67,7 +67,7 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "scafacos.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 
 /** whether the thermostat has to be reinitialized before integration */

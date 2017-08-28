@@ -33,7 +33,7 @@ cdef extern from "PartCfg.hpp":
     cppclass PartCfg:
         pass
 
-cdef extern from "partCfg.hpp":
+cdef extern from "partCfg_global.hpp":
     PartCfg & partCfg()
 
 cdef extern from "particle_data.hpp":

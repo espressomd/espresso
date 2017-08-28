@@ -1,5 +1,5 @@
-#ifndef CORE_pART_CFG_HPP
-#define CORE_pART_CFG_HPP
+#ifndef CORE_PART_CFG_GLOBAL_HPP
+#define CORE_PART_CFG_GLOBAL_HPP
  
 #include "PartCfg.hpp"
 

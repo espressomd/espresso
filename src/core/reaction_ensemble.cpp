@@ -18,7 +18,7 @@
 #include <iostream> //for std::cout
 #include <fstream> //for std::ifstream, std::ofstream for input output into files
 #include "utils.hpp" // for PI and random vectors
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 namespace ReactionEnsemble{
 

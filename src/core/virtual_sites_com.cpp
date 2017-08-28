@@ -26,7 +26,7 @@
 #include "cells.hpp"
 #include "topology.hpp"
 #include "forces.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 // forward declarations
 void calc_mol_vel(Particle *p_com,double v_com[3]);

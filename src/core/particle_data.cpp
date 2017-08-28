@@ -44,7 +44,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 /************************************************
  * defines

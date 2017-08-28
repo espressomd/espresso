@@ -9,7 +9,7 @@
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "tuning.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 #define DEBUG(A) std::cout << #A << ": " << A << std::endl;
 

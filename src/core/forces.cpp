@@ -30,7 +30,7 @@
 #include "maggs.hpp"
 #include "forces_inline.hpp"
 #include "electrokinetics.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 #include <cassert>
 ActorList forceActors;

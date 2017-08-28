@@ -24,7 +24,7 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #include "h5md.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Writer {

@@ -1,6 +1,7 @@
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 #include <cassert>
+#include <memory>
 
 PartCfg &partCfg(std::unique_ptr<PartCfg> init) {
   static std::unique_ptr<PartCfg> m_partCfg;

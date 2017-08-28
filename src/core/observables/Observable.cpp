@@ -21,7 +21,7 @@
 #include <fstream>
 #include "Observable.hpp"
 #include "integrate.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 namespace Observables {
 
