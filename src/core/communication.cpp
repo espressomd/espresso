@@ -263,7 +263,7 @@ void mpi_init(int *argc, char ***argv) {
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  partCfg(Utils::make_unique<PartCfg>(GetLocalParts()));
+  partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
 }

@@ -25,6 +25,7 @@
 #include "utils/mpi/gather_buffer.hpp"
 #include "utils/parallel/Callback.hpp"
 #include "utils/serialization/flat_set.hpp"
+#include "core/MpiCallbacks.hpp"
 
 namespace detail {
 /**
@@ -127,6 +128,8 @@ template <typename GetParticles, typename UnaryOp = Utils::NoOp,
               typename Range::iterator>::value_type>
 class ParticleCache {
   using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
+  /* Callback system we're on */
+  Communication::MpiCallbacks & m_cb;
 
   /** Index mapping particle ids to the position
       in remote_parts. */
@@ -164,7 +167,7 @@ class ParticleCache {
     }
 
     Utils::Mpi::gather_buffer(local_bonds,
-                              Communication::mpiCallbacks().comm());
+                              m_cb.comm());
 
     return local_bonds;
   }
@@ -214,7 +217,7 @@ class ParticleCache {
 
     /* Reduce data to the master by merging the flat_sets from
      * the nodes in a reduction tree. */
-    boost::mpi::reduce(Communication::mpiCallbacks().comm(), remote_parts,
+    boost::mpi::reduce(m_cb.comm(), remote_parts,
                        remote_parts,
                        detail::Merge<map_type, detail::IdCompare>(), 0);
   }
@@ -233,9 +236,10 @@ public:
   using value_iterator = typename map_type::const_iterator;
 
   ParticleCache() = delete;
-  ParticleCache(GetParticles parts, UnaryOp &&op = UnaryOp{})
-      : update_cb([this](int, int) { this->m_update(); }),
-        update_bonds_cb([this](int, int) { this->m_update_bonds(); }),
+  ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
+                UnaryOp &&op = UnaryOp{})
+      : m_cb(cb), update_cb(cb, [this](int, int) { this->m_update(); }),
+        update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
         parts(parts), m_valid(false), m_valid_bonds(false),
         m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
@@ -266,7 +270,7 @@ public:
    * be stored.
    */
   value_iterator begin() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -282,7 +286,7 @@ public:
    * an update is triggered.
    */
   value_iterator end() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -358,7 +362,7 @@ public:
     * Complexity: O(1)
   */
   size_t size() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -372,7 +376,7 @@ public:
    * Complexity: O(1)
    */
   bool empty() {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();
@@ -390,7 +394,7 @@ public:
    * Complexity: O(1)
    */
   Particle const &operator[](int id) {
-    assert(Communication::mpiCallbacks().comm().rank() == 0);
+    assert(m_cb.comm().rank() == 0);
 
     if (!m_valid)
       update();

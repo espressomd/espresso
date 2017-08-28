@@ -35,6 +35,10 @@ namespace Communication {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
+  /* Avoid accidental copy, leads to mpi deadlock
+     or split brain */
+  MpiCallbacks(MpiCallbacks const&) = delete;
+  MpiCallbacks& operator=(MpiCallbacks const&) = delete;
 public:
   /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
