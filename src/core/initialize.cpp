@@ -213,7 +213,7 @@ void on_integration_start()
 
   /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
-  partCfg.invalidate();
+  partCfg().invalidate();
 
   on_observable_calc();
 }
@@ -281,7 +281,7 @@ void on_particle_change()
   invalidate_obs();
 
   /* the particle information is no longer valid */
-  partCfg.invalidate();
+  partCfg().invalidate();
 }
 
 void on_coulomb_change()

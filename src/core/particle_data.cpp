@@ -36,7 +36,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
@@ -44,6 +44,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include "partCfg.hpp"
 
 /************************************************
  * defines
@@ -1308,7 +1309,7 @@ void auto_exclusion(int distance) {
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (auto const &part1 : partCfg) {
+  for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
       ia_params = &bonded_ia_params[part1.bl.e[i++]];
@@ -1431,7 +1432,7 @@ int init_type_array(int type) {
   int t_c = 0; // index
   type_array[Index.type[type]].id_list =
       (int *)Utils::malloc(sizeof(int) * n_part);
-  for (auto const &p : partCfg) {
+  for (auto const &p : partCfg()) {
     if (p.p.type == type)
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
   }
@@ -1514,7 +1515,7 @@ int remove_id_type_array(int part_id, int type) {
 
 int update_particle_array(int type) {
   int t_c = 0;
-  for (auto const &p : partCfg) {
+  for (auto const &p : partCfg()) {
     if (p.p.type == type) {
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
     }

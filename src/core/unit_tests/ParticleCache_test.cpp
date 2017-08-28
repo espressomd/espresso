@@ -25,13 +25,7 @@
 #include <random>
 #include <vector>
 
-#include <boost/version.hpp>
-/* Work around bug in boost, see
-   https://github.com/boostorg/container/commit/5e4a107e82ab3281688311d22d2bfc2fddcf84a3
-   */
-#if BOOST_VERSION < 106400
-#include <boost/container/detail/pair.hpp>
-#endif
+#include "core/ParticleCache.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
@@ -42,7 +36,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/ParticleCache.hpp"
 #include "utils/List.hpp"
 
 #include "mock/Particle.hpp"

@@ -25,12 +25,12 @@
 #include "statistics_molecule.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "statistics.hpp"
 #include "utils.hpp"
 
 /* new version for new topology structure */
-int analyze_fold_molecules(float *coord, double shift[3]) {
+int analyze_fold_molecules(PartCfg&partCfg, float *coord, double shift[3]) {
   int m, p, i, tmp;
   int mol_size, ind;
   double cm_tmp, com[3];
@@ -52,7 +52,7 @@ int analyze_fold_molecules(float *coord, double shift[3]) {
     mol_size = topology[m].part.n;
     if (mol_size > 0) {
       /* calc center of mass */
-      calc_mol_center_of_mass(topology[m], com);
+      calc_mol_center_of_mass(partCfg, topology[m], com);
       /* fold coordinates */
       for (i = 0; i < 3; i++) {
         if (PERIODIC(i)) {
@@ -80,7 +80,7 @@ int analyze_fold_molecules(float *coord, double shift[3]) {
 }
 
 /**Incorporates mass of each particle*/
-void calc_mol_center_of_mass(Molecule mol, double com[3]) {
+void calc_mol_center_of_mass(PartCfg &partCfg, Molecule mol, double com[3]) {
   int i, j, id;
   double M = 0.0;
   for (j = 0; j < 3; j++)
@@ -98,11 +98,11 @@ void calc_mol_center_of_mass(Molecule mol, double com[3]) {
 
 /* TODO: This function is not used anywhere. To be removed? */
 /**Incorporates mass of each particle*/
-double calc_mol_gyr_radius2(Molecule mol) {
+double calc_mol_gyr_radius2(PartCfg & partCfg, Molecule mol) {
   int i, id;
   double rg = 0.0, M = 0.0, com[3], diff_vec[3];
 
-  calc_mol_center_of_mass(mol, com);
+  calc_mol_center_of_mass(partCfg, mol, com);
 
   for (i = 0; i < mol.part.n; i++) {
     id = mol.part.e[i];

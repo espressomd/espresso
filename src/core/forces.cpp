@@ -30,6 +30,7 @@
 #include "maggs.hpp"
 #include "forces_inline.hpp"
 #include "electrokinetics.hpp"
+#include "partCfg.hpp"
 
 #include <cassert>
 ActorList forceActors;
@@ -212,7 +213,7 @@ espressoSystemInterface.update();
 #endif
 
 #ifdef COMFORCE
-  calc_comforce();
+  calc_comforce(partCfg());
 #endif
 
 #ifdef METADYNAMICS

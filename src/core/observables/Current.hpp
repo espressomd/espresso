@@ -2,7 +2,7 @@
 #define OBSERVABLES_CURRENTS_HPP
 
 #include "PidObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
@@ -10,7 +10,7 @@ namespace Observables {
 class Current : public PidObservable {
 public:
   virtual int n_values() const override { return 3; };
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     last_value.resize(3);
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS

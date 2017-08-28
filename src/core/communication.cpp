@@ -26,10 +26,6 @@
 #include <dlfcn.h>
 #endif
 
-#include <boost/mpi.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/string.hpp>
-
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
@@ -85,6 +81,11 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "partCfg.hpp"
+
+#include <boost/mpi.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/string.hpp>
 
 using namespace std;
 using Communication::mpiCallbacks;
@@ -213,22 +214,6 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-#ifdef COMM_DEBUG
-void mpi_add_callback(SlaveCallback *cb, const string &name) {
-  /** Name is only used for debug messages */
-  names.push_back(name);
-  mpiCallbacks().add(cb);
-}
-#endif
-
-void mpi_add_callback(SlaveCallback *cb) {
-#ifdef COMM_DEBUG
-  mpi_add_callback(cb, "dynamic callback");
-#else
-  mpiCallbacks().add(cb);
-#endif
-}
-
 std::unique_ptr<boost::mpi::environment> mpi_env;
 
 void mpi_init(int *argc, char ***argv) {
@@ -278,6 +263,7 @@ void mpi_init(int *argc, char ***argv) {
   }
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+  partCfg(Utils::make_unique<PartCfg>(GetLocalParts()));
 
   on_program_start();
 }
