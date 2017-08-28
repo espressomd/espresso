@@ -70,6 +70,7 @@
 #include "observables/Observable.hpp"
 #include "overlap.hpp"
 #include "p3m.hpp"
+#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "reaction.hpp"
@@ -81,19 +82,36 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
-#include "partCfg_global.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 
 using namespace std;
+
+namespace {
+std::unique_ptr<boost::mpi::environment> mpi_env;
+}
+
+boost::mpi::communicator comm_cart;
+
+namespace Communication {
+namespace {
+std::unique_ptr<MpiCallbacks> m_callbacks;
+}
+
+/* We use a singelton callback class for now. */
+MpiCallbacks &mpiCallbacks() {
+  assert(m_callbacks && "Mpi not initialized!");
+
+  return *m_callbacks;
+}
+}
+
 using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
-
-boost::mpi::communicator comm_cart;
 
 int graceful_exit = 0;
 /* whether there is already a termination going on. */
@@ -214,8 +232,6 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-std::unique_ptr<boost::mpi::environment> mpi_env;
-
 void mpi_init(int *argc, char ***argv) {
 #ifdef OPEN_MPI
   void *handle = 0;
@@ -243,20 +259,18 @@ void mpi_init(int *argc, char ***argv) {
   }
 #endif
 
-  mpi_env = Utils::make_unique<boost::mpi::environment>(*argc, *argv);
+  mpi_env =
+      Utils::make_unique<boost::mpi::environment>(*argc, *argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-
-  int reorder = 1;
-
   MPI_Dims_create(n_nodes, 3, node_grid);
 
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
                            /* periodicity */ {1, 1, 1});
-
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
-  Communication::mpiCallbacks().set_comm(comm_cart);
+  Communication::m_callbacks =
+      Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
 
   for (int i = 0; i < slave_callbacks.size(); ++i) {
     mpiCallbacks().add(slave_callbacks[i]);

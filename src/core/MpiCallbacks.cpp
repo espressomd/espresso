@@ -94,13 +94,4 @@ void MpiCallbacks::loop() const {
     }
   }
 }
-
-/* We use a singelton callback class for now. */
-MpiCallbacks &mpiCallbacks() {
-  static boost::mpi::communicator world;
-  static MpiCallbacks m_global_callback {world};
-
-  return m_global_callback;
-}
-
 } /* namespace Communication */

@@ -83,6 +83,15 @@ extern boost::mpi::communicator comm_cart;
 #define SOME_TAG 42
 #endif
 
+namespace Communication {
+  /**
+   * @brief Returns a reference to the global callback class instance.
+   *
+   */
+  MpiCallbacks &mpiCallbacks();
+  
+}
+
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on

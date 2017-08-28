@@ -178,13 +178,6 @@ private:
    */
   std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };
-
-/**
- * @brief Returns a reference to the global callback class instance.
- *
- */
-MpiCallbacks &mpiCallbacks();
-
 } /* namespace Communication */
 
 #endif
