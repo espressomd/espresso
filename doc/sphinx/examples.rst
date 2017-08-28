@@ -68,6 +68,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``load_properties.py``,  ``store_properties.py``
     Uses the Python ``pickle`` module to store and load system information.
 
+* ``MDAnalysisIntegration.py``.
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or 
+    convert the frame to other formats (CHARMM, GROMACS, ...)
+
 * ``minimal-charged-particles.py``
    Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
 
