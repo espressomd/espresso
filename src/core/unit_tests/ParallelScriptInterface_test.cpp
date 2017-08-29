@@ -11,10 +11,10 @@
 #include "../../script_interface/ParallelScriptInterface.hpp"
 
 namespace mpi = boost::mpi;
+
 mpi::environment mpi_env;
 mpi::communicator world;
-
-Communication::MpiCallbacks callbacks(world);
+Communication::MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
 using namespace ScriptInterface;
 
@@ -114,26 +114,19 @@ BOOST_AUTO_TEST_CASE(set_parmeter) {
     so->set_parameter("TestParam", std::string("TestValue"));
 
     callbacks.abort_loop();
-    Testing::reduce_and_check(callbacks.comm(),
-                              TestClass::last_instance != nullptr);
-
-    auto const &last_parameter = TestClass::last_instance->last_parameter;
-    Testing::reduce_and_check(callbacks.comm(),
-                              last_parameter.first == "TestParam");
-    Testing::reduce_and_check(callbacks.comm(),
-                              boost::get<std::string>(last_parameter.second) ==
-                                  "TestValue");
   } else {
     callbacks.loop();
-    Testing::reduce_and_check(callbacks.comm(),
-                              TestClass::last_instance != nullptr);
-    auto const &last_parameter = TestClass::last_instance->last_parameter;
-    Testing::reduce_and_check(callbacks.comm(),
-                              last_parameter.first == "TestParam");
-    Testing::reduce_and_check(callbacks.comm(),
-                              boost::get<std::string>(last_parameter.second) ==
-                                  "TestValue");
   }
+
+  Testing::reduce_and_check(callbacks.comm(),
+                            TestClass::last_instance != nullptr);
+
+  auto const &last_parameter = TestClass::last_instance->last_parameter;
+  Testing::reduce_and_check(callbacks.comm(),
+                            last_parameter.first == "TestParam");
+  Testing::reduce_and_check(callbacks.comm(),
+                            boost::get<std::string>(last_parameter.second) ==
+                                "TestValue");
 }
 
 /*
@@ -199,6 +192,10 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 
     /* Check that we got the original instance back */
     BOOST_CHECK(parameter.get() == bare_ptr);
+
+    callbacks.abort_loop();
+  } else {
+    callbacks.loop();
   }
 }
 
