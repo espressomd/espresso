@@ -259,7 +259,12 @@ void mpi_init() {
   }
 #endif
 
+#ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
   mpi_env = Utils::make_unique<boost::mpi::environment>();
+#else
+  int argc{};
+  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, NULL);
+#endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, node_grid);
