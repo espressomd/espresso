@@ -37,22 +37,25 @@ namespace Communication {
 class MpiCallbacks {
   /* Avoid accidental copy, leads to mpi deadlock
      or split brain */
-  MpiCallbacks(MpiCallbacks const&) = delete;
-  MpiCallbacks& operator=(MpiCallbacks const&) = delete;
+  MpiCallbacks(MpiCallbacks const &) = delete;
+  MpiCallbacks &operator=(MpiCallbacks const &) = delete;
+
 public:
   /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  explicit MpiCallbacks(boost::mpi::communicator &comm) : m_comm(comm) {
+  explicit MpiCallbacks(boost::mpi::communicator &comm,
+                        bool abort_on_exit = true)
+      : m_comm(comm), m_abort_on_exit(abort_on_exit) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
   }
 
   ~MpiCallbacks() {
     /* Release the clients on exit */
-    if (m_comm.rank() == 0) {
+    if (m_abort_on_exit && (m_comm.rank() == 0)) {
       abort_loop();
     }
   }
@@ -144,6 +147,7 @@ public:
    * Set the MPI communicator for the callbacks.
    */
   void set_comm(boost::mpi::communicator &comm) { m_comm = comm; }
+
 private:
   /**
    * @brief Id for the loop_abort. Has to be 0.
@@ -161,6 +165,12 @@ private:
    * @param par2 Second parameter to pass to the callback function.
    */
   void slave(int id, int par1, int par2) const;
+
+  /**
+   * @brief If loop_abort should be called on destruction
+   *        on the head node.
+   */
+  bool m_abort_on_exit;
 
   /**
    * The MPI communicator used for the callbacks.

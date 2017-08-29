@@ -58,7 +58,7 @@ using Communication::MpiCallbacks;
  */
 BOOST_AUTO_TEST_CASE(loop_exit) {
   communicator world;
-  MpiCallbacks callbacks(world);
+  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
   if (world.rank() == 0) {
     callbacks.abort_loop();
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(loop_exit) {
  */
 BOOST_AUTO_TEST_CASE(add_static_callback) {
   communicator world;
-  MpiCallbacks callbacks(world);
+  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
   const int id = callbacks.add(static_callback);
 
@@ -99,8 +99,7 @@ BOOST_AUTO_TEST_CASE(add_static_callback) {
  */
 BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
   communicator world;
-
-  MpiCallbacks callbacks(world);
+  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
   bool called = false;
   auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
@@ -127,7 +126,7 @@ BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
  */
 BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
   communicator world;
-  MpiCallbacks callbacks(world);
+  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
 
   bool called = false;
   auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
@@ -148,7 +147,7 @@ BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
     BOOST_CHECK_THROW(callbacks.call(dynamic_id, 0, 0), std::out_of_range);
   }
 
-  /** Caling the other callback should still work */
+  /** Calling the other callback should still work */
   static_callback_called = false;
   if (world.rank() == 0) {
     callbacks.call(static_callback, 5, 13);
@@ -180,16 +179,20 @@ BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
 /* Check that the destructor calls abort */
 BOOST_AUTO_TEST_CASE(destructor) {
   communicator world;
-  MpiCallbacks callbacks(world);
 
-  if (world.rank() == 0) {
-    ;
-  } else {
-    callbacks.loop();
+  {
+    /* Will be detroyed on scope exit */
+    MpiCallbacks callbacks(world);
+
+    if (world.rank() == 0) {
+      ;
+    } else {
+      callbacks.loop();
+    }
   }
 
   /* This must be reachable by all nodes */
-  BOOST_ASSERT(true);
+  Testing::reduce_and_check(world, true);
 }
 
 int main(int argc, char **argv) {
