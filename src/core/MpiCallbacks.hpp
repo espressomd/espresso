@@ -153,18 +153,6 @@ private:
    * @brief Id for the loop_abort. Has to be 0.
    */
   enum { LOOP_ABORT = 0 };
-  /**
-   * @brief Callback to integrate with the old callback mechanism.
-   *
-   * MPI callback for integration with the old callback mechanism,
-   * This is called on the slaves by the MPI loop. This should
-   * be removed when the new mechanism is used everywhere
-   *
-   * @param id The id of the callback to run.
-   * @param par2 First parameter to pass to the callback function.
-   * @param par2 Second parameter to pass to the callback function.
-   */
-  void slave(int id, int par1, int par2) const;
 
   /**
    * @brief If loop_abort should be called on destruction
