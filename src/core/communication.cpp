@@ -232,7 +232,7 @@ int mpi_check_runtime_errors(void);
  * procedures
  **********************************************/
 
-void mpi_init(int *argc, char ***argv) {
+void mpi_init() {
 #ifdef OPEN_MPI
   void *handle = 0;
   int mode = RTLD_NOW | RTLD_GLOBAL;
@@ -259,8 +259,7 @@ void mpi_init(int *argc, char ***argv) {
   }
 #endif
 
-  mpi_env =
-      Utils::make_unique<boost::mpi::environment>(*argc, *argv);
+  mpi_env = Utils::make_unique<boost::mpi::environment>();
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, node_grid);

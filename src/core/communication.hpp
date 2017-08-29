@@ -106,7 +106,7 @@ typedef void(SlaveCallback)(int node, int param);
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc = NULL, char ***argv = NULL);
+void mpi_init();
 
 /* Call a slave function. */
 void mpi_call(SlaveCallback cb, int node, int param);

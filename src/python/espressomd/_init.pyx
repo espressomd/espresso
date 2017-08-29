@@ -21,12 +21,12 @@ import sys
 from . import script_interface
 
 cdef extern from "communication.hpp":
-    void mpi_init(int * argc, char ** *argv)
+    void mpi_init()
     void mpi_loop()
     int this_node
 
 # Main code
-mpi_init(NULL, NULL)
+mpi_init()
 
 # Initialize script interface
 # Has to be _after_ mpi_init
