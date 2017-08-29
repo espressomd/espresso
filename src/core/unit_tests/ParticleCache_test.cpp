@@ -30,21 +30,17 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
-// #define BOOST_TEST_NO_MAIN
+#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ParticleCache test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "utils/List.hpp"
-
 #include "mock/Particle.hpp"
 
 using Communication::MpiCallbacks;
 namespace mpi = boost::mpi;
-
-mpi::environment mpi_env;
-mpi::communicator world;
 
 class Particle : public Testing::Particle {
 public:
@@ -96,15 +92,13 @@ void check_merge(unsigned size, unsigned split) {
 }
 
 BOOST_AUTO_TEST_CASE(detail_merge_equal) { check_merge(2000, 2); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_not_equal) { check_merge(2000, 3); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_empty_left) { check_merge(2000, 1); }
-
 BOOST_AUTO_TEST_CASE(detail_merge_empty_right) { check_merge(2000, 2000); }
 
 BOOST_AUTO_TEST_CASE(update) {
   Particles local_parts;
+  mpi::communicator world;
   MpiCallbacks cb(world);
 
   auto const rank = cb.comm().rank();
@@ -136,6 +130,7 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
   auto const bond_lengths = std::array<int, 6>{1, 2, 4, 9, 21, 0};
 
   Particles local_parts;
+  mpi::communicator world;
   MpiCallbacks cb(world);
 
   auto const rank = cb.comm().rank();
@@ -177,6 +172,7 @@ BOOST_AUTO_TEST_CASE(update_with_bonds) {
 
 BOOST_AUTO_TEST_CASE(iterators) {
   Particles local_parts;
+  mpi::communicator world;
   MpiCallbacks cb(world);
 
   auto const rank = cb.comm().rank();
@@ -214,4 +210,10 @@ BOOST_AUTO_TEST_CASE(iterators) {
   } else {
     cb.loop();
   }
+}
+
+int main(int argc, char **argv) {
+  mpi::environment mpi_env(argc, argv);
+
+  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
