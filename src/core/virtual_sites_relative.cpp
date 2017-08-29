@@ -193,7 +193,7 @@ void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_
 {
     // get teh distance between the particles
     double d[3];
-    get_mi_vector(d, p_current->r.p,p_relate_to->r.p);
+    get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
     
     
     
@@ -235,31 +235,31 @@ void calculate_vs_relate_to_params(const Particle& p_current, const Particle& p_
       // Define quat as described above:
       double x=0;
       for (i=0;i<4;i++)
-       x+=p_relate_to->r.quat[i]*p_relate_to->r.quat[i];
+       x+=p_relate_to.r.quat[i]*p_relate_to.r.quat[i];
   
       quat[0]=0;
       for (i=0;i<4;i++)
-       quat[0] +=p_relate_to->r.quat[i]*quat_director[i];
+       quat[0] +=p_relate_to.r.quat[i]*quat_director[i];
       
-      quat[1] =-quat_director[0] *p_relate_to->r.quat[1] 
-         +quat_director[1] *p_relate_to->r.quat[0]
-         +quat_director[2] *p_relate_to->r.quat[3]
-         -quat_director[3] *p_relate_to->r.quat[2];
-      quat[2] =p_relate_to->r.quat[1] *quat_director[3] 
-        + p_relate_to->r.quat[0] *quat_director[2] 
-        - p_relate_to->r.quat[3] *quat_director[1] 
-        - p_relate_to->r.quat[2] * quat_director[0];
-      quat[3] =quat_director[3] *p_relate_to->r.quat[0]
-        - p_relate_to->r.quat[3] *quat_director[0] 
-        + p_relate_to->r.quat[2] * quat_director[1] 
-        - p_relate_to->r.quat[1] *quat_director[2];
+      quat[1] =-quat_director[0] *p_relate_to.r.quat[1] 
+         +quat_director[1] *p_relate_to.r.quat[0]
+         +quat_director[2] *p_relate_to.r.quat[3]
+         -quat_director[3] *p_relate_to.r.quat[2];
+      quat[2] =p_relate_to.r.quat[1] *quat_director[3] 
+        + p_relate_to.r.quat[0] *quat_director[2] 
+        - p_relate_to.r.quat[3] *quat_director[1] 
+        - p_relate_to.r.quat[2] * quat_director[0];
+      quat[3] =quat_director[3] *p_relate_to.r.quat[0]
+        - p_relate_to.r.quat[3] *quat_director[0] 
+        + p_relate_to.r.quat[2] * quat_director[1] 
+        - p_relate_to.r.quat[1] *quat_director[2];
       for (i=0;i<4;i++)
        quat[i]/=x;
      
      
      // Verify result
      double qtemp[4];
-     multiply_quaternions(p_relate_to->r.quat,quat,qtemp);
+     multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
      for (i=0;i<4;i++)
        if (fabs(qtemp[i]-quat_director[i])>1E-9)
          fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
