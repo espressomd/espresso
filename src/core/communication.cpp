@@ -263,7 +263,8 @@ void mpi_init() {
   mpi_env = Utils::make_unique<boost::mpi::environment>();
 #else
   int argc{};
-  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, NULL);
+  char **argv{};
+  mpi_env = Utils::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
