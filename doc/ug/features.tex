@@ -115,6 +115,7 @@ Features can be activated in the configuration header
   \emph{wrong} random walk code of the polymer. Only use this if you
   rely on the old behavior and \emph{know what you are doing}.
 \item \newfeature{H5MD} Allows to write data to H5MD formatted hdf5 files.
+\item \newfeature{REACTION_ENSEMBLE} Allows to simulate arbitrary chemical reactions (especially also with varying particle number) \cite{smith1994reaction}.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the
@@ -146,13 +147,6 @@ integrator or thermostat:
 \item \newfeature{LB_ELECTROHYDRODYNAMICS} Enables the implicit
   calculation of electro-hydrodynamics for charged particles and salt
   ions in an electric field.
-\item \newfeature{SD} enable Stokesian Dynamics.
-\item \newfeature{SD_NOT_PERIODIC} disable periodic boundary conditions in
-  Stokesian Dynamics.
-\item \newfeature{SD_USE_FLOAT} use float instead of double in Stokesian
-  Dynamics.
-\item \newfeature{SD_FF_ONLY} disable nearfield of Stokesian Dynamics.
-\item \newfeature{SD_DEBUG} enable debug Stokesian Dynamics.
   
 \end{itemize}
 
@@ -264,8 +258,6 @@ looking directly at the code.
 \item \newfeature{FORCE\_CORE} Causes \es{} to try to provoke a core dump
   when exiting unexpectedly.
 \item \newfeature{MPI\_CORE} Causes \es{} to try this even with MPI errors.
-\item \newfeature{SD_DEBUG} Causes \es{} to check more things in the Stokesian
-  Dynamics code. If \var{warnings} is larger 1, SD prints more information.
 \end{itemize}
 
 %%% Local Variables: 

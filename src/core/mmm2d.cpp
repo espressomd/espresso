@@ -104,12 +104,12 @@ char const *mmm2d_errors[] = {
 static double part_error;
 
 /** cutoffs for the bessel sum */
-static IntList besselCutoff = {NULL, 0, 0};
+static IntList besselCutoff;
 
 /** cutoffs for the complex sum */
 static int  complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
-static DoubleList  bon = {NULL, 0, 0};
+static DoubleList  bon;
 
 /** inverse box dimensions */
 /*@{*/
