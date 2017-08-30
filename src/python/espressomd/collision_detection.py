@@ -35,7 +35,7 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         # Mode
         if not isinstance(kwargs["mode"],CollisionMode):
-            raise ValueError("mode needs to be an instance of CollisionMode")
+            raise ValueError("mode needs to be an instance of CollisionMode. Got"+kwargs["mode"].__str__())
         kwargs["mode"]=int(kwargs["mode"])
 
         # Convert bonds to bond ids
