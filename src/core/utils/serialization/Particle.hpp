@@ -19,13 +19,6 @@ void load(Archive &ar, Particle &p, const unsigned int /* file_version */) {
   new (&(p.el)) IntList(p.el.size());
   ar >> p.el;
 #endif
-
-#ifdef LB_BOUNDARIES_GPU
-  new (&(p.p.anchors)) std::vector<float>();
-  ar >> p.p.anchors;
-  new (&(p.p.anchors_out)) std::vector<float>();
-  ar >> p.p.anchors_out;
-#endif
 }
 
 template <typename Archive>
@@ -37,11 +30,6 @@ void save(Archive &ar, Particle const &p,
   ar << p.bl;
 #ifdef EXCLUSIONS
   ar << p.el;
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  ar << p.p.anchors;
-  ar << p.p.anchors_out;
 #endif
 }
 
