@@ -7,7 +7,6 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # HELPER FUNCTIONS
 
 # output value of env variables
@@ -121,7 +120,7 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
-cmd "cmake $cmake_params $srcdir" || exit $?
+cmd "cmake $cmake_params $srcdir" || exit 1
 end "CONFIGURE"
 
 # BUILD
@@ -163,5 +162,5 @@ if $with_coverage; then
     lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov --list coverage.info #debug info
     # Uploading report to CodeCov
-    bash <(curl -s https://codecov.io/bash) -t d1e004ab-1d37-4bde-af79-549b2a20ad25 || echo "Codecov did not collect coverage reports"
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
 fi
