@@ -23,6 +23,25 @@ class Cylinder(ScriptInterfaceHelper):
     _so_name = "Shapes::Cylinder"
 
 @script_interface_register
+class Ellipsoid(ScriptInterfaceHelper):
+    """
+    An parallelepiped.
+
+    Attributes
+    ----------
+    a : float
+       First semiaxis.
+    b : array_like
+       Second semiaxis.
+    c : array_like
+       Third semiaxis.
+    direction : int
+       Surface orientation, for +1 the normal points
+       out of the mantel, for -1 it points inward.
+    """
+    _so_name = "Shapes::Ellipsoid"
+
+@script_interface_register
 class HollowCone(ScriptInterfaceHelper):
     """
     A hollow cone shape.

@@ -19,7 +19,7 @@
 
 #include "initialize.hpp"
 #include "Cylinder.hpp"
-#include "HollowCone.hpp"
+#include "Ellipsoid.hpp"
 #include "Maze.hpp"
 #include "NoWhere.hpp"
 #include "Pore.hpp"
@@ -38,6 +38,8 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
       "Shapes::NoWhere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Ellipsoid>(
+      "Shapes::Ellipsoid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Sphere>(
       "Shapes::Sphere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Cylinder>(
