@@ -46,6 +46,7 @@
 namespace LBBoundaries {
 
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
+std::vector<std::shared_ptr<LBMovingBoundary>> lbmovingboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 void lbboundary_mindist_position(double pos[3], double *mindist,
@@ -71,13 +72,94 @@ void lbboundary_mindist_position(double pos[3], double *mindist,
   }
 }
 
+/* translates moving boundary data for gpu */
+void set_moving_boundary_struct(LBMovingBoundary * lbb_in, LB_moving_boundary* lbb_out){
+#ifdef LB_GPU
+  lbb_out->mass = lbb_in->mass();
+  lbb_out->scaled_mass = lbb_in->mass();
+
+  lbb_out->velocity[0] = lbb_in->velocity()[0] / lbpar_gpu.agrid * lbpar_gpu.tau;// latticesites/timestep
+  lbb_out->velocity[1] = lbb_in->velocity()[1] / lbpar_gpu.agrid * lbpar_gpu.tau;
+  lbb_out->velocity[2] = lbb_in->velocity()[2] / lbpar_gpu.agrid * lbpar_gpu.tau;
+  //Adding half time-step worth of velocity here, since collisions always occur on halftime
+  lbb_out->center[0] = (lbb_in->shape().pos()[0] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[0];//0.5 shifted to get the coordinates in nodespace
+  lbb_out->center[1] = (lbb_in->shape().pos()[1] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[1];//then 1/a to scale with lattice sites
+  lbb_out->center[2] = (lbb_in->shape().pos()[2] - 0.5) / lbpar_gpu.agrid + 0.5 * lbb_out->velocity[2];//then integrated by half timestep
+
+  lbb_out->radius = lbb_in->shape().rad() / lbpar_gpu.agrid;//this is stored as number of lattice sites
+
+  lbb_out->omega[0] = lbb_in->omega()[0]*lbpar_gpu.tau;//same units as velocity for fast surface velocity calculation
+  lbb_out->omega[1] = lbb_in->omega()[1]*lbpar_gpu.tau;
+  lbb_out->omega[2] = lbb_in->omega()[2]*lbpar_gpu.tau;
+
+  lbb_out->quat[0] = lbb_in->quat()[0];//quaternions. see \ref rotations.cpp for reference
+  lbb_out->quat[1] = lbb_in->quat()[1];
+  lbb_out->quat[2] = lbb_in->quat()[2];
+  lbb_out->quat[3] = lbb_in->quat()[3];
+
+
+  lbb_out->force_add[0] = 0;//compensation force to ensure momentum conservation
+  lbb_out->force_add[1] = 0;//may cause high frequency vibrations
+  lbb_out->force_add[2] = 0;
+
+  lbb_out->force_hyd[0] = 0;//holds hydrodynamic interaction force
+  lbb_out->force_hyd[1] = 0;
+  lbb_out->force_hyd[2] = 0;
+
+  lbb_out->torque[0] = 0;//holds torque from hydrodynamic interaction force
+  lbb_out->torque[1] = 0;
+  lbb_out->torque[2] = 0;
+
+
+
+
+  #ifdef EXTERNAL_FORCES
+  // External forces are not used in the first half_timestep
+  lbb_out->ext_force[0]  = lbb_in->force()[0] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f; //this is needed in lb units -> *tau^2/a
+  lbb_out->ext_force[1]  = lbb_in->force()[1] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f; //also this is added directly to the velocity -> 1/m
+  lbb_out->ext_force[2]  = lbb_in->force()[2] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f; // this totals to tau^3/(am). oh, and half of that.
+
+  lbb_out->body_force[0] = lbb_in->body_force()[0] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f;
+  lbb_out->body_force[1] = lbb_in->body_force()[1] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f;
+  lbb_out->body_force[2] = lbb_in->body_force()[2] * lbpar_gpu.tau*lbpar_gpu.tau
+                            / lbpar_gpu.agrid / lbb_in->mass() / 2.0f;
+
+  lbb_out->ext_torque[0] = lbb_in->torque()[0] / lbpar_gpu.agrid / lbpar_gpu.agrid;//this is needed as kg a^2/s^2 so just a tame 1/a^2
+  lbb_out->ext_torque[1] = lbb_in->torque()[1] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+  lbb_out->ext_torque[2] = lbb_in->torque()[2] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+
+  lbb_out->body_torque[0] = lbb_in->body_torque()[0] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+  lbb_out->body_torque[1] = lbb_in->body_torque()[1] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+  lbb_out->body_torque[2] = lbb_in->body_torque()[2] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+  #endif
+  if(lbb_in->rinertia()[0] || lbb_in->rinertia()[1] || lbb_in->rinertia()[2]){
+    lbb_out->rinertia[0] = lbb_in->rinertia()[0] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+    lbb_out->rinertia[1] = lbb_in->rinertia()[1] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+    lbb_out->rinertia[2] = lbb_in->rinertia()[2] / lbpar_gpu.agrid / lbpar_gpu.agrid;
+  } else {
+    // Hydrodynamic radius is 0.5 larger than the constraint radius.
+    lbb_out->rinertia[0] =
+    lbb_out->rinertia[1] =
+    lbb_out->rinertia[2] =  2.0f/5.0f * lbb_in->mass() * (lbb_out->radius+0.5)*(lbb_out->radius+0.5);// sphere. [kg a^2] because torque is calced in lb units.
+  }
+
+  lbb_out->n_anchors = lbb_in->anchors().size()*4;
+  lbb_out->anchors = std::vector<float>( lbb_in->anchors().begin(), lbb_in->anchors().end() );
+#endif
+}
+
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
-  int x, y, z;
-  // char *errtxt;
-  double pos[3], dist, dist_tmp = 0.0, dist_vec[3];
+  int n, x, y, z;
+  //char *errtxt;
+  double pos[3], dist, dist_tmp=0.0, dist_vec[3];
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
@@ -122,7 +204,7 @@ void lb_init_boundaries() {
             << "no charged species available to create wall charge\n";
       }
     }
-#endif
+#endif // EK_BOUNDARIES
 
     for (z = 0; z < int(lbpar_gpu.dim_z); z++) {
       for (y = 0; y < int(lbpar_gpu.dim_y); y++) {
@@ -141,7 +223,7 @@ void lb_init_boundaries() {
             node_charged = 0;
             node_wallcharge = 0.0f;
           }
-#endif
+#endif // EK_BOUNDARIES
 
           int n = 0;
           for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
@@ -163,7 +245,7 @@ void lb_init_boundaries() {
                     ek_parameters.agrid * ek_parameters.agrid);
               }
             }
-#endif
+#endif // EK_BOUNDARIES
           }
 
 #ifdef EK_BOUNDARIES
@@ -176,7 +258,7 @@ void lb_init_boundaries() {
                                                    // boundary_number is not used by
                                                    // a constraint
           }
-#endif
+#endif // EK_BOUNDARIES
           if (dist <= 0 && boundary_number >= 0 &&
               (lbboundaries.size() > 0 || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
@@ -227,7 +309,7 @@ void lb_init_boundaries() {
                     ek_parameters.agrid;
             }
           }
-#endif
+#endif // EK_BOUNDARIES
         }
       }
     }
@@ -235,6 +317,7 @@ void lb_init_boundaries() {
     /**call of cuda fkt*/
     float *boundary_velocity =
         (float *)Utils::malloc(3 * (lbboundaries.size() + 1) * sizeof(float));
+    LB_moving_boundary *host_moving_boundary = (LB_moving_boundary *) calloc(1,(lbboundaries.size()+1) * sizeof(LB_moving_boundary)); //using calloc to set the redundant boundary (+1) to zero, in case something goes wrong;
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
       boundary_velocity[3 * n + 0] = (**lbb).velocity()[0];
@@ -246,10 +329,18 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 1] = 0.0f;
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
-    if (lbboundaries.size() || pdb_boundary_lattice) {
-      lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
+    int moving_count = 0;
+    for ( auto boundary : lbmovingboundaries )
+    {
+      set_moving_boundary_struct(boundary.get(), host_moving_boundary + moving_count);
+      host_moving_boundary[moving_count].index = -1 - moving_count;
+      ++moving_count;
+    }
+
+    if (lbboundaries.size() || lbmovingboundaries.size() || pdb_boundary_lattice) {
+      lb_init_boundaries_GPU(lbboundaries.size(), lbmovingboundaries.size(), number_of_boundnodes,
                              host_boundary_node_list, host_boundary_index_list,
-                             boundary_velocity);
+                             boundary_velocity, host_moving_boundary);
     }
     free(boundary_velocity);
     free(host_boundary_node_list);
@@ -261,10 +352,10 @@ void lb_init_boundaries() {
                                          wallcharge_species);
       free(host_wallcharge_species_density);
     }
-#endif
+#endif // EK_BOUNDARIES
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
-  } else { 
+  } else {
 #if defined(LB) && defined(LB_BOUNDARIES)
     int node_domain_position[3], offset[3];
     int the_boundary = -1;
@@ -311,7 +402,7 @@ void lb_init_boundaries() {
       }
     }
     // SET VOXEL BOUNDARIES DIRECTLY
-    
+
     /* TODO implement as shape
     int xxx, yyy, zzz = 0;
     char line[80];
@@ -322,7 +413,7 @@ void lb_init_boundaries() {
         fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
 
         while (fgets(line, 80, fp) != NULL) {
-          // get a line, up to 80 chars from fp,  done if NULL 
+          // get a line, up to 80 chars from fp,  done if NULL
           sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
 
           lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
@@ -337,7 +428,7 @@ void lb_init_boundaries() {
       }
     }
     */
-#endif
+#endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   }
 }
 
@@ -370,7 +461,7 @@ int lbboundary_get_force(void* lbb, double *f) {
 #if defined(LB_BOUNDARIES) && defined(LB)
     mpi_gather_stats(8, forces, NULL, NULL, NULL);
 
-    f[0] = forces[3 * no + 0] * lbpar.agrid / lbpar.tau; // lbpar.tau; TODO this makes the units wrong and 
+    f[0] = forces[3 * no + 0] * lbpar.agrid / lbpar.tau; // lbpar.tau; TODO this makes the units wrong and
     f[1] = forces[3 * no + 1] * lbpar.agrid / lbpar.tau; // lbpar.tau; the result correct. But it's 3.13AM
     f[2] = forces[3 * no + 2] * lbpar.agrid / lbpar.tau; // lbpar.tau; on a Saturday at the ICP. Someone fix.
 #else
@@ -421,7 +512,7 @@ void lb_bounce_back() {
                    9, 12, 11, 14, 13, 16, 15, 18, 17};
 
   /* bottom-up sweep */
-  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) 
+  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
   for (z = 0; z < lblattice.grid[2] + 2; z++) {
     for (y = 0; y < lblattice.grid[1] + 2; y++) {
       for (x = 0; x < lblattice.grid[0] + 2; x++) {
@@ -473,4 +564,5 @@ void lb_bounce_back() {
 }
 
 #endif
-} // namespace 
+} // namespace
+
