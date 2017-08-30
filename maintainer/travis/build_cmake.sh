@@ -7,7 +7,6 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # HELPER FUNCTIONS
 
 # output value of env variables
@@ -123,7 +122,7 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
-cmd "cmake ${cmake_params} ${srcdir}" || exit $?
+cmd "cmake $cmake_params $srcdir" || exit 1
 end "CONFIGURE"
 
 # BUILD
