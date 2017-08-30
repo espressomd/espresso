@@ -1,5 +1,5 @@
 from .script_interface import ScriptInterfaceHelper
-from enum import IntEnum
+from enum import Enum
 from .utils import handle_errors
 from .interactions import BondedInteraction,BondedInteractions
 
@@ -86,7 +86,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         raise Exception("Mode not hanled: "+mode.__str__())
             
             
-class CollisionMode(IntEnum):
+class CollisionMode(Enum):
     """Modes for the collision detection /; dynamic binding features."""
     off = 0
     bind_centers = 2
