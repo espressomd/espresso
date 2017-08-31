@@ -27,6 +27,7 @@
     the file \ref topology.hpp.
 */
 
+#include "PartCfg.hpp"
 #include "topology.hpp"
 
 /** Using the topology information stored in \ref topology::topology
@@ -41,10 +42,10 @@ system coordinates that is applied prior to folding: This is used for
 visualization purposes.
 
 */
-int analyze_fold_molecules(float *coord, double shift[3]);
+int analyze_fold_molecules(PartCfg &partCfg, float *coord, double shift[3]);
 
 /* calculate the center of mass of a molecule */
-void calc_mol_center_of_mass(Molecule mol, double com[3]);
+void calc_mol_center_of_mass(PartCfg &partCfg, Molecule mol, double com[3]);
 
 /* calculate the center of mass of a molecule as above but uses mass of the particles*/
 void mol_center_of_mass_(Molecule mol, double com[3]);

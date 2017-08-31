@@ -153,20 +153,21 @@ static int failcounter=0;
 /*
  * set lattice switch on C-level
 */
-int lb_set_lattice_switch(int py_switch){
-
-  if(py_switch == 1){
+int lb_set_lattice_switch(int py_switch) {
+  if (py_switch == 1) {
 #ifdef LB
-    if( !(lattice_switch & LATTICE_LB_GPU) ) 
+    if (!(lattice_switch & LATTICE_LB_GPU))
       lattice_switch = lattice_switch | LATTICE_LB;
-      return 0;
-#endif
-#ifdef LB_GPU
-  }else if(py_switch == 2){
-    lattice_switch = lattice_switch | LATTICE_LB_GPU;
+    mpi_bcast_lb_params(LBPAR_LATTICE_SWITCH, lattice_switch);
     return 0;
 #endif
-  }else{
+#ifdef LB_GPU
+  } else if (py_switch == 2) {
+    lattice_switch = lattice_switch | LATTICE_LB_GPU;
+    mpi_bcast_lb_params(LBPAR_LATTICE_SWITCH, lattice_switch);
+    return 0;
+#endif
+  } else {
     return 1;
   }
 }

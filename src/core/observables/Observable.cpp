@@ -21,6 +21,7 @@
 #include <fstream>
 #include "Observable.hpp"
 #include "integrate.hpp"
+#include "partCfg_global.hpp"
 
 namespace Observables {
 
@@ -28,11 +29,11 @@ Observable::Observable()
     : last_value(n_values()), n(), last_update(0), m_ofile(), m_filename(),
       m_binary(false) {}
 
-int Observable::calculate() {
+  int Observable::calculate() {
   // Clear last value
   last_value.assign(n_values(), 0.0);
 
-  int temp = actual_calculate();
+  int temp = actual_calculate(partCfg());
   last_update = sim_time;
   return temp;
 }

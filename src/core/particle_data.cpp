@@ -36,7 +36,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
 #include "utils/make_unique.hpp"
@@ -44,6 +44,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include "partCfg_global.hpp"
 
 /************************************************
  * defines
@@ -100,10 +101,7 @@ void auto_exclusion(int distance);
 
 /** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) {
-  part->bl.resize(0);
-#ifdef EXCLUSIONS
-  part->el.resize(0);
-#endif
+  part->~Particle();
 }
 
 /************************************************
@@ -205,24 +203,14 @@ Particle *got_particle(ParticleList *l, int id) {
   return &(l->part[i]);
 }
 
-Particle *append_unindexed_particle(ParticleList *l, Particle *part) {
-  Particle *p;
-
+void append_unindexed_particle(ParticleList *l, Particle &&part) {
   realloc_particlelist(l, ++l->n);
-  p = &l->part[l->n - 1];
-
-  memmove(p, part, sizeof(Particle));
-  return p;
+  new(&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
-Particle *append_indexed_particle(ParticleList *l, Particle *part) {
-  int re;
-  Particle *p;
-
-  re = realloc_particlelist(l, ++l->n);
-  p = &l->part[l->n - 1];
-
-  memmove(p, part, sizeof(Particle));
+Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
+  auto const re = realloc_particlelist(l, ++l->n);
+  auto p = new(&(l->part[l->n - 1])) Particle(std::move(part));
 
   if (re)
     update_local_particles(l);
@@ -232,15 +220,16 @@ Particle *append_indexed_particle(ParticleList *l, Particle *part) {
 }
 
 Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  Particle *dst, *src, *end;
-
   realloc_particlelist(dl, ++dl->n);
-  dst = &dl->part[dl->n - 1];
-  src = &sl->part[i];
-  end = &sl->part[sl->n - 1];
-  memmove(dst, src, sizeof(Particle));
-  if (src != end)
-    memmove(src, end, sizeof(Particle));
+  auto dst = &dl->part[dl->n - 1];
+  auto src = &sl->part[i];
+  auto end = &sl->part[sl->n - 1];
+
+  new(dst) Particle(std::move(*src));
+  if (src != end) {
+    new(src) Particle(std::move(*end));
+  }
+
   sl->n -= 1;
   realloc_particlelist(sl, sl->n);
   return dst;
@@ -252,28 +241,18 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
 
-  memmove(dst, src, sizeof(Particle));
+  new(dst) Particle(std::move(*src));
   if (re) {
-    // fprintf(stderr, "%d: m_i_p: update destination list after
-    // realloc\n",this_node);
     update_local_particles(dl);
   } else {
-    // fprintf(stderr, "%d: m_i_p: update loc_part entry for moved particle (id
-    // %d)\n",this_node,dst->p.identity);
     local_particles[dst->p.identity] = dst;
   }
   if (src != end) {
-    // fprintf(stderr, "%d: m_i_p: copy end particle in source list (id
-    // %d)\n",this_node,end->p.identity);
-    memmove(src, end, sizeof(Particle));
+    new(src) Particle(std::move(*end));
   }
   if (realloc_particlelist(sl, --sl->n)) {
-    // fprintf(stderr, "%d: m_i_p: update source list after
-    // realloc\n",this_node);
     update_local_particles(sl);
   } else if (src != end) {
-    // fprintf(stderr, "%d: m_i_p: update loc_part entry for end particle (id
-    // %d)\n",this_node,src->p.identity);
     local_particles[src->p.identity] = src;
   }
   return dst;
@@ -395,7 +374,7 @@ int set_particle_solvation(int part, double *solvation) {
 
 #endif
 
-#ifdef MASS
+#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
 int set_particle_mass(int part, double mass) {
   int pnode;
   if (!particle_node)
@@ -989,7 +968,8 @@ void local_remove_particle(int part) {
 
   if (&pl->part[pl->n - 1] != p) {
     /* move last particle to free position */
-    memmove(p, &pl->part[pl->n - 1], sizeof(Particle));
+    *p = pl->part[pl->n - 1];
+
     /* update the local_particles array for the moved particle */
     local_particles[p->p.identity] = p;
   }
@@ -1057,6 +1037,7 @@ void local_remove_all_particles() {
   n_part = 0;
   max_seen_particle = -1;
   std::fill(local_particles, local_particles + max_local_particles, nullptr);
+
   for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
@@ -1064,7 +1045,7 @@ void local_remove_all_particles() {
     p = cell->part;
     np = cell->n;
     for (i = 0; i < np; i++)
-      realloc_intlist(&p[i].bl, 0);
+      free_particle(&p[i]);
     cell->n = 0;
   }
 }
@@ -1259,44 +1240,16 @@ void try_delete_exclusion(Particle *part, int part2) {
 }
 #endif
 
-void send_particles(ParticleList *particles, int node) {
-  int pc;
-  /* Dynamic data, bonds and exclusions */
-  IntList local_dyn;
+#include "utils/serialization/ParticleList.hpp"
 
+void send_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
                      particles->n, node));
 
-  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart);
-  MPI_Send(particles->part, particles->n * sizeof(Particle), MPI_BYTE, node,
-           REQ_SNDRCV_PART, comm_cart);
-
-  init_intlist(&local_dyn);
-  for (pc = 0; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    int size = local_dyn.n + p->bl.n;
-#ifdef EXCLUSIONS
-    size += p->el.n;
-#endif
-    realloc_intlist(&local_dyn, size);
-    memmove(local_dyn.e + local_dyn.n, p->bl.e, p->bl.n * sizeof(int));
-    local_dyn.n += p->bl.n;
-#ifdef EXCLUSIONS
-    memmove(local_dyn.e + local_dyn.n, p->el.e, p->el.n * sizeof(int));
-    local_dyn.n += p->el.n;
-#endif
-  }
-
-  PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n",
-                     this_node, local_dyn.n));
-  if (local_dyn.n > 0) {
-    MPI_Send(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
-             REQ_SNDRCV_PART, comm_cart);
-    realloc_intlist(&local_dyn, 0);
-  }
+  comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
   /* remove particles from this nodes local list and free data */
-  for (pc = 0; pc < particles->n; pc++) {
+  for (int pc = 0; pc < particles->n; pc++) {
     local_particles[particles->part[pc].p.identity] = NULL;
     free_particle(&particles->part[pc]);
   }
@@ -1305,70 +1258,11 @@ void send_particles(ParticleList *particles, int node) {
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  int transfer = 0, read, pc;
-  IntList local_dyn;
-
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
-  MPI_Recv(&transfer, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart,
-           MPI_STATUS_IGNORE);
-
-  PART_TRACE(
-      fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
-
-  realloc_particlelist(particles, particles->n + transfer);
-  MPI_Recv(&particles->part[particles->n], transfer * sizeof(Particle),
-           MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
-  particles->n += transfer;
-
-  init_intlist(&local_dyn);
-  for (pc = particles->n - transfer; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    local_dyn.n += p->bl.n;
-#ifdef EXCLUSIONS
-    local_dyn.n += p->el.n;
-#endif
-
-    PART_TRACE(fprintf(stderr, "%d: recv_particles got particle %d\n",
-                       this_node, p->p.identity));
-#ifdef ADDITIONAL_CHECKS
-    if (local_particles[p->p.identity] != NULL) {
-      fprintf(stderr, "%d: transmitted particle %d is already here...\n",
-              this_node, p->p.identity);
-      errexit();
-    }
-#endif
-  }
+  comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
-
-  PART_TRACE(fprintf(stderr, "%d: recv_particles expecting %d bond ints\n",
-                     this_node, local_dyn.n));
-  if (local_dyn.n > 0) {
-    alloc_intlist(&local_dyn, local_dyn.n);
-    MPI_Recv(local_dyn.e, local_dyn.n * sizeof(int), MPI_BYTE, node,
-             REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
-  }
-  read = 0;
-  for (pc = particles->n - transfer; pc < particles->n; pc++) {
-    Particle *p = &particles->part[pc];
-    if (p->bl.n > 0) {
-      alloc_intlist(&p->bl, p->bl.n);
-      memmove(p->bl.e, &local_dyn.e[read], p->bl.n * sizeof(int));
-      read += p->bl.n;
-    } else
-      p->bl.e = NULL;
-#ifdef EXCLUSIONS
-    if (p->el.n > 0) {
-      alloc_intlist(&p->el, p->el.n);
-      memmove(p->el.e, &local_dyn.e[read], p->el.n * sizeof(int));
-      read += p->el.n;
-    } else
-      p->el.e = NULL;
-#endif
-  }
-  if (local_dyn.n > 0)
-    realloc_intlist(&local_dyn, 0);
 }
 
 void add_partner(IntList *il, int i, int j, int distance) {
@@ -1416,7 +1310,7 @@ void auto_exclusion(int distance) {
     init_intlist(&partners[p]);
 
   /* determine initial connectivity */
-  for (auto const &part1 : partCfg) {
+  for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
       ia_params = &bonded_ia_params[part1.bl.e[i++]];
@@ -1539,7 +1433,7 @@ int init_type_array(int type) {
   int t_c = 0; // index
   type_array[Index.type[type]].id_list =
       (int *)Utils::malloc(sizeof(int) * n_part);
-  for (auto const &p : partCfg) {
+  for (auto const &p : partCfg()) {
     if (p.p.type == type)
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
   }
@@ -1622,7 +1516,7 @@ int remove_id_type_array(int part_id, int type) {
 
 int update_particle_array(int type) {
   int t_c = 0;
-  for (auto const &p : partCfg) {
+  for (auto const &p : partCfg()) {
     if (p.p.type == type) {
       type_array[Index.type[type]].id_list[t_c++] = p.p.identity;
     }

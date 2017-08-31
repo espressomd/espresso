@@ -252,16 +252,8 @@ static void prepare_ghost_cell(Cell *cell, int size)
     int np   = cell->n;
     Particle *part = cell->part;
     for (int p = 0; p < np; p++) {
-      Particle *pt = &part[p];
-      // no bonds or exclusions
-      pt->bl.e = 0;
-      pt->bl.n = 0;
-      pt->bl.max = 0;
-#ifdef EXCLUSIONS
-      pt->el.e = 0;
-      pt->el.n = 0;
-      pt->el.max = 0;
-#endif
+      Particle *pt = new(&part[p]) Particle();
+
       //init ghost variable
       pt->l.ghost=1;
     }
