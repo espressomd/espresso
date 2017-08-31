@@ -30,7 +30,6 @@
 #include "statistics_cluster.hpp"
 #include "grid.hpp"
 #include "interaction_data.hpp"
-#include "partCfg.hpp"
 
 /** NULL terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;
@@ -53,7 +52,7 @@ int    pearl_treshold;
 /*@{*/
 
 /* perform step 1 of necklace cluster algorithm */
-void cluster_init(Particle *part, int size) {
+void cluster_init(PartCfg & partCfg, Particle *part, int size) {
   int i;
 
   element       = (ClusterElement *)Utils::malloc(size*sizeof(ClusterElement));
@@ -233,11 +232,11 @@ int cluster_join_to_substructures()
     \param   np      Number of particles
     \return          Number of pearls in necklace structure
 */
-int analyze_necklace(Particle *part, int np) {
+int analyze_necklace(PartCfg & partCfg, Particle *part, int np) {
   int n_pearls;
   // fprintf(stderr," analyze_necklace:\n");
   /* initialize: step 1 in necklace cluster analyzation.*/
-  cluster_init(part,np);
+  cluster_init(partCfg, part,np);
   /* perform step 2-4 in necklace cluster analyzation.*/
   cluster_joincicle(part);
   /* perform step 5-7 in necklace cluster analyzation.*/
@@ -250,7 +249,7 @@ int analyze_necklace(Particle *part, int np) {
 
 /** test if a mesh point belongs to free (return -1) or occupied (return -2) volume.
 Needs feature LENNARD_JONES compiled in. */
-int test_mesh_elements(double pos[3], int probe_part_type) 
+int test_mesh_elements(PartCfg & partCfg, double pos[3], int probe_part_type) 
 {
 #ifdef LENNARD_JONES
   int i;
@@ -272,7 +271,7 @@ int test_mesh_elements(double pos[3], int probe_part_type)
 /** Test which mesh points belong to the free and occupied volume. 
     Free volume is marked by -1 and occupied volume by -2.
     Needs feature LENNARD_JONES compiled in. */
-void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type)
+void create_free_volume_grid(PartCfg & partCfg, IntList mesh, int dim[3], int probe_part_type)
 {
   int i,ix=0,iy=0,iz=0;
   double pos[3];
@@ -286,7 +285,7 @@ void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type)
     pos[1] = (iy+0.5)*mesh_c[1];
     pos[2] = (iz+0.5)*mesh_c[2];
 
-    mesh.e[i] = test_mesh_elements(pos, probe_part_type);
+    mesh.e[i] = test_mesh_elements(partCfg, pos, probe_part_type);
 
     ix++; 
     if ( ix >= dim[0]) { ix = ix - dim[0]; iy++; }

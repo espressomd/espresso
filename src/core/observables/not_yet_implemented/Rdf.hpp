@@ -1,4 +1,4 @@
-int ObservableRdf::actual_calculate() {
+int ObservableRdf::actual_calculate(PartCfg & partCfg) {
   if (!sortPartCfg()) {
     return 1;
   }

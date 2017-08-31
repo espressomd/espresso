@@ -1,4 +1,4 @@
-int ObservableComPosition::actual_calculate() {
+int ObservableComPosition::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;

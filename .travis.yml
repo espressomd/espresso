@@ -17,11 +17,19 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset image=debian
+      env: myconfig=maxset image=debian make_check=false
     - os: linux
       sudo: required
       services: docker
       env: myconfig=maxset image=ubuntu-cuda make_check=false
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=opensuse make_check=false
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset image=centos make_check=false
     - os: osx
       osx_image: xcode8
       env: myconfig=maxset
@@ -40,8 +48,10 @@ matrix:
       sudo: required
       services: docker
       env: myconfig=nocheck-maxset make_check=false
-
+    - os: linux
+      sudo: required
+      services: docker
+      env: myconfig=maxset with_coverage=true
 
 script:
         - maintainer/travis/build_docker.sh
- 
