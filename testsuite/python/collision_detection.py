@@ -31,13 +31,14 @@ class CollisionDetection(ut.TestCase):
 
     s = espressomd.System()
 
-    H = HarmonicBond(k=1,r_0=0.1)
-    H2 = HarmonicBond(k=1,r_0=0)
+    H = HarmonicBond(k=5000,r_0=0.1)
+    H2 = HarmonicBond(k=25000,r_0=0.02)
     s.bonded_inter.add(H)
     s.bonded_inter.add(H2)
-    s.time_step=0.01
+    s.time_step=0.001
     s.cell_system.skin=0
     s.min_global_cut=0.2
+
 
     def test_00_interface_and_defaults(self):
         # Is it off by default
@@ -55,7 +56,7 @@ class CollisionDetection(ut.TestCase):
         self.s.collision_detection.set_params(mode="off")
         self.assertEquals(self.s.collision_detection.mode,"off")
 
-    def atest_bind_centers(self):
+    def test_bind_centers(self):
         # Check that it leaves particles alone, wehn off
         self.s.collision_detection.set_params(mode="off")
         
@@ -103,6 +104,14 @@ class CollisionDetection(ut.TestCase):
         self.s.integrator.run(0,recalc_forces=True)
         self.verify_state_after_bind_at_poc()
 
+        # Check that nothing explodes, when the particles are moved.
+        # In particular for parallel simulations
+        self.s.thermostat.set_langevin(kT=0,gamma=0.01)
+        self.s.part[:].v=0.05,0.01,0.15
+        self.s.integrator.run(3000)
+        self.verify_state_after_bind_at_poc()
+
+
     def verify_state_after_bind_at_poc(self):
         bond0=((self.s.bonded_inter[0],1),)
         bond1=((self.s.bonded_inter[0],0),)
@@ -143,11 +152,11 @@ class CollisionDetection(ut.TestCase):
           else:
             dist_centers=self.s.part[0].pos-self.s.part[1].pos
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
-          self.assertTrue(np.sqrt(np.sum((p.pos-expected_pos)**2))<=1E-5)
+          self.assertLess(np.sqrt(np.sum((p.pos-expected_pos)**2)),1E-5)
     
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
     #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
-    def atest_bind_at_point_of_collision(self):
+    def test_bind_at_point_of_collision(self):
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)))
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0.55,0,0)))
