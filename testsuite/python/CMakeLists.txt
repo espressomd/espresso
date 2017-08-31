@@ -61,7 +61,7 @@ python_test(FILE ek_eof_one_species_x_nonlinear.py MAX_NUM_PROC 1)
 python_test(FILE ek_eof_one_species_y_nonlinear.py MAX_NUM_PROC 1)
 python_test(FILE ek_eof_one_species_z_nonlinear.py MAX_NUM_PROC 1)
 python_test(FILE exclusions.py MAX_NUM_PROC 4)
-python_test(FILE langevin_thermostat.py MAX_NUM_RPOC 2)
+python_test(FILE langevin_thermostat.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
