@@ -1,4 +1,4 @@
-int ObservablePersistenceLength::actual_calculate() {
+int ObservablePersistenceLength::actual_calculate(PartCfg & partCfg) {
     if (!sortPartCfg()) {
       ostringstream errtxt; // = runtimeError(128);
       errtxt << "{094 could not sort partCfg}";

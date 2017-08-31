@@ -1,4 +1,4 @@
-int ObservableStructureFactor::actual_calculate() {
+int ObservableStructureFactor::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
   int l;

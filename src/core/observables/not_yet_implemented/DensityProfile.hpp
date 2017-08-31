@@ -1,4 +1,4 @@
-int ObservableDensityProfile::actual_calculate() {
+int ObservableDensityProfile::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   int binx, biny, binz;
   double ppos[3];

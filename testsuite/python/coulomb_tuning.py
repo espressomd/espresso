@@ -24,13 +24,13 @@ import espressomd
 import numpy as np
 from espressomd.electrostatics import *
 from espressomd import scafacos
+import pickle
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class CoulombCloudWallTune(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
     S = espressomd.System()
-    forces = {}
     tolerance = 1E-3
 
     def setUp(self):
@@ -42,17 +42,17 @@ class CoulombCloudWallTune(ut.TestCase):
         if len(self.S.actors):
             del self.S.actors[0]
         self.S.part.clear()
-        data = np.genfromtxt("data/coulomb_cloud_wall_system.data")
 
+        data = np.load('data/coulomb_tuning_system.npz')
+
+        self.forces = []
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        for particle in data:
-            id = particle[0]
-            pos = particle[1:4]
-            q = particle[4]
-            f = particle[5:]
-            self.S.part.add(id=int(id), pos=pos, q=q)
-            self.forces[id] = f
+        for id in range(len(data['pos'])):
+            pos = data['pos'][id]
+            q = data['charges'][id]
+            self.forces.append(data['forces'][id])
+            self.S.part.add(id=id, pos=pos, q=q)
 
     def compare(self, method_name):
         # Compare forces now in the system to stored ones

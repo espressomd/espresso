@@ -83,6 +83,15 @@ extern boost::mpi::communicator comm_cart;
 #define SOME_TAG 42
 #endif
 
+namespace Communication {
+  /**
+   * @brief Returns a reference to the global callback class instance.
+   *
+   */
+  MpiCallbacks &mpiCallbacks();
+  
+}
+
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on
@@ -97,16 +106,13 @@ typedef void(SlaveCallback)(int node, int param);
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc = NULL, char ***argv = NULL);
+void mpi_init();
 
 /* Call a slave function. */
 void mpi_call(SlaveCallback cb, int node, int param);
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/** Stop Espresso, all slave nodes exit. */
-void mpi_stop();
 
 /** Abort Espresso using MPI_Abort. */
 void mpi_abort();
@@ -543,7 +549,7 @@ int mpi_sync_topo_part_info(void);
  * @param field References the parameter field to be broadcasted. The references
  * are defined in \ref lb.hpp "lb.hpp"
  */
-void mpi_bcast_lb_params(int field);
+void mpi_bcast_lb_params(int field, int value = -1);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA
  */

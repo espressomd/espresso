@@ -398,7 +398,7 @@ void layered_topology_init(CellPList *old) {
          somewhere for the moment */
       if (nc == NULL)
         nc = local_cells.cell[0];
-      append_unindexed_particle(nc, &part[p]);
+      append_unindexed_particle(nc, std::move(part[p]));
     }
   }
   for (c = 1; c <= n_layers; c++)
