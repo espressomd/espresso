@@ -142,7 +142,7 @@ void force_calc()
 espressoSystemInterface.update();
 
 #ifdef COLLISION_DETECTION
-  prepare_collision_queue();
+  prepare_local_collision_queue();
 #endif
 
 #ifdef LB_GPU

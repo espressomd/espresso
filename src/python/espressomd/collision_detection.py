@@ -1,5 +1,4 @@
 from .script_interface import ScriptInterfaceHelper
-from enum import Enum
 from .utils import handle_errors
 from .interactions import BondedInteraction,BondedInteractions
 
@@ -13,7 +12,7 @@ class CollisionDetection(ScriptInterfaceHelper):
     def __init__(self,*args,**kwargs):
         # If no mode is specified at construction, use off.
         if "mode" not in kwargs:
-            kwargs["mode"]=CollisionMode.off
+            kwargs["mode"]="off"
         super(type(self),self).__init__(*args,**kwargs)
         
 
@@ -34,9 +33,7 @@ class CollisionDetection(ScriptInterfaceHelper):
             raise Exception("Parameter set does not match mode. ",kwargs["mode"],"requries ",self._params_for_mode(kwargs["mode"]))
 
         # Mode
-        if not isinstance(kwargs["mode"],CollisionMode):
-            raise ValueError("mode needs to be an instance of CollisionMode. Got"+kwargs["mode"].__str__())
-        kwargs["mode"]=int(kwargs["mode"])
+        kwargs["mode"]=self._int_mode[kwargs["mode"]]
 
         # Convert bonds to bond ids
         for name in [ "bond_centers","bond_vs","bond_three_particle_binding"]:
@@ -47,8 +44,8 @@ class CollisionDetection(ScriptInterfaceHelper):
         self.validate()
         handle_errors("Validation of collision detection failed")
 
-    def _get_parameter(self,name):
-        res=super(type(self),self)._get_parameter(name)
+    def get_parameter(self,name):
+        res=super(type(self),self).get_parameter(name)
         return self._convert_param(name,res)
     
     def get_params(self):
@@ -62,7 +59,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         # Convert mode parameter into python enum
         res=value
         if name == "mode":
-            res=CollisionMode(value)
+            res=self._str_mode(value)
         
         # Convert bond parameters from bond ids to into BondedInteractions
         if name in [ "bond_centers","bond_vs","bond_three_particle_binding"]:
@@ -73,25 +70,31 @@ class CollisionDetection(ScriptInterfaceHelper):
         return res
     
     def _params_for_mode(self,mode):
-        if mode == CollisionMode.off:
+        if mode == "off":
             return ("mode",)
-        if mode == CollisionMode.bind_centers:
+        if mode == "bind_centers":
             return ("mode","bond_centers","distance")
-        if mode == CollisionMode.bind_at_point_of_collision:
+        if mode == "bind_at_point_of_collision": 
             return ("mode","bond_centers","bond_vs","part_type_vs","distance","vs_placement")
-        if mode == CollisionMode.glue_to_surface:
+        if mode == "glue_to_surface":
             return ("mode","bond_centers","bond_vs","part_type_vs","part_type_to_be_glued","part_type_to_attach_vs_to","part_type_after_glueing","distance","distance_glued_particle_to_vs")
-        if mode == CollisionMode.bind_three_particles:
+        if mode == "bind_three_particles":
             return ("mode","bond_centers","distance","bond_three_particles","three_particle_binding_angle_resolution")
         raise Exception("Mode not hanled: "+mode.__str__())
             
             
-class CollisionMode(Enum):
-    """Modes for the collision detection /; dynamic binding features."""
-    off = 0
-    bind_centers = 2
-    bind_at_point_of_collision = 4
-    glue_to_surface = 8
-    bind_three_particles = 16
+    
+    _int_mode={
+        "off":0,
+        "bind_centers":2,
+        "bind_at_point_of_collision":4,
+        "glue_to_surface":8,
+        "bind_three_particles":16}
+    
+    def _str_mode(self,int_mode):
+        for key in self._int_mode:
+            if self._int_mode[key] == int_mode:
+                return key
+        raise Exception("Unknown integer collision mode %d" % int_mode)
     
     

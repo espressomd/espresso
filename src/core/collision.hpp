@@ -93,13 +93,67 @@ extern Collision_parameters collision_params;
 */
 void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part);
 
-void prepare_collision_queue();
+void prepare_local_collision_queue();
 
 /// Handle the collisions recorded in the queue
 void handle_collisions();
 
 /** @brief Validates collision parameters and creates particle types if needed */
 bool validate_collision_parameters();
+
+/** @brief add the collision between the given particle ids to the collision queue */
+void queue_collision(const int part1,const int part2);
+
+/** @brief Check additional criteria for the glue_to_surface collision mode */
+inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p2) {
+    return  (
+       ((p1->p.type==collision_params.part_type_to_be_glued)
+       && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+      ||
+       ((p2->p.type==collision_params.part_type_to_be_glued)
+       && (p1->p.type ==collision_params.part_type_to_attach_vs_to)));
+}
+
+/** @brief Detect (and queue) a collision between the given particles. */
+inline void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)
+{
+  if (dist_betw_part > collision_params.distance)
+    return;
+
+  // If we are in the glue to surface mode, check that the particles
+  // are of the right type
+  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+    if (!glue_to_surface_criterion(p1,p2))
+       return;
+   
+
+#ifdef VIRTUAL_SITES_RELATIVE
+  // Ignore virtual particles
+  if ((p1->p.isVirtual) || (p2->p.isVirtual))
+    return;
+#endif
+
+
+  // Check, if there's already a bond between the particles
+  if (bond_exists(p1,p2, collision_params.bond_centers))
+    return;
+  
+  if (bond_exists(p2,p1, collision_params.bond_centers))
+    return;
+
+
+
+  /* If we're still here, there is no previous bond between the particles,
+     we have a new collision */
+
+  
+
+  // do not create bond between ghost particles
+  if (p1->l.ghost && p2->l.ghost) {
+     return;
+  }
+  queue_collision(p1->p.identity,p2->p.identity);
+}
 
 #endif
 

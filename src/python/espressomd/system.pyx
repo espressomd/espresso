@@ -47,7 +47,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .ekboundaries import EKBoundaries
 
 IF COLLISION_DETECTION == 1:
-    from .collision_detection import CollisionDetection,CollisionMode
+    from .collision_detection import CollisionDetection
 
 import sys
 import random  # for true random numbers from os.urandom()
