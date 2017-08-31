@@ -2,6 +2,11 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
+ci_env=""
+if [[ ! -z ${with_coverage+x} ]]; then 
+  ci_env=`bash <(curl -s https://codecov.io/env)`
+fi
+
 cat > $ENV_FILE <<EOF
 insource=$insource
 cmake_params=$cmake_params
@@ -18,8 +23,8 @@ if [ -z "$image" ]; then
 fi
 
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	image=espressomd/buildenv-espresso-$image:python
-	docker run -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "git clone --recursive /travis && cd travis && maintainer/travis/build_cmake.sh"
+	image=espressomd/espresso-$image:latest
+	docker run $ci_env -u espresso --env-file $ENV_FILE -v ${PWD}:/travis -it $image /bin/bash -c "cp -r /travis .; cd travis && maintainer/travis/build_cmake.sh" || exit 1
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install cmake || brew upgrade cmake
 	case "$image" in
@@ -45,10 +50,5 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	brew install homebrew/science/hdf5 --with-mpi --without-cxx
 
 	export TMPDIR=/tmp
-	maintainer/travis/build_cmake.sh
-fi
-
-if [ $with_coverage = "true" ]; then
-    cd ${PWD}
-    curl -s https://codecov.io/bash | bash -
+	maintainer/travis/build_cmake.sh || exit 1
 fi

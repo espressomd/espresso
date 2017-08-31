@@ -1,4 +1,4 @@
-int ObservableDipoleMoment::actual_calculate() {
+int ObservableDipoleMoment::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   double charge;
   double j[3] = {0. , 0., 0. } ;

@@ -20,7 +20,6 @@
 */
 
 #include "h5md_core.hpp"
-#include "partCfg.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -359,7 +358,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::Write(int write_dat) {
+  void File::Write(int write_dat, PartCfg & partCfg) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -405,8 +404,6 @@ void File::Write(int write_dat) {
       }
     }
   } else {
-    /* Get the number of particles on all other nodes. */
-
     /* loop over all local cells. */
     Cell *local_cell;
     int particle_index = 0;
