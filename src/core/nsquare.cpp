@@ -147,7 +147,7 @@ void nsq_topology_init(CellPList *old)
     part = old->cell[c]->part;
     np   = old->cell[c]->n;
     for (p = 0; p < np; p++)
-      append_unindexed_particle(local, &part[p]);
+      append_unindexed_particle(local, std::move(part[p]));
   }
   update_local_particles(local);
 }
@@ -214,7 +214,7 @@ void nsq_balance_particles(int global_flag)
       init_particlelist(&send_buf);
       realloc_particlelist(&send_buf, send_buf.n = transfer);
       for (i = 0; i < transfer; i++) {
-	memcpy(&send_buf.part[i], &local->part[--local->n], sizeof(Particle));
+        send_buf.part[i] = std::move(local->part[--local->n]);
       }
       realloc_particlelist(local, local->n);
       update_local_particles(local);

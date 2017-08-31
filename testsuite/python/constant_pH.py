@@ -46,7 +46,7 @@ class ReactionEnsembleTest(ut.TestCase):
     K_HA_diss_apparent=10**(-pKa); #could be in this test for example anywhere in the range 0.000001 ... 9
     box_l=(N0/c0)**(1.0/3.0)
     system = espressomd.System()
-    system.seed=np.random.randint(0, 2**31-1)
+    system.seed=system.cell_system.get_state()['n_nodes'] * [np.random.randint(0, 2**31-1)]
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01

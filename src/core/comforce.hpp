@@ -28,13 +28,14 @@
 #include "config.hpp"
 
 #ifdef COMFORCE
+#include "PartCfg.hpp"
 
 ///
 int comforce_set_params(int part_type_a, int part_type_b, int flag, int dir,
                         double force, double fratio);
 
 /// calculate the center of mass forces
-void calc_comforce();
+void calc_comforce(PartCfg &);
 
 #endif
 

@@ -2851,7 +2851,7 @@ void lb_set_ek_pointer(EK_parameters* pointeradress) {
 
 unsigned int ek_calculate_boundary_mass( )
 {
-  int* bound_array = (int*) Utils::malloc( lbpar_gpu.number_of_nodes*sizeof(unsigned int) );
+  unsigned int* bound_array = (unsigned int*) Utils::malloc( lbpar_gpu.number_of_nodes*sizeof(unsigned int) );
 
   lb_get_boundary_flags_GPU(bound_array);
 

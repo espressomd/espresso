@@ -147,6 +147,8 @@ void define_rotation_matrix(Particle const *p, double A[9])
     as well as Wd vector which is the angular acceleration of this particle */
 void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
+  double S1;
+
   /* calculate the first derivative of the quaternion */
   Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
                  p->r.quat[3] * p->m.omega[2]);

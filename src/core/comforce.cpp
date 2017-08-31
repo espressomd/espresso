@@ -53,7 +53,7 @@ int comforce_set_params(int part_type_a, int part_type_b, int flag, int dir,
   return 0;
 }
 
-void calc_comforce() {
+void calc_comforce(PartCfg &partCfg) {
   IA_parameters *ia_params;
   std::vector<double> com0(3), com1(3);
   double MofImatrix[9], diff[3];
@@ -63,12 +63,12 @@ void calc_comforce() {
     for (int t1 = t0 + 1; t1 < n_particle_types; t1++) {
       ia_params = get_ia_param(t0, t1);
       if (ia_params->COMFORCE_flag == 1) {
-        com0 = centerofmass(t0);
-        com1 = centerofmass(t1);
+        com0 = centerofmass(partCfg, t0);
+        com1 = centerofmass(partCfg, t1);
         for (int i = 0; i < 3; i++) {
           diff[i] = com1[i] - com0[i];
         }
-        momentofinertiamatrix(t0, MofImatrix);
+        momentofinertiamatrix(partCfg, t0, MofImatrix);
         calc_eigenvalues_3x3(MofImatrix, eva);
         /* perpendicular force */
         if (ia_params->COMFORCE_dir == 1) {

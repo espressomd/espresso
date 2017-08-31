@@ -13,8 +13,10 @@ class ParticleSliceTest(ut.TestCase):
 		super(ParticleSliceTest, self).__init__(*args, **kwargs)
 		self.system.part.clear()
 		self.system.part.add(pos=[0,0,0])
+		self.system.part.add(pos=[0,0,1])
+
 		if has_features(["EXTERNAL_FORCES"]):
-			self.system.part.add(pos=[0,0,1], fix=self.state[1])
+			self.system.part[1].fix = self.state[1]
 			self.assertTrue( np.array_equal(self.system.part[0].fix, self.state[0]) )
 			self.assertTrue( np.array_equal(self.system.part[1].fix, self.state[1]) )
 			self.assertTrue( np.array_equal(self.system.part[:].fix, self.state) )
