@@ -1259,7 +1259,17 @@ void send_particles(ParticleList *particles, int node) {
 void recv_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
-  comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
+  ParticleList buf;
+  comm_cart.recv(node, REQ_SNDRCV_PART, buf);
+
+  auto const new_size = particles->n + buf.n;
+  realloc_particlelist(particles, new_size);
+
+  for (int i = 0; i < buf.n; i++) {
+    new (&(particles->part[particles->n++])) Particle(std::move(buf.part[i]));
+  }
+
+  particles->n = new_size;
 
   update_local_particles(particles);
 }
