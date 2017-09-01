@@ -136,6 +136,8 @@ cdef class CellSystem(object):
 
         return s
 
+    def resort(self, global_flag = 1):
+        return mpi_resort_particles(global_flag)
 
     property max_num_cells:
         """
