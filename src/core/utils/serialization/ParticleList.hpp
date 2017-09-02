@@ -10,7 +10,7 @@ void load(Archive &ar, ParticleList &pl,
           const unsigned int /* version */) {
   int size;
   ar >> size;
-  init_particlelist(&pl);
+
   realloc_particlelist(&pl, pl.n = size);
   for (int i = 0; i < size; i++) {
     ar >> pl.part[i];
@@ -21,6 +21,7 @@ template <class Archive>
 void save(Archive &ar, ParticleList const &pl,
           const unsigned int /* version */) {
   ar << pl.n;
+
   for (int i = 0; i < pl.n; i++) {
     ar << pl.part[i];
   }
