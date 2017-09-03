@@ -906,8 +906,8 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. The particles are
-    APPENDED to the list, so it has to be a valid one */
+    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS

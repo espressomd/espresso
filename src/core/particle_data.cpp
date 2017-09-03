@@ -1258,7 +1258,6 @@ void send_particles(ParticleList *particles, int node) {
 
 void recv_particles(ParticleList *particles, int node) {
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
-
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
