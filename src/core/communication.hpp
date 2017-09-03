@@ -60,7 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
-#include "utils/serialization/array.hpp" 
+#include "utils/serialization/array.hpp"
 
 /**************************************************
  * exported variables
@@ -84,12 +84,11 @@ extern boost::mpi::communicator comm_cart;
 #endif
 
 namespace Communication {
-  /**
-   * @brief Returns a reference to the global callback class instance.
-   *
-   */
-  MpiCallbacks &mpiCallbacks();
-  
+/**
+ * @brief Returns a reference to the global callback class instance.
+ *
+ */
+MpiCallbacks &mpiCallbacks();
 }
 
 /**************************************************
@@ -649,6 +648,19 @@ void mpi_thermalize_cpu(int temp);
  *  \param write 1 to write, 0 to read
  */
 void mpi_mpiio(const char *filename, unsigned fields, int write);
+
+/**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between
+ *        neighbors.
+ * @return The number of particles on the nodes after
+ *         the resort.
+ */
+std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 

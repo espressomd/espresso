@@ -195,7 +195,8 @@ static int terminated = 0;
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
   CB(mpi_scafacos_free_slave)                                                  \
-  CB(mpi_mpiio_slave)
+  CB(mpi_mpiio_slave)                                                          \
+  CB(mpi_resort_particles_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2773,4 +2774,20 @@ void mpi_mpiio_slave(int dummy, int flen) {
   else
     mpi_mpiio_common_read(filename, fields);
   delete[] filename;
+}
+
+std::vector<int> mpi_resort_particles(int global_flag) {
+  mpi_call(mpi_resort_particles_slave, global_flag, 0);
+  cells_resort_particles(global_flag);
+
+  std::vector<int> n_parts;
+  boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
+
+  return n_parts;
+}
+
+void mpi_resort_particles_slave(int global_flag, int) {
+  cells_resort_particles(global_flag);
+
+  boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }

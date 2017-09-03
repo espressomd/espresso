@@ -225,7 +225,17 @@ void nsq_balance_particles(int global_flag)
 #endif
     }
     else if (l_node == this_node) {
-      recv_particles(local, s_node);
+      ParticleList buf{};
+
+      recv_particles(&buf, s_node);
+
+      auto const new_size = local->n + buf.n;
+      realloc_particlelist(local, new_size);
+
+      for (int i = 0; i < buf.n; i++) {
+        new (&(local->part[local->n++])) Particle(std::move(buf.part[i]));
+      }
+
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif
