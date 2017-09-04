@@ -36,7 +36,7 @@ class NSquare(ut.TestCase):
         n_part_avg = n_part // n_nodes
 
         for i in range(n_part):
-            self.S.part.add(id=i, pos=np.random.random(3))
+            self.S.part.add(id=i, pos=np.random.random(3), type=1)
 
         part_dist = self.S.cell_system.resort()
 
@@ -46,6 +46,11 @@ class NSquare(ut.TestCase):
         # Check that the parts are evenly distributed
         for node_parts in part_dist:
             self.assertTrue(abs(node_parts - n_part_avg) < 2)
+
+        # Check that we can still access all the particles
+        # This basically checks if part_node and local_particles
+        # is still in a valid state after the particle exchange
+        self.assertTrue(sum(self.S.part[:].type) == n_part)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
