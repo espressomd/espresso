@@ -1757,6 +1757,13 @@ cdef class ParticleList(object):
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
+        if len(np.array(P["pos"]).shape) == 2:
+            return self._place_new_particles(P)
+        else:
+            return self._place_new_particle(P)
+
+    def _place_new_particle(self, P):
+
         # Handling of particle id
         if not "id" in P:
             # Generate particle id
@@ -1764,13 +1771,6 @@ cdef class ParticleList(object):
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
-
-        if len(np.array(P["pos"]).shape) == 2:
-            return self._place_new_particles(P)
-        else:
-            return self._place_new_particle(P)
-
-    def _place_new_particle(self, P):
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be

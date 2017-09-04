@@ -25,6 +25,7 @@
 #ifdef OPEN_MPI
 #include <dlfcn.h>
 #endif
+#include <cassert>
 
 #include "communication.hpp"
 
@@ -1178,8 +1179,11 @@ void mpi_send_bond_slave(int pnode, int part) {
 
 /****************** REQ_GET_PART ************/
 void mpi_recv_part(int pnode, int part, Particle *pdata) {
+  assert(pdata);
+
   /* fetch fixed data */
   if (pnode == this_node) {
+    assert(local_particles[part]);
     *pdata = *local_particles[part];
   } else {
     mpi_call(mpi_recv_part_slave, pnode, part);
@@ -1191,6 +1195,7 @@ void mpi_recv_part_slave(int pnode, int part) {
   if (pnode != this_node)
     return;
 
+  assert(local_particles[part]);
   comm_cart.send(0, SOME_TAG, *local_particles[part]);
 }
 
