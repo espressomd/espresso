@@ -679,12 +679,10 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao,
                        mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1],
                        box_l[2]));
-  int reinit_if = 0, mesh_changed = 0;
-
-  espressoSystemInterface.requestParticleStructGpu();
-
   if (this_node == 0) {
+    espressoSystemInterface.requestParticleStructGpu();
 
+    int reinit_if = 0, mesh_changed = 0;
     p3m_gpu_data.n_part =
         gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 

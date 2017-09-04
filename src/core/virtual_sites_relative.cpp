@@ -295,6 +295,7 @@ int vs_relate_to(int part_num, int relate_to)
       runtimeError(msg);
       return ES_ERROR;
     }
+    set_particle_virtual(part_num,1);
    
    return ES_OK;
 }
