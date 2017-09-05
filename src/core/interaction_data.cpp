@@ -67,6 +67,8 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
+#include "p3m-dipolar.hpp"
+#include "thermostat.hpp"
 
 /****************************************
  * variables

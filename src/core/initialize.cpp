@@ -48,6 +48,7 @@
 #include "mmm1d.hpp"
 #include "mmm2d.hpp"
 #include "nemd.hpp"
+#include "npt.hpp"
 #include "nsquare.hpp"
 #include "observables/Observable.hpp"
 #include "p3m-dipolar.hpp"

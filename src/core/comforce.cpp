@@ -58,9 +58,6 @@ void calc_comforce(PartCfg &partCfg) {
   std::vector<double> com0(3), com1(3);
   double MofImatrix[9], diff[3];
   double vect0[3], vect1[3], eva[3], eve[3], fvect[3];
-  Particle *p;
-  int np;
-  Cell *cell;
 
   for (int t0 = 0; t0 < n_particle_types - 1; t0++) {
     for (int t1 = t0 + 1; t1 < n_particle_types; t1++) {
@@ -96,21 +93,16 @@ void calc_comforce(PartCfg &partCfg) {
         }
 
         /* Now apply the force */
-        for (int c = 0; c < local_cells.n; c++) {
-          cell = local_cells.cell[c];
-          p = cell->part;
-          np = cell->n;
-          for (int i = 0; i < np; i++) {
-            if (p[i].p.type == t0) {
-              for (int j = 0; j < 3; j++) {
-                p[i].f.f[j] -= ia_params->COMFORCE_fratio *
-                               ia_params->COMFORCE_force * fvect[j];
-              }
+        for (auto &p : local_cells.particles()) {
+          if (p.p.type == t0) {
+            for (int j = 0; j < 3; j++) {
+              p.f.f[j] -= ia_params->COMFORCE_fratio *
+                          ia_params->COMFORCE_force * fvect[j];
             }
-            if (p[i].p.type == t1) {
-              for (int j = 0; j < 3; j++) {
-                p[i].f.f[j] += ia_params->COMFORCE_force * fvect[j];
-              }
+          }
+          if (p.p.type == t1) {
+            for (int j = 0; j < 3; j++) {
+              p.f.f[j] += ia_params->COMFORCE_force * fvect[j];
             }
           }
         }
