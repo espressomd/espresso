@@ -609,9 +609,8 @@ void on_parameter_change(int field) {
 #endif
   case FIELD_THERMO_SWITCH:
 /* DPD needs ghost velocities, other thermostats not */
-#ifdef DPD
     on_ghost_flags_change();
-
+#ifdef DPD
     if (not(thermo_switch & THERMO_DPD)) {
       dpd_switch_off();
     }
@@ -665,7 +664,7 @@ void on_ghost_flags_change() {
   /* that's all we change here */
   extern int ghosts_have_v;
 
-  int old_have_v = ghosts_have_v;
+  const int old_have_v = ghosts_have_v;
 
   ghosts_have_v = 0;
 

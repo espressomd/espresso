@@ -19,6 +19,8 @@
 include "myconfig.pxi"
 
 cdef extern from "global.hpp":
+    int FIELD_BOXL
+    int FIELD_SKIN
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
     int FIELD_NODEGRID
