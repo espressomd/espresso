@@ -50,11 +50,6 @@ class LangevinThermostat(ut.TestCase):
                 found=data[j]
                 expected=self.single_component_maxwell(bins[j],bins[j+1],kT)
                 self.assertLessEqual(abs(found-expected),error_tol)
-            
-
-
-
-    
     
     def test_aa_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
@@ -74,7 +69,7 @@ class LangevinThermostat(ut.TestCase):
         loops=6000
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(3)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
@@ -113,7 +108,7 @@ class LangevinThermostat(ut.TestCase):
         v_kT2=np.zeros((int(N/2*loops),3))
 
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(3)
             v_kT[int(i*N/2):int((i+1)*N/2),:]=s.part[:int(N/2)].v
             v_kT2[int(i*N/2):int((i+1)*N/2),:]=s.part[int(N/2):].v
         v_minmax=5
