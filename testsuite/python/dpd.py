@@ -27,12 +27,13 @@ from time import time
 
 @ut.skipIf(not espressomd.has_features("DPD"),"Skipped because feature is disabled")
 class DPDThermostat(ut.TestCase):
-    """Tests the velocity distribution created by the Langevin thermostat agaisnt 
+    """Tests the velocity distribution created by the dpd thermostat against 
        the single component Maxwell distribution."""
 
     s = espressomd.System()
-    s.cell_system.set_n_square()
-    s.cell_system.skin=0.3
+    s.box_l = 3 * [10]
+    s.time_step = 0.01
+    s.cell_system.skin=0.4
     s.seed=np.random.randint(1,1000,s.cell_system.get_state()["n_nodes"])
 
     def single_component_maxwell(self,x1,x2,kT):
@@ -55,8 +56,68 @@ class DPDThermostat(ut.TestCase):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(abs(self.single_component_maxwell(-10,10,4.)-1.),1E-4)   
 
+    def check_total_zero(self):
+        v_total = np.sum(self.s.part[:].v, axis=0)
+        self.assertTrue(v_total[0] < 1e-11)
+        self.assertTrue(v_total[1] < 1e-11)
+        self.assertTrue(v_total[2] < 1e-11)
+
     def test_single(self):
-        """Test for global Langevin parameters."""
+        """Test velocity distribution of a dpd fluid with a single type."""
+        N=200
+        s=self.s
+        s.part.clear()
+        s.part.add(pos=np.random.random((N,3)))
+        kT=2.3
+        gamma=1.5
+        s.thermostat.set_dpd(kT=kT)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.5,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+        s.integrator.run(100)
+        loops=6000
+        v_stored=np.zeros((N*loops,3))
+        for i in range(loops):
+            s.integrator.run(5)
+            v_stored[i*N:(i+1)*N,:]=s.part[:].v
+        v_minmax=5
+        bins=5
+        error_tol=0.01
+        self.check_velocity_distribution(v_stored,v_minmax,bins,error_tol,kT)
+        self.check_total_zero()
+
+    def test_binary(self):
+        """Test velocity distribution of binary dpd fluid"""
+        N=200
+        s=self.s
+        s.part.clear()
+        s.part.add(pos=np.random.random((N/2,3)), type=0)
+        s.part.add(pos=np.random.random((N/2,3)), type=1)
+        kT=2.3
+        gamma=1.5
+        s.thermostat.set_dpd(kT=kT)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.0,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
+        s.non_bonded_inter[1,1].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.0,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
+        s.non_bonded_inter[0,1].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.5,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+        s.integrator.run(100)
+        loops=6000
+        v_stored=np.zeros((N*loops,3))
+        for i in range(loops):
+            s.integrator.run(5)
+            v_stored[i*N:(i+1)*N,:]=s.part[:].v
+        v_minmax=5
+        bins=5
+        error_tol=0.01
+        self.check_velocity_distribution(v_stored,v_minmax,bins,error_tol,kT)
+        self.check_total_zero()
+
+    def test_disable(self):
         N=200
         s=self.s
         s.part.clear()
@@ -69,40 +130,150 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
+
+        s.thermostat.turn_off()
+
+        # Reset velocities
+        for p in s.part[:]:
+            p.v = [1.,2.,3.]
+
+        s.integrator.run(100)
+
+        # Check that there was neither noise nor friction
+        for v in s.part[:].v:
+            for i in range(3):
+                self.assertTrue(v[i] == float(i+1))
+
+        # Turn back on
+        s.thermostat.set_dpd(kT=kT)
+
+        # Reset velocities for faster convergence
+        for p in s.part[:]:
+            p.v = [0.,0.,0.]
+
         loops=6000
         v_stored=np.zeros((N*loops,3))
         for i in range(loops):
-            s.integrator.run(2)
+            s.integrator.run(5)
             v_stored[i*N:(i+1)*N,:]=s.part[:].v
         v_minmax=5
         bins=5
         error_tol=0.01
         self.check_velocity_distribution(v_stored,v_minmax,bins,error_tol,kT)
 
-    def test_binary(self):
-        """Test for global Langevin parameters."""
-        N=200
+    def test_const_weight_function(self):
         s=self.s
         s.part.clear()
-        s.time_step=0.01
-        s.part.add(pos=np.random.random((N/2,3)), type=0)
-        s.part.add(pos=np.random.random((N/2,3)), type=1)
-        kT=2.3
-        gamma=1.5
+        kT=0.
+        gamma=1.42
         s.thermostat.set_dpd(kT=kT)
-        s.non_bonded_inter[0,1].dpd.set_params(
-            weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
-        s.integrator.run(100)
-        loops=6000
-        v_stored=np.zeros((N*loops,3))
-        for i in range(loops):
-            s.integrator.run(2)
-            v_stored[i*N:(i+1)*N,:]=s.part[:].v
-        v_minmax=5
-        bins=5
-        error_tol=0.01
-        self.check_velocity_distribution(v_stored,v_minmax,bins,error_tol,kT)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.2,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4)
+
+        s.part.add(id=0, pos=[5,5,5], type = 0, v=[0,0,0])
+        v=[.5,.8,.3]
+        s.part.add(id=1, pos=[3,5,5], type = 0, v = v)
+
+        s.integrator.run(0)
+
+        # Outside of both cutoffs, forces should be 0
+        for f in s.part[:].f:
+            self.assertTrue(f[0] == 0.)
+            self.assertTrue(f[1] == 0.)
+            self.assertTrue(f[2] == 0.)
+
+        # Only trans
+        s.part[1].pos = [5. - 1.3, 5, 5]
+
+        s.integrator.run(0)
+
+        # Only trans, so x component should be zero
+        self.assertTrue(s.part[0].f[0] == 0.)
+        # f = gamma * v_ij
+        self.assertTrue(abs(s.part[0].f[1] - gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[2] - gamma*v[2]) < 1e-11)
+        # Momentum conservation
+        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertTrue(abs(s.part[1].f[1] + gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[2] + gamma*v[2]) < 1e-11)
+
+        # Trans and parallel
+        s.part[1].pos = [5. - 1.1, 5, 5]
+
+        s.integrator.run(0)
+
+        self.assertTrue(abs(s.part[0].f[0] - gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[1] - gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[2] - gamma*v[2]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[0] + gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[1] + gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[2] + gamma*v[2]) < 1e-11)
+
+    def test_linear_weight_function(self):
+        s=self.s
+        s.part.clear()
+        kT=0.
+        gamma=1.42
+        s.thermostat.set_dpd(kT=kT)
+        s.non_bonded_inter[0,0].dpd.set_params(
+            weight_function=1, gamma=gamma, r_cut=1.2,
+            trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
+
+        def omega(dist, r_cut):
+            return (1. - dist / r_cut)
+
+        s.part.add(id=0, pos=[5,5,5], type = 0, v=[0,0,0])
+        v=[.5,.8,.3]
+        s.part.add(id=1, pos=[3,5,5], type = 0, v = v)
+
+        s.integrator.run(0)
+
+        # Outside of both cutoffs, forces should be 0
+        for f in s.part[:].f:
+            self.assertTrue(f[0] == 0.)
+            self.assertTrue(f[1] == 0.)
+            self.assertTrue(f[2] == 0.)
+
+        # Only trans
+        s.part[1].pos = [5. - 1.3, 5, 5]
+
+        s.integrator.run(0)
+
+        # Only trans, so x component should be zero
+        self.assertTrue(s.part[0].f[0] == 0.)
+        # f = gamma * v_ij
+        self.assertTrue(abs(s.part[0].f[1] - omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[2] - omega(1.3, 1.4)**2*gamma*v[2]) < 1e-11)
+        # Momentum conservation
+        self.assertTrue(s.part[1].f[0] == 0.)
+        self.assertTrue(abs(s.part[1].f[1] + omega(1.3, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[2] + omega(1.3, 1.4)**2*gamma*v[2]) < 1e-11)
+
+        # Trans and parallel
+        s.part[1].pos = [5. - 1.1, 5, 5]
+
+        s.integrator.run(0)
+
+        self.assertTrue(abs(s.part[0].f[0] - omega(1.1, 1.2)**2*gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[1] - omega(1.1, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[2] - omega(1.1, 1.4)**2*gamma*v[2]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[0] + omega(1.1, 1.2)**2*gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[1] + omega(1.1, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[2] + omega(1.1, 1.4)**2*gamma*v[2]) < 1e-11)
+
+        # Trans and parallel 2nd point
+        s.part[1].pos = [5. - 0.5, 5, 5]
+
+        s.integrator.run(0)
+
+        self.assertTrue(abs(s.part[0].f[0] - omega(0.5, 1.2)**2*gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[1] - omega(0.5, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[0].f[2] - omega(0.5, 1.4)**2*gamma*v[2]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[0] + omega(0.5, 1.2)**2*gamma*v[0]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[1] + omega(0.5, 1.4)**2*gamma*v[1]) < 1e-11)
+        self.assertTrue(abs(s.part[1].f[2] + omega(0.5, 1.4)**2*gamma*v[2]) < 1e-11)
+
 
 if __name__ == "__main__":
     ut.main()

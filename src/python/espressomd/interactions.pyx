@@ -369,13 +369,15 @@ IF DPD:
             ----------
 
             weight_function : float
-                The distance dependence of the parallel part
+                The distance dependence of the parallel part,
+                either 0 (constant) or 1 (linear)
             gamma : float
                 Friction coefficient of the parallel part
             r_cut : float
                 Cutoff of the parallel part
             trans_weight_function : float
-                The distance dependence of the orthogonal part
+                The distance dependence of the orthogonal part,
+                either 0 (constant) or 1 (linear)
             trans_gamma : float
                 Friction coefficient of the orthogonal part
             trans_r_cut : float

@@ -137,7 +137,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
-    if (ia_params->dpd_wf == 1) {
+    if (ia_params->dpd_wf == 0) {
       omega = dist_inv;
     } else {
       omega = dist_inv - 1.0 / ia_params->dpd_r_cut;
@@ -158,13 +158,14 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
   }
   // DPD2 part
   if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_pref3 > 0.0)) {
-    if (ia_params->dpd_twf == 1) {
+    if (ia_params->dpd_twf == 0) {
       omega = dist_inv;
     } else {
       omega = dist_inv - 1.0 / ia_params->dpd_tr_cut;
     }
 
     omega2 = SQR(omega);
+
     for (i = 0; i < 3; i++) {
       // noise vector
       noise_vec[i] = d_random() - 0.5;
