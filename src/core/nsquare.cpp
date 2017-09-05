@@ -29,8 +29,8 @@
 #include "nsquare.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
-#include "forces.hpp"
-#include "pressure.hpp"
+#include "forces_inline.hpp"
+#include "pressure_inline.hpp"
 #include "energy_inline.hpp"
 #include "constraints.hpp"
 

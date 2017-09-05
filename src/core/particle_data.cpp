@@ -551,8 +551,7 @@ int set_particle_smaller_timestep(int part, int smaller_timestep) {
 }
 #endif
 
-int set_particle_q(int part, double q)
-{
+int set_particle_q(int part, double q) {
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -1050,22 +1049,13 @@ void local_remove_all_particles() {
 }
 
 void local_rescale_particles(int dir, double scale) {
-  Particle *p, *p1;
-  int j, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    for (j = 0; j < cell->n; j++) {
-      p1 = &p[j];
-      if (dir < 3)
-        p1->r.p[dir] *= scale;
-      else {
-        p1->r.p[0] *= scale;
-        p1->r.p[1] *= scale;
-        p1->r.p[2] *= scale;
-      }
+  for (auto &p : local_cells.particles()) {
+    if (dir < 3)
+      p.r.p[dir] *= scale;
+    else {
+      p.r.p[0] *= scale;
+      p.r.p[1] *= scale;
+      p.r.p[2] *= scale;
     }
   }
 }
@@ -1142,61 +1132,42 @@ int try_delete_bond(Particle *part, int *bond) {
 }
 
 void remove_all_bonds_to(int identity) {
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
+  for (auto &p : local_cells.particles()) {
+    IntList *bl = &p.bl;
+    int i, j, partners;
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    part = cell->part;
-    for (p = 0; p < np; p++) {
-      IntList *bl = &part[p].bl;
-      int i, j, partners;
-
-      for (i = 0; i < bl->n;) {
-        partners = bonded_ia_params[bl->e[i]].num;
-        for (j = 1; j <= partners; j++)
-          if (bl->e[i + j] == identity)
-            break;
-        if (j <= partners) {
-          bl->n -= 1 + partners;
-          memmove(bl->e + i, bl->e + i + 1 + partners,
-                  sizeof(int) * (bl->n - i));
-          realloc_intlist(bl, bl->n);
-        } else
-          i += 1 + partners;
-      }
-      if (i != bl->n) {
-        fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
-                        "particle %d, exiting...\n",
-                this_node, part[p].p.identity);
-        errexit();
-      }
+    for (i = 0; i < bl->n;) {
+      partners = bonded_ia_params[bl->e[i]].num;
+      for (j = 1; j <= partners; j++)
+        if (bl->e[i + j] == identity)
+          break;
+      if (j <= partners) {
+        bl->n -= 1 + partners;
+        memmove(bl->e + i, bl->e + i + 1 + partners, sizeof(int) * (bl->n - i));
+        realloc_intlist(bl, bl->n);
+      } else
+        i += 1 + partners;
+    }
+    if (i != bl->n) {
+      fprintf(stderr, "%d: INTERNAL ERROR: bond information corrupt for "
+                      "particle %d, exiting...\n",
+              this_node, p.p.identity);
+      errexit();
     }
   }
 }
 
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
-  Cell *cell;
-  int p, np, c;
-  Particle *part;
-
   if (part1 == -1 && part2 == -1) {
-    /* delete all exclusions */
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      np = cell->n;
-      part = cell->part;
-      for (p = 0; p < np; p++)
-        realloc_intlist(&part[p].el, part[p].el.n = 0);
+    for (auto &p : local_cells.particles()) {
+      realloc_intlist(&p.el, p.el.n = 0);
+      return;
     }
-    return;
   }
 
   /* part1, if here */
-  part = local_particles[part1];
+  auto part = local_particles[part1];
   if (part) {
     if (_delete)
       try_delete_exclusion(part, part2);

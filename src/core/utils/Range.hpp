@@ -27,7 +27,8 @@ public:
 
   bool empty() const { return m_begin == m_end; }
   difference_type size() const {
-    return std::distance(m_begin, m_end);
+    using std::distance;
+    return distance(m_begin, m_end);
   }
 
   bool operator==(Range const &rhs) const {

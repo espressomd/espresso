@@ -44,18 +44,9 @@ int chain_length = 0;
 /*@}*/
 
 void update_mol_ids_setchains() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      p[i].p.mol_id =
-          floor((p[i].p.identity - chain_start) / (double)chain_length);
-    }
+  for (auto &p : local_cells.particles()) {
+    p.p.mol_id =
+        floor((p.p.identity - chain_start) / (double)chain_length);
   }
 }
 

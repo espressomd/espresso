@@ -405,18 +405,13 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     }
   } else {
     /* loop over all local cells. */
-    Cell *local_cell;
     int particle_index = 0;
-    for (int cell_id = 0; cell_id < local_cells.n; ++cell_id) {
-      local_cell = local_cells.cell[cell_id];
-      for (int local_part_id = 0; local_part_id < local_cell->n;
-           ++local_part_id) {
-        auto &current_particle = local_cell->part[local_part_id];
-        fill_arrays_for_h5md_write_with_particle_property(
-            particle_index, id, typ, mass, pos, image, vel, f, charge,
-            current_particle, write_dat, bond);
-        particle_index++;
-      }
+
+    for (auto &current_particle : local_cells.particles()) {
+      fill_arrays_for_h5md_write_with_particle_property(
+          particle_index, id, typ, mass, pos, image, vel, f, charge,
+          current_particle, write_dat, bond);
+      particle_index++;
     }
   }
 
