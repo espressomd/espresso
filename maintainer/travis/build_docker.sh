@@ -47,7 +47,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 	esac
 	brew install boost-mpi
 	brew install fftw
-	brew install homebrew/science/hdf5 --with-mpi --without-cxx
+	travis_wait brew install hdf5 --with-mpi
 
 	export TMPDIR=/tmp
 	maintainer/travis/build_cmake.sh || exit 1
