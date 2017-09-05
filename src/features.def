@@ -27,7 +27,6 @@ MODES                           requires FFTW
 BOND_VIRTUAL
 LANGEVIN_PER_PARTICLE
 COLLISION_DETECTION             implies GHOSTS_HAVE_BONDS
-LEES_EDWARDS                    implies DPD
 LEES_EDWARDS                    requires not ELECTROSTATICS and not LB and not PARTIAL_PERIODIC
 METADYNAMICS
 REACTION_ENSEMBLE
@@ -73,14 +72,7 @@ THERMOSTAT_IGNORE_NON_VIRTUAL   implies VIRTUAL_SITES_THERMOSTAT
 /* DPD features */
 DPD
 TRANS_DPD                       implies DPD
-DPD_MASS_RED                    requires not DPD_MASS_LIN
-DPD_MASS_LIN                    requires not DPD_MASS_RED
-DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
-DPD_MASS                        implies MASS, DPD
 TUNABLE_SLIP                    implies DPD
-
-/* Alternative implementation of DPD */
-INTER_DPD
 
 /* Lattice-Boltzmann features */
 LB

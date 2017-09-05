@@ -320,7 +320,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->TAB_maxval = INACTIVE_CUTOFF;
 #endif
 
-#ifdef INTER_DPD
+#ifdef DPD
   params->dpd_gamma = 0.0;
   params->dpd_wf = 0;
   params->dpd_pref1 = 0.0;
@@ -532,23 +532,6 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff()
    for the relative virtual sites algorithm. */
    max_cut_global = min_global_cut;
 
-  
-
-
-#ifdef DPD
-  if (dpd_r_cut != 0) {
-    if(max_cut_global < dpd_r_cut)
-      max_cut_global = dpd_r_cut;
-  }
-#endif
-  
-#ifdef TRANS_DPD
-  if (dpd_tr_cut != 0) {
-    if(max_cut_global < dpd_tr_cut)
-      max_cut_global = dpd_tr_cut;
-  }
-#endif
-
 // global cutoff without dipolar and coulomb methods is needed
 // for more selective additoin of particle pairs to verlet lists
 max_cut_global_without_coulomb_and_dipolar=max_cut_global;
@@ -587,13 +570,9 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = (data->LJ_cut+data->LJ_offset);
 #endif
 
-#ifdef INTER_DPD
-      {
-	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
-	  data->dpd_r_cut : data->dpd_tr_cut;
-	if (max_cut_current <  max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
-      }
+#ifdef DPD
+      max_cut_current = std::max(max_cut_current,
+                                 std::max(data->dpd_r_cut, data->dpd_tr_cut));
 #endif
 
 #ifdef LENNARD_JONES_GENERIC

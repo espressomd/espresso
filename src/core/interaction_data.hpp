@@ -442,7 +442,7 @@ typedef struct {
 /*@}*/
 #endif
 
-#ifdef INTER_DPD
+#ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
   double dpd_gamma;

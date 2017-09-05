@@ -99,10 +99,17 @@ cdef extern from "ljgen.hpp":
                                   double cap_radius)
 
 
+if DPD:
+    pass
+    #     cdef extern from "dpd.hpp":
+    #        int dpd_set_params(int part_type_a, int part_type_b,
+    #                           double gamma, double r_c, int wf,
+    #                           double tgamma, double tr_c, int twf)
+
+
 IF TABULATED==1:
     cdef extern from "tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
-
 
 cdef extern from "interaction_data.hpp":
     ctypedef struct Fene_bond_parameters:

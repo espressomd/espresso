@@ -25,7 +25,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
-#include "dpd.hpp"
 #include "layered.hpp"
 #include "lees_edwards.hpp"
 #include "npt.hpp"
@@ -42,8 +41,6 @@ const Datafield fields[] = {
   {box_l,            TYPE_DOUBLE, 3, "box_l",             1, false },         /* 0  from grid.cpp */
   {dd.cell_grid,        TYPE_INT, 3, "cell_grid",         6, false },         /* 1  from cells.cpp */
   {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",         6, false },         /* 2  from cells.cpp */
-  {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",         5, false },         /* 3  from thermostat.cpp */
-  {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",         5, false },         /* 4  from thermostat.cpp */
 #ifndef PARTICLE_ANISOTROPY
   {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",             1, false },         /* 5  from thermostat.cpp */
 #else
@@ -81,10 +78,6 @@ const Datafield fields[] = {
   {&max_cut_nonbonded,TYPE_DOUBLE, 1, "max_cut_nonbonded",9, false },         /* 35 from interaction_data.cpp */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",      8, false },         /* 36 from integrate.cpp */
   {&lattice_switch,     TYPE_INT, 1, "lattice_switch",    2, false },         /* 37 from lattice.cpp */
-  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",        6, false },         /* 38 from thermostat.cpp */
-  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",        6, false },         /* 39 from thermostat.cpp */
-  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",           6, false },         /* 40 from thermostat.cpp */
-  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",            5, false },         /* 41 from thermostat.cpp */
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9, false },         /* 42 from interaction_data.cpp */
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5, false },         /* 43 from interaction_data.cpp */
   {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6, false },         /* 44 from thermostat.cpp */
@@ -94,7 +87,6 @@ const Datafield fields[] = {
   {&ghmc_tscale,        TYPE_INT, 1, "ghmc_tscale",       6, false },         /* 48 from ghmc.cpp */
   {&lb_components,      TYPE_INT, 1, "lb_components",     2, false },         /* 49 from ghmc.cpp */
   {&warnings,           TYPE_INT, 1, "warnings",          1, false },         /* 50 from global.cpp */
-  {&dpd_ignore_fixed_particles, TYPE_INT, 1, "dpd_ignore_fixed_particles", 1, false },         /* 51 from global.cpp */
   {&smaller_time_step,TYPE_DOUBLE,1, "smaller_time_step", 5, false },         /* 52 from integrate.cpp */
   {&langevin_trans,  TYPE_BOOL, 1, "langevin_trans_switch", 1, false },       /* 53 from thermostat.cpp */
   {&langevin_rotate,  TYPE_BOOL, 1, "langevin_rotate_switch", 1, false },     /* 54 from thermostat.cpp */
