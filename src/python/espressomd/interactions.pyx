@@ -342,6 +342,75 @@ IF GAY_BERNE:
         def required_keys(self):
             return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
 
+IF DPD:
+    cdef class DPDInteraction(NonBondedInteraction):
+        def validate_params(self):
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "weight_function": ia_params.dpd_wf,
+                "gamma": ia_params.dpd_gamma,
+                "r_cut": ia_params.dpd_r_cut,
+                "trans_weight_function": ia_params.dpd_twf,
+                "trans_gamma": ia_params.dpd_tgamma,
+                "trans_r_cut": ia_params.dpd_tr_cut
+            }
+
+        def is_active(self):
+            return (self._params["r_cut"] > 0) or (self._params["trans_r_cut"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the DPD interaction.
+
+            Parameters
+            ----------
+
+            weight_function : float
+                The distance dependence of the parallel part
+            gamma : float
+                Friction coefficient of the parallel part
+            r_cut : float
+                Cutoff of the parallel part
+            trans_weight_function : float
+                The distance dependence of the orthogonal part
+            trans_gamma : float
+                Friction coefficient of the orthogonal part
+            trans_r_cut : float
+                Cutoff of the orthogonal part
+            """
+            super(DPDInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if dpd_set_params(self._part_types[0], self._part_types[1],
+                              self._params["gamma"],
+                              self._params["r_cut"],
+                              self._params["weight_function"],
+                              self._params["trans_gamma"],
+                              self._params["trans_r_cut"],
+                              self._params["trans_weight_function"]):
+                raise Exception("Could not set DPD parameters")
+
+        def default_params(self):
+            return {
+                "weight_function": 0,
+                "gamma": 0.0,
+                "r_cut": -1.0,
+                "trans_weight_function": 0,
+                "trans_gamma": 0.0,
+                "trans_r_cut": -1.0}
+
+        def type_name(self):
+            return "DPD"
+
+        def valid_keys(self):
+            return self.default_params().keys()
+
+        def required_keys(self):
+            return []
+
 # Generic Lennard Jones
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -483,6 +552,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     tabulated = None
     gay_berne = None
+    dpd = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -501,7 +571,8 @@ class NonBondedInteractionHandle(object):
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
-
+        IF DPD:
+            self.dpd = DPDInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
 

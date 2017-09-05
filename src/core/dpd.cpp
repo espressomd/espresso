@@ -36,7 +36,7 @@ static bool le_chatterjee_test_pair(Particle *p1, Particle *p2) {
   /* cannot assume that we have a flag set to mark ghost particles,
    * but can assume (for LE) that non-ghost
    * particle y-coords are always imaged inside the box */
-  if (p1->l.ghost or p2->l.ghost)
+  if (p2->l.ghost or p1->l.ghost)
     return false;
   else
     return true;
@@ -124,7 +124,7 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
   double friction, noise;
   // Projection martix
   int i;
-  double P_times_dist_sqr[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}},
+  double P_times_dist_sqr[3][3] = {{dist2, 0, 0}, {0, dist2, 0}, {0, 0, dist2}},
          noise_vec[3];
   double f_D[3], f_R[3];
   double tmp;
@@ -133,10 +133,6 @@ void add_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
   if (le_chatterjee_test_pair(p1, p2))
     return;
 #endif
-
-  P_times_dist_sqr[0][0] = dist2;
-  P_times_dist_sqr[1][1] = dist2;
-  P_times_dist_sqr[2][2] = dist2;
 
   auto const dist_inv = 1.0 / dist;
 

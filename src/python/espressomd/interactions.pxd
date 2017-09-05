@@ -62,6 +62,17 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        int dpd_wf
+        int dpd_twf
+        double dpd_gamma
+        double dpd_r_cut
+        double dpd_pref1
+        double dpd_pref2
+        double dpd_tgamma
+        double dpd_tr_cut
+        double dpd_pref3
+        double dpd_pref4
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -99,13 +110,11 @@ cdef extern from "ljgen.hpp":
                                   double cap_radius)
 
 
-if DPD:
-    pass
-    #     cdef extern from "dpd.hpp":
-    #        int dpd_set_params(int part_type_a, int part_type_b,
-    #                           double gamma, double r_c, int wf,
-    #                           double tgamma, double tr_c, int twf)
-
+IF DPD:
+    cdef extern from "dpd.hpp":
+        int dpd_set_params(int part_type_a, int part_type_b,
+                           double gamma, double r_c, int wf,
+                           double tgamma, double tr_c, int twf)
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":
