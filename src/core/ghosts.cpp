@@ -73,12 +73,15 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     comm->data_parts |= GHOSTTRANS_MOMENTUM;
 
+  std::cout << this_node << ": ghosts_have_v = " << ghosts_have_v << std::endl;
   GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node, comm->data_parts));
 
   comm->num = num;
   comm->comm = (GhostCommunication*)Utils::malloc(num*sizeof(GhostCommunication));
   for(i=0; i<num; i++) {
     comm->comm[i].shift[0]=comm->comm[i].shift[1]=comm->comm[i].shift[2]=0.0;
+    comm->comm[i].n_part_lists = 0;
+    comm->comm[i].part_lists = nullptr;
   }
 }
 
@@ -260,6 +263,8 @@ static void prepare_ghost_cell(Cell *cell, int size)
   }
 }
 
+#include <iostream>
+
 void prepare_recv_buffer(GhostCommunication *gc, int data_parts)
 {
   GHOST_TRACE(fprintf(stderr, "%d: prepare receiving from %d\n", this_node, gc->node));
@@ -284,6 +289,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
     if (data_parts & GHOSTTRANS_PARTNUM) {
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, cur_list, *(int *)retrieve, gc->node));
+      std::cout << "buffer_offset = " << (retrieve - r_buffer) << std::endl;
       prepare_ghost_cell(cur_list, *(int *)retrieve);
       retrieve += sizeof(int);
     }
