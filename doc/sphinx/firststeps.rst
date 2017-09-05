@@ -16,7 +16,9 @@ create a build directory and call ``cmake`` and ``make``:
 
     $ mkdir build
     $ cd build
+    $ //create or modify myconfig.hpp // in order to add/remove features
     $ cmake ..
+    $ //ccmake . // in order to add/remove features like SCAFACOS or CUDA
     $ make
 
 This will build |es| with a default feature set, namely
