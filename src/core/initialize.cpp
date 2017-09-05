@@ -668,18 +668,18 @@ void on_ghost_flags_change() {
 
   ghosts_have_v = 0;
 
-  /* DPD and LB need also ghost velocities */
+/* DPD and LB need also ghost velocities */
 #ifdef LB
   if (lattice_switch & LATTICE_LB)
     ghosts_have_v = 1;
 #endif
 #ifdef BOND_CONSTRAINT
-  else if (n_rigidbonds)
+  if (n_rigidbonds)
     ghosts_have_v = 1;
 #endif
 #ifdef ELECTROSTATICS
   /* Maggs electrostatics needs ghost velocities too */
-  else if (coulomb.method == COULOMB_MAGGS)
+  if (coulomb.method == COULOMB_MAGGS)
     ghosts_have_v = 1;
 #endif
 #ifdef DPD
