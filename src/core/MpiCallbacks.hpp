@@ -35,16 +35,29 @@ namespace Communication {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
+  /* Avoid accidental copy, leads to mpi deadlock
+     or split brain */
+  MpiCallbacks(MpiCallbacks const &) = delete;
+  MpiCallbacks &operator=(MpiCallbacks const &) = delete;
+
 public:
   /** Function type of static callbacks. */
   typedef void (*func_ptr_type)(int, int);
   /** Type of the callback functions. */
   typedef std::function<void(int, int)> function_type;
 
-  explicit MpiCallbacks(boost::mpi::communicator &comm) : m_comm(comm) {
-
+  explicit MpiCallbacks(boost::mpi::communicator &comm,
+                        bool abort_on_exit = true)
+      : m_comm(comm), m_abort_on_exit(abort_on_exit) {
     /** Add a dummy at id 0 for loop abort. */
     m_callbacks.add(function_type());
+  }
+
+  ~MpiCallbacks() {
+    /* Release the clients on exit */
+    if (m_abort_on_exit && (m_comm.rank() == 0)) {
+      abort_loop();
+    }
   }
 
   /**
@@ -140,18 +153,12 @@ private:
    * @brief Id for the loop_abort. Has to be 0.
    */
   enum { LOOP_ABORT = 0 };
+
   /**
-   * @brief Callback to integrate with the old callback mechanism.
-   *
-   * MPI callback for integration with the old callback mechanism,
-   * This is called on the slaves by the MPI loop. This should
-   * be removed when the new mechanism is used everywhere
-   *
-   * @param id The id of the callback to run.
-   * @param par2 First parameter to pass to the callback function.
-   * @param par2 Second parameter to pass to the callback function.
+   * @brief If loop_abort should be called on destruction
+   *        on the head node.
    */
-  void slave(int id, int par1, int par2) const;
+  bool m_abort_on_exit;
 
   /**
    * The MPI communicator used for the callbacks.
@@ -169,46 +176,6 @@ private:
    */
   std::unordered_map<func_ptr_type, int> m_func_ptr_to_id;
 };
-
-/**
- * @brief Returns a reference to the global callback class instance.
- *
- */
-MpiCallbacks &mpiCallbacks();
-
-/**
- * @brief Convenience class to register a static callback
- * automatically before main.
- *
- * To use decalare a static CallbackAdder member of your class
- * and initialize it with an static callback function or a lambda,
- * or a initializer list thereof.
- */
-class CallbackAdder {
-public:
-  explicit CallbackAdder(MpiCallbacks::function_type const &callback) {
-    mpiCallbacks().add(callback);
-  }
-
-  explicit CallbackAdder(MpiCallbacks::func_ptr_type callback) {
-    mpiCallbacks().add(callback);
-  }
-
-  explicit CallbackAdder(
-      std::initializer_list<MpiCallbacks::function_type> il) {
-    for (auto it : il) {
-      mpiCallbacks().add(it);
-    }
-  }
-
-  explicit CallbackAdder(
-      std::initializer_list<MpiCallbacks::func_ptr_type> il) {
-    for (auto it : il) {
-      mpiCallbacks().add(it);
-    }
-  }
-};
-
 } /* namespace Communication */
 
 #endif

@@ -146,6 +146,7 @@ void cells_re_init(int new_cs) {
 
   /* finally deallocate the old cells */
   realloc_cellplist(&tmp_local, 0);
+
   for (auto &cell : tmp_cells) {
     realloc_particlelist(&cell, 0);
   }
@@ -194,55 +195,10 @@ void announce_resort_particles() {
 /*************************************************/
 
 int cells_get_n_particles() {
-  int c, cnt = 0;
-  for (c = 0; c < local_cells.n; c++)
-    cnt += local_cells.cell[c]->n;
-  return cnt;
+  using std::distance;
+  return distance(local_cells.particles().begin(),
+                  local_cells.particles().end());
 }
-
-/*************************************************/
-
-void print_local_particle_positions() {
-  Cell *cell;
-  int c, i, np, cnt = 0;
-  Particle *part;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      fprintf(stderr, "%d: local cell %d contains part id=%d pos=(%f,%f,%f)\n",
-              this_node, c, part[i].p.identity, part[i].r.p[0], part[i].r.p[1],
-              part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr, "%d: found %d particles\n", this_node, cnt);
-}
-
-/*************************************************/
-
-#ifdef CELL_DEBUG
-
-static void dump_particle_ordering() {
-  /* Loop local cells */
-  for (int c = 0; c < local_cells.n; c++) {
-    Cell *cell = local_cells.cell[c];
-    Particle *p = cell->part;
-    int np = cell->n;
-
-    fprintf(stderr, "%d: cell %d has particles", this_node, c);
-
-    /* Loop cell particles */
-    for (int i = 0; i < np; i++) {
-      fprintf(stderr, " %d", p[i].p.identity);
-    }
-    fprintf(stderr, "\n");
-  }
-}
-
-#endif // CELL_TRACE
 
 /*************************************************/
 
@@ -280,7 +236,6 @@ void cells_resort_particles(int global_flag) {
 
   on_resort_particles();
 
-  CELL_TRACE(dump_particle_ordering());
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
@@ -316,21 +271,14 @@ void cells_on_geometry_change(int flags) {
 /*************************************************/
 
 void check_resort_particles() {
-  int i, c, np;
-  Cell *cell;
-  Particle *p;
-  double skin2 = SQR(skin / 2.0);
+  const double skin2 = SQR(skin / 2.0);
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      /* Verlet criterion check */
-      if (distance2(p[i].r.p, p[i].l.p_old) > skin2)
-        resort_particles = 1;
-    }
-  }
+  resort_particles =
+      std::any_of(local_cells.particles().begin(),
+                  local_cells.particles().end(), [&skin2](Particle const &p) {
+                    return distance2(p.r.p, p.l.p_old) > skin2;
+                  });
+
   announce_resort_particles();
 }
 
@@ -352,25 +300,4 @@ void cells_update_ghosts() {
   } else
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-}
-
-/*************************************************/
-
-void print_ghost_positions() {
-  Cell *cell;
-  int c, i, np, cnt = 0;
-  Particle *part;
-
-  for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      fprintf(stderr, "%d: local cell %d contains ghost id=%d pos=(%f,%f,%f)\n",
-              this_node, c, part[i].p.identity, part[i].r.p[0], part[i].r.p[1],
-              part[i].r.p[2]);
-      cnt++;
-    }
-  }
-  fprintf(stderr, "%d: found %d ghosts\n", this_node, cnt);
 }

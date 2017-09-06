@@ -76,10 +76,6 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   int my_pos[4][3]; /* The position of this_node in the node grids. */
   int *n_id[4];     /* linear node identity lists for the node grids. */
   int *n_pos[4];    /* positions of nodes in the node grids. */
-  /* FFTW WISDOM stuff. */
-  char wisdom_file_name[255];
-  FILE *wisdom_file;
-  int wisdom_status;
 
   FFT_TRACE(fprintf(stderr,"%d: fft_init():\n",this_node));
 
@@ -244,13 +240,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     fft.plan[i].dir = FFTW_FORWARD;   
     /* FFT plan creation. 
        Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf. */
-    wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,".fftw3_1d_wisdom_forw_n%d.file",
-	    fft.plan[i].new_mesh[2]);
-    if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
-      wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
-      fclose(wisdom_file);
-    }
+
     if(fft.init_tag==1) fftw_destroy_plan(fft.plan[i].our_fftw_plan);
 //printf("fft.plan[%d].n_ffts=%d\n",i,fft.plan[i].n_ffts);
     fft.plan[i].our_fftw_plan =
@@ -258,11 +248,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
                          c_data,NULL,1,fft.plan[i].new_mesh[2],
                          c_data,NULL,1,fft.plan[i].new_mesh[2],
                          fft.plan[i].dir,FFTW_PATIENT);
-    if( wisdom_status == FFTW_FAILURE && 
-	(wisdom_file=fopen(wisdom_file_name,"w"))!=NULL ) {
-      fftw_export_wisdom_to_file(wisdom_file);
-      fclose(wisdom_file);
-    }
+
     fft.plan[i].fft_function = fftw_execute;       
   }
 
@@ -270,24 +256,14 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   /* this is needed because slightly different functions are used */
   for(i=1;i<4;i++) {
     fft.back[i].dir = FFTW_BACKWARD;
-    wisdom_status   = FFTW_FAILURE;
-    sprintf(wisdom_file_name,".fftw3_1d_wisdom_back_n%d.file",
-	    fft.plan[i].new_mesh[2]);
-    if( (wisdom_file=fopen(wisdom_file_name,"r"))!=NULL ) {
-      wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
-      fclose(wisdom_file);
-    }    
+
     if(fft.init_tag==1) fftw_destroy_plan(fft.back[i].our_fftw_plan);
     fft.back[i].our_fftw_plan =
       fftw_plan_many_dft(1,&fft.plan[i].new_mesh[2],fft.plan[i].n_ffts,
                          c_data,NULL,1,fft.plan[i].new_mesh[2],
                          c_data,NULL,1,fft.plan[i].new_mesh[2],
                          fft.back[i].dir,FFTW_PATIENT);
-    if( wisdom_status == FFTW_FAILURE && 
-	(wisdom_file=fopen(wisdom_file_name,"w"))!=NULL ) {
-      fftw_export_wisdom_to_file(wisdom_file);
-      fclose(wisdom_file);
-    }
+
     fft.back[i].fft_function = fftw_execute;
     fft.back[i].pack_function = fft_pack_block_permute1;
     FFT_TRACE(fprintf(stderr,"%d: back plan[%d] permute 1 \n",this_node,i));

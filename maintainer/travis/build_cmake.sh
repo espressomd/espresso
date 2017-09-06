@@ -7,7 +7,6 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # HELPER FUNCTIONS
 
 # output value of env variables
@@ -47,6 +46,8 @@ function cmd {
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
 [ -z "$make_check" ] && make_check="true"
+
+cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -121,7 +122,7 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
-cmd "cmake $cmake_params $srcdir" || exit $?
+cmd "cmake $cmake_params $srcdir" || exit 1
 end "CONFIGURE"
 
 # BUILD
@@ -134,19 +135,8 @@ end "BUILD"
 if $make_check; then
     start "TEST"
 
-    cmd "make -j2 check_python $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
-
-    cmd "make -j2 check_unit_tests $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
+    cmd "make -j2 check_python $make_params" || exit 1
+    cmd "make -j2 check_unit_tests $make_params" || exit 1
 
     end "TEST"
 else
