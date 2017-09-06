@@ -26,7 +26,7 @@
 #include "cells.hpp"
 #include "topology.hpp"
 #include "forces.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 // forward declarations
 void calc_mol_vel(Particle *p_com,double v_com[3]);
@@ -56,21 +56,11 @@ void update_mol_pos_particle(Particle *p){
    }
 }
 
-
-void distribute_mol_force()
-{
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      if (ifParticleIsVirtual(&p[i])) {
-         if (sqrlen(p[i].f.f)!=0){
-            put_mol_force_on_parts(&p[i]);
-         }
+void distribute_mol_force() {
+  for (auto &p : local_cells.particles()) {
+    if (ifParticleIsVirtual(&p)) {
+      if (sqrlen(p.f.f) != 0) {
+        put_mol_force_on_parts(&p);
       }
     }
   }
@@ -303,11 +293,12 @@ double calc_pressure_mol(int type1,int type2){
 
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
   double vec12[3],dist2,dist;
+  auto & part_cfg = partCfg();
   force[0]=force[1]=force[2]=0.0;
   for (int i=0;i<topology[mol_id1].part.n;i++){
-    auto const& p1= partCfg[topology[mol_id1].part.e[i]];
+    auto const& p1= part_cfg[topology[mol_id1].part.e[i]];
     for (int j=0;j<topology[mol_id2].part.n;j++){
-      auto const& p2= partCfg[topology[mol_id2].part.e[j]];
+      auto const& p2= part_cfg[topology[mol_id2].part.e[j]];
 
       get_mi_vector(vec12,p1.r.p, p2.r.p);
       dist2=sqrlen(vec12);
@@ -398,7 +389,7 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]){
 
 Particle const&get_mol_com_particle_from_molid_cfg(int mol_id){
     for (int i=0;i<topology[mol_id].part.n;i++){
-       auto const&p= partCfg[topology[mol_id].part.e[i]];
+      auto const&p= partCfg()[topology[mol_id].part.e[i]];
        if (ifParticleIsVirtual(p)){
           return p;
        }

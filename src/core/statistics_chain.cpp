@@ -24,7 +24,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "statistics.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
@@ -44,22 +44,13 @@ int chain_length = 0;
 /*@}*/
 
 void update_mol_ids_setchains() {
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      p[i].p.mol_id =
-          floor((p[i].p.identity - chain_start) / (double)chain_length);
-    }
+  for (auto &p : local_cells.particles()) {
+    p.p.mol_id =
+        floor((p.p.identity - chain_start) / (double)chain_length);
   }
 }
 
-void calc_re(double **_re) {
+void calc_re(PartCfg & partCfg, double **_re) {
   int i;
   double dx, dy, dz;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
@@ -115,7 +106,7 @@ void calc_re_av(double **_re) {
   re[3] = sqrt(dist4 / tmp - re[2] * re[2]);
 }
 
-void calc_rg(double **_rg) {
+void calc_rg(PartCfg & partCfg, double **_rg) {
   int i, j, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
@@ -157,7 +148,7 @@ void calc_rg(double **_rg) {
   rg[3] = sqrt(r_G4 / tmp - rg[2] * rg[2]);
 }
 
-void calc_rg_av(double **_rg) {
+void calc_rg_av(PartCfg & partCfg, double **_rg) {
   int i, j, k, p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
@@ -201,7 +192,7 @@ void calc_rg_av(double **_rg) {
   rg[3] = sqrt(r_G4 / tmp - rg[2] * rg[2]);
 }
 
-void calc_rh(double **_rh) {
+void calc_rh(PartCfg & partCfg, double **_rh) {
   int i, j, p;
   double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = NULL, ri = 0.0, prefac, tmp;
   *_rh = rh = (double *)Utils::realloc(rh, 2 * sizeof(double));
@@ -259,7 +250,7 @@ void calc_rh_av(double **_rh) {
   rh[1] = sqrt(r_H2 / tmp - rh[0] * rh[0]);
 }
 
-void calc_internal_dist(double **_idf) {
+void calc_internal_dist(PartCfg & partCfg, double **_idf) {
   int i, j, k;
   double dx, dy, dz;
   double *idf = NULL;
@@ -309,7 +300,7 @@ void calc_internal_dist_av(double **_idf) {
   }
 }
 
-void calc_bond_l(double **_bond_l) {
+void calc_bond_l(PartCfg & partCfg, double **_bond_l) {
   int i, j;
   double dx, dy, dz, tmp;
   double *bond_l = NULL;
@@ -378,7 +369,7 @@ void calc_bond_l_av(double **_bond_l) {
   bond_l[3] = sqrt(bond_l[3]);
 }
 
-void calc_bond_dist(double **_bdf, int ind_n) {
+void calc_bond_dist(PartCfg & partCfg, double **_bdf, int ind_n) {
   int i, j = ind_n, k;
   double dx, dy, dz;
   double *bdf = NULL;
@@ -427,7 +418,7 @@ void calc_bond_dist_av(double **_bdf, int ind_n) {
   }
 }
 
-void init_g123() {
+void init_g123(PartCfg & partCfg) {
   int i, j, p;
   double cm_tmp[3], M;
 
@@ -458,7 +449,7 @@ void init_g123() {
   }
 }
 
-void calc_g123(double *_g1, double *_g2, double *_g3) {
+void calc_g123(PartCfg & partCfg, double *_g1, double *_g2, double *_g3) {
   /* - Mean square displacement of a monomer
      - Mean square displacement in the center of gravity of the chain itself
      - Motion of the center of mass */
@@ -524,7 +515,7 @@ void calc_g1_av(double **_g1, int window, double weights[3]) {
   }
 }
 
-void calc_g2_av(double **_g2, int window, double weights[3]) {
+void calc_g2_av(PartCfg & partCfg, double **_g2, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
   double *g2 = NULL, cm_tmp[3];
   double M;
@@ -568,7 +559,7 @@ void calc_g2_av(double **_g2, int window, double weights[3]) {
   }
 }
 
-void calc_g3_av(double **_g3, int window, double weights[3]) {
+void calc_g3_av(PartCfg & partCfg, double **_g3, int window, double weights[3]) {
   int i, j, p, t, k, cnt;
   double *g3 = NULL, cm_tmp[3];
   double M;
@@ -600,7 +591,7 @@ void calc_g3_av(double **_g3, int window, double weights[3]) {
   }
 }
 
-void analyze_formfactor(double qmin, double qmax, int qbins, double **_ff) {
+void analyze_formfactor(PartCfg & partCfg, double qmin, double qmax, int qbins, double **_ff) {
   int i, j, k, qi, cnt, cnt_max;
   double q, qfak, qr, dx, dy, dz, *r_ij = NULL, *ff = NULL;
   *_ff = ff = (double *)Utils::realloc(ff, (qbins + 1) * sizeof(double));
@@ -688,7 +679,7 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff) {
   free(r_ij);
 }
 
-void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_f1,
+void analyze_rdfchain(PartCfg & partCfg, double r_min, double r_max, int r_bins, double **_f1,
                       double **_f2, double **_f3) {
   int i, j, ind, c_i, c_j, mon;
   double bin_width, inv_bin_width, factor, r_in, r_out, bin_volume, dist,

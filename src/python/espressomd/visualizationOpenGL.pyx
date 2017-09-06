@@ -73,8 +73,13 @@ class openGLLive(object):
                 self.specs[key] = kwargs[key]
 
         #DEPENDENCIES
-        if not 'EXTERNAL_FORCES' in espressomd.features():
+        #if not 'EXTERNAL_FORCES' in espressomd.features():
+        IF not EXTERNAL_FORCES:
             self.specs['drag_enabled'] = False
+
+        IF not CONSTRAINTS:
+            self.specs['draw_constraints'] = False
+
 
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 - self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
 
@@ -139,7 +144,10 @@ class openGLLive(object):
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                self.updateConstraints()
+                
+                if self.specs['draw_constraints']:
+                    self.updateConstraints()
+
                 self.hasParticleData = True
 
             #IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
@@ -177,12 +185,12 @@ class openGLLive(object):
         ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
-                              'ext_forces': [0,0,0]*len(self.system.part),
+                              'ext_forces': [[0,0,0]]*len(self.system.part),
                               'charges':    self.system.part[:].q}
         ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
-                              'ext_forces': [0,0,0]*len(self.system.part),
+                              'ext_forces': [[0,0,0]]*len(self.system.part),
                               'charges':    [0]*len(self.system.part)}
 
     def edgesFromPN(self,p,n,diag):
@@ -373,14 +381,15 @@ class openGLLive(object):
                         if imx != 0 or imy != 0 or imz != 0:
                             redrawSphere(pos + (imx * self.imPos[0]+imy*self.imPos[1]+imz*self.imPos[2]), radius, self.specs['quality_spheres'])
 
-            if self.specs['ext_force_arrows'] or pid == self.dragId:
-                if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
-                    if pid == self.dragId:
-                        sc = 1
-                    else:
-                        sc = self.modulo_indexing(self.specs['ext_force_arrows_scale'],ptype)
-                    if sc > 0:
-                        drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
+            IF EXTERNAL_FORCES:
+                if self.specs['ext_force_arrows'] or pid == self.dragId:
+                    if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
+                        if pid == self.dragId:
+                            sc = 1
+                        else:
+                            sc = self.modulo_indexing(self.specs['ext_force_arrows_scale'],ptype)
+                        if sc > 0:
+                            drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
 
     def drawBonds(self):
         coords = self.particles['coords']

@@ -15,12 +15,10 @@ Userguide
     analysis.rst
     analysis-core.rst
     io.rst
-    aux.rst
     lb.rst
     electrokinetics.rst
     oif.rst
     ibm.rst
-    mbtools.rst
     internal.rst
     contributing.rst
     features.rst

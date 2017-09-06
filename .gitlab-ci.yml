@@ -1,0 +1,31 @@
+image: espressomd/buildenv-espresso-ubuntu-cuda:python
+
+stages:
+  - build
+  - deploy
+
+build_and_test:
+  stage: build
+  script:
+    - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
+
+sphinx_documentation:
+  stage: deploy
+  only:
+    - doc
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/espresso_rsa && chmod 600 ~/.ssh/espresso_rsa
+    - echo "$SSH_PUBLIC_KEY" > ~/.ssh/espresso_rsa.pub && chmod 600 ~/.ssh/espresso_rsa.pub
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - cd ${CI_PROJECT_DIR}; cd build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html && 
+      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+    - cd ../../doxygen/html &&
+      rsync -avz --delete -e "ssh -i ~/.ssh/espresso_rsa" ./* espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
