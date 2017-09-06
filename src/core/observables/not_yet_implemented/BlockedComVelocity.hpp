@@ -1,4 +1,4 @@
-int ObservableBlockedComVelocity::actual_calculate() {
+int ObservableBlockedComVelocity::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   unsigned int i;
   unsigned int block;

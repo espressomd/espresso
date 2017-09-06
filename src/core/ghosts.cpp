@@ -36,7 +36,6 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "forces_inline.hpp"
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
@@ -62,6 +61,16 @@ static MPI_Op MPI_FORCES_SUM;
     NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
 */
 int ghosts_have_v = 0;
+
+/** add force to another. This is used when collecting ghost forces. */
+inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
+  for (int i = 0; i < 3; i++)
+    F_to->f[i] += F_add->f[i];
+#ifdef ROTATION
+  for (int i = 0; i < 3; i++)
+    F_to->torque[i] += F_add->torque[i];
+#endif
+}
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num)
 {
@@ -252,16 +261,8 @@ static void prepare_ghost_cell(Cell *cell, int size)
     int np   = cell->n;
     Particle *part = cell->part;
     for (int p = 0; p < np; p++) {
-      Particle *pt = &part[p];
-      // no bonds or exclusions
-      pt->bl.e = 0;
-      pt->bl.n = 0;
-      pt->bl.max = 0;
-#ifdef EXCLUSIONS
-      pt->el.e = 0;
-      pt->el.n = 0;
-      pt->el.max = 0;
-#endif
+      Particle *pt = new(&part[p]) Particle();
+
       //init ghost variable
       pt->l.ghost=1;
     }

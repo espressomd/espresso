@@ -87,7 +87,7 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type = 0;
 
-#if defined(MASS) || defined(LB_BOUNDARIES_GPU)
+#ifdef MASS
   /** particle mass */
   double mass = 1.0;
 #else
@@ -99,7 +99,7 @@ struct ParticleProperties {
       std::array<double, 2 * LB_COMPONENTS>{};
 #endif
 
-#if defined(ROTATIONAL_INERTIA) || defined(LB_BOUNDARIES_GPU)
+#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3] = {1., 1., 1.};
 #else
@@ -108,12 +108,12 @@ struct ParticleProperties {
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  double bond_site[3]  = {-1., -1., -1.};
+  double bond_site[3] = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
-  double out_direction[3]  = {0., 0., 0.};
+  double out_direction[3] = {0., 0., 0.};
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
@@ -152,7 +152,7 @@ struct ParticleProperties {
   int vs_relative_to_particle_id = 0;
   double vs_relative_distance = 0;
   // Store relative position of the virtual site
-  double vs_relative_rel_orientation[4] = {0.,0.,0.,0};
+  double vs_relative_rel_orientation[4] = {0., 0., 0., 0};
 #endif
 #endif
 
@@ -161,14 +161,14 @@ struct ParticleProperties {
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
-  double gamma[3] = {-1.,-1.,-1.};
+  double gamma[3] = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
   double gamma_rot = -1.;
 #else
-  double gamma_rot[3] = {-1.,-1.,-1.};
+  double gamma_rot[3] = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
@@ -195,23 +195,12 @@ struct ParticleProperties {
   */
   int ext_flag = 0;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
-  double ext_force[3] = {0,0,0};
+  double ext_force[3] = {0, 0, 0};
 
-#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
+#ifdef ROTATION
   /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
-  double ext_torque[3]  = {0,0,0};
+  double ext_torque[3] = {0, 0, 0};
 #endif
-#ifdef LB_BOUNDARIES_GPU
-  /** External force & torque in body-frame for LB_boundaries. */
-  double body_force[3];
-  double lab_force[3]; /** this one needs to be converted && stored */
-  double body_torque[3];
-#endif
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  std::vector<float> anchors;
-  std::vector<float> anchors_out;
 #endif
 };
 
@@ -219,23 +208,23 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  double p[3] = {0.,0.,0.};
-
-#if defined(ROTATION) || defined(LB_BOUNDARIES_GPU)
+  double p[3] = {0, 0, 0};
+  
+#ifdef ROTATION
   /** quaternions to define particle orientation */
-  double quat[4] = {1.,0.,0.,0.} ;
+  double quat[4] = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  double quatu[3] {0.,0.,1.};
+  double quatu[3]{0., 0., 1.};
 #endif
 
 #ifdef DIPOLES
   /** dipol moment. This is synchronized with quatu and quat. */
-  double dip[3] = {0.,0.,0.};
+  double dip[3] = {0., 0., 0.};
 #endif
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  double p_old[3] = {0.,0.,0.};
+  double p_old[3] = {0., 0., 0.};
 #endif
 
 #ifdef SHANCHEN
@@ -255,10 +244,6 @@ struct ParticleForce {
   double torque[3] = {0., 0., 0.};
 #endif
 
-#ifdef LB_BOUNDARIES_GPU
-  float sf[3];
-  float storque[3];
-#endif
 };
 
 /** Momentum information on a particle. Information not contained in
@@ -272,11 +257,6 @@ struct ParticleMomentum {
   /** angular velocity
       ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3] = {0., 0., 0.};
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-  /* single precision omega */
-  float somega[3];
 #endif
 };
 
@@ -407,6 +387,38 @@ struct Particle {
 #endif
 };
 
+/**
+ * These functions cause a compile time error if
+ * Particles are copied by memmove or memcpy,
+ * which does not keep class invariants.
+ *
+ * These are templates so that the error is cause
+ * at the place they are used.
+ */
+template <typename Size> void memmove(Particle *, Particle *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+template <typename Size> void memmove(Particle *, Particle const *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size> void memcpy(Particle *, Particle *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+template <typename Size> void memcpy(Particle *, Particle const *, Size) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size, typename... Ts>
+void MPI_Send(Particle *, Size, Ts...) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
+template <typename Size, typename... Ts>
+void MPI_Send(Particle const *, Size, Ts...) {
+  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
+}
+
 /** List of particles. The particle array is resized using a sophisticated
     (we hope) algorithm to avoid unnecessary resizes.
     Access using \ref realloc_particlelist, \ref got_particle,...
@@ -487,9 +499,8 @@ Particle *got_particle(ParticleList *plist, int id);
     reallocates particles if necessary!
     This procedure does not care for \ref local_particles.
     \param plist List to append the particle to.
-    \param part  Particle to append.
-    \return Pointer to new location of the particle. */
-Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
+    \param part  Particle to append. */
+void append_unindexed_particle(ParticleList *l, Particle &&part);
 
 /** Append a particle at the end of a particle List.
     reallocates particles if necessary!
@@ -497,7 +508,7 @@ Particle *append_unindexed_particle(ParticleList *plist, Particle *part);
     \param plist List to append the particle to.
     \param part  Particle to append.
     \return Pointer to new location of the particle. */
-Particle *append_indexed_particle(ParticleList *plist, Particle *part);
+Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
 /** Remove a particle from one particle List and append it to another.
     Refill the sourceList with last particle and update its entry in
@@ -895,8 +906,8 @@ void local_rescale_particles(int dir, double scale);
 void send_particles(ParticleList *particles, int node);
 
 /** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. The particles are
-    APPENDED to the list, so it has to be a valid one */
+    MUST call \ref send_particles when this is called. Particles needs to initialized,
+    it is realloced to the correct size and the content is overwritten. */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS

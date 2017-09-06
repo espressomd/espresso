@@ -24,6 +24,7 @@
  */
 
 #include <cmath>
+#include <numeric>
 #include <mpi.h>
 #include "utils.hpp"
 #include "communication.hpp"
@@ -578,9 +579,7 @@ static void setup_z_force()
 
 static void add_z_force()
 {
-  int np, c, i;
   double add;
-  Particle *part;
   double *othcblk;
   int size = 2;
   double field_tot=0;
@@ -589,14 +588,10 @@ static void add_z_force()
   if (mmm2d_params.const_pot_on) {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
-
-    for (c = 0; c < local_cells.n; c++) {
-      int npl = local_cells.cell[c]->n;
-      Particle *pl = local_cells.cell[c]->part;
-      for (i = 0; i < npl; i++) {
-      	lcl_dm_z += pl[i].p.q*(pl[i].r.p[2] + pl[i].l.i[2]*box_l[2]);
-      }
+    for (auto const &p : local_cells.particles()) {
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
     }
+
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
     field_induced = gbl_dm_z * coulomb.prefactor*4*M_PI*ux*uy*uz;
@@ -604,12 +599,12 @@ static void add_z_force()
     field_tot = field_induced + field_applied;
   }
 
-  for (c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= n_layers; c++) {
     othcblk = block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
-    np   = cells[c].n;
-    part = cells[c].part;
-    for (i = 0; i < np; i++) {
+    auto np   = cells[c].n;
+    auto part = cells[c].part;
+    for (int i = 0; i < np; i++) {
       part[i].f.f[2] += part[i].p.q*(add+field_tot);
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
 			 this_node, part[i].p.identity, part[i].f.f[0],
@@ -673,13 +668,10 @@ static double z_energy()
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
 
-    for (c = 0; c < local_cells.n; c++) {
-      int npl = local_cells.cell[c]->n;
-      Particle *pl = local_cells.cell[c]->part;
-      for (i = 0; i < npl; i++) {
-		lcl_dm_z += pl[i].p.q*(pl[i].r.p[2] + pl[i].l.i[2]*box_l[2]);
-      }
+    for (auto &p : local_cells.particles()) {
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
     }
+
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
     // zero potential difference contribution
     eng += gbl_dm_z*gbl_dm_z * coulomb.prefactor*2*M_PI*ux*uy*uz;
@@ -1795,28 +1787,18 @@ double mmm2d_coulomb_pair_energy(double charge_factor,
   return 0.0;
 }
 
-void MMM2D_self_energy()
-{
-  int c, np, i;
-  Particle *part;
+void MMM2D_self_energy() {
   double dv[3] = {0, 0, 0};
-  double seng = coulomb.prefactor*calc_mmm2d_copy_pair_energy(dv);
-  self_energy = 0;
+  double seng = coulomb.prefactor * calc_mmm2d_copy_pair_energy(dv);
 
   /* this one gives twice the real self energy, as it is used
      in the far formula which counts everything twice and in
      the end divides by two*/
 
-  // fprintf(stderr, "%d: self energy %g\n", this_node, seng);
-
-  for (c = 0; c < local_cells.n; c++) {
-    np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-
-    for (i = 0; i < np; i++) {
-      self_energy += seng*SQR(part[i].p.q);
-     }
-  }
+  auto parts = local_cells.particles();
+  self_energy = std::accumulate(
+      parts.begin(), parts.end(), 0,
+      [seng](double sum, Particle const &p) { return sum + seng * SQR(p.p.q); });
 }
 
 /****************************************

@@ -40,13 +40,13 @@ class ReactionEnsembleTest(ut.TestCase):
     type_H=2
     temperature=1.0
     standard_pressure_in_simulation_units=0.00108
-    pKa_minus_pH=2*(np.random.random()-0.5) #avoid extreme regions in the titration curve
-    pH=4*np.random.random()
+    pKa_minus_pH=1 #avoid extreme regions in the titration curve e.g. via the choice (np.random.random()-0.5)
+    pH=2 #or randomly via: 4*np.random.random()
     pKa=pKa_minus_pH+pH
     K_HA_diss_apparent=10**(-pKa); #could be in this test for example anywhere in the range 0.000001 ... 9
     box_l=(N0/c0)**(1.0/3.0)
     system = espressomd.System()
-    system.seed=np.random.randint(0, 2**31-1)
+    system.seed=system.cell_system.get_state()['n_nodes'] * [1234]
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01

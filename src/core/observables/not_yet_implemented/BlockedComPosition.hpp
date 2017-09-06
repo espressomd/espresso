@@ -1,4 +1,4 @@
-int ObservableBlockedComPosition::actual_calculate() {
+int ObservableBlockedComPosition::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   unsigned int i;
   unsigned int block;

@@ -330,13 +330,18 @@ cdef class System(object):
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the distance between the particles, respecting periodic boundaries."""
+        """Return the scalar distance between the particles, respecting periodic boundaries."""
+        res=self.distance_vec(p1,p2)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+    
+    def distance_vec(self, p1, p2):
+        """Return the distance vector between the particles, respecting periodic boundaries."""
 
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
-        get_mi_vector(res, a, b)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+        get_mi_vector(res, b,a)
+        return np.array((res[0],res[1],res[2]))
 
 
 # lbfluid=lb.DeviceList()

@@ -24,17 +24,17 @@
     This file contains the code for statistics on the data.
 */
 
-#include <vector>
-
 #include "grid.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "topology.hpp"
 #include "utils.hpp"
+#include "PartCfg.hpp"
 
 #include <map>
 #include <string>
 #include <vector>
+
 
 /** \name Data Types */
 /************************************************************/
@@ -121,7 +121,7 @@ extern int n_part_conf;
     @param set1 types of particles
     @param set2 types of particles
     @return the minimal distance of two particles */
-double mindist(IntList *set1, IntList *set2);
+double mindist(PartCfg &, IntList *set1, IntList *set2);
 
 /** calculate the aggregate distribution for molecules.
     @param dist_criteria2 distance criteria squared
@@ -150,7 +150,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
     @param il the list where to store the particles indices
     @param planedims orientation of coordinate system
 */
-void nbhood(double pos[3], double r_catch, IntList *il, int planedims[3]);
+void nbhood(PartCfg & partCfg, double pos[3], double r_catch, IntList *il, int planedims[3]);
 
 /** minimal distance to point.
     @param pos point
@@ -160,7 +160,7 @@ void nbhood(double pos[3], double r_catch, IntList *il, int planedims[3]);
    a particle).
     @return the minimal distance of a particle to coordinates (\<posx\>,
    \<posy\>, \<posz\>). */
-double distto(double pos[3], int pid);
+double distto(PartCfg &, double pos[3], int pid);
 
 /** numerical solution for the integration constant \f$\gamma\f$ in the cell
    model, determined by
@@ -189,7 +189,7 @@ void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry,
                    double *result);
 
 /** appends particles' positions in 'partCfg' to onfigs */
-void analyze_append();
+void analyze_append(PartCfg &);
 
 /** appends the configuration stored in 'config[3*count]' to configs
     @param config the configuration which should be added
@@ -199,15 +199,15 @@ void analyze_configs(double *config, int count);
 /** Docs missing!
 \todo Docs missing
 */
-void analyze_activate(int ind);
+void analyze_activate(PartCfg &, int ind);
 
 /** removes configs[0], pushes all entries forward, appends current 'partCfg' to
  * last spot */
-void analyze_push();
+void analyze_push(PartCfg &);
 
 /** replaces configs[ind] with current 'partCfg'
     @param ind the entry in \ref #configs to be replaced */
-void analyze_replace(int ind);
+void analyze_replace(PartCfg &, int ind);
 
 /** removes configs[ind] and shrinks the array accordingly
     @param ind the entry in \ref #configs to be removed */
@@ -232,7 +232,7 @@ void analyze_remove(int ind);
     @param low      particles closer than r_min
     @param dist     Array to store the result (size: r_bins).
  */
-void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
+void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, int n_p2,
                             double r_min, double r_max, int r_bins,
                             int log_flag, double *low, double *dist);
 /** Calculates the radial distribution function.
@@ -254,9 +254,9 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param rdf     Array to store the result (size: r_bins).
 */
 
-void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
+void calc_rdf(PartCfg & partCfg, int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
               double r_max, int r_bins, double *rdf);
-void calc_rdf(std::vector<int> &p1_types, std::vector<int> &p2_types,
+void calc_rdf(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int> &p2_types,
               double r_min, double r_max, int r_bins, std::vector<double> &rdf);
 
 /** Calculates the radial distribution function averaged over last n_conf
@@ -279,9 +279,9 @@ void calc_rdf(std::vector<int> &p1_types, std::vector<int> &p2_types,
     @param rdf      Array to store the result (size: r_bins).
     @param n_conf   Number of configurations from the last stored configuration.
 */
-void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
+void calc_rdf_av(PartCfg & partCfg, int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
                  double r_max, int r_bins, double *rdf, int n_conf);
-void calc_rdf_av(std::vector<int> &p1_types, std::vector<int> &p2_types,
+void calc_rdf_av(PartCfg & partCfg, std::vector<int> &p1_types, std::vector<int> &p2_types,
                  double r_min, double r_max, int r_bins,
                  std::vector<double> &rdf, int n_conf);
 
@@ -306,10 +306,10 @@ void calc_rdf_av(std::vector<int> &p1_types, std::vector<int> &p2_types,
     @param n_conf   Number of configurations from the last stored configuration.
 */
 
-void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
+void calc_rdf_intermol_av(PartCfg & partCfg, int *p1_types, int n_p1, int *p2_types, int n_p2,
                           double r_min, double r_max, int r_bins, double *rdf,
                           int n_conf);
-void calc_rdf_intermol_av(std::vector<int> &p1_types,
+void calc_rdf_intermol_av(PartCfg & partCfg, std::vector<int> &p1_types,
                           std::vector<int> &p2_types, double r_min,
                           double r_max, int r_bins, std::vector<double> &rdf,
                           int n_conf);
@@ -339,7 +339,7 @@ void calc_rdf_intermol_av(std::vector<int> &p1_types,
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax,
+double calc_vanhove(PartCfg &, int ptype, double rmin, double rmax, int rbins, int tmax,
                     double *msd, double **vanhove);
 
 /** Calculates the spherically averaged structure factor.
@@ -365,7 +365,7 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax,
    (size: 2*order^2).
 */
 
-void calc_structurefactor(int *p_types, int n_types, int order, double **sf);
+void calc_structurefactor(PartCfg &, int *p_types, int n_types, int order, double **sf);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf);
 
@@ -373,7 +373,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf);
 void density_profile_av(int n_conf, int n_bin, double density, int dir,
                         double *rho_ave, int type);
 
-int calc_cylindrical_average(
+int calc_cylindrical_average(PartCfg &,
     std::vector<double> center, std::vector<double> direction, double length,
     double radius, int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
@@ -409,19 +409,19 @@ inline double min_distance(double const pos1[3], double const pos2[3]) {
  *  \param type  type of the particle
  *  \param com   center of mass position
  */
-std::vector<double> centerofmass(int part_type);
+std::vector<double> centerofmass(PartCfg &, int part_type);
 
 /** Docs missing
 \todo Docs missing
 */
-std::vector<double> centerofmass_vel(int type);
+std::vector<double> centerofmass_vel(PartCfg &, int type);
 
 /** calculate the angular momentum of a special type of the current
  * configuration
  *  \param type  type of the particle
  *  \param com   angular momentum vector
  */
-void angularmomentum(int type, double *com);
+void angularmomentum(PartCfg &, int type, double *com);
 
 /** calculate the center of mass of a special type of a saved configuration
  *  \param k       number of the saved configuration
@@ -430,9 +430,8 @@ void angularmomentum(int type, double *com);
  */
 void centermass_conf(int k, int type_1, double *com);
 
-void momentofinertiamatrix(int type, double *MofImatrix);
-void calc_gyration_tensor(int type, std::vector<double> &gt);
-void calculate_verlet_neighbors();
+void momentofinertiamatrix(PartCfg & partCfg, int type, double *MofImatrix);
+void calc_gyration_tensor(PartCfg & partCfg, int type, std::vector<double> &gt);
 
 /** returns the momentum of the particles in the simulation box.
  * \param result Momentum of particles.

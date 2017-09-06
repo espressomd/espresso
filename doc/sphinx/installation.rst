@@ -267,6 +267,16 @@ Please see the following chapters describing how to actually write
 a simulation script for |es|.
 
 
+Listing the features compiled into ESPResSo
+-------------------------------------------
+To see, what features were activated in myconfig.hpp, run:::
+    ./pypresso
+and then in the Python interpreter:
+    import espressomd
+    print(espressomd.features())
+
+
+
 .. [1]
    http://espressomd.org
 

@@ -31,6 +31,7 @@
  */
 
 #include "particle_data.hpp"
+#include "PartCfg.hpp"
 
 /** \name Data structures */
 /************************************************************/
