@@ -146,7 +146,6 @@ void on_program_start()
   }
 }
 
-
 void on_integration_start()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));

@@ -21,8 +21,6 @@
 #ifndef _GLOBAL_HPP
 #define _GLOBAL_HPP
 
-#include <boost/mpi/communicator.hpp>
-
 /** \file global.hpp This file contains the code for access to globally
     defined variables using the script command setmd. Please refer to
     the Developer's guide, section "Adding global variables", for
@@ -48,7 +46,7 @@ int mpi_bcast_parameter(int i);
  * @brief Check if all the global fields a synchronized between
  *        the nodes.
  */
-void check_global_consistency(boost::mpi::communicator const &comm);
+void check_global_consistency();
 
 /** \name Field Enumeration
     These numbers identify the variables given in

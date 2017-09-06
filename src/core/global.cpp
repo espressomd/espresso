@@ -35,6 +35,7 @@
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "tuning.hpp"
+#include "communication.hpp"
 #include "utils/mpi/all_compare.hpp"
 
 #include <boost/functional/hash.hpp>
@@ -293,19 +294,19 @@ void common_bcast_parameter(int i) {
 
 int warnings = 1;
 
-void check_global_consistency(boost::mpi::communicator const &comm) {
+void check_global_consistency() {
   using Utils::Mpi::all_compare;
 
   /* Local hash */
   auto const hash = boost::hash_range(fields.begin(), fields.end());
 
-  bool is_same = all_compare(comm, hash);
+  bool is_same = all_compare(comm_cart, hash);
 
   /* If the hash does not check out, test the individual fields to find out
      which ones are async. */
   if (not is_same) {
     for (auto const &field : fields) {
-      if (not all_compare(comm, hash_value(field.second))) {
+      if (not all_compare(comm_cart, hash_value(field.second))) {
         runtimeErrorMsg() << "Global field '" << field.second.name << "' ("
                           << field.first
                           << ") is not synchronized between all nodes.";
