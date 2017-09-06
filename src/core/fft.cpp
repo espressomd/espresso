@@ -222,13 +222,13 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   }
   
   /* Factor 2 for complex numbers */
-  fft.send_buf = (double *)Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
-  fft.recv_buf = (double *)Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
+  fft.send_buf = Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
+  fft.recv_buf = Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
   if (*data) fftw_free(*data);
   (*data)  = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
   if (fft.data_buf) fftw_free(fft.data_buf);
   fft.data_buf = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
-  if(!(*data) || !fft.data_buf || !fft.recv_buf || !fft.send_buf) {
+  if(!(*data) || !fft.data_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
   }
