@@ -24,14 +24,7 @@ import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
 from tests_common import verify_lj_forces
-from numpy import random 
-
-
-
-
-
-
-
+from numpy import random
 
 @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"Test requires VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
@@ -73,14 +66,6 @@ class VirtualSites(ut.TestCase):
         self.assertTrue(np.linalg.norm(
           v_d -vs_r[1]*self.director_from_quaternion(
           self.multiply_quaternions(rel.quat,vs_r[2])))<1E-6)
-
-
-
-
-
-
-
-
 
     def test_pos_vel_forces(self):
         s=self.s

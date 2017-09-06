@@ -26,10 +26,9 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "domain_decomposition.hpp"
-#include "energy.hpp"
 #include "energy_inline.hpp"
-#include "forces.hpp"
 #include "forces_inline.hpp"
+#include "pressure_inline.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
@@ -398,7 +397,7 @@ void layered_topology_init(CellPList *old) {
          somewhere for the moment */
       if (nc == NULL)
         nc = local_cells.cell[0];
-      append_unindexed_particle(nc, &part[p]);
+      append_unindexed_particle(nc, std::move(part[p]));
     }
   }
   for (c = 1; c <= n_layers; c++)
