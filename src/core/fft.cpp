@@ -133,10 +133,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
       }
     }
 
-    fft.plan[i].send_block = (int *)Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].send_size  = (int *)Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_block = (int *)Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_size  = (int *)Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_block = Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_size  = Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_block = Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_size  = Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
 
     fft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim,
 					   global_mesh_off, fft.plan[i].new_mesh, 

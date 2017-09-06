@@ -372,9 +372,9 @@ void dp3m_init() {
     }
 
     dp3m.send_grid =
-        (double *)Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
+        Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
     dp3m.recv_grid =
-        (double *)Utils::realloc(dp3m.recv_grid, sizeof(double) * dp3m.sm.max);
+        Utils::realloc(dp3m.recv_grid, sizeof(double) * dp3m.sm.max);
 
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();
@@ -395,10 +395,10 @@ void dp3m_init() {
         dfft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                   dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum);
     dp3m.ks_mesh =
-        (double *)Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
+        Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
-      dp3m.rs_mesh_dip[n] = (double *)Utils::realloc(
+      dp3m.rs_mesh_dip[n] = Utils::realloc(
           dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[0] ADR=%p\n", this_node,
@@ -628,7 +628,7 @@ void dp3m_interpolate_dipole_assignment_function() {
 
   for (i = 0; i < dp3m.params.cao; i++) {
     /* allocate memory for interpolation array */
-    dp3m.int_caf[i] = (double *)Utils::realloc(
+    dp3m.int_caf[i] = Utils::realloc(
         dp3m.int_caf[i], sizeof(double) * (2 * dp3m.params.inter + 1));
 
     /* loop over all interpolation points */
@@ -1370,9 +1370,9 @@ void dp3m_realloc_ca_fields(int newsize) {
       "%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",
       this_node, dp3m.ca_num, newsize));
   dp3m.ca_num = newsize;
-  dp3m.ca_frac = (double *)Utils::realloc(
+  dp3m.ca_frac = Utils::realloc(
       dp3m.ca_frac, dp3m.params.cao3 * dp3m.ca_num * sizeof(double));
-  dp3m.ca_fmp = (int *)Utils::realloc(dp3m.ca_fmp, dp3m.ca_num * sizeof(int));
+  dp3m.ca_fmp = Utils::realloc(dp3m.ca_fmp, dp3m.ca_num * sizeof(int));
 }
 
 /*****************************************************************************/
@@ -1381,7 +1381,7 @@ void dp3m_calc_meshift(void) {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.meshift = (double *)Utils::realloc(dp3m.meshift,
+  dp3m.meshift = Utils::realloc(dp3m.meshift,
                                           dp3m.params.mesh[0] * sizeof(double));
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.meshift[i] = i - dround(i / dmesh) * dmesh;
@@ -1395,7 +1395,7 @@ void dp3m_calc_differential_operator() {
 
   dmesh = (double)dp3m.params.mesh[0];
   dp3m.d_op =
-      (double *)Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
+      Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.d_op[i] = (double)i - dround((double)i / dmesh) * dmesh;
@@ -1418,7 +1418,7 @@ void dp3m_calc_influence_function_force() {
     size *= dfft.plan[3].new_mesh[i];
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  dp3m.g_force = (double *)Utils::realloc(dp3m.g_force, size * sizeof(double));
+  dp3m.g_force = Utils::realloc(dp3m.g_force, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_l[0] * box_l[0]);
 
@@ -1505,7 +1505,7 @@ void dp3m_calc_influence_function_energy() {
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
   dp3m.g_energy =
-      (double *)Utils::realloc(dp3m.g_energy, size * sizeof(double));
+      Utils::realloc(dp3m.g_energy, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_l[0] * box_l[0]);
 
