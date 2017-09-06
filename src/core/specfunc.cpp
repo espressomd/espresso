@@ -89,7 +89,7 @@ static double bk0_data[11] = {
    0.00000000000000013744,
    0.00000000000000000035
 };
-static Polynom bk0_cs = { bk0_data, 11, 11 };
+static Polynom bk0_cs{bk0_data};
 
 static double ak0_data[17] = {
   2.5 -0.07643947903327941,
@@ -110,7 +110,7 @@ static double ak0_data[17] = {
   -0.00000000000000033,
    0.00000000000000005
 };
-static Polynom ak0_cs = { ak0_data, 16, 16 };
+static Polynom ak0_cs{ak0_data};
 
 static double ak02_data[14] = {
   2.5 -0.01201869826307592,
@@ -128,7 +128,7 @@ static double ak02_data[14] = {
    0.00000000000000020,
   -0.00000000000000002
 };
-static Polynom ak02_cs = { ak02_data, 13, 13 };
+static Polynom ak02_cs{ak02_data};
 
 /* based on SLATEC besi0 */
 
@@ -168,7 +168,7 @@ static double bi0_data[12] = {
    .00000000000000053339,
    .00000000000000000245
 };
-static Polynom bi0_cs = { bi0_data, 12, 12 };
+static Polynom bi0_cs{bi0_data};
 
 static double ai0_data[21] = {
   .75 +.07575994494023796, 
@@ -193,7 +193,7 @@ static double ai0_data[21] = {
   -.00000000000000071,
    .00000000000000007
 };
-static Polynom ai0_cs = { ai0_data, 21, 21 };
+static Polynom ai0_cs{ai0_data};
 
 static double ai02_data[22] = {
   .75 +.05449041101410882,
@@ -219,7 +219,7 @@ static double ai02_data[22] = {
   -.00000000000000027,
    .00000000000000003
 };
-static Polynom ai02_cs = { ai02_data, 22, 22 };
+static Polynom ai02_cs{ai02_data};
 
 /* based on SLATEC besk1(), besk1e() */
 
@@ -258,7 +258,7 @@ static double bk1_data[11] = {
   -0.0000000000000000070
 };
 
-static Polynom bk1_cs = { bk1_data, 11, 11 };
+static Polynom bk1_cs{bk1_data};
 
 static double ak1_data[17] = {
   2.5 +0.27443134069738830, 
@@ -279,7 +279,7 @@ static double ak1_data[17] = {
    0.00000000000000038,
   -0.00000000000000006
 };
-static Polynom ak1_cs = { ak1_data, 17, 17 };
+static Polynom ak1_cs{ak1_data};
 
 static double ak12_data[14] = {
   2.5 +0.06379308343739001,
@@ -297,7 +297,7 @@ static double ak12_data[14] = {
   -0.00000000000000022,
    0.00000000000000002
 };
-static Polynom ak12_cs = { ak12_data, 14, 14 };
+static Polynom ak12_cs{ak12_data};
 
 /* based on SLATEC besi1(), besi1e() */
 
@@ -335,7 +335,7 @@ static double bi1_data[11] = {
    0.000000000000004741,
    0.000000000000000024
 };
-static Polynom bi1_cs = { bi1_data, 11, 11 };
+static Polynom bi1_cs{bi1_data};
 
 static double ai1_data[21] = {
   .75 -0.02846744181881479,
@@ -360,7 +360,7 @@ static double ai1_data[21] = {
    0.00000000000000071,
   -0.00000000000000006
 };
-static Polynom ai1_cs = { ai1_data, 21, 21 };
+static Polynom ai1_cs{ai1_data};
 
 static double ai12_data[22] = {
   .75 +0.02857623501828014,
@@ -386,7 +386,7 @@ static double ai12_data[22] = {
    0.00000000000000028,
   -0.00000000000000003
 };
-static Polynom ai12_cs = { ai12_data, 22, 22 };
+static Polynom ai12_cs{ai12_data};
 
 /************************************************
  * chebychev expansions

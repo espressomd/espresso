@@ -17,11 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from espressomd._system cimport *
+from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
 from espressomd.utils cimport *
 from libcpp cimport bool
+from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
@@ -60,6 +61,7 @@ cdef extern from "particle_data.hpp":
         particle_force f
         particle_local l
         int_list bl
+        int_list exclusions() except +
 
     IF ENGINE:
         IF LB or LB_GPU:
@@ -79,8 +81,7 @@ cdef extern from "particle_data.hpp":
                 double v_swim
 
     # Setter/getter/modifier functions functions
-
-    int get_particle_data(int part, particle * data)
+    unique_ptr[particle] get_particle_data(int part)
 
     int place_particle(int part, double p[3])
 
@@ -183,8 +184,6 @@ cdef extern from "particle_data.hpp":
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)
-        void pointer_to_exclusions(particle * p, int * & res1, int * & res2)
-
         void remove_all_exclusions()
 
     IF ENGINE:
@@ -220,19 +219,16 @@ cdef extern from "interaction_data.hpp":
     cdef int n_bonded_ia
 
 cdef class ParticleHandle(object):
-
     cdef public int id
     cdef bint valid
-    cdef particle particle_data
+    cdef unique_ptr[particle] particle_data
     cdef int update_particle_data(self) except -1
 
-
 cdef class _ParticleSliceImpl:
-
-    cdef particle particle_data
+    cdef unique_ptr[particle] particle_data
     cdef int update_particle_data(self, id) except -1
     cdef public id_selection
 
 cdef extern from "grid.hpp":
-    cdef inline void fold_position(double *, int*)
+    cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3]) 

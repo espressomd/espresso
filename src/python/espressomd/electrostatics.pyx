@@ -428,9 +428,6 @@ IF P3M == 1:
             def required_keys(self):
                 return ["bjerrum_length", "accuracy"]
 
-            def _deactivate_method(self):
-                coulomb.method = COULOMB_NONE
-
             def default_params(self):
                 return {"cao": 0,
                         "inter": -1,
@@ -529,7 +526,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "K_max", "alpha", "accuracy", "precision"
+            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -613,7 +610,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
-    cdef class MMM1D(electrostatics.ElectrostaticInteraction):
+    cdef class MMM1D(ElectrostaticInteraction):
         """
         Electrostatics solver for Systems with one periodic direction.
         See :ref:`mmm1d_guide` for more details.
@@ -913,7 +910,7 @@ IF ELECTROSTATICS:
 
             def default_params(self):
                 return {}
-            
+
             def _deactivate_method(self):
-                coulomb.method = COULOMB_NONE
+                super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()

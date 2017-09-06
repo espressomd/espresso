@@ -1,7 +1,5 @@
 #include "ScriptInterface.hpp"
 
-#include <iostream>
-
 namespace ScriptInterface {
 namespace Testing {
 class VariantTester : public ScriptInterfaceBase {

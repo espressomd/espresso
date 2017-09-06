@@ -35,7 +35,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``lbf.py``
 
 * ``lj-demo.py``
-    Lennard-Jones liquid used for demonstration purposes to showcase |Es|. Sliders from a MIDI controller can change system variables such as temperature and volume. Some thermodynamic observables are analyzed and plotted live.
+    Lennard-Jones liquid used for demonstration purposes to showcase |es|.
+    Sliders from a MIDI controller can change system variables such as
+    temperature and volume. Some thermodynamic observables are analyzed and
+    plotted live.
 
 * ``lj_liquid_distribution.py``
     Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.
@@ -46,7 +49,6 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     * set up system parameters, particles and interactions.
     * warm up and integrate. 
     * write parameters, configurations and observables to files
-    * handle the connection to VMD.
 
 * ``lj_liquid_structurefactor.py``
     Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.
@@ -65,6 +67,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 
 * ``load_properties.py``,  ``store_properties.py``
     Uses the Python ``pickle`` module to store and load system information.
+
+* ``MDAnalysisIntegration.py``.
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or 
+    convert the frame to other formats (CHARMM, GROMACS, ...)
 
 * ``minimal-charged-particles.py``
    Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 

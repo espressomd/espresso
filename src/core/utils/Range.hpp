@@ -14,6 +14,7 @@ template <typename Iterator> class Range {
   Iterator m_begin, m_end;
 
 public:
+  using iterator = Iterator;
   using value_type = typename std::iterator_traits<Iterator>::value_type;
   using difference_type = typename std::iterator_traits<Iterator>::difference_type;
 
@@ -26,7 +27,8 @@ public:
 
   bool empty() const { return m_begin == m_end; }
   difference_type size() const {
-    return std::distance(m_begin, m_end);
+    using std::distance;
+    return distance(m_begin, m_end);
   }
 
   bool operator==(Range const &rhs) const {

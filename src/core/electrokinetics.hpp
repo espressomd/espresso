@@ -50,6 +50,7 @@ typedef struct {
   float time_step; //MD time step
   float lb_density;
   unsigned int dim_x;
+  unsigned int dim_x_padded;
   unsigned int dim_y;
   unsigned int dim_z;
   unsigned int number_of_nodes;

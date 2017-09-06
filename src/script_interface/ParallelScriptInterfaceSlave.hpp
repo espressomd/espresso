@@ -23,7 +23,6 @@
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
 #include "ScriptInterfaceBase.hpp"
-#include "core/utils/parallel/InstanceCallback.hpp"
 #include "core/utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
@@ -41,6 +40,8 @@ public:
   };
 
 private:
+  friend class ParallelScriptInterface;
+  static Communication::MpiCallbacks * m_cb;
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
   ParallelScriptInterfaceSlave();
 

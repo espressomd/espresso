@@ -47,14 +47,12 @@ namespace Observables {
 
 class PidObservable : public Observable {
 public:
-  PidObservable() : m_observable(new ::Observables::PidObservable()){};
-
   const std::string name() const override {
     return "Observables::PidObservable";
   };
 
   VariantMap get_parameters() const override {
-    return {{"ids", pid_observable()->ids}};
+    return {{"ids", pid_observable()->ids()}};
   };
 
   ParameterMap valid_parameters() const override {
@@ -62,17 +60,12 @@ public:
   };
 
   void set_parameter(std::string const &name, Variant const &value) override {
-    SET_PARAMETER_HELPER("ids", pid_observable()->ids);
-  };
-  virtual std::shared_ptr<::Observables::Observable> observable() const {
-    return m_observable;
-  };
-  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const {
-    return m_observable;
+    SET_PARAMETER_HELPER("ids", pid_observable()->ids());
   };
 
-private:
-  std::shared_ptr<::Observables::PidObservable> m_observable;
+  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
+  virtual std::shared_ptr<::Observables::PidObservable>
+  pid_observable() const = 0;
 };
 
 #define NEW_PID_OBSERVABLE(obs_name)                                           \
@@ -84,10 +77,11 @@ private:
       return "Observables::" #obs_name;                                        \
     }                                                                          \
                                                                                \
-    virtual std::shared_ptr<::Observables::Observable> observable() override { \
+    std::shared_ptr<::Observables::Observable> observable() const override {   \
       return m_observable;                                                     \
     };                                                                         \
-    virtual std::shared_ptr<::Observables::PidObservable>                      \
+                                                                               \
+    std::shared_ptr<::Observables::PidObservable>                              \
     pid_observable() const override {                                          \
       return m_observable;                                                     \
     };                                                                         \

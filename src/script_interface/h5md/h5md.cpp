@@ -24,6 +24,7 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #include "h5md.hpp"
+#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
@@ -33,7 +34,7 @@ Variant H5mdScript::call_method(const std::string &name,
   if (name == "init_file")
     m_h5md->InitFile();
   else if (name == "write")
-    m_h5md->Write(m_h5md->what());
+    m_h5md->Write(m_h5md->what(), partCfg());
   else if (name == "flush")
     m_h5md->Flush();
   else if (name == "close")

@@ -1,4 +1,4 @@
-int ObservableBlockedComForce::actual_calculate() {
+int ObservableBlockedComForce::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   unsigned int i;
   unsigned int block;

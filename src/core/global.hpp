@@ -147,64 +147,48 @@ extern const Datafield fields[];
 #define FIELD_TIMESTEP            33
 /** index of \ref timing_samples in  \ref #fields */
 #define FIELD_TIMINGSAMP          34
-/** index of \ref transfer_rate  in \ref #fields */
-#define FIELD_TRANSFERRATE        35
 /** index of \ref max_cut_nonbonded in \ref #fields */
-#define FIELD_MCUT_NONBONDED      36
+#define FIELD_MCUT_NONBONDED      35
 /** index of \ref verlet_reuse in  \ref #fields */
-#define FIELD_VERLETREUSE         37
+#define FIELD_VERLETREUSE         36
 /** index of \ref lattice_switch in \ref #fields */
-#define FIELD_LATTICE_SWITCH      38
+#define FIELD_LATTICE_SWITCH      37
 /** index of \ref dpd_tgamma in \ref #fields */
-#define FIELD_DPD_TGAMMA          39
+#define FIELD_DPD_TGAMMA          38
 /** index of \ref dpd_tr_cut in \ref #fields */
-#define FIELD_DPD_TRCUT           40
+#define FIELD_DPD_TRCUT           39
 /** index of \ref dpd_twf in \ref #fields */
-#define FIELD_DPD_TWF             41
+#define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
-#define FIELD_DPD_WF              42
+#define FIELD_DPD_WF              41
 /** index of \ref max_cut_bonded in \ref #fields */
-#define FIELD_MCUT_BONDED         43
-/** index of \ref transfer_rate in \ref #fields */
-#define FIELD_TRANSFER_RATE       44
+#define FIELD_MCUT_BONDED         42
 /** index of \ref min_global_cut in \ref #fields */
-#define FIELD_MIN_GLOBAL_CUT      45
+#define FIELD_MIN_GLOBAL_CUT      43
 /** index of \ref ghmc_nmd in \ref #fields */
-#define FIELD_GHMC_NMD            46
+#define FIELD_GHMC_NMD            44
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_PHI            47
+#define FIELD_GHMC_PHI            45
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_RES            48 
+#define FIELD_GHMC_RES            46 
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_FLIP           49
+#define FIELD_GHMC_FLIP           47
 /** index of \ref ghmc_phi in \ref #fields */
-#define FIELD_GHMC_SCALE          50 
+#define FIELD_GHMC_SCALE          48 
 /** index of \ref lb_components in \ref #fields */
-#define FIELD_LB_COMPONENTS       51 
+#define FIELD_LB_COMPONENTS       49 
 /** index of \ref warnings in \ref #fields */
-#define FIELD_WARNINGS            52
+#define FIELD_WARNINGS            50
 /** DPD_IGNORE_FIXED_PARTICLES */
-#define FIELD_DPD_IGNORE_FIXED_PARTICLES 53
-/** index of \ref sd_viscosity in \ref #fields */
-#define FIELD_SD_VISCOSITY        54
-/** index of \ref sd_radius in \ref_#fields */
-#define FIELD_SD_RADIUS           55
-/** index of \ref sd_seed in \ref #fields */
-#define FIELD_SD_SEED             56
-/** index of \ref sd_random_state i_ \ref #fields */
-#define FIELD_SD_RANDOM_STATE     57
-/** index of \ref sd_precision_random in \ref #fields */
-#define FIELD_SD_RANDOM_PRECISION 58
+#define FIELD_DPD_IGNORE_FIXED_PARTICLES 51
 /** index of \ref smaller_timestep in \ref #fields */
-#define FIELD_SMALLERTIMESTEP     59
-/** index of \ref configtemp in \ref #fields */
-#define FIELD_CONFIGTEMP          60
+#define FIELD_SMALLERTIMESTEP     52
 /** index of \ref langevin_trans in \ref #fields */
-#define FIELD_LANGEVIN_TRANS_SWITCH 61
+#define FIELD_LANGEVIN_TRANS_SWITCH 53
 /** index of \ref langevin_rotate in \ref #fields */
-#define FIELD_LANGEVIN_ROT_SWITCH 62
+#define FIELD_LANGEVIN_ROT_SWITCH 54
 /** index of \ref langevin_gamma_rotation in  \ref #fields */
-#define FIELD_LANGEVIN_GAMMA_ROTATION 63
+#define FIELD_LANGEVIN_GAMMA_ROTATION 55
 
 /*@}*/
 

@@ -85,7 +85,7 @@ cdef class Diamond(object):
                 "Please define a bonded interaction [0] before setting up polymers!")
 
     def __set_params_in_es_core(self):
-        return diamondC(self._params["a"], self._params["bond_length"], self._params["MPC"], self._params["N_CI"], self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
+        return diamondC(partCfg(), self._params["a"], self._params["bond_length"], self._params["MPC"], self._params["N_CI"], self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
 
     def _set_params_in_es_core(self):
         tmp_try = self.__set_params_in_es_core()
