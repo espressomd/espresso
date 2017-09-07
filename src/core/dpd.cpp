@@ -60,13 +60,23 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
   data->dpd_gamma = gamma;
   data->dpd_r_cut = r_c;
   data->dpd_wf = wf;
-  data->dpd_pref1 = gamma / time_step;
   data->dpd_pref2 = sqrt(24.0 * temperature * gamma / time_step);
   data->dpd_tgamma = tgamma;
   data->dpd_tr_cut = tr_c;
   data->dpd_twf = twf;
-  data->dpd_pref3 = tgamma / time_step;
   data->dpd_pref4 = sqrt(24.0 * temperature * tgamma / time_step);
+
+  /* Only make active if the DPD thermostat is
+     activated, otherwise it will by activated
+     by dpd_init() on thermostat change.
+  */
+  if (thermo_switch & THERMO_DPD) {
+    data->dpd_pref1 = gamma / time_step;
+    data->dpd_pref3 = tgamma / time_step;
+  } else {
+    data->dpd_pref1 = 0.0;
+    data->dpd_pref3 = 0.0;
+  }
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
