@@ -19,12 +19,14 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
+import os
+import pickle
+import numpy as np
 import unittest as ut
 import espressomd
-import numpy as np
 from espressomd.electrostatics import *
 from espressomd import scafacos
-import pickle
+import tests_common
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
@@ -42,9 +44,7 @@ class CoulombCloudWallTune(ut.TestCase):
         if len(self.S.actors):
             del self.S.actors[0]
         self.S.part.clear()
-
-        data = np.load('data/coulomb_tuning_system.npz')
-
+        data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
         self.forces = []
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f

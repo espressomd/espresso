@@ -1924,12 +1924,12 @@ void MMM2D_on_resort_particles()
     n_localpart = cells_get_n_particles();
     n_scxcache = (int)(ceil(mmm2d_params.far_cut/ux) + 1);
     n_scycache = (int)(ceil(mmm2d_params.far_cut/uy) + 1);
-    scxcache = (SCCache*)Utils::realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
-    scycache = (SCCache*)Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
+    scxcache = Utils::realloc(scxcache, n_scxcache*n_localpart*sizeof(SCCache));
+    scycache = Utils::realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
-    partblk   = (double*)Utils::realloc(partblk,  n_localpart*8*sizeof(double));
-    lclcblk   = (double*)Utils::realloc(lclcblk,  cells.size()*8*sizeof(double));
-    gblcblk   = (double*)Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
+    partblk   = Utils::realloc(partblk,  n_localpart*8*sizeof(double));
+    lclcblk   = Utils::realloc(lclcblk,  cells.size()*8*sizeof(double));
+    gblcblk   = Utils::realloc(gblcblk,  n_layers*8*sizeof(double));
   }
   MMM2D_self_energy();
 }

@@ -158,7 +158,7 @@ IF DP3M == 1:
                 raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":
-                self._params = 0.0
+                self._params["epsilon"] = 0.0
 
             if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
@@ -202,7 +202,7 @@ IF DP3M == 1:
                 "cao"], self._params["alpha"], self._params["accuracy"])
 
         def _tune(self):
-            dipolar_set_Dbjerrum(self._params["bjerrum_length"])
+            self.set_magnetostatics_prefactor() 
             dp3m_set_eps(self._params["epsilon"])
             self.python_dp3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
                 "cao"], -1.0, self._params["accuracy"], self._params["inter"])
