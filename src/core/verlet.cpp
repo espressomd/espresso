@@ -61,7 +61,7 @@ inline void add_pair(PairList *pl, Particle *p1, Particle *p2)
   /* check size of verlet List */
   if(pl->n+1 >= pl->max) {
     pl->max += LIST_INCREMENT;
-    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
   /* add pair */
   pl->pair[(2*pl->n)  ] = p1;
@@ -89,7 +89,7 @@ void free_pairList(PairList *list)
 {
   list->n       = 0;
   list->max     = 0;
-  list->pair = (Particle **)Utils::realloc(list->pair, 0);
+  list->pair = Utils::realloc(list->pair, 0);
 }
 
 /** Returns true if the particles are to be considered for short range 
@@ -406,7 +406,7 @@ void resize_verlet_list(PairList *pl)
   if( diff > 2*LIST_INCREMENT ) {
     diff = (diff/LIST_INCREMENT)-1;
     pl->max -= diff*LIST_INCREMENT;
-    pl->pair = (Particle **)Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
+    pl->pair = Utils::realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
 

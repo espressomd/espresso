@@ -79,7 +79,4 @@
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
 
-
-
-
-
+#define ADDITIONAL_CHECKS

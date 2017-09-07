@@ -156,6 +156,11 @@ void nsq_balance_particles(int global_flag)
 {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
 
+  /* Refold positions in any case, this is always safe. */
+  for (auto &p : local_cells.particles()) {
+    fold_position(p.r.p, p.l.i);
+  }
+
   /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
   if (global_flag != CELL_GLOBAL_EXCHANGE)
