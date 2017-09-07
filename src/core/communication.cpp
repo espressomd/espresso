@@ -383,7 +383,7 @@ void mpi_who_has() {
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
         pdata_s = sizes[pnode];
-        pdata = (int *)Utils::realloc(pdata, sizeof(int) * pdata_s);
+        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
@@ -403,7 +403,7 @@ void mpi_who_has_slave(int node, int param) {
   if (n_part == 0)
     return;
 
-  sendbuf = (int *)Utils::realloc(sendbuf, sizeof(int) * n_part);
+  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
 
   auto end = std::transform(local_cells.particles().begin(),
                             local_cells.particles().end(), sendbuf,

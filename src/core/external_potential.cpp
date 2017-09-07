@@ -31,7 +31,7 @@ void external_potential_pre_init() {
 
 
 int generate_external_potential(ExternalPotential** e) {
-  external_potentials = (ExternalPotential*) Utils::realloc(external_potentials,
+  external_potentials = Utils::realloc(external_potentials,
 		  (n_external_potentials+1) * sizeof(ExternalPotential));
   *e = &external_potentials[n_external_potentials];
   n_external_potentials++;
