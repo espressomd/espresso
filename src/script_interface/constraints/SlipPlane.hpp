@@ -33,6 +33,7 @@ public:
   SlipPlane() : m_constraint(new ::Constraints::SlipPlane()) {
     add_parameters({{"velocity", m_constraint->v()},
                     {"gamma", m_constraint->gamma()},
+                    {"types", m_constraint->types()},
                     {"kT", m_constraint->kT()},
                     {"r_cut", m_constraint->r_cut()},
                     {"dist", m_constraint->wall().d()},

@@ -24,8 +24,6 @@
 #include "core/shapes/Wall.hpp"
 #include "random.hpp"
 
-#include <boost/container/flat_set.hpp>
-
 #include <cmath>
 #include <vector>
 
@@ -34,7 +32,7 @@ class SlipPlane : public Constraint {
   Vector3d m_v;
   double m_gamma, m_kT, m_time, m_rcut;
   Shapes::Wall m_wall;
-  boost::container::flat_set<int> m_types;
+  std::vector<int> m_types;
 
 public:
   SlipPlane() = default;
@@ -45,9 +43,10 @@ public:
   double &time_step() { return m_time; }
   double &r_cut() { return m_rcut; }
   Shapes::Wall &wall() { return m_wall; }
+  std::vector<int> &types() { return m_types; }
 
   void add_force(Particle *p, double *folded_pos) override {
-    if (m_types.find(p->p.type) == m_types.end()) {
+    if (std::find(m_types.begin(), m_types.end(), p->p.type) == m_types.end()) {
       return;
     }
 
