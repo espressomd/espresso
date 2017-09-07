@@ -67,6 +67,7 @@ python_test(FILE minimize_energy.py MAX_NUM_PROC 4)
 python_test(FILE mmm1d.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
 python_test(FILE variant_conversion.py MAX_NUM_PROC 1)
+python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)

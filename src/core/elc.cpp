@@ -1244,12 +1244,12 @@ void ELC_on_resort_particles() {
   n_localpart = cells_get_n_particles();
   n_scxcache = (int)(ceil(elc_params.far_cut / ux) + 1);
   n_scycache = (int)(ceil(elc_params.far_cut / uy) + 1);
-  scxcache = (SCCache *)Utils::realloc(
+  scxcache = Utils::realloc(
       scxcache, n_scxcache * n_localpart * sizeof(SCCache));
-  scycache = (SCCache *)Utils::realloc(
+  scycache = Utils::realloc(
       scycache, n_scycache * n_localpart * sizeof(SCCache));
 
-  partblk = (double *)Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
+  partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,

@@ -133,10 +133,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
       }
     }
 
-    fft.plan[i].send_block = (int *)Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].send_size  = (int *)Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_block = (int *)Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
-    fft.plan[i].recv_size  = (int *)Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_block = Utils::realloc(fft.plan[i].send_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].send_size  = Utils::realloc(fft.plan[i].send_size, 1*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_block = Utils::realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
+    fft.plan[i].recv_size  = Utils::realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
 
     fft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim,
 					   global_mesh_off, fft.plan[i].new_mesh, 
@@ -222,13 +222,13 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   }
   
   /* Factor 2 for complex numbers */
-  fft.send_buf = (double *)Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
-  fft.recv_buf = (double *)Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
+  fft.send_buf = Utils::realloc(fft.send_buf, fft.max_comm_size*sizeof(double));
+  fft.recv_buf = Utils::realloc(fft.recv_buf, fft.max_comm_size*sizeof(double));
   if (*data) fftw_free(*data);
   (*data)  = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
   if (fft.data_buf) fftw_free(fft.data_buf);
   fft.data_buf = (double *)fftw_malloc(fft.max_mesh_size*sizeof(double));
-  if(!(*data) || !fft.data_buf || !fft.recv_buf || !fft.send_buf) {
+  if(!(*data) || !fft.data_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
   }

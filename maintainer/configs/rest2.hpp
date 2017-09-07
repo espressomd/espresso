@@ -4,3 +4,4 @@
 #define VIRTUAL_SITES_COM
 /* using ADRESS causes several tests to fail */
 /* #define ADRESS */
+#define ADDITIONAL_CHECKS

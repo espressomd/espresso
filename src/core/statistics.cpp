@@ -883,7 +883,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
 
   order2 = order * order;
-  *_ff = ff = (double *)Utils::realloc(ff, 2 * order2 * sizeof(double));
+  *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -1386,7 +1386,7 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
@@ -1438,7 +1438,7 @@ void analyze_remove(int ind) {
     configs[i] = configs[i + 1];
   }
   n_configs--;
-  configs = (double **)Utils::realloc(configs, n_configs * sizeof(double *));
+  configs = Utils::realloc(configs, n_configs * sizeof(double *));
   if (n_configs == 0)
     n_part_conf = 0;
 }
@@ -1447,7 +1447,7 @@ void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   for (i = 0; i < n_part_conf; i++) {
