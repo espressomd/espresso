@@ -2,7 +2,7 @@
 #define OBSERVABLES_DIPOLEMOMENT_HPP
 
 #include "PidObservable.hpp"
-#include "partCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
@@ -10,7 +10,7 @@ namespace Observables {
 class DipoleMoment : public PidObservable {
 public:
   virtual int n_values() const override { return 3; };
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ELECTROSTATICS
       double charge = partCfg[ids()[i]].p.q;

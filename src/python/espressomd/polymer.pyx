@@ -162,7 +162,7 @@ def create_polymer(**kwargs):
         start_pos[i] = params["start_pos"][i]
         start_pos2[i] =params["pos2"][i]
 
-    polymerC(params["N_P"], params["MPC"], params["bond_length"], params["start_id"], \
+    polymerC(partCfg(), params["N_P"], params["MPC"], params["bond_length"], params["start_id"], \
              start_pos, params["mode"], params["shield"], params["max_tries"], \
              params["val_poly"], params["charge_distance"], params["type_poly_neutral"], \
              params["type_poly_charged"], bond_id, params["angle"], \

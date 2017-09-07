@@ -41,13 +41,13 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature=1.0
     standard_pressure_in_simulation_units=0.00108
     exclusion_radius=1.0
-    K_HA_diss=8.8*np.random.random()+0.2; #could be in this test for example anywhere in the range 0.000001 ... 9
+    K_HA_diss=8.8*0.5+0.2; #could be in this test for example anywhere in the range 0.000001 ... 9, chosen for example like 8.8*np.random.random()+0.2
     reactant_types=[type_HA]
     reactant_coefficients=[1]
     product_types=[type_A,type_H]
     product_coefficients=[1,1]
     system = espressomd.System()
-    system.seed=np.random.randint(0, 2**31-1)
+    system.seed=system.cell_system.get_state()['n_nodes'] * [1234]
     system.box_l = np.ones(3)*(N0/c0)**(1.0/3.0)
     system.cell_system.skin = 0.4
     system.time_step = 0.01

@@ -33,7 +33,7 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoCore EspressoConfig)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
@@ -61,7 +61,6 @@ if(CUDA)
 endif(CUDA)
 
 # Subdirectories
-add_subdirectory(utils)
 add_subdirectory(observables)
 add_subdirectory(correlators)
 add_subdirectory(io)

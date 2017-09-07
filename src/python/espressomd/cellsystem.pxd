@@ -19,6 +19,9 @@
 
 # @TODO: shouldn't these global definitions be used via global_variables?
 from __future__ import print_function, absolute_import
+
+from libcpp.vector cimport vector
+
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
 
@@ -26,6 +29,7 @@ cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)
     void mpi_bcast_cell_structure(int cs)
     int n_nodes
+    vector[int] mpi_resort_particles(int global_flag)
 
 cdef extern from "cells.hpp":
     int CELL_STRUCTURE_CURRENT
@@ -40,8 +44,6 @@ cdef extern from "layered.hpp":
 
 cdef extern from "grid.hpp":
     int node_grid[3]
-
-
 
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min, double max, double tol, int steps)

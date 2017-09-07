@@ -31,6 +31,7 @@
 namespace ScriptInterface {
 
 class ParallelScriptInterface : public ScriptInterfaceBase {
+  static Communication::MpiCallbacks * m_cb;
 public:
   using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
@@ -40,7 +41,7 @@ public:
   /**
    * @brief Initialize the mpi callback for instance creation.
    */
-  static void initialize();
+  static void initialize(Communication::MpiCallbacks &cb);
 
   bool operator==(ParallelScriptInterface const &rhs);
   bool operator!=(ParallelScriptInterface const &rhs);
@@ -76,7 +77,7 @@ private:
   using map_t = std::map<std::string, std::shared_ptr<ParallelScriptInterface>>;
 
   void call(CallbackAction action) {
-    Communication::mpiCallbacks().call(m_callback_id, static_cast<int>(action));
+    m_cb->call(m_callback_id, static_cast<int>(action));
   }
 
   /**
