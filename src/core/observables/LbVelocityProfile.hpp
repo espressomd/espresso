@@ -12,7 +12,7 @@ namespace Observables {
 class LBVelocityProfile : public ProfileObservable {
 public:
     virtual int n_values() const override { return 3 * xbins *ybins*zbins; }
-    virtual int actual_calculate() override {
+    virtual int actual_calculate(PartCfg & partCfg) override {
 #ifdef LB
   unsigned int maxi, maxj, maxk;
   double xoffset, yoffset, zoffset;

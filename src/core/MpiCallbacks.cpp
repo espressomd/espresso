@@ -74,10 +74,6 @@ int MpiCallbacks::add(func_ptr_type fp) {
 
 void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 
-void MpiCallbacks::slave(int id, int par1, int par2) const {
-  m_callbacks[id](par1, par2);
-}
-
 void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
 
 void MpiCallbacks::loop() const {
@@ -90,17 +86,8 @@ void MpiCallbacks::loop() const {
       break;
     } else {
       /** Call the callback */
-      slave(request[0], request[1], request[2]);
+      m_callbacks[request[0]](request[1], request[2]);
     }
   }
 }
-
-/* We use a singelton callback class for now. */
-MpiCallbacks &mpiCallbacks() {
-  static boost::mpi::communicator world;
-  static MpiCallbacks *m_global_callback = new MpiCallbacks(world);
-
-  return *m_global_callback;
-}
-
 } /* namespace Communication */

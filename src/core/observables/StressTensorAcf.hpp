@@ -13,7 +13,7 @@ namespace Observables {
 class StressTensorAcf : public PidObservable {
 public:
     virtual int n_values() const override { return 6;};
-    virtual int actual_calculate() override {
+    virtual int actual_calculate(PartCfg & partCfg) override {
   double stress_tensor[9];
   observable_compute_stress_tensor(1,stress_tensor);
   last_value[0]=stress_tensor[1];

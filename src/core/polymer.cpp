@@ -44,7 +44,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
-#include "partCfg.hpp"
+#include "PartCfg.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -54,7 +54,7 @@
  * ---------                                                 *
  *************************************************************/
 
-int mindist3(int part_id, double r_catch, int *ids) {
+int mindist3(PartCfg & partCfg, int part_id, double r_catch, int *ids) {
   int caught = 0;
 
   auto const r_catch2 = r_catch * r_catch;
@@ -70,7 +70,7 @@ int mindist3(int part_id, double r_catch, int *ids) {
   return caught;
 }
 
-double mindist4(double pos[3]) {
+double mindist4(PartCfg & partCfg, double pos[3]) {
   if (partCfg.size() == 0) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
@@ -106,8 +106,8 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
   return (-1.0);
 }
 
-int collision(double pos[3], double shield, int n_add, double *add) {
-  if (mindist4(pos) > shield && buf_mindist4(pos, n_add, add) > shield)
+int collision(PartCfg & partCfg, double pos[3], double shield, int n_add, double *add) {
+  if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
     return (0);
   return (1);
 }
@@ -144,7 +144,7 @@ int constraint_collision(double *p1, double *p2) {
 
 #endif
 
-int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
+int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_id, double *posed,
              int mode, double shield, int max_try, double val_cM, int cM_dist,
              int type_nM, int type_cM, int type_bond, double angle,
              double angle2, double *posed2, int constr) {
@@ -184,7 +184,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
           pos[0] = box_l[0] * d_random();
           pos[1] = box_l[1] * d_random();
           pos[2] = box_l[2] * d_random();
-          if ((mode == 1) || (collision(pos, shield, 0, NULL) == 0))
+          if ((mode == 1) || (collision(partCfg, pos, shield, 0, NULL) == 0))
             break;
           POLY_TRACE(printf("s"); fflush(NULL));
         }
@@ -233,7 +233,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
               constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
 #endif
 
-            if (mode == 1 || collision(pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
               break;
             if (mode == 0) {
               cnt1 = -1;
@@ -347,7 +347,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
           if (constr == 0 ||
               constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
 #endif
-            if (mode == 1 || collision(pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
               break;
             if (mode == 0) {
               cnt1 = -2;
@@ -425,7 +425,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   return (std::max(max_cnt, cnt2));
 }
 
-int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
+int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shield, int max_try,
                  double val_CI, int type_CI) {
   int n, cnt1, max_cnt;
   double pos[3];
@@ -436,7 +436,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
       pos[0] = box_l[0] * d_random();
       pos[1] = box_l[1] * d_random();
       pos[2] = box_l[2] * d_random();
-      if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+      if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
         break;
       POLY_TRACE(printf("c"); fflush(NULL));
     }
@@ -460,7 +460,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
   return (std::max(max_cnt, cnt1));
 }
 
-int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
+int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
           double val_pS, double val_nS, int type_pS, int type_nS, double rad) {
   int n, cnt1, max_cnt;
   double pos[3], dis2;
@@ -478,14 +478,14 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
           break;
       }
       POLY_TRACE(printf("p"); fflush(NULL));
@@ -518,14 +518,14 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
           break;
       }
       POLY_TRACE(printf("n"); fflush(NULL));
@@ -623,7 +623,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
   return (sqrt(SQR(v_av[0]) + SQR(v_av[1]) + SQR(v_av[2])) / fabs(time_step));
 }
 
-int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
+int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int type_bond,
                  int **bond_out, int ***bonds_out) {
   int i, j, k, ii, size, *bond = NULL, **bonds = NULL;
 
@@ -718,13 +718,13 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
   return (0);
 }
 
-int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
+int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch, int link_dist,
                int chain_dist, int type_bond, int max_try) {
   int i, j, k, ii, size, bondN[2], *bond, **bonds, *link, **links, *cross,
       crossL;
 
   /* Find all the bonds leading to and from each monomer. */
-  if (collectBonds(2, part_id, N_P, MPC, type_bond, &bond, &bonds))
+  if (collectBonds(partCfg, 2, part_id, N_P, MPC, type_bond, &bond, &bonds))
     return (-2);
   POLY_TRACE(for (i = 0; i < N_P * MPC + part_id; i++) {
     printf("%d:\t", i);
@@ -742,7 +742,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
     for (k = 0; k < 2; k++) {
       if (bond[i * MPC + k * (MPC - 1)] == 1) {
         links[2 * i + k] = (int *)Utils::malloc(n_part * sizeof(int));
-        link[2 * i + k] = mindist3(i * MPC + k * (MPC - 1) + part_id, r_catch,
+        link[2 * i + k] = mindist3(partCfg,i * MPC + k * (MPC - 1) + part_id, r_catch,
                                    links[2 * i + k]);
         links[2 * i + k] = (int *)Utils::realloc(links[2 * i + k],
                                                  link[2 * i + k] * sizeof(int));
@@ -929,7 +929,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
   }
 }
 
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
+int diamondC(PartCfg & partCfg, double a, double bond_length, int MPC, int N_CI, double val_nodes,
              double val_cM, double val_CI, int cM_dist, int nonet) {
   int i, j, k, part_id, bond[2], type_bond = 0, type_node = 0, type_cM = 1,
                                  type_nM = 1, type_CI = 2;
@@ -996,12 +996,12 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
 
   /* place counterions (if any) */
   if (N_CI > 0)
-    counterionsC(N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
 
   return (0);
 }
 
-int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
+int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
                int cM_dist) {
   int i, j, k, l, part_id, bond[2], type_bond = 0, type_cM = 0, type_nM = 1,
                                     type_CI = 2;
@@ -1164,7 +1164,7 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
 
   /* place counterions (if any) */
   if (N_CI > 0)
-    counterionsC(N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
 
   return (0);
 }

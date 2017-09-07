@@ -1,4 +1,4 @@
-int ObservableParticleBodyAngularMomentum::actual_calculate() {
+int ObservableParticleBodyAngularMomentum::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   IntList* ids;
   if (!sortPartCfg()) {

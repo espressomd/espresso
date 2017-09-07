@@ -10,7 +10,7 @@ namespace Observables {
 
 class ParticleForces : public PidObservable {
 public:
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     last_value.resize(3 * ids().size());
     double scale = 2. / time_step / time_step;
     for (int i = 0; i < ids().size(); i++) {
