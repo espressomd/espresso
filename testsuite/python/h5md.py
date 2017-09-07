@@ -64,23 +64,25 @@ class CommonTests(ut.TestCase):
         self.assertTrue(np.allclose(
             np.array([(float(i), float(i), float(i)) for i in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])),
-                        msg="Positions not written correctly by H5md!")
+            msg="Positions not written correctly by H5md!")
 
     def test_vel(self):
         """Test if velocities have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[1.0, 2.0, 3.0] for _ in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
-                        msg="Velocities not written correctly by H5md!")
+            msg="Velocities not written correctly by H5md!")
 
-    @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
-               "EXTERNAL_FORCES not compiled in, can not check writing forces.")
+    @ut.skipIf(
+        not espressomd.has_features(
+            ['EXTERNAL_FORCES']),
+        "EXTERNAL_FORCES not compiled in, can not check writing forces.")
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[0.1, 0.2, 0.3] for _ in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))])),
-                        msg="Forces not written correctly by H5md!")
+            msg="Forces not written correctly by H5md!")
 
 
 @ut.skipIf(not espressomd.has_features(['H5MD']),
@@ -93,9 +95,14 @@ class H5mdTestOrdered(CommonTests):
     def setUpClass(self):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
+        self.h5 = h5md.H5md(
+            filename="test.h5",
+            write_pos=True,
+            write_vel=True,
+            write_force=True,
+            write_species=True,
+            write_mass=True,
+            write_ordered=write_ordered)
         self.h5.write()
         self.h5.flush()
         self.h5.close()
@@ -108,7 +115,6 @@ class H5mdTestOrdered(CommonTests):
     @classmethod
     def tearDownClass(cls):
         os.remove("test.h5")
-
 
     def test_ids(self):
         """Test if ids have been written properly."""
@@ -127,9 +133,14 @@ class H5mdTestUnordered(CommonTests):
     def setUpClass(self):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
+        self.h5 = h5md.H5md(
+            filename="test.h5",
+            write_pos=True,
+            write_vel=True,
+            write_force=True,
+            write_species=True,
+            write_mass=True,
+            write_ordered=write_ordered)
         self.h5.write()
         self.h5.flush()
         self.h5.close()
@@ -145,7 +156,7 @@ class H5mdTestUnordered(CommonTests):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite() 
+    suite = ut.TestSuite()
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestUnordered))
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestOrdered))
     result = ut.TextTestRunner(verbosity=4).run(suite)
