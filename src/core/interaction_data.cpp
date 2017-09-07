@@ -70,6 +70,9 @@
 #ifdef BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
+#include "p3m-dipolar.hpp"
+#include "thermostat.hpp"
+
 
 /****************************************
  * variables

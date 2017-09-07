@@ -1,4 +1,4 @@
-int ObservableComForce::actual_calculate() {
+int ObservableComForce::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;

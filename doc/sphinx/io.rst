@@ -38,29 +38,13 @@ the script the checkpointing function was called to be able to return
 there. All this is even further complicated by the fact that is running
 in parallel.
 
-Instead, in , the user has to specify what information needs to be saved
-to a file to be able to restore the simulation state. The ``blockfile``
-and ``writemd`` commands help you to do that. ``blockfile`` writes text
-files. When floating point numbers are stored in such files (the
-particle positions), there is only a limited precision. Therefore, it is
-not possible to bitwise reproduce a simulation state using this
-function. When you need bitwise reproducibility, you will have to use
-the command , which stores positions, forces and velocities in binary
-format. Note that there is no command to write other MD parameters like
-time step or interactions in binary format. You should restore these
-using exactly the same Tcl command that you used to create them.
-
-Finally, there is one more complication: random forces are computed in
-the order the particles are stored in memory. This order usually differs
-after reading a blockfile back, since the particles are stored in
-consecutive identity order. In memory, they are usually not in a
-specific order. Therefore, you need to use ``sort_particles`` after
-writing a blockfile that you want to use for checkpointing, so that the
-particles are resorted to the same consecutive order. Note that this
-does not change physics, just the order the random numbers are applied.
-
-When using an LB fluid, you need to also write out the fluid nodes, see
-the ``lbfluid`` command for further details.
+Instead, in |es| the user has to specify what information needs to be saved to a
+file to be able to restore the simulation state. When floating point numbers
+are stored in text files (the particle positions), there is only a limited
+precision. Therefore, it is not possible to bitwise reproduce a simulation
+state using this text files. When you need bitwise reproducibility, you will have
+to use checkpointing , which stores positions, forces and velocities in binary
+format. 
 
 (Almost) generic checkpointing in Python
 ----------------------------------------
@@ -83,120 +67,115 @@ In addition, the checkpointing module is also able to catch signals that
 are invoked for example when the simulation is aborted by the user or by
 a timeout.
 
-The checkpointing module can be imported with
+The checkpointing module can be imported with::
 
-from espressomd import checkpointing
+    from espressomd import checkpointing
 
-[ checkpoint\_path= ]
+    [ checkpoint_path= ]
 
 Determines the identifier for a checkpoint. Legal characters for an id
-are “0-9”, “a-zA-Z”, “-”, “\_”.
+are "0-9", "a-zA-Z", "-", "_".
 
 Specifies the relative or absolute path where the checkpoints are
 stored.
 
-For example,
-
-checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
-
-would create the new checkpoint with id “mycheckpoint” and all the
+For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")``
+would create the new checkpoint with id "mycheckpoint" and all the
 checkpointing data will be stored in the current directory.
 
 After the system and checkpointing user variables are set up they can be
-registered for checkpointing:
-
-[ , ]
-
-Name string of the object or user variable that should be registered for
+registered for checkpointing.
+Name the string of the object or user variable that should be registered for
 checkpointing.
 
-To give an example,
+To give an example::
 
-myvar = “some variable value” skin = 0.4 checkpoint.register(“myvar”)
-checkpoint.register(“skin”)
+    myvar = "some variable value"
+    skin = 0.4
+    checkpoint.register("myvar")
+    checkpoint.register("skin")
 
-system = espressomd.System() # ... set system properties like box\_l or
-timestep here ... checkpoint.register(“system”)
+    system = espressomd.System()
+    # ... set system properties like box_l or
+    timestep here ... checkpoint.register("system")
 
-system.thermostat.set\_langevin(kT=1.0, gamma=1.0)
-checkpoint.register(“system.thermostat”)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    checkpoint.register("system.thermostat")
 
-# ... set system.non\_bonded\_inter here ...
-checkpoint.register(“system.non\_bonded\_inter”)
+    # ... set system.non_bonded_inter here ...
+    checkpoint.register("system.non_bonded_inter")
 
-# ... add particles to the system with system.part.add(...) here ...
-checkpoint.register(“system.part”)
+    # ... add particles to the system with system.part.add(...) here ...
+    checkpoint.register("system.part")
 
-# ... set charges of particles here ... from espressomd import
-electrostatics p3m = electrostatics.P3M(bjerrum\_length=1.0,
-accuracy=1e-2) system.actors.add(p3m) checkpoint.register(“p3m”)
+    # ... set charges of particles here ... from espressomd import
+    electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
+    system.actors.add(p3m)
+    checkpoint.register("p3m")
 
-will register the user variables and , system properties, a langevin
-thermostat, non-bonded interactions, particle properties and a p3m
-object for checkpointing. It is important to note that the checkpointing
-of will only save basic system properties. This excludes for example the
-system thermostat or the particle data. For this reason one has to
-explicitly register and for checkpointing.
+will register the user variables ``skin`` and ``myvar``, system properties, a
+langevin thermostat, non-bonded interactions, particle properties and a p3m
+object for checkpointing. It is important to note that the checkpointing of
+|es| will only save basic system properties. This excludes for example the
+system thermostat or the particle data. For this reason one has to explicitly
+register and for checkpointing.
 
-Analogous to this, objects that have been registered for checkpointing
-but are no longer needed in the next checkpoints can be unregistered
-with
+Analogous to this, objects that have been registered for checkpointing but are
+no longer needed in the next checkpoints can be unregistered with ``checkpoint
+unregister var``.  A list of all registered object names can be generated with
+``checkpoint get_registered_objects``.  A new checkpoint with a consecutive
+index that contains the latest data of the registered objects can then be
+created by calling ``checkpoint save [checkpoint_index]``.
 
-[ , ]
+An existing checkpoint can be loaded with ``checkpoint load
+[checkpoint_index]``.
 
-A list of all registered object names can be generated with
+If no is passed the last checkpoint will be loaded. Concerning the procedure of
+registering objects for checkpointing it is good to know that all registered
+objects saved in a checkpoint will be automatically re-registered after loading
+this checkpoint.
 
-A new checkpoint with a consecutive index that contains the latest data
-of the registered objects can then be created by calling
+In practical implementations it might come in handy to check if there are any
+available checkpoints for a given checkpoint id. This can be done with
+``checkpoint has_checkpoints`` which returns a bool value.
 
-An existing checkpoint can be loaded with
-
-[ checkpoint\_index= ]
-
-If no is passed the last checkpoint will be loaded. Concerning the
-procedure of registering objects for checkpointing it is good to know
-that all registered objects saved in a checkpoint will be automatically
-re-registered after loading this checkpoint.
-
-In practical implementations it might come in handy to check if there
-are any available checkpoints for a given checkpoint id. This can be
-done with
-
-which returns a bool value.
-
-As mentioned in the introduction the checkpointing module also enables
+As mentioned in the introduction, the checkpointing module also enables
 to catch signals in order to save a checkpoint and quit the simulation.
 Therefore one has to register the signal which should be caught with
+``checkpoint register_signal signum=int_number``.
 
-The registered signals are associated with the and will be automatically
+The registered signals are associated with the checkpoint id and will be automatically
 re-registered when the same checkpoint id is used later.
 
 Following the example above, the next example loads the last checkpoint,
 restores the state of all checkpointed objects and registers a signal.
 
-import espressomd from espressomd import checkpointing import signal
+.. code::
 
-checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
-checkpoint.load()
+    import espressomd from espressomd import checkpointing import signal
 
-system = espressomd.System() system.cell\_system.skin = skin
-system.actors.add(p3m)
+    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
+    checkpoint.load()
 
-#signal.SIGINT: signal 2, is sent when ctrl+c is pressed
-checkpoint.register\_signal(signal.SIGINT)
+    system = espressomd.System()
+    system.cell_system.skin = skin
+    system.actors.add(p3m)
 
-# integrate system until user presses ctrl+c while True:
-system.integrator.run(1000)
+    #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+    checkpoint.register\_signal(signal.SIGINT)
+
+    # integrate system until user presses ctrl+c while True:
+    system.integrator.run(1000)
 
 The above example runs as long as the user interrupts by pressing
 ctrl+c. In this case a new checkpoint is written and the simulation
 quits.
 
-It is perhaps surprising that one has to explicitly create again. But
-this is necessary as not all modules like or have implementations for
-checkpointing yet. By calling these modules are created and can be
-easily initialized with checkpointed user variables (like ) or
-checkpointed submodules (like ).
+It is perhaps surprising that one has to explicitly create ``system`` again.
+But this is necessary as not all |es| modules like ``cell_system`` or
+``actors`` have implementations for checkpointing yet. By calling ``System()`` these modules
+are created and can be easily initialized with checkpointed user variables
+(like ``skin``) or checkpointed submodules (like ``p3m``).
 
 .. _Writing H5MD-Files:
 
@@ -219,10 +198,10 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System()
     # ... add particles here
-    h5 = h5md.H5md(filename=“trajectory.h5”, write_pos=True, write_vel=True)
+    h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
 If a file with the given filename exists and has a valid H5MD structures
-it will be backed up to a file with suffix “.bak”. This file will be
+it will be backed up to a file with suffix ".bak". This file will be
 removed by the close() method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
@@ -260,95 +239,13 @@ h5.write()
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
 
-Writing and reading binary files
---------------------------------
-
-Binary files are written using the command
-
-writemd …
-
-This will write out particle data to the Tcl channel for all particles
-in binary format. Apart from the mandatory particle id, only limited
-information can be stored. The coordinates (, and ), velocities (, and )
-and forces (, and ). Other information should be stored in a blockfile
-or reconstructed differently. Note that since both ``blockfile`` and
-``writemd`` are using a Tcl channel, it is actually possible to mix
-them, so that you can write a single checkpoint file. However, the
-``blockfile read auto`` mechanism cannot handle the binary section, thus
-you need to read this section manually. Reading of binary particle data
-happens through
-
-readmd
-
-For the exact format of the written binary sequence, see
-``src/tcl/binary_file_tcl.cpp``.
-
-MPI-IO
-------
-
-When using with MPI, blockfiles and writemd have the disadvantage, that
-the master node does *all* the output. This is done by sequentially
-communicating all particle data to the master node. MPI-IO offers the
-possibility to write out particle data in parallel using binary IO. To
-output variables and other non-array information, use normal blockfiles
-(section [sec:structured-file-format]).
-
-To dump data using MPI-IO, use the following syntax:
-
-mpiio …
-
-This command writes data to several files using as common filename
-prefix. Beware, that must not be a Tcl channel but a string which must
-not contain colons. The data can be positions (), velocities (),
-particle types () and particle bonds () or any combination of these. The
-particle ids are always dumped. For safety reasons, MPI-IO will not
-overwrite existing files, so if the command fails and prints
-``MPI_ERR_IO`` make sure the files are non-existent.
-
-The files produced by this command are (assumed is “1”):
-
-1.head
-    Internal information (Dumped fields, bond partner num); always
-    produced
-
-1.pref
-    Internal information (Exscan results of nlocalparts); always
-    produced
-
-1.ids
-    Particle ids; always produced
-
-1.type
-    Particle types; optional
-
-1.pos
-    Particle positions; optional
-
-1.vel
-    Particle velocities; optional
-
-1.bond
-    Bond information; optional
-
-1.boff
-    Internal bond prefix information; optional, necessary to read 1.bond
-
-Currently, these files have to be read by exactly the same number of MPI
-processes that was used to dump them, otherwise an error is signalled.
-Also, the same type of machine (endianess, byte order) has to be used.
-Otherwise only garbage will be read. The read command replaces the
-particles, i.e. all previous existent particles will be *deleted*.
-
-There is a python script (``tools/mpiio2blockfile.py``) which converts
-MPI-IO snapshots to regular blockfiles.
-
 Writing VTF files
 -----------------
 
 The formats VTF (**V**\ TF **T**\ rajectory **F**\ ormat), VSF
 (**V**\ TF **S**\ tructure **F**\ ormat) and VCF (**V**\ TF
 **C**\ oordinate **F**\ ormat) are formats for the visualization
-software VMD:raw-latex:`\cite{humphrey96a}` [1]_. They are intended to
+software VMD:raw-latex:`\cite{humphrey96a}`. They are intended to
 be human-readable and easy to produce automatically and modify.
 
 The format distinguishes between *structure blocks* that contain the
@@ -363,7 +260,7 @@ VCF format contain at least one coordinate block, while files in the VTF
 format contain a single structure block first and an arbitrary number of
 coordinate blocks afterwards, thus allowing to store all information for
 a whole simulation in a single file. For more details on the format,
-refer to the homepage of the format [2]_.
+refer to the homepage of the format .
 
 Creating files in these formats from within is supported by the commands
 and , that write a structure respectively a coordinate block to the
@@ -410,30 +307,34 @@ Example
 ``writevcf``: Writing the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`writevcf(fp, types)`
+``writevcf(fp, types)``
 
 Writes a coordinate (or timestep) block that contains all coordinates of
-the system’s particles to the channel given by `fp`. `fp` must be an identifier
-for an open channel such as the return value of an invocation of `open`.
+the system’s particles to the channel given by ``fp``. ``fp`` must be an identifier
+for an open channel such as the return value of an invocation of ``open``.
 
 .. todo:: NOT IMPLEMENTED
+
 Specify, whether the output is in a human-readable, but somewhat longer
 format (), or in a more compact form (). The default is .
 
 .. todo:: NOT IMPLEMENTED
+
 Specify whether the particle positions are written in absolute
 coordinates () or folded into the central image of a periodic system ().
 The default is .
 
-Specify the coordinates of which particles should be written. If `types` is
+Specify the coordinates of which particles should be written. If ``types`` is
 used, all coordinates will be written (in the ordered timestep format).
 Otherwise, has to be a Tcl-list specifying the pids of the particles.
-The default is `types="all"`. 
-Example
-`pids =[0, 23, 42]`
-`pids="all"`
+The default is ``types="all"``. 
+Example::
+
+    pids =[0, 23, 42]
+    pids="all"
 
 .. todo:: NOT IMPLEMENTED
+
 Specify arbitrary user data for the particles. has to be a Tcl list
 containing the user data for every particle. The user data is appended
 to the coordinate line and can be read into VMD via the VMD plugin
@@ -446,125 +347,46 @@ to the coordinate line and can be read into VMD via the VMD plugin
 vtfpid
 
 .. todo:: NOT IMPLEMENTED
+
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 
-``writevtk``: Particle Visualization in paraview
-------------------------------------------------
+.. _MDAnalysis:
 
-This feature allows to export the particle positions in a paraview  [3]_
-compatible VTK file. Paraview is a powerful and easy to use open-source
-visualization program for scientific data. Since can export the
-lattice-Boltzmann velocity field [ssec:LBvisualization] in the VTK
-format as well and paraview allows to visualize particles with glyphs
-and vector fields with stream lines, glyphs, contourplots, etc., one can
-use it so completely visualize a coupled lattice-Boltzmann MD
-simulation. It can also create videos without much effort if one exports
-data of individual time steps into separate files with filenames
-including a running index (``data_0.vtk``, ``data_1.vtk``, ...).
+Writing various formats using MDAnalysis
+----------------------------------------
 
-writevtk
+If the MDAnalysis package (http://mdanalysis.org) is installed, it
+is possible to use it to convert frames to any of the supported
+configuration/trajectory formats, including PDB, GROMACS, GROMOS,
+CHARMM/NAMD, AMBER, LAMMPS, ...)
 
-Name of the file to export the particle positions into.
+To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
+the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
+using MDAnalysis. A simple example is the following:
 
-Specifies a list of particle types which should be exported. The default
-is . Alternatively, a list of type number can be given. Exporting the
-positions of all particles but in separate files might make sense if one
-wants to distinguish the different particle types in the visualization
-(i.e. by color or size). To export a type ``1`` use something along
-``writevtk test.tcl 1``. To export types ``1``, ``5``, ``7``, which are
-not to be distinguished in the visualization, use
-``writevtk test.tcl 7 1 5``. The order in the list is arbitrary, but
-duplicates are *not* ignored!
+.. code:: python
 
-Reading and Writing PDB/PSF files
----------------------------------
+    import espressomd
+    import MDAnalysis as mda
+    from espressomd import MDA_ESP
+    system = espressomd.System()
+    # ... add particles here
+    eos = MDA_ESP.Stream(system) # create the stream
+    u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
 
-The PDB (Brookhaven Protein DataBase) format is a widely used format for
-describing atomistic configurations. PSF is a format that is used to
-describe the topology of a PDB file.
+    # example: write a single frame to PDB
+    u.atoms.write("system.pdb")
 
-When visualizing your system with VMD, it is recommended to use the VTF
-format instead (see section [sec:vtf]), as it was specifically designed
-for visualizations with VMD. In contrast to the PDB/PSF formats, in VTF
-files it is possible to specify the VDW radii of the particles, to have
-a varying simulation box size, etc.
+    # example: save the trajectory to GROMACS format
+    from MDAnalysis.coordinates.TRR import TRRWriter
+    W = TRRWriter("traj.trr",n_atoms=len(system.part)) # open the trajectory file
+    for i in range(100):
+        system.integrator.run(1)
+        u.load_new(eos.trajectory) # load the frame to the MDA universe
+        W.write_next_timestep(u.trajectory.ts) # append it to the trajectory
 
-: Writing the topology
-~~~~~~~~~~~~~~~~~~~~~~
-
-writepsf
-
-Writes the current topology to the file (here, is not a channel, since
-additional information cannot be written anyway). , and so on are
-parameters describing a system consisting of equally long charged
-polymers, counterions and salt. This information is used to set the
-residue name and can be used to color the atoms in VMD. If you specify ,
-the residue name is taken from the molecule identity of the particle. Of
-course different kinds of topologies can also be handled by modified
-versions of .
-
-: Writing the coordinates
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-writepdb writepdbfoldchains writepdbfoldtopo
-
-Variant writes the corresponding particle data.
-
-Variant writes folded particle data where the folding is performed on
-chain centers of mass rather than single particles. In order to fold in
-this way the chain topology and box length must be specified. Note that
-this method is outdated. Use variant instead.
-
-Variant writes folded particle data where the folding is performed on
-chain centers of mass rather than single particles. This method uses the
-internal box length and topology information from espresso. If you wish
-to shift particles prior to folding then supply the optional shift
-information. should be a three member tcl list consisting of x, y, and z
-shifts respectively and each number should be a floating point (ie with
-decimal point).
-
-: Reading the coordinates and interactions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-| readpdb pdb\_file type first\_id
-
-Reads the positions and possibly charges, types and Lennard-Jones
-interactions from the file and a corresponding Gromacs topology file .
-The topology file must contain the ``atoms`` and ``atomtypes`` sections,
-it may be necessary to use the Gromacs preprocessor to obtain a complete
-file from a system configuration and a force field.
-
-Any offset of the particle positions if removed, such that the lower
-left corner bounding box of the particles is in the origin. If
-``fit_to_box`` is given, the box size if increased to hold the particles
-if necessary. If it is not set and the particles do not fit into the
-box, the behavior is undefined.
-
-sets the particle type for the added particles. If there is a topology
-file give that contains a types for the particles, the particles get
-types by the order in the topology file plus . If the corresponding type
-in the topology file has a charge, it is used, otherwise the particle
-charge defaults to zero.
-
-The particles get consecutive id’s in the order of the pdb file,
-starting at . Please be aware that existing particles get overwritten by
-values from the file.
-
-The ``lj_with`` section produces Lennard-Jones interactions between the
-type and the types defined by the topology file. The interaction
-parameters are calculated as :math:`\epsilon_{\text{othertype},j} =
-\sqrt{\epsilon_{\text{othertype}} \epsilon_j}` and
-:math:`\sigma_{\text{othertype},j}
-=\frac{1}{2}\left( \sigma_{\text{othertype}} + \sigma_j \right)`, where
-:math:`j` runs over the atomtypes defined in the topology file. This
-corresponds to the combination rule 2 of Gromacs. There may be multiple
-such sections. The cutoff is determined by as
-:math:`\text{cutoff}\times \sigma_{ij}` in a relative fashion. The
-potential is shifted so that it vanishes at the cutoff. The command
-returns the number of particles that were successfully added.
-
-Reading bonded interactions and dihedrals is currently not supported.
+For other examples see samples/python/MDAnalysisIntegration.py
 
 Online-visualisation with Mayavi or OpenGL
 ------------------------------------------
@@ -572,8 +394,8 @@ Online-visualisation with Mayavi or OpenGL
 With the python interface, |es| features two possibilities for
 online-visualization:
 
-#. Using the mlab module to drive *Mayavi, a “3D scientific data
-   visualization and plotting in Python”*. Mayavi has a user-friendly
+#. Using the mlab module to drive *Mayavi, a "3D scientific data
+   visualization and plotting in Python"*. Mayavi has a user-friendly
    GUI to specify the appearance of the output.
    Additional requirements:
    python module *mayavi*, VTK (package *python-vtk* for Debian/Ubuntu).
@@ -750,15 +572,15 @@ some tutorials:
    for the openGL visualizer.
 
 -  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_vis.py:
-   Periodic NaCl crystal, see tutorial “Charged Systems”.
+   Periodic NaCl crystal, see tutorial "Charged Systems".
 
 -  doc/tutorials/python/02-charged\_system/scripts/nacl\_units\_confined\_vis.py:
    Confined NaCl with interactively adjustable electric field, see
-   tutorial “Charged Systems”.
+   tutorial "Charged Systems".
 
 -  doc/tutorials/python/08-visualization/scripts/visualization.py:
-   LJ-Liquid visualization along with tutorial “Visualization”.
+   LJ-Liquid visualization along with tutorial "Visualization".
 
-Finally, it is recommended to go through tutorial “Visualization” for
-further code explanations. Also, the tutorial “Charged Systems” has two
+Finally, it is recommended to go through tutorial "Visualization" for
+further code explanations. Also, the tutorial "Charged Systems" has two
 visualization examples.

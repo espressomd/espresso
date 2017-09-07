@@ -2,7 +2,6 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/array.hpp>
-#include <boost/serialization/array.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -14,7 +13,7 @@
 namespace ScriptInterface {
 
 ParallelScriptInterfaceSlave::ParallelScriptInterfaceSlave() {
-  Communication::mpiCallbacks().add(Communication::MpiCallbacks::function_type(
+  m_cb->add(Communication::MpiCallbacks::function_type(
       [this](int a, int) { mpi_slave(a, 0); }));
 }
 
@@ -29,7 +28,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
   switch (CallbackAction(action)) {
   case CallbackAction::CREATE: {
     std::pair<ObjectId, std::string> what;
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), what, 0);
+    boost::mpi::broadcast(m_cb->comm(), what, 0);
 
     m_p = ScriptInterfaceBase::make_shared(what.second);
 
@@ -39,7 +38,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
   }
   case CallbackAction::SET_PARAMETER: {
     std::pair<std::string, Variant> d;
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+    boost::mpi::broadcast(m_cb->comm(), d, 0);
 
     /* If the parameter is a object we have to tranlate it first to a
        local id.
@@ -50,7 +49,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
   }
   case CallbackAction::SET_PARAMETERS: {
     std::map<std::string, Variant> parameters;
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), parameters, 0);
+    boost::mpi::broadcast(m_cb->comm(), parameters, 0);
 
     /* If the parameter is a object we have to tranlate it first to a
        local id.
@@ -68,7 +67,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
     std::pair<std::string, VariantMap> d;
 
     /* Broadcast method name and parameters */
-    boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+    boost::mpi::broadcast(m_cb->comm(), d, 0);
 
     for (auto &p : d.second) {
       translate_id(p.second);
@@ -85,5 +84,7 @@ void ParallelScriptInterfaceSlave::mpi_slave(int action, int = 0) {
   }
   }
 }
+
+Communication::MpiCallbacks *ParallelScriptInterfaceSlave::m_cb = nullptr;
 
 } /* namespace ScriptInterface */

@@ -3,13 +3,14 @@
 #ifdef EWALD_GPU
 
 #include <iostream>
+#include <algorithm>
 
 #include "cells.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
 #include "tuning.hpp"
-#include "partCfg.hpp"
+#include "partCfg_global.hpp"
 
 #define DEBUG(A) std::cout << #A << ": " << A << std::endl;
 
@@ -112,7 +113,7 @@ int EwaldgpuForce::adaptive_tune(char **log, SystemInterface &s) {
 
   // Squared charge
   auto const q_sqr = std::accumulate(
-      partCfg.begin(), partCfg.end(), 0,
+      partCfg().begin(), partCfg().end(), 0,
       [](double q2, Particle const &p) { return q2 + p.p.q * p.p.q; });
 
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
@@ -269,22 +270,10 @@ double EwaldgpuForce::tune_rcut(double accuracy, double precision, double alpha,
 }
 
 int EwaldgpuForce::determine_calc_time_steps() {
-  Cell *cell;
-  Particle *part;
-  int i, c, np;
-  int sum_qpart = 0;
+  auto const sum_qpart = std::count_if(
+      local_cells.particles().begin(), local_cells.particles().end(),
+      [](Particle const &p) { return p.p.q != 0.0; });
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    part = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++) {
-      if (part[i].p.q != 0.0) {
-        sum_qpart += 1.0;
-      }
-    }
-  }
-  sum_qpart = (int)(sum_qpart + 0.1);
   return (1999 + sum_qpart) / sum_qpart;
 }
 

@@ -20,7 +20,6 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import espressomd._system as es
 import numpy as np
 from espressomd.interactions import *
 

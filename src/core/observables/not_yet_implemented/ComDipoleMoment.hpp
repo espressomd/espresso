@@ -1,5 +1,5 @@
 #ifdef DIPOLES
-int ObservableComDipoleMoment::actual_calculate() {
+int ObservableComDipoleMoment::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   double d[3] = {0. , 0., 0. } ;
   IntList* ids;

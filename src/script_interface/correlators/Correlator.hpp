@@ -47,6 +47,7 @@ public:
             {"compress1", m_correlator->compressA_name},
             {"compress2", m_correlator->compressB_name},
             {"corr_operation", m_correlator->corr_operation_name},
+            {"args", m_correlator->correlation_args},
             {"obs1", (m_obs1 != nullptr) ? m_obs1->id() : ObjectId()},
             {"obs2", (m_obs2 != nullptr) ? m_obs2->id() : ObjectId()}};
   }
@@ -59,6 +60,7 @@ public:
             {"obs2", {ParameterType::OBJECTID, true}},
             {"compress1", {ParameterType::STRING, true}},
             {"compress2", {ParameterType::STRING, true}},
+            {"args", {ParameterType::DOUBLE_VECTOR, true}},
             {"corr_operation", {ParameterType::STRING, true}}};
   }
 
@@ -87,6 +89,7 @@ public:
     SET_PARAMETER_HELPER("tau_lin", m_correlator->tau_lin);
     SET_PARAMETER_HELPER("tau_max", m_correlator->tau_max);
     SET_PARAMETER_HELPER("dt", m_correlator->dt);
+    SET_PARAMETER_HELPER("args", m_correlator->correlation_args);
     SET_PARAMETER_HELPER("corr_operation", m_correlator->corr_operation_name);
     SET_PARAMETER_HELPER("compress1", m_correlator->compressA_name);
     SET_PARAMETER_HELPER("compress2", m_correlator->compressB_name);

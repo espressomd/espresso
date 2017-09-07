@@ -220,7 +220,7 @@ Using the pypresso script in the build directory, python simulation scripts can 
         \begin{task} 
              You can check the features, that are compiled in the \es{} core by
              issuing \texttt{print(espressomd.features())} after having imported the 
-             \texttt{espressomd} Module. Features can be switched on or off via the \tt{myconfig.hpp} file. See the chapter on installation in the user's guide.
+             \texttt{espressomd} Module. Features can be switched on or off via the \texttt{myconfig.hpp} file. See the chapter on installation in the user's guide.
         \end{task}
     \end{minipage}
 }\vspace{1cm}
@@ -263,9 +263,7 @@ system.box_l = [box_l_x, box_l_y, box_l_z]
 \end{pypresso}
 
 \subsection{Choosing the thermodynamic ensemble, thermostat}
-Simulations can be carried out in different thermodynamic ensembles such as NVE (particle
-Number, Velocity, Energy) or NVT (particle Number, Velocity, Temperature)
-as well as NPT-isotropic (particle Number, Pressure, Temperature). 
+Simulations can be carried out in different thermodynamic ensembles such as NVE (particle Number, Volume, Energy) or NVT (particle Number, Volume, Temperature) as well as NPT-isotropic (particle Number, Pressure, Temperature).
 The ensemble is maintained by a thermostat. In this tutorial we use the Langevin thermostat.
 
 In \es{}, the thermostat is set as follows:

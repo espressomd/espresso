@@ -30,10 +30,6 @@ EspressoSystemInterface *EspressoSystemInterface::m_instance = 0;
 /********************************************************************************************/
 
 void EspressoSystemInterface::gatherParticles() {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
-
 // get particles from other nodes
 #ifdef CUDA
   if (m_gpu) {
@@ -61,48 +57,22 @@ void EspressoSystemInterface::gatherParticles() {
 #ifdef ROTATION
     Quatu.clear();
 #endif
-
-    for (c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      p = cell->part;
-      np = cell->n;
-
+    for (auto const &p : local_cells.particles()) {
       if (needsR())
-        R.reserve(R.size() + np);
+        R.push_back(Vector3(p.r.p));
 
 #ifdef ELECTROSTATICS
       if (needsQ())
-        Q.reserve(Q.size() + np);
+        Q.push_back(p.p.q);
 #endif
 #ifdef DIPOLES
       if (needsDip())
-        Dip.reserve(Dip.size() + np);
+        Dip.emplace_back(Vector3{p.r.dip[0], p.r.dip[1], p.r.dip[2]});
 #endif
-
 #ifdef ROTATION
       if (needsQuatu())
-        Quatu.reserve(Quatu.size() + np);
+        Quatu.emplace_back(Vector3{p.r.quatu[0], p.r.quatu[1], p.r.quatu[2]});
 #endif
-
-      for (i = 0; i < np; i++) {
-        if (needsR())
-          R.push_back(Vector3(p[i].r.p));
-
-#ifdef ELECTROSTATICS
-        if (needsQ())
-          Q.push_back(p[i].p.q);
-#endif
-#ifdef DIPOLES
-        if (needsDip())
-          Dip.emplace_back(
-              Vector3{p[i].r.dip[0], p[i].r.dip[1], p[i].r.dip[2]});
-#endif
-#ifdef ROTATION
-        if (needsQuatu())
-          Quatu.emplace_back(
-              Vector3{p[i].r.quatu[0], p[i].r.quatu[1], p[i].r.quatu[2]});
-#endif
-      }
     }
   }
 }
