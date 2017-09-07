@@ -30,7 +30,7 @@
 namespace Constraints {
 class SlipPlane : public Constraint {
   Vector3d m_v;
-  double m_gamma, m_kT, m_time, m_rcut;
+  double m_gamma, m_kT, m_rcut;
   Shapes::Wall m_wall;
   std::vector<int> m_types;
 
@@ -40,7 +40,6 @@ public:
   Vector3d &v() { return m_v; }
   double &gamma() { return m_gamma; }
   double &kT() { return m_kT; }
-  double &time_step() { return m_time; }
   double &r_cut() { return m_rcut; }
   Shapes::Wall &wall() { return m_wall; }
   std::vector<int> &types() { return m_types; }
@@ -58,9 +57,9 @@ public:
       auto const omega = 1 - (dist / m_rcut);
       auto const omega_sqrt = std::sqrt(omega);
 
-      auto const pre_diss = m_gamma / m_time;
-      auto const pre_rand = std::sqrt(24. * m_kT * m_gamma / m_time);
-      auto const v_scaled = m_time * m_v;
+      auto const pre_diss = m_gamma / time_step;
+      auto const pre_rand = std::sqrt(24. * m_kT * m_gamma / time_step);
+      auto const v_scaled = time_step * m_v;
       auto const rand =
           Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5};
 
