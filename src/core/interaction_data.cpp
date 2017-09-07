@@ -680,11 +680,6 @@ static void recalc_maximal_cutoff_nonbonded()
       if (max_cut_current < data->TAB_maxval)
 	max_cut_current = data->TAB_maxval;
 #endif
-	 
-#ifdef TUNABLE_SLIP
-      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
-	max_cut_current = data->TUNABLE_SLIP_r_cut;
-#endif
 
 #ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
