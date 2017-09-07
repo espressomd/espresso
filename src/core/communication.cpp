@@ -83,6 +83,13 @@
 #include "tab.hpp"
 #include "topology.hpp"
 #include "virtual_sites.hpp"
+#include "p3m-dipolar.hpp"
+#include "debye_hueckel.hpp"
+#include "reaction_field.hpp"
+#include "collision.hpp"
+#include "ljgen.hpp"
+#include "ljcos2.hpp"
+#include "npt.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -352,7 +359,6 @@ void mpi_bcast_parameter_slave(int node, int i) {
 /*************** REQ_WHO_HAS ****************/
 
 void mpi_who_has() {
-  Cell *cell;
   static int *sizes = new int[n_nodes];
   int *pdata = NULL;
   int pdata_s = 0;
@@ -371,15 +377,13 @@ void mpi_who_has() {
     COMM_TRACE(
         fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (int c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        for (int i = 0; i < cell->n; i++)
-          particle_node[cell->part[i].p.identity] = this_node;
-      }
+      for (auto const &p : local_cells.particles())
+        particle_node[p.p.identity] = this_node;
+
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
         pdata_s = sizes[pnode];
-        pdata = (int *)Utils::realloc(pdata, sizeof(int) * pdata_s);
+        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
@@ -391,8 +395,6 @@ void mpi_who_has() {
 }
 
 void mpi_who_has_slave(int node, int param) {
-  Cell *cell;
-  int npart, i, c;
   static int *sendbuf;
   int n_part;
 
@@ -401,13 +403,13 @@ void mpi_who_has_slave(int node, int param) {
   if (n_part == 0)
     return;
 
-  sendbuf = (int *)Utils::realloc(sendbuf, sizeof(int) * n_part);
-  npart = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    for (i = 0; i < cell->n; i++)
-      sendbuf[npart++] = cell->part[i].p.identity;
-  }
+  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
+
+  auto end = std::transform(local_cells.particles().begin(),
+                            local_cells.particles().end(), sendbuf,
+                            [](Particle const &p) { return p.p.identity; });
+
+  auto npart = std::distance(sendbuf, end);
   MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 

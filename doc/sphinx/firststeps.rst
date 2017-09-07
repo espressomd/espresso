@@ -10,14 +10,18 @@ Quick installation
 
 If you have installed the requirements (see section :ref:`Requirements
 <requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make``:
+create a build directory and call ``cmake`` and ``make`` (optional steps 
+which modify the build process are commented out):
 
 .. code-block:: bash
 
-    $ mkdir build
-    $ cd build
-    $ cmake ..
-    $ make
+    mkdir build
+    cd build
+    #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
+    #nano myconfig.hpp                    # edit to add/remove features as desired
+    cmake ..
+    #ccmake . // in order to add/remove features like SCAFACOS or CUDA
+    make
 
 This will build |es| with a default feature set, namely
 :file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file, 
@@ -55,7 +59,7 @@ OpenMPI, you can use
 
 ::
 
-    $ mpirun -n <N> ./pypresso <SCRIPT>
+    mpirun -n <N> ./pypresso <SCRIPT>
 
 where ``<N>`` is the number of prcessors to be used.
 
@@ -78,7 +82,7 @@ the build directory.
 
 ::
 
-    $ ./pypresso simulation.py
+    ./pypresso simulation.py
 
 
 Python: Basic concepts

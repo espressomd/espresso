@@ -2,6 +2,7 @@
 #define CORE_PARTICLE_ITERATOR_HPP
 
 #include <boost/iterator/iterator_facade.hpp>
+#include <iterator>
 
 template <typename BidirectionalIterator, typename Particle>
 struct ParticleIterator : public boost::iterator_facade<
@@ -14,6 +15,29 @@ struct ParticleIterator : public boost::iterator_facade<
     if ((m_cell != m_end) && (*m_cell)->n == 0) {
       increment();
     }
+  }
+
+public:
+  friend typename std::iterator_traits<ParticleIterator>::difference_type
+  distance(ParticleIterator const &begin, ParticleIterator const &end) {
+    if(begin == end)
+      return 0;
+    
+    /* Remaining parts in this cell */
+    auto dist = ((*begin.m_cell)->n - begin.m_part_id);
+    /* Now add the size of all cells between the next
+       one and the last one */
+    auto it = std::next(begin.m_cell);
+
+    while (it != end.m_cell) {
+      dist += (*it)->n;
+      ++it;
+    }
+
+    /* Remaining in the last cell */
+    dist += end.m_part_id;
+
+    return dist;
   }
 
 private:

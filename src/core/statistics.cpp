@@ -42,6 +42,7 @@
 #include "virtual_sites.hpp"
 #include <cstdlib>
 #include <cstring>
+#include "npt.hpp"
 
 #include <limits>
 
@@ -224,27 +225,15 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
  * @param result Result for this processor (Output)
  */
 void predict_momentum_particles(double *result) {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
-
   double momentum[3] = {0.0, 0.0, 0.0};
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    p = cell->part;
+  for (auto const &p : local_cells.particles()) {
+    // Due to weird scaling of units the following is actually correct
+    auto const mass = p.p.mass;
 
-    for (i = 0; i < np; i++) {
-      // Due to weird scaling of units the following is actually correct
-      double mass = 1.0;
-#ifdef MASS
-      mass = p[i].p.mass;
-#endif
-      momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
-      momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
-      momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
-    }
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
   }
 
   momentum[0] /= time_step;
@@ -894,7 +883,7 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
 
   order2 = order * order;
-  *_ff = ff = (double *)Utils::realloc(ff, 2 * order2 * sizeof(double));
+  *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -1397,7 +1386,7 @@ double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
@@ -1449,7 +1438,7 @@ void analyze_remove(int ind) {
     configs[i] = configs[i + 1];
   }
   n_configs--;
-  configs = (double **)Utils::realloc(configs, n_configs * sizeof(double *));
+  configs = Utils::realloc(configs, n_configs * sizeof(double *));
   if (n_configs == 0)
     n_part_conf = 0;
 }
@@ -1458,7 +1447,7 @@ void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   for (i = 0; i < n_part_conf; i++) {
