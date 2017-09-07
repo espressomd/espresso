@@ -43,7 +43,7 @@ class CoulombCloudWallTune(ut.TestCase):
         if len(self.S.actors):
             del self.S.actors[0]
         self.S.part.clear()
-        data = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/coulomb_cloud_wall_system.data"))
+        data = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/coulomb_tuning_system.npz"))
         self.forces = []
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
