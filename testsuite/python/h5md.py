@@ -91,8 +91,7 @@ class H5mdTestOrdered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
-    @classmethod
-    def setUpClass(self):
+    def setUp(self):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         self.h5 = h5md.H5md(
@@ -112,8 +111,7 @@ class H5mdTestOrdered(CommonTests):
         self.py_f = self.py_file['particles/atoms/force/value']
         self.py_id = self.py_file['particles/atoms/id/value']
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         os.remove("test.h5")
 
     def test_ids(self):
@@ -129,8 +127,7 @@ class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
-    @classmethod
-    def setUpClass(self):
+    def setUp(self):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         self.h5 = h5md.H5md(
@@ -150,8 +147,7 @@ class H5mdTestUnordered(CommonTests):
         self.py_f = self.py_file['particles/atoms/force/value']
         self.py_id = self.py_file['particles/atoms/id/value']
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         os.remove("test.h5")
 
 
