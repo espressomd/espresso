@@ -462,16 +462,6 @@ typedef struct {
   int rf_on;
 #endif
 
-#ifdef TUNABLE_SLIP
-  double TUNABLE_SLIP_temp;
-  double TUNABLE_SLIP_gamma;
-  double TUNABLE_SLIP_r_cut;
-  double TUNABLE_SLIP_time;
-  double TUNABLE_SLIP_vx;
-  double TUNABLE_SLIP_vy;
-  double TUNABLE_SLIP_vz;
-#endif
-
 #ifdef CATALYTIC_REACTIONS
   double REACTION_range;
 #endif

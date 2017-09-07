@@ -77,7 +77,6 @@ DPD_MASS_RED                    requires not DPD_MASS_LIN
 DPD_MASS_LIN                    requires not DPD_MASS_RED
 DPD_MASS                        equals DPD_MASS_RED or DPD_MASS_LIN
 DPD_MASS                        implies MASS, DPD
-TUNABLE_SLIP                    implies DPD
 
 /* Alternative implementation of DPD */
 INTER_DPD

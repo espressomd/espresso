@@ -61,7 +61,6 @@
 #include "comfixed.hpp"
 #include "morse.hpp"
 #include "dpd.hpp"
-#include "tunable_slip.hpp"
 #include "magnetic_non_p3m_methods.hpp"
 #include "mdlc_correction.hpp"
 #include "initialize.hpp"
@@ -333,16 +332,6 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
   params->dpd_r_cut = INACTIVE_CUTOFF;
-#endif
-
-#ifdef TUNABLE_SLIP
-  params->TUNABLE_SLIP_temp  = 0.0;
-  params->TUNABLE_SLIP_gamma = 0.0;
-  params->TUNABLE_SLIP_time  = 0.0;
-  params->TUNABLE_SLIP_vx  = 0.0;
-  params->TUNABLE_SLIP_vy  = 0.0;
-  params->TUNABLE_SLIP_vz  = 0.0;
-  params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
 #endif
 
   /* things that are not strictly speaking short-ranged interactions,
