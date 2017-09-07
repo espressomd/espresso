@@ -216,7 +216,7 @@ void on_integration_start()
   partCfg().invalidate();
 
 #ifdef ADDITIONAL_CHECKS
-  check_global_consistency(comm_cart);
+  check_global_consistency();
 #endif
 
   on_observable_calc();
