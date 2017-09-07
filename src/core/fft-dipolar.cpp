@@ -140,13 +140,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
       }
     }
 
-    dfft.plan[i].send_block = (int *)Utils::realloc(
+    dfft.plan[i].send_block = Utils::realloc(
         dfft.plan[i].send_block, 6 * dfft.plan[i].g_size * sizeof(int));
-    dfft.plan[i].send_size = (int *)Utils::realloc(
+    dfft.plan[i].send_size = Utils::realloc(
         dfft.plan[i].send_size, 1 * dfft.plan[i].g_size * sizeof(int));
-    dfft.plan[i].recv_block = (int *)Utils::realloc(
+    dfft.plan[i].recv_block = Utils::realloc(
         dfft.plan[i].recv_block, 6 * dfft.plan[i].g_size * sizeof(int));
-    dfft.plan[i].recv_size = (int *)Utils::realloc(
+    dfft.plan[i].recv_size = Utils::realloc(
         dfft.plan[i].recv_size, 1 * dfft.plan[i].g_size * sizeof(int));
 
     dfft.plan[i].new_size = fft_calc_local_mesh(
@@ -237,13 +237,13 @@ int dfft_init(double **data, int *local_mesh_dim, int *local_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  dfft.send_buf = (double *)Utils::realloc(dfft.send_buf,
+  dfft.send_buf = Utils::realloc(dfft.send_buf,
                                            dfft.max_comm_size * sizeof(double));
-  dfft.recv_buf = (double *)Utils::realloc(dfft.recv_buf,
+  dfft.recv_buf = Utils::realloc(dfft.recv_buf,
                                            dfft.max_comm_size * sizeof(double));
   (*data) =
-      (double *)Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
-  dfft.data_buf = (double *)Utils::realloc(dfft.data_buf,
+      Utils::realloc((*data), dfft.max_mesh_size * sizeof(double));
+  dfft.data_buf = Utils::realloc(dfft.data_buf,
                                            dfft.max_mesh_size * sizeof(double));
   if (!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr, "%d: Could not allocate FFT data arays\n", this_node);
