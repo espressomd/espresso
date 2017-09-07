@@ -55,6 +55,8 @@ class CommonTests(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
+        if os.path.isfile('test.h5'):
+            os.remove('test.h5')
         self.py_file = self.py_pos = self.py_vel = self.py_f = self.py_id = None
 
     def test_pos(self):
@@ -87,7 +89,8 @@ class H5mdTestOrdered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
@@ -120,7 +123,8 @@ class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error
         self.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
