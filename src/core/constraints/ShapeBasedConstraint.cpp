@@ -12,7 +12,7 @@ namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {
     Vector3d total_force;
     boost::mpi::all_reduce(comm_cart, m_local_force, total_force,
-            std::plus<Vector3d>());                                                                         
+            std::plus<Vector3d>());
 
     return total_force;
 }
