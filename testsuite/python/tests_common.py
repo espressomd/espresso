@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import numpy as np
 try:
     import vtk
@@ -42,11 +43,6 @@ try:
             return False, np.inf
 except:
     pass
-
-# Tests particle property setters/getters
-import unittest as ut
-import espressomd
-import numpy as np
 
 
 def params_match(inParams, outParams):
@@ -135,4 +131,6 @@ def verify_lj_forces(system,tolerance,ids_to_skip=[]):
            raise Exception("LJ force verification failed on particle "+str(id)+". Got "+str(system.part[id].f)+", expected "+str(f_expected[id]))
 
 
-   
+def abspath(path):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+

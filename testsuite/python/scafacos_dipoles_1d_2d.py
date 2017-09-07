@@ -25,11 +25,11 @@
 
 from __future__ import print_function
 import os
-import espressomd 
-import espressomd.magnetostatics as magnetostatics
 import numpy as np
 import unittest as ut
-
+import espressomd 
+import espressomd.magnetostatics as magnetostatics
+import tests_common
 
 @ut.skipIf(not espressomd.has_features(["SCAFACOS_DIPOLES"]),
            "Features not available, skipping test!")
@@ -66,13 +66,13 @@ class Scafacos1d2d(ut.TestCase):
               s.periodicity =1,0,0
               file_prefix ="scafacos_dipoles_1d"
               
-            f = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), file_prefix + "_reference_data_energy.dat"))
+            f = open(tests_common.abspath(file_prefix + "_reference_data_energy.dat"))
             ref_E =float(f.readline())
             f.close()
             
             
             # Particles
-            data = np.genfromtxt(os.path.join(os.path.dirname(os.path.abspath(__file__)), file_prefix + "_reference_data_forces_torques.dat"))
+            data = np.genfromtxt(tests_common.abspath(file_prefix + "_reference_data_forces_torques.dat"))
             for p in data[:,:]:
                 s.part.add(id=int(p[0]),pos=p[1:4],dip=p[4:7])
             
