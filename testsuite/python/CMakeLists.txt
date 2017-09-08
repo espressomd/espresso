@@ -63,6 +63,8 @@ python_test(FILE ek_eof_one_species_z_nonlinear.py MAX_NUM_PROC 1)
 python_test(FILE exclusions.py MAX_NUM_PROC 4)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 2)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
+python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
+python_test(FILE layered.py MAX_NUM_PROC 4)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 
 if(PY_H5PY)
