@@ -27,6 +27,10 @@ cdef extern from "global.hpp":
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
+    int FIELD_LEES_EDWARDS_OFFSET
+
+cdef extern from "lees_edwards.hpp":
+    double lees_edwards_offset
 
 cdef extern from "communication.hpp":
     extern int n_nodes

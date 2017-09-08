@@ -296,14 +296,34 @@ inline void add_bonded_virials(Particle *p1)
       return;
     }
 
-    get_mi_vector(dx, p1->r.p, p2->r.p);
+    double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
+    double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
+    
+    //printf("Coordinates part 1: %f, %f, %f \n", a[0], a[1], a[2]);
+    //printf("Coordinates part 2: %f, %f, %f \n", b[0], b[1], b[2]);
+
+    double n_le_shifts = dround((a[1]-b[1]) * box_l_i[1]);
+    
+    //printf("n_le_shifts= %f \n", n_le_shifts);
+
+    get_mi_vector(dx, a, b);
+    //TODO insert LE stuff here
+    //printf("PERIODIC(1)=%d,\n", PERIODIC(1));
+    //printf("p1->l.i[1]=%d, p2->l.i=%d\n", p1->l.i[1], p2->l.i[1]); //TODO delete
+    //printf("dx=[%f, %f, %f]\n", dx[0], dx[1], dx[2]); //TODO delete
+#ifdef LEES_EDWARDS
+    if (PERIODIC(1) == 1) {
+      dx[0] -= lees_edwards_offset * n_le_shifts;
+      //printf("dx=[%f, %f, %f]\n", dx[0], dx[1], dx[2]); //TODO delete
+    }
+#endif
     calc_bonded_force(p1,p2,iaparams,&i,dx,force);
     *obsstat_bonded(&virials, type_num) += dx[0]*force[0] + dx[1]*force[1] + dx[2]*force[2];
 
  /* stress tensor part */
     for(k=0;k<3;k++)
       for(l=0;l<3;l++)
-	obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
+        obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
 
   }
 }

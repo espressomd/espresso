@@ -59,7 +59,7 @@ Hand-in-hand with the extensibility and readability of the code comes the
 flexibility of the whole program. On the one hand, it is provided by the
 generalized functionality of its parts, avoiding highly specialized functions.
 An example can be the implementation of the Generic Lennard-Jones potential
-described in section :ref:`generic_lennard_jones_interaction` where the user
+described in section :ref:`Generic Lennard-Jones interaction` where the user
 can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice.  ESPResSo cannot be
 aware whether your particles are representing atoms or billiard balls, so it
@@ -115,11 +115,11 @@ In the "Tested" column, we note whether there is an integration test for the met
 If you believe that the status of a certain method is wrong, please
 report so to the developers.
 
-.. tabularcolumns:: |c|c|c|
+.. tabularcolumns:: |l|c|c|c|
 
 +--------------------------------+------------------------+------------------+------------+
 | **Feature**                    | **Development Status** | **Usage Status** | **Tested** |
-+================================+========================+==================+------------+
++================================+========================+==================+============+
 |             **Integrators**, **Thermostats**, **Barostats**                             |
 +--------------------------------+------------------------+------------------+------------+
 | Velocity-Verlet Integrator     | Core                   | Core             | Yes        |

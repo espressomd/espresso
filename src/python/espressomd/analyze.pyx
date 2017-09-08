@@ -330,14 +330,14 @@ class Analysis(object):
            pressure(v_comp=False)
            """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
-    #
+    
         # Dict to store the results
         p = OrderedDict()
 
         # Update in espresso core if necessary
         if (c_analyze.total_pressure.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
@@ -352,7 +352,7 @@ class Analysis(object):
         # Ideal
         p["ideal"] = c_analyze.total_pressure.data.e[0]
 
-        # Nonbonded
+        # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
@@ -420,26 +420,24 @@ class Analysis(object):
         # Update in espresso core if necessary
         if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         tmp = np.zeros(9)
         for i in range(9):
-            value = c_analyze.total_p_tensor.data.e[i]
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                value += c_analyze.total_p_tensor.data.e[9*k + i]
-            # I don't know, why the 1/2 is needed.
-            tmp[i]=value/2.
+                tmp[i] += c_analyze.total_p_tensor.data.e[9*k + i]
 
         p["total"] = tmp.reshape((3,3))
 
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
+        p["ideal"] = p["ideal"].reshape((3,3))
 
-        # Nonbonded
+        # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
             if (bonded_ia_params[i].type != 0):
