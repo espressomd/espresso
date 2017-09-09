@@ -550,7 +550,7 @@ void on_temperature_change()
 
 void on_parameter_change(int field)
 {
-  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
+  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
