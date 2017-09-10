@@ -56,7 +56,7 @@ cdef class PScriptInterface(object):
         return oid
 
     def call_method(self, method, **kwargs):
-        print("Call method:",method_name,**kwargs)
+        print("Call method:",method_name,kwargs)
         cdef map[string, Variant] parameters
 
         for name in kwargs:
