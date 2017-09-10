@@ -967,7 +967,7 @@ Cluster analysis
 ----------------
 
 |es| provides support for online cluster analysis. Here, a cluster is a group of particles, such that you can get from any particle to any second particle by at least one path of neighboring particles.
-I.e., if particle B is a nieghbor of particle A, particle C is a neighbor of A and particle D is a neighbor of particle B, all four particles are part of the same cluster.
+I.e., if particle B is a neighbor of particle A, particle C is a neighbor of A and particle D is a neighbor of particle B, all four particles are part of the same cluster.
 The cluster analysis is available in parallel simulations, but the analysis is carried out on the head node, only.
 
 
