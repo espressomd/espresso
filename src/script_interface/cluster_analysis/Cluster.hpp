@@ -57,7 +57,7 @@ public:
      return m_cluster->center_of_mass();
     
     }
-    return nullptr;
+    return false;
   }                              
   void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> c) {
     m_cluster=c;

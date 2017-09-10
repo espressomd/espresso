@@ -83,17 +83,17 @@ public:
     }
     if (method=="clear") {
       m_cluster_structure.clear();
-      return nullptr;
+      return true;
     }
     if (method == "run_for_all_pairs") {
       m_cluster_structure.run_for_all_pairs();
-      return nullptr;
+      return true;
     }
     if (method == "run_for_bonded_particles") {
       m_cluster_structure.run_for_bonded_particles();
-      return nullptr;
+      return true;
     }
-    return nullptr;
+    return true;
   }                              
 private:
   ::ClusterAnalysis::ClusterStructure m_cluster_structure;
