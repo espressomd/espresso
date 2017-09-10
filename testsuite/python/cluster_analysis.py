@@ -148,7 +148,10 @@ class ClusterAnalysis(ut.TestCase):
 
             # Fractal dimension calc require gsl
             if not espressomd.has_features("GSL"):
+                print("Skipping fractal dimension tests for lack of GSL")
                 return
+                   
+                
 
             # Fractal dimension of a disk should be close to 2
             self.es.part.clear()
