@@ -42,12 +42,4 @@ public:
 };
 
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;
-/**
- * @brief Particles' current configuration.
- *
- * Particle coordinates are unfolded.
- * For documentation see @class ParticleCache
- */
-extern PartCfg partCfg;
-
 #endif

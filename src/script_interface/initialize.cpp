@@ -34,10 +34,12 @@
 #include "ParallelScriptInterface.hpp"
 #include "VariantTester.hpp"
 
+#include "core/communication.hpp"
+
 namespace ScriptInterface {
 
 void initialize() {
-  ParallelScriptInterface::initialize();
+  ParallelScriptInterface::initialize(Communication::mpiCallbacks());
 
   Shapes::initialize();
   Constraints::initialize();

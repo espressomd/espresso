@@ -69,7 +69,7 @@ extern double stray_cut_off;
 /* switch_fluc == 1 comuptes height grid
                == 0 thickness.
 */
-int modes2d(fftw_complex* result, int switch_fluc );
+int modes2d(PartCfg &, fftw_complex* result, int switch_fluc );
 void map_to_2dgrid();
 /** 
     This routine performs a simple check to see whether a lipid is
@@ -88,7 +88,7 @@ void map_to_2dgrid();
     up. This is usually the zaxis. If it is not the z axis then lipids
     will not be returned as stray.
  */
-int lipid_orientation( int id , double zref, double director[3],double refdir[3]);
+int lipid_orientation( PartCfg &, int id , double zref, double director[3],double refdir[3]);
 
 /**
    This routine calculates the orientational order parameter for a
@@ -106,7 +106,7 @@ int get_lipid_orients(IntList* l_orient);
    switch_fluc == 0: thickness
    The output is written in *height_grid no matter what the argument is.
 */
-int calc_fluctuations ( double* height_grid, int switch_fluc );
+int calc_fluctuations (PartCfg &, double* height_grid, int switch_fluc );
 
 /** 
     Calculate a  vertical density profile for each of the specified beadtypes

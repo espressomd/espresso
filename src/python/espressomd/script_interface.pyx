@@ -253,7 +253,5 @@ def script_interface_register(c):
     return c
     
 
-
-
-
-initialize()
+def init():
+    initialize()

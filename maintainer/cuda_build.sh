@@ -20,7 +20,6 @@ if (( $result == 0 )); then
     STATUS="success"
 else
     STATUS="failure"
-    cat testsuite/python/Testing/Temporary/LastTest.log
 fi
 echo "result was $result\n"
 GIT_COMMIT=$(git rev-parse HEAD)

@@ -29,11 +29,18 @@ from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
 
+cdef extern from "PartCfg.hpp":
+    cppclass PartCfg:
+        pass
+
+cdef extern from "partCfg_global.hpp":
+    PartCfg & partCfg()
+
 cdef extern from "particle_data.hpp":
     int n_particle_types
 
 cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(int * p_types, int n_types, int order, double ** sf)
+    cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
 
 cdef extern from "statistics.hpp":
@@ -52,16 +59,16 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
-    cdef double mindist(int_list * set1, int_list * set2)
-    cdef void nbhood(double pos[3], double r_catch, int_list * il, int planedims[3])
-    cdef double distto(double pos[3], int pid)
+    cdef double mindist(PartCfg &, int_list * set1, int_list * set2)
+    cdef void nbhood(PartCfg &, double pos[3], double r_catch, int_list * il, int planedims[3])
+    cdef double distto(PartCfg &, double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
-    cdef vector[double] centerofmass(int part_type)
-    cdef int calc_cylindrical_average(vector[double] center, vector[double] direction, double length,
+    cdef vector[double] centerofmass(PartCfg &, int part_type)
+    cdef int calc_cylindrical_average(PartCfg &, vector[double] center, vector[double] direction, double length,
                                       double radius, int bins_axial, int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
@@ -83,34 +90,34 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    void calc_re(double ** re)
-    void calc_rg(double ** rg)
-    void calc_rh(double ** rh)
+    void calc_re(PartCfg&, double ** re)
+    void calc_rg(PartCfg&, double ** rg)
+    void calc_rh(PartCfg&, double ** rh)
 
 cdef extern from "interaction_data.hpp":
     int n_bonded_ia
 
 cdef extern from "statistics.hpp":
-    void calc_rdf(vector[int] p1_types, vector[int] p2_types,
+    void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)
 
-    void calc_rdf_av(vector[int] p1_types, vector[int] p2_types,
+    void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                      double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
 
-    void calc_rdf_intermol_av(vector[int] p1_types, vector[int] p2_types,
+    void calc_rdf_intermol_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                               double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
-    void angularmomentum(int p_type, double * com)
-    void calc_gyration_tensor(int p_type, vector[double] gt)
-    void momentofinertiamatrix(int p_type, double * MofImatrix)
-    void analyze_rdfchain(double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
+    void angularmomentum(PartCfg &, int p_type, double * com)
+    void calc_gyration_tensor(PartCfg &, int p_type, vector[double] gt)
+    void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
+    void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins, double ** f1, double ** f2, double ** f3)
 
 cdef extern from "statistics.hpp":
     int n_part
     int n_part_conf
     int n_configs
-    void analyze_append()
+    void analyze_append(PartCfg &)
 
 cdef extern from "statistics.hpp":
-    void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
+    void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types, int n_p2,
                                 double r_min, double r_max, int r_bins, int log_flag, 
                                 double *low, double *dist)

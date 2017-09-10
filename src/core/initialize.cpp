@@ -67,8 +67,8 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "scafacos.hpp"
-#include "partCfg.hpp"
-
+#include "npt.hpp"
+#include "partCfg_global.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -94,10 +94,6 @@ void on_program_start()
 
   ErrorHandling::register_sigint_handler();
 
-  if (this_node == 0) {
-    /* master node */
-    atexit(mpi_stop);
-  }
 #ifdef CUDA
   cuda_init();
 #endif
@@ -217,7 +213,7 @@ void on_integration_start()
 
   /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
-  partCfg.invalidate();
+  partCfg().invalidate();
 
   on_observable_calc();
 }
@@ -238,6 +234,7 @@ void on_observable_calc()
     case COULOMB_ELC_P3M:
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
+      EVENT_TRACE(fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
       p3m_count_charged_particles();
       break;
 #endif
@@ -284,7 +281,7 @@ void on_particle_change()
   invalidate_obs();
 
   /* the particle information is no longer valid */
-  partCfg.invalidate();
+  partCfg().invalidate();
 }
 
 void on_coulomb_change()
@@ -302,8 +299,6 @@ void on_coulomb_change()
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
-    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), 
-              sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
     break;
 #endif
   case COULOMB_ELC_P3M:

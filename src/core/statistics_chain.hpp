@@ -26,6 +26,8 @@
     molecule information set with analyse set chains.
 */
 
+#include "PartCfg.hpp"
+
 /** \name Exported Variables */
 /************************************************************/
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
@@ -50,7 +52,7 @@ extern int chain_length;
 
 /** calculate the end-to-end-distance. chain information \ref chain_start etc. must be set!
     @return the end-to-end-distance */
-void calc_re(double **re);
+void calc_re(PartCfg &, double **re);
 
 /** calculate the end-to-end-distance averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
@@ -59,16 +61,16 @@ void calc_re_av(double **re);
 
 /** calculate the radius of gyration. chain information \ref chain_start etc. must be set!
     @return the radius of gyration */
-void calc_rg(double **rg);
+void calc_rg(PartCfg &, double **rg);
 
 /** calculate the radius of gyration averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @return the averaged radius of gyration */
-void calc_rg_av(double **rg);
+void calc_rg_av(PartCfg &, double **rg);
 
 /** calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory). chain information \ref chain_start etc. must be set!
     @return the hydrodynamic radius */
-void calc_rh(double **rh);
+void calc_rh(PartCfg &, double **rh);
 
 /** calculate the hydrodynamic radius averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
@@ -167,7 +169,7 @@ void analyze_formfactor_av(double qmin, double qmax, int qbins, double **_ff);
     @param _rdf_cm contains the distribution of centers of mass of the chains
     @param _rdf_d  contains the distribution of closest distances between the chains
     */
-void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_rdf_d);
+void analyze_rdfchain(PartCfg &, double r_min, double r_max, int r_bins, double **_rdf, double **_rdf_cm, double **_rdf_d);
 
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();

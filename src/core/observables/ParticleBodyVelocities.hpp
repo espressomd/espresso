@@ -3,7 +3,7 @@
 
 #include "PidObservable.hpp"
 #include "integrate.hpp"
-#include "partCfg.hpp"
+
 #include "rotation.hpp"
 #include <vector>
 
@@ -11,7 +11,7 @@ namespace Observables {
 
 class ParticleBodyVelocities : public PidObservable {
 public:
-  virtual int actual_calculate() override {
+  virtual int actual_calculate(PartCfg & partCfg) override {
     last_value.resize(3 * ids().size());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION

@@ -13,7 +13,7 @@
 namespace Utils {
 /** List.
     Use the functions specified in list operations. */
-  template <typename T, typename SizeType = uint32_t> class List {
+template <typename T, typename SizeType = uint32_t> class List {
   static_assert(std::is_pod<T>::value, "");
   static_assert(std::is_unsigned<SizeType>::value, "");
 
@@ -181,6 +181,13 @@ public:
     assert(i < n);
     return e[i];
   }
+
+  bool operator==(List const &rhs) const {
+    return (size() == rhs.size()) &&
+           std::equal(rhs.begin(), rhs.end(), begin());
+  }
+
+  bool operator!=(List const &rhs) const { return not(this->operator==(rhs)); }
 
   /** Dynamically allocated field. */
   T *e;
