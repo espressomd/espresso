@@ -33,7 +33,7 @@ class LangevinThermostat(ut.TestCase):
     s = espressomd.System()
     s.cell_system.set_n_square()
     s.cell_system.skin=0.3
-    s.seed=np.random.randint(1,1000,s.cell_system.get_state()["n_nodes"])
+    s.seed=range(s.cell_system.get_state()["n_nodes"])
 
     def single_component_maxwell(self,x1,x2,kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
