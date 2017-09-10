@@ -91,17 +91,21 @@ class ClusterStructure(ScriptInterfaceHelper):
 
     @property
     def clusters(self):
+        """Gives access to the clusters in the cluster structure via an instance of :any:`Clusters`."""
         return self._clusters
 
 
 class Clusters(object):
     """Access to the clusters in the cluster structure.
        
-      Access is as follows
+       Access is as follows: 
+
        * Number of clusters: len(clusters)
        * Access a cluster via its id: clusters[id]
-       * Iterate over clusters::
-           for c in clusters:
+       * Iterate over clusters:::
+
+            for c in clusters:
+         
          where c will be a tuple containing the cluster id and the cluster object
      """
 

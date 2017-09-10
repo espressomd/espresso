@@ -3,7 +3,7 @@
 #include "interaction_data.hpp"
 #include <algorithm>
 #include <stdexcept>
-#include "partCfg.hpp" 
+#include "partCfg_global.hpp" 
 
 namespace ClusterAnalysis {
 
@@ -35,7 +35,7 @@ void ClusterStructure::run_for_all_pairs()
     if (! particle_exists(i)) continue;
     for (int j=i+1;j<=max_seen_particle;j++) {
       if (! particle_exists(j)) continue;
-      add_pair(partCfg[i],partCfg[j]); 
+      add_pair(partCfg()[i],partCfg()[j]); 
     }
   }
   merge_clusters();
@@ -43,10 +43,10 @@ void ClusterStructure::run_for_all_pairs()
 
 void ClusterStructure::run_for_bonded_particles() {
 clear();
-partCfg.update_bonds();
+partCfg().update_bonds();
 for (int i=0;i<=max_seen_particle;i++) {
   if (particle_exists(i)) {
-    auto p=partCfg[i];
+    auto p=partCfg()[i];
     int j=0;
     while (j<p.bl.n) {
       int bond_type=p.bl.e[j];
@@ -56,7 +56,7 @@ for (int i=0;i<=max_seen_particle;i++) {
         continue;
       }
       // We are only here if bond has one partner
-      add_pair(p,partCfg[p.bl.e[j+1]]);
+      add_pair(p,partCfg()[p.bl.e[j+1]]);
       j+=2; // Type id + one prtner
     }
   }
