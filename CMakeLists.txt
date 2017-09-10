@@ -21,7 +21,6 @@
 cmake_minimum_required(VERSION 3.0)
 include(FeatureSummary)
 project(ESPResSo)
-include(cmake/FindPythonModule.cmake)
 
 enable_language(CXX)
 
@@ -62,8 +61,6 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 set(WITH_PYTHON yes)
 
 option(WITH_GSL "Build with GSL support" ON)
-option(WITH_PYTHON "Build python interface"  ON)
-option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
