@@ -141,15 +141,15 @@ class ClusterAnalysis(ut.TestCase):
             self.assertTrue(abs(c.radius_of_gyration()-rg)<=1E-6)
             
             
+            # Fractal dimension calc require gsl
+            if not espressomd.has_features("GSL"):
+                print("Skipping fractal dimension tests for lack of GSL")
+                return
             # The fractal dimension of a line should be 1
             
             dr=float(np.sqrt(0.01**2+0.011**2+0.012**2))
             self.assertTrue(np.abs(c.fractal_dimension(dr=dr)[0]-1.) <=1.2)
 
-            # Fractal dimension calc require gsl
-            if not espressomd.has_features("GSL"):
-                print("Skipping fractal dimension tests for lack of GSL")
-                return
                    
                 
 
@@ -165,20 +165,6 @@ class ClusterAnalysis(ut.TestCase):
             cid=self.cs.cluster_ids()[0]
             df=self.cs.clusters[cid].fractal_dimension(dr=0.01)
             self.assertTrue(abs(df[0]-2.)<=0.2)
-               
-            
-
-            
-            
-
-
-        
-
-
-        
-
-
-        
         
           
     
