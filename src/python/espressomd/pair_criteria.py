@@ -34,30 +34,37 @@ class DistanceCriterion(PairCriterion):
        The following parameters can be passed to the constructor, changed via set_params() 
        and retrieved via get_params()
 
-       cut_off : float, distance cut off for the criterion
+       cut_off : float
+           distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
+    
 
 
 @script_interface_register
 class EnergyCriterion(PairCriterion):
-    """Pair criterion returning true, if the short range energy between the particles is >= the cutoff"
+    """Pair criterion returning true, if the short range energy between the particles is >= the cutoff
+
+       Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
+       but not the long range part.
 
        The following parameters can be passed to the constructor, changed via set_params() 
        and retrieved via get_params()
 
-       cut_off : float, energy cut off for the criterion
+       cut_off : float
+           energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
 
 
 @script_interface_register
 class BondCriterion(PairCriterion):
-    """Pair criterion returning true, if a bond of given type exists between them
+    """Pair criterion returning true, if a pair bond of given type exists between them
 
        The following parameters can be passed to the constructor, changed via set_params() 
        and retrieved via get_params()
 
-       bond_type : int, numeric type of the bond 
+       bond_type : int
+           numeric type of the bond 
     """
     _so_name = "PairCriteria::BondCriterion"

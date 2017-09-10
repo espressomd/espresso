@@ -6,7 +6,8 @@ from .particle_data import ParticleHandle, ParticleSlice
 class Cluster(ScriptInterfaceHelper):
     """Class representing a cluster of particles
 
-    Methods:
+    Methods
+    -------
     particle_ids():
         Returns list of particle ids in the cluster
 
@@ -94,7 +95,16 @@ class ClusterStructure(ScriptInterfaceHelper):
 
 
 class Clusters(object):
-    """Access to the clusters in the cluster structure. Behaves roughly like a dict"""
+    """Access to the clusters in the cluster structure.
+       
+      Access is as follows
+       * Number of clusters: len(clusters)
+       * Access a cluster via its id: clusters[id]
+       * Iterate over clusters::
+           for c in clusters:
+         where c will be a tuple containing the cluster id and the cluster object
+     """
+
 
     def __init__(self, cluster_structure):
         self.cluster_structure = cluster_structure
