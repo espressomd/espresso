@@ -28,7 +28,6 @@
 #include <initializer_list>
 #include <iterator>
 #include <vector>
-#include <numeric>
 
 #include "utils/serialization/array.hpp"
 
@@ -73,8 +72,6 @@ public:
 
   Scalar &operator[](int i) { return d[i]; }
   Scalar const &operator[](int i) const { return d[i]; }
-
-
 
   iterator begin() { return d.begin(); }
   const_iterator begin() const { return d.begin(); }
@@ -146,24 +143,6 @@ public:
   }
 };
 
-template<size_t n, typename Scalar>
-Vector<n, Scalar> operator*(const Vector<n,Scalar> v, const Scalar s) {
-    Vector<n,Scalar> res({0,0,0});
-    for (int i=0;i<n;i++){
-      res[i] =v[i] * s;
-    }
-    return res;
-}
-
-template<size_t n, typename Scalar>
-Vector<n, Scalar> operator/(const Vector<n,Scalar> v, const Scalar rhs) {
-    Vector<n,Scalar> res;
-    for (int i=0;i<n;i++){
-      res[i] =v[i] / rhs;
-    }
-    return res;
-}
-
 // Useful typedefs
 
 typedef Vector<3, double> Vector3d;
@@ -174,15 +153,10 @@ template <size_t N, typename T, typename Op>
 Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
   Vector<N, T> ret;
 
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+  std::transform(std::begin(a), std::begin(b), std::begin(b), std::begin(ret),
                  op);
 
   return ret;
-}
-
-template <size_t N, typename T, typename Op>
-void binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
 }
 
 template <size_t N, typename T, typename Op>
@@ -229,60 +203,12 @@ bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 template <size_t N, typename T>
-Vector<N, T> operator+(Vector<N, T> const a, Vector<N, T> const b) {
+Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
   return detail::binary_op(a, b, std::plus<T>());
-}
-
-template <size_t N, typename T>
-void operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
-  return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
 template <size_t N, typename T>
 Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
   return detail::binary_op(a, b, std::minus<T>());
 }
-
-template <size_t N, typename T>
-void operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
-  return detail::binary_op_assign(a, b, std::minus<T>());
-}
-
-/* Scalar multiplication */
-template <size_t N, typename T>
-Vector<N, T> operator*(T const &a, Vector<N, T> const &b) {
-  Vector<N, T> ret;
-
-  std::transform(b.begin(), b.end(), ret.begin(),
-                 [a](T const &val) { return a * val; });
-
-  return ret;
-}
-
-template <size_t N, typename T> void operator*=(T const &a, Vector<N, T> &b) {
-  std::transform(b.begin(), b.end(), b.begin(),
-                 [a](T const &val) { return a * val; });
-}
-
-/* Scalar division */
-template <size_t N, typename T>
-Vector<N, T> operator/(Vector<N, T> const &a, T const &b) {
-  Vector<N, T> ret;
-
-  std::transform(a.begin(), a.end(), ret.begin(),
-                 [b](T const &val) { return val / b; });
-  return ret;
-}
-
-template <size_t N, typename T> void operator/=(Vector<N, T> &a, T const &b) {
-  std::transform(a.begin(), a.end(), a.begin(),
-                 [b](T const &val) { return val / b; });
-}
-
-/* Scalar product */
-template <size_t N, typename T>
-T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
-  return std::inner_product(a.begin(), a.end(), b.begin(), T{});
-}
-
 #endif
