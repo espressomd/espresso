@@ -109,6 +109,9 @@ cdef class PScriptInterface(object):
         cdef vector[Variant] vec
         cdef PObjectId oid
 
+        if value is None:
+            return Variant()
+
         # The order is important, the object character should
         # be preserved even if the PScriptInterface derived class
         # is iterable.
@@ -139,6 +142,8 @@ cdef class PScriptInterface(object):
         cdef int type = value.which()
         cdef shared_ptr[ScriptInterfaceBase] ptr
 
+        if < int > type == <int > NONE:
+            return None
         if < int > type == <int > BOOL:
             return get[bool](value)
         if < int > type == <int > INT:
