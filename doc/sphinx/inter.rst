@@ -2174,13 +2174,19 @@ reference :cite:`smiatek08a` before using this interaction.
 DPD interaction
 ~~~~~~~~~~~~~~~
 
-inter inter_dpd
+.. note::
+    `Feature DPD required.`
 
 This is a special interaction that is to be used in conjunction with the
-Dissipative Particle Dynamics algorithm [sec:DPD] when the
-implementation is used. The parameters correspond to the parameters of
-the DPD thermostat , but can be set individually for the different
-interactions.
+Dissipative Particle Dynamics thermostat [sec:DPD], for a genral description
+of the algorithm see there. The parameters can be set via::
+
+    system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
+
+This command defines a velocity dependent interaction
+between particles of the types *type1* and *type2*. For a description of the input arguments
+see :class:`espressomd.interactions.DPDInteraction`. The interaction
+only has an effect if the DPD thermostat activated.
 
 Fixing the center of mass
 ~~~~~~~~~~~~~~~~~~~~~~~~~
