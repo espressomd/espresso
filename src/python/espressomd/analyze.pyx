@@ -383,6 +383,7 @@ class Analysis(object):
         p["non_bonded_inter"] = total_inter
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
+
         # Electrostatics
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
@@ -455,6 +456,7 @@ class Analysis(object):
         for i in range(c_analyze.n_particle_types):
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
+
                 p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
@@ -562,6 +564,7 @@ class Analysis(object):
         total_inter = 0
         total_intra = 0
         total_non_bonded = 0.
+
         for i in range(c_analyze.n_particle_types):
             for j in range(c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
@@ -574,6 +577,7 @@ class Analysis(object):
     #  e["nonBondedIntra"]=total_intra
     #  e["nonBondedInter"]=total_inter
         e["non_bonded"] = total_non_bonded
+
         # Electrostatics
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
