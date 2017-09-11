@@ -39,6 +39,9 @@ public:
     if (method == "check_parameter_type") {
       auto const type = boost::get<std::string>(par.at("type"));
 
+      if(type == "none")
+        return is_none(par.at("value"));
+
       if (type == "bool") {
         return is_bool(par.at("value"));
       }
