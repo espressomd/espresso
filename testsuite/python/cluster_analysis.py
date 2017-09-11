@@ -19,6 +19,7 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
+from espressomd.utils import handle_errors
 import numpy as np
 from espressomd.interactions import FeneBond
 from espressomd.pair_criteria import *
@@ -29,8 +30,9 @@ class ClusterAnalysis(ut.TestCase):
     """Tests the cluster analysis"""
 
     es = espressomd.System()
+    
 
-    f = FeneBond(k=1, d_r_max=5)
+    f = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f)
     
     # Firt cluster
@@ -45,9 +47,14 @@ class ClusterAnalysis(ut.TestCase):
     
 
     cs=ClusterStructure()
+    np.random.seed(1)
+    
+    # Setup check
+    handle_errors("")
 
     def test_00_fails_without_criterion_set(self):
-        self.assertRaises(self.cs.run_for_all_pairs())
+        with(self.assertRaises(Exception)):
+            self.cs.run_for_all_pairs()
     
     def test_set_criterion(self):
         # Test setters/getters for criteria
@@ -58,7 +65,7 @@ class ClusterAnalysis(ut.TestCase):
         # Note: This work around the fact that the script interface does not 
         # yet assign the correct derived class when returning an object
         self.assertEqual(dc_ret.name() , "PairCriteria::DistanceCriterion")
-        self.assertTrue(abs(dc_ret.get_params()["cut_off"]-0.11)<=1E-8)
+        self.assertAlmostEqual(dc_ret.get_params()["cut_off"],0.11,places=7)
 
         # Is the cluster structure empty before being used
 
@@ -68,7 +75,7 @@ class ClusterAnalysis(ut.TestCase):
         self.cs.run_for_all_pairs()
 
         # Number of clusters
-        self.assertTrue(len(self.cs.clusters)==2)
+        self.assertEqual(len(self.cs.clusters),2)
         cids=self.cs.cluster_ids()
 
         # Sizes of individual clusters
@@ -76,8 +83,8 @@ class ClusterAnalysis(ut.TestCase):
         l1=len(self.cs.clusters[cids[0]].particle_ids())
         
         # Clusters should contain 2 and 4 particles
-        self.assertTrue(min(l1,l2)==2)
-        self.assertTrue(max(l1,l2)==4)
+        self.assertEqual(min(l1,l2),2)
+        self.assertEqual(max(l1,l2),4)
 
         # Verify particle ids
         smaller_cluster=None
@@ -89,17 +96,17 @@ class ClusterAnalysis(ut.TestCase):
             smaller_cluster=self.cs.clusters[cids[1]]
             bigger_cluster=self.cs.clusters[cids[0]]
 
-        self.assertTrue(bigger_cluster.particle_ids()==[0,1,2,3])
-        self.assertTrue(smaller_cluster.particle_ids()==[4,5])
+        self.assertEqual(bigger_cluster.particle_ids(),[0,1,2,3])
+        self.assertEqual(smaller_cluster.particle_ids(),[4,5])
 
         # Test obtaining a ParticleSlice for a cluster
         pids=bigger_cluster.particle_ids()
         particles=bigger_cluster.particles()
         # Do the number of entries match
-        self.assertTrue(len(pids)==len(particles.id_selection))
+        self.assertEqual(len(pids),len(particles.id_selection))
         
         # Compare ids of particles in the slice
-        self.assertTrue(all(particles.id_selection)==all(pids))
+        self.assertEqual(all(particles.id_selection),all(pids))
 
 
         # Test iteration over clusters
@@ -107,7 +114,7 @@ class ClusterAnalysis(ut.TestCase):
         for c in self.cs.clusters:
             visited_sizes.append(c[1].size())
         visited_sizes=sorted(visited_sizes)
-        self.assertTrue(visited_sizes==[2,4])
+        self.assertEqual(visited_sizes,[2,4])
 
     def test_zz_single_cluster_analysis(self):
         self.es.part.clear()
@@ -116,7 +123,7 @@ class ClusterAnalysis(ut.TestCase):
             self.es.part.add(pos=(x,1.1*x,1.2*x))
         self.cs.pair_criterion=DistanceCriterion(cut_off=0.13)
         self.cs.run_for_all_pairs()
-        self.assertTrue(len(self.cs.clusters)==1)
+        self.assertEqual(len(self.cs.clusters),1)
         
         for c in self.cs.clusters:
             # Discard cluster id
@@ -148,7 +155,7 @@ class ClusterAnalysis(ut.TestCase):
             # The fractal dimension of a line should be 1
             
             dr=float(np.sqrt(0.01**2+0.011**2+0.012**2))
-            self.assertTrue(np.abs(c.fractal_dimension(dr=dr)[0]-1.) <=1.2)
+            self.assertAlmostEqual(c.fractal_dimension(dr=dr)[0],1,delta=0.2)
 
                    
                 
@@ -164,7 +171,7 @@ class ClusterAnalysis(ut.TestCase):
             self.cs.run_for_all_pairs()
             cid=self.cs.cluster_ids()[0]
             df=self.cs.clusters[cid].fractal_dimension(dr=0.01)
-            self.assertTrue(abs(df[0]-2.)<=0.2)
+            self.assertAlmostEqual(df[0],2,delta=0.2)
         
           
     
@@ -174,12 +181,12 @@ class ClusterAnalysis(ut.TestCase):
         self.cs.run_for_bonded_particles()
 
         # There should be one cluster containing particles 0 and 1
-        self.assertTrue(len(self.cs.clusters)==1)
-        self.assertTrue(self.cs.clusters[self.cs.cluster_ids()[0]].particle_ids()==[0,1])
+        self.assertEqual(len(self.cs.clusters),1)
+        self.assertEqual(self.cs.clusters[self.cs.cluster_ids()[0]].particle_ids(),[0,1])
         
         # Check particle to cluster id mapping, once by ParticleHandle, once by id
-        self.assertTrue(self.cs.cid_for_particle(self.es.part[0])==self.cs.cluster_ids()[0])
-        self.assertTrue(self.cs.cid_for_particle(1)==self.cs.cluster_ids()[0])
+        self.assertEqual(self.cs.cid_for_particle(self.es.part[0]),self.cs.cluster_ids()[0])
+        self.assertEqual(self.cs.cid_for_particle(1),self.cs.cluster_ids()[0])
 
         
 
