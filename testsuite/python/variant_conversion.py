@@ -26,6 +26,11 @@ class test_variant_conversion(ut.TestCase):
         self.assertTrue(self.vt.call_method("true") == True)
         self.assertTrue(self.vt.call_method("false") == False)
 
+    def test_default(self):
+        """ Check that a default constructed Variant translates to None.
+        """
+        self.assertTrue(self.vt.call_method("default") == None)
+
     def test_flat(self):
         ret = self.vt.call_method("flat")
         self.assertTrue(isinstance(ret, list))
@@ -51,6 +56,7 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(str, 'end', ret[2][1][1][1][1][1])
 
     def test_parameter_types(self):
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="none", value=None))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="bool", value=True))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=42))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="string", value='blub'))

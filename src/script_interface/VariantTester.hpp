@@ -9,6 +9,10 @@ public:
   const std::string name() const override { return "Testing::VariantTester"; }
   Variant call_method(std::string const &method,
                       VariantMap const &par) override {
+    if(method == "default") {
+      return Variant{};
+    }
+
     if (method == "true") {
       return true;
     }
