@@ -41,6 +41,16 @@ void for_each_pair(ForwardIterator first, ForwardIterator last, BinaryOp op) {
     ++first;
   }
 }
+
+/*
+ * @brief Range overload for for_each_pair.
+ */
+  template <typename ForwardRange, typename BinaryOp>
+  void for_each_pair(ForwardRange rng, BinaryOp op) {
+    using std::begin;
+    using std::end;
+    for_each_pair(begin(rng), end(rng), std::forward<BinaryOp>(op));
+  }
 }
 
 #endif

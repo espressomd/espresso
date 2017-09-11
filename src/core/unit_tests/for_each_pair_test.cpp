@@ -31,17 +31,7 @@ using Utils::for_each_pair;
 #include <numeric>
 #include <vector>
 
-BOOST_AUTO_TEST_CASE(basic_check) {
-  auto const n_values = 141;
-  std::vector<int> vec(n_values);
-  std::vector<std::pair<int, int>> pairs;
-  std::iota(vec.begin(), vec.end(), 0);
-
-  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
-
-  /* Collect pairs */
-  for_each_pair(vec.begin(), vec.end(), pair_inserter);
-
+void check_pairs(int n_values, std::vector<std::pair<int, int>> &pairs) {
   /* Check number of pairs */
   BOOST_CHECK(pairs.size() == ((n_values - 1) * n_values) / 2);
 
@@ -52,4 +42,37 @@ BOOST_AUTO_TEST_CASE(basic_check) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
+}
+
+BOOST_AUTO_TEST_CASE(basic_check) {
+  auto const n_values = 141;
+  std::vector<int> vec(n_values);
+  
+  std::iota(vec.begin(), vec.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+
+  /* Collect pairs */
+  for_each_pair(vec.begin(), vec.end(), pair_inserter);
+
+  /* Check the result */
+  check_pairs(n_values, pairs);
+}
+
+BOOST_AUTO_TEST_CASE(range) {
+  auto const n_values = 141;
+  std::vector<int> vec(n_values);
+  std::iota(vec.begin(), vec.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+
+  /* Collect pairs */
+  for_each_pair(vec, pair_inserter);
+
+  /* Check the result */
+  check_pairs(n_values, pairs);
 }
