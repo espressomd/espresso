@@ -1,4 +1,4 @@
-from espressomd.utils import to_char_pointer, to_str
+from espressomd.utils import to_char_pointer, to_str,handle_errors
 
 cdef class PObjectId(object):
     cdef ObjectId id
@@ -61,7 +61,9 @@ cdef class PScriptInterface(object):
         for name in kwargs:
             parameters[to_char_pointer(name)] = self.python_object_to_variant(kwargs[name])
 
-        return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
+        res= self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
+        handle_errors("")
+        return res
 
     def name(self):
         return to_str(self.sip.get().name())

@@ -65,7 +65,7 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError]mpi_gather_runtime_errors()
 
-cdef handle_errors(msg)
+cpdef handle_errors(msg)
 
 # https://github.com/cython/cython/blob/master/Cython/Includes/libcpp/limits.pxd
 cdef extern from "<limits>" namespace "std" nogil:
