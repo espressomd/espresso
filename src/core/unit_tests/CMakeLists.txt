@@ -72,3 +72,4 @@ unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp ../MpiCallbacks.cpp
 unit_test(NAME SkipIterator_test SRC SkipIterator_test.cpp)
 unit_test(NAME List_test SRC List_test.cpp)
 unit_test(NAME Particle_test SRC Particle_test.cpp)
+unit_test(NAME for_each_pair_test SRC for_each_pair_test.cpp)
