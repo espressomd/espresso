@@ -69,6 +69,7 @@
 #include "scafacos.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
+#include "global.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -145,7 +146,6 @@ void on_program_start()
   }
 }
 
-
 void on_integration_start()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
@@ -214,6 +214,10 @@ void on_integration_start()
   /* Update particle and observable information for routines in statistics.cpp */
   invalidate_obs();
   partCfg().invalidate();
+
+#ifdef ADDITIONAL_CHECKS
+  check_global_consistency();
+#endif
 
   on_observable_calc();
 }
@@ -546,7 +550,7 @@ void on_temperature_change()
 
 void on_parameter_change(int field)
 {
-  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
+  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:

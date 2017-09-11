@@ -209,7 +209,7 @@ cdef class CellSystem(object):
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(29)
+            mpi_bcast_parameter(FIELD_SKIN)
             integrate.skin_set = True
 
         def __get__(self):
