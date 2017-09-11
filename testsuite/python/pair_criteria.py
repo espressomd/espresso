@@ -45,7 +45,7 @@ class PairCriteria(ut.TestCase):
     def test_distance_crit(self):
         dc=DistanceCriterion(cut_off=0.1)
         # Interface
-        self.assertTrue(dc.get_params().keys()==["cut_off",])
+        self.assertEqual(list(dc.get_params().keys()),["cut_off",])
         self.assertTrue(abs(dc.get_params()["cut_off"]-0.1)<self.epsilon)
 
         # Decisions
@@ -62,7 +62,7 @@ class PairCriteria(ut.TestCase):
     def test_energy_crit(self):
         ec=EnergyCriterion(cut_off=0.001)
         # Interface
-        self.assertTrue(ec.get_params().keys()==["cut_off",])
+        self.assertEqual(list(ec.get_params().keys()),["cut_off",])
         self.assertTrue(abs(ec.get_params()["cut_off"]-0.001)<self.epsilon)
 
         # Decisions
@@ -79,8 +79,8 @@ class PairCriteria(ut.TestCase):
     def test_bond_crit(self):
         bc=BondCriterion(bond_type=0)
         # Interface
-        self.assertTrue(bc.get_params().keys()==["bond_type",])
-        self.assertTrue(bc.get_params()["bond_type"]==0)
+        self.assertEqual(list(bc.get_params().keys()),["bond_type",])
+        self.assertEqual(bc.get_params()["bond_type"],0)
 
         # Decisions
         # No bond yet. Should return false
