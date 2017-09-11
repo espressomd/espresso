@@ -42,7 +42,6 @@ class CommonTests(ut.TestCase):
     system.box_l = [npart, npart, npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    py_file = py_pos = py_vel = py_f = py_id = None
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
@@ -54,28 +53,36 @@ class CommonTests(ut.TestCase):
             system.part[i].ext_force = [0.1, 0.2, 0.3]
     system.integrator.run(steps=0)
 
+    @classmethod
+    def setUpClass(self):
+        if os.path.isfile('test.h5'):
+            os.remove('test.h5')
+        self.py_file = self.py_pos = self.py_vel = self.py_f = self.py_id = None
+
     def test_pos(self):
         """Test if positions have been written properly."""
         self.assertTrue(np.allclose(
             np.array([(float(i), float(i), float(i)) for i in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])),
-                        msg="Positions not written correctly by H5md!")
+            msg="Positions not written correctly by H5md!")
 
     def test_vel(self):
         """Test if velocities have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[1.0, 2.0, 3.0] for _ in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
-                        msg="Velocities not written correctly by H5md!")
+            msg="Velocities not written correctly by H5md!")
 
-    @ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
-               "EXTERNAL_FORCES not compiled in, can not check writing forces.")
+    @ut.skipIf(
+        not espressomd.has_features(
+            ['EXTERNAL_FORCES']),
+        "EXTERNAL_FORCES not compiled in, can not check writing forces.")
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[0.1, 0.2, 0.3] for _ in range(npart)]),
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))])),
-                        msg="Forces not written correctly by H5md!")
+            msg="Forces not written correctly by H5md!")
 
 
 @ut.skipIf(not espressomd.has_features(['H5MD']),
@@ -84,26 +91,28 @@ class H5mdTestOrdered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
-    @classmethod
-    def tearDownClass(cls):
-        os.remove("test.h5")
-
-    @classmethod
-    def setUpClass(cls):
-        """Prepare a testsystem."""
+    def setUp(self):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
-        cls.h5.write()
-        cls.h5.close()
-        del cls.h5
-        cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
+        self.h5 = h5md.H5md(
+            filename="test.h5",
+            write_pos=True,
+            write_vel=True,
+            write_force=True,
+            write_species=True,
+            write_mass=True,
+            write_ordered=write_ordered)
+        self.h5.write()
+        self.h5.flush()
+        self.h5.close()
+        self.py_file = h5py.File("test.h5", 'r')
+        self.py_pos = self.py_file['particles/atoms/position/value']
+        self.py_vel = self.py_file['particles/atoms/velocity/value']
+        self.py_f = self.py_file['particles/atoms/force/value']
+        self.py_id = self.py_file['particles/atoms/id/value']
+
+    def tearDown(cls):
+        os.remove("test.h5")
 
     def test_ids(self):
         """Test if ids have been written properly."""
@@ -118,30 +127,32 @@ class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
-    @classmethod
-    def tearDownClass(cls):
-        os.remove("test.h5")
-
-    @classmethod
-    def setUpClass(cls):
-        """Prepare a testsystem."""
+    def setUp(self):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        cls.h5 = h5md.H5md(filename="test.h5", write_pos=True, write_vel=True,
-                           write_force=True, write_species=True, write_mass=True,
-                           write_ordered=write_ordered)
-        cls.h5.write()
-        cls.h5.close()
-        del cls.h5
-        cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
+        self.h5 = h5md.H5md(
+            filename="test.h5",
+            write_pos=True,
+            write_vel=True,
+            write_force=True,
+            write_species=True,
+            write_mass=True,
+            write_ordered=write_ordered)
+        self.h5.write()
+        self.h5.flush()
+        self.h5.close()
+        self.py_file = h5py.File("test.h5", 'r')
+        self.py_pos = self.py_file['particles/atoms/position/value']
+        self.py_vel = self.py_file['particles/atoms/velocity/value']
+        self.py_f = self.py_file['particles/atoms/force/value']
+        self.py_id = self.py_file['particles/atoms/id/value']
+
+    def tearDown(cls):
+        os.remove("test.h5")
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite() 
+    suite = ut.TestSuite()
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestUnordered))
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(H5mdTestOrdered))
     result = ut.TextTestRunner(verbosity=4).run(suite)

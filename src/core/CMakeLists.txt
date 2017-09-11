@@ -2,6 +2,12 @@ file(GLOB EspressoCore_SRC
           "*.cpp"
           )
 
+if( WITH_COVERAGE )
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+  link_libraries(gcov)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -27,7 +33,7 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 add_dependencies(EspressoCore EspressoConfig)
 
-target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints EspressoUtils Correlators Observables)
+target_link_libraries(EspressoCore ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables)
 
 if(SCAFACOS)
   include_directories(${SCAFACOS_INCLUDE_DIRS})
@@ -55,7 +61,6 @@ if(CUDA)
 endif(CUDA)
 
 # Subdirectories
-add_subdirectory(utils)
 add_subdirectory(observables)
 add_subdirectory(correlators)
 add_subdirectory(io)

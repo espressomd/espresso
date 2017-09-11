@@ -24,8 +24,9 @@
 
 */
 
+#include "config.hpp"
+
 #include <cmath>
-#include "utils.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
@@ -50,23 +51,9 @@
 #define THERMO_CPU        64
 /*@}*/
 
-// Handle switching of noise function flat vs Gaussian
-#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
-#define FLATNOISE
-#endif
-
-#if defined (FLATNOISE)
-  #define noise (d_random() -0.5)
-#elif defined (GAUSSRANDOMCUT)
-  #define noise gaussian_random_cut()
-#elif defined (GAUSSRANDOM)
-  #define noise gaussian_random()
-#else
- #error "No noise function defined"
-#endif
-
-
-
+namespace Thermostat {
+  auto noise = []() { return (d_random() - 0.5); };
+}
 
 /************************************************
  * exported variables
@@ -213,7 +200,7 @@ inline double le_frameV(int i, double *vel, double *pos)
 inline double friction_therm0_nptiso(double dt_vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if(thermo_switch & THERMO_NPT_ISO)
-    return ( nptiso_pref1*dt_vj + nptiso_pref2*noise );
+    return ( nptiso_pref1*dt_vj + nptiso_pref2*Thermostat::noise() );
   
   return 0.0;
 }
@@ -222,7 +209,7 @@ inline double friction_therm0_nptiso(double dt_vj) {
 inline double friction_thermV_nptiso(double p_diff) {
   extern double nptiso_pref3, nptiso_pref4;
   if(thermo_switch & THERMO_NPT_ISO)   
-    return ( nptiso_pref3*p_diff + nptiso_pref4*noise );
+    return ( nptiso_pref3*p_diff + nptiso_pref4*Thermostat::noise() );
   return 0.0;
 }
 #endif
@@ -240,7 +227,6 @@ inline void friction_thermo_langevin(Particle *p)
   double langevin_pref1_temp[3], langevin_pref2_temp[3];
 #endif
 
-  double langevin_temp_coeff;
   double particle_force[3] = {0.0, 0.0, 0.0};
 
 #ifdef MULTI_TIMESTEP
@@ -314,14 +300,7 @@ inline void friction_thermo_langevin(Particle *p)
 
   // Override defaults if per-particle values for T and gamma are given 
 #ifdef LANGEVIN_PER_PARTICLE  
-    // If a particle-specific gamma is given
-#if defined (FLATNOISE)
-  langevin_temp_coeff = 24.0;
-#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-  langevin_temp_coeff = 2.0;
-#else
-#error No Noise defined
-#endif
+  auto const constexpr langevin_temp_coeff = 24.0;
 
 #ifndef PARTICLE_ANISOTROPY
     if(p->p.gamma >= 0.) 
@@ -406,13 +385,13 @@ inline void friction_thermo_langevin(Particle *p)
     {
       // Apply the force
 #ifndef PARTICLE_ANISOTROPY
-      p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*noise;
+      p->f.f[j] = langevin_pref1_temp*velocity[j] + switch_trans*langevin_pref2_temp*Thermostat::noise();
 #else
       // In case of anisotropic particle: body-fixed reference frame. Otherwise: lab-fixed reference frame.
       if (aniso_flag)
-          p->f.f[j] = langevin_pref1_temp[j]*velocity_body[j] + switch_trans*langevin_pref2_temp[j]*noise;
+        p->f.f[j] = langevin_pref1_temp[j]*velocity_body[j] + switch_trans*langevin_pref2_temp[j]*Thermostat::noise();
       else
-          p->f.f[j] = langevin_pref1_temp[j]*velocity[j] + switch_trans*langevin_pref2_temp[j]*noise;
+        p->f.f[j] = langevin_pref1_temp[j]*velocity[j] + switch_trans*langevin_pref2_temp[j]*Thermostat::noise();
 #endif
     }
   } // END LOOP OVER ALL COMPONENTS
@@ -451,7 +430,6 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   extern double langevin_pref2_rotation[3];
   double langevin_pref1_temp[3], langevin_pref2_temp[3];
 #endif
-  double langevin_temp_coeff;
 
   int j;
   double switch_rotate = 1.0;
@@ -475,13 +453,8 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
     // If a particle-specific gamma is given
-#if defined (FLATNOISE)
-  langevin_temp_coeff = 24.0;
-#elif defined (GAUSSRANDOMCUT) || defined (GAUSSRANDOM)
-  langevin_temp_coeff = 2.0;
-#else
-#error No Noise defined
-#endif
+auto const constexpr langevin_temp_coeff = 24.0;
+
 #ifndef ROTATIONAL_INERTIA
     if(p->p.gamma_rot >= 0.)
     {
@@ -539,9 +512,9 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   for ( j = 0 ; j < 3 ; j++) 
   {
 #ifdef ROTATIONAL_INERTIA
-    p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*noise;
+    p->f.torque[j] = -langevin_pref1_temp[j]*p->m.omega[j] + switch_rotate*langevin_pref2_temp[j]*Thermostat::noise();
 #else
-    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*noise;
+    p->f.torque[j] = -langevin_pref1_temp*p->m.omega[j] + switch_rotate*langevin_pref2_temp*Thermostat::noise();
 #endif
   }
 
@@ -549,9 +522,5 @@ inline void friction_thermo_langevin_rotation(Particle *p)
   THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
 
-
 #endif // ROTATION
-
-
-#undef noise
 #endif

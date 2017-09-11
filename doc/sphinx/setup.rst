@@ -1,166 +1,66 @@
 Setting up the system
 =====================
 
-``setmd``: Setting global variables in TCL
-------------------------------------------
-
-setmd setmd +
-
-Variant returns the value of the global variable , variant can be used
-to set the variable to . The ’+’ in variant means that for some
-variables more than one can be given (example: setmd boxl 5 5 5). The
-following global variables can be set:
-
-(double[3]) Simulation box lengths of the cuboid box used by Espresso.
-Note that if you change the box length during the simulation, the folded
-particle coordinates will remain the same, i.e., the particle stay in
-the same image box, but at the same relative position in their image
-box. If you want to scale the positions, use the command.
-
-(int[3], *read-only*) Dimension of the inner cell grid.
-
-(double[3], *read-only*) Box-length of a cell.
-
-(double, *read-only*) Friction constant for the DPD thermostat.
-
-(double, *read-only*) Cutoff for DPD thermostat.
-
-(int, *read-only*) Switches fixed particle DPD force calculation ON (0)
-or OFF (1 default).
-
-(double double[3], *read-only*) Friction constant for the Langevin
-thermostat. Feature requires 3 values of the gamma corresponding to
-diagonal elements of the tensor. If one value is specified then other
-diagonal elements are defined equal to it automatically.
-
-(double double[3], *read-only*) Rotational friction constant for the
-Langevin thermostat. Feature requires 3 values of the gamma\_rot
-corresponding to diagonal elements of the tensor. If one is not
-specified then the translational gamma value is used.
-
-(int, *read-only*) Internal switch which integrator to use.
-
-(int, *read-only*) Number of fluid components.
-
-(int[3], *read-only*) Local simulation box length of the nodes.
-
-(double, *read-only*) Maximal cutoff of real space interactions.
-
-(double, *read-only*) Maximal cutoff of nonbonded real space
-interactions.
-
-(double, *read-only*) Maximal cutoff of bonded real space interactions.
-
-(int) Maximal number of cells for the link cell algorithm. Reasonable
-values are between 125 and 1000, or for some problems ( / ).
-
-(int, *read-only*) Maximal identity of a particle. *This is in general
-not related to the number of particles!*
-
-(double, *read-only*) Maximal range of real space interactions: + .
-
-(double, *read-only*) Maximal skin to be used for the link cell/verlet
-algorithm. This is the minimum of - .
-
-(double) Minimal total cutoff for real space. Effectively, this plus the
-skin is the minimally possible cell size. Espresso typically determines
-this value automatically, but some algorithms, virtual sites, require
-you to specify it manually.
-
-(int) Minimal number of cells for the link cell algorithm. Reasonable
-values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
-just make sure that the Verlet lists are not incredibly large. By default the
-minimum is 0, but for the automatic P3M tuning it may be wise to set larger
-values for high particle numbers.
-
-(int, *read-only*) Number of layers in cell structure LAYERED (see
-section ).
-
-(int, *read-only*) Number of nodes.
-
-(int, *read-only*) Total number of particles.
-
-(int, *read-only*) Number of particle types that were used so far in the
-command (see chaptertcl:inter).
-
-(int[3]) 3D node grid for real space domain decomposition (optional, if
-unset an optimal set is chosen automatically).
-
-(double, *read-only*)
-
-(double, *read-only*)
-
-(double, *read-only*) Pressure for NPT simulations.
-
-(double) Pressure calculated during an NPT\_isotropic integration.
-
-(double, *read-only*) Mass off the box when using NPT\_isotropic
-integrator.
-
-(bool[3]) Specifies periodicity for the three directions. If the feature
-PARTIAL\_PERIODIC is set, Espresso can be instructed to treat some
-dimensions as non-periodic. Per default espresso assumes periodicity in
-all directions which equals setting this variable to (1,1,1). A
-dimension is specified as non-periodic via setting the periodicity
-variable for this dimension to 0. E.g. Periodicity only in z-direction
-is obtained by (0,0,1). Caveat: Be aware of the fact that making a
-dimension non-periodic does not hinder particles from leaving the box in
-this direction. In this case for keeping particles in the simulation box
-a constraint has to be set.
-
-(double) Skin for the Verlet list.
-
-(double, *read-only*) Temperature of the simulation.
-
-(double, *read-only*) Internal variable which thermostat to use.
-
-(double) The simulation time.
-
-(double) Time step for MD integration.
-
-(int) Number of samples to (time-)average over.
-
-(bool) Indicates whether the Verlet list will be rebuild. The program
-decides this normally automatically based on your actions on the data.
-
-(double) Average number of integration steps the verlet list has been
-re-used.
-
-(int) if non-zero (default), some warnings are printed out. Set this to
-zero if you get annoyed by them.
-
 Setting global variables in Python
 ----------------------------------
 
 The global variables in Python are controlled via the
-:class:`espressomd._system.System` class.
-In analogy to the TCL interface global system variables can be read and
-set in Python simply by accessing the attribute of the corresponding
-Python object. Those variables that are already available in the Python
-interface are listed in the following.
+:class:`espressomd.system.System` class.
+Global system variables can be read and set in Python simply by accessing the
+attribute of the corresponding Python object. Those variables that are already
+available in the Python interface are listed in the following.
 
-Variables of the system class
+The system class
+~~~~~~~~~~~~~~~~
 
-    * :py:attr:`~espressomd._system.System.box_l`
-    * :py:attr:`~espressomd._system.System.periodicity`
-    * :py:attr:`~espressomd._system.System.time_step`
-    * :py:attr:`~espressomd._system.System.time`
-    * :py:attr:`~espressomd._system.System.max_cut_bonded`
-    * :py:attr:`~espressomd._system.System.max_cut_nonbonded`
-    * :py:attr:`~espressomd._system.System.min_global_cut`
+    * :py:attr:`~espressomd.system.System.box_l`
 
-The properties of the cell system can be accessed by
-:class:`espressomd._system.System.cell_system` Variables of the cell system
-module
+    (float[3]) Simulation box lengths of the cuboid box used by |es|.
+    Note that if you change the box length during the simulation, the folded
+    particle coordinates will remain the same, i.e., the particle stay in
+    the same image box, but at the same relative position in their image
+    box. If you want to scale the positions, use the command
+    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
 
-    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
-    * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+    * :py:attr:`~espressomd.system.System.periodicity`
 
-Special attention has to be paid to the
-:py:attr:`~espressomd.cellsystem.CellSystem.skin` property. This value has to be
-set, otherwise the simulation will not start.
+    (int[3]) Specifies periodicity for the three directions. If the feature
+    PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
+    dimensions as non-periodic. Per default espresso assumes periodicity in
+    all directions which equals setting this variable to [1,1,1]. A
+    dimension is specified as non-periodic via setting the periodicity
+    variable for this dimension to 0. E.g. Periodicity only in z-direction
+    is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
+    dimension non-periodic does not hinder particles from leaving the box in
+    this direction. In this case for keeping particles in the simulation box
+    a constraint has to be set.
+
+    * :py:attr:`~espressomd.system.System.time_step`
+    
+    (float) Time step for MD integration.
+
+    * :py:attr:`~espressomd.system.System.time`
+
+    (float) The simulation time.
+
+    * :py:attr:`~espressomd.system.System.min_global_cut`
+
+    (float) Minimal total cutoff for real space. Effectively, this plus the
+    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
+    this value automatically, but some algorithms, virtual sites, require
+    you to specify it manually.
+
+    * :py:attr:`~espressomd.system.System.max_cut_bonded`
+
+    *read-only* Maximal cutoff of bonded real space interactions.
+
+    * :py:attr:`~espressomd.system.System.max_cut_nonbonded`
+    
+    *read-only* Maximal cutoff of bonded real space interactions.
+
+
+Accessing module states
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
@@ -465,31 +365,34 @@ The prefactors are such that equal masses result in a factor :math:`1`.
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to use the isotropic NPT thermostat the following commond has to be invoked:
-:py:attr:`~espressomd.thermostat.Thermostat.set_npt`.
-In order to use this feature ``NPT`` has to be defined in the ``myconfig.hpp``
+In order to use this feature, ``NPT`` has to be defined in the ``myconfig.hpp``.
+Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
+and set the following parameters:
 
-This theormstat is based on the Anderson thermostat (see
+    * kT:     (float) Thermal energy of the heat bath
+    * gamma0: (float) Friction coefficient of the bath
+    * gammav: (float) Artificial friction coefficient for the volume fluctuations.
+
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt` 
+and the parameters:
+
+    * ext_pressure:  (float) The external pressure as float variable.
+    * piston:        (float) The mass of the applied piston as float variable.
+
+This thermostat is based on the Anderson thermostat (see
 :cite:`andersen80a,mann05d`) and will thermalize the box
-geometry. It will only do isotropic changes of the box.
+geometry. It will only do isotropic changes of the box. 
+See this code snippet for the two commands::
+
+    import espressomd
+
+    system=espressomd.System()
+    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
+    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
-
-CPU thermostat
-~~~~~~~~~~~~~~
-
-thermostat cpu
-
-The CPU thermostat consists of a number crunching and a time wasting
-term coupled via the central processing unit’s thermal diode. For a more
-detailed explanation, refer to German Patent No. DE 10 2015 04F00L.
-
-Using the CPU thermostat, it is posible to keep your central processing
-unit operating at a constant temperature.
-
-Be aware that this thermostat requires to be given in Kelvin.
 
 .. _nemd:
 
@@ -558,6 +461,46 @@ to different needs of different algorithms, |es| is able to change the
 organization of the particles in the computer memory, according to the
 needs of the used algorithms. For details on the internal organization,
 refer to section :ref:`internal_particle_org`.
+
+Global properties
+~~~~~~~~~~~~~~~~~
+
+The properties of the cell system can be accessed by
+:class:`espressomd.system.System.cell_system`:
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
+
+    (int) Maximal number of cells for the link cell algorithm. Reasonable
+    values are between 125 and 1000, or for some problems :math:`n_part / nnodes`.
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
+
+    (int) Minimal number of cells for the link cell algorithm. Reasonable
+    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general 
+    just make sure that the Verlet lists are not incredibly large. By default the
+    minimum is 0, but for the automatic P3M tuning it may be wise to set larger
+    values for high particle numbers.
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
+    
+    (int[3]) 3D node grid for real space domain decomposition (optional, if
+    unset an optimal set is chosen automatically).
+
+    * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
+    
+    (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
+
+Details about the cell system can be obtained by ``espressomd.System().cell_system.get_state()``:
+
+    * `cell_grid`       Dimension of the inner cell grid.
+    * `cell_size`       Box-length of a cell.
+    * `local_box_l`     Local simulation box length of the nodes.
+    * `max_cut`         Maximal cutoff of real space interactions.
+    * `n_layers`        Number of layers in cell structure LAYERED
+    * `n_nodes`         Number of nodes.
+    * `type`            The current type of the cell system.
+    * `verlet_reuse`    Average number of integration steps the verlet list is re-used.
+
 
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
@@ -754,8 +697,6 @@ The following limitations currently apply for the collision detection:
 
 Catalytic Reactions
 -------------------
-
-
 
 With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
 act as reactant (e.g. :math:`H_2O_2`), catalyzer (e.g. platinum), and

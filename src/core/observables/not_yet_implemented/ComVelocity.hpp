@@ -1,4 +1,4 @@
-int ObservableComVelocity::actual_calculate() {
+int ObservableComVelocity::actual_calculate(PartCfg & partCfg) {
   double* A = last_value;
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;

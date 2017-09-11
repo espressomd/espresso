@@ -42,7 +42,6 @@ PARTICLE_ANISOTROPY
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA              implies ROTATION
-BOND_CONSTRAINT                 requires not ROTATION
 ROTATION_PER_PARTICLE           implies ROTATION
 
 /* Electrostatics */
