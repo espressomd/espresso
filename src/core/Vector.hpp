@@ -146,7 +146,7 @@ public:
 };
 
 template<size_t n, typename Scalar>
-Vector<n, Scalar> operator*(const Vector<n,Scalar> &v, const Scalar s) {
+Vector<n, Scalar> operator*(const Vector<n,Scalar> v, const Scalar s) {
     Vector<n,Scalar> res({0,0,0});
     for (int i=0;i<n;i++){
       res[i] =v[i] * s;
