@@ -238,6 +238,15 @@ Vector<N, T> operator*(T const &a, Vector<N, T> const &b) {
 
   return ret;
 }
+template <size_t N, typename T>
+Vector<N, T> operator*(Vector<N, T> const &a, T const &b) {
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [b](T const &val) { return b * val; });
+
+  return ret;
+}
 
 template <size_t N, typename T> void operator*=(T const &a, Vector<N, T> &b) {
   std::transform(b.begin(), b.end(), b.begin(),
