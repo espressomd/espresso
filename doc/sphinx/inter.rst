@@ -874,7 +874,7 @@ of the Drude charge + core system. The downside of this approach is that
 usually a smaller time step has to be used to get stable behaviour for the
 spring.
 
-In |es|, the *Drude bond* that takes care of the harmonic bond and the correct
+In |es|, the *Drude bond* takes care of the harmonic bond and the 
 thermalization of the Drude complex. Therefore, the particles have to be
 excluded from the global thermostating.  With ``LANGEVIN_PER_PARTICLE``, we set
 the temperature and friction coefficient of the Drude complex to zero, which
@@ -908,6 +908,7 @@ core particle::
 
     def add_drude_particle_to_core(p_core, drude_bond, id_drude, type_drude, alpha, mass_drude):
         
+        #Add drude particle and alter core particle accordingly
         k = drude_bond.params["k"]
         q_drude = -pow(k * alpha, 0.5)
 
@@ -932,10 +933,10 @@ Thole correction
     THOLE is only implemented for the P3M electrostatics solver.
 
 
-Although a nonbondend interaction, the Thole correction is closely related to
-simulations with polarizable particles and is therefore placed here after the *Drude bond* section.
+Although it is a nonbondend interaction, the Thole correction is closely related to
+simulations with polarizable particles and is therefore described here after the *Drude bond* section.
 It is used to correct for overestimation of induced dipoles at short distances.
-Internally, it alters the short-range electrostatics of P3M to result in a
+Ultimately, it alters the short-range electrostatics of P3M to result in a
 damped coulomb interaction potential 
 :math:`V(r) = \frac{q_1 q_2}{r} \cdot (1- e^{-s r} (1 + \frac{s r}{2}) )`.
 The thole scaling coefficient :math:`s` is related to the polarizabilies :math:`\alpha`
@@ -959,7 +960,7 @@ a unique polarizability has to have a unique type. So each Drude charge type has
 interaction with all other Drude charges and all Drude cores, except the one it's connected to.
 This exeption is handeled internally. Also, each Drude core has a Thole
 correction interaction with all other Drude cores and Drude charges.
-To assist with this bookkeeping, the helper method from the *Drude bond* section 
+To assist with the bookkeeping of mixed scaling coefficients, the helper method from the *Drude bond* section 
 can be extended to collect all core types, drude types and parameters when a
 drude particle is created::
 
@@ -971,14 +972,25 @@ drude particle is created::
 
     def add_drude_particle_to_core(p_core, drude_bond, id_drude, type_drude, alpha, mass_drude):
 
-        ...
+        #Add drude particle and alter core particle accordingly
+        k = drude_bond.params["k"]
+        q_drude = -pow(k * alpha, 0.5)
+
+        S.part.add(id=id_drude, pos=p_core.pos, type = type_drude,  q = q_drude, mass = mass_drude, temp = 0, gamma = 0)
+        #print("Adding to core ID", p_core.id, "drude particle with id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
+
+        p_core.q -= q_drude
+        p_core.mass -= mass_drude   
+        p_core.add_bond((drude_bond, id_drude))
+        p_core.temp = 0
+        p_core.gamma = 0
 
        #Drude particles with different drude charges(or alphas)/thole_damping have to have different types for thole:
        if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
            print("ERROR: Drude particles with different drude charges have to have different types for thole..Aborting")
            exit()
 
-       #Bookkepping of q, alphas and damping parameter
+       #Bookkepping of q, alpha and damping parameter
        if not type_drude in drude_dict:
        
            drude_dict[type_drude] = {}

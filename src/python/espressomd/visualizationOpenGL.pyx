@@ -337,6 +337,7 @@ class openGLLive(object):
                 radius = self.modulo_indexing(self.specs['particle_sizes'], ptype)
             except:
                 radius = self.radiusByLJ(ptype) 
+        print ptype, radius
         return radius
 
     def drawSystemParticles(self):

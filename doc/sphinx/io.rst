@@ -670,11 +670,11 @@ Optional keywords:
     * `camera_position`: Initial camera position.
     * `camera_rotation`: Initial camera angles.
     * `particle_sizes`:     
-        * `"auto"` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
+        * `auto` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
         * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
         * `list`: A list of particle radii, indexed by the particle type.
     * `particle_coloring`:  
-        * `"auto"` (default)`: Colors of charged particles are specified by particle_charge_colors, neutral particles by particle_type_colors
+        * `auto` (default)`: Colors of charged particles are specified by particle_charge_colors, neutral particles by particle_type_colors
         * `charge`: Minimum and maximum charge of all particles is determined by the visualizer. All particles are colored by a linear interpolation of the two colors given by particle_charge_colors according to their charge.
         * `type`: Particle colors are specified by particle_type_colors, indexed by their numerical particle type.
     * `particle_type_colors`: Colors for particle types.
