@@ -11,10 +11,28 @@ class ScriptInterfaceBase;
 using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 
 /**
+ * @brief Type to indicate no value in Variant.
+ */
+class None {
+public:
+  bool operator==(None const&) const {
+    return true;
+  }
+
+  bool operator!=(None const&) const {
+    return false;
+  }
+
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &, long int /* version */) {}
+};
+
+/**
  * @brief Possible types for parameters.
  */
 typedef boost::make_recursive_variant<
-    bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>>::type Variant;
 
 /**
@@ -24,7 +42,8 @@ typedef boost::make_recursive_variant<
  * of Variant. (e.g. Variant(bool{}).which() == VariantType::BOOL).
  */
 enum class VariantType {
-  BOOL = 0,
+  NONE = 0,
+  BOOL,
   INT,
   DOUBLE,
   STRING,
@@ -43,6 +62,10 @@ namespace detail {
  * with a specific type, to extend just add a new one.
  */
 template <typename T> struct infer_type_helper {};
+
+template <> struct infer_type_helper<None> {
+  static constexpr VariantType value{VariantType::NONE};
+};
 
 template <> struct infer_type_helper<bool> {
   static constexpr VariantType value{VariantType::BOOL};
@@ -104,6 +127,7 @@ std::string get_type_label(Variant const &);
  */
 std::string get_type_label(VariantType);
 
+bool is_none(Variant const &v);
 bool is_bool(Variant const &v);
 bool is_int(Variant const &v);
 bool is_string(Variant const &v);
