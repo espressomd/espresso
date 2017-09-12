@@ -18,16 +18,14 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         # Does the shape parameter return the correct lcass
         self.assertEqual(c.shape.__class__,Wall)
         # Do the sciprt object match
-        self.assertTrue(c.shape==w)
+        self.assertEqual(c.shape,w)
         
         # Different shape
         c.shape=Sphere(radius=1)
         # Test class
-        self.assertTrue(c.shape.__class__==Sphere)
+        self.assertEqual(c.shape.__class__,Sphere)
         # Test parameter retrieval
-        self.assertTrue(abs(c.shape.radius-1)<=1E-8)
-
-
+        self.assertAlmostEqual(c.shape.radius,1,places=8)
 
 
 if __name__ == "__main__":

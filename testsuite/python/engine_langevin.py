@@ -45,8 +45,10 @@ class SwimmerTest(ut.TestCase):
         delta_pos_0 = np.linalg.norm(S.part[0].pos - pos_0)
         delta_pos_1 = np.linalg.norm(S.part[1].pos - pos_1)
 
-        self.assertTrue(1.4e-3 < delta_pos_0 and delta_pos_0 < 1.6e-3)
-        self.assertTrue(4.9e-4 < delta_pos_1 and delta_pos_1 < 5.1e-4)
+        self.assertLess(1.4e-3, delta_pos_0)
+        self.assertLess(delta_pos_0, 1.6e-3)
+        self.assertLess(4.9e-4, delta_pos_1)
+        self.assertLess(delta_pos_1, 5.1e-4)
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

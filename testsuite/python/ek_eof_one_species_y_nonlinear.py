@@ -274,14 +274,14 @@ class ek_eof_one_species_x(ut.TestCase):
     print("Pressure deviation yz component: {}".format(total_pressure_difference_yz))
     print("Pressure deviation xz component: {}".format(total_pressure_difference_xz))
 
-    self.assertTrue(total_density_difference < 1.0e-06,"Density accuracy not achieved")
-    self.assertTrue(total_velocity_difference < 1.0e-06,"Velocity accuracy not achieved")
-    self.assertTrue(total_pressure_difference_xx < 1.0e-05,"Pressure accuracy xx component not achieved")
-    self.assertTrue(total_pressure_difference_yy < 2.5e-05,"Pressure accuracy yy component not achieved")
-    self.assertTrue(total_pressure_difference_zz < 1.0e-05,"Pressure accuracy zz component not achieved")
-    self.assertTrue(total_pressure_difference_xy < 2.0e-06,"Pressure accuracy xy component not achieved")
-    self.assertTrue(total_pressure_difference_yz < 1.0e-10,"Pressure accuracy yz component not achieved")
-    self.assertTrue(total_pressure_difference_xz < 1.0e-10,"Pressure accuracy xz component not achieved")
+    self.assertLess(total_density_difference, 1.0e-06,"Density accuracy not achieved")
+    self.assertLess(total_velocity_difference, 1.0e-06,"Velocity accuracy not achieved")
+    self.assertLess(total_pressure_difference_xx, 1.0e-05,"Pressure accuracy xx component not achieved")
+    self.assertLess(total_pressure_difference_yy, 2.5e-05,"Pressure accuracy yy component not achieved")
+    self.assertLess(total_pressure_difference_zz, 1.0e-05,"Pressure accuracy zz component not achieved")
+    self.assertLess(total_pressure_difference_xy, 2.0e-06,"Pressure accuracy xy component not achieved")
+    self.assertLess(total_pressure_difference_yz, 1.0e-10,"Pressure accuracy yz component not achieved")
+    self.assertLess(total_pressure_difference_xz, 1.0e-10,"Pressure accuracy xz component not achieved")
 
 
 if __name__ == "__main__":

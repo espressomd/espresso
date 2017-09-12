@@ -132,7 +132,7 @@ cdef class System(object):
                         "Box length must be > 0 in all directions")
                 box_l[i] = _box_l[i]
 
-            mpi_bcast_parameter(0)
+            mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
             return np.array([box_l[0], box_l[1], box_l[2]])

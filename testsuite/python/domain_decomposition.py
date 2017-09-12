@@ -23,29 +23,30 @@ import unittest as ut
 import espressomd
 import numpy as np
 
-class NSquare(ut.TestCase):
+class DomainDecomposition(ut.TestCase):
     S = espressomd.System()
 
     def setUp(self):
         self.S.part.clear()
-        self.S.cell_system.set_n_square(use_verlet_lists=False)
+        self.S.cell_system.set_domain_decomposition(use_verlet_lists=False)
 
-    def test_load_balancing(self):
-        n_part = 235
-        n_nodes = self.S.cell_system.get_state()['n_nodes']
-        n_part_avg = n_part // n_nodes
+    def test_resort(self):
+        n_part = 2351
 
+        # Add the particles on node 0, so that they have to be
+        # resorted
         for i in range(n_part):
-            self.S.part.add(id=i, pos=np.random.random(3), type=1)
+            self.S.part.add(id=i, pos=[0,0,0], type=1)
 
+        # And now change their positions
+        for i in range(n_part):
+            self.S.part[i].pos=pos=np.random.random(3)
+
+        # Distribute the particles on the nodes
         part_dist = self.S.cell_system.resort()
 
         # Check that we did not lose particles
         self.assertEqual(sum(part_dist), n_part)
-
-        # Check that the parts are evenly distributed
-        for node_parts in part_dist:
-            self.assertLess(abs(node_parts - n_part_avg),2)
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
