@@ -1633,8 +1633,9 @@ void bd_random_walk_vel(Particle *p, double dt) {
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 12.0;
   // Is a particle-specific temperature specified?
+  // here, the time_step is used only to align with Espresso default dimensionless model
   if (p->p.T >= 0.)
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T) * time_step;
   else
     brown_sigma_vel_temp = brown_sigma_vel;
 #endif /* LANGEVIN_PER_PARTICLE */
@@ -1645,9 +1646,7 @@ void bd_random_walk_vel(Particle *p, double dt) {
 #endif
     {
       // velocity is added here. It is assigned in the drift part.
-      // here, the time_step is used only to align with Espresso default dimensionless model
-      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise() * time_step
-          / sqrt(p->p.mass);
+      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise() / sqrt(p->p.mass);
     }
   }
 }
