@@ -194,10 +194,8 @@ void propagate_omega_quat_particle(Particle *p) {
   double lambda;
 
   double Qd[4], Qdd[4], S[3], Wd[3];
-#ifdef ROTATION_PER_PARTICLE
   if (!p->p.rotation)
     return;
-#endif
 
   define_Qdd(p, Qd, Qdd, S, Wd);
 
@@ -251,10 +249,8 @@ void convert_torques_propagate_omega() {
 #endif
 
   for (auto &p : local_cells.particles()) {
-#ifdef ROTATION_PER_PARTICLE
     if (!p.p.rotation)
       continue;
-#endif
     double A[9];
     define_rotation_matrix(&p, A);
 
@@ -282,7 +278,6 @@ void convert_torques_propagate_omega() {
       p.f.torque[2] = tz;
     }
 
-#ifdef ROTATION_PER_PARTICLE
     if (!(p.p.rotation & 2))
       p.f.torque[0] = 0;
 
@@ -292,7 +287,6 @@ void convert_torques_propagate_omega() {
     if (!(p.p.rotation & 8))
       p.f.torque[2] = 0;
 
-#endif
 
 #if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
     double omega_swim[3] = {0, 0, 0};
@@ -390,10 +384,8 @@ void convert_initial_torques() {
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : local_cells.particles()) {
-#ifdef ROTATION_PER_PARTICLE
     if (!p.p.rotation)
       continue;
-#endif
     double A[9];
     define_rotation_matrix(&p, A);
 
@@ -416,7 +408,6 @@ void convert_initial_torques() {
       p.f.torque[2] = tz;
     }
 
-#ifdef ROTATION_PER_PARTICLE
     if (!(p.p.rotation & 2))
       p.f.torque[0] = 0;
 
@@ -426,7 +417,6 @@ void convert_initial_torques() {
     if (!(p.p.rotation & 8))
       p.f.torque[2] = 0;
 
-#endif
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
@@ -497,8 +487,6 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
   double a[3];
   convert_vec_space_to_body(p, aSpaceFrame, a);
 
-// Apply restrictions from the rotation_per_particle feature
-#ifdef ROTATION_PER_PARTICLE
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
   if (p->p.rotation < 2)
@@ -519,9 +507,6 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
 
   for (int i = 0; i < 3; i++)
     a[i] /= l;
-//  printf("%g %g %g\n",a[0],a[1],a[2]);
-
-#endif
 
   double q[4];
   q[0] = cos(phi / 2);

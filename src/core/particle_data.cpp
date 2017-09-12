@@ -409,8 +409,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
   return ES_OK;
 }
 #endif
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
   int pnode;
   if (!particle_node)
@@ -1726,11 +1725,9 @@ void pointer_to_gamma_rot(Particle *p, double *&res) {
 void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res) {
   res = &(p->p.rotation);
 }
-#endif
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {

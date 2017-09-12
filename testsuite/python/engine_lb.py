@@ -37,6 +37,7 @@ class SwimmerTest(ut.TestCase):
         S.part.add(id       = 3, pos=[3.0,6.0,2.0],
                    swimming = {"mode": "puller", "f_swim": 0.05, "dipole_length": 1.5, "rotational_friction":  6.0},
                    quat     = [          0,          0,np.sqrt(.5),np.sqrt(.5)])
+        S.part[:].rotation=1,1,1
 
     def run_and_check(self,S,lbm,vtk_name):
         S.integrator.run(self.sampsteps)

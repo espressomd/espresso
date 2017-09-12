@@ -1062,7 +1062,6 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 // ********************************
 
 void mpi_send_rotation(int pnode, int part, int rot) {
-#ifdef ROTATION_PER_PARTICLE
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -1073,11 +1072,9 @@ void mpi_send_rotation(int pnode, int part, int rot) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_send_rotation_slave(int pnode, int part) {
-#ifdef ROTATION_PER_PARTICLE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -1085,7 +1082,6 @@ void mpi_send_rotation_slave(int pnode, int part) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_observable_lb_radial_velocity_profile() {

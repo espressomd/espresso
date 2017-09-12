@@ -116,11 +116,9 @@ struct ParticleProperties {
   double out_direction[3] = {0., 0., 0.};
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
-  short int rotation = 14;
-#endif
+  short int rotation = 0;
 
 #ifdef ELECTROSTATICS
   /** charge. */
@@ -620,7 +618,6 @@ int set_particle_solvation(int part, double *solvation);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
-#ifdef ROTATION_PER_PARTICLE
 /** Call only on the master node: Specifies whether a particle's rotational
     degrees of freedom are integrated or not. If set to zero, the content of
     the torque and omega variables are meaningless
@@ -629,7 +626,6 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return ES_OK if particle existed
 */
 int set_particle_rotation(int part, int rot);
-#endif
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -1065,8 +1061,7 @@ void pointer_to_temperature(Particle *p, double *&res);
 void pointer_to_gamma_rot(Particle *p, double *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 void pointer_to_rotation(Particle *p, short int *&res);
 #endif
 

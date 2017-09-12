@@ -66,6 +66,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         data= np.genfromtxt("mdlc_reference_data_forces_torques.dat")
         for p in data[:,:]:
             s.part.add(id=int(p[0]),pos=p[1:4],dip=p[4:7])
+        s.part[:].rotation=(1,1,1)
             
         p3m = magnetostatics.DipolarP3M(prefactor=1,mesh=32,accuracy=1E-4)
         dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5,gap_size=2.)
@@ -109,6 +110,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         data= np.genfromtxt("p3m_magnetostatics_system.data")
         for p in data[:,:]:
             s.part.add(id=int(p[0]),pos=p[1:4],dip=p[4:7])
+        s.part[:].rotation=1,1,1
             
         p3m = magnetostatics.DipolarP3M(prefactor=1,mesh=32,accuracy=1E-6,epsilon="metallic")
         s.actors.add(p3m)
