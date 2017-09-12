@@ -63,7 +63,7 @@ class CoulombCloudWallTune(ut.TestCase):
 
         print(method_name, "force difference", force_abs_diff)
 
-        self.assertTrue(force_abs_diff <= self.tolerance, "Asbolute force difference " +
+        self.assertLessEqual(force_abs_diff, self.tolerance, "Asbolute force difference " +
                         str(force_abs_diff) + " too large for method " + method_name)
 
     # Tests for individual methods

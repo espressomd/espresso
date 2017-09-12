@@ -17,14 +17,14 @@ class test_variant_conversion(ut.TestCase):
     vt = VariantTester()
 
     def check_type_and_value(self, stype, svalue, value):
-        self.assertTrue(type(value) == stype)
-        self.assertTrue(value == svalue)
+        self.assertEqual(type(value), stype)
+        self.assertEqual(value, svalue)
 
     def test_bool_return(self):
         """Check that bool return values work corrcetly,
         because they are needed for the other tests."""
-        self.assertTrue(self.vt.call_method("true") == True)
-        self.assertTrue(self.vt.call_method("false") == False)
+        self.assertTrue(self.vt.call_method("true"))
+        self.assertFalse(self.vt.call_method("false"))
 
     def test_default(self):
         """ Check that a default constructed Variant translates to None.
@@ -40,10 +40,10 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(list, [3,1,4,1,5], ret[3])
         self.check_type_and_value(list, [1.1,2.2,3.3], ret[4])
         # Empty object (ObjectId()) should map to None
-        self.assertTrue(ret[5] == None)
+        self.assertEqual(ret[5], None)
         # An actual object
         self.assertTrue(isinstance(ret[6], script_interface.PScriptInterface))
-        self.assertTrue(ret[6].name() == "Testing::VariantTester")
+        self.assertEqual(ret[6].name(), "Testing::VariantTester")
 
     def test_recu(self):
         ret = self.vt.call_method("recursive", max_level=5)

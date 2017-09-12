@@ -65,9 +65,9 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertTrue(abs(L_lab[k] - L_0_lab[k]) <= tol, \
+                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol, \
                                 msg = 'Inertial motion around stable axis J1: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
-            self.assertTrue(abs(self.es.part[0].omega_body[1] - stable_omega) <= tol, \
+            self.assertLessEqual(abs(self.es.part[0].omega_body[1] - stable_omega), tol, \
                             msg = 'Inertial motion around stable axis J1: Deviation in omega is too large. Step {0}, coordinate 1, expected {1}, got {2}'.format(i, stable_omega, self.es.part[0].omega_body[1]))
             self.es.integrator.run(10)
 
@@ -86,9 +86,9 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertTrue(abs(L_lab[k] - L_0_lab[k]) <= tol, \
+                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol, \
                                 msg = 'Inertial motion around stable axis J2: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
-            self.assertTrue(abs(self.es.part[0].omega_body[2] - stable_omega) <= tol, \
+            self.assertLessEqual(abs(self.es.part[0].omega_body[2] - stable_omega), tol, \
                                 msg = 'Inertial motion around stable axis J2: Deviation in omega is too large. Step {0}, coordinate 2, expected {1}, got {2}'.format(i, stable_omega, self.es.part[0].omega_body[2]))
             self.es.integrator.run(10)
 
@@ -107,7 +107,7 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertTrue(abs(L_lab[k] - L_0_lab[k]) <= tol, \
+                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol, \
                                 msg = 'Inertial motion around stable axis J0: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
             self.es.integrator.run(10)
 
