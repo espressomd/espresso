@@ -25,21 +25,13 @@ def stress_bonded(pos, box_l):
 
 # analytical result for stress originating from non-bonded force
 def stress_nonbonded(pos, box_l):
-  print('lennard-jones stress')
   d = pos[1] - pos[0]
   r = np.sqrt(np.sum(d**2))
   r_hat = d/r
-  print('d', d)
-  print('r', r)
-  print('r_hat', r_hat)
-  f = (24.0 * 1.0 * (2.0*1.0**12/r**11 - 1.0**6/r**5)) * r_hat
-  print('f', f)
-  print('stress\n', np.einsum('i,j', f, d) / box_l**3)
-  print()
-  print()
+  f = (24.0 * 1.0 * (2.0*1.0**12/r**13 - 1.0**6/r**7)) * r_hat
   return np.einsum('i,j', f, d) / box_l**3
 
-@ut.skipIf(not espressomd.has_features(['LEES_EDWARDS']),
+@ut.skipIf(not espressomd.has_features(['LEES_EDWARDS', 'LENNARD_JONES']),
 'Features not available, skipping test!')
 class lees_edwards_test(ut.TestCase):
 
