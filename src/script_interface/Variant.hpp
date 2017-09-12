@@ -15,14 +15,14 @@ using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
  */
 class None {
 public:
-  bool operator==(None const&) const {
-    return true;
-  }
+  None() = default;
+  None(std::nullptr_t &) {}
 
-  bool operator!=(None const&) const {
-    return false;
-  }
+  bool operator==(None const &) const { return true; }
+  bool operator!=(None const &) const { return false; }
 
+  operator bool() const { return false; }
+private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &, long int /* version */) {}
