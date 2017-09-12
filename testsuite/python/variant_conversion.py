@@ -12,28 +12,28 @@ class test_variant_conversion(ut.TestCase):
     vt = script_interface.PScriptInterface("Testing::VariantTester")
 
     def check_type_and_value(self, stype, svalue, value):
-        assert(type(value) == stype)
-        assert(value == svalue)
+        self.assertEqual(type(value), stype)
+        self.assertEqual(value, svalue)
 
     def test_bool_return(self):
         """Check that bool return values work corrcetly,
         because they are needed for the other tests."""
-        assert(self.vt.call_method("true") == True)
-        assert(self.vt.call_method("false") == False)
+        self.assertTrue(self.vt.call_method("true"))
+        self.assertFalse(self.vt.call_method("false"))
 
     def test_flat(self):
         ret = self.vt.call_method("flat")
-        assert(isinstance(ret, list))
+        self.assertTrue(isinstance(ret, list))
         self.check_type_and_value(bool, True, ret[0])
         self.check_type_and_value(str, 'a string', ret[1])
         self.check_type_and_value(float, 3.14159, ret[2])
         self.check_type_and_value(list, [3,1,4,1,5], ret[3])
         self.check_type_and_value(list, [1.1,2.2,3.3], ret[4])
         # Empty object (ObjectId()) should map to None
-        assert(ret[5] == None)
+        self.assertEqual(ret[5], None)
         # An actual object
-        assert(isinstance(ret[6], script_interface.PScriptInterface))
-        assert(ret[6].name() == "Testing::VariantTester")
+        self.assertTrue(isinstance(ret[6], script_interface.PScriptInterface))
+        self.assertEqual(ret[6].name(), "Testing::VariantTester")
 
     def test_recu(self):
         ret = self.vt.call_method("recursive", max_level=5)
@@ -46,14 +46,14 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(str, 'end', ret[2][1][1][1][1][1])
 
     def test_parameter_types(self):
-        assert(self.vt.call_method("check_parameter_type", type="bool", value=True))
-        assert(self.vt.call_method("check_parameter_type", type="int", value=42))
-        assert(self.vt.call_method("check_parameter_type", type="string", value='blub'))
-        assert(self.vt.call_method("check_parameter_type", type="double", value=12.5))
-        assert(self.vt.call_method("check_parameter_type", type="objectid", value=self.vt))
-        assert(self.vt.call_method("check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
-        assert(self.vt.call_method("check_parameter_type", type="int_vector", value=[1,2,3]))
-        assert(self.vt.call_method("check_parameter_type", type="vector", value=[1,'string',True]))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="bool", value=True))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=42))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="string", value='blub'))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="double", value=12.5))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="objectid", value=self.vt))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="int_vector", value=[1,2,3]))
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="vector", value=[1,'string',True]))
 
 if __name__ == "__main__":
     ut.main()

@@ -45,7 +45,7 @@ class VirtualSites(ut.TestCase):
     
     def verify_vs(self,vs):
         """Verify vs position and (if compiled in) velocity."""
-        self.assertTrue(vs.virtual==1)
+        self.assertEqual(vs.virtual,1)
 
         vs_r=vs.vs_relative
 
@@ -56,16 +56,16 @@ class VirtualSites(ut.TestCase):
         d=self.s.distance(rel,vs)
         v_d=self.s.distance_vec(rel,vs)
         # Check distance
-        self.assertTrue(abs(d-vs_r[1])<1E-6)
+        self.assertAlmostEqual(d,vs_r[1],places=6)
 
         # check velocity
         if not espressomd.has_features("VIRTUAL_SITES_NO_VELOCITY"):
-            self.assertTrue(np.linalg.norm(vs.v -rel.v -np.cross(rel.omega_lab,v_d))<=1E-6)
+            self.assertLessEqual(np.linalg.norm(vs.v -rel.v -np.cross(rel.omega_lab,v_d)),1E-6)
 
         # Check position
-        self.assertTrue(np.linalg.norm(
+        self.assertLess(np.linalg.norm(
           v_d -vs_r[1]*self.director_from_quaternion(
-          self.multiply_quaternions(rel.quat,vs_r[2])))<1E-6)
+          self.multiply_quaternions(rel.quat,vs_r[2]))),1E-6)
 
     def test_pos_vel_forces(self):
         s=self.s
@@ -78,7 +78,7 @@ class VirtualSites(ut.TestCase):
 
         # Check setting of min_global_cut
         s.min_global_cut=0.23
-        self.assertEquals(s.min_global_cut,0.23)
+        self.assertEqual(s.min_global_cut,0.23)
 
         # Place central particle + 3 vs
         s.part.add(pos=(0.5,0.5,0.5),id=1,quat=(1,0,0,0),omega_lab=(1,2,3))
@@ -96,7 +96,7 @@ class VirtualSites(ut.TestCase):
             # id
             self.assertEqual(vs_r[0],1)
             #distance
-            self.assertTrue(abs(vs_r[1]-s.distance(s.part[1],s.part[cur_id]))<=1E-6)
+            self.assertAlmostEqual(vs_r[1], s.distance(s.part[1],s.part[cur_id]), places=6)
             cur_id+=1
 
         # Move central particle and Check vs placement
@@ -129,14 +129,14 @@ class VirtualSites(ut.TestCase):
     
     
         # Expected force = sum of the forces on the vs
-        self.assertTrue(np.linalg.norm(f-f2-f3)<1E-6)
+        self.assertLess(np.linalg.norm(f-f2-f3),1E-6)
     
         # Expected torque
         # Radial components of forces on a rigid body add to the torque
         t_exp=np.cross(s.distance_vec(s.part[1],s.part[2]),f2)
         t_exp+=np.cross(s.distance_vec(s.part[1],s.part[3]),f3)
         # Check
-        self.assertTrue(np.linalg.norm(t_exp-t)<=1E-6)
+        self.assertLessEqual(np.linalg.norm(t_exp-t),1E-6)
     
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential

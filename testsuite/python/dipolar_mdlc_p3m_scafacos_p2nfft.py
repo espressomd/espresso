@@ -21,8 +21,6 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-
-
 from __future__ import print_function
 import espressomd 
 import espressomd.magnetostatics as magnetostatics
@@ -84,9 +82,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         tol_t=2E-3
         tol_e=1E-3
 
-        self.assertTrue(abs(err_e)<=tol_e,"Energy difference too large")
-        self.assertTrue(abs(err_t)<=tol_t,"Torque difference too large")
-        self.assertTrue(abs(err_f)<=tol_f,"Force difference too large")
+        self.assertLessEqual(abs(err_e),tol_e,"Energy difference too large")
+        self.assertLessEqual(abs(err_t),tol_t,"Torque difference too large")
+        self.assertLessEqual(abs(err_f),tol_f,"Force difference too large")
     
         s.part.clear()
         del s.actors[0]
@@ -126,9 +124,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         tol_t=2E-3
         tol_e=1E-3
 
-        self.assertTrue(abs(err_e)<=tol_e,"Energy difference too large")
-        self.assertTrue(abs(err_t)<=tol_t,"Torque difference too large")
-        self.assertTrue(abs(err_f)<=tol_f,"Force difference too large")
+        self.assertLessEqual(abs(err_e),tol_e,"Energy difference too large")
+        self.assertLessEqual(abs(err_t),tol_t,"Torque difference too large")
+        self.assertLessEqual(abs(err_f),tol_f,"Force difference too large")
     
         s.part.clear()
         del s.actors[0]
@@ -168,17 +166,14 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         tol_t=2E-3
         tol_e=1E-3
 
-        self.assertTrue(abs(err_e)<=tol_e,"Energy difference too large")
-        self.assertTrue(abs(err_t)<=tol_t,"Torque difference too large")
-        self.assertTrue(abs(err_f)<=tol_f,"Force difference too large")
+        self.assertLessEqual(abs(err_e),tol_e,"Energy difference too large")
+        self.assertLessEqual(abs(err_t),tol_t,"Torque difference too large")
+        self.assertLessEqual(abs(err_f),tol_f,"Force difference too large")
     
         s.part.clear()
         del s.actors[0]
     
 
-
-
-    
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
     ut.main()

@@ -92,7 +92,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_degree_of_association/=num_samples
         pH=ReactionEnsembleTest.pH #note you cannot calculate the pH via -log10(<NH>/volume) in the constant pH ensemble, since the volume is totally arbitrary and does not influence the average number of protons
         real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(ReactionEnsembleTest.pH))/ReactionEnsembleTest.ideal_degree_of_association(ReactionEnsembleTest.pH)
-        self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
+        self.assertLess(real_error_in_degree_of_association, 0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

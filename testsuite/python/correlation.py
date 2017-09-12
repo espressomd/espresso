@@ -50,21 +50,9 @@ class Observables(ut.TestCase):
         corr=C2.result()
         for i in range(corr.shape[0]):
             t=corr[i,0]
-            self.assertTrue(abs(corr[i,2]-t*t) <0.0001)
-            self.assertTrue(abs(corr[i,3]-4*t*t) <0.0001)
-            self.assertTrue(abs(corr[i,4]-9*t*t) <0.0001)
-
-
-
-
-
-
-
-
-
-
-
-
+            self.assertAlmostEqual(corr[i,2], t*t  , places=3)
+            self.assertAlmostEqual(corr[i,3], 4*t*t, places=3)
+            self.assertAlmostEqual(corr[i,4], 9*t*t, places=3)
 
 
 if __name__ == "__main__":

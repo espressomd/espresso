@@ -76,9 +76,9 @@ class CoulombCloudWall(ut.TestCase):
             energy_abs_diff = abs(self.S.analysis.energy(
                 self.S)["total"] - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
-            self.assertTrue(energy_abs_diff <= self.tolerance, "Absolte energy difference " +
+            self.assertLessEqual(energy_abs_diff, self.tolerance, "Absolte energy difference " +
                             str(energy_abs_diff) + " too large for " + method_name)
-        self.assertTrue(force_abs_diff <= self.tolerance, "Asbolute force difference " +
+        self.assertLessEqual(force_abs_diff, self.tolerance, "Asbolute force difference " +
                         str(force_abs_diff) + " too large for method " + method_name)
 
     # Tests for individual methods
@@ -114,7 +114,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
-        self.assertTrue(self.S.analysis.energy(self.S)["total"] == 0.0)
+        self.assertEqual(self.S.analysis.energy(self.S)["total"], 0.0)
 
 
 if __name__ == "__main__":

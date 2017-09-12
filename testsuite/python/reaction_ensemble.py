@@ -97,24 +97,24 @@ class ReactionEnsembleTest(ut.TestCase):
         K_apparent_HA_diss=K_HA_diss*standard_pressure_in_simulation_units/temperature
         pK_a=-np.log10(K_apparent_HA_diss)
         real_error_in_degree_of_association=abs(average_degree_of_association-ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH))/ReactionEnsembleTest.ideal_degree_of_association(pK_a,pH)
-        self.assertTrue(real_error_in_degree_of_association<0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
+        self.assertLess(real_error_in_degree_of_association, 0.07, msg="Deviation to ideal titration curve for the given input parameters too large.")
     
     def test_reaction_system(self):
         RE_status=ReactionEnsembleTest.RE.get_status()
         forward_reaction=RE_status["reactions"][0]
         for i in range(len(forward_reaction["reactant_types"])):
-            self.assertTrue(ReactionEnsembleTest.reactant_types[i] == forward_reaction["reactant_types"][i], msg="reactant type not set correctly.")
+            self.assertEqual(ReactionEnsembleTest.reactant_types[i], forward_reaction["reactant_types"][i], msg="reactant type not set correctly.")
         for i in range(len(forward_reaction["reactant_coefficients"])):
-            self.assertTrue(ReactionEnsembleTest.reactant_coefficients[i] == forward_reaction["reactant_coefficients"][i], msg="reactant coefficients not set correctly.")
+            self.assertEqual(ReactionEnsembleTest.reactant_coefficients[i], forward_reaction["reactant_coefficients"][i], msg="reactant coefficients not set correctly.")
         for i in range(len(forward_reaction["product_types"])):
-            self.assertTrue(ReactionEnsembleTest.product_types[i] == forward_reaction["product_types"][i], msg="product type not set correctly.")
+            self.assertEqual(ReactionEnsembleTest.product_types[i], forward_reaction["product_types"][i], msg="product type not set correctly.")
         for i in range(len(forward_reaction["product_coefficients"])):
-            self.assertTrue(ReactionEnsembleTest.product_coefficients[i] == forward_reaction["product_coefficients"][i], msg="product coefficients not set correctly.")
+            self.assertEqual(ReactionEnsembleTest.product_coefficients[i], forward_reaction["product_coefficients"][i], msg="product coefficients not set correctly.")
         
-        self.assertTrue(abs(ReactionEnsembleTest.temperature-RE_status["temperature"])<1E-9, msg="reaction ensemble temperature not set correctly.")
-        self.assertTrue(abs(ReactionEnsembleTest.exclusion_radius-RE_status["exclusion_radius"])<1E-9, msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(ReactionEnsembleTest.temperature,RE_status["temperature"],places=9,msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(ReactionEnsembleTest.exclusion_radius,RE_status["exclusion_radius"],places=9,msg="reaction ensemble temperature not set correctly.")
         
-        self.assertTrue(abs(ReactionEnsembleTest.volume-ReactionEnsembleTest.RE.get_volume())<1E-9, msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(ReactionEnsembleTest.volume,ReactionEnsembleTest.RE.get_volume(),places=9,msg="reaction ensemble temperature not set correctly.")
 
     
 if __name__ == "__main__":
