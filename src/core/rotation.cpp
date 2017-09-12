@@ -337,32 +337,39 @@ void convert_torques_propagate_omega()
       }
 #endif
 
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+#ifdef BROWNIAN_DYNAMICS
+      if (thermo_switch & THERMO_BROWNIAN) {
+        bd_drift_vel_rot(&(p[i]),0.5 * time_step);
+        bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
+      } else
+#endif // BROWNIAN_DYNAMICS
+      {
+        ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
-      p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
-      p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
-      p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
+        p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0];
+        p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1];
+        p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2];
 
-      // zeroth estimate of omega
-      for (int j = 0; j < 3; j++) omega_0[j] = p[i].m.omega[j];
+        // zeroth estimate of omega
+        for (int j = 0; j < 3; j++) omega_0[j] = p[i].m.omega[j];
 
-      /* if the tensor of inertia is isotropic, the following refinement is not needed.
-         Otherwise repeat this loop 2-3 times depending on the required accuracy */
-      for(int times=0; times <= 5; times++)
-      { 
-        double Wd[3];
+        /* if the tensor of inertia is isotropic, the following refinement is not needed.
+           Otherwise repeat this loop 2-3 times depending on the required accuracy */
+        for(int times=0; times <= 5; times++)
+        {
+          double Wd[3];
 
-        Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(p[i].p.rinertia[1]-p[i].p.rinertia[2]))/p[i].p.rinertia[0];
-        Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]))/p[i].p.rinertia[1];
-        Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]))/p[i].p.rinertia[2];
+          Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(p[i].p.rinertia[1]-p[i].p.rinertia[2]))/p[i].p.rinertia[0];
+          Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(p[i].p.rinertia[2]-p[i].p.rinertia[0]))/p[i].p.rinertia[1];
+          Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(p[i].p.rinertia[0]-p[i].p.rinertia[1]))/p[i].p.rinertia[2];
 
-        p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
-        p[i].m.omega[1] = omega_0[1] + time_step_half*Wd[1];
-        p[i].m.omega[2] = omega_0[2] + time_step_half*Wd[2];
+          p[i].m.omega[0] = omega_0[0] + time_step_half*Wd[0];
+          p[i].m.omega[1] = omega_0[1] + time_step_half*Wd[1];
+          p[i].m.omega[2] = omega_0[2] + time_step_half*Wd[2];
+        }
+
+        ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       }
-
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
     }
   }
 }
@@ -463,6 +470,15 @@ void convert_vec_space_to_body(Particle *p, double *v,double* res)
   res[2] = A[2 + 3*0]*v[0] + A[2 + 3*1]*v[1] + A[2 + 3*2]*v[2];
 }
 
+void convert_vec_body_to_space(Particle *p, double *v,double* res)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  res[0] = A[0 + 3*0]*v[0] + A[1 + 3*0]*v[1] + A[2 + 3*0]*v[2];
+  res[1] = A[0 + 3*1]*v[0] + A[1 + 3*1]*v[1] + A[2 + 3*1]*v[2];
+  res[2] = A[0 + 3*2]*v[0] + A[1 + 3*2]*v[1] + A[2 + 3*2]*v[2];
+}
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])
@@ -526,6 +542,293 @@ void rotate_particle(Particle* p, double* aSpaceFrame, double phi)
 #endif
 }
 
+/** Rotate the particle p around the body axis "a" by amount phi */
+void rotate_particle_body(Particle* p, double* a, double phi)
+{
+  // Apply restrictions from the rotation_per_particle feature
+#ifdef ROTATION_PER_PARTICLE
+  // Rotation turned off entirely?
+  if (p->p.rotation <2) return;
 
+  // Per coordinate fixing
+  if (!(p->p.rotation & 2)) a[0]=0;
+  if (!(p->p.rotation & 4)) a[1]=0;
+  if (!(p->p.rotation & 8)) a[2]=0;
+  // Re-normalize rotation axis
+  double l=sqrt(sqrlen(a));
+  // Check, if the rotation axis is nonzero
+  if (l<1E-10) return;
+
+  for (int i=0;i<3;i++)
+    a[i]/=l;
+
+#endif
+
+  double q[4];
+  q[0]=cos(phi/2);
+  double tmp=sin(phi/2);
+  q[1]=tmp*a[0];
+  q[2]=tmp*a[1];
+  q[3]=tmp*a[2];
+
+  // Normalize
+  normalize_quaternion(q);
+
+  // Rotate the particle
+  double qn[4]; // Resulting quaternion
+  multiply_quaternions(p->r.quat,q,qn);
+  for (int k=0; k<4; k++)
+    p->r.quat[k]=qn[k];
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
+}
+
+/** Rotate the particle p around the j-th body axis by amount phi */
+void rotate_particle_body_j(Particle* p, int j, double phi)
+{
+  double u_dphi[3] = {0.0, 0.0, 0.0};
+  if (phi) {
+    u_dphi[j] = 1.0;
+    rotate_particle_body(p, u_dphi, phi);
+  }
+}
+
+void bd_drift_rot(Particle *p, double dt) {
+  int j;
+  double a[3];
+  double dphi[3];
+#ifndef ROTATIONAL_INERTIA
+  double local_gamma;
+#else
+  double local_gamma[3];
+#endif
+
+  a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+  if (!p->p.rotation)
+    return;
+  if (!(p->p.rotation & 2))
+    a[0] = 0.0;
+  if (!(p->p.rotation & 4))
+    a[1] = 0.0;
+  if (!(p->p.rotation & 8))
+    a[2] = 0.0;
+#endif
+
+#ifndef ROTATIONAL_INERTIA
+    if(p->p.gamma_rot >= 0.) local_gamma = p->p.gamma_rot;
+    else local_gamma = langevin_gamma_rotation;
+#else
+    for (j = 0; j < 3; j++)
+      if(p->p.gamma_rot[j] >= 0.) local_gamma[j] = p->p.gamma_rot[j];
+          else local_gamma[j] = langevin_gamma_rotation[j];
+#endif // ROTATIONAL_INERTIA
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+      dphi[0] = dphi[1] = dphi[2] = 0.0;
+      // only a conservative part of the torque is used here
+#ifndef ROTATIONAL_INERTIA
+      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma);
+#else
+      dphi[j] = a[j] * p->f.torque[j] * dt / (local_gamma[j]);
+#endif // ROTATIONAL_INERTIA
+      rotate_particle_body_j(p, j, dphi[j]);
+    }
+  }
+}
+
+void bd_drift_vel_rot(Particle *p, double dt) {
+  int j;
+  double m_dphi;
+  double a[3];
+#ifndef ROTATIONAL_INERTIA
+  double local_gamma;
+#else
+  double local_gamma[3];
+#endif
+
+  a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+  if (!p->p.rotation)
+    return;
+  if (!(p->p.rotation & 2))
+    a[0] = 0.0;
+  if (!(p->p.rotation & 4))
+    a[1] = 0.0;
+  if (!(p->p.rotation & 8))
+    a[2] = 0.0;
+#endif
+
+#ifndef ROTATIONAL_INERTIA
+    if(p->p.gamma_rot >= 0.) local_gamma = p->p.gamma_rot;
+    else local_gamma = langevin_gamma_rotation;
+#else
+    for (j = 0; j < 3; j++)
+      if(p->p.gamma_rot[j] >= 0.) local_gamma[j] = p->p.gamma_rot[j];
+          else local_gamma[j] = langevin_gamma_rotation[j];
+#endif // ROTATIONAL_INERTIA
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (p->p.ext_flag & COORD_FIXED(j)) {
+      p->m.omega[j] = 0.0;
+    } else
+#endif
+    {
+      // only conservative part of the force is used here
+      // NOTE: velocity is assigned here and propagated by thermal part further on top of it
+#ifndef ROTATIONAL_INERTIA
+      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma);
+#else
+      p->m.omega[j] = a[j] * p->f.torque[j] / (local_gamma[j]);
+#endif // ROTATIONAL_INERTIA
+    }
+  }
+}
+
+/** Propagate the positions: random walk part.*/
+void bd_random_walk_rot(Particle *p, double dt) {
+  double a[3];
+  double dphi[3];
+  int j;
+#ifndef ROTATIONAL_INERTIA
+  extern double brown_sigma_pos_rotation;
+  double brown_sigma_pos_temp;
+#else
+  extern double brown_sigma_pos_rotation[3];
+  double brown_sigma_pos_temp[3];
+#endif
+
+  a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+  if (!p->p.rotation)
+    return;
+  if (!(p->p.rotation & 2))
+    a[0] = 0.0;
+  if (!(p->p.rotation & 4))
+    a[1] = 0.0;
+  if (!(p->p.rotation & 8))
+    a[2] = 0.0;
+#endif
+
+  // first, set defaults
+#ifndef ROTATIONAL_INERTIA
+  brown_sigma_pos_temp = brown_sigma_pos_rotation;
+#else
+  for (j = 0; j < 3; j++)
+    brown_sigma_pos_temp[j] = brown_sigma_pos_rotation[j];
+#endif // ROTATIONAL_INERTIA
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  auto const constexpr langevin_temp_coeff = 24.0;
+
+#ifndef ROTATIONAL_INERTIA
+  if(p->p.gamma_rot >= 0.)
+  {
+    // Is a particle-specific temperature also specified?
+    if(p->p.T >= 0.)
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * p->p.T / p->p.gamma_rot);
+    else
+    // Default temperature but particle-specific gamma
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * temperature / p->p.gamma_rot);
+  } // particle specific gamma
+  else
+  {
+    // No particle-specific gamma, but is there particle-specific temperature
+    if(p->p.T >= 0.)
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * p->p.T / langevin_gamma_rotation);
+    else
+    // Defaut values for both
+    brown_sigma_pos_temp = brown_sigma_pos_rotation;
+  }
+#else
+  for (j = 0; j < 3; j++)
+    if (p->p.gamma_rot[j] >= 0.) {
+      // Is a particle-specific temperature also specified?
+      if (p->p.T >= 0.)
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * p->p.T / p->p.gamma_rot[j]);
+      else
+        // Default temperature but particle-specific gamma
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * temperature / p->p.gamma_rot[j]);
+    } // particle specific gamma
+    else {
+      // No particle-specific gamma, but is there particle-specific temperature
+      if (p->p.T >= 0.)
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * p->p.T / langevin_gamma_rotation[j]);
+      else
+        // Defaut values for both
+        brown_sigma_pos_temp[j] = brown_sigma_pos_rotation[j];
+    }
+#endif // ROTATIONAL_INERTIA
+#endif /* LANGEVIN_PER_PARTICLE */
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+      dphi[0] = dphi[1] = dphi[2] = 0.0;
+#ifndef ROTATIONAL_INERTIA
+      dphi[j] = a[j] * Thermostat::noise() * brown_sigma_pos_temp * sqrt(dt);
+#else
+      dphi[j] = a[j] * Thermostat::noise() * brown_sigma_pos_temp[j] * sqrt(dt);
+#endif // ROTATIONAL_INERTIA
+      rotate_particle_body_j(p, j, dphi[j]);
+    }
+  }
+}
+
+/** Determine the angular velocities: random walk part.*/
+void bd_random_walk_vel_rot(Particle *p, double dt) {
+  int j;
+  double a[3];
+  extern double brown_sigma_vel_rotation;
+  double brown_sigma_vel_temp;
+
+  a[0] = a[1] = a[2] = 1.0;
+#ifdef ROTATION_PER_PARTICLE
+  if (!p->p.rotation)
+    return;
+  if (!(p->p.rotation & 2))
+    a[0] = 0.0;
+  if (!(p->p.rotation & 4))
+    a[1] = 0.0;
+  if (!(p->p.rotation & 8))
+    a[2] = 0.0;
+#endif
+
+  // first, set defaults
+  brown_sigma_vel_temp = brown_sigma_vel_rotation;
+
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  auto const constexpr langevin_temp_coeff = 12.0;
+  // Is a particle-specific temperature specified?
+  if (p->p.T >= 0.)
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
+  else
+    brown_sigma_vel_temp = brown_sigma_vel_rotation;
+#endif /* LANGEVIN_PER_PARTICLE */
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+      // velocity is added here. It is assigned in the drift part.
+      p->m.omega[j] += a[j] * brown_sigma_vel_temp * Thermostat::noise() / sqrt(p->p.rinertia[j]);
+    }
+  }
+}
 
 #endif

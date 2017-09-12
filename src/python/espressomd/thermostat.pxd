@@ -54,3 +54,4 @@ cdef extern from "thermostat.hpp":
     int THERMO_NPT_ISO
     int THERMO_DPD
     int THERMO_INTER_DPD
+    int THERMO_BROWNIAN

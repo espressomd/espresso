@@ -101,6 +101,9 @@ cdef class Thermostat(object):
                              "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD" or thmst["type"] == "INTER_DPD":
                 pass
+            if thmst["type"] == "BROWNIAN":
+                self.set_brownian(kT=thmst["kT"], gamma=thmst[
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
 
     def get_ts(self):
         return thermo_switch
@@ -195,28 +198,7 @@ cdef class Thermostat(object):
         # here other thermostats stuff
         return True
 
-    @AssertThermostatType(THERMO_LANGEVIN)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
-        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'.
-
-        Parameters
-        -----------
-        'kT': float
-            Thermal energy of the simulated heat bath.
-
-        'gamma': float
-            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-            is compiled in then 'gamma' can be a list of three positive floats, for the friction
-            coefficient in each cardinal direction.
-
-        gamma_rotation: float, optional
-            The same applies to 'gamma_rotation', which requires the feature
-            'ROTATION' to work properly. But also accepts three floating point numbers
-            if 'PARTICLE_ANISOTROPY' is also compiled in.
-
-        """
-
+    def _set_langevin_gamma(self, kT=None, gamma=None, gamma_rotation=None):
         scalar_gamma_def = True
         scalar_gamma_rot_def = True
         IF PARTICLE_ANISOTROPY:
@@ -317,13 +299,37 @@ cdef class Thermostat(object):
                     ELSE:
                         langevin_gamma_rotation = langevin_gamma
         
-        global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         IF ROTATION:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+
+    @AssertThermostatType(THERMO_LANGEVIN)
+    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+        """Sets the Langevin thermostat with required parameters 'kT' 'gamma'
+        and optional parameter 'gamma_rotation'.
+
+        Parameters
+        -----------
+        'kT': float
+            Thermal energy of the simulated heat bath.
+
+        'gamma': float
+            Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+            is compiled in then 'gamma' can be a list of three positive floats, for the friction
+            coefficient in each cardinal direction.
+
+        gamma_rotation: float, optional
+            The same applies to 'gamma_rotation', which requires the feature
+            'ROTATION' to work properly. But also accepts three floating point numbers
+            if 'PARTICLE_ANISOTROPY' is also compiled in.
+
+        """
+
+        self._set_langevin_gamma(kT=kT, gamma=gamma, gamma_rotation=gamma_rotation)
+        global thermo_switch
+        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         return True
 
     IF LB_GPU or LB:
@@ -427,3 +433,32 @@ cdef class Thermostat(object):
             req = ["kT","gamma","r_cut"]
             valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
             raise Exception("Not implemented yet.")
+    
+    IF BROWNIAN_DYNAMICS:
+        @AssertThermostatType(THERMO_BROWNIAN)
+        def set_brownian(self, kT=None, gamma=None, gamma_rotation=None):
+            """Sets the Brownian Dynamics thermostat with required parameters 'kT' 'gamma'
+            and optional parameter 'gamma_rotation'.
+    
+            Parameters
+            -----------
+            'kT': float
+                Thermal energy of the simulated heat bath.
+    
+            'gamma': float
+                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+                is compiled in then 'gamma' can be a list of three positive floats, for the friction
+                coefficient in each cardinal direction.
+    
+            gamma_rotation: float, optional
+                The same applies to 'gamma_rotation', which requires the feature
+                'ROTATION' to work properly. But also accepts three floating point numbers
+                if 'PARTICLE_ANISOTROPY'/'ROTATIONAL_INERTIA' are also compiled in.
+    
+            """
+    
+            self._set_langevin_gamma(kT=kT, gamma=gamma, gamma_rotation=gamma_rotation)
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_BROWNIAN)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            return True

@@ -36,6 +36,7 @@ int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
 
 /* LANGEVIN THERMOSTAT */
+// Note: BROWNIAN_DYNAMICS feature implies the same langevin parameters
 #ifndef PARTICLE_ANISOTROPY
 /* Langevin friction coefficient gamma for translation. */
 double langevin_gamma = -1.0;
@@ -70,15 +71,33 @@ double ghmc_phi = 0;
 
 #ifndef PARTICLE_ANISOTROPY
 double langevin_pref1, langevin_pref2;
+#ifdef BROWNIAN_DYNAMICS
+// Brownian position random walk standard deviation
+double brown_sigma_pos;
+#endif // BROWNIAN_DYNAMICS
 #else
+
 double langevin_pref1[3], langevin_pref2[3];
+#ifdef BROWNIAN_DYNAMICS
+double brown_sigma_pos[3];
+#endif // BROWNIAN_DYNAMICS
 #endif
 
 #ifndef ROTATIONAL_INERTIA
-double langevin_pref2_rotation;
+double langevin_pref1_rotation, langevin_pref2_rotation;
+#ifdef BROWNIAN_DYNAMICS
+double brown_sigma_pos_rotation;
+#endif // BROWNIAN_DYNAMICS
 #else
-double langevin_pref2_rotation[3];
+double langevin_pref1_rotation[3], langevin_pref2_rotation[3];
+#ifdef BROWNIAN_DYNAMICS
+double brown_sigma_pos_rotation[3];
+#endif // BROWNIAN_DYNAMICS
 #endif
+
+#ifdef BROWNIAN_DYNAMICS
+double brown_sigma_vel, brown_sigma_vel_rotation;
+#endif // BROWNIAN_DYNAMICS
 
 #ifdef MULTI_TIMESTEP
   double langevin_pref1_small, langevin_pref2_small;
@@ -106,6 +125,26 @@ double nptiso_pref3;
 double nptiso_pref4;
 #endif
 
+void thermo_langevin_rot_parameters()
+{
+  int j;
+#ifndef ROTATIONAL_INERTIA
+  if ( langevin_gamma_rotation < 0.0 )
+  {
+    langevin_gamma_rotation = langevin_gamma;
+  }
+#else
+  if (( langevin_gamma_rotation[0] < 0.0 ) || (langevin_gamma_rotation[1] < 0.0) || (langevin_gamma_rotation[2] < 0.0))
+  for ( j = 0 ; j < 3 ; j++)
+  {
+#ifdef PARTICLE_ANISOTROPY
+    langevin_gamma_rotation[j] = langevin_gamma[j];
+#else
+    langevin_gamma_rotation[j] = langevin_gamma;
+#endif // PARTICLE_ANISOTROPY
+  }
+#endif // ROTATIONAL_INERTIA
+}
 
 void thermo_init_langevin() 
 {
@@ -136,22 +175,7 @@ void thermo_init_langevin()
 #endif
 
 #ifdef ROTATION 
-#ifndef ROTATIONAL_INERTIA
-  if ( langevin_gamma_rotation < 0.0 )
-  {
-    langevin_gamma_rotation = langevin_gamma;
-  }
-#else
-  if (( langevin_gamma_rotation[0] < 0.0 ) || (langevin_gamma_rotation[1] < 0.0) || (langevin_gamma_rotation[2] < 0.0))
-  for ( j = 0 ; j < 3 ; j++)
-  {
-#ifdef PARTICLE_ANISOTROPY
-    langevin_gamma_rotation[j] = langevin_gamma[j];
-#else
-    langevin_gamma_rotation[j] = langevin_gamma;
-#endif // PARTICLE_ANISOTROPY
-  }
-#endif // ROTATIONAL_INERTIA
+  thermo_langevin_rot_parameters();
 
 #ifndef ROTATIONAL_INERTIA
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
@@ -190,6 +214,47 @@ void thermo_init_npt_isotropic() {
 }
 #endif
 
+#ifdef BROWNIAN_DYNAMICS
+// brown_sigma_vel determines here the heat velocity random walk dispersion
+// brown_sigma_pos determines here the BD position random walk dispersion
+// default particle mass is assumed to be unitary in this global parameters
+void thermo_init_brownian() {
+    int j;
+    // here, the time_step is used only to align with Espresso default dimensionless model (translational velocity only)
+    brown_sigma_vel = sqrt(12.0 * temperature) * time_step;
+  #ifndef PARTICLE_ANISOTROPY
+    brown_sigma_pos = sqrt(24.0 * temperature / langevin_gamma);
+  #else
+    for (j = 0; j < 3; j++) brown_sigma_pos[j] = sqrt(24.0 * temperature / langevin_gamma[j]);
+  #endif // PARTICLE_ANISOTROPY
+
+  #ifdef ROTATION
+    // Note: the BD thermostat assigns the langevin viscous parameters as well
+    thermo_langevin_rot_parameters();
+    brown_sigma_vel_rotation = sqrt(12.0 * temperature);
+  #ifndef ROTATIONAL_INERTIA
+    brown_sigma_pos_rotation = sqrt(24.0 * temperature / langevin_gamma);
+  #else
+    for ( j = 0 ; j < 3 ; j++) brown_sigma_pos_rotation[j] = sqrt(24.0 * temperature / langevin_gamma[j]);
+  #endif // ROTATIONAL_INERTIA
+#ifndef ROTATIONAL_INERTIA
+    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation=%f, brown_sigma_pos_rotation=%f",this_node, brown_sigma_vel_rotation,brown_sigma_pos_rotation));
+#else
+    for ( j = 0 ; j < 3 ; j++) {
+        THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel_rotation[%d]=%f, brown_sigma_pos_rotation[%d]=%f",this_node,j,brown_sigma_vel,j,brown_sigma_pos));
+    }
+#endif // ROTATIONAL_INERTIA
+  #endif // ROTATION
+#ifndef PARTICLE_ANISOTROPY
+    THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel=%f, brown_sigma_pos=%f",this_node,brown_sigma_vel,brown_sigma_pos));
+#else
+    for ( j = 0 ; j < 3 ; j++) {
+        THERMO_TRACE(fprintf(stderr,"%d: thermo_init_bd: brown_sigma_vel[%d]=%f, brown_sigma_pos[%d]=%f",this_node,j,brown_sigma_vel,j,brown_sigma_pos));
+    }
+#endif // PARTICLE_ANISOTROPY
+}
+#endif // BROWNIAN_DYNAMICS
+
 void thermo_init()
 {
   if(thermo_switch == THERMO_OFF){
@@ -207,6 +272,9 @@ void thermo_init()
 #endif
 #ifdef GHMC
   if(thermo_switch & THERMO_GHMC) thermo_init_ghmc();
+#endif
+#ifdef BROWNIAN_DYNAMICS
+  if(thermo_switch & THERMO_BROWNIAN) thermo_init_brownian();
 #endif
 }
 

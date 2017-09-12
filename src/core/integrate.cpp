@@ -138,6 +138,20 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+#ifdef BROWNIAN_DYNAMICS
+
+/** Propagate position: viscous drift driven by conservative forces.*/
+void bd_drift(Particle *p, double dt);
+/** Set velocity: viscous drift driven by conservative forces.*/
+void bd_drift_vel(Particle *p, double dt);
+
+/** Propagate position: random walk part.*/
+void bd_random_walk(Particle *p, double dt);
+/** Thermalize velocity: random walk part.*/
+void bd_random_walk_vel(Particle *p, double dt);
+
+#endif // BROWNIAN_DYNAMICS
+
 /*@}*/
 
 void integrator_sanity_checks() {
@@ -716,8 +730,18 @@ void rescale_forces_propagate_vel() {
                   friction_therm0_nptiso(p[i].m.v[j]) / (p[i]).p.mass;
           } else
 #endif
-            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j];
+          {
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift_vel(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel(&(p[i]),0.5 * time_step);
+            } else
+#endif // BROWNIAN_DYNAMICS
+            {
+              /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+              p[i].m.v[j] += p[i].f.f[j];
+            }
+          }
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -922,7 +946,12 @@ void propagate_vel() {
     np = cell->n;
     for (i = 0; i < np; i++) {
 #ifdef ROTATION
-      propagate_omega_quat_particle(&p[i]);
+#ifdef BROWNIAN_DYNAMICS
+      if (!(thermo_switch & THERMO_BROWNIAN))
+#endif // BROWNIAN_DYNAMICS
+      {
+        propagate_omega_quat_particle(&p[i]);
+      }
 #endif
 
 // Don't propagate translational degrees of freedom of vs
@@ -949,8 +978,20 @@ void propagate_vel() {
             nptiso.p_vel[j] += SQR(p[i].m.v[j]) * (p[i]).p.mass;
           } else
 #endif
-            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-            p[i].m.v[j] += p[i].f.f[j];
+          {
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift_vel(&(p[i]),0.5 * time_step);
+              bd_drift_vel_rot(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
+            } else
+#endif // BROWNIAN_DYNAMICS
+            {
+              /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+              p[i].m.v[j] += p[i].f.f[j];
+            }
+          }
 
 /* SPECIAL TASKS in particle loop */
 #ifdef NEMD
@@ -1010,9 +1051,21 @@ void propagate_pos() {
             if (j == 0)
               nemd_add_velocity(&p[i]);
 #endif
-            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-             * v(t+0.5*dt) */
-            p[i].r.p[j] += p[i].m.v[j];
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift(&(p[i]), time_step);
+              bd_drift_rot(&(p[i]), time_step);
+              bd_random_walk(&(p[i]), time_step);
+              bd_random_walk_rot(&(p[i]), time_step);
+            } else
+#endif // BROWNIAN_DYNAMICS
+            {
+              /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+               * v(t+0.5*dt) */
+              p[i].r.p[j] += p[i].m.v[j];
+            }
+
+
           }
         }
         /* Verlet criterion check */
@@ -1043,7 +1096,12 @@ void propagate_vel_pos() {
     for (i = 0; i < np; i++) {
 
 #ifdef ROTATION
-      propagate_omega_quat_particle(&p[i]);
+#ifdef BROWNIAN_DYNAMICS
+      if (!(thermo_switch & THERMO_BROWNIAN))
+#endif // BROWNIAN_DYNAMICS
+      {
+        propagate_omega_quat_particle(&p[i]);
+      }
 #endif
 
 // Don't propagate translational degrees of freedom of vs
@@ -1056,15 +1114,37 @@ void propagate_vel_pos() {
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
-          p[i].m.v[j] += p[i].f.f[j];
+#ifdef BROWNIAN_DYNAMICS
+          if (thermo_switch & THERMO_BROWNIAN) {
+            bd_drift_vel(&(p[i]),0.5 * time_step);
+            bd_drift_vel_rot(&(p[i]),0.5 * time_step);
+            bd_random_walk_vel(&(p[i]),0.5 * time_step);
+            bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
+          } else
+#endif // BROWNIAN_DYNAMICS
+          {
+            /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
+            p[i].m.v[j] += p[i].f.f[j];
+          }
 
 #ifdef MULTI_TIMESTEP
           if (smaller_time_step < 0. || current_time_step_is_small == 1)
 #endif
-            /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-             * v(t+0.5*dt) */
-            p[i].r.p[j] += p[i].m.v[j];
+            {
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift(&(p[i]), time_step);
+              bd_drift_rot(&(p[i]), time_step);
+              bd_random_walk(&(p[i]), time_step);
+              bd_random_walk_rot(&(p[i]), time_step);
+            } else
+#endif // BROWNIAN_DYNAMICS
+            {
+              /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+               * v(t+0.5*dt) */
+              p[i].r.p[j] += p[i].m.v[j];
+            }
+          }
         }
       }
 
@@ -1350,3 +1430,226 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   mpi_bcast_nptiso_geom();
   return (ES_OK);
 }
+
+#ifdef BROWNIAN_DYNAMICS
+
+void bd_drift(Particle *p, double dt) {
+  int j;
+  double scale_f;
+#ifndef PARTICLE_ANISOTROPY
+  double local_gamma;
+#else
+  double local_gamma[3];
+#endif
+
+  scale_f = 0.5 * time_step * time_step / p->p.mass;
+
+#ifndef PARTICLE_ANISOTROPY
+    if(p->p.gamma >= 0.) local_gamma = p->p.gamma;
+    else local_gamma = langevin_gamma;
+#else
+    for (j = 0; j < 3; j++)
+      if(p->p.gamma[j] >= 0.) local_gamma[j] = p->p.gamma[j];
+          else local_gamma[j] = langevin_gamma[j];
+#endif // PARTICLE_ANISOTROPY
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+      // scale_f is required to be aligned with rescaled forces
+      // only a conservative part of the force is used here
+#ifndef PARTICLE_ANISOTROPY
+      p->r.p[j] += p->f.f[j] * dt / (local_gamma * scale_f);
+#else
+      p->r.p[j] += p->f.f[j] * dt / (local_gamma[j] * scale_f);
+#endif // PARTICLE_ANISOTROPY
+    }
+  }
+}
+
+void bd_drift_vel(Particle *p, double dt) {
+  int j;
+  double scale_f;
+#ifndef PARTICLE_ANISOTROPY
+  double local_gamma;
+#else
+  double local_gamma[3];
+#endif
+
+  scale_f = 0.5 * time_step * time_step / p->p.mass;
+
+#ifndef PARTICLE_ANISOTROPY
+    if(p->p.gamma >= 0.) local_gamma = p->p.gamma;
+    else local_gamma = langevin_gamma;
+#else
+    for (j = 0; j < 3; j++)
+      if(p->p.gamma[j] >= 0.) local_gamma[j] = p->p.gamma[j];
+          else local_gamma[j] = langevin_gamma[j];
+#endif // PARTICLE_ANISOTROPY
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (p->p.ext_flag & COORD_FIXED(j)) {
+      p->m.v[j] = 0.0;
+    } else
+#endif
+    {
+      // here, the additional time_step is used only to align with Espresso default dimensionless model
+      // scale_f is required to be aligned with rescaled forces
+      // only conservative part of the force is used here
+      // NOTE: velocity is assigned here and propagated by thermal part further on top of it
+#ifndef PARTICLE_ANISOTROPY
+      p->m.v[j] = p->f.f[j] * time_step / (local_gamma * scale_f);
+#else
+      p->m.v[j] = p->f.f[j] * time_step / (local_gamma[j] * scale_f);
+#endif // PARTICLE_ANISOTROPY
+    }
+  }
+}
+
+/** Propagate the positions: random walk part.*/
+void bd_random_walk(Particle *p, double dt) {
+  int j;
+#ifndef PARTICLE_ANISOTROPY
+  extern double brown_sigma_pos;
+  double brown_sigma_pos_temp;
+#else
+  extern double brown_sigma_pos[3];
+  double brown_sigma_pos_temp[3];
+  double delta_pos_body[3] = { 0.0, 0.0, 0.0 }, delta_pos_lab[3] = { 0.0, 0.0,
+      0.0 };
+#endif
+  int aniso_flag = 1; // particle anisotropy flag
+
+  // first, set defaults
+#ifndef PARTICLE_ANISOTROPY
+  brown_sigma_pos_temp = brown_sigma_pos;
+#else
+  for (j = 0; j < 3; j++)
+    brown_sigma_pos_temp[j] = brown_sigma_pos[j];
+#endif // PARTICLE_ANISOTROPY
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  auto const constexpr langevin_temp_coeff = 24.0;
+
+#ifndef PARTICLE_ANISOTROPY
+  if(p->p.gamma >= 0.)
+  {
+    // Is a particle-specific temperature also specified?
+    if(p->p.T >= 0.)
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * p->p.T / p->p.gamma);
+    else
+    // Default temperature but particle-specific gamma
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * temperature / p->p.gamma);
+  } // particle specific gamma
+  else
+  {
+    // No particle-specific gamma, but is there particle-specific temperature
+    if(p->p.T >= 0.)
+    brown_sigma_pos_temp = sqrt(langevin_temp_coeff * p->p.T / langevin_gamma);
+    else
+    // Defaut values for both
+    brown_sigma_pos_temp = brown_sigma_pos;
+  }
+#else
+  for (j = 0; j < 3; j++)
+    if (p->p.gamma[j] >= 0.) {
+      // Is a particle-specific temperature also specified?
+      if (p->p.T >= 0.)
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * p->p.T / p->p.gamma[j]);
+      else
+        // Default temperature but particle-specific gamma
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * temperature / p->p.gamma[j]);
+    } // particle specific gamma
+    else {
+      // No particle-specific gamma, but is there particle-specific temperature
+      if (p->p.T >= 0.)
+        brown_sigma_pos_temp[j] = sqrt(
+            langevin_temp_coeff * p->p.T / langevin_gamma[j]);
+      else
+        // Defaut values for both
+        brown_sigma_pos_temp[j] = brown_sigma_pos[j];
+    }
+#endif // PARTICLE_ANISOTROPY
+#endif /* LANGEVIN_PER_PARTICLE */
+
+#ifdef PARTICLE_ANISOTROPY
+  // Particle frictional isotropy check.
+  aniso_flag = (brown_sigma_pos_temp[0] != brown_sigma_pos_temp[1])
+      || (brown_sigma_pos_temp[1] != brown_sigma_pos_temp[2]);
+#endif
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+#ifndef PARTICLE_ANISOTROPY
+      delta_pos_body[j] = brown_sigma_pos_temp * sqrt(dt) * Thermostat::noise();
+#else
+      delta_pos_body[j] = brown_sigma_pos_temp[j] * sqrt(dt) * Thermostat::noise();
+#endif // PARTICLE_ANISOTROPY
+    }
+  }
+
+  if (aniso_flag) {
+    convert_vec_body_to_space(p, delta_pos_body, delta_pos_lab);
+
+    for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p->r.p[j] += delta_pos_lab[j];
+      }
+    }
+  } else {
+    // in order to save a calculation performance:
+    for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p->r.p[j] += delta_pos_body[j];
+      }
+    }
+  }
+}
+
+/** Determine the velocities: random walk part.*/
+void bd_random_walk_vel(Particle *p, double dt) {
+  int j;
+  extern double brown_sigma_vel;
+  double brown_sigma_vel_temp;
+
+  // first, set defaults
+  brown_sigma_vel_temp = brown_sigma_vel;
+
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  auto const constexpr langevin_temp_coeff = 12.0;
+  // Is a particle-specific temperature specified?
+  if (p->p.T >= 0.)
+    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p->p.T);
+  else
+    brown_sigma_vel_temp = brown_sigma_vel;
+#endif /* LANGEVIN_PER_PARTICLE */
+
+  for (j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+    if (!(p->p.ext_flag & COORD_FIXED(j)))
+#endif
+    {
+      // velocity is added here. It is assigned in the drift part.
+      // here, the time_step is used only to align with Espresso default dimensionless model
+      p->m.v[j] += brown_sigma_vel_temp * Thermostat::noise() * time_step
+          / sqrt(p->p.mass);
+    }
+  }
+}
+
+#endif // BROWNIAN_DYNAMICS

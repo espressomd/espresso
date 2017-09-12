@@ -13,6 +13,10 @@ matrix:
     - os: linux
       sudo: required
       services: docker
+      env: myconfig=maxset-bd
+    - os: linux
+      sudo: required
+      services: docker
       env: myconfig=maxset image=ubuntu-python3
     - os: linux
       sudo: required

@@ -49,6 +49,7 @@
 #define THERMO_INTER_DPD  16
 #define THERMO_GHMC       32
 #define THERMO_CPU        64
+#define THERMO_BROWNIAN   128
 /*@}*/
 
 namespace Thermostat {
