@@ -41,6 +41,8 @@ cdef extern from "global.hpp":
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV
 
+    void mpi_bcast_parameter(int p)
+        
 cdef extern from "communication.hpp":
     extern int n_nodes
     void mpi_set_smaller_time_step(double smaller_time_step)
