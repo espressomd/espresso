@@ -28,7 +28,6 @@ from espressomd.observables import *
 
 class Observables(ut.TestCase):
 
-
     # Error tolerance when comparing arrays/tuples...
     tol = 1E-9
 
@@ -63,8 +62,6 @@ class Observables(ut.TestCase):
                 self.es.part[i].dip=random(3)
               if espressomd.has_features(["ROTATION"]):
                 self.es.part[i].omega_lab=random(3)
-
-
 
 
     def generate_test_for_pid_observable(_obs_name,_pprop_name,_agg_type=None):
@@ -106,8 +103,6 @@ class Observables(ut.TestCase):
     
     if espressomd.has_features(["DIPOLES"]):
         test_mag_dip = generate_test_for_pid_observable(MagneticDipoleMoment,"dip","sum")
-        
-
 
 
     # This is disabled as it does not currently work
@@ -141,8 +136,6 @@ class Observables(ut.TestCase):
             com_vel=sum((self.es.part[:].v.T).T,0)/len(self.es.part)
         obs_data=ComVelocity(ids=range(1000)).calculate()
         self.assertTrue(self.arraysNearlyEqual(com_vel,obs_data),"Center of mass velocity observable wrong value")
-
-
 
 
 if __name__ == "__main__":

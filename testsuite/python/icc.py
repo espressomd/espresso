@@ -69,7 +69,7 @@ class test_icc(ut.TestCase):
         induced_dipole = 0.5*(abs(QL)+abs(QR))*box_l
 
         #Result
-        assert ( abs(1-induced_dipole/testcharge_dipole) < 1e-4 )
+        self.assertAlmostEqual(1,induced_dipole/testcharge_dipole,places=4)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

@@ -27,8 +27,6 @@ from espressomd.interactions import RigidBond
 @ut.skipIf(not espressomd.has_features("BOND_CONSTRAINT"),"Test requires BOND_CONSTRAINT feature")
 class RigidBondTest(ut.TestCase):
 
-
-
     def test(self):
         target_acc=1E-3
         tol=1.2*target_acc
@@ -52,9 +50,6 @@ class RigidBondTest(ut.TestCase):
             # Velocity projection on distance vector
             vel_proj=np.dot(s.part[i].v-s.part[i-1].v,v_d)/d
             self.assertLess(vel_proj,tol)
-
-
-
 
 
 if __name__ == "__main__":
