@@ -106,7 +106,7 @@ system.cell_system.max_num_cells = 2744
 for i in range(n_part / 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-    
+
 
 # P3M setup after charge assigned
 #############################################################
@@ -130,7 +130,6 @@ system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 
-
 # Warmup Integration Loop
 i = 0
 while (i < warm_n_times and act_min_dist < min_dist):
@@ -152,7 +151,6 @@ pprint.pprint(system.thermostat.get_state(), width=1)
 pprint.pprint(system.__getstate__(), width=1)
 
 
-
 # Pickle data
 ###########################################################
 try:
@@ -160,16 +158,16 @@ try:
 except ImportError:
     import pickle
 
-with open("particle_save","w") as particle_save:
+with open("particle_save", "w") as particle_save:
     pickle.dump(system.part, particle_save, -1)
 
-with open("p3m_save","w") as p3m_save:
+with open("p3m_save", "w") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
-with open("system_save","w") as system_save:
+with open("system_save", "w") as system_save:
     pickle.dump(system, system_save, -1)
 
-with open("thermostat_save","w") as thermostat_save:
+with open("thermostat_save", "w") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
 with open("nonBondedInter_save", "w") as bond_save:

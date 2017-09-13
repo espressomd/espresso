@@ -55,8 +55,6 @@ system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 
-
-
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30

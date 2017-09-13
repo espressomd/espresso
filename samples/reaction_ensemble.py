@@ -29,8 +29,8 @@ import numpy as np
 import sys
 
 if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
-	print("REACTION_ENSEMBLE not compiled in.")
-	sys.exit()
+    print("REACTION_ENSEMBLE not compiled in.")
+    sys.exit()
 dev = "cpu"
 
 # System parameters
@@ -55,30 +55,32 @@ system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
-#type 0 = HA
-#type 1 = A-
-#type 2 = H+
+# type 0 = HA
+# type 1 = A-
+# type 2 = H+
 
-N0 = 50 # number of titratable units
-K_diss=0.0088
+N0 = 50  # number of titratable units
+K_diss = 0.0088
 
 for i in range(N0):
-    system.part.add(id=i ,pos=np.random.random(3) * system.box_l, type=1)
-for i in range(N0,2*N0):
-    system.part.add(id=i ,pos=np.random.random(3) * system.box_l, type=2)
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=1)
+for i in range(N0, 2 * N0):
+    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 
 
-RE=reaction_ensemble.reaction_ensemble(standard_pressure=0.00108, temperature=1, exclusion_radius=1)
-RE.add(equilibrium_constant=K_diss,reactant_types=[0],reactant_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
-RE.set_default_charges(dictionary={"0":0,"1":-1, "2":+1})
+RE = reaction_ensemble.reaction_ensemble(
+    standard_pressure=0.00108, temperature=1, exclusion_radius=1)
+RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
+       1], product_types=[1, 2], product_coefficients=[1, 1])
+RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
 print(RE.get_status())
-grand_canonical.setup([0,1,2])
+grand_canonical.setup([0, 1, 2])
 
-#RE.pH=2
+# RE.pH=2
 
 for i in range(10000):
-	RE.reaction()
+    RE.reaction()
 #	RE.reaction_constant_pH()
-	if(i%100==0):
-		print("HA", grand_canonical.number_of_particles(current_type=0), "A-", grand_canonical.number_of_particles(current_type=1), "H+", grand_canonical.number_of_particles(current_type=2))
-
+    if(i % 100 == 0):
+        print("HA", grand_canonical.number_of_particles(current_type=0), "A-",
+              grand_canonical.number_of_particles(current_type=1), "H+", grand_canonical.number_of_particles(current_type=2))

@@ -72,7 +72,7 @@ int_n_times = 5
 distr_type_list_a = [0]
 distr_type_list_b = [1]
 distr_r_min = 0.1
-distr_r_max = box_l/2.0
+distr_r_max = box_l / 2.0
 distr_r_bins = 200
 distr_log_flag = 0
 distr_int_flag = 1
@@ -104,11 +104,12 @@ volume = box_l * box_l * box_l
 n_part = int(volume * density)
 
 for i in range(n_part):
-    if i < n_part/2.0:
-        system.part.add(type=0, id=i, pos=numpy.random.random(3) * system.box_l)
+    if i < n_part / 2.0:
+        system.part.add(
+            type=0, id=i, pos=numpy.random.random(3) * system.box_l)
     else:
-        system.part.add(type=1, id=i, pos=numpy.random.random(3) * system.box_l)
-
+        system.part.add(
+            type=1, id=i, pos=numpy.random.random(3) * system.box_l)
 
 
 print("Simulate {} particles in a cubic simulation box {} at density {}."
@@ -192,8 +193,8 @@ for i in range(0, int_n_times):
     system.integrator.run(int_steps)
 
     r, dist = system.analysis.distribution(type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
-                                   r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins, 
-                                   log_flag=distr_log_flag, int_flag=distr_int_flag)
+                                           r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
+                                           log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r
     distr_values += dist
 
@@ -215,7 +216,7 @@ for i in range(0, int_n_times):
 #	incr j
 #    }
 
-#rescale distribution values and write out data
+# rescale distribution values and write out data
 distr_values /= int_n_times
 
 for i in range(distr_r_bins):

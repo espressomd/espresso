@@ -29,7 +29,7 @@ import numpy
 
 system = espressomd.System()
 
-#if no seed is provided espresso generates a seed
+# if no seed is provided espresso generates a seed
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
@@ -44,7 +44,7 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-polymer.create_polymer(N_P = 1, bond_length = 1.0, MPC=50, bond=fene)
+polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, bond=fene)
 
 
 #############################################################

@@ -125,8 +125,8 @@ for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
 print("\nSCRIPT--->Explicit tune call\n")
-p3m.Tune(accuracy=1e3) 
-    
+p3m.Tune(accuracy=1e3)
+
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):

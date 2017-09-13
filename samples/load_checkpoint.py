@@ -4,7 +4,8 @@ from espressomd import checkpointing
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
-system = espressomd.System() #necessary for using e.g. system.actors, since explicit checkpointing of actors is not implemented yet
+# necessary for using e.g. system.actors, since explicit checkpointing of actors is not implemented yet
+system = espressomd.System()
 
 # test user variable
 print "\n### user variable test ###"

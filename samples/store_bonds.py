@@ -20,9 +20,10 @@ system.bonded_inter.add(h)
 
 output_filename = "bonded_inter_save"
 
-with open(output_filename,"w") as bonded_ia_save:
+with open(output_filename, "w") as bonded_ia_save:
     pickle.dump(system.bonded_inter, bonded_ia_save, -1)
 
-print("The following bonding interactions were stored in file '{}':".format(output_filename))
+print("The following bonding interactions were stored in file '{}':".format(
+    output_filename))
 for i in system.bonded_inter:
     print(i)

@@ -2,14 +2,15 @@ import espressomd
 from espressomd import electrostatics
 from espressomd import checkpointing
 
-import numpy, signal
+import numpy
+import signal
 
 checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
 
 # test for user data
 myvar = "some script variable"
 checkpoint.register("myvar")
-myvar = "updated value" #demo of how the register function works
+myvar = "updated value"  # demo of how the register function works
 
 skin = 0.4
 checkpoint.register("skin")
@@ -63,7 +64,7 @@ system.actors.add(p3m)
 
 checkpoint.register("p3m")
 
-#signal.SIGINT: signal 2, is sent when ctrl+c is pressed
+# signal.SIGINT: signal 2, is sent when ctrl+c is pressed
 checkpoint.register_signal(signal.SIGINT)
 
 

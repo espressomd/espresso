@@ -70,9 +70,8 @@ print(system.non_bonded_inter.get_force_cap())
 
 # Integration parameters
 #############################################################
-with open("thermostat_save","r") as thermostat_save:
+with open("thermostat_save", "r") as thermostat_save:
     pickle.load(thermostat_save)
-
 
 
 # warmup integration (with capped LJ potential)

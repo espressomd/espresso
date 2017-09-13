@@ -61,37 +61,35 @@ system.box_l = [box_l, box_l, box_l]
 n_part = 10
 
 id_list = np.arange(n_part)
-pos_list = np.random.random((n_part,3)) * system.box_l
+pos_list = np.random.random((n_part, 3)) * system.box_l
 type_list = np.ones(n_part, dtype=int)
 
-system.part.add(id=id_list ,pos=pos_list, type=type_list)
+system.part.add(id=id_list, pos=pos_list, type=type_list)
 
 
-print("TYPE\n%s"%system.part[:].type)
-system.part[0:2].type=[3,3]
-print("TYPE_NEW\n%s"%system.part[:].type)
+print("TYPE\n%s" % system.part[:].type)
+system.part[0:2].type = [3, 3]
+print("TYPE_NEW\n%s" % system.part[:].type)
 
-print("POS\n%s"%system.part[:].pos)
-system.part[:5].pos=[[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]]
-print("POS_NEW\n%s"%system.part[:].pos)
+print("POS\n%s" % system.part[:].pos)
+system.part[:5].pos = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]]
+print("POS_NEW\n%s" % system.part[:].pos)
 
-print("V\n%s"%system.part[:].v)
-system.part[:2].v=[[1,2,3],[2,3,4]]
-print("V_NEW\n%s"%system.part[:].v)
+print("V\n%s" % system.part[:].v)
+system.part[:2].v = [[1, 2, 3], [2, 3, 4]]
+print("V_NEW\n%s" % system.part[:].v)
 
-print("F\n%s"%system.part[:].f)
-system.part[:2].f=[[3,4,5],[4,5,6]]
-print("F_NEW\n%s"%system.part[:].f)
+print("F\n%s" % system.part[:].f)
+system.part[:2].f = [[3, 4, 5], [4, 5, 6]]
+print("F_NEW\n%s" % system.part[:].f)
 
 if espressomd.has_features(["MASS"]):
-    print("MASS\n%s"%system.part[:].mass)
-    system.part[:2].mass=[2,3]
-    print("MASS_NEW\n%s"%system.part[:].mass)
+    print("MASS\n%s" % system.part[:].mass)
+    system.part[:2].mass = [2, 3]
+    print("MASS_NEW\n%s" % system.part[:].mass)
 
 if espressomd.has_features(["ELECTROSTATICS"]):
-    print("Q\n%s"%system.part[:].q)
-    system.part[::2].q=np.ones(n_part/2)
-    system.part[1::2].q=-np.ones(n_part/2)
-    print("Q_NEW\n%s"%system.part[:].q)
-
-
+    print("Q\n%s" % system.part[:].q)
+    system.part[::2].q = np.ones(n_part / 2)
+    system.part[1::2].q = -np.ones(n_part / 2)
+    print("Q_NEW\n%s" % system.part[:].q)

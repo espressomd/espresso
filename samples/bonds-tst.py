@@ -72,8 +72,3 @@ print(S.part[0].bonds)
 print("**Listing bonds held by all particles")
 for p in S.part:
     print(p.bonds)
-
-
-
-
-

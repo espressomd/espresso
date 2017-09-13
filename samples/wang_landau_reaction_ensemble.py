@@ -29,13 +29,13 @@ import numpy as np
 import sys
 
 if('REACTION_ENSEMBLE' not in espressomd.code_info.features()):
-	print("REACTION_ENSEMBLE not compiled in.")
-	sys.exit()
+    print("REACTION_ENSEMBLE not compiled in.")
+    sys.exit()
 dev = "cpu"
 
 # System parameters
 #############################################################
-box_l = 6*np.sqrt(2)
+box_l = 6 * np.sqrt(2)
 
 # Integration parameters
 #############################################################
@@ -55,40 +55,46 @@ system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
-#type 0 = HA
-#type 1 = A-
-#type 2 = H+
+# type 0 = HA
+# type 1 = A-
+# type 2 = H+
 
-N0 = 1 # number of titratable units
-K_diss=0.0088
+N0 = 1  # number of titratable units
+K_diss = 0.0088
 
-system.part.add(id=0,pos=[0,0,0] * system.box_l, type=3)
-system.part.add(id=1,pos=[1.0,1.0,1.0] * system.box_l/2.0, type=1)
-system.part.add(id=2,pos=np.random.random() * system.box_l, type=2)
-system.part.add(id=3,pos=np.random.random() * system.box_l, type=2)
+system.part.add(id=0, pos=[0, 0, 0] * system.box_l, type=3)
+system.part.add(id=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
+system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
+system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
 
-#create a harmonic bond between the two reacting particles => the potential energy is quadratic in the elongation of the bond and therefore the density of states is known as the one of the harmonic oscillator
+# create a harmonic bond between the two reacting particles => the potential energy is quadratic in the elongation of the bond and therefore the density of states is known as the one of the harmonic oscillator
 h = HarmonicBond(r_0=0, k=1)
 system.bonded_inter[0] = h
 system.part[0].add_bond((h, 1))
 
 
-RE=reaction_ensemble.reaction_ensemble(standard_pressure=0.00108, temperature=1, exclusion_radius=0)
-RE.add(equilibrium_constant=K_diss,reactant_types=[0],reactant_coefficients=[1], product_types=[1,2], product_coefficients=[1,1])
-RE.set_default_charges(dictionary={"0":0,"1":-1, "2":+1})
+RE = reaction_ensemble.reaction_ensemble(
+    standard_pressure=0.00108, temperature=1, exclusion_radius=0)
+RE.add(equilibrium_constant=K_diss, reactant_types=[0], reactant_coefficients=[
+       1], product_types=[1, 2], product_coefficients=[1, 1])
+RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
 print(RE.get_status())
-grand_canonical.setup([0,1,2,3])
+grand_canonical.setup([0, 1, 2, 3])
 
 
-#####initialize wang_landau
-#generate preliminary_energy_run_results here, this should be done in a seperate simulation without energy reweighting using the update energy functions
-np.savetxt("energy_boundaries.dat", np.c_[[0,1],[0,0],[9,9]], header="nbar E_min E_max")
+# initialize wang_landau
+# generate preliminary_energy_run_results here, this should be done in a seperate simulation without energy reweighting using the update energy functions
+np.savetxt("energy_boundaries.dat", np.c_[
+           [0, 1], [0, 0], [9, 9]], header="nbar E_min E_max")
 
-RE.add_collective_variable_degree_of_association(associated_type=0,min=0,max=1,corresponding_acid_types=[0,1])
-RE.add_collective_variable_potential_energy(filename="energy_boundaries.dat", delta=0.05)
-RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3,wang_landau_steps=1,do_not_sample_reaction_partition_function=True,full_path_to_output_filename="WL_potential_out.dat")
+RE.add_collective_variable_degree_of_association(
+    associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
+RE.add_collective_variable_potential_energy(
+    filename="energy_boundaries.dat", delta=0.05)
+RE.set_wang_landau_parameters(final_wang_landau_parameter=1e-3, wang_landau_steps=1,
+                              do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
 
-i=0
+i = 0
 while True:
-	RE.reaction_wang_landau()
-	RE.global_mc_move_for_one_particle_of_type_wang_landau(3)
+    RE.reaction_wang_landau()
+    RE.global_mc_move_for_one_particle_of_type_wang_landau(3)

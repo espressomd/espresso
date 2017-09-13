@@ -105,7 +105,7 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 2744
 
-#Switch between openGl/Mayavi
+# Switch between openGl/Mayavi
 visualizer = visualization.mayaviLive(system)
 #visualizer = visualization.openGLLive(system)
 
@@ -143,20 +143,20 @@ while (i < warm_n_times and act_min_dist < min_dist):
     visualizer.update()
 
 # Just to see what else we may get from the c code
-#print("""
-#ro variables:
-#cell_grid     {0.cell_grid}
-#cell_size     {0.cell_size} 
-#local_box_l   {0.local_box_l} 
-#max_cut       {0.max_cut}
-#max_part      {0.max_part}
-#max_range     {0.max_range} 
-#max_skin      {0.max_skin}
-#n_nodes       {0.n_nodes}
-#n_part        {0.n_part}
-#n_part_types  {0.n_part_types}
-#periodicity   {0.periodicity}
-#verlet_reuse  {0.verlet_reuse}
+# print("""
+# ro variables:
+# cell_grid     {0.cell_grid}
+# cell_size     {0.cell_size}
+# local_box_l   {0.local_box_l}
+# max_cut       {0.max_cut}
+# max_part      {0.max_part}
+# max_range     {0.max_range}
+# max_skin      {0.max_skin}
+# n_nodes       {0.n_nodes}
+# n_part        {0.n_part}
+# n_part_types  {0.n_part_types}
+# periodicity   {0.periodicity}
+# verlet_reuse  {0.verlet_reuse}
 #""".format(system))
 
 # write parameter file
@@ -179,13 +179,14 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 energies = system.analysis.energy()
 print(energies)
 
-plot, = pyplot.plot([0],[energies['total']], label="total")
+plot, = pyplot.plot([0], [energies['total']], label="total")
 pyplot.xlabel("Time")
 pyplot.ylabel("Energy")
 pyplot.legend()
 pyplot.show(block=False)
 
 j = 0
+
 
 def main_loop():
     global energies
@@ -202,11 +203,15 @@ def main_loop():
     linear_momentum = system.analysis.analyze_linear_momentum()
     print(linear_momentum)
 
+
 def main_thread():
     for i in range(0, int_n_times):
         main_loop()
 
+
 last_plotted = 0
+
+
 def update_plot():
     global last_plotted
     current_time = plot.get_xdata()[-1]
@@ -216,6 +221,7 @@ def update_plot():
     pyplot.xlim(0, plot.get_xdata()[-1])
     pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
     pyplot.draw()
+
 
 t = Thread(target=main_thread)
 t.daemon = True

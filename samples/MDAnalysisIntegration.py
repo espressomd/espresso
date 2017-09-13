@@ -9,21 +9,21 @@ from espressomd import MDA_ESP
 import numpy as np
 import MDAnalysis as mda
 
-### set up a minimal sample system
+# set up a minimal sample system
 
 system = espressomd.System()
-system.time_step           = 0.001
-system.cell_system.skin    = 0.1
-system.box_l               = [10,10,10]
+system.time_step = 0.001
+system.cell_system.skin = 0.1
+system.box_l = [10, 10, 10]
 
 for i in range(10):
     system.part.add(id=i,
                     pos=np.random.random(3) * system.box_l,
                     v=np.random.random(3)
                     )
-for i in range(5,10):
+for i in range(5, 10):
     system.part[i].q = 1.0
-    system.part[i].type =  1
+    system.part[i].type = 1
 
 #
 # ========================================================="
@@ -34,13 +34,13 @@ for i in range(5,10):
 
 eos = MDA_ESP.Stream(system)
 
-u =  mda.Universe( eos.topology, eos.trajectory )
+u = mda.Universe(eos.topology, eos.trajectory)
 
 
-### let's have a look at the universe
+# let's have a look at the universe
 print(u)
 
-### Inspect atoms
+# Inspect atoms
 print(u.atoms)
 
 print("Positions:")
@@ -69,16 +69,15 @@ u.atoms.write("system.pdb")
 print("===> The initial configuration has been written on system.pdb ")
 
 
-
 #
 # ========================================================="
 # Example #3: Calculate a radial distribution function     "
 # ========================================================="
 #
-from MDAnalysis.analysis.rdf import  InterRDF
+from MDAnalysis.analysis.rdf import InterRDF
 
 charged = u.select_atoms("prop charge  > 0")
-rdf = InterRDF(charged, charged,nbins=7,range=(0,10))
+rdf = InterRDF(charged, charged, nbins=7, range=(0, 10))
 
 # This runs so far only over the single frame we have loaded.
 # Multiframe averaging must be done by hand
@@ -92,7 +91,7 @@ rdf.run()
 
 from MDAnalysis.coordinates.TRR import TRRWriter
 
-W = TRRWriter("traj.trr",n_atoms=len(system.part))
+W = TRRWriter("traj.trr", n_atoms=len(system.part))
 
 for i in range(100):
     # integrate

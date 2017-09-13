@@ -42,7 +42,7 @@ system = espressomd.System()
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.box_l = [100, 100, 100]
-system.periodicity = [1,1,1]
+system.periodicity = [1, 1, 1]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 # system.cell_system.set_n_square(use_verlet_lists=False)
 system.cell_system.max_num_cells = 2744
@@ -84,13 +84,15 @@ system.bonded_inter.add(harmonicangle)
 #########################################################################################
 n_monomers = 20
 
-init_polymer_pos=np.dstack((np.arange(n_monomers),np.zeros(n_monomers),np.zeros(n_monomers)))[0]+np.array([system.box_l[0]/2-n_monomers/2, system.box_l[1]/2, system.box_l[2]/2])
+init_polymer_pos = np.dstack((np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[
+    0] + np.array([system.box_l[0] / 2 - n_monomers / 2, system.box_l[1] / 2, system.box_l[2] / 2])
 
 system.part.add(pos=init_polymer_pos)
 
 
 system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2], np.arange(n_monomers)[2:]))
+system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)
+                            [:-2], np.arange(n_monomers)[2:]))
 
 # Particle creation with loops:
 # for i in range(n_monomers):
@@ -104,7 +106,7 @@ system.part[:n_monomers].q = -np.ones(n_monomers)
 
 # Create counterions
 ###################################################################
-system.part.add(pos=np.random.random((n_monomers,3)) * system.box_l,
+system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
                 q=1,
                 type=1)
 
@@ -112,9 +114,9 @@ system.part.add(pos=np.random.random((n_monomers,3)) * system.box_l,
 ###############################################################
 n_ions = 100
 
-system.part.add(pos=np.random.random((n_ions,3)) * system.box_l, 
-                q=np.hstack((np.ones(n_ions/2),-np.ones(n_ions/2))),
-                type=np.array(np.hstack((np.ones(n_ions/2),2*np.ones(n_ions/2))),dtype=int))
+system.part.add(pos=np.random.random((n_ions, 3)) * system.box_l,
+                q=np.hstack((np.ones(n_ions / 2), -np.ones(n_ions / 2))),
+                type=np.array(np.hstack((np.ones(n_ions / 2), 2 * np.ones(n_ions / 2))), dtype=int))
 
 
 # Sign charges to particles after the particle creation:
@@ -126,7 +128,6 @@ print("")
 print("Q_tot:", np.sum(system.part[:].q))
 
 
-
 #############################################################
 #      Warmup                                               #
 #############################################################
@@ -134,10 +135,10 @@ print("Q_tot:", np.sum(system.part[:].q))
 system.non_bonded_inter.set_force_cap(10)
 
 for i in range(1000):
-    sys.stdout.write("\rWarmup: %03i"%i)
+    sys.stdout.write("\rWarmup: %03i" % i)
     sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.non_bonded_inter.set_force_cap(10*i)
+    system.non_bonded_inter.set_force_cap(10 * i)
 
 system.non_bonded_inter.set_force_cap(0)
 
@@ -153,15 +154,15 @@ read_checkpoint = False
 # Load checkpointed p3m class
 if os.path.isfile("p3m_checkpoint") and read_checkpoint == True:
     print("reading p3m from file")
-    p3m = pickle.load(open("p3m_checkpoint","r"))
+    p3m = pickle.load(open("p3m_checkpoint", "r"))
 else:
     p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
     print("Tuning P3M")
-    
+
 system.actors.add(p3m)
 
 # Checkpoint AFTER tuning (adding method to actors)
-pickle.dump(p3m,open("p3m_checkpoint","w"),-1)
+pickle.dump(p3m, open("p3m_checkpoint", "w"), -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -173,7 +174,8 @@ print(system.actors)
 # Apply external Force
 #############################################################
 n_part = len(system.part)
-system.part[:].ext_force = np.dstack((system.part[:].q * np.ones(n_part), np.zeros(n_part), np.zeros(n_part)))[0]
+system.part[:].ext_force = np.dstack(
+    (system.part[:].q * np.ones(n_part), np.zeros(n_part), np.zeros(n_part)))[0]
 
 # print(system.part[:].ext_force)
 
@@ -189,7 +191,7 @@ pos_list = []
 
 # Sampling Loop
 for i in range(4000):
-    sys.stdout.write("\rSampling: %04i"%i)
+    sys.stdout.write("\rSampling: %04i" % i)
     sys.stdout.flush()
     system.integrator.run(steps=1)
 
@@ -207,12 +209,12 @@ v_list = np.array(v_list)
 pos_list = np.array(pos_list)
 
 # Calculate COM and COM velocity
-COM = pos_list.sum(axis=1)/n_monomers
-COM_v = (COM[1:] - COM[:-1])/system.time_step
+COM = pos_list.sum(axis=1) / n_monomers
+COM_v = (COM[1:] - COM[:-1]) / system.time_step
 
 # Calculate the Mobility mu = v/E
 ##################################
-mu = COM_v.mean()/1.0
+mu = COM_v.mean() / 1.0
 print("MOBILITY", mu)
 
 # Calculate the Persistence length
@@ -225,28 +227,27 @@ if float(np.version.version.split(".")[1]) >= 10:
     from numpy.linalg import norm
 
     # First get bond vectors
-    bond_vec = pos_list[:,1:,:] - pos_list[:,:-1,:]
+    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
     bond_abs = norm(bond_vec, axis=2, keepdims=True)
-    bond_abs_avg = bond_abs.mean(axis=0)[:,0]
+    bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
 
     c_length = bond_abs_avg
-    for i in range(1,len(bond_abs_avg)):
-        c_length[i] += c_length[i-1]
+    for i in range(1, len(bond_abs_avg)):
+        c_length[i] += c_length[i - 1]
 
     bv_norm = bond_vec / bond_abs
 
-
     bv_zero = np.empty_like(bv_norm)
     for i in range(bv_zero.shape[1]):
-        bv_zero[:,i,:] = bv_norm[:,0,:]
-    
+        bv_zero[:, i, :] = bv_norm[:, 0, :]
+
     # Calculate <cos(theta)>
-    cos_theta = (bv_zero*bv_norm).sum(axis=2).mean(axis=0)
+    cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)
 
-    def decay(x,lp):
-        return np.exp(-x/lp)
+    def decay(x, lp):
+        return np.exp(-x / lp)
 
-    fit,_ = curve_fit(decay, c_length, cos_theta)
+    fit, _ = curve_fit(decay, c_length, cos_theta)
 
     print(c_length.shape, cos_theta.shape)
     print("PERSISTENCE LENGTH", fit[0])
@@ -256,25 +257,25 @@ if float(np.version.version.split(".")[1]) >= 10:
 import matplotlib.pyplot as pp
 
 direction = ["x", "y", "z"]
-fig1=pp.figure()
-ax=fig1.add_subplot(111)
+fig1 = pp.figure()
+ax = fig1.add_subplot(111)
 for i in range(3):
-    ax.plot(COM[:-500,i], label="COM pos %s" %direction[i])
+    ax.plot(COM[:-500, i], label="COM pos %s" % direction[i])
 ax.legend(loc="best")
 ax.set_xlabel("time_step")
 ax.set_ylabel("r")
 
-fig2=pp.figure()
-ax=fig2.add_subplot(111)
+fig2 = pp.figure()
+ax = fig2.add_subplot(111)
 for i in range(3):
-    ax.plot(COM_v[:-500,i], label="COM v %s" %direction[i])
+    ax.plot(COM_v[:-500, i], label="COM v %s" % direction[i])
 ax.legend(loc="best")
 ax.set_xlabel("time_step")
 ax.set_ylabel("v")
 
 if float(np.version.version.split(".")[1]) >= 10:
-    fig3=pp.figure()
-    ax=fig3.add_subplot(111)
+    fig3 = pp.figure()
+    ax = fig3.add_subplot(111)
     ax.plot(c_length, cos_theta, label="sim data")
     ax.plot(c_length, decay(c_length, fit[0]), label="fit")
     ax.legend(loc="best")
