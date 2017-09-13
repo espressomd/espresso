@@ -54,11 +54,11 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  template <typename T> explicit Vector(T const (&v)[n]) {
+  template <typename T> explicit Vector(T const(&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  explicit Vector(std::initializer_list<Scalar> v) {
+  Vector(std::initializer_list<Scalar> v) {
     /* Convert to static_assert in C++14 */
     assert(v.size() == n);
     std::copy(std::begin(v), std::end(v), d.begin());
@@ -211,4 +211,11 @@ template <size_t N, typename T>
 Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
   return detail::binary_op(a, b, std::minus<T>());
 }
+
+template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
+  Vector<N, T> ret{a};
+
+  std::transform(a.begin(), a.end(), a.begin(), [](T const &v) { return -v; });
+}
+
 #endif
