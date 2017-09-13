@@ -55,7 +55,7 @@ public:
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
-  template <typename T> explicit Vector(T const(&v)[n]) {
+  explicit Vector(Scalar const(&v)[n]) {
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
@@ -226,7 +226,8 @@ Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
 template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
   Vector<N, T> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(), [](T const &v) { return -v; });
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return -v; });
 
   return ret;
 }
@@ -284,14 +285,12 @@ T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
 }
 
 /* Componentwise square route */
-template <size_t N, typename T> 
-Vector<N, T> sqrt(Vector<N, T> const& a) {
+template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
   using std::sqrt;
   Vector<N, T> ret;
 
-  std::transform(a.begin(), a.end(), ret.begin(), [](T const& v) {
-      return sqrt(v);
-    });
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return sqrt(v); });
 
   return ret;
 }
