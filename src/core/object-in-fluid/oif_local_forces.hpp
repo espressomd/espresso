@@ -195,20 +195,20 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         len2 = sqrlen(dx);
         len = sqrt(len2);
           
-		len_new = sqrt(pow((fp2[0] +  p2->m.v[0]) - (fp3[0] +  p3->m.v[0]),2) + pow((fp2[1] +  p2->m.v[1]) - (fp3[1] +  p3->m.v[1]),2) + pow((fp2[2] +  p2->m.v[2]) - (fp3[2] +  p3->m.v[2]),2));
-		len_old = sqrt(pow((fp2[0] -  p2->m.v[0]) - (fp3[0] -  p3->m.v[0]),2) + pow((fp2[1] -  p2->m.v[1]) - (fp3[1] -  p3->m.v[1]),2) + pow((fp2[2] -  p2->m.v[2]) - (fp3[2] -  p3->m.v[2]),2));
+		//len_new = sqrt(pow((fp2[0] +  p2->m.v[0]) - (fp3[0] +  p3->m.v[0]),2) + pow((fp2[1] +  p2->m.v[1]) - (fp3[1] +  p3->m.v[1]),2) + pow((fp2[2] +  p2->m.v[2]) - (fp3[2] +  p3->m.v[2]),2));
+		//len_old = sqrt(pow((fp2[0] -  p2->m.v[0]) - (fp3[0] -  p3->m.v[0]),2) + pow((fp2[1] -  p2->m.v[1]) - (fp3[1] -  p3->m.v[1]),2) + pow((fp2[2] -  p2->m.v[2]) - (fp3[2] -  p3->m.v[2]),2));
 
 		//printf("future length %lf\n", len_new);
 		//printf("old length %lf\n", len_old);    
 		//printf("actual length %lf\n", len);
 
-		if ( - len_old + len < 0 ) {
-			def_vel = -sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
-		else if ( - len_old + len > 0 ) {
-			def_vel = +sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
-		else { def_vel = 0; }
+		//if ( - len_old + len < 0 ) {
+		//	def_vel = -sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		//else if ( - len_old + len > 0 ) {
+		//	def_vel = +sqrt(pow(p2->m.v[0] - p3->m.v[0],2) + pow(p2->m.v[1] - p3->m.v[1],2) + pow(p2->m.v[2] - p3->m.v[2],2));}
+		//else { def_vel = 0; }
  	 
-		fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
+		//fac = -iaparams->p.oif_local_forces.kvisc*def_vel;
   
 		/* unscale velocities ! */
 		v[0] = (p3->m.v[0] - p2->m.v[0])/time_step;
@@ -216,15 +216,38 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		v[2] = (p3->m.v[2] - p2->m.v[2])/time_step;
  
 		// Variant A
-		for(i=0;i<3;i++) {
-			force2[i] += iaparams->p.oif_local_forces.kvisc*v[i];
-			force3[i] -= iaparams->p.oif_local_forces.kvisc*v[i];
-		}
-		// Variant B
+		// Here the force is in the direction of relative velocity btw points
+
+		// Code:
 		//for(i=0;i<3;i++) {
-			//force2[i] += fac*dx[i]/time_step;
-			//force3[i] -= fac*dx[i]/time_step;
+			//force2[i] += iaparams->p.oif_local_forces.kvisc*v[i];
+			//force3[i] -= iaparams->p.oif_local_forces.kvisc*v[i];
 		//}
+
+
+		
+		// Variant B
+		// Here the force is the projection of relative velocity btw points onto line btw the points
+		
+		// denote p vector between p2 and p3 		
+		// denote v the velocity difference between the points p2 and p3
+		// denote alpha the angle between p and v
+		// denote x the projevted v onto p
+		// cos alpha = |x|/|v|
+		// cos alpha = (v,p)/(|v||p|)
+		// together we get |x|=(v,p)/|p|
+		// also, x is along p, so x = |x|.p/|p|
+		// so x = p/|p| . (v,p)/|p|
+		// altogether x = p . (v,p)/(|p|)^2
+		// |p|^2 is stored in len2
+
+		// Code:
+		def_vel = dx[0]*v[0] + dx[1]*v[1] + dx[2]*v[2];
+		fac = iaparams->p.oif_local_forces.kvisc*def_vel/len2;
+		for(i=0;i<3;i++) {
+			force2[i] += fac*dx[i];
+			force3[i] -= fac*dx[i];
+		}
     }
     
     /* bending
