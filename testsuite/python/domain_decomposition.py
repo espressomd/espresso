@@ -46,12 +46,12 @@ class DomainDecomposition(ut.TestCase):
         part_dist = self.S.cell_system.resort()
 
         # Check that we did not lose particles
-        self.assertTrue(sum(part_dist) == n_part)
+        self.assertEqual(sum(part_dist), n_part)
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
-        self.assertTrue(sum(self.S.part[:].type) == n_part)
+        self.assertEqual(sum(self.S.part[:].type), n_part)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

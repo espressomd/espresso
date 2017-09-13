@@ -86,11 +86,11 @@ class ThermoTest(ut.TestCase):
         tol = 1.25E-4
         for i in range(100):
             for k in range(3):
-                self.assertTrue(abs(self.es.part[0].v[k] - math.exp( - gamma[0] * self.es.time / mass)) <= tol and \
-                                abs(self.es.part[1].v[k] - math.exp( - gamma[1] * self.es.time / mass)) <= tol)
+                self.assertLess(abs(self.es.part[0].v[k] - math.exp( - gamma[0] * self.es.time / mass)), tol)
+                self.assertLess(abs(self.es.part[1].v[k] - math.exp( - gamma[1] * self.es.time / mass)), tol)
                 if "ROTATION" in espressomd.features():
-                    self.assertTrue(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0] * self.es.time / J[k])) <= tol and \
-                                    abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1] * self.es.time / J[k])) <= tol)
+                    self.assertLess(abs(self.es.part[0].omega_body[k] - math.exp( - gamma[0] * self.es.time / J[k])), tol)
+                    self.assertLess(abs(self.es.part[1].omega_body[k] - math.exp( - gamma[1] * self.es.time / J[k])), tol)
             self.es.integrator.run(10)
 
         for i in range(len(self.es.part)):
@@ -255,13 +255,13 @@ class ThermoTest(ut.TestCase):
                 print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(do_vec[k,0], do_vec[k,1], do_vec[k,2]))
             print("Deviation in translational diffusion: {0} ".format(dr_norm[k]))
             
-            self.assertTrue(abs(dv[k]) <= tolerance, msg = 'Relative deviation in translational energy too large: {0}'.format(dv[k]))
+            self.assertLessEqual(abs(dv[k]), tolerance, msg = 'Relative deviation in translational energy too large: {0}'.format(dv[k]))
             if "ROTATION" in espressomd.features():
-                self.assertTrue(abs(do[k]) <= tolerance, msg = 'Relative deviation in rotational energy too large: {0}'.format(do[k]))
-                self.assertTrue(abs(do_vec[k,0]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k,0]))
-                self.assertTrue(abs(do_vec[k,1]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k,1]))
-                self.assertTrue(abs(do_vec[k,2]) <= tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k,2]))
-            self.assertTrue(abs(dr_norm[k]) <= tolerance, msg = 'Relative deviation in translational diffusion is too large: {0}'.format(dr_norm[k]))
+                self.assertLessEqual(abs(do[k]), tolerance, msg = 'Relative deviation in rotational energy too large: {0}'.format(do[k]))
+                self.assertLessEqual(abs(do_vec[k,0]), tolerance, msg = 'Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k,0]))
+                self.assertLessEqual(abs(do_vec[k,1]), tolerance, msg = 'Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k,1]))
+                self.assertLessEqual(abs(do_vec[k,2]), tolerance, msg = 'Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k,2]))
+            self.assertLessEqual(abs(dr_norm[k]), tolerance, msg = 'Relative deviation in translational diffusion is too large: {0}'.format(dr_norm[k]))
 
     def test(self):
         for i in range(4):

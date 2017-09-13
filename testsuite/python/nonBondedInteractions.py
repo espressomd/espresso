@@ -24,7 +24,6 @@ import numpy as np
 from espressomd.interactions import *
 
 
-
 class Non_bonded_interactionsTests(ut.TestCase):
     #  def __init__(self,particleId):
     #    self.pid=particleId

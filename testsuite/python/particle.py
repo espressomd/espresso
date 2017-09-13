@@ -97,8 +97,8 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.es.part[self.pid], propName, value)
-            self.assertTrue(getattr(self.es.part[
-                            self.pid], propName) == value, propName + ": value set and value gotten back differ.")
+            self.assertEqual(getattr(self.es.part[
+                            self.pid], propName), value, propName + ": value set and value gotten back differ.")
 
         return func
 
@@ -155,8 +155,9 @@ class ParticleProperties(ut.TestCase):
             self.es.part.add(id=1, pos=(0, 0, 0))
             self.es.part[1].vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
             res = self.es.part[1].vs_relative
-            self.assertTrue(res[0] == 0 and res[1] == 5.0 and
-                            self.arraysNearlyEqual(res[2], np.array((0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
+            self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
+            self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
+            self.assertTrue(self.arraysNearlyEqual(res[2], np.array((0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
 
 
 if __name__ == "__main__":

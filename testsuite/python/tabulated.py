@@ -658,8 +658,8 @@ class Tabulated(ut.TestCase):
         totenergy = Analysis(self.system).energy()["total"]
         totpressure = Analysis(self.system).pressure()["total"]
 
-        self.assertTrue(np.abs(energy -totenergy)/totenergy < self.epsilon, "Failed. Energy difference too large") 
-        self.assertTrue(np.abs(pressure - totpressure)/totpressure < self.epsilon, "Failed. Pressure difference too large")
+        self.assertLess(np.abs(energy -totenergy)/totenergy, self.epsilon, "Failed. Energy difference too large") 
+        self.assertLess(np.abs(pressure - totpressure)/totpressure, self.epsilon, "Failed. Pressure difference too large")
 
     
     def test_tab(self):
