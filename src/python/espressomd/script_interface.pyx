@@ -64,7 +64,7 @@ cdef class PScriptInterface(object):
         return self.variant_to_python_object(self.sip.get().call_method(to_char_pointer(method), parameters))
 
     def name(self):
-        return self.sip.get().name()
+        return to_str(self.sip.get().name())
 
     def set_params(self, **kwargs):
         cdef ParameterType type
@@ -109,6 +109,9 @@ cdef class PScriptInterface(object):
         cdef vector[Variant] vec
         cdef PObjectId oid
 
+        if value is None:
+            return Variant()
+
         # The order is important, the object character should
         # be preserved even if the PScriptInterface derived class
         # is iterable.
@@ -139,6 +142,8 @@ cdef class PScriptInterface(object):
         cdef int type = value.which()
         cdef shared_ptr[ScriptInterfaceBase] ptr
 
+        if < int > type == <int > NONE:
+            return None
         if < int > type == <int > BOOL:
             return get[bool](value)
         if < int > type == <int > INT:
@@ -146,7 +151,7 @@ cdef class PScriptInterface(object):
         if < int > type == <int > DOUBLE:
             return get[double](value)
         if < int > type == <int > STRING:
-            return get[string](value)
+            return to_str(get[string](value))
         if < int > type == <int > INT_VECTOR:
             return get[vector[int]](value)
         if < int > type == <int > DOUBLE_VECTOR:

@@ -20,9 +20,11 @@
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.electrostatics import MMM1D
 
+if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
+    from espressomd.electrostatics import MMM1D
 
+@ut.skipIf(not espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"),"Skipped because of feature turned off.")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
@@ -43,10 +45,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         return True
 
     def setUp(self):
-        if len(self.system.part) == 0:
+        if len(self.system.part) == 0 :
+            self.system.periodicity=[0,0,1]
+            self.system.cell_system.set_n_square()
             self.system.box_l = 10, 10, 10
-            self.system.part.add(id=0, pos=[0, 0, 0])
-            self.system.part.add(id=1, pos=[0.1, 0.1, 0.1])
+            self.system.part.add(id=0, pos = [0, 0, 0])
+            self.system.part.add(id=1, pos = [0.1, 0.1, 0.1])
             self.system.part[0].q = 1
             self.system.part[1].q = -1
 
@@ -73,21 +77,17 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             # Read them out again
             outParams = Inter._get_params_from_es_core()
 
-            self.assertTrue(
-                self.paramsMatch(
-                    params,
-                    outParams),
-                "Missmatch of parameters.\nParameters set " +
-                params.__str__() +
-                " vs. output parameters " +
-                outParams.__str__())
+            self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
+                            params.__str__() + " vs. output parameters " + outParams.__str__())
+
 
         return func
 
-    system.periodicity = [0, 0, 1]
-    system.cell_system.set_n_square()
-    test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(
-        bjerrum_length=2.0, maxPWerror=0.001, far_switch_radius=3, tune=False))
+    if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
+        test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(bjerrum_length=2.0,
+                                                                    maxPWerror= 0.001, 
+                                                                    far_switch_radius = 3, 
+                                                                    tune=False))
 
 
 if __name__ == "__main__":
