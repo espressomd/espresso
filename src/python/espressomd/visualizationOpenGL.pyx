@@ -926,7 +926,6 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
 def drawSpheroCylinder(posA, posB, radius, color, material, quality):
     setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
     glPushMatrix()
-    print("drawing with {}, {}, {}".format(posA, posB, radius))
     quadric = gluNewQuadric()
 
     d = posB - posA
