@@ -121,7 +121,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
                         fp3[i] = fp4[i] + CC[i];
                     }
 				} else {
-					printf("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...");
+					printf("Something wrong in oif_local_forces.hpp: All particles in a bond are ghost particles, impossible to unfold the positions...\n");
 					return 0;
 				}
 			}
@@ -150,7 +150,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
         force3[i] = 0;
         force4[i] = 0;
     }
-    
+
     // non-linear stretching
     if (iaparams->p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
         vecsub(fp2,fp3,dx);
@@ -298,7 +298,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-        fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+        fac = iaparams->p.oif_local_forces.kal*iaparams->p.oif_local_forces.A01*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p1
 			force[i] += fac*m1[i]/3.0;
@@ -324,7 +324,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4
 		m2_length = normr(m2);
 		m3_length = normr(m3);
 		
-		fac = iaparams->p.oif_local_forces.kal*A*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+		fac = iaparams->p.oif_local_forces.kal*iaparams->p.oif_local_forces.A02*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
 		
 		for(i=0; i<3; i++) {          // local area force for p2
 			force2[i] += fac*m1[i]/3.0;

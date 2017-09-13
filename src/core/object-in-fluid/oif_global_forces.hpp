@@ -178,7 +178,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
     double m1[3],m2[3],m3[3];
     double m1_length,m2_length,m3_length,t,fac;
 
-	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
+	double deltaA, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
 	
 	/** loop over particles */
@@ -194,7 +194,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
     BondedInteraction type;
 
 	int test=0;
-	
+
 	/* Loop local cells */
 	for (c = 0; c < local_cells.n; c++) {
 		cell = local_cells.cell[c];
@@ -296,8 +296,7 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					for(k=0;k<3;k++){
 						h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
 					}
-					//aa=( area - iaparams->p.oif_global_forces.A0_g) / iaparams->p.oif_global_forces.A0_g;
-					t = sqrt(area/iaparams->p.oif_global_forces.A0_g) - 1.0;
+					deltaA = area - iaparams->p.oif_global_forces.A0_g;
 			        vecsub(h,p11,m1);
 			        vecsub(h,p22,m2);
 			        vecsub(h,p33,m3);	
@@ -306,12 +305,8 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 					m2_length = normr(m2);
 					m3_length = normr(m3);
 									
-			        fac = iaparams->p.oif_global_forces.ka_g*iaparams->p.oif_global_forces.A0_g*(2*t+t*t)/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
-			
-                    // adding the proportionality coefficient, so that the influence of global force depends on the size of the triengle. To avoid merging of the mesh points.
-                    fac *= VOL_A/iaparams->p.oif_global_forces.A0_g; 
-                    // end of adding proportionality coefficient
-                    
+			        fac = iaparams->p.oif_global_forces.ka_g*VOL_A * deltaA/(m1_length*m1_length + m2_length*m2_length + m3_length*m3_length);
+
 					for(k=0; k<3; k++) {          // local area force for p1
 						force1[k] = fac*m1[k];
 					}    
@@ -334,7 +329,6 @@ inline void add_oif_global_forces(double *area_volume, int molType){  //first-fo
 			}
 		}
     }
-	
 }
 
 #endif 

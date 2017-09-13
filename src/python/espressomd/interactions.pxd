@@ -65,6 +65,10 @@ cdef extern from "interaction_data.hpp":
         double membrane_n;
         double membrane_cut;
         double membrane_offset;
+        double soft_a;
+        double soft_n;
+        double soft_cut;
+        double soft_offset;
 
 
     cdef ia_parameters * get_ia_param(int i, int j)
@@ -105,6 +109,12 @@ IF MEMBRANE_COLLISION==1:
     cdef extern from "object-in-fluid/membrane_collision.hpp":
         cdef int membrane_collision_set_params(int part_type_a, int part_type_b,
                                                double a, double n, 
+                                               double cut, double offset)
+
+IF SOFT_SPHERE==1:
+    cdef extern from "soft_sphere.hpp":
+        cdef int soft_sphere_set_params(int part_type_a, int part_type_b,
+                                               double a, double n,
                                                double cut, double offset)
 
 IF AFFINITY==1:

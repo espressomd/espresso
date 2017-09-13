@@ -1243,6 +1243,22 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces) {
 
   /* perform integration */
   if (!Correlators::auto_update_enabled() && !Observables::auto_update_enabled()) {
+//    Particle *p;
+//    Cell *cell;
+//    FILE * outFile;
+//    outFile = fopen("stretching.dat","w");
+//    int np;
+//
+//    for (int ddd = 0; ddd < local_cells.n; ddd++) {
+//        cell = local_cells.cell[ddd];
+//        p = cell->part;
+//        np = cell->n;
+//        for (int i = 0; i < np; i++) {
+//            fprintf(outFile, "%.8f %.8f %.8f\n",p[i].f.f[0], p[i].f.f[1], p[i].f.f[2]);
+//        }
+//    }
+//    fclose(outFile);
+
     if (mpi_integrate(n_steps, reuse_forces))
       return ES_ERROR;
   } else {
