@@ -23,7 +23,8 @@ import unittest as ut
 import numpy as np
 from tests_common import *
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS","CUDA","EWALD_GPU"]),
+
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "CUDA", "EWALD_GPU"]),
            "Features not available, skipping test!")
 class ewald_GPU_test(ut.TestCase):
     def runTest(self):
@@ -44,7 +45,9 @@ class ewald_GPU_test(ut.TestCase):
 
         ewald = EwaldGpu(**test_params)
         es.actors.add(ewald)
-        self.assertTrue(params_match(test_params,ewald._get_params_from_es_core()))
+        self.assertTrue(params_match(
+            test_params, ewald._get_params_from_es_core()))
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

@@ -23,6 +23,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 class Layered(ut.TestCase):
     S = espressomd.System()
 
@@ -36,11 +37,11 @@ class Layered(ut.TestCase):
         # Add the particles on node 0, so that they have to be
         # resorted
         for i in range(n_part):
-            self.S.part.add(id=i, pos=[0,0,0], type=1)
+            self.S.part.add(id=i, pos=[0, 0, 0], type=1)
 
         # And now change their positions
         for i in range(n_part):
-            self.S.part[i].pos=pos=np.random.random(3)
+            self.S.part[i].pos = pos = np.random.random(3)
 
         # Distribute the particles on the nodes
         part_dist = self.S.cell_system.resort()
@@ -52,6 +53,7 @@ class Layered(ut.TestCase):
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.S.part[:].type), n_part)
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

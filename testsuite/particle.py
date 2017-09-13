@@ -98,7 +98,7 @@ class ParticleProperties(ut.TestCase):
             # which was there, when the outer function was called
             setattr(self.es.part[self.pid], propName, value)
             self.assertEqual(getattr(self.es.part[
-                            self.pid], propName), value, propName + ": value set and value gotten back differ.")
+                self.pid], propName), value, propName + ": value set and value gotten back differ.")
 
         return func
 
@@ -128,15 +128,16 @@ class ParticleProperties(ut.TestCase):
         if espressomd.has_features(["LANGEVIN_PER_PARTICLE"]):
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
-                "gamma", np.array([2., 9., 0.23]))
+                    "gamma", np.array([2., 9., 0.23]))
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
-                
+
             if espressomd.has_features(["ROTATIONAL_INERTIA"]):
                 test_gamma_rot = generateTestForVectorProperty(
-                "gamma_rot", np.array([5., 10., 0.33]))
+                    "gamma_rot", np.array([5., 10., 0.33]))
             else:
-                test_gamma_rot = generateTestForScalarProperty("gamma_rot", 14.23)
+                test_gamma_rot = generateTestForScalarProperty(
+                    "gamma_rot", 14.23)
 #    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
 
     if espressomd.has_features(["ELECTROSTATICS"]):
@@ -157,7 +158,8 @@ class ParticleProperties(ut.TestCase):
             res = self.es.part[1].vs_relative
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
-            self.assertTrue(self.arraysNearlyEqual(res[2], np.array((0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
+            self.assertTrue(self.arraysNearlyEqual(res[2], np.array(
+                (0.5, -0.5, -0.5, -0.5))), "vs_relative: " + res.__str__())
 
 
 if __name__ == "__main__":

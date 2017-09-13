@@ -47,51 +47,54 @@ class CommonTests(ut.TestCase):
     written_pos = None
     written_bonds = None
     written_atoms = None
-    
 
     types_to_write = None
     for i in range(npart):
         system.part.add(id=i, pos=np.array([float(i),
                                             float(i),
                                             float(i)]),
-                        v=np.array([1.0, 2.0, 3.0]), type=1+(-1)**i)
+                        v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
     system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
-    system.part[0].add_bond((0,1))
-    system.part[0].add_bond((0,2))
-    system.part[0].add_bond((0,3))
+    system.part[0].add_bond((0, 1))
+    system.part[0].add_bond((0, 2))
+    system.part[0].add_bond((0, 3))
 
     system.integrator.run(steps=0)
 
-
     def test_pos(self):
         """Test if positions have been written properly."""
-        if self.types_to_write=='all': simulation_pos=np.array([((i), float(i), float(i), float(i)) for i in range(npart)]),
-        elif (2 in self.types_to_write): simulation_pos=np.array([((i*2), float(i*2), float(i*2), float(i*2)) for i in range(npart//2)]),
+        if self.types_to_write == 'all':
+            simulation_pos = np.array(
+                [((i), float(i), float(i), float(i)) for i in range(npart)]),
+        elif (2 in self.types_to_write):
+            simulation_pos = np.array(
+                [((i * 2), float(i * 2), float(i * 2), float(i * 2)) for i in range(npart // 2)]),
 
         self.assertTrue(np.allclose(
             simulation_pos, self.written_pos),
             msg="Positions not written correctly by writevcf!")
 
-
     def test_bonds(self):
         """Test if bonds have been written properly."""
-        if self.types_to_write=='all': 
-            simulation_bonds=np.array([1,2,3]) #the two bonded particles 
-        elif (2 in self.types_to_write): 
-            types=[2]
-            simulation_bonds=np.array(2) # only this one is type 2
-        
+        if self.types_to_write == 'all':
+            simulation_bonds = np.array([1, 2, 3])  # the two bonded particles
+        elif (2 in self.types_to_write):
+            types = [2]
+            simulation_bonds = np.array(2)  # only this one is type 2
+
         self.assertTrue(np.allclose(
             simulation_bonds, self.written_bonds),
             msg="Bonds not written correctly by writevsf!")
 
     def test_atoms(self):
         """Test if atom declarations have been written properly."""
-        if self.types_to_write=='all': 
-            simulation_atoms=np.array([((i), (1+(-1)**i)) for i in range(npart)])
-        elif (2 in self.types_to_write): 
-            simulation_atoms=np.array([((i*2), 2) for i in range(npart//2)])
+        if self.types_to_write == 'all':
+            simulation_atoms = np.array(
+                [((i), (1 + (-1)**i)) for i in range(npart)])
+        elif (2 in self.types_to_write):
+            simulation_atoms = np.array([((i * 2), 2)
+                                         for i in range(npart // 2)])
 
         self.assertTrue(np.allclose(
             simulation_atoms, self.written_atoms),
@@ -106,23 +109,25 @@ class VCFTestAll(CommonTests):
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
-        cls.types_to_write='all'
-       
+        cls.types_to_write = 'all'
+
         with tempfile.TemporaryFile(mode='w+t') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
-            cls.written_pos=np.loadtxt(fp,comments="t")
+            cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+t') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
-            cls.written_bonds=np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            cls.written_bonds = np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[
+                                           1])  # just the second bonded member
             fp.seek(0)
-            cls.written_atoms=np.loadtxt(fp, skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            cls.written_atoms = np.loadtxt(fp, skiprows=1, comments="b", usecols=[
+                                           1, 7])  # just the part_ID and type_ID
 
-        
+
 class VCFTestType(CommonTests):
     """
     Test the writing VTF files: only particle types 2 and 23.
@@ -131,20 +136,22 @@ class VCFTestType(CommonTests):
     @classmethod
     def setUpClass(cls):
         """Prepare a testsystem."""
-        cls.types_to_write=[2, 23]
+        cls.types_to_write = [2, 23]
         with tempfile.TemporaryFile(mode='w+') as fp:
             vtf.writevcf(cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
-            cls.written_pos=np.loadtxt(fp,comments="t")
+            cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+') as fp:
             vtf.writevsf(cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
-            cls.written_bonds=np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[1]) #just the second bonded member
+            cls.written_bonds = np.loadtxt(fp, skiprows=1, comments="a", delimiter=":", usecols=[
+                                           1])  # just the second bonded member
             fp.seek(0)
-            cls.written_atoms=np.loadtxt(fp, skiprows=1, comments="b", usecols=[1,7]) #just the part_ID and type_ID
+            cls.written_atoms = np.loadtxt(fp, skiprows=1, comments="b", usecols=[
+                                           1, 7])  # just the part_ID and type_ID
 
 
 if __name__ == "__main__":
@@ -153,4 +160,3 @@ if __name__ == "__main__":
 
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())
-

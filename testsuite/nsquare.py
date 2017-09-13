@@ -23,6 +23,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 class NSquare(ut.TestCase):
     S = espressomd.System()
 
@@ -45,12 +46,13 @@ class NSquare(ut.TestCase):
 
         # Check that the parts are evenly distributed
         for node_parts in part_dist:
-            self.assertLess(abs(node_parts - n_part_avg),2)
+            self.assertLess(abs(node_parts - n_part_avg), 2)
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.S.part[:].type), n_part)
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

@@ -91,6 +91,7 @@ class H5mdTestOrdered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written ordered.
     """
+
     def setUp(self):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
@@ -127,6 +128,7 @@ class H5mdTestUnordered(CommonTests):
     """
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
+
     def setUp(self):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error

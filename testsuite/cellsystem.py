@@ -37,7 +37,7 @@ class CellSystem(ut.TestCase):
 
         self.S.cell_system.set_domain_decomposition(use_verlet_lists=True)
         s = self.S.cell_system.get_state()
-        
+
         self.assertEqual(
             [s['use_verlet_lists'], s['type']], [1, "domain_decomposition"])
 

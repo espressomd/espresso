@@ -23,7 +23,8 @@ import unittest as ut
 import numpy as np
 from tests_common import *
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS","CUDA"]),
+
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "CUDA"]),
            "Features not available, skipping test!")
 class P3M_GPU_test(ut.TestCase):
     def runTest(self):
@@ -42,7 +43,9 @@ class P3M_GPU_test(ut.TestCase):
 
         p3m = P3M_GPU(**test_params)
         es.actors.add(p3m)
-        self.assertTrue(params_match(test_params,p3m._get_params_from_es_core()))
+        self.assertTrue(params_match(
+            test_params, p3m._get_params_from_es_core()))
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

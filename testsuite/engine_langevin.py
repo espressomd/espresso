@@ -17,14 +17,14 @@ class SwimmerTest(ut.TestCase):
         temp = 0.0
         gamma = 1.0
 
-        pos_0 = np.array([boxl/2., boxl/2., 1.*boxl/3.])
-        pos_1 = np.array([boxl/2., boxl/2., 2.*boxl/3.])
+        pos_0 = np.array([boxl / 2., boxl / 2., 1. * boxl / 3.])
+        pos_1 = np.array([boxl / 2., boxl / 2., 2. * boxl / 3.])
 
-        def z_f(t,z0):
-            return f_swim/gamma*(-1./gamma + t + (1./gamma)*np.exp(-gamma*t))+z0
+        def z_f(t, z0):
+            return f_swim / gamma * (-1. / gamma + t + (1. / gamma) * np.exp(-gamma * t)) + z0
 
-        def z_v(t,z0):
-            return v_swim*(-1./gamma + t + (1./gamma)*np.exp(-gamma*t))+z0
+        def z_v(t, z0):
+            return v_swim * (-1. / gamma + t + (1. / gamma) * np.exp(-gamma * t)) + z0
 
         S = espressomd.System()
 
@@ -49,6 +49,7 @@ class SwimmerTest(ut.TestCase):
         self.assertLess(delta_pos_0, 1.6e-3)
         self.assertLess(4.9e-4, delta_pos_1)
         self.assertLess(delta_pos_1, 5.1e-4)
+
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

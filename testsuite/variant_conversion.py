@@ -4,6 +4,7 @@ import unittest as ut
 
 from espressomd import script_interface
 
+
 class test_variant_conversion(ut.TestCase):
     """
     Test the variant conversion functions.
@@ -27,8 +28,8 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(bool, True, ret[0])
         self.check_type_and_value(str, 'a string', ret[1])
         self.check_type_and_value(float, 3.14159, ret[2])
-        self.check_type_and_value(list, [3,1,4,1,5], ret[3])
-        self.check_type_and_value(list, [1.1,2.2,3.3], ret[4])
+        self.check_type_and_value(list, [3, 1, 4, 1, 5], ret[3])
+        self.check_type_and_value(list, [1.1, 2.2, 3.3], ret[4])
         # Empty object (ObjectId()) should map to None
         self.assertEqual(ret[5], None)
         # An actual object
@@ -46,14 +47,23 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(str, 'end', ret[2][1][1][1][1][1])
 
     def test_parameter_types(self):
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="bool", value=True))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=42))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="string", value='blub'))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="double", value=12.5))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="objectid", value=self.vt))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="int_vector", value=[1,2,3]))
-        self.assertTrue(self.vt.call_method("check_parameter_type", type="vector", value=[1,'string',True]))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="bool", value=True))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="int", value=42))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="string", value='blub'))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="double", value=12.5))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="objectid", value=self.vt))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="int_vector", value=[1, 2, 3]))
+        self.assertTrue(self.vt.call_method(
+            "check_parameter_type", type="vector", value=[1, 'string', True]))
+
 
 if __name__ == "__main__":
     ut.main()

@@ -27,6 +27,7 @@ from espressomd.electrostatics import *
 from espressomd import scafacos
 import tests_common
 
+
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class CoulombCloudWall(ut.TestCase):
@@ -48,7 +49,8 @@ class CoulombCloudWall(ut.TestCase):
         if len(self.S.actors):
             del self.S.actors[0]
         self.S.part.clear()
-        data = np.genfromtxt(tests_common.abspath("data/coulomb_cloud_wall_system.data"))
+        data = np.genfromtxt(tests_common.abspath(
+            "data/coulomb_cloud_wall_system.data"))
 
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
@@ -77,22 +79,22 @@ class CoulombCloudWall(ut.TestCase):
                 self.S)["total"] - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
             self.assertLessEqual(energy_abs_diff, self.tolerance, "Absolte energy difference " +
-                            str(energy_abs_diff) + " too large for " + method_name)
+                                 str(energy_abs_diff) + " too large for " + method_name)
         self.assertLessEqual(force_abs_diff, self.tolerance, "Asbolute force difference " +
-                        str(force_abs_diff) + " too large for method " + method_name)
+                             str(force_abs_diff) + " too large for method " + method_name)
 
     # Tests for individual methods
 
     if espressomd.has_features(["P3M"]):
         def test_p3m(self):
-            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy = 1e-3,
+            self.S.actors.add(P3M(bjerrum_length=1, r_cut=1.001, accuracy=1e-3,
                                   mesh=64, cao=7, alpha=2.70746, tune=False))
             self.S.integrator.run(0)
             self.compare("p3m", energy=True)
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
-            self.S.actors.add(P3M_GPU(bjerrum_length=1, r_cut=1.001, accuracy = 1e-3,
+            self.S.actors.add(P3M_GPU(bjerrum_length=1, r_cut=1.001, accuracy=1e-3,
                                       mesh=64, cao=7, alpha=2.70746, tune=False))
             self.S.integrator.run(0)
             self.compare("p3m_gpu", energy=False)

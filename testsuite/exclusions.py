@@ -22,63 +22,67 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+
 @ut.skipIf(not espressomd.has_features(['EXCLUSIONS']), "Skipping test")
 class Exclusions(ut.TestCase):
     s = espressomd.System()
 
     def setUp(self):
         self.s.part.clear()
-        self.s.box_l = 3*[10]
+        self.s.box_l = 3 * [10]
         self.s.cell_system.skin = 0.4
         self.s.time_step = 0.01
 
     def test_add_remove(self):
-        self.s.part.add(id=0,pos=[0,0,0])
-        self.s.part.add(id=1,pos=[0,0,0])
-        self.s.part.add(id=2,pos=[0,0,0])
+        self.s.part.add(id=0, pos=[0, 0, 0])
+        self.s.part.add(id=1, pos=[0, 0, 0])
+        self.s.part.add(id=2, pos=[0, 0, 0])
 
         self.s.part[0].add_exclusion(1)
         self.s.part[0].add_exclusion(2)
-        self.assertEqual(self.s.part[0].exclusions, [1,2])
+        self.assertEqual(self.s.part[0].exclusions, [1, 2])
         self.s.part[0].delete_exclusion(1)
         self.assertEqual(self.s.part[0].exclusions, [2])
         self.s.part[0].delete_exclusion(2)
         self.assertEqual(self.s.part[0].exclusions, [])
 
     def test_transfer(self):
-        self.s.part.add(id=0,pos=[0,0,0],v=[1.,1.,1])
-        self.s.part.add(id=1,pos=[0,0,0])
-        self.s.part.add(id=2,pos=[0,0,0])
-        self.s.part.add(id=3,pos=[0,0,0])
+        self.s.part.add(id=0, pos=[0, 0, 0], v=[1., 1., 1])
+        self.s.part.add(id=1, pos=[0, 0, 0])
+        self.s.part.add(id=2, pos=[0, 0, 0])
+        self.s.part.add(id=3, pos=[0, 0, 0])
 
-        self.s.part[0].exclusions=[1,2,3]
+        self.s.part[0].exclusions = [1, 2, 3]
 
         for i in range(15):
             self.s.integrator.run(100)
-            self.assertEqual(self.s.part[0].exclusions,[1,2,3])
+            self.assertEqual(self.s.part[0].exclusions, [1, 2, 3])
 
     @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']), "Skipping test")
     def test_particle_property(self):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1., sigma=2.,
-            cutoff=1.5,shift=0.0)
+            cutoff=1.5, shift=0.0)
 
-        self.s.part.add(id=0,pos=[0,0,0],type=0)
-        self.s.part.add(id=1,pos=[1,0,0],type=0)
+        self.s.part.add(id=0, pos=[0, 0, 0], type=0)
+        self.s.part.add(id=1, pos=[1, 0, 0], type=0)
 
         pair_energy = self.s.analysis.energy()['total']
-        self.assertGreater(pair_energy,0.)
+        self.assertGreater(pair_energy, 0.)
 
-        self.s.part.add(id=2,pos=[2,0,0],type=0)
-        self.assertAlmostEqual(self.s.analysis.energy()['total'], 2*pair_energy)
-        self.s.part[1].exclusions = [0,2]
+        self.s.part.add(id=2, pos=[2, 0, 0], type=0)
+        self.assertAlmostEqual(self.s.analysis.energy()[
+                               'total'], 2 * pair_energy)
+        self.s.part[1].exclusions = [0, 2]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], 0)
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
         self.s.part[1].exclusions = []
-        self.assertAlmostEqual(self.s.analysis.energy()['total'], 2*pair_energy)
+        self.assertAlmostEqual(self.s.analysis.energy()[
+                               'total'], 2 * pair_energy)
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
+
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
