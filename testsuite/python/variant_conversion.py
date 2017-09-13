@@ -4,12 +4,17 @@ import unittest as ut
 
 from espressomd import script_interface
 
+@script_interface.script_interface_register
+class VariantTester(script_interface.ScriptInterfaceHelper):
+    _so_name = "Testing::VariantTester"
+    _so_creation_policy = "LOCAL"
+
 class test_variant_conversion(ut.TestCase):
     """
     Test the variant conversion functions.
     This needs the c++ helper class ScriptInterface::Testing::VariantTester.
     """
-    vt = script_interface.PScriptInterface("Testing::VariantTester")
+    vt = VariantTester()
 
     def check_type_and_value(self, stype, svalue, value):
         self.assertEqual(type(value), stype)
@@ -20,6 +25,11 @@ class test_variant_conversion(ut.TestCase):
         because they are needed for the other tests."""
         self.assertTrue(self.vt.call_method("true"))
         self.assertFalse(self.vt.call_method("false"))
+
+    def test_default(self):
+        """ Check that a default constructed Variant translates to None.
+        """
+        self.assertTrue(self.vt.call_method("default") == None)
 
     def test_flat(self):
         ret = self.vt.call_method("flat")
@@ -46,6 +56,7 @@ class test_variant_conversion(ut.TestCase):
         self.check_type_and_value(str, 'end', ret[2][1][1][1][1][1])
 
     def test_parameter_types(self):
+        self.assertTrue(self.vt.call_method("check_parameter_type", type="none", value=None))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="bool", value=True))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="int", value=42))
         self.assertTrue(self.vt.call_method("check_parameter_type", type="string", value='blub'))
