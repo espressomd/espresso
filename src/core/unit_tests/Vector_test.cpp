@@ -125,4 +125,7 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   }
 
   BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
+  BOOST_CHECK(((v1 * 2) == Vector<3, int>{2, 4, 6}));
+  BOOST_CHECK((sqrt(Vector<3, double>{1., 2., 3.}) ==
+               Vector<3, double>{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }

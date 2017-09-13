@@ -247,7 +247,17 @@ Vector<N, T> operator*(T const &a, Vector<N, T> const &b) {
   return ret;
 }
 
-template <size_t N, typename T> void operator*=(T const &a, Vector<N, T> &b) {
+template <size_t N, typename T>
+Vector<N, T> operator*(Vector<N, T> const &b, T const &a) {
+  Vector<N, T> ret;
+
+  std::transform(b.begin(), b.end(), ret.begin(),
+                 [a](T const &val) { return a * val; });
+
+  return ret;
+}
+
+template <size_t N, typename T> void operator*=(Vector<N, T> &b, T const &a) {
   std::transform(b.begin(), b.end(), b.begin(),
                  [a](T const &val) { return a * val; });
 }
@@ -271,6 +281,19 @@ template <size_t N, typename T> void operator/=(Vector<N, T> &a, T const &b) {
 template <size_t N, typename T>
 T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
   return std::inner_product(a.begin(), a.end(), b.begin(), T{});
+}
+
+/* Componentwise square route */
+template <size_t N, typename T> 
+Vector<N, T> sqrt(Vector<N, T> const& a) {
+  using std::sqrt;
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(), [](T const& v) {
+      return sqrt(v);
+    });
+
+  return ret;
 }
 
 #endif
