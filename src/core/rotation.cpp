@@ -278,13 +278,13 @@ void convert_torques_propagate_omega() {
       p.f.torque[2] = tz;
     }
 
-    if (!(p.p.rotation & 2))
+    if (!(p.p.rotation & ROTATION_X))
       p.f.torque[0] = 0;
 
-    if (!(p.p.rotation & 4))
+    if (!(p.p.rotation & ROTATION_Y))
       p.f.torque[1] = 0;
 
-    if (!(p.p.rotation & 8))
+    if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
 
 
@@ -408,13 +408,13 @@ void convert_initial_torques() {
       p.f.torque[2] = tz;
     }
 
-    if (!(p.p.rotation & 2))
+    if (!(p.p.rotation & ROTATION_X))
       p.f.torque[0] = 0;
 
-    if (!(p.p.rotation & 4))
+    if (!(p.p.rotation & ROTATION_Y))
       p.f.torque[1] = 0;
 
-    if (!(p.p.rotation & 8))
+    if (!(p.p.rotation & ROTATION_Z))
       p.f.torque[2] = 0;
 
 
@@ -489,15 +489,15 @@ void rotate_particle(Particle *p, double *aSpaceFrame, double phi) {
 
   //  printf("%g %g %g - ",a[0],a[1],a[2]);
   // Rotation turned off entirely?
-  if (p->p.rotation < 2)
+  if (!p->p.rotation)
     return;
 
   // Per coordinate fixing
-  if (!(p->p.rotation & 2))
+  if (!(p->p.rotation & ROTATION_X))
     a[0] = 0;
-  if (!(p->p.rotation & 4))
+  if (!(p->p.rotation & ROTATION_Y))
     a[1] = 0;
-  if (!(p->p.rotation & 8))
+  if (!(p->p.rotation & ROTATION_Z))
     a[2] = 0;
   // Re-normalize rotation axis
   double l = sqrt(sqrlen(a));

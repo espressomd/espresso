@@ -30,6 +30,11 @@
 #include "thermostat.hpp"
 #include "utils.hpp"
 
+
+const int ROTATION_X =2;
+const int ROTATION_Y =4;
+const int ROTATION_Z =8;
+
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
