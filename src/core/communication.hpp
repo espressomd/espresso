@@ -493,14 +493,14 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
 #ifndef ROTATIONAL_INERTIA
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
 #endif // ROTATIONAL_INERTIA
 #endif
 #endif // LANGEVIN_PER_PARTICLE
