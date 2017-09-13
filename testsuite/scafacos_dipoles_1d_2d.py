@@ -78,8 +78,19 @@ class Scafacos1d2d(ut.TestCase):
                 s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
 
             if dim == 2:
-                scafacos = magnetostatics.Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={
-                                                   "p2nfft_verbose_tuning": 0, "pnfft_N": "80,80,160", "pnfft_window_name": "bspline", "pnfft_m": "4", "p2nfft_ignore_tolerance": "1", "pnfft_diff_ik": "0", "p2nfft_r_cut": "6", "p2nfft_alpha": "0.8", "p2nfft_epsB": "0.05"})
+                scafacos = magnetostatics.Scafacos(
+                    bjerrum_length=1,
+                    method_name="p2nfft",
+                    method_params={
+                        "p2nfft_verbose_tuning": 0,
+                        "pnfft_N": "80,80,160",
+                        "pnfft_window_name": "bspline",
+                        "pnfft_m": "4",
+                        "p2nfft_ignore_tolerance": "1",
+                        "pnfft_diff_ik": "0",
+                        "p2nfft_r_cut": "6",
+                        "p2nfft_alpha": "0.8",
+                        "p2nfft_epsB": "0.05"})
                 s.actors.add(scafacos)
                 # change box geometry in x,y direction to ensure that
                 # scafacos survives it
@@ -88,8 +99,23 @@ class Scafacos1d2d(ut.TestCase):
             else:
                 if dim == 1:
                     # 1d periodic in x
-                    scafacos = magnetostatics.Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={"p2nfft_verbose_tuning": 1, "pnfft_N": "32,128,128", "pnfft_direct": 0, "p2nfft_r_cut": 2.855, "p2nfft_alpha": "1.5",
-                                                                                                              "p2nfft_intpol_order": "-1", "p2nfft_reg_kernel_name": "ewald", "p2nfft_p": "16", "p2nfft_ignore_tolerance": "1", "pnfft_window_name": "bspline", "pnfft_m": "8", "pnfft_diff_ik": "1", "p2nfft_epsB": "0.125"})
+                    scafacos = magnetostatics.Scafacos(
+                        bjerrum_length=1,
+                        method_name="p2nfft",
+                        method_params={
+                            "p2nfft_verbose_tuning": 1,
+                            "pnfft_N": "32,128,128",
+                            "pnfft_direct": 0,
+                            "p2nfft_r_cut": 2.855,
+                            "p2nfft_alpha": "1.5",
+                            "p2nfft_intpol_order": "-1",
+                            "p2nfft_reg_kernel_name": "ewald",
+                            "p2nfft_p": "16",
+                            "p2nfft_ignore_tolerance": "1",
+                            "pnfft_window_name": "bspline",
+                            "pnfft_m": "8",
+                            "pnfft_diff_ik": "1",
+                            "p2nfft_epsB": "0.125"})
                     s.box_l = np.array((1, 1, 1)) * box_l
                     s.actors.add(scafacos)
                 else:

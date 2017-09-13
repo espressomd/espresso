@@ -31,7 +31,7 @@ import tests_common
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class CoulombCloudWall(ut.TestCase):
-    """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft 
+    """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
        electrostatic forces and energy against stored data."""
     S = espressomd.System()
     forces = {}
@@ -78,10 +78,20 @@ class CoulombCloudWall(ut.TestCase):
             energy_abs_diff = abs(self.S.analysis.energy(
                 self.S)["total"] - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
-            self.assertLessEqual(energy_abs_diff, self.tolerance, "Absolte energy difference " +
-                                 str(energy_abs_diff) + " too large for " + method_name)
-        self.assertLessEqual(force_abs_diff, self.tolerance, "Asbolute force difference " +
-                             str(force_abs_diff) + " too large for method " + method_name)
+            self.assertLessEqual(
+                energy_abs_diff,
+                self.tolerance,
+                "Absolte energy difference " +
+                str(energy_abs_diff) +
+                " too large for " +
+                method_name)
+        self.assertLessEqual(
+            force_abs_diff,
+            self.tolerance,
+            "Asbolute force difference " +
+            str(force_abs_diff) +
+            " too large for method " +
+            method_name)
 
     # Tests for individual methods
 
@@ -94,23 +104,42 @@ class CoulombCloudWall(ut.TestCase):
 
     if espressomd.has_features(["ELECTROSTATICS", "CUDA"]):
         def test_p3m_gpu(self):
-            self.S.actors.add(P3M_GPU(bjerrum_length=1, r_cut=1.001, accuracy=1e-3,
-                                      mesh=64, cao=7, alpha=2.70746, tune=False))
+            self.S.actors.add(
+                P3M_GPU(
+                    bjerrum_length=1,
+                    r_cut=1.001,
+                    accuracy=1e-3,
+                    mesh=64,
+                    cao=7,
+                    alpha=2.70746,
+                    tune=False))
             self.S.integrator.run(0)
             self.compare("p3m_gpu", energy=False)
 
     if espressomd.has_features(["SCAFACOS"]):
         if "p3m" in scafacos.available_methods():
             def test_scafacos_p3m(self):
-                self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p3m", method_params={
-                                  "p3m_r_cut": 1.001, "p3m_grid": 64, "p3m_cao": 7, "p3m_alpha": 2.70746}))
+                self.S.actors.add(
+                    Scafacos(
+                        bjerrum_length=1,
+                        method_name="p3m",
+                        method_params={
+                            "p3m_r_cut": 1.001,
+                            "p3m_grid": 64,
+                            "p3m_cao": 7,
+                            "p3m_alpha": 2.70746}))
                 self.S.integrator.run(0)
                 self.compare("scafacos_p3m", energy=True)
 
         if "p2nfft" in scafacos.available_methods():
             def test_scafacos_p2nfft(self):
-                self.S.actors.add(Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={
-                                  "p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
+                self.S.actors.add(
+                    Scafacos(
+                        bjerrum_length=1,
+                        method_name="p2nfft",
+                        method_params={
+                            "p2nfft_r_cut": 1.001,
+                            "tolerance_field": 1E-4}))
                 self.S.integrator.run(0)
                 self.compare("scafacos_p2nfft", energy=True)
 

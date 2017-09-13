@@ -73,17 +73,21 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             # Read them out again
             outParams = Inter._get_params_from_es_core()
 
-            self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
-                            params.__str__() + " vs. output parameters " + outParams.__str__())
+            self.assertTrue(
+                self.paramsMatch(
+                    params,
+                    outParams),
+                "Missmatch of parameters.\nParameters set " +
+                params.__str__() +
+                " vs. output parameters " +
+                outParams.__str__())
 
         return func
 
     system.periodicity = [0, 0, 1]
     system.cell_system.set_n_square()
-    test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(bjerrum_length=2.0,
-                                                                     maxPWerror=0.001,
-                                                                     far_switch_radius=3,
-                                                                     tune=False))
+    test_mmm1d = generateTestForElectrostaticInteraction(MMM1D, dict(
+        bjerrum_length=2.0, maxPWerror=0.001, far_switch_radius=3, tune=False))
 
 
 if __name__ == "__main__":

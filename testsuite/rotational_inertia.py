@@ -37,7 +37,8 @@ class RotationalInertia(ut.TestCase):
 
     # Angular momentum
     def L_body(self, part):
-        return self.es.part[part].omega_body[:] * self.es.part[part].rinertia[:]
+        return self.es.part[part].omega_body[:] * \
+            self.es.part[part].rinertia[:]
 
     def test(self):
         self.es.cell_system.skin = 0
@@ -47,7 +48,8 @@ class RotationalInertia(ut.TestCase):
 
         tol = 4E-3
         # Anisotropic inertial moment. Stable axes correspond to J[1] and J[2].
-        # The unstable axis corresponds to J[0]. These values relation is J[1] < J[0] < J[2].
+        # The unstable axis corresponds to J[0]. These values relation is J[1]
+        # < J[0] < J[2].
         J = np.array([5, 0.5, 18.5])
 
         # Validation of J[1] stability
@@ -66,10 +68,25 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol,
-                                     msg='Inertial motion around stable axis J1: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
-            self.assertLessEqual(abs(self.es.part[0].omega_body[1] - stable_omega), tol,
-                                 msg='Inertial motion around stable axis J1: Deviation in omega is too large. Step {0}, coordinate 1, expected {1}, got {2}'.format(i, stable_omega, self.es.part[0].omega_body[1]))
+                self.assertLessEqual(
+                    abs(
+                        L_lab[k] -
+                        L_0_lab[k]),
+                    tol,
+                    msg='Inertial motion around stable axis J1: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
+                        i,
+                        k,
+                        L_0_lab[k],
+                        L_lab[k]))
+            self.assertLessEqual(
+                abs(
+                    self.es.part[0].omega_body[1] -
+                    stable_omega),
+                tol,
+                msg='Inertial motion around stable axis J1: Deviation in omega is too large. Step {0}, coordinate 1, expected {1}, got {2}'.format(
+                    i,
+                    stable_omega,
+                    self.es.part[0].omega_body[1]))
             self.es.integrator.run(10)
 
         # Validation of J[2] stability
@@ -87,10 +104,25 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol,
-                                     msg='Inertial motion around stable axis J2: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
-            self.assertLessEqual(abs(self.es.part[0].omega_body[2] - stable_omega), tol,
-                                 msg='Inertial motion around stable axis J2: Deviation in omega is too large. Step {0}, coordinate 2, expected {1}, got {2}'.format(i, stable_omega, self.es.part[0].omega_body[2]))
+                self.assertLessEqual(
+                    abs(
+                        L_lab[k] -
+                        L_0_lab[k]),
+                    tol,
+                    msg='Inertial motion around stable axis J2: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
+                        i,
+                        k,
+                        L_0_lab[k],
+                        L_lab[k]))
+            self.assertLessEqual(
+                abs(
+                    self.es.part[0].omega_body[2] -
+                    stable_omega),
+                tol,
+                msg='Inertial motion around stable axis J2: Deviation in omega is too large. Step {0}, coordinate 2, expected {1}, got {2}'.format(
+                    i,
+                    stable_omega,
+                    self.es.part[0].omega_body[2]))
             self.es.integrator.run(10)
 
         # Validation of J[0]
@@ -108,8 +140,16 @@ class RotationalInertia(ut.TestCase):
             L_body = self.L_body(0)
             L_lab = self.convert_vec_body_to_space(0, L_body)
             for k in range(3):
-                self.assertLessEqual(abs(L_lab[k] - L_0_lab[k]), tol,
-                                     msg='Inertial motion around stable axis J0: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(i, k, L_0_lab[k], L_lab[k]))
+                self.assertLessEqual(
+                    abs(
+                        L_lab[k] -
+                        L_0_lab[k]),
+                    tol,
+                    msg='Inertial motion around stable axis J0: Deviation in angular momentum is too large. Step {0}, coordinate {1}, expected {2}, got {3}'.format(
+                        i,
+                        k,
+                        L_0_lab[k],
+                        L_lab[k]))
             self.es.integrator.run(10)
 
 

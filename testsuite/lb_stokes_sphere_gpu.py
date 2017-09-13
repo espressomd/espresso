@@ -49,23 +49,33 @@ class Stokes(ut.TestCase):
 
         # Setup walls
         walls = [None] * 4
-        walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[-1, 0, 0],
-                                                             dist=-(1 + box_width)), velocity=v)
-        walls[1] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[1, 0, 0], dist=1),
-                                           velocity=v)
-        walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[0, -1, 0],
-                                                             dist=-(1 + box_width)), velocity=v)
-        walls[3] = lbboundaries.LBBoundary(shape=shapes.Wall(normal=[0, 1, 0], dist=1),
-                                           velocity=v)
+        walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
+        walls[1] = lbboundaries.LBBoundary(
+            shape=shapes.Wall(
+                normal=[
+                    1,
+                    0,
+                    0],
+                dist=1),
+            velocity=v)
+        walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[0, -1, 0], dist=-(1 + box_width)), velocity=v)
+        walls[3] = lbboundaries.LBBoundary(
+            shape=shapes.Wall(
+                normal=[
+                    0,
+                    1,
+                    0],
+                dist=1),
+            velocity=v)
 
         for wall in walls:
             system.lbboundaries.add(wall)
 
         # setup sphere without slip in the middle
-        sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(radius=radius,
-                                                             center=[
-                                                                 real_width / 2] * 2 + [box_length / 2],
-                                                             direction=1))
+        sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
+            radius=radius, center=[real_width / 2] * 2 + [box_length / 2], direction=1))
 
         system.lbboundaries.add(sphere)
 

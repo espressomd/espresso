@@ -56,8 +56,21 @@ class test_icc(ut.TestCase):
 
         # Actors
         p3m = P3M(bjerrum_length=1, accuracy=1e-5)
-        icc = ICC(n_icc=nicc_tot, convergence=1e-6, relaxation=0.75, ext_field=[
-                  0, 0, 0], max_iterations=100, first_id=0, eps_out=1, normals=iccNormals, areas=iccAreas, sigmas=iccSigmas, epsilons=iccEpsilons)
+        icc = ICC(
+            n_icc=nicc_tot,
+            convergence=1e-6,
+            relaxation=0.75,
+            ext_field=[
+                0,
+                0,
+                0],
+            max_iterations=100,
+            first_id=0,
+            eps_out=1,
+            normals=iccNormals,
+            areas=iccAreas,
+            sigmas=iccSigmas,
+            epsilons=iccEpsilons)
         S.actors.add(p3m)
         S.actors.add(icc)
 

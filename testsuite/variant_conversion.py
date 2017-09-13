@@ -57,8 +57,14 @@ class test_variant_conversion(ut.TestCase):
             "check_parameter_type", type="double", value=12.5))
         self.assertTrue(self.vt.call_method(
             "check_parameter_type", type="objectid", value=self.vt))
-        self.assertTrue(self.vt.call_method(
-            "check_parameter_type", type="double_vector", value=[1.1, 2.2, 3.3]))
+        self.assertTrue(
+            self.vt.call_method(
+                "check_parameter_type",
+                type="double_vector",
+                value=[
+                    1.1,
+                    2.2,
+                    3.3]))
         self.assertTrue(self.vt.call_method(
             "check_parameter_type", type="int_vector", value=[1, 2, 3]))
         self.assertTrue(self.vt.call_method(

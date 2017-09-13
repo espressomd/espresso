@@ -37,7 +37,7 @@ class ParticleProperties(ut.TestCase):
     tol = 1E-9
 
     def bondsMatch(self, inType, outType, inParams, outParams):
-        """Check, if the bond type set and gotten back as well as the bond 
+        """Check, if the bond type set and gotten back as well as the bond
         parameters set and gotten back match. Only check keys present in
         inParams.
         """
@@ -76,8 +76,20 @@ class ParticleProperties(ut.TestCase):
             tnIn = bondClass(**params).type_number()
             tnOut = outBond.type_number()
             outParams = outBond.params
-            self.assertTrue(self.bondsMatch(tnIn, tnOut, params, outParams), bondClass(
-                **params).type_name() + ": value set and value gotten back differ for bond id " + str(bondId) + ": " + params.__str__() + " vs. " + outParams.__str__())
+            self.assertTrue(
+                self.bondsMatch(
+                    tnIn,
+                    tnOut,
+                    params,
+                    outParams),
+                bondClass(
+                    **params).type_name() +
+                ": value set and value gotten back differ for bond id " +
+                str(bondId) +
+                ": " +
+                params.__str__() +
+                " vs. " +
+                outParams.__str__())
 
         return func
 

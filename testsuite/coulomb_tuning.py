@@ -64,8 +64,13 @@ class CoulombCloudWallTune(ut.TestCase):
 
         print(method_name, "force difference", force_abs_diff)
 
-        self.assertLessEqual(force_abs_diff, self.tolerance, "Asbolute force difference " +
-                             str(force_abs_diff) + " too large for method " + method_name)
+        self.assertLessEqual(
+            force_abs_diff,
+            self.tolerance,
+            "Asbolute force difference " +
+            str(force_abs_diff) +
+            " too large for method " +
+            method_name)
 
     # Tests for individual methods
     if espressomd.has_features(["P3M"]):

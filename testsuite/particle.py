@@ -65,7 +65,7 @@ class ParticleProperties(ut.TestCase):
     def generateTestForVectorProperty(_propName, _value):
         """Generates test cases for vectorial particle properties such as
         position, velocity...
-        1st arg: name of the property (e.g., "pos"), 
+        1st arg: name of the property (e.g., "pos"),
         2nd array: value to be used for testing. Has to be numpy.array of floats
         """
         # This is executed, when generateTestForVectorProperty() is called
@@ -85,7 +85,7 @@ class ParticleProperties(ut.TestCase):
     def generateTestForScalarProperty(_propName, _value):
         """Generates test cases for scalar particle properties such as
         type, mass, charge...
-        1st arg: name of the property (e.g., "type"), 
+        1st arg: name of the property (e.g., "type"),
         2nd array: value to be used for testing. int or float
         """
         # This is executed, when generateTestForVectorProperty() is called
@@ -97,8 +97,8 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.es.part[self.pid], propName, value)
-            self.assertEqual(getattr(self.es.part[
-                self.pid], propName), value, propName + ": value set and value gotten back differ.")
+            self.assertEqual(getattr(self.es.part[self.pid], propName),
+                             value, propName + ": value set and value gotten back differ.")
 
         return func
 

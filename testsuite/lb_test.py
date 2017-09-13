@@ -9,7 +9,15 @@ S.time_step = 0.01
 
 print("Setup LB")
 lb = espressomd.lb.LBFluid(
-    dens=0.5, agrid=1.0, visc=0.8, tau=0.1, fric=1, ext_force=[1e-1, 2e-1, 3e-1])
+    dens=0.5,
+    agrid=1.0,
+    visc=0.8,
+    tau=0.1,
+    fric=1,
+    ext_force=[
+        1e-1,
+        2e-1,
+        3e-1])
 
 # print "Get LB params", lb.getParams()
 

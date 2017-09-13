@@ -41,7 +41,8 @@ class ReactionEnsembleTest(ut.TestCase):
     temperature = 1.0
     standard_pressure_in_simulation_units = 0.00108
     exclusion_radius = 1.0
-    # could be in this test for example anywhere in the range 0.000001 ... 9, chosen for example like 8.8*np.random.random()+0.2
+    # could be in this test for example anywhere in the range 0.000001 ... 9,
+    # chosen for example like 8.8*np.random.random()+0.2
     K_HA_diss = 8.8 * 0.5 + 0.2
     reactant_types = [type_HA]
     reactant_coefficients = [1]
@@ -53,7 +54,9 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.reaction_ensemble(
-        standard_pressure=standard_pressure_in_simulation_units, temperature=temperature, exclusion_radius=exclusion_radius)
+        standard_pressure=standard_pressure_in_simulation_units,
+        temperature=temperature,
+        exclusion_radius=exclusion_radius)
     volume = np.prod(system.box_l)  # cuboid box
 
     @classmethod
@@ -62,11 +65,15 @@ class ReactionEnsembleTest(ut.TestCase):
         for i in range(0, 2 * cls.N0, 2):
             cls.system.part.add(id=i, pos=np.random.random(
                 3) * cls.system.box_l, type=cls.type_A)
-            cls.system.part.add(id=i + 1, pos=np.random.random(3)
-                                * cls.system.box_l, type=cls.type_H)
+            cls.system.part.add(id=i + 1, pos=np.random.random(3) *
+                                cls.system.box_l, type=cls.type_H)
 
-        cls.RE.add(equilibrium_constant=cls.K_HA_diss, reactant_types=cls.reactant_types, reactant_coefficients=cls.reactant_coefficients,
-                   product_types=cls.product_types, product_coefficients=cls.product_coefficients)
+        cls.RE.add(
+            equilibrium_constant=cls.K_HA_diss,
+            reactant_types=cls.reactant_types,
+            reactant_coefficients=cls.reactant_coefficients,
+            product_types=cls.product_types,
+            product_coefficients=cls.product_coefficients)
         cls.RE.set_default_charges(dictionary={"0": 0, "1": -1, "2": +1})
 
     @classmethod
@@ -103,34 +110,55 @@ class ReactionEnsembleTest(ut.TestCase):
         pH = -np.log10(average_NH / volume)
         K_apparent_HA_diss = K_HA_diss * standard_pressure_in_simulation_units / temperature
         pK_a = -np.log10(K_apparent_HA_diss)
-        real_error_in_degree_of_association = abs(average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
-            pK_a, pH)) / ReactionEnsembleTest.ideal_degree_of_association(pK_a, pH)
-        self.assertLess(real_error_in_degree_of_association, 0.07,
-                        msg="Deviation to ideal titration curve for the given input parameters too large.")
+        real_error_in_degree_of_association = abs(
+            average_degree_of_association - ReactionEnsembleTest.ideal_degree_of_association(
+                pK_a, pH)) / ReactionEnsembleTest.ideal_degree_of_association(
+            pK_a, pH)
+        self.assertLess(
+            real_error_in_degree_of_association,
+            0.07,
+            msg="Deviation to ideal titration curve for the given input parameters too large.")
 
     def test_reaction_system(self):
         RE_status = ReactionEnsembleTest.RE.get_status()
         forward_reaction = RE_status["reactions"][0]
         for i in range(len(forward_reaction["reactant_types"])):
             self.assertEqual(
-                ReactionEnsembleTest.reactant_types[i], forward_reaction["reactant_types"][i], msg="reactant type not set correctly.")
+                ReactionEnsembleTest.reactant_types[i],
+                forward_reaction["reactant_types"][i],
+                msg="reactant type not set correctly.")
         for i in range(len(forward_reaction["reactant_coefficients"])):
-            self.assertEqual(ReactionEnsembleTest.reactant_coefficients[i], forward_reaction[
-                             "reactant_coefficients"][i], msg="reactant coefficients not set correctly.")
+            self.assertEqual(
+                ReactionEnsembleTest.reactant_coefficients[i],
+                forward_reaction["reactant_coefficients"][i],
+                msg="reactant coefficients not set correctly.")
         for i in range(len(forward_reaction["product_types"])):
             self.assertEqual(
-                ReactionEnsembleTest.product_types[i], forward_reaction["product_types"][i], msg="product type not set correctly.")
+                ReactionEnsembleTest.product_types[i],
+                forward_reaction["product_types"][i],
+                msg="product type not set correctly.")
         for i in range(len(forward_reaction["product_coefficients"])):
-            self.assertEqual(ReactionEnsembleTest.product_coefficients[i], forward_reaction[
-                             "product_coefficients"][i], msg="product coefficients not set correctly.")
+            self.assertEqual(
+                ReactionEnsembleTest.product_coefficients[i],
+                forward_reaction["product_coefficients"][i],
+                msg="product coefficients not set correctly.")
 
-        self.assertAlmostEqual(ReactionEnsembleTest.temperature,
-                               RE_status["temperature"], places=9, msg="reaction ensemble temperature not set correctly.")
-        self.assertAlmostEqual(ReactionEnsembleTest.exclusion_radius,
-                               RE_status["exclusion_radius"], places=9, msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(
+            ReactionEnsembleTest.temperature,
+            RE_status["temperature"],
+            places=9,
+            msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(
+            ReactionEnsembleTest.exclusion_radius,
+            RE_status["exclusion_radius"],
+            places=9,
+            msg="reaction ensemble temperature not set correctly.")
 
-        self.assertAlmostEqual(ReactionEnsembleTest.volume, ReactionEnsembleTest.RE.get_volume(
-        ), places=9, msg="reaction ensemble temperature not set correctly.")
+        self.assertAlmostEqual(
+            ReactionEnsembleTest.volume,
+            ReactionEnsembleTest.RE.get_volume(),
+            places=9,
+            msg="reaction ensemble temperature not set correctly.")
 
 
 if __name__ == "__main__":

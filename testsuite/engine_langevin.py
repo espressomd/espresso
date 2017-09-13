@@ -21,10 +21,12 @@ class SwimmerTest(ut.TestCase):
         pos_1 = np.array([boxl / 2., boxl / 2., 2. * boxl / 3.])
 
         def z_f(t, z0):
-            return f_swim / gamma * (-1. / gamma + t + (1. / gamma) * np.exp(-gamma * t)) + z0
+            return f_swim / gamma * \
+                (-1. / gamma + t + (1. / gamma) * np.exp(-gamma * t)) + z0
 
         def z_v(t, z0):
-            return v_swim * (-1. / gamma + t + (1. / gamma) * np.exp(-gamma * t)) + z0
+            return v_swim * (-1. / gamma + t + (1. / gamma) *
+                             np.exp(-gamma * t)) + z0
 
         S = espressomd.System()
 

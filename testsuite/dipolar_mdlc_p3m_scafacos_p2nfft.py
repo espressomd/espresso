@@ -137,7 +137,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         del s.actors[0]
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES"), "Skipped, because test requires SCAFACOS_DIPOLES")
+    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES"),
+               "Skipped, because test requires SCAFACOS_DIPOLES")
     def test_scafacos_dipoles(self):
         s = self.s
         s.part.clear()
@@ -157,8 +158,19 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
 
-        scafacos = magnetostatics.Scafacos(bjerrum_length=1, method_name="p2nfft", method_params={
-                                           "p2nfft_verbose_tuning": 0, "pnfft_N": "32,32,32", "pnfft_n": "32,32,32", "pnfft_window_name": "bspline", "pnfft_m": "4", "p2nfft_ignore_tolerance": "1", "pnfft_diff_ik": "0", "p2nfft_r_cut": "11", "p2nfft_alpha": "0.31"})
+        scafacos = magnetostatics.Scafacos(
+            bjerrum_length=1,
+            method_name="p2nfft",
+            method_params={
+                "p2nfft_verbose_tuning": 0,
+                "pnfft_N": "32,32,32",
+                "pnfft_n": "32,32,32",
+                "pnfft_window_name": "bspline",
+                "pnfft_m": "4",
+                "p2nfft_ignore_tolerance": "1",
+                "pnfft_diff_ik": "0",
+                "p2nfft_r_cut": "11",
+                "p2nfft_alpha": "0.31"})
         s.actors.add(scafacos)
         s.integrator.run(0)
         expected = np.genfromtxt("p3m_magnetostatics_expected.data")[:, 1:]

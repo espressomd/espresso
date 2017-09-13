@@ -25,7 +25,8 @@ import numpy as np
 from espressomd.interactions import RigidBond
 
 
-@ut.skipIf(not espressomd.has_features("BOND_CONSTRAINT"), "Test requires BOND_CONSTRAINT feature")
+@ut.skipIf(not espressomd.has_features("BOND_CONSTRAINT"),
+           "Test requires BOND_CONSTRAINT feature")
 class RigidBondTest(ut.TestCase):
 
     def test(self):

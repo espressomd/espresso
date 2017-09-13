@@ -32,7 +32,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
     es = espressomd.System()
 
     def intersMatch(self, inType, outType, inParams, outParams):
-        """Check, if the interaction type set and gotten back as well as the bond 
+        """Check, if the interaction type set and gotten back as well as the bond
         parameters set and gotten back match. Only check keys present in
         inParams.
         """
@@ -50,7 +50,8 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
         return True
 
-    def generateTestForNon_bonded_interaction(_partType1, _partType2, _interClass, _params, _interName):
+    def generateTestForNon_bonded_interaction(
+            _partType1, _partType2, _interClass, _params, _interName):
         """Generates test cases for checking interaction parameters set and gotten back
         from Es actually match. Only keys which are present  in _params are checked
         1st and 2nd arg: Particle type ids to check on
@@ -78,8 +79,22 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 self.es.non_bonded_inter[partType1, partType2], interName)
             outParams = outInter.get_params()
 
-            self.assertTrue(self.intersMatch(interClass, type(outInter), params, outParams), interClass(
-                **params).type_name() + ": value set and value gotten back differ for particle types " + str(partType1) + " and " + str(partType2) + ": " + params.__str__() + " vs. " + outParams.__str__())
+            self.assertTrue(
+                self.intersMatch(
+                    interClass,
+                    type(outInter),
+                    params,
+                    outParams),
+                interClass(
+                    **params).type_name() +
+                ": value set and value gotten back differ for particle types " +
+                str(partType1) +
+                " and " +
+                str(partType2) +
+                ": " +
+                params.__str__() +
+                " vs. " +
+                outParams.__str__())
 
         return func
 

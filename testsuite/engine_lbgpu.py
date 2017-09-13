@@ -28,20 +28,44 @@ class SwimmerTest(ut.TestCase):
 
         S.part.add(id=0, pos=[6.0, 3.0, 2.0],
                    swimming={"mode": "pusher", "v_swim": 0.10,
-                             "dipole_length": 1.0, "rotational_friction":  2.0},
-                   quat=[np.sqrt(.5), np.sqrt(.5),          0,          0])
-        S.part.add(id=1, pos=[2.0, 3.0, 6.0],
-                   swimming={"mode": "pusher", "f_swim": 0.03,
-                             "dipole_length": 2.0, "rotational_friction": 20.0},
-                   quat=[np.sqrt(.5),          0, np.sqrt(.5),          0])
-        S.part.add(id=2, pos=[3.0, 2.0, 6.0],
-                   swimming={"mode": "puller", "v_swim": 0.15,
-                             "dipole_length": 0.5, "rotational_friction": 15.0},
-                   quat=[np.sqrt(.5),          0,          0, np.sqrt(.5)])
+                             "dipole_length": 1.0, "rotational_friction": 2.0},
+                   quat=[np.sqrt(.5), np.sqrt(.5), 0, 0])
+        S.part.add(
+            id=1,
+            pos=[
+                2.0,
+                3.0,
+                6.0],
+            swimming={
+                "mode": "pusher",
+                "f_swim": 0.03,
+                "dipole_length": 2.0,
+                "rotational_friction": 20.0},
+            quat=[
+                np.sqrt(.5),
+                0,
+                np.sqrt(.5),
+                0])
+        S.part.add(
+            id=2,
+            pos=[
+                3.0,
+                2.0,
+                6.0],
+            swimming={
+                "mode": "puller",
+                "v_swim": 0.15,
+                "dipole_length": 0.5,
+                "rotational_friction": 15.0},
+            quat=[
+                np.sqrt(.5),
+                0,
+                0,
+                np.sqrt(.5)])
         S.part.add(id=3, pos=[3.0, 6.0, 2.0],
                    swimming={"mode": "puller", "f_swim": 0.05,
-                             "dipole_length": 1.5, "rotational_friction":  6.0},
-                   quat=[0,          0, np.sqrt(.5), np.sqrt(.5)])
+                             "dipole_length": 1.5, "rotational_friction": 6.0},
+                   quat=[0, 0, np.sqrt(.5), np.sqrt(.5)])
 
     def run_and_check(self, S, lbm, vtk_name):
         S.integrator.run(self.sampsteps)
@@ -54,7 +78,8 @@ class SwimmerTest(ut.TestCase):
             different, difference = tests_common.calculate_vtk_max_pointwise_difference(
                 vtk_name, "engine_test_tmp.vtk", tol=2.0e-7)
             os.remove("engine_test_tmp.vtk")
-            print("Maximum deviation to the reference point is: {}".format(difference))
+            print(
+                "Maximum deviation to the reference point is: {}".format(difference))
             self.assertTrue(different)
 
     def test(self):
@@ -65,12 +90,22 @@ class SwimmerTest(ut.TestCase):
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(
-            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0, couple="2pt")
+            agrid=1.0,
+            tau=S.time_step,
+            fric=0.5,
+            visc=1.0,
+            dens=1.0,
+            couple="2pt")
         S.actors.add(lbm)
         self.run_and_check(S, lbm, "engine_lbgpu_2pt.vtk")
 
         lbm = espressomd.lb.LBFluid(
-            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0, couple="3pt")
+            agrid=1.0,
+            tau=S.time_step,
+            fric=0.5,
+            visc=1.0,
+            dens=1.0,
+            couple="3pt")
         self.run_and_check(S, lbm, "engine_lbgpu_3pt.vtk")
 
 

@@ -12,7 +12,10 @@ from numpy.random import random
 from espressomd import has_features
 
 
-@ut.skipIf(not has_features(["DIPOLES", "CUDA", "PARTIAL_PERIODIC", "ROTATION"]),
+@ut.skipIf(not has_features(["DIPOLES",
+                             "CUDA",
+                             "PARTIAL_PERIODIC",
+                             "ROTATION"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     longMessage = True
@@ -80,7 +83,8 @@ class DDSGPUTest(ut.TestCase):
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
             self.es.thermostat.turn_off()
-            # gamma should be zero in order to avoid the noise term in force and torque
+            # gamma should be zero in order to avoid the noise term in force
+            # and torque
             self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
             dds_cpu = DipolarDirectSumCpu(bjerrum_length=pf_dawaanr)
@@ -114,12 +118,43 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                self.assertTrue(self.vectorsTheSame(np.array(dawaanr_t[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i])),
-                                msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(i, np.array(dawaanr_t[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i])))
-                self.assertTrue(self.vectorsTheSame(np.array(dawaanr_f[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])),
-                                msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(i, np.array(dawaanr_f[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])))
-            self.assertAlmostEqual(dawaanr_e, ddsgpu_e * ratio_dawaanr_dds_gpu, places=3,
-                                   msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dawaanr_e, ratio_dawaanr_dds_gpu * ddsgpu_e))
+                self.assertTrue(
+                    self.vectorsTheSame(
+                        np.array(
+                            dawaanr_t[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_t[i])),
+                    msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(
+                        i,
+                        np.array(
+                            dawaanr_t[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_t[i])))
+                self.assertTrue(
+                    self.vectorsTheSame(
+                        np.array(
+                            dawaanr_f[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_f[i])),
+                    msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(
+                        i,
+                        np.array(
+                            dawaanr_f[i]),
+                        ratio_dawaanr_dds_gpu *
+                        np.array(
+                            ddsgpu_f[i])))
+            self.assertAlmostEqual(
+                dawaanr_e,
+                ddsgpu_e *
+                ratio_dawaanr_dds_gpu,
+                places=3,
+                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
+                    dawaanr_e,
+                    ratio_dawaanr_dds_gpu *
+                    ddsgpu_e))
 
             self.es.integrator.run(steps=0, recalc_forces=True)
 

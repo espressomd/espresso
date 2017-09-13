@@ -25,9 +25,10 @@ from espressomd.interactions import FeneBond
 from time import time
 
 
-@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"), "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
+@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
+           "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
 class LangevinThermostat(ut.TestCase):
-    """Tests the velocity distribution created by the Langevin thermostat against 
+    """Tests the velocity distribution created by the Langevin thermostat against
        the single component Maxwell distribution."""
 
     s = espressomd.System()
@@ -42,7 +43,8 @@ class LangevinThermostat(ut.TestCase):
     def single_component_maxwell(self, x1, x2, kT):
         """Integrate the probability density from x1 to x2 using the trapez rule"""
         x = np.linspace(x1, x2, 1000)
-        return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
+        return np.trapz(np.exp(-x**2 / (2. * kT)), x) / \
+            np.sqrt(2. * np.pi * kT)
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
@@ -84,7 +86,8 @@ class LangevinThermostat(ut.TestCase):
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
 
-    @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"), "Test requires LANGEVIN_PER_PARTICLE")
+    @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"),
+               "Test requires LANGEVIN_PER_PARTICLE")
     def test_langevin_per_particle(self):
         """Test for Langevin particle. Covers all combinations of
            particle specific gamma and temp set or not set.

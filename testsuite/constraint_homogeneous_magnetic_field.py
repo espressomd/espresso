@@ -68,9 +68,13 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
             torque_expected1 = numpy.cross(dip_mom1, H_field)
             for i in range(3):
                 self.assertAlmostEqual(
-                    self.S.part[0].torque_lab[i], torque_expected0[i], places=10)
+                    self.S.part[0].torque_lab[i],
+                    torque_expected0[i],
+                    places=10)
                 self.assertAlmostEqual(
-                    self.S.part[1].torque_lab[i], torque_expected1[i], places=10)
+                    self.S.part[1].torque_lab[i],
+                    torque_expected1[i],
+                    places=10)
 
 
 if __name__ == "__main__":

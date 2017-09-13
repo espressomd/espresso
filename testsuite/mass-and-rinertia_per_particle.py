@@ -6,7 +6,9 @@ import espressomd
 import math
 
 
-@ut.skipIf(not espressomd.has_features(["MASS", "ROTATIONAL_INERTIA", "LANGEVIN_PER_PARTICLE"]),
+@ut.skipIf(not espressomd.has_features(["MASS",
+                                        "ROTATIONAL_INERTIA",
+                                        "LANGEVIN_PER_PARTICLE"]),
            "Features not available, skipping test!")
 class ThermoTest(ut.TestCase):
     longMessage = True
@@ -117,7 +119,8 @@ class ThermoTest(ut.TestCase):
 
         # 2 different langevin parameters for particles
         temp = np.array([2.5, 2.0])
-        # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions X Y Z]
+        # gamma_tran/gamma_rot matrix: [2 types of particless] x [3 dimensions
+        # X Y Z]
         gamma_tran = np.zeros((2, 3))
         gamma_tr = np.zeros((2, 3))
         gamma_rot = np.zeros((2, 3))
@@ -155,7 +158,11 @@ class ThermoTest(ut.TestCase):
 
         if "PARTICLE_ANISOTROPY" in espressomd.features():
             self.es.thermostat.set_langevin(
-                kT=kT, gamma=[gamma_global[0], gamma_global[1], gamma_global[2]])
+                kT=kT,
+                gamma=[
+                    gamma_global[0],
+                    gamma_global[1],
+                    gamma_global[2]])
         else:
             self.es.thermostat.set_langevin(kT=kT, gamma=gamma_global[0])
 
@@ -235,11 +242,15 @@ class ThermoTest(ut.TestCase):
                     dr2[k, :] = np.power((pos[:] - pos0[ind, :]), 2)
                     dt = (int_steps * (i + 1) + therm_steps) * \
                         self.es.time_step
-                    # translational diffusion variance: after a closed-form integration of the Langevin EOM
+                    # translational diffusion variance: after a closed-form
+                    # integration of the Langevin EOM
                     sigma2_tr[k] = 0.0
                     for j in range(3):
-                        sigma2_tr[k] = sigma2_tr[k] + D_tr[k, j] * (
-                            2 * dt + dt0[k, j] * (- 3 + 4 * math.exp(- dt / dt0[k, j]) - math.exp(- 2 * dt / dt0[k, j])))
+                        sigma2_tr[k] = sigma2_tr[k] + D_tr[k,
+                                                           j] * (2 * dt + dt0[k,
+                                                                              j] * (- 3 + 4 * math.exp(- dt / dt0[k,
+                                                                                                                  j]) - math.exp(- 2 * dt / dt0[k,
+                                                                                                                                                j])))
                     dr_norm[k] = dr_norm[k] + \
                         (sum(dr2[k, :]) - sigma2_tr[k]) / sigma2_tr[k]
 
@@ -279,21 +290,34 @@ class ThermoTest(ut.TestCase):
                 print("Deviation in rotational energy per degrees of freedom: {0} {1} {2}".format(
                     do_vec[k, 0], do_vec[k, 1], do_vec[k, 2]))
             print(
-                "Deviation in translational diffusion: {0} ".format(dr_norm[k]))
+                "Deviation in translational diffusion: {0} ".format(
+                    dr_norm[k]))
 
-            self.assertLessEqual(abs(
-                dv[k]), tolerance, msg='Relative deviation in translational energy too large: {0}'.format(dv[k]))
+            self.assertLessEqual(
+                abs(
+                    dv[k]),
+                tolerance,
+                msg='Relative deviation in translational energy too large: {0}'.format(
+                    dv[k]))
             if "ROTATION" in espressomd.features():
-                self.assertLessEqual(abs(
-                    do[k]), tolerance, msg='Relative deviation in rotational energy too large: {0}'.format(do[k]))
+                self.assertLessEqual(
+                    abs(
+                        do[k]),
+                    tolerance,
+                    msg='Relative deviation in rotational energy too large: {0}'.format(
+                        do[k]))
                 self.assertLessEqual(abs(
                     do_vec[k, 0]), tolerance, msg='Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k, 0]))
                 self.assertLessEqual(abs(
                     do_vec[k, 1]), tolerance, msg='Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k, 1]))
                 self.assertLessEqual(abs(
                     do_vec[k, 2]), tolerance, msg='Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k, 2]))
-            self.assertLessEqual(abs(
-                dr_norm[k]), tolerance, msg='Relative deviation in translational diffusion is too large: {0}'.format(dr_norm[k]))
+            self.assertLessEqual(
+                abs(
+                    dr_norm[k]),
+                tolerance,
+                msg='Relative deviation in translational diffusion is too large: {0}'.format(
+                    dr_norm[k]))
 
     def test(self):
         for i in range(4):

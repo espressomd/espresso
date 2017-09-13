@@ -63,7 +63,8 @@ class Observables(ut.TestCase):
                 if espressomd.has_features(["ROTATION"]):
                     self.es.part[i].omega_lab = random(3)
 
-    def generate_test_for_pid_observable(_obs_name, _pprop_name, _agg_type=None):
+    def generate_test_for_pid_observable(
+            _obs_name, _pprop_name, _agg_type=None):
         """Generates test cases for observables working on particle id lists"""
 
         pprop_name = _pprop_name
@@ -88,8 +89,14 @@ class Observables(ut.TestCase):
 
             # Data from observable
             obs_data = obs_name(ids=id_list).calculate()
-            self.assertTrue(self.arraysNearlyEqual(obs_data, part_data),
-                            "Data did not agree for observable " + str(obs_name) + " and particle property " + pprop_name)
+            self.assertTrue(
+                self.arraysNearlyEqual(
+                    obs_data,
+                    part_data),
+                "Data did not agree for observable " +
+                str(obs_name) +
+                " and particle property " +
+                pprop_name)
 
         return func
 
@@ -110,15 +117,21 @@ class Observables(ut.TestCase):
     def test_stress_tensor(self):
         s = self.es.analysis.stress_tensor()["total"].reshape(9)
         obs_data = np.array(StressTensor().calculate())
-        self.assertTrue(self.arraysNearlyEqual(
-            s, obs_data), "Stress tensor from analysis and observable did not agree")
+        self.assertTrue(
+            self.arraysNearlyEqual(
+                s,
+                obs_data),
+            "Stress tensor from analysis and observable did not agree")
 
     def test_stress_tensor_acf(self):
         s = self.es.analysis.stress_tensor()["total"].reshape(9)
         s = np.array((s[1], s[5], s[6], s[0] - s[4], s[0] - s[8], s[4] - s[8]))
         obs_data = np.array(StressTensorAcf().calculate())
-        self.assertTrue(self.arraysNearlyEqual(
-            s, obs_data), "Stress tensor from analysis and observable StressTensorAcf did not agree")
+        self.assertTrue(
+            self.arraysNearlyEqual(
+                s,
+                obs_data),
+            "Stress tensor from analysis and observable StressTensorAcf did not agree")
 
     def test_com_position(self):
         if espressomd.has_features(["MASS"]):

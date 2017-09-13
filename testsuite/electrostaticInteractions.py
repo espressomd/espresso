@@ -39,24 +39,35 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         print("ut.TestCase setUp")
 
     if espressomd.has_features(["P3M"]):
-        test_P3M = generate_test_for_class(system, P3M, dict(bjerrum_length=1.0,
-                                                             epsilon=0.0,
-                                                             r_cut=2.4,
-                                                             mesh=[2, 2, 2],
-                                                             cao=1,
-                                                             alpha=12,
-                                                             accuracy=0.01,
-                                                             tune=False))
+        test_P3M = generate_test_for_class(
+            system,
+            P3M,
+            dict(
+                bjerrum_length=1.0,
+                epsilon=0.0,
+                r_cut=2.4,
+                mesh=[
+                    2,
+                    2,
+                    2],
+                cao=1,
+                alpha=12,
+                accuracy=0.01,
+                tune=False))
 
     if espressomd.has_features(["COULOMB_DEBYE_HUECKEL"]):
-        test_CDH = generate_test_for_class(system, CDH, dict(bjerrum_length=1.0,
-                                                             kappa=2.3,
-                                                             r_cut=2,
-                                                             r0=1,
-                                                             r1=1.9,
-                                                             eps_int=0.8,
-                                                             eps_ext=1,
-                                                             alpha=2))
+        test_CDH = generate_test_for_class(
+            system,
+            CDH,
+            dict(
+                bjerrum_length=1.0,
+                kappa=2.3,
+                r_cut=2,
+                r0=1,
+                r1=1.9,
+                eps_int=0.8,
+                eps_ext=1,
+                alpha=2))
 
 
 if __name__ == "__main__":

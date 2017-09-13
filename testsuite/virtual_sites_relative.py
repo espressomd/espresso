@@ -27,15 +27,17 @@ from tests_common import verify_lj_forces
 from numpy import random
 
 
-@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "Test requires VIRTUAL_SITES_RELATIVE")
+@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),
+           "Test requires VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     s = espressomd.System()
 
     def multiply_quaternions(self, a, b):
-        return np.array((a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-                         a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-                         a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3],
-                         a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]))
+        return np.array(
+            (a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
+             a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+                a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3],
+                a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]))
 
     def director_from_quaternion(self, quat):
         return np.array((
@@ -113,7 +115,8 @@ class VirtualSites(ut.TestCase):
         for i in 2, 3, 4:
             self.verify_vs(s.part[i])
 
-        # Check if still true, when non-virtual particle has rotated and a linear motion
+        # Check if still true, when non-virtual particle has rotated and a
+        # linear motion
         s.part[1].omega_lab = -5, 3, 8.4
         s.integrator.run(10)
         for i in 2, 3, 4:
@@ -178,10 +181,12 @@ class VirtualSites(ut.TestCase):
             s.part.add(id=3 * i, pos=random.random(3) * l, type=1,
                        omega_lab=0.3 * random.random(3), v=random.random(3))
             # lj spheres
-            s.part.add(
-                id=3 * i + 1, pos=s.part[3 * i].pos + s.part[3 * i].director / 2., type=0)
-            s.part.add(
-                id=3 * i + 2, pos=s.part[3 * i].pos - s.part[3 * i].director / 2., type=0)
+            s.part.add(id=3 * i + 1,
+                       pos=s.part[3 * i].pos + s.part[3 * i].director / 2.,
+                       type=0)
+            s.part.add(id=3 * i + 2,
+                       pos=s.part[3 * i].pos - s.part[3 * i].director / 2.,
+                       type=0)
             s.part[3 * i + 1].vs_auto_relate_to(3 * i)
             s.part[3 * i + 2].vs_auto_relate_to(3 * i)
 
@@ -197,7 +202,8 @@ class VirtualSites(ut.TestCase):
             s.thermostat.set_langevin(kT=kT, gamma=gamma)
             s.integrator.run(300)
             s.thermostat.turn_off()
-            # Constant energy to get rid of thermostat forces in the verification
+            # Constant energy to get rid of thermostat forces in the
+            # verification
             s.integrator.run(2)
             # Theck the virtual sites config,pos and vel of the lj spheres
             for j in range(int(n / 2)):
@@ -205,14 +211,17 @@ class VirtualSites(ut.TestCase):
                 self.verify_vs(s.part[3 * j + 2])
 
             # Verify lj forces on the particles. The non-virtual particles are skipeed
-            # because the forces on them originate from the vss and not the lj interaction
+            # because the forces on them originate from the vss and not the lj
+            # interaction
             verify_lj_forces(s, 1E-10, 3 * np.arange(int(n / 2), dtype=int))
 
         # Turn off lj interaction
         s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=0, sigma=0, cutoff=0, shift=0)
 
-    @ut.skipIf(espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"), "LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
+    @ut.skipIf(
+        espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"),
+        "LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
     def test_lj(self):
         """Run LJ fluid test for different cell systems and skins."""
         s = self.s
