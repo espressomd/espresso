@@ -3,6 +3,7 @@
 
 #include <boost/variant.hpp>
 
+#include "None.hpp"
 #include "core/Vector.hpp"
 #include "utils/AutoObjectId.hpp"
 
@@ -11,22 +12,9 @@ class ScriptInterfaceBase;
 using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
 
 /**
- * @brief Type to indicate no value in Variant.
+ * @brief None-"literal".
  */
-class None {
-public:
-  None() = default;
-  None(std::nullptr_t &) {}
-
-  bool operator==(None const &) const { return true; }
-  bool operator!=(None const &) const { return false; }
-
-  operator bool() const { return false; }
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &, long int /* version */) {}
-};
+constexpr const None none{};
 
 /**
  * @brief Possible types for parameters.
