@@ -1,6 +1,7 @@
 from __future__ import print_function
 import espressomd
 from espressomd.interactions import *
+from samples_common import open
 
 system = espressomd.System()
 f = FeneBond(k=1, d_r_max=1)

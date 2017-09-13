@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
+import numpy
 import espressomd
 from espressomd import thermostat
-import numpy
+from samples_common import open
 
 print("""
 =======================================================

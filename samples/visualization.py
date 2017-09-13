@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
+import numpy
+from matplotlib import pyplot
+from threading import Thread
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd import visualization
-import numpy
-from matplotlib import pyplot
-from threading import Thread
 
 print("""
 =======================================================
@@ -113,10 +113,6 @@ visualizer = visualization.mayaviLive(system)
 #  Warmup Integration                                       #
 #############################################################
 
-# open Observable file
-obs_file = open("pylj_liquid.obs", "w")
-obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-
 print("""
 Start warmup integration:
 At maximum {} times {} steps
@@ -158,12 +154,6 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # periodicity   {0.periodicity}
 # verlet_reuse  {0.verlet_reuse}
 #""".format(system))
-
-# write parameter file
-
-set_file = open("pylj_liquid.set", "w")
-set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
-               (box_l, system.time_step, system.cell_system.skin))
 
 #############################################################
 #      Integration                                          #
@@ -228,18 +218,6 @@ t.daemon = True
 t.start()
 visualizer.registerCallback(update_plot, interval=2000)
 visualizer.start()
-
-# write end configuration
-end_file = open("pylj_liquid.end", "w")
-end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
-end_file.write("{ particles {id pos type} }")
-for i in range(n_part):
-    end_file.write("%s\n" % system.part[i].pos)
-    # id & type not working yet
-
-obs_file.close()
-set_file.close()
-end_file.close()
 
 # terminate program
 print("\nFinished.")
