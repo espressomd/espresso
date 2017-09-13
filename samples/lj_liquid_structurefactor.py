@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import analyze
@@ -128,9 +127,6 @@ system.cell_system.max_num_cells = 2744
 # open Observable file
 obs_file = open("pylj_liquid.obs", "w")
 obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-# set obs_file [open "$name$ident.obs" "w"]
-# puts $obs_file "\# System: $name$ident"
-# puts $obs_file "\# Time\tE_tot\tE_kin\t..."
 
 print("""
 Start warmup integration:
@@ -149,11 +145,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.mindist()
-#  print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
-#   write observables
-#    puts $obs_file "{ time [setmd time] } [analyze energy]"
 
 #   Increase LJ cap
     lj_cap = lj_cap + 10
@@ -162,13 +155,11 @@ while (i < warm_n_times and act_min_dist < min_dist):
 # Just to see what else we may get from the c code
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
-# pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__(), width=1)
 
 
 # write parameter file
 
-# polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.cell_system.skin))
@@ -184,7 +175,6 @@ lj_cap = 0
 system.non_bonded_inter.set_force_cap(lj_cap)
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print(initial energies)
 energies = system.analysis.energy()
 print(energies)
 
@@ -195,26 +185,14 @@ for i in range(0, int_n_times):
     system.integrator.run(int_steps)
 
     structurefactor_k, structurefactor_Sk = system.analysis.structure_factor(
-        system, structurefactor_type_list, structurefactor_order)
+        structurefactor_type_list, structurefactor_order)
 
     energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
     linear_momentum = system.analysis.analyze_linear_momentum()
     print(linear_momentum)
-    # print(system.analysis.calc_rh(0,3,5))
 
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
-
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
 
 # rescale structure factor values and write out data
 structurefactor_Sk /= int_n_times
@@ -235,7 +213,6 @@ for i in range(n_part):
 obs_file.close()
 set_file.close()
 end_file.close()
-# es._espressoHandle.die()
 
 # terminate program
 print("\nFinished.")
