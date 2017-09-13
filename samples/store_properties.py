@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
