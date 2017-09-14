@@ -231,7 +231,7 @@ class openGLLive(object):
         for s in coll_shape_obj['Shapes::Cylinder']:
             pos = np.array(s[0].get_parameter('center'))
             a = np.array(s[0].get_parameter('axis'))
-            l = 2.0*s[0].get_parameter('length')
+            l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append([pos - a*l*0.5, pos + a*l*0.5, r, s[1]])
 
