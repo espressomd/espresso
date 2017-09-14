@@ -74,7 +74,7 @@ class VirtualSites(ut.TestCase):
         s = self.s
         s.box_l = 2, 2, 2
         s.part.clear()
-        s.time_step = 0.01
+        s.time_step = 0.008
         s.part.clear()
         s.thermostat.turn_off()
         s.non_bonded_inter[0, 0].lennard_jones.set_params(
