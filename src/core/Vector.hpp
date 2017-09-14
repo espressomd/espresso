@@ -259,9 +259,11 @@ Vector<N, T> operator*(Vector<N, T> const &b, T const &a) {
   return ret;
 }
 
-template <size_t N, typename T> void operator*=(Vector<N, T> &b, T const &a) {
+template <size_t N, typename T>
+Vector<N, T> &operator*=(Vector<N, T> &b, T const &a) {
   std::transform(b.begin(), b.end(), b.begin(),
                  [a](T const &val) { return a * val; });
+  return b;
 }
 
 /* Scalar division */
@@ -274,9 +276,11 @@ Vector<N, T> operator/(Vector<N, T> const &a, T const &b) {
   return ret;
 }
 
-template <size_t N, typename T> void operator/=(Vector<N, T> &a, T const &b) {
+template <size_t N, typename T>
+Vector<N, T> &operator/=(Vector<N, T> &a, T const &b) {
   std::transform(a.begin(), a.end(), a.begin(),
                  [b](T const &val) { return val / b; });
+  return a;
 }
 
 /* Scalar product */
