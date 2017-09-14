@@ -74,13 +74,13 @@ The checkpointing module can be imported with::
     [ checkpoint_path= ]
 
 Determines the identifier for a checkpoint. Legal characters for an id
-are “0-9”, “a-zA-Z”, “-”, “_”.
+are "0-9", "a-zA-Z", "-", "_".
 
 Specifies the relative or absolute path where the checkpoints are
 stored.
 
-For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id=“mycheckpoint”)``
-would create the new checkpoint with id “mycheckpoint” and all the
+For example ``checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")``
+would create the new checkpoint with id "mycheckpoint" and all the
 checkpointing data will be stored in the current directory.
 
 After the system and checkpointing user variables are set up they can be
@@ -90,28 +90,28 @@ checkpointing.
 
 To give an example::
 
-    myvar = “some variable value”
+    myvar = "some variable value"
     skin = 0.4
-    checkpoint.register(“myvar”)
-    checkpoint.register(“skin”)
+    checkpoint.register("myvar")
+    checkpoint.register("skin")
 
     system = espressomd.System()
     # ... set system properties like box_l or
-    timestep here ... checkpoint.register(“system”)
+    timestep here ... checkpoint.register("system")
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-    checkpoint.register(“system.thermostat”)
+    checkpoint.register("system.thermostat")
 
     # ... set system.non_bonded_inter here ...
-    checkpoint.register(“system.non_bonded_inter”)
+    checkpoint.register("system.non_bonded_inter")
 
     # ... add particles to the system with system.part.add(...) here ...
-    checkpoint.register(“system.part”)
+    checkpoint.register("system.part")
 
     # ... set charges of particles here ... from espressomd import
     electrostatics p3m = electrostatics.P3M(bjerrum_length=1.0, accuracy=1e-2)
     system.actors.add(p3m)
-    checkpoint.register(“p3m”)
+    checkpoint.register("p3m")
 
 will register the user variables ``skin`` and ``myvar``, system properties, a
 langevin thermostat, non-bonded interactions, particle properties and a p3m
@@ -150,13 +150,15 @@ re-registered when the same checkpoint id is used later.
 Following the example above, the next example loads the last checkpoint,
 restores the state of all checkpointed objects and registers a signal.
 
-.. code:: python
+.. code::
+
     import espressomd from espressomd import checkpointing import signal
 
-    checkpoint = checkpointing.Checkpointing(checkpoint\_id=“mycheckpoint”)
+    checkpoint = checkpointing.Checkpointing(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
-    system = espressomd.System() system.cell\_system.skin = skin
+    system = espressomd.System()
+    system.cell_system.skin = skin
     system.actors.add(p3m)
 
     #signal.SIGINT: signal 2, is sent when ctrl+c is pressed
@@ -196,10 +198,10 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System()
     # ... add particles here
-    h5 = h5md.H5md(filename=“trajectory.h5”, write_pos=True, write_vel=True)
+    h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
 If a file with the given filename exists and has a valid H5MD structures
-it will be backed up to a file with suffix “.bak”. This file will be
+it will be backed up to a file with suffix ".bak". This file will be
 removed by the close() method of the class which has to be called at the
 end of the simulation to close the file. The current implementation
 allows to write the following properties: positions, velocities, forces,
@@ -236,88 +238,6 @@ h5.write()
 
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
-
-Writing and reading binary files
---------------------------------
-
-Binary files are written using the command
-
-writemd …
-
-This will write out particle data to the Tcl channel for all particles
-in binary format. Apart from the mandatory particle id, only limited
-information can be stored. The coordinates (, and ), velocities (, and )
-and forces (, and ). Other information should be stored in a blockfile
-or reconstructed differently. Note that since both ``blockfile`` and
-``writemd`` are using a Tcl channel, it is actually possible to mix
-them, so that you can write a single checkpoint file. However, the
-``blockfile read auto`` mechanism cannot handle the binary section, thus
-you need to read this section manually. Reading of binary particle data
-happens through
-
-readmd
-
-For the exact format of the written binary sequence, see
-``src/tcl/binary_file_tcl.cpp``.
-
-MPI-IO
-------
-
-When using with MPI, blockfiles and writemd have the disadvantage, that
-the master node does *all* the output. This is done by sequentially
-communicating all particle data to the master node. MPI-IO offers the
-possibility to write out particle data in parallel using binary IO. To
-output variables and other non-array information, use normal blockfiles
-(section [sec:structured-file-format]).
-
-To dump data using MPI-IO, use the following syntax:
-
-mpiio …
-
-This command writes data to several files using as common filename
-prefix. Beware, that must not be a Tcl channel but a string which must
-not contain colons. The data can be positions (), velocities (),
-particle types () and particle bonds () or any combination of these. The
-particle ids are always dumped. For safety reasons, MPI-IO will not
-overwrite existing files, so if the command fails and prints
-``MPI_ERR_IO`` make sure the files are non-existent.
-
-The files produced by this command are (assumed is “1”):
-
-1.head
-    Internal information (Dumped fields, bond partner num); always
-    produced
-
-1.pref
-    Internal information (Exscan results of nlocalparts); always
-    produced
-
-1.ids
-    Particle ids; always produced
-
-1.type
-    Particle types; optional
-
-1.pos
-    Particle positions; optional
-
-1.vel
-    Particle velocities; optional
-
-1.bond
-    Bond information; optional
-
-1.boff
-    Internal bond prefix information; optional, necessary to read 1.bond
-
-Currently, these files have to be read by exactly the same number of MPI
-processes that was used to dump them, otherwise an error is signalled.
-Also, the same type of machine (endianess, byte order) has to be used.
-Otherwise only garbage will be read. The read command replaces the
-particles, i.e. all previous existent particles will be *deleted*.
-
-There is a python script (``tools/mpiio2blockfile.py``) which converts
-MPI-IO snapshots to regular blockfiles.
 
 Writing VTF files
 -----------------
@@ -431,122 +351,42 @@ vtfpid
 If is the id of a particle as used in , this command returns the atom id
 used in the VTF, VSF or VCF formats.
 
-``writevtk``: Particle Visualization in paraview
-------------------------------------------------
+.. _MDAnalysis:
 
-This feature allows to export the particle positions in a paraview  [3]_
-compatible VTK file. Paraview is a powerful and easy to use open-source
-visualization program for scientific data. Since can export the
-lattice-Boltzmann velocity field [ssec:LBvisualization] in the VTK
-format as well and paraview allows to visualize particles with glyphs
-and vector fields with stream lines, glyphs, contourplots, etc., one can
-use it so completely visualize a coupled lattice-Boltzmann MD
-simulation. It can also create videos without much effort if one exports
-data of individual time steps into separate files with filenames
-including a running index (``data_0.vtk``, ``data_1.vtk``, ...).
+Writing various formats using MDAnalysis
+----------------------------------------
 
-writevtk
+If the MDAnalysis package (http://mdanalysis.org) is installed, it
+is possible to use it to convert frames to any of the supported
+configuration/trajectory formats, including PDB, GROMACS, GROMOS,
+CHARMM/NAMD, AMBER, LAMMPS, ...)
 
-Name of the file to export the particle positions into.
+To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
+the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
+using MDAnalysis. A simple example is the following:
 
-Specifies a list of particle types which should be exported. The default
-is . Alternatively, a list of type number can be given. Exporting the
-positions of all particles but in separate files might make sense if one
-wants to distinguish the different particle types in the visualization
-(i.e. by color or size). To export a type ``1`` use something along
-``writevtk test.tcl 1``. To export types ``1``, ``5``, ``7``, which are
-not to be distinguished in the visualization, use
-``writevtk test.tcl 7 1 5``. The order in the list is arbitrary, but
-duplicates are *not* ignored!
+.. code:: python
 
-Reading and Writing PDB/PSF files
----------------------------------
+    import espressomd
+    import MDAnalysis as mda
+    from espressomd import MDA_ESP
+    system = espressomd.System()
+    # ... add particles here
+    eos = MDA_ESP.Stream(system) # create the stream
+    u =  mda.Universe( eos.topology, eos.trajectory ) # create the MDA universe
 
-The PDB (Brookhaven Protein DataBase) format is a widely used format for
-describing atomistic configurations. PSF is a format that is used to
-describe the topology of a PDB file.
+    # example: write a single frame to PDB
+    u.atoms.write("system.pdb")
 
-When visualizing your system with VMD, it is recommended to use the VTF
-format instead (see section [sec:vtf]), as it was specifically designed
-for visualizations with VMD. In contrast to the PDB/PSF formats, in VTF
-files it is possible to specify the VDW radii of the particles, to have
-a varying simulation box size, etc.
+    # example: save the trajectory to GROMACS format
+    from MDAnalysis.coordinates.TRR import TRRWriter
+    W = TRRWriter("traj.trr",n_atoms=len(system.part)) # open the trajectory file
+    for i in range(100):
+        system.integrator.run(1)
+        u.load_new(eos.trajectory) # load the frame to the MDA universe
+        W.write_next_timestep(u.trajectory.ts) # append it to the trajectory
 
-: Writing the topology
-~~~~~~~~~~~~~~~~~~~~~~
-
-writepsf
-
-Writes the current topology to the file (here, is not a channel, since
-additional information cannot be written anyway). , and so on are
-parameters describing a system consisting of equally long charged
-polymers, counterions and salt. This information is used to set the
-residue name and can be used to color the atoms in VMD. If you specify ,
-the residue name is taken from the molecule identity of the particle. Of
-course different kinds of topologies can also be handled by modified
-versions of .
-
-: Writing the coordinates
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-writepdb writepdbfoldchains writepdbfoldtopo
-
-Variant writes the corresponding particle data.
-
-Variant writes folded particle data where the folding is performed on
-chain centers of mass rather than single particles. In order to fold in
-this way the chain topology and box length must be specified. Note that
-this method is outdated. Use variant instead.
-
-Variant writes folded particle data where the folding is performed on
-chain centers of mass rather than single particles. This method uses the
-internal box length and topology information from espresso. If you wish
-to shift particles prior to folding then supply the optional shift
-information. should be a three member tcl list consisting of x, y, and z
-shifts respectively and each number should be a floating point (ie with
-decimal point).
-
-: Reading the coordinates and interactions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-| readpdb pdb\_file type first\_id
-
-Reads the positions and possibly charges, types and Lennard-Jones
-interactions from the file and a corresponding Gromacs topology file .
-The topology file must contain the ``atoms`` and ``atomtypes`` sections,
-it may be necessary to use the Gromacs preprocessor to obtain a complete
-file from a system configuration and a force field.
-
-Any offset of the particle positions if removed, such that the lower
-left corner bounding box of the particles is in the origin. If
-``fit_to_box`` is given, the box size if increased to hold the particles
-if necessary. If it is not set and the particles do not fit into the
-box, the behavior is undefined.
-
-sets the particle type for the added particles. If there is a topology
-file give that contains a types for the particles, the particles get
-types by the order in the topology file plus . If the corresponding type
-in the topology file has a charge, it is used, otherwise the particle
-charge defaults to zero.
-
-The particles get consecutive id’s in the order of the pdb file,
-starting at . Please be aware that existing particles get overwritten by
-values from the file.
-
-The ``lj_with`` section produces Lennard-Jones interactions between the
-type and the types defined by the topology file. The interaction
-parameters are calculated as :math:`\epsilon_{\text{othertype},j} =
-\sqrt{\epsilon_{\text{othertype}} \epsilon_j}` and
-:math:`\sigma_{\text{othertype},j}
-=\frac{1}{2}\left( \sigma_{\text{othertype}} + \sigma_j \right)`, where
-:math:`j` runs over the atomtypes defined in the topology file. This
-corresponds to the combination rule 2 of Gromacs. There may be multiple
-such sections. The cutoff is determined by as
-:math:`\text{cutoff}\times \sigma_{ij}` in a relative fashion. The
-potential is shifted so that it vanishes at the cutoff. The command
-returns the number of particles that were successfully added.
-
-Reading bonded interactions and dihedrals is currently not supported.
+For other examples see samples/python/MDAnalysisIntegration.py
 
 Online-visualisation with Mayavi or OpenGL
 ------------------------------------------
@@ -554,8 +394,8 @@ Online-visualisation with Mayavi or OpenGL
 With the python interface, |es| features two possibilities for
 online-visualization:
 
-#. Using the mlab module to drive *Mayavi, a “3D scientific data
-   visualization and plotting in Python”*. Mayavi has a user-friendly
+#. Using the mlab module to drive *Mayavi, a "3D scientific data
+   visualization and plotting in Python"*. Mayavi has a user-friendly
    GUI to specify the appearance of the output.
    Additional requirements:
    python module *mayavi*, VTK (package *python-vtk* for Debian/Ubuntu).
