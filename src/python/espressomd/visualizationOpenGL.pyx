@@ -79,7 +79,7 @@ class openGLLive(object):
                 self.specs[key] = kwargs[key]
 
         #DEPENDENCIES
-        if not 'EXTERNAL_FORCES' in espressomd.features():
+        IF not EXTERNAL_FORCES:
             self.specs['drag_enabled'] = False
 
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 - self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
@@ -257,7 +257,6 @@ class openGLLive(object):
         return v1, v2
 
     def rasterizeBruteForce(self,shape):
-        #box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         sp = max(self.system.box_l)/self.specs['rasterize_resolution']
         res = np.array(self.system.box_l)/sp
 
@@ -293,9 +292,6 @@ class openGLLive(object):
             self.drawSystemBox()
 
         self.drawSystemParticles()
-
-#		drawSphere(self.smooth_light_pos,0.5,[0,1.0,0,1.0],[1.,1.,1.])
-#		drawSphere(self.particle_COM,0.5,[1.0,0,0,1.0],[1.,1.,1.])
 
         if self.specs['draw_bonds']:
             self.drawBonds()
@@ -625,7 +621,6 @@ class openGLLive(object):
 
     def fcolorToId(self, fcol):
         if (fcol==[0,0,0]).all():
-#if (fcol==self.specs['background_color']).all():
             return -1
         else:
             return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
@@ -717,12 +712,8 @@ class openGLLive(object):
 
     #ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def setLightPos(self): 
-#glPushMatrix()
-#        glLoadIdentity()
         if self.specs['light_pos'] == 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
-        #else:
-        #    glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
 
         self.setCameraSpotlight()
     
@@ -762,10 +753,6 @@ class openGLLive(object):
                      'background_color'][1], self.specs['background_color'][2], 1.)
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        #glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-        #glDepthMask(GL_TRUE)
-        #glAlphaFunc(GL_GREATER, 0.5)
-        #glEnable(GL_ALPHA_TEST)
 
         glEnable(GL_BLEND)
         
@@ -900,7 +887,6 @@ def calcAngle(d):
 
 def drawTriangles(triangles, color, material):
     np.random.seed(1)
-    #setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
 
     glBegin(GL_TRIANGLES)
     for t in triangles:
@@ -913,12 +899,6 @@ def drawTriangles(triangles, color, material):
 
 def drawPoints(points, pointsize, color, material):
     setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
-
-#    for p in points:
-#        glPushMatrix()
-#        glTranslatef(p[0], p[1], p[2])
-#        glutSolidSphere(0.43, 3, 2)
-#        glPopMatrix()
     glEnable(GL_POINT_SMOOTH)
 
     glPointSize( pointsize )
@@ -926,8 +906,6 @@ def drawPoints(points, pointsize, color, material):
     for p in points:
         glVertex3f(p[0],p[1],p[2])
     glEnd()
-
-    #glPopMatrix()
 
 def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False):
     setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
@@ -955,24 +933,10 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
 
 
     glRotatef(ax, rx, ry, 0.0)
-
-
-#        glBegin(GL_TRIANGLE_FAN)
-#        glVertex3f(0,0,0)
-#        for i in range(quality+1):
-#            a = 1.0*i/quality*2.0*np.pi
-#            an = 1.0*(i+1)/quality*2.0*np.pi
-#            x = radius * cos(a)
-#            y = radius * sin(a)
-#            glVertex3f(x,y,0)
-#
-#        glEnd()
-
     gluCylinder(quadric, radius, radius, length, quality, quality)
 
     if draw_caps:
         gluDisk(quadric, 0, radius, quality, quality) 
-#glTranslatef(d[0], d[1], d[2])
         glTranslatef(0,0,v)
         gluDisk(quadric, 0, radius, quality, quality) 
 
@@ -994,14 +958,12 @@ def drawArrow(pos, d, radius, color, quality):
     #angle,t,length = calcAngle(d)
     glTranslatef(pos[0], pos[1], pos[2])
     glRotatef(ax, rx, ry, 0.0)
-    # glRotatef(angle,t[0],t[1],t[2]);
     quadric = gluNewQuadric()
     gluCylinder(quadric, radius, radius, v, quality, quality)
 
     glPopMatrix()
     e = pos + d
     glTranslatef(e[0], e[1], e[2])
-    # glRotatef(angle,t[0],t[1],t[2]);
     glRotatef(ax, rx, ry, 0.0)
 
     glutSolidCone(radius * 3,radius* 3, quality, quality)
@@ -1074,10 +1036,6 @@ class MouseManager(object):
 
         for me in self.mouseEventsFreeMotion:
             me.callback(self.mousePos, self.mousePosOld, self.mouseState)
-#		for me in self.mouseEventsButtonMotion:
-#			if me.button == button:
-#				me.callback(self.mousePos,self.mousePosOld)
-
 
 #KEYBOARD EVENT MANAGER
 class KeyboardFireEvent(object):
@@ -1185,15 +1143,9 @@ class Camera(object):
         self.updateLights()
 
     def rotateSystemXL(self):
-        #da = self.globalRotSpeed*0.01
-        #self.camRot[0] += da
-        #self.camPos
-        #self.calcCameraDirections()
         self.camRotGlobal[1] += self.globalRotSpeed
 
     def rotateSystemXR(self):
-        #self.camRot[0] -= self.globalRotSpeed*0.01
-        #self.calcCameraDirections()
         self.camRotGlobal[1] -= self.globalRotSpeed
 
     def rotateSystemYL(self):
@@ -1224,8 +1176,6 @@ class Camera(object):
             self.camRotGlobal[1] += dm[0] * 0.1 * self.globalRotSpeed
             self.camRotGlobal[0] += dm[1] * 0.1 * self.globalRotSpeed
         elif mouseButtonState[GLUT_RIGHT_BUTTON] == GLUT_DOWN:
-        #    self.camRotGlobal[2] -= dm[0] * 0.2 * self.globalRotSpeed
-        #elif mouseButtonState[GLUT_MIDDLE_BUTTON] == GLUT_DOWN:
             self.camRot += dm * self.lookSpeed
             self.calcCameraDirections()
         
