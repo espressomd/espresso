@@ -114,14 +114,12 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   {
     auto v3 = v1;
-    v3 += v2;
-    BOOST_CHECK(((v1 + v2) == v3));
+    BOOST_CHECK((v1 + v2) == (v3 += v2));
   }
 
   {
     auto v3 = v1;
-    v3 -= v2;
-    BOOST_CHECK(((v1 - v2) == v3));
+    BOOST_CHECK((v1 - v2) == (v3 -= v2));
   }
 
   BOOST_CHECK(((2 * v1) == Vector<3, int>{2, 4, 6}));
