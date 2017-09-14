@@ -24,10 +24,10 @@ class openGLLive(object):
             'update_fps':				  30.0,
             'periodic_images':	   		  [0, 0, 0],
             'draw_box':		 	  		  True,
-            'quality_spheres':            15,
-            'quality_bonds':              15,
-            'quality_arrows':             15,
-            'quality_constraints':        15,
+            'quality_particles':          16,
+            'quality_bonds':              16,
+            'quality_arrows':             16,
+            'quality_constraints':        32,
             'close_cut_distance':         0.1,
             'far_cut_distance':           5,
             'camera_position':	   		  'auto',
@@ -56,9 +56,15 @@ class openGLLive(object):
             'LB':						  False,
 
             'light_pos':				  'auto',
-            'light_color':				  [0.8, 0.8, 0.8],
+            'light_colors':				  [[0.1, 0.1, 0.2, 1.0],[0.9,0.9,0.9,1.0],[1.0,1.0,1.0,1.0]],
             'light_brightness':   		  1.0,
-            'light_size':		   		  1.0,
+            'light_size':		   		  'auto',
+
+            'spotlight_enabled':          True,
+            'spotlight_colors':		      [[0.1, 0.1, 0.2, 1.0],[0.5,0.5,0.5,1.0],[1.0,1.0,1.0,1.0]],
+            'spotlight_angle':            45,
+            'spotlight_focus':            1,
+            'spotlight_brightness':   	  0.4,
 
             'drag_enabled':		   		  False,
             'drag_force':		   		  3.0
@@ -68,18 +74,13 @@ class openGLLive(object):
         for key in kwargs.iterkeys():
             if key not in self.specs.iterkeys():
                 raise ValueError(
-                    key + 'is not a valid visualization property')
+                    key + ' is not a valid visualization property')
             else:
                 self.specs[key] = kwargs[key]
 
         #DEPENDENCIES
-        #if not 'EXTERNAL_FORCES' in espressomd.features():
-        IF not EXTERNAL_FORCES:
+        if not 'EXTERNAL_FORCES' in espressomd.features():
             self.specs['drag_enabled'] = False
-
-        IF not CONSTRAINTS:
-            self.specs['draw_constraints'] = False
-
 
         self.invBackgroundCol = np.array([1 - self.specs['background_color'][0], 1 - self.specs['background_color'][1], 1 - self.specs['background_color'][2]])
 
@@ -104,6 +105,7 @@ class openGLLive(object):
         #POST DISPLAY WITH 60FPS
         def timed_update_redraw(data):
             glutPostRedisplay()
+            self.keyboardManager.handleInternalInput()
             glutTimerFunc(17, timed_update_redraw, -1)
 
         #PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION CHANGE, CALL WITH 10FPS
@@ -128,6 +130,7 @@ class openGLLive(object):
         self.hasParticleData = False
 
         glutTimerFunc(17, timed_update_redraw, -1)
+
         if self.specs['light_pos'] == 'auto':
             glutTimerFunc(2000, timed_update_particleCOM, -1)
             glutTimerFunc(60, timed_update_centerLight, -1)
@@ -144,10 +147,7 @@ class openGLLive(object):
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                
-                if self.specs['draw_constraints']:
-                    self.updateConstraints()
-
+                self.updateConstraints()
                 self.hasParticleData = True
 
             #IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
@@ -156,7 +156,7 @@ class openGLLive(object):
                 self.elapsedTime = 0
                 self.updateParticles()
                 #KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES, ONLY SAVE TO CHANGE HERE
-                self.keyboardManager.handleInput()
+                self.keyboardManager.handleEspressoUserInput()
 
             self.measureTimeBeforeIntegrate = time.time()
 
@@ -185,12 +185,12 @@ class openGLLive(object):
         ELIF not EXTERNAL_FORCES and ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
-                              'ext_forces': [[0,0,0]]*len(self.system.part),
+                              'ext_forces': [0,0,0]*len(self.system.part),
                               'charges':    self.system.part[:].q}
         ELIF not EXTERNAL_FORCES and not ELECTROSTATICS:
             self.particles = {'coords':  	self.system.part[:].pos_folded,
                               'types':   	self.system.part[:].type,
-                              'ext_forces': [[0,0,0]]*len(self.system.part),
+                              'ext_forces': [0,0,0]*len(self.system.part),
                               'charges':    [0]*len(self.system.part)}
 
     def edgesFromPN(self,p,n,diag):
@@ -216,7 +216,7 @@ class openGLLive(object):
             t = c.get_parameter('particle_type')
             s = c.get_parameter('shape')
             n = s.name()
-            if n in ['Shapes::Wall','Shapes::Cylinder','Shapes::Sphere','Shapes::SpheroCylinder']:
+            if n in ['Shapes::Wall','Shapes::Cylinder','Shapes::Sphere']:
                 coll_shape_obj[n].append([s,t])
             else:
                 coll_shape_obj['Shapes::Misc'].append([s,t])
@@ -231,7 +231,7 @@ class openGLLive(object):
         for s in coll_shape_obj['Shapes::Cylinder']:
             pos = np.array(s[0].get_parameter('center'))
             a = np.array(s[0].get_parameter('axis'))
-            l = s[0].get_parameter('length')
+            l = 2.0*s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append([pos - a*l*0.5, pos + a*l*0.5, r, s[1]])
 
@@ -239,13 +239,6 @@ class openGLLive(object):
             pos = np.array(s[0].get_parameter('center'))
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Sphere'].append([pos, r, s[1]])
-
-        for s in coll_shape_obj['Shapes::SpheroCylinder']:
-            pos = np.array(s[0].get_parameter('center'))
-            a = np.array(s[0].get_parameter('axis'))
-            l = s[0].get_parameter('length')
-            r = s[0].get_parameter('radius')
-            self.shapes['Shapes::SpheroCylinder'].append([pos - a*l*0.5, pos + a*l*0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append([self.rasterizeBruteForce(s[0]), s[1]])
@@ -317,17 +310,11 @@ class openGLLive(object):
             glEnable(GL_CLIP_PLANE0+i)
             glClipPlane(GL_CLIP_PLANE0+i, self.box_eqn[i])
 
-        for s in self.shapes['Shapes::Wall']:
-            drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
-
         for s in self.shapes['Shapes::Sphere']:
             drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'],s[2]), self.modulo_indexing(self.specs['constraint_type_materials'],s[2]), self.specs['quality_constraints'])
 
-        for s in self.shapes['Shapes::SpheroCylinder']:
-            drawSpheroCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_constraints'])
-
-        for i in range(6):
-            glDisable(GL_CLIP_PLANE0+i)
+        for s in self.shapes['Shapes::Wall']:
+            drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
 
         for s in self.shapes['Shapes::Cylinder']:
             drawCylinder(s[0],s[1],s[2], self.modulo_indexing(self.specs['constraint_type_colors'],s[3]), self.modulo_indexing(self.specs['constraint_type_materials'],s[3]), self.specs['quality_constraints'],True)
@@ -335,6 +322,11 @@ class openGLLive(object):
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
             drawPoints(s[0], self.specs['rasterize_pointsize'],  self.modulo_indexing(self.specs['constraint_type_colors'],s[1]), self.modulo_indexing(self.specs['constraint_type_materials'],s[1]))
+
+        for i in range(6):
+            glDisable(GL_CLIP_PLANE0+i)
+
+
 
     def determine_radius(self,ptype):
         def radiusByLJ(ptype):
@@ -384,22 +376,21 @@ class openGLLive(object):
             elif self.specs['particle_coloring'] == 'type':
                 color = self.modulo_indexing(self.specs['particle_type_colors'], ptype)
 
-            drawSphere(pos, radius, color, material, self.specs['quality_spheres'])
+            drawSphere(pos, radius, color, material, self.specs['quality_particles'])
             for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
                 for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                     for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                         if imx != 0 or imy != 0 or imz != 0:
-                            redrawSphere(pos + (imx * self.imPos[0]+imy*self.imPos[1]+imz*self.imPos[2]), radius, self.specs['quality_spheres'])
+                            redrawSphere(pos + (imx * self.imPos[0]+imy*self.imPos[1]+imz*self.imPos[2]), radius, self.specs['quality_particles'])
 
-            IF EXTERNAL_FORCES:
-                if self.specs['ext_force_arrows'] or pid == self.dragId:
-                    if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
-                        if pid == self.dragId:
-                            sc = 1
-                        else:
-                            sc = self.modulo_indexing(self.specs['ext_force_arrows_scale'],ptype)
-                        if sc > 0:
-                            drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
+            if self.specs['ext_force_arrows'] or pid == self.dragId:
+                if ext_f[0] != 0 or ext_f[1] != 0 or ext_f[2] != 0:
+                    if pid == self.dragId:
+                        sc = 1
+                    else:
+                        sc = self.modulo_indexing(self.specs['ext_force_arrows_scale'],ptype)
+                    if sc > 0:
+                        drawArrow(pos, np.array(ext_f) * sc, 0.25*sc, [1, 1, 1], self.specs['quality_arrows'])
 
     def drawBonds(self):
         coords = self.particles['coords']
@@ -419,6 +410,7 @@ class openGLLive(object):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
+                                im = np.array([imx,imy,imz])
                                 drawCylinder(coords[b[0]] + im * self.imPos[dim], coords[b[1]] + im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
             else:
                 l = coords[b[0]] - coords[b[1]]
@@ -444,6 +436,7 @@ class openGLLive(object):
                     for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
                         for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
+                                im = np.array([imx,imy,imz])
                                 drawCylinder(coords[b[0]] + im * self.imPos[dim], s0 + im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
                                 drawCylinder(coords[b[1]] + im * self.imPos[dim], s1 + im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
 
@@ -503,12 +496,15 @@ class openGLLive(object):
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
                 glLoadIdentity()
 
+
                 self.camera.glLookAt()
-                self.camera.rotateSystem()
 
                 if self.updateLightPos:
                     self.setLightPos()
                     self.updateLightPos=False
+                
+                self.camera.rotateSystem()
+
 
                 self.draw()
 
@@ -529,6 +525,9 @@ class openGLLive(object):
 
         def motion(x, y):
             self.mouseManager.mouseMove(x, y)
+            return
+
+        def idleUpdate():
             return
 
         #CALLED ION WINDOW POSITION/SIZE CHANGE
@@ -553,9 +552,9 @@ class openGLLive(object):
         glutKeyboardFunc(keyboardDown)
         glutKeyboardUpFunc(keyboardUp)
         glutReshapeFunc(reshapeWindow)
-        #TODO: ZOOM WITH MOUSEWHEEL
-        # glutMouseWheelFunc(mouseWheel);
         glutMotionFunc(motion)
+
+        glutIdleFunc(idleUpdate)
 
         index=0
         for t in self.timers:
@@ -563,7 +562,7 @@ class openGLLive(object):
             index+=1
 
     #CLICKED ON PARTICLE: DRAG; CLICKED ON BACKGROUND: CAMERA
-    def mouseMotion(self, mousePos, mousePosOld):
+    def mouseMotion(self, mousePos, mousePosOld, mouseButtonState):
 
         if self.dragId != -1:
             ppos = self.particles['coords'][self.dragId]
@@ -573,7 +572,7 @@ class openGLLive(object):
             self.dragExtForce = self.specs['drag_force'] * (np.asarray(mouseWorld) - np.array(ppos))
             self.triggerSetParticleDrag = True
         else:
-            self.camera.rotateCamera(mousePos, mousePosOld)
+            self.camera.rotateCamera(mousePos, mousePosOld, mouseButtonState)
 
     #DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
     def setParticleDrag(self, pos, pos_old):
@@ -589,6 +588,8 @@ class openGLLive(object):
         self.specs['particle_coloring'] = 'id'
         glDisable(GL_LIGHTING)
         glDisable(GL_LIGHT0)
+        if self.specs['spotlight_enabled']:
+            glDisable(GL_LIGHT1)
         self.drawSystemParticles()
         viewport = glGetIntegerv(GL_VIEWPORT)
 
@@ -606,6 +607,8 @@ class openGLLive(object):
         self.specs['particle_coloring'] = oldColMode
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
+        if self.specs['spotlight_enabled']:
+            glEnable(GL_LIGHT1)
         glClearColor(self.specs['background_color'][0], 
                      self.specs['background_color'][1],
                      self.specs['background_color'][2], 1.)
@@ -669,34 +672,44 @@ class openGLLive(object):
 
     #DEFAULT CONTROLS
     def initControls(self):
+        #MOUSE LOOK/ROTATE/DRAG
         self.mouseManager.registerButton(MouseButtonEvent(
             None, MouseFireEvent.FreeMotion, self.mouseMotion))
+        
+        self.mouseManager.registerButton(MouseButtonEvent(
+            3, MouseFireEvent.ButtonPressed, self.camera.moveForward))
+        
+        self.mouseManager.registerButton(MouseButtonEvent(
+            4, MouseFireEvent.ButtonPressed, self.camera.moveBackward))
+
+        #START/STOP DRAG
         if self.specs['drag_enabled']:
             self.mouseManager.registerButton(MouseButtonEvent(
-                GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self.setParticleDrag))
+                GLUT_LEFT_BUTTON, MouseFireEvent.ButtonPressed, self.setParticleDrag, True ))
             self.mouseManager.registerButton(MouseButtonEvent(
-                GLUT_LEFT_BUTTON, MouseFireEvent.ButtonReleased, self.resetParticleDrag))
+                GLUT_LEFT_BUTTON, MouseFireEvent.ButtonReleased, self.resetParticleDrag, True))
 
+        #KEYBOARD BUTTONS
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'w', KeyboardFireEvent.Hold, self.camera.moveForward))
+            'w', KeyboardFireEvent.Hold, self.camera.moveForward, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            's', KeyboardFireEvent.Hold, self.camera.moveBackward))
+            's', KeyboardFireEvent.Hold, self.camera.moveBackward, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'a', KeyboardFireEvent.Hold, self.camera.moveLeft))
+            'a', KeyboardFireEvent.Hold, self.camera.moveLeft, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'd', KeyboardFireEvent.Hold, self.camera.moveRight))
+            'd', KeyboardFireEvent.Hold, self.camera.moveRight, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'e', KeyboardFireEvent.Hold, self.camera.rotateSystemXR))
+            'e', KeyboardFireEvent.Hold, self.camera.rotateSystemXR, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'q', KeyboardFireEvent.Hold, self.camera.rotateSystemXL))
+            'q', KeyboardFireEvent.Hold, self.camera.rotateSystemXL, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'z', KeyboardFireEvent.Hold, self.camera.rotateSystemYR))
+            'z', KeyboardFireEvent.Hold, self.camera.rotateSystemYR, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'c', KeyboardFireEvent.Hold, self.camera.rotateSystemYL))
+            'c', KeyboardFireEvent.Hold, self.camera.rotateSystemYL, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'r', KeyboardFireEvent.Hold, self.camera.rotateSystemZR))
+            'r', KeyboardFireEvent.Hold, self.camera.rotateSystemZR, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL))
+            'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL, True))
 
 
 
@@ -706,14 +719,23 @@ class openGLLive(object):
 #        glLoadIdentity()
         if self.specs['light_pos'] == 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, [self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
-        else:
-            glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
-#        glPopMatrix()
+        #else:
+        #    glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
+
+        self.setCameraSpotlight()
+    
+    def setCameraSpotlight(self):
+        p = self.camera.camPos + 10 * self.camera.lookDir
+        fp = [p[0],p[1],p[2],1]
+        glLightfv(GL_LIGHT1, GL_POSITION, fp)
+        glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, self.camera.lookDir)
+
 
     def triggerLightPosUpdate(self):
         self.updateLightPos=True
 
     def initCamera(self):
+        box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         bl = self.system.box_l[0]
         bl2 = bl / 2.0
         if self.specs['camera_position'] == 'auto':
@@ -721,10 +743,11 @@ class openGLLive(object):
         else:
             cp = self.specs['camera_position']
         box_center = np.array([bl2, bl2, bl2])
-        self.camera = Camera(camPos=np.array(cp), camRot=np.array(self.specs['camera_rotation']), center=box_center, updateLights=self.triggerLightPosUpdate)
+        self.camera = Camera(camPos=np.array(cp), camRot=np.array(self.specs['camera_rotation']), moveSpeed=0.5*box_diag/17.0,  center=box_center, updateLights=self.triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
+        self.setCameraSpotlight()
         self.updateLightPos=True
 
     def initOpenGL(self):
@@ -737,26 +760,56 @@ class openGLLive(object):
                      'background_color'][1], self.specs['background_color'][2], 1.)
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_BLEND)
+        #glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+        #glDepthMask(GL_TRUE)
+        #glAlphaFunc(GL_GREATER, 0.5)
+        #glEnable(GL_ALPHA_TEST)
 
+        glEnable(GL_BLEND)
+        
+        glEnable(GL_CULL_FACE)
+        
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
 
         # setup lighting
+        if self.specs['light_size'] == 'auto':
+            box_diag = pow(pow(self.system.box_l[0], 2) + pow(self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
+            self.specs['light_size'] = box_diag * 2.0
+
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
+
+        #LIGHT0
         if self.specs['light_pos'] != 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
         else:
             glLightfv(GL_LIGHT0, GL_POSITION, self.system.box_l * 0.5)
 
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_color'])
+        glLightfv(GL_LIGHT0, GL_AMBIENT, self.specs['light_colors'][0])
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_colors'][1])
+        glLightfv(GL_LIGHT0, GL_SPECULAR, self.specs['light_colors'][2])
 
-        glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,
-                 0.7 / self.specs['light_brightness'])
-        glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, self.system.box_l[
-                 0] / 67. * 0.005 / self.specs['light_size'])
+        glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0 / self.specs['light_brightness'])
+        glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 1.0 / self.specs['light_size'])
         glEnable(GL_LIGHT0)
+
+        #LIGHT1: SPOTLIGHT ON CAMERA IN LOOK DIRECTION
+        if self.specs['spotlight_enabled']:
+            glLightfv(GL_LIGHT1, GL_POSITION, [0,0,0,1])
+
+            glLightfv(GL_LIGHT1, GL_AMBIENT, self.specs['spotlight_colors'][0])
+            glLightfv(GL_LIGHT1, GL_DIFFUSE, self.specs['spotlight_colors'][1])
+            glLightfv(GL_LIGHT1, GL_SPECULAR, self.specs['spotlight_colors'][2])
+
+            glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, self.specs['spotlight_angle'])
+            glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, [1.0,1.0,1.0])
+            glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, self.specs['spotlight_focus'])
+            
+            glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0 / self.specs['spotlight_brightness'])
+            glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0 )
+            glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0 )
+            glEnable(GL_LIGHT1)
 
 #END OF MAIN CLASS 
 
@@ -923,45 +976,6 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps = False
 
     glPopMatrix()
 
-def drawSpheroCylinder(posA, posB, radius, color, material, quality):
-    setSolidMaterial(color[0], color[1], color[2], color[3], material[0], material[1], material[2])
-    glPushMatrix()
-    quadric = gluNewQuadric()
-
-    d = posB - posA
-    if d[2] == 0.0:
-        d[2]=0.0001
-
-    v = np.linalg.norm(d)
-    if v == 0:
-        ax = 57.2957795
-    else:
-        ax = 57.2957795 * acos(d[2] / v)
-
-    if d[2] < 0.0:
-        ax = -ax
-    rx = -d[1] * d[2]
-    ry = d[0] * d[2]
-    length = np.linalg.norm(d)
-    glTranslatef(posA[0], posA[1], posA[2])
-    glRotatef(ax, rx, ry, 0.0)
-
-    # First hemispherical cap
-    glEnable(GL_CLIP_PLANE0)
-    glClipPlane(GL_CLIP_PLANE0, (0,0,-1,0))
-    gluSphere(quadric, radius, quality, quality)
-    glDisable(GL_CLIP_PLANE0)
-    # Cylinder
-    gluCylinder(quadric, radius, radius, length, quality, quality)
-    # Second hemispherical cap
-    glTranslatef(0,0,v)
-    glEnable(GL_CLIP_PLANE0)
-    glClipPlane(GL_CLIP_PLANE0, (0,0,1,0))
-    gluSphere(quadric, radius, quality, quality)
-    glDisable(GL_CLIP_PLANE0)
-
-    glPopMatrix()
-
 
 def drawArrow(pos, d, radius, color, quality):
     setSolidMaterial(color[0], color[1], color[2])
@@ -1003,11 +1017,11 @@ class MouseFireEvent(object):
 
 class MouseButtonEvent(object):
 
-    def __init__(self, button, fireEvent, callback):
+    def __init__(self, button, fireEvent, callback, positional = False):
         self.button = button
         self.fireEvent = fireEvent
         self.callback = callback
-
+        self.positional = positional
 
 class MouseManager(object):
 
@@ -1018,34 +1032,46 @@ class MouseManager(object):
         self.mouseEventsFreeMotion = []
         self.mouseEventsButtonMotion = []
         self.mouseEventsReleased = []
-
+        self.mouseState = {}
+        self.mouseState[GLUT_LEFT_BUTTON] = GLUT_UP
+        self.mouseState[GLUT_MIDDLE_BUTTON] = GLUT_UP
+        self.mouseState[GLUT_RIGHT_BUTTON] = GLUT_UP
+        
     def registerButton(self, mouseEvent):
         if mouseEvent.fireEvent == MouseFireEvent.ButtonPressed:
             self.mouseEventsPressed.append(mouseEvent)
+        elif mouseEvent.fireEvent == MouseFireEvent.ButtonReleased:
+            self.mouseEventsReleased.append(mouseEvent)
         elif mouseEvent.fireEvent == MouseFireEvent.FreeMotion:
             self.mouseEventsFreeMotion.append(mouseEvent)
         elif mouseEvent.fireEvent == MouseFireEvent.ButtonMotion:
             self.mouseEventsButtonMotion.append(mouseEvent)
-        elif mouseEvent.fireEvent == MouseFireEvent.ButtonReleased:
-            self.mouseEventsReleased.append(mouseEvent)
 
     def mouseClick(self, button, state, x, y):
         self.mousePosOld = self.mousePos
         self.mousePos = np.array([x, y])
 
+        self.mouseState[button] = state
+
         for me in self.mouseEventsPressed:
             if me.button == button and state == GLUT_DOWN:
-                me.callback(self.mousePos, self.mousePosOld)
+                if me.positional:
+                    me.callback(self.mousePos, self.mousePosOld)
+                else:
+                    me.callback()
         for me in self.mouseEventsReleased:
             if me.button == button and state == GLUT_UP:
-                me.callback(self.mousePos, self.mousePosOld)
+                if me.positional:
+                    me.callback(self.mousePos, self.mousePosOld)
+                else: 
+                    me.callback()
 
     def mouseMove(self, x, y):
         self.mousePosOld = self.mousePos
         self.mousePos = np.array([x, y])
 
         for me in self.mouseEventsFreeMotion:
-            me.callback(self.mousePos, self.mousePosOld)
+            me.callback(self.mousePos, self.mousePosOld, self.mouseState)
 #		for me in self.mouseEventsButtonMotion:
 #			if me.button == button:
 #				me.callback(self.mousePos,self.mousePosOld)
@@ -1061,10 +1087,11 @@ class KeyboardFireEvent(object):
 
 class KeyboardButtonEvent(object):
 
-    def __init__(self, button, fireEvent, callback):
+    def __init__(self, button, fireEvent, callback, internal = False):
         self.button = button
         self.fireEvent = fireEvent
         self.callback = callback
+        self.internal = internal
 
 
 class KeyboardManager(object):
@@ -1085,26 +1112,51 @@ class KeyboardManager(object):
         elif buttonEvent.fireEvent == KeyboardFireEvent.Released:
             self.buttonEventsReleased.append(buttonEvent)
 
-    def handleInput(self):
-
+    def handleInternalInput(self):
         removeKeys = set([])
         for b in self.pressedKeys:
             if self.keyStateOld[b] == 0 and self.keyState[b] == 1:
                 for be in self.buttonEventsPressed:
-                    if be.button == b:
+                    if be.internal and be.button == b:
                         be.callback()
                 for be in self.buttonEventsHold:
-                    if be.button == b:
+                    if be.internal and be.button == b:
                         be.callback()
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 1:
                 for be in self.buttonEventsHold:
-                    if be.button == b:
+                    if be.internal and be.button == b:
                         be.callback()
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 0:
                 for be in self.buttonEventsReleased:
-                    if be.button == b:
+                    if be.internal and be.button == b:
+                        be.callback()
+                removeKeys.add(b)
+
+            self.keyStateOld[b] = self.keyState[b]
+
+        self.pressedKeys = self.pressedKeys.difference(removeKeys)
+
+    def handleEspressoUserInput(self):
+        removeKeys = set([])
+        for b in self.pressedKeys:
+            if self.keyStateOld[b] == 0 and self.keyState[b] == 1:
+                for be in self.buttonEventsPressed:
+                    if not be.internal and be.button == b:
+                        be.callback()
+                for be in self.buttonEventsHold:
+                    if not be.internal and be.button == b:
+                        be.callback()
+
+            elif self.keyStateOld[b] == 1 and self.keyState[b] == 1:
+                for be in self.buttonEventsHold:
+                    if not be.internal and be.button == b:
+                        be.callback()
+
+            elif self.keyStateOld[b] == 1 and self.keyState[b] == 0:
+                for be in self.buttonEventsReleased:
+                    if not be.internal and be.button == b:
                         be.callback()
                 removeKeys.add(b)
 
@@ -1124,14 +1176,14 @@ class KeyboardManager(object):
 #CAMERA
 class Camera(object):
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3, center=np.array([0, 0, 0]), updateLights=None):
+    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
         self.camPos = camPos
         self.camRot = camRot
         self.center = center
-        self.camRotGlobal = np.array([0, 0, 0])
+        self.camRotGlobal = np.array([0.0, 0.0, 0.0])
         self.updateLights = updateLights
         self.calcCameraDirections()
 
@@ -1152,9 +1204,15 @@ class Camera(object):
         self.updateLights()
 
     def rotateSystemXL(self):
+        #da = self.globalRotSpeed*0.01
+        #self.camRot[0] += da
+        #self.camPos
+        #self.calcCameraDirections()
         self.camRotGlobal[1] += self.globalRotSpeed
 
     def rotateSystemXR(self):
+        #self.camRot[0] -= self.globalRotSpeed*0.01
+        #self.calcCameraDirections()
         self.camRotGlobal[1] -= self.globalRotSpeed
 
     def rotateSystemYL(self):
@@ -1178,9 +1236,19 @@ class Camera(object):
 
         self.up = np.cross(self.right, self.lookDir)
 
-    def rotateCamera(self, mousePos, mousePosOld):
-        self.camRot += (mousePos - mousePosOld) * self.lookSpeed
-        self.calcCameraDirections()
+    def rotateCamera(self, mousePos, mousePosOld, mouseButtonState):
+        dm = mousePos - mousePosOld
+
+        if mouseButtonState[GLUT_LEFT_BUTTON] == GLUT_DOWN:
+            self.camRotGlobal[1] += dm[0] * 0.1 * self.globalRotSpeed
+            self.camRotGlobal[0] += dm[1] * 0.1 * self.globalRotSpeed
+        elif mouseButtonState[GLUT_RIGHT_BUTTON] == GLUT_DOWN:
+        #    self.camRotGlobal[2] -= dm[0] * 0.2 * self.globalRotSpeed
+        #elif mouseButtonState[GLUT_MIDDLE_BUTTON] == GLUT_DOWN:
+            self.camRot += dm * self.lookSpeed
+            self.calcCameraDirections()
+        
+
     def glLookAt(self):
         lookAt = self.camPos + self.lookDir
         gluLookAt(self.camPos[0], self.camPos[1], self.camPos[2],
