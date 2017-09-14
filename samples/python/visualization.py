@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import espressomd._system as es
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
@@ -107,8 +106,8 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.cell_system.max_num_cells = 2744
 
 #Switch between openGl/Mayavi
-visualizer = visualization.mayaviLive(system)
-#visualizer = visualization.openGLLive(system)
+#visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #

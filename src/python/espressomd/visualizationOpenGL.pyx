@@ -105,7 +105,7 @@ class openGLLive(object):
         #POST DISPLAY WITH 60FPS
         def timed_update_redraw(data):
             glutPostRedisplay()
-            self.keyboardManager.handleInternalInput()
+            self.keyboardManager.handleInput()
             glutTimerFunc(17, timed_update_redraw, -1)
 
         #PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION CHANGE, CALL WITH 10FPS
@@ -156,7 +156,9 @@ class openGLLive(object):
                 self.elapsedTime = 0
                 self.updateParticles()
                 #KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES, ONLY SAVE TO CHANGE HERE
-                self.keyboardManager.handleEspressoUserInput()
+                for c in self.keyboardManager.userCallbackStack:
+                    c()
+                self.keyboardManager.userCallbackStack = []
 
             self.measureTimeBeforeIntegrate = time.time()
 
@@ -1103,6 +1105,7 @@ class KeyboardManager(object):
         self.buttonEventsPressed = []
         self.buttonEventsHold = []
         self.buttonEventsReleased = []
+        self.userCallbackStack = []
 
     def registerButton(self, buttonEvent):
         if buttonEvent.fireEvent == KeyboardFireEvent.Pressed:
@@ -1112,57 +1115,35 @@ class KeyboardManager(object):
         elif buttonEvent.fireEvent == KeyboardFireEvent.Released:
             self.buttonEventsReleased.append(buttonEvent)
 
-    def handleInternalInput(self):
+    def callbackOnButton(self,be,b):
+        if be.button == b:
+            if be.internal:
+                be.callback()
+            else:
+                self.userCallbackStack.append(be.callback)
+
+    def handleInput(self):
         removeKeys = set([])
         for b in self.pressedKeys:
             if self.keyStateOld[b] == 0 and self.keyState[b] == 1:
                 for be in self.buttonEventsPressed:
-                    if be.internal and be.button == b:
-                        be.callback()
+                    self.callbackOnButton(be,b)
                 for be in self.buttonEventsHold:
-                    if be.internal and be.button == b:
-                        be.callback()
+                    self.callbackOnButton(be,b)
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 1:
                 for be in self.buttonEventsHold:
-                    if be.internal and be.button == b:
-                        be.callback()
+                    self.callbackOnButton(be,b)
 
             elif self.keyStateOld[b] == 1 and self.keyState[b] == 0:
                 for be in self.buttonEventsReleased:
-                    if be.internal and be.button == b:
-                        be.callback()
+                    self.callbackOnButton(be,b)
                 removeKeys.add(b)
 
             self.keyStateOld[b] = self.keyState[b]
 
         self.pressedKeys = self.pressedKeys.difference(removeKeys)
 
-    def handleEspressoUserInput(self):
-        removeKeys = set([])
-        for b in self.pressedKeys:
-            if self.keyStateOld[b] == 0 and self.keyState[b] == 1:
-                for be in self.buttonEventsPressed:
-                    if not be.internal and be.button == b:
-                        be.callback()
-                for be in self.buttonEventsHold:
-                    if not be.internal and be.button == b:
-                        be.callback()
-
-            elif self.keyStateOld[b] == 1 and self.keyState[b] == 1:
-                for be in self.buttonEventsHold:
-                    if not be.internal and be.button == b:
-                        be.callback()
-
-            elif self.keyStateOld[b] == 1 and self.keyState[b] == 0:
-                for be in self.buttonEventsReleased:
-                    if not be.internal and be.button == b:
-                        be.callback()
-                removeKeys.add(b)
-
-            self.keyStateOld[b] = self.keyState[b]
-
-        self.pressedKeys = self.pressedKeys.difference(removeKeys)
 
     def keyboardUp(self, button):
         self.keyState[button] = 0  # Key up

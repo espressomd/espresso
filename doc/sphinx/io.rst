@@ -706,25 +706,61 @@ Optional keywords:
     * `spotlight_focus`: Focus (spot exponent) for the spotlight from 0 (uniform) to 128. 
 
 
-Keyboard controls
-^^^^^^^^^^^^^^^^^
+Controls
+^^^^^^^^
 
 The camera can be controlled via mouse and keyboard:
 
-    * left/right button: camera roll
-    * middle button: camera look direction
+    * hold left button: rotate the system
+    * hold right button: camera look direction
     * mouse wheel: zoom
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
-    * Kkey pairs QE, RF, ZC (camera roll). 
+    * Key pairs QE, RF, ZC: rotate the system 
 
-With the keyword ``drag_enabled`` set to ``True``, the mouse can be used to exert a force
-on particles in drag direction (scaled by ``drag_force`` and the
-distance of particle and mouse cursor). Additional input functionality
-for mouse and keyboard is possible by assigning callbacks to specified
-keyboard or mouse buttons. This may be useful for realtime adjustment of
-system parameters (temperature, interactions, particle properties etc)
-of for demonstration purposes. An example can be found in
-samples/python/billard.py.
+Additional input functionality for mouse and keyboard is possible by assigning
+callbacks to specified keyboard or mouse buttons. This may be useful for
+realtime adjustment of system parameters (temperature, interactions, particle
+properties etc) of for demonstration purposes. The callbacks can be triggered
+by a timer or keyboard input:: 
+
+    def foo():
+        print "foo"
+
+    #Registers timed calls of foo()
+    visualizer.registerCallback(foo,interval=500)
+
+    #Callbacks to control temperature 
+    temperature = 1.0
+    def increaseTemp():
+            global temperature
+            temperature += 0.1
+            system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+            print "T =",system.thermostat.get_state()[0]['kT']
+
+    def decreaseTemp():
+        global temperature
+        temperature -= 0.1
+
+        if temperature > 0:
+            system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+            print "T =",system.thermostat.get_state()[0]['kT']
+        else:
+            temperature = 0
+            system.thermostat.turn_off()
+            print "T = 0"
+
+    #Registers input-based calls
+    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
+    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseTemp))
+
+Further examples can be found in samples/python/billard.py or samples/python/visualization\_openGL.py.
+
+Dragging particles
+^^^^^^^^^^^^^^^^^^
+
+With the keyword ``drag_enabled`` set to ``True``, the mouse can be used to
+exert a force on particles in drag direction (scaled by ``drag_force`` and the
+distance of particle and mouse cursor). 
 
 Visualization example scripts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
