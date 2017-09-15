@@ -167,7 +167,7 @@ class VirtualSites(ut.TestCase):
         s.min_global_cut = 0.501
         s.part.clear()
 
-        s.time_step = 0.01
+        s.time_step = 0.008
         s.thermostat.turn_off()
 
         # interactions
