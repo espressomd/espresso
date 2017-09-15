@@ -52,7 +52,6 @@ extern int lb_components ; // global variable holding the number of fluid compon
 #define LBPAR_FRICTION  4 /**< friction coefficient for viscous coupling between particles and fluid */
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
-#define LBPAR_LATTICE_SWITCH 7
 
 /** Note these are used for binary logic so should be powers of 2 */
 #define LB_COUPLE_NULL        1
