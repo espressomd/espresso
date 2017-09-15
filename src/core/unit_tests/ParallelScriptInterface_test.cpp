@@ -16,19 +16,6 @@ std::unique_ptr<Communication::MpiCallbacks> callbacks;
 
 using namespace ScriptInterface;
 
-namespace Testing {
-
-void reduce_and_check(const mpi::communicator &comm, bool local_value) {
-  if (comm.rank() == 0) {
-    bool total;
-    mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
-  } else {
-    mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
-  }
-}
-}
-
 struct TestClass : public ScriptInterfaceBase {
   TestClass() {
     constructed = true;
@@ -96,14 +83,14 @@ BOOST_AUTO_TEST_CASE(ctor_dtor) {
   }
 
   /* Check that ctor and dtor were run on all nodes */
-  Testing::reduce_and_check(callbacks->comm(), TestClass::constructed);
-  Testing::reduce_and_check(callbacks->comm(), TestClass::destructed);
+  BOOST_CHECK(TestClass::constructed);
+  BOOST_CHECK(TestClass::destructed);
 }
 
 /**
  * Check that parameters are forwarded correctly.
  */
-BOOST_AUTO_TEST_CASE(set_parmeter) {
+BOOST_AUTO_TEST_CASE(set_parameter) {
   TestClass::last_instance = nullptr;
 
   if (callbacks->comm().rank() == 0) {
@@ -116,15 +103,11 @@ BOOST_AUTO_TEST_CASE(set_parmeter) {
     callbacks->loop();
   }
 
-  Testing::reduce_and_check(callbacks->comm(),
-                            TestClass::last_instance != nullptr);
+  BOOST_REQUIRE(TestClass::last_instance != nullptr);
 
   auto const &last_parameter = TestClass::last_instance->last_parameter;
-  Testing::reduce_and_check(callbacks->comm(),
-                            last_parameter.first == "TestParam");
-  Testing::reduce_and_check(callbacks->comm(),
-                            boost::get<std::string>(last_parameter.second) ==
-                                "TestValue");
+  BOOST_CHECK(last_parameter.first == "TestParam");
+  BOOST_CHECK(boost::get<std::string>(last_parameter.second) == "TestValue");
 }
 
 /*
@@ -148,25 +131,19 @@ BOOST_AUTO_TEST_CASE(call_method) {
     BOOST_CHECK(boost::get<std::string>(result) == "TestResult");
 
     callbacks->abort_loop();
-    Testing::reduce_and_check(callbacks->comm(),
-                              TestClass::last_instance != nullptr);
+    BOOST_CHECK(TestClass::last_instance != nullptr);
 
     auto const &last_parameters =
         TestClass::last_instance->last_method_parameters;
-    Testing::reduce_and_check(callbacks->comm(),
-                              last_parameters.first == method);
-    Testing::reduce_and_check(callbacks->comm(),
-                              last_parameters.second == params);
+    BOOST_CHECK(last_parameters.first == method);
+    BOOST_CHECK(last_parameters.second == params);
   } else {
     callbacks->loop();
-    Testing::reduce_and_check(callbacks->comm(),
-                              TestClass::last_instance != nullptr);
+    BOOST_CHECK(TestClass::last_instance != nullptr);
     auto const &last_parameters =
         TestClass::last_instance->last_method_parameters;
-    Testing::reduce_and_check(callbacks->comm(),
-                              last_parameters.first == method);
-    Testing::reduce_and_check(callbacks->comm(),
-                              last_parameters.second == params);
+    BOOST_CHECK(last_parameters.first == method);
+    BOOST_CHECK(last_parameters.second == params);
   }
 }
 
