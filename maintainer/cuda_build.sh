@@ -9,7 +9,7 @@ curl "https://api.github.com/repos/espressomd/espresso/statuses/$GIT_COMMIT?acce
       -d "{\"state\": \"$STATUS\", \"context\": \"ICP CUDA build\", \"target_url\": \"$URL\"}"
 
 nvidia-smi
-srcdir="${CI_PROJECT_DIR}" cmake_params='-DCUDA_NVCC_FLAGS="-D_FORCE_INLINES"' with_coverage="true" maintainer/travis/build_cmake.sh
+srcdir="${CI_PROJECT_DIR}" cmake_params='-DCUDA_NVCC_FLAGS="-D_FORCE_INLINES"' with_coverage="true" build_procs=4 maintainer/travis/build_cmake.sh
 result=$?
 echo $result
 if (( $result == 0 )); then

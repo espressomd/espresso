@@ -45,6 +45,7 @@ function cmd {
 [ -z "$with_coverage" ] && with_coverage="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
+[ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 
 cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
@@ -57,7 +58,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage myconfig check_procs
+    with_python_interface with_coverage myconfig check_procs build_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -128,21 +129,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make -j2" || exit $?
+cmd "make -j${build_procs}" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make -j2 check_python $make_params" || exit 1
-    cmd "make -j2 check_unit_tests $make_params" || exit 1
+    cmd "make -j${build_procs} check_python $make_params" || exit 1
+    cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
 
     end "TEST"
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
 
     end "TEST"
 fi
