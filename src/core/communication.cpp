@@ -2076,12 +2076,6 @@ void mpi_bcast_lb_params(int field, int value) {
 }
 
 void mpi_bcast_lb_params_slave(int field, int value) {
-#if defined(LB) || defined(LB_GPU)
-  if (field == LBPAR_LATTICE_SWITCH) {
-    lattice_switch = value;
-  }
-#endif
-
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
