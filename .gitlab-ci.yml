@@ -8,13 +8,13 @@ shanchen:
   stage: build
   script:
     - export myconfig=shanchen
-    - maintainer/cuda_build.sh
+    - bash maintainer/cuda_build.sh
 
 maxset:
   stage: build
   script:
     - export myconfig=maxset
-    - maintainer/cuda_build.sh
+    - bash maintainer/cuda_build.sh
   artifacts:
     paths:
     - build/
