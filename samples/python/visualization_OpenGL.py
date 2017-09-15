@@ -5,7 +5,7 @@ from espressomd import integrate
 import numpy
 from threading import Thread
 from math import *
-from espressomd.visualizationOpenGL import *
+from espressomd.visualization_opengl import *
 
 # Minimal interactive OpenGL visualization for ESPResSo
 
@@ -46,10 +46,6 @@ for i in range(10):
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
-# system.non_bonded_inter[0,0].lennard_jones.set_params(
-#    epsilon=0, sigma=1,
-#    cutoff=2, shift="auto")
-
 visualizer = openGLLive(system)
 
 for key, value in visualizer.specs.items():
@@ -61,9 +57,8 @@ visualizer.keyboardManager.registerButton(
 visualizer.keyboardManager.registerButton(
     KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
+
 # Register additional callback to run in main thread
-
-
 def muu():
     print "muu"
 
