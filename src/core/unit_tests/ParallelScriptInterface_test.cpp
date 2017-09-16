@@ -87,6 +87,15 @@ BOOST_AUTO_TEST_CASE(ctor_dtor) {
   BOOST_CHECK(TestClass::destructed);
 }
 
+
+void set_parameter_common() {
+  BOOST_REQUIRE(TestClass::last_instance != nullptr);
+
+  auto const &last_parameter = TestClass::last_instance->last_parameter;
+  BOOST_CHECK(last_parameter.first == "TestParam");
+  BOOST_CHECK(boost::get<std::string>(last_parameter.second) == "TestValue");
+}
+
 /**
  * Check that parameters are forwarded correctly.
  */
@@ -98,16 +107,13 @@ BOOST_AUTO_TEST_CASE(set_parameter) {
 
     so->set_parameter("TestParam", std::string("TestValue"));
 
+    set_parameter_common();
+
     callbacks->abort_loop();
   } else {
     callbacks->loop();
+    set_parameter_common();
   }
-
-  BOOST_REQUIRE(TestClass::last_instance != nullptr);
-
-  auto const &last_parameter = TestClass::last_instance->last_parameter;
-  BOOST_CHECK(last_parameter.first == "TestParam");
-  BOOST_CHECK(boost::get<std::string>(last_parameter.second) == "TestValue");
 }
 
 /*
