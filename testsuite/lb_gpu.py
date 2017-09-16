@@ -10,10 +10,10 @@ import espressomd
 import espressomd.lb
 from espressomd import *
 import numpy as np
+from tests_common import abspath
 
 @ut.skipIf(not espressomd.has_features(["LB_GPU","LENNARD_JONES"]),
            "Features not available, skipping test!")
-
 class lb_test(ut.TestCase):
 
 	es = espressomd.System()
@@ -49,7 +49,7 @@ class lb_test(ut.TestCase):
 			del system.actors[0]
 		system.part.clear()
 		#import particle data
-		data = np.genfromtxt("lb_system.data")
+		data = np.genfromtxt(abspath("data/lb_system.data"))
 
 		for particle in data:
 			id = particle[0]
