@@ -100,17 +100,17 @@ void iccp3m_init(void) {
 }
 
 void iccp3m_alloc_lists() {
-  iccp3m_cfg.areas = (double *)Utils::realloc(
+  iccp3m_cfg.areas = Utils::realloc(
       iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.ein = (double *)Utils::realloc(iccp3m_cfg.ein,
+  iccp3m_cfg.ein = Utils::realloc(iccp3m_cfg.ein,
                                             (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorx = (double *)Utils::realloc(
+  iccp3m_cfg.nvectorx = Utils::realloc(
       iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectory = (double *)Utils::realloc(
+  iccp3m_cfg.nvectory = Utils::realloc(
       iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.nvectorz = (double *)Utils::realloc(
+  iccp3m_cfg.nvectorz = Utils::realloc(
       iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-  iccp3m_cfg.sigma = (double *)Utils::realloc(
+  iccp3m_cfg.sigma = Utils::realloc(
       iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
 }
 
@@ -121,17 +121,17 @@ int bcast_iccp3m_cfg(void) {
    * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
-    iccp3m_cfg.areas = (double *)Utils::realloc(
+    iccp3m_cfg.areas = Utils::realloc(
         iccp3m_cfg.areas, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.ein = (double *)Utils::realloc(
+    iccp3m_cfg.ein = Utils::realloc(
         iccp3m_cfg.ein, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorx = (double *)Utils::realloc(
+    iccp3m_cfg.nvectorx = Utils::realloc(
         iccp3m_cfg.nvectorx, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectory = (double *)Utils::realloc(
+    iccp3m_cfg.nvectory = Utils::realloc(
         iccp3m_cfg.nvectory, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.nvectorz = (double *)Utils::realloc(
+    iccp3m_cfg.nvectorz = Utils::realloc(
         iccp3m_cfg.nvectorz, (iccp3m_cfg.n_ic) * sizeof(double));
-    iccp3m_cfg.sigma = (double *)Utils::realloc(
+    iccp3m_cfg.sigma = Utils::realloc(
         iccp3m_cfg.sigma, (iccp3m_cfg.n_ic) * sizeof(double));
   }
 
@@ -672,7 +672,7 @@ inline void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2) {
   if (pl->n + 1 >= pl->max) {
     pl->max += LIST_INCREMENT;
     pl->pair =
-        (Particle **)Utils::realloc(pl->pair, 2 * pl->max * sizeof(Particle *));
+        Utils::realloc(pl->pair, 2 * pl->max * sizeof(Particle *));
   }
   /* add pair */
   pl->pair[(2 * pl->n)] = p1;
@@ -688,7 +688,7 @@ void resize_verlet_list_iccp3m(PairList *pl) {
     diff = (diff / LIST_INCREMENT) - 1;
     pl->max -= diff * LIST_INCREMENT;
     pl->pair =
-        (Particle **)Utils::realloc(pl->pair, 2 * pl->max * sizeof(Particle *));
+        Utils::realloc(pl->pair, 2 * pl->max * sizeof(Particle *));
   }
 }
 

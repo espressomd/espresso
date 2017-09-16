@@ -322,40 +322,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
-/*************** REQ_BCAST_PAR ************/
-static void common_bcast_parameter(int i) {
-  switch (fields[i].type) {
-  case TYPE_INT:
-    MPI_Bcast((int *)fields[i].data, fields[i].dimension, MPI_INT, 0,
-              comm_cart);
-    break;
-  case TYPE_BOOL:
-    MPI_Bcast((int *)fields[i].data, 1, MPI_INT, 0, comm_cart);
-    break;
-  case TYPE_DOUBLE:
-    MPI_Bcast((double *)fields[i].data, fields[i].dimension, MPI_DOUBLE, 0,
-              comm_cart);
-    break;
-  default:
-    break;
-  }
-
-  on_parameter_change(i);
-}
-
-int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
-
-  common_bcast_parameter(i);
-
-  return check_runtime_errors();
-}
-
-void mpi_bcast_parameter_slave(int node, int i) {
-  common_bcast_parameter(i);
-  check_runtime_errors();
-}
-
 /*************** REQ_WHO_HAS ****************/
 
 void mpi_who_has() {
@@ -383,7 +349,7 @@ void mpi_who_has() {
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
         pdata_s = sizes[pnode];
-        pdata = (int *)Utils::realloc(pdata, sizeof(int) * pdata_s);
+        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
@@ -403,7 +369,7 @@ void mpi_who_has_slave(int node, int param) {
   if (n_part == 0)
     return;
 
-  sendbuf = (int *)Utils::realloc(sendbuf, sizeof(int) * n_part);
+  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
 
   auto end = std::transform(local_cells.particles().begin(),
                             local_cells.particles().end(), sendbuf,
