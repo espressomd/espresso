@@ -712,6 +712,12 @@ void rescale_forces_propagate_vel() {
       if (ifParticleIsVirtual(&p[i]))
         continue;
 #endif
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift_vel(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel(&(p[i]),0.5 * time_step);
+            }
+#endif // BROWNIAN_DYNAMICS
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
@@ -732,10 +738,7 @@ void rescale_forces_propagate_vel() {
 #endif
           {
 #ifdef BROWNIAN_DYNAMICS
-            if (thermo_switch & THERMO_BROWNIAN) {
-              bd_drift_vel(&(p[i]),0.5 * time_step);
-              bd_random_walk_vel(&(p[i]),0.5 * time_step);
-            } else
+            if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
             {
               /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
@@ -959,6 +962,14 @@ void propagate_vel() {
       if (ifParticleIsVirtual(&p[i]))
         continue;
 #endif
+#ifdef BROWNIAN_DYNAMICS
+            if (thermo_switch & THERMO_BROWNIAN) {
+              bd_drift_vel(&(p[i]),0.5 * time_step);
+              bd_drift_vel_rot(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel(&(p[i]),0.5 * time_step);
+              bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
+            }
+#endif // BROWNIAN_DYNAMICS
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
@@ -980,12 +991,7 @@ void propagate_vel() {
 #endif
           {
 #ifdef BROWNIAN_DYNAMICS
-            if (thermo_switch & THERMO_BROWNIAN) {
-              bd_drift_vel(&(p[i]),0.5 * time_step);
-              bd_drift_vel_rot(&(p[i]),0.5 * time_step);
-              bd_random_walk_vel(&(p[i]),0.5 * time_step);
-              bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
-            } else
+            if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
             {
               /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
@@ -1041,6 +1047,14 @@ void propagate_pos() {
         if (ifParticleIsVirtual(&p[i]))
           continue;
 #endif
+#ifdef BROWNIAN_DYNAMICS
+        if (thermo_switch & THERMO_BROWNIAN) {
+          bd_drift(&(p[i]), time_step);
+          bd_drift_rot(&(p[i]), time_step);
+          bd_random_walk(&(p[i]), time_step);
+          bd_random_walk_rot(&(p[i]), time_step);
+        }
+#endif // BROWNIAN_DYNAMICS
         for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
           if (!(p[i].p.ext_flag & COORD_FIXED(j)))
@@ -1052,12 +1066,7 @@ void propagate_pos() {
               nemd_add_velocity(&p[i]);
 #endif
 #ifdef BROWNIAN_DYNAMICS
-            if (thermo_switch & THERMO_BROWNIAN) {
-              bd_drift(&(p[i]), time_step);
-              bd_drift_rot(&(p[i]), time_step);
-              bd_random_walk(&(p[i]), time_step);
-              bd_random_walk_rot(&(p[i]), time_step);
-            } else
+            if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
             {
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
@@ -1109,18 +1118,25 @@ void propagate_vel_pos() {
       if (ifParticleIsVirtual(&p[i]))
         continue;
 #endif
+#ifdef BROWNIAN_DYNAMICS
+      if (thermo_switch & THERMO_BROWNIAN) {
+        bd_drift_vel(&(p[i]),0.5 * time_step);
+        bd_drift_vel_rot(&(p[i]),0.5 * time_step);
+        bd_random_walk_vel(&(p[i]),0.5 * time_step);
+        bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
+        bd_drift(&(p[i]), time_step);
+        bd_drift_rot(&(p[i]), time_step);
+        bd_random_walk(&(p[i]), time_step);
+        bd_random_walk_rot(&(p[i]), time_step);
+      }
+#endif // BROWNIAN_DYNAMICS
       for (j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j)))
 #endif
         {
 #ifdef BROWNIAN_DYNAMICS
-          if (thermo_switch & THERMO_BROWNIAN) {
-            bd_drift_vel(&(p[i]),0.5 * time_step);
-            bd_drift_vel_rot(&(p[i]),0.5 * time_step);
-            bd_random_walk_vel(&(p[i]),0.5 * time_step);
-            bd_random_walk_vel_rot(&(p[i]),0.5 * time_step);
-          } else
+          if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
           {
             /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * f(t) */
@@ -1132,12 +1148,7 @@ void propagate_vel_pos() {
 #endif
             {
 #ifdef BROWNIAN_DYNAMICS
-            if (thermo_switch & THERMO_BROWNIAN) {
-              bd_drift(&(p[i]), time_step);
-              bd_drift_rot(&(p[i]), time_step);
-              bd_random_walk(&(p[i]), time_step);
-              bd_random_walk_rot(&(p[i]), time_step);
-            } else
+            if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
             {
               /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *

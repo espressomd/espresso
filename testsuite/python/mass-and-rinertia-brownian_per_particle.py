@@ -67,7 +67,7 @@ class ThermoTest(ut.TestCase):
         
         # no need to rebuild Verlet lists, avoid it
         self.es.cell_system.skin = 5.0
-        self.es.time_step = 0.03
+        self.es.time_step = 0.3
         n = 200 
         mass = (0.2 + random()) * 7.0
         J = np.array((0.2 + random(3)) * 7.0)
