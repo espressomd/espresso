@@ -127,13 +127,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {1, 1,
                                                                        1});
 
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.hpp" referencing the
-   datafield.
-    @return nonzero on error
-*/
-int mpi_bcast_parameter(int i);
-
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
 

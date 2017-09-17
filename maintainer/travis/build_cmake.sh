@@ -142,7 +142,7 @@ if $make_check; then
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
 
     end "TEST"
 fi
@@ -151,6 +151,8 @@ if $with_coverage; then
     cd $builddir
     lcov --directory . --capture --output-file coverage.info # capture coverage info
     lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
     lcov --list coverage.info #debug info
     # Uploading report to CodeCov
     bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"

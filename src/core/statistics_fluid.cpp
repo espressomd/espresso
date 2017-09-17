@@ -171,7 +171,7 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
-    result = (double*) Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
+    result = Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   if (involved) {
 
@@ -257,7 +257,7 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
-    result = (double*) Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
+    result = Utils::realloc(result,box_l[pdir]/lblattice.agrid[pdir]*sizeof(double));
 
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 

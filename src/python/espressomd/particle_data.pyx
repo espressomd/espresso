@@ -725,21 +725,6 @@ cdef class ParticleHandle(object):
             Setup this particle as virtual site relative to the particle with the given id.
 
             """
-            if isinstance(_relto, int):
-                if vs_relate_to(self.id, _relto):
-                    handle_errors("Vs_relative setup failed.")
-            else:
-                raise ValueError(
-                    "Argument of vs_auto_relate_to has to be of type int.")
-
-                # Virtual sites relative parameters
-
-        # vs_auto_relate_to
-        def vs_auto_relate_to(self, _relto):
-            """
-            Setup this particle as virtual site relative to the particle with the given id.
-
-            """
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
             if vs_relate_to(self.id, _relto):
