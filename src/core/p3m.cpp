@@ -1824,7 +1824,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.cao == 0) {
     cao_min = 1;
     cao_max = 7;
-    cao = 3;
+    cao = cao_max;
   } else {
     cao_min = cao_max = cao = p3m.params.cao;
 
