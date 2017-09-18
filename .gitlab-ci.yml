@@ -1,8 +1,13 @@
 image: espressomd/espresso-ubuntu-cuda:python
 
 stages:
+  - prepare
   - build
   - deploy
+
+status_pending:
+  stage: prepare
+  script: bash maintainer/gh_post_status.sh pending
 
 shanchen:
   stage: build
@@ -18,6 +23,16 @@ maxset:
   artifacts:
     paths:
     - build/
+
+status_success:
+  stage: deploy
+  script: bash maintainer/gh_post_status.sh success
+  when: on_success
+
+status_failure:
+  stage: deploy
+  script: bash maintainer/gh_post_status.sh failure
+  when: on_failure
 
 sphinx_documentation:
   stage: deploy
