@@ -1191,9 +1191,9 @@ template <int cao> void calc_influence_function_force() {
      the results need not be correct for timing. */
   if(p3m.params.tuning) {
     /* If resized, fill with zeros to avoid nan forces. */
-    if(old != p3m.g_force) {
       memset(p3m.g_force, 0, size * sizeof(double));
-    }
+
+    return;
   }
 
   for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
