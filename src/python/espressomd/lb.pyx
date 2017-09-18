@@ -40,6 +40,7 @@ IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+
         """
 
         def __getitem__(self, key):
@@ -208,6 +209,7 @@ IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+
         """
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
