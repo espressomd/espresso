@@ -1,7 +1,7 @@
 from __future__ import print_function
 import espressomd
 from espressomd import thermostat
-from espressomd.visualizationOpenGL import *
+from espressomd.visualization_opengl import *
 import numpy
 from threading import Thread
 
