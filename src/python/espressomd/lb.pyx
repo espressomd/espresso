@@ -214,6 +214,10 @@ IF LB_GPU:
         def remove_total_momentum(self):
             lb_lbfluid_remove_total_momentum()
 
+        def _activate_method(self):
+            self.validate_params()
+            self._set_lattice_switch()
+            self._set_params_in_es_core()
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
