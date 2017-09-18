@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2017 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,18 +17,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __SPHEROCYLINDER_HPP
-#define __SPHEROCYLINDER_HPP
+/** \file None_test.cpp Unit tests for the
+ * ScriptInterface::None class.
+ *
+*/
 
-#include "Cylinder.hpp"
-#include "Shape.hpp"
+#define BOOST_TEST_MODULE None test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-namespace Shapes {
-class SpheroCylinder : public Cylinder {
-public:
-  SpheroCylinder() : Cylinder() { m_open = true; };
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
-};
+#include "script_interface/None.hpp"
+using ScriptInterface::None;
+
+BOOST_AUTO_TEST_CASE(constructor_bool) {
+  static_assert(!None{}, "");
+  static_assert(!None{nullptr}, "");
 }
-#endif
+
+BOOST_AUTO_TEST_CASE(comparison) {
+  static_assert(None{} == None{}, "");
+  static_assert(!(None{} != None{}), "");
+}
+
+BOOST_AUTO_TEST_CASE(from_nullptr) {
+  auto return_nullptr = []() -> None { return nullptr; };
+  BOOST_CHECK(!return_nullptr());
+}

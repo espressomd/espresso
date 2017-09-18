@@ -1,7 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2017 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -19,18 +17,31 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __SPHEROCYLINDER_HPP
-#define __SPHEROCYLINDER_HPP
+#ifndef SCRIPT_INTERFACE_NONE_HPP
+#define SCRIPT_INTERFACE_NONE_HPP
 
-#include "Cylinder.hpp"
-#include "Shape.hpp"
+#include <boost/serialization/access.hpp>
 
-namespace Shapes {
-class SpheroCylinder : public Cylinder {
+namespace ScriptInterface {
+
+/**
+ * @brief Type to indicate no value in Variant.
+ */
+class None {
 public:
-  SpheroCylinder() : Cylinder() { m_open = true; };
-  int calculate_dist(const double *ppos, double *dist,
-                     double *vec) const override;
+  constexpr None() = default;
+  constexpr None(std::nullptr_t) {}
+
+  constexpr bool operator==(None const &) const { return true; }
+  constexpr bool operator!=(None const &) const { return false; }
+
+  constexpr operator bool() const { return false; }
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &, long int /* version */) const {}
 };
+
 }
+
 #endif
