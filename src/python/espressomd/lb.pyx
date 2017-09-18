@@ -198,12 +198,8 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_lattice_switch()
             self._set_params_in_es_core()
-
-
-
-
+            self._set_lattice_switch()
 
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
