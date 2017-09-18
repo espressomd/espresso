@@ -96,7 +96,7 @@ class SwimmerTest(ut.TestCase):
         if (S.cell_system.get_state()["n_nodes"] > 1):
             print("NOTE: Ignoring testcase for n_nodes > 1")
         else:
-            self.run_and_check(S, lbm, "engine_lb.vtk")
+            self.run_and_check(S, lbm, tests_common.abspath("data/engine_lb.vtk"))
 
 
 if __name__ == '__main__':
