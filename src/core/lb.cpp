@@ -157,11 +157,11 @@ int lb_set_lattice_switch(int py_switch) {
 
   switch(py_switch) {
   case 1:
-    lattice_switch = lattice_switch | LATTICE_LB;
+    lattice_switch = LATTICE_LB;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
     return 0;
   case 2:
-    lattice_switch = lattice_switch | LATTICE_LB_GPU;
+    lattice_switch = LATTICE_LB_GPU;
     mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
     return 0;
   default:
