@@ -9,6 +9,10 @@ public:
   const std::string name() const override { return "Testing::VariantTester"; }
   Variant call_method(std::string const &method,
                       VariantMap const &par) override {
+    if(method == "default") {
+      return Variant{};
+    }
+
     if (method == "true") {
       return true;
     }
@@ -38,6 +42,9 @@ public:
 
     if (method == "check_parameter_type") {
       auto const type = boost::get<std::string>(par.at("type"));
+
+      if(type == "none")
+        return is_none(par.at("value"));
 
       if (type == "bool") {
         return is_bool(par.at("value"));

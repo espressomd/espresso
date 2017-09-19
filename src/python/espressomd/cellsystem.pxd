@@ -22,11 +22,7 @@ from __future__ import print_function, absolute_import
 
 from libcpp.vector cimport vector
 
-cdef extern from "global.hpp":
-    int FIELD_NODEGRID
-
 cdef extern from "communication.hpp":
-    int mpi_bcast_parameter(int p)
     void mpi_bcast_cell_structure(int cs)
     int n_nodes
     vector[int] mpi_resort_particles(int global_flag)

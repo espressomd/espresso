@@ -191,7 +191,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
        Radius of the cylinder.
 
     length : float
-      Length of the cylinder.
+      Length of the cylinder (not including the caps).
     """
     _so_name = "Shapes::SpheroCylinder"
 

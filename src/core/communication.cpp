@@ -322,40 +322,6 @@ void mpi_call(SlaveCallback cb, int node, int param) {
   COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
-/*************** REQ_BCAST_PAR ************/
-static void common_bcast_parameter(int i) {
-  switch (fields[i].type) {
-  case TYPE_INT:
-    MPI_Bcast((int *)fields[i].data, fields[i].dimension, MPI_INT, 0,
-              comm_cart);
-    break;
-  case TYPE_BOOL:
-    MPI_Bcast((int *)fields[i].data, 1, MPI_INT, 0, comm_cart);
-    break;
-  case TYPE_DOUBLE:
-    MPI_Bcast((double *)fields[i].data, fields[i].dimension, MPI_DOUBLE, 0,
-              comm_cart);
-    break;
-  default:
-    break;
-  }
-
-  on_parameter_change(i);
-}
-
-int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
-
-  common_bcast_parameter(i);
-
-  return check_runtime_errors();
-}
-
-void mpi_bcast_parameter_slave(int node, int i) {
-  common_bcast_parameter(i);
-  check_runtime_errors();
-}
-
 /*************** REQ_WHO_HAS ****************/
 
 void mpi_who_has() {
@@ -2110,12 +2076,6 @@ void mpi_bcast_lb_params(int field, int value) {
 }
 
 void mpi_bcast_lb_params_slave(int field, int value) {
-#if defined(LB) || defined(LB_GPU)
-  if (field == LBPAR_LATTICE_SWITCH) {
-    lattice_switch = value;
-  }
-#endif
-
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
