@@ -2,7 +2,7 @@ import sys, os
 
 try:
     if sys.platform == "darwin" or os.name != "posix" or "DISPLAY" in os.environ:
-        from .visualizationMayavi import mayaviLive
+        from .visualization_mayavi import mayaviLive
     else:
         raise ImportError("Cannot connect to X server")
 except ImportError as e:
@@ -11,7 +11,7 @@ except ImportError as e:
             raise e
 
 try:
-    from .visualizationOpenGL import openGLLive
+    from .visualization_opengl import openGLLive
 except ImportError as e:
     class openGLLive(object):
         def __init__(*args, **kwargs):

@@ -1031,7 +1031,7 @@ IF BOND_CONSTRAINT == 1:
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.r, "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.ptol, "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.vtol}
+            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5, "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol, "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
 
         def _set_params_in_es_core(self):
             rigid_bond_set_params(
