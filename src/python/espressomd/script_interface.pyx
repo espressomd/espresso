@@ -246,7 +246,6 @@ class ScriptInterfaceHelper(PScriptInterface):
 # Map from script object names to corresponding python classes
 _python_class_by_so_name ={}
 
-
 def script_interface_register(c):
     """Decorator used to register script interface classes
        This will store a name<->class relationship in a registry, so that parameters
