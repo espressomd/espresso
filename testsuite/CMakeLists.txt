@@ -73,7 +73,7 @@ python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
 python_test(FILE variant_conversion.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
-python_test(FILE lb.py MAX_NUM_PROC 4)
+python_test(FILE lb.py MAX_NUM_PROC 8)
 python_test(FILE lb_gpu.py MAX_NUM_PROC 2)
 python_test(FILE lb_stokes_sphere_gpu.py MAX_NUM_PROC 1)
 
