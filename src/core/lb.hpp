@@ -149,13 +149,13 @@ typedef struct {
 typedef struct {
 
   /** number density (LJ units) */
-  double rho[LB_COMPONENTS];
+  double rho;
 
   /** kinematic viscosity (LJ units) */
-  double viscosity[LB_COMPONENTS];
+  double viscosity;
 
   /** bulk viscosity (LJ units) */
-  double bulk_viscosity[LB_COMPONENTS];
+  double bulk_viscosity;
 
   /** lattice spacing (LJ units) */
   double agrid;
@@ -167,12 +167,12 @@ typedef struct {
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
-  double friction[LB_COMPONENTS];
+  double friction;
 
   /** external force applied to the fluid at each lattice site (MD units) */
   double ext_force[3]; /* Open question: Do we want a local force or global
                           force? */
-  double rho_lb_units[LB_COMPONENTS];
+  double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
   /** relaxation of the even kinetic modes */
@@ -329,7 +329,7 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
     return;
   }
 
-  double avg_rho = lbpar.rho[0] * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   *rho = avg_rho + lbfluid[0][0][index] + lbfluid[0][1][index] +
          lbfluid[0][2][index] + lbfluid[0][3][index] + lbfluid[0][4][index] +
@@ -424,7 +424,7 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j,
 
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
-    *rho = lbpar.rho[0] * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
     j[0] = 0.;
     j[1] = 0.;
     j[2] = 0.;
@@ -443,7 +443,7 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j,
   double modes_from_pi_eq[6];
   lb_calc_modes(index, mode);
 
-  *rho = mode[0] + lbpar.rho[0] * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
 
   j[0] = mode[1];
   j[1] = mode[2];
@@ -518,17 +518,17 @@ inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
  */
 inline void lb_get_populations(index_t index, double *pop) {
   int i = 0;
-  for (i = 0; i < 19 * LB_COMPONENTS; i++) {
+  for (i = 0; i < 19; i++) {
     pop[i] =
-        lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho[i / 19];
+        lbfluid[0][i][index] + lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(index_t index, double *pop) {
   int i = 0;
-  for (i = 0; i < 19 * LB_COMPONENTS; i++) {
+  for (i = 0; i < 19; i++) {
     lbfluid[0][i][index] =
-        pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho[i / 19];
+        pop[i] - lbmodel.coeff[i % 19][0] * lbpar.rho;
   }
 }
 #endif
