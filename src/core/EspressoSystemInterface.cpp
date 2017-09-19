@@ -22,8 +22,6 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
-#include <iostream>
-
 /* Initialize instance pointer */
 EspressoSystemInterface *EspressoSystemInterface::m_instance = 0;
 
@@ -43,92 +41,12 @@ void EspressoSystemInterface::gatherParticles() {
     }
   }
 #endif
-
-  if (needsQ() || needsR() || needsDip() || needsQuatu()) {
-    R.clear();
-
-#ifdef ELECTROSTATICS
-    Q.clear();
-#endif
-#ifdef DIPOLES
-    Dip.clear();
-#endif
-
-#ifdef ROTATION
-    Quatu.clear();
-#endif
-    for (auto const &p : local_cells.particles()) {
-      if (needsR())
-        R.push_back(Vector3(p.r.p));
-
-#ifdef ELECTROSTATICS
-      if (needsQ())
-        Q.push_back(p.p.q);
-#endif
-#ifdef DIPOLES
-      if (needsDip())
-        Dip.emplace_back(Vector3{p.r.dip[0], p.r.dip[1], p.r.dip[2]});
-#endif
-#ifdef ROTATION
-      if (needsQuatu())
-        Quatu.emplace_back(Vector3{p.r.quatu[0], p.r.quatu[1], p.r.quatu[2]});
-#endif
-    }
-  }
 }
 
 void EspressoSystemInterface::init() { gatherParticles(); }
 
 void EspressoSystemInterface::update() { gatherParticles(); }
 
-SystemInterface::const_vec_iterator &EspressoSystemInterface::rBegin() {
-  m_r_begin = R.begin();
-  return m_r_begin;
-}
-
-const SystemInterface::const_vec_iterator &EspressoSystemInterface::rEnd() {
-  m_r_end = R.end();
-  return m_r_end;
-}
-
-#ifdef DIPOLES
-SystemInterface::const_vec_iterator &EspressoSystemInterface::dipBegin() {
-  m_dip_begin = Dip.begin();
-  return m_dip_begin;
-}
-
-const SystemInterface::const_vec_iterator &EspressoSystemInterface::dipEnd() {
-  m_dip_end = Dip.end();
-  return m_dip_end;
-}
-#endif
-
-#ifdef ELECTROSTATICS
-SystemInterface::const_real_iterator &EspressoSystemInterface::qBegin() {
-  m_q_begin = Q.begin();
-  return m_q_begin;
-}
-
-const SystemInterface::const_real_iterator &EspressoSystemInterface::qEnd() {
-  m_q_end = Q.end();
-  return m_q_end;
-}
-#endif
-
-#ifdef ROTATION
-SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuBegin() {
-  m_quatu_begin = Quatu.begin();
-  return m_quatu_begin;
-}
-
-const SystemInterface::const_vec_iterator &EspressoSystemInterface::quatuEnd() {
-  m_quatu_end = Quatu.end();
-  return m_quatu_end;
-}
-#endif
-
-unsigned int EspressoSystemInterface::npart() { return m_npart; }
-
-SystemInterface::Vector3 EspressoSystemInterface::box() {
+Vector3d EspressoSystemInterface::box() const {
   return Vector3d{box_l[0], box_l[1], box_l[2]};
 }
