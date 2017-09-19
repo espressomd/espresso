@@ -1158,7 +1158,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
         double rho; double j[3]; double pi[6];
 
@@ -1191,7 +1191,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
         double rho; double j[3]; double pi[6];
 
@@ -1322,7 +1322,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
         double rho; double j[3]; double pi[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -1354,7 +1354,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
 
         ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
@@ -1383,7 +1383,7 @@ int lb_lbnode_get_pop(int* ind, double* p_pop) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
 
         ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
@@ -1409,7 +1409,7 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
         double rho; double j[3]; double pi[6];
 
@@ -1441,7 +1441,7 @@ int lb_lbnode_set_u(int* ind, double* u){
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
         double rho; double j[3]; double pi[6];
 
@@ -1486,7 +1486,7 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-        index_t index;
+        Lattice::index_t index;
         int node, grid[3], ind_shifted[3];
 
         ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
@@ -1508,7 +1508,7 @@ int lb_lbnode_set_extforce(int* ind, double* f) {
 /********************** The Main LB Part *************************************/
 /* Halo communication for push scheme */
 static void halo_push_communication() {
-    index_t index;
+    Lattice::index_t index;
     int x, y, z, count;
     int rnode, snode;
     double *buffer=NULL, *sbuf=NULL, *rbuf=NULL;
@@ -2014,7 +2014,7 @@ void lb_reinit_parameters() {
 
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces() {
-    for (index_t index=0; index < lblattice.halo_grid_volume; index++) {
+    for (Lattice::index_t index=0; index < lblattice.halo_grid_volume; index++) {
 #ifdef EXTERNAL_FORCES
         // unit conversion: force density
         lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,2)*lbpar.tau*lbpar.tau;
@@ -2046,7 +2046,7 @@ void lb_reinit_fluid() {
 
     LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
 
-    for (index_t index = 0; index < lblattice.halo_grid_volume; index++) {
+    for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume; index++) {
       // calculate equilibrium distribution
       lb_calc_n_from_rho_j_pi(index,rho,j,pi);
       
@@ -2126,7 +2126,7 @@ void lb_release() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-void lb_calc_n_from_rho_j_pi(const index_t index,
+void lb_calc_n_from_rho_j_pi(const Lattice::index_t index,
                              const double rho,
                              const double *j,
                              double *pi) 
@@ -2213,7 +2213,7 @@ void lb_calc_n_from_rho_j_pi(const index_t index,
 
 
 /** Calculation of hydrodynamic modes */
-void lb_calc_modes(index_t index, double *mode) 
+void lb_calc_modes(Lattice::index_t index, double *mode) 
 {
 #ifdef D3Q19
     double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p, n7m, n8p, n8m, n9p, n9m;
@@ -2286,7 +2286,7 @@ void lb_calc_modes(index_t index, double *mode)
 
 
 /** Streaming and calculation of modes (pull scheme) */
-inline void lb_pull_calc_modes(index_t index, double *mode) {
+inline void lb_pull_calc_modes(Lattice::index_t index, double *mode) {
 
     int yperiod = lblattice.halo_grid[0];
     int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
@@ -2377,7 +2377,7 @@ inline void lb_pull_calc_modes(index_t index, double *mode) {
 }
 
 
-inline void lb_relax_modes(index_t index, double *mode) 
+inline void lb_relax_modes(Lattice::index_t index, double *mode) 
 {
     double rho, j[3], pi_eq[6];
 
@@ -2434,7 +2434,7 @@ inline void lb_relax_modes(index_t index, double *mode)
 }
 
 
-inline void lb_thermalize_modes(index_t index, double *mode) {
+inline void lb_thermalize_modes(Lattice::index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid));
@@ -2517,7 +2517,7 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
 }
 
 
-inline void lb_apply_forces(index_t index, double* mode) {
+inline void lb_apply_forces(Lattice::index_t index, double* mode) {
 
     double rho, *f, u[3], C[6];
 
@@ -2566,7 +2566,7 @@ inline void lb_apply_forces(index_t index, double* mode) {
 }
 
 
-inline void lb_calc_n_from_modes(index_t index, double *mode) 
+inline void lb_calc_n_from_modes(Lattice::index_t index, double *mode) 
 {
   
   double *w = lbmodel.w;
@@ -2628,11 +2628,11 @@ inline void lb_calc_n_from_modes(index_t index, double *mode)
 }
 
 
-inline void lb_calc_n_from_modes_push(index_t index, double *m) {
+inline void lb_calc_n_from_modes_push(Lattice::index_t index, double *m) {
 #ifdef D3Q19
     int yperiod = lblattice.halo_grid[0];
     int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
-    index_t next[19];
+    Lattice::index_t next[19];
     next[0]  = index;
     next[1]  = index + 1;
     next[2]  = index - 1;
@@ -2704,7 +2704,7 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
         lbfluid[1][i][next[i]] *= lbmodel.w[i];
 #else // D3Q19
     double **e = lbmodel.e;
-    index_t next[lbmodel.n_veloc];
+    Lattice::index_t next[lbmodel.n_veloc];
     for (int i = 0; i < lbmodel.n_veloc; i++) {
         next[i] = get_linear_index(c[i][0],c[i][1],c[i][2],lblattic.halo_grid);
         lbfluid[1][i][next[i]] = 0.0;
@@ -2718,7 +2718,7 @@ inline void lb_calc_n_from_modes_push(index_t index, double *m) {
 
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
-    index_t index;
+    Lattice::index_t index;
     int x, y, z;
     double modes[19];
 
@@ -2810,7 +2810,7 @@ inline void lb_collide_stream() {
 
 /** Streaming and collisions (pull scheme) */
 inline void lb_stream_collide() {
-    index_t index;
+    Lattice::index_t index;
     int x, y, z;
     double modes[19];
 
@@ -2918,7 +2918,7 @@ void lattice_boltzmann_update() {
  */
 inline void lb_viscous_coupling(Particle *p, double force[3]) {
   int x,y,z;
-  index_t node_index[8];
+  Lattice::index_t node_index[8];
   double delta[6];
   double *local_f, interpolated_u[3],delta_j[3];
   
@@ -3097,7 +3097,7 @@ inline void lb_viscous_coupling(Particle *p, double force[3]) {
 
 
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
-  index_t node_index[8], index;
+  Lattice::index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
@@ -3342,7 +3342,7 @@ void calc_particle_lattice_ia() {
  * This function has to be called after changing the density of
  * a local lattice site in order to set lbpar.rho consistently. */
 void lb_calc_average_rho() {
-    index_t index;
+    Lattice::index_t index;
     int x, y, z;
     double rho, local_rho, sum_rho;
 
@@ -3390,7 +3390,7 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
     halo regions have been exchanged correctly.
 */
 static void lb_check_halo_regions() {
-  index_t index;
+  Lattice::index_t index;
   int i,x,y,z, s_node, r_node, count=lbmodel.n_veloc;
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
@@ -3663,7 +3663,7 @@ static void lb_lattice_sum() {
 #endif /* #ifdef ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_mode_transformation(index_t index, double *mode) {
+static void lb_check_mode_transformation(Lattice::index_t index, double *mode) {
     /* check if what I think is right */
     int i;
     double *w = lbmodel.w;
@@ -3924,7 +3924,7 @@ static void lb_init_mode_transformation() {
 
     @param  index Index of the local lattice site (Input).
     @return Number of negative populations on the local lattice site. */
-static int lb_check_negative_n(index_t index)
+static int lb_check_negative_n(Lattice::index_t index)
 {
     int i, localfails=0;
 

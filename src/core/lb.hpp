@@ -277,7 +277,7 @@ void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j,
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const index_t index, const double rho,
+void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
@@ -300,7 +300,7 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double *p, double *v);
 
-inline void lb_calc_local_fields(index_t index, double *rho, double *j,
+inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi);
 
 /** Calculation of hydrodynamic modes.
@@ -308,14 +308,14 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j,
  *  @param index number of the node to calculate the modes for
  *  @param mode output pointer to a double[19]
  */
-void lb_calc_modes(index_t index, double *mode);
+void lb_calc_modes(Lattice::index_t index, double *mode);
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index the local lattice site (Input).
  * @param rho   local fluid density
  */
-inline void lb_calc_local_rho(index_t index, double *rho) {
+inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
 
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
@@ -345,7 +345,7 @@ inline void lb_calc_local_rho(index_t index, double *rho) {
  * @param index The local lattice site (Input).
  * @param j local fluid speed
  */
-inline void lb_calc_local_j(index_t index, double *j) {
+inline void lb_calc_local_j(Lattice::index_t index, double *j) {
 
 #ifndef D3Q19
 #error Only D3Q19 is implemened!
@@ -376,7 +376,7 @@ inline void lb_calc_local_j(index_t index, double *j) {
  * @param index The local lattice site (Input).
  * @param pi local fluid pressure
  */
-inline void lb_calc_local_pi(index_t index, double *pi) {
+inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
 
   double rho;
   double j[3];
@@ -399,7 +399,7 @@ inline void lb_calc_local_pi(index_t index, double *pi) {
  * @param j       local fluid speed
  * @param pi      local fluid pressure
  */
-inline void lb_calc_local_fields(index_t index, double *rho, double *j,
+inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                                  double *pi) {
 
   if (!(lattice_switch & LATTICE_LB)) {
@@ -498,7 +498,7 @@ inline void lb_calc_local_fields(index_t index, double *rho, double *j,
 }
 
 #ifdef LB_BOUNDARIES
-inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
+inline void lb_local_fields_get_boundary_flag(Lattice::index_t index, int *boundary) {
 
   if (!(lattice_switch & LATTICE_LB)) {
     runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
@@ -516,7 +516,7 @@ inline void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
  * @param index The local lattice site (Input).
  * @param pop fluid population
  */
-inline void lb_get_populations(index_t index, double *pop) {
+inline void lb_get_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
     pop[i] =
@@ -524,7 +524,7 @@ inline void lb_get_populations(index_t index, double *pop) {
   }
 }
 
-inline void lb_set_populations(index_t index, double *pop) {
+inline void lb_set_populations(Lattice::index_t index, double *pop) {
   int i = 0;
   for (i = 0; i < 19; i++) {
     lbfluid[0][i][index] =
