@@ -76,9 +76,13 @@ LB_Parameters lbpar = {
     // rho_lb_units
     {0.},
     // gamma_odd
-    {0.},
+    0.,
     // gamma_even
-    {0.},
+    0.,
+    // gamma_shear
+    0.,
+    // gamma_bulk
+    0.,
     // is_TRT
     false,
     // resend_halo
@@ -111,21 +115,9 @@ LB_FluidNode *lbfields = NULL;
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = { 0, NULL };
 
-/** \name Derived parameters */
-/*@{*/
-/** Flag indicating whether fluctuations are present. */
-static int fluct;
 
-/** relaxation rate of shear modes */
-double gamma_shear = 0.0;
-/** relaxation rate of bulk modes */
-double gamma_bulk = 0.0;
-/** relaxation of the odd kinetic modes */
-static double gamma_odd  = 0.0;
-/** relaxation of the even kinetic modes */
-static double gamma_even = 0.0;
-/** amplitudes of the fluctuations of the modes */
-static double lb_phi[19];
+/*@{*/
+
 /** amplitude of the fluctuations in the viscous coupling */
 static double lb_coupl_pref = 0.0;
 /** amplitude of the fluctuations in the viscous coupling with gaussian random numbers */
@@ -320,7 +312,7 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd) {
 #endif // LB_GPU
     } else {
 #ifdef LB
-      lbpar.gamma_odd[ii] = gamma_odd = p_gamma_odd[ii];
+      lbpar.gamma_odd = *p_gamma_odd;
       lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
@@ -342,7 +334,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even)
 #endif // LB_GPU
     } else {
 #ifdef LB
-      lbpar.gamma_even[ii] = gamma_even = p_gamma_even[ii];
+      lbpar.gamma_even = *p_gamma_even;
       lbpar.is_TRT = false;
       mpi_bcast_lb_params(0);
 #endif // LB
@@ -583,7 +575,7 @@ int lb_lbfluid_get_gamma_odd(double* p_gamma_odd){
 #endif // LB_GPU
   } else {
 #ifdef LB
-    *p_gamma_odd = lbpar.gamma_odd[0];
+    *p_gamma_odd = lbpar.gamma_odd;
 #endif // LB
   }
   return 0;
@@ -597,7 +589,7 @@ int lb_lbfluid_get_gamma_even(double* p_gamma_even){
 #endif // LB_GPU
   } else {
 #ifdef LB
-    *p_gamma_even = lbpar.gamma_even[0];
+    *p_gamma_even = lbpar.gamma_even;
 #endif // LB
   }
   return 0;
@@ -1949,32 +1941,29 @@ void lb_reinit_parameters() {
     if (lbpar.viscosity[0] > 0.0) {
         /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
         // unit conversion: viscosity
-        gamma_shear = 1. - 2./(6.*lbpar.viscosity[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
+        lbpar.gamma_shear = 1. - 2./(6.*lbpar.viscosity[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
     }
 
     if (lbpar.bulk_viscosity[0] > 0.0) {
         /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
         // unit conversion: viscosity
-        gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
+        lbpar.gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity[0]*lbpar.tau/(lbpar.agrid*lbpar.agrid)+1.);
     }
-
-    gamma_odd = lbpar.gamma_odd[0];
-    gamma_even = lbpar.gamma_even[0];
 
     if (lbpar.is_TRT) {
-        gamma_bulk = gamma_shear;
-        gamma_even = gamma_shear;
-        gamma_odd = -(7.0*gamma_even+1.0)/(gamma_even+7.0);
-        //gamma_odd = gamma_shear; //uncomment for BGK
+        lbpar.gamma_bulk = lbpar.gamma_shear;
+        lbpar.gamma_even = lbpar.gamma_shear;
+        lbpar.gamma_odd = -(7.0*lbpar.gamma_even+1.0)/(lbpar.gamma_even+7.0);
+        //gamma_odd = lbpar.gamma_shear; //uncomment for BGK
     }
 
-    //gamma_shear = 0.0; //uncomment for special case of BGK
-    //gamma_bulk = 0.0;
+    //lbpar.gamma_shear = 0.0; //uncomment for special case of BGK
+    //lbpar.gamma_bulk = 0.0;
     //gamma_odd = 0.0;
     //gamma_even = 0.0;
 
-    //printf("gamma_shear=%e\n", gamma_shear);
-    //printf("gamma_bulk=%e\n", gamma_bulk);
+    //printf("lbpar.gamma_shear=%e\n", lbpar.gamma_shear);
+    //printf("lbpar.gamma_bulk=%e\n", lbpar.gamma_bulk);
     //printf("gamma_odd=%e\n", gamma_odd);
     //printf("gamma_even=%e\n", gamma_even);
     //printf("\n");
@@ -1984,7 +1973,7 @@ void lb_reinit_parameters() {
     if (temperature > 0.0)
       {
         /* fluctuating hydrodynamics ? */
-        fluct = 1;
+        lbpar.fluct = 1;
         
         /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
          * Note that the modes are not normalized as in the paper here! */
@@ -1995,11 +1984,11 @@ void lb_reinit_parameters() {
 #else // D3Q19
         double **e = lbmodel.e;
 #endif // D3Q19
-        for (i = 0; i < 4; i++) lb_phi[i] = 0.0;
-        lb_phi[4] = sqrt(mu*e[19][4]*(1.-SQR(gamma_bulk))); // SQR(x) == x*x
-        for (i = 5; i < 10; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear)));
-        for (i = 10; i < 16; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1-SQR(gamma_odd)));
-        for (i = 16; i < 19; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1-SQR(gamma_even)));
+        for (i = 0; i < 4; i++) lbpar.phi[i] = 0.0;
+        lbpar.phi[4] = sqrt(mu*e[19][4]*(1.-SQR(lbpar.gamma_bulk))); // SQR(x) == x*x
+        for (i = 5; i < 10; i++) lbpar.phi[i] = sqrt(mu*e[19][i]*(1.-SQR(lbpar.gamma_shear)));
+        for (i = 10; i < 16; i++) lbpar.phi[i] = sqrt(mu*e[19][i]*(1-SQR(lbpar.gamma_odd)));
+        for (i = 16; i < 19; i++) lbpar.phi[i] = sqrt(mu*e[19][i]*(1-SQR(lbpar.gamma_even)));
         
         /* lb_coupl_pref is stored in MD units (force)
          * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -2011,14 +2000,14 @@ void lb_reinit_parameters() {
         lb_coupl_pref2 = sqrt(2.*lbpar.friction[0]*temperature/time_step);
       } else {
       /* no fluctuations at zero temperature */
-      fluct = 0;
-      for (i = 0; i < lbmodel.n_veloc; i++) lb_phi[i] = 0.0;
+      lbpar.fluct = 0;
+      for (i = 0; i < lbmodel.n_veloc; i++) lbpar.phi[i] = 0.0;
       lb_coupl_pref = 0.0;
       lb_coupl_pref2 = 0.0;
     }
-    LB_TRACE(fprintf(stderr,"%d: gamma_shear=%lf gamma_bulk=%lf shear_fluct=%lf " \
+    LB_TRACE(fprintf(stderr,"%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf " \
                      "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",     \
-                     this_node, gamma_shear, gamma_bulk, lb_phi[9], lb_phi[4], mu, \
+                     this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9], lbpar.phi[4], mu, \
                      lbpar.bulk_viscosity[0], lbpar.viscosity[0]));
 }
 
@@ -2422,25 +2411,25 @@ inline void lb_relax_modes(index_t index, double *mode)
     pi_eq[5] = j[1] * j[2] / rho;
 
     /* relax the stress modes */
-    mode[4] = pi_eq[0] + gamma_bulk * (mode[4] - pi_eq[0]);
-    mode[5] = pi_eq[1] + gamma_shear * (mode[5] - pi_eq[1]);
-    mode[6] = pi_eq[2] + gamma_shear * (mode[6] - pi_eq[2]);
-    mode[7] = pi_eq[3] + gamma_shear * (mode[7] - pi_eq[3]);
-    mode[8] = pi_eq[4] + gamma_shear * (mode[8] - pi_eq[4]);
-    mode[9] = pi_eq[5] + gamma_shear * (mode[9] - pi_eq[5]);
+    mode[4] = pi_eq[0] + lbpar.gamma_bulk * (mode[4] - pi_eq[0]);
+    mode[5] = pi_eq[1] + lbpar.gamma_shear * (mode[5] - pi_eq[1]);
+    mode[6] = pi_eq[2] + lbpar.gamma_shear * (mode[6] - pi_eq[2]);
+    mode[7] = pi_eq[3] + lbpar.gamma_shear * (mode[7] - pi_eq[3]);
+    mode[8] = pi_eq[4] + lbpar.gamma_shear * (mode[8] - pi_eq[4]);
+    mode[9] = pi_eq[5] + lbpar.gamma_shear * (mode[9] - pi_eq[5]);
 
 #ifndef OLD_FLUCT
     /* relax the ghost modes (project them out) */
     /* ghost modes have no equilibrium part due to orthogonality */
-    mode[10] = gamma_odd*mode[10];
-    mode[11] = gamma_odd*mode[11];
-    mode[12] = gamma_odd*mode[12];
-    mode[13] = gamma_odd*mode[13];
-    mode[14] = gamma_odd*mode[14];
-    mode[15] = gamma_odd*mode[15];
-    mode[16] = gamma_even*mode[16];
-    mode[17] = gamma_even*mode[17];
-    mode[18] = gamma_even*mode[18];
+    mode[10] = lbpar.gamma_odd*mode[10];
+    mode[11] = lbpar.gamma_odd*mode[11];
+    mode[12] = lbpar.gamma_odd*mode[12];
+    mode[13] = lbpar.gamma_odd*mode[13];
+    mode[14] = lbpar.gamma_odd*mode[14];
+    mode[15] = lbpar.gamma_odd*mode[15];
+    mode[16] = lbpar.gamma_even*mode[16];
+    mode[17] = lbpar.gamma_even*mode[17];
+    mode[18] = lbpar.gamma_even*mode[18];
 #endif // !OLD_FLUCT
 }
 
@@ -2451,72 +2440,72 @@ inline void lb_thermalize_modes(index_t index, double *mode) {
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid));
 
     /* stress modes */
-    mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
-    mode[5] += (fluct[1] = rootrho_gauss*lb_phi[5]*gaussian_random());
-    mode[6] += (fluct[2] = rootrho_gauss*lb_phi[6]*gaussian_random());
-    mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random());
-    mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random());
-    mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random());
+    mode[4] += (fluct[0] = rootrho_gauss*lbpar.phi[4]*gaussian_random());
+    mode[5] += (fluct[1] = rootrho_gauss*lbpar.phi[5]*gaussian_random());
+    mode[6] += (fluct[2] = rootrho_gauss*lbpar.phi[6]*gaussian_random());
+    mode[7] += (fluct[3] = rootrho_gauss*lbpar.phi[7]*gaussian_random());
+    mode[8] += (fluct[4] = rootrho_gauss*lbpar.phi[8]*gaussian_random());
+    mode[9] += (fluct[5] = rootrho_gauss*lbpar.phi[9]*gaussian_random());
 
 #ifndef OLD_FLUCT
     /* ghost modes */
-    mode[10] += rootrho_gauss*lb_phi[10]*gaussian_random();
-    mode[11] += rootrho_gauss*lb_phi[11]*gaussian_random();
-    mode[12] += rootrho_gauss*lb_phi[12]*gaussian_random();
-    mode[13] += rootrho_gauss*lb_phi[13]*gaussian_random();
-    mode[14] += rootrho_gauss*lb_phi[14]*gaussian_random();
-    mode[15] += rootrho_gauss*lb_phi[15]*gaussian_random();
-    mode[16] += rootrho_gauss*lb_phi[16]*gaussian_random();
-    mode[17] += rootrho_gauss*lb_phi[17]*gaussian_random();
-    mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random();
+    mode[10] += rootrho_gauss*lbpar.phi[10]*gaussian_random();
+    mode[11] += rootrho_gauss*lbpar.phi[11]*gaussian_random();
+    mode[12] += rootrho_gauss*lbpar.phi[12]*gaussian_random();
+    mode[13] += rootrho_gauss*lbpar.phi[13]*gaussian_random();
+    mode[14] += rootrho_gauss*lbpar.phi[14]*gaussian_random();
+    mode[15] += rootrho_gauss*lbpar.phi[15]*gaussian_random();
+    mode[16] += rootrho_gauss*lbpar.phi[16]*gaussian_random();
+    mode[17] += rootrho_gauss*lbpar.phi[17]*gaussian_random();
+    mode[18] += rootrho_gauss*lbpar.phi[18]*gaussian_random();
 #endif // !OLD_FLUCT
 
 #elif defined (GAUSSRANDOMCUT)
     double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid));
 
     /* stress modes */
-    mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random_cut());
-    mode[5] += (fluct[1] = rootrho_gauss*lb_phi[5]*gaussian_random_cut());
-    mode[6] += (fluct[2] = rootrho_gauss*lb_phi[6]*gaussian_random_cut());
-    mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random_cut());
-    mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random_cut());
-    mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random_cut());
+    mode[4] += (fluct[0] = rootrho_gauss*lbpar.phi[4]*gaussian_random_cut());
+    mode[5] += (fluct[1] = rootrho_gauss*lbpar.phi[5]*gaussian_random_cut());
+    mode[6] += (fluct[2] = rootrho_gauss*lbpar.phi[6]*gaussian_random_cut());
+    mode[7] += (fluct[3] = rootrho_gauss*lbpar.phi[7]*gaussian_random_cut());
+    mode[8] += (fluct[4] = rootrho_gauss*lbpar.phi[8]*gaussian_random_cut());
+    mode[9] += (fluct[5] = rootrho_gauss*lbpar.phi[9]*gaussian_random_cut());
 
 #ifndef OLD_FLUCT
     /* ghost modes */
-    mode[10] += rootrho_gauss*lb_phi[10]*gaussian_random_cut();
-    mode[11] += rootrho_gauss*lb_phi[11]*gaussian_random_cut();
-    mode[12] += rootrho_gauss*lb_phi[12]*gaussian_random_cut();
-    mode[13] += rootrho_gauss*lb_phi[13]*gaussian_random_cut();
-    mode[14] += rootrho_gauss*lb_phi[14]*gaussian_random_cut();
-    mode[15] += rootrho_gauss*lb_phi[15]*gaussian_random_cut();
-    mode[16] += rootrho_gauss*lb_phi[16]*gaussian_random_cut();
-    mode[17] += rootrho_gauss*lb_phi[17]*gaussian_random_cut();
-    mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random_cut();
+    mode[10] += rootrho_gauss*lbpar.phi[10]*gaussian_random_cut();
+    mode[11] += rootrho_gauss*lbpar.phi[11]*gaussian_random_cut();
+    mode[12] += rootrho_gauss*lbpar.phi[12]*gaussian_random_cut();
+    mode[13] += rootrho_gauss*lbpar.phi[13]*gaussian_random_cut();
+    mode[14] += rootrho_gauss*lbpar.phi[14]*gaussian_random_cut();
+    mode[15] += rootrho_gauss*lbpar.phi[15]*gaussian_random_cut();
+    mode[16] += rootrho_gauss*lbpar.phi[16]*gaussian_random_cut();
+    mode[17] += rootrho_gauss*lbpar.phi[17]*gaussian_random_cut();
+    mode[18] += rootrho_gauss*lbpar.phi[18]*gaussian_random_cut();
 #endif // OLD_FLUCT
 
 #elif defined (FLATNOISE)
     double rootrho = sqrt(fabs(12.0*(mode[0]+lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid)));
 
     /* stress modes */
-    mode[4] += (fluct[0] = rootrho*lb_phi[4]*(d_random()-0.5));
-    mode[5] += (fluct[1] = rootrho*lb_phi[5]*(d_random()-0.5));
-    mode[6] += (fluct[2] = rootrho*lb_phi[6]*(d_random()-0.5));
-    mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
-    mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
-    mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
+    mode[4] += (fluct[0] = rootrho*lbpar.phi[4]*(d_random()-0.5));
+    mode[5] += (fluct[1] = rootrho*lbpar.phi[5]*(d_random()-0.5));
+    mode[6] += (fluct[2] = rootrho*lbpar.phi[6]*(d_random()-0.5));
+    mode[7] += (fluct[3] = rootrho*lbpar.phi[7]*(d_random()-0.5));
+    mode[8] += (fluct[4] = rootrho*lbpar.phi[8]*(d_random()-0.5));
+    mode[9] += (fluct[5] = rootrho*lbpar.phi[9]*(d_random()-0.5));
 
 #ifndef OLD_FLUCT
     /* ghost modes */
-    mode[10] += rootrho*lb_phi[10]*(d_random()-0.5);
-    mode[11] += rootrho*lb_phi[11]*(d_random()-0.5);
-    mode[12] += rootrho*lb_phi[12]*(d_random()-0.5);
-    mode[13] += rootrho*lb_phi[13]*(d_random()-0.5);
-    mode[14] += rootrho*lb_phi[14]*(d_random()-0.5);
-    mode[15] += rootrho*lb_phi[15]*(d_random()-0.5);
-    mode[16] += rootrho*lb_phi[16]*(d_random()-0.5);
-    mode[17] += rootrho*lb_phi[17]*(d_random()-0.5);
-    mode[18] += rootrho*lb_phi[18]*(d_random()-0.5);
+    mode[10] += rootrho*lbpar.phi[10]*(d_random()-0.5);
+    mode[11] += rootrho*lbpar.phi[11]*(d_random()-0.5);
+    mode[12] += rootrho*lbpar.phi[12]*(d_random()-0.5);
+    mode[13] += rootrho*lbpar.phi[13]*(d_random()-0.5);
+    mode[14] += rootrho*lbpar.phi[14]*(d_random()-0.5);
+    mode[15] += rootrho*lbpar.phi[15]*(d_random()-0.5);
+    mode[16] += rootrho*lbpar.phi[16]*(d_random()-0.5);
+    mode[17] += rootrho*lbpar.phi[17]*(d_random()-0.5);
+    mode[18] += rootrho*lbpar.phi[18]*(d_random()-0.5);
 #endif // !OLD_FLUCT
 #else // GAUSSRANDOM
 #error No noise type defined for the CPU LB
@@ -2541,12 +2530,12 @@ inline void lb_apply_forces(index_t index, double* mode) {
     u[1] = (mode[2] + 0.5 * f[1])/rho;
     u[2] = (mode[3] + 0.5 * f[2])/rho;
 
-    C[0] = (1.+gamma_bulk)*u[0]*f[0] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
-    C[2] = (1.+gamma_bulk)*u[1]*f[1] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
-    C[5] = (1.+gamma_bulk)*u[2]*f[2] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
-    C[1] = 1./2. * (1.+gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
-    C[3] = 1./2. * (1.+gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
-    C[4] = 1./2. * (1.+gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
+    C[0] = (1.+lbpar.gamma_bulk)*u[0]*f[0] + 1./3.*(lbpar.gamma_bulk-lbpar.gamma_shear)*scalar(u,f);
+    C[2] = (1.+lbpar.gamma_bulk)*u[1]*f[1] + 1./3.*(lbpar.gamma_bulk-lbpar.gamma_shear)*scalar(u,f);
+    C[5] = (1.+lbpar.gamma_bulk)*u[2]*f[2] + 1./3.*(lbpar.gamma_bulk-lbpar.gamma_shear)*scalar(u,f);
+    C[1] = 1./2. * (1.+lbpar.gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
+    C[3] = 1./2. * (1.+lbpar.gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
+    C[4] = 1./2. * (1.+lbpar.gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
 
     /* update momentum modes */
     mode[1] += f[0];
@@ -2773,7 +2762,7 @@ inline void lb_collide_stream() {
               lb_relax_modes(index, modes);
 
               /* fluctuating hydrodynamics */
-              if (fluct) lb_thermalize_modes(index, modes);
+              if (lbpar.fluct) lb_thermalize_modes(index, modes);
 
               /* apply forces */
 #ifdef EXTERNAL_FORCES
@@ -2851,7 +2840,7 @@ inline void lb_stream_collide() {
                     lb_relax_modes(index, modes);
                     
                     /* fluctuating hydrodynamics */
-                    if (fluct) lb_thermalize_modes(index, modes);
+                    if (lbpar.fluct) lb_thermalize_modes(index, modes);
                     
                     /* apply forces */
                     if (lbfields[index].has_force) lb_apply_forces(index, modes);
