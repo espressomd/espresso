@@ -24,12 +24,10 @@
 */
 
 #include "forcecap.hpp"
-#include "communication.hpp"
 
 double force_cap = 0.0;
 
 int forcecap_set_params(double forcecap) {
-  mpi_cap_forces(forcecap);
-
-  return ES_OK;
+  force_cap = forcecap;
+  return 0;
 }

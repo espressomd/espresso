@@ -36,14 +36,10 @@
 #include "particle_data.hpp"
 #include "interaction_data.hpp"
 
-#include "forcecap.hpp"
-
-int ljforcecap_set_params(double ljforcecap);
-
 int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double cut,
 				      double shift, double offset,
-				      double cap_radius, double min);
+				      double min);
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 inline void add_lj_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
@@ -60,7 +56,6 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
-    if(r_off > ia_params->LJ_capradius) {
       frac2 = SQR(ia_params->LJ_sig/r_off);
       frac6 = frac2*frac2*frac2;
       fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (r_off * dist);
@@ -84,29 +79,6 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
       if(fac*dist > 1000) fprintf(stderr,"%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
 				  this_node,p1->p.identity,p2->p.identity,fac*dist,dist);
 #endif
-
-    }
-    /* capped part of lj potential. */
-    else if(dist > 0.0) {
-      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
-      frac6 = frac2*frac2*frac2;
-      fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / (ia_params->LJ_capradius * dist);
-      for(j=0;j<3;j++)
-	/* vector d is rescaled to length LJ_capradius */
-	force[j] += fac * d[j];
-
-    }
-    /* this should not happen! */
-    else {
-      LJ_TRACE(fprintf(stderr, "%d: Lennard-Jones warning: Particles id1=%d id2=%d exactly on top of each other\n",this_node,p1->p.identity,p2->p.identity));
-
-      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
-      frac6 = frac2*frac2*frac2;
-      fac   = 48.0 * ia_params->LJ_eps * frac6*(frac6 - 0.5) / ia_params->LJ_capradius;
-
-      force[0] += fac * ia_params->LJ_capradius;
-    }
-
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
 
@@ -116,38 +88,20 @@ inline void add_lj_pair_force(const Particle * const p1, const Particle * const 
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
-inline double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist)
-{
+inline double lj_pair_energy(Particle *p1, Particle *p2,
+                             IA_parameters *ia_params, double d[3],
+                             double dist) {
   double r_off, frac2, frac6;
-  if ((dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
-	  (dist > ia_params->LJ_min+ia_params->LJ_offset))
-  {
+  if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
+      (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
-    if(r_off > ia_params->LJ_capradius) {
-      frac2 = SQR(ia_params->LJ_sig/r_off);
-      frac6 = frac2*frac2*frac2;
-      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
-    }
-    /* capped part of lj potential. */
-    else if(dist > 0.0) {
-      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
-      frac6 = frac2*frac2*frac2;
-      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
-    }
-    /* this should not happen! */
-    else {
-      frac2 = SQR(ia_params->LJ_sig/ia_params->LJ_capradius);
-      frac6 = frac2*frac2*frac2;
-      return 4.0*ia_params->LJ_eps*(SQR(frac6)-frac6+ia_params->LJ_shift);
-    }
+    frac2 = SQR(ia_params->LJ_sig / r_off);
+    frac6 = frac2 * frac2 * frac2;
+    return 4.0 * ia_params->LJ_eps * (SQR(frac6) - frac6 + ia_params->LJ_shift);
   }
   return 0.0;
 }
-
-/** calculate lj_capradius from force_cap */
-void calc_lj_cap_radii();
 
 #endif /* ifdef LENNARD_JONES */
 #endif

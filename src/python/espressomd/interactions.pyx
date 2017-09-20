@@ -199,7 +199,6 @@ IF LENNARD_JONES == 1:
                 "cutoff": ia_params.LJ_cut,
                 "shift": ia_params.LJ_shift,
                 "offset": ia_params.LJ_offset,
-                "cap": ia_params.LJ_capradius,
                 "min": ia_params.LJ_min}
 
         def is_active(self):
@@ -221,9 +220,6 @@ IF LENNARD_JONES == 1:
                     Constant shift of the potential. (4*epsilon*shift).
             offset : float, optional
                      Offset distance of the interaction.
-            cap : float, optional
-                  If individual force caps are used, determines the distance
-                  at which the force is capped.
             min : float, optional
                   Restricts the interaction to a minimal distance.
             """
@@ -243,7 +239,6 @@ IF LENNARD_JONES == 1:
                                         self._params["cutoff"],
                                         self._params["shift"],
                                         self._params["offset"],
-                                        self._params["cap"],
                                         self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
@@ -254,14 +249,13 @@ IF LENNARD_JONES == 1:
                 "cutoff": 0.,
                 "shift": 0.,
                 "offset": 0.,
-                "cap": 0.,
                 "min": 0.}
 
         def type_name(self):
             return "LennardJones"
 
         def valid_keys(self):
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "cap", "min"
+            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
 
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift"
@@ -398,7 +392,6 @@ IF LENNARD_JONES_GENERIC == 1:
                                     self._params["e2"],
                                     self._params["b1"],
                                     self._params["b2"],
-                                    0.0,
                                     self._params["lambda"],
                                     self._params["delta"]):
                     raise Exception(
