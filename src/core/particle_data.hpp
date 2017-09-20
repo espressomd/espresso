@@ -161,14 +161,14 @@ struct ParticleProperties {
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
-  double gamma[3] = {-1., -1., -1.};
+  Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
 #else
-  double gamma_rot[3] = {-1., -1., -1.};
+  Vector3d gamma_rot = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
@@ -768,13 +768,13 @@ int set_particle_temperature(int part, double T);
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma);
 #else
-int set_particle_gamma(int part, double gamma[3]);
+int set_particle_gamma(int part, Vector3d gamma);
 #endif
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma);
 #else
-int set_particle_gamma_rot(int part, double gamma[3]);
+int set_particle_gamma_rot(int part, Vector3d gamma);
 #endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE

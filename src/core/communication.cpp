@@ -407,7 +407,8 @@ void mpi_bcast_event_slave(int node, int event) {
     break;
 #endif
 
-  default:;
+  default:
+    ;
   }
 }
 
@@ -2368,28 +2369,17 @@ void mpi_set_particle_temperature_slave(int pnode, int part) {
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma) {
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma) {
 #endif
-  int j;
   mpi_call(mpi_set_particle_gamma_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-/* here the setting actually happens, if the particle belongs to the local
- * node */
-#ifndef PARTICLE_ANISOTROPY
+    /* here the setting actually happens, if the particle belongs to the local
+     * node */
     p->p.gamma = gamma;
-#else
-    for (j = 0; j < 3; j++)
-      p->p.gamma[j] = gamma[j];
-#endif
-
   } else {
-#ifndef PARTICLE_ANISOTROPY
-    MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#else
-    MPI_Send(gamma, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#endif
+    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma});
   }
 
   on_particle_change();
@@ -2398,49 +2388,31 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma[3]) {
 
 void mpi_set_particle_gamma_slave(int pnode, int part) {
 #ifdef LANGEVIN_PER_PARTICLE
-  double s_buf = 0.;
-  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Status status;
-/* here the setting happens for nonlocal nodes */
-#ifndef PARTICLE_ANISOTROPY
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    p->p.gamma = s_buf;
-#else
-    MPI_Recv(p->p.gamma, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-#endif
+    comm_cart.recv(0, SOME_TAG, p->p.gamma);
   }
+
   on_particle_change();
 #endif
 }
 
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot)
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot)
 #endif
 {
-  int j;
   mpi_call(mpi_set_particle_gamma_rot_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-/* here the setting actually happens, if the particle belongs to the local
- * node */
-#ifndef ROTATIONAL_INERTIA
+    /* here the setting actually happens, if the particle belongs to the local
+     * node */
     p->p.gamma_rot = gamma_rot;
-#else
-    for (j = 0; j < 3; j++)
-      p->p.gamma_rot[j] = gamma_rot[j];
-#endif
   } else {
-#ifndef ROTATIONAL_INERTIA
-    MPI_Send(&gamma_rot, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#else
-    MPI_Send(gamma_rot, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-#endif
+    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma_rot});
   }
 
   on_particle_change();
@@ -2449,19 +2421,11 @@ void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3])
 
 void mpi_set_particle_gamma_rot_slave(int pnode, int part) {
 #if defined(LANGEVIN_PER_PARTICLE) && defined(ROTATION)
-  double s_buf = 0.;
-  int j;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    MPI_Status status;
-/* here the setting happens for nonlocal nodes */
-#ifndef ROTATIONAL_INERTIA
-    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-    p->p.gamma_rot = s_buf;
-#else
-    MPI_Recv(p->p.gamma_rot, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
-#endif
+    comm_cart.recv(pnode, SOME_TAG, p->p.gamma_rot);
   }
+
   on_particle_change();
 #endif
 }

@@ -926,7 +926,7 @@ cdef class ParticleHandle(object):
                 """
 
                 def __set__(self, _gamma):
-                    cdef double gamma[3]
+                    cdef Vector3d gamma
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
@@ -985,7 +985,7 @@ cdef class ParticleHandle(object):
                     """
 
                     def __set__(self, _gamma_rot):
-                        cdef double gamma_rot[3]
+                        cdef Vector3d gamma_rot
                         check_type_or_throw_except(
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
                         for i in range(3):
