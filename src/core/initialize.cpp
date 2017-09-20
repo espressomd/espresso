@@ -594,8 +594,8 @@ void on_parameter_change(int field)
       if (lattice_switch & LATTICE_LB_GPU) {
         lb_reinit_parameters_gpu();
       }
-    }  
-#endif    
+    }
+#endif
 #ifdef LB
     if (lattice_switch & LATTICE_LB) {
       lb_reinit_parameters();
