@@ -518,11 +518,10 @@ cdef class NonBondedInteractions(object):
         return NonBondedInteractionHandle(key[0], key[1])
 
     def set_force_cap(self, cap):
-        if forcecap_set_params(cap):
-            raise Exception("Could not set forcecap")
+        forcecap_set(cap)
 
     def get_force_cap(self):
-        return force_cap
+        return forcecap_get()
 
     def __getstate__(self):
         # contains info about ALL nonbonded interactions

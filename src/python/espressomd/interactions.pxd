@@ -78,8 +78,8 @@ IF GAY_BERNE:
                                  double mu, double nu);
 
 cdef extern from "forcecap.hpp":
-    double force_cap
-    int forcecap_set_params(double forcecap)
+    double forcecap_get()
+    void forcecap_set(double forcecap)
 
 cdef extern from "ljgen.hpp":
     IF LJGEN_SOFTCORE:

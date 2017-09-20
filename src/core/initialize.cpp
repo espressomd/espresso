@@ -636,6 +636,10 @@ void on_parameter_change(int field)
 #endif
   case FIELD_DPD_IGNORE_FIXED_PARTICLES:
     break;
+  case FIELD_FORCE_CAP:
+    /* If the force cap changed, forces are invalid */
+    recalc_forces = 1;
+    break;
   }
 }
 

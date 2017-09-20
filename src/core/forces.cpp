@@ -31,6 +31,7 @@
 #include "maggs.hpp"
 #include "p3m_gpu.hpp"
 #include "partCfg_global.hpp"
+#include "forcecap.hpp"
 
 #include <cassert>
 ActorList forceActors;
@@ -213,6 +214,9 @@ void force_calc() {
 #ifdef COMFIXED
   calc_comfixed();
 #endif
+
+  // Needs to be the last one to be effective
+  forcecap_cap(local_cells.particles());
 
   // mark that forces are now up-to-date
   recalc_forces = 0;

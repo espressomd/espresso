@@ -24,10 +24,35 @@
 */
 
 #include "forcecap.hpp"
+#include "utils.hpp"
+#include "global.hpp"
 
 double force_cap = 0.0;
 
-int forcecap_set_params(double forcecap) {
+void forcecap_set(double forcecap) {
   force_cap = forcecap;
-  return 0;
+  mpi_bcast_parameter(FIELD_FORCE_CAP);
+}
+
+double forcecap_get() {
+  return force_cap;
+}
+
+void forcecap_cap(ParticleRange particles) {
+  if (force_cap <= 0) {
+    return;
+  }
+
+  auto const fc2 = force_cap * force_cap;
+
+  for (auto &p : particles) {
+    auto const f2 = sqrlen(p.f.f);
+    if (f2 > fc2) {
+      auto const scale = force_cap / std::sqrt(f2);
+
+      for (int i = 0; i < 3; i++) {
+        p.f.f[i] *= scale;
+      }
+    }
+  }
 }

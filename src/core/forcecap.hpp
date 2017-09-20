@@ -19,9 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** For the warmup you can cap the singularity of various
-    potentials. Look into the warmup documentation for more
-    details (who wants to write that?).*/
-extern double force_cap;
+#include "ParticleRange.hpp"
 
-int forcecap_set_params(double forcecap);
+void forcecap_set(double forcecap);
+double forcecap_get();
+
+void forcecap_cap(ParticleRange particles);
