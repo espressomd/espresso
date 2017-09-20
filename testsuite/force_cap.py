@@ -25,8 +25,9 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
            "Skipped because of LENNARD_JONES ")
 class ForceCap(ut.TestCase):
-    """Tests the velocity distribution created by the Langevin thermostat against
-       the single component Maxwell distribution."""
+    """Tests the force capping mechanism.
+
+    """
 
     s = espressomd.System()
     s.cell_system.skin = 0.0
@@ -43,7 +44,6 @@ class ForceCap(ut.TestCase):
         return f_max
 
     def test(self):
-        """Test for global Langevin parameters."""
         N = 200
         f_cap = 10.
         s = self.s
@@ -60,7 +60,10 @@ class ForceCap(ut.TestCase):
         # Check that there is sth to cap
         self.assertGreater(self.calc_f_max(), f_cap)
 
-        self.s.non_bonded_inter.set_force_cap(f_cap)
+        self.s.force_cap = f_cap
+
+        # Check interface
+        self.assertEqual(self.s.force_cap, f_cap)
         self.s.integrator.run(0)
 
         # Since there was a force larger than f_cap, the
