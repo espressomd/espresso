@@ -88,7 +88,7 @@ const std::unordered_map<int, Datafield> fields{{
       1}}, /* 5  from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA,
-     {langevin_gamma, Datafield::Type::DOUBLE, 3, "gamma",
+     {langevin_gamma.data(), Datafield::Type::DOUBLE, 3, "gamma",
       1}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
     {FIELD_LEES_EDWARDS_OFFSET,
@@ -244,7 +244,7 @@ const std::unordered_map<int, Datafield> fields{{
       1}} /* 55 from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin_gamma_rotation, Datafield::Type::DOUBLE, 3, "gamma_rot",
+     {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
       1}} /* 55 from thermostat.cpp */
 #endif
 }};
