@@ -2,7 +2,7 @@
 % Options for onecolumn and a4paper
 \linespread{1.0}
 \usepackage[expansion,protrusion,tracking=smallcaps]{microtype}
-\usepackage{listings,tikz,tikz-3dplot,xcolor}
+\usepackage{listings,tikz,tikz-3dplot,xcolor,upquote}
 \tikzset{
   dot/.style = {draw,fill,circle,inner sep=1pt}
 }
@@ -13,9 +13,8 @@
   columns = fullflexible,
   xleftmargin = 1em
 }
-\lstdefinelanguage{espresso}[]{TCL}{morekeywords={setmd,thermostat,constraint,inter,part,integrate,lbfluid,lbboundary,writevtk,system_CMS}}
 \lstnewenvironment{espresso}[1][]%
-  {\lstset{language=espresso,#1}}%
+  {\lstset{language=python,#1}}%
   {}
 \lstnewenvironment{bash}[1][]%
   {\lstset{keywordstyle = \color{red!80!blue},keywords={\$},#1}}%
@@ -23,7 +22,7 @@
 \usepackage{xspace}
 \newcommand\code{\lstinline}
 \newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
-\newcommand\codees{\lstinline[language=espresso]}
+\newcommand\codees{\lstinline[language=python]}
 \begin{document}
 \title{Active Matter Tutorial}
 \author{Joost de Graaf}
@@ -37,7 +36,7 @@
   Germany}
 
 \begin{abstract}
-In this tutorial we explore the ways to simulate self-propulsion in the simulation software package \es{}. We consider three examples that illustrate the properties of these systems. First, we study the concept of enhanced diffusion of a self-propelled particle. Second, we investigate rectification in an asymmetric geometry. Finally, we determine the flow field around a self-propelled particle using lattice-Boltzmann simulations (LB). These three subsections should give insight into the basics of simulating active matter with \es{}. This tutorial assumes basic knowledge of Tcl and \es{}, as well as the use of lattice-Boltzmann within \es{}. It is therefore recommended to go through the relevant tutorials first, before attempting this one.
+In this tutorial we explore the ways to simulate self-propulsion in the simulation software package \es{}. We consider three examples that illustrate the properties of these systems. First, we study the concept of enhanced diffusion of a self-propelled particle. Second, we investigate rectification in an asymmetric geometry. Finally, we determine the flow field around a self-propelled particle using lattice-Boltzmann simulations (LB). These three subsections should give insight into the basics of simulating active matter with \es{}. This tutorial assumes basic knowledge of Python and \es{}, as well as the use of lattice-Boltzmann within \es{}. It is therefore recommended to go through the relevant tutorials first, before attempting this one.
 \end{abstract}
 
 \maketitle
@@ -61,19 +60,19 @@ For this type of self-propulsion the Langevin thermostat is exploited. The Lange
 \caption{\label{fig:balance}A balance of the driving force in the direction defined by the `director' unit vector and the friction due to the Langevin thermostat results in a constant terminal velocity.}
 \end{figure}
 
-The syntax for the Langevin-based swimming is incorporated in the \codees{part} command of \es{}. You can either set up the self-propulsion during the creation of a particle or at a later stage. In the following example we set up a particle with ID 0 at the position $(1,1,1)$ and set its terminal velocity to $1.0$.
+The syntax for the Langevin-based swimming is incorporated in the \codees{ParticleHandle} command of \es{}. You can either set up the self-propulsion during the creation of a particle or at a later stage. In the following example we set up a particle with ID 0 at the position $(1,1,1)$ and set its terminal velocity to $1.0$.
 \begin{espresso}
-part 0 pos 1 1 1 swimming v_swim 1.0
+system.part.add(pos=[1,1,1],swimming={'v_swim':1.0})
 \end{espresso}
-As you can see, the keyword for setting up the engine is \codees{swimming}. The code \codees{v_swim 1.0} sets the terminal velocity to $1.0$ (in MD units). Setting the terminal velocity directly is possible, since the terminal velocity is simply the ratio of the applied driving force and Langevin friction coefficient. It is also possible to set the driving force directly, which requires you to calculate/compute the terminal velocity. This can be achieved by replacing \codees{v_swim} with \codees{f_swim}. Please note, that the options \codees{v_swim} and \codees{f_swim} are mutually exclusive. Also, one is limited to the force/velocity and time step that can be used, by the stability criteria on the Langevin algorithm itself.
+As you can see, the keyword for setting up the engine is \codees{swimming}. The code \codees{'v_swim':1.0} sets the terminal velocity to $1.0$ (in MD units). Setting the terminal velocity directly is possible, since the terminal velocity is simply the ratio of the applied driving force and Langevin friction coefficient. It is also possible to set the driving force directly, which requires you to calculate/compute the terminal velocity. This can be achieved by replacing \codees{v_swim} with \codees{f_swim}. Please note, that the options \codees{v_swim} and \codees{f_swim} are mutually exclusive. Also, one is limited to the force/velocity and time step that can be used, by the stability criteria on the Langevin algorithm itself.
 
 To modify a passive particle (switch on self-propulsion) or deactivate activity, one can use the following commands. Suppose a passive particle with, say ID 1, has been set up, we can add self-propulsion to it by specifying
 \begin{espresso}
-part 1 swimming f_swim 0.03
+system.part[1].swimming = {'f_swim':0.03}
 \end{espresso}
-Finally, a particle's activity can be switched off, by invoking the command
+Finally, a particle's activity can be switched off, by setting either \codees{v_swim} or \codees{f_swim} to zero
 \begin{espresso}
-part 0 swimming off
+system.part[0].swimming = {'f_swim':0.0}
 \end{espresso}
 on the particle with ID 0 in this case. The numerical values of \codees{v_swim} and \codees{f_swim} in these examples are completely arbitrary and crucially depend on all other parameters of your simulation, such as friction, temperature, interactions, etc. Please consult the User Guide~\cite{UG} for additional information.
 
@@ -92,14 +91,15 @@ Of particular importance for self-propulsion at low Reynolds number is the fact 
 
 In \es{} one can model both pushers and pullers using the following command. Say we want to set up a pusher with ID 0 at the position $(1,1,1)$ that has a dipolar strength of 0.1. Then we need to first set up the LB fluid (on the GPU) by invoking
 \begin{espresso}
-lbfluid gpu agrid 1 dens 1.0 visc 1.0 tau 0.01 friction 20.0 couple 3pt
-thermostat lb 0.0
+lbf = espressomd.lb.LBFluid_GPU(agrid=1, dens=1.0, visc=1.0, tau=0.01, fric=20.0, couple='3pt')
+system.actors.add(lbf)
+system.thermostat.set_lb(kT=0.0)
 \end{espresso}
-In this example we used parameters for which we know the LB reproduces Stokes-level hydrodynamic interactions well. The key \codees{couple 3pt} ensures that the three-point interpolation stencil is used to couple the position of the particle and the forces to the LB grid. This reduces lattice-based artifacts that can occur for these systems. Here, we simulate a quiescent LB fluid by deactivating the LB thermostat (this is the default behavior). We next set up the pusher by imputing the following line
+In this example we used parameters for which we know the LB reproduces Stokes-level hydrodynamic interactions well. The key \codees{'couple':3pt} ensures that the three-point interpolation stencil is used to couple the position of the particle and the forces to the LB grid. This reduces lattice-based artifacts that can occur for these systems. Here, we simulate a quiescent LB fluid by deactivating the LB thermostat (this is the default behavior). We next set up the pusher by imputing the following line
 \begin{espresso}
-part 0 pos 1 1 1 swimming f_swim 0.1 pusher dipole_length 1.0
+system.part.add(pos=[1,1,1],swimming={'f_swim':0.1, 'dipole_length':1.0})
 \end{espresso}
-The \codees{v_swim} option exists, but it does not produce the right flow field. With \codees{v_swim} onehas motion, but no dipolar flow field. This can be used to check whether the presence of a dipolar flow field is the dominant term in describing the interactions. The keys \codees{f_swim} and \codees{dipole_length} together determine what the dipole strength is. One should be careful, however, the \codees{dipole_length} should be at least one grid spacing, since use is made of the LB interpolation scheme. If the length is less than one grid spacing, you can easily run into discretization artifacts or cause the particle not to move. This dipole length together with the director and the keyword \codees{pusher/puller} determines where the counter force on the fluid is applied to make the system force free, see Fig.~\ref{fig:pusher-puller}(a) for an illustration of the setup. That is to say, a force of magnitude \codees{f_swim} is applied to the particle (leading to a Stokeslet in the fluid, due to friction) and a counter force is applied to compensate for this in the fluid (resulting in an extended dipole flow field, due to the second monopole). For a puller the counter force is applied in front of the particle and for a pusher it is in the back (Fig.~\ref{fig:pusher-puller}(b)).
+The \codees{v_swim} option exists, but it does not produce the right flow field. With \codees{v_swim} one has motion, but no dipolar flow field. This can be used to check whether the presence of a dipolar flow field is the dominant term in describing the interactions. The keys \codees{f_swim} and \codees{dipole_length} together determine what the dipole strength is. One should be careful, however, the \codees{dipole_length} should be at least one grid spacing, since use is made of the LB interpolation scheme. If the length is less than one grid spacing, you can easily run into discretization artifacts or cause the particle not to move. This dipole length together with the director and the keyword \codees{pusher/puller} determines where the counter force on the fluid is applied to make the system force free, see Fig.~\ref{fig:pusher-puller}(a) for an illustration of the setup. That is to say, a force of magnitude \codees{f_swim} is applied to the particle (leading to a Stokeslet in the fluid, due to friction) and a counter force is applied to compensate for this in the fluid (resulting in an extended dipole flow field, due to the second monopole). For a puller the counter force is applied in front of the particle and for a pusher it is in the back (Fig.~\ref{fig:pusher-puller}(b)).
 
 Finally, there are a few caveats to the swimming setup with hydrodynamic interactions. First, the stability of this algorithm is governed by the stability limitations of the LB method. Second, since the particle is essentially a point particle, there is no rotation caused by the fluid flow,~\textit{e.g.}, a swimmer in a Posseuille flow. If the thermostat is switched on, the rotational degrees of freedom will also be thermalized, but there is still no contribution of rotation due to `external' flow fields. A rather unsatisfying solution to this problem is offered by the \codees{rotational_friction} option, which allows one to include the effect of fluid flow on the rotation. The algorithm computes the difference in fluid flow velocity between the center of the particle and the coupling point, and takes the cross product of that with the dipole length. This quantity is then converted into a torque using the \codees{rotational_friction}. It is recommended to use an alternative means of obtaining rotations in your LB swimming simulations. For example, by constructing a raspberry particle~\cite{lobaskin04,chatterji05,fischer15,degraaf15}.
 
@@ -136,8 +136,9 @@ $ git checkout Active_Matter -b my_active_matter_branch
 \end{bash}
 Now you are ready to configure \es{} in the newly created \es{} directory.
 \begin{bash}
-$ ./bootstrap
-$ ./configure
+$ mkdir build
+$ cd build
+$ cmake ..
 \end{bash}
 After this, you will need to copy the \code{myconfig-sample.hpp} file into \code{myconfig.hpp} and select the appropriate \code{FEATURES} in the latter.
 \begin{bash}
@@ -154,59 +155,61 @@ To run all the tutorials you need to uncomment the following \code{FEATURES}:
 #define LB_BOUNDARIES_GPU
 #define LENNARD_JONES
 \end{bash}
-Now you are ready to build \es{}.
+Now you are ready to build \es{}.  You have to run \code{cmake} again to process the modified \code{myconfig.hpp}.
 \begin{bash}
+$ cmake ..
 $ make -j 8
 \end{bash}
 Next you can unpack the archive with the tutorial files in this directory. You will find two folders, one called `EXERCISES' and one called `SOLUTIONS'.
 
 \subsection{\label{sub:edtut}The Enhanced-Diffusion Tutorial}
 
-In the folder EXERCISES you will find the \code{enhanced_diffusion.tcl} file. This tutorial demonstrates that our Langevin-based swimmer code captures enhanced diffusion. N.B. It is incomplete and needs your input to be evaluated in \es{} without errors. A fully functional file exists in the SOLUTIONS folder, but we recommend that you try solving the exercises on your own first.
+In the folder EXERCISES you will find the \code{enhanced_diffusion.py} file. This tutorial demonstrates that our Langevin-based swimmer code captures enhanced diffusion. N.B. It is incomplete and needs your input to be evaluated in \es{} without errors. A fully functional file exists in the SOLUTIONS folder, but we recommend that you try solving the exercises on your own first.
 
-To start the exercises, go into the EXERCISES directory and invoke \es{} on the script
+To start the exercises, go into the EXERCISES directory and invoke the Python variant of \es{} on the script
 \begin{bash}
-$ ./../Espresso enhanced_diffusion.tcl 0.0
+$ ./../pypresso enhanced_diffusion.py 0.0
 \end{bash}
-where the parameter 0.0 gives the magnitude of the self-propulsion velocity. At this stage, executing the above line will cause an error, as the exercise has not yet been completed. If you read through the script, you will find all the basic elements of a simple \es{} simulation, with two exceptions. First, you will see that a single swimmer is set up using the \codees{swimming v_swim} combination, with a value of the velocity that is read in from the command prompt. Second, you find that around the integration loop there are commands related to the correlator. These have the form
+where the parameter 0.0 gives the magnitude of the self-propulsion velocity. At this stage, executing the above line will cause an error, as the exercise has not yet been completed. If you read through the script, you will find all the basic elements of a simple \es{} simulation, with two exceptions. First, you will see that a single swimmer is set up using the \codees|swimming={'v_swim':...}| combination, with a value of the velocity that is read in from the command prompt. Second, you find that around the integration loop there are commands related to the correlator. These have the form
 \begin{espresso}
 # Determine the MSD correlator
 
-set pos_id [observable new particle_positions id 0]
-set msd [correlation new obs1 $pos_id \
-         corr_operation square_distance_componentwise \
-         dt $dt tau_max $tmax tau_lin 16]
-correlation $msd autoupdate start
+pos_id = ParticlePositions(ids=[0])
+msd = Correlator(obs1=pos_id,
+                   corr_operation="square_distance_componentwise",
+                   dt=tstep,
+                   tau_max=tmax,
+                   tau_lin=16)
+system.auto_update_correlators.add(msd)
 
 # Integrate
 
-for { set i 0 } { $i < $sampsteps } { incr i } {
-  integrate $samplength
-}
+for i in range(sampsteps):
+    system.integrator.run(samplength)
 
 # Finalize the correlator and write to disk
 
-correlation $msd autoupdate stop
-correlation $msd finalize
-correlation $msd write_to_file "output.dat"
+system.auto_update_correlators.remove(msd)
+msd.finalize()
+numpy.savetxt("output.dat",msd.result())
 \end{espresso}
-Here, the observable \codees{pos_id} is set to the particle positions of the only particle in the simulation (with ID 0). Then an MSD correlation is created on the next line. Since the MSD is an auto-correlation function, we only require one entry for the observables, see the User Guide for additional information~\cite{UG}. The command \codees{corr_operation} allows one to choose the type of correlation, in this case \codees{"square_distance_componentwise"}, which gives the MSD for each component (x, y, and z). The time step \codees{dt} is set next, followed by the value of the maximum time (\codees{tmax}) over which the correlation is to be computed. This maximum can be set to the total integrated time. However, it is recommended --- as in the script --- not to do so, since this will give very limited sampling for the longest times (one or even zero samples). In the tutorial only a 1000th of the total run length is used for \codees{tmax}, which means at least 1000 samples are gathered for the longest time in the correlation function. You can play with this parameter to see the effect on the quality of the sampling. The command \codees{tau_lin 16} indicates that the intervals of sampling are chosen by the correlator according to an exponential distribution, see the User Guide~\cite{UG}. Next the command
+Here, the observable \codees{pos_id} is set to the particle positions of the only particle in the simulation (with ID 0). Then an MSD correlation is created on the next line. Since the MSD is an auto-correlation function, we only require one entry for the observables, see the User Guide for additional information~\cite{UG}. The command \codees{corr_operation} allows one to choose the type of correlation, in this case \codees{"square_distance_componentwise"}, which gives the MSD for each component (x, y, and z). The time step \codees{dt} is set next, followed by the value of the maximum time (\codees{tmax}) over which the correlation is to be computed. This maximum can be set to the total integrated time. However, it is recommended --- as in the script --- not to do so, since this will give very limited sampling for the longest times (one or even zero samples). In the tutorial only a 1000th of the total run length is used for \codees{tmax}, which means at least 1000 samples are gathered for the longest time in the correlation function. You can play with this parameter to see the effect on the quality of the sampling. The command \codees{tau_lin=16} indicates that the intervals of sampling are chosen by the correlator according to an exponential distribution, see the User Guide~\cite{UG}. Next the command
 \begin{espresso}
-correlation $msd autoupdate start
+system.auto_update_correlators.add(msd)
 \end{espresso}
 lets \es{} know to start measuring the correlation function and to do so automatically during integration. After integration, the commands
 \begin{espresso}
-correlation $msd autoupdate stop
-correlation $msd finalize
+system.auto_update_correlators.remove(msd)
+msd.finalize()
 \end{espresso}
 ensure that the auto updating is terminated and that any available information used to create the auto correlation. That is, information that has not yet been used is processed. Finally, the correlation allows you to write output to disk in a format that depends on the specific choice of correlation.
 
-With the above knowledge it should be easy to understand the partially functional Tcl script. It is a straightforward simulation of a single particle, which uses the correlator functionality of \es{}~\cite{Arnold_13,UG} to determine the MSD and (angular) velocity auto-correlation function (A)VACF. The latter two are of interest, since we can infer that the swimming only affects the translational motion and not the rotational motion. They are given by
+With the above knowledge it should be easy to understand the partially functional Python script. It is a straightforward simulation of a single particle, which uses the correlator functionality of \es{}~\cite{Arnold_13,UG} to determine the MSD and (angular) velocity auto-correlation function (A)VACF. The latter two are of interest, since we can infer that the swimming only affects the translational motion and not the rotational motion. They are given by
 \begin{eqnarray}
 \label{eq:vacf} \mathrm{VACF}(t) = \langle \mathbf{v}(t) \cdot \mathbf{v}(t + \tau) \rangle_{\tau}; \\
 \label{eq:avacf} \mathrm{AVACF}(t) = \langle \boldsymbol{\omega}(t) \cdot \boldsymbol{\omega}(t + \tau) \rangle_{\tau} ,
 \end{eqnarray}
-respectively. Here, $\mathbf{v}$ is the velocity and $\boldsymbol{\omega}$ is the angular velocity, and the brackets $\langle \rangle_{\tau}$ indicate time averaging over $\tau$. The first task is to get the script up and running. Once you have done this, you will find that you can output a single measurement of the MSD and (A)VACF for a passive system (\codees{vel 0.0}) or an active on (e.g., \codees{vel 5.0}). You can plot these using GNUplot, for instance. For the MSD there are three data entries, as the MSD is calculated in each direction (x, y, and z).
+respectively. Here, $\mathbf{v}$ is the velocity and $\boldsymbol{\omega}$ is the angular velocity, and the brackets $\langle \rangle_{\tau}$ indicate time averaging over $\tau$. The first task is to get the script up and running. Once you have done this, you will find that you can output a single measurement of the MSD and (A)VACF for a passive system (\codees{vel=0.0}) or an active on (e.g., \codees{vel=5.0}). You can plot these using GNUplot, for instance. For the MSD there are three data entries, as the MSD is calculated in each direction (x, y, and z).
 
 \begin{figure}[!htb]
 \begin{center}
@@ -215,7 +218,7 @@ respectively. Here, $\mathbf{v}$ is the velocity and $\boldsymbol{\omega}$ is th
 \caption{\label{fig:enhanced}(a) Averaged MSD with standard error for the passive and active particle. The dependence of the MSD on time ($t$) has been indicated with guides to the eye. (b) The AVACF for the same system. Note that the activity does not influence the rotational behavior.}
 \end{figure}
 
-Despite the long run length, the quality of the MSD and (A)VACF can be lacking. It is therefore recommended that you output 5 uncorrelated data files. The script is designed to facilitate you doing this. Once you have obtained this data for a velocity of \codees{vel 0.0} (passive) and \codees{vel 5.0} active particle, you can average over these and obtain a mean and standard error for your data. You will be pleased to find that indeed, there is enhanced diffusion for the active system and that the ballistic regime is stretched compared to the passive case, see Fig.~\ref{fig:enhanced}(a). Contrasting the passive and active AVACFs shows that the rotational properties are unaffected (Fig.~\ref{fig:enhanced}(b)), as expected.
+Despite the long run length, the quality of the MSD and (A)VACF can be lacking. It is therefore recommended that you output 5 uncorrelated data files. The Python script is designed to facilitate you doing this. Once you have obtained this data for a velocity of \codees{vel=0.0} (passive) and \codees{vel=5.0} active particle, you can average over these and obtain a mean and standard error for your data. You will be pleased to find that indeed, there is enhanced diffusion for the active system and that the ballistic regime is stretched compared to the passive case, see Fig.~\ref{fig:enhanced}(a). Contrasting the passive and active AVACFs shows that the rotational properties are unaffected (Fig.~\ref{fig:enhanced}(b)), as expected.
 
 \section{\label{sec:rectify}Rectification}
 
@@ -223,18 +226,18 @@ In this tutorial you will consider the `rectifying' properties of certain geomet
 
 \subsection{\label{sub:rgtut}The Rectifying-Geometry Tutorial}
 
-Here, we will set up a rectifying geometry. In the folder EXERCISES you will find the \code{rectification_geometry.tcl} file. This will help you construct and visualize a rectifying geometry of a cylindrical chamber with a wedge-like obstacle in the center, see Fig.~\ref{fig:system}(a). You will first need to complete the exercises before the script evaluates properly. The wedge-like obstacle causes rectification when the particles are self-propelled. As you can see the LB is used and the rectifying geometry is built up using the \codees{lbboundary} command, see the User Guide for more information~\cite{UG}. The reason for the use of LB is to help visualize the geometry, as there is currently no means in \es{} or VMD to visualize constraints.
+Here, we will set up a rectifying geometry. In the folder EXERCISES you will find the \code{rectification_geometry.py} file. This will help you construct and visualize a rectifying geometry of a cylindrical chamber with a wedge-like obstacle in the center, see Fig.~\ref{fig:system}(a). You will first need to complete the exercises before the script evaluates properly. The wedge-like obstacle causes rectification when the particles are self-propelled. As you can see the LB is used and the rectifying geometry is built up using the \codees{LBBoundary} command, see the User Guide for more information~\cite{UG}. The reason for the use of LB is to help visualize the geometry, as there is currently no means in \es{} or VMD to visualize constraints.
 
 \begin{figure}[!htb]
 \begin{center}
 \includegraphics[scale=1.0]{FIGURES/geometry}
 \end{center}
-\caption{\label{fig:system}(a) Sketch of the rectifying geometry which we simulate for this tutorial. (b) The geometry of the \codees{hollow_cone} constraint and \codees{lbboundary}. The figure is cylindrically symmetric about the x-axis. The size of the pore opening is determined by $r_{i}$, the length of the cone by $r_{o}$ and the opening angle by $\alpha$. Finally, the pore is given a width using the parameter $w$.}
+\caption{\label{fig:system}(a) Sketch of the rectifying geometry which we simulate for this tutorial. (b) The geometry of the \codees{HollowCone} constraint and \codees{LBBoundary}. The figure is cylindrically symmetric about the x-axis. The size of the pore opening is determined by $r_{i}$, the length of the cone by $r_{o}$ and the opening angle by $\alpha$. Finally, the pore is given a width using the parameter $w$.}
 \end{figure}
 
-The first block of the script sets up the basic simulation parameters, with which you should be familiar -- if you are struggling with this part, please consult the previous tutorials. The second block sets up the boundaries using the \codees{lbboundary} command that was introduced in the LB tutorial. Here it is worth noting that the geometric parameters of the \codees{hollow_cone} command are somewhat counterintuitive. They are illustrated in Fig.~\ref{fig:system}(b) for clarification. Finally, in the third block the code
+The first block of the script sets up the basic simulation parameters, with which you should be familiar -- if you are struggling with this part, please consult the previous tutorials. The second block sets up the boundaries using the \codees{LBBoundary} command that was introduced in the LB tutorial. Here it is worth noting that the geometric parameters of the \codees{HollowCone} command are somewhat counterintuitive. They are illustrated in Fig.~\ref{fig:system}(b) for clarification. Finally, in the third block the code
 \begin{espresso}
-lbfluid print vtk boundary "$outdir/boundary.vtk"
+lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 \end{espresso}
 ensures that the boundary data is exported to a \codees{.vtk} file. This file can be read in and visualized using the program \code{ParaView}, which should have been introduced in the LB and Electrostatics tutorials. Here, we briefly comment on how the geometry can be visualized. In the command prompt type
 \begin{bash}
@@ -246,32 +249,33 @@ to open ParaView. Open the relevant \code{.vtk} file (in our case \code{boundary
 \begin{center}
 \includegraphics[scale=0.75]{FIGURES/rectify}
 \end{center}
-\caption{\label{fig:rectify}(a) Snapshot of the rectifying geometry, as visualized with \code{ParaView}. (b) Final state for the system with 500 particles and \codees{vel 5.0}. Note that there are more particles in the left-hand chamber, due to the rectification.}
+\caption{\label{fig:rectify}(a) Snapshot of the rectifying geometry, as visualized with \code{ParaView}. (b) Final state for the system with 500 particles and \codees{vel=5.0}. Note that there are more particles in the left-hand chamber, due to the rectification.}
 \end{figure}
 
 \subsection{\label{sub:rstut}The Rectification Tutorial}
 
-Now we will study the effectiveness of our rectifying geometry. In the folder EXERCISES you will find the \code{rectification_simulation.tcl} file. This Tcl script will allow the user to appreciate the differences between a passive and an active `ideal gas' in the above geometry. Again, you will have to complete the exercises to obtain a functioning script. N.B. Once up and running, the simulation takes quite a while ($\sim20$ min) on a modern desktop. We recommend that you proceed with the final exercise while the simulation is running.
+Now we will study the effectiveness of our rectifying geometry. In the folder EXERCISES you will find the \code{rectification_simulation.py} file. This Python script will allow the user to appreciate the differences between a passive and an active `ideal gas' in the above geometry. Again, you will have to complete the exercises to obtain a functioning script. N.B. Once up and running, the simulation takes quite a while ($\sim20$ min) on a modern desktop. We recommend that you proceed with the final exercise while the simulation is running.
 
 The first block of the script introduces a procedure to convert a rotation given in spherical coordinates by the azimuthal and polar angle $\theta$ and $\phi$, respectively, to a quaternion. The code
 \begin{espresso}
-proc a2quat {phi theta} {
-  set q1w   [expr cos($theta/2.0)]
-  set q1x   0
-  set q1y   [expr sin($theta/2.0)]
-  set q1z   0
+def a2quat(phi,theta):
 
-  set q2w   [expr cos($phi/2.0)]
-  set q2x   0
-  set q2y   0
-  set q2z   [expr sin($phi/2.0)]
+    q1w = cos(theta/2.0)
+    q1x = 0
+    q1y = sin(theta/2.0)
+    q1z = 0
 
-  set q3w   [expr ($q1w*$q2w-$q1x*$q2x-$q1y*$q2y-$q1z*$q2z)]
-  set q3x   [expr ($q1w*$q2x+$q1x*$q2w-$q1y*$q2z+$q1z*$q2y)]
-  set q3y   [expr ($q1w*$q2y+$q1x*$q2z+$q1y*$q2w-$q1z*$q2x)]
-  set q3z   [expr ($q1w*$q2z-$q1x*$q2y+$q1y*$q2x+$q1z*$q2w)]
-  return    [list $q3w $q3x $q3y $q3z]
-}
+    q2w = cos(phi/2.0)
+    q2x = 0
+    q2y = 0
+    q2z = sin(phi/2.0)
+
+    q3w = (q1w*q2w-q1x*q2x-q1y*q2y-q1z*q2z)
+    q3x = (q1w*q2x+q1x*q2w-q1y*q2z+q1z*q2y)
+    q3y = (q1w*q2y+q1x*q2z+q1y*q2w-q1z*q2x)
+    q3z = (q1w*q2z-q1x*q2y+q1y*q2x+q1z*q2w)
+
+    return [q3w,q3x,q3y,q3z]
 \end{espresso}
 essentially implements the geometric relation
 \begin{equation}
@@ -289,7 +293,7 @@ essentially implements the geometric relation
 where $\alpha$ is the angle and $\mathbf{n} = (n_x,n_y,n_z)$ is the
 axis of rotation. This relation is used for both rotation axes and subsequently the two expressions are quaternion multiplied to obtain the full rotation. This procedure will be used later to draw (almost) random quaternions. The rest of the block deals with standard input and output and parameter/simulation definitions.
 
-The second block of the script uses the geometric parameters from the \code{rectification_geometry.tcl} script to establish the constraints that keep the particles inside of the confining geometry. The relevant \es{} command is \codees{constraint} and has already been introduced in the basic tutorial. Next we set up interactions between the geometry and the particles --- in this case the almost-hard WCA interaction --- to ensure that they are trapped. In the fourth block, the geometry is seeded with particles, two clouds of equal size in the respective chambers. This is done to ensure that the equilibration time for the system is limited. That is, if you had set up all particles in a single chamber, there would obviously be flow from the full chamber to the empty one, despite the system being passive (in equilibrium), as the density is homogenized.
+The second block of the script uses the geometric parameters from the \code{rectification_geometry.py} script to establish the constraints that keep the particles inside of the confining geometry. The relevant \es{} command is \codees{system.constraints.add()} and has already been introduced in the basic tutorial. Next we set up interactions between the geometry and the particles --- in this case the almost-hard WCA interaction --- to ensure that they are trapped. In the fourth block, the geometry is seeded with particles, two clouds of equal size in the respective chambers. This is done to ensure that the equilibration time for the system is limited. That is, if you had set up all particles in a single chamber, there would obviously be flow from the full chamber to the empty one, despite the system being passive (in equilibrium), as the density is homogenized.
 
 \begin{figure}[!htb]
 \begin{center}
@@ -298,9 +302,9 @@ The second block of the script uses the geometric parameters from the \code{rect
 \caption{\label{fig:rectification}The change in the position of the CMS for the rectifying geometry with particles. The passive system fluctuates around zero (mid-way in the box), while the active one shows an accumulation of particles in one of the chambers.}
 \end{figure}
 
-The final block is concerned with measuring the rectifying properties of this geometry. We do so with a convenient parameter, namely the center of mass (CMS) of the system. You can use the \es{} command \codees{system_CMS} to determine it directly~\cite{UG}. If the system is passive, then the CMS should fluctuate around the center of the box. However, if there is rectification, this can be seen as a deviation of the CMS from this center. Figure~\ref{fig:rectification} shows the evolution of the CMS as a function of time for passive and active (a velocity of 5.0) particles in the system. The script also outputs a snapshot of the final coordinates of the particles using the line
+The final block is concerned with measuring the rectifying properties of this geometry. We do so with a convenient parameter, namely the center of mass (CMS) of the system. You can use the \es{} command \codees{system.galilei.system_CMS()} to determine it directly~\cite{UG}. If the system is passive, then the CMS should fluctuate around the center of the box. However, if there is rectification, this can be seen as a deviation of the CMS from this center. Figure~\ref{fig:rectification} shows the evolution of the CMS as a function of time for passive and active (a velocity of 5.0) particles in the system. The script also outputs a snapshot of the final coordinates of the particles using the line
 \begin{espresso}
-writevtk "$outdir/points\_$vel.vtk" 0
+system.part.writevtk("{}/points_{}.vtk".format(outdir,vel),types=[0])
 \end{espresso}
 The \codees{writevtk} command outputs the coordinates of the particles of type 0 to a file that is ParaView readable. You can now show how the particles are distributed in the geometry that you visualized in the previous section. To do so, choose the relevant \code{.vtk} file,~\textit{e.g.}, \code{points_5.0.vtk} and load it into ParaView. Now add a \code{Glyph} from the ribbon just above the Pipeline Browser to the highlighted \code{points_5.0.vtk} entry. Select \code{Sphere} from the \code{Glyph Type} drop down. Scroll down and select \code{off} in the \code{Scale Mode} drop down. Tick the \code{Edit} box and set the scale factor to 1.0. As you can see, there are clearly far more particles in the `front' chamber, than there are in the other, see Fig.~\ref{fig:rectify}(b). This can be explained by the fact that the activity makes it easier to take the barrier in one direction than in the other. Or in technical terms: the equivalence between thermodynamic pressure and mechanical pressure is lost.
 
@@ -310,7 +314,7 @@ As previously discussed, the flow field around an active particle should not con
 
 \subsection{\label{sub:fftut}The Flow-Field Tutorial}
 
-Now we will study the flow field around a simple pusher and puller particle in \es{}. In the folder EXERCISES you will find the \code{flow_field.tcl} file. Once again, you will have to complete the excercises to obtain a functioning script. The structure of the blocks and their content should by now be straightforward for you to understand on the basis of the previous tutorials and the information provided here. We will therefore focus on the use of this script.
+Now we will study the flow field around a simple pusher and puller particle in \es{}. In the folder EXERCISES you will find the \code{flow_field.py} file. Once again, you will have to complete the excercises to obtain a functioning script. The structure of the blocks and their content should by now be straightforward for you to understand on the basis of the previous tutorials and the information provided here. We will therefore focus on the use of this script.
 
 \begin{figure}[!htb]
 \begin{center}
