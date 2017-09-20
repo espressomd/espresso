@@ -1,8 +1,3 @@
-# Basic tests of the Lattice Boltzmann implementation
-#
-# 1) check conservation of fluid mass
-# 2) check conservation of total momentum
-# 3) measure temperature of colloid and fluid
 
 from __future__ import print_function
 import unittest as ut
@@ -16,7 +11,14 @@ from tests_common import abspath
 @ut.skipIf(not espressomd.has_features(["LB", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class LBTest(ut.TestCase):
+    """
+    Basic tests of the Lattice Boltzmann implementation
+    
+    1) check conservation of fluid mass
+    2) check conservation of total momentum
+    3) measure temperature of colloid and fluid
 
+    """
     system = espressomd.System()
     n_nodes = system.cell_system.get_state()["n_nodes"]
     system.seed = np.random.randint(low=1, high=2**31 - 1, size=n_nodes)
@@ -51,7 +53,7 @@ class LBTest(ut.TestCase):
         self.system.time_step = self.params['time_step']
         self.system.cell_system.skin = self.params['skin']
 
-        #  Clear actors that might be left from prev tests
+        # clear actors that might be left from prev tests
         for i in self.system.actors:
             self.system.actors.remove(i)
         self.system.part.clear()
@@ -103,9 +105,7 @@ class LBTest(ut.TestCase):
     def test(self):
         # Integration
         for i in range(self.params['int_times']):
-
             self.system.integrator.run(self.params['int_steps'])
-
             fluidmass_sim = 0.0
             fluid_temp_sim = 0.0
             node_v_list = []
