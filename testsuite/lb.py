@@ -8,7 +8,7 @@ from espressomd import *
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["LB", "LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["LB"]),
            "Features not available, skipping test!")
 class LBTest(ut.TestCase):
     """
