@@ -219,7 +219,7 @@ class openGLLive(object):
 
         # Collect shapes and interaction type (for coloring) from constraints
         coll_shape_obj = collections.defaultdict(list)
-        for c in self.system.constraints.call_method('get_elements'):
+        for c in self.system.constraints:
             if type(c) == espressomd.constraints.ShapeBasedConstraint:
                 t = c.get_parameter('particle_type')
                 s = c.get_parameter('shape')
