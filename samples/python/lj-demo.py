@@ -27,7 +27,7 @@ from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
-from espressomd.visualizationMayavi import mlab
+from espressomd.visualization_mayavi import mlab
 
 try:
     import midi

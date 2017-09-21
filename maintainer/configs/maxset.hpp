@@ -17,6 +17,7 @@
 #define MODES
 #endif
 
+#define BOND_CONSTRAINT
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE

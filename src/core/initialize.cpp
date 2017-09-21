@@ -67,6 +67,7 @@
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "utils.hpp"
+#include "global.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -213,6 +214,10 @@ void on_integration_start() {
    */
   invalidate_obs();
   partCfg().invalidate();
+
+#ifdef ADDITIONAL_CHECKS
+  check_global_consistency();
+#endif
 
   on_observable_calc();
 }
@@ -542,8 +547,8 @@ void on_temperature_change() {
 }
 
 void on_parameter_change(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node,
-                      fields[field].name));
+  EVENT_TRACE(
+      fprintf(stderr, "%d: on_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
@@ -608,7 +613,7 @@ void on_parameter_change(int field) {
     break;
 #endif
   case FIELD_THERMO_SWITCH:
-/* DPD needs ghost velocities, other thermostats not */
+    /* DPD needs ghost velocities, other thermostats not */
     on_ghost_flags_change();
 #ifdef DPD
     if (not(thermo_switch & THERMO_DPD)) {

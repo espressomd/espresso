@@ -10,7 +10,7 @@ from espressomd.interactions import *
 import numpy
 from threading import Thread
 from math import *
-from espressomd.visualizationOpenGL import *
+from espressomd.visualization_opengl import *
 from espressomd.shapes import *
 
 print '8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot'

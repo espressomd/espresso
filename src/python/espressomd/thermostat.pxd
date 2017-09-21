@@ -19,20 +19,6 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
-cdef extern from "communication.hpp":
-    void mpi_bcast_parameter(int p)
-
-cdef extern from "global.hpp":
-    int FIELD_TEMPERATURE
-    int FIELD_THERMO_SWITCH
-    int FIELD_TEMPERATURE
-    int FIELD_LANGEVIN_GAMMA
-    IF ROTATION:
-        int FIELD_LANGEVIN_GAMMA_ROTATION
-    IF NPT:
-        int FIELD_NPTISO_G0
-        int FIELD_NPTISO_GV
-
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch

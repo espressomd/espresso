@@ -215,5 +215,5 @@ BOOST_AUTO_TEST_CASE(iterators) {
 int main(int argc, char **argv) {
   mpi::environment mpi_env(argc, argv);
 
-  boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
