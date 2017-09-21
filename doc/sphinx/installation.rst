@@ -28,7 +28,6 @@ This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses `cmake` [4]_ to compile
 software easily on a wide range of platforms.
 
-
 .. _Requirements:
 
 Requirements
@@ -48,7 +47,7 @@ Boost
 
 FFTW
     For some algorithms (P:math:`^3`\ M), ESPResSo needs the FFTW library
-    version 3 or later  [1]_ for Fourier transforms, including header
+    version 3 or later  [5]_ for Fourier transforms, including header
     files.
 
 MPI
@@ -62,7 +61,8 @@ Cython
     Cython is used for connecting the C++ core to Python
 
 
-.. Installing Requirements on ubuntu:
+
+.. _Installing Requirements on ubuntu:
 
 Installing Requirements on Ubuntu 16.04 LTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,8 +103,6 @@ following commands:
     sudo port select –set python python27
     sudo port select–set mpi openmpi-mp-fortran
 
-.. [1]
-   http://www.fftw.org/
 
 Installing python dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,8 +265,7 @@ having multiple build directories you can build several variants of |es|,
 each variant having different activated features, and for as many
 platforms as you want.
 
-Example
-"""""""
+**Example:**
 
 When the source directory is ``srcdir`` (the files where unpacked to this
 directory), then the user can create a build directory ``build`` below that
@@ -293,8 +290,7 @@ ccmake
 Optionally and for easier use the curses interface to cmake can be used
 to configure |es| interactively.
 
-Example
-"""""""
+**Example:**
 
 Alternatively to the previous example instead of , the executable is
 called in the build direcotry to configure ESPResSo previous to its
@@ -434,7 +430,7 @@ a simulation script for |es|.
 
 
 Basic python simulation script
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In this section, a brief overview is given over the most important
 components of the Python interface and their usage is illustrated by
@@ -554,7 +550,6 @@ created by the system class. To perform an integration step, execute
     system.integrator.run(steps=100)
 
 
-
 .. [1]
    http://espressomd.org
 
@@ -566,3 +561,6 @@ created by the system class. To perform an integration step, execute
 
 .. [4]
    https://cmake.org/
+
+.. [5]
+   http://www.fftw.org/
