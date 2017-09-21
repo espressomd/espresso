@@ -82,10 +82,10 @@ cdef class ParticleHandle(object):
     # Particle Type
     property type:
         """
-        The type id of the Particle.
+        The particle type for nonbonded interactions
 
         type : int
-               The particle type is used to set interactions bleh between different particles.
+               Nonbonded interactions act between different types of particles.
 
         ..  note::
 
@@ -94,7 +94,7 @@ cdef class ParticleHandle(object):
         """
 
         def __set__(self, _type):
-            
+
             if isinstance(_type, int) and _type >= 0:
                 if set_particle_type(self.id, _type) == 1:
                     raise Exception("Set particle position first.")
@@ -132,10 +132,10 @@ cdef class ParticleHandle(object):
     # Position
     property pos:
         """
-        The unwrapped (not folded into central box) position vector of a Particle.
+        The unwrapped (not folded into central box) particle position
 
         pos : list of floats
-              A list of three floats representing the Particles's absolute position    
+              A list of three floats representing the Particles's absolute position
 
         """
 
@@ -166,21 +166,21 @@ cdef class ParticleHandle(object):
         pos : list of floats
               A list of three floats representing the Particles's position.
 
- 
+
         ..  note::
 
             Setting the folded position is ambiguous and is thus not possible, please use `pos`.
 
-        
+
         Examples
         ----------
 
         >>> import espressomd
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> system.box_l=[10,10,10]
-        >>> # add two bonded particles to particle 0 
+        >>> # add two bonded particles to particle 0
         >>> system.part.add(id=0, pos=(5, 0, 0))
         >>> system.part.add(id=1, pos=(10, 0, 0))
         >>> system.part.add(id=2, pos=(25, 0, 0))
@@ -212,16 +212,17 @@ cdef class ParticleHandle(object):
     # Velocity
     property v:
         """
-        Particle velocity.
+        The particle velocity in the lab frame.
 
         v : list of floats
-              A list of three floats representing the Particles's velocity 
+              A list of three floats representing the Particles's velocity
 
         .. note::
 
-          The velocity remains variable and will be changed during integration.
+           The velocity remains variable and will be changed during integration.
 
         """
+
         def __set__(self, _v):
             global time_step
             cdef double myv[3]
@@ -254,16 +255,17 @@ cdef class ParticleHandle(object):
     # Force
     property f:
         """
-        Particle force.
+        The instantaneous force acting on this particle.
 
         f : list of floats
-              A list of three floats representing the current forces on the Particle 
+             A list of three floats representing the current forces on the Particle
 
         .. note::
 
-            Whereas the velocity is modified with respect to the velocity you set
-            upon integration, the force it recomputed during the integration step and any
-            force set in this way is immediatly lost at the next integration step.
+           Whereas the velocity is modified with respect to the velocity you set
+           upon integration, the force it recomputed during the integration step and any
+           force set in this way is immediatly lost at the next integration step.
+
 
         """
 
@@ -287,10 +289,11 @@ cdef class ParticleHandle(object):
     # Bonds
     property bonds:
         """
-        Bond partners with respect to bonded interactions.
+        The bonds stored by this particle. Note that bonds are only stored by one partner.
+        You need to define a bonded interaction.
 
         bonds : tuple of tuples (or list)
-                a bond tuple is specified as a bond identifier associated with a particle `(bond_ID, part_ID)`. a single particle may contain multiple such tuples.
+                a bond tuple is specified as a bond identifier associated with a particle `(bond_ID, part_ID)`. A single particle may contain multiple such tuples.
 
         See Also
         ----------
@@ -301,7 +304,8 @@ cdef class ParticleHandle(object):
 
         ..  note::
 
-            Bond ids have to be an integer >= 0.
+        Bond ids have to be an integer >= 0.
+
 
         """
 
@@ -349,14 +353,15 @@ cdef class ParticleHandle(object):
     IF MULTI_TIMESTEP == 1:
         property smaller_timestep:
             """
-            Flag for smaller timestep
-            
+            Flag for smaller timestep.
+
             smaller_timestep : int
-                               Particle flag specifying whether particle trajectory should be integrated with time_step of small_time_step.
+                               Particle flag specifying whether particle trajectory
+                               should be integrated with time_step of small_time_step.
 
-            ..  note::
+            .. note::
 
-            This needs the feature MULTI_TIMESTEP
+               This needs the feature MULTI_TIMESTEP
 
 
             """
@@ -377,11 +382,11 @@ cdef class ParticleHandle(object):
     property mass:
         """
         Particle mass.
-        
-        mass :  float
-               The mass of the particle
 
-       
+        mass :  float
+               The particle mass.
+
+
         See Also
         ----------
         espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
@@ -405,24 +410,26 @@ cdef class ParticleHandle(object):
     IF ROTATION == 1:
         property omega_lab:
             """
-            Angular velocity in lab frame.
+            The particle angular velocity the lab frame.
 
             omega_lab : list of floats
                 list of three floats giving the particle angular velocity as measured from the lab frame.
 
             .. note::
 
-                This needs the feature ROTATION
+               This needs the feature ROTATION
 
-                If you set the angular velocity of the particle in the lab
-                frame, the orientation of the particle
-                (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be
-                set before setting omega_lab, otherwise the conversion from
-                lab to body frame will not be handled properly.
+               If you set the angular velocity of the particle in the lab
+               frame, the orientation of the particle
+               (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be
+               set before setting omega_lab, otherwise the conversion from
+               lab to body frame will not be handled properly.
 
-            See Also
-            ----------
+           See Also
+            ---------
+
             espressomd.particle_data.ParticleHandle.omega_body
+
 
             """
 
@@ -443,14 +450,14 @@ cdef class ParticleHandle(object):
 
         property quat:
             """
-            Quaternions.
+            Particle quaternion representation.
 
             quat : list fo floats (of length four)
                 This list of four floats sets the quaternion representation of the rotational position of
                 this particle.
-                
+
             ..note::
-            
+
                 This needs the feature ROTATION.
 
 
@@ -475,11 +482,11 @@ cdef class ParticleHandle(object):
         property director:
             """
             Director.
-            
+
             .. note::
 
-                Seeting the director is not implemented.
-                This needs the feature ROTATION.
+               Seeting the director is not implemented.
+               This needs the feature ROTATION.
 
             """
 
@@ -502,7 +509,7 @@ cdef class ParticleHandle(object):
     # ROTATIONAL_INERTIA
         property omega_body:
             """
-            Angular velocity in body frame.
+            The particle angular velocity in body frame.
 
             omega_body : list of floats
 
@@ -512,10 +519,11 @@ cdef class ParticleHandle(object):
 
             .. note::
 
-                This needs the feature ROTATION.
+               This needs the feature ROTATION.
 
 
             """
+
             def __set__(self, _o):
                 cdef double myo[3]
                 check_type_or_throw_except(
@@ -534,7 +542,7 @@ cdef class ParticleHandle(object):
 
         property torque_lab:
             """
-            Torque in lab frame.
+            The particle torque in the lab frame.
 
             torque_lab : list of floats
 
@@ -543,13 +551,13 @@ cdef class ParticleHandle(object):
 
             .. note::
 
-                The orientation of the particle (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be set
-                before setting this property, otherwise the conversion from lab to body frame
-                will not be handled properly.
+               The orientation of the particle (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be set
+               before setting this property, otherwise the conversion from lab to body frame
+               will not be handled properly.
 
             .. seealso::
 
-                :attr:`espressomd.particle_data.ParticleHandle.torque_body`
+               :attr:`espressomd.particle_data.ParticleHandle.torque_body`
 
             """
 
@@ -571,9 +579,9 @@ cdef class ParticleHandle(object):
     IF ROTATIONAL_INERTIA == 1:
         property rinertia:
             """
-            Rotational inertia.
+            The particle rotational inertia.
 
-            rintertia : list fo floats
+            rintertia : list of floats
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
@@ -583,7 +591,7 @@ cdef class ParticleHandle(object):
 
             .. note::
 
-                This needs the feature ROTATIONAL_INERTIA.
+               This needs the feature ROTATIONAL_INERTIA.
 
 
             """
@@ -610,10 +618,10 @@ cdef class ParticleHandle(object):
             Particle charge.
 
             q : float
-            
+
             .. note::
 
-                This needs the feature ELECTROSTATICS.
+               This needs the feature ELECTROSTATICS.
 
 
             """
@@ -635,9 +643,9 @@ cdef class ParticleHandle(object):
     def delete(self):
         """
         Delete the particle.
-        
+
         See Also
-        --------
+        ---------
         add
         remove, clear
 
@@ -651,13 +659,14 @@ cdef class ParticleHandle(object):
         property virtual:
             """
             Virtual flag.
+            Declares the particles as virtual (1) or non-virtual (0, default). Please
+            read !!! THIS !!! before using virtual sites.
 
             virtual : integer
 
             .. note::
 
-                This needs the feature VIRTUAL_SITES
-
+               This needs the feature VIRTUAL_SITES
 
             """
 
@@ -678,16 +687,20 @@ cdef class ParticleHandle(object):
         property vs_relative:
             """
             Virtual sites relative parameters.
-            vs_relative : 
-            
-            ..todo ::
-            
-                document this
- 
-            .. note::
-            
-                This needs the feature VIRTUAL_SITES_RELATIVE
+            Allows for manual access to the attributes of virtual sites in the "relative"
+            implementation. PID denotes the id of the particle to which this virtual site
+            is related and distance the distance between non-virtual and virtual particle.
+            The relative orientation is specified as a quaternion of 4 floats.
 
+            vs_relative : tuple: (PID, distance, (q1,q2,q3,q4))
+
+            ..todo ::
+
+              document this
+
+            .. note::
+
+               This needs the feature VIRTUAL_SITES_RELATIVE
 
             """
 
@@ -725,6 +738,23 @@ cdef class ParticleHandle(object):
             Setup this particle as virtual site relative to the particle with the given id.
 
             """
+
+            if isinstance(_relto, int):
+                if vs_relate_to(self.id, _relto):
+                    handle_errors("Vs_relative setup failed.")
+            else:
+                raise ValueError(
+                    "Argument of vs_auto_relate_to has to be of type int.")
+
+                # Virtual sites relative parameters
+
+        # vs_auto_relate_to
+        def vs_auto_relate_to(self, _relto):
+            """
+            Setup this particle as virtual site relative to the particle with the given id.
+
+            """
+
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
             if vs_relate_to(self.id, _relto):
@@ -733,13 +763,13 @@ cdef class ParticleHandle(object):
     IF DIPOLES:
         property dip:
             """
-            Dipole moment as vector.
+            The orientation of the dipole axis.
 
             dip : list of floats
-            
+
             .. note::
-            
-                This needs the feature DIPOLES
+
+               This needs the feature DIPOLES
 
 
             """
@@ -762,12 +792,12 @@ cdef class ParticleHandle(object):
         # Scalar magnitude of dipole moment
         property dipm:
             """
-            Dipole moment (magnitude).
+            The magnitude of the dipole moment.
 
             dipm : float
-           
+
             .. note::
-            
+
                This needs the feature DIPOLES.
 
 
@@ -788,13 +818,13 @@ cdef class ParticleHandle(object):
     IF EXTERNAL_FORCES:
         property ext_force:
             """
-            External force on a particle defined by a vector.
+            An additional external force applied to the particle.
 
-            ext_force : list of floats 
-            
+            ext_force : list of floats
+
             .. note::
-            
-                This needs the feature EXTERNAL_FORCES.
+
+               This needs the feature EXTERNAL_FORCES.
 
 
             """
@@ -825,8 +855,8 @@ cdef class ParticleHandle(object):
 
         property fix:
             """
-            Fix the particle at current position.
-            
+            Fixes the particle motion in the specified cartesian directions.
+
             fix : list of integers
 
             Fixes the particle in space. By supplying a set of 3 integers as
@@ -836,11 +866,11 @@ cdef class ParticleHandle(object):
                 part[<ID>].fix = [0, 0, 1]
 
             will fix motion for particle with id ``ID`` only in z.
-            
-           
+
+
             .. note::
-            
-            This needs the feature EXTERNAL_FORCES
+
+               This needs the feature EXTERNAL_FORCES
 
 
             """
@@ -868,14 +898,13 @@ cdef class ParticleHandle(object):
         IF ROTATION:
             property ext_torque:
                 """
-                External torque on a particle defined by a vector.
+                An additional external torque is applied to the particle.
 
                 ext_torque : list of floats
 
                 ..  note::
 
                     This torque is specified in the laboratory frame!
-            
                     This needs the feature EXTERNAL_FORCES and ROTATION
 
 
@@ -909,16 +938,16 @@ cdef class ParticleHandle(object):
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
-                Rotational friction coefficient per particle in Langevin.
+                The rotational frictional coefficient used in the the Langevin thermostat.
 
                 gamma : list of floats
-                
-                .. note::
-                 
-                    This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY
 
- 
- 
+                .. note::
+
+                   This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY
+
+
+
                 See Also
                 ----------
                 espressomd.thermostat.Thermostat.set_langevin : Setting the parameters of the Langevin thermostat
@@ -926,7 +955,7 @@ cdef class ParticleHandle(object):
                 """
 
                 def __set__(self, _gamma):
-                    cdef Vector3d gamma
+                    cdef double gamma[3]
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
@@ -942,16 +971,15 @@ cdef class ParticleHandle(object):
         ELSE:
             property gamma:
                 """
-                Friction coefficient per particle in Langevin.
-                
+                The translational frictional coefficient used in the the Langevin thermostat.
+
                 gamma : float
 
 
                 .. note::
-                 
-                This needs the feature LANGEVIN_PER_PARTICLE
- 
- 
+
+                   This needs the feature LANGEVIN_PER_PARTICLE
+
                 See Also
                 ----------
                 espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
@@ -973,19 +1001,19 @@ cdef class ParticleHandle(object):
             IF ROTATIONAL_INERTIA:
                 property gamma_rot:
                     """
-                    Rotational friction coefficient per particle in Langevin.
-                    
+                    The particle translational frictional coefficient used in the Langevin thermostat.
+
                     gamma_rot : list of floats
-                    
+
                     .. note::
-                 
-                    This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and ROTATIONAL_INERTIA
+
+                       This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and ROTATIONAL_INERTIA
 
 
                     """
 
                     def __set__(self, _gamma_rot):
-                        cdef Vector3d gamma_rot
+                        cdef double gamma_rot[3]
                         check_type_or_throw_except(
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
                         for i in range(3):
@@ -1001,13 +1029,13 @@ cdef class ParticleHandle(object):
             ELSE:
                 property gamma_rot:
                     """
-                    Rotational friction coefficient per particle in Langevin.
-                    
+                    The particle rotational frictional coefficient used in the Langevin thermostat.
+
                     gamma : float
 
                     .. note::
-                 
-                    This needs the feature LANGEVIN_PER_PARTICLE and ROTATION
+
+                       This needs the feature LANGEVIN_PER_PARTICLE and ROTATION
 
 
                     """
@@ -1026,13 +1054,13 @@ cdef class ParticleHandle(object):
 
         property temp:
             """
-            Temperature per particle in Langevin.
-            
+            Particle's temperature in the Langevin thermostat.
+
             temp: float
-            
+
             .. note::
-                 
-            This needs the feature LANGEVIN_PER_PARTICLE
+
+               This needs the feature LANGEVIN_PER_PARTICLE
 
 
             """
@@ -1052,15 +1080,21 @@ cdef class ParticleHandle(object):
     IF ROTATION_PER_PARTICLE:
         property rotation:
             """
-            Friction coefficient per particle in Langevin.
-            
+            The particle rotational degrees of freedom.
+
             rotation : int
 
-            .. note::
-                 
-           This needs the feature ROTATION_PER_PARTICLE
+            Specifies whether a particle’s rotational degrees of freedom along the
+            different axes in the particle’s body-fixed frame are integrated or not. If
+            set to zero, rotation is disabled entirely, and the content of the torque and
+            omega variables are meaningless. Rotation of a particular axis is turned on
+            by adding up the corresponding flags: x=2, y=4, z=8. To enable rotation around
+            all axis, use a value of 2+4+8=14. This is also the default.
 
-            
+            .. note::
+
+               This needs the feature ROTATION_PER_PARTICLE
+
 
             """
 
@@ -1086,11 +1120,11 @@ cdef class ParticleHandle(object):
     IF EXCLUSIONS:
         property exclusions:
             """
-            Particles excluded from non-bonded interactions with this particle
+            The exclusion list of particles where nonbonded interactions are ignored.
 
             .. note::
 
-            This needs the feature EXCLUSIONS
+               This needs the feature EXCLUSIONS
 
             """
 
@@ -1116,10 +1150,12 @@ cdef class ParticleHandle(object):
             Excluding interaction with given partners.
 
             Parameters
-            ----------
+            -----------
             _partners : list of partners
 
+
             """
+
             if isinstance(_partners, int):
                 _partners = [_partners]
 
@@ -1143,66 +1179,85 @@ cdef class ParticleHandle(object):
     IF ENGINE:
         property swimming:
             """
-            Set swimming parameters.  This property takes a dictionary
-            with the following entries.
-            
-            Parameters
-            ----------
+            The particle swimming parameters.
 
-            'f_swim': float
-                Achieve a constant velocity by imposing a constant
-                force term 'f_swim' that is balanced by friction of a
-                (Langevin) thermostat.  This exludes the option
-                'v_swim'.
-            'v_swim': float
-                Achieve a constant velocity by imposing a constant
-                terminal velocity 'v_swim'.  This exludes the option
-                'f_swim'.
-            'mode': string, 'pusher' or 'puller' (initially 'N/A')
-                The LB flow field can be generated by a pushing or a
-                pulling mechanism, leading to change in the sign of the
-                dipolar flow field with respect to the direction of
-                motion.
-            'dipole_length': float
-                This determines the distance of the source of
-                propulsion from the particle's center.
-            'rotational_friction': float
-                This key can be used to set the friction that causes
-                the orientation of the particle to change in shear
-                flow. The torque on the particle is determined by
-                taking the cross product of the difference between the
-                fluid velocity at the center of the particle and at
-                the source point and the vector connecting the center
-                and source.
+            The parameters are stored in a dictionary with a different number of
+            parameters depending whether there is an implicit fluid (i.e. with the
+            Langevin thermostat) of an explicit fluid tih LB.
 
-            Notes
-            -----
+            Enables the particle to be self-propelled in the direction determined by its
+            quaternion. For setting the quaternion of the particle see . The
+            self-propulsion speed will relax to a constant velocity, that is specified by
+            `v_swim` . Alternatively it is possible to achieve a constant velocity by
+            imposing a constant force term `f_swim` that is balanced by friction of a
+            (Langevin) thermostat. The way the velocity of the particle decays to the
+            constant terminal velocity in either of these methods is completely
+            determined by the friction coefficient. You may only set one of the
+            possibilities `v_swim` *or* `f_swim` as you cannot relax to constant force
+            *and* constant velocity at the same time. The setting both `v_swim` and
+            `f_swim` to 0.0 thus disables swimming. This option applies to all
+            non-lattice-Boltzmann thermostats. Note that there is no real difference
+            between `v_swim` and `f_swim` since the latter may aways be chosen such that
+            the same terminal velocity is achieved for a given friction coefficient.
 
-            This needs the feature ENGINE.  The keys 'mode',
-            'dipole_length', and 'rotational_friction' are only
-            available if ENGINE is used with LB or LB_GPU.
+            Parameters (LD)
+            ---------------
+            swimming : bool
+            v_swim: float (You can't set "v_swim" and "f_swim" at the same time.)
+            f_swim : float (You can't set "v_swim" and "f_swim" at the same time.)
 
-            Examples
-            --------
 
-            >>> import espressomd
-            >>> 
-            >>> system = espressomd.System()
-            >>> 
-            >>> # Usage with Langevin
-            >>> system.part.add(id=0, pos=[1,0,0],swimming={'f_swim':0.03})
-            >>> 
-            >>> # Usage with LB
-            >>> system.part.add(id=1, pos=[2,0,0],swimming={
-            >>>    'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
+            Parameters (LB, requires "LB" or "LB_GPU")
+            ------------------------------------------
+            swimming : bool
+            v_swim: float (You can't set "v_swim" and "f_swim" at the same time.)
+            f_swim : float (You can't set "v_swim" and "f_swim" at the same time.)
+            dipole_length : float
+            rotational_friction : float
+            mode : string one of "pusher", "puller", or "N/A"
+
+            For an explanation of the parameters `v_swim` and `v_swim`, see the previous
+            item. In Lattice-Boltzmann, self-propulsion is less trivial than for normal
+            MD because the self-propulsion is achieved by a force-free mechanism, which
+            has strong implications for the far-field hydrodynamic flow field induced by
+            the self-propelled particle. In only the dipolar component of the flow field
+            of an active particle is taken into account. This flow field can be generated
+            by a *pushing* or a *pulling* mechanism, leading to change in the sign of the
+            dipolar flow field with respect to the direction of motion. You can specify
+            the nature of the particles flow field by using the keywords `pusher` or
+            `puller` as the `mode`. You will also need to specify a `dipole_length` which
+            determines the distance of the source of propulsion from the particle's
+            center. Note that you should not put this distance to zero; (currently) does
+            not support mathematical dipole flow fields. The `rotational_friction`
+            variable can be used to set the friction that causes the orientation of the
+            particle to change in shear flow. The torque on the particle is determined by
+            taking the cross product of the difference between the fluid velocity at the
+            center of the particle and at the source point and the vector connecting the
+            center and source.
+
+            You may ask: Why are there two methods and for the self-propulsion using the
+            Lattice-Bolzmann algorithm? The answer is straightforward. When a particle is
+            accelerating, it has a monopolar flow-field contribution which vanishes when
+            it reaches its terminal velocity (for which there will only be a dipolar flow
+            field). The major difference between the above two methods is that with the
+            flow field *only* has a monopolar moment and *only* while the particle is
+            accelerating. As soon as the particle reaches a constant speed (given by )
+            this monopolar moment is gone and the flow field is zero! In contrast,
+            always, i.e., while accelerating *and* while swimming at constant force
+            possesses a dipolar flow field.
+
+            .. note::
+
+               This needs the feature ENGINE
+
 
             """
 
             def __set__(self, _params):
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
-                swim.v_swim = 0.0
-                swim.f_swim = 0.0
+                v_swim = 0.0
+                f_swim = 0.0
                 IF LB or LB_GPU:
                     swim.push_pull = 0
                     swim.dipole_length = 0.0
@@ -1290,6 +1345,7 @@ cdef class ParticleHandle(object):
 
 
         """
+
         if remove_particle(self.id):
             raise Exception("Could not delete particle.")
         del self
@@ -1320,22 +1376,21 @@ cdef class ParticleHandle(object):
     def delete_verified_bond(self, bond):
         """
         Delete a single bond from the particle. The validity of which has already been verified.
-        
+
         Parameters
         ----------
         bond : tuple where the first element is either a bond ID of a bond
             type, and the last element is the ID of the parter particle to be
             bonded to.
 
-        
+
         See Also
-        --------
+        ---------
         delete_bond :  Delete an unverified bond held by the `Particle`.
         bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
-        
         """
-        
+
         cdef int bond_info[5]
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
@@ -1398,38 +1453,40 @@ cdef class ParticleHandle(object):
     def add_bond(self, _bond):
         """
         Add a single bond to the particle.
-        
+
         Parameters
         ----------
         _bond : tuple where the first element is either a bond ID of a bond
             type, and the last element is the ID of the parter particle to be
             bonded to.
 
+
         See Also
         --------
         bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
-        Examples 
+        Examples
         --------
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # define a harmonic potential and add it to the system
         >>> harm_bond = HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-        >>> 
+        >>>
         >>> # add two particles
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> 
+        >>>
         >>> # bond them via the bond type
         >>> system.part[0].add_bond((harm_bond,1))
         >>> # or via the bond index (zero in this case since it is the first one added)
         >>> system.part[0].add_bond((0,1))
-        
+
         """
+
         bond = list(_bond)  # As we will modify it
         self.check_bond_or_throw_exception(bond)
         self.add_verified_bond(bond)
@@ -1437,35 +1494,38 @@ cdef class ParticleHandle(object):
     def delete_bond(self, _bond):
         """
         Delete a single bond from the particle.
-        
+
         Parameters
         ----------
-        _bond : bond to be deleted 
-        
+        _bond : bond to be deleted
+
+
         See Also
         --------
         bonds :  Particle property, a list of all current bonds.
 
+
         Examples
         --------
+
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
-         
+
         define a harmonic potential and add it to the system
 
         >>> harm_bond = HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-         
+
         add two bonded particles to particle 0
 
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
         >>> system.part.add(id=2, pos=(1, 1, 0))
-        >>> system.part[0].add_bond((harm_bond,1))       
+        >>> system.part[0].add_bond((harm_bond,1))
         >>> system.part[0].add_bond((harm_bond,2))
-        >>> 
+        >>>
         >>> bonds = system.part[0].bonds
         >>> print(bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
@@ -1476,14 +1536,15 @@ cdef class ParticleHandle(object):
         >>> print(system.part[0].bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
+
         """
+
         bond = list(_bond)  # as we modify it
         self.check_bond_or_throw_exception(bond)
         self.delete_verified_bond(bond)
 
     def delete_all_bonds(self):
         """
-        
         Delete all bonds from the particle.
 
         See Also
@@ -1491,7 +1552,9 @@ cdef class ParticleHandle(object):
         delete_bond :  Delete an unverified bond held by the Particle.
         bonds :  Particle property containing a list of all current bonds help by Particle.
 
+
         """
+
         if change_particle_bond(self.id, NULL, 1):
             handle_errors("Deleting all bonds failed.")
 
@@ -1509,6 +1572,8 @@ cdef class _ParticleSliceImpl(object):
     Handles slice inputs.
 
     This base class should not be used directly. Use :class:`espressomd.ParticleSlice` instead, which contains all the particle properties.
+
+
     """
 
     def __cinit__(self, slice_):
@@ -1591,7 +1656,9 @@ cdef class _ParticleSliceImpl(object):
         """
         Add a single bond to the particles.
 
+
         """
+
         bond = list(_bond)  # As we will modify it
         for i in range(len(self.id_selection)):
             partners = []
@@ -1603,7 +1670,9 @@ cdef class _ParticleSliceImpl(object):
         """
         Delete a single bond from the particles.
 
+
         """
+
         bond = list(_bond)  # as we modify it
         for i in range(len(self.id_selection)):
             partners = []
@@ -1618,7 +1687,7 @@ cdef class _ParticleSliceImpl(object):
     def remove(self):
         """
         Delete the particles.
-        
+
         See Also
         ----------
         add
@@ -1626,6 +1695,7 @@ cdef class _ParticleSliceImpl(object):
 
 
         """
+
         for id in self.id_selection:
             ParticleHandle(id).remove()
 
@@ -1634,7 +1704,9 @@ class ParticleSlice(_ParticleSliceImpl):
     """
     Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
 
+
     """
+
     pass
 
 cdef class ParticleList(object):
@@ -1642,6 +1714,7 @@ cdef class ParticleList(object):
     Provides access to the particles via [i], where i is the particle id. Returns a ParticleHandle object.
 
     """
+
     # Retrieve a particle
 
     def __getitem__(self, key):
@@ -1672,7 +1745,10 @@ cdef class ParticleList(object):
         (rightly) does not support changing of the id after the particle
         was created.
 
+
+
         """
+
         pickle_attr = copy(particle_attributes)
         for i in ["director", "dip", "id"]:
             if i in pickle_attr:
@@ -1701,7 +1777,7 @@ cdef class ParticleList(object):
     def add(self, *args, **kwargs):
         """
         Adds a particle to the system
-        
+
         Parameters
         ----------
         add() takes either a dictionary or a bunch of keyword args.
@@ -1709,21 +1785,21 @@ cdef class ParticleList(object):
         See Also
         ----------
         remove,delete,clear
-        
-        Examples 
+
+        Examples
         ----------
 
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # add two particles
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> 
+        >>>
 
-        
+
         """
 
         # Did we get a dictionary
@@ -1742,13 +1818,6 @@ cdef class ParticleList(object):
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
-        if len(np.array(P["pos"]).shape) == 2:
-            return self._place_new_particles(P)
-        else:
-            return self._place_new_particle(P)
-
-    def _place_new_particle(self, P):
-
         # Handling of particle id
         if not "id" in P:
             # Generate particle id
@@ -1756,6 +1825,13 @@ cdef class ParticleList(object):
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
+
+        if len(np.array(P["pos"]).shape) == 2:
+            self._place_new_particles(P)
+        else:
+            self._place_new_particle(P)
+
+    def _place_new_particle(self, P):
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
@@ -1820,15 +1896,15 @@ cdef class ParticleList(object):
     def clear(self):
         """
         Removes all particles
-        
+
         See Also
         ----------
         add
         remove, delete
-        
 
-        
+
         """
+
         remove_all_particles()
 
     def __str__(self):
@@ -1841,37 +1917,12 @@ cdef class ParticleList(object):
 
     def writevtk(self, fname, types='all'):
         """
-        Write the positions and velocities of particles with specified
-        types to a VTK file.
-
-        Parameters
-        ----------
-
-        'fname': string
-            filename of the target output file
-        'types': list of integers or the string 'all', optional (default: 'all')
-            A list of particle types which should be output to 'fname'
-
-        Examples
-        --------
-
-        >>> import espressomd
-        >>> 
-        >>> system = espressomd.System()
-        >>> 
-        >>> # add several particles
-        >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
-        >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
-        >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
-        >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
-        >>> 
-        >>> # write to VTK
-        >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
-        >>> system.part.writevtk("part_type_2.vtk", types=[2])
-        >>> system.part.writevtk("part_all.vtk")
-
+        :todo: `Documentation missing.`
         :todo: `move to ./io/writer/`
+
+
         """
+
         global box_l
         if not hasattr(types, '__iter__'):
             types = [types]
@@ -1906,7 +1957,9 @@ cdef class ParticleList(object):
         """
         Largest particle id.
 
+
         """
+
         def __get__(self):
             return max_seen_particle
 
@@ -1914,7 +1967,9 @@ cdef class ParticleList(object):
         """
         Number of particle types.
 
+
         """
+
         def __get__(self):
             return n_particle_types
 
@@ -1922,7 +1977,9 @@ cdef class ParticleList(object):
         """
         Number of rigid bonds.
 
+
         """
+
         def __get__(self):
             return n_rigidbonds
 
@@ -1938,7 +1995,9 @@ cdef class ParticleList(object):
         """
         Generator returns all pairs of particles.
 
+
         """
+
         for i in range(max_seen_particle + 1):
             for j in range(i + 1, max_seen_particle + 1, 1):
                 if not (self.exists(i) and self.exists(j)):
