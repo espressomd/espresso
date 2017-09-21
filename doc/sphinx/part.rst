@@ -433,6 +433,8 @@ non-bonded interaction. After a type is defined for each constraint one
 has to define the interaction of all different particle types with the
 constraint using the  :class:`espressomd.interactions.NonBondedInteractions` class.
 
+      
+
 Shapes
 ~~~~~~~
 :class:`espressomd.shapes`
@@ -474,6 +476,16 @@ Example contraint with a ``Wall`` shape created with ::
 
     wall = Wall( dist=20, normal=[0.1,0.0,1] )
     system.constraints.add(shape=wall, particle_type=0)
+    
+In variant (1) if the only_positive flag is set to 1, interactions are only calculated if
+the particle is on the side of the wall in which the normal vector is
+pointing.
+This has only an effect for penetrable walls. If the flag is
+set to 1, then slip boundary interactions apply that are essential for
+microchannel flows like the Plane Poiseuille or Plane Couette Flow.
+Youalso need to use the tunable\_slip interaction (see [sec:tunableSlip])
+for this too work.
+
 
 :class:`espressomd.shapes.Sphere`
     A sphere.
@@ -683,49 +695,10 @@ This shape supports the ``direction`` parameter, +1 the normal points out of the
        
 
 
-       
-constraint mindist\_position
-
-Variant calculates the smallest distance to all non-penetrable
-constraints, that can be repulsive (wall, cylinder, sphere, rhomboid,
-maze, pore, slitpore). Negative distances mean that the position is
-within the area that particles should not access. Helpful to find
-initial configurations.)
-
-
-In variant if the flag is set to 1, interactions are only calculated if
-the particle is on the side of the wall in which the normal vector is
-pointing. This has only an effect for penetrable walls. If the flag is
-set to 1, then slip boundary interactions apply that are essential for
-microchannel flows like the Plane Poiseuille or Plane Couette Flow. You
-also need to use the tunable\_slip interaction (see [sec:tunableSlip])
-for this too work.
-
-Variants and create interactions based on electrostatic interactions.
-The corresponding force acts in direction of the normal vector of the
-surface and applies to all charged particles. For the normal vector
-which is used in the implementation lies in z-direction.
-
-Variant does not define a surface but is based on magnetic dipolar
-interaction with an external magnetic field. It applies to all particles
-with a dipole moment.
-
-Variant specifies an electrostatic interaction between the charged
-particles in the system to an infinitely long rod with a line charge of
-which is alinge along the z-axis and centered at and .
-
-Variant specifies the electrostatic interactinos between the charged
-particles in the system and an inifinitely large plate in the x-y-plane
-at height . The plate carries a charge density of .
-
-Variant specifies the dipolar coupling of particles with a dipolar
-moment to an external field .
-
 Variant creates an infinite plane at a fixed position. For
 non-initializing a direction of the constraint values of the positions
 have to be negative. For the tunable-slip boundary interactions you have
 to set *two* constraints.
-
 
 
 For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomacyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.
@@ -750,16 +723,19 @@ interaction range.
 Adding a shape-based constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-All previosly listed shapes can be added to the system's constraints by passing a initialized shape object to :meth:`system.constraints.add` ::
+All previosly listed shapes can be added to the system's constraints by passing a initialized shape object to :meth:`system.constraints.add`  ::
   
-   myShape = Wall( dist=20, normal=[0.1, 0.0, 1] )
-   myConstraint = system.constraints.add(shape = myShape, particle_type=p_type)
+    myShape = Wall( dist=20, normal=[0.1, 0.0, 1] )
+    myConstraint = system.constraints.add(shape = myShape, particle_type=p_type)
 
+      
 The extra argument ``particle_type`` specifies the nonbonded interaction to be used with
-that constraint. There are two further optional parameters and that can
-be used to fine tune the behavior of the constraint. If penetrable is
-set to then particles can move through the constraint in this case the
-other option controls whether the particle is subject to the interaction
+that constraint.
+      
+There are two further optional parameters and that can
+be used to fine tune the behavior of the constraint. If ``penetrable`` is
+set to ``True`` then particles can move through the constraint in this case the
+other option ``only_positive`` controls whether the particle is subject to the interaction
 potential of the wall. If set to then the constraint will only act in
 the direction of the normal vector.
 
@@ -801,6 +777,17 @@ particles due to this constraint. Similarly, the total energy does not
 containt constraint-constraint contributions.
 
 
+Getting the minimal distance to a constraint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:todo: `Is this implemented?.`
+
+constraint mindist\_position
+
+calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, rhomboid,
+maze, pore, slitpore). Negative distances mean that the position is
+within the area that particles should not access. Helpful to find
+initial configurations.)
 
 
 
@@ -818,7 +805,24 @@ the GPU.
 
 ``Homogeneous MagneticField``: 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `add description`
+This does not define a surface but is based on magnetic dipolar
+interaction with an external magnetic field. It applies to all particles
+with a dipole moment.
+
+Variant specifies the dipolar coupling of particles with a dipolar
+moment to an external field .
+
+:todo: `This is not implemented`
+
+Variant specifies an electrostatic interaction between the charged
+particles in the system to an infinitely long rod with a line charge of
+which is alinge along the z-axis and centered at and .
+
+:todo: `This is not implemented`
+
+Variant specifies the electrostatic interactinos between the charged
+particles in the system and an inifinitely large plate in the x-y-plane
+at height . The plate carries a charge density of .
 
 
 Virtual sites
@@ -1001,6 +1005,7 @@ switches in ``myconfig.hpp`` (sec. [sec:myconfig])
 
 Grand canonical feature
 -----------------------
+:mod:`espressomd.grand_canonical`
 
 For using conveniently for simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
@@ -1010,17 +1015,18 @@ drawn.
 
 
   ::
-    from espressomd import grand\_canonical grand\_canonical.setup([\_type])
-    grand\_canonical.delete\_particles(\_type)
-    grand\_canonical.find\_particle(\_type)
-    grand\_canonical.number\_of\_particles(\_type)
+
+    from espressomd import grand_canonical grand_canonical.setup([_type])
+    grand_canonical.delete_particles(_type)
+    grand_canonical.find_particle(_type)
+    grand_canonical.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
 initialize the method by calling
 
   ::
-    part gc
-    grand\_canonical.setup([\_type])
+
+    grand_canonical.setup([_type])
 
 After that will keep track of particle ids of that type. When using the
 keyword ``find`` and a particle type, the command will return a randomly
