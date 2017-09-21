@@ -2008,7 +2008,7 @@ void lb_reinit_parameters() {
     LB_TRACE(fprintf(stderr,"%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf " \
                      "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",     \
                      this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9], lbpar.phi[4], mu, \
-                     lbpar.bulk_viscosity[0], lbpar.viscosity));
+                     lbpar.bulk_viscosity, lbpar.viscosity));
 }
 
 
