@@ -80,7 +80,7 @@ cdef class System(object):
         lbboundaries
         ekboundaries
         __seed
-
+        cuda_init_handle
 
     def __init__(self):
         global _system_created
@@ -102,9 +102,12 @@ cdef class System(object):
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            IF CUDA:
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
             _system_created = True
         else:
-            raise RuntimeError("You can only have one instance of the system class at a time.")
+            raise RuntimeError(
+                "You can only have one instance of the system class at a time.")
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -121,6 +124,7 @@ cdef class System(object):
         """
         Array like, list of three floats
         """
+
         def __set__(self, _box_l):
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
@@ -146,6 +150,7 @@ cdef class System(object):
         zero for no periodicity in this direction
         one for periodicity
         """
+
         def __set__(self, _periodic):
             global periodic
             if len(_periodic) != 3:
@@ -208,8 +213,8 @@ cdef class System(object):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
-                if ( lbpar_gpu.tau >= 0.0 and
-                     lbpar_gpu.tau-_time_step > numeric_limits[float].epsilon()*abs(lbpar_gpu.tau+_time_step) ):
+                if (lbpar_gpu.tau >= 0.0 and
+                        lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
                     raise ValueError(
                         "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
             mpi_set_time_step(_time_step)
@@ -245,6 +250,7 @@ cdef class System(object):
             global min_global_cut
             min_global_cut = _min_global_cut
             mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+
         def __get__(self):
             return min_global_cut
 
@@ -258,7 +264,8 @@ cdef class System(object):
         for i in range(n_nodes):
             states_on_node_i = []
             for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(rng.randint(0, numeric_limits[int].max()))
+                states_on_node_i.append(
+                    rng.randint(0, numeric_limits[int].max()))
             states[i] = " ".join(map(str, states_on_node_i))
         mpi_random_set_stat(states)
 
@@ -304,9 +311,15 @@ cdef class System(object):
             return rng_state
 
     def change_volume_and_rescale_particles(d_new, dir="xyz"):
-        """Change box size and rescale particle coordinates
-           change_volume_and_rescale_particles(d_new, dir="xyz")
-           d_new: new length, dir=coordinate tow work on, "xyz" for isotropic.
+        """Change box size and rescale particle coordinates.
+
+        Parameters:
+        -----------
+        d_new : float
+                new box length
+        dir : str, optional
+              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+
         """
 
         if d_new < 0:
@@ -325,29 +338,24 @@ cdef class System(object):
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
 
     def volume(self):
-        """Return box volume."""
+        """Return box volume.
 
+        """
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the scalar distance between the particles, respecting periodic boundaries."""
-        res=self.distance_vec(p1,p2)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
-    
-    def distance_vec(self, p1, p2):
-        """Return the distance vector between the particles, respecting periodic boundaries."""
+        """Return the scalar distance between the particles, respecting periodic boundaries.
 
+        """
+        res = self.distance_vec(p1, p2)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+
+    def distance_vec(self, p1, p2):
+        """Return the distance vector between the particles, respecting periodic boundaries.
+
+        """
         cdef double[3] res, a, b
         a = p1.pos
         b = p2.pos
-        get_mi_vector(res, b,a)
-        return np.array((res[0],res[1],res[2]))
-
-
-# lbfluid=lb.DeviceList()
-IF CUDA == 1:
-    cu = cuda_init.CudaInitHandle()
-    """Cuda Init Handle.
-    Used to list or select cuda devices
-    Also see :class:`espressomd.cuda_init.CudaInitHandle`
-    """
+        get_mi_vector(res, b, a)
+        return np.array((res[0], res[1], res[2]))
