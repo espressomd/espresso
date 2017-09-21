@@ -110,7 +110,8 @@ class openGLLive(object):
             self.keyboardManager.handleInput()
             glutTimerFunc(17, timed_update_redraw, -1)
 
-        # PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION CHANGE, CALL WITH 10FPS
+        # PLACE LIGHT AT PARTICLE CENTER, DAMPED SPRING FOR SMOOTH POSITION
+        # CHANGE, CALL WITH 10FPS
         def timed_update_centerLight(data):
             if self.hasParticleData:
                 ldt = 0.8
@@ -158,7 +159,8 @@ class openGLLive(object):
             if self.elapsedTime > 1.0 / self.specs['update_fps']:
                 self.elapsedTime = 0
                 self.updateParticles()
-                # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES, ONLY SAVE TO CHANGE HERE
+                # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
+                # ONLY SAVE TO CHANGE HERE
                 for c in self.keyboardManager.userCallbackStack:
                     c()
                 self.keyboardManager.userCallbackStack = []
@@ -221,7 +223,7 @@ class openGLLive(object):
             t = c.get_parameter('particle_type')
             s = c.get_parameter('shape')
             n = s.name()
-            if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere']:
+            if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
                 coll_shape_obj[n].append([s, t])
             else:
                 coll_shape_obj['Shapes::Misc'].append([s, t])
@@ -236,7 +238,7 @@ class openGLLive(object):
         for s in coll_shape_obj['Shapes::Cylinder']:
             pos = np.array(s[0].get_parameter('center'))
             a = np.array(s[0].get_parameter('axis'))
-            l = 2.0 * s[0].get_parameter('length')
+            l = s[0].get_parameter('length')
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Cylinder'].append(
                 [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
@@ -245,6 +247,14 @@ class openGLLive(object):
             pos = np.array(s[0].get_parameter('center'))
             r = s[0].get_parameter('radius')
             self.shapes['Shapes::Sphere'].append([pos, r, s[1]])
+
+        for s in coll_shape_obj['Shapes::SpheroCylinder']:
+            pos = np.array(s[0].get_parameter('center'))
+            a = np.array(s[0].get_parameter('axis'))
+            l = s[0].get_parameter('length')
+            r = s[0].get_parameter('radius')
+            self.shapes['Shapes::SpheroCylinder'].append(
+                [pos - a * l * 0.5, pos + a * l * 0.5, r, s[1]])
 
         for s in coll_shape_obj['Shapes::Misc']:
             self.shapes['Shapes::Misc'].append(
@@ -318,8 +328,16 @@ class openGLLive(object):
             drawSphere(s[0], s[1], self.modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.modulo_indexing(
                 self.specs['constraint_type_materials'], s[2]), self.specs['quality_constraints'])
 
+        for s in self.shapes['Shapes::SpheroCylinder']:
+            drawSpheroCylinder(
+                s[0], s[1], s[2], self.modulo_indexing(
+                    self.specs['constraint_type_colors'], s[3]),
+                               self.modulo_indexing(self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'])
+
         for s in self.shapes['Shapes::Wall']:
-            drawPlane(s[0], self.modulo_indexing(self.specs['constraint_type_colors'], s[1]),
+            drawPlane(
+                s[0], self.modulo_indexing(
+                    self.specs['constraint_type_colors'], s[1]),
                       self.modulo_indexing(self.specs['constraint_type_materials'], s[1]))
 
         for s in self.shapes['Shapes::Cylinder']:
@@ -492,11 +510,13 @@ class openGLLive(object):
                     alpha = 0.1  # np.linalg.norm(col)
                     drawCube(c, cubeSize, col, alpha)
 
-    # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR COLORS, MATERIALS ETC..
+    # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
+    # COLORS, MATERIALS ETC..
     def modulo_indexing(self, l, t):
         return l[t % len(l)]
 
-    # FADE PARTICE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP MINUSCOLOR (q=q_min)
+    # FADE PARTICE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP
+    # MINUSCOLOR (q=q_min)
     def colorByCharge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
@@ -742,7 +762,8 @@ class openGLLive(object):
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL, True))
 
-    # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
+    # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
+    # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def setLightPos(self):
         if self.specs['light_pos'] == 'auto':
             glLightfv(GL_LIGHT0, GL_POSITION, [
@@ -982,7 +1003,7 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     rx = -d[1] * d[2]
     ry = d[0] * d[2]
 
-    #angle,t,length = calcAngle(d)
+    # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     glTranslatef(posA[0], posA[1], posA[2])
 
@@ -993,6 +1014,47 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
         gluDisk(quadric, 0, radius, quality, quality)
         glTranslatef(0, 0, v)
         gluDisk(quadric, 0, radius, quality, quality)
+
+    glPopMatrix()
+
+
+def drawSpheroCylinder(posA, posB, radius, color, material, quality):
+    setSolidMaterial(color[0], color[1], color[
+                     2], color[3], material[0], material[1], material[2])
+    glPushMatrix()
+    quadric = gluNewQuadric()
+
+    d = posB - posA
+    if d[2] == 0.0:
+        d[2] = 0.0001
+
+    v = np.linalg.norm(d)
+    if v == 0:
+        ax = 57.2957795
+    else:
+        ax = 57.2957795 * acos(d[2] / v)
+
+    if d[2] < 0.0:
+        ax = -ax
+    rx = -d[1] * d[2]
+    ry = d[0] * d[2]
+    length = np.linalg.norm(d)
+    glTranslatef(posA[0], posA[1], posA[2])
+    glRotatef(ax, rx, ry, 0.0)
+
+    # First hemispherical cap
+    glEnable(GL_CLIP_PLANE0)
+    glClipPlane(GL_CLIP_PLANE0, (0, 0, -1, 0))
+    gluSphere(quadric, radius, quality, quality)
+    glDisable(GL_CLIP_PLANE0)
+    # Cylinder
+    gluCylinder(quadric, radius, radius, length, quality, quality)
+    # Second hemispherical cap
+    glTranslatef(0, 0, v)
+    glEnable(GL_CLIP_PLANE0)
+    glClipPlane(GL_CLIP_PLANE0, (0, 0, 1, 0))
+    gluSphere(quadric, radius, quality, quality)
+    glDisable(GL_CLIP_PLANE0)
 
     glPopMatrix()
 
@@ -1009,7 +1071,7 @@ def drawArrow(pos, d, radius, color, quality):
     rx = -d[1] * d[2]
     ry = d[0] * d[2]
 
-    #angle,t,length = calcAngle(d)
+    # angle,t,length = calcAngle(d)
     glTranslatef(pos[0], pos[1], pos[2])
     glRotatef(ax, rx, ry, 0.0)
     quadric = gluNewQuadric()

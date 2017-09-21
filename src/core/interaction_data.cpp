@@ -20,7 +20,7 @@
 */
 /** \file interaction_data.cpp
     Implementation of interaction_data.hpp
- */
+ */ 
 #include <cstring>
 #include <cstdlib>
 #include "utils.hpp"
@@ -69,6 +69,7 @@
 #include "actor/DipolarDirectSum.hpp"
 #include "p3m-dipolar.hpp"
 #include "thermostat.hpp"
+#include "scafacos.hpp"
 
 /****************************************
  * variables
