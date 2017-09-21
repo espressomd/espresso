@@ -26,6 +26,10 @@ from libcpp.memory cimport unique_ptr
 
 include "myconfig.pxi"
 
+cdef extern from "Vector.hpp":
+    cppclass Vector3d:
+        double & operator[](int i)
+
 # Import particle data structures and setter functions from particle_data.hpp
 
 cdef extern from "particle_data.hpp":
@@ -149,15 +153,15 @@ cdef extern from "particle_data.hpp":
         void pointer_to_temperature(particle * p, double * & res)
 
         IF PARTICLE_ANISOTROPY:
-            int set_particle_gamma(int part, double gamma[3])
+            int set_particle_gamma(int part, Vector3d gamma)
         ELSE:
             int set_particle_gamma(int part, double gamma)
 
         void pointer_to_gamma(particle * p, double * & res)
 
         IF ROTATION:
-            IF ROTATIONAL_INERTIA:
-                int set_particle_gamma_rot(int part, double gamma[3])
+            IF PARTICLE_ANISOTROPY:
+                int set_particle_gamma_rot(int part, Vector3d gamma_rot)
             ELSE:
                 int set_particle_gamma_rot(int part, double gamma)
 
