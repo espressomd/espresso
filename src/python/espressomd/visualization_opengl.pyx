@@ -811,7 +811,7 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        glEnable(GL_CULL_FACE)
+        #glEnable(GL_CULL_FACE)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
