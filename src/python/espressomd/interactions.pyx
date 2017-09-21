@@ -1443,7 +1443,7 @@ IF LENNARD_JONES:
 class BondedInteractions(object):
 
     """Represents the bonded interactions. Individual interactions can be accessed using
-    NonBondedInteractions[i], where i is the bond id. Will return a bonded interaction 
+    BondedInteractions[i], where i is the bond id. Will return a bonded interaction 
     from bonded_interaction_classes"""
 
     def __getitem__(self, key):
@@ -1487,6 +1487,9 @@ class BondedInteractions(object):
 
         # Set the parameters of the BondedInteraction instance in the Es core
         value._set_params_in_es_core()
+
+    def __len__(self):
+      return n_bonded_ia
 
     # Support iteration over active bonded interactions
     def __iter__(self):

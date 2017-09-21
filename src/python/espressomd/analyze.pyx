@@ -371,7 +371,7 @@ class Analysis(object):
         total_non_bonded = 0
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
@@ -380,7 +380,6 @@ class Analysis(object):
                 p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
-        p["non_bonded_inter"] = total_inter
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
 
@@ -454,7 +453,7 @@ class Analysis(object):
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
                   create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
