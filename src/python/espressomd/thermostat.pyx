@@ -384,10 +384,10 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
     IF DPD:
-        @AssertThermostatType(THERMO_DPD)
         def set_dpd(self, kT=None):
             """
             Sets the DPD thermostat with required parameters 'kT'.
+            This also activates the DPD interactions.
 
             Parameters
             ----------

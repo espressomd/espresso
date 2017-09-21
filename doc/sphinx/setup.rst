@@ -195,19 +195,30 @@ momenta flip is . The :math:`\pmb{\xi}` noise vector’s variance van be
 tuned to exactly :math:`1/\mathrm{temperature}` by specifying the option.
 The default for temperature scaling is .
 
-Dissipative Particle Dynamics (DPD) 
+.. _Dissipative Particle Dynamics (DPD):
+
+Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    this is not implemented yet
+To realize a complete DPD fluid model, three parts are needed:
+The DPD thermostat, which controlls the temperatur, a dissipative
+interaction between the particles that make up the fluid,
+see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The DPD thermostat can be invoked by the function:
-:py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
+:py:attr:`espressomd.thermostat.Thermostat.set_dpd`
+which takes :math:`k_\mathrm{B} T` as the only agument.
 
-Implements Dissipative Particle Dynamics (DPD) either via a global
-thermostat, or via a thermostat and a special DPD interaction between
-particle types. The latter allows the user to specify friction
-coefficients on a per-interaction basis.
+The friction coefficients and cutoff are controlled via the
+:ref:`DPD interaction` on a per type-pair basis. For details see
+there.
+
+As a conservative force any interaction potential can be used,
+see :ref:`Isotropic non-bonded interactions`. A common choice is
+a force ramp which is implemented as :ref:`Hat interaction`.
+
+A complete example of setting up a DPD fluid and running it
+to sample the equation of state can be found in samples/dpd.py.
 
 Thermostat DPD
 ^^^^^^^^^^^^^^
@@ -219,12 +230,7 @@ thermostat dpd
 
 or
 
-’s standard DPD thermostat implements the thermostat exactly as
-described in :cite:`soddeman03a`. We use the standard
-*Velocity-Verlet* integration scheme, DPD only influences the
-calculation of the forces. No special measures have been taken to
-self-consistently determine the velocities and the dissipative forces as
-it is for example described in :cite:`Nikunen03`. DPD adds a
+DPD adds a
 velocity dependent dissipative force and a random force to the usual
 conservative pair forces (Lennard-Jones).
 
@@ -319,48 +325,6 @@ The random force by
 The parameters define the strength of the friction and the cutoff in the
 same way as above. Note: This thermostat does *not* conserve angular
 momentum.
-
-Interaction DPD
-^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the pyton interface
-
-thermostat inter\_dpd
-
-Another way to use DPD is by using the interaction DPD. In this case,
-DPD is implemented via a thermostat and corresponding interactions. The
-above command will set the global temperature of the system, while the
-friction and other parameters have to be set via the command
-``inter inter_dpd`` (see ). This allows to set the friction on a
-per-interaction basis.
-
-DPD interactions with fixed particles is switched off by default,
-because it is not clear if the results obtained with that method are
-physically correct. If you want activate ``inter_dpd`` with fixed
-particles please use:
-
-setmd dpd\_ignore\_fixed\_particles 0
-
-By default the fixed particles are ignored
-(``dpd_ignore_fixed_particles`` is 1).
-
-Other DPD extensions
-^^^^^^^^^^^^^^^^^^^^
-.. todo::
-    This is not yet implemted for the pyton interface
-
-
-The features ``DPD_MADD_RED`` or ``DPD_MADD_IN`` make the friction constant mass dependent:
-
-.. math:: \zeta \to \zeta M_{ij}
-
-There are two implemented cases.
-
--  uses the reduced mass: :math:`M_{ij}=2\frac{m_i m_j}{m_i+m_j}`
-
--  uses the real mass: :math:`M_{ij}=\frac{m_i+m_j}{2}`
-
-The prefactors are such that equal masses result in a factor :math:`1`.
 
 Isotropic NPT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~

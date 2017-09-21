@@ -451,6 +451,8 @@ implemented currently, which means that the potential is discontinuous
 at :math:`d=d_\mathrm{cut}`. Therefore energy calculations should
 be used with great caution.
 
+.. _Hat interaction:
+
 Hat interaction
 ~~~~~~~~~~~~~~~
 
@@ -479,7 +481,7 @@ The potential energy is given by
 which is zero for distances bigger than :math:`r_c` and continuous at distance :math:`0`.
 
 This is the standard conservative DPD potential and can be used in
-combination with [sec:DPD].
+combination with :ref:`Dissipative Particle Dynamics (DPD)`.
 
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
@@ -2171,6 +2173,8 @@ radius of the constraint Lennard-Jones interactions. Otherwise there is
 no possibility that the particles feel the viscous layer. Please read
 reference :cite:`smiatek08a` before using this interaction.
 
+.. _DPD interaction:
+
 DPD interaction
 ~~~~~~~~~~~~~~~
 
@@ -2178,7 +2182,7 @@ DPD interaction
     `Feature DPD required.`
 
 This is a special interaction that is to be used in conjunction with the
-Dissipative Particle Dynamics thermostat [sec:DPD], for a genral description
+`Dissipative Particle Dynamics (DPD)` thermostat, for a genral description
 of the algorithm see there. The parameters can be set via::
 
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
@@ -2186,7 +2190,10 @@ of the algorithm see there. The parameters can be set via::
 This command defines a velocity dependent interaction
 between particles of the types *type1* and *type2*. For a description of the input arguments
 see :class:`espressomd.interactions.DPDInteraction`. The interaction
-only has an effect if the DPD thermostat activated.
+only has an effect if the DPD thermostat activated, and acts according to the
+temperature of the thermostat.
+
+
 
 Fixing the center of mass
 ~~~~~~~~~~~~~~~~~~~~~~~~~

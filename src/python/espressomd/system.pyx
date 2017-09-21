@@ -318,8 +318,7 @@ cdef class System(object):
         d_new : float
                 new box length
         dir : str, optional
-              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-              Isotropic assumes a cubic box.
+                coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
 
         """
 
