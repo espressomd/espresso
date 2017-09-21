@@ -108,7 +108,7 @@ To stop particles you can use the functionality implemented in the
 :mod:`espressomd.galilei` module.  The corresponding class
 :class:`espressomd.galilei.GalileiTransform` which is wrapped inside
 the :class:`espressomd.system.System` instance as
-:class:`espressomd._system.System.galilei` has two functions:
+:class:`espressomd.system.System.galilei` has two functions:
 
 - :meth:`espressomd.galilei.GalileiTransform.kill_particle_motion`:
    halts all particles in the current simulation, setting their
