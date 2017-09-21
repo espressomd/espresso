@@ -454,32 +454,32 @@ be used with great caution.
 Hat interaction
 ~~~~~~~~~~~~~~~
 
-.. todo::
-    
-    Not implemented yet.
+.. note::
+    `Feature HAT required.`
 
-inter hat
+The interface for the Lennard-Jones interaction is implemented in 
+:class:`espressomd.interactions.HatInteraction`. The hat parameters
+can be set via::
 
-This defines a simple force ramp between particles of the types and .
+    system.non_bonded_inter[type1, type2].hat.set_params(**kwargs)
+
+This defines a simple force ramp between particle so of two types.
 The maximal force acts at zero distance and zero force is applied at
-distances :math:`r_c` and bigger. For distances smaller than , the force
-is given by
+distances :math:`r_c` and bigger. For distances smaller than :math:`r_c`,
+the force is given by
 
 .. math:: F(r)=F_{\text{max}} \cdot \left( 1 - \frac{r}{r_c} \right),
 
-for distances exceeding , the force is zero.
+for distances exceeding :math:`r_c`, the force is zero.
 
 The potential energy is given by
 
 .. math:: V(r)=F_{\text{max}} \cdot (r-r_c) \cdot \left( \frac{r+r_c}{2r_c} - 1 \right),
 
-which is zero for distances bigger than and continuous at distance .
+which is zero for distances bigger than :math:`r_c` and continuous at distance :math:`0`.
 
 This is the standard conservative DPD potential and can be used in
-combination with [sec:DPDinter]. The potential is also useful for live
-demonstrations, where a big time step may be employed to obtain quick
-results on a weak machine, for which the physics do not need to be
-entirely correct.
+combination with [sec:DPD].
 
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
