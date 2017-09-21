@@ -468,11 +468,11 @@ vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
 
 .. figure:: figures/shape-wall.png
-   :alt: Example contraint with a ``Wall`` shape.
+   :alt: Example constraint with a ``Wall`` shape.
    :align: center
    :height: 6.00000cm
    
-Pictured is an example contraint with a ``Wall`` shape created with ::
+Pictured is an example cosntraint with a ``Wall`` shape created with ::
 
     wall = Wall( dist=20, normal=[0.1,0.0,1] )
     system.constraints.add(shape=wall, particle_type=0)
@@ -496,11 +496,11 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
 .. _shape-sphere:
 
 .. figure:: figures/shape-sphere.png
-   :alt: Example contraint with a ``Sphere`` shape.
+   :alt: Example constraint with a ``Sphere`` shape.
    :align: center
    :height: 6.00000cm
    
-Pictured is an example contraint with a ``Sphere`` shape created with ::
+Pictured is an example cosntraint with a ``Sphere`` shape created with ::
   
     sphere = Sphere(center=[25,25,25], radius = 15, direction = 1 )
     system.constraints.add(shape=sphere, particle_type=0)
@@ -517,11 +517,11 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
 
 
 .. figure:: figures/shape-cylinder.png
-   :alt: Example contraint with a ``Cylinder`` shape.
+   :alt: Example constraint with a ``Cylinder`` shape.
    :align: center
    :height: 6.00000cm
    
-Pictured is an example contraint with a ``Cylinder`` shape created with ::
+Pictured is an example constraint with a ``Cylinder`` shape created with ::
 
     cylinder=Cylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
     system.constraints.add(shape=cylinder, particle_type = 0)
@@ -529,7 +529,7 @@ Pictured is an example contraint with a ``Cylinder`` shape created with ::
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelpiped.
 
-:todo: `BROKEN! DO NOT USE!`
+:todo: `Shape is currently broken. Please do not use.`
 
 The resulting surface is a rhomboid, defined by one corner located at ``corner`` 
 and three adjacent edges, defined by the three vectors connecting the 
@@ -555,11 +555,11 @@ Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for
 
 
 .. figure:: figures/shape-maze.png
-   :alt: Example contraint with a ``Maze`` shape.
+   :alt: Example constraint with a ``Maze`` shape.
    :align: center
    :height: 6.00000cm
 
-Pictured is an example contraint with a ``Maze`` shape created with ::
+Pictured is an example constraint with a ``Maze`` shape created with ::
 
     maze=Maze(cylrad = 2, dim = 2, nsphere = 5, sphrad = 6)
     system.constraints.add(shape=maze, particle_type = 0, penetrable = 1)
@@ -568,7 +568,7 @@ Pictured is an example contraint with a ``Maze`` shape created with ::
 :class:`espressomd.shapes.Pore`
     A cylinder with a conical pore between the faces.
   
-:todo: `BROKEN! DO NOT USE!`
+:todo: `Shape is currently broken. Please do not use.`
     
 The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
 
@@ -584,11 +584,11 @@ Per default sharp edges are replaced by circles of unit radius.
 The radius of this smoothing can be set with the optional keyword ``smoothing_radius``.
 
 .. figure:: figures/shape-pore1.png
-   :alt: Example contraint with a ``Pore`` shape.
+   :alt: Example constraint with a ``Pore`` shape.
    :align: center
    :height: 6.00000cm
 
-Pictured is an example contraint with a ``Pore`` shape created with ::
+Pictured is an example constraint with a ``Pore`` shape created with ::
 
     pore=Pore(axis = [1,0,0], length = 70, outer_rad_left = 20, outer_rad_right = 30, pos = [50,50,50], rad_left = 10, rad_right = 20, smoothing_radius = 5)
     system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
@@ -613,7 +613,7 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
 
 
 .. figure:: figures/shape-stomatocyte1.png
-   :alt: Example contraint with a ``Stomatocyte`` shape.
+   :alt: Example constraint with a ``Stomatocyte`` shape.
    :align: center
    :height: 6.00000cm
 
@@ -623,7 +623,7 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
    :height: 6.00000cm
 
    
-Pictured is an example contraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
+Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
   
     stomatocyte=Stomatocyte(inner_radius = 3, outer_radius = 7, orientation_x = 1.0, orientation_y = 0.0,orientation_z = 0.0, position_x = 25, position_y = 25, position_z = 25, layer_width = 3,    direction = 1)
     system.constraints.add(shape=stomatocyte, particle_type = 0, penetrable = 1)
@@ -654,12 +654,12 @@ The meaning of the geometrical parameters can be inferred from the shcematic in 
 
 
 .. figure:: figures/shape-slitpore.png
-   :alt: Example contraint with a ``Slitpore`` shape.
+   :alt: Example constraint with a ``Slitpore`` shape.
    :align: center
    :height: 6.00000cm
 
   
-Pictured is an example contraint with a ``Slitpore`` shape created with ::
+Pictured is an example constraint with a ``Slitpore`` shape created with ::
   
     slitpore=Slitpore(Slitpore(channel_width = 30, lower_smoothing_radius = 3, upper_smoothing_radius = 3, pore_length = 40, pore_mouth = 60, pore_width = 10)
     system.constraints.add(shape=slitpore, particle_type = 0, penetrable = 1)
@@ -676,11 +676,11 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
 
 
 .. figure:: figures/shape-spherocylinder.png
-   :alt: Example contraint with a ``SpheroCylinder`` shape.
+   :alt: Example constraint with a ``SpheroCylinder`` shape.
    :align: center
    :height: 6.00000cm
    
-Pictured is an example contraint with a ``SpheroCylinder`` shape created with ::
+Pictured is an example constraint with a ``SpheroCylinder`` shape created with ::
 
     spherocylinder = SpheroCylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
     system.constraints.add(shape=spherocylinder, particle_type = 0)
@@ -701,12 +701,12 @@ The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
 
 .. figure:: figures/shape-hollowcone.png
-   :alt:  Example contraint with a  ``Hollowcone`` shape.
+   :alt:  Example constraint with a  ``Hollowcone`` shape.
    :align: center
    :height: 6.00000cm
 
 
-Pictured is an example contraint with a ``Hollowcone`` shape created with ::
+Pictured is an example constraint with a ``Hollowcone`` shape created with ::
   
     hollowcone=Hollowcone(HollowCone(inner_radius = 5, outer_radius = 20, opening_angle = np.pi/4.0, orientation_x = 1.0, orientation_y = 0.0, orientation_z = 0.0, position_x = 25, position_y = 25, positi    on_z = 25, width = 2,direction = 1)
     system.constraints.add(shape=hollowcone, particle_type = 0, penetrable = 1)
@@ -765,12 +765,12 @@ This command will delete the specified constraint.
 Getting the currently defined constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One can interate through contraints, for example ::
+One can interate through constraints, for example ::
   
     for c in system.constraints:
         print(c.shape)
 
-will print the shape information for all defined contraints.
+will print the shape information for all defined constraints.
 
 
 Getting the force on a constraint
