@@ -360,9 +360,10 @@ cdef class System(object):
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
 
     def volume(self):
-        """Return box volume of the cuboid box."""
-
         """
+        Return box volume of the cuboid box
+        """
+        
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
