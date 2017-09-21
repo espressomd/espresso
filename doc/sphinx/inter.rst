@@ -1204,6 +1204,8 @@ with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
 oif_global_forces interaction).
 
+.. _Bond-angle interactions:
+
 Bond-angle interactions
 -----------------------
 
