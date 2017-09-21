@@ -21,9 +21,7 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import FeneBond
 from time import time
-
 
 @ut.skipIf(not espressomd.has_features("DPD"),"Skipped because feature is disabled")
 class DPDThermostat(ut.TestCase):

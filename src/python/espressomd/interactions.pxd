@@ -73,6 +73,9 @@ cdef extern from "interaction_data.hpp":
         double dpd_pref3
         double dpd_pref4
 
+        double HAT_Fmax
+        double HAT_r
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -115,6 +118,11 @@ IF DPD:
         int dpd_set_params(int part_type_a, int part_type_b,
                            double gamma, double r_c, int wf,
                            double tgamma, double tr_c, int twf)
+
+IF HAT:
+    cdef extern from "hat.hpp":
+        int hat_set_params(int part_type_a, int part_type_b,
+                           double Fmax, double r)
 
 IF TABULATED==1:
     cdef extern from "tab.hpp":

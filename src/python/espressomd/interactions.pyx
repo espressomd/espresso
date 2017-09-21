@@ -264,6 +264,61 @@ IF LENNARD_JONES == 1:
         def required_keys(self):
             return "epsilon", "sigma", "cutoff", "shift"
 
+IF HAT == 1:
+    cdef class HatInteraction(NonBondedInteraction):
+        def validate_params(self):
+            if self._params["F_max"] < 0:
+                raise ValueError("Hat max force has to be >=0")
+            if self._params["cutoff"] < 0:
+                raise ValueError("Hat cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "F_max": ia_params.HAT_Fmax,
+                "cutoff": ia_params.HAT_r,
+            }
+
+        def is_active(self):
+            return (self._params["F_max"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Hat interaction.
+
+            Parameters
+            ----------
+
+            F_max : float
+                      The magnitude of the interaction.
+            cutoff : float
+                     Cutoff distance of the interaction.
+
+            """
+            super(HatInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if hat_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["F_max"],
+                                        self._params["cutoff"]):
+                raise Exception("Could not set Hat parameters")
+
+        def default_params(self):
+            return {
+                "F_max": 0.,
+                "cutoff": 0.,
+            }
+
+        def type_name(self):
+            return "Hat"
+
+        def valid_keys(self):
+            return "F_max", "cutoff"
+
+        def required_keys(self):
+            return "F_max", "cutoff"
+
 # Lennard Jones
 
 IF GAY_BERNE:
@@ -555,6 +610,7 @@ class NonBondedInteractionHandle(object):
     tabulated = None
     gay_berne = None
     dpd = None
+    hat = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -575,6 +631,8 @@ class NonBondedInteractionHandle(object):
             self.gay_berne = GayBerneInteraction(_type1, _type2)
         IF DPD:
             self.dpd = DPDInteraction(_type1, _type2)
+        IF HAT:
+            self.hat = HatInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
 
