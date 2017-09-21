@@ -128,9 +128,7 @@ integration time steps within a simulation, associating beads with
 either the large :attr:`espressomd.system.System.time_step` or the
 other :attr:`espressomd.system.System.smaller_time_step`. Setting
 :attr:`espressomd.system.System.smaller_time_step` to a positive
-value turns on the multi-timestepping algorithm. The ratio
-:attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step`
-*must* be an integer. Beads are by default associated with
+value turns on the multi-timestepping algorithm. Beads are by default associated with
 :attr:`espressomd.system.System.time_step`, corresponding to the
 particle property
 :attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` set
