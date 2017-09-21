@@ -115,7 +115,7 @@ class DDSGPUTest(ut.TestCase):
                                 msg = 'Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_dds_gpu*ddsgpu_t={2}'.format(i,np.array(dawaanr_t[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i])))
                 self.assertTrue(self.vectorsTheSame(np.array(dawaanr_f[i]),ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])), \
                                 msg = 'Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_dds_gpu*ddsgpu_f={2}'.format(i,np.array(dawaanr_f[i]), ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i])))
-            self.assertTrue(abs(dawaanr_e - ddsgpu_e * ratio_dawaanr_dds_gpu) <= 0.001, \
+            self.assertAlmostEqual(dawaanr_e, ddsgpu_e * ratio_dawaanr_dds_gpu, places=3, \
                             msg = 'Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(dawaanr_e,ratio_dawaanr_dds_gpu * ddsgpu_e))
             
             self.es.integrator.run(steps = 0,recalc_forces = True)

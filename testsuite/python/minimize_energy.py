@@ -44,11 +44,8 @@ class test_minimize_energy(ut.TestCase):
 
         energy = self.system.analysis.energy() 
 
-        assert( energy["total"] == 0 )
+        self.assertEqual(energy["total"], 0)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
-
-
-
