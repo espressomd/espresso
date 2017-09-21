@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(resize) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(operator_backets) {
+BOOST_AUTO_TEST_CASE(operator_brackets) {
   /* List::operator[](size_type) */
   {
     auto l = List(32);
@@ -284,6 +284,42 @@ BOOST_AUTO_TEST_CASE(operator_backets) {
     for (List::size_type i = 0; i < l.size(); i++) {
       BOOST_CHECK(l[i] == i);
     }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(comparison) {
+  /* List::operator{!,=}=(List const&), true */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(31);
+    std::iota(m.begin(), m.end(), 0);
+
+    BOOST_CHECK(l == m);
+    BOOST_CHECK(not(l != m));
+  }
+
+  /* List::operator{!,=}=(List const&), wrong size */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(12);
+    std::iota(m.begin(), m.end(), 0);
+
+    BOOST_CHECK(not(l == m));
+    BOOST_CHECK(l != m);
+  }
+
+  /* List::operator{!,=}=(List const&), wrong values */
+  {
+    auto l = List(31);
+    std::iota(l.begin(), l.end(), 0);
+    auto m = List(31);
+    std::iota(m.begin(), m.end(), 0);
+    m[11] = 0;
+
+    BOOST_CHECK(not(l == m));
+    BOOST_CHECK(l != m);
   }
 }
 

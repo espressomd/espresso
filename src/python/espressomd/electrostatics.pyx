@@ -428,9 +428,6 @@ IF P3M == 1:
             def required_keys(self):
                 return ["bjerrum_length", "accuracy"]
 
-            def _deactivate_method(self):
-                coulomb.method = COULOMB_NONE
-
             def default_params(self):
                 return {"cao": 0,
                         "inter": -1,
@@ -913,7 +910,7 @@ IF ELECTROSTATICS:
 
             def default_params(self):
                 return {}
-            
+
             def _deactivate_method(self):
-                coulomb.method = COULOMB_NONE
+                super(Scafacos,self)._deactivate_method()
                 scafacos.free_handle()

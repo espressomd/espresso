@@ -17,6 +17,7 @@
 #define MODES
 #endif
 
+#define BOND_CONSTRAINT
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
@@ -78,7 +79,4 @@
 #define VIRTUAL_SITES_RELATIVE
 #define FLATNOISE
 
-
-
-
-
+#define ADDITIONAL_CHECKS
