@@ -268,27 +268,20 @@ Exclusions
 
    check this
 
+  ::
+    system.part[0].add_exclusion(1)
 
-part auto\_exclusions part delete\_exclusions
 
-Variant will create exclusions for all particles pairs connected by not
-more than bonds ( defaults to 2). This is typically used in atomistic
-simulations, where nearest and next nearest neighbour interactions along
-the chain have to be omitted since they are included in the bonding
-potentials. For example, if the system contains particles :math:`0`
-\ :math:`100`, where particle :math:`n` is bonded to particle
-:math:`n-1` for :math:`1 \leq n \leq 100`, then it will result in the
-exclusions:
+Create exclusions for particles pairs 0 and 1.
+This is typically used in atomistic simulations, 
+where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
 
--  particle 1 does not interact with particles 2 and 3
+To delete all exclusions, simply use
 
--  particle 2 does not interact with particles 1, 3 and 4
+  ::
+    system.part[0].delete_exclusion(1)
 
--  particle 3 does not interact with particles 1, 2, 4 and 5
 
--  ...
-
-Variant deletes all exclusions currently present in the system.
 
 Creating groups of particle
 ---------------------------
