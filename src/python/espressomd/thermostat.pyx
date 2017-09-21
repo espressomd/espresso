@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from decorator import decorator
 from . cimport thermostat
 include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 from . cimport utils
 
-
+@decorator
 class AssertThermostatType():
     """Assert that only a certain thermostat is active
 
