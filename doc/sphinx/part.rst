@@ -347,7 +347,7 @@ particle ID 0. Nodes are assigned type 0, monomers (both charged and
 uncharged) are type 1 and counterions type 2. For inter-particle bonds
 interaction :math:`0` is taken which must be a two-particle bond.
 
-
+.. _diamond:
 .. figure:: figures/diamond.png
    :alt: Diamond-like polymer network with MPC=15.
    :align: center
@@ -369,8 +369,9 @@ edges are modeled by polymer chains connected at the corners of the
 icosaeder. For inter-particle bonds interaction :math:`0` is taken which
 must be a two-particle bond. Two particle types are used for the
 pentagons and the interconnecting links. For an example, see figure
-[fig:fullerene].
+[fullerene].
 
+.. _fullerene:
 .. figure:: figures/fullerene.png
    :alt: Icosaeder with =15.
    :align: center
@@ -388,7 +389,7 @@ Set the charges of the monomers to and the charges of the counterions to
 .
 
 Specifies the distance between two charged monomer along the edge. If
-:math:`\var{d_\mathrm{charged}} > 1` the remaining monomers are
+:math:`d_\mathrm{charged} > 1` the remaining monomers are
 uncharged.
 
 ``crosslink``: Cross-linking polymers
@@ -466,13 +467,12 @@ Note that ``dist`` describes the distance from the origin in units of the normal
 vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
 
-
 .. figure:: figures/shape-wall.png
-   :alt: Example contraint with a ``Wall`` shape created with ``wall = Wall(dist=20, normal=[0.1,0.0,1])``
+   :alt: Example contraint with a ``Wall`` shape.
    :align: center
    :height: 6.00000cm
    
-Example contraint with a ``Wall`` shape created with ::
+Pictured is an example contraint with a ``Wall`` shape created with ::
 
     wall = Wall( dist=20, normal=[0.1,0.0,1] )
     system.constraints.add(shape=wall, particle_type=0)
@@ -493,8 +493,10 @@ for this too work.
 The resulting surface is a sphere with center ``center`` and radius ``radius``. 
 The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
 
+.. _shape-sphere:
+
 .. figure:: figures/shape-sphere.png
-   :alt: Example contraint with a ``Sphere`` shape created with ``sphere = Sphere(center=[25,25,25], radius = 15, direction = 1)
+   :alt: Example contraint with a ``Sphere`` shape.
    :align: center
    :height: 6.00000cm
    
@@ -515,7 +517,7 @@ The direction ``direction`` determines the force direction, ``-1`` or for inward
 
 
 .. figure:: figures/shape-cylinder.png
-   :alt: Example contraint with a ``Cylinder`` shape created with ``cylinder=Cylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)``
+   :alt: Example contraint with a ``Cylinder`` shape.
    :align: center
    :height: 6.00000cm
    
@@ -526,6 +528,8 @@ Pictured is an example contraint with a ``Cylinder`` shape created with ::
 
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelpiped.
+
+:todo: `BROKEN! DO NOT USE!`
 
 The resulting surface is a rhomboid, defined by one corner located at ``corner`` 
 and three adjacent edges, defined by the three vectors connecting the 
@@ -545,23 +549,28 @@ adjacent edges, defined by the three vectors connecting the corner with its thre
     Spherical cavities on a regular grid that are connected by tubes.
 
 The resulting surface is ``nsphere`` spheres of radius ``sphrad`` along each dimension, connected by cylinders of radius ``cylrad``.
-The spheres have simple cubic symmetry.
+The sphere grid have simple cubic symmetry.
 The spheres are distributed evenly by dividing the boxl by ``nsphere``.
 Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
 
- ::
 
-    maze = Maze(nsphere=5, dim=3, cylrad=1.0, sphrad=3.0)
+.. figure:: figures/shape-maze.png
+   :alt: Example contraint with a ``Maze`` shape.
+   :align: center
+   :height: 6.00000cm
 
-creates 3-dimensional maze by 5 spheres of radius 3 per dimension.
-The spheres build a grid of simple cubic symmetry and are connected by
-cylinders with radius 1.
+Pictured is an example contraint with a ``Maze`` shape created with ::
+
+    maze=Maze(cylrad = 2, dim = 2, nsphere = 5, sphrad = 6)
+    system.constraints.add(shape=maze, particle_type = 0, penetrable = 1)
 
 
 :class:`espressomd.shapes.Pore`
-    A cylinder with a conical pore between the faces. The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore.
+    A cylinder with a conical pore between the faces.
+  
+:todo: `BROKEN! DO NOT USE!`
     
-The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
+The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
 
 The ``length`` parameter is half of the cylinder length.
 The parameter ``axis`` is a vector along the cylinder axis, which is normalized in the program.
@@ -574,16 +583,17 @@ The same applies for ``outer_radius`` which can be replaced with ``outer_rad_lef
 Per default sharp edges are replaced by circles of unit radius.
 The radius of this smoothing can be set with the optional keyword ``smoothing_radius``.
 
- ::
+.. figure:: figures/shape-pore1.png
+   :alt: Example contraint with a ``Pore`` shape.
+   :align: center
+   :height: 6.00000cm
 
-    pore = Pore(pos=[x, y, z], axis=[a\_x, a\_y, a\_z], length=L,
-    smoothing\_radius = SR, rad\_left=LR, rad\_right=RR,
-    outer\_rad\_left=ORL, outer\_rad\_right=ORR)
+Pictured is an example contraint with a ``Pore`` shape created with ::
 
-creates a pore at position , with its axis pointing in the direction
-of and length .
+    pore=Pore(axis = [1,0,0], length = 70, outer_rad_left = 20, outer_rad_right = 30, pos = [50,50,50], rad_left = 10, rad_right = 20, smoothing_radius = 5)
+    system.constraints.add(shape=pore, particle_type = 0, penetrable  = 1)
 
-
+    
 :class:`espressomd.shapes.Stomatocyte`
     A stomatocyte.
 
@@ -601,16 +611,24 @@ is half the size of the stomatocyte given by 7:3:2.
 Not all choices of the parameters give reasonable values for the shape of the stomatocyte, 
 but the combination 7:3:1 is a good point to start from when trying to modify the shape.
 
- ::
 
-    stomatocyte = Stomatocyte(position\_x=x, position\_y=y,
-    position\_z=z, orientation\_x = o\_x, orientation\_y = o\_y,
-    orientation\_z = o\_z, outer\_radius = OR, inner\_radius = IR,
-    layer\_width = LW, direction = D)
+.. figure:: figures/shape-stomatocyte1.png
+   :alt: Example contraint with a ``Stomatocyte`` shape.
+   :align: center
+   :height: 6.00000cm
 
-creates a Stomatocyte at position with orientation whose outer radius
-is , its inner radius is and the layer width will be .
+.. figure:: figures/shape-stomatocyte2.png
+   :alt: Close-up of the internal ``Stomatocyte`` structure.
+   :align: center
+   :height: 6.00000cm
 
+   
+Pictured is an example contraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
+  
+    stomatocyte=Stomatocyte(inner_radius = 3, outer_radius = 7, orientation_x = 1.0, orientation_y = 0.0,orientation_z = 0.0, position_x = 25, position_y = 25, position_z = 25, layer_width = 3,    direction = 1)
+    system.constraints.add(shape=stomatocyte, particle_type = 0, penetrable = 1)
+
+    
 
 :class:`espressomd.shapes.Slitpore`
    Channel-like surface
@@ -622,7 +640,7 @@ It is translationally invariant in y direction.
 The region is described as a pore (lower vertical part of the "T"-shape) and a channel (upper horizontal part of the "T"-shape).
 
 .. figure:: figures/slitpore.pdf
-   :alt: The geometry of the slitpore surface
+   :alt: Schematic for the slitpore shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
    
@@ -632,15 +650,19 @@ The parameter ``pore_width`` specifies the distance between the two plateau edge
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (centre). It is always centered in the x-direction.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
+The meaning of the geometrical parameters can be inferred from the shcematic in fig. [fig:slitpore].
 
- ::
 
-    slitpore = Slitpore(pore\_mouth = z, channel\_width = CW, pore\_width
-    = PW, pore\_length = PL, upper\_smoothing\_radius = USR,
-    lower\_smoothing\_radius = LSR)
+.. figure:: figures/shape-slitpore.png
+   :alt: Example contraint with a ``Slitpore`` shape.
+   :align: center
+   :height: 6.00000cm
 
-creates a Slitpore, the meaning of the geometrical parameters can be
-inferred from fig. [fig:slitpore].
+  
+Pictured is an example contraint with a ``Slitpore`` shape created with ::
+  
+    slitpore=Slitpore(Slitpore(channel_width = 30, lower_smoothing_radius = 3, upper_smoothing_radius = 3, pore_length = 40, pore_mouth = 60, pore_width = 10)
+    system.constraints.add(shape=slitpore, particle_type = 0, penetrable = 1)
 
 
 :class:`espressomd.shapes.SpheroCylinder`
@@ -652,21 +674,13 @@ The ``length`` parameter is **half** of the cylinder length, and does not includ
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` or for inward and ``+1`` for outward.
 
- ::
-
-    spherocylinder=SpheroCylinder(pos=[x, y, z], axis=[a\_x, a\_y, a\_z],
-    length=L, rad=R)
-
-creates a Sphero-Cylinder at position , whose cylindrical element is
-aligned in direction . The cylinder will have a length of and a
-radius of . The spherical cap will have the same radius.
 
 .. figure:: figures/shape-spherocylinder.png
-   :alt: Example contraint with a ``Cylinder`` shape created with ``spherocylinder = SpheroCylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30) ``
+   :alt: Example contraint with a ``SpheroCylinder`` shape.
    :align: center
    :height: 6.00000cm
    
-Pictured is an example contraint with a ``Cylinder`` shape created with ::
+Pictured is an example contraint with a ``SpheroCylinder`` shape created with ::
 
     spherocylinder = SpheroCylinder(center=[25, 25, 25], axis = [1, 0, 0], direction = 1, radius = 10, length = 30)
     system.constraints.add(shape=spherocylinder, particle_type = 0)
@@ -686,19 +700,16 @@ The position is specified with ``position_x``, ``position_y`` and ``position_z``
 The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, +1 the normal points out of the mantel, -1 for when points inward.
 
- ::
-
-    hollowCone = HollowCone(position\_x = x, position\_y = y, position\_z
-    = z, orientation\_x = o\_x, orientation\_y = o\_y, orientation\_z =
-    o\_z, outer\_radius = OR, inner\_radius = IR, width = W,
-    opening\_angle = a, direction = D)
-       
+.. figure:: figures/shape-hollowcone.png
+   :alt:  Example contraint with a  ``Hollowcone`` shape.
+   :align: center
+   :height: 6.00000cm
 
 
-Variant creates an infinite plane at a fixed position. For
-non-initializing a direction of the constraint values of the positions
-have to be negative. For the tunable-slip boundary interactions you have
-to set *two* constraints.
+Pictured is an example contraint with a ``Hollowcone`` shape created with ::
+  
+    hollowcone=Hollowcone(HollowCone(inner_radius = 5, outer_radius = 20, opening_angle = np.pi/4.0, orientation_x = 1.0, orientation_y = 0.0, orientation_z = 0.0, position_x = 25, position_y = 25, positi    on_z = 25, width = 2,direction = 1)
+    system.constraints.add(shape=hollowcone, particle_type = 0, penetrable = 1)
 
 
 For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomacyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.
