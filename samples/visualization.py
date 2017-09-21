@@ -189,10 +189,9 @@ def main_loop():
     print(energies)
     plot.set_xdata(numpy.append(plot.get_xdata(), system.time))
     plot.set_ydata(numpy.append(plot.get_ydata(), energies['total']))
-    obs_file.write('{ time %s } %s\n' % (system.time, energies))
+
     linear_momentum = system.analysis.analyze_linear_momentum()
     print(linear_momentum)
-
 
 def main_thread():
     for i in range(0, int_n_times):

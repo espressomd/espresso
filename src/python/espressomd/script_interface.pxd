@@ -29,6 +29,7 @@ cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface":
         bool operator == (const ParameterType & a, const ParameterType & b)
 
 cdef extern from "script_interface/Parameter.hpp" namespace "ScriptInterface::ParameterType":
+    cdef ParameterType NONE
     cdef ParameterType BOOL
     cdef ParameterType INT
     cdef ParameterType DOUBLE
