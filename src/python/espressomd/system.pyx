@@ -335,7 +335,7 @@ cdef class System(object):
             rescale_boxl(2, d_new)
         else:
             raise ValueError(
-                'Usage: change_volume_and_rescale_particles { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
+                'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
         """Return box volume.
