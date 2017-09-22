@@ -219,14 +219,15 @@ class openGLLive(object):
 
         # Collect shapes and interaction type (for coloring) from constraints
         coll_shape_obj = collections.defaultdict(list)
-        for c in self.system.constraints.call_method('get_elements'):
-            t = c.get_parameter('particle_type')
-            s = c.get_parameter('shape')
-            n = s.name()
-            if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
-                coll_shape_obj[n].append([s, t])
-            else:
-                coll_shape_obj['Shapes::Misc'].append([s, t])
+        for c in self.system.constraints:
+            if type(c) == espressomd.constraints.ShapeBasedConstraint:
+                t = c.get_parameter('particle_type')
+                s = c.get_parameter('shape')
+                n = s.name()
+                if n in ['Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Sphere', 'Shapes::SpheroCylinder']:
+                    coll_shape_obj[n].append([s, t])
+                else:
+                    coll_shape_obj['Shapes::Misc'].append([s, t])
 
         # TODO: get shapes from lbboundaries
         for s in coll_shape_obj['Shapes::Wall']:

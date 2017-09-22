@@ -632,20 +632,6 @@ cdef class ParticleHandle(object):
                 pointer_to_q( self.particle_data.get(), x)
                 return x[0]
 
-    def delete(self):
-        """
-        Delete the particle.
-        
-        See Also
-        --------
-        add
-        remove, clear
-
-        """
-        if remove_particle(self.id):
-            raise Exception("Could not delete particle.")
-        del self
-
     IF VIRTUAL_SITES == 1:
 
         property virtual:
@@ -1286,7 +1272,7 @@ cdef class ParticleHandle(object):
         See Also
         ----------
         add
-        delete, clear
+        clear
 
 
         """
@@ -1824,7 +1810,7 @@ cdef class ParticleList(object):
         See Also
         ----------
         add
-        remove, delete
+        remove
         
 
         
