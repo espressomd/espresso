@@ -332,32 +332,31 @@ cdef class System(object):
             rng_state = map(int, (mpi_random_get_stat().c_str()).split())
             return rng_state
 
-    def change_volume_and_rescale_particles(d_new, dir="xyz"):
+    def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
+        """Change box size and rescale particle coordinates.
 
-        """Change box size and rescale particle coordinates
-           
-           Parameters
-           ----------
-           d_new : float
-                 new length
-           dir : string
-                 coordinate to work on, either ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic change
+        Parameters:
+        -----------
+        d_new : float
+                new box length
+        dir : str, optional
+              coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+              Isotropic assumes a cubic box.
         """
 
         if d_new < 0:
             raise ValueError("No negative lengths")
         if dir == "xyz":
-            d_new = d_new**(1. / 3.)
             rescale_boxl(3, d_new)
-        elif dir == "x":
+        elif dir == "x" or dir == 0:
             rescale_boxl(0, d_new)
-        elif dir == "y":
+        elif dir == "y" or dir == 1:
             rescale_boxl(1, d_new)
-        elif dir == "z":
+        elif dir == "z" or dir == 2:
             rescale_boxl(2, d_new)
         else:
             raise ValueError(
-                'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
+                'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
         """
