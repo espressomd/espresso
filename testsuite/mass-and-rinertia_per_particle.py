@@ -27,7 +27,7 @@ class ThermoTest(ut.TestCase):
         J = [10.0, 10.0, 10.0]
 
         for i in range(len(self.es.part)):
-            self.es.part[i].delete()
+            self.es.part[i].remove()
 
         for i in range(2):
             self.es.part.add(pos=np.array([0.0, 0.0, 0.0]), id=i)
@@ -111,7 +111,7 @@ class ThermoTest(ut.TestCase):
             self.es.integrator.run(10)
 
         for i in range(len(self.es.part)):
-            self.es.part[i].delete()
+            self.es.part[i].remove()
 
         # thermalization
         # Checks if every degree of freedom has 1/2 kT of energy, even when
