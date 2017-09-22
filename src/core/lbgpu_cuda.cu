@@ -41,7 +41,6 @@
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
 
-
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
@@ -127,8 +126,7 @@ static const float c_sound_sq = 1.0f/3.0f;
 
 /*-------------------------------------------------------*/
 
-/** atomic add function for sveral cuda architectures 
-*/
+
 __device__ inline void atomicadd(float* address, float value){
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
   atomicAdd(address, value);
@@ -299,7 +297,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
     // The following convention is used:
     // The $\hat{c}_i$ form B. Duenweg's paper are given by:
 
-    /* c_0  = { 0, 0, 0}
+   /* c_0  = { 0, 0, 0}
        c_1  = { 1, 0, 0}
        c_2  = {-1, 0, 0}
        c_3  = { 0, 1, 0}
@@ -2825,6 +2823,68 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
     n_a.boundary[index] = n_b.boundary[index] = 0;
 }
 
+__device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_offset, double lees_edwards_velocity) {
+  
+  //first apply the velocity shift
+  //do this similarly to velocity BCs by rearranging densities between different populations
+  //only do this to populations that crossed the LE boundary
+  //this is called after streaming, so those are the ones moving away from the LE boundary above and below it
+ 
+  lees_edwards_velocity = 0.1;
+  printf("LE-velocity %06.3f", lees_edwards_velocity);
+
+  int y = (index/para.dim_x) % para.dim_y;
+  int pos[3];
+  
+  index_to_xyz(index, pos);
+  
+  if(y == 0) {
+    printf("lower %2d %2d %2d\n", pos[0], pos[1], pos[2]);
+    
+    n_b.vd[7*para.number_of_nodes+index] += lees_edwards_offset*0.1; 
+    n_b.vd[10*para.number_of_nodes+index] -= lees_edwards_offset*0.1;
+
+    printf("velocity %06.3f \n", n_b.vd[7*para.number_of_nodes+index]);
+    printf("velocity %06.3f \n", n_b.vd[10*para.number_of_nodes+index]);
+
+    //Obere Grenze, zeigen jetzt nach unten:  c_8, c_9, c_16, c_17
+    //Untere Grenze, zeigen jetzt nach oben: c_7, c_10, c_15, c_18
+
+    /* c_0  = { 0, 0, 0} 
+       c_1  = { 1, 0, 0}
+       c_2  = {-1, 0, 0}
+       c_3  = { 0, 1, 0}
+       c_4  = { 0,-1, 0}
+       c_5  = { 0, 0, 1}
+       c_6  = { 0, 0,-1}
+       c_7  = { 1, 1, 0}
+       c_8  = {-1,-1, 0}
+       c_9  = { 1,-1, 0}
+       c_10 = {-1, 1, 0}
+       c_11 = { 1, 0, 1}
+       c_12 = {-1, 0,-1}
+       c_13 = { 1, 0,-1}
+       c_14 = {-1, 0, 1}
+       c_15 = { 0, 1, 1}
+       c_16 = { 0,-1,-1}
+       c_17 = { 0, 1,-1}
+       c_18 = { 0,-1, 1} */
+
+    }
+
+  else if(y == para.dim_y-1) {
+    printf("upper %2d %2d %2d\n", pos[0], pos[1], pos[2]);
+    
+    n_b.vd[8*para.number_of_nodes+index] += lees_edwards_velocity*0.01;
+    n_b.vd[9*para.number_of_nodes+index] -= lees_edwards_velocity*0.01;
+
+    printf("velocity %06.3f \n", n_b.vd[8*para.number_of_nodes+index]);
+    printf("velocity %06.3f \n", n_b.vd[9*para.number_of_nodes+index]);
+     
+    }
+
+}
+
 /** integrationstep of the lb-fluid-solver
  * @param n_a     Pointer to local node residing in array a (Input)
  * @param n_b     Pointer to local node residing in array b (Input)
@@ -2833,8 +2893,8 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param ek_parameters_gpu  Pointer to the parameters for the electrokinetics (Input)
 */
 
-
-__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu) {
+__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu, float lees_edwards_offset = 0.1f, float lees_edwards_velocity = 0.1f) {
+  //printf("Deine Mutter is fett");
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   /**the 19 moments (modes) are only temporary register values */
@@ -2856,7 +2916,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     }
 #if  defined(EXTERNAL_FORCES)  ||   defined (SHANCHEN)  
     /**if external force is used apply node force */
-    apply_forces(index, mode, node_f,d_v);
+apply_forces(index, mode, node_f,d_v);
 #else
     /**if particles are used apply node forces*/
     if (para.number_of_particles) apply_forces(index, mode, node_f,d_v); 
@@ -2865,6 +2925,9 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     normalize_modes(mode);
     /**calc of velocity densities and streaming with pbc*/
     calc_n_from_modes_push(n_b, mode, index);
+#ifdef LEES_EDWARDS
+    apply_LE_shift(n_b, index, lees_edwards_offset, lees_edwards_velocity);
+#endif
     /** rewriting the seed back to the global memory*/
     n_b.seed[index] = rng.seed;
   }  
@@ -3692,13 +3755,13 @@ void lb_integrate_GPU() {
            it or device_rho_v are NULL depending on extended_values_flag */ 
   if (intflag == 1)
   {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_offset, lees_edwards_rate*lbpar_gpu.dim_y*lbpar_gpu.agrid));
     current_nodes = &nodes_b;
     intflag = 0;
   }
   else
   {
-    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu));
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_rho_v, node_f, lb_ek_parameters_gpu, lees_edwards_offset, lees_edwards_rate * lbpar_gpu.dim_y*lbpar_gpu.agrid));
     current_nodes = &nodes_a;
     intflag = 1;
   }
