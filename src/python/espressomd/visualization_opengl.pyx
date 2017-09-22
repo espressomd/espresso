@@ -151,7 +151,8 @@ class openGLLive(object):
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                self.updateConstraints()
+                IF CONSTRAINTS:
+                    self.updateConstraints()
                 self.hasParticleData = True
 
             # IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
@@ -282,8 +283,8 @@ class openGLLive(object):
                 for k in range(int(res[2])):
                     p = np.array([i, j, k]) * sp
                     dist, vec = shape.call_method(
-                        "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp and dist != 0:
+                            "calc_distance", position=p.tolist())
+                    if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp:
                         points.append((p - vec).tolist())
         return points
 
@@ -313,8 +314,9 @@ class openGLLive(object):
         if self.specs['draw_bonds']:
             self.drawBonds()
 
-        if self.specs['draw_constraints']:
-            self.drawConstraints()
+        IF CONSTRAINTS:
+            if self.specs['draw_constraints']:
+                self.drawConstraints()
 
     def drawSystemBox(self):
         drawBox([0, 0, 0], self.system.box_l, self.invBackgroundCol)
@@ -345,8 +347,6 @@ class openGLLive(object):
             drawCylinder(s[0], s[1], s[2], self.modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.modulo_indexing(
                 self.specs['constraint_type_materials'], s[3]), self.specs['quality_constraints'], True)
 
-        box_diag = pow(pow(self.system.box_l[0], 2) + pow(
-            self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
         for s in self.shapes['Shapes::Misc']:
             drawPoints(s[0], self.specs['rasterize_pointsize'],  self.modulo_indexing(
                 self.specs['constraint_type_colors'], s[1]), self.modulo_indexing(self.specs['constraint_type_materials'], s[1]))
@@ -812,7 +812,7 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        glEnable(GL_CULL_FACE)
+        #glEnable(GL_CULL_FACE)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
