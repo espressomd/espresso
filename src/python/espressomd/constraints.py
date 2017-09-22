@@ -109,10 +109,6 @@ class ShapeBasedConstraint(Constraint):
         """
         Get total force acting on this constraint.
 
-        Parameters
-        ----------
-        constraint : :class:`espressomd.constraints.Constraint`
-
         Examples
         ----------
 
