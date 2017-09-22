@@ -264,23 +264,26 @@ For example, to delete all particles with particle id greater than 10, run::
 Exclusions
 ~~~~~~~~~~
 
-.. TODO::
+        :todo: `Perhaps this does not need its own section.`
 
-   check this
+Particles can have an exclusion list of all other particles where nonbonded interactions are ignored.
+This is typically used in atomistic simulations, 
+where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
 
   ::
+
     system.part[0].add_exclusion(1)
 
 
 Create exclusions for particles pairs 0 and 1.
-This is typically used in atomistic simulations, 
-where nearest and next nearest neighbour interactions along the chain have to be omitted since they are included in the bonding potentials.
 
-To delete all exclusions, simply use
+To delete the exclusion, simply use
 
   ::
+
     system.part[0].delete_exclusion(1)
 
+See :attr:`espressomd.particle_data.ParticleHandle.exclude`
 
 
 Creating groups of particle
@@ -352,10 +355,7 @@ See :meth:`espressomd.diamond.Diamond` for more details.
 
 ``icosaeder``: Setting up an icosaeder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        :todo: `Is this implemented?.`
-
-icosaeder
+:todo: `This feature is not yet implemented .`
 
 Creates a modified icosaeder to model a fullerene (or soccer ball). The
 edges are modeled by polymer chains connected at the corners of the
@@ -522,7 +522,7 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelpiped.
 
-:todo: `Shape is currently broken. Please do not use.`
+:todo: `This shape is currently broken. Please do not use.`
 
 The resulting surface is a rhomboid, defined by one corner located at ``corner`` 
 and three adjacent edges, defined by the three vectors connecting the 
@@ -561,7 +561,7 @@ Pictured is an example constraint with a ``Maze`` shape created with ::
 :class:`espressomd.shapes.Pore`
     A cylinder with a conical pore between the faces.
   
-:todo: `Shape is currently broken. Please do not use.`
+:todo: `This shape is currently broken. Please do not use.`
     
 The pore openings are smoothed with torus segment. The outer radius can be chosen such that it is bigger than the box, to get a wall with a pore. The resulting surface is a cylindrical pore similar to :class:`espressomd.shapes::Cylinder` with a center ``center`` and radius ``radius``.
 
@@ -768,24 +768,19 @@ will print the shape information for all defined constraints.
 
 Getting the force on a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:todo: `This feature is not yet implemented .`
 
-:todo: `Is this implemented?.`
-
-constraint force
-
-Returns the force acting on the th constraint. Note, however, that this
+Returns the force acting on the a constraint. Note, however, that this
 are only forces due to interactions with particles, not with other
 constraints. Also, these forces still do not mean that the constraints
 move, they are just the negative of the sum of forces acting on all
 particles due to this constraint. Similarly, the total energy does not
-containt constraint-constraint contributions.
+contain constraint-constraint contributions.
 
 
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `Is this implemented?.`
-
-constraint mindist\_position
+:todo: `This feature is not yet implemented .`
 
 calculates the smallest distance to all non-penetrable
 constraints, that can be repulsive (wall, cylinder, sphere, rhomboid,
@@ -797,9 +792,7 @@ initial configurations.)
 
 ``harmonic_well``: Creating a harmonic trap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `Is this implemented?.`
-
-harmonic\_well { }
+:todo: `This feature is not yet implemented .`
 
 Calculates a spring force for all particles, where the equilibrium
 position of the spring is at and its force constant is . A more
@@ -807,26 +800,14 @@ flexible trap can be constructed with constraints, but this one runs on
 the GPU.
 
 
-``Homogeneous MagneticField``: 
+``Homogeneous Magnetic Field``: 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:class:`espressomd.Constraints::HomogeneousMagneticField`
+
 This does not define a surface but is based on magnetic dipolar
 interaction with an external magnetic field. It applies to all particles
 with a dipole moment.
 
-Variant specifies the dipolar coupling of particles with a dipolar
-moment to an external field .
-
-:todo: `This is not implemented`
-
-Variant specifies an electrostatic interaction between the charged
-particles in the system to an infinitely long rod with a line charge of
-which is alinge along the z-axis and centered at and .
-
-:todo: `This is not implemented`
-
-Variant specifies the electrostatic interactinos between the charged
-particles in the system and an inifinitely large plate in the x-y-plane
-at height . The plate carries a charge density of .
 
 
 Virtual sites
@@ -848,7 +829,7 @@ following.
 
 Virtual sites in the center of mass of a molecule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `add dscription here`
+:todo: `add description here`
 :todo: `add description in particle_data.pyx`
 
 To activate this implementation, enable the feature (sec.
@@ -1015,10 +996,7 @@ For using conveniently for simulations in the grand canonical ensemble,
 or other purposes, when particles of certain types are created and
 deleted frequently. Particle ids can be stored in lists for each
 individual type and so random ids of particles of a certain type can be
-drawn.
-
-
-  ::
+drawn.  ::
 
     from espressomd import grand_canonical grand_canonical.setup([_type])
     grand_canonical.delete_particles(_type)
@@ -1026,9 +1004,7 @@ drawn.
     grand_canonical.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
-initialize the method by calling
-
-  ::
+initialize the method by calling  ::
 
     grand_canonical.setup([_type])
 
