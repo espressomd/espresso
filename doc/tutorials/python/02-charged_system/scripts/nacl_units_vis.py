@@ -20,7 +20,7 @@
 #
 from espressomd import *
 from espressomd import electrostatics
-from espressomd.visualizationOpenGL import *
+from espressomd.visualization_opengl import *
 from threading import Thread
 import numpy
 
