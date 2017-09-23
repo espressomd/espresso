@@ -1,12 +1,11 @@
 Running the simulation
 ======================
 
-``integrate``: Running the simulation
--------------------------------------
+Integrator
+----------
 
-To run the integrator use call the
-:meth:`espressomd.integrate.Integrator.run` method of the
-:class:`espressomd._system.integrator` instance::
+To run the integrator call the method
+:meth:`espressomd.integrate.Integrator.run`::
 
     system.integrator.run(steps=number_of_steps)
 
@@ -17,23 +16,23 @@ should perform.
 of motion.
 
 Note that this implementation of the Velocity Verlet algorithm reuses
-forces, that is, they are computed once in the middle of the time step,
-but used twice, at the beginning and end. However, in the first time
-step after setting up, there are no forces present yet. Therefore, has
+forces. That is, they are computed once in the middle of the time step,
+but used twice, at the beginning and end. In the first time
+step after setting up, there are no forces present yet. Therefore, |es| has
 to compute them before the first time step. That has two consequences:
 first, random forces are redrawn, resulting in a narrower distribution
 of the random forces, which we compensate by stretching. Second,
 coupling forces of e.g. the Lattice Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
-minimize these effects, has a quite conservative heuristics to decide
+minimize these effects, |es| has a quite conservative heuristics to decide
 whether a change makes it necessary to recompute forces before the first
-time step. Therefore, calling hundred times
+time step. Therefore, calling 100 times
 :meth:`espressomd.integrate.Integrator.run` with ``steps=1`` does the
 same as with ``steps=100``, apart from some small calling overhead.
 
-However, for checkpointing, there is no way for to tell that the forces
+However, for checkpointing, there is no way for |es| to tell that the forces
 that you read back in actually match the parameters that are set.
-Therefore, would recompute the forces before the first time step, which
+Therefore, |es| would recompute the forces before the first time step, which
 makes it essentially impossible to checkpoint LB simulations, where it
 is vital to keep the coupling forces. To work around this, there is
 an additional parameter, which tells integrate to not recalculate
@@ -46,13 +45,13 @@ would like to recompute the forces, despite the fact that they are
 already correctly calculated. To this aim, the option can be used to
 enforce force recalculation.
 
-``minimize_energy``: Run steepest descent minimization
-------------------------------------------------------
+Run steepest descent minimization
+---------------------------------
 
 In Python the ``minimize_energy`` functionality can be imported from
 :mod:`espressomd.minimize_energy` as class
 :class:`espressomd.minimize_energy.MinimizeEnergy`. Alternatively it
-is already part of the :class:`espressomd._system.System` class object
+is already part of the :class:`espressomd.system.System` class object
 and can be called from there (second variant)::
 
     espressomd.minimize_energy.init(
@@ -78,9 +77,9 @@ Iterate
 
 .. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
 
-while the maximal force is bigger than or for at most ``max_steps`` times. The energy
+while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
-The combination of and can be used to get an poor man’s adaptive update.
+The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man’s adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle.
 Please be aware of the fact that this needs not to converge to a local
@@ -88,11 +87,11 @@ minimum in periodic boundary conditions. Translational and rotational
 coordinates that are fixed using the ``fix`` command or the
 ``ROTATION_PER_PARTICLE`` feature are not altered.
 
-``change_volume_and_rescale_particles``: Changing the box volume
-----------------------------------------------------------------
+Changing the box volume
+-----------------------
 
 This is implemented in
-:meth:`espressomd._system.System.change_volume_and_rescale_particles`
+:meth:`espressomd.system.System.change_volume_and_rescale_particles`
 with the parameters ``d_new`` for the new length and ``dir`` for the
 coordinates to work on and ``"xyz"`` for isotropic.
 
@@ -126,19 +125,17 @@ Required feature: ``MULTI_TIMESTEP``
 
 The multi-timestepping integrator allows to run two concurrent
 integration time steps within a simulation, associating beads with
-either the large :attr:`espressomd._system.System.time_step` or the
-other :attr:`espressomd._system.System.smaller_time_step`. Setting
-:attr:`espressomd._system.System.smaller_time_step` to a positive
-value turns on the multi-timestepping algorithm. The ratio
-:attr:`espressomd._system.System.time_step`/:attr:`espressomd._system.System.smaller_time_step`
-*must* be an integer. Beads are by default associated with
-:attr:`espressomd._system.System.time_step`, corresponding to the
+either the large :attr:`espressomd.system.System.time_step` or the
+other :attr:`espressomd.system.System.smaller_time_step`. Setting
+:attr:`espressomd.system.System.smaller_time_step` to a positive
+value turns on the multi-timestepping algorithm. Beads are by default associated with
+:attr:`espressomd.system.System.time_step`, corresponding to the
 particle property
 :attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` set
 to 0. Setting to
 :attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` to 1
 associates the particle to the
-:attr:`espressomd._system.System.smaller_time_step` integration. The
+:attr:`espressomd.system.System.smaller_time_step` integration. The
 integrator can be used in the NVE ensemble, as well as with the
 Langevin thermostat and the modified Andersen barostat for NVT and NPT
 simulations, respectively. See :cite:`bereau15` for more details.
@@ -221,11 +218,10 @@ is related to :math:`K` as
 
 .. math::
 
-   \Gamma = K \biggl(\frac{p^{\ominus}}{N_{\mathrm{A}}k_\mathrm{B}T}\biggr)^{\bar\nu},
+   \Gamma = K \biggl(\frac{p^{\ominus}}{k_\mathrm{B}T}\biggr)^{\bar\nu},
          \label{eq:Gamma}
 
-where :math:`N_{\mathrm{A}}` is the Avogadro number and
-:math:`p^{\ominus}=1 atm` is the standard pressure. It is often
+where :math:`p^{\ominus}=1 atm` is the standard pressure. It is often
 convenient and in some cases even necessary (dissociation reaction of
 polyelectrolytes) that some particles representing reactants are not
 removed from or placed at randomly in the system (think about reacting monomers in a polymer), but their identity is changed to that of the
@@ -302,14 +298,16 @@ Therefore, if :math:`\emptyset` is a product, particles vanish and if
 
 .. math::
 
-   \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- } \,, \text{ with reaction constant K}
+   \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,, 
+
+with reaction constant K
 
 .. math::
 
-   \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, \text{ with reaction constant 1/K},
+   \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,, 
 
-where K is given implicitly as a function of the apparent dissociation
-constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}`:
+with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
+constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
 :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
 :math:`\overline{\nu}=2` for the dissociation reaction and where x is
 the value of the apparent dissociation constant that is converted from
