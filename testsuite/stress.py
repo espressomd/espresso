@@ -9,7 +9,6 @@ from espressomd import analyze
 import itertools
 
 import numpy as np
-import scipy as sp
 
 # allowed deviation from analytical results
 tol = 1.0e-13
