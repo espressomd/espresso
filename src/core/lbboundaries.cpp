@@ -435,7 +435,7 @@ void lb_bounce_back() {
             for (l = 0; l < 3; l++) {
               population_shift -=
                   lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                  lbpar.rho[0] * 2 * lbmodel.c[i][l] *
+                  lbpar.rho * 2 * lbmodel.c[i][l] *
                   lbmodel.w[i] *
 		(*LBBoundaries::lbboundaries[lbfields[k].boundary - 1]).velocity()[l] / //TODO
                   lbmodel.c_sound_sq;

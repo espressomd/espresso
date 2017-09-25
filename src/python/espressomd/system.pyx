@@ -180,6 +180,9 @@ cdef class System(object):
             return periodicity
 
     property time:
+        """
+        Set the time in the simulation 
+        """
         def __set__(self, double _time):
             if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
@@ -192,6 +195,9 @@ cdef class System(object):
             return sim_time
 
     property smaller_time_step:
+        """
+        Setting this property to a positive integer value turns on the multi-timestepping algorithm. The ratio :attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step` must be an integer.
+        """
         def __set__(self, double _smaller_time_step):
             IF MULTI_TIMESTEP:
                 global smaller_time_step
@@ -203,6 +209,9 @@ cdef class System(object):
             return smaller_time_step
 
     property time_step:
+        """
+        Sets the time step for the integrator. 
+        """
         def __set__(self, double _time_step):
             IF LB:
                 global lbpar
@@ -257,9 +266,17 @@ cdef class System(object):
             return min_global_cut
 
     def _get_PRNG_state_size(self):
+        """
+        Returns the state of the pseudo random number generator.
+        """
+        
         return get_state_size_of_generator()
 
     def set_random_state_PRNG(self):
+        """
+        Sets the state of the pseudo random number generator using real random numbers.
+        """
+        
         _state_size_plus_one = self._get_PRNG_state_size() + 1
         states = string_vec(n_nodes)
         rng = random.SystemRandom()  # true RNG that uses os.urandom()
@@ -272,6 +289,10 @@ cdef class System(object):
         mpi_random_set_stat(states)
 
     property seed:
+        """
+        Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
+        """
+        
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
@@ -295,8 +316,9 @@ cdef class System(object):
             return self.__seed
 
     property random_number_generator_state:
-        # sets the random number generator state in the core. this is of
-        # interest for deterministic checkpointing
+        """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        """
+        
         def __set__(self, rng_state):
             _state_size_plus_one = self._get_PRNG_state_size() + 1
             if(len(rng_state) == n_nodes * _state_size_plus_one):
@@ -330,7 +352,7 @@ cdef class System(object):
           #   global lees_edwards_offset
                 return lees_edwards_offset
 
-    def change_volume_and_rescale_particles(d_new, dir="xyz"):
+    def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 
         Parameters:
@@ -339,28 +361,28 @@ cdef class System(object):
                 new box length
         dir : str, optional
               coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-
+              Isotropic assumes a cubic box.
         """
 
         if d_new < 0:
             raise ValueError("No negative lengths")
         if dir == "xyz":
-            d_new = d_new**(1. / 3.)
             rescale_boxl(3, d_new)
-        elif dir == "x":
+        elif dir == "x" or dir == 0:
             rescale_boxl(0, d_new)
-        elif dir == "y":
+        elif dir == "y" or dir == 1:
             rescale_boxl(1, d_new)
-        elif dir == "z":
+        elif dir == "z" or dir == 2:
             rescale_boxl(2, d_new)
         else:
             raise ValueError(
-                'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
+                'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
 
     def volume(self):
-        """Return box volume.
-
         """
+        Return box volume of the cuboid box
+        """
+        
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
