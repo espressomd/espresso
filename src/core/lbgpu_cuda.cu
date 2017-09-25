@@ -2830,8 +2830,7 @@ __device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_
   //only do this to populations that crossed the LE boundary
   //this is called after streaming, so those are the ones moving away from the LE boundary above and below it
  
-  lees_edwards_velocity = 0.1;
-  printf("LE-velocity %06.3f", lees_edwards_velocity);
+  //printf("LE-velocity %06.3f", lees_edwards_velocity);
 
   int y = (index/para.dim_x) % para.dim_y;
   int pos[3];
@@ -2839,14 +2838,17 @@ __device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_
   index_to_xyz(index, pos);
   
   if(y == 0) {
-    printf("lower %2d %2d %2d\n", pos[0], pos[1], pos[2]);
+    //printf("lower %2d %2d %2d\n", pos[0], pos[1], pos[2]);
     
-    n_b.vd[7*para.number_of_nodes+index] += lees_edwards_offset*0.1; 
-    n_b.vd[10*para.number_of_nodes+index] -= lees_edwards_offset*0.1;
+    n_b.vd[7*para.number_of_nodes+index] -= lees_edwards_velocity; 
+    n_b.vd[10*para.number_of_nodes+index] += lees_edwards_velocity;
+    
 
-    printf("velocity %06.3f \n", n_b.vd[7*para.number_of_nodes+index]);
-    printf("velocity %06.3f \n", n_b.vd[10*para.number_of_nodes+index]);
-
+    if(pos[0] == 0 && pos[2] == 0){
+      printf("velocity 7 %06.3f \n", n_b.vd[7*para.number_of_nodes+index]);
+      printf("velocity 10 %06.3f \n", n_b.vd[10*para.number_of_nodes+index]);
+      }
+      
     //Obere Grenze, zeigen jetzt nach unten:  c_8, c_9, c_16, c_17
     //Untere Grenze, zeigen jetzt nach oben: c_7, c_10, c_15, c_18
 
@@ -2873,14 +2875,15 @@ __device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_
     }
 
   else if(y == para.dim_y-1) {
-    printf("upper %2d %2d %2d\n", pos[0], pos[1], pos[2]);
+    //printf("upper %2d %2d %2d\n", pos[0], pos[1], pos[2]);
     
-    n_b.vd[8*para.number_of_nodes+index] += lees_edwards_velocity*0.01;
-    n_b.vd[9*para.number_of_nodes+index] -= lees_edwards_velocity*0.01;
+    n_b.vd[8*para.number_of_nodes+index] -= lees_edwards_velocity;
+    n_b.vd[9*para.number_of_nodes+index] += lees_edwards_velocity;
 
-    printf("velocity %06.3f \n", n_b.vd[8*para.number_of_nodes+index]);
-    printf("velocity %06.3f \n", n_b.vd[9*para.number_of_nodes+index]);
-     
+    if(pos[0] == 0 && pos[2] == 0){
+      printf("velocity 8 %06.3f \n", n_b.vd[8*para.number_of_nodes+index]);
+      printf("velocity 9 %06.3f \n", n_b.vd[9*para.number_of_nodes+index]);
+      }
     }
 
 }
@@ -2893,7 +2896,7 @@ __device__ void apply_LE_shift(LB_nodes_gpu n_b, int index, double lees_edwards_
  * @param ek_parameters_gpu  Pointer to the parameters for the electrokinetics (Input)
 */
 
-__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu, float lees_edwards_offset = 0.1f, float lees_edwards_velocity = 0.1f) {
+__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, EK_parameters* ek_parameters_gpu, float lees_edwards_offset = 0.0f, float lees_edwards_velocity = 0.0f) {
   //printf("Deine Mutter is fett");
   /**every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;

@@ -39,6 +39,9 @@
 #include "forces_inline.hpp"
 #include "domain_decomposition.hpp"
 
+/** Tag for communication in ghost_comm. */
+#define REQ_GHOST_SEND 100
+
 static int n_s_buffer = 0;
 static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
