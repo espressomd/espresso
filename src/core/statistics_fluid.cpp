@@ -115,7 +115,7 @@ void lb_calc_fluid_temp(double *result) {
   }
 
   // @Todo: lblattice.agrid is 3d. What to use here?
-  temp *= 1./(3.*lbpar.rho[0]*number_of_non_boundary_nodes*
+  temp *= 1./(3.*lbpar.rho*number_of_non_boundary_nodes*
               lbpar.tau*lbpar.tau*lbpar.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);

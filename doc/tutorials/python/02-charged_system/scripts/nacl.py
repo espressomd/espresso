@@ -115,7 +115,7 @@ print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(num_steps_equilibration/100):
     temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
                                        temp_measured))
@@ -123,12 +123,13 @@ for i in range(num_steps_equilibration/100):
 
 print("\n--->Integration")
 system.time = 0.0
+temp_measured=[]
 for i in range(num_configs):
-    temp_measured = system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part)
-    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T={3:.4f}".format(system.time,
+    temp_measured.append(system.analysis.energy()['kinetic'] / ((3.0 / 2.0) * n_part))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
                                        system.analysis.energy()['total'],
                                        system.analysis.energy()['coulomb'],
-                                       temp_measured))
+                                       temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
     # Interally append particle configuration
@@ -153,11 +154,7 @@ r,rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
                             r_min=r_min,
                             r_max=r_max, 
                             r_bins=rdf_bins)
-
 # Write out the data
-rdf_fp = open('rdf.data', 'w')
-for i in range(rdf_bins):
-    rdf_fp.write("%1.5e %1.5e %1.5e\n" % (r[i], rdf_00[i], rdf_01[i]))
-rdf_fp.close()
+numpy.savetxt('rdf.data', numpy.c_[r, rdf_00, rdf_01])
 print("\n--->Written rdf.data")
 print("\n--->Done")
