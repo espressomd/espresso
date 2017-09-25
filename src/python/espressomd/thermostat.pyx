@@ -26,6 +26,17 @@ from . cimport utils
 
 
 def AssertThermostatType(*allowedthermostats):
+    """Assert that only a certain thermostat is active
+
+    Decorator class to assure that only a given thermostat is active
+    at a time.  Usage:
+
+        @AssertThermostatType(THERMO_LANGEVIN)
+        def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+
+    This will prefix an assertion for THERMO_LANGEVIN to the call.
+
+    """
     def decoratorfunction(function):
         @wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
