@@ -4,7 +4,7 @@ Welcome to the ESPResSo documentation!
 Contents:
 
 .. toctree::
-    :maxdepth: 15
+    :maxdepth: 2
 
     User's Guide <ug>
 
@@ -14,7 +14,7 @@ espressomd package
 ==================
 
 .. toctree::
-    :maxdepth: 5
+    :maxdepth: 1
 
     modules.rst
 
