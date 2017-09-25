@@ -1489,7 +1489,7 @@ class BondedInteractions(object):
         value._set_params_in_es_core()
 
     def __len__(self):
-      return n_bonded_ia
+        return n_bonded_ia
 
     # Support iteration over active bonded interactions
     def __iter__(self):
