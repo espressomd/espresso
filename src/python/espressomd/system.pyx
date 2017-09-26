@@ -50,7 +50,9 @@ import sys
 import random  # for true random numbers from os.urandom()
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings"]
+                      "time_step", "timings", "lees_edwards_offset"]
+IF LEES_EDWARDS == 1:
+    setable_properties.append("lees_edwards_offset")
 
 cdef bool _system_created = False
 
@@ -331,6 +333,24 @@ cdef class System(object):
         def __get__(self):
             rng_state = map(int, (mpi_random_get_stat().c_str()).split())
             return rng_state
+
+    IF LEES_EDWARDS == 1:
+        property lees_edwards_offset:
+        # defines the lees edwards offset
+            def __set__(self, double _lees_edwards_offset):
+
+                if isinstance(_lees_edwards_offset, float):
+                    global lees_edwards_offset
+                    lees_edwards_offset = _lees_edwards_offset
+                    #new_offset = _lees_edwards_offset
+                    mpi_bcast_parameter(FIELD_LEES_EDWARDS_OFFSET)
+
+                else:
+                    raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
+
+            def __get__(self):
+          #   global lees_edwards_offset
+                return lees_edwards_offset
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
