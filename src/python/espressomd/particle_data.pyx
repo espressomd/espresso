@@ -961,7 +961,7 @@ cdef class ParticleHandle(object):
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : list of floats (if using feature ROTATIONAL_INTERIA)
+                    gamma_rot : list of floats
 
                     .. note::
                        This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and ROTATIONAL_INERTIA
