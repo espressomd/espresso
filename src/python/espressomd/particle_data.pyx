@@ -1898,8 +1898,87 @@ cdef class ParticleList(object):
                     continue
                 yield (self[i], self[j])
 
-    def readpdb(self, pdb_file=None, itp_file=None, type=-1, first_id=-1, first_type=0,
-                lj_rel_cutoff=2.5, rescale_box=False, lj_internal=False, lj_diagonal=False, lj_with=None):
+    def readpdb(self,
+                # Required arguments
+                pdb_file=None, type=None, first_id=None,
+                # Optional arguments
+                itp_file='', first_type=0, lj_rel_cutoff=2.5, rescale_box=False,
+                lj_internal=False, lj_diagonal=False, lj_with=[]):
+        """
+        Read the positions of particles from a PDB file, optionally
+        with charges, types, and Lennard-Jones parameters from an ITP
+        Gromacs topology file.  The topology file must contain the
+        atoms and atomtypes sections, it may be necessary to use the
+        Gromacs preprocessor to obtain a complete file from a system
+        configuration and a force field.  Any offset of the particle
+        positions if removed, such that the lower left corner bounding
+        box of the particles is in the origin.
+
+        Notes
+        -----
+
+        Reading bonded interactions and dihedrals is currently not
+        supported.
+
+        Parameters
+        ----------
+
+        'pdb_file': string
+            filename of the PDB source
+        'type': integer
+            Sets the particle type for the added particles. If there
+            is a topology file give that contains a types for the
+            particles, the particles get types by the order in the
+            topology file plus firstype.  If the corresponding type in
+            the topology file has a charge, it is used, otherwise the
+            particle charge defaults to zero.
+        'first_id': integer
+            The particles get consecutive id’s in the order of the pdb
+            file, starting at firstid. Please be aware that existing
+            particles get overwritten by values from the file.
+        'itp_file': string, optional (default: empty)
+            filename of the ITP source
+        'first_type': integer, optional (default: 0)
+            Different species can be assigned different types.  The
+            types are numbered ascending from this value.
+        'lj_rel_cutoff': float, optional (default: 2.5)
+            The cutoff is determined by lj_rel_cutoff as
+            :math:`\\mathtt{lj\\_rel\\_cutoff}\\times\\sigma_{ij}` in a
+            relative fashion. The potential is shifted so that it
+            vanishes at the cutoff.
+        'rescale_box': bool, optional (default: False)
+            If this option is given, the box size if increased to hold
+            the particles if necessary. If it is not set and the
+            particles do not fit into the box, the behavior is
+            undefined.
+        'lj_internal': bool, optional (default: False)
+            *not documented*
+        'lj_diagonal': bool, optional, implies lj_internal (default: False)
+            *not documented*
+        'lj_with': list, optional (default: empty)
+            lj_with is a list of the form::
+
+                [othertype1, epsilon1, sigma1, othertype2, epsilon2, sigma2, ..., othertypeN, epsilonN, sigmaN].
+
+            The lj_with section produces Lennard-Jones interactions
+            between the type othertype and the types defined by the
+            topology file. The interaction parameters are calculated
+            as :math:`\\epsilon_{\\mathrm{othertype},j} =
+            \\sqrt{\\epsilon_{\\mathrm{othertype}} \\epsilon_j}` and
+            :math:`\\sigma_{\\mathrm{othertype},j} =
+            \\frac{1}{2}(\\sigma_{\\mathrm{othertype}} + \\sigma_j)`
+            where :math:`j` runs over the atomtypes defined in the
+            topology file. This corresponds to the combination rule 2
+            of Gromacs.
+
+        Examples
+        --------
+
+        >>> import espressomd
+        >>> system = espressomd.System()
+        >>> system.part.(pdb_file="ortho_dimer.pdb", type=0, first_id=0)
+
+        """
 
         check_type_or_throw_except(pdb_file     , 1, str  , "pdb_file must be string")
         check_type_or_throw_except(itp_file     , 1, str  , "itp_file must be string")
@@ -1912,6 +1991,7 @@ cdef class ParticleList(object):
         check_type_or_throw_except(lj_diagonal  , 1, bool , "lj_diagonal must be boolean")
         check_type_or_throw_except(lj_with      , 1, list , "lj_with has to be a list")
 
+        # lj_diagonal implies lj_internal
         if lj_diagonal: lj_internal = True
 
         cdef vector[PdbLJInteraction] ljinteractions
