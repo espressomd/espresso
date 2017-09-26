@@ -39,7 +39,7 @@ class CommonTests(ut.TestCase):
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
     # need to unfold the positions of the hdf5 file.
-    box_l=npart/2.0
+    box_l = npart / 2.0
     system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
@@ -62,13 +62,27 @@ class CommonTests(ut.TestCase):
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        self.assertTrue(np.allclose(np.array([(float(i)%self.box_l, float(i)%self.box_l, float(i)%self.box_l) for i in range(npart)]), np.array([x for (_, x) in sorted(zip(self.py_id[0], self.py_pos[0]))])))
-    
+        self.assertTrue(
+            np.allclose(
+                np.array(
+                    [
+                        (float(i) %
+                         self.box_l, float(i) %
+                         self.box_l, float(i) %
+                         self.box_l) for i in range(npart)]), np.array(
+                    [
+                        x for (
+                            _, x) in sorted(
+                            zip(
+                                self.py_id[0], self.py_pos[0]))])))
+
     def test_img(self):
         """Test if images have been written properly."""
-        images=np.append(np.zeros((int(npart/2),3)), np.ones((int(npart/2),3)))
-        images=images.reshape(npart,3)
-        self.assertTrue((np.allclose(np.array([x for (_, x) in sorted(zip(self.py_id[0], self.py_img[0]))]),images)))
+        images = np.append(np.zeros((int(npart / 2), 3)),
+                           np.ones((int(npart / 2), 3)))
+        images = images.reshape(npart, 3)
+        self.assertTrue((np.allclose(np.array(
+            [x for (_, x) in sorted(zip(self.py_id[0], self.py_img[0]))]), images)))
 
     def test_vel(self):
         """Test if velocities have been written properly."""
@@ -81,7 +95,6 @@ class CommonTests(ut.TestCase):
         not espressomd.has_features(
             ['EXTERNAL_FORCES']),
         "EXTERNAL_FORCES not compiled in, can not check writing forces.")
-
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
