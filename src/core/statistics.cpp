@@ -1526,6 +1526,7 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
 void invalidate_obs() {
   total_energy.init_status = 0;
   total_pressure.init_status = 0;
+  total_p_tensor.init_status = 0;
 }
 
 void centermass_conf(PartCfg &partCfg, int k, int type_1, double *com) {
