@@ -80,6 +80,6 @@ if(SPHINX_FOUND)
             -d "${SPHINX_CACHE_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}"
             "${SPHINX_HTML_DIR}"
-        DEPENDS espressomd pypresso 
+        DEPENDS espressomd pypresso doxygen
         COMMENT "Building HTML documentation with Sphinx")
 endif(SPHINX_FOUND) 

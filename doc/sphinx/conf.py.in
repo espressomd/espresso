@@ -21,6 +21,7 @@ import shlex
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, '@CMAKE_BINARY_DIR@/src/python')
+sys.path.insert(0, '@CMAKE_SOURCE_DIR@/libs/doxylink/sphinxcontrib')
 
 # -- General configuration ------------------------------------------------
 
@@ -38,7 +39,9 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
-    'numpydoc'
+    'numpydoc',
+    'doxylink'
+#    'breathe'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -306,3 +309,8 @@ autodoc_default_flags = ['members',
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+## breathe extension
+#breathe_projects = { "espresso": '@CMAKE_BINARY_DIR@/doc/doxygen/xml' }
+#breathe_default_project = "espresso"
+
+doxylink = {"espresso": ('@CMAKE_BINARY_DIR@/doc/doxygen/espresso.tag', '@CMAKE_BINARY_DIR@/doc/doxygen/html/')} 

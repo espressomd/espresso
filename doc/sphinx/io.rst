@@ -222,8 +222,6 @@ Currently available:
     - write_ordered: if particles should be written ordered according to their
       id (implies serial write). 
 
-
-
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
 increases but will not be decreased. Instead a negative fill value will
@@ -232,12 +230,15 @@ simulation please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md objects write method without any arguments.
+call the H5md objects write method without any arguments.::
 
-h5.write()
+    h5.write()
 
 After the last write call, you have to call the close() method to remove
 the backup file and to close the datasets etc.
+
+.. seealso::
+   :espresso:`Writer::H5md::File`
 
 Writing VTF files
 -----------------
