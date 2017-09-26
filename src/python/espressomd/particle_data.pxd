@@ -23,6 +23,7 @@ cimport numpy as np
 from espressomd.utils cimport *
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libcpp.vector cimport vector
 
 include "myconfig.pxi"
 
@@ -236,3 +237,16 @@ cdef class _ParticleSliceImpl:
 cdef extern from "grid.hpp":
     cdef void fold_position(double *, int*)
     void unfold_position(double pos[3], int image_box[3]) 
+
+cdef extern from "readpdb.hpp":
+    ctypedef struct PdbLJInteraction:
+        int other_type
+        double epsilon
+        double sigma
+
+    cdef int pdb_add_particles_from_file(char *pdb_file, int first_id,
+				int type, vector[PdbLJInteraction]&
+				ljInteractions, double lj_rel_cutoff,
+				char *itp_file, int first_type, bool
+				fit, bool lj_internal, bool
+				lj_diagonal)

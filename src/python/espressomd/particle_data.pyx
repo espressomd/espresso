@@ -30,6 +30,8 @@ from copy import copy
 from globals cimport max_seen_particle, time_step, smaller_time_step, box_l, n_part, n_rigidbonds, n_particle_types
 import collections
 import functools
+from cpython cimport bool
+from libcpp.vector cimport vector
 
 PARTICLE_EXT_FORCE = 1
 
@@ -1895,6 +1897,50 @@ cdef class ParticleList(object):
                 if not (self.exists(i) and self.exists(j)):
                     continue
                 yield (self[i], self[j])
+
+    def readpdb(self, pdb_file=None, itp_file=None, type=-1, first_id=-1, first_type=0,
+                lj_rel_cutoff=2.5, rescale_box=False, lj_internal=False, lj_diagonal=False, lj_with=None):
+
+        check_type_or_throw_except(pdb_file     , 1, str  , "pdb_file must be string")
+        check_type_or_throw_except(itp_file     , 1, str  , "itp_file must be string")
+        check_type_or_throw_except(type         , 1, int  , "type must be an integer")
+        check_type_or_throw_except(first_id     , 1, int  , "first_id must be an integer")
+        check_type_or_throw_except(first_type   , 1, int  , "first_type must be an integer")
+        check_type_or_throw_except(lj_rel_cutoff, 1, float, "lj_rel_cutoff must be a float")
+        check_type_or_throw_except(rescale_box  , 1, bool , "rescale_box must be boolean")
+        check_type_or_throw_except(lj_internal  , 1, bool , "lj_internal must be boolean")
+        check_type_or_throw_except(lj_diagonal  , 1, bool , "lj_diagonal must be boolean")
+        check_type_or_throw_except(lj_with      , 1, list , "lj_with has to be a list")
+
+        if lj_diagonal: lj_internal = True
+
+        cdef vector[PdbLJInteraction] ljinteractions
+        N = len(lj_with)
+        if N % 3 != 0:
+            raise Exception("Length of lj_with has to be a multiple of 3")
+
+        def push_ljia(i):
+            check_type_or_throw_except(lj_with[i+0], 1, int  , "lj_with[0] has to be an integer")
+            check_type_or_throw_except(lj_with[i+1], 1, float, "lj_with[1] has to be a float")
+            check_type_or_throw_except(lj_with[i+2], 1, float, "lj_with[2] has to be a float")
+
+            cdef PdbLJInteraction ljia
+            ljia.other_type = lj_with[i+0]
+            ljia.epsilon = lj_with[i+1]
+            ljia.sigma = lj_with[i+2]
+
+            ljinteractions.push_back(ljia)
+
+        for i in range(0,N/3):
+            push_ljia(i)
+
+        pdb_n_part = pdb_add_particles_from_file(utils.to_char_pointer(pdb_file),
+                                                 first_id, type, ljinteractions, lj_rel_cutoff,
+                                                 utils.to_char_pointer(itp_file),
+                                                 first_type, rescale_box, lj_internal, lj_diagonal)
+
+        if pdb_n_part == 0:
+            raise Exception("Could not parse pdb file")
 
 
 def _add_particle_slice_properties():
