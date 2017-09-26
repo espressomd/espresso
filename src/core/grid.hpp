@@ -306,6 +306,10 @@ template <typename Particle> Vector3d folded_position(Particle const &p) {
   return pos;
 }
 
+inline void fold_position(Vector3d &pos, Vector<3, int> &image_box) {
+  fold_position(pos.data(), image_box.data());
+}
+
 /** unfold coordinates to physical position.
     \param pos the position
     \param pos the velocity
