@@ -29,7 +29,7 @@ cdef extern from "stdlib.h":
 cdef np.ndarray create_nparray_from_int_list(int_list * il):
     """
     Returns a numpy array from an int list struct which is provided as argument.
-    
+
     Parameters
     ----------
     int_list : int_list* which is to be converted
@@ -54,7 +54,7 @@ cdef np.ndarray create_nparray_from_double_list(double_list * dl):
 cdef int_list * create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
-    
+
     Parameters
     ----------
     obj : python object which supports subscripts
@@ -81,26 +81,49 @@ cdef check_type_or_throw_except(x, n, t, msg):
         if hasattr(x, "__getitem__"):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
-                    if not ((t == float and isinstance(x[i], int)) 
-                      or (t == float and issubclass(type(x[i]), np.integer))) \
-                      and not (t == int and issubclass(type(x[i]), np.integer)):
+                    if not (
+                        (t == float and isinstance(
+                            x[i],
+                            int)) or (
+                            t == float and issubclass(
+                                type(
+                                    x[i]),
+                                np.integer))) and not (
+                        t == int and issubclass(
+                            type(
+                                x[i]),
+                            np.integer)):
                         raise ValueError(
-                            msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
+                            msg +
+                            " -- Item " +
+                            str(i) +
+                            " was of type " +
+                            type(
+                                x[i]).__name__)
         else:
             # if n>1, but the user passed a single value, also throw exception
             raise ValueError(
-                msg + " -- A single value was given but " + str(n) + " were expected.")
+                msg +
+                " -- A single value was given but " +
+                str(n) +
+                " were expected.")
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and isinstance(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (
+                t == float and isinstance(
+                    x,
+                    int)) and not (
+                t == int and issubclass(
+                    type(x),
+                    np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     """
     Returns a numpy array from double array
-    
+
     Parameters
     ----------
     x : double* which is to be converted
@@ -121,39 +144,57 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                                 or (not incl_min and not all(v > v_min for v in x)))) or \
            (v_max != "inf" and ((incl_max and not all(v <= v_max for v in x))
                                 or (not incl_max and not all(v < v_max for v in x)))):
-            raise ValueError("In " + name + ": Some values in " + str(x) + "are out of range " +
-                             ("[" if incl_min else "]") + str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+            raise ValueError("In " +
+                             name +
+                             ": Some values in " +
+                             str(x) +
+                             "are out of range " +
+                             ("[" if incl_min else "]") +
+                             str(v_min) +
+                             "," +
+                             str(v_max) +
+                             ("]" if incl_max else "["))
     # Single Value
     else:
-        if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min)) or
-                v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
-            raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
-                             str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+        if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min))
+                or v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
+            raise ValueError("In " +
+                             name +
+                             ": Value " +
+                             str(x) +
+                             " is out of range " +
+                             ("[" if incl_min else "]") +
+                             str(v_min) +
+                             "," +
+                             str(v_max) +
+                             ("]" if incl_max else "["))
+
 
 def to_char_pointer(s):
     """
     Returns a char pointer which contains the information of the provided python string.
-    
+
     Parameters
     ----------
     s : string
     """
     if isinstance(s, unicode):
-        s = (<unicode>s).encode('utf8')
+        s = (< unicode > s).encode('utf8')
     return s
+
 
 def to_str(s):
     """
     Returns a python string
-    
+
     Parameters
     ----------
     s : char*
     """
     if type(s) is unicode:
-        return <unicode>s
+        return < unicode > s
     elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
-        return (<bytes>s).decode('ascii')
+        return (< bytes > s).decode('ascii')
     elif isinstance(s, unicode):
         return unicode(s)
     else:
@@ -163,7 +204,7 @@ def to_str(s):
 cdef handle_errors(msg):
     """
     Gathers runtime errors
-    
+
     Parameters
     ----------
     msg: string
@@ -174,6 +215,6 @@ cdef handle_errors(msg):
         err.print()
 
     for err in errors:
-    # Cast because cython does not support typed enums completely
-        if <int> err.level() == <int> ERROR:
+        # Cast because cython does not support typed enums completely
+        if < int > err.level() == <int > ERROR:
             raise Exception(msg)

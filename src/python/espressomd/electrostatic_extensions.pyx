@@ -65,8 +65,11 @@ IF ELECTROSTATICS and P3M:
             if coulomb.method == COULOMB_P3M_GPU:
                 raise Exception(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")
-            if ELC_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(self._params["neutralize"]), 0, 0, 0, 0):
-                handle_errors("ELC tuning failed, ELC is not set up to work with the GPU P3M")
+            if ELC_set_params(
+                self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"], int(
+                    self._params["neutralize"]), 0, 0, 0, 0):
+                handle_errors(
+                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -113,23 +116,35 @@ IF ELECTROSTATICS and P3M:
             self._params["normals"] = np.array(self._params["normals"])
             if self._params["normals"].size != self._params["n_icc"] * 3:
                 raise ValueError(
-                    "Expecting normal list with " + self._params["n_icc"] * 3 + " entries.")
+                    "Expecting normal list with " +
+                    self._params["n_icc"] *
+                    3 +
+                    " entries.")
             check_type_or_throw_except(self._params["normals"], self._params[
                 "n_icc"], np.ndarray, "Error in normal list.")
 
             check_type_or_throw_except(
-                self._params["areas"], self._params["n_icc"], float, "Error in area list.")
+                self._params["areas"],
+                self._params["n_icc"],
+                float,
+                "Error in area list.")
 
             # Not Required
             if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
-                    self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
+                    self._params["sigmas"],
+                    self._params["n_icc"],
+                    float,
+                    "Error in sigma list.")
             else:
                 self._params["sigmas"] = np.zeros(self._params["n_icc"])
 
             if "epsilons" in self._params.keys():
                 check_type_or_throw_except(
-                    self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
+                    self._params["epsilons"],
+                    self._params["n_icc"],
+                    float,
+                    "Error in epsilon list.")
             else:
                 self._params["epsilons"] = np.zeros(self._params["n_icc"])
 

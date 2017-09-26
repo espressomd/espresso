@@ -48,7 +48,7 @@ PARTICLE_EXT_TORQUE = 16
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        if not d in ["pos_folded"]:
+        if d not in ["pos_folded"]:
             particle_attributes.append(d)
 
 
@@ -139,7 +139,7 @@ cdef class ParticleHandle(object):
         The unwrapped (not folded into central box) position vector of a Particle.
 
         pos : list of floats
-              A list of three floats representing the Particles's absolute position    
+              A list of three floats representing the Particles's absolute position
 
         """
 
@@ -179,11 +179,11 @@ cdef class ParticleHandle(object):
         ----------
 
         >>> import espressomd
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> system.box_l=[10,10,10]
-        >>> # add two bonded particles to particle 0 
+        >>> # add two bonded particles to particle 0
         >>> system.part.add(id=0, pos=(5, 0, 0))
         >>> system.part.add(id=1, pos=(10, 0, 0))
         >>> system.part.add(id=2, pos=(25, 0, 0))
@@ -217,7 +217,7 @@ cdef class ParticleHandle(object):
         Particle velocity.
 
         v : list of floats
-              A list of three floats representing the Particles's velocity 
+              A list of three floats representing the Particles's velocity
 
         .. note::
            The velocity remains variable and will be changed during integration.
@@ -240,20 +240,24 @@ cdef class ParticleHandle(object):
             self.update_particle_data()
             IF MULTI_TIMESTEP:
                 if smaller_time_step > 0. and self.smaller_timestep:
-                    return np.array([self.particle_data.get()[0].m.v[0] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[
-                                         1] / smaller_time_step,
-                                     self.particle_data.get()[0].m.v[2] / smaller_time_step])
+                    return np.array(
+                        [
+                            self.particle_data.get()[0].m.v[0] /
+                            smaller_time_step,
+                            self.particle_data.get()[0].m.v[1] /
+                            smaller_time_step,
+                            self.particle_data.get()[0].m.v[2] /
+                            smaller_time_step])
                 else:
-                    return np.array([self.particle_data.get()[0].m.v[0] / time_step,
-                                     self.particle_data.get()[
-                        0].m.v[1] / time_step,
-                        self.particle_data.get()[0].m.v[2] / time_step])
+                    return np.array([self.particle_data.get()[0].m.v[0] /
+                                     time_step, self.particle_data.get()[0].m.v[1] /
+                                     time_step, self.particle_data.get()[0].m.v[2] /
+                                     time_step])
             ELSE:
-                return np.array([self.particle_data.get()[0].m.v[0] / time_step,
-                                 self.particle_data.get()[
-                    0].m.v[1] / time_step,
-                    self.particle_data.get()[0].m.v[2] / time_step])
+                return np.array([self.particle_data.get()[0].m.v[0] /
+                                 time_step, self.particle_data.get()[0].m.v[1] /
+                                 time_step, self.particle_data.get()[0].m.v[2] /
+                                 time_step])
 
     # Force
     property f:
@@ -261,7 +265,7 @@ cdef class ParticleHandle(object):
         Particle force.
 
         f : list of floats
-              A list of three floats representing the current forces on the Particle 
+              A list of three floats representing the current forces on the Particle
 
         .. note::
            Whereas the velocity is modified with respect to the velocity you set
@@ -283,10 +287,16 @@ cdef class ParticleHandle(object):
         def __get__(self):
             global time_step
             self.update_particle_data()
-            return np.array([self.particle_data.get()[0].f.f[0] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                             self.particle_data.get()[
-                0].f.f[1] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2),
-                self.particle_data.get()[0].f.f[2] * self.particle_data.get()[0].p.mass / (0.5 * time_step**2)])
+            return np.array([self.particle_data.get()[0].f.f[0] *
+                             self.particle_data.get()[0].p.mass /
+                             (0.5 *
+                              time_step**2), self.particle_data.get()[0].f.f[1] *
+                             self.particle_data.get()[0].p.mass /
+                             (0.5 *
+                              time_step**2), self.particle_data.get()[0].f.f[2] *
+                             self.particle_data.get()[0].p.mass /
+                             (0.5 *
+                              time_step**2)])
 
     # Bonds
     property bonds:
@@ -366,7 +376,8 @@ cdef class ParticleHandle(object):
             def __set__(self, _smaller_timestep):
                 check_type_or_throw_except(
                     _smaller_timestep, 1, int, "Smaller time step flag has to be 1 ints")
-                if set_particle_smaller_timestep(self.id, _smaller_timestep) == 1:
+                if set_particle_smaller_timestep(
+                        self.id, _smaller_timestep) == 1:
                     raise Exception("error setting particle smaller_timestep")
 
             def __get__(self):
@@ -656,7 +667,7 @@ cdef class ParticleHandle(object):
         property vs_relative:
             """
             Virtual sites relative parameters.
-            vs_relative : 
+            vs_relative :
 
             .. todo::
                document this
@@ -674,13 +685,17 @@ cdef class ParticleHandle(object):
                 _dist = x[1]
                 q = x[2]
                 check_type_or_throw_except(
-                    q, 4, float, "The relative orientation has to be specified as quaternion with 4 floats.")
+                    q,
+                    4,
+                    float,
+                    "The relative orientation has to be specified as quaternion with 4 floats.")
                 cdef double _q[4]
                 for i in range(4):
                     _q[i] = q[i]
 
                 if isinstance(_relto, int) and isinstance(_dist, float):
-                    if set_particle_vs_relative(self.id, _relto, _dist, _q) == 1:
+                    if set_particle_vs_relative(
+                            self.id, _relto, _dist, _q) == 1:
                         raise Exception("Set particle position first.")
                 else:
                     raise ValueError(
@@ -762,7 +777,7 @@ cdef class ParticleHandle(object):
             """
             External force on a particle defined by a vector.
 
-            ext_force : list of floats 
+            ext_force : list of floats
 
             .. note::
                This needs the feature EXTERNAL_FORCES.
@@ -958,7 +973,8 @@ cdef class ParticleHandle(object):
                         cdef double * gamma_rot = NULL
                         pointer_to_gamma_rot(
                             self.particle_data.get(), gamma_rot)
-                        return np.array([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+                        return np.array(
+                            [gamma_rot[0], gamma_rot[1], gamma_rot[2]])
             ELSE:
                 property gamma_rot:
                     """
@@ -1084,7 +1100,8 @@ cdef class ParticleHandle(object):
                     partner, 1, int, "PID of partner has to be an int.")
                 if self.id == partner:
                     raise Exception(
-                        "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self.id, partner))
+                        "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." %
+                        (self.id, partner))
                 if change_exclusion(self.id, partner, 0) == 1:
                     raise Exception("Set particle position first.")
 
@@ -1139,12 +1156,12 @@ cdef class ParticleHandle(object):
             Examples
             --------
             >>> import espressomd
-            >>> 
+            >>>
             >>> system = espressomd.System()
-            >>> 
+            >>>
             >>> # Usage with Langevin
             >>> system.part.add(id=0, pos=[1,0,0],swimming={'f_swim':0.03})
-            >>> 
+            >>>
             >>> # Usage with LB
             >>> system.part.add(id=1, pos=[2,0,0],swimming={
             >>>    'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
@@ -1162,7 +1179,7 @@ cdef class ParticleHandle(object):
                     swim.rotational_friction = 0.0
 
                 if type(_params) == type(True):
-                    if _params == True:
+                    if _params:
                         raise Exception(
                             "To enable swimming supply a dictionary of parameters.")
                 else:
@@ -1200,7 +1217,10 @@ cdef class ParticleHandle(object):
 
                         if 'rotational_friction' in _params:
                             check_type_or_throw_except(
-                                _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
+                                _params['rotational_friction'],
+                                1,
+                                float,
+                                "rotational_friction has to be a float.")
                             swim.rotational_friction = _params[
                                 'rotational_friction']
 
@@ -1260,7 +1280,8 @@ cdef class ParticleHandle(object):
 
         """
 
-        # If someone adds bond types with more than four partners, this has to be changed
+        # If someone adds bond types with more than four partners, this has to
+        # be changed
         cdef int bond_info[5]
         bond_info[0] = bond[0]._bond_id
         for i in range(1, len(bond)):
@@ -1332,8 +1353,11 @@ cdef class ParticleHandle(object):
 
         # Number of partners
         if bonded_ia_params[bond[0]._bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond._bond_id, "needs", bonded_ia_params[
-                             bond[0]._bond_id], "partners.")
+            raise ValueError("Bond of type",
+                             bond._bond_id,
+                             "needs",
+                             bonded_ia_params[bond[0]._bond_id],
+                             "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -1359,21 +1383,21 @@ cdef class ParticleHandle(object):
         --------
         bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
 
-        Examples 
+        Examples
         --------
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # define a harmonic potential and add it to the system
         >>> harm_bond = HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-        >>> 
+        >>>
         >>> # add two particles
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> 
+        >>>
         >>> # bond them via the bond type
         >>> system.part[0].add_bond((harm_bond,1))
         >>> # or via the bond index (zero in this case since it is the first one added)
@@ -1390,7 +1414,7 @@ cdef class ParticleHandle(object):
 
         Parameters
         ----------
-        _bond : bond to be deleted 
+        _bond : bond to be deleted
 
         See Also
         --------
@@ -1400,7 +1424,7 @@ cdef class ParticleHandle(object):
         --------
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
 
         define a harmonic potential and add it to the system
@@ -1413,9 +1437,9 @@ cdef class ParticleHandle(object):
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
         >>> system.part.add(id=2, pos=(1, 1, 0))
-        >>> system.part[0].add_bond((harm_bond,1))       
+        >>> system.part[0].add_bond((harm_bond,1))
         >>> system.part[0].add_bond((harm_bond,2))
-        >>> 
+        >>>
         >>> bonds = system.part[0].bonds
         >>> print(bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
@@ -1460,14 +1484,14 @@ cdef class _ParticleSliceImpl(object):
     This base class should not be used directly. Use
     :class:`espressomd.ParticleSlice` instead, which contains all the particle
     properties.
-    
+
     """
 
     def __cinit__(self, slice_):
         id_list = np.arange(max_seen_particle + 1)
         self.id_selection = id_list[slice_]
         mask = np.empty(len(self.id_selection), dtype=np.bool)
-        mask == True
+        mask
         cdef int i
         for i in range(len(self.id_selection) - 1, -1, -1):
             mask[i] = particle_exists(i)
@@ -1601,10 +1625,16 @@ cdef class ParticleList(object):
         try:
             if isinstance(key, range):
                 return ParticleSlice(key)
-        except:
+        except BaseException:
             pass
 
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+        if isinstance(
+            key,
+            tuple) or isinstance(
+            key,
+            list) or isinstance(
+            key,
+                np.ndarray):
             return ParticleSlice(np.array(key))
 
         return ParticleHandle(key)
@@ -1660,18 +1690,18 @@ cdef class ParticleList(object):
         ----------
         remove,delete,clear
 
-        Examples 
+        Examples
         ----------
 
         >>> import espressomd
         >>> from espressomd.interactions import *
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # add two particles
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> 
+        >>>
 
 
         """
@@ -1688,7 +1718,7 @@ cdef class ParticleList(object):
                     "add() takes either a dictionary or a bunch of keyword args.")
 
         # Check for presence of pos attribute
-        if not "pos" in P:
+        if "pos" not in P:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
@@ -1700,7 +1730,7 @@ cdef class ParticleList(object):
     def _place_new_particle(self, P):
 
         # Handling of particle id
-        if not "id" in P:
+        if "id" not in P:
             # Generate particle id
             P["id"] = max_seen_particle + 1
         else:
@@ -1729,7 +1759,7 @@ cdef class ParticleList(object):
 
     def _place_new_particles(self, P):
 
-        if not "id" in P:
+        if "id" not in P:
             # Generate particle ids
             ids = np.arange(np.array(P["pos"]).shape[
                             0]) + max_seen_particle + 1
@@ -1761,7 +1791,15 @@ cdef class ParticleList(object):
     def exists(self, idx):
         if isinstance(idx, int) or issubclass(type(idx), np.integer):
             return particle_exists(idx)
-        if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
+        if isinstance(
+                idx,
+                slice) or isinstance(
+                idx,
+                tuple) or isinstance(
+                idx,
+                list) or isinstance(
+                    idx,
+                np.ndarray):
             tf_array = np.zeros(len(idx), dtype=np.bool)
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])
@@ -1804,15 +1842,15 @@ cdef class ParticleList(object):
         --------
 
         >>> import espressomd
-        >>> 
+        >>>
         >>> system = espressomd.System()
-        >>> 
+        >>>
         >>> # add several particles
         >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
         >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
         >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
         >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
-        >>> 
+        >>>
         >>> # write to VTK
         >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
         >>> system.part.writevtk("part_type_2.vtk", types=[2])
@@ -1908,7 +1946,7 @@ def _add_particle_slice_properties():
         If values contains only one element, all members are set to it. If it
         contains as many elements as there are members, each of them gets set
         to the corresponding one.
-        
+
         """
         target = getattr(ParticleHandle(
             particle_slice.id_selection[0]), attribute)
@@ -1925,8 +1963,9 @@ def _add_particle_slice_properties():
                     setattr(ParticleHandle(
                         particle_slice.id_selection[i]), attribute, values[i])
             else:
-                raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
-                    np.shape(values), target_shape))
+                raise Exception(
+                    "Shape of value (%s) does not broadcast to shape of attribute (%s)." %
+                    (np.shape(values), target_shape))
             return
 
         if target_shape == np.shape(values):  # one value provided
@@ -1939,16 +1978,17 @@ def _add_particle_slice_properties():
                 setattr(ParticleHandle(
                     particle_slice.id_selection[i]), attribute, values[i])
         else:
-            raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
-                np.shape(values), target_shape))
+            raise Exception(
+                "Shape of value (%s) does not broadcast to shape of attribute (%s)." %
+                (np.shape(values), target_shape))
 
     def geta(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
         particle_slice into an array.
-        
+
         """
-        
+
         N = len(particle_slice.id_selection)
         if N == 0:
             return np.empty(0, dtype=type(None))
@@ -1972,8 +2012,11 @@ def _add_particle_slice_properties():
             continue
 
         # synthesize a new property
-        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
-            seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+        new_property = property(
+            functools.partial(
+                geta, attribute=attribute_name), functools.partial(
+                seta, attribute=attribute_name), doc=getattr(
+                ParticleHandle, attribute_name).__doc__)
         # attach the property to ParticleSlice
         setattr(ParticleSlice, attribute_name, new_property)
 

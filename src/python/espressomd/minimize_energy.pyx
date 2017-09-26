@@ -48,7 +48,8 @@ cdef class MinimizeEnergy(object):
         for k in self.required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+                    "At least the following keys have to be given as keyword arguments: " +
+                    self.required_keys().__str__())
 
         self._params = kwargs
         self.validate_params()
@@ -57,7 +58,8 @@ cdef class MinimizeEnergy(object):
         for k in self.required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+                    "At least the following keys have to be given as keyword arguments: " +
+                    self.required_keys().__str__())
 
         self._params = kwargs
         self.validate_params()
@@ -80,7 +82,8 @@ cdef class MinimizeEnergy(object):
         if self._params["gamma"] < 0:
             raise ValueError(
                 "gamma has to be a positive floating point number")
-        if self._params["max_steps"] < 0 or not isinstance(self._params["max_steps"], int):
+        if self._params["max_steps"] < 0 or not isinstance(
+                self._params["max_steps"], int):
             raise ValueError(
                 "max_steps has to be a positive integer")
         if self._params["max_displacement"] < 0:
@@ -91,6 +94,9 @@ cdef class MinimizeEnergy(object):
         """
         Perform energy minimization sweep.
         """
-        minimize_energy_init(self._params["f_max"], self._params["gamma"], self._params[
-                             "max_steps"], self._params["max_displacement"])
+        minimize_energy_init(
+            self._params["f_max"],
+            self._params["gamma"],
+            self._params["max_steps"],
+            self._params["max_displacement"])
         mpi_minimize_energy()

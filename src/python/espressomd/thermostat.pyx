@@ -43,7 +43,7 @@ class AssertThermostatType():
     def __call__(self, f):
         def __f(*args, **kwargs):
             if (not (thermo_switch in self.thermo_type) and
-                  (thermo_switch != THERMO_OFF)):
+                    (thermo_switch != THERMO_OFF)):
                 raise Exception("A different thermostat is already set!")
             f(*args, **kwargs)
         return __f
@@ -92,8 +92,10 @@ cdef class Thermostat(object):
             if thmst["type"] == "OFF":
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
-                self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"])
+                self.set_langevin(
+                    kT=thmst["kT"],
+                    gamma=thmst["gamma"],
+                    gamma_rotation=thmst["gamma_rotation"])
             if thmst["type"] == "LB":
                 self.set_lb(kT=thmst["kT"])
             if thmst["type"] == "NPT_ISO":
@@ -247,14 +249,20 @@ cdef class Thermostat(object):
                     gamma_rotation, 1, float, "gamma_rotation must be a number")
             else:
                 utils.check_type_or_throw_except(
-                    gamma_rotation, 3, float, "diagonal elements of the gamma_rotation tensor must be numbers")
+                    gamma_rotation,
+                    3,
+                    float,
+                    "diagonal elements of the gamma_rotation tensor must be numbers")
 
         if scalar_gamma_def:
             if float(kT) < 0. or float(gamma) < 0.:
                 raise ValueError(
                     "temperature and gamma must be positive numbers")
         else:
-            if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
+            if float(kT) < 0. or float(
+                    gamma[0]) < 0. or float(
+                    gamma[1]) < 0. or float(
+                    gamma[2]) < 0.:
                 raise ValueError(
                     "temperature and diagonal elements of the gamma tensor must be positive numbers")
         if gamma_rotation is not None:
@@ -263,10 +271,13 @@ cdef class Thermostat(object):
                     raise ValueError(
                         "gamma_rotation must be positive number")
             else:
-                if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                if float(
+                        gamma_rotation[0]) < 0. or float(
+                        gamma_rotation[1]) < 0. or float(
+                        gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
-        
+
         global temperature
         temperature = float(kT)
         global langevin_gamma
@@ -281,7 +292,7 @@ cdef class Thermostat(object):
                 langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
-        
+
         global langevin_gamma_rotation
         IF ROTATION:
             if gamma_rotation is not None:
@@ -316,7 +327,7 @@ cdef class Thermostat(object):
                             "gamma_rotation scalar parameter is required")
                     ELSE:
                         langevin_gamma_rotation = langevin_gamma
-        
+
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
@@ -344,7 +355,8 @@ cdef class Thermostat(object):
             if kT is None:
                 raise ValueError(
                     "kT has to be given as keyword arg")
-            utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+            utils.check_type_or_throw_except(
+                kT, 1, float, "kT must be a number")
             if float(kT) < 0.:
                 raise ValueError("temperature must be non-negative")
             global temperature
@@ -391,20 +403,19 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_TEMPERATURE)
             mpi_bcast_parameter(FIELD_NPTISO_G0)
             mpi_bcast_parameter(FIELD_NPTISO_GV)
-        
-            
+
     IF DPD or INTER_DPD:
         @AssertThermostatType(THERMO_DPD, THERMO_INTER_DPD)
         def set_dpd(self, **kwargs):
             """
             Sets the DPD thermostat with required parameters 'kT' 'gamma' 'r_cut'.
-            
+
             Parameters
             ----------
-            'kT': float 
+            'kT': float
                 Thermal energy of the heat bath, floating point number
 
-            'gamma': float 
+            'gamma': float
                 Friction the particles experience in the bath, floating point number
 
             'r_cut': float
@@ -412,18 +423,18 @@ cdef class Thermostat(object):
 
             'wf'   : integer, optional
                 Integer value zero or one, affects scaling of the random forces
-        
+
             'tgamma': float, optional
                 Friction coefficient for the transverse DPD algorithm
 
             'tr_cut': float, optional
                 Cut off radius for the transverse DPD
 
-            'twf'   : integer 
+            'twf'   : integer
                 Interger value zero or one, affects the scaling of the random forces
                 in the transverse DPD algorithm
 
             """
-            req = ["kT","gamma","r_cut"]
-            valid = ["kT","gamma","r_cut","tgamma","tr_cut","wf","twf"]
+            req = ["kT", "gamma", "r_cut"]
+            valid = ["kT", "gamma", "r_cut", "tgamma", "tr_cut", "wf", "twf"]
             raise Exception("Not implemented yet.")

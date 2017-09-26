@@ -39,23 +39,25 @@ from .system import System
 
 class Analysis(object):
 
-    _systemp =None
+    _systemp = None
 
-    def __init__(self,system):
-        if not isinstance(system,System):
+    def __init__(self, system):
+        if not isinstance(system, System):
             raise TypeError("An instance of System is required as argument")
-        self._system=system            
+        self._system = system
 
     #
-    # Append configs    
+    # Append configs
     #
 
     def append(self):
         """Append configuration for averaged analysis."""
         if c_analyze.n_part == 0:
             raise Exception("No particles to append!")
-        if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
-            raise Exception("All configurations stored must have the same length")
+        if (c_analyze.n_configs > 0) and (
+                c_analyze.n_part_conf != c_analyze.n_part):
+            raise Exception(
+                "All configurations stored must have the same length")
 
         c_analyze.analyze_append(c_analyze.partCfg())
 
@@ -105,7 +107,6 @@ class Analysis(object):
     # Distance to particle or point
     #
 
-
     def distto(self, id=None, pos=None):
         """
         Calculates the distance to a point or particle.
@@ -123,11 +124,13 @@ class Analysis(object):
             The calculated distance.
         """
 
-        if id == None and pos == None:
-            raise Exception("Either id or pos have to be specified\n" + __doc__)
+        if id is None and pos is None:
+            raise Exception(
+                "Either id or pos have to be specified\n" + __doc__)
 
-        if id != None and pos != None:
-            raise Exception("Only one of id or pos may be specified\n" + __doc__)
+        if id is not None and pos is not None:
+            raise Exception(
+                "Only one of id or pos may be specified\n" + __doc__)
 
         cdef double cpos[3]
         if len(self._system.part) == 0:
@@ -135,7 +138,7 @@ class Analysis(object):
 
         # Get position
         # If particle id specified
-        if id != None:
+        if id is not None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
             _pos = self._system.part[id].pos
@@ -151,8 +154,10 @@ class Analysis(object):
     # Analyze Linear Momentum
     #
 
-
-    def analyze_linear_momentum(self, include_particles=True, include_lbfluid=True):
+    def analyze_linear_momentum(
+            self,
+            include_particles=True,
+            include_lbfluid=True):
         """
         Calculates the systems linear momentum.
 
@@ -168,13 +173,12 @@ class Analysis(object):
         float
             The linear momentum of the system.
         """
-        return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
-
+        return c_analyze.calc_linear_momentum(
+            include_particles, include_lbfluid)
 
     #
     # Analyze center of mass
     #
-
 
     def centermass(self, part_type=None):
         """
@@ -183,7 +187,7 @@ class Analysis(object):
         Parameters
         ----------
         part_type : int
-            Particle type for which to calculate the center of mass.    
+            Particle type for which to calculate the center of mass.
 
         Returns
         -------
@@ -192,11 +196,9 @@ class Analysis(object):
         """
         return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
 
-
     # get all particles in neighborhood r_catch of pos and return their ids
     # in il. plane can be used to specify the distance in the xy, xz or yz
     # plane
-
 
     def nbhood(self, pos=None, r_catch=None, plane='3d'):
         """
@@ -251,7 +253,6 @@ class Analysis(object):
         free(il)
         return result
 
-
     def cylindrical_average(self, center=None, direction=None,
                             length=None, radius=None,
                             bins_axial=None, bins_radial=None,
@@ -259,17 +260,17 @@ class Analysis(object):
 
         # Check the input types
         check_type_or_throw_except(
-            center,      3, float, "center has to be 3 floats")
+            center, 3, float, "center has to be 3 floats")
         check_type_or_throw_except(
-            direction,   3, float, "direction has to be 3 floats")
+            direction, 3, float, "direction has to be 3 floats")
         check_type_or_throw_except(
-            length,      1, float, "length has to be a float")
+            length, 1, float, "length has to be a float")
         check_type_or_throw_except(
-            radius,      1, float, "radius has to be a floats")
+            radius, 1, float, "radius has to be a floats")
         check_type_or_throw_except(
-            bins_axial,  1, int,   "bins_axial has to be an int")
+            bins_axial, 1, int, "bins_axial has to be an int")
         check_type_or_throw_except(
-            bins_radial, 1, int,   "bins_radial has to be an int")
+            bins_radial, 1, int, "bins_radial has to be an int")
 
         # Convert Python types to C++ types
         cdef vector[double] c_center = center
@@ -281,9 +282,16 @@ class Analysis(object):
         cdef vector[int] c_types = types
 
         cdef map[string, vector[vector[vector[double]]]] distribution
-        c_analyze.calc_cylindrical_average(c_analyze.partCfg(), c_center, c_direction, c_length,
-                                           c_radius, c_bins_axial, c_bins_radial, c_types,
-                                           distribution)
+        c_analyze.calc_cylindrical_average(
+            c_analyze.partCfg(),
+            c_center,
+            c_direction,
+            c_length,
+            c_radius,
+            c_bins_axial,
+            c_bins_radial,
+            c_types,
+            distribution)
 
         cdef double binwd_axial = c_length / c_bins_axial
         cdef double binwd_radial = c_radius / c_bins_radial
@@ -308,15 +316,17 @@ class Analysis(object):
                         (index_radial * index_radial + 2 * index_radial) * \
                         binwd_radial * binwd_radial * c_length
 
-                buffer[index_axial + bins_axial * index_radial, 0] = index_radial
-                buffer[index_axial + bins_axial * index_radial, 1] = index_axial
+                buffer[index_axial + bins_axial *
+                       index_radial, 0] = index_radial
+                buffer[index_axial + bins_axial *
+                       index_radial, 1] = index_axial
                 buffer[index_axial + bins_axial * index_radial, 2] = pos_radial
                 buffer[index_axial + bins_axial * index_radial, 3] = pos_axial
                 buffer[index_axial + bins_axial * index_radial, 4] = binvolume
                 for type_id in range(0, c_types.size()):
                     for name in range(0, names.size()):
-                        buffer[index_axial + bins_axial * index_radial, 5 + name + type_id * names.size()] \
-                            = distribution[names[name]][type_id][index_radial][index_axial]
+                        buffer[index_axial + bins_axial * index_radial, 5 + name + type_id *
+                               names.size()] = distribution[names[name]][type_id][index_radial][index_axial]
 
         return buffer
 
@@ -324,13 +334,12 @@ class Analysis(object):
     # Pressure analysis
     #
 
-
     def pressure(self, v_comp=0):
         """Pressure calculation
            pressure(v_comp=False)
            """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
-    
+
         # Dict to store the results
         p = OrderedDict()
 
@@ -371,7 +380,7 @@ class Analysis(object):
         total_non_bonded = 0
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(i,c_analyze.n_particle_types):
+            for j in range(i, c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
@@ -407,7 +416,6 @@ class Analysis(object):
 
         return p
 
-
     def stress_tensor(self, v_comp=0):
         """stress_tensor(v_comp=0)
         """
@@ -427,22 +435,22 @@ class Analysis(object):
         tmp = np.zeros(9)
         for i in range(9):
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                tmp[i] += c_analyze.total_p_tensor.data.e[9*k + i]
+                tmp[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
 
-        p["total"] = tmp.reshape((3,3))
+        p["total"] = tmp.reshape((3, 3))
 
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
-        p["ideal"] = p["ideal"].reshape((3,3))
+        p["ideal"] = p["ideal"].reshape((3, 3))
 
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
             if (bonded_ia_params[i].type != 0):
-                p["bonded", i] = np.reshape( create_nparray_from_double_array(
-                  c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i), 9),
-                  (3, 3) )
+                p["bonded", i] = np.reshape(create_nparray_from_double_array(
+                    c_analyze.obsstat_bonded(& c_analyze.total_p_tensor, i), 9),
+                    (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -453,23 +461,23 @@ class Analysis(object):
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(i,c_analyze.n_particle_types):
+            for j in range(i, c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
-                  create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
-                    &c_analyze.total_p_tensor, i, j), 9), (3, 3) )
+                    create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
+                        & c_analyze.total_p_tensor, i, j), 9), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
                 p["non_bonded_intra", i, j] = np.reshape(
-                  create_nparray_from_double_array(
-                    c_analyze.obsstat_nonbonded_intra(
-                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
+                    create_nparray_from_double_array(
+                        c_analyze.obsstat_nonbonded_intra(
+                            & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
-                  create_nparray_from_double_array(
-                    c_analyze.obsstat_nonbonded_inter(
-                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
+                    create_nparray_from_double_array(
+                        c_analyze.obsstat_nonbonded_inter(
+                            & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -482,7 +490,7 @@ class Analysis(object):
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
-                      c_analyze.total_p_tensor.coulomb, 9), (3, 3) )
+                        c_analyze.total_p_tensor.coulomb, 9), (3, 3))
                 total_coulomb = p["coulomb", i]
             p["coulomb"] = total_coulomb
 
@@ -492,7 +500,7 @@ class Analysis(object):
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
-                      c_analyze.total_p_tensor.dipolar, 9), (3, 3) )
+                        c_analyze.total_p_tensor.dipolar, 9), (3, 3))
                 total_dipolar = p["dipolar", i]
             p["dipolar"] = total_dipolar
 
@@ -503,8 +511,12 @@ class Analysis(object):
 
         return p
 
-
-    def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1)):
+    def local_stress_tensor(
+        self, periodicity=(
+            1, 1, 1), range_start=(
+            0.0, 0.0, 0.0), stress_range=(
+                1.0, 1.0, 1.0), bins=(
+                    1, 1, 1)):
         """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
         """
 
@@ -518,7 +530,12 @@ class Analysis(object):
             c_range_start[i] = range_start[i]
             c_stress_range[i] = stress_range[i]
 
-        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor):
+        if c_analyze.analyze_local_stress_tensor(
+                c_periodicity,
+                c_range_start,
+                c_stress_range,
+                c_bins,
+                local_stress_tensor):
             handle_errors("Error while calculating local stress tensor")
         stress_tensor = create_nparray_from_double_list(local_stress_tensor)
         free(local_stress_tensor)
@@ -527,7 +544,6 @@ class Analysis(object):
     #
     # Energy analysis
     #
-
 
     def energy(self, etype='all', id1='default', id2='default'):
         """energy()
@@ -606,8 +622,11 @@ class Analysis(object):
 
         return e
 
-
-    def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_re(
+            self,
+            chain_start=None,
+            number_of_chains=None,
+            chain_length=None):
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_re(c_analyze.partCfg(), & re)
@@ -615,8 +634,11 @@ class Analysis(object):
         free(re)
         return tuple_re
 
-
-    def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_rg(
+            self,
+            chain_start=None,
+            number_of_chains=None,
+            chain_length=None):
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rg(c_analyze.partCfg(), & rg)
@@ -624,8 +646,11 @@ class Analysis(object):
         free(rg)
         return tuple_rg
 
-
-    def calc_rh(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def calc_rh(
+            self,
+            chain_start=None,
+            number_of_chains=None,
+            chain_length=None):
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_rh(c_analyze.partCfg(), & rh)
@@ -633,18 +658,30 @@ class Analysis(object):
         free(rh)
         return tuple_rh
 
-
-    def check_topology(self, chain_start=None, number_of_chains=None, chain_length=None):
+    def check_topology(
+            self,
+            chain_start=None,
+            number_of_chains=None,
+            chain_length=None):
         check_type_or_throw_except(
             chain_start, 1, int, "chain_start=int is a required argument")
         check_type_or_throw_except(
-            number_of_chains, 1, int, "number_of_chains=int is a required argument")
+            number_of_chains,
+            1,
+            int,
+            "number_of_chains=int is a required argument")
         check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
-        id_min=chain_start; id_max=chain_start + chain_length * number_of_chains;
-        for i in range(id_min,id_max):
+        id_min = chain_start
+        id_max = chain_start + chain_length * number_of_chains
+        for i in range(id_min, id_max):
             if (not self._system.part.exists(i)):
-                raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(i,chain_start,number_of_chains,chain_length));
+                raise ValueError(
+                    'particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(
+                        i,
+                        chain_start,
+                        number_of_chains,
+                        chain_length));
         c_analyze.chain_start = chain_start
         c_analyze.chain_n_chains = number_of_chains
         c_analyze.chain_length = chain_length
@@ -653,7 +690,6 @@ class Analysis(object):
     # Structure factor
     #
 
-
     def structure_factor(self, sf_types=None, sf_order=None):
         """Structure Factor
            structure_factor(sf_types = None, sf_order = None )
@@ -661,7 +697,8 @@ class Analysis(object):
 
         if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
             raise ValueError("sf_types has to be a list!")
-        check_type_or_throw_except(sf_order, 1, int, "sf_order has to be an int!")
+        check_type_or_throw_except(
+            sf_order, 1, int, "sf_order has to be an int!")
 
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
@@ -673,7 +710,6 @@ class Analysis(object):
     #
     # RDF
     #
-
 
     def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
@@ -687,9 +723,11 @@ class Analysis(object):
 
         if rdf_type != 'rdf':
             if n_configs == 0:
-                raise ValueError("No configurations founds!\n",
-                                 "Use 'analyze append' to save some,",
-                                 "or 'analyze rdf' to only look at current RDF!""")
+                raise ValueError(
+                    "No configurations founds!\n",
+                    "Use 'analyze append' to save some,",
+                    "or 'analyze rdf' to only look at current RDF!"
+                    "")
             if n_conf is None:
                 n_conf = n_configs
 
@@ -702,13 +740,34 @@ class Analysis(object):
         cdef vector[int] p2_types = type_list_b
 
         if rdf_type == 'rdf':
-            c_analyze.calc_rdf(c_analyze.partCfg(), p1_types, p2_types, r_min, r_max, r_bins, rdf)
+            c_analyze.calc_rdf(
+                c_analyze.partCfg(),
+                p1_types,
+                p2_types,
+                r_min,
+                r_max,
+                r_bins,
+                rdf)
         elif rdf_type == '<rdf>':
-            c_analyze.calc_rdf_av(c_analyze.partCfg(), p1_types, p2_types, r_min,
-                                  r_max, r_bins, rdf, n_conf)
+            c_analyze.calc_rdf_av(
+                c_analyze.partCfg(),
+                p1_types,
+                p2_types,
+                r_min,
+                r_max,
+                r_bins,
+                rdf,
+                n_conf)
         elif rdf_type == '<rdf-intermol>':
-            c_analyze.calc_rdf_intermol_av(c_analyze.partCfg(),
-                p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
+            c_analyze.calc_rdf_intermol_av(
+                c_analyze.partCfg(),
+                p1_types,
+                p2_types,
+                r_min,
+                r_max,
+                r_bins,
+                rdf,
+                n_conf)
         else:
             raise Exception(
                 "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
@@ -726,9 +785,15 @@ class Analysis(object):
     # distribution
     #
 
-
-    def distribution(self, type_list_a=None, type_list_b=None,
-                     r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
+    def distribution(
+            self,
+            type_list_a=None,
+            type_list_b=None,
+            r_min=0.0,
+            r_max=None,
+            r_bins=100,
+            log_flag=0,
+            int_flag=0):
         """Calculates the distance distribution of particles
         """
 
@@ -752,10 +817,11 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.calc_part_distribution(c_analyze.partCfg(),p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+        c_analyze.calc_part_distribution(c_analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
 
-        np_distribution = create_nparray_from_double_array(distribution, r_bins)
+        np_distribution = create_nparray_from_double_array(
+            distribution, r_bins)
 
         free(distribution)
 
@@ -782,16 +848,15 @@ class Analysis(object):
     # angularmomentum
     #
 
-
     def angularmomentum(self, p_type=None):
         print("p_type = ", p_type)
         check_type_or_throw_except(
-            p_type, 1, int,   "p_type has to be an int")
+            p_type, 1, int, "p_type has to be an int")
 
         cdef double[3] com
         cdef int p1 = p_type
 
-        c_analyze.angularmomentum(c_analyze.partCfg(),p1, com)
+        c_analyze.angularmomentum(c_analyze.partCfg(), p1, com)
 
         return np.array([com[0], com[1], com[2]])
 
@@ -799,18 +864,18 @@ class Analysis(object):
     # gyration_tensor
     #
 
-
     def gyration_tensor(self, p_type=None):
         cdef vector[double] gt
 
         if p_type is not None:
-            check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+            check_type_or_throw_except(
+                p_type, 1, int, "p_type has to be an int")
             if (p_type < 0 or p_type >= c_analyze.n_particle_types):
                 raise ValueError("Particle type", p_type, "does not exist!")
         else:
             p_type = -1
 
-        c_analyze.calc_gyration_tensor(c_analyze.partCfg(),p_type, gt)
+        c_analyze.calc_gyration_tensor(c_analyze.partCfg(), p_type, gt)
 
         return {"Rg^2": gt[3],
                 "shape": [gt[4], gt[5], gt[6]],
@@ -822,16 +887,17 @@ class Analysis(object):
     # momentofinertiamatrix
     #
 
-
     def momentofinertiamatrix(self, p_type=None):
         cdef double[9] MofImatrix
 
         if p_type is not None:
-            check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
+            check_type_or_throw_except(
+                p_type, 1, int, "p_type has to be an int")
             if (p_type < 0 or p_type >= c_analyze.n_particle_types):
                 raise ValueError("Particle type", p_type, "does not exist!")
 
-            c_analyze.momentofinertiamatrix(c_analyze.partCfg(), p_type, MofImatrix)
+            c_analyze.momentofinertiamatrix(
+                c_analyze.partCfg(), p_type, MofImatrix)
 
             MofImatrix_np = np.empty((9))
             for i in range(9):
@@ -843,7 +909,6 @@ class Analysis(object):
     # rdfchain
     #
 
-
     def rdfchain(self, r_min=None, r_max=None, r_bins=None,
                  chain_start=None, n_chains=None, chain_length=None):
         cdef double * f1
@@ -854,19 +919,22 @@ class Analysis(object):
         check_type_or_throw_except(r_max, 1, float, "r_max has to be a float")
         check_type_or_throw_except(r_bins, 1, int, "r_bins has to be an int")
 
-        self.check_topology(chain_start=chain_start,
-                       number_of_chains=number_of_chains, chain_length=chain_length)
+        self.check_topology(
+            chain_start=chain_start,
+            number_of_chains=number_of_chains,
+            chain_length=chain_length)
 
         if (c_analyze.chain_n_chains == 0 or chain_length == 0):
             raise Exception("The chain topology has not been set")
         if (r_bins <= 0):
-            raise Exception("Nothing to be done - choose <r_bins> greater zero!")
+            raise Exception(
+                "Nothing to be done - choose <r_bins> greater zero!")
         if (r_min <= 0.):
             raise Exception("<r_min> has to be positive")
         if (r_max <= r_min):
             raise Exception("<r_max> has to be larger than <r_min>")
 
-        c_analyze.analyze_rdfchain(c_analyze.partCfg(),r_min, r_max, r_bins, & f1, & f2, & f3)
+        c_analyze.analyze_rdfchain(c_analyze.partCfg(), r_min, r_max, r_bins, & f1, & f2, & f3)
 
         rdfchain = np.empty((r_bins, 4))
         bin_width = (r_max - r_min) / float(r_bins)
@@ -889,7 +957,6 @@ class Analysis(object):
         "Vk2": 0.0,
         "avk": 0.0
     }
-
 
     def Vkappa(self, mode=None, Vk1=None, Vk2=None, avk=None):
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
