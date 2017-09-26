@@ -23,6 +23,7 @@ cimport numpy as np
 from espressomd.utils cimport *
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 include "myconfig.pxi"
@@ -244,9 +245,8 @@ cdef extern from "readpdb.hpp":
         double epsilon
         double sigma
 
-    cdef int pdb_add_particles_from_file(char *pdb_file, int first_id,
-				int type, vector[PdbLJInteraction]&
-				ljInteractions, double lj_rel_cutoff,
-				char *itp_file, int first_type, bool
-				fit, bool lj_internal, bool
-				lj_diagonal)
+    cdef int pdb_add_particles_from_file(const string & pdb_file, int first_id,
+                                         int type, vector[PdbLJInteraction] &ljInteractions,
+                                         double lj_rel_cutoff, const string & itp_file,
+                                         int first_type, bool fit, bool lj_internal,
+                                         bool lj_diagonal)

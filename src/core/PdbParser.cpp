@@ -48,7 +48,7 @@ namespace PdbParser {
     return bb;
   }
 
-  bool PdbParser::parse_pdb_file(string filename) { 
+  bool PdbParser::parse_pdb_file(string const &filename) {
     ifstream file;
     string tmp;
     pdb_atom a;
@@ -76,7 +76,7 @@ namespace PdbParser {
     return true; 
   }
 
-  bool PdbParser::parse_itp_file(string filename) { 
+  bool PdbParser::parse_itp_file(string const &filename) {
     ifstream file(filename.c_str());
     string tmp, buf;
     itp_atom atom;
@@ -180,7 +180,7 @@ namespace PdbParser {
     return true; 
   }
 
-  bool PdbParser::parse_file(string pdb_filename, string itp_filename) {
+  bool PdbParser::parse_file(string const &pdb_filename, string const &itp_filename) {
     return parse_pdb_file(pdb_filename) && parse_itp_file(itp_filename);
   }
 

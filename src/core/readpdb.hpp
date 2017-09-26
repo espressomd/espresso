@@ -21,6 +21,8 @@
 #ifndef __READ_PDB_HPP
 #define __READ_PDB_HPP
 
+#include <string>
+
 #include "PdbParser.hpp"
 #include "particle_data.hpp"
 
@@ -40,6 +42,6 @@ struct PdbLJInteraction {
     @return Number of particles that were added.
  */
 
-int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
-				char *itp_file=NULL, int first_type=0, bool fit = false, bool lj_internal = false, bool lj_diagonal = false);
+int pdb_add_particles_from_file(std::string const &pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff=2.5,
+				std::string const &itp_file="", int first_type=0, bool fit = false, bool lj_internal = false, bool lj_diagonal = false);
 #endif

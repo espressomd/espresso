@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <set>
+#include <string>
 
 #ifdef READPDB_DEBUG
 #define READPDB_TRACE(A) A
@@ -139,14 +140,14 @@ static int add_particles(PdbParser::PdbParser &parser, int first_id, int default
   return id - first_id;
 }
 
-int pdb_add_particles_from_file(char *pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff,
-				char *itp_file, int first_type, bool fit, bool lj_internal, bool lj_diagonal) {
+int pdb_add_particles_from_file(std::string const &pdb_file, int first_id, int type, std::vector<PdbLJInteraction> &ljInteractions, double lj_rel_cutoff,
+				std::string const &itp_file, int first_type, bool fit, bool lj_internal, bool lj_diagonal) {
   int n_part;
   PdbParser::PdbParser parser;
   if(!parser.parse_pdb_file(pdb_file))
     return 0;
 
-  if(itp_file) {
+  if(!itp_file.empty()) {
     if(!parser.parse_itp_file(itp_file))
       return 0;
   }

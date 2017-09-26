@@ -1934,10 +1934,8 @@ cdef class ParticleList(object):
         for i in range(0,N/3):
             push_ljia(i)
 
-        pdb_n_part = pdb_add_particles_from_file(utils.to_char_pointer(pdb_file),
-                                                 first_id, type, ljinteractions, lj_rel_cutoff,
-                                                 utils.to_char_pointer(itp_file),
-                                                 first_type, rescale_box, lj_internal, lj_diagonal)
+        pdb_n_part = pdb_add_particles_from_file(pdb_file, first_id, type, ljinteractions, lj_rel_cutoff,
+                                                 itp_file, first_type, rescale_box, lj_internal, lj_diagonal)
 
         if pdb_n_part == 0:
             raise Exception("Could not parse pdb file")
