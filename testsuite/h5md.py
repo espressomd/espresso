@@ -74,7 +74,7 @@ class CommonTests(ut.TestCase):
                         x for (
                             _, x) in sorted(
                             zip(
-                                self.py_id[0], self.py_pos[0]))])))
+                                self.py_id, self.py_pos))])))
 
     def test_img(self):
         """Test if images have been written properly."""
@@ -82,13 +82,13 @@ class CommonTests(ut.TestCase):
                            np.ones((int(npart / 2), 3)))
         images = images.reshape(npart, 3)
         self.assertTrue((np.allclose(np.array(
-            [x for (_, x) in sorted(zip(self.py_id[0], self.py_img[0]))]), images)))
+            [x for (_, x) in sorted(zip(self.py_id, self.py_img))]), images)))
 
     def test_vel(self):
         """Test if velocities have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[1.0, 2.0, 3.0] for _ in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id[0], self.py_vel[0]))])),
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
             msg="Velocities not written correctly by H5md!")
 
     @ut.skipIf(
@@ -99,7 +99,7 @@ class CommonTests(ut.TestCase):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
             np.array([[0.1, 0.2, 0.3] for _ in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id[0], self.py_f[0]))])),
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))])),
             msg="Forces not written correctly by H5md!")
 
 
@@ -126,11 +126,11 @@ class H5mdTestOrdered(CommonTests):
         h5.flush()
         h5.close()
         cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_img = cls.py_file['particles/atoms/image/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
+        cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
+        cls.py_img = cls.py_file['particles/atoms/image/value'][0]
+        cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        cls.py_f = cls.py_file['particles/atoms/force/value'][0]
+        cls.py_id = cls.py_file['particles/atoms/id/value'][0]
 
     @classmethod
     def tearDownClass(cls):
@@ -166,11 +166,11 @@ class H5mdTestUnordered(CommonTests):
         h5.flush()
         h5.close()
         cls.py_file = h5py.File("test.h5", 'r')
-        cls.py_pos = cls.py_file['particles/atoms/position/value']
-        cls.py_img = cls.py_file['particles/atoms/image/value']
-        cls.py_vel = cls.py_file['particles/atoms/velocity/value']
-        cls.py_f = cls.py_file['particles/atoms/force/value']
-        cls.py_id = cls.py_file['particles/atoms/id/value']
+        cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
+        cls.py_img = cls.py_file['particles/atoms/image/value'][0]
+        cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        cls.py_f = cls.py_file['particles/atoms/force/value'][0]
+        cls.py_id = cls.py_file['particles/atoms/id/value'][0]
 
     @classmethod
     def tearDownClass(cls):
