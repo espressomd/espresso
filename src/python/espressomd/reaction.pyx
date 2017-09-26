@@ -50,7 +50,8 @@ IF CATALYTIC_REACTIONS:
             if self._params["ct_rate"] < 0:
                 raise ValueError(
                     "Negative catalytic reaction rate constant is not allowed!")
-            if (self._params["eq_rate"] < 0 and abs(self._params["eq_rate"] + 1.0) > 0.001):
+            if (self._params["eq_rate"] < 0 and abs(
+                    self._params["eq_rate"] + 1.0) > 0.001):
                 raise ValueError(
                     "Negative equilibrium reaction rate contstant is not allowed!")
 
@@ -145,7 +146,7 @@ IF CATALYTIC_REACTIONS:
 
             # There can only be one reaction
             global __reaction_is_initiated
-            if __reaction_is_initiated == True:
+            if __reaction_is_initiated:
                 raise ThereCanOnlyBeOne(self.__class__)
             __reaction_is_initiated = True
 
@@ -155,8 +156,11 @@ IF CATALYTIC_REACTIONS:
             # Check if required keys are given
             for k in self.required_keys():
                 if k not in kwargs:
-                    raise ValueError("At least the following keys have to be given as keyword arguments: " +
-                                     self.required_keys().__str__() + " got " + kwargs.__str__())
+                    raise ValueError(
+                        "At least the following keys have to be given as keyword arguments: " +
+                        self.required_keys().__str__() +
+                        " got " +
+                        kwargs.__str__())
 
                 self._params[k] = kwargs[k]
 

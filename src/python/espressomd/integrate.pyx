@@ -60,10 +60,11 @@ cdef class Integrator(object):
             if (_integrate(steps, recalc_forces, reuse_forces)):
                 handle_errors("Encoutered errors during integrate")
         elif self._method == "STEEPEST_DESCENT":
-            minimize_energy_init(self._steepest_descent_params["f_max"],
-                                 self._steepest_descent_params["gamma"],
-                                 steps,
-                                 self._steepest_descent_params["max_displacement"])
+            minimize_energy_init(
+                self._steepest_descent_params["f_max"],
+                self._steepest_descent_params["gamma"],
+                steps,
+                self._steepest_descent_params["max_displacement"])
             mpi_minimize_energy()
 
     def set_steepest_descent(self, *args, **kwargs):
@@ -76,8 +77,8 @@ cdef class Integrator(object):
 
         req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
-            if not key in req:
-                raise Exception("Set required parameter %s first." %key)
+            if key not in req:
+                raise Exception("Set required parameter %s first." % key)
 
         self._steepest_descent_params.update(kwargs)
         self._method = "STEEPEST_DESCENT"
@@ -95,7 +96,15 @@ cdef class Integrator(object):
 
         integrate_set_nvt()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0,0,0], cubic_box=False):
+    def set_isotropic_npt(
+            self,
+            ext_pressure,
+            piston,
+            direction=[
+                0,
+                0,
+                0],
+            cubic_box=False):
         """
         Set the integration method to NPT.
 
@@ -114,10 +123,14 @@ cdef class Integrator(object):
         if "NPT" not in espressomd.code_info.features():
             raise Exception("NPT is not compiled in")
         check_type_or_throw_except(
-            ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
+            ext_pressure,
+            1,
+            float,
+            "NPT parameter ext_pressure must be a float")
         check_type_or_throw_except(
             piston, 1, float, "NPT parameter piston must be a float")
         check_type_or_throw_except(
             direction, 3, int, "NPT parameter direction must be an three ints")
-        if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
+        if (integrate_set_npt_isotropic(ext_pressure, piston,
+                                        direction[0], direction[1], direction[2], cubic_box)):
             handle_errors("Encoutered errors setting up the NPT integrator")

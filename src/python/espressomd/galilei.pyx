@@ -23,8 +23,8 @@ from . cimport galilei
 cdef class GalileiTransform(object):
 
     def kill_particle_motion(self, rotation=0):
-        """ 
-        Stop the motion of the particles. 
+        """
+        Stop the motion of the particles.
 
         Parameters
         ----------
@@ -36,7 +36,7 @@ cdef class GalileiTransform(object):
         mpi_kill_particle_motion(rotation)
 
     def kill_particle_forces(self, torque=0):
-        """ 
+        """
         Set the forces on the particles to zero.
 
         Parameters
@@ -49,25 +49,25 @@ cdef class GalileiTransform(object):
         mpi_kill_particle_forces(torque)
 
     def system_CMS(self):
-        """ 
+        """
         Calculate the center of mass of the system. Assumes equal unit mass if the mass feature is not used.
-        
+
         Returns
         ----------
         cms :  list
-            The of the center of mass position vector as a list of floats 
+            The of the center of mass position vector as a list of floats
         """
         mpi_system_CMS()
         return gal.cms
 
     def system_CMS_velocity(self):
-        """ 
+        """
         Calculate the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used.
 
         Returns
         ----------
         cms_vel :  list of floats
-            The of the center of mass velocity vector as a list of floats 
+            The of the center of mass velocity vector as a list of floats
 
         """
 
@@ -75,7 +75,7 @@ cdef class GalileiTransform(object):
         return gal.cms_vel
 
     def galilei_transform(self):
-        """ 
+        """
         Remove the center of mass velocity of the system. Assumes equal unit mass if the mass feature is not used. This is often used when switching from Langevin Dynamics to Lattice Boltzmann. This is due to the random nature of LD that yield a non-zero net system momentum at any given time.
 
         """

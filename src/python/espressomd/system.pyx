@@ -181,8 +181,9 @@ cdef class System(object):
 
     property time:
         """
-        Set the time in the simulation 
+        Set the time in the simulation
         """
+
         def __set__(self, double _time):
             if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
@@ -198,6 +199,7 @@ cdef class System(object):
         """
         Setting this property to a positive integer value turns on the multi-timestepping algorithm. The ratio :attr:`espressomd.system.System.time_step`/:attr:`espressomd.system.System.smaller_time_step` must be an integer.
         """
+
         def __set__(self, double _smaller_time_step):
             IF MULTI_TIMESTEP:
                 global smaller_time_step
@@ -210,8 +212,9 @@ cdef class System(object):
 
     property time_step:
         """
-        Sets the time step for the integrator. 
+        Sets the time step for the integrator.
         """
+
         def __set__(self, double _time_step):
             IF LB:
                 global lbpar
@@ -221,13 +224,19 @@ cdef class System(object):
                 raise ValueError("Time Step must be positive")
             IF LB:
                 if lbpar.tau >= 0.0 and _time_step < lbpar.tau:
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
+                    raise ValueError("Time Step (" +
+                                     str(time_step) +
+                                     ") must be > LB_time_step (" +
+                                     str(lbpar.tau) +
+                                     ")")
             IF LB_GPU:
-                if (lbpar_gpu.tau >= 0.0 and
-                        lbpar_gpu.tau - _time_step > numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar_gpu.tau) + ")")
+                if (lbpar_gpu.tau >= 0.0 and lbpar_gpu.tau - _time_step >
+                        numeric_limits[float].epsilon() * abs(lbpar_gpu.tau + _time_step)):
+                    raise ValueError("Time Step (" +
+                                     str(time_step) +
+                                     ") must be > LB_time_step (" +
+                                     str(lbpar_gpu.tau) +
+                                     ")")
             mpi_set_time_step(_time_step)
 
         def __get__(self):
@@ -269,14 +278,14 @@ cdef class System(object):
         """
         Returns the state of the pseudo random number generator.
         """
-        
+
         return get_state_size_of_generator()
 
     def set_random_state_PRNG(self):
         """
         Sets the state of the pseudo random number generator using real random numbers.
         """
-        
+
         _state_size_plus_one = self._get_PRNG_state_size() + 1
         states = string_vec(n_nodes)
         rng = random.SystemRandom()  # true RNG that uses os.urandom()
@@ -292,7 +301,7 @@ cdef class System(object):
         """
         Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
         """
-        
+
         def __set__(self, _seed):
             cdef vector[int] seed_array
             self.__seed = _seed
@@ -318,7 +327,7 @@ cdef class System(object):
     property random_number_generator_state:
         """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
         """
-        
+
         def __set__(self, rng_state):
             _state_size_plus_one = self._get_PRNG_state_size() + 1
             if(len(rng_state) == n_nodes * _state_size_plus_one):
@@ -336,7 +345,7 @@ cdef class System(object):
 
     IF LEES_EDWARDS == 1:
         property lees_edwards_offset:
-        # defines the lees edwards offset
+            # defines the lees edwards offset
             def __set__(self, double _lees_edwards_offset):
 
                 if isinstance(_lees_edwards_offset, float):
@@ -346,10 +355,11 @@ cdef class System(object):
                     mpi_bcast_parameter(FIELD_LEES_EDWARDS_OFFSET)
 
                 else:
-                    raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
+                    raise ValueError(
+                        "Wrong # of args! Usage: lees_edwards_offset { new_offset }")
 
             def __get__(self):
-          #   global lees_edwards_offset
+              #   global lees_edwards_offset
                 return lees_edwards_offset
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
@@ -382,7 +392,7 @@ cdef class System(object):
         """
         Return box volume of the cuboid box
         """
-        
+
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):

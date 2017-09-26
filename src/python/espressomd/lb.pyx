@@ -44,12 +44,16 @@ IF LB_GPU or LB:
         """
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(
+                    key, tuple) or isinstance(
+                    key, list) or isinstance(
+                    key, np.ndarray):
                 if len(key) == 3:
                     return LBFluidRoutines(np.array(key))
-            else: 
-                raise Exception("%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," %key)
-
+            else:
+                raise Exception(
+                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," %
+                    key)
 
         # validate the given parameters on actor initalization
         ####################################################
@@ -57,14 +61,21 @@ IF LB_GPU or LB:
             default_params = self.default_params()
 
             IF SHANCHEN:
-                if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
+                if not (self._params["dens"][0] >
+                        0.0 and self._params["dens"][1] > 0.0):
                     raise ValueError(
                         "Density must be two positive double (ShanChen)")
             ELSE:
                 if self._params["dens"] == default_params["dens"]:
                     raise Exception("LB_FLUID density not set")
                 else:
-                    if not (self._params["dens"] > 0.0 and (isinstance(self._params["dens"], float) or isinstance(self._params["dens"], int))):
+                    if not (
+                        self._params["dens"] > 0.0 and (
+                            isinstance(
+                                self._params["dens"],
+                                float) or isinstance(
+                                self._params["dens"],
+                                int))):
                         raise ValueError("Density must be one positive double")
 
         # list of valid keys for parameters
@@ -175,24 +186,26 @@ IF LB_GPU or LB:
         ####################################################
         def print_vtk_velocity(self, path):
             lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
+
         def print_velocity(self, path):
             lb_lbfluid_print_velocity(utils.to_char_pointer(path))
+
         def print_boundary(self, path):
             lb_lbfluid_print_boundary(utils.to_char_pointer(path))
+
         def save_checkpoint(self, path, binary):
             tmp_path = path + ".__tmp__"
             lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
             os.rename(tmp_path, path)
+
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
         # input/output function wrappers for LB nodes
         ####################################################
-
-
-
 
         # Activate Actor
         ####################################################
@@ -207,6 +220,7 @@ IF LB_GPU:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
         """
+
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
@@ -222,6 +236,7 @@ IF LB_GPU:
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
         cdef int node[3]
+
         def __init__(self, key):
             self.node[0] = key[0]
             self.node[1] = key[1]
@@ -245,14 +260,13 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-
         property pi:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return np.array([[pi[0], pi[1], pi[3]],
+                                 [pi[1], pi[2], pi[4]],
+                                 [pi[3], pi[4], pi[5]]])
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -261,9 +275,9 @@ IF LB or LB_GPU:
             def __get__(self):
                 cdef double[6] pi
                 lb_lbnode_get_pi_neq(self.node, pi)
-                return np.array([[pi[0],pi[1],pi[3]],
-                                 [pi[1],pi[2],pi[4]],
-                                 [pi[3],pi[4],pi[5]]])
+                return np.array([[pi[0], pi[1], pi[3]],
+                                 [pi[1], pi[2], pi[4]],
+                                 [pi[3], pi[4], pi[5]]])
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
@@ -281,7 +295,7 @@ IF LB or LB_GPU:
         property boundary:
             def __get__(self):
                 cdef int int_return
-                lb_lbnode_get_boundary(self.node, &int_return)
+                lb_lbnode_get_boundary(self.node, & int_return)
                 return int_return
 
             def __set__(self, value):

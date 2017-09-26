@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 
 try:
     if sys.platform == "darwin" or os.name != "posix" or "DISPLAY" in os.environ:

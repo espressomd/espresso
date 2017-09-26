@@ -37,7 +37,11 @@ cdef class NonBondedInteraction(object):
         Or called with keyword arguments describing a new interaction."""
 
         # Interaction id as argument
-        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
+        if len(args) == 2 and isinstance(
+                args[0],
+                int) and isinstance(
+                args[1],
+                int):
             self._part_types = args
 
             # Load the parameters currently set in the Espresso core
@@ -53,7 +57,8 @@ cdef class NonBondedInteraction(object):
             for k in self.required_keys():
                 if k not in kwargs:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+                        "At least the following keys have to be given as keyword arguments: " +
+                        self.required_keys().__str__())
 
             self._params.update(kwargs)
 
@@ -94,7 +99,8 @@ cdef class NonBondedInteraction(object):
         for k in p.keys():
             if k not in self.valid_keys():
                 raise ValueError(
-                    "Only the following keys are supported: " + self.valid_keys().__str__())
+                    "Only the following keys are supported: " +
+                    self.valid_keys().__str__())
 
         # When an interaction is newly activated, all required keys must be
         # given
@@ -102,7 +108,8 @@ cdef class NonBondedInteraction(object):
             for k in self.required_keys():
                 if k not in p:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+                        "At least the following keys have to be given as keyword arguments: " +
+                        self.required_keys().__str__())
 
         # If this instance refers to an interaction defined in the espresso core,
         # load the parameters from there
@@ -133,7 +140,9 @@ cdef class NonBondedInteraction(object):
     def __getattribute__(self, name):
         """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
         attr = object.__getattribute__(self, name)
-        if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
+        if hasattr(
+                attr,
+                '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 self._params.update(self._get_params_from_es_core())
@@ -237,14 +246,14 @@ IF LENNARD_JONES == 1:
                     self._params["sigma"] / self._params["cutoff"])**6)
 
             if lennard_jones_set_params(
-                self._part_types[0], self._part_types[1],
-                                        self._params["epsilon"],
-                                        self._params["sigma"],
-                                        self._params["cutoff"],
-                                        self._params["shift"],
-                                        self._params["offset"],
-                                        self._params["cap"],
-                                        self._params["min"]):
+                    self._part_types[0], self._part_types[1],
+                    self._params["epsilon"],
+                    self._params["sigma"],
+                    self._params["cutoff"],
+                    self._params["shift"],
+                    self._params["offset"],
+                    self._params["cap"],
+                    self._params["min"]):
                 raise Exception("Could not set Lennard Jones parameters")
 
         def default_params(self):
@@ -385,8 +394,8 @@ IF LENNARD_JONES_GENERIC == 1:
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
                 # Calc shift
-                self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params[
-                                          "e1"] - self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
+                self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e1"] -
+                                          self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
             IF LJGEN_SOFTCORE:
                 if ljgen_set_params(self._part_types[0], self._part_types[1],
                                     self._params["epsilon"],
@@ -519,7 +528,13 @@ cdef class NonBondedInteractions(object):
         if not isinstance(key, tuple):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
-        if len(key) != 2 or (not isinstance(key[0], int)) or (not isinstance(key[1], int)):
+        if len(key) != 2 or (
+            not isinstance(
+                key[0],
+                int)) or (
+            not isinstance(
+                key[1],
+                int)):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
@@ -548,7 +563,8 @@ cdef class NonBondedInteractions(object):
                     attr_ref = getattr(
                         NonBondedInteractionHandle(_type1, _type2), a)
                     type_name_ref = getattr(attr_ref, "type_name", None)
-                    if callable(type_name_ref) and type_name_ref() == odict[_type1][_type2]['type_name']:
+                    if callable(type_name_ref) and type_name_ref(
+                    ) == odict[_type1][_type2]['type_name']:
                         # found nonbonded inter, e.g.
                         # LennardJonesInteraction(_type1, _type2)
                         inter_instance = attr_ref
@@ -578,7 +594,9 @@ cdef class BondedInteraction(object):
             # bond
             if bonded_ia_params[bond_id].type != self.type_number():
                 raise Exception(
-                    "The bond with this id is not defined as a " + self.type_name() + " bond in the Espresso core.")
+                    "The bond with this id is not defined as a " +
+                    self.type_name() +
+                    " bond in the Espresso core.")
 
             self._bond_id = bond_id
 
@@ -592,7 +610,8 @@ cdef class BondedInteraction(object):
             for k in self.required_keys():
                 if k not in kwargs:
                     raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+                        "At least the following keys have to be given as keyword arguments: " +
+                        self.required_keys().__str__())
 
             self.params = kwargs
 
@@ -628,7 +647,8 @@ cdef class BondedInteraction(object):
             for k in p.keys():
                 if k not in self.valid_keys():
                     raise ValueError(
-                        "Only the following keys are supported: " + self.valid_keys().__str__)
+                        "Only the following keys are supported: " +
+                        self.valid_keys().__str__)
 
             # Initialize default values
             self.set_default_params()
@@ -641,7 +661,9 @@ cdef class BondedInteraction(object):
     def __getattribute__(self, name):
         """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
         attr = object.__getattribute__(self, name)
-        if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
+        if hasattr(
+                attr,
+                '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 self._params.update(self._get_params_from_es_core())
@@ -687,7 +709,8 @@ cdef class BondedInteraction(object):
         else:
             id_str = str(self._bond_id)
 
-        return self.__class__.__name__ + "(" + id_str + "): " + self._params.__str__()
+        return self.__class__.__name__ + \
+            "(" + id_str + "): " + self._params.__str__()
 
     def __richcmp__(self, other, i):
         if i != 2:
@@ -770,7 +793,10 @@ class FeneBond(BondedInteraction):
 
     def _set_params_in_es_core(self):
         fene_set_params(
-            self._bond_id, self._params["k"], self._params["d_r_max"], self._params["r_0"])
+            self._bond_id,
+            self._params["k"],
+            self._params["d_r_max"],
+            self._params["r_0"])
 
 
 class HarmonicBond(BondedInteraction):
@@ -815,7 +841,10 @@ class HarmonicBond(BondedInteraction):
 
     def _set_params_in_es_core(self):
         harmonic_set_params(
-            self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
+            self._bond_id,
+            self._params["k"],
+            self._params["r_0"],
+            self._params["r_cut"])
 
 
 IF ROTATION:
@@ -957,11 +986,16 @@ IF BOND_CONSTRAINT == 1:
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5, "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol, "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
+            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5,
+                    "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol,
+                    "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
 
         def _set_params_in_es_core(self):
             rigid_bond_set_params(
-                self._bond_id, self._params["r"], self._params["ptol"], self._params["vtol"])
+                self._bond_id,
+                self._params["r"],
+                self._params["ptol"],
+                self._params["vtol"])
 ELSE:
     class RigidBond(BondedInteractionNotDefined):
         name = "RIGID"
@@ -992,7 +1026,10 @@ class Dihedral(BondedInteraction):
 
     def _set_params_in_es_core(self):
         dihedral_set_params(
-            self._bond_id, self._params["mult"], self._params["bend"], self._params["phase"])
+            self._bond_id,
+            self._params["mult"],
+            self._params["bend"],
+            self._params["phase"])
 
 
 IF TABULATED == 1:
@@ -1110,8 +1147,11 @@ IF TABULATED == 1:
                 "filename": utils.to_str(ia_params.TAB_filename)}
 
         def _set_params_in_es_core(self):
-            self.state = tabulated_set_params(self._part_types[0], self._part_types[
-                                              1], utils.to_char_pointer(self._params["filename"]))
+            self.state = tabulated_set_params(
+                self._part_types[0],
+                self._part_types[1],
+                utils.to_char_pointer(
+                    self._params["filename"]))
 
         def is_active(self):
             if self.state == 0:
@@ -1222,18 +1262,16 @@ IF BOND_ENDANGLEDIST == 1:
             self._params = {"bend": 0, "phi0": 0, "distmin": 0, "distmax": 1}
 
         def _get_params_from_es_core(self):
-            return \
-                {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
-                 "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin":
-                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
-                 "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
+            return {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
+                    "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
+                    "distmin": bonded_ia_params[self._bond_id].p.endangledist.distmin,
+                    "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
 
         def _set_params_in_es_core(self):
             endangledist_set_params(
                 self._bond_id, self._params["bend"], self._params[
                     "phi0"], self._params["distmin"],
-                                    self._params["distmax"])
+                self._params["distmax"])
 
 ELSE:
     class Endangledist(BondedInteractionNotDefined):
@@ -1265,7 +1303,10 @@ IF OVERLAPPED == 1:
 
         def _set_params_in_es_core(self):
             overlapped_bonded_set_params(
-                self._bond_id, self._params["overlap_type"], utils.to_char_pointer(self._params["filename"]))
+                self._bond_id,
+                self._params["overlap_type"],
+                utils.to_char_pointer(
+                    self._params["filename"]))
 
 ELSE:
     class Overlapped(BondedInteractionNotDefined):
@@ -1388,7 +1429,11 @@ class Oif_Global_Forces(BondedInteraction):
 
     def _set_params_in_es_core(self):
         oif_global_forces_set_params(
-            self._bond_id, self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"])
+            self._bond_id,
+            self._params["A0_g"],
+            self._params["ka_g"],
+            self._params["V0"],
+            self._params["kv"])
 
 
 class Oif_Local_Forces(BondedInteraction):
@@ -1422,7 +1467,15 @@ class Oif_Local_Forces(BondedInteraction):
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
-            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"])
+            self._bond_id,
+            self._params["r0"],
+            self._params["ks"],
+            self._params["kslin"],
+            self._params["phi0"],
+            self._params["kb"],
+            self._params["A01"],
+            self._params["A02"],
+            self._params["kal"])
 
 
 bonded_interaction_classes = {
@@ -1465,7 +1518,9 @@ class BondedInteractions(object):
         # Check if the bonded interaction exists in Espresso core
         if bond_type == -1:
             raise ValueError(
-                "The bonded interaction with the id " + str(key) + " is not yet defined.")
+                "The bonded interaction with the id " +
+                str(key) +
+                " is not yet defined.")
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]

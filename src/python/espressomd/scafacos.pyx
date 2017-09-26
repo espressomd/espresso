@@ -6,7 +6,7 @@ from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
 cimport magnetostatics
-from espressomd.utils import to_char_pointer,to_str
+from espressomd.utils import to_char_pointer, to_str
 
 from espressomd.utils cimport handle_errors
 
@@ -44,13 +44,14 @@ IF SCAFACOS == 1:
             # Verify that scafacos is not used for elecrostatics and dipoles
             # at the same time
             IF ELECTROSTATICS == 1:
-                if self.dipolar and <int>electrostatics.coulomb.method ==<int>electrostatics.COULOMB_SCAFACOS:
-                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
+                if self.dipolar and < int > electrostatics.coulomb.method == <int > electrostatics.COULOMB_SCAFACOS:
+                    raise Exception(
+                        "Scafacos cannot be used for dipoles and charges at the same time")
 
             IF DIPOLES == 1:
-                if not self.dipolar and <int>magnetostatics.coulomb.Dmethod ==<int>magnetostatics.DIPOLAR_SCAFACOS:
-                    raise Exception("Scafacos cannot be used for dipoles and charges at the same time")
-
+                if not self.dipolar and < int > magnetostatics.coulomb.Dmethod == <int > magnetostatics.DIPOLAR_SCAFACOS:
+                    raise Exception(
+                        "Scafacos cannot be used for dipoles and charges at the same time")
 
             # Convert the parameter dictionary to a list of strings
             method_params = self._params["method_params"]
@@ -70,9 +71,8 @@ IF SCAFACOS == 1:
 
     def available_methods():
         """Lists long range methods available in the Scafacos library"""
-        methods=available_methods_core()
-        res=[]
+        methods = available_methods_core()
+        res = []
         for m in methods:
             res.append(to_str(m))
         return res
-    

@@ -24,41 +24,42 @@ from . import actors
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
-    from .scafacos import ScafacosConnector 
+    from .scafacos import ScafacosConnector
     from . cimport scafacos
 
-IF ELECTROSTATICS == 1: 
+IF ELECTROSTATICS == 1:
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the _tune() method or chosen method does not support tuning.")
-    
+
         def _set_params_in_es_core(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the _set_params_in_es_core() method.")
-    
+
         def _deactivate_method(self):
             coulomb.method = COULOMB_NONE
             mpi_bcast_coulomb_params()
-    
+
         def Tune(self, **subsetTuneParams):
-    
+
             # Override default parmas with subset given by user
             tuneParams = self.default_params()
-            if not subsetTuneParams == None:
+            if subsetTuneParams is not None:
                 for k in subsetTuneParams.iterkeys():
                     if k not in self.valid_keys():
                         raise ValueError(k + " is not a valid parameter")
                 tuneParams.update(subsetTuneParams)
-    
+
             # If param is 'required', it was set before, so don't change it
             # Do change it if it's given to Tune() by user
             for param in tuneParams.iterkeys():
-                if not param in self.required_keys() or (not subsetTuneParams == None and param in subsetTuneParams.keys()):
+                if param not in self.required_keys() or (
+                        not subsetTuneParams is None and param in subsetTuneParams.keys()):
                     self._params[param] = tuneParams[param]
             print(self._params)
             self._tune()
-    
+
 IF COULOMB_DEBYE_HUECKEL:
     cdef class CDH(ElectrostaticInteraction):
         """ Hybrid method to solve electrostatic interactions, on short length
@@ -72,7 +73,7 @@ IF COULOMB_DEBYE_HUECKEL:
                               Bjerrum length
         kappa               : float
                               Inverse Debye screening length
-        r_cut               : float 
+        r_cut               : float
                               Cut off radius for this interaction
         eps_int             : float
                               Relative permitivity in the interior region r<r1
@@ -86,6 +87,7 @@ IF COULOMB_DEBYE_HUECKEL:
                               Controls the transition between the pure Coulomb and Debye Hueckel regions
 
         """
+
         def validate_params(self):
             if (self._params["bjerrum_length"] <= 0):
                 raise ValueError("Bjerrum_length should be a positive double")
@@ -97,10 +99,12 @@ IF COULOMB_DEBYE_HUECKEL:
                 raise ValueError("eps_int should be a positive double")
             if (self._params["eps_ext"] <= 0):
                 raise ValueError("eps_ext should be a positive double")
-            if (self._params["r0"] <= 0 or self._params["r0"] >= self._params["r1"]):
+            if (self._params["r0"] <= 0 or self._params["r0"]
+                    >= self._params["r1"]):
                 raise ValueError(
                     "r0 should be a positive double smaller than r1")
-            if (self._params["r1"] <= 0 or self._params["r1"] >= self._params["r_cut"]):
+            if (self._params["r1"] <= 0 or self._params["r1"]
+                    >= self._params["r_cut"]):
                 raise ValueError(
                     "r1 should be a positive double larger than r0 and smaller than r_cut")
             if (self._params["alpha"] < 0):
@@ -114,8 +118,14 @@ IF COULOMB_DEBYE_HUECKEL:
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            dh_set_params_cdh(self._params["kappa"], self._params["r_cut"], self._params[
-                              "eps_int"], self._params["eps_ext"], self._params["r0"], self._params["r1"], self._params["alpha"])
+            dh_set_params_cdh(
+                self._params["kappa"],
+                self._params["r_cut"],
+                self._params["eps_int"],
+                self._params["eps_ext"],
+                self._params["r0"],
+                self._params["r1"],
+                self._params["alpha"])
 
         def _get_params_from_es_core(self):
             params = {}
@@ -153,6 +163,7 @@ ELSE:
                               Cut off radius for this interaction
 
             """
+
             def validate_params(self):
                 if (self._params["bjerrum_length"] <= 0):
                     raise ValueError(
@@ -195,21 +206,21 @@ IF P3M == 1:
             P3M electrostatics solver.
 
             Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-            summation method to calculate potentials in N-body simulation.  
+            summation method to calculate potentials in N-body simulation.
 
             Parameters
             ----------
             bjerrum_length : float
                              The separation at which the electrostatic interaction
                              energy and thermal energy are comparable. Defined as
-                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)`
             accuracy : float
                        P3M tunes its parameters to provide this target accuracy.
 
-            alpha : float, optional 
+            alpha : float, optional
                     The Ewald parameter.
 
-            cao : float, optional 
+            cao : float, optional
                   The charge-assignment order, an integer between 0 and 7.
 
             epsilon : string, optional
@@ -220,7 +231,7 @@ IF P3M == 1:
                       A positive number for the dielectric constant of the
                       surrounding medium.
 
-            mesh : int, optional 
+            mesh : int, optional
                    The number of mesh points
 
             mesh : array_like, optional
@@ -242,15 +253,27 @@ IF P3M == 1:
             if not (self._params["bjerrum_length"] > 0.0):
                 raise ValueError("Bjerrum_length should be a positive double")
 
-            if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+            if not (
+                    self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (
+                isinstance(
+                    self._params["mesh"],
+                    int) or len(
+                    self._params["mesh"])):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
-            if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
-                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
+            if (isinstance(self._params["mesh"], basestring) and len(
+                    self._params["mesh"]) == 3):
+                if (self._params["mesh"][0] %
+                    2 != 0 and self._params["mesh"][0] != -
+                    1) or (self._params["mesh"][1] %
+                           2 != 0 and self._params["mesh"][1] != -
+                           1) or (self._params["mesh"][2] %
+                                  2 != 0 and self._params["mesh"][2] != -
+                                  1):
                     raise ValueError(
                         "P3M requires an even number of mesh points in all directions")
 
@@ -264,17 +287,24 @@ IF P3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params = 0.0
 
-            if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (
+                isinstance(
+                    self._params["epsilon"],
+                    float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+            if not (
+                    self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+            if not (
+                self._params["mesh_off"] == default_params["mesh_off"] or len(
+                    self._params) != 3):
                 raise ValueError(
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
-            if not (self._params["alpha"] == default_params["alpha"] or self._params["alpha"] > 0):
+            if not (
+                    self._params["alpha"] == default_params["alpha"] or self._params["alpha"] > 0):
                 raise ValueError(
                     "alpha should be positive")
 
@@ -303,25 +333,33 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            #Sets lb, bcast, resets vars to zero if lb=0
+            # Sets lb, bcast, resets vars to zero if lb=0
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            #Sets cdef vars and calls p3m_set_params() in core 
-            python_p3m_set_params(self._params["r_cut"],
-                        self._params["mesh"], self._params["cao"],
-                        self._params["alpha"], self._params["accuracy"])
-            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts 
-            #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
+            # Sets cdef vars and calls p3m_set_params() in core
+            python_p3m_set_params(
+                self._params["r_cut"],
+                self._params["mesh"],
+                self._params["cao"],
+                self._params["alpha"],
+                self._params["accuracy"])
+            # p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
+            # Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
-            #Sets eps, bcast
+            # Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            #Sets ninterpol, bcast
+            # Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                       "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+            python_p3m_set_tune_params(
+                self._params["r_cut"],
+                self._params["mesh"],
+                self._params["cao"],
+                -1.0,
+                self._params["accuracy"],
+                self._params["inter"])
             resp = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
@@ -341,21 +379,21 @@ IF P3M == 1:
                 P3M electrostatics solver with GPU support.
 
                 Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-                summation method to calculate potentials in N-body simulation.  
+                summation method to calculate potentials in N-body simulation.
 
                 Parameters
                 ----------
                 bjerrum_length : float
                                  The separation at which the electrostatic interaction
                                  energy and thermal energy are comparable. Defined as
-                                 :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+                                 :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)`
                 accuracy : float
                            P3M tunes its parameters to provide this target accuracy.
 
-                alpha : float, optional 
+                alpha : float, optional
                         The Ewald parameter.
 
-                cao : float, optional 
+                cao : float, optional
                       The charge-assignment order, an integer between 0 and 7.
 
                 epsilon : string, optional
@@ -366,7 +404,7 @@ IF P3M == 1:
                           A positive number for the dielectric constant of the
                           surrounding medium.
 
-                mesh : int, optional 
+                mesh : int, optional
                        The number of mesh points
 
                 mesh : array_like, optional
@@ -389,19 +427,33 @@ IF P3M == 1:
                     raise ValueError(
                         "Bjerrum_length should be a positive double")
 
-                if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+                if not (
+                        self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
 
-                if not (isinstance(self._params["mesh"], int) or len(self._params["mesh"])):
+                if not (
+                    isinstance(
+                        self._params["mesh"],
+                        int) or len(
+                        self._params["mesh"])):
                     raise ValueError(
                         "P3M mesh has to be an integer or integer list of length 3")
 
-                if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
-                    if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
+                if (isinstance(self._params["mesh"], basestring) and len(
+                        self._params["mesh"]) == 3):
+                    if (self._params["mesh"][0] %
+                        2 != 0 and self._params["mesh"][0] != -
+                        1) or (self._params["mesh"][1] %
+                               2 != 0 and self._params["mesh"][1] != -
+                               1) or (self._params["mesh"][2] %
+                                      2 != 0 and self._params["mesh"][2] != -
+                                      1):
                         raise ValueError(
                             "P3M requires an even number of mesh points in all directions")
 
-                if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
+                if not (
+                        self._params["cao"] >= -
+                        1 and self._params["cao"] <= 7):
                     raise ValueError(
                         "P3M cao has to be an integer between -1 and 7")
 
@@ -411,14 +463,20 @@ IF P3M == 1:
                 # if self._params["epsilon"] == "metallic":
                 #  self._params = 0.0
 
-                if not (isinstance(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+                if not (
+                    isinstance(
+                        self._params["epsilon"],
+                        float) or self._params["epsilon"] == "metallic"):
                     raise ValueError(
                         "epsilon should be a double or 'metallic'")
 
-                if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+                if not (
+                        self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
                     raise ValueError("inter should be a positive integer")
 
-                if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+                if not (
+                    self._params["mesh_off"] == default_params["mesh_off"] or len(
+                        self._params) != 3):
                     raise ValueError(
                         "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
@@ -448,8 +506,13 @@ IF P3M == 1:
 
             def _tune(self):
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
-                python_p3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                           "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+                python_p3m_set_tune_params(
+                    self._params["r_cut"],
+                    self._params["mesh"],
+                    self._params["cao"],
+                    -1.0,
+                    self._params["accuracy"],
+                    self._params["inter"])
                 resp = python_p3m_adaptive_tune()
                 if resp:
                     raise Exception(
@@ -457,7 +520,7 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
-                #self._set_params_in_es_core()
+                # self._set_params_in_es_core()
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
@@ -466,8 +529,12 @@ IF P3M == 1:
 
             def _set_params_in_es_core(self):
                 coulomb_set_bjerrum(self._params["bjerrum_length"])
-                python_p3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
-                                      "cao"], self._params["alpha"], self._params["accuracy"])
+                python_p3m_set_params(
+                    self._params["r_cut"],
+                    self._params["mesh"],
+                    self._params["cao"],
+                    self._params["alpha"],
+                    self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
                 p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
@@ -480,14 +547,14 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             P3M electrostatics solver with GPU support.
 
             Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-            summation method to calculate potentials in N-body simulation.  
+            summation method to calculate potentials in N-body simulation.
 
             Parameters
             ----------
             bjerrum_length : float
                              The separation at which the electrostatic interaction
                              energy and thermal energy are comparable. Defined as
-                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)` 
+                             :math:`l_B = e_o^2 / (4 \pi \epsilon k_B T)`
             accuracy : float
                        Maximal allowed root mean square error regarding the forces
 
@@ -502,7 +569,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                     Maximal reciprocal space cutoff to be tested in the
                     tuning algorithm, specified for each dimension.
 
-            alpha : float, optional 
+            alpha : float, optional
                     The Ewald parameter.
 
             rcut : float, optional
@@ -526,7 +593,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             del self.thisptr
 
         def valid_keys(self):
-            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz",  "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
+            return "bjerrum_length", "rcut", "num_kx", "num_ky", "num_kz", "K_max", "alpha", "accuracy", "precision", "time_calc_steps"
 
         def default_params(self):
             return {"bjerrum_length": -1,
@@ -547,7 +614,9 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             if self._params["bjerrum_length"] <= 0.0 and self._params["bjerrum_length"] != default_params["bjerrum_length"]:
                 raise ValueError("Bjerrum_length should be a positive double")
             if isinstance(self._params["K_max"], (list, np.ndarray)):
-                if isinstance(self._params["K_max"], int) and len(self._params["K_max"]) == 3:
+                if isinstance(
+                        self._params["K_max"], int) and len(
+                        self._params["K_max"]) == 3:
                     self._params["num_kx"] = self._params["K_max"][0]
                     self._params["num_ky"] = self._params["K_max"][1]
                     self._params["num_kz"] = self._params["K_max"][2]
@@ -580,19 +649,30 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
                 self._params[
                     "time_calc_steps"] = self.thisptr.determine_calc_time_steps()
             if isinstance(self._params["K_max"], (list, np.ndarray)):
-                self.thisptr.set_params(self._params["rcut"], self._params["K_max"][0], self._params[
-                                        "K_max"][1], self._params["K_max"][2], self._params["alpha"])
+                self.thisptr.set_params(
+                    self._params["rcut"],
+                    self._params["K_max"][0],
+                    self._params["K_max"][1],
+                    self._params["K_max"][2],
+                    self._params["alpha"])
             else:
-                self.thisptr.set_params_tune(self._params["accuracy"], self._params[
-                    "precision"], self._params["K_max"], self._params["time_calc_steps"])
-            resp = self.thisptr.adaptive_tune(& self.log, dereference(self.interface))
+                self.thisptr.set_params_tune(
+                    self._params["accuracy"],
+                    self._params["precision"],
+                    self._params["K_max"],
+                    self._params["time_calc_steps"])
+            resp = self.thisptr.adaptive_tune( & self.log, dereference(self.interface))
             if resp != 0:
                 print(self.log)
 
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
-            self.thisptr.set_params(self._params["rcut"], self._params[
-                                    "num_kx"], self._params["num_ky"], self._params["num_kz"], self._params["alpha"])
+            self.thisptr.set_params(
+                self._params["rcut"],
+                self._params["num_kx"],
+                self._params["num_ky"],
+                self._params["num_kz"],
+                self._params["alpha"])
 
         def _get_params_from_es_core(self):
             params = {}
@@ -655,7 +735,8 @@ IF ELECTROSTATICS:
         def _get_params_from_es_core(self):
             params = {}
             params.update(mmm1d_params)
-            params["far_switch_radius"] = np.sqrt(params["far_switch_radius_2"])
+            params["far_switch_radius"] = np.sqrt(
+                params["far_switch_radius_2"])
             del params["far_switch_radius_2"]
             params["bjerrum_length"] = coulomb.bjerrum
             params["tune"] = self._params["tune"]
@@ -748,13 +829,21 @@ IF ELECTROSTATICS and MMM1D_GPU:
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(globals.box_l[2], globals.temperature * coulomb.bjerrum, self._params[
-                                    "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
+            self.thisptr.set_params(
+                globals.box_l[2],
+                globals.temperature * coulomb.bjerrum,
+                self._params["maxPWerror"],
+                self._params["far_switch_radius"],
+                self._params["bessel_cutoff"])
 
         def _tune(self):
             self.thisptr.setup(dereference(self.interface))
-            self.thisptr.tune(dereference(self.interface), self._params[
-                              "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
+            self.thisptr.tune(
+                dereference(
+                    self.interface),
+                self._params["maxPWerror"],
+                self._params["far_switch_radius"],
+                self._params["bessel_cutoff"])
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -767,7 +856,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
 IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):
         """
-        Electrostatics solver for systems with two periodic dimensions. 
+        Electrostatics solver for systems with two periodic dimensions.
         More detail are in the user guide :ref:`mmm2d_guide`
 
         Parameters
@@ -792,7 +881,7 @@ IF ELECTROSTATICS:
                                   If dielectric is specified this paramter sets the
                                   dielectric constant *below* the simulation box
                                   :math:`\\varepsilon_\\mathrm{bot}`
-        dielectric_contrast_on  : int, optional 
+        dielectric_contrast_on  : int, optional
                                   Selector parameter for setting a dielectric
                                   contrast between the upper simulation boundary
                                   and the simulation box, and between the lower
@@ -816,17 +905,20 @@ IF ELECTROSTATICS:
                                   If capacitor mode is selected this parameter
                                   controls the applied voltage.
         far_cut                 : float, optional
-                                  Cut off radius, use with care, intended for testing purposes. 
+                                  Cut off radius, use with care, intended for testing purposes.
         """
+
         def validate_params(self):
             default_params = self.default_params()
             if self._params["bjerrum_length"] < 0:
                 raise ValueError("Bjerrum_length should be a positive double")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
-            if self._params["dielectric"] == 1 and (self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
+            if self._params["dielectric"] == 1 and (
+                    self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
                 raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
+            if self._params["dielectric_contrast_on"] == 1 and (
+                    self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
             if self._params["capacitor"] == 1 and self._params["pot_diff"] == default_params["pot_diff"]:
                 raise ValueError("Potential difference not set!")
@@ -876,17 +968,26 @@ IF ELECTROSTATICS:
         def _set_params_in_es_core(self):
             coulomb_set_bjerrum(self._params["bjerrum_length"])
             if self._params["dielectric"]:
-                self._params["delta_mid_top"] = (self._params[
-                                                 "mid"] - self._params["top"]) / (self._params["mid"] + self._params["top"])
-                self._params["delta_mid_bot"] = (self._params[
-                                                 "mid"] - self._params["bot"]) / (self._params["mid"] + self._params["bot"])
+                self._params["delta_mid_top"] = (
+                    self._params["mid"] - self._params["top"]) / (
+                    self._params["mid"] + self._params["top"])
+                self._params["delta_mid_bot"] = (
+                    self._params["mid"] - self._params["bot"]) / (
+                    self._params["mid"] + self._params["bot"])
 
             if self._params["capacitor"]:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
                 self._params["const_pot_on"] = 1
 
-            print(MMM2D_set_params(self._params["maxPWerror"], self._params["far_cut"], self._params["delta_mid_top"], self._params["delta_mid_bot"], self._params["capacitor"], self._params["pot_diff"]))
+            print(
+                MMM2D_set_params(
+                    self._params["maxPWerror"],
+                    self._params["far_cut"],
+                    self._params["delta_mid_top"],
+                    self._params["delta_mid_bot"],
+                    self._params["capacitor"],
+                    self._params["pot_diff"]))
 
         def _activate_method(self):
             coulomb.method = COULOMB_MMM2D
@@ -912,5 +1013,5 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos,self)._deactivate_method()
+                super(Scafacos, self)._deactivate_method()
                 scafacos.free_handle()
