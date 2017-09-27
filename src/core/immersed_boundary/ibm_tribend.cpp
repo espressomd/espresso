@@ -182,17 +182,21 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, c
     if ( !flat )
     {
       // Compute theta0
-      Particle p1, p2, p3, p4;
+/*      Particle p1, p2, p3, p4;
       get_particle_data(ind1, &p1);
       get_particle_data(ind2, &p2);
       get_particle_data(ind3, &p3);
-      get_particle_data(ind4, &p4);
+      get_particle_data(ind4, &p4);*/
+      const std::unique_ptr<Particle> p1 = get_particle_data(ind1);
+      const std::unique_ptr<Particle> p2 = get_particle_data(ind2);
+      const std::unique_ptr<Particle> p3 = get_particle_data(ind3);
+      const std::unique_ptr<Particle> p4 = get_particle_data(ind4);
       
       //Get vectors of triangles
       double dx1[3], dx2[3], dx3[3];
-      get_mi_vector(dx1, p1.r.p, p3.r.p);
-      get_mi_vector(dx2, p2.r.p, p3.r.p);
-      get_mi_vector(dx3, p4.r.p, p3.r.p);
+      get_mi_vector(dx1, p1->r.p, p3->r.p);
+      get_mi_vector(dx2, p2->r.p, p3->r.p);
+      get_mi_vector(dx3, p4->r.p, p3->r.p);
       
       //Get normals on triangle; pointing outwards by definition of indices sequence
       double n1l[3], n2l[3];
