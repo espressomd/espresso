@@ -16,8 +16,8 @@
 
 // Dummy functions. They are required by Espresso, but they don't do anything here.
 // We have our own update functions.
-//void update_mol_pos_particle(Particle *) {};
-//void update_mol_vel_particle(Particle *) {};
+void update_mol_pos_particle(Particle *) {};
+void update_mol_vel_particle(Particle *) {};
 void distribute_mol_force() {};
 
 // ****** Functions for internal use ********
