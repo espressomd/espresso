@@ -108,14 +108,14 @@ IF REACTION_ENSEMBLE:
             """
             return RE.m_current_reaction_system.slab_start_z, RE.m_current_reaction_system.slab_end_z       
          
-        def set_volume(volume):
+        def set_volume(self,volume):
             """
             set the volume to be used in the acceptance probability of the reaction ensemble. This can be useful when using constraints, if the relevant volume is different from the box volume. If not used the default volume which is used, is the box volume.
 
             """
             RE.m_current_reaction_system.volume=volume
 
-        def get_volume(volume):
+        def get_volume(self,volume):
             """
             get the volume to be used in the acceptance probability of the reaction ensemble.
 
