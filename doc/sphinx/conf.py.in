@@ -41,7 +41,6 @@ extensions = [
     'sphinxcontrib.bibtex',
     'numpydoc',
     'doxylink'
-#    'breathe'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -309,8 +308,5 @@ autodoc_default_flags = ['members',
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
-## breathe extension
-#breathe_projects = { "espresso": '@CMAKE_BINARY_DIR@/doc/doxygen/xml' }
-#breathe_default_project = "espresso"
 
 doxylink = {"espresso": ('@CMAKE_BINARY_DIR@/doc/doxygen/espresso.tag', '@CMAKE_BINARY_DIR@/doc/doxygen/html/')} 

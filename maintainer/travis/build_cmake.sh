@@ -74,7 +74,7 @@ else
     exit $ec
 fi
 # enforce style rules
-grep 'class[^_].*[^\)]\s*:\s*$' $(find . -name '*.py*') && echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
+pylint --score=no --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
 
 if ! $insource; then
     if [ ! -d $builddir ]; then
