@@ -11,7 +11,9 @@ module. This module provides classes for the different available shapes::
 
 Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
-Lattice-Boltzmann fluid.
+Lattice-Boltzmann fluid. If you just want to observe "normal" behaviour make
+sure all parts of your shape are within the central box since the distance to the
+shape is calculated only within the central box.
 
 Creating different shapes
 =========================
