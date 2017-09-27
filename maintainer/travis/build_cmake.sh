@@ -79,7 +79,7 @@ if [ $(pylint --version | grep -o 'pylint [0-9]\.[0-9]\.[0-9]' | awk '{ print $2
 else
     score_option=''
 fi
-pylint $score_option --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
+pylint $score_option --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || {echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1}
 
 if ! $insource; then
     if [ ! -d $builddir ]; then
