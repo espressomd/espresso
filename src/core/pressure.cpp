@@ -137,10 +137,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
-  
+
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= volume;
-  
+
   /* Intra- and Inter- part of nonbonded interaction */
   for (n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0*volume;

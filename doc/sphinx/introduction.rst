@@ -115,7 +115,7 @@ In the "Tested" column, we note whether there is an integration test for the met
 If you believe that the status of a certain method is wrong, please
 report so to the developers.
 
-.. tabularcolumns:: |c|c|c|
+.. tabularcolumns:: |l|c|c|c|
 
 +--------------------------------+------------------------+------------------+------------+
 | **Feature**                    | **Development Status** | **Usage Status** | **Tested** |
