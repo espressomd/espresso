@@ -84,7 +84,7 @@ pylint_command () {
         exit 1
     fi
 }
-if [ $(pylint_command --version | grep -o 'pylint [0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
+if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
     score_option='--score=no'
 else
     score_option=''
