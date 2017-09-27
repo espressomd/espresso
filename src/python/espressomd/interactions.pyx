@@ -1393,7 +1393,9 @@ IF IMMERSED_BOUNDARY == 1:
             if self._params["elasticLaw"] == "Skalak":
                 el = 1
             IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], int(el), self._params["k1"], self._params["k2"])
-
+ELSE:
+    class IBM_Triel(BondedInteractionNotDefined):
+        name = "IBM_TRIEL"
 
 
 
