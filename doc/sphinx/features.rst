@@ -138,16 +138,6 @@ integrator or thermostat:
 -  Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
 
--  enable Stokesian Dynamics.
-
--  disable periodic boundary conditions in Stokesian Dynamics.
-
--  use float instead of double in Stokesian Dynamics.
-
--  disable nearfield of Stokesian Dynamics.
-
--  enable debug Stokesian Dynamics.
-
 Interactions
 ------------
 
@@ -279,6 +269,3 @@ looking directly at the code.
 -  Causes to try to provoke a core dump when exiting unexpectedly.
 
 -  Causes to try this even with MPI errors.
-
--  Causes to check more things in the Stokesian Dynamics code. If is
-   larger 1, SD prints more informations.

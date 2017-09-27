@@ -10,6 +10,9 @@ class Constraints(ScriptInterfaceHelper):
 
     _so_name = "Constraints::Constraints"
 
+    def __getitem__(self, key):
+        return self.call_method("get_elements")[key]
+
     def add(self, *args, **kwargs):
         """
         Add a constraint to the list.
@@ -19,12 +22,12 @@ class Constraints(ScriptInterfaceHelper):
 
         Either an :class:`espressomd.constraints.Constraint`, or
         the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
-        
+
         Returns
         ----------
         constraint : :class:`espressomd.constraints.Constraint`
             The added constraint
-        
+
         """
 
         if len(args) == 1:
@@ -48,6 +51,7 @@ class Constraints(ScriptInterfaceHelper):
         """
 
         self.call_method("remove", constraint=constraint)
+
 
 
 class Constraint(ScriptInterfaceHelper):
@@ -81,22 +85,22 @@ class ShapeBasedConstraint(Constraint):
 
     Examples
     ----------
-    
+
     >>> import espressomd
     >>> from espressomd import shapes
     >>> system = espressomd.System()
-    >>> 
+    >>>
     >>> # create first a shape-object to define the constraint surface
     >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
-    >>> 
+    >>>
     >>> # now create an un-penetrable shape-based contraint of type 0
     >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
-    >>> 
+    >>>
     >>> #place a trapped particle inside this sphere
     >>> system.part.add(id=0, pos=[5,5,5], type=1)
-    >>> 
+    >>>
 
-    
+
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"

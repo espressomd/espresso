@@ -247,7 +247,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice, Fieldtyp
   num = 2*3; /* two communications in each space direction */
 
   hc->num = num ;
-  hc->halo_info = (HaloInfo*) Utils::realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
+  hc->halo_info = Utils::realloc(hc->halo_info,num*sizeof(HaloInfo)) ;
 
   int extent = fieldtype->extent;
 

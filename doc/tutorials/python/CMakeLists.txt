@@ -24,9 +24,19 @@ add_subdirectory(01-lennard_jones)
 add_subdirectory(02-charged_system)
 add_subdirectory(04-lattice_boltzmann)
 add_subdirectory(05-raspberry_electrophoresis)
+add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials_py DEPENDS tutorials_py_00 tutorials_py_01 tutorials_py_02 tutorials_py_04 tutorials_py_05 tutorials_py_07 tutorials_py_08)
+add_custom_target(tutorials_py
+  DEPENDS
+  tutorials_py_00
+  tutorials_py_01
+  tutorials_py_02
+  tutorials_py_04
+  tutorials_py_05
+  tutorials_py_06
+  tutorials_py_07
+  tutorials_py_08)

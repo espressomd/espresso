@@ -21,7 +21,7 @@
 /** \file pressure.cpp
     Implementation of \ref pressure.hpp "pressure.h".
 */
-#include "pressure.hpp"
+#include "pressure_inline.hpp"
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "initialize.hpp"
@@ -29,18 +29,21 @@
 #include "nsquare.hpp"
 #include "layered.hpp"
 #include "virtual_sites_relative.hpp" 
+#include "npt.hpp"
+#include "p3m.hpp"
+#include "p3m-dipolar.hpp"
 
-Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0,0};
-Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0,0};
-Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0,0};
-Observable_stat total_p_tensor = {0, {NULL,0,0},0,0,0,0,0};
+Observable_stat virials  = {0, {}, 0,0,0,0,0};
+Observable_stat total_pressure = {0, {}, 0,0,0,0,0};
+Observable_stat p_tensor = {0, {},0,0,0,0,0};
+Observable_stat total_p_tensor = {0, {},0,0,0,0,0};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded  = {0, {NULL,0,0}, 0,0,0};
-Observable_stat_non_bonded total_pressure_non_bonded = {0, {NULL,0,0}, 0,0,0};
-Observable_stat_non_bonded p_tensor_non_bonded = {0, {NULL,0,0},0,0,0};
-Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {NULL,0,0},0,0,0};
+Observable_stat_non_bonded virials_non_bonded  = {0, {}, 0,0,0};
+Observable_stat_non_bonded total_pressure_non_bonded = {0, {}, 0,0,0};
+Observable_stat_non_bonded p_tensor_non_bonded = {0, {},0,0,0};
+Observable_stat_non_bonded total_p_tensor_non_bonded = {0, {},0,0,0};
 
 nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0.0},1, 0 ,{NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},0,0,0};
 
@@ -134,10 +137,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
-  
+
   for(i=9; i<p_tensor.data.n; i++)
     p_tensor.data.e[i]  /= volume;
-  
+
   /* Intra- and Inter- part of nonbonded interaction */
   for (n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0*volume;
