@@ -1356,6 +1356,41 @@ ELSE:
     class Angle_Cossquare(BondedInteractionNotDefined):
         name = "BOND_ANGLE"
 
+# IBM triel
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_Triel(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIEL
+
+        def type_name(self):
+            return "IBM_Triel"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "k1","k2","elasticLaw", "maxDist"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3","k1", "elasticLaw", "maxDist"
+
+        def set_default_params(self):
+            self._params = {"k2":0}
+
+        def _get_params_from_es_core(self):
+            return {}
+#               {"maxdist":bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,\
+#                 "k1":bonded_ia_params[self._bond_id].p.ibm_triel.k1,\
+#                 "k2":bonded_ia_params[self._bond_id].p.ibm_triel.k2,\
+#                 "elasticLaw":bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+
+        def _set_params_in_es_core(self):
+            if self._params["elasticLaw"] == "NeoHookean":
+                el = 0
+            if self._params["elasticLaw"] == "Skalak":
+                el = 1
+            IBM_Triel_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["maxDist"], int(el), self._params["k1"], self._params["k2"])
+
+
+
 
 class Oif_Global_Forces(BondedInteraction):
 
@@ -1435,6 +1470,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): Angle_Cossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
+    int(BONDED_IA_IBM_TRIEL): IBM_Triel,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
