@@ -1742,9 +1742,9 @@ cdef class ParticleList(object):
                 "pos attribute must be specified for new particle")
 
         if len(np.array(P["pos"]).shape) == 2:
-             return self._place_new_particles(P)
-         else:
-             return self._place_new_particle(P)
+            return self._place_new_particles(P)
+        else:
+            return self._place_new_particle(P)
  
      def _place_new_particle(self, P):
      
