@@ -932,7 +932,7 @@ cdef class ParticleHandle(object):
                     pointer_to_gamma(self.particle_data.get(), gamma)
                     return gamma[0]
         IF ROTATION:
-            IF ROTATIONAL_INERTIA:
+            IF PARTICLE_ANISOTROPY:
                 property gamma_rot:
                     """
                     Rotational friction coefficient per particle in Langevin.
@@ -940,7 +940,7 @@ cdef class ParticleHandle(object):
                     gamma_rot : list of floats
 
                     .. note::
-                       This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and ROTATIONAL_INERTIA
+                       This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and PARTICLE_ANISOTROPY
 
                     """
 
