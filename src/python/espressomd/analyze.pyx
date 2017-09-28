@@ -330,14 +330,14 @@ class Analysis(object):
            pressure(v_comp=False)
            """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
-    #
+    
         # Dict to store the results
         p = OrderedDict()
 
         # Update in espresso core if necessary
         if (c_analyze.total_pressure.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
@@ -352,7 +352,7 @@ class Analysis(object):
         # Ideal
         p["ideal"] = c_analyze.total_pressure.data.e[0]
 
-        # Nonbonded
+        # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
@@ -371,7 +371,7 @@ class Analysis(object):
         total_non_bonded = 0
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
@@ -380,7 +380,6 @@ class Analysis(object):
                 p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
-        p["non_bonded_inter"] = total_inter
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
 
@@ -420,30 +419,30 @@ class Analysis(object):
         # Update in espresso core if necessary
         if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         tmp = np.zeros(9)
         for i in range(9):
-            value = c_analyze.total_p_tensor.data.e[i]
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                value += c_analyze.total_p_tensor.data.e[9*k + i]
-            # I don't know, why the 1/2 is needed.
-            tmp[i]=value/2.
+                tmp[i] += c_analyze.total_p_tensor.data.e[9*k + i]
 
         p["total"] = tmp.reshape((3,3))
 
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
+        p["ideal"] = p["ideal"].reshape((3,3))
 
-        # Nonbonded
+        # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
             if (bonded_ia_params[i].type != 0):
-                p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
+                p["bonded", i] = np.reshape( create_nparray_from_double_array(
+                  c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i), 9),
+                  (3, 3) )
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -454,16 +453,23 @@ class Analysis(object):
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
-
-                p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+                p["non_bonded", i, j] = np.reshape(
+                  create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
+                    &c_analyze.total_p_tensor, i, j), 9), (3, 3) )
                 total_non_bonded += p["non_bonded", i, j]
 
-                p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_intra", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_intra(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
-                p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_inter", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_inter(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -475,7 +481,8 @@ class Analysis(object):
             total_coulomb = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.coulomb, 9), (3, 3) )
                 total_coulomb = p["coulomb", i]
             p["coulomb"] = total_coulomb
 
@@ -484,7 +491,8 @@ class Analysis(object):
             total_dipolar = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.dipolar, 9), (3, 3) )
                 total_dipolar = p["dipolar", i]
             p["dipolar"] = total_dipolar
 

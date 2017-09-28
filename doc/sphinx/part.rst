@@ -1,7 +1,6 @@
-.. _Setting up particles:
-
+====================
 Setting up particles
-********************
+====================
 
 Creating single particles
 =========================
