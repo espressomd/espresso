@@ -115,7 +115,7 @@ IF REACTION_ENSEMBLE:
             """
             RE.m_current_reaction_system.volume=volume
 
-        def get_volume(self,volume):
+        def get_volume(self):
             """
             get the volume to be used in the acceptance probability of the reaction ensemble.
 
