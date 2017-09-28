@@ -476,7 +476,7 @@ cdef class ParticleHandle(object):
             """
             Director.
             .. note::
-               Seeting the director is not implemented.
+               Setting the director is not implemented.
                This needs the feature ROTATION.
 
             """
@@ -666,11 +666,9 @@ cdef class ParticleHandle(object):
             vs_relative : tuple: (PID, distance, (q1,q2,q3,q4))
 
             ..todo ::
-
               document this
 
             .. note::
-
                This needs the feature VIRTUAL_SITES_RELATIVE
 
             """
@@ -1618,7 +1616,6 @@ cdef class _ParticleSliceImpl(object):
         See Also
         ----------
         add
-        delete, clear
 
         """
 
@@ -1711,7 +1708,7 @@ cdef class ParticleList(object):
 
         See Also
         ----------
-        remove,delete,clear
+        remove
 
         Examples
         ----------
@@ -1744,6 +1741,13 @@ cdef class ParticleList(object):
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
+        if len(np.array(P["pos"]).shape) == 2:
+             return self._place_new_particles(P)
+         else:
+             return self._place_new_particle(P)
+ 
+     def _place_new_particle(self, P):
+     
         # Handling of particle id
         if not "id" in P:
             # Generate particle id
@@ -1836,9 +1840,36 @@ cdef class ParticleList(object):
 
     def writevtk(self, fname, types='all'):
         """
-        .. todo:: `Documentation missing.`
-        .. todo:: `move to ./io/writer/`
-
+        Write the positions and velocities of particles with specified
+        types to a VTK file.
+ 
+         Parameters
+         ----------
+ 
+         'fname': string
+             filename of the target output file
+         'types': list of integers or the string 'all', optional (default: 'all')
+             A list of particle types which should be output to 'fname'
+   
+         Examples
+         --------
+ 
+         >>> import espressomd
+         >>> 
+         >>> system = espressomd.System()
+         >>> 
+         >>> # add several particles
+         >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
+         >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
+         >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
+         >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
+         >>> 
+         >>> # write to VTK
+         >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
+         >>> system.part.writevtk("part_type_2.vtk", types=[2])
+         >>> system.part.writevtk("part_all.vtk")
+ 
+         :todo: `move to ./io/writer/`
         """
 
         global box_l
