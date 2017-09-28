@@ -575,26 +575,19 @@ void three_particle_binding_domain_decomposition(std::vector<collision_struct> g
                         // (bond is placed on 1st particle, order of bond partners
   	                      // does not matter, so we don't need non-cyclic permutations):
 
-                        if (P->l.ghost) {
-                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, P->p.identity));
-                          continue;
-                        }
-                        //TRACE(printf("%d: LOOP: %d Handling collision of particles FIRST CONFIGURATION %d %d %d\n", this_node, id, p1->p.identity, P->p.identity, p2->p.identity));
-                        coldet_do_three_particle_bond(P,p1,p2);
-
-                        if (p1->l.ghost) {
-                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p1->p.identity));
-                          continue;
+                        if (!P->l.ghost) {
+                          coldet_do_three_particle_bond(P,p1,p2);
                         }
 
-                        coldet_do_three_particle_bond(p1,P,p2);
-
-                        if (p2->l.ghost) {
-                          //TRACE(printf("%d: center particle is ghost: %d\n", this_node, p2->p.identity));
-                          continue;
+                        if (!p1->l.ghost) {
+                          coldet_do_three_particle_bond(p1,P,p2);
                         }
 
-  	                      coldet_do_three_particle_bond(p2,P,p1);
+
+                        if (!p2->l.ghost) {
+  	                  coldet_do_three_particle_bond(p2,P,p1);
+                        }
+
 
                      } // loop over particles in this cell
 
