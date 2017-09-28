@@ -27,7 +27,7 @@ import numpy as np
 import espressomd  # pylint: disable=import-error
 import h5py  # h5py has to be imported *after* espressomd (MPI)
 
-npart = 25
+npart = 26
 
 
 class CommonTests(ut.TestCase):
@@ -39,7 +39,8 @@ class CommonTests(ut.TestCase):
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
     # need to unfold the positions of the hdf5 file.
-    system.box_l = [npart, npart, npart]
+    box_l = npart / 2.0
+    system.box_l = [box_l, box_l, box_l]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     for i in range(npart):
@@ -54,17 +55,34 @@ class CommonTests(ut.TestCase):
     system.integrator.run(steps=0)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         if os.path.isfile('test.h5'):
             os.remove('test.h5')
-        self.py_file = self.py_pos = self.py_vel = self.py_f = self.py_id = None
+        cls.py_file = cls.py_pos = cls.py_vel = cls.py_f = cls.py_id = cls.py_img = None
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        self.assertTrue(np.allclose(
-            np.array([(float(i), float(i), float(i)) for i in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])),
-            msg="Positions not written correctly by H5md!")
+        self.assertTrue(
+            np.allclose(
+                np.array(
+                    [
+                        (float(i) %
+                         self.box_l, float(i) %
+                         self.box_l, float(i) %
+                         self.box_l) for i in range(npart)]), np.array(
+                    [
+                        x for (
+                            _, x) in sorted(
+                            zip(
+                                self.py_id, self.py_pos))])))
+
+    def test_img(self):
+        """Test if images have been written properly."""
+        images = np.append(np.zeros((int(npart / 2), 3)),
+                           np.ones((int(npart / 2), 3)))
+        images = images.reshape(npart, 3)
+        self.assertTrue((np.allclose(np.array(
+            [x for (_, x) in sorted(zip(self.py_id, self.py_img))]), images)))
 
     def test_vel(self):
         """Test if velocities have been written properly."""
@@ -92,10 +110,11 @@ class H5mdTestOrdered(CommonTests):
     Test the core implementation of writing hdf5 files if written ordered.
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         write_ordered = True
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        self.h5 = h5md.H5md(
+        h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
             write_vel=True,
@@ -103,16 +122,18 @@ class H5mdTestOrdered(CommonTests):
             write_species=True,
             write_mass=True,
             write_ordered=write_ordered)
-        self.h5.write()
-        self.h5.flush()
-        self.h5.close()
-        self.py_file = h5py.File("test.h5", 'r')
-        self.py_pos = self.py_file['particles/atoms/position/value']
-        self.py_vel = self.py_file['particles/atoms/velocity/value']
-        self.py_f = self.py_file['particles/atoms/force/value']
-        self.py_id = self.py_file['particles/atoms/id/value']
+        h5.write()
+        h5.flush()
+        h5.close()
+        cls.py_file = h5py.File("test.h5", 'r')
+        cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
+        cls.py_img = cls.py_file['particles/atoms/image/value'][0]
+        cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        cls.py_f = cls.py_file['particles/atoms/force/value'][0]
+        cls.py_id = cls.py_file['particles/atoms/id/value'][0]
 
-    def tearDown(cls):
+    @classmethod
+    def tearDownClass(cls):
         os.remove("test.h5")
 
     def test_ids(self):
@@ -129,10 +150,11 @@ class H5mdTestUnordered(CommonTests):
     Test the core implementation of writing hdf5 files if written un-ordered.
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         write_ordered = False
         from espressomd.io.writer import h5md  # pylint: disable=import-error
-        self.h5 = h5md.H5md(
+        h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
             write_vel=True,
@@ -140,16 +162,18 @@ class H5mdTestUnordered(CommonTests):
             write_species=True,
             write_mass=True,
             write_ordered=write_ordered)
-        self.h5.write()
-        self.h5.flush()
-        self.h5.close()
-        self.py_file = h5py.File("test.h5", 'r')
-        self.py_pos = self.py_file['particles/atoms/position/value']
-        self.py_vel = self.py_file['particles/atoms/velocity/value']
-        self.py_f = self.py_file['particles/atoms/force/value']
-        self.py_id = self.py_file['particles/atoms/id/value']
+        h5.write()
+        h5.flush()
+        h5.close()
+        cls.py_file = h5py.File("test.h5", 'r')
+        cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
+        cls.py_img = cls.py_file['particles/atoms/image/value'][0]
+        cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        cls.py_f = cls.py_file['particles/atoms/force/value'][0]
+        cls.py_id = cls.py_file['particles/atoms/id/value'][0]
 
-    def tearDown(cls):
+    @classmethod
+    def tearDownClass(cls):
         os.remove("test.h5")
 
 

@@ -349,7 +349,7 @@ cdef class System(object):
                     raise ValueError("Wrong # of args! Usage: lees_edwards_offset { new_offset }")
 
             def __get__(self):
-          #   global lees_edwards_offset
+        # global lees_edwards_offset
                 return lees_edwards_offset
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
