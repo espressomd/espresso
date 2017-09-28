@@ -34,6 +34,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip3 install cython
 			pip3 install numpy
 			pip3 install pep8
+			pip3 install pylint
 			PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | awk -F . '{print $1"."$2}')
 			export cmake_params="-DPYTHON_EXECUTABLE=$(which python3) $cmake_params"
 		;;
@@ -43,6 +44,7 @@ elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 			pip install cython
 			pip install numpy
 			pip install pep8
+            pip install pylint
 		;;
 	esac
 	brew install boost-mpi

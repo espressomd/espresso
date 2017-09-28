@@ -3266,6 +3266,8 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
  * @param host_lb_boundary_velocity   The constant velocity at the boundary, set by the user (Input)
 */
 void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_lb_boundary_velocity){
+  if (this_node != 0) return;
+  
   int temp = host_n_lb_boundaries;
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
