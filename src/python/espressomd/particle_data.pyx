@@ -711,22 +711,6 @@ cdef class ParticleHandle(object):
 
             """
 
-            if isinstance(_relto, int):
-                if vs_relate_to(self.id, _relto):
-                    handle_errors("Vs_relative setup failed.")
-            else:
-                raise ValueError(
-                    "Argument of vs_auto_relate_to has to be of type int.")
-
-                # Virtual sites relative parameters
-
-        # vs_auto_relate_to
-        def vs_auto_relate_to(self, _relto):
-            """
-            Setup this particle as virtual site relative to the particle with the given id.
-
-            """
-
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
             if vs_relate_to(self.id, _relto):
@@ -914,7 +898,7 @@ cdef class ParticleHandle(object):
                 """
 
                 def __set__(self, _gamma):
-                    cdef double gamma[3]
+                    cdef Vector3d gamma
                     check_type_or_throw_except(
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
@@ -969,7 +953,7 @@ cdef class ParticleHandle(object):
                     """
 
                     def __set__(self, _gamma_rot):
-                        cdef double gamma_rot[3]
+                        cdef Vector3d gamma_rot
                         check_type_or_throw_except(
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
                         for i in range(3):
@@ -1205,8 +1189,8 @@ cdef class ParticleHandle(object):
             def __set__(self, _params):
                 cdef particle_parameters_swimming swim
                 swim.swimming = True
-                v_swim = 0.0
-                f_swim = 0.0
+                swim.v_swim = 0.0
+                swim.f_swim = 0.0
                 IF LB or LB_GPU:
                     swim.push_pull = 0
                     swim.dipole_length = 0.0
@@ -1768,12 +1752,6 @@ cdef class ParticleList(object):
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
 
-        if len(np.array(P["pos"]).shape) == 2:
-            self._place_new_particles(P)
-        else:
-            self._place_new_particle(P)
-
-    def _place_new_particle(self, P):
 
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
