@@ -258,6 +258,11 @@ cdef extern from "interaction_data.hpp":
         double k1
         double k2
 
+#* Parameters for IBM Tribend  */
+    ctypedef struct IBM_Tribend_Parameters:
+        double kb
+        double theta0
+
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
@@ -277,6 +282,7 @@ cdef extern from "interaction_data.hpp":
         Angledist_bond_parameters angledist
         Endangledist_bond_parameters endangledist
         IBM_Triel_Parameters ibm_triel
+        IBM_Tribend_Parameters ibm_tribend
 
     ctypedef struct bonded_ia_parameters:
         int type
@@ -309,6 +315,8 @@ cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal)
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
+cdef extern from "immersed_boundary/ibm_tribend.hpp":
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
 
 
 IF ROTATION:

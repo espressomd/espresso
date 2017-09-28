@@ -1397,6 +1397,37 @@ ELSE:
     class IBM_Triel(BondedInteractionNotDefined):
         name = "IBM_TRIEL"
 
+# IBM tribend
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_Tribend(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_TRIBEND
+
+        def type_name(self):
+            return "IBM_Tribend"
+
+        def valid_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
+
+        def required_keys(self):
+            return "ind1", "ind2", "ind3", "ind4", "kb"
+
+        def set_default_params(self):
+            self._params = {"flat":False}
+
+        def _get_params_from_es_core(self):
+            return {}
+
+        def _set_params_in_es_core(self):
+            if self._params["refShape"] == "Flat":
+                flat = True
+            if self._params["refShape"] == "Initial":
+                flat = False
+            IBM_Tribend_SetParams(self._bond_id,self._params["ind1"],self._params["ind2"],self._params["ind3"],self._params["ind4"], self._params["kb"], flat)
+ELSE:
+    class IBM_Tribend(BondedInteractionNotDefined):
+        name = "IBM_TRIBEND"
 
 
 class Oif_Global_Forces(BondedInteraction):
@@ -1478,6 +1509,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_OIF_GLOBAL_FORCES): Oif_Global_Forces,
     int(BONDED_IA_OIF_LOCAL_FORCES): Oif_Local_Forces,
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
+    int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = Subt_Lj
