@@ -1746,7 +1746,7 @@ cdef class ParticleList(object):
         else:
             return self._place_new_particle(P)
  
-     def _place_new_particle(self, P):
+    def _place_new_particle(self, P):
      
         # Handling of particle id
         if not "id" in P:
