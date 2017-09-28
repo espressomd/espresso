@@ -612,6 +612,16 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
   d_v[index].v[2]=u_tot[2]; 
 }
 
+__device__ inline void equilibrium_modes(float *j, float Rho, float *modes_from_pi_eq){
+  
+  modes_from_pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
+  modes_from_pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/Rho;
+  modes_from_pi_eq[2] = (((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2])) - 3.0f*(j[2]*j[2]))/Rho;
+  modes_from_pi_eq[3] = j[0]*j[1]/Rho;
+  modes_from_pi_eq[4] = j[0]*j[2]/Rho;
+  modes_from_pi_eq[5] = j[1]*j[2]/Rho; 
+}
+
 /**lb_relax_modes, means collision update of the modes
  * @param index   node index / thread index (Input)
  * @param mode    Pointer to the local register values mode (Input/Output)
@@ -630,7 +640,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii)
   { 
-      float Rho; float j[3]; float modes_from_pi_eq[6];
+      float Rho; float j[3]; float modes_from_pi_eq[6]; 
 
       Rho = mode[0 + ii * LBQ] + para.rho[ii]*para.agrid*para.agrid*para.agrid ;
       j[0] = Rho * u_tot[0];
@@ -638,14 +648,9 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
       j[2] = Rho * u_tot[2];
 
       /** equilibrium part of the stress modes (eq13 schiller)*/
-
-      modes_from_pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
-      modes_from_pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/Rho;
-      modes_from_pi_eq[2] = (((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2])) - 3.0f*(j[2]*j[2]))/Rho;
-      modes_from_pi_eq[3] = j[0]*j[1]/Rho;
-      modes_from_pi_eq[4] = j[0]*j[2]/Rho;
-      modes_from_pi_eq[5] = j[1]*j[2]/Rho;
- 
+     
+      equilibrium_modes(j, Rho, modes_from_pi_eq);
+    
       /** in Shan-Chen we have to relax the momentum modes as well using the mobility, but
           the total momentum is conserved */  
 
