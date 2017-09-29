@@ -74,7 +74,22 @@ else
     exit $ec
 fi
 # enforce style rules
-grep 'class[^_].*[^\)]\s*:\s*$' $(find . -name '*.py*') && echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
+pylint_command () {
+    if hash pylint 2> /dev/null; then
+        pylint "$@"
+    elif hash pylint3 2> /dev/null; then
+        pylint3 "$@"
+    else
+        echo "pylint not found";
+        exit 1
+    fi
+}
+if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
+    score_option='--score=no'
+else
+    score_option=''
+fi
+pylint_command $score_option --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
 if ! $insource; then
     if [ ! -d $builddir ]; then
