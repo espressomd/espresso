@@ -127,9 +127,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {1, 1,
                                                                        1});
 
-/** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
-void mpi_who_has();
-
 /** Issue REQ_EVENT: tells all clients of some system change.
     The events are:
     <ul>
