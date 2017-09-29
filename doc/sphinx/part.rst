@@ -767,7 +767,7 @@ will print the shape information for all defined constraints.
 
 Getting the force on a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.system.constraints.total_force` ::
+:meth:`espressomd.system.constraints.total_force`
 
 Returns the force acting on the a constraint. Note, however, that this
 are only forces due to interactions with particles, not with other
