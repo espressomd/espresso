@@ -759,15 +759,15 @@ Getting the currently defined constraints
 
 One can interate through constraints, for example ::
   
-    for c in system.constraints:
-        print(c.shape)
+    >>> for c in system.constraints:
+    >>>    print(c.shape)
 
 will print the shape information for all defined constraints.
 
 
 Getting the force on a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:todo: `This feature is not yet implemented .`
+:meth:`espressomd.system.constraints.total_force` ::
 
 Returns the force acting on the a constraint. Note, however, that this
 are only forces due to interactions with particles, not with other
@@ -776,6 +776,9 @@ move, they are just the negative of the sum of forces acting on all
 particles due to this constraint. Similarly, the total energy does not
 contain constraint-constraint contributions.
 
+For example the pressure from wall ::
+    >>> p = system.constraints[0].total_force()
+    >>> print(p)
 
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
