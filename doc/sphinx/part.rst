@@ -1,3 +1,5 @@
+.. _Setting up particles:
+
 ====================
 Setting up particles
 ====================
