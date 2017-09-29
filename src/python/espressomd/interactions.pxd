@@ -263,6 +263,12 @@ cdef extern from "interaction_data.hpp":
         double kb
         double theta0
 
+#* Parameters for IBM VolCons  */
+    ctypedef struct IBM_VolCons_Parameters:
+        int softID
+        double kappaV
+        double volRef
+
 #* Union in which to store the parameters of an individual bonded interaction */
     ctypedef union bond_parameters "Bond_parameters":
         Fene_bond_parameters fene
@@ -283,6 +289,7 @@ cdef extern from "interaction_data.hpp":
         Endangledist_bond_parameters endangledist
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
+        IBM_VolCons_Parameters ibm_volCons
 
     ctypedef struct bonded_ia_parameters:
         int type
@@ -317,7 +324,8 @@ cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
     int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
-
+cdef extern from "immersed_boundary/ibm_volume_conservation.hpp":
+    int IBM_VolumeConservation_SetParams(const int bond_type, const int softID, const double kappaV);
 
 IF ROTATION:
     cdef extern from "harmonic_dumbbell.hpp":
@@ -374,6 +382,6 @@ cdef extern from "interaction_data.hpp":
         BONDED_IA_CG_DNA_STACKING,
         BONDED_IA_CG_DNA_BACKBONE,
         BONDED_IA_IBM_TRIEL,
-        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_IBM_TRIBEND,
+        BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA

@@ -1429,6 +1429,33 @@ ELSE:
     class IBM_Tribend(BondedInteractionNotDefined):
         name = "IBM_TRIBEND"
 
+# IBM VolCons
+IF IMMERSED_BOUNDARY == 1:
+    class IBM_VolCons(BondedInteraction):
+
+        def type_number(self):
+            return BONDED_IA_IBM_VOLUME_CONSERVATION
+
+        def type_name(self):
+            return "IBM_VolCons"
+
+        def valid_keys(self):
+            return "softID", "kappaV"
+
+        def required_keys(self):
+            return "softID", "kappaV"
+
+        def set_default_params(self):
+            self._params = {}
+
+        def _get_params_from_es_core(self):
+            return {}
+
+        def _set_params_in_es_core(self):
+            IBM_VolumeConservation_SetParams(self._bond_id,self._params["softID"],self._params["kappaV"])
+ELSE:
+    class IBM_VolCons(BondedInteractionNotDefined):
+        name = "IBM_VOLCONS"
 
 class Oif_Global_Forces(BondedInteraction):
 
