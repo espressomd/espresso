@@ -48,7 +48,7 @@ class Tabulated(ut.TestCase):
         self.system.non_bonded_inter[1, 1].tabulated.set_params(
             filename=abspath("data/lj2.tab"))
         self.system.non_bonded_inter[0, 1].tabulated.set_params(
-            filename="lj3.tab")
+            filename=abspath("data/lj3.tab"))
 
         self.system.part.add(id=0, type=1, pos=[32.6999, 6.14966, 5.34031], f=[
                              172609.00468, 90109.0416958, -61747.0304427])
