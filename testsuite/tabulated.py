@@ -26,6 +26,7 @@ from espressomd.interactions import *
 from espressomd.analyze import *
 import espressomd
 import sys
+from tests_common import abspath
 
 
 @ut.skipIf(not espressomd.has_features(["TABULATED"]),
@@ -43,9 +44,9 @@ class Tabulated(ut.TestCase):
         self.system.time_step = 0.01
 
         self.system.non_bonded_inter[0, 0].tabulated.set_params(
-            filename="lj1.tab")
+            filename=abspath("data/lj1.tab"))
         self.system.non_bonded_inter[1, 1].tabulated.set_params(
-            filename="lj2.tab")
+            filename=abspath("data/lj2.tab"))
         self.system.non_bonded_inter[0, 1].tabulated.set_params(
             filename="lj3.tab")
 
