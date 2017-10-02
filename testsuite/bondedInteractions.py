@@ -22,6 +22,7 @@ import unittest as ut
 import espressomd
 import numpy as np
 from espressomd.interactions import *
+from tests_common import abspath
 
 
 class ParticleProperties(ut.TestCase):
@@ -124,7 +125,7 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["TABULATED"]):
         test_tabulated = generateTestForBondParams(
-            0, Tabulated, {"type": "distance", "filename": "lj1.tab"})
+            0, Tabulated, {"type": "distance", "filename": abspath("data/lj1.tab")})
 
 
 if __name__ == "__main__":

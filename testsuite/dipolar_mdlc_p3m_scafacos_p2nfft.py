@@ -27,6 +27,7 @@ import espressomd.magnetostatics as magnetostatics
 import espressomd.magnetostatic_extensions as magnetostatic_extensions
 import numpy as np
 import unittest as ut
+from tests_common import abspath
 
 
 @ut.skipIf(not espressomd.has_features(["DIPOLES", "FFTW"]),
@@ -56,12 +57,12 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
         s.box_l = box_l, box_l, box_l
-        f = open("mdlc_reference_data_energy.dat")
+        f = open(abspath("data/mdlc_reference_data_energy.dat"))
         ref_E = float(f.readline())
         f.close()
 
         # Particles
-        data = np.genfromtxt("mdlc_reference_data_forces_torques.dat")
+        data = np.genfromtxt(abspath("data/mdlc_reference_data_forces_torques.dat"))
         for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
 
@@ -107,7 +108,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.box_l = box_l, box_l, box_l
 
         # Particles
-        data = np.genfromtxt("p3m_magnetostatics_system.data")
+        data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
         for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
 
@@ -115,7 +116,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
             prefactor=1, mesh=32, accuracy=1E-6, epsilon="metallic")
         s.actors.add(p3m)
         s.integrator.run(0)
-        expected = np.genfromtxt("p3m_magnetostatics_expected.data")[:, 1:]
+        expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = np.sum(np.sqrt(
             np.sum((s.part[:].f - expected[:, 0:3])**2, 1)), 0) / np.sqrt(data.shape[0])
         err_t = np.sum(np.sqrt(np.sum(
@@ -154,7 +155,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.box_l = box_l, box_l, box_l
 
         # Particles
-        data = np.genfromtxt("p3m_magnetostatics_system.data")
+        data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
         for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
 
@@ -173,7 +174,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
                 "p2nfft_alpha": "0.31"})
         s.actors.add(scafacos)
         s.integrator.run(0)
-        expected = np.genfromtxt("p3m_magnetostatics_expected.data")[:, 1:]
+        expected = np.genfromtxt(abspath("p3m_magnetostatics_expected.data"))[:, 1:]
         err_f = np.sum(np.sqrt(
             np.sum((s.part[:].f - expected[:, 0:3])**2, 1)), 0) / np.sqrt(data.shape[0])
         err_t = np.sum(np.sqrt(np.sum(
