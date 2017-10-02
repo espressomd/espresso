@@ -12,6 +12,7 @@ import collections
 import scipy.spatial
 include "myconfig.pxi"
 
+from copy import deepcopy
 
 class openGLLive(object):
 
@@ -25,6 +26,7 @@ class openGLLive(object):
             'update_fps':				  30.0,
             'periodic_images':	   		  [0, 0, 0],
             'draw_box':		 	  		  True,
+            'draw_axis':	 	  		  True,
             'quality_particles':          16,
             'quality_bonds':              16,
             'quality_arrows':             16,
@@ -32,7 +34,9 @@ class openGLLive(object):
             'close_cut_distance':         0.1,
             'far_cut_distance':           5,
             'camera_position':	   		  'auto',
-            'camera_rotation':	   		  [3.55, -0.4],
+            'camera_target':	   		  'auto',
+            'camera_right': 	   		  'auto',
+            #'camera_rotation':	   		  [3.55, -0.4],
 
             'particle_coloring':   		  'auto',
             'particle_sizes':			  'auto',
@@ -308,6 +312,13 @@ class openGLLive(object):
             self.drawLBVel()
         if self.specs['draw_box']:
             self.drawSystemBox()
+       
+        if self.specs['draw_axis']:
+            axis_fac = 0.2
+            axis_r = np.min(self.system.box_l)/50.0
+            drawArrow([0,0,0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [1, 0, 0, 1], self.specs['quality_arrows'])
+            drawArrow([0,0,0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [0, 1, 0, 1], self.specs['quality_arrows'])
+            drawArrow([0,0,0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [0, 0, 1, 1], self.specs['quality_arrows'])
 
         self.drawSystemParticles()
 
@@ -425,7 +436,7 @@ class openGLLive(object):
                             self.specs['ext_force_arrows_scale'], ptype)
                     if sc > 0:
                         drawArrow(pos, np.array(ext_f) * sc, 0.25 *
-                                  sc, [1, 1, 1], self.specs['quality_arrows'])
+                                  sc, [1, 1, 1, 1], self.specs['quality_arrows'])
 
     def drawBonds(self):
         coords = self.particles['coords']
@@ -539,15 +550,18 @@ class openGLLive(object):
         def display():
             if self.hasParticleData:
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-                glLoadIdentity()
+                #glLoadIdentity()
 
-                self.camera.glLookAt()
+
+                glLoadMatrixf(self.camera.modelview)
+                #self.camera.rotateSystem3()
+                #self.camera.glLookAt()
 
                 if self.updateLightPos:
                     self.setLightPos()
                     self.updateLightPos = False
 
-                self.camera.rotateSystem()
+          #      self.camera.rotateSystem()
 
                 self.draw()
 
@@ -569,7 +583,7 @@ class openGLLive(object):
         def motion(x, y):
             self.mouseManager.mouseMove(x, y)
             return
-
+        
         def idleUpdate():
             return
 
@@ -626,10 +640,8 @@ class openGLLive(object):
 
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
 
-        self.camera.glLookAt()
-        self.camera.rotateSystem()
+        glLoadMatrixf(self.camera.modelview)
 
         oldColMode = self.specs['particle_coloring']
         self.specs['particle_coloring'] = 'id'
@@ -743,9 +755,9 @@ class openGLLive(object):
 
         # KEYBOARD BUTTONS
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            'w', KeyboardFireEvent.Hold, self.camera.moveForward, True))
+            'w', KeyboardFireEvent.Hold, self.camera.moveUp, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
-            's', KeyboardFireEvent.Hold, self.camera.moveBackward, True))
+            's', KeyboardFireEvent.Hold, self.camera.moveDown, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'a', KeyboardFireEvent.Hold, self.camera.moveLeft, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
@@ -762,6 +774,10 @@ class openGLLive(object):
             'r', KeyboardFireEvent.Hold, self.camera.rotateSystemZR, True))
         self.keyboardManager.registerButton(KeyboardButtonEvent(
             'f', KeyboardFireEvent.Hold, self.camera.rotateSystemZL, True))
+        self.keyboardManager.registerButton(KeyboardButtonEvent(
+            't', KeyboardFireEvent.Hold, self.camera.moveForward, True))
+        self.keyboardManager.registerButton(KeyboardButtonEvent(
+            'g', KeyboardFireEvent.Hold, self.camera.moveBackward, True))
 
     # ASYNCHRONOUS PARALLEL CALLS OF glLight CAUSES SEG FAULTS, SO ONLY CHANGE
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
@@ -771,28 +787,39 @@ class openGLLive(object):
                       self.smooth_light_pos[0], self.smooth_light_pos[1], self.smooth_light_pos[2], 0.6])
 
         self.setCameraSpotlight()
+       
 
     def setCameraSpotlight(self):
-        p = self.camera.camPos + 10 * self.camera.lookDir
+        #p = np.linalg.norm(self.camera.state_pos) * self.camera.state_target
+        p = self.camera.camPos
         fp = [p[0], p[1], p[2], 1]
         glLightfv(GL_LIGHT1, GL_POSITION, fp)
-        glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, self.camera.lookDir)
+        glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, self.camera.state_target)
+
 
     def triggerLightPosUpdate(self):
         self.updateLightPos = True
 
     def initCamera(self):
-        box_diag = pow(pow(self.system.box_l[0], 2) + pow(
-            self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
-        bl = self.system.box_l[0]
-        bl2 = bl / 2.0
+        b = np.array(self.system.box_l)
+        box_diag = np.linalg.norm(b)
+        box_center = b * 0.5
         if self.specs['camera_position'] == 'auto':
-            cp = [bl * 1.3, bl * 1.3, bl * 2.5]
+            cp = [box_center[0], box_center[1], b[2]*3]
         else:
             cp = self.specs['camera_position']
-        box_center = np.array([bl2, bl2, bl2])
-        self.camera = Camera(camPos=np.array(cp), camRot=np.array(
-            self.specs['camera_rotation']), moveSpeed=0.5 * box_diag / 17.0,  center=box_center, updateLights=self.triggerLightPosUpdate)
+
+        if self.specs['camera_target'] == 'auto':
+            ct = box_center
+        else:
+            ct = self.specs['camera_target']
+        
+        if self.specs['camera_right'] == 'auto':
+            cr = np.array([1.0,0.0,0.0])
+        else:
+            cr = self.specs['camera_right']
+
+        self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 * box_diag / 17.0,  center=box_center, updateLights=self.triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
         self.smooth_light_posV = np.array([0.0, 0.0, 0.0])
         self.particle_COM = np.copy(box_center)
@@ -990,6 +1017,23 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     quadric = gluNewQuadric()
 
     d = posB - posA
+
+    # angle,t,length = calcAngle(d)
+    length = np.linalg.norm(d)
+    glTranslatef(posA[0], posA[1], posA[2])
+    
+    ax,rx,ry = rotationHelper(d)
+    glRotatef(ax, rx, ry, 0.0)
+    gluCylinder(quadric, radius, radius, length, quality, quality)
+
+    if draw_caps:
+        gluDisk(quadric, 0, radius, quality, quality)
+        glTranslatef(0, 0, length)
+        gluDisk(quadric, 0, radius, quality, quality)
+
+    glPopMatrix()
+
+def rotationHelper(d):
     if d[2] == 0.0:
         d[2] = 0.0001
 
@@ -1004,20 +1048,7 @@ def drawCylinder(posA, posB, radius, color, material, quality, draw_caps=False):
     rx = -d[1] * d[2]
     ry = d[0] * d[2]
 
-    # angle,t,length = calcAngle(d)
-    length = np.linalg.norm(d)
-    glTranslatef(posA[0], posA[1], posA[2])
-
-    glRotatef(ax, rx, ry, 0.0)
-    gluCylinder(quadric, radius, radius, length, quality, quality)
-
-    if draw_caps:
-        gluDisk(quadric, 0, radius, quality, quality)
-        glTranslatef(0, 0, v)
-        gluDisk(quadric, 0, radius, quality, quality)
-
-    glPopMatrix()
-
+    return ax, rx, ry
 
 def drawSpheroCylinder(posA, posB, radius, color, material, quality):
     setSolidMaterial(color[0], color[1], color[
@@ -1061,28 +1092,15 @@ def drawSpheroCylinder(posA, posB, radius, color, material, quality):
 
 
 def drawArrow(pos, d, radius, color, quality):
-    setSolidMaterial(color[0], color[1], color[2])
+    pos2 = np.array(pos) + np.array(d)
+
+    drawCylinder(pos, pos2, radius, color,[0.6,1.0,0.1], quality)
+    
+    ax, rx, ry = rotationHelper(d)
+
     glPushMatrix()
-    glPushMatrix()
-
-    v = np.linalg.norm(d)
-    ax = 57.2957795 * acos(d[2] / v)
-    if d[2] < 0.0:
-        ax = -ax
-    rx = -d[1] * d[2]
-    ry = d[0] * d[2]
-
-    # angle,t,length = calcAngle(d)
-    glTranslatef(pos[0], pos[1], pos[2])
+    glTranslatef(pos2[0], pos2[1], pos2[2])
     glRotatef(ax, rx, ry, 0.0)
-    quadric = gluNewQuadric()
-    gluCylinder(quadric, radius, radius, v, quality, quality)
-
-    glPopMatrix()
-    e = pos + d
-    glTranslatef(e[0], e[1], e[2])
-    glRotatef(ax, rx, ry, 0.0)
-
     glutSolidCone(radius * 3, radius * 3, quality, quality)
     glPopMatrix()
 
@@ -1236,80 +1254,208 @@ class KeyboardManager(object):
 
 class Camera(object):
 
-    def __init__(self, camPos=np.array([0, 0, 1]), camRot=np.array([pi, 0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
+    def __init__(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array([1.0,0.0,0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0]), updateLights=None):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
-        self.camPos = camPos
-        self.camRot = camRot
+        #self.camPos = np.array(camPos) + np.array(center)
+
         self.center = center
-        self.camRotGlobal = np.array([0.0, 0.0, 0.0])
         self.updateLights = updateLights
-        self.calcCameraDirections()
+        
+        self.modelview = np.identity(4, np.float32)
+
+        t = camPos-camTarget
+        r = np.linalg.norm(t)
+
+        self.state_target = -t / r 
+        self.state_right = camRight / np.linalg.norm(camRight)
+        self.state_up = np.cross(self.state_right, self.state_target)
+
+        self.state_pos = np.array([0,0,r])
+        
+        #self.state_pos[0]  *= -1
+        #self.state_pos[1]  *= -1
+        ##self.state_pos[2]  *= -1
+        #self.state_pos[0]  += center[0]
+        #self.state_pos[1]  += center[1]
+        #self.state_pos[2]  += center[2]
+
+        #self.rotateCameraH(0)
+        #self.rotateCameraV(0)
+        self.update_modelview()
 
     def moveForward(self):
-        self.camPos += self.lookDir * self.moveSpeed
-        self.updateLights()
-
+        self.state_pos[2] += self.moveSpeed
+        self.update_modelview()
+    
     def moveBackward(self):
-        self.camPos -= self.lookDir * self.moveSpeed
-        self.updateLights()
+        self.state_pos[2] -= self.moveSpeed
+        self.update_modelview()
+
+    def moveUp(self):
+        self.state_pos[1] += self.moveSpeed
+        self.update_modelview()
+
+    def moveDown(self):
+        self.state_pos[1] -= self.moveSpeed
+        self.update_modelview()
 
     def moveLeft(self):
-        self.camPos -= self.right * self.moveSpeed
-        self.updateLights()
+        self.state_pos[0] -= self.moveSpeed
+        self.update_modelview()
 
     def moveRight(self):
-        self.camPos += self.right * self.moveSpeed
-        self.updateLights()
+        self.state_pos[0] += self.moveSpeed
+        self.update_modelview()
 
     def rotateSystemXL(self):
-        self.camRotGlobal[1] += self.globalRotSpeed
+        self.rotateCameraH(0.01 * self.globalRotSpeed)
 
     def rotateSystemXR(self):
-        self.camRotGlobal[1] -= self.globalRotSpeed
+        self.rotateCameraH(-0.01 * self.globalRotSpeed)
 
     def rotateSystemYL(self):
-        self.camRotGlobal[2] += self.globalRotSpeed
+        self.rotateCameraR(0.01 * self.globalRotSpeed)
 
     def rotateSystemYR(self):
-        self.camRotGlobal[2] -= self.globalRotSpeed
+        self.rotateCameraR(-0.01 * self.globalRotSpeed)
 
     def rotateSystemZL(self):
-        self.camRotGlobal[0] += self.globalRotSpeed
+        self.rotateCameraV(0.01 * self.globalRotSpeed)
 
     def rotateSystemZR(self):
-        self.camRotGlobal[0] -= self.globalRotSpeed
+        self.rotateCameraV(-0.01 * self.globalRotSpeed)
 
-    def calcCameraDirections(self):
-        self.lookDir = np.array([cos(self.camRot[1]) * sin(self.camRot[0]),
-                                 sin(self.camRot[1]),
-                                 cos(self.camRot[1]) * cos(self.camRot[0])])
-        self.right = np.array(
-            [sin(self.camRot[0] - pi / 2.0), 0, cos(self.camRot[0] - pi / 2.0)])
-
-        self.up = np.cross(self.right, self.lookDir)
 
     def rotateCamera(self, mousePos, mousePosOld, mouseButtonState):
         dm = mousePos - mousePosOld
 
         if mouseButtonState[GLUT_LEFT_BUTTON] == GLUT_DOWN:
-            self.camRotGlobal[1] += dm[0] * 0.1 * self.globalRotSpeed
-            self.camRotGlobal[0] += dm[1] * 0.1 * self.globalRotSpeed
+            if dm[0] != 0:
+                self.rotateCameraH(dm[0] * 0.001 * self.globalRotSpeed)
+            if dm[1] != 0:
+                self.rotateCameraV(-dm[1] * 0.001 * self.globalRotSpeed)
         elif mouseButtonState[GLUT_RIGHT_BUTTON] == GLUT_DOWN:
-            self.camRot += dm * self.lookSpeed
-            self.calcCameraDirections()
+            self.state_pos[0] -= 0.05 * dm[0] * self.moveSpeed
+            self.state_pos[1] += 0.05 * dm[1] * self.moveSpeed
+            self.update_modelview()
+        elif mouseButtonState[GLUT_MIDDLE_BUTTON] == GLUT_DOWN:
+            self.state_pos[2] += 0.05 * dm[1] * self.moveSpeed
+            self.rotateCameraR(dm[0] * 0.001 * self.globalRotSpeed)
 
-    def glLookAt(self):
-        lookAt = self.camPos + self.lookDir
-        gluLookAt(self.camPos[0], self.camPos[1], self.camPos[2],
-                  lookAt[0], lookAt[1], lookAt[2],
-                  self.up[0], self.up[1], self.up[2])
 
-    def rotateSystem(self):
-        glTranslatef(self.center[0], self.center[1], self.center[2])
-        glRotatef(self.camRotGlobal[0], 1, 0, 0)
-        glRotatef(self.camRotGlobal[1], 0, 1, 0)
-        glRotatef(self.camRotGlobal[2], 0, 0, 1)
-        glTranslatef(-self.center[0], -self.center[1], -self.center[2])
+    def normalize(self,vec):
+        vec = self.normalized(vec)
+
+    def normalized(self,vec):
+        return vec / np.linalg.norm(vec)
+
+    def get_camera_rotation_matrix(self,target_vec, up_vec):
+        n = self.normalized(target_vec)
+        u = self.normalized(up_vec)
+        u = np.cross(u, target_vec)
+        v = np.cross(n, u)
+        m = np.identity(4, np.float32)
+        m[0][0] = u[0]
+        m[0][1] = v[0]
+        m[0][2] = n[0]
+        m[1][0] = u[1]
+        m[1][1] = v[1]
+        m[1][2] = n[1]
+        m[2][0] = u[2]
+        m[2][1] = v[2]
+        m[2][2] = n[2]
+        return m
+
+    
+    def rotate_vector(self,vec, ang, axe):
+        sinhalf = sin(ang / 2)
+        coshalf = cos(ang / 2)
+
+        rx = axe[0] * sinhalf
+        ry = axe[1] * sinhalf
+        rz = axe[2] * sinhalf
+        rw = coshalf
+
+        rot = Quaternion(rx, ry, rz, rw)
+        conq = rot.conjugated()
+        w1 = conq.mult_v(vec)
+        w  = w1.mult_q(rot)
+
+        vec[0] = w[0]
+        vec[1] = w[1]
+        vec[2] = w[2]
+
+    def rotateCameraR(self, da):
+        self.rotate_vector(self.state_right, da, self.state_target)
+        self.rotate_vector(self.state_up, da, self.state_target)
+        self.update_modelview()
+
+    def rotateCameraV(self, da):
+        self.rotate_vector(self.state_target, da, self.state_right)
+        self.state_up = np.cross(self.state_right, self.state_target)
+        self.update_modelview()
+
+    def rotateCameraH(self, da):
+        self.rotate_vector(self.state_target, da, self.state_up)
+        self.state_right = np.cross(self.state_target, self.state_up)
+        self.update_modelview()
+
+    def update_modelview(self):
+
+        self.state_up /= np.linalg.norm(self.state_up)
+        self.state_right /= np.linalg.norm(self.state_right)
+        self.state_target /= np.linalg.norm(self.state_target)
+
+        # Center Box
+        trans = np.identity(4, np.float32) 
+        trans[3][0] = -self.center[0]
+        trans[3][1] = -self.center[1]
+        trans[3][2] = -self.center[2]
+        
+        # Camera rotation
+        rotate_cam = self.get_camera_rotation_matrix(-self.state_target, self.state_up)
+
+        # System translation
+        trans_cam = np.identity(4, np.float32)
+        trans_cam[3][0] = -self.state_pos[0]
+        trans_cam[3][1] = -self.state_pos[1]
+        trans_cam[3][2] = -self.state_pos[2]
+        
+        self.modelview = trans.dot(rotate_cam.dot(trans_cam))
+        
+        cXYZ = -1 * np.mat(self.modelview[:3,:3]) * np.mat(self.modelview[3,:3]).T
+        self.camPos=np.array([cXYZ[0,0], cXYZ[1,0], cXYZ[2,0]])
+        
+        #print  "CAM",self.camPos
+        #print  "TRA",self.state_pos
+        #print "Target:", self.state_target
+        #print "Up:", self.state_up
+        #print "Right:", self.state_right
         self.updateLights()
+
+
+class Quaternion:
+    def __init__(self, x, y, z, w):
+        self.array = np.array([x, y, z, w], np.float32)
+
+    def __getitem__(self, x):
+        return self.array[x]
+
+    def conjugated(self):
+        return Quaternion(-self[0], -self[1], -self[2], self[3])
+
+    def mult_v(self, v):
+        w = - (self[0] * v[0]) - (self[1] * v[1]) - (self[2] * v[2])
+        x =   (self[3] * v[0]) + (self[1] * v[2]) - (self[2] * v[1])
+        y =   (self[3] * v[1]) + (self[2] * v[0]) - (self[0] * v[2])
+        z =   (self[3] * v[2]) + (self[0] * v[1]) - (self[1] * v[0])
+        return Quaternion(x, y, z, w)
+
+    def mult_q(self, q):
+        w = - (self[3] * q[3]) - (self[0] * q[0]) - (self[1] * q[1]) - (self[2] * q[2])
+        x =   (self[0] * q[3]) + (self[3] * q[0]) + (self[1] * q[2]) - (self[2] * q[1])
+        y =   (self[1] * q[3]) + (self[3] * q[1]) + (self[2] * q[0]) - (self[0] * q[2])
+        z =   (self[2] * q[3]) + (self[3] * q[2]) + (self[0] * q[1]) - (self[1] * q[0])
+        return Quaternion(x, y, z, w)

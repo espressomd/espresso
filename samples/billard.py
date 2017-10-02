@@ -17,17 +17,20 @@ print '8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjus
 
 #ESPRESSO
 system = espressomd.System()
+table_dim = [2.24,1.12]
+system.box_l = [table_dim[0], 3, table_dim[1]]
+
 visualizer = openGLLive(system,
         ext_force_arrows = True, 
-        ext_force_arrows_scale =  [0.06], 
+        ext_force_arrows_scale =  [0.02], 
         background_color = [0.5,0.4,0.5], 
         drag_enabled = False, 
         constraint_type_colors = [[0.039,0.424,0.011,1.0]],
         particle_type_colors = [[1,1,1,1],[1,0,0,1],[0,0,1,1],[0.2,0.2,0.2,1]],
-        camera_position = [ 1.03500425, 2.74691908, 0.60058434],
-        camera_rotation = [ 3.14159, -1.570796],
+        camera_position = [ 1.12, 2.8, 0.56],
         window_size = [1000,600],
-        light_brightness = 2.0)
+        draw_axis = True, #False,
+        light_brightness = 5.0)
     
 stopped = True
 angle = numpy.pi*0.5
@@ -36,25 +39,25 @@ impulse = 10.0
 def decreaseAngle():
     global angle,impulse
     if stopped:
-        angle += 0.01
+        angle += 0.05
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def increaseAngle():
     global angle,impulse
     if stopped:
-        angle -= 0.01
+        angle -= 0.05
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def decreaseImpulse():
     global impulse,angle
     if stopped:
-        impulse -= 0.2
+        impulse -= 0.5
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def increaseImpulse():
     global impulse,angle
     if stopped:
-        impulse += 0.2
+        impulse += 0.5
         system.part[0].ext_force = impulse*np.array([sin(angle),0,cos(angle)])
 
 def fire():
@@ -74,10 +77,9 @@ visualizer.keyboardManager.registerButton(KeyboardButtonEvent('5',KeyboardFireEv
 def main():
     global stopped
 
-    system.time_step = 0.00003
+    system.time_step = 0.0003
     system.cell_system.skin = 0.4
 
-    table_dim = [2.24,1.12]
     table_h = 0.5
     ball_diam = 0.0572
     hole_dist = 0.02
@@ -91,7 +93,6 @@ def main():
                 [table_dim[0]*0.5, table_h, hole_dist]]
     types = {'cue_ball': 0,'striped_ball':1, 'solid_ball':2,'black_ball':3, 'table':4,'wall':5,'hole':6}
 
-    system.box_l = [table_dim[0], 3, table_dim[1]]
 
     system.constraints.add(shape=Wall(dist=table_h,normal=[0.0,1.0,0.0]),particle_type=types['table'],penetrable=1)
 
@@ -101,7 +102,7 @@ def main():
     system.constraints.add(shape=Wall(dist=-(table_dim[1]-0.01),normal=[0.0,0.0,-1.0]),particle_type=types['wall'],penetrable=1)
 #system.constraints.add(shape=Wall(dist=table_dim[0],normal=[0.0,0.0,-1.0]),particle_type=2)
     for h in hole_pos:
-        system.constraints.add(shape=Cylinder(center=(np.array(h)-np.array([0,table_h*0.5,0])).tolist(), axis=[0,1,0],radius = hole_rad, length = 0.51*table_h, direction = 1),particle_type=types['hole'], penetrable=1)
+        system.constraints.add(shape=Cylinder(center=(np.array(h)-np.array([0,table_h*0.5,0])).tolist(), axis=[0,1,0],radius = hole_rad, length = 1.02*table_h, direction = 1),particle_type=types['hole'], penetrable=1)
 
     lj_eps = np.array([1])
     lj_sig = np.array([ball_diam])
