@@ -35,7 +35,7 @@ class openGLLive(object):
             'far_cut_distance':           5,
             'camera_position':	   		  'auto',
             'camera_target':	   		  'auto',
-            'camera_right': 	   		  'auto',
+            'camera_right': 	   		  [1.0, 0.0, 0.0],
             #'camera_rotation':	   		  [3.55, -0.4],
 
             'particle_coloring':   		  'auto',
@@ -814,10 +814,7 @@ class openGLLive(object):
         else:
             ct = self.specs['camera_target']
         
-        if self.specs['camera_right'] == 'auto':
-            cr = np.array([1.0,0.0,0.0])
-        else:
-            cr = self.specs['camera_right']
+        cr = np.array(self.specs['camera_right'])
 
         self.camera = Camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 * box_diag / 17.0,  center=box_center, updateLights=self.triggerLightPosUpdate)
         self.smooth_light_pos = np.copy(box_center)
