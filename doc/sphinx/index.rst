@@ -19,6 +19,7 @@ espressomd package
     modules.rst
 
 .. automodule:: espressomd
+    :noindex: espressomd.assert_features, espressomd.has_features, espressomd.missing_features
     :members: 
     :private-members:
 
