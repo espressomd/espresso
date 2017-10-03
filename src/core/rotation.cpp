@@ -451,7 +451,7 @@ void convert_omega_body_to_space(Particle *p, double *omega) {
              A[2 + 3 * 2] * p->m.omega[2];
 }
 
-Vector3d convert_vector_body_to_space(const Particle& p, Vector3d vec) {
+Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& vec) {
   Vector3d res={0,0,0};
   double A[9];
   define_rotation_matrix(&p, A);

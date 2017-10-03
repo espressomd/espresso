@@ -211,7 +211,7 @@ cdef extern from "virtual_sites_relative.hpp":
 cdef extern from "rotation.hpp":
     void convert_omega_body_to_space(particle * p, double * omega)
     void convert_torques_body_to_space(particle * p, double * torque)
-    Vector3d convert_vector_body_to_space(particle& p,Vector3d v)
+    Vector3d convert_vector_body_to_space(const particle& p,const Vector3d& v)
 
 # The bonded_ia_params stuff has to be included here, because the setter/getter
 # of the particles' bond property needs to now about the correct number of

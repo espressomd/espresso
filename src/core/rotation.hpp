@@ -58,7 +58,7 @@ void convert_omega_body_to_space(Particle *p, double *omega);
 void convert_torques_body_to_space(Particle *p, double *torque);
 
 
-Vector3d convert_vector_body_to_space(const Particle& p, Vector3d v);
+Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
 
 /** convert velocity form the lab-fixed coordinates
     to the body-fixed frame */
