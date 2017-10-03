@@ -32,9 +32,9 @@
 #include "Vector.hpp"
 
 
-const int ROTATION_X =2;
-const int ROTATION_Y =4;
-const int ROTATION_Z =8;
+constexpr const int ROTATION_X =2;
+constexpr const int ROTATION_Y =4;
+constexpr const int ROTATION_Z =8;
 
 /*************************************************************
  * Functions                                                 *
