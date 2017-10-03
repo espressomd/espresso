@@ -34,14 +34,15 @@ public:
 
   constexpr bool operator==(None const &) const { return true; }
   constexpr bool operator!=(None const &) const { return false; }
+  constexpr bool operator<(None const &) const { return false; }
 
   constexpr operator bool() const { return false; }
+
 private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &, long int /* version */) const {}
 };
-
 }
 
 #endif

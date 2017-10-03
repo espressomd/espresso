@@ -25,6 +25,7 @@
 #if defined(P3M) || defined(DP3M)
 
 void p3m_common_parameter_pre_init(p3m_parameter_struct *params) {
+  params->tuning = false;
   params->alpha = 0.0;
   params->alpha_L = 0.0;
   params->r_cut = 0.0;

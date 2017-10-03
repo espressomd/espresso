@@ -37,6 +37,7 @@ BOOST_AUTO_TEST_CASE(constructor_bool) {
 BOOST_AUTO_TEST_CASE(comparison) {
   static_assert(None{} == None{}, "");
   static_assert(!(None{} != None{}), "");
+  static_assert(!(None{} < None{}), "");
 }
 
 BOOST_AUTO_TEST_CASE(from_nullptr) {

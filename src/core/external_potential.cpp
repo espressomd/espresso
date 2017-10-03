@@ -193,7 +193,7 @@ int lattice_read_file(Lattice* lattice, char* filename) {
 
 
 int write_local_lattice_to_file(const char* filename_prefix, Lattice* lattice) {
-  index_t index[3];
+  Lattice::index_t index[3];
   double pos[3];
   int i,j,k;
   double *d;
