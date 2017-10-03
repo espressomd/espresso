@@ -194,9 +194,20 @@ void propagate_omega_quat_particle(Particle *p) {
   double lambda;
 
   double Qd[4], Qdd[4], S[3], Wd[3];
+  // If rotation for the particle is disabled entirely, return early.
   if (!p->p.rotation)
     return;
 
+  // Clear rotational velocity for blocked rotation axes.
+  if (! (p->p.rotation & ROTATION_X))
+    p->m.omega[0]=0;
+  if (! (p->p.rotation & ROTATION_Y))
+    p->m.omega[1]=0;
+  if (! (p->p.rotation & ROTATION_Z))
+    p->m.omega[2]=0;
+
+
+  
   define_Qdd(p, Qd, Qdd, S, Wd);
 
   lambda = 1 - S[0] * time_step_squared_half -
@@ -249,8 +260,10 @@ void convert_torques_propagate_omega() {
 #endif
 
   for (auto &p : local_cells.particles()) {
+    // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
+    
     double A[9];
     define_rotation_matrix(&p, A);
 
@@ -437,6 +450,22 @@ void convert_omega_body_to_space(Particle *p, double *omega) {
   omega[2] = A[0 + 3 * 2] * p->m.omega[0] + A[1 + 3 * 2] * p->m.omega[1] +
              A[2 + 3 * 2] * p->m.omega[2];
 }
+
+Vector3d convert_vector_body_to_space(const Particle& p, Vector3d vec) {
+  Vector3d res={0,0,0};
+  double A[9];
+  define_rotation_matrix(&p, A);
+
+  res[0] = A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] +
+             A[2 + 3 * 0] * vec[2];
+  res[1] = A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] +
+             A[2 + 3 * 1] * vec[2];
+  res[2] = A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] +
+             A[2 + 3 * 2] * vec[2];
+  
+  return res;
+}
+
 
 void convert_torques_body_to_space(Particle *p, double *torque) {
   double A[9];
