@@ -59,6 +59,10 @@ class openGLLive(object):
             'ext_force_arrows_scale': 	  [1, 1, 1, 1, 1, 1, 1],
 
             'LB':						  False,
+            'LB_plane_axis':			  2,
+            'LB_plane_dist':			  0,
+            'LB_plane_ngrid':			  5,
+            'LB_vel_scale':               1.0,  
 
             'light_pos':				  'auto',
             'light_colors':				  [[0.1, 0.1, 0.2, 1.0], [0.9, 0.9, 0.9, 1.0], [1.0, 1.0, 1.0, 1.0]],
@@ -164,6 +168,8 @@ class openGLLive(object):
             if self.elapsedTime > 1.0 / self.specs['update_fps']:
                 self.elapsedTime = 0
                 self.updateParticles()
+                if self.specs['LB']:
+                    self.updateLB()
                 # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
                 # ONLY SAVE TO CHANGE HERE
                 for c in self.keyboardManager.userCallbackStack:
@@ -203,6 +209,23 @@ class openGLLive(object):
                               'types':   	self.system.part[:].type,
                               'ext_forces': [0, 0, 0] * len(self.system.part),
                               'charges':    [0] * len(self.system.part)}
+
+    def updateLB(self):
+        agrid = self.lb_params['agrid']
+        #g = [int(bl/agrid) for bl in self.system.box_l]
+        #self.lb_grid = np.zeros((g[0],g[1],g[2],3))
+        #for i in xrange(g[0]):
+        #    for j in xrange(g[1]):
+        #        for k in xrange(g[2]):
+        #            self.lb_grid[i,j,k] = self.lb[i,j,k].velocity
+        #            print i,j,k, self.lb_grid[i,j,k]
+        self.lb_plane_vel = []
+        ng = self.specs['LB_plane_ngrid']
+        for xi in xrange(ng):
+            for xj in xrange(ng):
+                pp = (self.lb_plane_p + xi*1.0/ng * self.lb_plane_b1 + xj*1.0/ng * self.lb_plane_b2) % self.system.box_l
+                i,j,k = (int(ppp / agrid) for ppp in pp)
+                self.lb_plane_vel.append([pp, np.array(self.lb[i,j,k].velocity)])
 
     def edgesFromPN(self, p, n, diag):
         v1, v2 = self.getTangents(n)
@@ -502,25 +525,32 @@ class openGLLive(object):
                 return False
         return True
 
-    # VOXELS FOR LB VELOCITIES
+# VOXELS FOR LB VELOCITIES
     def drawLBVel(self):
-        grid = 10
-        velRelax = 0.2
-        cubeSize = grid * 0.25
-        r = np.array([grid] * 3)
 
-        min_vel_new = np.array([1e100] * 3)
-        max_vel_new = np.array([-1e100] * 3)
-        for ix in range(r[0]):
-            for iy in range(r[1]):
-                for iz in range(r[2]):
-                    c = self.system.box_l * \
-                        (np.array([ix, iy, iz]) +
-                         np.array([0.5, 0.5, 0.5])) / r
-                    v = self.system.actors[0].lbnode_get_node_velocity(c)
-                    col = (np.array(v) - self.lb_min_vel) / self.lb_vel_range
-                    alpha = 0.1  # np.linalg.norm(col)
-                    drawCube(c, cubeSize, col, alpha)
+        for lbl in self.lb_plane_vel:
+            p = lbl[0]
+            v = lbl[1]
+            c = np.linalg.norm(v)
+            drawArrow(p, v * self.specs['LB_vel_scale'], self.lb_arrow_radius, [1,1,1,1], 16)
+        
+        # grid = 10
+        #velRelax = 0.2
+        #cubeSize = grid * 0.25
+        #r = np.array([grid] * 3)
+
+        #min_vel_new = np.array([1e100] * 3)
+        #max_vel_new = np.array([-1e100] * 3)
+        #for ix in range(r[0]):
+        #    for iy in range(r[1]):
+        #        for iz in range(r[2]):
+        #            c = self.system.box_l * \
+        #                (np.array([ix, iy, iz]) +
+        #                 np.array([0.5, 0.5, 0.5])) / r
+        #            #v = self.system.actors[0][.lb_lbnode_get_u(c)
+        #            col = (np.array(v) - self.lb_min_vel) / self.lb_vel_range
+        #            alpha = 0.1  # np.linalg.norm(col)
+        #            drawCube(c, cubeSize, col, alpha)
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC..
@@ -703,11 +733,28 @@ class openGLLive(object):
         self.imPos = [np.array([self.system.box_l[0], 0, 0]), np.array(
             [0, self.system.box_l[1], 0]), np.array([0, 0, self.system.box_l[2]])]
 
-        self.lb_min_vel = np.array([-1e-6] * 3)
-        self.lb_max_vel = np.array([1e-6] * 3)
-        self.lb_vel_range = self.lb_max_vel - self.lb_min_vel
-        self.lb_min_dens = np.array([0] * 3)
-        self.lb_max_dens = np.array([0] * 3)
+        if self.specs['LB']:
+            for a in self.system.actors:
+                pa = a.get_params()
+                if 'agrid' in pa:
+                    self.lb_params = pa
+                    self.lb = a
+                    break
+            pn = [0.0,0.0,0.0]
+            pn[self.specs['LB_plane_axis']] = 1.0
+            self.lb_plane_b1, self.lb_plane_b2 = self.getTangents(pn)
+            self.lb_plane_b1 *= np.array(self.system.box_l)
+            self.lb_plane_b2 *= np.array(self.system.box_l)
+            self.lb_plane_p = np.array(pn) * self.specs['LB_plane_dist']
+            self.lb_arrow_radius = self.system.box_l[self.specs['LB_plane_axis']]*0.005
+            
+            self.lb_min_vel = np.array([-1e-6] * 3)
+            self.lb_max_vel = np.array([1e-6] * 3)
+            self.lb_vel_range = self.lb_max_vel - self.lb_min_vel
+            self.lb_min_dens = np.array([0] * 3)
+            self.lb_max_dens = np.array([0] * 3)
+            
+            self.updateLB()
 
         self.elapsedTime = 0
         self.measureTimeBeforeIntegrate = 0
