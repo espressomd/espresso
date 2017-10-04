@@ -17,22 +17,31 @@ General features
 ----------------
 
 -  ``PARTIAL_PERIODIC`` By default, all coordinates in |es| are periodic. With
-   ``PARTIAL_PERIODIC`` turned on, the |es| global variable ``periodic`` (see
-   section ) controls the periodicity of the individual coordinates.
-   Note that this slows the integrator down by around :math:`10-30\%`.
+   ``PARTIAL_PERIODIC`` turned on, the |es| global variable ``periodic``
+   controls the periodicity of the individual coordinates.
 
--  ``ELECTROSTATICS`` This switches on the various electrostatics algorithms, such as P3M.
-   See section for details on these algorithms.
+   .. note:: This slows the integrator down by around :math:`10-30\%`.
+
+   .. seealso:: :ref:`Setting global variables in Python`
+
+-  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
+
+   .. seealso:: :ref:`Coulomb interaction`
 
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
-   See section for details on these algorithms.
+
+   .. seealso:: :ref:`Coulomb interaction`
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
-   the corresponding quaternion integrator. See section for details.
-   Note, that when the feature is activated, every particle has three
-   additional degrees of freedom, which for example means that the
-   kinetic energy changes at constant temperature is twice as large.
+   the corresponding quaternion integrator. 
+   
+   .. seealso:: :ref:`Defining particle properties`
+
+   .. note:: 
+      Note, that when the feature is activated, every particle has three
+      additional degrees of freedom, which for example means that the
+      kinetic energy changes at constant temperature is twice as large.
 
 -  ``ROTATION_PER_PARTICLE`` Allows to set whether a particle has rotational degrees of freedom.
 
@@ -51,14 +60,20 @@ General features
    See section for possible constraint forms.
 
 -  ``TUNABLE_SLIP`` Switch on tunable slip conditions for planar wall boundary
-   conditions. See section for details.
+   conditions.
+   
+   .. seealso:: :ref:`Tunable-slip boundary interaction`
 
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account
    correctly.
 
+   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
+
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
+
+   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
 
 -  ``COMFORCE`` Allows to pull apart groups of particles
 
@@ -73,17 +88,24 @@ General features
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
    feature allows to place a virtual particle into the center of mass of
-   a set of other particles. See section [sec:virtual] for details.
+   a set of other particles.
+   
+   .. seealso:: :ref:`Virtual sites` 
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
-   feature allows for rigid arrangements of particles. See section
-   [sec:virtual] for details.
+   feature allows for rigid arrangements of particles.
+
+   .. seealso:: :ref:`Virtual sites` 
 
 -  ``VIRTUAL_SITES_NO_VELOCITY``
 
+   .. seealso:: :ref:`Virtual sites` 
+
 -  ``VIRTUAL_SITES_THERMOSTAT``
+
+   .. seealso:: :ref:`Virtual sites` 
 
 -  ``THERMOSTAT_IGNORE_NON_VIRTUAL``
 
@@ -95,20 +117,18 @@ General features
 
 -  ``METADYNAMICS``
 
--  ``LANGEVIN_PER_PARTICLE`` Allows to define the temperature and friction coefficient for
-   individual particles. See [ssec:particleproperties] for details.
-
 -  ``CATALYTIC_REACTIONS`` Allows the user to define three particle types to be reactant,
    catalyzer, and product. Reactants get converted into products in the
    vicinity of a catalyst according to a used-defined reaction rate
    constant. It is also possible to set up a chemical equilibrium
    reaction between the reactants and products, with another rate
-   constant. See section [sec:Reactions] for details.
+   constant. 
+   
+   .. seealso:: :ref:`Catalytic reactions`
 
 -  ``OVERLAPPED``
 
--  ``COLLISION_DETECTION`` Allows particles to be bound on collision. See section
-   [sec:collision]
+-  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
 -  ``OLD_RW_VERSION`` This switches back to the old, *wrong* random walk code of the
    polymer. Only use this if you rely on the old behaviour and *know
@@ -116,23 +136,33 @@ General features
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
 
+   .. seealso:: :ref:`Writing H5MD-Files`
+
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
 
--  ``NEMD`` Enables the non-equilbrium (shear) MD support (see section ).
+-  ``NEMD`` Enables the non-equilbrium (shear) MD support.
 
--  ``NPT`` Enables an on–the–fly NPT integration scheme (see section ).
+   .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibirum MD`
 
--  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction (see section ).
+-  ``NPT`` Enables an on–the–fly NPT integration scheme.
+   
+   .. seealso:: :ref:`\`\`thermostat\`\`\: Setting up the thermostat`
 
--  ``LB`` Enables the lattice-Boltzmann fluid code (see section ).
+-  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
--  ``LB_GPU`` Enables the lattice-Boltzmann fluid code support for GPU (see section
-   ).
+   .. seealso:: :ref:`DPD interaction`
 
--  ``SHANCHEN`` Enables the Shan Chen bicomponent fluid code on the GPU (see section
-   ).
+-  ``LB`` Enables the lattice-Boltzmann fluid code.
+
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+
+-  ``LB_GPU`` Enables the lattice-Boltzmann fluid code support for GPU.
+
+   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice-Boltzmann`
+
+-  ``SHANCHEN`` Enables the Shan Chen bicomponent fluid code on the GPU.
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
@@ -141,7 +171,7 @@ Interactions
 ------------
 
 The following switches turn on various short ranged interactions (see
-section ):
+section :ref:`Isotropic non-bonded interactions`):
 
 -  ``TABULATED`` Enable support for user–defined interactions.
 

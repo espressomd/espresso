@@ -6,6 +6,7 @@ Setting up particles
 Creating single particles
 =========================
 
+.. _Defining particle properties:
 
 Defining particle properties
 ----------------------------
@@ -833,6 +834,8 @@ Calculates a spring force for all particles, where the equilibrium
 position of the spring is at and it’s force constant is . A more
 flexible trap can be constructed with constraints, but this one runs on
 the GPU.
+
+.. _Virtual sites:
 
 Virtual sites
 -------------

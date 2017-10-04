@@ -21,7 +21,7 @@ define the interaction parameters.
 .. todo::
     IMPLEMENT: print interaction list
 
-.. _Isotropic non-bonded interactions :
+.. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
 ---------------------------------
@@ -1312,7 +1312,7 @@ length, which measures the strength of the electrostatic interaction. As
 a special case, when the thermostat is switched off, the value of
 Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
 :math:`l_B`. This is used to perform an NVE integration (see also
-section :ref:`thermostat`).
+section :ref:`\`\`thermostat\`\`\: Setting up the thermostat`).
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -2120,6 +2120,8 @@ the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared l
 Special interaction commands
 ----------------------------
 
+.. _Tunable-slip boundary interaction:
+
 Tunable-slip boundary interaction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2172,6 +2174,8 @@ interaction. Make sure that the cutoff radius is larger than the cutoff
 radius of the constraint Lennard-Jones interactions. Otherwise there is
 no possibility that the particles feel the viscous layer. Please read
 reference :cite:`smiatek08a` before using this interaction.
+
+.. _DPD interaction:
 
 DPD interaction
 ~~~~~~~~~~~~~~~

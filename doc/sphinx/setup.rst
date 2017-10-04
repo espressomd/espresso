@@ -1,6 +1,8 @@
 Setting up the system
 =====================
 
+.. _Setting global variables in Python:
+
 Setting global variables in Python
 ----------------------------------
 
@@ -76,7 +78,7 @@ or by calling the corresponding ``get_state`` methods like::
     
     gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
 
-.. _thermostat:
+.. _\`\`thermostat\`\`\: Setting up the thermostat:
 
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
@@ -394,7 +396,7 @@ Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
 
-.. _nemd:
+.. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 
 ``nemd``: Setting up non-equilibrium MD
 ---------------------------------------
@@ -695,7 +697,9 @@ The following limitations currently apply for the collision detection:
 -  The “bind at point of collision” approach cannot handle collisions
    between virtual sites
 
-Catalytic Reactions
+.. _Catalytic reactions:
+
+Catalytic reactions
 -------------------
 
 With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
