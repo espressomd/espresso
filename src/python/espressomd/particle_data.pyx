@@ -1844,7 +1844,7 @@ cdef class ParticleList(object):
         ----------
         add
         remove
-
+        
         """
 
         remove_all_particles()
