@@ -3,30 +3,29 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd
-#from espressomd.interactions import *
 from espressomd.interactions import HarmonicBond
 
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),"Skipped because LENNARD_JONES turned off.")
-
-class test_analyze_energy(ut.TestCase):
+class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System()
-    box_l = 10.0
-
-    system.box_l = [box_l, box_l, box_l]
-    system.cell_system.skin = 0.4
-    system.time_step = 0.01
-    system.non_bonded_inter[0, 0].lennard_jones.set_params(
-        epsilon=1.0, sigma=1.0,
-        cutoff=2**(1./6.), shift="auto")
-    system.non_bonded_inter[1, 1].lennard_jones.set_params(
-        epsilon=1.0, sigma=1.0,
-        cutoff=2**(1./6.), shift="auto")
-
-    system.part.add(id = 0, pos = [1, 2, 2], type=0)
-    system.part.add(id = 1, pos = [5, 2, 2], type=0)
-    system.thermostat.set_langevin(kT = 0., gamma = 1.)
     harmonic = HarmonicBond(r_0 = 0.0, k = 3)
-    system.bonded_inter.add(harmonic)
+    
+    @classmethod
+    def setUpClass(self):
+        box_l = 10.0
+        self.system.box_l = [box_l, box_l, box_l]
+        self.system.cell_system.skin = 0.4
+        self.system.time_step = 0.01
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1./6.), shift="auto")
+        self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1./6.), shift="auto")
+        self.system.part.add(id = 0, pos = [1, 2, 2], type=0)
+        self.system.part.add(id = 1, pos = [5, 2, 2], type=0)
+        self.system.thermostat.set_langevin(kT = 0., gamma = 1.)
+        self.system.bonded_inter.add(self.harmonic)
         
     def test_kinetic(self):
         self.system.part[0].pos = [1, 2, 2]
@@ -73,7 +72,6 @@ class test_analyze_energy(ut.TestCase):
         self.system.part[3].remove()
         self.system.part[4].remove()
 
-
     def test_bonded(self):
         self.system.part[0].pos = [1, 2, 2]
         self.system.part[1].pos = [3, 2, 2]
@@ -100,7 +98,6 @@ class test_analyze_energy(ut.TestCase):
         self.assertTrue( np.allclose(energy["kinetic"], 0.))
         self.assertTrue( np.allclose(energy["bonded"], 0))
         self.assertTrue( np.allclose(energy["non_bonded"], 0.))
-
 
     def test_all(self):
         self.system.part[0].pos = [1, 2, 2]
@@ -134,11 +131,7 @@ class test_analyze_energy(ut.TestCase):
         self.system.part[0].delete_all_bonds()
 
 
-
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
+    ut.main()
     
-    suite = ut.TestLoader().loadTestsFromTestCase(test_analyze_energy)
-    ut.TextTestRunner(verbosity=2).run(suite)
-
-    #ut.main()
