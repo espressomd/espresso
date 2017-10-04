@@ -89,5 +89,25 @@ class RdfTest(ut.TestCase):
 
         self.assertTrue(np.allclose(rdf10, rdf01))
 
+    def test_av(self):
+        s = self.s
+
+        for i in range(200):
+            s.part.add(id = i, pos=s.box_l * np.random.random(3), type=(i % 3))
+
+        r_bins = 50
+        r_min = 0.0
+        r_max = 0.49 * s.box_l[0]
+        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0,1,2],
+                             r_min=r_min, r_max=r_max, r_bins=r_bins)
+
+        for i in range(10):
+            s.analysis.append()
+
+        rdf_av = s.analysis.rdf(rdf_type='<rdf>', type_list_a=[0,1,2],
+                             r_min=r_min, r_max=r_max, r_bins=r_bins)
+
+        self.assertTrue(np.allclose(rdf[1], rdf_av[1]))
+
 if __name__ == "__main__":
     ut.main()
