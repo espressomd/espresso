@@ -232,11 +232,10 @@ system.actors.add(p3m)
 
 Before the production part of the simulation, we do a quick temperature 
 equilibration. For the output, we gather all energies with
-\pypressoinline{system.analysis.energy()}, calculate the temperature from the ideal part and 
+\pypressoinline{system.analysis.energy()}, calculate the "current" temperature\footnote{Note that for the ideal gas the temperature is given via $1/2 m \sqrt{\langle v^2 \rangle}=3/2 k_BT$, where $\langle \cdot \rangle$ denotes the ensemble average. Calculating some kind of "current temperature" via $T_\text{cur}=\frac{m}{3 k_B} \sqrt{ v^2 }$ you do not obtain the temperature in the system. Only when averaging the squared velocities first one would obtain the temperature for the ideal gas. $T$ is a fixed quantity and does not fluctuate in the canonical ensemble.} from the ideal part and 
 print it to the screen along with the total and Coulomb energies.
+
 We integrate for a certain amount of steps with \pypressoinline{system.integrator.run(100)}.
-
-
 
 \begin{pypresso}
 print("\n--->Temperature Equilibration")

@@ -1,4 +1,4 @@
-image: espressomd/espresso-ubuntu-cuda:python
+image: espressomd/espresso-ubuntu-cuda:latest
 
 stages:
   - prepare

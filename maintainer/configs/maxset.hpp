@@ -1,6 +1,7 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
+#define COULOMB_DEBYE_HUECKEL
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA

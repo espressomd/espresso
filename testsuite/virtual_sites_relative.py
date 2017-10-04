@@ -85,14 +85,14 @@ class VirtualSites(ut.TestCase):
         self.assertEqual(s.min_global_cut, 0.23)
 
         # Place central particle + 3 vs
-        s.part.add(pos=(0.5, 0.5, 0.5), id=1, quat=(
+        s.part.add(rotation=(1,1,1),pos=(0.5, 0.5, 0.5), id=1, quat=(
             1, 0, 0, 0), omega_lab=(1, 2, 3))
         pos2 = (0.5, 0.4, 0.5)
         pos3 = (0.3, 0.5, 0.4)
         pos4 = (0.5, 0.5, 0.5)
         cur_id = 2
         for pos in pos2, pos3, pos4:
-            s.part.add(pos=pos, id=cur_id)
+            s.part.add(rotation=(1,1,1), pos=pos, id=cur_id)
             s.part[cur_id].vs_auto_relate_to(1)
             # Was the particle made virtual
             self.assertEqual(s.part[cur_id].virtual, 1)
@@ -178,13 +178,13 @@ class VirtualSites(ut.TestCase):
         # For n sphers n/2 dumbells.
         for i in range(int(n / 2)):
             # Type=1, i.e., no lj ia for the center of mass particles
-            s.part.add(id=3 * i, pos=random.random(3) * l, type=1,
+            s.part.add(rotation=(1,1,1), id=3 * i, pos=random.random(3) * l, type=1,
                        omega_lab=0.3 * random.random(3), v=random.random(3))
             # lj spheres
-            s.part.add(id=3 * i + 1,
+            s.part.add(rotation=(1,1,1), id=3 * i + 1,
                        pos=s.part[3 * i].pos + s.part[3 * i].director / 2.,
                        type=0)
-            s.part.add(id=3 * i + 2,
+            s.part.add(rotation=(1,1,1), id=3 * i + 2,
                        pos=s.part[3 * i].pos - s.part[3 * i].director / 2.,
                        type=0)
             s.part[3 * i + 1].vs_auto_relate_to(3 * i)
