@@ -1501,16 +1501,17 @@ cdef class ParticleHandle(object):
         for k in P.keys():
             setattr(self, k, P[k])
 
-    def convert_vector_body_to_space(self,vec):
-        """Converts the given vector from the particle's body frame to the space frame"""
-        cdef Vector3d res
-        cdef Vector3d _v
-        _v[0]=vec[0]
-        _v[1]=vec[1]
-        _v[2]=vec[2]
-        self.update_particle_data()
-        res= convert_vector_body_to_space(self.particle_data.get()[0],_v)
-        return np.array((res[0],res[1],res[2]))
+    IF ROTATION:
+        def convert_vector_body_to_space(self,vec):
+            """Converts the given vector from the particle's body frame to the space frame"""
+            cdef Vector3d res
+            cdef Vector3d _v
+            _v[0]=vec[0]
+            _v[1]=vec[1]
+            _v[2]=vec[2]
+            self.update_particle_data()
+            res= convert_vector_body_to_space(self.particle_data.get()[0],_v)
+            return np.array((res[0],res[1],res[2]))
 
 
 cdef class _ParticleSliceImpl(object):
