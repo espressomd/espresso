@@ -77,6 +77,7 @@ python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE lb.py MAX_NUM_PROC 8)
 python_test(FILE lb_gpu.py MAX_NUM_PROC 2)
 python_test(FILE lb_stokes_sphere_gpu.py MAX_NUM_PROC 1)
+python_test(FILE analyze_energy.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
