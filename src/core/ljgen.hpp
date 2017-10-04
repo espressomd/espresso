@@ -41,7 +41,7 @@
 #include "utils.hpp"
 
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double shift, double offset, int a1, int a2,
+                     double cut, double shift, double offset, double a1, double a2,
                      double b1, double b2, double cap_radius
 #ifdef LJGEN_SOFTCORE
                      ,
