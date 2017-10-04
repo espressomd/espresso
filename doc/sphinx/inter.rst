@@ -3,8 +3,8 @@
 Setting up interactions
 =======================
 
-In |es|, interactions are set up and investigated by the ``interactions`` module. There are
-mainly two types of interactions: non-bonded and bonded interactions.
+In |es| there are mainly two types of interactions: non-bonded and bonded
+interactions.
 
 Non-bonded interactions only depend on the *type* of the two particles
 involved. This also applies to the electrostatic interaction; however,
@@ -21,10 +21,12 @@ define the interaction parameters.
 .. todo::
     IMPLEMENT: print interaction list
 
+
 .. _Isotropic non-bonded interactions :
 
 Isotropic non-bonded interactions
 ---------------------------------
+
 Non-bonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
 
     system.non_bonded_inter[type1, type2]
@@ -57,15 +59,13 @@ The interface for tabulated interactions are implemented
 :class:`espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-    system.non_bonded_inter[type1, type2].tabulated(filename='filename')
+    system.non_bonded_inter[type1, type2].tabulated.set_params(filename='filename')
 
 This defines an interaction between particles of the types *type1* and *type2* according
 to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
-separation distance. The tabulated potential allows capping the force
-using MISSING, see section :ref:`Capping the force during warmup`.
-
-.. todo:: replace MISSING above.
+separation distance. The tabulated potential allows capping the force, see
+section :ref:`Capping the force during warmup`.
 
 At present the required file format is simply an ordered list separated
 by whitespaces. The data reader first looks for a ``#`` character and
@@ -1463,6 +1463,8 @@ chosen for tuning.
 Debye-Hückel potential
 ~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
+
 For a list of all parameters see :attr:`espressomd.electrostatics.DH` or :attr:`espressomd.electrostatics.CDH`.
 
 Uses the Debye-Hückel electrostatic potential defined by
@@ -1500,61 +1502,6 @@ continuous.
 .. note:: The two variants are mutually exclusive. If “COULOMB_DEBYE_HUECKEL”
     is defined in the configuration file, variant (DH) would not work. However, both methods
     require the feature "ELECTROSTATICS" do be defined.
-
-
-
-.. todo:: FINISH DOCUMENTATION/TESTING/INTERFACE BELOW
-
-.. _mmm2d_guide:
-
-MMM2D
-~~~~~
-
-.. note::
-    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
-
-Please cite :cite:`mmm2d` when using MMM2D, and when using dielectric interfaces.
-
-MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
-layered cell system. The performance of the method depends on the number
-of slices of the cell system, which has to be tuned manually. It is
-automatically ensured that the maximal pairwise error is smaller than
-the given bound. The far cutoff setting should only be used for testing
-reasons, otherwise you are more safe with the automatic tuning. If you
-even don’t know what it is, do not even think of touching the far
-cutoff. For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
-
-For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
-The last two, mutually exclusive parameters “dielectric” and
-“dielectric_constants_on” allow to specify dielectric contrasts at the
-upper and lower boundaries of the simulation box. The first form
-specifies the respective dielectric constants in the media, which
-however is only used to calculate the contrasts. That is, specifying
-:math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
-identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`. The second form
-specifies only the dielectric contrasts at the boundaries, that is
-:math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}` and
-:math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
-Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
-to metallic boundary conditions.
-
-Using `capacitor` allows to maintain a constant electric potential difference
-between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
-denotes the box length in :math:`z`-direction. This is done by
-countering the total dipol moment of the system with the electric field
-:math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the induction
-of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0` for
-planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor
-connected to a battery with voltage `pot_diff`. Using 0 is equivalent to
-:math:`\Delta_{t/b}=-1`.
-
-.. todo::
-    efield_caps
-
-    The electric fields added by can be obtained by calling the above
-    command, where returns :math:`E_{induced}`, returns :math:`E_{applied}`
-    and their sum.
 
 
 .. _mmm1d_guide:
@@ -1610,10 +1557,228 @@ one.
 
 For details on the MMM family of algorithms, refer to appendix :ref:`mmm_appendix`.
 
+.. _mmm2d_guide:
+
+MMM2D
+~~~~~
+
+.. note::
+    Required features: ELECTROSTATICS, PARTIAL_PERIODIC.
+
+MMM2D is an electrostatics solver for explicit 2D periodic systems.
+It can account for different dielectric jumps on both sides of the 
+nonperiodic direction. MMM2D coulomb method needs periodicity 1 1 0 and the
+layered cell system. The performance of the method depends on the number of
+slices of the cell system, which has to be tuned manually. It is
+automatically ensured that the maximal pairwise error is smaller than
+the given bound. Note thate the user has to take care that the particles don't
+leave the box in the nonperiodic z-direction e.g. with constraints. By default,
+no dielectric contrast is set and it is used as::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3)
+	system.actors.add(mmm2d)
+
+
+For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`. 
+The last two, mutually exclusive parameters `dielectric` and
+`dielectric_constants_on` allow to specify dielectric contrasts at the
+upper and lower boundaries of the simulation box. The first form
+specifies the respective dielectric constants in the media, which
+however is only used to calculate the contrasts. That is, specifying
+:math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
+identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric = 1, top = 1, mid = 1, bot = 1)
+
+The second form specifies only the dielectric contrasts at the boundaries,
+that is :math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
+and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
+Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
+to metallic boundary conditions::
+
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 1.0, maxPWerror = 1e-3, dielectric_contrast_on = 1, delta_mid_top = -1, delta_mid_bot = -1)
+
+Using `capacitor` allows to maintain a constant electric potential difference
+between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
+denotes the box length in :math:`z`-direction::
+	
+	mmm2d = electrostatics.MMM2D(bjerrum_length = 100.0, maxPWerror = 1e-3, capacitor = 1, pot_diff = 100.0)
+
+This is done by countering the total dipol moment of the system with the
+electric field :math:`E_{induced}` and superposing a homogeneous electric field
+:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
+induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
+for planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor connected
+to a battery with voltage `pot_diff`. Using 0 is equivalent to
+:math:`\Delta_{t/b}=-1`.
+
+Finally, the far cutoff setting should only be used for testing reasons,
+otherwise you are more safe with the automatic tuning. If you even don’t know
+what it is, do not even think of touching the far cutoff. For details on the
+MMM family of algorithms, refer to appendix :ref:`mmm_appendix`. Please cite
+:cite:`mmm2d` when using MMM2D.
+
+A complete (but unphysical) sample script for a plate capacitor simulated with MMM2D
+can be found in `/samples/visualiztion_mmm2d.py`.
+
+
+.. _ELC:
+
+Electrostatic Layer Correction (ELC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*ELC* can be used to simulate charged system with 2D periodicity. In more
+detail, is a special procedure that converts a 3D electrostatic method to a 2D
+method in computational order N. Currently, it only supports P3M. This means,
+that you will first have to set up the P3M algorithm before using ELC. The
+algorithm is definitely faster than MMM2D for larger numbers of particles
+(:math:`>400` at reasonable accuracy requirements). The periodicity has to be
+set to ``1 1 1`` still, and the 3D method has to be set to epsilon metallic,
+i.e. metallic boundary conditions.  Make sure that you read the papers on ELC
+(:cite:`arnold02c,icelc`) before using it. ELC  is an |es| actor and is used
+with::
+
+    elc = electrostatic_extensions.ELC(gap_size = box_l*0.2, maxPWerror = 1e-3)
+    system.actors.add(elc)
+
+
+Parameters are:
+    * gap_size:
+        The gap size gives the height of the empty region between the system box
+        and the neighboring artificial images. |es| does not
+        make sure that the gap is actually empty, this is the users
+        responsibility. The method will compute fine if the condition is not
+        fulfilled, however, the error bound will not be reached. Therefore you
+        should really make sure that the gap region is empty (e.g. by constraints).
+    * maxPWerror:
+		The maximal pairwise error sets the LUB error of the force between any
+		two charges without prefactors (see the papers). The algorithm tries to find
+		parameters to meet this LUB requirements or will throw an error if there are
+		none.
+    * far_cut:
+        The setting of the far cutoff is only intended for testing and allows to
+        directly set the cutoff. In this case, the maximal pairwise error is
+        ignored.     
+    * neutralize:
+		By default, ELC just as P3M adds a homogeneous neutralizing background
+		to the system in case of a net charge. However, unlike in three dimensions,
+		this background adds a parabolic potential across the
+		slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
+		probably want to disable the neutralization.  This corresponds then to a formal
+		regularization of the forces and energies :cite:`ballenegger09a`. Also, if you
+		add neutralizing walls explicitely as constraints, you have to disable the
+		neutralization.
+
+.. _ICC:
+
+Dielectric interfaces with the ICC\ :math:`\star` algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ICC\ :math:`\star` algorithm allows to take into account arbitrarily shaped
+dielectric interfaces and dynamic charge induction. For instance, it can be
+used to simulate a curved metallic boundary. This is done by iterating the
+charge on a set of spatially fixed *ICC particles* until they correctly
+represent the influence of the dielectric discontinuity. All *ICC particles*
+need a certain area, normal vector and dielectric constant to specify the
+surface. ICC relies on a coulomb solver that is already initialized. So far, it
+is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
+actor and can be activated via::
+
+	icc=ICC(<See the following list of ICC parameters>)
+	system.actors.add(icc)
+
+Paremters are:
+
+	* first_id: 
+		ID of the first ICC Particle.
+	* n_icc: 
+		Total number of ICC Particles.
+	* convergence:
+		Abort criteria of the iteration. It corresponds to the maximum relative
+		change of any of the interface particle’s charge.
+	* relaxation:
+		SOR relaxation parameter.
+	* ext_field:
+		Homogeneous electric field added to the calculation of dielectric boundary forces.
+	* max_iterations:
+		Maximal number of iterations.
+	* eps_out:
+		Relative permittivity of the outer region (where the particles are).
+	* normals:
+		List of size `n_icc` with normal vectors pointing into the outer region. 
+	* areas 
+		List of size `n_icc` with areas of the discretized surface. 
+	* sigmas 
+		List of size `n_icc` with an additional surface charge density in
+		absence of any charge induction
+	* epsilons
+		List of size `n_icc` with the dielectric constant associated to the area. 
+
+The ICC particles are setup as normal |es| particles. Note that they should be
+fixed in space and need an initial nonzero charge. The following usage example
+sets up parallel metallic plates and activates ICC::
+
+	# Set the ICC line density and calculate the number of
+	# ICC particles according to the box size
+	l = 3.2
+	nicc =int(box_l / l)
+	nicc_per_electrode = nicc * nicc
+	nicc_tot = 2 * nicc_per_electrode
+	iccArea = box_l * box_l / nicc_per_electrode
+	l=box_l / nicc
+
+	# Lists to collect required parameters
+	iccNormals=[]
+	iccAreas=[]
+	iccSigmas=[]
+	iccEpsilons=[]
+
+	# Add the fixed ICC particles:
+
+	# Left electrode (normal [0,0,1])
+	for xi in xrange(nicc):
+		for yi in xrange(nicc):
+			system.part.add(pos=[l * xi, l * yi, 0], q = -0.0001, fix = [1, 1, 1], type = icc_type)
+	iccNormals.extend([0, 0, 1] * nicc_per_electrode)
+
+	# Right electrode (normal [0,0,-1])
+	for xi in xrange(nicc):
+		for yi in xrange(nicc):
+			system.part.add(pos=[l * xi, l * yi, box_l], q = 0.0001, fix = [1, 1, 1], type = icc_type)
+	iccNormals.extend([0, 0, -1] * nicc_per_electrode)
+
+	# Common area, sigma and metallic epsilon
+	iccAreas.extend([iccArea] * nicc_tot)
+	iccSigmas.extend([0] * nicc_tot)
+	iccEpsilons.extend([100000] * nicc_tot)
+	
+	icc=ICC(first_id=0, 
+			n_icc=nicc_tot, 
+			convergence=1e-4, 
+			relaxation=0.75,
+			ext_field=[0,0,0], 
+			max_iterations=100, 
+			eps_out = 1.0,
+			normals=iccNormals, 
+			areas=iccAreas, 
+			sigmas=iccSigmas, 
+			epsilons=iccEpsilons)
+
+	system.actors.add(icc)
+
+
+With each iteration, ICC has to solve electrostatics which can severely slow
+down the integration. The performance can be improved by using multiple cores, 
+a minimal set of ICC particles and convergence and relaxation parameters that
+result in a minimal number of iterations. Also please make sure to read the
+corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
+using it.
+
+
 Maxwell Equation Molecular Dynamics (MEMD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter coulomb memd
 
@@ -1800,8 +1965,8 @@ depending on your computer -- run roughly a factor of :math:`2` to
 :math:`4` longer than MEMD without temporally varying dielectric
 properties.
 
-Scafacos
-~~~~~~~~
+Scafacos Electrostatics
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Espresso can use the electrostatics methods from the SCAFACOS *Scalable
 fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods()`
@@ -1826,116 +1991,6 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 For details of the various methods and their parameters please refer to
 the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
-.. _ELC:
-
-Electrostatic Layer Correction (ELC)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Please cite when using ELC, and in addition if you use dielectric
-interfaces.
-
-[ neutralize = , far_cut = ]
-
-inter coulomb elc
-
-This is a special procedure that converts a 3d method, to a 2d method,
-in computational order N. Currently, it only supports P3M. This means,
-that you will first have to set up the P3M algorithm (via
-``inter coulomb p3m``) before using ELC. The algorithm is definitely
-faster than MMM2D for larger numbers of particles (:math:`>400` at
-reasonable accuracy requirements). The maximal pairwise error sets the
-LUB error of the force between any two charges without prefactors (see
-the papers). The algorithm tries to find parameters to meet this LUB
-requirements or will throw an error if there are none.
-
-The gap size gives the height of the empty region between the system box
-and the neighboring artificial images (again, see the paper). does not
-make sure that the gap is actually empty, this is the users
-responsibility. The method will compute fine of the condition is not
-fulfilled, however, the error bound will not be reached. Therefore you
-should really make sure that the gap region is empty (e. g. by
-constraints).
-
-The setting of the far cutoff is only intended for testing and allows to
-directly set the cutoff. In this case, the maximal pairwise error is
-ignored. The periodicity has to be set to ``1 1 1`` still, and the 3d
-method has to be set to epsilon metallic, i.e. metallic boundary
-conditions. For details, see appendix .
-
-By default, ELC just as P3M adds a homogeneous neutralizing background
-to the system in case of a net charge. However, unlike in three
-dimensions, this background adds a parabolic potential across the
-slab :cite:`ballenegger09a`. Therefore, under normal
-circumstance, you will probably want to disable the neutralization using
-. This corresponds then to a formal regularization of the forces and
-energies :cite:`ballenegger09a`. Also, if you add
-neutralizing walls explicitely as constraints, you have to disable the
-neutralization.
-
-The dielectric contrast features work exactly the same as for MMM2D, see
-the documentation above. Same accounts for , but the constant potential
-is maintained between the xy-plane at :math:`z=0` and
-:math:`z=L-gap_size`. The command to read out the electric fields added
-by also applies for the capacitor-feature of ELC.
-
-Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it.
-
-.. _ICC:
-
-Dielectric interfaces with the ICC\ :math:`\star` algorithm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-iccp3m convergence areas normals sigmas epsilons
-
-The ICC\ :math:`\star` algorithm allows to take into account arbitrarily
-shaped dielectric interfaces. This is done by iterating the charge on
-the particles with the ids 0 to until the correctly represent the
-influence of the dielectric discontinuity. It relies on a coulomb solver
-that is already initialized. This Coulomb solver can be P3M, P3M+ELC,
-MMM2D or MMM1D. As most of the times, ICC\ :math:`\star` will be used
-with P3M the corresponding command is called .
-
-Please make sure to read the corresponding articles,
-mainly:cite:`espresso2,tyagi10a,kesselheim11a` before
-using it.
-
-The particles with ids 0 to are treated as iterated particles by
-ICC\ :math:`\star`. The constitute the dielectric interface and should
-be fixed in space. The parameters and are Tcl lists containing one
-floating point number describing each surface elements area and
-dielectric constant. allows to take into account a (bare) charge
-density, thus a surface charge density in absence of any charge
-induction. is a Tcl list of Tcl lists with three floating point numbers
-describing the outward pointing normal vectors for every surface
-element. The parameter allows to specify the accuracy of the iteration.
-It corresponds to the maximum relative change of any of the interface
-particle’s charge. After the iteration stops anyways. The dielectric
-constant in bulk, i. e. outside the dielectric walls is specified by . A
-homogeneous electric field can be added to the calculation of dielectric
-boundary forces by specifying it in the parameter .
-
-Quick setup of dielectric interfaces
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-dielectric sphere center radius res dielectric wall normal dist res
-dielectric cylinder center axis radius direction dielectric pore center
-axis radius length smoothing_radius res dielectric slitpore pore_mouth
-channel_width pore_width pore_length upper_smoothing_radius
-lower_smoothing_radius
-
-The command allows to conveniently create dielectric interfaces similar
-to the constraint and the lbboundary command. Currently the creation of
-spherical, cylindrical and planar geometries as well as a pore and
-slitpore geometry is supported. Please check the documentation of the
-corresponding constraint for the detailed geometry. It is implemented in
-Tcl and places particles in the right positions and adds the correct
-values to the global Tcl variables and increases the global Tcl variable
-varn_induced_charges. Thus after setting up the shapes, it is still
-necessary to register them by calling , usually in the following way:
-
-| iccp3m $n_induced_charges epsilons $icc_epsilons normals
-| $icc_normals areas $icc_areas sigmas $icc_sigmas
 
 Dipolar interaction
 -------------------
@@ -2086,12 +2141,10 @@ To use the method, create an instance of :attr:`espressomd.magnetostatics.Dipola
   from espressomd.magnetostatics import DipolarDirectSumGpu
   dds=DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
-  
 
 
-
-Scafacos
-~~~~~~~~
+Scafacos Magnetostatics
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Espresso can use the methods from the Scafacos *Scalable fast Coulomb
 solvers* library for dipoles, if the methods support dipolar
@@ -2110,69 +2163,13 @@ For details of the various methods and their parameters please refer to
 the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for coulomb or for dipolar interactions.
 
 
-
-
-
-
-
 Special interaction commands
 ----------------------------
 
-Tunable-slip boundary interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-inter tunable_slip
-
-Simulating micro-channel flow phenomena like the Plane Poiseuille and the
-Plane Couette Flow require accurate boundary conditions. There are two
-main boundary conditions in use:
-
-#. *slip boundary condition* which means that the flow velocity at the
-   the hydrodynamic boundaries is zero.
-
-#. *partial-slip boundary condition* which means that the flow velocity
-   at the hydrodynamic boundaries does not vanish.
-
-In recent years, experiments have indicated that the no-slip boundary
-condition is indeed usually not valid on the micrometer scale. Instead,
-it has to be replaced by the *partial-slip boundary condition*
-
-.. math::
-
-   \delta_B \; \; \partial_\mathbf{n} v_{\parallel} \rVert_{\mathbf{r}_B} =
-   v_{\parallel} \rVert_{\mathbf{r}_B},
-
-where :math:`v_{\parallel}` denotes the tangential component of the
-velocity and :math:`\partial_\mathbf{n} v_{\parallel}` its spatial
-derivative normal to the surface, both evaluated at the position
-:math:`\mathbf{r}_B` of the so-called *hydrodynamic boundary*. This
-boundary condition is characterized by two effective parameters, namely
-(i) the slip length :math:`\delta_B` and (ii) the hydrodynamic boundary
-:math:`\mathbf{r}_B`.
-
-Within the approach of the tunable-slip boundary interactions it is
-possible to tune the slip length systematically from full-slip to
-no-slip. A coordinate-dependent Langevin-equation describes a viscous
-layer in the vicinity of the channel walls which exerts an additional
-friction on the fluid particles. is the temperature, the friction
-coefficient and is the cut-off radius of this layer. is the timestep of
-the integration scheme. With and it is possible to give the layer a
-reference velocity to create a Plane Couette Flow. Make sure that the
-cutoff radius is larger than the cutoff radius of the constraint
-Lennard-Jones interactions. Otherwise there is no possibility that the
-particles feel the viscous layer.
-
-This method was tested for Dissipative Particle Dynamics but it is
-intended for mesoscopic simulation methods in general. Note, that to use
-tunable-slip boundary interactions you have to apply **two** wall
-constraints with Lennard-Jones in addition to the tunable-slip
-interaction. Make sure that the cutoff radius is larger than the cutoff
-radius of the constraint Lennard-Jones interactions. Otherwise there is
-no possibility that the particles feel the viscous layer. Please read
-reference :cite:`smiatek08a` before using this interaction.
-
 DPD interaction
 ~~~~~~~~~~~~~~~
+
+.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter inter_dpd
 
@@ -2184,6 +2181,8 @@ interactions.
 
 Fixing the center of mass
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter comfixed
 
@@ -2210,6 +2209,8 @@ interaction only works on a single node.
 Pulling particles apart
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. todo:: NOT IMPLEMENTED IN PYTHON
+
 inter comforce
 
 The comforce interaction type enables one to pull away particle groups
@@ -2231,37 +2232,33 @@ particles, and a force of magnitude ( \* ) is applied on particles.
 Capping the force during warmup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-inter forcecap
-
 Non-bonded interactions are often used to model the hard core repulsion
 between particles. Most of the potentials in the section are therefore
 singular at zero distance, and forces usually become very large for
 distances below the particle size. This is not a problem during the
 simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
-difficult.
+difficult. The forces of all non-bonded interactions can be limited via::
 
-By artificially capping the forces, it is possible to simulate a system
-with overlaps. By gradually raising the cap value , possible overlaps
+	system.non_bonded_inter.set_force_cap(max)
+
+This command will cap the force to the specified value `max`, for particle distances
+which would lead to larger forces, the force remains at `max`. Accordingly, the
+potential is replaced by :math:`r F_\mathrm{max}`. Particles placed exactly on
+top of each other will be subject to a force of magnitude along the first
+coordinate axis.
+
+ By artificially capping the forces, it is possible to simulate a system
+with overlaps. By gradually raising the cap value, possible overlaps
 become unfavorable, and the system equilibrates to a overlap free
 configuration.
 
-This command will cap the force to , for particle distances which would
-lead to larger forces than , the force remains at . Accordingly, the
-potential is replaced by :math:`r F_\mathrm{max}`. Particles
-placed exactly on top of each other will be subject to a force of
-magnitude along the first coordinate axis.
+The force capping is switched off by setting the force capping to zero::
 
-The force capping is switched off by setting
-:math:`F_\mathrm{max}=0`. Note that force capping always applies
-to all Lennard-Jones, tabulated, Morse and Buckingham interactions
+	system.non_bonded_inter.set_force_cap(0)
+
+Note that force capping always applies to all non-bonded interactions
 regardless of the particle types.
-
-If instead of a force capping value, the string “individual” is given,
-the force capping can be set individually for each interaction. The
-capping radius is in this case not derived from the potential
-parameters, but is given by an additional signal floating point
-parameter to the interaction.
 
 .. |image1| image:: figures/hbond.pdf
 .. |image2| image:: figures/stretching.png

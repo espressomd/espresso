@@ -788,10 +788,10 @@ class openGLLive(object):
             None, MouseFireEvent.FreeMotion, self.mouseMotion))
 
         self.mouseManager.registerButton(MouseButtonEvent(
-            3, MouseFireEvent.ButtonPressed, self.camera.moveForward))
+            3, MouseFireEvent.ButtonPressed, self.camera.moveBackward))
 
         self.mouseManager.registerButton(MouseButtonEvent(
-            4, MouseFireEvent.ButtonPressed, self.camera.moveBackward))
+            4, MouseFireEvent.ButtonPressed, self.camera.moveForward))
 
         # START/STOP DRAG
         if self.specs['drag_enabled']:
@@ -1302,7 +1302,6 @@ class Camera(object):
         self.moveSpeed = moveSpeed
         self.lookSpeed = rotSpeed
         self.globalRotSpeed = globalRotSpeed
-        #self.camPos = np.array(camPos) + np.array(center)
 
         self.center = center
         self.updateLights = updateLights
@@ -1318,15 +1317,6 @@ class Camera(object):
 
         self.state_pos = np.array([0,0,r])
         
-        #self.state_pos[0]  *= -1
-        #self.state_pos[1]  *= -1
-        ##self.state_pos[2]  *= -1
-        #self.state_pos[0]  += center[0]
-        #self.state_pos[1]  += center[1]
-        #self.state_pos[2]  += center[2]
-
-        #self.rotateCameraH(0)
-        #self.rotateCameraV(0)
         self.update_modelview()
 
     def moveForward(self):
@@ -1379,7 +1369,7 @@ class Camera(object):
             if dm[0] != 0:
                 self.rotateCameraH(dm[0] * 0.001 * self.globalRotSpeed)
             if dm[1] != 0:
-                self.rotateCameraV(-dm[1] * 0.001 * self.globalRotSpeed)
+                self.rotateCameraV(dm[1] * 0.001 * self.globalRotSpeed)
         elif mouseButtonState[GLUT_RIGHT_BUTTON] == GLUT_DOWN:
             self.state_pos[0] -= 0.05 * dm[0] * self.moveSpeed
             self.state_pos[1] += 0.05 * dm[1] * self.moveSpeed
