@@ -322,3 +322,49 @@ in the given simulation volume and compare this to the expected value at
 pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
 case of an initial excess of acid or base in the simulation box. Note
 that this only works for big enough volumes.
+
+
+
+Integrating rotational degrees of freedom
+-----------------------------------------
+When the feature ROTATION is compiled in, Particles not only have a position, but also an orientation.
+Just as a force on a particle leads to an increase in linear velocity, a torque on a particle leads to an increase in angular velocity. The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
+When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
+
+Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
+It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
+In this way, just compiling in the ROTATION feature no longer changes the physics of the system.
+
+The rotation of a particle is controlled via the :any:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled:::
+    
+    import espressomd
+    s=espressomd.System()
+    s.part.add(pos=(0,0,0),rotation=(1,0,0))
+
+Notes:
+
+* The orientation of a particle is stored as a quaternion in the :any:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide. 
+* The space-frame direction of the particle's z-axis in its body frame is accessible through the `espressomd.particle_data.ParticleHandle.director` property.
+* Any other vector can be converted from body to space fixed frame using the `espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
+* When DIPOLES are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
+* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the direcotr or the dipole moment.
+
+
+The following particle properties are related to rotation:
+
+* :any:`espressomd.particle_data.ParticleHandle.dip`
+* :any:`espressomd.particle_data.ParticleHandle.director`
+* :any:`espressomd.particle_data.ParticleHandle.ext_torque`
+* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :any:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :any:`espressomd.particle_data.ParticleHandle.omega_body`
+* :any:`espressomd.particle_data.ParticleHandle.omega_lab`
+* :any:`espressomd.particle_data.ParticleHandle.quat`
+* :any:`espressomd.particle_data.ParticleHandle.rinertia`
+* :any:`espressomd.particle_data.ParticleHandle.rotation`
+* :any:`espressomd.particle_data.ParticleHandle.torque_lab`
+
+
+
+
+
