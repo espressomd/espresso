@@ -146,6 +146,13 @@ cdef class System(object):
             return integ_switch
 
     property force_cap:
+    """
+    If > 0, the magnitude of the force on the particles
+    are capped to this value.
+
+    type : float
+    
+    """
         def __get__(self):
             return forcecap_get()
 
