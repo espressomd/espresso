@@ -88,7 +88,7 @@ cdef class ParticleHandle(object):
     # Particle Type
     property type:
         """
-        The particle type for nonbonded interactions
+        The particle type for nonbonded interactions.
 
         type : int
                Nonbonded interactions act between different types of particles.
@@ -114,11 +114,12 @@ cdef class ParticleHandle(object):
     property mol_id:
         """
         The molecule id of the Particle.
-         mol_id : int
-                  The particle mol_id is used to differentiate between
-                  particles belonging to different molecules, e.g. when virtual
-                  sites are used, or object-in-fuid cells. The default
-                  `mol_id` for all particles is 0.
+
+        mol_id : int
+                 The particle mol_id is used to differentiate between
+                 particles belonging to different molecules, e.g. when virtual
+                 sites are used, or object-in-fuid cells. The default
+                 `mol_id` for all particles is 0.
 
         .. note::
            The value of `mol_id` has to be an integer >= 0.
@@ -139,10 +140,10 @@ cdef class ParticleHandle(object):
     # Position
     property pos:
         """
-        The unwrapped (not folded into central box) particle position
+        The unwrapped (not folded into central box) particle position.
 
         pos : list of floats
-              A list of three floats representing the Particles's absolute position
+              A list of three floats representing the particles's absolute position.
 
         """
 
@@ -168,18 +169,16 @@ cdef class ParticleHandle(object):
 
     property pos_folded:
         """
-        The wrapped (folded into central box) position vector of a Particle.
+        The wrapped (folded into central box) position vector of a particle.
 
         pos : list of floats
-              A list of three floats representing the Particles's position.
+              A list of three floats representing the particles's position.
 
         .. note::
            Setting the folded position is ambiguous and is thus not possible, please use `pos`.
 
-
         Examples
-        ----------
-
+        --------
         >>> import espressomd
         >>>
         >>> system = espressomd.System()
@@ -201,9 +200,7 @@ cdef class ParticleHandle(object):
         [0.0, 0.0, 0.0]
         [5.0, 0.0, 0.0]
 
-
         """
-
         def __set__(self, pos_folded):
             raise Exception("setting a folded position is not implemented")
 
@@ -219,7 +216,7 @@ cdef class ParticleHandle(object):
         The particle velocity in the lab frame.
 
         v : list of floats
-              A list of three floats representing the Particles's velocity
+            A list of three floats representing the Particles's velocity
 
         .. note::
            The velocity remains variable and will be changed during integration.
@@ -263,7 +260,7 @@ cdef class ParticleHandle(object):
         The instantaneous force acting on this particle.
 
         f : list of floats
-             A list of three floats representing the current forces on the Particle
+            A list of three floats representing the current forces on the Particle
 
         .. note::
            Whereas the velocity is modified with respect to the velocity you set
@@ -297,14 +294,14 @@ cdef class ParticleHandle(object):
         You need to define a bonded interaction.
 
         bonds : tuple of tuples (or list)
-                a bond tuple is specified as a bond identifier associated with a particle `(bond_ID, part_ID)`. A single particle may contain multiple such tuples.
+                a bond tuple is specified as a bond identifier associated with
+                a particle `(bond_ID, part_ID)`. A single particle may contain
+                multiple such tuples.
 
         See Also
-        ----------
-
+        --------
         add_bond() : Method to add bonds to a `Particle`
         delete_bond() : Method to add bonds to a `Particle`
-
 
         .. note::
            Bond ids have to be an integer >= 0.
@@ -360,8 +357,7 @@ cdef class ParticleHandle(object):
                                should be integrated with time_step of small_time_step.
 
             .. note::
-               This needs the feature MULTI_TIMESTEP
-
+               This needs the feature MULTI_TIMESTEP.
 
             """
 
@@ -382,13 +378,12 @@ cdef class ParticleHandle(object):
         """
         Particle mass.
 
-        mass :  float
+        mass : float
                The particle mass.
-
 
         See Also
         ----------
-        espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
+        :meth:`espressomd.thermostat.Thermostat.set_langevin` : Setting the parameters of the Langevin thermostat
 
         """
 
@@ -415,7 +410,7 @@ cdef class ParticleHandle(object):
                 list of three floats giving the particle angular velocity as measured from the lab frame.
 
             .. note::
-               This needs the feature ROTATION
+               This needs the feature ROTATION.
 
                If you set the angular velocity of the particle in the lab
                frame, the orientation of the particle
@@ -425,9 +420,7 @@ cdef class ParticleHandle(object):
 
             See Also
             ---------
-
-            espressomd.particle_data.ParticleHandle.omega_body
-
+            :attr:`espressomd.particle_data.ParticleHandle.omega_body`
 
             """
 
@@ -451,11 +444,11 @@ cdef class ParticleHandle(object):
             Particle quaternion representation.
 
             quat : list fo floats (of length four)
-                This list of four floats sets the quaternion representation of the rotational position of
-                this particle.
+                   This list of four floats sets the quaternion representation
+                   of the rotational position of this particle.
 
-            ..note::
-                This needs the feature ROTATION.
+            .. note::
+               This needs the feature ROTATION.
 
             """
 
@@ -478,6 +471,7 @@ cdef class ParticleHandle(object):
         property director:
             """
             Director.
+
             .. note::
                Setting the director is not implemented.
                This needs the feature ROTATION.
@@ -507,13 +501,11 @@ cdef class ParticleHandle(object):
 
             omega_body : list of floats
 
-
             This property sets the angular momentum of this particle in the
             particles co-rotating frame (or body frame).
 
             .. note::
                This needs the feature ROTATION.
-
 
             """
 
@@ -542,9 +534,10 @@ cdef class ParticleHandle(object):
             in the fixed frame (or laboratory frame).
 
             .. note::
-               The orientation of the particle (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be set
-               before setting this property, otherwise the conversion from lab to body frame
-               will not be handled properly.
+               The orientation of the particle
+               (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be
+               set before setting this property, otherwise the conversion from
+               lab to body frame will not be handled properly.
 
             See also
             --------
@@ -577,7 +570,7 @@ cdef class ParticleHandle(object):
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
             coordinate axes in the particle’s co-rotating coordinate system.
-            When the particle’s quaternions are set to 1 0 0 0, the co-rotating
+            When the particle's quaternions are set to 1 0 0 0, the co-rotating
             and the fixed (lab) frame are co-aligned.
 
             .. note::
@@ -633,8 +626,7 @@ cdef class ParticleHandle(object):
         property virtual:
             """
             Virtual flag.
-            Declares the particles as virtual (1) or non-virtual (0, default). Please
-            read !!! THIS !!! before using virtual sites.
+            Declares the particles as virtual (1) or non-virtual (0, default).
 
             virtual : integer
 
@@ -667,9 +659,6 @@ cdef class ParticleHandle(object):
             The relative orientation is specified as a quaternion of 4 floats.
 
             vs_relative : tuple: (PID, distance, (q1,q2,q3,q4))
-
-            ..todo ::
-              document this
 
             .. note::
                This needs the feature VIRTUAL_SITES_RELATIVE
@@ -725,7 +714,7 @@ cdef class ParticleHandle(object):
             dip : list of floats
 
             .. note::
-               This needs the feature DIPOLES
+               This needs the feature DIPOLES.
 
             """
 
@@ -811,7 +800,7 @@ cdef class ParticleHandle(object):
             fix : list of integers
 
             Fixes the particle in space. By supplying a set of 3 integers as
-            ar- guments it is possible to fix motion in x, y, or z coordinates
+            arguments it is possible to fix motion in x, y, or z coordinates
             independently. For example::
 
                 part[<ID>].fix = [0, 0, 1]
@@ -819,7 +808,7 @@ cdef class ParticleHandle(object):
             will fix motion for particle with id ``ID`` only in z.
 
             .. note::
-               This needs the feature EXTERNAL_FORCES
+               This needs the feature EXTERNAL_FORCES.
 
             """
 
@@ -851,8 +840,8 @@ cdef class ParticleHandle(object):
                 ext_torque : list of floats
 
                 ..  note::
-                    This torque is specified in the laboratory frame!
-                    This needs the feature EXTERNAL_FORCES and ROTATION
+                    * This torque is specified in the laboratory frame!
+                    * This needs the feature EXTERNAL_FORCES and ROTATION.
 
                 """
 
@@ -890,11 +879,11 @@ cdef class ParticleHandle(object):
                 gamma : list of floats
 
                 .. note::
-                   This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY
+                   This needs the feature LANGEVIN_PER_PARTICLE and PARTICLE_ANISOTROPY.
 
                 See Also
                 ----------
-                espressomd.thermostat.Thermostat.set_langevin : Setting the parameters of the Langevin thermostat
+                :meth:`espressomd.thermostat.Thermostat.set_langevin` : Setting the parameters of the Langevin thermostat
 
                 """
 
@@ -919,13 +908,12 @@ cdef class ParticleHandle(object):
 
                 gamma : float
 
-
                 .. note::
-                   This needs the feature LANGEVIN_PER_PARTICLE
+                   This needs the feature LANGEVIN_PER_PARTICLE.
 
                 See Also
                 ----------
-                espressomd.thermostat.Thermostat.set_langevin.set_langevin : Setting the parameters of the Langevin thermostat
+                :meth:`espressomd.thermostat.Thermostat.set_langevin.set_langevin` : Setting the parameters of the Langevin thermostat
 
                 """
 
@@ -949,8 +937,7 @@ cdef class ParticleHandle(object):
                     gamma_rot : list of floats
 
                     .. note::
-                       This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and PARTICLE_ANISOTROPY
-
+                       This needs the feature LANGEVIN_PER_PARTICLE, ROTATION and PARTICLE_ANISOTROPY.
                     """
 
                     def __set__(self, _gamma_rot):
@@ -975,8 +962,6 @@ cdef class ParticleHandle(object):
 
                     gamma : float
 
-                    .. note::
-
                     """
 
                     def __set__(self, _gamma_rot):
@@ -999,8 +984,7 @@ cdef class ParticleHandle(object):
             temp: float
 
             .. note::
-               This needs the feature LANGEVIN_PER_PARTICLE
-
+               This needs the feature LANGEVIN_PER_PARTICLE.
 
             """
 
@@ -1028,11 +1012,7 @@ cdef class ParticleHandle(object):
             rotation : (int,int,int)
 
             .. note::
-                 
-           This needs the feature ROTATION
-
-            .. note::
-               This needs the feature ROTATION_PER_PARTICLE
+               This needs the feature ROTATION.
 
             """
 
@@ -1064,7 +1044,7 @@ cdef class ParticleHandle(object):
             The exclusion list of particles where nonbonded interactions are ignored.
 
             .. note::
-               This needs the feature EXCLUSIONS
+               This needs the feature EXCLUSIONS.
 
             """
 
@@ -1092,7 +1072,6 @@ cdef class ParticleHandle(object):
             Parameters
             -----------
             _partners : list of partners
-
 
             """
 
@@ -1143,7 +1122,6 @@ cdef class ParticleHandle(object):
 
             Parameters
             ----------
-
             'f_swim' : float
                        Achieve a constant velocity by imposing a constant
                        force term 'f_swim' that is balanced by friction of a
@@ -1277,7 +1255,7 @@ cdef class ParticleHandle(object):
         Delete the particle.
 
         See Also
-        ----------
+        --------
         add
         clear
 
@@ -1295,9 +1273,9 @@ cdef class ParticleHandle(object):
         Add a bond, the validity of which has already been verified.
 
         See Also
-        ----------
-        add_bond :  Delete an unverified bond held by the `Particle`.
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
+        --------
+        add_bond : Delete an unverified bond held by the `Particle`.
+        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
 
         """
 
@@ -1318,7 +1296,6 @@ cdef class ParticleHandle(object):
         bond : tuple where the first element is either a bond ID of a bond
                type, and the last element is the ID of the parter particle to be
                bonded to.
-
 
         See Also
         --------
@@ -1399,7 +1376,7 @@ cdef class ParticleHandle(object):
 
         See Also
         --------
-        bonds :  `Particle` property containing a list of all current bonds help by `Particle`.
+        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
 
         Examples
         --------
@@ -1471,7 +1448,6 @@ cdef class ParticleHandle(object):
         >>> print(system.part[0].bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
-
         """
 
         bond = list(_bond)  # as we modify it
@@ -1487,14 +1463,12 @@ cdef class ParticleHandle(object):
         delete_bond : Delete an unverified bond held by the Particle.
         bonds : Particle property containing a list of all current bonds help by Particle.
 
-
         """
 
         if change_particle_bond(self.id, NULL, 1):
             handle_errors("Deleting all bonds failed.")
 
     def update(self, P):
-
         if "id" in P:
             raise Exception("Cannot change particle id.")
 
@@ -1600,7 +1574,6 @@ cdef class _ParticleSliceImpl(object):
         """
         Add a single bond to the particles.
 
-
         """
 
         bond = list(_bond)  # As we will modify it
@@ -1613,7 +1586,6 @@ cdef class _ParticleSliceImpl(object):
     def delete_bond(self, _bond):
         """
         Delete a single bond from the particles.
-
 
         """
 
@@ -1633,7 +1605,7 @@ cdef class _ParticleSliceImpl(object):
         Delete the particles.
 
         See Also
-        ----------
+        --------
         add
 
         """
@@ -1645,7 +1617,6 @@ cdef class _ParticleSliceImpl(object):
 class ParticleSlice(_ParticleSliceImpl):
     """
     Handles slice inputs e.g. part[0:2]. Sets values for selected slices or returns values as a single list.
-
 
     """
 
@@ -1688,8 +1659,6 @@ cdef class ParticleList(object):
         (rightly) does not support changing of the id after the particle
         was created.
 
-
-
         """
 
         pickle_attr = copy(particle_attributes)
@@ -1726,11 +1695,11 @@ cdef class ParticleList(object):
         add() takes either a dictionary or a bunch of keyword args.
 
         See Also
-        ----------
+        --------
         remove
 
         Examples
-        ----------
+        --------
 
         >>> import espressomd
         >>> from espressomd.interactions import *
@@ -1766,7 +1735,6 @@ cdef class ParticleList(object):
             return self._place_new_particle(P)
  
     def _place_new_particle(self, P):
-     
         # Handling of particle id
         if not "id" in P:
             # Generate particle id
@@ -1797,7 +1765,6 @@ cdef class ParticleList(object):
         return self[id]
 
     def _place_new_particles(self, P):
-
         if not "id" in P:
             # Generate particle ids
             ids = np.arange(np.array(P["pos"]).shape[
@@ -1838,10 +1805,10 @@ cdef class ParticleList(object):
 
     def clear(self):
         """
-        Removes all particles
+        Removes all particles.
 
         See Also
-        ----------
+        --------
         add
         remove
 
@@ -1862,35 +1829,35 @@ cdef class ParticleList(object):
         Write the positions and velocities of particles with specified
         types to a VTK file.
  
-         Parameters
-         ----------
+        Parameters
+        ----------
  
-         'fname': string
-             filename of the target output file
-         'types': list of integers or the string 'all', optional (default: 'all')
-             A list of particle types which should be output to 'fname'
+        'fname': string
+            filename of the target output file
+        'types': list of integers or the string 'all', optional (default: 'all')
+            A list of particle types which should be output to 'fname'
    
-         Examples
-         --------
+        Examples
+        --------
  
-         >>> import espressomd
-         >>> 
-         >>> system = espressomd.System()
-         >>> 
-         >>> # add several particles
-         >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
-         >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
-         >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
-         >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
-         >>> 
-         >>> # write to VTK
-         >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
-         >>> system.part.writevtk("part_type_2.vtk", types=[2])
-         >>> system.part.writevtk("part_all.vtk")
+        >>> import espressomd
+        >>> 
+        >>> system = espressomd.System()
+        >>> 
+        >>> # add several particles
+        >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
+        >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
+        >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
+        >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
+        >>> 
+        >>> # write to VTK
+        >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
+        >>> system.part.writevtk("part_type_2.vtk", types=[2])
+        >>> system.part.writevtk("part_all.vtk")
  
-         :todo: `move to ./io/writer/`
-        """
+        .. todo:: `move to ./io/writer/`
 
+        """
         global box_l
         if not hasattr(types, '__iter__'):
             types = [types]
@@ -1924,7 +1891,6 @@ cdef class ParticleList(object):
         """
         Largest particle id.
 
-
         """
 
         def __get__(self):
@@ -1934,7 +1900,6 @@ cdef class ParticleList(object):
         """
         Number of particle types.
 
-
         """
 
         def __get__(self):
@@ -1943,7 +1908,6 @@ cdef class ParticleList(object):
     property n_rigidbonds:
         """
         Number of rigid bonds.
-
 
         """
 
@@ -1961,7 +1925,6 @@ cdef class ParticleList(object):
     def pairs(self):
         """
         Generator returns all pairs of particles.
-
 
         """
 

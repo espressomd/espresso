@@ -551,8 +551,6 @@ The sphere grid have simple cubic symmetry.
 The spheres are distributed evenly by dividing the boxl by ``nsphere``.
 Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
 
-Python Syntax::
-
 .. figure:: figures/shape-maze.png
    :alt: Example constraint with a ``Maze`` shape.
    :align: center

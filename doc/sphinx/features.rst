@@ -124,7 +124,7 @@ General features
    reaction between the reactants and products, with another rate
    constant. 
    
-   .. seealso:: :ref:`Catalytic reactions`
+   .. seealso:: :ref:`Catalytic reaction`
 
 -  ``OVERLAPPED``
 
