@@ -27,19 +27,22 @@
 #include <boost/serialization/vector.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
-
 #include "utils/parallel/ParallelObject.hpp"
+
+#include <cassert>
 
 namespace ScriptInterface {
 using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
 
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
+  assert(m_cb && "Not initialized!");
+
   /* Create the slaves */
-  Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>::make();
+  Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>::make(*m_cb);
 
   /* Add the callback */
-  m_callback_id = Communication::mpiCallbacks().add(
-      Communication::MpiCallbacks::function_type([](int, int) {}));
+  m_callback_id =
+      m_cb->add(Communication::MpiCallbacks::function_type([](int, int) {}));
 
   /* Create local object */
   m_p = ScriptInterfaceBase::make_shared(
@@ -48,7 +51,7 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name) {
   /* Bcast class name and global id to the slaves */
   call(CallbackAction::CREATE);
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);
-  boost::mpi::broadcast(Communication::mpiCallbacks().comm(), what, 0);
+  boost::mpi::broadcast(m_cb->comm(), what, 0);
 }
 
 ParallelScriptInterface::~ParallelScriptInterface() {
@@ -64,10 +67,14 @@ bool ParallelScriptInterface::operator!=(ParallelScriptInterface const &rhs) {
   return !(*this == rhs);
 }
 
-void ParallelScriptInterface::initialize() {
+void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
+  m_cb = &cb;
+  ParallelScriptInterfaceSlave::m_cb = &cb;
+
   Utils::Parallel::ParallelObject<
-      ParallelScriptInterfaceSlave>::register_callback();
+      ParallelScriptInterfaceSlave>::register_callback(cb);
 }
+
 void ParallelScriptInterface::set_parameter(const std::string &name,
                                             const Variant &value) {
   std::pair<std::string, Variant> d(name, Variant());
@@ -80,7 +87,7 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
 
   call(CallbackAction::SET_PARAMETER);
 
-  boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+  boost::mpi::broadcast(m_cb->comm(), d, 0);
 
   m_p->set_parameter(d.first, d.second);
 
@@ -100,7 +107,7 @@ void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
     }
   }
 
-  boost::mpi::broadcast(Communication::mpiCallbacks().comm(), p, 0);
+  boost::mpi::broadcast(m_cb->comm(), p, 0);
 
   m_p->set_parameters(p);
 
@@ -121,7 +128,7 @@ Variant ParallelScriptInterface::call_method(const std::string &name,
 
   auto d = std::make_pair(name, p);
   /* Broadcast method name and parameters */
-  boost::mpi::broadcast(Communication::mpiCallbacks().comm(), d, 0);
+  boost::mpi::broadcast(m_cb->comm(), d, 0);
 
   return m_p->call_method(name, p);
 }
@@ -208,5 +215,7 @@ void ParallelScriptInterface::collect_garbage() {
     }
   }
 }
+
+Communication::MpiCallbacks *ParallelScriptInterface::m_cb = nullptr;
 
 } /* namespace ScriptInterface */

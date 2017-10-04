@@ -5,20 +5,11 @@ set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/lbboundaries/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/observables/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Cylinder.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/HollowCone.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Maze.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Pore.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Rhomboid.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Slitpore.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Sphere.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/SpheroCylinder.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Stomatocyte.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/Wall.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/Variant.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterfaceSlave.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
 )
 
 if(H5MD)
@@ -26,7 +17,14 @@ if(H5MD)
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp"
         )
-endif(H5MD)
+    endif(H5MD)
+
+if( WITH_COVERAGE )
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+  link_libraries(gcov)
+endif()
+
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${LIBDIR})
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})

@@ -31,22 +31,17 @@
 */
 
 #include "particle_data.hpp"
+#include "PartCfg.hpp"
 
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
  *************************************************************/
 
-/** C implementation of 'mindist \<posx\> \<posy\> \<posz\>',<br>
-    which returns the minimum distance of all current particles
-    to position (\<posx\>, \<posy\>, \<posz\>) as a double.<br>
-    If it fails, return value equals -1. */
-double mindist4(double pos[3]);
-
 /** C implementation of 'mindist \<part_id\> \<r_catch\>',<br>
     which returns the size of an array \<ids\> of indices of particles which are
     less than \<r_catch\> away from the position of the particle \<part_id\>. */
-int mindist3(int part_id, double r_catch, int *ids);
+int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
    collides
@@ -57,7 +52,7 @@ int mindist3(int part_id, double r_catch, int *ids);
     @param n_add number of additional coordinates to check
     @param add additional coordinates to check
     @return Returns '1' if there is a collision, '0' otherwise. */
-int collision(double pos[3], double shield, int n_add, double *add);
+int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
 
 /** Function used by polymerC to determine wether a constraint has been violated
    while setting up a polymer. Currently only "wall", "sphere" and "cylinder"
@@ -104,7 +99,7 @@ int constraint_collision(double *p1, double *p2);
    case. <br>
     If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.
    */
-int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
+int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id, double *posed,
              int mode, double shield, int max_try, double val_cM, int cM_dist,
              int type_nM, int type_cM, int type_FENE, double angle,
              double angle2, double *posed2, int constr);
@@ -124,7 +119,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
    (default to '2')
     @return Returns how often the attempt to place a particle failed in the
    worst case. */
-int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
+int counterionsC(PartCfg &, int N_CI, int part_id, int mode, double shield, int max_try,
                  double val_CI, int type_CI);
 
 /** C implementation of 'salt \<N_pS\> \<N_nS\> [options]',
@@ -149,7 +144,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
                           in the simulation box.
     @return Returns how often the attempt to place a particle failed in the
    worst case. */
-int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
+int saltC(PartCfg &, int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
           double val_pS, double val_nS, int type_pS, int type_nS, double rad);
 
 /** C implementation of 'velocities \<v_max\> [options]',
@@ -173,7 +168,7 @@ double maxwell_velocitiesC(int part_id, int N_T);
    (mode == 1) or
     all the bonds leading to and from each monomer (mode == 2).
     @return  Returns '0' upon success, '-2' otherwise. */
-int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
+int collectBonds(PartCfg &, int mode, int part_id, int N_P, int MPC, int type_bond,
                  int **bond_out, int ***bonds_out);
 
 /** C implementation of 'crosslink \<N_P\> \<MPC\> [options]',
@@ -190,15 +185,15 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     @param  max_try     = how often crosslinks should be removed if they are too
    close to other links (defaults to '30000')
     @return Returns how many ends are now successfully linked. */
-int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
+int crosslinkC(PartCfg &, int N_P, int MPC, int part_id, double r_catch, int link_dist,
                int chain_dist, int type_FENE, int max_try);
 
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
+int diamondC(PartCfg &, double a, double bond_length, int MPC, int N_CI, double val_nodes,
              double val_cM, double val_CI, int cM_dist, int nonet);
 
 /** C implementation of 'icosaeder \<a\> \<bond_length\> \<MPC\> [options]' */
-int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
+int icosaederC(PartCfg &, double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
                int cM_dist);
 
 #endif

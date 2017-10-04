@@ -23,39 +23,29 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 
 #include "ScriptInterface.hpp"
-#include "core/utils/Factory.hpp"
 
 #include <memory>
+#include <stdexcept>
 
-
-#include "core/observables/Observable.hpp"
 #include "core/observables/Observable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-
 typedef ::Observables::Observable CoreObs;
 
 class Observable : public ScriptInterfaceBase {
 public:
-  Observable() {};
-  
   const std::string name() const override { return "Observables::Observable"; }
 
-  virtual std::shared_ptr<CoreObs> observable() {
-    return m_observable;
-  }
+  virtual std::shared_ptr<CoreObs> observable() const = 0;
   virtual Variant call_method(std::string const &method,
-                                   VariantMap const &parameters) {
+                              VariantMap const &parameters) {
     if (method == "calculate") {
       observable()->calculate();
       return observable()->last_value;
     }
-    if (method == "update") {
-      observable()->update();
-      return observable()->last_value;
-    }
+
     if (method == "value") {
       return observable()->last_value;
     }
@@ -63,21 +53,15 @@ public:
       std::string filename;
       bool binary;
 
-      try
-      {
+      try {
         filename = get_value<std::string>(parameters.at("filename"));
-      }
-      catch (std::out_of_range &e)
-      {
+      } catch (std::out_of_range &e) {
         return {};
       }
 
-      try
-      {
+      try {
         binary = get_value<bool>(parameters.at("binary"));
-      }
-      catch (std::out_of_range &e)
-      {
+      } catch (std::out_of_range &e) {
         binary = false;
       }
 
@@ -85,10 +69,8 @@ public:
       return {};
     }
 
-     return {};
-  };
-  private:
-    std::shared_ptr<::Observables::Observable> m_observable;
+    return {};
+  }
 };
 } /* namespace Observables */
 } /* namespace ScriptInterface */

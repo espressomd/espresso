@@ -1,8 +1,3 @@
-.. Extensible Simulation Package for Soft Matter Research documentation master file, created by
-   sphinx-quickstart on Thu Oct  6 11:27:00 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to the ESPResSo documentation!
 ======================================
 
@@ -11,17 +6,20 @@ Contents:
 .. toctree::
     :maxdepth: 2
 
-    Userguide <ug>
+    User's Guide <ug>
+
+    Developer's Guide <dg>
 
 espressomd package
 ==================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     modules.rst
 
 .. automodule:: espressomd
+    :noindex: espressomd.assert_features, espressomd.has_features, espressomd.missing_features
     :members: 
     :private-members:
 

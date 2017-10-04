@@ -34,10 +34,10 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from ._system import System
+from .system import System
 
 
-class Analysis:
+class Analysis(object):
 
     _systemp =None
 
@@ -56,11 +56,8 @@ class Analysis:
             raise Exception("No particles to append!")
         if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
             raise Exception("All configurations stored must have the same length")
-        #sorPartCfg() has to be called before analyze_append()
-        if not c_analyze.sortPartCfg():
-            raise Exception("for analyze, store particles consecutively starting with 0.")
 
-        c_analyze.analyze_append()
+        c_analyze.analyze_append(c_analyze.partCfg())
 
     #
     # Minimal distance between particles
@@ -79,7 +76,7 @@ class Analysis:
         cdef int_list * set2
 
         if p1 == 'default' and p2 == 'default':
-            result = c_analyze.mindist(NULL, NULL)
+            result = c_analyze.mindist(c_analyze.partCfg(), NULL, NULL)
         elif (p1 == 'default' and not p2 == 'default') or \
              (not p1 == 'default' and p2 == 'default'):
             raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
@@ -97,7 +94,7 @@ class Analysis:
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
 
-            result = c_analyze.mindist(set1, set2)
+            result = c_analyze.mindist(c_analyze.partCfg(), set1, set2)
 
             realloc_intlist(set1, 0)
             realloc_intlist(set2, 0)
@@ -148,7 +145,7 @@ class Analysis:
             for i in range(3):
                 cpos[i] = pos[i]
                 _id = -1
-        return c_analyze.distto(cpos, _id)
+        return c_analyze.distto(c_analyze.partCfg(), cpos, _id)
 
     #
     # Analyze Linear Momentum
@@ -193,7 +190,7 @@ class Analysis:
         array of floats
             The center of mass of the system.
         """
-        return c_analyze.centerofmass(part_type)
+        return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
 
 
     # get all particles in neighborhood r_catch of pos and return their ids
@@ -247,7 +244,7 @@ class Analysis:
             c_pos[i] = pos[i]
 
         il = <int_list * > malloc(sizeof(int_list))
-        c_analyze.nbhood(c_pos, r_catch, il, planedims)
+        c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, il, planedims)
 
         result = create_nparray_from_int_list(il)
         realloc_intlist(il, 0)
@@ -284,7 +281,7 @@ class Analysis:
         cdef vector[int] c_types = types
 
         cdef map[string, vector[vector[vector[double]]]] distribution
-        c_analyze.calc_cylindrical_average(c_center, c_direction, c_length,
+        c_analyze.calc_cylindrical_average(c_analyze.partCfg(), c_center, c_direction, c_length,
                                            c_radius, c_bins_axial, c_bins_radial, c_types,
                                            distribution)
 
@@ -333,14 +330,14 @@ class Analysis:
            pressure(v_comp=False)
            """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
-    #
+    
         # Dict to store the results
         p = OrderedDict()
 
         # Update in espresso core if necessary
         if (c_analyze.total_pressure.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
@@ -355,7 +352,7 @@ class Analysis:
         # Ideal
         p["ideal"] = c_analyze.total_pressure.data.e[0]
 
-        # Nonbonded
+        # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
@@ -374,7 +371,7 @@ class Analysis:
         total_non_bonded = 0
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
@@ -383,7 +380,6 @@ class Analysis:
                 p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
-        p["non_bonded_inter"] = total_inter
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
 
@@ -423,30 +419,30 @@ class Analysis:
         # Update in espresso core if necessary
         if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         tmp = np.zeros(9)
         for i in range(9):
-            value = c_analyze.total_p_tensor.data.e[i]
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                value += c_analyze.total_p_tensor.data.e[9*k + i]
-            # I don't know, why the 1/2 is needed.
-            tmp[i]=value/2.
+                tmp[i] += c_analyze.total_p_tensor.data.e[9*k + i]
 
         p["total"] = tmp.reshape((3,3))
 
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
+        p["ideal"] = p["ideal"].reshape((3,3))
 
-        # Nonbonded
+        # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
             if (bonded_ia_params[i].type != 0):
-                p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
+                p["bonded", i] = np.reshape( create_nparray_from_double_array(
+                  c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i), 9),
+                  (3, 3) )
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -457,16 +453,23 @@ class Analysis:
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
-
-                p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+                p["non_bonded", i, j] = np.reshape(
+                  create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
+                    &c_analyze.total_p_tensor, i, j), 9), (3, 3) )
                 total_non_bonded += p["non_bonded", i, j]
 
-                p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_intra", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_intra(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
-                p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_inter", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_inter(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -478,7 +481,8 @@ class Analysis:
             total_coulomb = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.coulomb, 9), (3, 3) )
                 total_coulomb = p["coulomb", i]
             p["coulomb"] = total_coulomb
 
@@ -487,7 +491,8 @@ class Analysis:
             total_dipolar = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.dipolar, 9), (3, 3) )
                 total_dipolar = p["dipolar", i]
             p["dipolar"] = total_dipolar
 
@@ -542,14 +547,13 @@ class Analysis:
         # Total energy
         cdef int i
         cdef double tmp
-        tmp = 0
-        for i in range(c_analyze.total_energy.data.n):
-            tmp += c_analyze.total_energy.data.e[i]
+        tmp = c_analyze.total_energy.data.e[0]
+        tmp += calculate_current_potential_energy_of_system()
 
         e["total"] = tmp
 
-        # Ideal
-        e["ideal"] = c_analyze.total_energy.data.e[0]
+        # Kinetic energy
+        e["kinetic"] = c_analyze.total_energy.data.e[0]
 
         # Nonbonded
         cdef double total_bonded
@@ -606,7 +610,7 @@ class Analysis:
     def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_re( & re)
+        c_analyze.calc_re(c_analyze.partCfg(), & re)
         tuple_re = (re[0], re[1], re[2])
         free(re)
         return tuple_re
@@ -615,7 +619,7 @@ class Analysis:
     def calc_rg(self, chain_start=None, number_of_chains=None, chain_length=None):
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_rg( & rg)
+        c_analyze.calc_rg(c_analyze.partCfg(), & rg)
         tuple_rg = (rg[0], rg[1], rg[2])
         free(rg)
         return tuple_rg
@@ -624,7 +628,7 @@ class Analysis:
     def calc_rh(self, chain_start=None, number_of_chains=None, chain_length=None):
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_rh( & rh)
+        c_analyze.calc_rh(c_analyze.partCfg(), & rh)
         tuple_rh = (rh[0], rh[1], rh[2])
         free(rh)
         return tuple_rh
@@ -637,16 +641,10 @@ class Analysis:
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
         check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
-        if chain_start < 0:
-            raise ValueError('chain_start must be greater than zero')
-        if chain_length < 0:
-            raise ValueError('chain_length must be greater than zero')
-        if number_of_chains < 0:
-            raise ValueError('number_of_chains must be greater than zero')
-        c_analyze.sortPartCfg()
-        if chain_start + chain_length * number_of_chains >= len(self._system.part):
-            raise ValueError(
-                'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
+        id_min=chain_start; id_max=chain_start + chain_length * number_of_chains;
+        for i in range(id_min,id_max):
+            if (not self._system.part.exists(i)):
+                raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(i,chain_start,number_of_chains,chain_length));
         c_analyze.chain_start = chain_start
         c_analyze.chain_n_chains = number_of_chains
         c_analyze.chain_length = chain_length
@@ -668,10 +666,7 @@ class Analysis:
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        # Used to take the WITHOUT_BONDS define
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
-        c_analyze.calc_structurefactor(p_types.e, p_types.n, sf_order, & sf)
+        c_analyze.calc_structurefactor(c_analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
 
         return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
 
@@ -706,15 +701,13 @@ class Analysis:
         cdef vector[int] p1_types = type_list_a
         cdef vector[int] p2_types = type_list_b
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
         if rdf_type == 'rdf':
-            c_analyze.calc_rdf(p1_types, p2_types, r_min, r_max, r_bins, rdf)
+            c_analyze.calc_rdf(c_analyze.partCfg(), p1_types, p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
-            c_analyze.calc_rdf_av(p1_types, p2_types, r_min,
+            c_analyze.calc_rdf_av(c_analyze.partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
         elif rdf_type == '<rdf-intermol>':
-            c_analyze.calc_rdf_intermol_av(
+            c_analyze.calc_rdf_intermol_av(c_analyze.partCfg(),
                 p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
@@ -759,9 +752,7 @@ class Analysis:
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
-        c_analyze.calc_part_distribution(p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+        c_analyze.calc_part_distribution(c_analyze.partCfg(),p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution)
 
         np_distribution = create_nparray_from_double_array(distribution, r_bins)
@@ -800,7 +791,7 @@ class Analysis:
         cdef double[3] com
         cdef int p1 = p_type
 
-        c_analyze.angularmomentum(p1, com)
+        c_analyze.angularmomentum(c_analyze.partCfg(),p1, com)
 
         return np.array([com[0], com[1], com[2]])
 
@@ -819,7 +810,7 @@ class Analysis:
         else:
             p_type = -1
 
-        c_analyze.calc_gyration_tensor(p_type, gt)
+        c_analyze.calc_gyration_tensor(c_analyze.partCfg(),p_type, gt)
 
         return {"Rg^2": gt[3],
                 "shape": [gt[4], gt[5], gt[6]],
@@ -840,7 +831,7 @@ class Analysis:
             if (p_type < 0 or p_type >= c_analyze.n_particle_types):
                 raise ValueError("Particle type", p_type, "does not exist!")
 
-            c_analyze.momentofinertiamatrix(p_type, MofImatrix)
+            c_analyze.momentofinertiamatrix(c_analyze.partCfg(), p_type, MofImatrix)
 
             MofImatrix_np = np.empty((9))
             for i in range(9):
@@ -875,10 +866,7 @@ class Analysis:
         if (r_max <= r_min):
             raise Exception("<r_max> has to be larger than <r_min>")
 
-        # Used to take the WITHOUT_BONDS define
-        c_analyze.updatePartCfg(0)
-        handle_errors("updatePartCfg failed")
-        c_analyze.analyze_rdfchain(r_min, r_max, r_bins, & f1, & f2, & f3)
+        c_analyze.analyze_rdfchain(c_analyze.partCfg(),r_min, r_max, r_bins, & f1, & f2, & f3)
 
         rdfchain = np.empty((r_bins, 4))
         bin_width = (r_max - r_min) / float(r_bins)
@@ -907,25 +895,25 @@ class Analysis:
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
         if (mode == "reset"):
-            _Vkappa["Vk1"] = 0.0
-            _Vkappa["Vk2"] = 0.0
-            _Vkappa["avk"] = 0.0
+            self._Vkappa["Vk1"] = 0.0
+            self._Vkappa["Vk2"] = 0.0
+            self._Vkappa["avk"] = 0.0
         elif (mode == "read"):
-            return _Vkappa
+            return self._Vkappa
         elif (mode == "set"):
             check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
-            _Vkappa["Vk1"] = Vk1
+            self._Vkappa["Vk1"] = Vk1
             check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
-            _Vkappa["Vk2"] = Vk2
+            self._Vkappa["Vk2"] = Vk2
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
-            _Vkappa["avk"] = avk
-            if (_Vkappa["avk"] <= 0.0):
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
+            self._Vkappa["avk"] = avk
+            if (self._Vkappa["avk"] <= 0.0):
+                result = self._Vkappa["Vk1"] = self._Vkappa["Vk2"] = self._Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
             else:
-                result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
-                    (_Vkappa["Vk1"] / _Vkappa["avk"])**2
+                result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
+                    (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
             raise Exception("ERROR: Unknown mode.")

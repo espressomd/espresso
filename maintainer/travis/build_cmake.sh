@@ -7,7 +7,6 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # HELPER FUNCTIONS
 
 # output value of env variables
@@ -37,16 +36,19 @@ function cmd {
     eval $1
 }
 
-
 # handle environment variables
-[ -z "$insource" ] && insource="true"
+[ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
 [ -z "$with_fftw" ] && with_fftw="true"
 [ -z "$with_python_interface" ] && with_python_interface="true"
+[ -z "$with_coverage" ] && with_coverage="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
+[ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
+
+cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
 
 if $insource; then
     builddir=$srcdir
@@ -56,7 +58,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface myconfig check_procs
+    with_python_interface with_coverage myconfig check_procs build_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -71,17 +73,38 @@ else
     echo ""
     exit $ec
 fi
+# enforce style rules
+pylint_command () {
+    if hash pylint 2> /dev/null; then
+        pylint "$@"
+    elif hash pylint3 2> /dev/null; then
+        pylint3 "$@"
+    else
+        echo "pylint not found";
+        exit 1
+    fi
+}
+if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
+    score_option='--score=no'
+else
+    score_option=''
+fi
+pylint_command $score_option --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
-if [ ! $insource ]; then
+if ! $insource; then
     if [ ! -d $builddir ]; then
         echo "Creating $builddir..."
         mkdir -p $builddir
     fi
 fi
 
-if [ ! $insource ]; then
+if ! $insource; then
     cd $builddir
 fi
+
+# load MPI module if necessary
+grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
+grep -q rhel /etc/os-release && source /etc/profile.d/modules.sh && module load mpi
 
 # CONFIGURE
 start "CONFIGURE"
@@ -98,6 +121,10 @@ else
     cmake_params="-DWITH_PYTHON=OFF $cmake_params"
 fi
 
+if [ $with_coverage = "true" ]; then
+    cmake_params="-DWITH_COVERAGE=ON $cmake_params"
+fi
+
 MYCONFIG_DIR=$srcdir/maintainer/configs
 if [ "$myconfig" = "default" ]; then
     echo "Using default myconfig."
@@ -111,32 +138,42 @@ else
     cp $myconfig_file $builddir/myconfig.hpp
 fi
 
-cmd "cmake $cmake_params $srcdir" || exit $?
+cmd "cmake $cmake_params $srcdir" || exit 1
 end "CONFIGURE"
 
 # BUILD
 start "BUILD"
 
-cmd "make -j2" || exit $?
+cmd "make -j${build_procs}" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make -j2 check_python $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/testsuite/python/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
-
-    cmd "make -j2 check_unit_tests $make_params"
-    ec=$?
-    if [ $ec != 0 ]; then	
-        cmd "cat $srcdir/src/core/unit_tests/Testing/Temporary/LastTest.log"
-        exit $ec
-    fi
+    cmd "make -j${build_procs} check_python $make_params" || exit 1
+    cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
 
     end "TEST"
+else
+    start "TEST"
+
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
+
+    end "TEST"
+fi
+
+if $with_coverage; then
+    cd $builddir
+    lcov --directory . --capture --output-file coverage.info # capture coverage info
+    lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
+    lcov --list coverage.info #debug info
+    # Uploading report to CodeCov
+    if [ -z "$CODECOV_TOKEN" ]; then
+        bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+    else
+        bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
+    fi
 fi

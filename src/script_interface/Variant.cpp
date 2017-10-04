@@ -1,9 +1,9 @@
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-static const char *VariantLabels[] = {"BOOL",     "INT",        "DOUBLE",
-                                      "STRING",   "INT_VECTOR", "DOUBLE_VECTOR",
-                                      "OBJECTID", "VECTOR"};
+static const char *VariantLabels[] = {"NONE",          "BOOL",     "INT",
+                                      "DOUBLE",        "STRING",   "INT_VECTOR",
+                                      "DOUBLE_VECTOR", "OBJECTID", "VECTOR"};
 
 std::string get_type_label(Variant const &v) {
   return std::string(VariantLabels[v.which()]);
@@ -11,6 +11,10 @@ std::string get_type_label(Variant const &v) {
 
 std::string get_type_label(VariantType t) {
   return std::string(VariantLabels[static_cast<int>(t)]);
+}
+
+bool is_none(Variant const &v) {
+  return v.which() == static_cast<int>(VariantType::NONE);
 }
 
 bool is_bool(Variant const &v) {
@@ -45,6 +49,7 @@ bool is_vector(Variant const &v) {
   return v.which() == static_cast<int>(VariantType::VECTOR);
 }
 
+namespace {
 template <typename T>
 std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
   std::vector<T> ret;
@@ -56,6 +61,7 @@ std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
 
   return ret;
 }
+} /* namespace */
 
 void transform_vectors(Variant &v) {
   if (is_vector(v)) {
@@ -93,7 +99,7 @@ std::string print_variant_types(Variant const &v) {
 
     return ret;
   } else {
-    return VariantLabels[v.which()];
+    return get_type_label(v);
   }
 }
 

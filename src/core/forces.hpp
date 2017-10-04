@@ -48,6 +48,33 @@ void init_forces();
  */
 void init_forces_ghosts();
 
+/** Calculate forces.
+ *
+ *  A short list, what the function is doing:
+ *  <ol>
+ *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
+ with zero).
+ *  <li> Calculate bonded interaction forces:<br>
+ *       Loop all local particles (not the ghosts).
+ *       <ul>
+ *       <li> FENE
+ *       <li> ANGLE (cos bend potential)
+ *       </ul>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
+ *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
+ *       <ul>
+ *       <li> Lennard-Jones.
+ *       <li> Buckingham.
+ *       <li> Real space part: Coulomb.
+ *       <li> Ramp.
+ *       </ul>
+ *  <li> Calculate long range interaction forces:<br>
+ Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
+ *  </ol>
+ */
+
+void force_calc();
+
 /** Check if forces are NAN 
  */
 void check_forces();
@@ -56,7 +83,7 @@ void check_forces();
 void calc_long_range_forces();
 
 void 
-calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2, 
+calc_non_bonded_pair_force_from_partcfg(Particle const *p1, Particle const *p2, 
                                         IA_parameters *ia_params,
                                         double d[3], double dist, double dist2,
                                         double force[3],
@@ -64,7 +91,7 @@ calc_non_bonded_pair_force_from_partcfg(Particle *p1, Particle *p2,
                                         double torque2[3] = NULL);
 
 void
-calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1, Particle *p2,
+calc_non_bonded_pair_force_from_partcfg_simple(Particle const *p1, Particle const *p2,
                                                double d[3], double dist,
                                                double dist2, double force[3]);
 /*@}*/

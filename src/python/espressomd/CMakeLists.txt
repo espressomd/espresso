@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-
-
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
@@ -38,12 +35,10 @@ endif(HDF5_FOUND)
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 add_dependencies(gen_pxiconfig EspressoConfig)
 
-add_custom_command(OUTPUT _espresso/myconfig.pxi
-		   COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/_espresso
-                   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/_espresso/myconfig.pxi
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
+                   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
-
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${NUMPY_INCLUDE_DIR})
@@ -51,7 +46,7 @@ include_directories(${NUMPY_INCLUDE_DIR})
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
         COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
         )
 
 file(GLOB cython_SRC *.pyx)
@@ -61,6 +56,7 @@ SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
+file(COPY MDA_ESP DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
@@ -87,13 +83,13 @@ foreach(cython_file ${cython_SRC})
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE}  --cplus
                          --directive embedsignature=True
-                         -I ${CMAKE_CURRENT_BINARY_DIR}/_espresso
+                         --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
-                         -I ${CMAKE_CURRENT_SOURCE_DIR}/_espresso
+                         -I ${CMAKE_CURRENT_BINARY_DIR}
                          ${cython_file}
                          -o ${outputpath}
                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-                         DEPENDS _espresso/myconfig.pxi ${cython_file}
+                         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
       add_library(${basename} SHARED ${outputpath})
@@ -105,6 +101,11 @@ foreach(cython_file ${cython_SRC})
       set_target_properties(${basename} PROPERTIES MACOSX_RPATH TRUE)
       if (APPLE)
          set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+      endif()
+      if ( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-cpp")
+      elseif( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
+          set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-#warnings")
       endif()
       target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
       add_dependencies(espressomd ${basename})

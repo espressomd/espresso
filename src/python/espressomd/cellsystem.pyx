@@ -136,6 +136,20 @@ cdef class CellSystem(object):
 
         return s
 
+    def resort(self, global_flag = 1):
+        """
+        Resort the particles in the cellsystem.
+        Returns the particle numbers on the nodes
+        after the resort.
+
+        Parameters
+        ----------
+        global_flag: int
+            If true, a global resorting is done, otherwise particles
+            are only exchanged between neighboring nodes.
+        """
+
+        return mpi_resort_particles(global_flag)
 
     property max_num_cells:
         """
@@ -195,10 +209,28 @@ cdef class CellSystem(object):
                 raise ValueError("Skin must be >= 0")
             global skin
             skin = _skin
-            mpi_bcast_parameter(29)
+            mpi_bcast_parameter(FIELD_SKIN)
             integrate.skin_set = True
 
         def __get__(self):
             return skin
 
+    def tune_skin(self,min_skin=None,max_skin=None,tol=None,int_steps=None):
+        """Tunes the skin by measuring the integration time and bisecting over the
+           given range of skins. The best skin is set in the simulation core.
 
+           Parameters
+           -----------
+           'min_skin': float
+             Minimum skin to test
+           'max_skin': float
+             Maximum skin
+           'tol': float
+             Accuracy in skin to tune to
+           'int_steps": int
+             Integration steps to time
+
+           Returns the final skin
+        """
+        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        return self.skin

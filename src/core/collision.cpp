@@ -23,6 +23,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
+#include "rotation.hpp"
 
 
 using namespace std;
@@ -430,9 +431,7 @@ void place_vs_and_relate_to_particle(double* pos, int relate_to)
 	  vs_relate_to(max_seen_particle,relate_to);
 	  
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
-	  #ifdef ROTATION_PER_PARTICLE
-	    (local_particles[relate_to])->p.rotation=14;
-	  #endif
+	  (local_particles[relate_to])->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
 	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
 }
 
@@ -592,7 +591,7 @@ void three_particle_binding_domain_decomposition()
                for(int q=cellIdx[j][1]-1; q<=cellIdx[j][1]+1; q++)
 	                for(int r=cellIdx[j][2]-1; r<=cellIdx[j][2]+1; r++) {   
 	                   int ind2 = get_linear_index(p,q,r,dd.ghost_cell_grid);
-	                   Cell* cell=cells+ind2;
+	                   Cell* cell=&cells[ind2];
  
 	                   // Iterate over particles in this cell
                      for(int a=0; a<cell->n; a++) {

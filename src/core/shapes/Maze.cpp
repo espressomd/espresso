@@ -27,11 +27,10 @@ using namespace std;
 
 namespace Shapes {
 int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
-  int i, min_axis, cursph[3], dim;
+  int i, min_axis, cursph[3];
   double diasph, fac, c_dist, sph_dist, cyl_dist, temp_dis;
   double sph_vec[3], cyl_vec[3];
 
-  dim = (int)this->m_dim;
   diasph = box_l[0] / m_nsphere;
 
   /* First determine the distance to the sphere */
@@ -54,14 +53,14 @@ int Maze::calculate_dist(const double *ppos, double *dist, double *vec) const {
   min_axis = 2;
   cyl_dist = sqrt(cyl_vec[0] * cyl_vec[0] + cyl_vec[1] * cyl_vec[1]);
 
-  if (dim > 0) {
+  if (m_dim > 0) {
     temp_dis = sqrt(cyl_vec[0] * cyl_vec[0] + cyl_vec[2] * cyl_vec[2]);
     if (temp_dis < cyl_dist) {
       min_axis = 1;
       cyl_dist = temp_dis;
     }
 
-    if (dim > 1) {
+    if (m_dim > 1) {
       temp_dis = sqrt(cyl_vec[1] * cyl_vec[1] + cyl_vec[2] * cyl_vec[2]);
       if (temp_dis < cyl_dist) {
         min_axis = 0;

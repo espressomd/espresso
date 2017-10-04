@@ -38,6 +38,10 @@ cdef class HydrodynamicInteraction(Actor):
 ####################################################
 IF LB_GPU or LB:
     cdef class LBFluid(HydrodynamicInteraction):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+
+        """
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -194,15 +198,15 @@ IF LB_GPU or LB:
         ####################################################
         def _activate_method(self):
             self.validate_params()
-            self._set_lattice_switch()
             self._set_params_in_es_core()
-
-
-
-
+            self._set_lattice_switch()
 
 IF LB_GPU:
     cdef class LBFluid_GPU(LBFluid):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+
+        """
         def _set_lattice_switch(self):
             if lb_set_lattice_switch(2):
                 raise Exception("lb_set_lattice_switch error")
@@ -210,9 +214,13 @@ IF LB_GPU:
         def remove_total_momentum(self):
             lb_lbfluid_remove_total_momentum()
 
+        def _activate_method(self):
+            self.validate_params()
+            self._set_lattice_switch()
+            self._set_params_in_es_core()
 
 IF LB or LB_GPU:
-    cdef class LBFluidRoutines:
+    cdef class LBFluidRoutines(object):
         cdef int node[3]
         def __init__(self, key):
             self.node[0] = key[0]

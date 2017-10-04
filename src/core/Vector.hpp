@@ -24,38 +24,51 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <vector>
+#include <numeric>
 
-#include <boost/serialization/array.hpp>
+#include "utils/serialization/array.hpp"
 
 template <size_t n, typename Scalar> class Vector {
 private:
   std::array<Scalar, n> d;
 
 public:
-  typedef typename std::array<Scalar, n>::iterator iterator;
-  typedef typename std::array<Scalar, n>::const_iterator const_iterator;
-  typedef typename std::array<Scalar, n>::reference reference;
-  typedef typename std::array<Scalar, n>::const_reference const_reference;
+  /* Concept Container requirements */
+  using size_type = typename std::array<Scalar, n>::size_type;
+  using difference_type = typename std::array<Scalar, n>::difference_type;
+  using value_type = Scalar;
+  using reference = Scalar &;
+  using const_reference = const Scalar &;
+  using iterator = typename std::array<Scalar, n>::iterator;
+  using const_iterator = typename std::array<Scalar, n>::const_iterator;
 
-  Vector() {}
+  Vector() = default;
+  Vector(Vector const &) = default;
+  Vector &operator=(Vector const &) = default;
 
-  template <typename Container> explicit Vector(Container const &v) {
-    assert(std::distance(std::begin(v), std::end(v)) <= n);
+  template <typename Container> explicit Vector(Container v) {
+    assert(std::distance(std::begin(v), std::end(v)) == n);
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
+  explicit Vector(Scalar const(&v)[n]) {
+    std::copy(std::begin(v), std::end(v), d.begin());
+  }
+
+  Vector(std::initializer_list<Scalar> v) {
+    /* Convert to static_assert in C++14 */
+    assert(v.size() == n);
     std::copy(std::begin(v), std::end(v), d.begin());
   }
 
   template <typename InputIterator>
-  Vector(InputIterator const &begin, InputIterator const &end) {
-    assert(std::distance(begin, end) <= n);
+  Vector(InputIterator begin, InputIterator end) {
+    assert(std::distance(begin, end) == n);
     std::copy(begin, end, d.begin());
-  }
-
-  Vector(std::initializer_list<Scalar> l) {
-    assert(l.size() <= n);
-    std::copy(std::begin(l), std::end(l), d.begin());
   }
 
   Scalar &operator[](int i) { return d[i]; }
@@ -74,16 +87,18 @@ public:
   const_reference back() const { return d.back(); }
 
   static constexpr size_t size() { return n; }
+  Scalar const *data() const { return d.data(); }
+  Scalar *data() { return d.data(); }
+  size_type max_size() const { return d.max_size(); }
+  bool empty() const { return d.empty(); }
 
   operator std::array<Scalar, n> const &() const { return d; }
-  bool operator==(Vector const &rhs) const { return d == rhs.d; }
-  operator std::vector<Scalar>() const {
-    return std::vector<Scalar>(std::begin(d), std::end(d));
-  }
 
   std::vector<Scalar> as_vector() const {
     return std::vector<Scalar>(std::begin(d), std::end(d));
   }
+
+  operator std::vector<Scalar>() const { return as_vector(); }
 
   inline Scalar dot(const Vector<n, Scalar> &b) const {
     Scalar sum = 0;
@@ -119,38 +134,170 @@ public:
   }
 
   inline Vector<3, Scalar> cross(const Vector<3, Scalar> &a) const {
-    return cross(this, a);
+    return cross(*this, a);
   }
 
+  friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
     ar &d;
   }
 };
 
-
-// type checking using SFINAE
-
-namespace traits {
-
-template < typename T >
-struct is_vector
-{
-  static constexpr const bool value = false;
-};
-
-template < size_t n, typename Scalar >
-struct is_vector < Vector < n, Scalar > >
-{
-  static constexpr const bool value = true;
-};
-
-} // namespace traits
-
-
 // Useful typedefs
 
 typedef Vector<3, double> Vector3d;
 typedef Vector<2, double> Vector2d;
+
+namespace detail {
+template <size_t N, typename T, typename Op>
+Vector<N, T> binary_op(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
+  Vector<N, T> ret;
+
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                 op);
+
+  return ret;
+}
+
+template <size_t N, typename T, typename Op>
+Vector<N, T> & binary_op_assign(Vector<N, T> &a, Vector<N, T> const &b, Op op) {
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
+  return a;
+}
+
+template <size_t N, typename T, typename Op>
+bool all_of(Vector<N, T> const &a, Vector<N, T> const &b, Op op) {
+  for (int i = 0; i < a.size(); i++) {
+    /* Short circuit */
+    if (!static_cast<bool>(op(a[i], b[i]))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+}
+
+template <size_t N, typename T>
+bool operator<(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::less<T>());
+}
+
+template <size_t N, typename T>
+bool operator>(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::greater<T>());
+}
+
+template <size_t N, typename T>
+bool operator<=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::less_equal<T>());
+}
+
+template <size_t N, typename T>
+bool operator>=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::greater_equal<T>());
+}
+
+template <size_t N, typename T>
+bool operator==(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::equal_to<T>());
+}
+
+template <size_t N, typename T>
+bool operator!=(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::all_of(a, b, std::not_equal_to<T>());
+}
+
+template <size_t N, typename T>
+Vector<N, T> operator+(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::binary_op(a, b, std::plus<T>());
+}
+
+template <size_t N, typename T>
+Vector<N, T> & operator+=(Vector<N, T> &a, Vector<N, T> const &b) {
+  return detail::binary_op_assign(a, b, std::plus<T>());
+}
+
+template <size_t N, typename T>
+Vector<N, T> operator-(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return detail::binary_op(a, b, std::minus<T>());
+}
+
+template <size_t N, typename T> Vector<N, T> operator-(Vector<N, T> const &a) {
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return -v; });
+
+  return ret;
+}
+
+template <size_t N, typename T>
+Vector<N, T> & operator-=(Vector<N, T> &a, Vector<N, T> const &b) {
+  return detail::binary_op_assign(a, b, std::minus<T>());
+}
+
+/* Scalar multiplication */
+template <size_t N, typename T>
+Vector<N, T> operator*(T const &a, Vector<N, T> const &b) {
+  Vector<N, T> ret;
+
+  std::transform(b.begin(), b.end(), ret.begin(),
+                 [a](T const &val) { return a * val; });
+
+  return ret;
+}
+
+template <size_t N, typename T>
+Vector<N, T> operator*(Vector<N, T> const &b, T const &a) {
+  Vector<N, T> ret;
+
+  std::transform(b.begin(), b.end(), ret.begin(),
+                 [a](T const &val) { return a * val; });
+
+  return ret;
+}
+
+template <size_t N, typename T>
+Vector<N, T> &operator*=(Vector<N, T> &b, T const &a) {
+  std::transform(b.begin(), b.end(), b.begin(),
+                 [a](T const &val) { return a * val; });
+  return b;
+}
+
+/* Scalar division */
+template <size_t N, typename T>
+Vector<N, T> operator/(Vector<N, T> const &a, T const &b) {
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [b](T const &val) { return val / b; });
+  return ret;
+}
+
+template <size_t N, typename T>
+Vector<N, T> &operator/=(Vector<N, T> &a, T const &b) {
+  std::transform(a.begin(), a.end(), a.begin(),
+                 [b](T const &val) { return val / b; });
+  return a;
+}
+
+/* Scalar product */
+template <size_t N, typename T>
+T operator*(Vector<N, T> const &a, Vector<N, T> const &b) {
+  return std::inner_product(a.begin(), a.end(), b.begin(), T{});
+}
+
+/* Componentwise square route */
+template <size_t N, typename T> Vector<N, T> sqrt(Vector<N, T> const &a) {
+  using std::sqrt;
+  Vector<N, T> ret;
+
+  std::transform(a.begin(), a.end(), ret.begin(),
+                 [](T const &v) { return sqrt(v); });
+
+  return ret;
+}
 
 #endif

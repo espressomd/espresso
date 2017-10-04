@@ -27,7 +27,6 @@
 #include "topology.hpp"
 #endif
 
-#include "angle.hpp"
 #include "angle_cosine.hpp"
 #include "angle_cossquare.hpp"
 #include "angle_harmonic.hpp"
@@ -169,33 +168,6 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 }
 
-/** Calculate forces.
- *
- *  A short list, what the function is doing:
- *  <ol>
- *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces
- with zero).
- *  <li> Calculate bonded interaction forces:<br>
- *       Loop all local particles (not the ghosts).
- *       <ul>
- *       <li> FENE
- *       <li> ANGLE (cos bend potential)
- *       </ul>
- *  <li> Calculate non-bonded short range interaction forces:<br>
- *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
- *       <ul>
- *       <li> Lennard-Jones.
- *       <li> Buckingham.
- *       <li> Real space part: Coulomb.
- *       <li> Ramp.
- *       </ul>
- *  <li> Calculate long range interaction forces:<br>
-         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
- *  </ol>
- */
-
-void force_calc();
-
 inline void calc_non_bonded_pair_force_parts(
     const Particle *const p1, const Particle *const p2,
     IA_parameters *ia_params, double d[3], double dist, double dist2,
@@ -275,15 +247,8 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
                                        double force[3],
                                        double torque1[3] = NULL,
                                        double torque2[3] = NULL) {
-#ifdef MOL_CUT
-  // You may want to put a correction factor and correction term for smoothing
-  // function else then theta
-  if (checkIfParticlesInteractViaMolCut(p1, p2, ia_params) == 1)
-#endif
-  {
     calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
                                      torque1, torque2);
-  }
 }
 
 inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
@@ -688,12 +653,6 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_ANGLE_OLD
-    /* the first case is not needed and should not be called */
-    case BONDED_IA_ANGLE_OLD:
-      bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
-      break;
-#endif
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE_HARMONIC:
       bond_broken =
@@ -907,16 +866,6 @@ inline void add_bonded_force(Particle *p1) {
       }
     }
   }
-}
-
-/** add force to another. This is used when collecting ghost forces. */
-inline void add_force(ParticleForce *F_to, ParticleForce *F_add) {
-  for (int i = 0; i < 3; i++)
-    F_to->f[i] += F_add->f[i];
-#ifdef ROTATION
-  for (int i = 0; i < 3; i++)
-    F_to->torque[i] += F_add->torque[i];
-#endif
 }
 
 inline void check_particle_force(Particle *part) {

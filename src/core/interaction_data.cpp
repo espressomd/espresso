@@ -20,7 +20,7 @@
 */
 /** \file interaction_data.cpp
     Implementation of interaction_data.hpp
- */
+ */ 
 #include <cstring>
 #include <cstdlib>
 #include "utils.hpp"
@@ -67,6 +67,9 @@
 #include "initialize.hpp"
 #include "interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"
+#include "p3m-dipolar.hpp"
+#include "thermostat.hpp"
+#include "scafacos.hpp"
 
 /****************************************
  * variables
@@ -358,11 +361,6 @@ void initialize_ia_params(IA_parameters *params) {
 
 #ifdef INTER_RF
   params->rf_on = 0;
-#endif
-
-#ifdef MOL_CUT
-  params->mol_cut_type = 0;
-  params->mol_cut_cutoff = 0.0;
 #endif
 
 #ifdef CATALYTIC_REACTIONS
@@ -703,14 +701,6 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
 	max_cut_current = data->REACTION_range;
-#endif
-
-#ifdef MOL_CUT
-      if (data->mol_cut_type != 0) {
-	if (max_cut_current < data->mol_cut_cutoff)
-	  max_cut_current = data->mol_cut_cutoff;
-	max_cut_current += 2.0* max_cut_bonded;
-      }
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);

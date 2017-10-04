@@ -38,11 +38,13 @@
 
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interaction_data.hpp"
+#include "PartCfg.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -52,61 +54,36 @@
  * ---------                                                 *
  *************************************************************/
 
-int mindist3(int part_id, double r_catch, int *ids) {
-  Particle *partCfgMD;
-  double dx, dy, dz;
-  int i, me, caught = 0;
+int mindist3(PartCfg & partCfg, int part_id, double r_catch, int *ids) {
+  int caught = 0;
 
-  partCfgMD = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(partCfgMD, NULL);
-  me = -1; /* Since 'mpi_get_particles' returns the particles unsorted, it's
-              most likely that 'partCfgMD[i].p.identity != i'
-              --> prevent that! */
-  for (i = 0; i < n_part; i++)
-    if (partCfgMD[i].p.identity == part_id)
-      me = i;
-  if (me == -1) {
-    runtimeErrorMsg() << "failed to find desired particle " << part_id;
-    return 0;
-  }
-  for (i = 0; i < n_part; i++) {
-    if (i != me) {
-      dx = partCfgMD[me].r.p[0] - partCfgMD[i].r.p[0];
-      dx -= dround(dx / box_l[0]) * box_l[0];
-      dy = partCfgMD[me].r.p[1] - partCfgMD[i].r.p[1];
-      dy -= dround(dy / box_l[1]) * box_l[1];
-      dz = partCfgMD[me].r.p[2] - partCfgMD[i].r.p[2];
-      dz -= dround(dz / box_l[2]) * box_l[2];
-      if (sqrt(SQR(dx) + SQR(dy) + SQR(dz)) < r_catch)
-        ids[caught++] = partCfgMD[i].p.identity;
+  auto const r_catch2 = r_catch * r_catch;
+  auto const &part = partCfg[part_id];
+
+  for (auto const &p : partCfg) {
+    if (p != part) {
+      if (get_mi_vector(part.r.p, p.r.p).norm2() < r_catch2)
+        ids[caught++] = p.p.identity;
     }
   }
-  free(partCfgMD);
-  return (caught);
+
+  return caught;
 }
 
-double mindist4(double pos[3]) {
-  Particle *partCfgMD;
-  double mindist = 30000.0, dx, dy, dz;
-  int i;
-
-  if (n_part == 0)
-    return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
-  partCfgMD = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(partCfgMD, NULL);
-  for (i = 0; i < n_part; i++) {
-    dx = pos[0] - partCfgMD[i].r.p[0];
-    dx -= dround(dx / box_l[0]) * box_l[0];
-    dy = pos[1] - partCfgMD[i].r.p[1];
-    dy -= dround(dy / box_l[1]) * box_l[1];
-    dz = pos[2] - partCfgMD[i].r.p[2];
-    dz -= dround(dz / box_l[2]) * box_l[2];
-    mindist = std::min(mindist, SQR(dx) + SQR(dy) + SQR(dz));
+double mindist4(PartCfg & partCfg, double pos[3]) {
+  if (partCfg.size() == 0) {
+    return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
-  free(partCfgMD);
-  if (mindist < 30000.0)
-    return (sqrt(mindist));
-  return (-1.0);
+
+  auto const mindist = std::accumulate(
+      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
+      [&pos](double mindist, Particle const &p) {
+        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
+      });
+
+  if (mindist < std::numeric_limits<double>::infinity())
+    return std::sqrt(mindist);
+  return -1.0;
 }
 
 double buf_mindist4(double pos[3], int n_add, double *add) {
@@ -129,8 +106,8 @@ double buf_mindist4(double pos[3], int n_add, double *add) {
   return (-1.0);
 }
 
-int collision(double pos[3], double shield, int n_add, double *add) {
-  if (mindist4(pos) > shield && buf_mindist4(pos, n_add, add) > shield)
+int collision(PartCfg & partCfg, double pos[3], double shield, int n_add, double *add) {
+  if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
     return (0);
   return (1);
 }
@@ -140,7 +117,6 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 int constraint_collision(double *p1, double *p2) {
   Particle part1, part2;
   double d1, d2, v[3];
-  Constraint *c;
   int i;
   double folded_pos1[3];
   double folded_pos2[3];
@@ -153,18 +129,22 @@ int constraint_collision(double *p1, double *p2) {
   fold_position(folded_pos2, img);
 
   for (auto &c : Constraints::constraints) {
-    c->calc_dist(folded_pos1, &d1, v);
-    c->calc_dist(folded_pos2, &d2, v);
+    auto cs =
+        std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+    if (cs) {
+      cs->calc_dist(folded_pos1, &d1, v);
+      cs->calc_dist(folded_pos2, &d2, v);
 
-    if (d1 * d2 < 0.0)
-      return 1;
+      if (d1 * d2 < 0.0)
+        return 1;
+    }
   }
   return 0;
 }
 
 #endif
 
-int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
+int polymerC(PartCfg & partCfg, int N_P, int MPC, double bond_length, int part_id, double *posed,
              int mode, double shield, int max_try, double val_cM, int cM_dist,
              int type_nM, int type_cM, int type_bond, double angle,
              double angle2, double *posed2, int constr) {
@@ -204,7 +184,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
           pos[0] = box_l[0] * d_random();
           pos[1] = box_l[1] * d_random();
           pos[2] = box_l[2] * d_random();
-          if ((mode == 1) || (collision(pos, shield, 0, NULL) == 0))
+          if ((mode == 1) || (collision(partCfg, pos, shield, 0, NULL) == 0))
             break;
           POLY_TRACE(printf("s"); fflush(NULL));
         }
@@ -253,7 +233,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
               constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
 #endif
 
-            if (mode == 1 || collision(pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
               break;
             if (mode == 0) {
               cnt1 = -1;
@@ -367,7 +347,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
           if (constr == 0 ||
               constraint_collision(pos, poly + 3 * (n - 1)) == 0) {
 #endif
-            if (mode == 1 || collision(pos, shield, n, poly) == 0)
+            if (mode == 1 || collision(partCfg, pos, shield, n, poly) == 0)
               break;
             if (mode == 0) {
               cnt1 = -2;
@@ -445,7 +425,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   return (std::max(max_cnt, cnt2));
 }
 
-int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
+int counterionsC(PartCfg & partCfg, int N_CI, int part_id, int mode, double shield, int max_try,
                  double val_CI, int type_CI) {
   int n, cnt1, max_cnt;
   double pos[3];
@@ -456,7 +436,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
       pos[0] = box_l[0] * d_random();
       pos[1] = box_l[1] * d_random();
       pos[2] = box_l[2] * d_random();
-      if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+      if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
         break;
       POLY_TRACE(printf("c"); fflush(NULL));
     }
@@ -480,7 +460,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try,
   return (std::max(max_cnt, cnt1));
 }
 
-int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
+int saltC(PartCfg & partCfg, int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
           double val_pS, double val_nS, int type_pS, int type_nS, double rad) {
   int n, cnt1, max_cnt;
   double pos[3], dis2;
@@ -498,14 +478,14 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
           break;
       }
       POLY_TRACE(printf("p"); fflush(NULL));
@@ -538,14 +518,14 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
         pos[0] += box_l[0] * 0.5;
         pos[1] += box_l[1] * 0.5;
         pos[2] += box_l[2] * 0.5;
-        if (((mode != 0) || (collision(pos, shield, 0, NULL) == 0)) &&
+        if (((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0)) &&
             (dis2 < (rad * rad)))
           break;
       } else {
         pos[0] = box_l[0] * d_random();
         pos[1] = box_l[1] * d_random();
         pos[2] = box_l[2] * d_random();
-        if ((mode != 0) || (collision(pos, shield, 0, NULL) == 0))
+        if ((mode != 0) || (collision(partCfg, pos, shield, 0, NULL) == 0))
           break;
       }
       POLY_TRACE(printf("n"); fflush(NULL));
@@ -643,23 +623,11 @@ double maxwell_velocitiesC(int part_id, int N_T) {
   return (sqrt(SQR(v_av[0]) + SQR(v_av[1]) + SQR(v_av[2])) / fabs(time_step));
 }
 
-int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
+int collectBonds(PartCfg & partCfg, int mode, int part_id, int N_P, int MPC, int type_bond,
                  int **bond_out, int ***bonds_out) {
   int i, j, k, ii, size, *bond = NULL, **bonds = NULL;
 
-  /* Get particle and bonding informations. */
-  IntList *bl;
-  Particle *prt, *sorted;
-  bl = (IntList *)Utils::malloc(1 * sizeof(IntList));
-  prt = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  mpi_get_particles(prt, bl);
-
-  /* Sort the received informations. */
-  sorted = (Particle *)Utils::malloc(n_part * sizeof(Particle));
-  for (i = 0; i < n_part; i++)
-    memmove(&sorted[prt[i].p.identity], &prt[i], sizeof(Particle));
-  free(prt);
-  prt = sorted;
+  partCfg.update_bonds();
 
   if (mode == 1) {
     /* Find all the bonds leading to and from the ending monomers of the chains.
@@ -672,25 +640,25 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
-      while (i < prt[k].bl.n) {
-        size = bonded_ia_params[prt[k].bl.e[i]].num;
-        if (prt[k].bl.e[i++] == type_bond) {
+      while (i < partCfg[k].bl.n) {
+        size = bonded_ia_params[partCfg[k].bl.e[i]].num;
+        if (partCfg[k].bl.e[i++] == type_bond) {
           for (j = 0; j < size; j++) {
-            if ((prt[k].p.identity % MPC == 0) ||
-                ((prt[k].p.identity + 1) % MPC == 0)) {
-              ii = prt[k].p.identity % MPC
-                       ? 2 * (prt[k].p.identity + 1) / MPC - 1
-                       : 2 * prt[k].p.identity / MPC;
+            if ((partCfg[k].p.identity % MPC == 0) ||
+                ((partCfg[k].p.identity + 1) % MPC == 0)) {
+              ii = partCfg[k].p.identity % MPC
+                       ? 2 * (partCfg[k].p.identity + 1) / MPC - 1
+                       : 2 * partCfg[k].p.identity / MPC;
               bonds[i] =
-                  (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
-              bonds[ii][bond[ii]++] = prt[k].bl.e[i];
-            } else if ((prt[k].bl.e[i] % MPC == 0) ||
-                       ((prt[k].bl.e[i] + 1) % MPC == 0)) {
-              ii = prt[k].bl.e[i] % MPC ? 2 * (prt[k].bl.e[i] + 1) / MPC - 1
-                                        : 2 * prt[k].bl.e[i] / MPC;
+                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+              bonds[ii][bond[ii]++] = partCfg[k].bl.e[i];
+            } else if ((partCfg[k].bl.e[i] % MPC == 0) ||
+                       ((partCfg[k].bl.e[i] + 1) % MPC == 0)) {
+              ii = partCfg[k].bl.e[i] % MPC ? 2 * (partCfg[k].bl.e[i] + 1) / MPC - 1
+                                        : 2 * partCfg[k].bl.e[i] / MPC;
               bonds[i] =
-                  (int *)Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
-              bonds[ii][bond[ii]++] = prt[k].p.identity;
+                  Utils::realloc(bonds[i], (bond[i] + 1) * sizeof(int));
+              bonds[ii][bond[ii]++] = partCfg[k].p.identity;
             }
             i++;
           }
@@ -715,16 +683,16 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     }
     for (k = part_id; k < N_P * MPC + part_id; k++) {
       i = 0;
-      while (i < prt[k].bl.n) {
-        size = bonded_ia_params[prt[k].bl.e[i]].num;
-        if (prt[k].bl.e[i++] == type_bond) {
+      while (i < partCfg[k].bl.n) {
+        size = bonded_ia_params[partCfg[k].bl.e[i]].num;
+        if (partCfg[k].bl.e[i++] == type_bond) {
           for (j = 0; j < size; j++) {
-            ii = prt[k].bl.e[i];
+            ii = partCfg[k].bl.e[i];
             bonds[k] =
-                (int *)Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
+                Utils::realloc(bonds[k], (bond[k] + 1) * sizeof(int));
             bonds[k][bond[k]++] = ii;
             bonds[ii] =
-                (int *)Utils::realloc(bonds[ii], (bond[ii] + 1) * sizeof(int));
+                Utils::realloc(bonds[ii], (bond[ii] + 1) * sizeof(int));
             bonds[ii][bond[ii]++] = k;
             i++;
           }
@@ -744,20 +712,19 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond,
     fflush(NULL);
     return (-2);
   }
-  free(prt);
-  realloc_intlist(bl, 0);
+
   *bond_out = bond;
   *bonds_out = bonds;
   return (0);
 }
 
-int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
+int crosslinkC(PartCfg & partCfg, int N_P, int MPC, int part_id, double r_catch, int link_dist,
                int chain_dist, int type_bond, int max_try) {
   int i, j, k, ii, size, bondN[2], *bond, **bonds, *link, **links, *cross,
       crossL;
 
   /* Find all the bonds leading to and from each monomer. */
-  if (collectBonds(2, part_id, N_P, MPC, type_bond, &bond, &bonds))
+  if (collectBonds(partCfg, 2, part_id, N_P, MPC, type_bond, &bond, &bonds))
     return (-2);
   POLY_TRACE(for (i = 0; i < N_P * MPC + part_id; i++) {
     printf("%d:\t", i);
@@ -775,9 +742,9 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
     for (k = 0; k < 2; k++) {
       if (bond[i * MPC + k * (MPC - 1)] == 1) {
         links[2 * i + k] = (int *)Utils::malloc(n_part * sizeof(int));
-        link[2 * i + k] = mindist3(i * MPC + k * (MPC - 1) + part_id, r_catch,
+        link[2 * i + k] = mindist3(partCfg,i * MPC + k * (MPC - 1) + part_id, r_catch,
                                    links[2 * i + k]);
-        links[2 * i + k] = (int *)Utils::realloc(links[2 * i + k],
+        links[2 * i + k] = Utils::realloc(links[2 * i + k],
                                                  link[2 * i + k] * sizeof(int));
       } else if (bond[i * MPC + k * (MPC - 1)] == 2)
         link[2 * i + k] = -1; /* Note that links[2*i+k] will not be malloc()ed
@@ -817,7 +784,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
                   links[2 * i + k][j]; /* no ends accepted */
         }
         link[2 * i + k] = size;
-        links[2 * i + k] = (int *)Utils::realloc(links[2 * i + k],
+        links[2 * i + k] = Utils::realloc(links[2 * i + k],
                                                  link[2 * i + k] * sizeof(int));
       }
       POLY_TRACE(printf("%d: ", ii); for (j = 0; j < link[2 * i + k]; j++)
@@ -962,7 +929,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist,
   }
 }
 
-int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
+int diamondC(PartCfg & partCfg, double a, double bond_length, int MPC, int N_CI, double val_nodes,
              double val_cM, double val_CI, int cM_dist, int nonet) {
   int i, j, k, part_id, bond[2], type_bond = 0, type_node = 0, type_cM = 1,
                                  type_nM = 1, type_CI = 2;
@@ -1029,12 +996,12 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes,
 
   /* place counterions (if any) */
   if (N_CI > 0)
-    counterionsC(N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
 
   return (0);
 }
 
-int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
+int icosaederC(PartCfg & partCfg, double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
                int cM_dist) {
   int i, j, k, l, part_id, bond[2], type_bond = 0, type_cM = 0, type_nM = 1,
                                     type_CI = 2;
@@ -1197,7 +1164,7 @@ int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI,
 
   /* place counterions (if any) */
   if (N_CI > 0)
-    counterionsC(N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
 
   return (0);
 }
