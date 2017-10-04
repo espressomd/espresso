@@ -1226,7 +1226,7 @@ others determines the interaction.
 
 Similar to other bonded interactions, these are defined for every particle triad and and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
 For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
-   >>> system.part[1].add_bond((bond_angle, 0, 2))
+    >>> system.part[1].add_bond((bond_angle, 0, 2))
 
 The parameter ``bond_angle`` refers to an instance to one of three possible bond-angle classes, described below.
 
