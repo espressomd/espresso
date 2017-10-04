@@ -53,11 +53,9 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
 
         # check dipolar energy when adding dipole moments
-        self.S.part.add(id=0, pos=[0, 0, 0], dip=dip_mom0)
-        self.assertEqual(self.S.analysis.energy()[
-                         "dipolar"], -1.0 * numpy.dot(H_field, dip_mom0))
-
-        self.S.part.add(id=1, pos=[1, 1, 1], dip=dip_mom1)
+        self.S.part.add(id=0, pos=[0,0,0], dip=dip_mom0,rotation=(1,1,1))
+        self.assertEqual(self.S.analysis.energy()["dipolar"], -1.0*numpy.dot(H_field, dip_mom0))
+        self.S.part.add(id=1, pos=[1,1,1], dip=dip_mom1,rotation=(1,1,1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
                          (-1.0 * numpy.dot(H_field, dip_mom0) - 1.0 * numpy.dot(H_field, dip_mom1)))
 
