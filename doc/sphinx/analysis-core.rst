@@ -13,17 +13,14 @@ the script level and back, which produces a significant overhead when
 performed too often.
 
 Some observables in the core have their corresponding counterparts in
-the Tcl observables of the ``analyze`` command described in
-Chapter [chap:analysis]. However, only the core-observables can be used
+the :mod:`espressomd.analysis` module. However, only the core-observables can be used
 on the fly with the toolbox of the correlator and on the fly analysis of
-time series. Similarly, some special cases of using the correlator have
-their redundant counterparts in the analysis in Tcl
-(Chapter [chap:analysis]), but the correlator provides a general and
+time series. 
+Similarly, some special cases of using the correlator have
+their redundant counterparts in :mod:`esperssomd.analysis`,
+but the correlator provides a general and
 versatile toolbox which can be used with any implemented
-core-observables. The only trick to bridge the gap between Tcl based
-analysis and core analysis is the tclcommand observable that allows use
-the return value of arbitrary Tcl functions (also self-written) as input
-for the core analysis. See more below.
+core-observables. 
 
 Observables
 -----------
@@ -31,7 +28,7 @@ Observables
 Introduction
 ~~~~~~~~~~~~
 
-The first step of the core analysis is to tell to create an observable.
+The first step of the core analysis is to create an observable.
 An observable in the sense of the core analysis can be considered as a
 rule how to compute a certain set of numbers from a given state of the
 system or a role how to collect data from other observables. Any
@@ -39,48 +36,22 @@ observable is represented as a single array of double values. Any more
 complex shape (tensor, complex number, …) must be compatible to this
 prerequisite. Every observable however documents the storage order.
 
-Creating an observable means just allocating the corresponding memory,
-assigning a function to compute the observable value and reserving an
-which will be used to refer to the observable. In addition to the
-possibility to print the observable value (return the observable value
-to the script interface), the of a core-observable can be passed to
-another analysis function. The observable value is computed from the
-current state of the system at the moment when it is needed, when
-requested explicitly by the user calling the ``observable print``
-function or when requested automatically by some other analysis
-function. Updating is an orthogonal concept: Observables that collect
-data over time (e.g. the average observable) need to be updated
-regularly, even though their current value is not of interest.
+The observables can be used in parallel simulations. However,
+not all observables carry out their calculations in parallel. 
+Instead, the entire particle configuration is collected on the head node, and the calculations are carried out there.
+This is only performance-relevant if the number of processor cores is large and/or interactions are calculated very frequently.
 
-Not all observables are implemented in parallel. When performing a
-parallel computation, too frequent updates to observables which are not
-implemented in parallel may produce a significant slowdown.
 
 Creating an observable
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Tcl
-^^^
-
-To create a new observable, use
-
-observable new
-
-Upon this call, allocates the necessary amount of memory and returns an
-integer which will be used later to refer to the observable. The
-parameter and further arguments have to correspond to one of the
-observables described below.
-
-Python
-^^^^^^
-
-The observables are represented as Python classes. They are contained in
+The observables are represented as Python classes derived from :class:`espressomd.observables.Observable`. They are contained in
 the ``espressomd.observables`` module. An observable is instanced as
 follows
 
 ::
 
-    from espressomd.observables import *
+    from espressomd.observables import ParticlePositions
     part_pos=ParticlePositions(ids=(1,2,3,4,5))
 
 Here, the keyword argument ``ids`` specifies the ids of the particles,
@@ -88,225 +59,6 @@ which the observable should take into account.
 
 Available observables
 ^^^^^^^^^^^^^^^^^^^^^
-
-Tcl
-^^^
-
-Currently the following observables are implemented. Particle
-specifications (see section [sec:PartSpec] below) define a group of
-particles, from which the observable should be calculated. They are
-generic to all observables and are described after the list of
-observables.
-
-Here are the observables, that only depend on the current state of the
-simulation system:
-
--  | 
-   | Positions of the particles, in the format
-     :math:`x_1,\ y_1,\ z_1,\ x_2,\ y_2,\ z_2,\ \dots\ x_n,\ y_n,\ z_n`.
-     The particles are ordered ascending according to their ids.
-
--  | 
-   | Velocities of the particles, in the format
-   | :math:`v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
-               \dots\ v^x_n,\ v^y_n,\ v^z_n`. The particles are ordered
-     ascending according to their ids.
-
--  | 
-   | Velocities of the particles in the body frame, in the format
-   | :math:`v^x_1,\ v^y_1,\ v^z_1,\ v^x_2,\ v^y_2,\ v^z_2,\ 
-               \dots\ v^x_n,\ v^y_n,\ v^z_n`. The particles are ordered
-     ascending according to their ids. This command only produces a
-     meaningful result when ``ROTATIONS`` is compiled in.
-
--  | 
-   | Forces on the particles, in the format
-   | :math:`f^x_1,\ f^y_1,\ f^z_1,\ f^x_2,\ f^y_2,\ f^z_2,\ 
-               \dots\ f^x_n,\ f^y_n,\ f^z_n`. The particles are ordered
-     ascending according to their ids.
-
--  | 
-   | Angular momenta (omega) of the particles, in the format
-   | :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
-               \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. The
-     particles are ordered ascending according to their ids and the
-     angular velocity/momentum is specified in the laboratory frame.
-
--  | 
-   | Angular momenta (omega) of the particles, in the format
-   | :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
-               \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. The
-     particles are ordered ascending according to their ids and the
-     angular velocity/momentum is specified in the body (co-rotating)
-     frame.
-
--  | 
-   | Position of the centre of mass. If is specified, the particles are
-     subdivided into blocks of size and the centre of mass position is
-     calculated for each block separately.
-
--  | 
-   | Velocity of the centre of mass. If is specified, the particles are
-     subdivided into blocks of size and the centre of mass velocity is
-     calculated for each block separately.
-
--  | 
-   | Total force on the specified particles. If is specified, the
-     particles are subdivided into blocks of size and the total force is
-     calculated for each block separately.
-
--  | 
-   | The stress tensor. It only works with all particles. It is returned
-     as a 9-dimensional array:
-   | :math:` \{\ \sigma_{xx},\ \sigma_{xy},\ \sigma_{xz},\ \sigma_{yx},\ \sigma_{yy},\
-               \sigma_{yz},\ \sigma_{zx},\ \sigma_{zy},\ \sigma_{zz}\ \} `
-
--  | 
-   | The observable for computation of the Stress tensor autocorrelation
-     function. Similarly to the stress tensor, it only works with all
-     particles. It is returned as a 6-dimensional array:
-   | :math:` \{\ \sigma_{xy},\ \sigma_{yz},\ \sigma_{zx},\ 
-               ( \sigma_{xx} - \sigma_{yy}),\ 
-               ( \sigma_{xx} - \sigma_{zz}),\ 
-               ( \sigma_{yy} - \sigma_{zz})\  
-               \} `
-   | where :math:`\sigma_{ij}` are the components of the stress tensor.
-
--  | 
-   | Electric currents due to individual particles. For a particle
-     :math:`i`: :math:`j_i^x = q_i v_i^x / \Delta t` where
-     :math:`\Delta t` is the simulation time step. Required feature:
-
--  | 
-   | Electric currents summed over all particles:
-     :math:`j^x = \sum_i q_i v_i^x / \Delta t` where :math:`\Delta t` is
-     the simulation time step. Required feature:
-
--  | 
-   | The dipole moment of the specified group of particles:
-     :math:`\mu^x = \sum_i q_i r_i^x` Required feature:
-
--  | 
-   | Total dipole moment of the specified group of particles:
-     :math:`\mu^x = \sum_i d_i^x` where :math:`d_i^x` is an intrinsic
-     dipole moment of the individual :math:`i`-th particle. Required
-     feature:
-
--  | 
-   | For each particle belonging to the observable is unity if a
-     neighbour of a type from is found within the distance defined by
-     the . If no such neighbour is found, the observable is zero. The
-     observable has one dimension per each particle of
-
--  | 
-   | Compute the density profile within the specified cube. For profile
-     specifications, see section [sec:DensProfSpec].
-
--  | 
-   | Compute the force density profile within the specified cube. For
-     profile specifications, see section [sec:DensProfSpec].
-
--  | 
-   | Compute the Lattice-Boltzmann velocity profile within the specified
-     cube. For profile specifications, see section [sec:DensProfSpec].
-
--  | 
-   | Compute the flux density within the specified cube. For profile
-     specifications, see section [sec:DensProfSpec].
-
--  Compute the density profile in cylindrical coordinates. For profile
-   specifications, see section [sec:DensProfSpec].
-
--  | 
-   | Compute the flux density profile in cylindrical coordinates. For
-     profile specifications, see section [sec:DensProfSpec].
-
--  | 
-   | Compute the Lattice-Boltzmann velocity profile in cylindrical
-     coordinates. For profile specifications, see
-     section [sec:DensProfSpec].
-
--  | 
-   | Compute the radial distribution function, see [analyze:rdf].
-
--  | 
-   | Compute the structure factor. Remember it scales as
-     order\ :math:`^3`, see [analyze:structurefactor].
-
--  | ``\``
-   | ``\``
-   | Computes the radial density distribution for particles of the given
-     type around the axis given either as fixed positions or as particle
-     ids. The binning is done between ``minr`` and ``maxr`` with
-     ``rbins``.
-
--  | 
-   | Calculates the mean charge along ``Npoly`` weak polyelectrolytes of
-     the *same* length. The particles can be specified as a list of
-     particle ids or through the particle type. The result will be the
-     average charge during the simulation in dependence of the monomer
-     ranking number, its position on the chain.
-
--  | 
-   | Calculates the persistence length based on the bond vector angle
-     correlation of the given polymer specified through the ``id_list``.
-     ``max_d`` is the maximum distance (in terms of particles) for which
-     the correlation is computed. With ``cut_off`` the number of
-     particles at the polymer ends that are ignored for the calculation,
-     can be specified. The observable will not calculate the actual
-     persistence length but the correlation function of the bond angles.
-
-     .. math::
-
-        \mathrm{Obs}(i) =\mathrm{Norm\_const} \langle \sum_j \frac{(\vec{r}_j - \vec{r}_{j+1})
-                    (\vec{r}_{j+i}-\vec{r}_{j+i+1})}{|\vec{r}_j-\vec{r}_{j+1}||\vec{r}_{i+j}-\vec{r}_{i+j+1}|}\rangle
-
--  | ``\``
-   | Computes the pair correlation of particles on a polymer chain given
-     through the ``id_list``, here ``k`` is the distance (in terms of
-     particles) between the mononers on the chain for which the pair
-     correlation is computed. This is averaged over the whole chain and
-     all the given chains. The number of polymers for which this
-     distribution is computed has to be given as ``Npoly`` and their
-     length through ``poly_len``. The distribution is calculated for
-     distances between ``minr`` and ``maxr`` with ``rbins``.
-
-     .. math::
-
-        \mathrm{Obs}(r) = \mathrm{Norm\_const} \langle \sum_{j=0,
-                    j+=k}^{j<\mathrm{poly\_len} - k} \delta(r - |\vec{r}_j -
-                    \vec{r}_{j+k}|)\rangle
-
-The tclcommand observable is a helpful tool, that allows to make the
-analysis framework much more versatile, by allowing the evaluation of
-arbitrary tcl commands.
-
--  | 
-   | An arbitrary Tcl function that returns a list of floating point
-     numbers of fixed size can be specified. Although its execution
-     might be slow, it allows to prototype new observables without a lot
-     of trouble. Many existing analysis commands can be made to
-     cooperate with the core analysis that way.
-
-The following commands allow to collect data automatically over time
-once their autoupdate feature is enabled.
-
--  | 
-   | The running average of the reference observable with id . It can be
-     resetted by
-
-Printing an observable
-~~~~~~~~~~~~~~~~~~~~~~
-
-observable print
-
-Prints the value of the observable with a given :math:`id`. If the
-observable refers to the current state of the system, its value is
-updated before printing, except if is given.
-
-Python
-^^^^^^
-
 The following observables are available
 
 -  Observables working on a given set of particles specified as follows
@@ -314,32 +66,59 @@ The following observables are available
    ::
 
        part_vel=ParticleVelocities(ids=(1,2,3,4,5))
+   -  ParticlePositions: Positions of the particles, in the format
+      :math:`x_1,\ y_1,\ z_1,\ x_2,\ y_2,\ z_2,\ \dots\ x_n,\ y_n,\ z_n`.
+      The particles are ordered according to the list of ids passed to the observable.
 
-   -  ParticlePositions
+   -  ParticleVelocities: Velocities of the particles in the form
+      :math:`v_{x1},\ v_{y1},\ v_{z1},\ v{x2},\ v_{y2},\ v_{z2},\ \dots\ v{xn},\ v_{yn},\ v_{zn}`.
+      The particles are ordered according to the list of ids passed to the observable.
 
-   -  ParticleVelocities
+   -  ParticleForces: Forces on the particles in the form
+      :math:`f_{x1},\ f_{y1},\ f_{z1},\ f{x2},\ f_{y2},\ f_{z2},\ \dots\ f{xn},\ f_{yn},\ f_{zn}`.
 
-   -  ParticleForces
+   -  ParticleBodyVelocities: the particles' velocity in their respective body-fixed frames.
+      :math:`v_{x1},\ v_{y1},\ v_{z1},\ v{x2},\ v_{y2},\ v_{z2},\ \dots\ v{xn},\ v_{yn},\ v_{zn}`.
+      The particles are ordered according to the list of ids passed to the observable.
 
-   -  ParticleBodyVelocities
+   -  ParticleAngularVelocities: The particles' angular velocities in the space-fixed frame:
+     :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
+               \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`. The
+      The particles are ordered according to the list of ids passed to the observable.
 
-   -  ParticleAngularMomentum
 
-   -  ParticleBodyAngularMomentum
+   -  ParticleBodyAngularVelocities: As above, but in the particles' body-ffixed frame
 
-   -  ParticleCurrent
 
-   -  Current
 
-   -  DipoleMoment
 
-   -  MagneticDipoleMoment
+   -  ParticleCurrent: Product of the particles' velocity and charge
+      :math:`m_1 v^x_1, m_1 v^y_1, m_1 v^z_1, \ldots` 
+      The particles are ordered according to the list of ids passed to the observable.
 
-   -  ComPosition
 
-   -  ComVelocity
 
-   -  ComForce
+   -  Current: Total current of the system
+      :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots` 
+
+   -  DipoleMoment: Total electric dipole moment of the system obtained based on funfolded positions
+      :math:`\sum_i q_i r^x_i, \sum_i q_i r^y_i, \sum_i q_i r^z_i` 
+
+
+   -  MagneticDipoleMoment: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
+      :math:`\sum_i \mu^x_i, \sum_i \mu^y_i, \sum_i \mu^z_i` 
+
+
+   -  ComPosition: The system's center of mass based on unfolded coordinates
+      :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i r^x_i, \sum_i m_i r^y_i, \sum_i m_i r^z_i\right)` 
+
+
+   -  ComVelocity: Velocity of the center of mass
+      :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i\right)` 
+
+   -  ComForce: Sum of the forces on the particles
+      :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i` 
+
 
 -  Profile observables sampling the spacial profile of various
    quantities
@@ -360,94 +139,8 @@ The following observables are available
 
    -  LBVelocityProfile
 
-Checkpointing observables
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-observable write\_checkpoint
-
-Writes the current state of the observable to . If is given then it does
-so in binary form. This is useful to save the state of statful
-observables as the average. This checkpoing mechanism is not portable,
-rereading is only guaranteed to work on the same system with the same
-Espresso binary.
-
-observable read\_checkpoint
-
-Reads the state of the observable from a checkpoint file. The observable
-has to be configured beforehand in the script in exactly the same way as
-it was when the checkpoint was written. That means that the
-configuration of the observable – including possible particle and
-profile specifications – is not saved in the file but has to be provided
-by the user. Please be aware that the value of observables that refer to
-the current state of the system are overwritten by the command except if
-the option is given.
-
-Passing an observable to an analysis function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Currently the only analysis function which uses the core observables is
-the correlator (section [sec:Correlations]).
-
-Deleting an observable to an analysis function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-observable delete
-
-Deletes the observable, frees the allocated memory and makes the
-:math:`id` free for a new observable.
-
-Particle specifications
-~~~~~~~~~~~~~~~~~~~~~~~
-
-You can specify from which particles the observable should be computed
-in one of the following ways. In all cases, particle specifications
-refer to the current state of espresso. Any later changes to particles
-(additions, deletions, changes of types) will not be automatically
-reflected in the observable.
-
--  | 
-   | Requests observable calculation based on all particles in the
-     system.
-
--  | 
-   | Restricts observable calculation to a given particle type(s). The
-     type list is a tcl list of existing particle types.
-
--  | 
-   | Restricts observable calculation to a given list of particle id(s).
-     The id list is a tcl list of existing particle ids.
-
-Profile specifications
-~~~~~~~~~~~~~~~~~~~~~~
-
-Profiles are specified by giving the spacial area that is to be profiled
-and the number of bins in each spacial direction. The area to be
-analyzed is characterized by / / and /. The defaults correspond to the
-box size when the observable is created. The bin size in each direction
-defaults to 1, and can be change with the parameter //. Changing one,
-two or three of them to a value :math:`>1` with thus create a one-, two-
-or three-dimensional map of the desired quantity. The full syntax thus
-reads as:
-
-observable new needs\_profile\_specs
-
-Radial profiles allow to do the same as usual profiles, except the
-coordinate system is a cylindrical one and the binning is done in the
-cylindrical coordinates (defined with the axis in z-direction). This is
-very helpful if the symmetry of the system is cylindrical. The spacial
-are is characterized by a center (default to the center of the box) a
-maximum radial position (defaults to the smaller value of the box
-lengths in x and y directions) and a minimum and maximum value of
-:math:`z`. It is possible to also resolve different polar angles, thus
-using it as a full 3D mapping tool, but this will only rarely be used.
-The full syntax is:
-
-observable new needs\_radial\_profile\_specs
-
 Correlations
 ------------
-
-[sec:Correlations]
 
 Introduction
 ~~~~~~~~~~~~
