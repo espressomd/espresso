@@ -175,6 +175,10 @@ IF LB_GPU or LB:
         ####################################################
         def print_vtk_velocity(self, path):
             lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+        def print_vtk_velocity(self, path, bb1, bb2):
+            cdef vector[int] bb1_vec = bb1
+            cdef vector[int] bb2_vec = bb2
+            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path), bb1_vec, bb2_vec)
         def print_vtk_boundary(self, path):
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
         def print_velocity(self, path):
@@ -187,12 +191,6 @@ IF LB_GPU or LB:
             os.rename(tmp_path, path)
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
-
-        # input/output function wrappers for LB nodes
-        ####################################################
-
-
-
 
         # Activate Actor
         ####################################################

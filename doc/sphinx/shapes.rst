@@ -33,6 +33,8 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Stomatocyte`
 
 
+.. _Using shapes as constraints:
+
 Using shapes as constraints
 ===========================
 
