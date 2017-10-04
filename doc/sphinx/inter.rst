@@ -41,7 +41,7 @@ listed below.
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
-the subsection :ref:`Capping the force during warmup` for more details.
+the subsection :ref:`Capping the force during warmup` for more details.
 
 .. _Tabulated interaction:
 
@@ -63,7 +63,7 @@ This defines an interaction between particles of the types *type1* and *type2* a
 to an arbitrary tabulated pair potential. *filename* specifies a file which
 contains the tabulated forces and energies as a function of the
 separation distance. The tabulated potential allows capping the force
-using MISSING, see section :ref:`Capping the force during warmup`.
+using MISSING, see section :ref:`Capping the force during warmup`.
 
 .. todo:: replace MISSING above.
 
@@ -252,7 +252,7 @@ Lennard-Jones cosine interaction
 inter lj-cos inter lj-cos2
 
 specifies a Lennard-Jones interaction with cosine
-tail :cite:`soddeman01a` between particles of the types and
+tail :cite:`soddeman01a` between particles of the types and
 . The first variant behaves as follows: Until the minimum of the
 Lennard-Jones potential at
 :math:`r_\mathrm{min} = r_\mathrm{off} +
@@ -281,7 +281,7 @@ as normal Lennard-Jones potential, see equation [eq:lj] with
 :math:`c_\mathrm{shift} = 0`.
 
 Only the second variant allows capping the force using , see
-section [sec:forcecap].
+section [sec:forcecap].
 
 Smooth step interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -363,7 +363,7 @@ of the types and . It serves similar purposes as the Lennard-Jones
 potential, but has a deeper minimum, around which it is harmonic. This
 models the potential energy in a diatomic molecule. This potential
 allows capping the force using ``inter forcecap``, see
-section [sec:forcecap].
+section [sec:forcecap].
 
 For :math:`r < r_\mathrm{cut}`, this potential is given by
 
@@ -394,7 +394,7 @@ for :math:`r_\mathrm{discont} < r < r_\mathrm{cut}`. Below ,
 the potential is linearly continued towards :math:`r=0`, similarly to
 force capping, see below. Above :math:`r=r_\mathrm{cut}`, the
 potential is :math:`0`. This potential allows capping the force using ,
-see section [sec:forcecap].
+see section [sec:forcecap].
 
 Soft-sphere interaction
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -747,7 +747,7 @@ information regarding particle properties in :ref:`Setting up particles`.
 FENE bond
 ~~~~~~~~~
 
-A FENE (finite extension nonlinear expander) bond can be instantiated via
+A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
     
     from espressomd.interactions import FeneBond
@@ -802,7 +802,7 @@ A harmonic bond can be instantiated via
 
 
 This bond is similar to the normal harmonic bond in such a way that it
-sets up a harmonic potential, i.e. a spring, between the two particles.
+sets up a harmonic potential, i.e. a spring, between the two particles.
 Additionally the orientation of the first particle in the bond will be aligned along
 the distance vector between both particles. This alignment can be
 controlled by the second harmonic constant :math:`k2`. Keep in mind that orientation will
@@ -968,7 +968,7 @@ displayed in VMD.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite :cite:`cimrak` when using the interactions in this section in order to
+Please cite :cite:`cimrak` when using the interactions in this section in order to
 simulate extended objects embedded in a LB fluid. For more details also
 see the documentation at http://cell-in-fluid.fri.uniza.sk/oif-documentation.
 
@@ -1206,65 +1206,91 @@ oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
+..  note::
+    `Feature BOND_ANGLE required.`
 
-[sec:angle]
+Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
 
-[ phi_0 = ]
+.. _inter_angle:
+.. figure:: figures/inter_angle.png
+   :alt: Bond-angle interactions
+   :align: center
+   :height: 12.00cm
 
-inter angle_harmonic inter angle_cosine inter angle_cossquare
-
-This creates a bond type with identificator with an angle dependent
-potential. This potential is defined between three particles. The
-particle for which the bond is created, is the central particle, and the
+This allows for a bond type having an angle dependent potential.
+This potential is defined between three particles.
+The particle for which the bond is created, is the central particle, and the
 angle :math:`\phi` between the vectors from this particle to the two
-others determines the interaction. is the bending constant, and the
-optional parameter :math:`\phi_0` is the equilibirum bond angle in
-radians ranging from 0 to :math:`\pi`. If this parameter is not given, it
-defaults to :math:`\phi_0 = \pi`, which corresponds to a stretched
-configuration. For example, for a bond defined by
+others determines the interaction.
 
-part $p_2 bond 4 $p_1 $p_3
+Similar to other bonded interactions, these are defined for every particle triad and and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
+For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
 
-the minimal energy configurations are the following:
+    >>> system.part[1].add_bond((bond_angle, 0, 2))
 
-(8381,2684)(1570,-5393) (2701,-4561) (3601,-4561) (4501,-4561)
-(7021,-4561) (7921,-4561) (7921,-3661) (2701,-4561)( 1, 0)1800
-(7021,-4561)( 1, 0)900 (7921,-4561)( 0, 1)900 (5761,-2831)( 0,-1)2500
+The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
-(2701,-5191)(0,0)[b]:math:`p_1` (3601,-5191)(0,0)[b]:math:`p_2`
-(4501,-5191)(0,0)[b]:math:`p_3` (7021,-5191)(0,0)[b]:math:`p_1`
-(8371,-3751)(0,0)[b]:math:`p_3` (7921,-5191)(0,0)[b]:math:`p_2`
-(8371,-2941)(0,0)[b] (3601,-2941)(0,0)[b]
 
-For the potential acting between the three particles three variants are
-possible
+:class:`espressomd.interactions.Angle_Harmonic`
+    A classical harmonic potential of the form: 
+    
+    .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
 
--  | Harmonic bond angle potential :
-   | A classical harmonic potential,
+    :math:`K` is the bending constant,
+    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    radians ranging from 0 to :math:`\pi`.
 
-     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
+    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
+    which corresponds to a stretched conformation.
 
-     Unlike the two following variants, this potential has a kink at
-     :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
-     force, and should therefore be used with caution.
+    Unlike the two other variants, this potential has a kink at
+    :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
+    force, and should therefore be used with caution.
 
--  | Cosine bond angle potential :
-   | 
+    example ::
+        >>> angle_harmonic=Angle_Harmonic(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_harmonic)
+        >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
-     .. math:: V(\alpha) = K \left[1 - \cos(\phi - \phi0)\right]
 
-     Around :math:`\phi_0`, this potential is close to a harmonic one
-     (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
-     periodic and smooth for all angles :math:`\phi`.
 
--  | Cosine square bond angle potential :
-   | 
+:class:`espressomd.interactions.Angle_Cosine`
 
-     .. math:: V(\alpha) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+    Cosine bond angle potential of the form:
 
-     This form is used for example in the GROMOS96 force field. The
-     potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
-     therefore much flatter than the two potentials before.
+    .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi0)\right]
+
+    :math:`K` is the bending constant,
+    and the optional parameter :math:`\phi_0` is the equilibirum bond angle in
+    radians ranging from 0 to :math:`\pi`.
+
+    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
+    which corresponds to a stretched conformation.
+
+    Around :math:`\phi_0`, this potential is close to a harmonic one
+    (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
+    periodic and smooth for all angles :math:`\phi`.
+
+    example ::
+        >>> angle_cosine=Angle_Cosine(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_cosine)
+        >>> system.part[1].add_bond((angle_cosine, 0, 2))
+
+:class:`espressomd.interactions.Angle_Cossquare`
+
+    Cosine square bond angle potential of the form:
+
+    .. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+
+    This form is used for example in the GROMOS96 force field. The
+    potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
+    therefore much flatter than the two potentials before.
+
+    example ::
+        >>> angle_cossquare=Angle_Cossquare(bend=1.0, phi0=np.pi)
+        >>> system.bonded_inter.add(angle_cossquare)
+        >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+
 
 Dihedral interactions
 ---------------------
@@ -1310,7 +1336,7 @@ length, which measures the strength of the electrostatic interaction. As
 a special case, when the thermostat is switched off, the value of
 Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
 :math:`l_B`. This is used to perform an NVE integration (see also
-section :ref:`thermostat`).
+section :ref:`thermostat`).
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -1571,7 +1597,7 @@ MMM1D
     from espressomd.electrostatics import MMM1D
     from espressomd.electrostatics import MMM1D_GPU
 
-Please cite :cite:`mmm1d`  when using MMM1D.
+Please cite :cite:`mmm1d`  when using MMM1D.
 
 See :attr:`espressomd.electrostatics.MMM1D` or
 :attr:`espressomd.electrostatics.MMM1D_GPU` for the list of available
@@ -1678,8 +1704,8 @@ momentarily it is advisable to choose the lattice with a rather fine
 mesh of the size of the particles. As a rule of thumb, the error will
 then be less than :math:`10^{-5}` for the particle force.
 
-For a more detailed description of the algorithm, see appendix  or the
-publications :cite:`maggs02a,pasichnyk04a`.
+For a more detailed description of the algorithm, see appendix  or the
+publications :cite:`maggs02a,pasichnyk04a`.
 
 Spatially varying dielectrics with MEMD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1714,7 +1740,7 @@ permittivity set by the parameter .
 
 The permittivity on each lattice site is set relatively. By defining the
 (global) Bjerrum length of the system, the reference
-permittivity \ :math:`\varepsilon` is fixed via the formula
+permittivity \ :math:`\varepsilon` is fixed via the formula
 
 .. math::
 
@@ -1729,10 +1755,10 @@ Adaptive permittivity with MEMD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In addition to setting the local permittivity manually as described in
-section [sec:dielectric-memd], MEMD is capable of adapting the local
+section [sec:dielectric-memd], MEMD is capable of adapting the local
 permittivity at each lattice site, dependent on the concentration of
 surrounding charges. More information on this can be found in
-article :cite:`fahrenberger15b`, which you should cite if
+article :cite:`fahrenberger15b`, which you should cite if
 you use this algorithm.
 
 To achieve this, the local salt concentration around each lattice cell
@@ -1776,7 +1802,7 @@ for this particular algorithm should most likely be set as the
 permittivity of pure water.
 
 is the scaling of the used length unit to match the expected unit
-system. For more details see equation [eq:adaptive-scaling] and the
+system. For more details see equation [eq:adaptive-scaling] and the
 paragraph before.
 
 is the mass of the field degree of freedom and equals to the square root
@@ -1865,10 +1891,10 @@ conditions. For details, see appendix .
 By default, ELC just as P3M adds a homogeneous neutralizing background
 to the system in case of a net charge. However, unlike in three
 dimensions, this background adds a parabolic potential across the
-slab :cite:`ballenegger09a`. Therefore, under normal
+slab :cite:`ballenegger09a`. Therefore, under normal
 circumstance, you will probably want to disable the neutralization using
 . This corresponds then to a formal regularization of the forces and
-energies :cite:`ballenegger09a`. Also, if you add
+energies :cite:`ballenegger09a`. Also, if you add
 neutralizing walls explicitely as constraints, you have to disable the
 neutralization.
 
@@ -1911,7 +1937,7 @@ describing the outward pointing normal vectors for every surface
 element. The parameter allows to specify the accuracy of the iteration.
 It corresponds to the maximum relative change of any of the interface
 particle’s charge. After the iteration stops anyways. The dielectric
-constant in bulk, i. e. outside the dielectric walls is specified by . A
+constant in bulk, i. e. outside the dielectric walls is specified by . A
 homogeneous electric field can be added to the calculation of dielectric
 boundary forces by specifying it in the parameter .
 
