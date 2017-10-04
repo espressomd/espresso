@@ -57,6 +57,10 @@ follows
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
 
+The current value of an observable can be obtained using its calculate()-method::
+    
+    print(par_pos.calculate())
+
 Available observables
 ^^^^^^^^^^^^^^^^^^^^^
 The following observables are available
@@ -181,6 +185,10 @@ integration by adding them to :attr:`espressomd.system.System.auto_update_correl
     system.auto_update_correlators.add(corr)
 
 Alternatively, an update can triggered by calling the update()-method of the correlator instance. In that case, one has to make sure to call the update in the correct time intervals.
+
+
+The current on-the-fly correlation result can of a correlator can be obtained using its result()-method.
+The final result (including the latest data in the buffers) is obtained using the finalize()-method. After this, no further update of the correlator is possible.
 
 Example: Calculating a particle's diffusion coefficient
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
