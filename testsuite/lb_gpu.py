@@ -62,7 +62,7 @@ class lb_test(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            system.part.add(id=int(id), pos=pos, v=v, type=int(typ), rotation=[1,1,1])
 
         n_col_part=len(system.part)
 

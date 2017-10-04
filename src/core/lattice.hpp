@@ -42,7 +42,7 @@ extern int lattice_switch;
 #define LATTICE_LB   1  /** Lattice Boltzmann */
 #define LATTICE_LB_GPU   2  /** Lattice Boltzmann */
 #define INTERPOLATION_LINEAR 1
-#define index_t long
+
 #define LATTICE_OFF  0  /** Lattice off */
 
 enum { LATTICE_ANISOTROPIC = 1, 
@@ -50,6 +50,8 @@ enum { LATTICE_ANISOTROPIC = 1,
 
 class Lattice {
 public:
+  using index_t = int;
+
     int grid[3] ;/** number of local lattice sites in each direction (excluding halo) */
     int global_grid[3];
     unsigned int dim;

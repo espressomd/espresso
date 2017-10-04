@@ -22,7 +22,7 @@ from espressomd import *
 from espressomd.shapes import *
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
-from espressomd.visualizationOpenGL import *
+from espressomd.visualization_opengl import *
 from threading import Thread
 from time import sleep
 import numpy
