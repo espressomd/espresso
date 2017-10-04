@@ -139,7 +139,7 @@ class ParticleProperties(ut.TestCase):
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
 
-            if espressomd.has_features(["ROTATIONAL_INERTIA"]):
+            if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma_rot = generateTestForVectorProperty(
                     "gamma_rot", np.array([5., 10., 0.33]))
             else:
