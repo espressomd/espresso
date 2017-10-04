@@ -638,6 +638,7 @@ void on_parameter_change(int field)
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
+    invalidate_obs();
     recalc_forces = 1;
     break;
   }
