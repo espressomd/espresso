@@ -53,7 +53,6 @@ class Constraints(ScriptInterfaceHelper):
         self.call_method("remove", constraint=constraint)
 
 
-
 class Constraint(ScriptInterfaceHelper):
     """
     Base class for constraints. A constraint provides a force and
@@ -104,6 +103,44 @@ class ShapeBasedConstraint(Constraint):
     """
 
     _so_name = "Constraints::ShapeBasedConstraint"
+    
+    
+    def total_force(self):
+        """
+        Get total force acting on this constraint.
+
+        Examples
+        ----------
+
+        >>> import espressomd
+        >>> from espressomd import shapes
+        >>> system = espressomd.System()
+        >>> 
+        >>> system.time_step = 0.01
+        >>> system.box_l = [50, 50, 50]
+        >>> system.thermostat.set_langevin(kT=0.0, gamma=1.0)
+        >>> system.cell_system.set_n_square(use_verlet_lists=False)
+        >>> system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        >>>     epsilon=1, sigma=1,
+        >>>     cutoff=2**(1. / 6), shift="auto")
+        >>> 
+        >>> 
+        >>> floor = system.constraints.add(shape=shapes.Wall(normal=[0, 0, 1], dist=0.0),
+        >>>    particle_type=0, penetrable=0, only_positive=0)
+
+        >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0,0,-.1])
+        >>> # print the particle position as it falls
+        >>> # and print the force it applies on the floor
+        >>> for t in range(10):
+        >>>     system.integrator.run(100)
+        >>>     print(system.part[0].pos, floor.total_force())
+
+        """
+    
+        return self.call_method("total_force", constraint=self)
+
+
+
 
 class HomogeneousMagneticField(Constraint):
     """

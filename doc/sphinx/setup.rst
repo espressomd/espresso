@@ -12,10 +12,7 @@ Global system variables can be read and set in Python simply by accessing the
 attribute of the corresponding Python object. Those variables that are already
 available in the Python interface are listed in the following.
 
-The system class
-~~~~~~~~~~~~~~~~
-
-    * :py:attr:`~espressomd.system.System.box_l`
+* :py:attr:`~espressomd.system.System.box_l`
 
     (float[3]) Simulation box lengths of the cuboid box used by |es|.
     Note that if you change the box length during the simulation, the folded
@@ -24,7 +21,7 @@ The system class
     box. If you want to scale the positions, use the command
     :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`
 
-    * :py:attr:`~espressomd.system.System.periodicity`
+* :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. If the feature
     PARTIAL\_PERIODIC is set, |es| can be instructed to treat some
@@ -37,32 +34,32 @@ The system class
     this direction. In this case for keeping particles in the simulation box
     a constraint has to be set.
 
-    * :py:attr:`~espressomd.system.System.time_step`
-    
+* :py:attr:`~espressomd.system.System.time_step`
+
     (float) Time step for MD integration.
 
-    * :py:attr:`~espressomd.system.System.time`
+* :py:attr:`~espressomd.system.System.time`
 
     (float) The simulation time.
 
-    * :py:attr:`~espressomd.system.System.min_global_cut`
+* :py:attr:`~espressomd.system.System.min_global_cut`
 
     (float) Minimal total cutoff for real space. Effectively, this plus the
     :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
     this value automatically, but some algorithms, virtual sites, require
     you to specify it manually.
 
-    * :py:attr:`~espressomd.system.System.max_cut_bonded`
+* :py:attr:`~espressomd.system.System.max_cut_bonded`
 
     *read-only* Maximal cutoff of bonded real space interactions.
 
-    * :py:attr:`~espressomd.system.System.max_cut_nonbonded`
-    
+* :py:attr:`~espressomd.system.System.max_cut_nonbonded`
+
     *read-only* Maximal cutoff of bonded real space interactions.
 
 
 Accessing module states
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
@@ -201,7 +198,7 @@ Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. todo::
-    this is not implemented yet
+    this is not yet implemented in the python interface.
 
 The DPD thermostat can be invoked by the function:
 :py:attr:`~espressomd.thermostat.Thermostat.set_dpd`
@@ -215,7 +212,8 @@ Thermostat DPD
 ^^^^^^^^^^^^^^
 
 .. todo::
-    this is not implemented yet
+    this is not yet implemented in the python interface.
+
 
 thermostat dpd
 
@@ -303,7 +301,7 @@ Transverse DPD thermostat
 '''''''''''''''''''''''''
 
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 This is an extension of the above standard DPD thermostat
 :cite:`junghans2008`, which dampens the degrees of freedom
@@ -325,7 +323,7 @@ momentum.
 Interaction DPD
 ^^^^^^^^^^^^^^^
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 thermostat inter\_dpd
 
@@ -349,7 +347,7 @@ By default the fixed particles are ignored
 Other DPD extensions
 ^^^^^^^^^^^^^^^^^^^^
 .. todo::
-    This is not yet implemted for the pyton interface
+    This is not yet implemted for the python interface
 
 
 The features ``DPD_MADD_RED`` or ``DPD_MADD_IN`` make the friction constant mass dependent:
@@ -697,9 +695,7 @@ The following limitations currently apply for the collision detection:
 -  The “bind at point of collision” approach cannot handle collisions
    between virtual sites
 
-.. _Catalytic reactions:
-
-Catalytic reactions
+Catalytic Reactions
 -------------------
 
 With the help of the feature ``CATALYTIC_REACTIONS``, one can define three particle types to
@@ -824,7 +820,7 @@ The following class :class:`espressomd.galilei.GalileiTransform` may be useful
 in effecting the velocity of the system.::
     
     system = espressomd.System()
-    gt = system.galilei()
+    gt = system.galilei
 
 Particle motion and rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
