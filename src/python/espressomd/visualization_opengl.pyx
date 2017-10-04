@@ -591,7 +591,7 @@ class openGLLive(object):
                     self.setLightPos()
                     self.updateLightPos = False
 
-          #      self.camera.rotateSystem()
+                #self.camera.rotateSystem()
 
                 self.draw()
 
