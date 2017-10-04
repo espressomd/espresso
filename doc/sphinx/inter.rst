@@ -747,7 +747,7 @@ information regarding particle properties in :ref:`Setting up particles`.
 FENE bond
 ~~~~~~~~~
 
-A FENE (finite extension nonlinear expander) bond can be instantiated via
+A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
     
     from espressomd.interactions import FeneBond
@@ -1209,7 +1209,6 @@ Bond-angle interactions
 ..  note::
     `Feature BOND_ANGLE required.`
 
-
 Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
 
 .. _inter_angle:
@@ -1226,12 +1225,13 @@ others determines the interaction.
 
 Similar to other bonded interactions, these are defined for every particle triad and and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
 For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
+
     >>> system.part[1].add_bond((bond_angle, 0, 2))
 
-The parameter ``bond_angle`` refers to an instance to one of three possible bond-angle classes, described below.
+The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
 
 
-:class:`espressomd.Angle_Harmonic`
+:class:`espressomd.interactions.Angle_Harmonic`
     A classical harmonic potential of the form: 
     
     .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -1254,7 +1254,7 @@ The parameter ``bond_angle`` refers to an instance to one of three possible bond
 
 
 
-:class:`espressomd.Angle_Cosine`
+:class:`espressomd.interactions.Angle_Cosine`
 
     Cosine bond angle potential of the form:
 
@@ -1276,7 +1276,7 @@ The parameter ``bond_angle`` refers to an instance to one of three possible bond
         >>> system.bonded_inter.add(angle_cosine)
         >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
-:class:`espressomd.Angle_Cossquare`
+:class:`espressomd.interactions.Angle_Cossquare`
 
     Cosine square bond angle potential of the form:
 
