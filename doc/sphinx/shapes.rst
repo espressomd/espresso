@@ -1,7 +1,9 @@
 .. _Setting up shapes:
 
+=================
 Setting up shapes
-*****************
+=================
+
 In order to use shapes you first have to import the :mod:`espressomd.shapes`
 module. This module provides classes for the different available shapes::
 
@@ -102,5 +104,3 @@ you could do the following::
     wall = espressomd.shapes.Wall(dist=5, normal=[1,0,0])
     lbb = espressomd.lbboundaries.LBBoundary(shape=wall, velocity=[0,0,0])
     system.lbboundaries.add(lbb)
-
-

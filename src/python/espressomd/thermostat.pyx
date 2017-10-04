@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from functools import wraps
 from . cimport thermostat
 include "myconfig.pxi"
 from globals cimport *
@@ -24,7 +25,7 @@ import numpy as np
 from . cimport utils
 
 
-class AssertThermostatType():
+def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
 
     Decorator class to assure that only a given thermostat is active
@@ -36,17 +37,16 @@ class AssertThermostatType():
     This will prefix an assertion for THERMO_LANGEVIN to the call.
 
     """
-
-    def __init__(self, *args):
-        self.thermo_type = args
-
-    def __call__(self, f):
-        def __f(*args, **kwargs):
-            if (not (thermo_switch in self.thermo_type) and
-                  (thermo_switch != THERMO_OFF)):
-                raise Exception("A different thermostat is already set!")
-            f(*args, **kwargs)
-        return __f
+    def decoratorfunction(function):
+        @wraps(function, assigned=('__name__', '__doc__'))
+        def wrapper(*args, **kwargs):
+            if (not (thermo_switch in allowedthermostats) and
+                    (thermo_switch != THERMO_OFF)):
+                raise Exception(
+                    "This combination of thermostats is not allowed!")
+            function(*args, **kwargs)
+        return wrapper
+    return decoratorfunction
 
 
 cdef class Thermostat(object):
@@ -193,15 +193,15 @@ cdef class Thermostat(object):
 
         Parameters
         -----------
-        'kT': float
+        'kT' : float
             Thermal energy of the simulated heat bath.
 
-        'gamma': float
+        'gamma' : float
             Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
             is compiled in then 'gamma' can be a list of three positive floats, for the friction
             coefficient in each cardinal direction.
 
-        gamma_rotation: float, optional
+        gamma_rotation : float, optional
             The same applies to 'gamma_rotation', which requires the feature
             'ROTATION' to work properly. But also accepts three floating point numbers
             if 'PARTICLE_ANISOTROPY' is also compiled in.
@@ -257,7 +257,7 @@ cdef class Thermostat(object):
                 if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
-        
+
         global temperature
         temperature = float(kT)
         global langevin_gamma
@@ -272,7 +272,7 @@ cdef class Thermostat(object):
                 langevin_gamma[2] = gamma[2]
         ELSE:
             langevin_gamma = float(gamma)
-        
+
         global langevin_gamma_rotation
         IF ROTATION:
             if gamma_rotation is not None:
@@ -307,7 +307,7 @@ cdef class Thermostat(object):
                             "gamma_rotation scalar parameter is required")
                     ELSE:
                         langevin_gamma_rotation = langevin_gamma
-        
+
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
@@ -327,7 +327,7 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-            'kT':   float
+            'kT' : float
                 Specifies the thermal energy of the heat bath
 
             """
@@ -335,7 +335,8 @@ cdef class Thermostat(object):
             if kT is None:
                 raise ValueError(
                     "kT has to be given as keyword arg")
-            utils.check_type_or_throw_except(kT,1,float,"kT must be a number")
+            utils.check_type_or_throw_except(
+                kT, 1, float, "kT must be a number")
             if float(kT) < 0.:
                 raise ValueError("temperature must be non-negative")
             global temperature
@@ -355,14 +356,15 @@ cdef class Thermostat(object):
             Parameters
             ----------
 
-            'kT': float
+            'kT' : float
                 Thermal energy of the heat bath
 
-            'gamma0': float
+            'gamma0' : float
                 Friction coefficient of the bath
 
-            'gammav': float
+            'gammav' : float
                 Artificial friction coefficient for the volume fluctuations. Mass of the artificial piston
+
             """
 
             if kT is None or gamma0 is None or gammav is None:
@@ -391,8 +393,9 @@ cdef class Thermostat(object):
 
             Parameters
             ----------
-            'kT': float 
+            'kT' : float
                 Thermal energy of the heat bath, floating point number
+
             """
 
             if kT is None:
