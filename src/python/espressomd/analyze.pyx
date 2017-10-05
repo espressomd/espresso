@@ -702,8 +702,10 @@ class Analysis(object):
             raise ValueError("rdf_type must not be empty!")
         if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
             raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
+        if type_list_b and (not hasattr(type_list_b, '__iter__')):
             raise ValueError("type_list_b has to be a list!")
+        if type_list_b is None:
+            type_list_b = type_list_a
 
         if rdf_type != 'rdf':
             if n_configs == 0:
@@ -726,9 +728,6 @@ class Analysis(object):
         elif rdf_type == '<rdf>':
             c_analyze.calc_rdf_av(c_analyze.partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
-        elif rdf_type == '<rdf-intermol>':
-            c_analyze.calc_rdf_intermol_av(c_analyze.partCfg(),
-                p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
                 "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
