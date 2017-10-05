@@ -1,0 +1,108 @@
+from __future__ import print_function
+import sys
+import unittest as ut
+import numpy as np
+import espressomd
+from espressomd.interactions import HarmonicBond
+
+
+@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+class AnalyzeDistance(ut.TestCase):
+    system = espressomd.System()
+    np.random.seed(1234)
+
+    @classmethod
+    def setUpClass(self):
+        box_l = 100.0
+        self.system.box_l = [box_l, box_l, box_l]
+        self.system.cell_system.skin = 0.4
+        self.system.time_step = 0.01
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0,
+            cutoff=2**(1. / 6.), shift="auto")
+        self.system.thermostat.set_langevin(kT=1., gamma=1.)
+        for i in range(200):
+            self.system.part.add(id=i, pos=np.random.random(3)*box_l)
+        self.system.non_bonded_inter.set_force_cap(10)
+        i=0
+        min_dist=self.system.analysis.mindist()
+        while (i < 50 and min_dist < 0.9):
+            system.integrator.run(100)
+            min_dist = self.system.analysis.mindist()
+            i += 1
+            lj_cap = lj_cap + 10
+            self.system.non_bonded_inter.set_force_cap(lj_cap)
+        self.system.non_bonded_inter.set_force_cap(0)
+        self.system.integrator.run(1000)
+
+    # python version of the espresso core function
+    def mindist(self):
+        r=np.array(self.system.part[:].pos)
+        ij=np.triu_indices(len(r), k=1)
+        r_ij= r[ij[0]]-r[ij[1]]
+        # PBC check
+        for dim in range(3):
+            fold_ind=np.where((r_ij[:,dim])>0.5*self.system.box_l[dim])
+            r_ij[fold_ind[0],dim] -= self.system.box_l[dim]
+            fold_ind=np.where((r_ij[:,dim])<-0.5*self.system.box_l[dim])
+            r_ij[fold_ind[0],dim] += self.system.box_l[dim]
+        dist=np.sum(r_ij**2, axis=-1)
+        return np.sqrt(np.min(dist))
+
+    # python version of the espresso core function
+    def nbhood(self, pos, r_catch):
+        dist= np.array(self.system.part[:].pos) - pos
+        # PBC check
+        for dim in range(3):
+            fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
+            dist[fold_ind[0],dim] -= self.system.box_l[dim]
+            fold_ind=np.where((dist[:,dim])<-0.5*self.system.box_l[dim])
+            dist[fold_ind[0],dim] += self.system.box_l[dim]
+        dist=np.sum(dist**2, axis=-1)
+        return np.where(dist<r_catch**2)[0]
+
+    # python version of the espresso core function
+    def distto_pos(self, pos):
+        dist=self.system.part[:].pos - pos
+        for dim in range(3):
+            fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
+            dist[fold_ind[0],dim] -= self.system.box_l[dim]
+            fold_ind=np.where((dist[:,dim])<-0.5*self.system.box_l[dim])
+            dist[fold_ind[0],dim] += self.system.box_l[dim]
+        dist=np.sum(dist**2, axis=-1)
+        return np.sqrt(np.min(dist))
+
+
+    def test_mindist(self):
+        #try five times
+        for i in range(5):
+            self.assertAlmostEqual(self.system.analysis.mindist(),
+                                   self.mindist(),
+                                   delta=1e-7)
+            self.system.integrator.run(100)
+
+    def test_nbhood(self):
+        #try five times
+        for i in range(5):
+            self.assertTrue(np.allclose(self.system.analysis.nbhood([i, i, i], i*2),
+                                        self.nbhood([i, i, i], i*2)))
+            self.system.integrator.run(100)
+
+    def test_distto_pos(self):
+        #try five times
+        for i in range(5):
+            self.assertTrue(np.allclose(self.system.analysis.distto(pos=[i, i, i]),
+                                        self.distto_pos([i, i, i])))
+            self.system.integrator.run(100)
+
+    def test_distto_id(self):
+        #try five times
+        for i in range(5):
+            self.assertTrue(np.allclose(self.system.analysis.distto(id=i ),
+                                        self.distto_pos(self.system.part[i].pos )))
+            self.system.integrator.run(100)
+
+
+if __name__ == "__main__":
+    print("Features: ", espressomd.features())
+    ut.main()
