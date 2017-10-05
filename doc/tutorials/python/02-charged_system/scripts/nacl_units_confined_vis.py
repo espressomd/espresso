@@ -76,11 +76,11 @@ system.constraints.add(shape=Wall(dist=0,normal=[0,0,1]),particle_type=types["El
 system.constraints.add(shape=Wall(dist=-box_z,normal=[0,0,-1]),particle_type=types["Electrode"])
 
 # Place particles
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     p = numpy.random.random(3)*box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part), type=types["Cl"],  pos=p, q=charges["Cl"], mass=masses["Cl"])
-for i in range(n_ionpairs):
+for i in range(int(n_ionpairs)):
     p = numpy.random.random(3)*box_l
     p[2] += lj_sigmas["Electrode"]
     system.part.add(id=len(system.part), type=types["Na"],  pos=p, q=charges["Na"], mass=masses["Na"])
@@ -121,14 +121,14 @@ def increaseElectricField():
         Ez += 1000
         for p in system.part:
             p.ext_force = [0,0,Ez * p.q]
-        print Ez
+        print(Ez)
 
 def decreaseElectricField():
         global Ez
         Ez -= 1000
         for p in system.part:
             p.ext_force = [0,0,Ez * p.q]
-        print Ez
+        print(Ez)
 
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('u',KeyboardFireEvent.Hold,increaseElectricField))
