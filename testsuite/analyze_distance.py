@@ -55,7 +55,6 @@ class AnalyzeDistance(ut.TestCase):
     # python version of the espresso core function
     def nbhood(self, pos, r_catch):
         dist= np.array(self.system.part[:].pos) - pos
-        # PBC check
         for dim in range(3):
             fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
             dist[fold_ind[0],dim] -= self.system.box_l[dim]
