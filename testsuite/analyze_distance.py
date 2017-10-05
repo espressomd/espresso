@@ -12,7 +12,6 @@ class AnalyzeDistance(ut.TestCase):
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
 
-
     @classmethod
     def setUpClass(self):
         box_l = 50.0
@@ -24,10 +23,10 @@ class AnalyzeDistance(ut.TestCase):
             cutoff=2**(1. / 6.), shift="auto")
         self.system.thermostat.set_langevin(kT=1., gamma=1.)
         for i in range(100):
-            self.system.part.add(id=i, pos=np.random.random(3)*box_l)
+            self.system.part.add(id=i, pos=np.random.random(3) * box_l)
         self.system.non_bonded_inter.set_force_cap(10)
-        i=0
-        min_dist=self.system.analysis.mindist()
+        i = 0
+        min_dist = self.system.analysis.mindist()
         while (i < 50 and min_dist < 0.9):
             system.integrator.run(100)
             min_dist = self.system.analysis.mindist()
@@ -39,56 +38,55 @@ class AnalyzeDistance(ut.TestCase):
 
     # python version of the espresso core function
     def mindist(self):
-        r=np.array(self.system.part[:].pos)
+        r = np.array(self.system.part[:].pos)
         # this finds all i<j combinations
-        ij=np.triu_indices(len(r), k=1)
-        r_ij= r[ij[0]]-r[ij[1]]
+        ij = np.triu_indices(len(r), k=1)
+        r_ij = r[ij[0]] - r[ij[1]]
         # PBC check
         for dim in range(3):
-            fold_ind=np.where((r_ij[:,dim])>0.5*self.system.box_l[dim])
-            r_ij[fold_ind[0],dim] -= self.system.box_l[dim]
-            fold_ind=np.where((r_ij[:,dim])<-0.5*self.system.box_l[dim])
-            r_ij[fold_ind[0],dim] += self.system.box_l[dim]
-        dist=np.sum(r_ij**2, axis=-1)
+            fold_ind = np.where((r_ij[:, dim]) > 0.5 * self.system.box_l[dim])
+            r_ij[fold_ind[0], dim] -= self.system.box_l[dim]
+            fold_ind = np.where((r_ij[:, dim]) < -0.5 * self.system.box_l[dim])
+            r_ij[fold_ind[0], dim] += self.system.box_l[dim]
+        dist = np.sum(r_ij**2, axis=-1)
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function
     def nbhood(self, pos, r_catch):
-        dist= np.array(self.system.part[:].pos) - pos
+        dist = np.array(self.system.part[:].pos) - pos
         for dim in range(3):
-            fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] -= self.system.box_l[dim]
-            fold_ind=np.where((dist[:,dim])<-0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] += self.system.box_l[dim]
-        dist=np.sum(dist**2, axis=-1)
-        return np.where(dist<r_catch**2)[0]
+            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] -= self.system.box_l[dim]
+            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] += self.system.box_l[dim]
+        dist = np.sum(dist**2, axis=-1)
+        return np.where(dist < r_catch**2)[0]
 
     # python version of the espresso core function
     def distto_pos(self, pos):
-        dist=self.system.part[:].pos - pos
+        dist = self.system.part[:].pos - pos
         for dim in range(3):
-            fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] -= self.system.box_l[dim]
-            fold_ind=np.where((dist[:,dim])<-0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] += self.system.box_l[dim]
-        dist=np.sum(dist**2, axis=-1)
+            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] -= self.system.box_l[dim]
+            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] += self.system.box_l[dim]
+        dist = np.sum(dist**2, axis=-1)
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function
     def distto_id(self, id):
-        dist=np.delete(self.system.part[:].pos, id, axis=0)
-        dist=dist - self.system.part[id].pos
+        dist = np.delete(self.system.part[:].pos, id, axis=0)
+        dist = dist - self.system.part[id].pos
         for dim in range(3):
-            fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] -= self.system.box_l[dim]
-            fold_ind=np.where((dist[:,dim])<-0.5*self.system.box_l[dim])
-            dist[fold_ind[0],dim] += self.system.box_l[dim]
-        dist=np.sum(dist**2, axis=-1)
+            fold_ind = np.where((dist[:, dim]) > 0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] -= self.system.box_l[dim]
+            fold_ind = np.where((dist[:, dim]) < -0.5 * self.system.box_l[dim])
+            dist[fold_ind[0], dim] += self.system.box_l[dim]
+        dist = np.sum(dist**2, axis=-1)
         return np.sqrt(np.min(dist))
 
-
     def test_mindist(self):
-        #try five times
+        # try five times
         for i in range(5):
             self.assertAlmostEqual(self.system.analysis.mindist(),
                                    self.mindist(),
@@ -96,24 +94,26 @@ class AnalyzeDistance(ut.TestCase):
             self.system.integrator.run(100)
 
     def test_nbhood(self):
-        #try five times
-        for i in range(1,10,2):
-            self.assertTrue(np.allclose(self.system.analysis.nbhood([i, i, i], i*2),
-                                        self.nbhood([i, i, i], i*2)))
+        # try five times
+        for i in range(1, 10, 2):
+            self.assertTrue(
+                np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
+                            self.nbhood([i, i, i], i * 2)))
             self.system.integrator.run(100)
 
     def test_distto_pos(self):
-        #try five times
+        # try five times
         for i in range(5):
-            self.assertTrue(np.allclose(self.system.analysis.distto(pos=[i, i, i]),
-                                        self.distto_pos([i, i, i])))
+            self.assertTrue(
+                np.allclose(self.system.analysis.distto(pos=[i, i, i]),
+                            self.distto_pos([i, i, i])))
             self.system.integrator.run(100)
 
     def test_distto_id(self):
-        #try five times
+        # try five times
         for i in range(5):
-            self.assertAlmostEqual(self.system.analysis.distto(id=i ),
-                                        self.distto_id(i ))
+            self.assertAlmostEqual(self.system.analysis.distto(id=i),
+                                   self.distto_id(i))
             self.system.integrator.run(100)
 
 
