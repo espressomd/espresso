@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from libcpp cimport bool
+from libcpp.vector cimport vector
 from .actors cimport Actor
 
 cdef class HydrodynamicInteraction(Actor):
@@ -83,6 +84,7 @@ IF LB_GPU or LB:
         int lb_lbfluid_set_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_get_bulk_visc(double * c_bulk_visc)
         int lb_lbfluid_print_vtk_velocity(char * filename)
+        int lb_lbfluid_print_vtk_velocity(char* filename, vector[int] bb1, vector[int] bb2)
         int lb_lbfluid_print_vtk_boundary(char * filename)
         int lb_lbfluid_print_velocity(char * filename)
         int lb_lbfluid_print_boundary(char * filename)
