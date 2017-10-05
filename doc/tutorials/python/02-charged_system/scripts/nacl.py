@@ -28,11 +28,11 @@ print("\n--->Setup system")
 # System parameters
 n_part = 200
 n_ionpairs = n_part/2
-density = 0.7
+density = 0.5
 time_step = 0.01
 temp = 1.0
 gamma = 1.0
-l_bjerrum = 1.0
+l_bjerrum = 7.0
 
 num_steps_equilibration = 1000
 num_configs = 100
