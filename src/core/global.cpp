@@ -23,7 +23,6 @@
 */
 #include "global.hpp"
 
-#include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
@@ -36,14 +35,15 @@
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "tuning.hpp"
+#include "communication.hpp"
 #include "utils/mpi/all_compare.hpp"
-
-extern double force_cap;
 
 #include <boost/functional/hash.hpp>
 
 #include <functional>
 #include <unordered_map>
+
+extern double force_cap;
 
 namespace {
 
@@ -240,14 +240,14 @@ const std::unordered_map<int, Datafield> fields{
      {FIELD_LANGEVIN_ROT_SWITCH,
       {&langevin_rotate, Datafield::Type::BOOL, 1, "langevin_rotate_switch",
        1}}, /* 54 from thermostat.cpp */
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
      {FIELD_LANGEVIN_GAMMA_ROTATION,
       {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1, "gamma_rot",
        1}}, /* 55 from thermostat.cpp */
 #else
-    {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
-         1}}, /* 55 from thermostat.cpp */
+     {FIELD_LANGEVIN_GAMMA_ROTATION,
+      {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3, "gamma_rot",
+       1}}, /* 55 from thermostat.cpp */
 #endif
      {FIELD_FORCE_CAP,
       {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap", 1}}}};

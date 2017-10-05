@@ -1,6 +1,8 @@
 Setting up the system
 =====================
 
+.. _Setting global variables in Python:
+
 Setting global variables in Python
 ----------------------------------
 
@@ -73,8 +75,7 @@ or by calling the corresponding ``get_state`` methods like::
     
     gamma_rot = espressomd.System().thermostat.get_state()[0][’gamma_rotation’]
 
-
-.. _thermostat:
+.. _\`\`thermostat\`\`\: Setting up the thermostat:
 
 ``thermostat``: Setting up the thermostat
 -----------------------------------------
@@ -112,6 +113,8 @@ above zero and set it to :math:`-2\sigma` or :math:`2\sigma`
 respectively. In all three cases the distribution is made such that the
 second moment of the distribution is the same and thus results in the
 same temperature.
+
+.. _Langevin thermostat:
 
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
@@ -393,7 +396,7 @@ Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
 behaviour, please contribute to solving the problem.
 
-.. _nemd:
+.. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
 
 ``nemd``: Setting up non-equilibrium MD
 ---------------------------------------

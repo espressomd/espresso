@@ -65,9 +65,17 @@ in your \emph{myconfig.hpp} to be set throughout the whole tutorial:
 
 The script for the tutorial can be found in your build directory at\\
 \verb|\doc\tutorials\python\02-charged_system\nacl.py|.
-We start with setting up all the relevant simulation parameters in one place:
+We start with importing numpy and the espressomd features and setting up all
+the relevant simulation parameters in one place:
 
 \begin{pypresso}
+
+from espressomd import System, assert_features, electrostatics
+import numpy
+
+assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
+
+
 # System parameters
 n_part = 200
 n_ionpairs = n_part/2
@@ -113,7 +121,7 @@ for our NVT ensemble with temperature \pypressoinline{temp} and friction coeffic
 
 \begin{pypresso}
 # Setup System
-system = espressomd.System()
+system = System()
 box_l = (n_part / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
@@ -242,7 +250,7 @@ print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(num_steps_equilibration/100):
     energy = system.analysis.energy()
-    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, 
           T={3:.4f}".format(system.time, energy['total'], 
           energy['coulomb'], temp_measured))
@@ -259,7 +267,7 @@ print("\n--->Integration")
 system.time = 0.0
 for i in range(num_configs):
     energy = system.analysis.energy()
-    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f},
             T={3:.4f}".format(system.time, energy['total'],
             energy['coulomb'], temp_measured))
@@ -414,10 +422,7 @@ Electrical Conductance, and Viscosity Data, \emph{J. Phys. Chem. Ref. Data, 17},
 Let's walk through the python script. We need additional imports for the wall shapes and the ELC algorithm:
 
 \begin{pypresso}
-from espressomd import *
-from espressomd.shapes import *
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
+from espressomd import System, assert_features, electrostatics, electrostatic_extensions, shapes
 import numpy
 \end{pypresso}
 
@@ -427,7 +432,7 @@ We define our system size by the number of particles and the density.
 The system parameters lead to the following values:
 
 \begin{pypresso}
-system = espressomd.System()
+system = System()
 
 print("\n--->Setup system")
 
@@ -582,7 +587,7 @@ print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(num_steps_equilibration/100):
     energy = system.analysis.energy()
-    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f},
           T={3:.4f}".format(system.time, energy['total'],
           energy['coulomb'], temp_measured))
@@ -602,7 +607,7 @@ cnt = 0
 
 for i in range(num_configs):
     energy = system.analysis.energy()
-    temp_measured = energy['ideal'] / ((3.0 / 2.0) * n_part)
+    temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f},
           T={3:.4f}".format(system.time, energy['total'],
           energy['coulomb'], temp_measured))
@@ -638,7 +643,7 @@ at the walls. Now try to put in an electric field that represents an applied vol
 The density data (see figure \ref{fig:nacl_confined}) should show strong layering at the walls, decaying towards the system center.
 The complete script is at \\
 \verb|\doc\tutorials\python\02-charged_system\nacl_units_confined.py|.\\
-In the interactive script \verb|nacl_units_confined_vis.py|, you can increase/decrease the electric field with the keys \emph{t/g} (at your own risk).
+In the interactive script \verb|nacl_units_confined_vis.py|, you can increase/decrease the electric field with the keys \emph{u/j} (at your own risk).
 
 \begin{figure}[tb]
   \centering

@@ -1,13 +1,15 @@
 Running the simulation
 ======================
 
+.. _Integrator:
+
 Integrator
 ----------
 
 To run the integrator call the method
 :meth:`espressomd.integrate.Integrator.run`::
 
-    system.integrator.run(steps=number_of_steps)
+    system.integrator.run(steps=number_of_steps, recalc_forces=False, reuse_forces=False)
 
 where ``number_of_steps`` is the number of time steps the integrator
 should perform.
@@ -35,14 +37,14 @@ that you read back in actually match the parameters that are set.
 Therefore, |es| would recompute the forces before the first time step, which
 makes it essentially impossible to checkpoint LB simulations, where it
 is vital to keep the coupling forces. To work around this, there is
-an additional parameter, which tells integrate to not recalculate
+an additional parameter ``reuse_forces``, which tells integrate to not recalculate
 the forces for the first time step, but use that the values still stored
 with the particles. Use this only if you are absolutely sure that the
 forces stored match your current setup!
 
 The opposite problem occurs when timing interactions: In this case, one
 would like to recompute the forces, despite the fact that they are
-already correctly calculated. To this aim, the option can be used to
+already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
 enforce force recalculation.
 
 Run steepest descent minimization

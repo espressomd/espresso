@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import espressomd
 from espressomd import visualization
 import numpy
