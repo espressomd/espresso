@@ -5,7 +5,6 @@ import numpy as np
 import espressomd
 from espressomd.interactions import HarmonicBond
 
-
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System()
@@ -130,7 +129,6 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[3].remove()
         self.system.part[4].remove()
         self.system.part[0].delete_all_bonds()
-
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
