@@ -9,7 +9,9 @@ from espressomd.interactions import HarmonicBond
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeDistance(ut.TestCase):
     system = espressomd.System()
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
+
 
     @classmethod
     def setUpClass(self):
