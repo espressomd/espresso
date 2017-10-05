@@ -27,14 +27,20 @@
     A random generator
 */
 
+#include "errorhandling.hpp"
+
 #include <random>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 namespace Random {
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
+extern bool user_has_seeded;
+extern bool unseeded_error_thrown;
+
 
 /**
  * @brief Set seed of random number generators on each node.
@@ -83,6 +89,12 @@ void init_random_seed(int seed);
 
 inline double d_random() {
   using namespace Random;
+
+  if (!user_has_seeded && !unseeded_error_thrown) {
+    unseeded_error_thrown = true;
+    runtimeErrorMsg() <<"Please seed the random number generator.\nESPResSo can choose one for you with set_random_state_PRNG().";
+    }
+
   return uniform_real_distribution(generator); 
 }
 
@@ -93,6 +105,12 @@ inline double d_random() {
  */
 inline int i_random(int maxint){
   using namespace Random;
+
+  if (!user_has_seeded && !unseeded_error_thrown) {
+    unseeded_error_thrown = true;
+    runtimeErrorMsg() <<"Please seed the random number generator.\nESPResSo can choose one for you with set_random_state_PRNG().";
+    }
+
   std::uniform_int_distribution<int> uniform_int_dist(0, maxint-1);
   return uniform_int_dist(generator);
 }
@@ -102,6 +120,12 @@ inline int i_random(int maxint){
  */
 inline double gaussian_random(void){
   using namespace Random;
+
+  if (!user_has_seeded && !unseeded_error_thrown) {
+    unseeded_error_thrown = true;
+    runtimeErrorMsg() <<"Please seed the random number generator.\nESPResSo can choose one for you with set_random_state_PRNG().";
+    }
+
   return normal_distribution(generator);
 }
 
@@ -116,6 +140,12 @@ inline double gaussian_random(void){
  */
 inline double gaussian_random_cut(void){
   using namespace Random;
+
+  if (!user_has_seeded && !unseeded_error_thrown) {
+    unseeded_error_thrown = true;
+    runtimeErrorMsg() <<"Please seed the random number generator.\nESPResSo can choose one for you with set_random_state_PRNG().";
+    }
+
   const double random_number=1.042267973*normal_distribution(generator);
   
   if ( fabs(random_number) > 2*1.042267973 ) {

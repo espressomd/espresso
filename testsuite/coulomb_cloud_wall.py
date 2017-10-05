@@ -34,6 +34,7 @@ class CoulombCloudWall(ut.TestCase):
     """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
        electrostatic forces and energy against stored data."""
     S = espressomd.System()
+    S.set_random_state_PRNG()
     forces = {}
     tolerance = 1E-3
 

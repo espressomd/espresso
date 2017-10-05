@@ -26,6 +26,7 @@ import numpy as np
 
 class CellSystem(ut.TestCase):
     S = espressomd.System()
+    S.set_random_state_PRNG()
 
     def test_cell_system(self):
         self.S.cell_system.set_n_square(use_verlet_lists=False)

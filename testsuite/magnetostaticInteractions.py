@@ -29,6 +29,7 @@ from tests_common import *
 class MagnetostaticsInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System()
+    system.set_random_state_PRNG()
 
     def setUp(self):
         self.system.box_l = 10, 10, 10

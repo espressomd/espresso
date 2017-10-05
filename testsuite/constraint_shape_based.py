@@ -36,6 +36,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
     def test(self):
         S = espressomd.System()
+        S.set_random_state_PRNG()
         self.prepare(S)
 
         wy = Wall(normal=[0., 1., 0.], dist=0.)

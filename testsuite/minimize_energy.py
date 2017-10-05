@@ -8,6 +8,7 @@ from espressomd.interactions import *
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),"Skipped because LENNARD_JONES turned off.")
 class test_minimize_energy(ut.TestCase):
     system = espressomd.System()
+    system.set_random_state_PRNG()
     box_l = 10.0
     density = 0.6
     vol = box_l * box_l *box_l
