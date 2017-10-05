@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd import electrostatics
+from espressomd import System, assert_features, electrostatics
 import numpy
+
+assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 
 print("\n--->Setup system")
 
@@ -49,7 +50,7 @@ lj_cuts     = {"Anion":  WCA_cut * lj_sigmas["Anion"],
                "Cation": WCA_cut * lj_sigmas["Cation"]}
 
 # Setup System
-system = espressomd.System()
+system = System()
 box_l = (n_part / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
@@ -91,8 +92,6 @@ min_dist = 0.0
 cap = 10.0
 #Warmup Helper: Cold, highly damped system
 system.thermostat.set_langevin(kT=temp*0.1, gamma=gamma*50.0)
-#Warmup Helper: Reduced time_step
-#system.time_step = time_step*0.1
 
 while min_dist < max_sigma:
     #Warmup Helper: Cap max. force, increase slowly for overlapping particles
@@ -103,7 +102,6 @@ while min_dist < max_sigma:
     system.integrator.run(10)
 
 #Don't forget to reset thermostat, timestep and force cap
-system.time_step = time_step
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 system.non_bonded_inter.set_force_cap(0)
 

@@ -39,7 +39,7 @@ from .system import System
 
 class Analysis(object):
 
-    _systemp =None
+    _systemp = None
 
     def __init__(self,system):
         if not isinstance(system,System):
@@ -64,11 +64,11 @@ class Analysis(object):
     #
 
     def mindist(self, p1='default', p2='default'):
-        """Minimal distance between particles.
-
+        """Minimal distance between two sets of particles.
+        
         Parameters
         ----------
-        p1, p2: lists of particle types
+        p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
 
         """
 
@@ -112,15 +112,16 @@ class Analysis(object):
 
         Parameters
         ----------
-        id : int, optional
-            Calculate distance to particle with id `id`.
-        pos : array of floats, optional
-            Calculate distance to position `pos`.
+        id : :obj:`int`, optional (:attr:`espressomd.particle_data.ParticleHandle.id`)
+             Calculate distance to particle with id `id`.
+        pos : array of :obj:`float`, optional
+              Calculate distance to position `pos`.
 
         Returns
         -------
-        float
+        :obj:`float`
             The calculated distance.
+
         """
 
         if id == None and pos == None:
@@ -158,15 +159,18 @@ class Analysis(object):
 
         Parameters
         ----------
-        include_particles : bool, optional
-            Include the particles contribution to the linear momentum. Default: True.
-        include_lbfluid : bool, optional
-            Include the Lattice Boltzmann fluid contribution to the linear momentum. Default: True.
+        include_particles : :obj:`bool`, optional
+                            wether to include the particles contribution to the linear
+                            momentum.
+        include_lbfluid : :obj:`bool`, optional
+                          wether to include the Lattice Boltzmann fluid
+                          contribution to the linear momentum.
 
         Returns
         -------
-        float
+        :obj:`float`
             The linear momentum of the system.
+
         """
         return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
@@ -182,13 +186,14 @@ class Analysis(object):
 
         Parameters
         ----------
-        part_type : int
-            Particle type for which to calculate the center of mass.    
+        part_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+                    Particle type for which to calculate the center of mass.    
 
         Returns
         -------
-        array of floats
+        array of :obj:`float`
             The center of mass of the system.
+
         """
         return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
 
@@ -204,17 +209,18 @@ class Analysis(object):
 
         Parameters
         ----------
-        pos : array of floats
-            Reference position for the neighborhood.
-        r_catch : float
-            Radius of the region.
-        plane : {'xy', 'xz', 'yz'}
-            If given, `r_catch` is the distance to the respective plane.
+        pos : array of :obj:`float`
+              Reference position for the neighborhood.
+        r_catch : :obj:`float`
+                  Radius of the region.
+        plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
+                If given, `r_catch` is the distance to the respective plane.
 
         Returns
         -------
-        array of ints
+        array of :obj:`int`
             The neighbouring particle ids.
+
         """
 
         cdef int planedims[3]
@@ -326,9 +332,13 @@ class Analysis(object):
 
 
     def pressure(self, v_comp=0):
-        """Pressure calculation
-           pressure(v_comp=False)
-           """
+        """Get the systems pressure.
+           
+        Parameters
+        ----------
+        v_comp : :obj:`bool`, optional
+                    
+        """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
     
         # Dict to store the results
@@ -409,7 +419,12 @@ class Analysis(object):
 
 
     def stress_tensor(self, v_comp=0):
-        """stress_tensor(v_comp=0)
+        """Get the stress tensor.
+
+        Parameters
+        ----------
+        v_comp : :obj:`bool`
+
         """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
@@ -529,8 +544,13 @@ class Analysis(object):
     #
 
 
-    def energy(self, etype='all', id1='default', id2='default'):
-        """energy()
+    def energy(self):
+        """Calculate the systems energy.
+
+        Returns
+        -------
+        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb']}
+
         """
     #  if system.n_part == 0:
     #    raise Exception('no particles')
@@ -655,8 +675,8 @@ class Analysis(object):
 
 
     def structure_factor(self, sf_types=None, sf_order=None):
-        """Structure Factor
-           structure_factor(sf_types = None, sf_order = None )
+        """Calculate the structure factor for given types.
+
         """
 
         if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
@@ -729,7 +749,8 @@ class Analysis(object):
 
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """Calculates the distance distribution of particles
+        """Calculates the distance distribution of particles.
+
         """
 
         if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):

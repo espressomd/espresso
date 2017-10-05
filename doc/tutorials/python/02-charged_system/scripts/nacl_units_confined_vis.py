@@ -18,17 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd.shapes import *
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
+from espressomd import System, assert_features, electrostatics, electrostatic_extensions
+from espressomd.shapes import Wall
 from espressomd.visualization_opengl import *
+import numpy
 from threading import Thread
 from time import sleep
-import numpy
 
-system = espressomd.System()
-visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30], ext_force_arrows_scale=[0.0001], ext_force_arrows=False)
+assert_features(["ELECTROSTATICS", "CONSTRAINTS", "MASS", "LENNARD_JONES"])
+
+system = System()
 
 print("\n--->Setup system")
 
@@ -69,6 +68,9 @@ system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
+# Visualizer
+visualizer = openGLLive(system, camera_position = [-3*box_l, box_l*0.5, box_l*0.5], camera_right = [0,0,1], drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30], ext_force_arrows_scale=[0.0001], ext_force_arrows=False)
+
 # Walls   
 system.constraints.add(shape=Wall(dist=0,normal=[0,0,1]),particle_type=types["Electrode"])
 system.constraints.add(shape=Wall(dist=-box_z,normal=[0,0,-1]),particle_type=types["Electrode"])
@@ -105,7 +107,7 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", 
         system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-system.minimize_energy.init(f_max = 10, gamma = 20, max_steps = 1000, max_displacement= 0.1)
+system.minimize_energy.init(f_max = 10, gamma = 10, max_steps = 2000, max_displacement= 0.1)
 system.minimize_energy.minimize()
 
 print("\n--->Tuning Electrostatics")
@@ -129,8 +131,8 @@ def decreaseElectricField():
         print Ez
 
 #Register buttons
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseElectricField))
-visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g',KeyboardFireEvent.Hold,decreaseElectricField))
+visualizer.keyboardManager.registerButton(KeyboardButtonEvent('u',KeyboardFireEvent.Hold,increaseElectricField))
+visualizer.keyboardManager.registerButton(KeyboardButtonEvent('j',KeyboardFireEvent.Hold,decreaseElectricField))
 
 def main():
     print("\n--->Integration")

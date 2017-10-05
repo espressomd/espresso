@@ -1719,11 +1719,15 @@ cdef class ParticleList(object):
 
     def add(self, *args, **kwargs):
         """
-        Adds a particle to the system
+        Adds one or several particles to the system
 
         Parameters
         ----------
         add() takes either a dictionary or a bunch of keyword args.
+
+        Returns
+        -------
+        Returns one ParticleHandle per created particle.
 
         See Also
         ----------
@@ -1742,6 +1746,11 @@ cdef class ParticleList(object):
         >>> system.part.add(id=1, pos=(2, 0, 0))
         >>>
 
+        Pos is mandatory, id can be omitted, in which case it is assigned automatically.
+        Several particles can be added by passing one value per particle to each property::
+            
+            system.part.add(pos=((1,2,3),(4,5,6)),q=(1,-1))
+        
         """
 
         # Did we get a dictionary
@@ -1844,7 +1853,7 @@ cdef class ParticleList(object):
         ----------
         add
         remove
-
+        
         """
 
         remove_all_particles()
