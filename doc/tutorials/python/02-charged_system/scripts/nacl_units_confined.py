@@ -18,13 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd.shapes import *
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
+from espressomd import System, electrostatics, electrostatic_extensions, assert_features
+from espressomd.shapes import Wall
 import numpy
 
-system = espressomd.System()
+assert_features(["ELECTROSTATICS", "CONSTRAINTS", "MASS", "LENNARD_JONES"])
+
+system = System()
 
 print("\n--->Setup system")
 
@@ -40,7 +40,7 @@ l_bjerrum = 130878.0 / temp
 #[E]=k_b*K/e/A
 #Ez = U[V]/(8.61733e-5*box_l)
 #Ez=465.116 -> 1V
-Ez=6976.74
+Ez=465.116
 
 num_steps_equilibration = 3000
 num_configs = 500

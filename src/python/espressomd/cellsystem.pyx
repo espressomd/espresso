@@ -30,9 +30,9 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-
-        'use_verlet_lists' : bool, optional, defaults to True
-            Activates or deactivates the usage of Verlet lists in the algorithm
+        'use_verlet_lists' : :obj:`bool`, optional
+                             Activates or deactivates the usage of Verlet lists
+                             in the algorithm.
 
         """
         if use_verlet_lists:
@@ -53,8 +53,9 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        'use_verlet_lists': bool, optional, defaults to True
-            Activates or deactivates the usage of the verlet lists for this algorithm
+        'use_verlet_lists' : :obj:`bool`, optional
+                             Activates or deactivates the usage of the verlet
+                             lists for this algorithm.
 
         """
         if use_verlet_lists:
@@ -73,8 +74,8 @@ cdef class CellSystem(object):
         Parameters
         ----------
 
-        'n_layers': int, optional, positive
-           Sets the number of layers in the z-direction
+        'n_layers': :obj:`int`, optional, positive
+                    Sets the number of layers in the z-direction.
 
         """
         if n_layers:
@@ -144,16 +145,18 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        global_flag: int
-            If true, a global resorting is done, otherwise particles
-            are only exchanged between neighboring nodes.
+        global_flag : :obj:`int`
+                      If true, a global resorting is done, otherwise particles
+                      are only exchanged between neighboring nodes.
+
         """
 
         return mpi_resort_particles(global_flag)
 
     property max_num_cells:
         """
-        Maximum number for the cells
+        Maximum number for the cells.
+
         """
         def __set__(self, int _max_num_cells):
             global max_num_cells
@@ -168,7 +171,8 @@ cdef class CellSystem(object):
 
     property min_num_cells:
         """
-        Minimal number of the cells
+        Minimal number of the cells.
+
         """
         def __set__(self, int _min_num_cells):
             global min_num_cells
@@ -189,7 +193,8 @@ cdef class CellSystem(object):
     # setter deprecated
     property node_grid:
         """
-        Node grid
+        Node grid.
+
         """
         def __set__(self, _node_grid):
             raise Exception('node_grid is not settable by the user.')
@@ -202,7 +207,8 @@ cdef class CellSystem(object):
         """
         Value of the skin layer expects a floating point number.
 
-        Mandatory to set.
+        .. note:: Mandatory to set.
+
         """
         def __set__(self, double _skin):
             if _skin < 0:
@@ -215,22 +221,26 @@ cdef class CellSystem(object):
         def __get__(self):
             return skin
 
-    def tune_skin(self,min_skin=None,max_skin=None,tol=None,int_steps=None):
-        """Tunes the skin by measuring the integration time and bisecting over the
-           given range of skins. The best skin is set in the simulation core.
+    def tune_skin(self, min_skin=None, max_skin=None, tol=None, int_steps=None):
+        """
+        Tunes the skin by measuring the integration time and bisecting over the
+        given range of skins. The best skin is set in the simulation core.
 
-           Parameters
-           -----------
-           'min_skin': float
-             Minimum skin to test
-           'max_skin': float
-             Maximum skin
-           'tol': float
-             Accuracy in skin to tune to
-           'int_steps": int
-             Integration steps to time
+        Parameters
+        -----------
+        'min_skin' : :obj:`float`
+                     Minimum skin to test.
+        'max_skin' : :obj:`float`
+                     Maximum skin.
+        'tol' : :obj:`float`
+                Accuracy in skin to tune to.
+        'int_steps' : :obj:`int`
+                      Integration steps to time.
 
-           Returns the final skin
+        Returns
+        -------
+        :attr:`espressomd.cell_system.skin`
+
         """
         c_tune_skin(min_skin, max_skin, tol, int_steps)
         return self.skin
