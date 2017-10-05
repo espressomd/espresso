@@ -325,6 +325,3 @@ IF ELECTROKINETICS:
                     raise Exception("Species has not been added to EK.")
 
                 return np.array(flux[0], flux[1], flux[2])
-
-
-
