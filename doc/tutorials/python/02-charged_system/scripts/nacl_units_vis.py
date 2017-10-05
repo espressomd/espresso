@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import *
-from espressomd import electrostatics
+from espressomd import System, assert_features, electrostatics, electrostatic_extensions
 from espressomd.visualization_opengl import *
-from threading import Thread
 import numpy
+from threading import Thread
+from time import sleep
 
-system = espressomd.System()
+assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
+
+system = System()
 visualizer = openGLLive(system, drag_force=5*298, background_color=[1,1,1], light_pos=[30,30,30])
 
 #Callbacks to control temperature 

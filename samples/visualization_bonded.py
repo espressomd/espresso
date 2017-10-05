@@ -8,12 +8,12 @@ import numpy
 from threading import Thread
 
 box_l = 50
-n_part = 500
+n_part = 200
 
 system = espressomd.System()
-system.time_step = 0.001
+system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=0.1, gamma=20.0)
 
 system.box_l = [box_l, box_l, box_l]
 
