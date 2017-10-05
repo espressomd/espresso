@@ -238,7 +238,7 @@ const std::unordered_map<int, Datafield> fields{{
     {FIELD_LANGEVIN_ROT_SWITCH,
      {&langevin_rotate, Datafield::Type::BOOL, 1, "langevin_rotate_switch",
       1}}, /* 54 from thermostat.cpp */
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1, "gamma_rot",
       1}} /* 55 from thermostat.cpp */

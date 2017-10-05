@@ -497,11 +497,11 @@ void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
 void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
