@@ -57,7 +57,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         for i, ai in enumerate(a):
             self.assertFractionAlmostEqual(ai, b[i])
 
-    # Analytical expression Generic Lennard-Jones Potential
+    # Analytical Expression for Generic Lennard-Jones Potential ...
     def lj_generic_potential(self, r, eps, sig, cutoff, offset=0., shift=0., e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
         V_lj = 0.
         if (r >= offset + cutoff):
@@ -71,7 +71,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                  b2 * numpy.power(sig / rroff, e2) + shift)
         return V_lj
 
-    # and resulting force
+    # ... and resulting force
     def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1.):
         f_lj = 0.
         if (r >= offset + cutoff):
@@ -106,12 +106,14 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
+            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                                              cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
+            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps,
+                                                       sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -120,7 +122,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(epsilon=0.)
+        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
+            epsilon=0.)
 
     # Test Generic Lennard-Jones Softcore Potential
     @ut.skipIf(not espressomd.has_features(["LJGEN_SOFTCORE"]),
@@ -148,12 +151,14 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
+            E_ref = self.lj_generic_potential(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
+                                              offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
+            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                                                       cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -162,7 +167,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(epsilon=0.)
+        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
+            epsilon=0.)
 
     # Test Lennard-Jones Potential
     @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
@@ -174,7 +180,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_cut = 1.123
         lj_shift = 0.92
 
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
 
         for i in range(113):
             self.system.part[1].pos += self.step
@@ -182,12 +189,15 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = self.lj_generic_potential((i + 1) * self.step_width, lj_eps, lj_sig, lj_cut, shift=lj_shift*4.)
+            E_ref = self.lj_generic_potential(
+                (i + 1) * self.step_width, lj_eps, lj_sig, lj_cut, shift=lj_shift * 4.)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * self.lj_generic_force(r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
+            f1_ref = self.axis * \
+                self.lj_generic_force(
+                    r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -197,6 +207,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
+
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
