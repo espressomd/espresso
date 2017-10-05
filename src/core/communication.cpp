@@ -2375,7 +2375,7 @@ void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma) {
      * node */
     p->p.gamma = gamma;
   } else {
-    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma});
+    comm_cart.send(pnode, SOME_TAG, gamma);
   }
 
   on_particle_change();
@@ -2408,7 +2408,7 @@ void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot)
      * node */
     p->p.gamma_rot = gamma_rot;
   } else {
-    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma_rot});
+    comm_cart.send(pnode, SOME_TAG, gamma_rot);
   }
 
   on_particle_change();

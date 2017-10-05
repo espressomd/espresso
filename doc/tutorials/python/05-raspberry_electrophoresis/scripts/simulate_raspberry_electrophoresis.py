@@ -64,7 +64,8 @@ colPos = np.ones(3)*center
 q_col = 40 # note the charge on the colloid is actually negative
 n_col_part = int(4*np.pi*np.power(radius_col,2) + 1) # Number of particles making up the raspberry (surface particles + the central particle).
 
-system.part.add(id=0, pos=colPos, type=0, q=-q_col, fix=np.ones(3,dtype=np.int)) # Create central particle
+# Place the central particle 
+system.part.add(id=0, pos=colPos, type=0, q=-q_col, fix=(1,1,1),rotation=(1,1,1)) # Create central particle
 
 # this loop create n_col_part surface beads randomly placed on a spherical shell Rvec away from the central bead
 # create surface beads uniformly distributed over surface of a sphere with radius=radius_col
@@ -115,7 +116,7 @@ momI*=(2./3.)
 
 #note that the real particle must be at the center of mass of the colloid because of the integrator
 print("\n# moving central particle from {} to {}".format(system.part[0].pos, com))
-system.part[0].fix=np.zeros(3,dtype=np.int)
+system.part[0].fix=0,0,0
 system.part[0].pos=com
 system.part[0].mass=n_col_part
 system.part[0].rinertia=np.ones(3)*momI
