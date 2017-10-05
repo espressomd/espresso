@@ -1,4 +1,3 @@
-
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 import numpy as np
@@ -9,84 +8,80 @@ class Correlator(ScriptInterfaceHelper):
     """
     Calculates correlations based on results from observables.
 
-    Attributes
+    Parameters
     ----------
-    The following attribtues can be passed to the constructor as keyword
-    arguments. They can also be acessed read-only as class-atributes.
-
-    obs1 and obs2 : instances of :class:`espressomd.observables.Observable`
-                    The observables A and B that are to be correlated.
-                    If `obs2` is omitted, autocorrelation of `obs1` is calculated by
-                    default.
+    obs1, obs2 : Instances of :class:`espressomd.observables.Observable`.
+                 The observables A and B that are to be correlated. If `obs2`
+                 is omitted, autocorrelation of `obs1` is calculated by
+                 default.
     corr_operation : :obj:`str`
                      The operation that is performed on :math:`A(t)` and
-                     :math:`B(t+\tau)` to obtain :math:`C(\tau)`.  The
+                     :math:`B(t+\\tau)` to obtain :math:`C(\\tau)`. The
                      following operations are currently available:
 
-                     * `scalar_product`: Scalar product of :math:`A` and
-                       :math:`B`, i.e., :math:`C=\sum\limits_{i} A_i B_i`
+                         * `scalar_product`: Scalar product of :math:`A` and
+                           :math:`B`, i.e., :math:`C=\sum\limits_{i} A_i B_i`
 
-                     * `componentwise_product`: Componentwise product of
-                       :math:`A` and :math:`B`, i.e., :math:`C_i = A_i B_i`
+                         * `componentwise_product`: Componentwise product of
+                           :math:`A` and :math:`B`, i.e., :math:`C_i = A_i B_i`
 
-                     * `square_distance_componentwise`: Each component of
-                       the correlation vector is the square of the difference
-                       between the corresponding components of the
-                       observables, i.E., :math:`C_i = (A_i-B_i)^2`. Example:
-                       when :math:`A` is `ParticlePositions`, it produces the
-                       mean square displacement (for each component
-                       separately).
+                         * `square_distance_componentwise`: Each component of
+                           the correlation vector is the square of the difference
+                           between the corresponding components of the
+                           observables, i.E., :math:`C_i = (A_i-B_i)^2`. Example:
+                           when :math:`A` is `ParticlePositions`, it produces the
+                           mean square displacement (for each component
+                           separately).
 
-                     * `tensor_product`: Tensor product of :math:`A` and
-                       :math:`B`, i.e., :math:`C_{i \cdot l_B + j} = A_i B_j`
-                       with :math:`l_B` the length of :math:`B`.
+                         * `tensor_product`: Tensor product of :math:`A` and
+                           :math:`B`, i.e., :math:`C_{i \\cdot l_B + j} = A_i B_j`
+                           with :math:`l_B` the length of :math:`B`.
 
-                     * `complex_conjugate_product`:
+                         * `complex_conjugate_product`:
 
-                       .. todo:: `Complex conjugate product must be defined.`
+                           .. todo:: `Complex conjugate product must be defined.`
 
-                     * `fcs_acf`:
+                         * `fcs_acf`:
 
-                       .. todo:: `How to set the extra args in py?`
+                           .. todo:: `How to set the extra args in py?`
 
-                       Fluorescence Correlation Spectroscopy (FCS)
-                       autocorrelation function, i.e.,
+                           Fluorescence Correlation Spectroscopy (FCS)
+                           autocorrelation function, i.e.,
 
-                       .. math::
+                           .. math::
 
-                           G_i(\tau) =
-                           \frac{1}{N} \left< \exp \left(
-                           - \frac{\Delta x_i^2(\tau)}{w_x^2}
-                           - \frac{\Delta y_i^2(\tau)}{w_y^2}
-                           - \frac{\Delta z_i^2(\tau)}{w_z^2}
-                           \right) \right>
+                               G_i(\\tau) =
+                               \\frac{1}{N} \\left< \\exp \\left(
+                               - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
+                               - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
+                               - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
+                               \\right) \\right>
 
-                       where
+                           where
 
-                        .. math::
+                           .. math::
 
-                            \Delta x_i^2(\tau) = \left( x_i(0) - x_i(\tau) \right)^2
+                               \\Delta x_i^2(\\tau) = \\left( x_i(0) - x_i(\\tau) \\right)^2
 
-                       is the square displacement of particle
-                       :math:`i` in the :math:`x` direction, and :math:`w_x`
-                       is the beam waist of the intensity profile of the
-                       exciting laser beam,
+                           is the square displacement of particle
+                           :math:`i` in the :math:`x` direction, and :math:`w_x`
+                           is the beam waist of the intensity profile of the
+                           exciting laser beam,
 
-                       .. math::
+                           .. math::
 
-                           W(x,y,z) = I_0 \exp
-                           \left( - \frac{2x^2}{w_x^2} - \frac{2y^2}{w_y^2} -
-                           \frac{2z^2}{w_z^2} \right).
+                               W(x,y,z) = I_0 \\exp
+                               \\left( - \\frac{2x^2}{w_x^2} - \\frac{2y^2}{w_y^2} -
+                               \\frac{2z^2}{w_z^2} \\right).
 
-                       The equations are a
-                       generalization of the formula presented by Hoefling
-                       et. al. :cite:`hofling11a`. For more information, see
-                       references therein. Per each 3 dimensions of the
-                       observable, one dimension of the correlation output
-                       is produced. If `fcs_acf` is used with other
-                       observables than `ParticlePositions`, the physical
-                       meaning of the result is unclear.
-
+                           The equations are a
+                           generalization of the formula presented by Hoefling
+                           et. al. :cite:`hofling11a`. For more information, see
+                           references therein. Per each 3 dimensions of the
+                           observable, one dimension of the correlation output
+                           is produced. If `fcs_acf` is used with other
+                           observables than `ParticlePositions`, the physical
+                           meaning of the result is unclear.
     dt : :obj:`float`
          The time interval of sampling data points. When autoupdate is used,
          `dt` has to be a multiple of timestep. It is also used to produce time
@@ -112,7 +107,7 @@ class Correlator(ScriptInterfaceHelper):
               tau correlator is switched on. In many cases, `tau_lin`=16 is a
               good choice but this may strongly depend on the observables you are
               correlating. For more information, we recommend to read
-              Ref.:cite:`ramirez10a` or to perform your own tests.
+              Ref. :cite:`ramirez10a` or to perform your own tests.
 
     compress1 and compress2 : :obj:`str`
                               Are functions used to compress the data when
@@ -130,7 +125,7 @@ class Correlator(ScriptInterfaceHelper):
                               observable, the systematic error can be anything
                               between harmless and disastrous. For more
                               information, we recommend to read
-                              Ref.~:cite:`ramirez10a` or to perform your own
+                              Ref. :cite:`ramirez10a` or to perform your own
                               tests.
 
     """
