@@ -3,8 +3,8 @@
 Setting up interactions
 =======================
 
-In |es| there are mainly two types of interactions: non-bonded and bonded
-interactions.
+In |es|, interactions are set up and investigated by the ``interactions`` module. There are
+mainly two types of interactions: non-bonded and bonded interactions.
 
 Non-bonded interactions only depend on the *type* of the two particles
 involved. This also applies to the electrostatic interaction; however,
@@ -21,12 +21,10 @@ define the interaction parameters.
 .. todo::
     IMPLEMENT: print interaction list
 
-
-.. _Isotropic non-bonded interactions :
+.. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
 ---------------------------------
-
 Non-bonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
 
     system.non_bonded_inter[type1, type2]
@@ -1204,6 +1202,8 @@ with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in the section on volume in
 oif_global_forces interaction).
 
+.. _Bond-angle interactions:
+
 Bond-angle interactions
 -----------------------
 ..  note::
@@ -1336,7 +1336,7 @@ length, which measures the strength of the electrostatic interaction. As
 a special case, when the thermostat is switched off, the value of
 Bjerrum length you enter is treated as :math:`l_B k_B T` rather than
 :math:`l_B`. This is used to perform an NVE integration (see also
-section :ref:`thermostat`).
+section :ref:`\`\`thermostat\`\`\: Setting up the thermostat`).
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
@@ -2163,6 +2163,7 @@ the rest of the gpu remains idle. Hence, the method will perform poorly
 for small systems.
 
 To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  
   from espressomd.magnetostatics import DipolarDirectSumGpu
   dds=DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
@@ -2191,10 +2192,9 @@ the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared l
 Special interaction commands
 ----------------------------
 
+
 DPD interaction
 ~~~~~~~~~~~~~~~
-
-.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter inter_dpd
 
@@ -2206,8 +2206,6 @@ interactions.
 
 Fixing the center of mass
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter comfixed
 
@@ -2233,8 +2231,6 @@ interaction only works on a single node.
 
 Pulling particles apart
 ~~~~~~~~~~~~~~~~~~~~~~~
-
-.. todo:: NOT IMPLEMENTED IN PYTHON
 
 inter comforce
 
@@ -2291,7 +2287,6 @@ regardless of the particle types.
 .. |image4| image:: figures/arealocal.png
 .. |image5| image:: figures/volume.png
 .. |image6| image:: figures/dihedral-angle.pdf
-
 ``constraint``: Setting up constraints
 --------------------------------------
 

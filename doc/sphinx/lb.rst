@@ -1,3 +1,5 @@
+.. _Lattice-Boltzmann:
+
 Lattice-Boltzmann
 =================
 
