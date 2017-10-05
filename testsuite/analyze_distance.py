@@ -76,14 +76,9 @@ class AnalyzeDistance(ut.TestCase):
         return np.sqrt(np.min(dist))
 
     # python version of the espresso core function
-    # the distto(ID) version always returns 0
-    # probably because it finds ID' own distance
-    # I made it the same way, but it is probably a bug
-    # here is
     def distto_id(self, id):
-        dist=self.system.part[0:id].pos
-        dist=np.append(dist, self.system.part[id+1:-1].pos)
-        dist=self.system.part[:].pos - self.system.part[id].pos
+        dist=np.delete(self.system.part[:].pos, id, axis=0)
+        dist=dist - self.system.part[id].pos
         for dim in range(3):
             fold_ind=np.where((dist[:,dim])>0.5*self.system.box_l[dim])
             dist[fold_ind[0],dim] -= self.system.box_l[dim]
@@ -118,9 +113,8 @@ class AnalyzeDistance(ut.TestCase):
     def test_distto_id(self):
         #try five times
         for i in range(5):
-            self.assertTrue(np.allclose(self.system.analysis.distto(id=i ),
-                                        # use the dissto_pos variant for now
-                                        self.distto_pos(self.system.part[i].pos )))
+            self.assertAlmostEqual(self.system.analysis.distto(id=i ),
+                                        self.distto_id(i ))
             self.system.integrator.run(100)
 
 
