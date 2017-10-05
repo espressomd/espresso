@@ -19,24 +19,23 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
+cdef extern from "Vector.hpp":
+    cppclass Vector3d:
+        double & operator[](int i)
+
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
-    #double langevin_gamma
     int THERMO_OFF
     int THERMO_LANGEVIN
-
-    IF ROTATION:
-        IF ROTATIONAL_INERTIA:
-            double langevin_gamma_rotation[3]
-        ELSE:
-            double langevin_gamma_rotation
     int THERMO_LB
-
-    IF PARTICLE_ANISOTROPY:
-        double langevin_gamma[3]
-    ELSE:
-        double langevin_gamma
     int THERMO_NPT_ISO
     int THERMO_DPD
     int THERMO_INTER_DPD
+
+    IF PARTICLE_ANISOTROPY:
+        Vector3d langevin_gamma_rotation
+        Vector3d langevin_gamma
+    ELSE:
+        double langevin_gamma_rotation
+        double langevin_gamma

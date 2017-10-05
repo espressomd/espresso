@@ -7,6 +7,7 @@ import math
 
 
 @ut.skipIf(not espressomd.has_features(["MASS",
+                                        "PARTICLE_ANISOTROPY",
                                         "ROTATIONAL_INERTIA",
                                         "LANGEVIN_PER_PARTICLE"]),
            "Features not available, skipping test!")
