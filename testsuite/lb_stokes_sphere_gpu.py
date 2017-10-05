@@ -21,6 +21,7 @@ import sys
 class Stokes(ut.TestCase):
 
     es = System()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def test_stokes(self):
         # System setup

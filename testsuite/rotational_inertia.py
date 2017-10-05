@@ -11,6 +11,7 @@ class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def define_rotation_matrix(self, part):
         A = np.zeros((3, 3))

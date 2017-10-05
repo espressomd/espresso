@@ -37,6 +37,7 @@ class Tabulated(ut.TestCase):
     epsilon = 1e-6
 
     system = espressomd.System()
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
 

@@ -12,6 +12,7 @@ import sys
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
     S = espressomd.System()
+    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.S.box_l = [3.0, 3.0, 3.0]

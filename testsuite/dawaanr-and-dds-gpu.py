@@ -21,7 +21,7 @@ class DDSGPUTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
-    es.set_random_state_PRNG()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def vectorsTheSame(self, a, b):
         tol = 3E-3

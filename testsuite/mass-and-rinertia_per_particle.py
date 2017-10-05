@@ -15,6 +15,7 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     es = espressomd.System()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def run_test_case(self, test_case):
         gamma = np.array([1.0, 1.0])

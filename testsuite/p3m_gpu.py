@@ -31,7 +31,7 @@ class P3M_GPU_test(ut.TestCase):
         from espressomd.electrostatics import P3M_GPU
 
         es = espressomd.System()
-        es.set_random_state_PRNG()
+        es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
         test_params = {}
         test_params["bjerrum_length"] = 2
         test_params["cao"] = 2

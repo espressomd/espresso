@@ -100,6 +100,8 @@ def hydrostatic_pressure(
 class ek_eof_one_species_x(ut.TestCase):
 
     es = espressomd.System()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
+
 
     def test(self):
         system = self.es

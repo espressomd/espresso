@@ -33,6 +33,7 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def arraysNearlyEqual(self, a, b):
         """Test, if the magnitude of the difference between two arrays is smaller than the tolerance"""

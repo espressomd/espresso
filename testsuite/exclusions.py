@@ -26,6 +26,8 @@ import numpy as np
 @ut.skipIf(not espressomd.has_features(['EXCLUSIONS']), "Skipping test")
 class Exclusions(ut.TestCase):
     s = espressomd.System()
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
+
 
     def setUp(self):
         self.s.part.clear()

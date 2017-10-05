@@ -35,7 +35,8 @@ class CommonTests(ut.TestCase):
     Class that holds common test methods.
     """
     system = espressomd.System()
-    system.set_random_state_PRNG()
+    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+
     # avoid particles to be set outside of the main box, otherwise particle
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would

@@ -33,7 +33,7 @@ class Observables(ut.TestCase):
 
     # Handle for espresso system
     es = espressomd.System()
-    es.set_random_state_PRNG()
+    es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
 
     def test_corr(self):
         s = self.es

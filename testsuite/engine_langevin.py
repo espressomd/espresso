@@ -29,7 +29,7 @@ class SwimmerTest(ut.TestCase):
                              np.exp(-gamma * t)) + z0
 
         S = espressomd.System()
-        S.set_random_state_PRNG()
+        S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
         S.box_l = [boxl, boxl, boxl]
         S.cell_system.skin = 0.1
