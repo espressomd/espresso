@@ -5,6 +5,7 @@ import numpy as np
 import espressomd
 from espressomd.interactions import HarmonicBond
 
+
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System()
@@ -32,24 +33,17 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[1].pos = [5, 2, 2]
         self.system.part[0].v = [3, 4, 5]
         self.system.part[1].v = [0, 0, 0]
-        # initial, single moving particle
+        # single moving particle
         energy = self.system.analysis.energy()
         self.assertTrue(np.allclose(energy["total"], 25.))
         self.assertTrue(np.allclose(energy["kinetic"], 25.))
         self.assertTrue(np.allclose(energy["bonded"], 0.))
         self.assertTrue(np.allclose(energy["non_bonded"], 0.))
-        # initial, two moving particles
+        # two moving particles
         self.system.part[1].v = [3, 4, 5]
         energy = self.system.analysis.energy()
         self.assertTrue(np.allclose(energy["total"], 50.))
         self.assertTrue(np.allclose(energy["kinetic"], 50.))
-        self.assertTrue(np.allclose(energy["bonded"], 0.))
-        self.assertTrue(np.allclose(energy["non_bonded"], 0.))
-        # rest
-        self.system.integrator.run(10000)
-        energy = self.system.analysis.energy()
-        self.assertTrue(np.allclose(energy["total"], 0.))
-        self.assertTrue(np.allclose(energy["kinetic"], 0.))
         self.assertTrue(np.allclose(energy["bonded"], 0.))
         self.assertTrue(np.allclose(energy["non_bonded"], 0.))
 
