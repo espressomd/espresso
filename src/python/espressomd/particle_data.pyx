@@ -1719,7 +1719,7 @@ cdef class ParticleList(object):
 
     def add(self, *args, **kwargs):
         """
-        Adds one ore sevarl particles to the system
+        Adds one or several particles to the system
 
         Parameters
         ----------
