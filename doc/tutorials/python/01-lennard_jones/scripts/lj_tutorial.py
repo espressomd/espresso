@@ -66,6 +66,8 @@ lj_cap = 5
 # System setup
 #############################################################
 system              = espressomd.System()
+system.seed         = system.cell_system.get_state()['n_nodes'] * [1234]
+np.random.seed(system.seed)
 
 if not os.path.exists('data') :
     os.mkdir('data')

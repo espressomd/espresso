@@ -51,6 +51,8 @@ lj_cuts     = {"Anion":  WCA_cut * lj_sigmas["Anion"],
 
 # Setup System
 system = System()
+system.seed  = system.cell_system.get_state()['n_nodes'] * [1234]
+numpy.random.seed(system.seed)
 box_l = (n_part / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
