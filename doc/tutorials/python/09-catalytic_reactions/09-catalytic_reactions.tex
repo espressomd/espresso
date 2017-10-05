@@ -11,12 +11,8 @@
   columns = fullflexible,
   xleftmargin = 1em
 }
-\lstdefinelanguage{espresso}[]{TCL}{%
-  morekeywords={part,reaction,minimize_energy},
-  deletekeywords={range}
-}
 \lstnewenvironment{espresso}[1][]%
-  {\lstset{language=espresso,#1}}%
+  {\lstset{language=python,#1}}%
   {}
 \lstnewenvironment{bash}[1][]%
   {\lstset{keywordstyle = \color{red!80!blue},keywords={\$},#1}}%
@@ -24,7 +20,7 @@
 \usepackage{xspace}
 \newcommand\code{\lstinline}
 \newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
-\newcommand\codees{\lstinline[language=espresso]}
+\newcommand\codees{\lstinline[language=python]}
 \renewcommand\thefootnote{\fnsymbol{footnote}}
 \begin{document}
 \title{Catalytic Reactions Tutorial}
@@ -162,14 +158,14 @@ Catalytic reactions can be enabled in \es\ by compiling in the eponymous feature
 
 To setup the reaction there is the \es\ command \codees{Reaction}, which operates on particle types. The general syntax is
 \begin{espresso}
-reaction reactant_type R catalyzer_type C product_type P range r ct_rate k_ct
-    [react_once on/off]
+espressomd.reaction.Reaction(reactant_type=R,catalyzer_type=C,product_type=P,ct_range=r,ct_rate=k_ct,
+                                react_once=True/False ) # optional
 \end{espresso}
-The parameter \codees{react_once} is optional and can be left out, the default values is \codees{react_once off}.
+The parameter \codees{react_once} is optional and can be left out, the default values is \codees{react_once=False}.
 
 To set up a reaction between particles with types 1 and 2, where particles of type 3 act as catalyzers with a reaction range of 1.5 around them and a reaction rate of 20, one inputs
 \begin{espresso}
-reaction reactant_type 1 catalyzer_type 3 product_type 2 range 1.5 ct_rate 20
+espressomd.reaction.Reaction(reactant_type=1,catalyzer_type=3,product_type=2,ct_range=1.5,ct_rate=20)
 \end{espresso}
 Here, we have left out the optional parameter \codees{react_once}, however, its meaning is important. Briefly, the parameter determines whether a particle can take part in a only single reaction move per time step. In the case of multiple catalyzers in the system a particle might be tagged for reaction several times by different catalyzers because their reaction ranges overlap and the reactant is inside this overlap. This can be prevented by setting \code{react_once on}. That way the reaction rate is independent of the density of catalyzers. This can be convenient if one wants to model several catalyzer particles that are in close proximity to one another.
 
@@ -199,19 +195,20 @@ To run all the tutorials you need to uncomment the following \code{FEATURES}:
 #define CATALYTIC_REACTIONS
 #define LENNARD_JONES
 \end{lstlisting}
-Now you are ready to build \es.
+Now you are ready to build \es.  You have to run \code{cmake} again to process the modified \code{myconfig.hpp}.
 \begin{bash}
+$ cmake ..
 $ make -j N
 \end{bash}
 with $N$ the number of processes used to build. Next you can unpack the archive with the tutorial files in this directory. You will find two folders, one called `EXERCISES' and one called `SOLUTIONS'.
 
 \section{The Enhanced-Diffusion Tutorial}
 
-In the folder `EXERCISES' you will find the \code{reaction.tcl} file. It is a tutorial to demonstrate that our approach to catalytic reactions leads to enhanced diffusion of the catalyzer. When you begin, the code is incomplete and will produce errors when evaluated in \es. It needs your input to function properly. A fully functional file exists in the `SOLUTIONS' folder, but we recommend that you try solving the exercises on your own first.
+In the folder `EXERCISES' you will find the \code{reaction.py} file. It is a tutorial to demonstrate that our approach to catalytic reactions leads to enhanced diffusion of the catalyzer. When you begin, the code is incomplete and will produce errors when evaluated in \es. It needs your input to function properly. A fully functional file exists in the `SOLUTIONS' folder, but we recommend that you try solving the exercises on your own first.
 
 To start the exercises, go into the `EXERCISES' directory and invoke \es\ on the script
 \begin{bash}
-$ ./../build/Espresso reaction.tcl 0
+$ ./../build/pypresso reaction.py 0
 \end{bash}
 where the parameter \code{0} determines whether the reaction is enabled. Here, 0/1 corresponds to reaction off/on. At this stage, executing the above line will cause an error, as the exercise has not yet been completed.
 

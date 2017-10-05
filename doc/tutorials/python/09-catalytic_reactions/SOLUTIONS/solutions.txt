@@ -3,11 +3,11 @@ Solutions:
 For all exercises where you had to complete the code, also consult the
 correct script in the SOLUTION folder.
 
-E1. Simply set all coordinates to [expr .5*$box_l]
+E1. Simply set all coordinates to 0.5*box_l
 
 E2. The concentration is equivalent to particles per volume. To
-    obtain the number of particles we evaluate $csmall*$box_l^3.
-    Additionally we apply floor() to the result, because the number of
+    obtain the number of particles we evaluate csmall*box_l**3.
+    Additionally we apply int() to the result, because the number of
     particles has to be an integer.
 
 E3. To generate propulsion we have to break the rotational symmetry of
