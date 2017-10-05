@@ -114,6 +114,8 @@ respectively. In all three cases the distribution is made such that the
 second moment of the distribution is the same and thus results in the
 same temperature.
 
+.. _Langevin thermostat:
+
 Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
