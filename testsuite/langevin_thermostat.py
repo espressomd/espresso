@@ -24,7 +24,7 @@ import numpy as np
 from espressomd.interactions import FeneBond
 from time import time
 from espressomd.correlators import Correlator
-from espressomd.observables import ParticleVelocities, ParticleAngularMomentum
+from espressomd.observables import ParticleVelocities, ParticleBodyAngularMomentum
 
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
@@ -197,6 +197,7 @@ class LangevinThermostat(ut.TestCase):
         else:
             # No rotation
             s.thermostat.set_langevin(kT=kT,gamma=gamma)
+        print(s.thermostat.get_state())                    
         
 
         
@@ -211,7 +212,7 @@ class LangevinThermostat(ut.TestCase):
         
         # angular vel
         if espressomd.has_features("ROTATION"):
-            omega_obs=ParticleAngularMomentum(ids=(0,))
+            omega_obs=ParticleBodyAngularMomentum(ids=(0,))
             c_omega = Correlator(obs1=omega_obs, tau_lin=16, tau_max=40., dt=dt,
                 corr_operation="componentwise_product", compress1="discard1")
             s.auto_update_correlators.add(c_omega)
@@ -254,7 +255,6 @@ class LangevinThermostat(ut.TestCase):
                     ratio = I/(kT/gamma_rot_a[coord-2])
                     print("Ratio of measured and expected diffusion coeff from Green-Kubo:",ratio)
                     self.assertAlmostEqual(ratio,1.,delta=0.07)
-        print(s.thermostat.get_state())                    
         
  
 if __name__ == "__main__":
