@@ -128,7 +128,7 @@ z0pnt = ...
 cent = len(system.part)
 system.part.add(id=cent,pos=[x0pnt,y0pnt,z0pnt],type=0,temp=temp,
                 gamma=frict_trans_colloid,
-                gamma_rot=[frict_rot_colloid,frict_rot_colloid,frict_rot_colloid])
+                gamma_rot=frict_rot_colloid)
 
 # Set up the particles
 
@@ -157,7 +157,7 @@ for i in range(nA):
 
     system.part.add(pos=[x,y,z],type=1,temp=temp,
                     gamma=frict_trans_part,
-                    gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
+                    gamma_rot=frict_rot_part)
 
 for i in range(nB):
     x = box_l*np.random.random()
@@ -172,7 +172,7 @@ for i in range(nB):
 
     system.part.add(pos=[x,y,z],type=2,temp=temp,
                     gamma=frict_trans_part,
-                    gamma_rot=[frict_rot_part,frict_rot_part,frict_rot_part])
+                    gamma_rot=frict_rot_part)
 
 print("box: {}, npart: {}".format(system.box_l,len(system.part)))
 
