@@ -61,12 +61,12 @@ class LangevinThermostat(ut.TestCase):
                     bins[j], bins[j + 1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
-    def atest_aa_verify_single_component_maxwell(self):
+    def test_aa_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(
             abs(self.single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
 
-    def atest_global_langevin(self):
+    def test_global_langevin(self):
         """Test for global Langevin parameters."""
         N = 200
         s = self.s
@@ -108,7 +108,7 @@ class LangevinThermostat(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"),
                "Test requires LANGEVIN_PER_PARTICLE")
-    def atest_langevin_per_particle(self):
+    def test_langevin_per_particle(self):
         """Test for Langevin particle. Covers all combinations of
            particle specific gamma and temp set or not set.
         """
@@ -179,7 +179,7 @@ class LangevinThermostat(ut.TestCase):
         s.part.clear()
 
         kT=1.37
-        dt=0.1
+        dt=0.05
         s.time_step=dt
         
         # Translational gamma. We cannot test per-component, if rotation is on,
@@ -272,18 +272,17 @@ class LangevinThermostat(ut.TestCase):
         for p in all_particles:
             # linear vel
             vel_obs[p]=ParticleVelocities(ids=(p.id,))
-            corr_vel[p] = Correlator(obs1=vel_obs[p], tau_lin=20, tau_max=20., dt=dt,
+            corr_vel[p] = Correlator(obs1=vel_obs[p], tau_lin=32, tau_max=4., dt=dt,
                 corr_operation="componentwise_product", compress1="discard1")
             s.auto_update_correlators.add(corr_vel[p])
             # angular vel
             if espressomd.has_features("ROTATION"):
                 omega_obs[p]=ParticleBodyAngularMomentum(ids=(p.id,))
-                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=20, tau_max=40., dt=dt,
+                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=16, tau_max=24, dt=dt,
                     corr_operation="componentwise_product", compress1="discard1")
                 s.auto_update_correlators.add(corr_omega[p])
         
-        print(corr_vel)
-        s.integrator.run(10000000)
+        s.integrator.run(2000000)
 
         # Verify diffusion
         # Translation
@@ -309,6 +308,7 @@ class LangevinThermostat(ut.TestCase):
                 eff_per_part_gamma_rot =per_part_gamma_rot_i *np.ones(3)
 
 
+            np.savetxt("vacf.dat", corr_omega[p_global].result())
             self.verify_diffusion(p_global,corr_omega,kT,eff_gamma_rot)
             if espressomd.has_features("LANGEVIN_PER_PARTICLE"): 
                 self.verify_diffusion(p_gamma,corr_omega,kT,eff_per_part_gamma_rot)
