@@ -697,6 +697,33 @@ class Analysis(object):
 
     def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
+        """Calculate a radial distribution function.
+
+        Parameters
+        ----------
+        rdf_type : string
+           'rdf' or '<rdf>'.
+        type_list_a : array like
+           Left types of the rdf
+        type_list_b : array like, optional
+           Right types of the rdf01
+        r_min : float
+           Minimal distance to consider
+        r_max : float
+           Maximal distance to consider
+        r_bins : int
+           Number of bins
+        n_conf : int, optional
+           If rdf_type is '<rdf>' this determines
+           the number of stored configs that are used.
+
+        Returns
+        -------
+        array_like
+          Where [0] contains the midpoints of the bins,
+          and [1] contains the values of the rdf.
+
+        """
 
         if rdf_type is None:
             raise ValueError("rdf_type must not be empty!")
