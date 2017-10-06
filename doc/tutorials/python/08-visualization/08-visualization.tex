@@ -133,7 +133,7 @@ def main():
 
 Then, add the following line after the particle setup code:
 \begin{pypresso}
-visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 \end{pypresso}
 Now, go to the end of the \pypressoinline{main} function definition and add
 \begin{pypresso}
@@ -149,9 +149,9 @@ visualizer.start()
 \end{pypresso}
 While the simulation is running, you can move and zoom around with your mouse or explore the buttons in the toolbar to see how the graphical representation can be changed.\\
 
-\noindent Alternatively, you can try \es's own OpenGL visualization by switching the visualizer to:
+\noindent Alternatively, you can try mayavi by switching the visualizer to:
 \begin{pypresso}
-visualizer = visualization.openGLLive(system)
+visualizer = visualization.mayaviLive(system)
 \end{pypresso}
 To follow the trajectories, try decreasing the integration steps to 1 and the time step to 0.001. 
 

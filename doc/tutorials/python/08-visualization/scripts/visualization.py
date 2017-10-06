@@ -65,8 +65,8 @@ system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
 system.cell_system.max_num_cells = 2744
 
-visualizer = visualization.mayaviLive(system)
-#visualizer = visualization.openGLLive(system)
+#visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
