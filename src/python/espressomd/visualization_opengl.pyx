@@ -593,13 +593,13 @@ class openGLLive(object):
         def keyboardUp(button, x, y):
             if type(button) is bytes:
                 button = button.decode("utf-8")
-            self.keyboardManager.keyboardUp(str(button))
+            self.keyboardManager.keyboardUp(button)
             return
 
         def keyboardDown(button, x, y):
             if type(button) is bytes:
                 button = button.decode("utf-8")
-            self.keyboardManager.keyboardDown(str(button))
+            self.keyboardManager.keyboardDown(button)
             return
 
         def mouse(button, state, x, y):

@@ -33,9 +33,6 @@ visualizer = openGLLive(system,
         draw_axis = False,
         light_brightness = 5.0)
 
-for k in sorted(visualizer.specs.keys(), key=lambda s: s.lower()): print("{:30}  {}".format(k, visualizer.specs[k]))
-
-    
 stopped = True
 angle = numpy.pi*0.5
 impulse = 10.0
