@@ -5,7 +5,8 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 
 .. todo:: currently resides in ``/samples/python`` should be moved?
 
-* ``billard.py`` needs the Python ``pypopengl`` module
+* ``billard.py`` 
+    A simple billard game, needs the Python ``pypopengl`` module
 
 * ``bonds-tst.py``
    Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
@@ -91,9 +92,24 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     Uses python array slicing to set and extract various particle properties.
 
 * ``visualization_bonded.py``
+    Opengl visualization for bonds.
 
 * ``visualization_openGL.py``
+    Sample for an opengl visualization with user-defined keyboard- and timed callbacks.
 
 * ``visualization.py``
+    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+
+* ``visualization_npt.py``
+    Simple test visualization for the NPT ensemble.
+
+* ``visualization_poisseuille.py``
+    Visualization for poisseuille flow with Lattice-Boltzmann.
+
+* ``visualization_constraints.py``
+    Constraint visualization with opengl with all avaiable constraints (commented out).
+
+* ``visualization_mmm2d.py``
+    A visual sample for a constant potential plate capacitor simulated with mmm2d.
 
 

@@ -270,6 +270,8 @@ simulation script, as they are not part of the checkpointed data.
 The format of the checkpoint is binary and no special care is taken with
 respect to the specific binary layout of the machine.
 
+.. _Catalytic Reaction:
+
 Catalytic Reaction
 ------------------
 

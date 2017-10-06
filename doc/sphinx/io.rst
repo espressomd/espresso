@@ -502,14 +502,16 @@ Optional keywords:
     * `background_color`: RGB of the background.
     * `periodic_images`: Periodic repetitions on both sides of the box in xyzdirection.
     * `draw_box`: Draw wireframe boundaries.
+    * `draw_axis`: Draws xyz system axes.
     * `quality_particles`: The number of subdivisions for particle spheres.
     * `quality_bonds`: The number of subdivisions for cylindrical bonds.
     * `quality_arrows`: The number of subdivisions for external force arrows.
     * `quality_constraints`: The number of subdivisions for primitive constraints.
     * `close_cut_distance`: The distance from the viewer to the near clipping plane.
     * `far_cut_distance`: The distance from the viewer to the far clipping plane.
-    * `camera_position`: Initial camera position.
-    * `camera_rotation`: Initial camera angles.
+    * `camera_position`: Initial camera position. `auto` (default) for shiftet position in z-direction. 
+    * `camera_target`: Initial camera target. `auto` (default) to look towards the system center.
+    * `camera_right`: Camera right vector in system coordinates. Default is [1, 0, 0] 
     * `particle_sizes`:     
         * `auto` (default)`: The Lennard-Jones sigma value of the self-interaction is used for the particle diameter.
         * `callable`: A lambda function with one argument. Internally, the numerical particle type is passed to the lambda function to determine the particle radius.
@@ -552,8 +554,9 @@ Controls
 The camera can be controlled via mouse and keyboard:
 
     * hold left button: rotate the system
-    * hold right button: camera look direction
-    * mouse wheel: zoom
+    * hold right button: translate the system
+    * hold middle button: zoom / roll
+    * mouse wheel / key pair TG: zoom
     * WASD-Keyboard control (WS: move forwards/backwards, AD: move sidewards)
     * Key pairs QE, RF, ZC: rotate the system 
 
