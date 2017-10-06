@@ -118,7 +118,7 @@ def main():
         update_plot()
 main()
 
-print ("Average energy: %6g" % energies[:,1].mean())
+print("Average energy: %6g" % energies[:,1].mean())
 
 # terminate program
 print("\nFinished.")

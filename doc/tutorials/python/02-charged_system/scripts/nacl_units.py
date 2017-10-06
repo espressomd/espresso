@@ -107,7 +107,7 @@ system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
 system.time = 0.0
-for i in range(num_steps_equilibration/100):
+for i in range(int(num_steps_equilibration/100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
     print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,

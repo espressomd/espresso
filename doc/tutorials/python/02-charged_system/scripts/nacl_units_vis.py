@@ -35,7 +35,7 @@ def increaseTemp():
         global temperature
         temperature += 10
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print temperature 
+        print(temperature)
 
 def decreaseTemp():
     global temperature
@@ -46,7 +46,7 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print temperature 
+    print(temperature)
 
 #Register buttons
 visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t',KeyboardFireEvent.Hold,increaseTemp))
@@ -137,7 +137,7 @@ def main():
 
     print("\n--->Temperature Equilibration")
     system.time = 0.0
-    for i in range(num_steps_equilibration/100):
+    for i in range(int(num_steps_equilibration/100)):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
         print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
