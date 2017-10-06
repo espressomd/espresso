@@ -92,9 +92,9 @@ for ...:
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
-    # Place a single active particle
+    # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 
-    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel })
+    system.part.add(pos=[5.0, 5.0, 5.0],swimming={ 'v_swim' : vel },rotation=[1,1,1])
 
     # Initialize the mean squared displacement (MSD) correlator
 
