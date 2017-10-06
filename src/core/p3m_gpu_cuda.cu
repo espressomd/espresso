@@ -385,6 +385,12 @@ __global__ void apply_diff_op(const P3MGpuData p) {
   p.force_mesh_z[linear_index].y = nz * buf.y / p.box[2];
 }
 
+namespace {
+__device__ inline int linear_index(P3MGpuData const &p, int i, int j, int k) {
+  return p.mesh[1] * p.mesh[2] * i + p.mesh[2] * j + k;
+}
+}
+
 __device__ inline int wrap_index(const int ind, const int mesh) {
   if (ind < 0)
     return ind + mesh;
@@ -436,8 +442,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
-  const int ind =
-      par.mesh[1] * par.mesh[2] * nmp_x + par.mesh[1] * nmp_y + nmp_z;
+  const int ind = linear_index(par, nmp_x, nmp_y, nmp_z);
 
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
@@ -567,8 +572,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
   REAL_TYPE c;
-  const int index =
-      par.mesh[1] * par.mesh[2] * nmp_x + par.mesh[2] * nmp_y + nmp_z;
+  const int index = linear_index(par, nmp_x, nmp_y, nmp_z);
+
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
@@ -740,6 +745,7 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
+
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
