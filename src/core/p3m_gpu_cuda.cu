@@ -65,7 +65,7 @@ struct P3MGpuData {
   REAL_TYPE *G_hat;
   /** Charge assignment order */
   int cao;
-  /** Total number of mesh points */
+  /** Total number of mesh points (including padding) */
   int mesh_size;
   /** Ewald parameter */
   REAL_TYPE alpha;
@@ -75,6 +75,8 @@ struct P3MGpuData {
   REAL_TYPE box[3];
   /** Mesh dimensions */
   int mesh[3];
+  /** Padded size */
+  int mesh_z_padded;
   /** Inverse mesh spacing */
   REAL_TYPE hi[3];
   /** Position shift */
@@ -280,7 +282,6 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 }
 
 /* Calculate influence function */
-
 template <int cao>
 __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
@@ -360,9 +361,19 @@ __device__ inline void atomicAdd(float *address, float value) {
 #error I need at least compute capability 1.1
 #endif
 
+namespace {
+__device__ inline int linear_index_r(P3MGpuData const &p, int i, int j, int k) {
+  return p.mesh[1] * p.mesh_z_padded * i + p.mesh_z_padded * j + k;
+}
+
+__device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
+  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i +
+                           (p.mesh[2] / 2 + 1) * j + k;
+}
+}
+
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index = p.mesh[1] * (p.mesh[2] / 2 + 1) * blockIdx.x +
-                           (p.mesh[2] / 2 + 1) * blockIdx.y + threadIdx.x;
+  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   const int nx =
       (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x;
@@ -395,8 +406,8 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index = p.mesh[1] * (p.mesh[2] / 2 + 1) * blockIdx.x +
-                           (p.mesh[2] / 2 + 1) * blockIdx.y + threadIdx.x;
+  const int linear_index = linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
   p.charge_mesh[linear_index].y *= p.G_hat[linear_index];
 }
@@ -436,8 +447,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
-  const int ind =
-      par.mesh[1] * par.mesh[2] * nmp_x + par.mesh[1] * nmp_y + nmp_z;
+  const int ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
@@ -567,8 +577,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
   REAL_TYPE c;
-  const int index =
-      par.mesh[1] * par.mesh[2] * nmp_x + par.mesh[2] * nmp_y + nmp_z;
+  const int index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
+
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
@@ -712,7 +722,8 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       reinit_if = 1;
     }
 
-    p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * mesh[2];
+    p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
+    p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
 
     for (int i = 0; i < 3; i++) {
       p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
@@ -740,6 +751,7 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
+
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
                                cmesh_size * sizeof(CUFFT_TYPE_COMPLEX)));
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
@@ -753,12 +765,8 @@ void p3m_gpu_init(int cao, int mesh[3], double alpha) {
 
       cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
                   CUFFT_PLAN_FORW_FLAG);
-      cufftSetCompatibilityMode(p3m_gpu_fft_plans.forw_plan,
-                                CUFFT_COMPATIBILITY_NATIVE);
       cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
                   CUFFT_PLAN_BACK_FLAG);
-      cufftSetCompatibilityMode(p3m_gpu_fft_plans.back_plan,
-                                CUFFT_COMPATIBILITY_NATIVE);
     }
 
     if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&

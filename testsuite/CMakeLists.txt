@@ -79,6 +79,7 @@ python_test(FILE lb_gpu.py MAX_NUM_PROC 2)
 python_test(FILE lb_stokes_sphere_gpu.py MAX_NUM_PROC 1)
 python_test(FILE analyze_energy.py MAX_NUM_PROC 4)
 python_test(FILE rdf.py MAX_NUM_PROC 1)
+python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
