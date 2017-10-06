@@ -139,7 +139,7 @@ class Analysis(object):
         if id != None:
             if not isinstance(id, int):
                 raise ValueError("Id has to be an integer")
-            if id >= len(self._system.part):
+            if not id in self._system.part[:].id:
                 raise ValueError("Id has to be an index of an existing particle")
             _pos = self._system.part[id].pos
             for i in range(3):
