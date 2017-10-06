@@ -133,7 +133,7 @@ z0pnt = 0.5*box_l
 
 cent = len(system.part)
 system.part.add(id=cent,pos=[x0pnt,y0pnt,z0pnt],type=0,temp=temp,
-                gamma=frict_trans_colloid,
+                gamma=[frict_trans_colloid, frict_trans_colloid, frict_trans_colloid],
                 gamma_rot=[frict_rot_colloid,frict_rot_colloid,frict_rot_colloid])
 
 # Set up the particles
