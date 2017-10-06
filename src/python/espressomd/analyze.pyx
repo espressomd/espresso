@@ -108,7 +108,7 @@ class Analysis(object):
 
     def distto(self, id=None, pos=None):
         """
-        Calculates the minimum distance to a point or particle.
+        Calculates the distance to a point or particle.
 
         Parameters
         ----------
