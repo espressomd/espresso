@@ -322,13 +322,18 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    pos[0][particle_index][0] = current_particle.r.p[0];
-    pos[0][particle_index][1] = current_particle.r.p[1];
-    pos[0][particle_index][2] = current_particle.r.p[2];
-    image[0][particle_index][0] = current_particle.l.i[0];
-    image[0][particle_index][1] = current_particle.l.i[1];
-    image[0][particle_index][2] = current_particle.l.i[2];
+    Vector3d p{{current_particle.r.p}};
+    Vector<3, int> i{{current_particle.l.i}};
+    fold_position(p, i);
+
+    pos[0][particle_index][0] = p[0];
+    pos[0][particle_index][1] = p[1];
+    pos[0][particle_index][2] = p[2];
+    image[0][particle_index][0] = i[0];
+    image[0][particle_index][1] = i[1];
+    image[0][particle_index][2] = i[2];
   }
+
   if (write_vel) {
     vel[0][particle_index][0] = current_particle.m.v[0] / time_step;
     vel[0][particle_index][1] = current_particle.m.v[1] / time_step;

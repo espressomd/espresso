@@ -2229,7 +2229,7 @@ void maggs_calc_forces()
 	
   Npart = cells_get_n_particles();
   if(Npart>Npart_old) {
-    grad = (double *) Utils::realloc(grad, 12*Npart*sizeof(double));
+    grad = Utils::realloc(grad, 12*Npart*sizeof(double));
     Npart_old = Npart;
   }
 	

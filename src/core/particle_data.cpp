@@ -118,7 +118,7 @@ void realloc_local_particles(int part) {
     /* round up part + 1 in granularity PART_INCREMENT */
     max_local_particles =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles = (Particle **)Utils::realloc(
+    local_particles = Utils::realloc(
         local_particles, sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
@@ -137,7 +137,7 @@ static void realloc_particle_node(int part) {
     max_particle_node =
         PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
     particle_node =
-        (int *)Utils::realloc(particle_node, sizeof(int) * max_particle_node);
+        Utils::realloc(particle_node, sizeof(int) * max_particle_node);
   }
 }
 
@@ -181,7 +181,7 @@ int realloc_particlelist(ParticleList *l, int size) {
     /* round up */
     l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
   if (l->max != old_max)
-    l->part = (Particle *)Utils::realloc(l->part, sizeof(Particle) * l->max);
+    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
   return l->part != old_start;
 }
 
@@ -409,8 +409,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3]) {
   return ES_OK;
 }
 #endif
-
-#ifdef ROTATION_PER_PARTICLE
+#ifdef ROTATION
 int set_particle_rotation(int part, int rot) {
   int pnode;
   if (!particle_node)
@@ -776,7 +775,7 @@ int set_particle_temperature(int part, double T) {
 #ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma(int part, double gamma)
 #else
-int set_particle_gamma(int part, double gamma[3])
+int set_particle_gamma(int part, Vector3d gamma)
 #endif // PARTICLE_ANISOTROPY
 {
   int pnode;
@@ -796,11 +795,11 @@ int set_particle_gamma(int part, double gamma[3])
   return ES_OK;
 }
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 int set_particle_gamma_rot(int part, double gamma_rot)
 #else
-int set_particle_gamma_rot(int part, double gamma_rot[3])
-#endif // ROTATIONAL_INERTIA
+int set_particle_gamma_rot(int part, Vector3d gamma_rot)
+#endif // PARTICLE_ANISOTROPY
 {
   int pnode;
 
@@ -1372,14 +1371,14 @@ int init_type_array(int type) {
   }
 
   Type.index =
-      (int *)Utils::realloc((void *)Type.index, sizeof(int) * Type.max_entry);
+      Utils::realloc(Type.index, sizeof(int) * Type.max_entry);
 
   // reallocate the array that holds the particle type and points to the type
   // index used for the type_list
 
   if (type >= Index.max_entry) {
     Index.type =
-        (int *)Utils::realloc((void *)Index.type, (type + 1) * sizeof(int));
+        Utils::realloc(Index.type, (type + 1) * sizeof(int));
     Index.max_entry = type + 1;
   }
   for (int i = 0; i < Type.max_entry; i++)
@@ -1413,15 +1412,15 @@ int init_type_array(int type) {
     }
     // now the array is shrinked to at least 4 times the highest entry
     type_array[Index.type[type]].id_list =
-        (int *)Utils::realloc((void *)type_array[Index.type[type]].id_list,
+        Utils::realloc(type_array[Index.type[type]].id_list,
                               sizeof(int) * 2 * max_size);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = max_size * 2;
   } else {
     // no particles of the given type were found, so leave array size fixed at a
     // reasonable start entry 64 ints in this case
-    type_array[Index.type[type]].id_list = (int *)Utils::realloc(
-        (void *)type_array[Index.type[type]].id_list, sizeof(int) * 64);
+    type_array[Index.type[type]].id_list = Utils::realloc(
+        type_array[Index.type[type]].id_list, sizeof(int) * 64);
     type_array[Index.type[type]].max_entry = t_c;
     type_array[Index.type[type]].cur_size = 64;
   }
@@ -1435,8 +1434,8 @@ int init_type_array(int type) {
 }
 
 int reallocate_type_array(int type) {
-  type_array[Index.type[type]].id_list = (int *)Utils::realloc(
-      (void *)type_array[Index.type[type]].id_list,
+  type_array[Index.type[type]].id_list = Utils::realloc(
+      type_array[Index.type[type]].id_list,
       sizeof(int) * type_array[Index.type[type]].cur_size * 2);
   if (type_array[Index.type[type]].id_list == (int *)0) {
     return ES_ERROR;
@@ -1505,7 +1504,7 @@ int reallocate_global_type_list(int size) {
   if (size <= 0)
     return ES_ERROR;
   type_array =
-      (TypeList *)Utils::realloc((void *)type_array, sizeof(TypeList) * size);
+      Utils::realloc(type_array, sizeof(TypeList) * size);
   number_of_type_lists = size;
   if (type_array == (TypeList *)0)
     return ES_ERROR;
@@ -1709,16 +1708,16 @@ void pointer_to_gamma(Particle *p, double *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
 #else
-  res = p->p.gamma; // array [3]
+  res = p->p.gamma.data(); // array [3]
 #endif // PARTICLE_ANISTROPY
 }
 
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle *p, double *&res) {
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma_rot);
 #else
-  res = p->p.gamma_rot; // array [3]
+  res = p->p.gamma_rot.data(); // array [3]
 #endif // ROTATIONAL_INERTIA
 }
 #endif // ROTATION
@@ -1726,11 +1725,9 @@ void pointer_to_gamma_rot(Particle *p, double *&res) {
 void pointer_to_temperature(Particle *p, double *&res) { res = &(p->p.T); }
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef ROTATION_PER_PARTICLE
 void pointer_to_rotation(Particle *p, short int *&res) {
   res = &(p->p.rotation);
 }
-#endif
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle *p, ParticleParametersSwimming *&swim) {

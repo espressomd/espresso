@@ -103,10 +103,10 @@ int calc_node_neighbors(int node) {
 
   int dir, neighbor_count;
 #ifdef LEES_EDWARDS
-  node_neighbors = (int *)Utils::realloc(node_neighbors, 6 * sizeof(int));
-  node_neighbor_lr = (int *)Utils::realloc(node_neighbor_lr, 6 * sizeof(int));
+  node_neighbors = Utils::realloc(node_neighbors, 6 * sizeof(int));
+  node_neighbor_lr = Utils::realloc(node_neighbor_lr, 6 * sizeof(int));
   node_neighbor_wrap =
-      (int *)Utils::realloc(node_neighbor_wrap, 6 * sizeof(int));
+      Utils::realloc(node_neighbor_wrap, 6 * sizeof(int));
 #endif
 
   map_node_array(node, node_pos);
@@ -163,21 +163,21 @@ int calc_node_neighbors(int node) {
 
     if ((boundary[2] == 1 && boundary[3] != -1) ||
         (boundary[3] == -1 && boundary[2] != 1)) {
-      node_neighbors = (int *)Utils::realloc(
+      node_neighbors = Utils::realloc(
           node_neighbors, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_lr = (int *)Utils::realloc(
+      node_neighbor_lr = Utils::realloc(
           node_neighbor_lr, (neighbor_count + node_grid[0] - 1) * sizeof(int));
-      node_neighbor_wrap = (int *)Utils::realloc(
+      node_neighbor_wrap = Utils::realloc(
           node_neighbor_wrap,
           (neighbor_count + node_grid[0] - 1) * sizeof(int));
     } else if (boundary[3] == -1 && boundary[2] == 1) {
-      node_neighbors = (int *)Utils::realloc(
+      node_neighbors = Utils::realloc(
           node_neighbors,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_lr = (int *)Utils::realloc(
+      node_neighbor_lr = Utils::realloc(
           node_neighbor_lr,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
-      node_neighbor_wrap = (int *)Utils::realloc(
+      node_neighbor_wrap = Utils::realloc(
           node_neighbor_wrap,
           (neighbor_count + 2 * node_grid[0] - 2) * sizeof(int));
     }
