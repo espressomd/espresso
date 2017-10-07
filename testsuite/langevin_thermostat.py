@@ -37,6 +37,9 @@ class LangevinThermostat(ut.TestCase):
     s.cell_system.set_n_square()
     s.cell_system.skin = 0.3
     s.seed = range(s.cell_system.get_state()["n_nodes"])
+    if espressomd.has_features("PARTIAL_PERIODIC"):
+        s.periodicity = 0,0,0
+
 
     @classmethod
     def setUpClass(cls):
@@ -71,7 +74,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.1
+        s.time_step = 0.02
         
         # Place particles
         s.part.add(pos=np.random.random((N, 3)))
@@ -115,7 +118,7 @@ class LangevinThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.part.clear()
-        s.time_step = 0.1
+        s.time_step = 0.02
         s.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"): 
             s.part[:].rotation = 1,1,1
@@ -188,7 +191,7 @@ class LangevinThermostat(ut.TestCase):
         
         # Rotational gamma
         gamma_rot_i=0.4
-        gamma_rot_a=2.5,0.7,1.4
+        gamma_rot_a=0.7,0.6,1.2
 
         # If we have langevin per particle:
         # per particle kT
@@ -197,7 +200,7 @@ class LangevinThermostat(ut.TestCase):
         per_part_gamma=1.63
         # Rotational 
         per_part_gamma_rot_i=0.6
-        per_part_gamma_rot_a=2.2,1.7,1.1
+        per_part_gamma_rot_a=0.4,0.8,1.1
 
 
         
@@ -272,17 +275,17 @@ class LangevinThermostat(ut.TestCase):
         for p in all_particles:
             # linear vel
             vel_obs[p]=ParticleVelocities(ids=(p.id,))
-            corr_vel[p] = Correlator(obs1=vel_obs[p], tau_lin=32, tau_max=4., dt=dt,
+            corr_vel[p] = Correlator(obs1=vel_obs[p], tau_lin=32, tau_max=4., dt=2*dt,
                 corr_operation="componentwise_product", compress1="discard1")
             s.auto_update_correlators.add(corr_vel[p])
             # angular vel
             if espressomd.has_features("ROTATION"):
                 omega_obs[p]=ParticleBodyAngularMomentum(ids=(p.id,))
-                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=16, tau_max=24, dt=dt,
+                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=16, tau_max=24, dt=2*dt,
                     corr_operation="componentwise_product", compress1="discard1")
                 s.auto_update_correlators.add(corr_omega[p])
         
-        s.integrator.run(2000000)
+        s.integrator.run(5000000)
 
         # Verify diffusion
         # Translation
