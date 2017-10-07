@@ -2167,7 +2167,7 @@ To use the method, create an instance of :attr:`espressomd.magnetostatics.Dipola
   from espressomd.magnetostatics import DipolarDirectSumGpu
   dds=DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
-  
+
 Barnes-Hut octree sum on gpu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2182,12 +2182,10 @@ Barnes-Hut method application to the dipole-dipole interactions, please
 refer to :cite:`Polyakov2013`.
 
 To use the method, create an instance of :attr:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors. The only required parameter is the Bjerrum length::
+  
   from espressomd.magnetostatics import DipolarBarnesHutGpu
   bh=DipolarBarnesHutGpu(bjerrum_length=1,epssq=100,itolsq=4)
   system.actors.add(bh)
-  
-
-
 
 Scafacos Magnetostatics
 ~~~~~~~~~~~~~~~~~~~~~~~

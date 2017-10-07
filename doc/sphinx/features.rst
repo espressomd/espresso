@@ -226,6 +226,10 @@ following features.
 
 -  ``BOND_ENDANGLEDIST``
 
+Specific long ranged interaction algorithms could be enabled by the following features:
+
+-  ``BARNES_HUT`` Enable Barnes-Hut octree sum on GPU algorithm for a dipole-dipole interaction calculation.
+
 Debug messages
 --------------
 
