@@ -20,7 +20,7 @@
 */
 /** \file interaction_data.cpp
     Implementation of interaction_data.hpp
- */
+ */ 
 #include <cstring>
 #include <cstdlib>
 #include "utils.hpp"
@@ -70,6 +70,9 @@
 #ifdef BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
+#include "p3m-dipolar.hpp"
+#include "thermostat.hpp"
+#include "scafacos.hpp"
 
 /****************************************
  * variables

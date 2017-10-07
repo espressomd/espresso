@@ -40,6 +40,8 @@ public:
   };
 
 private:
+  friend class ParallelScriptInterface;
+  static Communication::MpiCallbacks * m_cb;
   friend Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>;
   ParallelScriptInterfaceSlave();
 

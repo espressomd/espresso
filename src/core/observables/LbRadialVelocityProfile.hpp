@@ -7,7 +7,7 @@
 namespace Observables {
 
 #ifdef LB
-//int ObservableLbRadialVelocityProfile::actual_calculate() {
+//int ObservableLbRadialVelocityProfile::actual_calculate(PartCfg & partCfg) {
 //  double* A = last_value;
 //  void* pdata = container;
 //  unsigned int n_A = n;

@@ -42,13 +42,9 @@
 #include "virtual_sites.hpp"
 #include <cstdlib>
 #include <cstring>
-
-#include "partCfg.hpp"
+#include "npt.hpp"
 
 #include <limits>
-#include <map>
-#include <string>
-#include <vector>
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */
@@ -70,7 +66,7 @@ double min_distance2(double const pos1[3], double const pos2[3]) {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(IntList *set1, IntList *set2) {
+double mindist(PartCfg &partCfg, IntList *set1, IntList *set2) {
   double pt[3];
   int i, j, in_set;
 
@@ -91,9 +87,7 @@ double mindist(IntList *set1, IntList *set2) {
     if (in_set == 0)
       continue;
 
-    auto it = jt;
-    ++it;
-    for (; it != partCfg.end(); ++it)
+    for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
       if (((in_set & 1) && (!set2 || intlist_contains(set2, it->p.type))) ||
@@ -231,27 +225,15 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
  * @param result Result for this processor (Output)
  */
 void predict_momentum_particles(double *result) {
-  Cell *cell;
-  Particle *p;
-  int i, c, np;
-
   double momentum[3] = {0.0, 0.0, 0.0};
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    np = cell->n;
-    p = cell->part;
+  for (auto const &p : local_cells.particles()) {
+    // Due to weird scaling of units the following is actually correct
+    auto const mass = p.p.mass;
 
-    for (i = 0; i < np; i++) {
-      // Due to weird scaling of units the following is actually correct
-      double mass = 1.0;
-#ifdef MASS
-      mass = p[i].p.mass;
-#endif
-      momentum[0] += mass * (p[i].m.v[0] + p[i].f.f[0]);
-      momentum[1] += mass * (p[i].m.v[1] + p[i].f.f[1]);
-      momentum[2] += mass * (p[i].m.v[2] + p[i].f.f[2]);
-    }
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0]);
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1]);
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2]);
   }
 
   momentum[0] /= time_step;
@@ -295,7 +277,7 @@ std::vector<double> calc_linear_momentum(int include_particles,
   return linear_momentum;
 }
 
-std::vector<double> centerofmass(int type) {
+std::vector<double> centerofmass(PartCfg &partCfg, int type) {
   std::vector<double> com(3);
   double mass = 0.0;
 
@@ -312,7 +294,7 @@ std::vector<double> centerofmass(int type) {
   return com;
 }
 
-std::vector<double> centerofmass_vel(int type) {
+std::vector<double> centerofmass_vel(PartCfg &partCfg, int type) {
   /*center of mass velocity scaled with time_step*/
   std::vector<double> com_vel(3);
   int count = 0;
@@ -332,7 +314,7 @@ std::vector<double> centerofmass_vel(int type) {
   return com_vel;
 }
 
-void angularmomentum(int type, double *com) {
+void angularmomentum(PartCfg &partCfg, int type, double *com) {
   double tmp[3];
   com[0] = com[1] = com[2] = 0.;
 
@@ -347,7 +329,7 @@ void angularmomentum(int type, double *com) {
   return;
 }
 
-void momentofinertiamatrix(int type, double *MofImatrix) {
+void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, j, count;
   double p1[3], massi;
   std::vector<double> com(3);
@@ -355,7 +337,7 @@ void momentofinertiamatrix(int type, double *MofImatrix) {
 
   for (i = 0; i < 9; i++)
     MofImatrix[i] = 0.;
-  com = centerofmass(type);
+  com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
       count++;
@@ -377,7 +359,7 @@ void momentofinertiamatrix(int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-void calc_gyration_tensor(int type, std::vector<double> &gt) {
+void calc_gyration_tensor(PartCfg &partCfg, int type, std::vector<double> &gt) {
   int i, j, count;
   std::vector<double> com(3);
   double eva[3], eve0[3], eve1[3], eve2[3];
@@ -390,7 +372,7 @@ void calc_gyration_tensor(int type, std::vector<double> &gt) {
   gt.resize(16);
 
   /* Calculate the position of COM */
-  com = centerofmass(type);
+  com = centerofmass(partCfg, type);
 
   /* Calculate the gyration tensor Smatrix */
   count = 0;
@@ -441,7 +423,8 @@ void calc_gyration_tensor(int type, std::vector<double> &gt) {
   }
 }
 
-void nbhood(double pt[3], double r, IntList *il, int planedims[3]) {
+void nbhood(PartCfg &partCfg, double pt[3], double r, IntList *il,
+            int planedims[3]) {
   double d[3];
 
   auto const r2 = r * r;
@@ -466,7 +449,7 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3]) {
   }
 }
 
-double distto(double p[3], int pid) {
+double distto(PartCfg &partCfg, double p[3], int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
@@ -604,9 +587,10 @@ void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry,
   return;
 }
 
-void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
-                            double r_min, double r_max, int r_bins,
-                            int log_flag, double *low, double *dist) {
+void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
+                            int *p2_types, int n_p2, double r_min, double r_max,
+                            int r_bins, int log_flag, double *low,
+                            double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2, act_dist2;
@@ -665,15 +649,15 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
     dist[i] /= (double)cnt;
 }
 
-void calc_rdf(std::vector<int> &p1_types, std::vector<int> &p2_types,
-              double r_min, double r_max, int r_bins,
-              std::vector<double> &rdf) {
-  calc_rdf(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(), r_min,
-           r_max, r_bins, &rdf[0]);
+void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
+              std::vector<int> &p2_types, double r_min, double r_max,
+              int r_bins, std::vector<double> &rdf) {
+  calc_rdf(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
+           p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
 }
 
-void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
-              double r_max, int r_bins, double *rdf) {
+void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
+              int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
   long int cnt = 0;
   int i, j, t1, t2, ind;
   int mixed_flag = 0, start;
@@ -726,72 +710,78 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
   }
 }
 
-void calc_rdf_av(std::vector<int> &p1_types, std::vector<int> &p2_types,
-                 double r_min, double r_max, int r_bins,
-                 std::vector<double> &rdf, int n_conf) {
-  calc_rdf_av(&p1_types[0], p1_types.size(), &p2_types[0], p2_types.size(),
-              r_min, r_max, r_bins, &rdf[0], n_conf);
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
+                 std::vector<int> &p2_types, double r_min, double r_max,
+                 int r_bins, std::vector<double> &rdf, int n_conf) {
+  calc_rdf_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
+              p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
-void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
-                 double r_max, int r_bins, double *rdf, int n_conf) {
+void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
+                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
+                 int n_conf) {
   long int cnt = 0;
-  int i, j, k, l, t1, t2, ind, cnt_conf = 1;
+  int cnt_conf = 1;
   int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
+  double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
 
   rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
 
   if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
+    for (int i = 0; i < n_p1; i++)
       if (p1_types[i] != p2_types[i])
         mixed_flag = 1;
   } else
     mixed_flag = 1;
+
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
   volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
+  for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
   while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
+    for (int l = 0; l < r_bins; l++)
       rdf_tmp[l] = 0.0;
     cnt = 0;
-    k = n_configs - cnt_conf;
+    auto const k = n_configs - cnt_conf;
+    int i = 0;
     for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
+      for (int t1 = 0; t1 < n_p1; t1++) {
         if (it->p.type == p1_types[t1]) {
           /* distinguish mixed and identical rdf's */
           auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
+          int j = (mixed_flag == 1) ? 0 : i + 1;
 
           // particle loop: p2_types
           for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
+            for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                p1[0] = configs[k][3 * i];
+                p1[0] = configs[k][3 * i + 0];
                 p1[1] = configs[k][3 * i + 1];
                 p1[2] = configs[k][3 * i + 2];
-                p2[0] = configs[k][3 * j];
+                p2[0] = configs[k][3 * j + 0];
                 p2[1] = configs[k][3 * j + 1];
                 p2[2] = configs[k][3 * j + 2];
-                dist = min_distance(p1, p2);
+                auto const dist = min_distance(p1, p2);
                 if (dist > r_min && dist < r_max) {
-                  ind = (int)((dist - r_min) * inv_bin_width);
+                  auto const ind = static_cast<int>((dist - r_min) * inv_bin_width);
                   rdf_tmp[ind]++;
                 }
                 cnt++;
               }
             }
+            j++;
           }
         }
       }
+      i++;
     }
     // normalization
 
-    for (i = 0; i < r_bins; i++) {
+    for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
       bin_volume =
@@ -801,103 +791,19 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2, double r_min,
 
     cnt_conf++;
   } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
+  for (int i = 0; i < r_bins; i++) {
     rdf[i] /= (cnt_conf - 1);
   }
   free(rdf_tmp);
 }
 
-void calc_rdf_intermol_av(std::vector<int> &p1_types,
-                          std::vector<int> &p2_types, double r_min,
-                          double r_max, int r_bins, std::vector<double> &rdf,
-                          int n_conf) {
-  calc_rdf_intermol_av(&p1_types[0], p1_types.size(), &p2_types[0],
-                       p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
-}
-
-void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
-                          double r_min, double r_max, int r_bins, double *rdf,
-                          int n_conf) {
-  int i, j, k, l, t1, t2, ind, cnt = 0, cnt_conf = 1;
-  int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
-  double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3], p2[3];
-
-  rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
-
-  if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
-      if (p1_types[i] != p2_types[i])
-        mixed_flag = 1;
-  } else
-    mixed_flag = 1;
-  bin_width = (r_max - r_min) / (double)r_bins;
-  inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
-    rdf_tmp[l] = rdf[l] = 0.0;
-
-  while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
-      rdf_tmp[l] = 0.0;
-    cnt = 0;
-    k = n_configs - cnt_conf;
-    for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
-        if (it->p.type == p1_types[t1]) {
-          // distinguish mixed and identical rdf's
-          auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
-
-          // particle loop: p2_types
-          for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
-              if (jt->p.type == p2_types[t2]) {
-                /*see if particles i and j belong to different molecules*/
-                if (it->p.mol_id != jt->p.mol_id) {
-                  p1[0] = configs[k][3 * i];
-                  p1[1] = configs[k][3 * i + 1];
-                  p1[2] = configs[k][3 * i + 2];
-                  p2[0] = configs[k][3 * j];
-                  p2[1] = configs[k][3 * j + 1];
-                  p2[2] = configs[k][3 * j + 2];
-                  dist = min_distance(p1, p2);
-                  if (dist > r_min && dist < r_max) {
-                    ind = (int)((dist - r_min) * inv_bin_width);
-                    rdf_tmp[ind]++;
-                  }
-                  cnt++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    // normalization
-
-    for (i = 0; i < r_bins; i++) {
-      r_in = i * bin_width + r_min;
-      r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-      rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
-    }
-
-    cnt_conf++;
-  } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
-    rdf[i] /= (cnt_conf - 1);
-  }
-  free(rdf_tmp);
-}
-
-void calc_structurefactor(int *p_types, int n_types, int order, double **_ff) {
+void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
+                          int order, double **_ff) {
   int i, j, k, n, qi, p, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = NULL;
 
   order2 = order * order;
-  *_ff = ff = (double *)Utils::realloc(ff, 2 * order2 * sizeof(double));
+  *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   twoPI_L = 2 * PI / box_l[0];
 
   if ((n_types < 0) || (n_types > n_particle_types)) {
@@ -976,8 +882,8 @@ std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf) {
 
 // calculates average density profile in dir direction over last n_conf
 // configurations
-void density_profile_av(int n_conf, int n_bin, double density, int dir,
-                        double *rho_ave, int type) {
+void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
+                        int dir, double *rho_ave, int type) {
   int i, j, k, m, n;
   double r;
   double r_bin;
@@ -1024,9 +930,9 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir,
     rho_ave[i] /= n_conf;
 }
 
-void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins,
-                            int n_part, int n_conf, int time, int type,
-                            double *bins) {
+void calc_diffusion_profile(PartCfg &partCfg, int dir, double xmin, double xmax,
+                            int nbins, int n_part, int n_conf, int time,
+                            int type, double *bins) {
   int i, t, count, index;
   double tcount = 0;
   double xpos;
@@ -1088,8 +994,9 @@ void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins,
 }
 
 int calc_cylindrical_average(
-    std::vector<double> center_, std::vector<double> direction_, double length,
-    double radius, int bins_axial, int bins_radial, std::vector<int> types,
+    PartCfg &partCfg, std::vector<double> center_,
+    std::vector<double> direction_, double length, double radius,
+    int bins_axial, int bins_radial, std::vector<int> types,
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution) {
   int index_axial;
@@ -1197,9 +1104,10 @@ int calc_cylindrical_average(
   return ES_OK;
 }
 
-int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
-                            double yrange, double axis[3], double center[3],
-                            IntList *beadids, DoubleList *density_map,
+int calc_radial_density_map(PartCfg &partCfg, int xbins, int ybins,
+                            int thetabins, double xrange, double yrange,
+                            double axis[3], double center[3], IntList *beadids,
+                            DoubleList *density_map,
                             DoubleList *density_profile) {
   int i, j, t;
   int pi, bi;
@@ -1329,8 +1237,8 @@ int calc_radial_density_map(int xbins, int ybins, int thetabins, double xrange,
   return ES_OK;
 }
 
-double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax,
-                    double *msd, double **vanhove) {
+double calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
+                    int rbins, int tmax, double *msd, double **vanhove) {
   int c1, c3, c3_max, ind;
   double p1[3], p2[3], dist;
   double bin_width, inv_bin_width;
@@ -1395,15 +1303,15 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax,
  *                                 config storage functions
  ****************************************************************************************/
 
-void analyze_append() {
+void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs][3 * i] = p.r.p[0];
+    configs[n_configs][3 * i + 0] = p.r.p[0];
     configs[n_configs][3 * i + 1] = p.r.p[1];
     configs[n_configs][3 * i + 2] = p.r.p[2];
     i++;
@@ -1411,7 +1319,7 @@ void analyze_append() {
   n_configs++;
 }
 
-void analyze_push() {
+void analyze_push(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
   free(configs[0]);
   for (int i = 0; i < n_configs - 1; i++) {
@@ -1422,7 +1330,7 @@ void analyze_push() {
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs - 1][3 * i] = p.r.p[0];
+    configs[n_configs - 1][3 * i + 0] = p.r.p[0];
     configs[n_configs - 1][3 * i + 1] = p.r.p[1];
     configs[n_configs - 1][3 * i + 2] = p.r.p[2];
 
@@ -1430,12 +1338,12 @@ void analyze_push() {
   }
 }
 
-void analyze_replace(int ind) {
+void analyze_replace(PartCfg &partCfg, int ind) {
   n_part_conf = partCfg.size();
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[ind][3 * i] = p.r.p[0];
+    configs[ind][3 * i + 0] = p.r.p[0];
     configs[ind][3 * i + 1] = p.r.p[1];
     configs[ind][3 * i + 2] = p.r.p[2];
 
@@ -1450,7 +1358,7 @@ void analyze_remove(int ind) {
     configs[i] = configs[i + 1];
   }
   n_configs--;
-  configs = (double **)Utils::realloc(configs, n_configs * sizeof(double *));
+  configs = Utils::realloc(configs, n_configs * sizeof(double *));
   if (n_configs == 0)
     n_part_conf = 0;
 }
@@ -1459,7 +1367,7 @@ void analyze_configs(double *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs =
-      (double **)Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
+      Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
   configs[n_configs] =
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   for (i = 0; i < n_part_conf; i++) {
@@ -1470,7 +1378,7 @@ void analyze_configs(double *tmp_config, int count) {
   n_configs++;
 }
 
-void analyze_activate(int ind) {
+void analyze_activate(PartCfg &partCfg, int ind) {
   int i;
   double pos[3];
   n_part_conf = partCfg.size();
@@ -1538,9 +1446,10 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
 void invalidate_obs() {
   total_energy.init_status = 0;
   total_pressure.init_status = 0;
+  total_p_tensor.init_status = 0;
 }
 
-void centermass_conf(int k, int type_1, double *com) {
+void centermass_conf(PartCfg &partCfg, int k, int type_1, double *com) {
   int i, j;
   double M = 0.0;
   com[0] = com[1] = com[2] = 0.;

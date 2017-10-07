@@ -26,6 +26,7 @@ using namespace ScriptInterface;
 
 /* Check that the enum and the types are in order. */
 BOOST_AUTO_TEST_CASE(variant_types) {
+  BOOST_CHECK(static_cast<int>(VariantType::NONE) == Variant(None{}).which());
   BOOST_CHECK(static_cast<int>(VariantType::BOOL) == Variant(bool{}).which());
   BOOST_CHECK(static_cast<int>(VariantType::INT) == Variant(int{}).which());
   BOOST_CHECK(static_cast<int>(VariantType::DOUBLE) ==
@@ -43,6 +44,7 @@ BOOST_AUTO_TEST_CASE(variant_types) {
 }
 
 BOOST_AUTO_TEST_CASE(infer_type_test) {
+  static_assert(infer_type<None>() == VariantType::NONE, "");
   static_assert(infer_type<bool>() == VariantType::BOOL, "");
   static_assert(infer_type<int>() == VariantType::INT, "");
   static_assert(infer_type<double>() == VariantType::DOUBLE, "");
@@ -55,6 +57,7 @@ BOOST_AUTO_TEST_CASE(infer_type_test) {
 }
 
 BOOST_AUTO_TEST_CASE(is_a) {
+  BOOST_CHECK(is_none(Variant(None{})));
   BOOST_CHECK(is_bool(Variant(bool{})));
   BOOST_CHECK(is_int(Variant(int{})));
   BOOST_CHECK(is_double(Variant(double{})));
@@ -63,6 +66,10 @@ BOOST_AUTO_TEST_CASE(is_a) {
   BOOST_CHECK(is_double_vector(Variant(std::vector<double>{})));
   BOOST_CHECK(is_objectid(Variant(ObjectId{})));
   BOOST_CHECK(is_vector(Variant(std::vector<Variant>{})));
+}
+
+BOOST_AUTO_TEST_CASE(none_is_default) {
+  BOOST_CHECK(is_none(Variant{}));
 }
 
 BOOST_AUTO_TEST_CASE(transform_vectors_test) {

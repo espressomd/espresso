@@ -19,6 +19,9 @@
 include "myconfig.pxi"
 
 cdef extern from "global.hpp":
+    int FIELD_BOXL
+    int FIELD_SKIN
+    int FIELD_NODEGRID
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
     int FIELD_NODEGRID
@@ -27,12 +30,23 @@ cdef extern from "global.hpp":
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
+    int FIELD_LEES_EDWARDS_OFFSET
+    int FIELD_TEMPERATURE
+    int FIELD_THERMO_SWITCH
+    int FIELD_TEMPERATURE
+    int FIELD_LANGEVIN_GAMMA
+    IF ROTATION:
+        int FIELD_LANGEVIN_GAMMA_ROTATION
+    IF NPT:
+        int FIELD_NPTISO_G0
+        int FIELD_NPTISO_GV
 
+    void mpi_bcast_parameter(int p)
+        
 cdef extern from "communication.hpp":
     extern int n_nodes
     void mpi_set_smaller_time_step(double smaller_time_step)
     void mpi_set_time_step(double time_step)
-    void mpi_bcast_parameter(int p)
 
 cdef extern from "integrate.hpp":
     double time_step
@@ -67,6 +81,8 @@ cdef extern from "domain_decomposition.hpp":
 cdef extern from "particle_data.hpp":
     extern int n_part
 
+cdef extern from "lees_edwards.hpp":
+    double lees_edwards_offset    
 
 cdef extern from "interaction_data.hpp":
     double dpd_gamma
@@ -80,19 +96,10 @@ cdef extern from "interaction_data.hpp":
 
 
 cdef extern from "thermostat.hpp":
-    IF PARTICLE_ANISOTROPY:
-        double langevin_gamma[3]
-    ELSE:
-        double langevin_gamma
     extern double nptiso_gamma0
     extern double nptiso_gammav
     extern double temperature
     extern int thermo_switch
-    IF ROTATION:
-        IF ROTATIONAL_INERTIA:
-            double langevin_gamma_rotation[3]
-        ELSE:
-            double langevin_gamma_rotation
 
 cdef extern from "dpd.hpp":
     extern int dpd_wf

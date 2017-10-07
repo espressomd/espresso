@@ -20,7 +20,7 @@
 
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd._system cimport *
+from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
 
