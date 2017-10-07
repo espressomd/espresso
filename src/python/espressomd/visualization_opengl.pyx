@@ -80,8 +80,8 @@ class openGLLive(object):
         }
 
         # OVERWRITE WITH USER PROPERTIES
-        for key in kwargs.iterkeys():
-            if key not in self.specs.iterkeys():
+        for key in kwargs:
+            if key not in self.specs:
                 raise ValueError(
                     key + ' is not a valid visualization property')
             else:
@@ -212,13 +212,6 @@ class openGLLive(object):
 
     def updateLB(self):
         agrid = self.lb_params['agrid']
-        #g = [int(bl/agrid) for bl in self.system.box_l]
-        #self.lb_grid = np.zeros((g[0],g[1],g[2],3))
-        #for i in xrange(g[0]):
-        #    for j in xrange(g[1]):
-        #        for k in xrange(g[2]):
-        #            self.lb_grid[i,j,k] = self.lb[i,j,k].velocity
-        #            print i,j,k, self.lb_grid[i,j,k]
         self.lb_plane_vel = []
         ng = self.specs['LB_plane_ngrid']
         for xi in xrange(ng):
@@ -391,8 +384,7 @@ class openGLLive(object):
     def determine_radius(self, ptype):
         def radiusByLJ(ptype):
             try:
-                radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
-                    'sigma'] * 0.5
+                radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()['sigma'] * 0.5
             except:
                 radius = 0.5
             if radius == 0:
@@ -417,7 +409,7 @@ class openGLLive(object):
         for pid in pIds:
             pos = coords[pid]
             q = self.particles['charges'][pid]
-            ptype = self.particles['types'][pid]
+            ptype = int(self.particles['types'][pid])
             ext_f = self.particles['ext_forces'][pid]
 
             radius = self.determine_radius(ptype)
@@ -599,10 +591,14 @@ class openGLLive(object):
             return
 
         def keyboardUp(button, x, y):
+            if type(button) is bytes:
+                button = button.decode("utf-8")
             self.keyboardManager.keyboardUp(button)
             return
 
         def keyboardDown(button, x, y):
+            if type(button) is bytes:
+                button = button.decode("utf-8")
             self.keyboardManager.keyboardDown(button)
             return
 
@@ -875,7 +871,10 @@ class openGLLive(object):
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutInitWindowSize(self.specs['window_size'][
                            0], self.specs['window_size'][1])
-        glutCreateWindow(self.specs['name'])
+		
+        #glutCreateWindow(bytes(self.specs['name'], encoding='ascii'))
+        glutCreateWindow(b"ESPResSo visualization")
+
         glClearColor(self.specs['background_color'][0], self.specs[
                      'background_color'][1], self.specs['background_color'][2], 1.)
 
@@ -899,9 +898,9 @@ class openGLLive(object):
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            glLightfv(GL_LIGHT0, GL_POSITION, self.specs['light_pos'])
+            glLightfv(GL_LIGHT0, GL_POSITION, np.array(self.specs['light_pos']).tolist())
         else:
-            glLightfv(GL_LIGHT0, GL_POSITION, self.system.box_l * 0.5)
+            glLightfv(GL_LIGHT0, GL_POSITION, (np.array(self.system.box_l) * 0.5).tolist())
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, self.specs['light_colors'][0])
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.specs['light_colors'][1])
@@ -1461,12 +1460,7 @@ class Camera(object):
         
         cXYZ = -1 * np.mat(self.modelview[:3,:3]) * np.mat(self.modelview[3,:3]).T
         self.camPos=np.array([cXYZ[0,0], cXYZ[1,0], cXYZ[2,0]])
-        
-        #print  "CAM",self.camPos
-        #print  "TRA",self.state_pos
-        #print "Target:", self.state_target
-        #print "Up:", self.state_up
-        #print "Right:", self.state_right
+
         self.updateLights()
 
 

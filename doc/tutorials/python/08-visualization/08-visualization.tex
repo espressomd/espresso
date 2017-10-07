@@ -42,7 +42,6 @@ We will also use NumPy, which both of these libraries depend on, to store data a
 
 First, we need to set up a simulation.
 We simulate a simple Lennard-Jones liquid in this tutorial using the script shown below.
-Visualization of more advanced features of \es is also possible (for example, bonds, constraints and lattice Boltzmann).
 
 \pypressoexternal{scripts/simulation.py}
 
@@ -105,6 +104,7 @@ def update_plot():
     pyplot.xlim(0, energies[i,0])
     pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
     pyplot.draw()
+    pyplot.pause(0.01)
 def main():
     global current_time
     for i in range(0, int_n_times):
@@ -133,7 +133,7 @@ def main():
 
 Then, add the following line after the particle setup code:
 \begin{pypresso}
-visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 \end{pypresso}
 Now, go to the end of the \pypressoinline{main} function definition and add
 \begin{pypresso}
@@ -147,19 +147,23 @@ t.daemon = True
 t.start()
 visualizer.start()
 \end{pypresso}
-While the simulation is running, you can move and zoom around with your mouse or explore the buttons in the toolbar to see how the graphical representation can be changed.\\
 
-\noindent Alternatively, you can try \es's own OpenGL visualization by switching the visualizer to:
+To follow the trajectories, try decreasing the integration steps to 1 and the
+time step to 0.001.  While the simulation is running, you can move and zoom
+around with your mouse. Alternatively, you can try mayavi by
+switching the visualizer to:
+
 \begin{pypresso}
-visualizer = visualization.openGLLive(system)
+visualizer = visualization.mayaviLive(system)
 \end{pypresso}
-To follow the trajectories, try decreasing the integration steps to 1 and the time step to 0.001. 
-You may have noticed that you can drag particles with your mouse. 
+
+In mayavi, explore the buttons in the toolbar to see how the graphical representation can be changed
 
 \section{Combined live visualization and plotting}
 
 Now let's merge the code from the preceding two sections so we can see the energy graph while viewing the 3D visualization of the particles.
 Do do that, we copy the \pypressoinline{pyplot}-related lines from above:
+
 \begin{pypresso}
 current_time = -1
 pyplot.xlabel("time")
@@ -175,8 +179,11 @@ def update_plot():
     pyplot.xlim(0, energies[i,0])
     pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
     pyplot.draw()
+    pyplot.pause(0.01)
 \end{pypresso}
+
 Then we merge the \pypressoinline{main} function definitions from both the previous sections.
+
 \begin{pypresso}
 def main():
     global current_time
@@ -188,8 +195,10 @@ def main():
         visualizer.update()
         # update_plot() cannot be called from here
 \end{pypresso}
+
 However, as we now have multiple threads, we cannot simply call \pypressoinline{update_plot()} from the \pypressoinline{main} function definition.
 Instead, we register it as a callback with the visualizer before we start up the visualizer GUI:
+
 \begin{pypresso}
 t = Thread(target=main)
 t.daemon = True
@@ -197,5 +206,75 @@ t.start()
 visualizer.registerCallback(update_plot, interval=500)
 visualizer.start()
 \end{pypresso}
+
+\section{Customizing the OpenGL visualizer}
+
+Visualization of more advanced features of \es is also possible (e.g.
+bonds, constraints and lattice Boltzmann velicity fields) with the OpenGL
+visualizer. There are a number of optional keywords that can be used to specify the
+appearance of the visualization, they are simply stated after
+\pypressoinline{system} when creating the visualizer instance.
+See the following examples:
+
+\begin{pypresso} 
+# Enables particle dragging via mouse:
+visualizer = visualization.openGLLive(system, drag_enabled=True)
+\end{pypresso}
+
+\begin{pypresso} 
+# Use a white background:
+visualizer = visualization.openGLLive(system, background_color = [1,1,1])
+\end{pypresso}
+
+\begin{pypresso} 
+# Static, uniform lightning
+visualizer = visualization.openGLLive(system, light_pos = system.box_l*2.0, light_brightness = 5.0, spotlight_brightness = 0.0)
+\end{pypresso}
+
+The visualizer options are stored in the dict \pypressoinline{visualizer.specs},
+the following snippet prints out the current configuration nicely: 
+
+\begin{pypresso} 
+for k in sorted(visualizer.specs.keys(), key=lambda s: s.lower()): print("{:30}  {}".format(k, visualizer.specs[k]))
+\end{pypresso}
+
+All keywords are explained in the Online Documentation at
+\url{http://espressomd.org/html/doc/io.html#opengl-visualizer}.  
+
+\section{Further examples with OpenGL}
+
+There are a number of specific visualization examples for \es and the OpenGL visualizer that can be found
+in the \path{samples} folder. You may need to recompile \es with the following features used in the examples:
+
+\begin{pypresso}
+#define PARTIAL_PERIODIC
+#define EXTERNAL_FORCES
+#define CONSTRAINTS
+#define MASS
+#define NPT
+#define ELECTROSTATICS
+#define LB
+#define LB_BOUNDARIES
+#define LENNARD_JONES
+\end{pypresso}
+
+
+\begin{itemize}
+
+\item \path{billard.py} A simple billard game made with \es.
+
+\item \path{visualization_openGL.py} Sample for an opengl visualization with user-defined keyboard- and timed callbacks.
+
+\item \path{visualization_bonded.py} Opengl visualization for bonds.
+
+\item \path{visualization_npt.py} Simple test visualization for the NPT ensemble.
+
+\item \path{visualization_poisseuille.py} Visualization for poisseuille flow with Lattice-Boltzmann.
+
+\item \path{visualization_constraints.py} Constraint visualization with opengl with all avaiable constraints (commented out).
+
+\item \path{visualization_mmm2d.py} A visual sample for a constant potential plate capacitor simulated with mmm2d.
+
+\end{itemize}
 
 \end{document}

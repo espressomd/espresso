@@ -388,7 +388,7 @@ using MDAnalysis. A simple example is the following:
 
 For other examples see samples/python/MDAnalysisIntegration.py
 
-Online-visualisation with Mayavi or OpenGL
+Online-visualization with Mayavi or OpenGL
 ------------------------------------------
 
 With the python interface, |es| features two possibilities for
