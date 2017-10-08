@@ -10,19 +10,15 @@
 #ifdef BARNES_HUT
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq)
-//void activate_dipolar_barnes_hut()
 {
     if (dipolarBarnesHut)
         free(dipolarBarnesHut);
 
     // also necessary on 1 CPU or GPU, does more than just broadcasting
     mpi_bcast_coulomb_params();
-    //std::cout << "Trace activate_dipolar_barnes_hut 1" << std::endl;
     dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
-    //dipolarBarnesHut =new DipolarBarnesHut(espressoSystemInterface);
     forceActors.push_back(dipolarBarnesHut);
     energyActors.push_back(dipolarBarnesHut);
-    //std::cout << "Trace activate_dipolar_barnes_hut 2" << std::endl;
 
     coulomb.Dmethod = DIPOLAR_BH_GPU;
 }
@@ -31,12 +27,10 @@ void deactivate_dipolar_barnes_hut()
 {
     if (dipolarBarnesHut)
     {
-        //std::cout << "Trace deactivate_dipolar_barnes_hut 1" << std::endl;
         forceActors.remove(dipolarBarnesHut);
         energyActors.remove(dipolarBarnesHut);
         delete(dipolarBarnesHut);
         dipolarBarnesHut=NULL;
-        //std::cout << "Trace deactivate_dipolar_barnes_hut 2" << std::endl;
     }
 }
 

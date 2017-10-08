@@ -14,13 +14,12 @@
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
 #define ACTOR_DIPOLARBARNESHUT_HPP
 
-//This needs to be done in the .cu file too!!!!!
+//This needs to be done in the .cu file too
 typedef float dds_float;
 
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq)
-  //DipolarBarnesHut(SystemInterface &s)
   {
 	k = coulomb.Dprefactor;
 	m_epssq = epssq;
@@ -34,86 +33,46 @@ public:
 
     if(!s.requestDipGpu())
       std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!" << std::endl;
-
-    //std::cout << "Trace DipolarBarnesHut init" << std::endl;
-
-	/*fillConstantPointers(s.rxGpuBegin(), s.ryGpuBegin(), s.rzGpuBegin(),
-			s.dipxGpuBegin(), s.dipyGpuBegin(), s.dipzGpuBegin(),
-			s.npart_gpu(), s.bhnnodes(), s.arrl(), s.boxl(), s.massGpuBegin());
-	initBH(s.blocksGpu());*/
-
   };
-
-//virtual ~DipolarBarnesHut() {}
 
   void computeForces(SystemInterface &s) {
     dds_float box[3];
     int per[3];
 
-    //std::cout << "Trace computeForces 1" << std::endl;
-
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
      per[i] = (PERIODIC(i));
     }
 
-	//cudaThreadSynchronize();
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(),
                 s.npart_gpu(), s.bhnnodes(), s.BHarrl(), s.BHboxl(), s.massGpuBegin());
     initBHgpu(s.blocksGpu());
 
-    //printf("\n blocks = %d",s.blocksGpu());
 	buildBoxBH(s.blocksGpu());
-	//cudaThreadSynchronize();
-
 	buildTreeBH(s.blocksGpu());
-	//cudaThreadSynchronize();
-
 	summarizeBH(s.blocksGpu());
-	//cudaThreadSynchronize();
-
 	sortBH(s.blocksGpu());
-	//cudaThreadSynchronize();
-
-	//std::cout << "Trace computeForces 2" << std::endl;
-	//printf("Trace computeForces 2");
 	forceBH(s.blocksGpu(),k,s.fGpuBegin(),s.torqueGpuBegin(),box,per);
-	//cudaThreadSynchronize();
   };
   void computeEnergy(SystemInterface &s) {
     dds_float box[3];
     int per[3];
 
-    //std::cout << "Trace computeEnergy 1" << std::endl;
-
     for (int i=0;i<3;i++)
     {
      box[i]=s.box()[i];
      per[i] = (PERIODIC(i));
     }
-    //cudaThreadSynchronize();
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(),
                     s.npart_gpu(), s.bhnnodes(), s.BHarrl(), s.BHboxl(), s.massGpuBegin());
     initBHgpu(s.blocksGpu());
-
-    //printf("\n blocks = %d",s.blocksGpu());
     buildBoxBH(s.blocksGpu());
-    //cudaThreadSynchronize();
-
     buildTreeBH(s.blocksGpu());
-    //cudaThreadSynchronize();
-
     summarizeBH(s.blocksGpu());
-    //cudaThreadSynchronize();
-
     sortBH(s.blocksGpu());
-    //cudaThreadSynchronize();
-
-    //std::cout << "Trace computeEnergy 2" << std::endl;
     energyBH(s.blocksGpu(),k,box,per,(&(((CUDA_energy*)s.eGpu())->dipolar)));
-    //cudaThreadSynchronize();
  };
 
 protected:
@@ -123,7 +82,6 @@ protected:
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);
-//void activate_dipolar_barnes_hut();
 void deactivate_dipolar_barnes_hut();
 
 extern DipolarBarnesHut *dipolarBarnesHut;

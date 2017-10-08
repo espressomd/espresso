@@ -25,13 +25,6 @@
 
 #ifdef BARNES_HUT
 
-/**
- *
- */
-
-//#include <cuda.h>
-//#include <curand.h>
-//#include <curand_kernel.h>
 #include <cstdio>
 #include <iostream>
 #include <time.h>
@@ -85,8 +78,6 @@ void fillConstantPointers(float* r, float* dip,
 
 void initBHgpu(int blocks);
 
-//void calcU(int blocks);
-
 void buildBoxBH(int blocks);
 
 void buildTreeBH(int blocks);
@@ -98,18 +89,6 @@ void sortBH(int blocks);
 void forceBH(int blocks, dds_float k, float* f, float* torque, dds_float box_l[3],int periodic[3]);
 
 void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float* E);
-
-//void integrate(int blocks);
-
-//void fillGloabalChangableBH(ChangableParams* chPar);
-
-//void fillGloabalConstantBH(ConstParams* cPar);
-
-//float3 averageU(int blocks);
-
-//void getCurrentPhysBH(int blocks, float* devOldPhy);
-
-//void getRingStatBH(int blocks, int nRings, int nPart, float** devOldPhy, float* dphy, int* pd);
 
 #endif /* DIPOLARBARNESHUT_CUH_ */
 #endif // BARNES_HUT
