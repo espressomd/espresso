@@ -39,7 +39,7 @@ from .system import System
 
 class Analysis(object):
 
-    _systemp =None
+    _systemp = None
 
     def __init__(self,system):
         if not isinstance(system,System):
@@ -64,11 +64,11 @@ class Analysis(object):
     #
 
     def mindist(self, p1='default', p2='default'):
-        """Minimal distance between particles.
-
+        """Minimal distance between two sets of particles.
+        
         Parameters
         ----------
-        p1, p2: lists of particle types
+        p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
 
         """
 
@@ -112,15 +112,16 @@ class Analysis(object):
 
         Parameters
         ----------
-        id : int, optional
-            Calculate distance to particle with id `id`.
-        pos : array of floats, optional
-            Calculate distance to position `pos`.
+        id : :obj:`int`, optional (:attr:`espressomd.particle_data.ParticleHandle.id`)
+             Calculate distance to particle with id `id`.
+        pos : array of :obj:`float`, optional
+              Calculate distance to position `pos`.
 
         Returns
         -------
-        float
+        :obj:`float`
             The calculated distance.
+
         """
 
         if id == None and pos == None:
@@ -158,15 +159,18 @@ class Analysis(object):
 
         Parameters
         ----------
-        include_particles : bool, optional
-            Include the particles contribution to the linear momentum. Default: True.
-        include_lbfluid : bool, optional
-            Include the Lattice Boltzmann fluid contribution to the linear momentum. Default: True.
+        include_particles : :obj:`bool`, optional
+                            wether to include the particles contribution to the linear
+                            momentum.
+        include_lbfluid : :obj:`bool`, optional
+                          wether to include the Lattice Boltzmann fluid
+                          contribution to the linear momentum.
 
         Returns
         -------
-        float
+        :obj:`float`
             The linear momentum of the system.
+
         """
         return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
@@ -182,13 +186,14 @@ class Analysis(object):
 
         Parameters
         ----------
-        part_type : int
-            Particle type for which to calculate the center of mass.    
+        part_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+                    Particle type for which to calculate the center of mass.    
 
         Returns
         -------
-        array of floats
+        array of :obj:`float`
             The center of mass of the system.
+
         """
         return c_analyze.centerofmass(c_analyze.partCfg(), part_type)
 
@@ -204,17 +209,18 @@ class Analysis(object):
 
         Parameters
         ----------
-        pos : array of floats
-            Reference position for the neighborhood.
-        r_catch : float
-            Radius of the region.
-        plane : {'xy', 'xz', 'yz'}
-            If given, `r_catch` is the distance to the respective plane.
+        pos : array of :obj:`float`
+              Reference position for the neighborhood.
+        r_catch : :obj:`float`
+                  Radius of the region.
+        plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
+                If given, `r_catch` is the distance to the respective plane.
 
         Returns
         -------
-        array of ints
+        array of :obj:`int`
             The neighbouring particle ids.
+
         """
 
         cdef int planedims[3]
@@ -326,18 +332,22 @@ class Analysis(object):
 
 
     def pressure(self, v_comp=0):
-        """Pressure calculation
-           pressure(v_comp=False)
-           """
+        """Get the systems pressure.
+           
+        Parameters
+        ----------
+        v_comp : :obj:`bool`, optional
+                    
+        """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
-    #
+    
         # Dict to store the results
         p = OrderedDict()
 
         # Update in espresso core if necessary
         if (c_analyze.total_pressure.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
@@ -352,7 +362,7 @@ class Analysis(object):
         # Ideal
         p["ideal"] = c_analyze.total_pressure.data.e[0]
 
-        # Nonbonded
+        # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(c_analyze.n_bonded_ia):
@@ -371,7 +381,7 @@ class Analysis(object):
         total_non_bonded = 0
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
                 total_non_bonded += c_analyze.obsstat_nonbonded(& c_analyze.total_pressure, i, j)[0]
@@ -380,7 +390,6 @@ class Analysis(object):
                 p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
                 total_inter += c_analyze.obsstat_nonbonded_inter(& c_analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
-        p["non_bonded_inter"] = total_inter
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
 
@@ -410,7 +419,12 @@ class Analysis(object):
 
 
     def stress_tensor(self, v_comp=0):
-        """stress_tensor(v_comp=0)
+        """Get the stress tensor.
+
+        Parameters
+        ----------
+        v_comp : :obj:`bool`
+
         """
         check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
 
@@ -420,30 +434,30 @@ class Analysis(object):
         # Update in espresso core if necessary
         if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
             c_analyze.update_pressure(v_comp)
-    #
+
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         tmp = np.zeros(9)
         for i in range(9):
-            value = c_analyze.total_p_tensor.data.e[i]
             for k in range(c_analyze.total_p_tensor.data.n // 9):
-                value += c_analyze.total_p_tensor.data.e[9*k + i]
-            # I don't know, why the 1/2 is needed.
-            tmp[i]=value/2.
+                tmp[i] += c_analyze.total_p_tensor.data.e[9*k + i]
 
         p["total"] = tmp.reshape((3,3))
 
         # Ideal
         p["ideal"] = create_nparray_from_double_array(
             c_analyze.total_p_tensor.data.e, 9)
+        p["ideal"] = p["ideal"].reshape((3,3))
 
-        # Nonbonded
+        # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(c_analyze.n_bonded_ia):
             if (bonded_ia_params[i].type != 0):
-                p["bonded", i] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9), (3, 3))
+                p["bonded", i] = np.reshape( create_nparray_from_double_array(
+                  c_analyze.obsstat_bonded(&c_analyze.total_p_tensor, i), 9),
+                  (3, 3) )
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -454,16 +468,23 @@ class Analysis(object):
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(c_analyze.n_particle_types):
-            for j in range(c_analyze.n_particle_types):
+            for j in range(i,c_analyze.n_particle_types):
                 #      if checkIfParticlesInteract(i, j):
-
-                p["non_bonded", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded( & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+                p["non_bonded", i, j] = np.reshape(
+                  create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
+                    &c_analyze.total_p_tensor, i, j), 9), (3, 3) )
                 total_non_bonded += p["non_bonded", i, j]
 
-                p["non_bonded_intra", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_intra( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_intra", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_intra(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
-                p["non_bonded_inter", i, j] = np.reshape(create_nparray_from_double_array(c_analyze.obsstat_nonbonded_inter( & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                p["non_bonded_inter", i, j] = np.reshape(
+                  create_nparray_from_double_array(
+                    c_analyze.obsstat_nonbonded_inter(
+                      &c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3) )
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -475,7 +496,8 @@ class Analysis(object):
             total_coulomb = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.coulomb, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.coulomb, 9), (3, 3) )
                 total_coulomb = p["coulomb", i]
             p["coulomb"] = total_coulomb
 
@@ -484,7 +506,8 @@ class Analysis(object):
             total_dipolar = np.zeros(9)
             for i in range(c_analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.total_p_tensor.dipolar, 9), (3, 3))
+                    create_nparray_from_double_array(
+                      c_analyze.total_p_tensor.dipolar, 9), (3, 3) )
                 total_dipolar = p["dipolar", i]
             p["dipolar"] = total_dipolar
 
@@ -521,8 +544,13 @@ class Analysis(object):
     #
 
 
-    def energy(self, etype='all', id1='default', id2='default'):
-        """energy()
+    def energy(self):
+        """Calculate the systems energy.
+
+        Returns
+        -------
+        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb']}
+
         """
     #  if system.n_part == 0:
     #    raise Exception('no particles')
@@ -647,8 +675,8 @@ class Analysis(object):
 
 
     def structure_factor(self, sf_types=None, sf_order=None):
-        """Structure Factor
-           structure_factor(sf_types = None, sf_order = None )
+        """Calculate the structure factor for given types.
+
         """
 
         if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
@@ -669,13 +697,42 @@ class Analysis(object):
 
     def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
             r_min=0.0, r_max=None, r_bins=100, n_conf=None):
+        """Calculate a radial distribution function.
+
+        Parameters
+        ----------
+        rdf_type : string
+           'rdf' or '<rdf>'.
+        type_list_a : array like
+           Left types of the rdf
+        type_list_b : array like, optional
+           Right types of the rdf01
+        r_min : float
+           Minimal distance to consider
+        r_max : float
+           Maximal distance to consider
+        r_bins : int
+           Number of bins
+        n_conf : int, optional
+           If rdf_type is '<rdf>' this determines
+           the number of stored configs that are used.
+
+        Returns
+        -------
+        array_like
+          Where [0] contains the midpoints of the bins,
+          and [1] contains the values of the rdf.
+
+        """
 
         if rdf_type is None:
             raise ValueError("rdf_type must not be empty!")
         if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
             raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is None) or (not hasattr(type_list_b, '__iter__')):
+        if type_list_b and (not hasattr(type_list_b, '__iter__')):
             raise ValueError("type_list_b has to be a list!")
+        if type_list_b is None:
+            type_list_b = type_list_a
 
         if rdf_type != 'rdf':
             if n_configs == 0:
@@ -698,9 +755,6 @@ class Analysis(object):
         elif rdf_type == '<rdf>':
             c_analyze.calc_rdf_av(c_analyze.partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
-        elif rdf_type == '<rdf-intermol>':
-            c_analyze.calc_rdf_intermol_av(c_analyze.partCfg(),
-                p1_types, p2_types, r_min, r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
                 "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
@@ -721,7 +775,8 @@ class Analysis(object):
 
     def distribution(self, type_list_a=None, type_list_b=None,
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
-        """Calculates the distance distribution of particles
+        """Calculates the distance distribution of particles.
+
         """
 
         if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):

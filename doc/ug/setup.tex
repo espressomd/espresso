@@ -681,7 +681,7 @@ internal organization, refer to section
 }
 \end{pysyntax}
 
-
+Catalytic
 \subsection{Domain decomposition}
 \index{domain decomposition}
 
@@ -712,7 +712,7 @@ interactions only occur between particles in adjacent cells. Since the
 interaction range should be much smaller than the total system size,
 leaving out all interactions between non-adjacent cells can mean a
 tremendous speed-up. Moreover, since for constant interaction range,
-the number of particles in a cell depends only on the density. The
+the number of particles in a Catalyticcell depends only on the density. The
 number of interactions is therefore of the order N instead of order
 $N^2$ if one has to calculate all pair interactions.
 
@@ -789,7 +789,7 @@ N*\var{n\_layers} layers along the z axis. Since in x and y direction
 there are no processor boundaries, the implementation is basically
 just a stripped down version of the domain decomposition cellsystem.
 
-\section{CUDA}
+\section{CUDA}Catalytic
 \label{sec:cuda}
 \begin{essyntax}
   \variant{1} cuda list
@@ -926,54 +926,37 @@ The following limitations currently apply for the collision detection:
 \section{Catalytic Reactions}
 \label{sec:Reactions}
 
-With the help of the feature \feature{CATALYTIC_REACTIONS}, one can
-define three particle types to act as reactant (e.g. $H_2O_2$), catalyzer (e.g. platinum), and
-products (e.g. $O_2$ and $H_2O$). Using these reaction categories, we model the following
-chemical reaction system which is not thermodynamically consistent but rather intended to simulate active swimmers and their propulsion:
-\begin{eqnarray}
-rt & \rightleftharpoons & pr ; \\
-rt & \xrightarrow{ct} & pr.
-\end{eqnarray}
-The first line indicates that there is a reversible chemical
-reaction in the bulk that converts the reactant particles (\var{rt}) into product
-(\var{pr}) particles, leading to an equilibrium state. This reaction is intended to artificially recover the reactant (\var{rt}) particles in this model. In the case of $H_2O_2$ this is artificial since it does not spontaneously build up if oxygen is dissolved in water. The second line
-indicates that in the vicinity of a catalyst (\var{ct}) the forward
-reaction takes place, i.e., conversion of reactants into
-products. Of course the decompositon of a reactand into a product also takes place if there is no catalyst (since a catalyst has no effect on the chemical equilibrium) however the reaction is much faster than normally in the presence of a catalyst and the normal decomposition is neglected since it takes place so slowly. This is correct chemistry for waterperoxide since it spontaneously decomposes almost completely and much faster in the presence of a catalyst.
+With the help of the feature \feature{CATALYTIC_REACTIONS}, one can define three particle types to act as reactant (e.g. $H_{2}O_{2}$), catalyzer (e.g. platinum), and product (e.g. $O_{2}$ and $H_{2}O$). The current setup allows one to simulate active swimmers and their chemical propulsion. 
 
-The equilibrium reaction is described by the equilibrium
-constant
-\begin{equation}
-K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
-\end{equation}
-with $[rt]$ and $[pr]$ the reactant and product concentration and
-$k_{\text{eq,$\pm$}}$ the forward and backward reaction rate
-constants, respectively. The rate constants that specify the change in
-concentration for the equilibrium and catalytic reaction are given by
-\begin{eqnarray}
-\frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
-\frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
--\frac{d[rt]}{dt} \;\; = \;\; \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
-\end{eqnarray}
-respectively.
+For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
+\begin{align}
+  \label{eq:H2O2}
+    H_{2}O_{2} &\xrightarrow{\text{Pt}} 2 H^{+} + 2 e^{-} + O_{2} \\
+    2 H^{+} + 2 e^{-} + H_{2}O_{2} &\xrightarrow{\text{Au}} 2 H_{2}O
+\end{align}
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be 
+\begin{align}
+  \label{eq:simple}
+    A &\xrightarrow{C^{+}} B \\
+    B &\xrightarrow{C^{-}} A 
+\end{align}
+where on the upper half of the catalyst $C^{+}$ a species $A$ is converted into $B$, and on the lower half the opposite reaction takes place. Note that when $A$ and $B$ are charged, this reaction conserves charge, provided the rates are equal. 
 
-In the current \es implementation we assume $k_{\text{eq,+}} =
-k_{\text{eq,-}} \equiv k\_eq$ and therefore $K_{\text{eq}}=1$. The
-user can specify $k\_eq \ge 0$ and $k\_ct \equiv k_{\text{ct}} >
-0$. The former rate constant is applied to all reactant and product
-particles in the system, whereas the latter is applied only to the
-reactant particles in the vicinity of a catalyst particle. Reactant
-particles that have a distance of \var{r} or less to at least one
-catalyzer particle are therefore converted into product particles with
-rate constant $k\_eq + k\_ct$. The conversion of particles is done
-stochastically on the basis of the relevant rate constant (\var{k}
-$\ge$ 0):
+In \es\ the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the \textit{reaction range}: $r$. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by 
 \begin{equation}
-\label{eq:rate} P_{\text{cvt}} = 1 - \exp \left( - k  \Delta t  \right) ,
+  \label{eq:prob}
+  P_{\text{move}} = 1 - \mathrm{e}^{-k_{\text{ct}}\,\Delta t} ,
 \end{equation}
-with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$
-the integration time step. If the equilibrium rate constant is not
-specified it is assumed that \var{k\_eq} = 0.
+with the reaction rate $k_{\text{ct}}$ and the simulation time step $\Delta t$. A pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
+\begin{enumerate}
+\item Both partners of the reactant-product pair have to reside within
+  the reaction range.
+\item The product has to reside in the upper half-space of the
+  reaction range.
+\item The reactant has to reside in the lower half-space of the
+  reaction range.
+\end{enumerate}
+Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
 \begin{pysyntax}
   \object{
@@ -986,22 +969,18 @@ specified it is assumed that \var{k\_eq} = 0.
     catalyzer_type = \arg{int},
     ct_range       = \arg{float},
     ct_rate        = \arg{float},
-    eq_rate        = \arg{float},
-    react_once     = \arg{bool},
-    swap           = \arg{bool}
+    react_once     = \arg{bool}
   }
 \end{pysyntax}
 
 \begin{essyntax}
 \variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
-product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
-\opt{eq_rate \var{k\_eq}} \opt{react_once \var{on/off}} \opt{swap \var{on/off}}
+product_type \var{pt} range \var{r} ct_rate \var{k\_ct} \opt{react_once \var{on/off}}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
-  \required{CATALYTIC_REACTIONS\footnote{The current implementation
-      also requires the use of verlet lists and domain
-      decomposition.}}
+  \required{CATALYTIC_REACTIONS\footnote{The current implementation       also requires the use of verlet lists and domain decomposition.}}
+  \required{ROTATION\footnote{This is necessary to define the orientation of the particle and thus the swap half spaces}}
 \end{features}
 \end{essyntax}
 
@@ -1022,42 +1001,10 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
   constant is given by \var{k\_ct}\footnote{Currently only strictly
     positive values of the catalytic conversion rate constant are
     allowed. Setting the value to zero is equivalent to
-    \texttt{reaction off}.} and to override the default rate constant
-  for the equilibrium reaction (\var{k\_eq} = 0), one can specify it
-  by \var{k\_eq}. By default each reactant particle is checked against
-  each catalyst particle (\texttt{react\_once} \emph{off}). However,
-  when creating smooth surfaces using many catalyst particles, it can
-  be desirable to let the reaction rate be independent of the surface
-  density of these particles. That is, each particle has a likelihood
-  of reacting in the vicinity of the surface (distance is less than
-  $r$) as specified by the rate constant, i.e., \emph{not} according
-  to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t \right)$, with
-  $n$ the number of local catalysts. To accomplish this, each reactant
+    \texttt{reaction off}.}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when using many catalyst particles, it can
+  be desirable to let the reaction rate be independent of the density of these particles. To accomplish this, each reactant
   is considered only once each time step by using the option
   \texttt{react\_once} \emph{on}.
-
-  In the default setup a particle of type \emph{reactant\_type} is
-  converted to a particle of type \emph{product\_type} and vice versa,
-  when the particle is within the reaction range and a reaction move
-  takes place.  Unfortunately, in this scheme the simulation does not
-  conserve the particle number of each type, respectively.  This is
-  the (default) case when the parameter \texttt{swap} is set to
-  \emph{off}.  Switching it to \emph{on} enables an alternative
-  reaction algorithm in which two particles of opposing types
-  (\emph{reactant\_type} and \emph{product\_type}) have to be within
-  the reaction range.  Imagine the reaction range around the
-  \emph{catalyzer\_type} particle as a sphere.  Upper and lower
-  hemisphere are distinguished by the \texttt{quat} property (i.e.\
-  the direction) of the catalyzer.  In the \texttt{swap} algorithm it
-  does not suffice for these two particles to be anywhere within the
-  reaction range, but a particle of \emph{reactant\_type} has to be in
-  the lower hemisphere and the partner of \emph{product\_type} in the
-  upper hemisphere.  As you may have noticed this scheme models a
-  Janus particle where one hemisphere is coated with a catalyzing
-  surface (in most cases Pt).  When the reaction move takes place the
-  types \emph{and the charges}\footnote{requires
-    \texttt{ELECTROSTATICS}} of the pair are interchanged.  This
-  ensures the conservation of charge and particles per type.
 
   The reaction command is set up such that the different properties
   may be influenced individually.
@@ -1067,8 +1014,8 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 \end{itemize}
 
 The Python interface has some modified capabilities with respect to
-the TCL interface.  For example, you can alter parameters using the
-\texttt{.setup()} method of the reaction instance.  The reaction
+the TCL interface. For example, you can alter parameters using the
+\texttt{.setup()} method of the reaction instance. The reaction
 mechanism can be inhibited and restarted using \texttt{.stop()} and
 \texttt{.start()}.
 

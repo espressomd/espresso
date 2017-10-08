@@ -48,7 +48,7 @@ contributors from all over the world.
 ## Documentation
 
 You can find documentation on how to compile, use and develop ESPResSo
-on the homepage at [http://espressomd.org](http://espressomd.org).
+on the homepage at [http://espressomd.org/html/doc/index.html](http://espressomd.org/html/doc/index.html).
 
 ESPResSo is intended to be used by people that have proper knowledge
 of simulation techniques and know how to use them. We do not take

@@ -68,7 +68,7 @@ IF CATALYTIC_REACTIONS:
                     "ct_rate": None,
                     "eq_rate": 0.0,
                     "react_once": False,
-                    "swap": False}
+                    "swap": True}
 
         def _set_params_in_es_core(self):
             globals.reaction.product_type = self._params["product_type"]

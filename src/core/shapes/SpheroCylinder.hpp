@@ -28,7 +28,7 @@
 namespace Shapes {
 class SpheroCylinder : public Cylinder {
 public:
-  SpheroCylinder() : Cylinder(){};
+  SpheroCylinder() : Cylinder() { m_open = true; };
   int calculate_dist(const double *ppos, double *dist,
                      double *vec) const override;
 };
