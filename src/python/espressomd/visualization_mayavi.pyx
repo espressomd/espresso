@@ -29,11 +29,18 @@ output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
 cdef class mayaviLive(object):
-    """This class provides live visualization using Enthought Mayavi.
-    Use the update method to push your current simulation state after
-    integrating. If you run your integrate loop in a separate thread, 
-    you can call run_gui_event_loop in your main thread to be able to
-    interact with the GUI."""
+    """
+    This class provides live visualization using Enthought Mayavi.  Use the
+    update method to push your current simulation state after integrating. If
+    you run your integrate loop in a separate thread, you can call
+    run_gui_event_loop in your main thread to be able to interact with the GUI.
+    
+    Arguments
+    ---------
+    system : instance of espressomd.System
+    particle_sizes : (optional) function, list, or dict, which maps particle types to radii
+
+    """
 
     cdef object system
     cdef object particle_sizes
@@ -52,12 +59,6 @@ cdef class mayaviLive(object):
 
 
     def __init__(self, system, particle_sizes='auto'):
-        """Constructor.
-        **Arguments**
-
-        :system: instance of espressomd.System
-        :particle_sizes: (optional) function, list, or dict, which maps particle types to radii
-        """
         self.system = system
         self.particle_sizes = particle_sizes
 
@@ -106,8 +107,11 @@ cdef class mayaviLive(object):
         return radius
 
     def _draw(self):
-        """Update the Mayavi objects with new particle information.
-        This is called periodically in the GUI thread"""
+        """
+        Update the Mayavi objects with new particle information.
+        This is called periodically in the GUI thread.
+        
+        """
         if self.data is None:
             return
 
@@ -137,8 +141,12 @@ cdef class mayaviLive(object):
 
     def update(self):
         """Pull the latest particle information from Espresso.
-        This is the only function that should be called from the computation thread.
-        It does not call any Mayavi functions unless it is being called from the main (GUI) thread."""
+        
+        This is the only function that should be called from the computation
+        thread.  It does not call any Mayavi functions unless it is being
+        called from the main (GUI) thread.
+        
+        """
 
         if self.last_T is not None and self.last_T == self.system.time:
             return
@@ -222,14 +230,21 @@ cdef class mayaviLive(object):
 
     def processGuiEvents(self):
         """Process GUI events, e.g. mouse clicks, in the Mayavi window.
-        Call this function as often as you can to get a smooth GUI experience."""
+        
+        Call this function as often as you can to get a smooth GUI experience.
+        
+        """
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.process_events()
 
     def start(self):
         """Start the GUI event loop.
-        This function blocks until the Mayavi window is closed.
-        So you should only use it if your Espresso simulation's integrate loop is running in a secondary thread."""
+        
+        This function blocks until the Mayavi window is closed. So you should
+        only use it if your Espresso simulation's integrate loop is running in
+        a secondary thread.
+        
+        """
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.start_event_loop()
 
