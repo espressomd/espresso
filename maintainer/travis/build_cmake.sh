@@ -45,6 +45,7 @@ function cmd {
 [ -z "$with_coverage" ] && with_coverage="false"
 [ -z "$myconfig" ] && myconfig="default"
 [ -z "$check_procs" ] && check_procs=2
+[ -z "$build_procs" ] && build_procs=2
 [ -z "$make_check" ] && make_check="true"
 
 cmake_params="-DTEST_NP:INT=$check_procs $cmake_params"
@@ -57,7 +58,7 @@ fi
 
 outp insource srcdir builddir \
     cmake_params with_fftw \
-    with_python_interface with_coverage myconfig check_procs
+    with_python_interface with_coverage myconfig check_procs build_procs
 
 # check indentation of python files
 pep8 --filename=*.pyx,*.pxd,*.py --select=E111 $srcdir/src/python/espressomd/
@@ -73,7 +74,22 @@ else
     exit $ec
 fi
 # enforce style rules
-grep 'class[^_].*[^\)]\s*:\s*$' $(find . -name '*.py*') && echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1
+pylint_command () {
+    if hash pylint 2> /dev/null; then
+        pylint "$@"
+    elif hash pylint3 2> /dev/null; then
+        pylint3 "$@"
+    else
+        echo "pylint not found";
+        exit 1
+    fi
+}
+if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
+    score_option='--score=no'
+else
+    score_option=''
+fi
+pylint_command $score_option --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
 if ! $insource; then
     if [ ! -d $builddir ]; then
@@ -128,21 +144,21 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-cmd "make -j2" || exit $?
+cmd "make -j${build_procs}" || exit $?
 
 end "BUILD"
 
 if $make_check; then
     start "TEST"
 
-    cmd "make -j2 check_python $make_params" || exit 1
-    cmd "make -j2 check_unit_tests $make_params" || exit 1
+    cmd "make -j${build_procs} check_python $make_params" || exit 1
+    cmd "make -j${build_procs} check_unit_tests $make_params" || exit 1
 
     end "TEST"
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
 
     end "TEST"
 fi
@@ -155,5 +171,9 @@ if $with_coverage; then
     lcov --remove coverage.info '*/unit_tests/*' --output-file coverage.info # filter out unit test
     lcov --list coverage.info #debug info
     # Uploading report to CodeCov
-    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+    if [ -z "$CODECOV_TOKEN" ]; then
+        bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+    else
+        bash <(curl -s https://codecov.io/bash) -t "$CODECOV_TOKEN" || echo "Codecov did not collect coverage reports"
+    fi
 fi
