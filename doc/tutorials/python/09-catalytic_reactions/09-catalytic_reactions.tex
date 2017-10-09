@@ -50,7 +50,7 @@
 
 \maketitle
 
-\section{Cataltic Reactions}
+\section{A Special Case of Catalytic Reactions}
 
 Many chemical processes in nature do not occur at room temperature, because the energy penalty is too high for thermal fluctuations to overcome. The activation energy of such processes can in some cases be lowered significantly in the presence of a catalyzer (a catalytic substance). Alternatively, a catalyzer can give access to reaction pathways that are atypical. Below, we discuss this concept in some detail, in order to prepare you for its application to catalytic swimmers.
 
@@ -78,7 +78,7 @@ A catalyzer accelerates the reactions, by shifting the barriers in the free ener
 
 Let us now consider the following situation. When the back reaction rate is very small compared to the forward rate, there is relative abundance of products in equilibrium, see Eq.~\eqref{eq:const}. If, however, one starts out in a situation where there are predominantly reactant species and almost no products, the back reaction hardly occurs (the back reaction rate is small). In this case, the system is far out of equililibrium and attempts to reach equilibrium `as quickly as possible', by almost exclusively creating product species. 
 
-An example of this occurs in a freshly prepared hydrogenperoxide solution. Hydrogenperoxide is decomposed into water and (dissolved) air and eventually will assume an equilibrium. Typically the reactions involved are is slow. However, when platinum is introduced, the reaction can be significantly accellerated. In that case, the platinum will predominantly lead to the decomposition of hydrogen peroxide, with the recombination hardly occuring, especially when the oxygen is forms bubbles and is removed from the solution. Most artificial self-propelled particles use this platinum-accelerated decomposition of a hydrogenperoxide solution (far from equilibrium) to convert chemical energy into mechanical work.  
+An example of this occurs in a freshly prepared hydrogenperoxide solution. Hydrogenperoxide is decomposed into water and (dissolved) air and eventually will assume an equilibrium. Typically the reactions involved are is slow. However, when platinum is introduced, the reaction can be significantly accellerated. In that case, the platinum will predominantly lead to the decomposition of hydrogen peroxide, with the recombination hardly occuring, especially when the oxygen forms bubbles and is removed from the solution. Most artificial self-propelled particles use this platinum-accelerated decomposition of a hydrogenperoxide solution (far from equilibrium) to convert chemical energy into mechanical work.  
 
 In the situation described above, we can for all intents and purposes ignore the backward reaction and effectively only the forward reaction takes place.
 \begin{equation}
@@ -96,16 +96,16 @@ Thus far, we have discussed a continuum model for catalytically induced decompos
 
 Phenomenologically, catalysis is triggered by a contact interaction,~\textit{i.e.}, the reactant has to make physical contact with the catalyzer. \es\ technically only simulates point particles --- they obtain a size through the interaction potentials. To impose a finite extent, we define a \textit{reaction range} around the catalyzer inside of which the conversion of a reactant to a product is feasible. This means that we have explicit catalyzer, reactant, and product particles, for which the inter-particle distance imposes whether a reaction takes place or not.
 
-Next we have to think about how to implement \eqref{eq:diff-cat} is this picture. Simply integration \eqref{eq:diff-cat} yields an exponential decay as a function of time, see above. On the particle level, the reaction is a stochastic process and takes place with a certain probability, depending on the reaction rate. This probability is inversely proportional to the exponential decay. We thus assign
+Next we have to think about how to implement \eqref{eq:diff-cat} is this picture. Simply integrating \eqref{eq:diff-cat} yields an exponential decay as a function of time, see above. On the particle level, the reaction is a stochastic process and takes place with a certain probability, depending on the reaction rate. This probability is inversely proportional to the exponential decay. We thus assign
 \begin{equation}
   \label{eq:prob}
-  P_{\text{move}} = 1 - \mathrm{e}^{-k\,\Delta t} ,
+  P_{\text{move}} = 1 - \mathrm{e}^{-k_{\text{ct}}\,\Delta t} ,
 \end{equation}
-with the reaction rate $k \in \{ k_{\text{eq},+}, k_{\text{eq},-}, k_{\text{ct}} \}$ and the simulation time step $\Delta t$.
+with simulation time step $\Delta t$.
 
 The above is a recipe for implementing Eq.~\eqref{eq:diff-cat} on the particle level, within a MD context. In the next section, we refine the concepts introduced here to cover the specific case of a catalytic Janus particle, capable of self-propulsion (swimming).
 
-\section{Catalytic Reactions in \es}
+\section{Catalytic Reactions for Swimming in \es}
 
 Here, we will discuss the implementation of a catalytic reaction in \es\ in more detail in more detail. There are only three species --- of the $N \ge 3$ possible species comprising the system --- which can be involved in the catalytic reaction. Multiple reactions involving some or all of the species are not possible at this moment. The reaction scheme is set up to conveniently model catalytic Janus swimmers and conserve particle numbers. This has the advantage that the reactions can be used for electrostatic algorithms, where charge conservation is prerequisite. 
 
@@ -125,7 +125,7 @@ Let us begin by describing the chemical swimmer that we wish to model. Consider 
 \end{align}
 The block arrow in the sketch points in the direction of movement induced by the reaction. We refer to upper and lower hemisphere (or half-space) in the following, as two regions that are determined with respect to the orientation of the particle and the plane through the center of the particle, with the orientation as its normal. In the present case one might choose \ch{Au} as the upper hemisphere and \ch{Pt} as the lower hemisphere. The reaction region is bounded by the \textit{reaction range}: $r$.
 
-Examining the reactions in Eq.~\eqref{eq:H2O2}, we observe that catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. Assuming that it is the change in distribution of charged species that lead to motion of the swimmer, a process refered to as self-electrophoresis~\cite{Gibbs_10,Wheat_10}, then a minimal model for this would be 
+Examining the reactions in Eq.~\eqref{eq:H2O2}, we observe that catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. Assuming that it is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis~\cite{Gibbs_10,Wheat_10}, then a minimal model for this would be 
 \begin{align}
   \label{eq:simple}
   \ch{
@@ -133,7 +133,7 @@ Examining the reactions in Eq.~\eqref{eq:H2O2}, we observe that catalytic surfac
     B &->[ C^{-} ] A 
   }
 \end{align}
-where on the upper half of the catalyst $C^{+}$ a species $A$ is converted into $B$, and on the lower half the opposite reaction takes place. Note that when $A$ and $B$ are charged, this reaction conserves charge, provided the rates are equal. 
+where on the upper half of the catalyst $C^{+}$ a species $A$ is converted into $B$, and on the lower half $C^{-}$ the opposite reaction takes place. Note that when $A$ and $B$ are charged, this reaction conserves charge, provided the rates are equal. 
 
 In \es\, we model this reaction as follows. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from top to bottom with a rate prescribed by Eq.~\eqref{eq:prob}, and a pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
 \begin{enumerate}
@@ -149,7 +149,7 @@ The situation is illustrated in Fig.~\ref{fig:nc}.
 \begin{figure}
   \centering
   \includegraphics{FIGURES/number-conserving}
-  \caption{\label{fig:nc}Illustration of the catalytic scheme. The cut-off range of $r$ around the catalyzer (green) is subdivided into two half-spaces. A reactant-product pair (blue and red connected by dotted line)is converted by swapping them if the pair is selected, and only if the product (red) resides in the upper half-space (silver background) and the corresponding reactant (blue) resides in the lower half-space (gold background). The catalytic reaction leads to a conversion of one reactant-product pair of particles in this example, denoted by the arrows annotated with $k_{\text{ct}}$. The second reactant-product pair within the reaction range is not viable for conversion. Additionally, particles in a pair may only undergo one exhange per time step.}
+  \caption{\label{fig:nc}Illustration of the catalytic scheme. The cut-off range of $r$ around the catalyzer (green) is subdivided into two half-spaces. A reactant-product pair (blue and red connected by dotted line)is converted by swapping them if the pair is selected, and only if the product (red) resides in the upper half-space (silver background) and the corresponding reactant (blue) resides in the lower half-space (gold background). The catalytic reaction leads to a conversion of one reactant-product pair of particles in this example, denoted by the arrows annotated with $k_{\text{ct}}$. The second reactant-product pair within the reaction range is not viable for conversion. Additionally, particles in a pair may only undergo only one exhange per time step.}
 \end{figure}
 
 \subsection{Usage in \es}

@@ -455,3 +455,84 @@ chosen particle id, for a particle of the given type. The keyword
 ``status`` will return a list with all particles with the given type,
 similarly giving ``number`` as argument will return the number of
 particles which share the given type.
+
+Self-propelled swimmers
+-----------------------
+
+.. seealso::
+
+    :class:`espressomd.particle_data.ParticleHandle.swimming`
+
+Langevin swimmers
+~~~~~~~~~~~~~~~~~
+
+::
+
+    import espressomd
+
+    system = espressomd.System()
+
+    system.part.add(id=0, pos=[1,0,0], swimming={'f_swim':0.03})
+
+This enables the particle to be self-propelled in the direction determined by
+its quaternion. For setting the particle's quaternion see
+:class:`espressomd.particle_data.ParticleHandle.quat`. The self-propulsion
+speed will relax to a constant velocity, that is specified by ``v_swim``.
+Alternatively it is possible to achieve a constant velocity by imposing a
+constant force term ``f_swim`` that is balanced by friction of a (Langevin)
+thermostat. The way the velocity of the particle decays to the constant
+terminal velocity in either of these methods is completely determined by the
+friction coefficient. You may only set one of the possibilities ``v_swim`` *or*
+``f_swim`` as you cannot relax to constant force *and* constant velocity at the
+same time. Note that there is no real difference between ``v_swim`` and
+``f_swim``, since the latter may aways be chosen such that the same terminal
+velocity is achieved for a given friction coefficient.
+
+Lattice-Boltzmann (LB) swimmers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    import espressomd
+
+    system = espressomd.System()
+
+    system.part.add(id=1, pos=[2,0,0], rotation=[1,1,1], swimming={
+       'f_swim':0.01, 'mode':'pusher', 'dipole_length':2.0, 'rotational_friction':20})
+
+For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
+item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
+because the self-propulsion is achieved by a force-free mechanism, which has
+strong implications for the far-field hydrodynamic flow field induced by the
+self-propelled particle. In |es| only the dipolar component of the flow field
+of an active particle is taken into account. This flow field can be generated
+by a *pushing* or a *pulling* mechanism, leading to change in the sign of the
+dipolar flow field with respect to the direction of motion. You can specify the
+nature of the particle's flow field by using one of the modes: ``pusher`` or
+``puller``. You will also need to specify a ``dipole_length`` which determines
+the distance of the source of propulsion from the particle's center. Note that
+you should not put this distance to zero; |es| (currently) does not support
+mathematical dipole flow fields. The key ``rotational_friction`` can be used to
+set the friction that causes the orientation of the particle to change in shear
+flow. The torque on the particle is determined by taking the cross product of
+the difference between the fluid velocity at the center of the particle and at
+the source point and the vector connecting the center and source.
+
+You may ask: “Why are there two methods ``v_swim`` and ``f_swim`` for the
+self-propulsion using the lattice-Bolzmann algorithm?” The answer is
+straightforward. When a particle is accelerating, it has a monopolar flow-field
+contribution which vanishes when it reaches its terminal velocity (for which
+there will only be a dipolar flow field). The major difference between the
+above two methods is that with ``v_swim`` the flow field *only* has a monopolar
+moment and *only* while the particle is accelerating. As soon as the particle
+reaches a constant speed (given by ``v_swim``) this monopolar moment is gone
+and the flow field is zero! In contrast, ``f_swim`` always, i.e., while
+accelerating *and* while swimming at constant force possesses a dipolar flow
+field.
+
+.. warning::
+
+    Please note that even though swimming is interoperable with the
+    CPU version of LB it is only supported on *one* Open MPI
+    node, i.e. ``n_nodes`` = 1.
+

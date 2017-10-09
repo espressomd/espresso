@@ -125,10 +125,12 @@ x0pnt = ...
 y0pnt = ...
 z0pnt = ...
 
+# Note that the swimmer needs to rotate freely
 cent = len(system.part)
 system.part.add(id=cent,pos=[x0pnt,y0pnt,z0pnt],type=0,temp=temp,
                 gamma=frict_trans_colloid,
-                gamma_rot=frict_rot_colloid)
+                gamma_rot=frict_rot_colloid,
+                rotation=[1,1,1])
 
 # Set up the particles
 
@@ -155,9 +157,11 @@ for i in range(nA):
         y = box_l*np.random.random()
         z = box_l*np.random.random()
 
+    # reactants and products do not need to rotate
     system.part.add(pos=[x,y,z],type=1,temp=temp,
                     gamma=frict_trans_part,
-                    gamma_rot=frict_rot_part)
+                    gamma_rot=frict_rot_part,
+                    rotation=[0,0,0])
 
 for i in range(nB):
     x = box_l*np.random.random()
@@ -170,9 +174,11 @@ for i in range(nB):
         y = box_l*np.random.random()
         z = box_l*np.random.random()
 
+    # reactants and products do not need to rotate
     system.part.add(pos=[x,y,z],type=2,temp=temp,
                     gamma=frict_trans_part,
-                    gamma_rot=frict_rot_part)
+                    gamma_rot=frict_rot_part,
+                    rotation=[0,0,0])
 
 print("box: {}, npart: {}".format(system.box_l,len(system.part)))
 
