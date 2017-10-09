@@ -25,6 +25,8 @@ from espressomd.interactions import FeneBond
 from time import time
 from espressomd.correlators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularMomentum
+import trace 
+
 
 
 @ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
@@ -285,7 +287,7 @@ class LangevinThermostat(ut.TestCase):
                     corr_operation="componentwise_product", compress1="discard1")
                 s.auto_update_correlators.add(corr_omega[p])
         
-        s.integrator.run(1000000)
+        s.integrator.run(800000)
         for c in corr_vel.values():
             s.auto_update_correlators.remove(c)
         for c in corr_omega.values():
@@ -331,6 +333,7 @@ class LangevinThermostat(ut.TestCase):
            kT=kT, gamma=gamma as 3 component vector.
         """
         c=corr[p]
+        print(p,kT,gamma, type(c.obs1))
         c.finalize()
         # Integral of vacf via Green-Kubo
         #D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
@@ -404,7 +407,6 @@ class LangevinThermostat(ut.TestCase):
                     self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_a[j]/s.part[0].rinertia[j]*s.time),places=2)
                 else:
                     self.assertAlmostEqual(s.part[0].omega_body[j],o0*np.exp(-gamma_r_i/s.part[0].rinertia[j]*s.time),places=2)
-
 
 
 
