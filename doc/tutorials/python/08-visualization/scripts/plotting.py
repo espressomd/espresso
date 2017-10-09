@@ -99,6 +99,7 @@ pyplot.xlabel("time")
 pyplot.ylabel("energy")
 plot, = pyplot.plot([0],[0])
 pyplot.show(block=False)
+
 def update_plot():
     if current_time < 0:
         return
@@ -108,6 +109,8 @@ def update_plot():
     pyplot.xlim(0, energies[i,0])
     pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
     pyplot.draw()
+    pyplot.pause(0.01)
+
 def main():
     global current_time
     for i in range(0, int_n_times):
@@ -116,6 +119,7 @@ def main():
         energies[i] = (system.time, system.analysis.energy()['total'])
         current_time = i
         update_plot()
+
 main()
 
 print("Average energy: %6g" % energies[:,1].mean())

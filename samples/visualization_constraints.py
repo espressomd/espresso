@@ -1,3 +1,4 @@
+from __future__ import print_function
 from espressomd import *
 from espressomd.shapes import *
 from espressomd.visualization_opengl import *

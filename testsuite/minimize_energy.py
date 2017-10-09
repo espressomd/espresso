@@ -8,6 +8,12 @@ from espressomd.interactions import *
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),"Skipped because LENNARD_JONES turned off.")
 class test_minimize_energy(ut.TestCase):
     system = espressomd.System()
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
+
+    @classmethod
+    def setUpClass(cls):
+        np.random.seed(42)
+
     box_l = 10.0
     density = 0.6
     vol = box_l * box_l *box_l
@@ -16,7 +22,6 @@ class test_minimize_energy(ut.TestCase):
     lj_eps = 1.0
     lj_sig = 1.0
     lj_cut = 1.12246
-
 
     def runTest(self):
         self.system.box_l = [self.box_l, self.box_l, self.box_l]
@@ -37,7 +42,7 @@ class test_minimize_energy(ut.TestCase):
 
         energy = self.system.analysis.energy()
 
-        self.assertEqual(energy["total"], 0)
+        self.assertAlmostEqual(energy["total"], 0, places=10)
 
 if __name__ == "__main__":
     print("Features: ", espressomd.features())

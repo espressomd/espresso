@@ -65,8 +65,8 @@ system.analysis.distto(0)
 act_min_dist = system.analysis.mindist()
 system.cell_system.max_num_cells = 2744
 
-visualizer = visualization.mayaviLive(system)
-#visualizer = visualization.openGLLive(system)
+#visualizer = visualization.mayaviLive(system)
+visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -102,6 +102,7 @@ pyplot.xlabel("time")
 pyplot.ylabel("energy")
 plot, = pyplot.plot([0],[0])
 pyplot.show(block=False)
+
 def update_plot():
     if current_time < 0:
         return
@@ -111,6 +112,8 @@ def update_plot():
     pyplot.xlim(0, energies[i,0])
     pyplot.ylim(energies[:i+1,1].min(), energies[:i+1,1].max())
     pyplot.draw()
+    pyplot.pause(0.01)
+
 def main():
     global current_time
     for i in range(0, int_n_times):
