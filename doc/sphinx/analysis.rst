@@ -661,6 +661,9 @@ Returns the quadratic end-to-end-distance and its root averaged over all
 chains. If is used, the distance is averaged over all stored
 configurations (see section ).
 
+::
+    test code string
+
 { }
 
 
