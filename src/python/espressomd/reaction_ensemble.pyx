@@ -11,21 +11,38 @@ IF REACTION_ENSEMBLE:
 
     cdef class reaction_ensemble(object):
         """
-        This class provides the Reaction Ensemble algorithm, the Wang-Landau Reaction Ensemble algorithm and the constant pH method.
+        This class provides the Reaction Ensemble algorithm, the Wang-Landau
+        Reaction Ensemble algorithm and the constant pH method.
+        Initialize the reaction ensemble by setting the standard pressure,
+        temperature, and the exclusion radius. 
+
+        Parameters
+        ----------
+        standard_pressure : :obj:`float`
+                            The pressure in simulation units where the
+                            reactions should occur. This is an input parameter
+                            of the reaction ensemble.
+        temperature : :obj:`float`
+                      The temperature at which the reaction is performed.
+        exclusion_radius : :obj:`float`
+                           Exclusion radius is the minimal distance that a new
+                           particle must have towards another particle when the
+                           new particle is inserted. This is valid if there is
+                           some repulsive potential in the system, that brings
+                           the energy to (approximately) infinity if particles
+                           are too close and therefore :math:`\exp(-\\beta E)`
+                           gives these configurations aproximately zero
+                           contribution in the partition function. The
+                           exclusion radius needs to be set in order to avoid
+                           oppositley charged particles to be set too close to
+                           each other or in order to avoid too steep gradients
+                           from the short ranged interaction potential when
+                           using the Reaction ensemble together with a MD
+                           scheme.
+            
         """
         def __init__(self,*args,**kwargs):
             """
-            initialize the reaction ensemble by setting the standard pressure, temperature, and the exclusion radius. 
-
-            Parameters
-            ----------
-            standard_pressure : float
-                                the pressure in simulation units where the reactions should occur. This is an input parameter of the reaction ensemble
-            temperature : float
-                          the temperature at which the reaction is performed
-            exclusion_radius : float
-                               Exclusion radius is the minimal distance that a new particle must have towards another particle when the new particle is inserted. This is valid if there is some repulsive potential in the system, that brings the energy to (approximately) infinity if particles are too close and therefore :math:`\exp(-\\beta E)` gives these configurations aproximately zero contribution in the partition function. The exclusion radius needs to be set in order to avoid oppositley charged particles to be set too close to each other or in order to avoid too steep gradients from the short ranged interaction potential when using the Reaction ensemble together with a MD scheme.
-            
             """
             self._params=self._default_params()
 
@@ -75,17 +92,17 @@ IF REACTION_ENSEMBLE:
 
         def set_cylindrical_constraint_in_z_direction(center_x, center_y, radius_of_cylinder):
             """
-            constrain the reaction moves within a cylinder defined by its axis
+            Constrain the reaction moves within a cylinder defined by its axis
             passing through centres (:math:`x` and :math:`y`) and the radius.
             Requires setting the volume using :meth:`set_volume`.
 
             Parameters
             ----------
-            center_x : float
+            center_x : :obj:`float`
                        x coordinate of center of the cylinder.
-            center_y : float
+            center_y : :obj:`float`
                        y coordinate of center of the cylinder.
-            radius_of_cylinder : float
+            radius_of_cylinder : :obj:`float`
                        radius of the cylinder
 
             """
@@ -96,7 +113,8 @@ IF REACTION_ENSEMBLE:
             
         def set_wall_constraints_in_z_direction(slab_start_z,slab_end_z):
             """
-            restrict the sampling area to a slab in z-direction. Requires setting the volume using :meth:`set_volume`.
+            Restrict the sampling area to a slab in z-direction. Requires
+            setting the volume using :meth:`set_volume`.
             
             """
             RE.m_current_reaction_system.slab_start_z=slab_start_z
@@ -104,38 +122,54 @@ IF REACTION_ENSEMBLE:
         
         def get_wall_constraints_in_z_direction(self):
             """
-            returns the restrictions of the sampling area in z-direction.             
+            Returns the restrictions of the sampling area in z-direction.             
             """
             return RE.m_current_reaction_system.slab_start_z, RE.m_current_reaction_system.slab_end_z       
          
         def set_volume(self,volume):
             """
-            set the volume to be used in the acceptance probability of the reaction ensemble. This can be useful when using constraints, if the relevant volume is different from the box volume. If not used the default volume which is used, is the box volume.
+            Set the volume to be used in the acceptance probability of the
+            reaction ensemble. This can be useful when using constraints, if
+            the relevant volume is different from the box volume. If not used
+            the default volume which is used, is the box volume.
 
             """
             RE.m_current_reaction_system.volume=volume
 
         def get_volume(self):
             """
-            get the volume to be used in the acceptance probability of the reaction ensemble.
+            Get the volume to be used in the acceptance probability of the
+            reaction ensemble.
 
             """
             return RE.m_current_reaction_system.volume
 
         def acceptance_rate_configurational_moves(self):
             """
-            returns the acceptance rate for the configuration changing moves
+            Returns the acceptance rate for the configuration changing moves.
+
             """
             return (1.0*RE.m_accepted_configurational_MC_moves)/RE.m_tried_configurational_MC_moves
 
         def set_non_interacting_type(non_interacting_type):
             """
-            sets a type which is assumed to be non interacting in order to hide particles temporarily during a reaction trial move if they are to be deleted. The default value for this non_interacting type is 100. Please change this value if you intend to use a type 100 which has interactions. Please also note that particles in the current implementation of the Reaction Ensemble are only hidden with respect to Lennard-Jones interactions and Coulomb interactions. If there is for example a magnetic interaction hiding for this needs to be implemented in the code.
+            Sets a type which is assumed to be non interacting in order to hide
+            particles temporarily during a reaction trial move if they are to
+            be deleted. The default value for this non_interacting type is 100.
+            Please change this value if you intend to use a type 100 which has
+            interactions. Please also note that particles in the current
+            implementation of the Reaction Ensemble are only hidden with
+            respect to Lennard-Jones interactions and Coulomb interactions. If
+            there is for example a magnetic interaction hiding for this needs
+            to be implemented in the code.
+            
             """
             RE.m_current_reaction_system.non_interacting_type=non_interacting_type
             
         def get_non_interacting_type(self):
-            """get the type which is used for hiding particles"""
+            """Get the type which is used for hiding particles.
+            
+            """
             return RE.m_current_reaction_system.non_interacting_type
 
         def add(self,*args,**kwargs):
@@ -144,16 +178,21 @@ IF REACTION_ENSEMBLE:
             
             Parameters
             ----------
-            equilibrium_constant : float
-                                   dimensionless (thermodynamic) equilibrium constant of the reaction, see Eq.[Keq].
-            reactant_types : list 
-                          a list of types of reactants in the reaction
-            reactant_coefficients : list 
-                                 a list of stoichiometric coefficients of the reactants in the same order as the list of their types
-            product_types : list
-                            a list of product types of the reaction.
-            product_coefficients : list
-                                   a list of stoichiometric coefficients of products of the reaction in the same order as the list of their types
+            equilibrium_constant : :obj:`float`
+                                   Dimensionless (thermodynamic) equilibrium
+                                   constant of the reaction, see Eq.[Keq].
+            reactant_types : array_like
+                             A list of types of reactants in the reaction.
+            reactant_coefficients : array_like
+                                    A list of stoichiometric coefficients of
+                                    the reactants in the same order as the list
+                                    of their types.
+            product_types : array_like
+                            A list of product types of the reaction.
+            product_coefficients : array_like
+                                   A list of stoichiometric coefficients of
+                                   products of the reaction in the same order
+                                   as the list of their types.
 
             """            
             for k in self._required_keys_add():
@@ -186,7 +225,10 @@ IF REACTION_ENSEMBLE:
 
         def set_default_charges(self,*args,**kwargs):
             """
-            sets the charges of the particle types that are created. Note that it has to be called for each type that occurs in the reaction system individually.
+            Sets the charges of the particle types that are created. Note that
+            it has to be called for each type that occurs in the reaction
+            system individually.
+
             """
             for k in kwargs:
                 if k in self._valid_keys_default_charge():
@@ -209,20 +251,26 @@ IF REACTION_ENSEMBLE:
         
         def reaction(self):
             """
-            performs one randomly selected reaction of the provided reaction system
+            Performs one randomly selected reaction of the provided reaction system.
+
             """
             RE.do_reaction()
         
         def global_mc_move_for_one_particle_of_type(type_mc):
             """
-            performs a global mc move for one particle of type type_mc.
-            If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
+            Performs a global mc move for one particle of type type_mc. If
+            there are multiple types, that need to be moved, make sure to move
+            them in a random order to avoid artefacts.
+
             """
             RE.do_global_mc_move_for_particles_of_type(type_mc, -10, -10, 1, False)
 
         def get_status(self):
             """
-            returns the status of the reaction ensemble in a dictionary containing the used reactions, the used temperature and the used exclusion radius
+            Returns the status of the reaction ensemble in a dictionary
+            containing the used reactions, the used temperature and the used
+            exclusion radius.
+            
             """
             if(RE.m_current_reaction_system.nr_single_reactions == 0):
                 raise Exception("Reaction System is not initialized")
@@ -251,27 +299,30 @@ IF REACTION_ENSEMBLE:
 
         def delete_particle(self, p_id):
             """
-            Deletes the particle of the given p_id and makes sure that the particle range has no holes. This function has some restrictions, as e.g. bonds are not deleted. 
-            Therefore only apply this function to simple ions.
+            Deletes the particle of the given p_id and makes sure that the
+            particle range has no holes. This function has some restrictions,
+            as e.g. bonds are not deleted. Therefore only apply this function
+            to simple ions.
+
             """
             RE.delete_particle(p_id)
 
         #//////////////////////////Wang-Landau algorithm
         def add_collective_variable_degree_of_association(self,*args,**kwargs):
             """
-            adds a reaction coordinate of the type degree of association
+            Adds a reaction coordinate of the type degree of association
             
             Parameters
             ----------
-            associated_type : int
-                              type of the associated version of the species
-                         
-            min : float
-                  minimum value of the collective variable
-            max : float
-                  maximum value of the collective variable
-            corresponding_acid_types : list
-                  list of the types of the version of the species
+            associated_type : :obj:`int`
+                              Type of the associated version of the species.    
+            min : :obj:`float`
+                  Minimum value of the collective variable.
+            max : :obj:`float`
+                  Maximum value of the collective variable.
+            corresponding_acid_types : array_like
+                                       List of the types of the version of the
+                                       species.
             
             """
             for k in kwargs:
@@ -298,14 +349,30 @@ IF REACTION_ENSEMBLE:
 
         def add_collective_variable_potential_energy(self,*args,**kwargs):
             """
-            adds a reaction coordinate of the type potential energy
+            Adds a reaction coordinate of the type potential energy.
             
             Parameters
             ----------
-            filename : str
-                       filename of the energy boundary file which provides the potential energy boundaries (min E_pot, max E_pot) tabulated for all degrees of association. Make sure to only list the degrees of association which are used by the degree of association collective variable within this file. The energy boundary file can be created in a preliminary energy run. By the help of the functions :meth:`update_maximum_and_minimum_energies_at_current_state` and :meth:`write_out_preliminary_energy_run_results`. This file has to be obtained before being able to run a simulation with the energy as collective variable.
-            delta : float
-                    provides the discretization of the potential energy range. Only for small enough delta the results of the energy reweighted averages are correct. If delta is chosen too big there are discretization errors in the numerical integration which occurs during the energy reweighting process.
+            filename : :obj:`str`
+                       Filename of the energy boundary file which provides the
+                       potential energy boundaries (min E_pot, max E_pot)
+                       tabulated for all degrees of association. Make sure to
+                       only list the degrees of association which are used by
+                       the degree of association collective variable within
+                       this file. The energy boundary file can be created in a
+                       preliminary energy run. By the help of the functions
+                       :meth:`update_maximum_and_minimum_energies_at_current_state`
+                       and :meth:`write_out_preliminary_energy_run_results`.
+                       This file has to be obtained before being able to run a
+                       simulation with the energy as collective variable.
+            delta : :obj:`float`
+                    Provides the discretization of the potential energy range.
+                    Only for small enough delta the results of the energy
+                    reweighted averages are correct. If delta is chosen too big
+                    there are discretization errors in the numerical
+                    integration which occurs during the energy reweighting
+                    process.
+
             """
             for k in kwargs:
                 if k in self._valid_keys_add_collective_variable_potential_energy():
@@ -328,18 +395,44 @@ IF REACTION_ENSEMBLE:
 
         def set_wang_landau_parameters(self,*args,**kwargs):
             """
-            sets the final Wang-Landau parameter
+            Sets the final Wang-Landau parameter.
             
             Parameters
             ----------
-            final_wang_landau_parameter : float
-                                          sets the final Wang-Landau parameter, which is the Wang-Landau parameter after which the simulation should stop.).
-            wang_landau_steps : float
-                                sets the number of Wang-Landau steps which are performed at once. Do not use too many Wang-Landau steps consequetively without having conformation changing steps in between. Number of Wang-Landau steps performed at once. This is for performance. It reduces the need for the interpreter to be called.
-            full_path_to_output_filename : string
-                                           sets the path to the output file of the Wang-Landau algorithm which contains the Wang-Landau potential
-            do_not_sample_reaction_partition_function : bool
-                                                        avoids sampling the Reaction ensemble partition function in the Wang-Landau algorithm. Therefore this option makes all degrees of association equally probable. This option may be used in the sweeping mode of the reaction ensemble, since the reaction ensemble partition function can be later added analytically.
+            final_wang_landau_parameter : :obj:`float`
+                                          Sets the final Wang-Landau parameter,
+                                          which is the Wang-Landau parameter
+                                          after which the simulation should
+                                          stop..
+            wang_landau_steps : :obj:`float`
+                                Sets the number of Wang-Landau steps which are
+                                performed at once. Do not use too many
+                                Wang-Landau steps consequetively without having
+                                conformation changing steps in between. Number
+                                of Wang-Landau steps performed at once. This is
+                                for performance. It reduces the need for the
+                                interpreter to be called.
+            full_path_to_output_filename : :obj:`str`
+                                           Sets the path to the output file of
+                                           the Wang-Landau algorithm which
+                                           contains the Wang-Landau potential
+            do_not_sample_reaction_partition_function : :obj:`bool`
+                                                        Avoids sampling the
+                                                        Reaction ensemble
+                                                        partition function in
+                                                        the Wang-Landau
+                                                        algorithm. Therefore
+                                                        this option makes all
+                                                        degrees of association
+                                                        equally probable. This
+                                                        option may be used in
+                                                        the sweeping mode of
+                                                        the reaction ensemble,
+                                                        since the reaction
+                                                        ensemble partition
+                                                        function can be later
+                                                        added analytically.
+
             """
             for k in kwargs:
                 if k in self._valid_keys_set_wang_landau_parameters():
@@ -367,25 +460,42 @@ IF REACTION_ENSEMBLE:
             
         def update_maximum_and_minimum_energies_at_current_state(self):
             """
-            records the minimum and maximum potential energy as a function of the degree of association in a preliminary Wang-Landau reaction ensemble simulation where the acceptance probability includes the factor :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal potential energys which occur in the system are needed for the energy reweighting simulations wehere the factor :math:`\exp(-\\beta \\Delta E_{pot})` is not included in the acceptance probability in order to avoid choosing the wrong potential energy boundaries.
+            Records the minimum and maximum potential energy as a function of
+            the degree of association in a preliminary Wang-Landau reaction
+            ensemble simulation where the acceptance probability includes the
+            factor :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and
+            maximal potential energys which occur in the system are needed for
+            the energy reweighting simulations wehere the factor
+            :math:`\exp(-\\beta \\Delta E_{pot})` is not included in the
+            acceptance probability in order to avoid choosing the wrong
+            potential energy boundaries.
+
             """
             RE.update_maximum_and_minimum_energies_at_current_state()
         
         def write_out_preliminary_energy_run_results(self):
             """
-            this writes out the minimum and maximum potential energy as a function of the degree of association to a file. It requires that previously :meth:`update_maximum_and_minimum_energies_at_current_state` was used.
+            This writes out the minimum and maximum potential energy as a
+            function of the degree of association to a file. It requires that
+            previously
+            :meth:`update_maximum_and_minimum_energies_at_current_state` was
+            used.
+
             """
             RE.write_out_preliminary_energy_run_results("preliminary_energy_run_results")
             
         def write_wang_landau_results_to_file(self,filename):
             """
-            this writes out the wang landau potential as a function of the used collective variables.
+            This writes out the wang landau potential as a function of the used
+            collective variables.
+
             """
             RE.write_wang_landau_results_to_file(filename)
             
         def reaction_wang_landau(self):
             """
-            performs a reaction in the Wang-Landau reaction ensemble.
+            Performs a reaction in the Wang-Landau reaction ensemble.
+
             """
             status_wang_landau=RE.do_reaction_wang_landau()
             if(status_wang_landau<0):
@@ -393,8 +503,11 @@ IF REACTION_ENSEMBLE:
 
         def global_mc_move_for_one_particle_of_type_wang_landau(self,type_mc):
             """
-            performs a global mc move for one particle of type type_mc (depending on the energy reweighting scheme)
-            If there are multiple types, that need to be moved, make sure to move them in a random order to avoid artefacts.
+            Performs a global mc move for one particle of type type_mc
+            (depending on the energy reweighting scheme) If there are multiple
+            types, that need to be moved, make sure to move them in a random
+            order to avoid artefacts.
+
             """
             RE.do_global_mc_move_for_particles_of_type(type_mc, RE.m_current_wang_landau_system.polymer_start_id,RE.m_current_wang_landau_system.polymer_end_id, 1, True)
 
@@ -402,7 +515,13 @@ IF REACTION_ENSEMBLE:
         ##specify information for configuration changing monte carlo move
         property polymer_start_id:
             """
-            Optional: since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation. Sets the start id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space.. MC moves for free particles and polymer particles may be very different.
+            Optional: since you might not want to change the configuration of
+            your polymer, e.g. if you are trying to simulate a rigid
+            conformation. Sets the start id of the polymer, optional. Should be
+            set when you have a non fixed polymer and want it to be moved by MC
+            trail moves in order to sample its configuration space.. MC moves
+            for free particles and polymer particles may be very different.
+
             """
             def __set__(self, int start_id):
                 RE.m_current_wang_landau_system.polymer_start_id=start_id
@@ -410,7 +529,13 @@ IF REACTION_ENSEMBLE:
                         return RE.m_current_wang_landau_system.polymer_start_id
         property polymer_end_id:
             """
-            Optional: since you might not want to change the configuration of your polymer, e.g. if you are trying to simulate a rigid conformation. Sets the end id of the polymer, optional. Should be set when you have a non fixed polymer and want it to be moved by MC trail moves in order to sample its configuration space. MC moves for free particles and polymer particles may be very different.
+            Optional: since you might not want to change the configuration of
+            your polymer, e.g. if you are trying to simulate a rigid
+            conformation. Sets the end id of the polymer, optional. Should be
+            set when you have a non fixed polymer and want it to be moved by MC
+            trail moves in order to sample its configuration space. MC moves
+            for free particles and polymer particles may be very different.
+
             """
             def __set__(self, int end_id):
                 RE.m_current_wang_landau_system.polymer_end_id=end_id
@@ -419,7 +544,8 @@ IF REACTION_ENSEMBLE:
             
         property fix_polymer_monomers:
             """
-            fixes the polymer monomers in the Monte Carlo moves
+            Fixes the polymer monomers in the Monte Carlo moves.
+
             """
             def __set__(self, bool fix_polymer):
                 RE.m_current_wang_landau_system.fix_polymer=fix_polymer
@@ -431,14 +557,14 @@ IF REACTION_ENSEMBLE:
         property constant_pH:
             def __set__(self, double pH):
                 """
-                sets the pH that the method assumes for the implicit pH bath
+                Sets the pH that the method assumes for the implicit pH bath.
+
                 """           
                 RE.m_constant_pH=pH
     
         def reaction_constant_pH(self):
             """
-            performs a reaction according to the constant pH method
+            Performs a reaction according to the constant pH method.
+
             """
             RE.do_reaction_constant_pH()
-        
-
