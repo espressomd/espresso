@@ -174,7 +174,7 @@ class LangevinThermostat(ut.TestCase):
             p.rotation = 1,1,1
             # Make sure rinertia does not change diff coeff
             if espressomd.has_features("ROTATIONAL_INERTIA"): 
-                p.rinertia =2,2,2
+                p.rinertia =0.4,0.4,0.4
         
     def test_diffusion(self):
         """This tests rotational and translational diffusion coeff via green-kubo"""
@@ -190,12 +190,12 @@ class LangevinThermostat(ut.TestCase):
         gamma=3.1
         
         # Rotational gamma
-        gamma_rot_i=0.4
-        gamma_rot_a=0.7,0.6,1.2
+        gamma_rot_i=0.7
+        gamma_rot_a=0.7,1,1.2
 
         # If we have langevin per particle:
         # per particle kT
-        per_part_kT=0.67
+        per_part_kT=1.6
         # Translation
         per_part_gamma=1.63
         # Rotational 
@@ -281,11 +281,15 @@ class LangevinThermostat(ut.TestCase):
             # angular vel
             if espressomd.has_features("ROTATION"):
                 omega_obs[p]=ParticleBodyAngularMomentum(ids=(p.id,))
-                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=16, tau_max=24, dt=2*dt,
+                corr_omega[p] = Correlator(obs1=omega_obs[p], tau_lin=32, tau_max=4, dt=2*dt,
                     corr_operation="componentwise_product", compress1="discard1")
                 s.auto_update_correlators.add(corr_omega[p])
         
-        s.integrator.run(5000000)
+        s.integrator.run(1000000)
+        for c in corr_vel.values():
+            s.auto_update_correlators.remove(c)
+        for c in corr_omega.values():
+            s.auto_update_correlators.remove(c)
 
         # Verify diffusion
         # Translation
@@ -311,16 +315,11 @@ class LangevinThermostat(ut.TestCase):
                 eff_per_part_gamma_rot =per_part_gamma_rot_i *np.ones(3)
 
 
-            np.savetxt("vacf.dat", corr_omega[p_global].result())
             self.verify_diffusion(p_global,corr_omega,kT,eff_gamma_rot)
             if espressomd.has_features("LANGEVIN_PER_PARTICLE"): 
                 self.verify_diffusion(p_gamma,corr_omega,kT,eff_per_part_gamma_rot)
                 self.verify_diffusion(p_kT,corr_omega,per_part_kT,eff_gamma_rot)
                 self.verify_diffusion(p_both,corr_omega,per_part_kT,eff_per_part_gamma_rot)
-        for c in corr_vel.values():
-            s.auto_update_correlators.remove(c)
-        for c in corr_omega.values():
-            s.auto_update_correlators.remove(c)
 
 
             
