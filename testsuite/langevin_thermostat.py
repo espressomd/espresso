@@ -317,6 +317,12 @@ class LangevinThermostat(ut.TestCase):
                 self.verify_diffusion(p_gamma,corr_omega,kT,eff_per_part_gamma_rot)
                 self.verify_diffusion(p_kT,corr_omega,per_part_kT,eff_gamma_rot)
                 self.verify_diffusion(p_both,corr_omega,per_part_kT,eff_per_part_gamma_rot)
+        for c in corr_vel.values():
+            s.auto_update_correlators.remove(c)
+        for c in corr_omega.values():
+            s.auto_update_correlators.remove(c)
+
+
             
 
     def verify_diffusion(self,p,corr,kT,gamma):
