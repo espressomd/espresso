@@ -22,6 +22,13 @@ from . import utils
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
+    """
+    Represents an instance of a non-bonded interaction, such as lennard jones
+    Either called with two particle type id, in which case, the interaction
+    will represent the bonded interaction as it is defined in Espresso core
+    Or called with keyword arguments describing a new interaction.
+    
+    """
 
     cdef public object _part_types
     cdef object _params
@@ -31,10 +38,6 @@ cdef class NonBondedInteraction(object):
     user_interactions = {}
 
     def __init__(self, *args, **kwargs):
-        """Represents an instance of a non-bonded interaction, such as lennard jones
-        Either called with two particle type id, in which case, the interaction
-        will represent the bonded interaction as it is defined in Espresso core
-        Or called with keyword arguments describing a new interaction."""
 
         # Interaction id as argument
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
@@ -62,10 +65,12 @@ cdef class NonBondedInteraction(object):
 
         else:
             raise Exception(
-                "The constructor has to be called either with two particle type ids (as interger), or with a set of keyword arguments describing a new interaction")
+                "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso"""
+        """Check, if the data stored in the instance still matches what is in Espresso.
+        
+        """
 
         # check, if the bond parameters saved in the class still match those
         # saved in Espresso
@@ -77,7 +82,9 @@ cdef class NonBondedInteraction(object):
         return True
 
     def get_params(self):
-        """Get interaction parameters"""
+        """Get interaction parameters.
+        
+        """
         # If this instance refers to an actual interaction defined in the es core, load
         # current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
@@ -89,7 +96,9 @@ cdef class NonBondedInteraction(object):
         return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
     def set_params(self, **p):
-        """Update parameters. Only given """
+        """Update the given parameters.
+        
+        """
         # Check, if any key was passed, which is not known
         for k in p.keys():
             if k not in self.valid_keys():
@@ -131,7 +140,9 @@ cdef class NonBondedInteraction(object):
         return True
 
     def __getattribute__(self, name):
-        """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
+        """Every time _set_params_in_es_core is called, the parameter dict is also updated.
+        
+        """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
@@ -211,21 +222,22 @@ IF LENNARD_JONES == 1:
             Parameters
             ----------
 
-            epsilon : float
+            epsilon : :obj:`float`
                       The magnitude of the interaction.
-            sigma : float
+            sigma : :obj:`float`
                     Determines the interaction length scale.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            shift : float, string
+            shift : :obj:`float` or :obj:`str`
                     Constant shift of the potential. (4*epsilon*shift).
-            offset : float, optional
+            offset : :obj:`float`, optional
                      Offset distance of the interaction.
-            cap : float, optional
+            cap : :obj:`float`, optional
                   If individual force caps are used, determines the distance
                   at which the force is capped.
-            min : float, optional
+            min : :obj:`float`, optional
                   Restricts the interaction to a minimal distance.
+
             """
             super(LennardJonesInteraction, self).set_params(**kwargs)
 
@@ -296,22 +308,22 @@ IF GAY_BERNE:
 
             Parameters
             ----------
-
-            eps : float
+            eps : :obj:`float`
                   Potential well depth.
-            sig : float
+            sig : :obj:`float`
                   Interaction range.
-            cut : float
+            cut : :obj:`float`
                   Cutoff distance of the interaction.
-            k1  : float, string
+            k1 : :obj:`float` or :obj:`string`
                   Molecular elongation.
-            k2  : float, optional
+            k2 : :obj:`float`, optional
                   Ratio of the potential well depths for the side-by-side
                   and end-to-end configurations.
-            mu  : float, optional
+            mu : :obj:`float`, optional
                   Adjustable exponent.
-            nu  : float, optional
+            nu : :obj:`float`, optional
                   Adjustable exponent.
+
             """
             super(GayBerneInteraction, self).set_params(**kwargs)
 
@@ -441,30 +453,31 @@ IF LENNARD_JONES_GENERIC == 1:
 
             Parameters
             ----------
-            epsilon : float
+            epsilon : :obj:`float`
                       The magnitude of the interaction.
-            sigma : float
+            sigma : :obj:`float`
                     Determines the interaction length scale.
-            cutoff : float
+            cutoff : :obj:`float`
                      Cutoff distance of the interaction.
-            shift : float, string
+            shift : :obj:`float`, string
                     Constant shift of the potential.
-            offset : float
+            offset : :obj:`float`
                      Offset distance of the interaction.
-            e1 : int
+            e1 : :obj:`int`
                  Exponent of the repulsion term.
-            e2 : int
+            e2 : :obj:`int`
                  Exponent of the attraction term.
-            b1 : float
+            b1 : :obj:`float`
                  Prefactor of the repulsion term.
-            b2 : float
+            b2 : :obj:`float`
                  Prefactor of the attraction term.
-            delta : float, optional
+            delta : :obj:`float`, optional
                     LJGEN_SOFTCORE parameter. Allows control over how smoothly
                     the potential drops to zero as lambda approaches zero.
-            lambda : float, optional
+            lambda : :obj:`float`, optional
                      LJGEN_SOFTCORE parameter. Tune the strength of the
                      interaction.
+
             """
             super(GenericLennardJonesInteraction, self).set_params(**kwargs)
 
@@ -476,9 +489,11 @@ IF LENNARD_JONES_GENERIC == 1:
 
 
 class NonBondedInteractionHandle(object):
-
-    """Provides access to all Non-bonded interactions between
-    two particle types."""
+    """
+    Provides access to all Non-bonded interactions between
+    two particle types.
+    
+    """
 
     type1 = -1
     type2 = -1
@@ -509,10 +524,11 @@ class NonBondedInteractionHandle(object):
 
 
 cdef class NonBondedInteractions(object):
-
-    """Access to non-bonded interaction parameters via [i,j], where i,j are particle
+    """
+    Access to non-bonded interaction parameters via [i,j], where i,j are particle
     types. Returns NonBondedInteractionHandle.
-    Also: access to force capping
+    Also: access to force capping.
+
     """
 
     def __getitem__(self, key):
@@ -561,15 +577,15 @@ cdef class NonBondedInteractions(object):
 
 
 cdef class BondedInteraction(object):
-
     # This means, the instance does not yet represent a bond in the simulation
     _bond_id = -1
 
     def __init__(self, *args, **kwargs):
         """
-           Either called with an interaction id, in which case, the interaction
-           will represent the bonded interaction as it is defined in Espresso core
-           Or called with keyword arguments describing a new interaction.
+        Either called with an interaction id, in which case, the interaction
+        will represent the bonded interaction as it is defined in Espresso core
+        Or called with keyword arguments describing a new interaction.
+
         """
         # Interaction id as argument
         if len(args) == 1 and isinstance(args[0], int):
@@ -604,7 +620,9 @@ cdef class BondedInteraction(object):
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso"""
+        """Check, if the data stored in the instance still matches what is in Espresso.
+        
+        """
         # Check if the bond type in Espresso still matches the bond type saved
         # in this class
         if bonded_ia_params[self._bond_id].type != self.type_number():
@@ -639,7 +657,9 @@ cdef class BondedInteraction(object):
         return True
 
     def __getattribute__(self, name):
-        """Every time _set_params_in_es_core is called, the parameter dict is also updated."""
+        """Every time _set_params_in_es_core is called, the parameter dict is also updated.
+        
+        """
         attr = object.__getattribute__(self, name)
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
@@ -736,13 +756,14 @@ class FeneBond(BondedInteraction):
 
         Parameters
         ----------
-        k : float
+        k : :obj:`float`
             Specifies the magnitude of the bond interaction.
-        d_r_max : float
+        d_r_max : :obj:`float`
                   Specifies the maximum stretch and compression length of the
                   bond.
-        r_0 : float, optional
+        r_0 : :obj:`float`, optional
               Specifies the equilibrium length of the bond.
+
         """
         super(FeneBond, self).__init__(*args, **kwargs)
 
@@ -782,13 +803,14 @@ class HarmonicBond(BondedInteraction):
 
         Parameters
         ----------
-        k : float
+        k : :obj:`float`
             Specifies the magnitude of the bond interaction.
-        r_0 : float
+        r_0 : :obj:`float`
               Specifies the equilibrium length of the bond.
-        r_cut : float, optional
+        r_cut : :obj:`float`, optional
                 Specifies maximum distance beyond which the bond is considered
                 broken.
+
         """
         super(HarmonicBond, self).__init__(*args, **kwargs)
 
@@ -828,13 +850,13 @@ IF ROTATION:
 
             Parameters
             ----------
-            k1 : float
+            k1 : :obj:`float`
                 Specifies the magnitude of the bond interaction.
-            k2 : float
+            k2 : :obj:`float`
                 Specifies the magnitude of the angular interaction.
-            r_0 : float
+            r_0 : :obj:`float`
                   Specifies the equilibrium length of the bond.
-            r_cut : float, optional
+            r_cut : :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
             """
@@ -877,15 +899,16 @@ IF ROTATION != 1:
 
             Parameters
             ----------
-            k1 : float
-                Specifies the magnitude of the bond interaction.
-            k2 : float
-                Specifies the magnitude of the angular interaction.
-            r_0 : float
+            k1 : :obj:`float`
+                 Specifies the magnitude of the bond interaction.
+            k2 : :obj:`float`
+                 Specifies the magnitude of the angular interaction.
+            r_0 : :obj:`float`
                   Specifies the equilibrium length of the bond.
-            r_cut : float, optional
+            r_cut : :obj:`float`, optional
                     Specifies maximum distance beyond which the bond is considered
                     broken.
+
             """
             raise Exception(
                 "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
@@ -929,11 +952,11 @@ IF BOND_CONSTRAINT == 1:
 
             Parameters
             ----------
-            r : float
+            r : :obj:`float`
                 Specifies the length of the rigid bond.
-            ptol : float, optional
+            ptol : :obj:`float`, optional
                    Specifies the tolerance for positional deviations.
-            vtop : float, optional
+            vtop : :obj:`float`, optional
                    Specifies the tolerance for velocity deviations.
             """
             super(RigidBond, self).__init__(*args, **kwargs)
@@ -1005,11 +1028,12 @@ IF TABULATED == 1:
 
             Parameters
             ----------
-            type : str
+            type : :obj:`str`
                    Specifies the type of bonded interaction. Possible inputs:
                    'distance', 'angle' and 'dihedral'.
-            filename : str
+            filename : :obj:`str`
                        Filename of the tabular.
+
             """
             super(Tabulated, self).__init__(*args, **kwargs)
 
@@ -1175,6 +1199,7 @@ IF BOND_VIRTUAL == 1:
         def __init__(self, *args, **kwargs):
             """
             VirtualBond initialiser. Used to instantiate a VirtualBond identifier.
+
             """
             super(Virtual, self).__init__(*args, **kwargs)
 
@@ -1446,10 +1471,13 @@ IF LENNARD_JONES:
 
 
 class BondedInteractions(object):
-
-    """Represents the bonded interactions. Individual interactions can be accessed using
+    """Represents the bonded interactions.
+    
+    Individual interactions can be accessed using
     BondedInteractions[i], where i is the bond id. Will return a bonded interaction
-    from bonded_interaction_classes"""
+    from bonded_interaction_classes.
+    
+    """
 
     def __getitem__(self, key):
         if not isinstance(key, int):
