@@ -12,7 +12,8 @@ IF CATALYTIC_REACTIONS:
         """
         Class that handles catalytic reactions for self propelled particles.
 
-        Requires the features 'CATALYTIC_REACTIONS'.
+        .. note:: Requires the features CATALYTIC_REACTIONS.
+
         """
 
         def validate_params(self):
@@ -92,7 +93,8 @@ IF CATALYTIC_REACTIONS:
 
         def get_params(self):
             """
-            Get parameters set for the catalytic reactions
+            Get parameters set for the catalytic reactions.
+
             """
             self._get_params_from_es_core()
             return self._params
@@ -110,35 +112,27 @@ IF CATALYTIC_REACTIONS:
 
         def __init__(self, *args, **kwargs):
             """
-            Initialize the reaction.  Keep in mind, that there may be
-            only one reaction enabled.  There can be only one.
+            Initialize the reaction. Keep in mind, that there may be
+            only one reaction enabled. There can be only one.
 
             Parameters
             ----------
-
-            'product_type': integer
-                Particle type of the reactions product
-
-            'reactant_type': integer
-                Particle type of the reactant
-
-            'catalyzer_type':   integer
-                Particle type of the catalyst
-
-            'ct_range': float
-                Distance up to which the catalyst affects the reactants
-
-            'ct_rate': float
-                Reaction rate for particle in the vicinity of catalysts
-
-            'eq_rate': float, optional
-                Equilibrium reaction rate
-
-            'react_once':   bool, optional, defaults to False
-                See documentation for explanation
-
-            'swap': bool, optional
-                See documentation for explanation
+            'product_type' : :obj:`int`
+                             Particle type of the reactions product.
+            'reactant_type' : :obj:`int`
+                              Particle type of the reactant.
+            'catalyzer_type' : :obj:`int`
+                               Particle type of the catalyst.
+            'ct_range' : :obj:`float`
+                         Distance up to which the catalyst affects the reactants.
+            'ct_rate' : :obj:`float`
+                        Reaction rate for particle in the vicinity of catalysts.
+            'eq_rate' : :obj:`float`, optional
+                        Equilibrium reaction rate.
+            'react_once' : :obj:`bool`, optional, defaults to False
+                           See documentation for explanation.
+            'swap' : :obj:`bool`, optional
+                     See documentation for explanation.
 
             """
             self._ct_rate = 0.0
@@ -166,6 +160,7 @@ IF CATALYTIC_REACTIONS:
         def setup(self, *args, **kwargs):
             """
             Collect the parameters and set them in the core.
+
             """
 
             # Check if parameters are complete
@@ -186,7 +181,8 @@ IF CATALYTIC_REACTIONS:
 
         def start(self):
             """
-            Restart the reaction after it was stopped
+            Restart the reaction after it was stopped.
+
             """
             if (self._ct_rate != 0.0):
                 self._params["ct_rate"] = self._ct_rate
@@ -196,7 +192,8 @@ IF CATALYTIC_REACTIONS:
 
         def stop(self):
             """
-            Stop the reaction, i.e. set the reaction rate to 0.0
+            Stop the reaction, i.e. set the reaction rate to 0.0.
+
             """
             if (self._ct_rate == 0.0):
                 self._ct_rate = self._params["ct_rate"]
