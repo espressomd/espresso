@@ -43,18 +43,14 @@ int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff, dou
 inline void add_thole_pair_force(const Particle * const p1, const Particle * const p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
-  if (thole_active && dist < p3m.params.r_cut) {
-    
-    //printf("THOLE %f ID1 %d ID2 %d 1.bl.n %d 2.bl.n %d \n",dist, p1->p.identity, p2->p.identity, p1->bl.n, p2->bl.n);
+  double q1q2 = ia_params->THOLE_q1q2;
+  if (thole_active && q1q2 != 0 && dist < p3m.params.r_cut) {
     
     if (bond_between_particles(p1,p2, BONDED_IA_DRUDE))
         return;
 
     double dist2 = dist*dist;
     double thole_s = ia_params->THOLE_scaling_coeff;
-    double q1q2 = ia_params->THOLE_q1q2;
-    //double chgfac = p1->p.q*p2->p.q;
-
     //Subtract p3m shortrange
     p3m_add_pair_force(-q1q2, d, dist2, dist, force);
 
@@ -64,9 +60,6 @@ inline void add_thole_pair_force(const Particle * const p1, const Particle * con
     // Everything before q1q2/r^2 can be used as a factor for the p3m_add_pair_force method
     double sr = thole_s * dist;
     double dS_r = 0.5 * (  2.0 - ( exp(-sr) * (sr * (sr + 2.0) + 2.0) ) ); 
-
-    //printf("THOLE dist %f  dS_r %e \n", dist, dS_r);
-    
     //Add damped p3m shortrange
     p3m_add_pair_force(q1q2*dS_r, d, dist2, dist, force);
 
@@ -93,7 +86,8 @@ inline double thole_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_pa
         e_thole += p3m_pair_energy(-chgfac, d, dist2, dist);
 
         //Add damped p3m shortrange energy
-        double S_r = 1.0 - (1.0 + thole_s*dist/2.0) * exp(-thole_s*dist); 
+        double sd = thole_s*dist;
+        double S_r = 1.0 - (1.0 + sd/2.0) * exp(-sd); 
         e_thole += p3m_pair_energy(thole_q1q2*S_r, d, dist2, dist);
     }
     return e_thole;

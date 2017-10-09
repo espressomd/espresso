@@ -51,13 +51,4 @@ int drude_set_params(int bond_type, double temp_com, double gamma_com, double te
   return ES_OK;
 }
 
-/*
-void drude_recalc_params()
-{
-
-
-
-}
-*/
-
 #endif

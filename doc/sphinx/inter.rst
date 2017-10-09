@@ -958,7 +958,8 @@ Because the scaling coefficient depends on the *mixed* polarizabilies and
 the nonbonded interaction is controlled by particle types, each Drude charge with 
 a unique polarizability has to have a unique type. So each Drude charge type has a Thole correction
 interaction with all other Drude charges and all Drude cores, except the one it's connected to.
-This exeption is handeled internally. Also, each Drude core has a Thole
+This exeption is handeled internally by disabling Thole interaction between
+particles connected via Drude bonds. Also, each Drude core has a Thole
 correction interaction with all other Drude cores and Drude charges.
 To assist with the bookkeeping of mixed scaling coefficients, the helper method from the *Drude bond* section 
 can be extended to collect all core types, drude types and parameters when a
@@ -972,9 +973,17 @@ drude particle is created::
 
     def add_drude_particle_to_core(p_core, drude_bond, id_drude, type_drude, alpha, mass_drude):
 
+        inv_coulomb_prefactor = -1
+        for a in S.actors:
+            if 'bjerrum_length' in a._params:
+                inv_coulomb_prefactor = 1.0 / S.thermostat.get_state()[0]['kT'] /a._params['bjerrum_length']
+                print(inv_coulomb_prefactor)
+        if inv_coulomb_prefactor == -1:
+            print("ERROR: Thermostat and p3m have to be set up before adding drude bonds")
+
         #Add drude particle and alter core particle accordingly
-        k = drude_bond.params["k"]
-        q_drude = -pow(k * alpha, 0.5)
+        k=drude_bond.params["k"]
+        q_drude =  -1.0 * pow(k * alpha * inv_coulomb_prefactor, 0.5)
 
         S.part.add(id=id_drude, pos=p_core.pos, type = type_drude,  q = q_drude, mass = mass_drude, temp = 0, gamma = 0)
         #print("Adding to core ID", p_core.id, "drude particle with id", id_drude, "  pol", alpha, "  core charge", p_core.q, "->", p_core.q-q_drude, "   drude charge", q_drude)
@@ -999,7 +1008,11 @@ drude particle is created::
            drude_dict[type_drude]["thole_damping"] = thole_damping
 
            #Save same information to get lazy access to the parameters via core types
-           drude_dict[p_core.type] = drude_dict[type_drude]
+           drude_dict[p_core.type] = {}
+           drude_dict[p_core.type]["q"] = -q_drude #This is correct, as the thole interaction should only correct for the dipolar part +/- q_drude
+           drude_dict[p_core.type]["alpha"] = alpha
+           drude_dict[p_core.type]["thole_damping"] = thole_damping
+
 
        #Collect unique drude types
        if not type_drude in drude_type_list:
@@ -1015,7 +1028,7 @@ create all necessary Thole interactions after all calls of ``add_drude_particle_
 
     def add_thole_pair_damping(t1,t2):
         qq = drude_dict[t1]["q"] * drude_dict[t2]["q"]
-        s = 0.5 * (drude_dict[t1]["thole_damping"] * drude_dict[t2]["thole_damping"]) / (drude_dict[t1]["alpha"] * drude_dict[t2]["alpha"])**(1.0/6.0) 
+        s = 0.5 * (drude_dict[t1]["thole_damping"] + drude_dict[t2]["thole_damping"]) / (drude_dict[t1]["alpha"] * drude_dict[t2]["alpha"])**(1.0/6.0) 
         S.non_bonded_inter[t1,t2].thole.set_params(scaling_coeff=s, q1q2 = qq)
         #print("Added THOLE",t1,"<->",t2, "S",s, "q1q2",qq)
 

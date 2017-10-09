@@ -36,19 +36,16 @@
 
 #ifdef DRUDE
 
-// set the parameters for the Drude correction
+// Set the parameters for the Drude correction
 int drude_set_params(int bond_type, double temp_com, double gamma_com, double temp_drude, double gamma_drude, double k, double r_cut);
 
-// pre- or recalculate parameters for langevin cross terms
-//void drude_recalc_params();
-
 /** Computes the necessary corrections for the properly simulation of Drude Particles
-    and adds this force to the particle forces (see \ref tclcommand_inter). 
+    and adds this force to the particle forces. 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param iaparams  Parameters of interaction
     @param dx        change in position
-    @param forc, force1 and force2     force on particles
+    @param force1 and force2     force on particles
     @return true if bond is broken
 */
 
@@ -69,7 +66,6 @@ inline int calc_drude_forces(Particle *p1, Particle *p2, Bonded_ia_parameters *i
 
   //Coulomb Shortrange
   p3m_add_pair_force(chgfac, dx, dist*dist, dist, force_p3m_sr);
-  //printf("p3m in drude: F  %f %f %f   d %f %f %f dist2 %f dist %f q1q2 %f \n", force_p3m_sr[0], force_p3m_sr[1], force_p3m_sr[2], dx[0],dx[1],dx[2], dist*dist,dist, chgfac);
 
   for (int i=0; i<3; i++) {
 

@@ -37,6 +37,7 @@
 #include "mmm2d.hpp"
 #include "p3m.hpp"
 #include "p3m_gpu.hpp"
+#include "cuda_interface.hpp"
 
 #include "communication.hpp"
 
@@ -257,6 +258,11 @@ int iccp3m_iteration() {
     } /* local cells */
     iccp3m_cfg.citeration++;
     MPI_Allreduce(&diff, &globalmax, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
+
+    #ifdef CUDA
+    if (coulomb.method == COULOMB_P3M_GPU)
+        copy_part_data_to_gpu(local_cells.particles());
+    #endif
 
     if (globalmax < iccp3m_cfg.convergence)
       break;
@@ -638,6 +644,7 @@ void calc_long_range_forces_iccp3m() {
     if (this_node == 0) {
       FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
       p3m_gpu_add_farfield_force();
+      copy_forces_from_GPU(local_cells.particles());
     }
     break;
 #endif
