@@ -60,7 +60,7 @@
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
 #include "particle_data.hpp"
-#include "utils/serialization/array.hpp" 
+#include "utils/serialization/array.hpp"
 
 /**************************************************
  * exported variables
@@ -83,6 +83,14 @@ extern boost::mpi::communicator comm_cart;
 #define SOME_TAG 42
 #endif
 
+namespace Communication {
+/**
+ * @brief Returns a reference to the global callback class instance.
+ *
+ */
+MpiCallbacks &mpiCallbacks();
+}
+
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on
@@ -97,16 +105,13 @@ typedef void(SlaveCallback)(int node, int param);
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init(int *argc = NULL, char ***argv = NULL);
+void mpi_init();
 
 /* Call a slave function. */
 void mpi_call(SlaveCallback cb, int node, int param);
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/** Stop Espresso, all slave nodes exit. */
-void mpi_stop();
 
 /** Abort Espresso using MPI_Abort. */
 void mpi_abort();
@@ -121,13 +126,6 @@ void mpi_finalize();
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {1, 1,
                                                                        1});
-
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
-    @param i the number from \ref global.hpp "global.hpp" referencing the
-   datafield.
-    @return nonzero on error
-*/
-int mpi_bcast_parameter(int i);
 
 /** Issue REQ_WHO_HAS: ask nodes for their attached particles. */
 void mpi_who_has();
@@ -325,16 +323,6 @@ void mpi_send_smaller_timestep_flag(int node, int part,
                                     int smaller_timestep_flag);
 #endif
 
-#ifdef CONFIGTEMP
-/** Issue REQ_SET_CONFIGTEMP: send configurational temperature flag.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param configtemp the configurational temperature flag.
-*/
-void mpi_send_configtemp_flag(int node, int part, int configtemp_flag);
-#endif
-
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -471,19 +459,6 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3],
                              int periodic[3], double range_start[3],
                              double range[3]);
 
-/** Issue REQ_GETPARTS: gather all particle informations (except bonds).
-    This is slow and may use huge amounts of memory. If il is non-NULL, also
-    the bonding information is also fetched and stored in a single intlist
-    pointed to by il. The particles bonding information references this array,
-    which is the only data you have to free later (besides the result array
-    you allocated). YOU MUST NOT CALL \ref free_particle on any of these
-  particles!
-
-  \param result where to store the gathered particles
-  \param il if non-NULL, the integerlist where to store the bonding info
-*/
-void mpi_get_particles(Particle *result, IntList *il);
-
 /** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
     velocities accordingly.
 */
@@ -518,15 +493,15 @@ void mpi_set_particle_temperature(int pnode, int part, double _T);
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma(int pnode, int part, double gamma);
 #else
-void mpi_set_particle_gamma(int pnode, int part, double gamma[3]);
+void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma);
 #endif
 
 #ifdef ROTATION
-#ifndef ROTATIONAL_INERTIA
+#ifndef PARTICLE_ANISOTROPY
 void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot);
 #else
-void mpi_set_particle_gamma_rot(int pnode, int part, double gamma_rot[3]);
-#endif // ROTATIONAL_INERTIA
+void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot);
+#endif // PARTICLE_ANISOTROPY
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 
@@ -537,11 +512,6 @@ void mpi_bcast_lbboundary(int del_num);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize force capping. */
 void mpi_cap_forces(double force_cap);
-
-#ifdef CONFIGTEMP
-/** Issue REQ_GET_CONFIGTEMP: get configurational temperature */
-void mpi_get_configtemp(double cfgtmp[2]);
-#endif
 
 /** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
  * by a factor 'scale'. */
@@ -571,7 +541,7 @@ int mpi_sync_topo_part_info(void);
  * @param field References the parameter field to be broadcasted. The references
  * are defined in \ref lb.hpp "lb.hpp"
  */
-void mpi_bcast_lb_params(int field);
+void mpi_bcast_lb_params(int field, int value = -1);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA
  */
@@ -671,6 +641,19 @@ void mpi_thermalize_cpu(int temp);
  *  \param write 1 to write, 0 to read
  */
 void mpi_mpiio(const char *filename, unsigned fields, int write);
+
+/**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between
+ *        neighbors.
+ * @return The number of particles on the nodes after
+ *         the resort.
+ */
+std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 

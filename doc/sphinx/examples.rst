@@ -5,7 +5,8 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 
 .. todo:: currently resides in ``/samples/python`` should be moved?
 
-* ``billard.py`` needs the Python ``pypopengl`` module
+* ``billard.py`` 
+    A simple billard game, needs the Python ``pypopengl`` module
 
 * ``bonds-tst.py``
    Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
@@ -35,7 +36,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 * ``lbf.py``
 
 * ``lj-demo.py``
-    Lennard-Jones liquid used for demonstration purposes to showcase |Es|. Sliders from a MIDI controller can change system variables such as temperature and volume. Some thermodynamic observables are analyzed and plotted live.
+    Lennard-Jones liquid used for demonstration purposes to showcase |es|.
+    Sliders from a MIDI controller can change system variables such as
+    temperature and volume. Some thermodynamic observables are analyzed and
+    plotted live.
 
 * ``lj_liquid_distribution.py``
     Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.
@@ -46,7 +50,6 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     * set up system parameters, particles and interactions.
     * warm up and integrate. 
     * write parameters, configurations and observables to files
-    * handle the connection to VMD.
 
 * ``lj_liquid_structurefactor.py``
     Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.
@@ -65,6 +68,10 @@ Serveral scripts that can serve as usage examples can be found in the directory 
 
 * ``load_properties.py``,  ``store_properties.py``
     Uses the Python ``pickle`` module to store and load system information.
+
+* ``MDAnalysisIntegration.py``.
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or 
+    convert the frame to other formats (CHARMM, GROMACS, ...)
 
 * ``minimal-charged-particles.py``
    Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions. 
@@ -85,9 +92,24 @@ Serveral scripts that can serve as usage examples can be found in the directory 
     Uses python array slicing to set and extract various particle properties.
 
 * ``visualization_bonded.py``
+    Opengl visualization for bonds.
 
 * ``visualization_openGL.py``
+    Sample for an opengl visualization with user-defined keyboard- and timed callbacks.
 
 * ``visualization.py``
+    A visualization for mayavi/opengl of the lj-liquid with interactive plotting.
+
+* ``visualization_npt.py``
+    Simple test visualization for the NPT ensemble.
+
+* ``visualization_poisseuille.py``
+    Visualization for poisseuille flow with Lattice-Boltzmann.
+
+* ``visualization_constraints.py``
+    Constraint visualization with opengl with all avaiable constraints (commented out).
+
+* ``visualization_mmm2d.py``
+    A visual sample for a constant potential plate capacitor simulated with mmm2d.
 
 

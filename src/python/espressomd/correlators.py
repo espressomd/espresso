@@ -33,7 +33,3 @@ class AutoUpdateCorrelators(ScriptInterfaceHelper):
 
     def remove(self, Correlator):
         self.call_method("remove", object=Correlator)
-
-
-
-

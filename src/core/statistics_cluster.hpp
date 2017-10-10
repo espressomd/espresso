@@ -30,8 +30,8 @@
  *  (see thesis chapter 3 of H. Schmitz for details) 
  */
 
-#include "interaction_data.hpp"
 #include "particle_data.hpp"
+#include "PartCfg.hpp"
 
 /** \name Data structures */
 /************************************************************/

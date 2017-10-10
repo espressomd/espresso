@@ -62,7 +62,7 @@ void galloc(void** ptr, size_t size) {
   }
   else {
     if (size > 0) {
-      *ptr = (void*) Utils::realloc(*ptr, size);
+      *ptr = Utils::realloc(*ptr, size);
     }
     else {
       free(*ptr);

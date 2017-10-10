@@ -2,13 +2,11 @@
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
-#include "particle_data.hpp" 
+#include "particle_data.hpp"
 #include <vector>
-#include "integrate.hpp"  
-
+#include "integrate.hpp"
 
 namespace Observables {
-
 
 // Observable which acts on a given list of particle ids
 class ProfileObservable : public Observable {
@@ -24,10 +22,8 @@ public:
   int ybins;
   int zbins;
   std::vector<double> container;
-  virtual int n_values() const override { return xbins*ybins*zbins;};
+  virtual int n_values() const override { return xbins * ybins * zbins; };
 };
 
 } // Namespace Observables
 #endif
-  
-

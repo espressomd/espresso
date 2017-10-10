@@ -147,8 +147,6 @@ void Scafacos::set_common_parameters(double *box_l, int *periodicity, int total_
    // Scafacos does near field calc
    sr=1;
   }
-  int d=dipolar();
-//  printf("Short range switch %d, dipolar=%d, has_near=%d\n",sr,d,has_near);
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity, total_particles));
 }
 

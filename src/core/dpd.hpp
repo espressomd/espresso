@@ -26,11 +26,8 @@
  *  \ref forces.cpp
 */
 
-#include "utils.hpp"
-#include "thermostat.hpp"
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
-#include "virtual_sites.hpp"
 
 /** Flag to decide wether to allow for fixed particles with DPD */
 extern int dpd_ignore_fixed_particles;

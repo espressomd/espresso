@@ -21,11 +21,40 @@
 #define UTILS_OBJECT_ID_HPP
 
 #include <memory>
+#include <string>
 
 #include <boost/serialization/access.hpp>
 
 #include "NumeratedContainer.hpp"
+
 namespace Utils {
+
+template <typename T> class AutoObjectId;
+
+template <typename T> class ObjectId {
+public:
+  ObjectId() : m_id(-1) {}
+
+  bool operator==(ObjectId const &rhs) const { return m_id == rhs.m_id; }
+  bool operator!=(ObjectId const &rhs) const { return m_id != rhs.m_id; }
+  bool operator<(ObjectId const &rhs) const { return m_id < rhs.m_id; }
+
+  int id() const { return m_id; }
+
+  std::string to_string() const { return std::to_string(m_id); }
+
+private:
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned int /* version */) {
+    ar &m_id;
+  }
+
+  friend class AutoObjectId<T>;
+  explicit ObjectId(unsigned i) : m_id(i) {}
+
+  int m_id;
+};
 
 /**
  * @brief Class to automatically maintain a registry of
@@ -34,30 +63,6 @@ namespace Utils {
  */
 template <typename T> class AutoObjectId {
 public:
-  class ObjectId {
-  public:
-    ObjectId() : m_id(-1) {}
-
-    bool operator==(ObjectId const &rhs) const { return m_id == rhs.m_id; }
-    bool operator!=(ObjectId const &rhs) const { return m_id != rhs.m_id; }
-    bool operator<(ObjectId const &rhs) const { return m_id < rhs.m_id; }
-
-    int id() const { return m_id; }
-
-  private:
-    friend class AutoObjectId<T>;
-
-    explicit ObjectId(unsigned i) : m_id(i) {}
-
-    friend class boost::serialization::access;
-    template <typename Archive>
-    void serialize(Archive &ar, unsigned int /* version */) {
-      ar &m_id;
-    }
-
-    int m_id;
-  };
-
   /* Assign an id on construction */
   AutoObjectId() : m_id(reg().add(std::weak_ptr<T>())) {}
 
@@ -67,25 +72,25 @@ public:
   /**
    * @brief Get indentifier for this instance.
    */
-  ObjectId id() const { return m_id; }
+  ObjectId<T> id() const { return m_id; }
   /**
    * @brief get instance by id. If the id is none (ObjectId()),
    * a nullptr is returned. If the id is unknown, an out-of-range
    * exception is thrown.
    */
-  static std::weak_ptr<T> &get_instance(ObjectId id) { return reg()[id.m_id]; }
+  static std::weak_ptr<T> &get_instance(ObjectId<T> id) {
+    return reg()[id.m_id];
+  }
 
 private:
-  ObjectId m_id;
+  ObjectId<T> m_id;
   static Utils::NumeratedContainer<std::weak_ptr<T>> &reg() {
     static Utils::NumeratedContainer<std::weak_ptr<T>> m_reg(
-        {{ObjectId().id(), std::weak_ptr<T>()}});
+        {{ObjectId<T>().id(), std::weak_ptr<T>()}});
 
     return m_reg;
   }
 };
-
-template <typename T> using ObjectId = typename AutoObjectId<T>::ObjectId;
 
 } /* namespace Utils */
 

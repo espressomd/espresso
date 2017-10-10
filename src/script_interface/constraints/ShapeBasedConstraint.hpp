@@ -45,7 +45,6 @@ public:
                        if (m_shape) {
                          m_constraint->set_shape(m_shape->shape());
                        };
-
                      },
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
@@ -64,10 +63,10 @@ public:
     return false;
   }
 
-  std::shared_ptr<::Constraints::Constraint> constraint() {
+  std::shared_ptr<::Constraints::Constraint> constraint() override {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }
-  std::shared_ptr<const ::Constraints::Constraint> constraint() const {
+  std::shared_ptr<const ::Constraints::Constraint> constraint() const override {
     return std::static_pointer_cast<::Constraints::Constraint>(m_constraint);
   }
   std::shared_ptr<::Constraints::ShapeBasedConstraint>

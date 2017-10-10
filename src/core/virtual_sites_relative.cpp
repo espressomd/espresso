@@ -141,64 +141,55 @@ void update_mol_vel_particle(Particle *p)
  }
 }
 
-
-// Distribute forces that have accumulated on virtual particles to the 
+// Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void distribute_mol_force()
-{
+void distribute_mol_force() {
   // Iterate over all the particles in the local cells
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      // We only care about virtual particles
-      if (ifParticleIsVirtual(&p[i])) {
-       update_mol_pos_particle(&p[i]);
+  for (auto &p : local_cells.particles()) {
+    // We only care about virtual particles
+    if (ifParticleIsVirtual(&p)) {
+      update_mol_pos_particle(&p);
 
-       // First obtain the real particle responsible for this virtual particle:
-       Particle *p_real = vs_relative_get_real_particle(&p[i]);
+      // First obtain the real particle responsible for this virtual particle:
+      Particle *p_real = vs_relative_get_real_particle(&p);
 
-       // Get distance vector pointing from real to virtual particle, respecting periodic boundary i
-       // conditions
-       double d[3];
-       get_mi_vector(d,p[i].r.p,p_real->r.p);
+      // Get distance vector pointing from real to virtual particle, respecting
+      // periodic boundary i
+      // conditions
+      double d[3];
+      get_mi_vector(d, p.r.p, p_real->r.p);
 
-       // The rules for transfering forces are:
-       // F_realParticle +=F_virtualParticle
-       // T_realParticle +=f_realParticle \times (r_virtualParticle-r_realParticle)
-       
-       // Calculate torque to be added on real particle
-       double tmp[3];
-       vector_product(d,p[i].f.f,tmp);
+      // The rules for transfering forces are:
+      // F_realParticle +=F_virtualParticle
+      // T_realParticle +=f_realParticle \times
+      // (r_virtualParticle-r_realParticle)
 
-       // Add forces and torques
-       int j;
-//       printf("Particle %d gets torque from %f %f %f of particle %d\n",p_real->p.identity, p[i].f.f[0], p[i].f.f[1],p[i].f.f[2], p[i].p.identity);
-       for (j=0;j<3;j++) {
-         p_real->f.torque[j]+=tmp[j];
-//	 printf("%f ",tmp[j]);
-	 p_real->f.f[j]+=p[i].f.f[j];
+      // Calculate torque to be added on real particle
+      double tmp[3];
+      vector_product(d, p.f.f, tmp);
 
-       }
+      // Add forces and torques
+      int j;
+      //       printf("Particle %d gets torque from %f %f %f of particle
+      //       %d\n",p_real->p.identity, p.f.f[0], p.f.f[1],p.f.f[2],
+      //       p.p.identity);
+      for (j = 0; j < 3; j++) {
+        p_real->f.torque[j] += tmp[j];
+        //	 printf("%f ",tmp[j]);
+        p_real->f.f[j] += p.f.f[j];
       }
     }
   }
 }
-
-
 
 // Setup the virtual_sites_relative properties of a particle so that the given virtaul particle will follow the given real particle
 int vs_relate_to(int part_num, int relate_to)
 {
     // Get the data for the particle we act on and the one we wnat to relate
     // it to.
-    Particle  p_current,p_relate_to;
-    if ((get_particle_data(relate_to,&p_relate_to)!=ES_OK) || 
-        (get_particle_data(part_num,&p_current)!=ES_OK)) {
+    auto p_current = get_particle_data(part_num);
+    auto p_relate_to = get_particle_data(relate_to);
+    if (!p_current || !p_relate_to) {
         ostringstream msg;
         msg <<"Could not retrieve particle data for the given id";
         runtimeError(msg);
@@ -207,7 +198,7 @@ int vs_relate_to(int part_num, int relate_to)
     
     // get teh distance between the particles
     double d[3];
-    get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
+    get_mi_vector(d, p_current->r.p,p_relate_to->r.p);
     
     
     
@@ -216,7 +207,7 @@ int vs_relate_to(int part_num, int relate_to)
     double l=sqrt(sqrlen(d));
     if (l>min_global_cut) {
         ostringstream msg;
-        msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n";
+        msg << "Warning: The distance between virtual and non-virtual particle (" << l << ") is\nlarger than the minimum global cutoff (" << min_global_cut << "). This may lead to incorrect simulations\nunder certain conditions. Set the \"System()\" class property \"min_global_cut\" to\nincrease the minimum cutoff.\n";
         runtimeWarning(msg);
       return ES_ERROR;
     }
@@ -251,31 +242,31 @@ int vs_relate_to(int part_num, int relate_to)
       // Define quat as described above:
       double x=0;
       for (i=0;i<4;i++)
-       x+=p_relate_to.r.quat[i]*p_relate_to.r.quat[i];
+       x+=p_relate_to->r.quat[i]*p_relate_to->r.quat[i];
   
       quat[0]=0;
       for (i=0;i<4;i++)
-       quat[0] +=p_relate_to.r.quat[i]*quat_director[i];
+       quat[0] +=p_relate_to->r.quat[i]*quat_director[i];
       
-      quat[1] =-quat_director[0] *p_relate_to.r.quat[1] 
-         +quat_director[1] *p_relate_to.r.quat[0]
-         +quat_director[2] *p_relate_to.r.quat[3]
-         -quat_director[3] *p_relate_to.r.quat[2];
-      quat[2] =p_relate_to.r.quat[1] *quat_director[3] 
-        + p_relate_to.r.quat[0] *quat_director[2] 
-        - p_relate_to.r.quat[3] *quat_director[1] 
-        - p_relate_to.r.quat[2] * quat_director[0];
-      quat[3] =quat_director[3] *p_relate_to.r.quat[0]
-        - p_relate_to.r.quat[3] *quat_director[0] 
-        + p_relate_to.r.quat[2] * quat_director[1] 
-        - p_relate_to.r.quat[1] *quat_director[2];
+      quat[1] =-quat_director[0] *p_relate_to->r.quat[1] 
+         +quat_director[1] *p_relate_to->r.quat[0]
+         +quat_director[2] *p_relate_to->r.quat[3]
+         -quat_director[3] *p_relate_to->r.quat[2];
+      quat[2] =p_relate_to->r.quat[1] *quat_director[3] 
+        + p_relate_to->r.quat[0] *quat_director[2] 
+        - p_relate_to->r.quat[3] *quat_director[1] 
+        - p_relate_to->r.quat[2] * quat_director[0];
+      quat[3] =quat_director[3] *p_relate_to->r.quat[0]
+        - p_relate_to->r.quat[3] *quat_director[0] 
+        + p_relate_to->r.quat[2] * quat_director[1] 
+        - p_relate_to->r.quat[1] *quat_director[2];
       for (i=0;i<4;i++)
        quat[i]/=x;
      
      
      // Verify result
      double qtemp[4];
-     multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
+     multiply_quaternions(p_relate_to->r.quat,quat,qtemp);
      for (i=0;i<4;i++)
        if (fabs(qtemp[i]-quat_director[i])>1E-9)
          fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
@@ -286,8 +277,6 @@ int vs_relate_to(int part_num, int relate_to)
      quat[0]=1;
      quat[1]=quat[2]=quat[3]=0;
     }
-    free_particle(&p_relate_to);
-    free_particle(&p_current);
 
     // Set the particle id of the particle we want to relate to, the distnace
     // and the relative orientation
@@ -297,6 +286,7 @@ int vs_relate_to(int part_num, int relate_to)
       runtimeError(msg);
       return ES_ERROR;
     }
+    set_particle_virtual(part_num,1);
    
    return ES_OK;
 }
@@ -306,45 +296,36 @@ int vs_relate_to(int part_num, int relate_to)
 void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor)
 {
   // Division by 3 volume is somewhere else. (pressure.cpp after all presure calculations)
-
-
   // Iterate over all the particles in the local cells
-  Particle *p;
-  int i, np, c;
-  Cell *cell;
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
-      // We only care about virtual particles
-      if (!ifParticleIsVirtual(&p[i]))
-        continue;
 
-      update_mol_pos_particle(&p[i]);
+  for (auto &p : local_cells.particles()) {
+    if (!ifParticleIsVirtual(&p))
+      continue;
 
-      // First obtain the real particle responsible for this virtual particle:
-      Particle *p_real = vs_relative_get_real_particle(&p[i]);
+    update_mol_pos_particle(&p);
 
-      // Get distance vector pointing from real to virtual particle, respecting periodic boundary i
-      // conditions
-      double d[3];
-      get_mi_vector(d,p_real->r.p,p[i].r.p);
+    // First obtain the real particle responsible for this virtual particle:
+    Particle *p_real = vs_relative_get_real_particle(&p);
 
-      // Stress tensor conribution
-      for (int k =0; k<3;k++)
-       for (int l =0;l<3;l++)
-        stress_tensor[k*3+l] +=p[i].f.f[k] *d[l];
-      
-      // Pressure = 1/3 trace of stress tensor
-      // but the 1/3 is applied somewhere else.
-      *pressure +=(p[i].f.f[0] *d[0] +p[i].f.f[1] *d[1] +p[i].f.f[2] *d[2]);
+    // Get distance vector pointing from real to virtual particle, respecting
+    // periodic boundary i
+    // conditions
+    double d[3];
+    get_mi_vector(d, p_real->r.p, p.r.p);
 
-    }
+    // Stress tensor conribution
+    for (int k = 0; k < 3; k++)
+      for (int l = 0; l < 3; l++)
+        stress_tensor[k * 3 + l] += p.f.f[k] * d[l];
+
+    // Pressure = 1/3 trace of stress tensor
+    // but the 1/3 is applied somewhere else.
+    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
   }
- *pressure/=0.5*time_step*time_step;
- for (i=0;i<9;i++)
-  stress_tensor[i]/=0.5*time_step*time_step;
+
+  *pressure /= 0.5 * time_step * time_step;
+  for (int i = 0; i < 9; i++)
+    stress_tensor[i] /= 0.5 * time_step * time_step;
 
 }
 

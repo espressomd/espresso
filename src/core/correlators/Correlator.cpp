@@ -125,8 +125,8 @@ int Correlator::get_correlation_time(double* correlation_time) {
 
 
 Correlator::Correlator() :
-			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0)
-           {};
+			    t(0), finalized(0), autoupdate(0),autocorrelation(1),initialized(0),correlation_args{}
+           {}
 
 void Correlator::initialize() {
   unsigned int i,j,k;
@@ -206,21 +206,29 @@ void Correlator::initialize() {
   } else if ( corr_operation_name=="componentwise_product")  {
     dim_corr = dim_A;
     corr_operation = &componentwise_product;
-    args = NULL;
+    correlation_args = Vector3d{0,0,0};
   } else if ( corr_operation_name=="complex_conjugate_product")  {
     dim_corr = dim_A;
     corr_operation = &complex_conjugate_product;
-    args = NULL;
+    correlation_args = Vector3d{0,0,0};
   } else if ( corr_operation_name=="tensor_product") {
     dim_corr = dim_A*dim_B;
     corr_operation = &tensor_product;
-    args = NULL;
+    correlation_args = Vector3d{0,0,0};
   } else if ( corr_operation_name=="square_distance_componentwise") {
     dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
-    args = NULL;
+    correlation_args = Vector3d{0,0,0};
   } else if ( corr_operation_name=="fcs_acf")  {
-    if (dim_A %3 )
+	// note: user provides w=(wx,wy,wz) but we want to use wsquare=(wx^2,wy^2,wz^2)
+    if(correlation_args[0] <= 0 || correlation_args[1] <= 0 || correlation_args[2] <= 0) {
+		throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
+	}
+	correlation_args[0]=correlation_args[0]*correlation_args[0];
+    correlation_args[1]=correlation_args[1]*correlation_args[1];
+    correlation_args[2]=correlation_args[2]*correlation_args[2];
+	fprintf(stderr,"args2: %f %f %f\n",correlation_args[0],correlation_args[1],correlation_args[2]);
+	if (dim_A %3 )
        throw std::runtime_error( init_errors[18]);
     dim_corr = dim_A/3;
     corr_operation = &fcs_acf;
@@ -230,7 +238,7 @@ void Correlator::initialize() {
   } else if ( corr_operation_name=="scalar_product")  {
     dim_corr=1;
     corr_operation = &scalar_product;
-    args = NULL;
+    correlation_args = Vector3d{0,0,0};
   } else {
     throw std::runtime_error( init_errors[11]); 
   }
@@ -449,7 +457,7 @@ int Correlator::get_data() {
     index_new = newest[0];
     index_old =  (newest[0] - j + tau_lin + 1) % (tau_lin + 1);
 //    printf("old %d new %d\n", index_old, index_new);
-    error = (corr_operation)(A[0][index_old], dim_A, B[0][index_new], dim_B, temp, dim_corr, args);
+    error = (corr_operation)(A[0][index_old], dim_A, B[0][index_new], dim_B, temp, dim_corr, correlation_args);
     if ( error != 0)
       return error;
     n_sweeps[j]++;
@@ -463,7 +471,7 @@ int Correlator::get_data() {
       index_new = newest[i];
       index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
       index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
-      error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, args);
+      error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, correlation_args);
       if ( error != 0)
         return error;
       n_sweeps[index_res]++;
@@ -686,7 +694,7 @@ int Correlator::finalize() {
           index_new = newest[i];
           index_old = (newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
-          error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, args);
+          error=(corr_operation)(A[i][index_old], dim_A, B[i][index_new], dim_B, temp, dim_corr, correlation_args);
           if ( error != 0)
             return error;
           n_sweeps[index_res]++;
@@ -787,7 +795,7 @@ int obs_nothing (void* params, double* A, unsigned int n_A) {
   return 0;
 }
 
-int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
   double temp = 0;
   unsigned int i;
   if (!(dim_A == dim_B && dim_corr == 1 )) {
@@ -801,7 +809,7 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
   return 0;
 }
 
-int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
   unsigned int i;
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
@@ -817,7 +825,7 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   return 0;
 }
 
-int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
   unsigned int i,j;
   if (!(dim_A == dim_B )) {
     printf("Error in complex_conjugate product: The vector sizes do not match");
@@ -832,7 +840,7 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   return 0;
 }
 
-int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
   unsigned int i,j;
   for ( i = 0; i < dim_A; i++ )
   {
@@ -844,7 +852,7 @@ int tensor_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
   return 0;
 }
 
-int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d ) {
   unsigned int i;
   if (!(dim_A == dim_B )) {
     printf("Error in square distance componentwise: The vector sizes do not match\n");
@@ -856,10 +864,8 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   return 0;
 }
 
-int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
-  DoubleList *wsquare = (DoubleList*)args;
-  if (args == NULL )
-    return 1;
+// note: the argument name wsquare denotes that it value is w^2 while the user sets w
+int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, Vector3d wsquare) {
   if (!(dim_A == dim_B )) {
     return 5;
   }
@@ -869,7 +875,7 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
   for (unsigned i = 0; i < dim_corr; i++ ) 
     C[i] = 0;
   for (unsigned i = 0; i < dim_A; i++ ) {
-    C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare->e[i%3];
+    C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare[i%3];
   }
   for (unsigned i = 0; i < dim_corr; i++ ) 
     C[i] = exp(C[i]);
