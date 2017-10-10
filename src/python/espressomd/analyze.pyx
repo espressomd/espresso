@@ -633,15 +633,14 @@ class Analysis(object):
         
         Parameters
         ----------
-                
-        chain_start : int,
-        n_chains = int,
-        chain_length = int
+        chain_start : :obj:`int`.
+        number_of_chains : :obj:`int`.
+        chain_length : :obj:`int`.
         
         Returns            
         -------
         array_like
-            Where [0] Root Mean Square end-to-end distance of chains
+            Where [0] is the Root Mean Square end-to-end distance of chains
             and [1] its standard deviation,
             [2] the Mean Square end-to-end distance
             and [3] its standard deviation.
