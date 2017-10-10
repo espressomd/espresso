@@ -721,62 +721,67 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
                  int n_p2, double r_min, double r_max, int r_bins, double *rdf,
                  int n_conf) {
   long int cnt = 0;
-  int i, j, k, l, t1, t2, ind, cnt_conf = 1;
+  int cnt_conf = 1;
   int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
+  double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp, p1[3], p2[3];
 
   rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
 
   if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
+    for (int i = 0; i < n_p1; i++)
       if (p1_types[i] != p2_types[i])
         mixed_flag = 1;
   } else
     mixed_flag = 1;
+
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
   volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
+  for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
   while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
+    for (int l = 0; l < r_bins; l++)
       rdf_tmp[l] = 0.0;
     cnt = 0;
-    k = n_configs - cnt_conf;
+    auto const k = n_configs - cnt_conf;
+    int i = 0;
     for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
+      for (int t1 = 0; t1 < n_p1; t1++) {
         if (it->p.type == p1_types[t1]) {
           /* distinguish mixed and identical rdf's */
           auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
+          int j = (mixed_flag == 1) ? 0 : i + 1;
 
           // particle loop: p2_types
           for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
+            for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                p1[0] = configs[k][3 * i];
+                p1[0] = configs[k][3 * i + 0];
                 p1[1] = configs[k][3 * i + 1];
                 p1[2] = configs[k][3 * i + 2];
-                p2[0] = configs[k][3 * j];
+                p2[0] = configs[k][3 * j + 0];
                 p2[1] = configs[k][3 * j + 1];
                 p2[2] = configs[k][3 * j + 2];
-                dist = min_distance(p1, p2);
+                auto const dist = min_distance(p1, p2);
                 if (dist > r_min && dist < r_max) {
-                  ind = (int)((dist - r_min) * inv_bin_width);
+                  auto const ind = static_cast<int>((dist - r_min) * inv_bin_width);
                   rdf_tmp[ind]++;
                 }
                 cnt++;
               }
             }
+            j++;
           }
         }
       }
+      i++;
     }
     // normalization
 
-    for (i = 0; i < r_bins; i++) {
+    for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
       bin_volume =
@@ -786,92 +791,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
 
     cnt_conf++;
   } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
-    rdf[i] /= (cnt_conf - 1);
-  }
-  free(rdf_tmp);
-}
-
-void calc_rdf_intermol_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                          std::vector<int> &p2_types, double r_min,
-                          double r_max, int r_bins, std::vector<double> &rdf,
-                          int n_conf) {
-  calc_rdf_intermol_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
-                       p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
-}
-
-void calc_rdf_intermol_av(PartCfg &partCfg, int *p1_types, int n_p1,
-                          int *p2_types, int n_p2, double r_min, double r_max,
-                          int r_bins, double *rdf, int n_conf) {
-  int i, j, k, l, t1, t2, ind, cnt = 0, cnt_conf = 1;
-  int mixed_flag = 0, start;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
-  double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3], p2[3];
-
-  rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
-
-  if (n_p1 == n_p2) {
-    for (i = 0; i < n_p1; i++)
-      if (p1_types[i] != p2_types[i])
-        mixed_flag = 1;
-  } else
-    mixed_flag = 1;
-  bin_width = (r_max - r_min) / (double)r_bins;
-  inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
-  for (l = 0; l < r_bins; l++)
-    rdf_tmp[l] = rdf[l] = 0.0;
-
-  while (cnt_conf <= n_conf) {
-    for (l = 0; l < r_bins; l++)
-      rdf_tmp[l] = 0.0;
-    cnt = 0;
-    k = n_configs - cnt_conf;
-    for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (t1 = 0; t1 < n_p1; t1++) {
-        if (it->p.type == p1_types[t1]) {
-          // distinguish mixed and identical rdf's
-          auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
-
-          // particle loop: p2_types
-          for (; jt != partCfg.end(); ++jt) {
-            for (t2 = 0; t2 < n_p2; t2++) {
-              if (jt->p.type == p2_types[t2]) {
-                /*see if particles i and j belong to different molecules*/
-                if (it->p.mol_id != jt->p.mol_id) {
-                  p1[0] = configs[k][3 * i];
-                  p1[1] = configs[k][3 * i + 1];
-                  p1[2] = configs[k][3 * i + 2];
-                  p2[0] = configs[k][3 * j];
-                  p2[1] = configs[k][3 * j + 1];
-                  p2[2] = configs[k][3 * j + 2];
-                  dist = min_distance(p1, p2);
-                  if (dist > r_min && dist < r_max) {
-                    ind = (int)((dist - r_min) * inv_bin_width);
-                    rdf_tmp[ind]++;
-                  }
-                  cnt++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    // normalization
-
-    for (i = 0; i < r_bins; i++) {
-      r_in = i * bin_width + r_min;
-      r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-      rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
-    }
-
-    cnt_conf++;
-  } // cnt_conf loop
-  for (i = 0; i < r_bins; i++) {
+  for (int i = 0; i < r_bins; i++) {
     rdf[i] /= (cnt_conf - 1);
   }
   free(rdf_tmp);
@@ -1391,7 +1311,7 @@ void analyze_append(PartCfg &partCfg) {
       (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs][3 * i] = p.r.p[0];
+    configs[n_configs][3 * i + 0] = p.r.p[0];
     configs[n_configs][3 * i + 1] = p.r.p[1];
     configs[n_configs][3 * i + 2] = p.r.p[2];
     i++;
@@ -1410,7 +1330,7 @@ void analyze_push(PartCfg &partCfg) {
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[n_configs - 1][3 * i] = p.r.p[0];
+    configs[n_configs - 1][3 * i + 0] = p.r.p[0];
     configs[n_configs - 1][3 * i + 1] = p.r.p[1];
     configs[n_configs - 1][3 * i + 2] = p.r.p[2];
 
@@ -1423,7 +1343,7 @@ void analyze_replace(PartCfg &partCfg, int ind) {
 
   int i = 0;
   for (auto const &p : partCfg) {
-    configs[ind][3 * i] = p.r.p[0];
+    configs[ind][3 * i + 0] = p.r.p[0];
     configs[ind][3 * i + 1] = p.r.p[1];
     configs[ind][3 * i + 2] = p.r.p[2];
 

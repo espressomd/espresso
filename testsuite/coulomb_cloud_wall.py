@@ -75,8 +75,7 @@ class CoulombCloudWall(ut.TestCase):
 
         # Energy
         if energy:
-            energy_abs_diff = abs(self.S.analysis.energy(
-                self.S)["total"] - self.reference_energy)
+            energy_abs_diff = abs(self.S.analysis.energy()["total"] - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
             self.assertLessEqual(
                 energy_abs_diff,
@@ -145,7 +144,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
-        self.assertEqual(self.S.analysis.energy(self.S)["total"], 0.0)
+        self.assertEqual(self.S.analysis.energy()["total"], 0.0)
 
 
 if __name__ == "__main__":
