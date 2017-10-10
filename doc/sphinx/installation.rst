@@ -98,7 +98,7 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port port install cmake python27 python27-cython python27-numpy \
+    sudo port install cmake python27 python27-cython python27-numpy \
     openmpi-default fftw-3 +openmpi boost +openmpi +python27
     sudo port select --set cython cython27
     sudo port select --set python python27
