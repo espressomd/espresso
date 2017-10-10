@@ -459,6 +459,11 @@ particles which share the given type.
 Self-propelled swimmers
 -----------------------
 
+.. note::
+
+    If you are using this feature, please cite :cite:`degraaf16`.
+
+
 .. seealso::
 
     :class:`espressomd.particle_data.ParticleHandle.swimming`
