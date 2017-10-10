@@ -1626,7 +1626,7 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int spe
     float* flux = ek_parameters_gpu.j;
     float random = (curand_uniform(&ek_parameters_gpu.rnd_state[index]) - 0.0f) * 3.46410161514;
     float random2 = (curand_uniform(&ek_parameters_gpu.rnd_state[index]) - 0.0f) * 3.46410161514;
-    //float random =(curand_normal(&ek_parameters_gpu.rnd_state[index]) + 1.0f) * 0.5f;
+    //float random =(curand_normal(&ek_parameters_gpu.rnd_state[index]) + 0.0f) * 1.0f;
     //float random2 = (curand_normal(&ek_parameters_gpu.rnd_state[index]) + 1.0f) * 0.5f;
 
 
@@ -1635,11 +1635,13 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index, unsigned int spe
       //printf("%d,%d: density=%f, fluct_ampl=%f, rnd=%f, flux=%f\n", index, i, density, ek_parameters_gpu.fluctuation_amplitude, random, flux[i]);
         if(i > 2)
         {
-            flux[jindex_getByRhoLinear(index, i)] += (powf(density, 0.1428f) * random - powf(ek_parameters_gpu.rho[species_index][neighborindex[i]], 0.1428f) * random2) * ek_parameters_gpu.fluctuation_amplitude;
+            //flux[jindex_getByRhoLinear(index, i)] += powf(density + ek_parameters_gpu.rho[species_index][neighborindex[i]], 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude;
+            flux[jindex_getByRhoLinear(index, i)] += (powf(2.0f * density * ek_parameters_gpu.D, 0.5f) * random - powf(2.0f * ek_parameters_gpu.rho[species_index][neighborindex[i]] * ek_parameters_gpu.D, 0.5f) * random2) * ek_parameters_gpu.fluctuation_amplitude;
         }
         else
         {
-            flux[jindex_getByRhoLinear(index, i)] += (powf(density, 0.1428f) * random - powf(ek_parameters_gpu.rho[species_index][neighborindex[i]], 0.1428f)  * random2) * ek_parameters_gpu.fluctuation_amplitude;
+            //flux[jindex_getByRhoLinear(index, i)] += powf(density + ek_parameters_gpu.rho[species_index][neighborindex[i]], 0.5f) * random * ek_parameters_gpu.fluctuation_amplitude;
+            flux[jindex_getByRhoLinear(index, i)] += (powf(2.0f * density * ek_parameters_gpu.D, 0.5f) * random - powf(2.0f * ek_parameters_gpu.D * ek_parameters_gpu.rho[species_index][neighborindex[i]], 0.5f) * random2) * ek_parameters_gpu.fluctuation_amplitude;
         }
       //printf("%d,%d: flux=%f\n", index, i, flux[i]);
     }
