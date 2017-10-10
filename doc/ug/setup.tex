@@ -926,7 +926,7 @@ The following limitations currently apply for the collision detection:
 \section{Catalytic Reactions}
 \label{sec:Reactions}
 
-With the help of the feature \feature{CATALYTIC_REACTIONS}, one can define three particle types to act as reactant (e.g. $H_{2}O_{2}$), catalyzer (e.g. platinum), and product (e.g. $O_{2}$ and $H_{2}O$). The current setup allows one to simulate active swimmers and their chemical propulsion. 
+With the help of the feature \feature{CATALYTIC_REACTIONS}, one can define three particle types to act as reactant (e.g. $H_{2}O_{2}$), catalyzer (e.g. platinum), and product (e.g. $O_{2}$ and $H_{2}O$). The current setup allows one to simulate active swimmers and their chemical propulsion.
 
 For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldomly occur at the surface. A typical model for the propulsion of such a particle assumes
 \begin{align}
@@ -934,15 +934,15 @@ For a Janus swimmer consisting of platinum on one hemisphere and gold on the oth
     H_{2}O_{2} &\xrightarrow{\text{Pt}} 2 H^{+} + 2 e^{-} + O_{2} \\
     2 H^{+} + 2 e^{-} + H_{2}O_{2} &\xrightarrow{\text{Au}} 2 H_{2}O
 \end{align}
-That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be 
+That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process refered to as self-electrophoresis. A minimal model for this would be
 \begin{align}
   \label{eq:simple}
     A &\xrightarrow{C^{+}} B \\
-    B &\xrightarrow{C^{-}} A 
+    B &\xrightarrow{C^{-}} A
 \end{align}
-where on the upper half of the catalyst $C^{+}$ a species $A$ is converted into $B$, and on the lower half the opposite reaction takes place. Note that when $A$ and $B$ are charged, this reaction conserves charge, provided the rates are equal. 
+where on the upper half of the catalyst $C^{+}$ a species $A$ is converted into $B$, and on the lower half $C^{-}$ the opposite reaction takes place. Note that when $A$ and $B$ are charged, this reaction conserves charge, provided the rates are equal.
 
-In \es\ the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the \textit{reaction range}: $r$. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by 
+In \es\ the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the \textit{reaction range}: $r$. Inside the reaction range, we react only rectant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
 \begin{equation}
   \label{eq:prob}
   P_{\text{move}} = 1 - \mathrm{e}^{-k_{\text{ct}}\,\Delta t} ,
@@ -998,10 +998,10 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct} \opt{react_once \var{on/
     reaction involving particles of type 5, 6, and 8. It is however
     possible to modify the reaction properties for a given set of
     types during the simulation.}. The catalytic reaction rate
-  constant is given by \var{k\_ct}\footnote{Currently only strictly
+  constant is given by\footnote{Currently only strictly
     positive values of the catalytic conversion rate constant are
     allowed. Setting the value to zero is equivalent to
-    \texttt{reaction off}.}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when using many catalyst particles, it can
+    \texttt{reaction off}.} \var{k\_ct}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when using many catalyst particles, it can
   be desirable to let the reaction rate be independent of the density of these particles. To accomplish this, each reactant
   is considered only once each time step by using the option
   \texttt{react\_once} \emph{on}.

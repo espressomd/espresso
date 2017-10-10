@@ -12,8 +12,40 @@ IF CATALYTIC_REACTIONS:
         """
         Class that handles catalytic reactions for self propelled particles.
 
-        .. note:: Requires the features CATALYTIC_REACTIONS.
+        .. note::
+           Requires the features CATALYTIC_REACTIONS.
+           
+           Keep in mind, that there may be only one reaction enabled. 
+           There can be only one.
 
+        Parameters
+        ----------
+
+        'product_type': integer
+            Particle type of the reactions product
+
+        'reactant_type': integer
+            Particle type of the reactant
+
+        'catalyzer_type':   integer
+            Particle type of the catalyst
+
+        'ct_range': float
+            Distance up to which the catalyst affects the reactants
+
+        'ct_rate': float
+            Reaction rate for particle in the vicinity of catalysts
+
+        'eq_rate': float, optional
+            Equilibrium reaction rate
+
+        'react_once':   bool, optional, defaults to False
+            Only perform the reaction move on a particle pair once per timestep
+
+        Notes
+        -----
+
+        Requires the features 'CATALYTIC_REACTIONS'.
         """
 
         def validate_params(self):
@@ -111,30 +143,6 @@ IF CATALYTIC_REACTIONS:
             mpi_setup_reaction()
 
         def __init__(self, *args, **kwargs):
-            """
-            Initialize the reaction. Keep in mind, that there may be
-            only one reaction enabled. There can be only one.
-
-            Parameters
-            ----------
-            'product_type' : :obj:`int`
-                             Particle type of the reactions product.
-            'reactant_type' : :obj:`int`
-                              Particle type of the reactant.
-            'catalyzer_type' : :obj:`int`
-                               Particle type of the catalyst.
-            'ct_range' : :obj:`float`
-                         Distance up to which the catalyst affects the reactants.
-            'ct_rate' : :obj:`float`
-                        Reaction rate for particle in the vicinity of catalysts.
-            'eq_rate' : :obj:`float`, optional
-                        Equilibrium reaction rate.
-            'react_once' : :obj:`bool`, optional, defaults to False
-                           See documentation for explanation.
-            'swap' : :obj:`bool`, optional
-                     See documentation for explanation.
-
-            """
             self._ct_rate = 0.0
 
             # There can only be one reaction
