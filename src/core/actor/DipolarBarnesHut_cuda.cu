@@ -33,7 +33,7 @@ typedef float dds_float ;
 #include "DipolarBarnesHut_cuda.cuh"
 
 #define SQ(x) ((x)*(x))
-#define IND (blockDim.x * blockIdx.x + threadIdx.x) // TODO
+#define IND (blockDim.x * blockIdx.x + threadIdx.x)
 
 __device__ float sgn(float x){
 	return (x > 0.0f) ? 1.0f : ((x < 0.0f) ? -1.0f : 0.0f);
@@ -41,19 +41,22 @@ __device__ float sgn(float x){
 
 using namespace std;
 
+// each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
+// hence, 8 nodes per particle is a theoretical octree limit:
+// a number of nodes is "nnodesd" and a number of particles "nbodiesd" respectively
 __constant__ int nnodesd, nbodiesd;
 __constant__ volatile float epssqd, itolsqd;
+// blkcntd is a factual blocks' count
+// bottomd is a bottom node
+// maxdepthd is a largest length of the octree "branch" till the "leaf"
 __device__ volatile int bottomd, maxdepthd, blkcntd;
+// hald edge of the BH box
 __device__ volatile float radiusd;
 __device__ __constant__ volatile float* xd;
 __constant__ volatile float* uxd;
 __constant__ volatile float* massd; // not a real mass. Just a node weight coefficient.
-__constant__ volatile float *minxd;
-__constant__ volatile float *maxxd;
-__constant__ volatile float *minyd;
-__constant__ volatile float *maxyd;
-__constant__ volatile float *minzd;
-__constant__ volatile float *maxzd;
+__constant__ volatile float *mind;
+__constant__ volatile float *maxd;
 __constant__ volatile int *errd;
 __constant__ volatile int *sortd;
 __constant__ volatile int *childd;
@@ -103,85 +106,77 @@ __global__
 __launch_bounds__(THREADS1, FACTOR1)
 void boundingBoxKernel()
 {
-	register int i, j, k, inc;
-	register float val, minx, maxx, miny, maxy, minz, maxz;
-	__shared__ volatile float sminx[THREADS1], smaxx[THREADS1], sminy[THREADS1], smaxy[THREADS1], sminz[THREADS1], smaxz[THREADS1];
-	minx = maxx = xd[0];
-	miny = maxy = xd[1];
-	minz = maxz = xd[2];
+	register int i, j, k, l, inc;
+	register float val;
+	float minp[3], maxp[3];
+	__shared__ volatile float smin[3*THREADS1], smax[3*THREADS1];
+	for (l = 0; l < 3; l++) {
+	  minp[l] = maxp[l] = xd[l];
+	}
 
 	// scan all bodies
 	i = threadIdx.x;
 	inc = THREADS1 * gridDim.x;
-	for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc) {
-		val = xd[3 * j];
-		minx = min(minx, val);
-		maxx = max(maxx, val);
-		val = xd[3 * j + 1];
-		miny = min(miny, val);
-		maxy = max(maxy, val);
-		val = xd[3 * j + 2];
-		minz = min(minz, val);
-		maxz = max(maxz, val);
-	}
+	for (j = i + blockIdx.x * THREADS1; j < nbodiesd; j += inc)
+	  for (l = 0; l < 3; l++) {
+	    val = xd[3 * j + l];
+	    minp[l] = min(minp[l], val);
+	    maxp[l] = max(maxp[l], val);
+	  }
 
-	// reduction in shared memory
-	sminx[i] = minx;
-	smaxx[i] = maxx;
-	sminy[i] = miny;
-	smaxy[i] = maxy;
-	sminz[i] = minz;
-	smaxz[i] = maxz;
+	// reduction in shared memory:
+	for (l = 0; l < 3; l++) {
+	  smin[3 * i + l] = minp[l];
+	  smax[3 * i + l] = maxp[l];
+	}
 
 	for (j = THREADS1 / 2; j > 0; j /= 2) {
 		__syncthreads();
 		if (i < j) {
 			k = i + j;
-			sminx[i] = minx = min(minx, sminx[k]);
-			smaxx[i] = maxx = max(maxx, smaxx[k]);
-			sminy[i] = miny = min(miny, sminy[k]);
-			smaxy[i] = maxy = max(maxy, smaxy[k]);
-			sminz[i] = minz = min(minz, sminz[k]);
-			smaxz[i] = maxz = max(maxz, smaxz[k]);
+			for (l = 0; l < 3; l++) {
+			  smin[3 * i + l] = minp[l] = min(minp[l], smin[3 * k + l]);
+			  smax[3 * i + l] = maxp[l] = max(maxp[l], smax[3 * k + l]);
+			}
 		}
 	}
 
-	// write block result to global memory
+	// write a given block result to the global memory
 	if (i == 0) {
 		k = blockIdx.x;
-		minxd[k] = minx;
-		maxxd[k] = maxx;
-		minyd[k] = miny;
-		maxyd[k] = maxy;
-		minzd[k] = minz;
-		maxzd[k] = maxz;
+		for (l = 0; l < 3; l++) {
+		  mind[3 * k + l] = minp[l];
+		  maxd[3 * k + l] = maxp[l];
+		}
 
 		inc = gridDim.x - 1;
 		if (inc == atomicInc((unsigned int *)&blkcntd, inc)) {
-		// I'm the last block, so combine all block results
-			for (j = 0; j <= inc; j++) {
-				minx = min(minx, minxd[j]);
-				maxx = max(maxx, maxxd[j]);
-				miny = min(miny, minyd[j]);
-				maxy = max(maxy, maxyd[j]);
-				minz = min(minz, minzd[j]);
-				maxz = max(maxz, maxzd[j]);
-			}
+		// I'm the last block, so combine all block results over the index j
+			for (j = 0; j <= inc; j++)
+			  for (l = 0; l < 3; l++) {
+			    minp[l] = min(minp[l], mind[3 * j + l]);
+			    maxp[l] = max(maxp[l], maxd[3 * j + l]);
+			  }
 
 			// compute 'radius'
-			val = max(maxx - minx, maxy - miny);
-			radiusd = max(val, maxz - minz) * 0.5f;
+			val = max(maxp[0] - minp[0], maxp[1] - minp[1]);
+			radiusd = max(val, maxp[2] - minp[2]) * 0.5f;
 
-			// create root node
 			k = nnodesd;
+			// create the root node of the Barnes-Hut octree
+			// bottom node is defined with max possible index just to start
+			// it will be updated within further tree building in
+			// corresponding kernel
 			bottomd = k;
-
+			// mass of the root node has no physical sense cause
+			// it does not correspond to any real particle
 			massd[k] = -1.0f;
+			// sorting init
 			startd[k] = 0;
-			xd[3 * k] = (minx + maxx) * 0.5f;
-			xd[3 * k + 1] = (miny + maxy) * 0.5f;
-			xd[3 * k + 2] = (minz + maxz) * 0.5f;
+			// position of the root node should be in the center of the just defined BH box
+			for (l = 0; l < 3; l++) xd[3 * k + l] = (minp[l] + maxp[l]) * 0.5f;
 			k *= 8;
+			// init further tree building:
 			for (i = 0; i < 8; i++) childd[k + i] = -1;
 		}
 	}
@@ -782,11 +777,9 @@ void energyCalculationKernel(dds_float pf,
     sum /= 2.0f; // the self-consistent field energy
     // Save per thread result into block shared mem
     res[threadIdx.x] =sum;
-    //globalRes[i]=sum;
     // Sum results within a block
     __syncthreads(); // Wait til all threads in block are done
     dds_sumReduction_BH(res,&(energySum[blockIdx.x]));
-    //  if (threadIdx.x==0)
 }
 
 static void CudaTest(char *msg) {
@@ -865,11 +858,8 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	block.x = THREADS5;
 
 	cuda_safe_mem(cudaMalloc((void**)&box_l_gpu,3*sizeof(dds_float)));
-
 	cuda_safe_mem(cudaMalloc((void**)&periodic_gpu,3*sizeof(int)));
-
 	cuda_safe_mem(cudaMemcpy(box_l_gpu,box_l,3*sizeof(float),cudaMemcpyHostToDevice));
-
 	cuda_safe_mem(cudaMemcpy(periodic_gpu,periodic,3*sizeof(int),cudaMemcpyHostToDevice));
 
 	dds_float *energySum;
@@ -880,12 +870,9 @@ void energyBH(int blocks, dds_float k, dds_float box_l[3],int periodic[3],float*
 	cudaThreadSynchronize();
 
 	// Sum the results of all blocks
-	// One thread per block in the prev kernel
-	block.x=grid.x;
-	grid.x=1;
-	//KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
+	// One energy part per block in the prev kernel
 	thrust::device_ptr<dds_float> t(energySum);
-	float x=thrust::reduce(t,t+block.x);
+	float x=thrust::reduce(t,t+grid.x);
 	cuda_safe_mem(cudaMemcpy(E,&x,sizeof(float),cudaMemcpyHostToDevice));
 
 	cuda_safe_mem(cudaFree(energySum));
@@ -901,6 +888,7 @@ void setBHPrecision(float epssq, float itolsq) {
     cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, &itolsq_loc, sizeof(float), 0, cudaMemcpyHostToDevice));
 }
 
+// Populating of array pointers allocated in GPU device from .cu part of the Espresso interface
 void fillConstantPointers(float* r, float* dip, int nbodies, int nnodes, BHArrays arrl, BHBox boxl, float* mass) {
 	cuda_safe_mem(cudaMemcpyToSymbol(nnodesd, &nnodes, sizeof(int), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(nbodiesd, &nbodies, sizeof(int), 0, cudaMemcpyHostToDevice));
@@ -912,12 +900,8 @@ void fillConstantPointers(float* r, float* dip, int nbodies, int nnodes, BHArray
 	cuda_safe_mem(cudaMemcpyToSymbol(xd, &r, sizeof(float*), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(uxd, &dip, sizeof(float*), 0, cudaMemcpyHostToDevice));
 	cuda_safe_mem(cudaMemcpyToSymbol(massd, &(mass), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(maxxd, &(boxl.maxx), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(maxyd, &(boxl.maxy), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(maxzd, &(boxl.maxz), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(minxd, &(boxl.minx), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(minyd, &(boxl.miny), sizeof(void*), 0, cudaMemcpyHostToDevice));
-	cuda_safe_mem(cudaMemcpyToSymbol(minzd, &(boxl.minz), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(maxd, &(boxl.maxp), sizeof(void*), 0, cudaMemcpyHostToDevice));
+	cuda_safe_mem(cudaMemcpyToSymbol(mind, &(boxl.minp), sizeof(void*), 0, cudaMemcpyHostToDevice));
 }
 
-#endif
+#endif // BARNES_HUT

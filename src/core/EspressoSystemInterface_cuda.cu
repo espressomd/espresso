@@ -136,6 +136,8 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
       cuda_get_device_props(devID,dev);
 
       m_blocks = dev.n_cores;
+      // each node corresponds to a split of the cubic box in 3D space to equal cubic boxes
+      // hence, 8 nodes per particle is a theoretical octree limit:
       m_bhnnodes = n * 8;
       if (m_bhnnodes < 1024 * m_blocks) m_bhnnodes = 1024 * m_blocks;
       while ((m_bhnnodes & (WARPSIZE - 1)) != 0) m_bhnnodes++;
@@ -181,40 +183,23 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
    delete[] mass;
   }
 
-  if ((m_boxl.maxx == 0) || (n != m_gpu_npart))
+  if ((m_boxl.maxp == 0) || (n != m_gpu_npart))
   {
-   if (m_boxl.maxx != 0) cuda_safe_mem(cudaFree(m_boxl.maxx));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxx, sizeof(float) * m_blocks * 3));
+   if (m_boxl.maxp != 0) cuda_safe_mem(cudaFree(m_boxl.maxp));
+   // (max[3*i], max[3*i+1], max[3*i+2])
+   // are the octree box dynamical spatial constraints
+   // this array is updating per each block at each interaction calculation
+   // within the boundingBoxKernel
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxp, sizeof(float) * m_blocks * 3));
   }
-
-  if ((m_boxl.maxy == 0) || (n != m_gpu_npart))
+  // (min[3*i], min[3*i+1], min[3*i+2])
+  // are the octree box dynamical spatial constraints
+  // this array is updating per each block at each interaction calculation
+  // within the boundingBoxKernel
+  if ((m_boxl.minp == 0) || (n != m_gpu_npart))
   {
-   if (m_boxl.maxy != 0) cuda_safe_mem(cudaFree(m_boxl.maxy));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxy, sizeof(float) * m_blocks * 3));
-  }
-
-  if ((m_boxl.maxz == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.maxz != 0) cuda_safe_mem(cudaFree(m_boxl.maxz));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.maxz, sizeof(float) * m_blocks * 3));
-  }
-
-  if ((m_boxl.minx == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.minx != 0) cuda_safe_mem(cudaFree(m_boxl.minx));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minx, sizeof(float) * m_blocks * 3));
-  }
-
-  if ((m_boxl.miny == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.miny != 0) cuda_safe_mem(cudaFree(m_boxl.miny));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.miny, sizeof(float) * m_blocks * 3));
-  }
-
-  if ((m_boxl.minz == 0) || (n != m_gpu_npart))
-  {
-   if (m_boxl.minz != 0) cuda_safe_mem(cudaFree(m_boxl.minz));
-   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minz, sizeof(float) * m_blocks * 3));
+   if (m_boxl.minp != 0) cuda_safe_mem(cudaFree(m_boxl.minp));
+   cuda_safe_mem(cudaMalloc((void **)&m_boxl.minp, sizeof(float) * m_blocks * 3));
   }
 #endif // BARNES_HUT
   if(m_needsRGpu && ((n != m_gpu_npart) || (m_r_gpu_begin == 0))) {

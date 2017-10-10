@@ -54,12 +54,8 @@ void EspressoSystemInterface::initBH() {
     m_arrl.start = 0;
     m_arrl.sort = 0;
     m_mass = 0;
-    m_boxl.maxx = 0;
-    m_boxl.maxy = 0;
-    m_boxl.maxz = 0;
-    m_boxl.minx = 0;
-    m_boxl.miny = 0;
-    m_boxl.minz = 0;
+    m_boxl.maxp = 0;
+    m_boxl.minp = 0;
 }
 #endif
 

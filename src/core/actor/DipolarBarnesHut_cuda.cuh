@@ -34,12 +34,10 @@ typedef float dds_float ;
 #define SHARED_ARRAY_BH 512
 
 struct BHBox{
-	float *minx;
-	float *maxx;
-	float *miny;
-	float *maxy;
-	float *minz;
-	float *maxz;
+    // min positions' coordinates of the BH box
+	float *minp;
+	// max positions' coordinates of the BH box
+	float *maxp;
 };
 
 struct BHArrays{
