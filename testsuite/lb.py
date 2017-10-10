@@ -28,14 +28,14 @@ class LBTest(ut.TestCase):
                        'int_times': 20,
                        'time_step': 0.005,
                        'tau': 0.02,
-                       'agrid': 1.0,
-                       'box_l': 30.0,
+                       'agrid': 0.5,
+                       'box_l': 12.0,
                        'dens': 0.85,
                        'viscosity': 30.0,
                        'friction': 2.0,
-                       'temp': 1.0,
-                       'gamma': 1.0,
-                       'skin': 0.4,
+                       'temp': 1.5,
+                       'gamma': 1.5,
+                       'skin': 0.2,
                        'mom_prec': 1.e-11,
                        'mass_prec_per_node': 4.e-8,
                        'temp_confidence': 10}
@@ -66,7 +66,7 @@ class LBTest(ut.TestCase):
             pos = particle[3:6]
             f = particle[9:]
             v = particle[6:9]
-            self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ))
+            self.system.part.add(id=int(id), pos=pos, v=v, type=int(typ), rotation=[1,1,1])
 
         self.n_col_part = len(self.system.part)
 

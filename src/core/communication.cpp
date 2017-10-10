@@ -1063,7 +1063,6 @@ void mpi_send_vs_relative_slave(int pnode, int part) {
 // ********************************
 
 void mpi_send_rotation(int pnode, int part, int rot) {
-#ifdef ROTATION_PER_PARTICLE
   mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
@@ -1074,11 +1073,9 @@ void mpi_send_rotation(int pnode, int part, int rot) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_send_rotation_slave(int pnode, int part) {
-#ifdef ROTATION_PER_PARTICLE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
@@ -1086,7 +1083,6 @@ void mpi_send_rotation_slave(int pnode, int part) {
   }
 
   on_particle_change();
-#endif
 }
 
 void mpi_observable_lb_radial_velocity_profile() {
@@ -2379,7 +2375,7 @@ void mpi_set_particle_gamma(int pnode, int part, Vector3d gamma) {
      * node */
     p->p.gamma = gamma;
   } else {
-    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma});
+    comm_cart.send(pnode, SOME_TAG, gamma);
   }
 
   on_particle_change();
@@ -2412,7 +2408,7 @@ void mpi_set_particle_gamma_rot(int pnode, int part, Vector3d gamma_rot)
      * node */
     p->p.gamma_rot = gamma_rot;
   } else {
-    comm_cart.send(pnode, SOME_TAG, Vector3d{gamma_rot});
+    comm_cart.send(pnode, SOME_TAG, gamma_rot);
   }
 
   on_particle_change();

@@ -43,7 +43,7 @@ In this tutorial we explore the ways to simulate self-propulsion in the simulati
 
 \section{\label{sec:active}Active Particles}
 
-Active matter is a term that describes a class of systems, in which energy is constantly consumed to perform work. These systems are therefore highly out-of-equilibrium (thermodynamically) and (can) thus defy description using the standard framework of statistical mechanics. Active systems are, however, ubiquitous. On our length scale, we encounter flocks of birds~\cite{Ballerini_08}, schools of fish~\cite{Katz_11}, and, of course, humans~\cite{Helbing_00,Zhang_13,Sliverberg_13}; on the mesoscopic level examples are found in bacteria~\cite{Sokolov_07,Schwarz-Linek_12,Reufer_14}, sperm~\cite{Woolley_03,Riedel_05,Ma_14}, and algae~\cite{Polin_09,Geyer_13}; and on the nanoscopic level, transport along the cytoskeleton is achieved by myosin motors~\cite{Mizuno07}. This exemplifies that range of length scales which the field of active matter encompasses, as well as its diversity. Recent years have seen a huge increase in studies into systems consisting of self-propelled particles, in particular artificial ones in the colloidal regime~\cite{ismagilov,Paxton_04,Wang_06,Brown,Ebbens,Ebbens_12,Howse_07,Valadares_10,simmchen,Yoshinaga,Baraban_13a,Buttinoni_12,Solovev_09,Mei_11}. These self-propelled colloids show promise as physical model systems for complex biological behavior (bacteria moving collectively) and could be used to answer fundamental questions concerning out-of-equilibrium statistical physics~\cite{Cates_12,Cates_14}. Simulations can also play an important role in this regard, as the parameters are more easily tunable and the results `cleaner' than in experiments. The above should give you some idea of the importance of the emergent field of active matter and why you should be interested in performing simulations in it.
+Active matter is a term that describes a class of systems, in which energy is constantly consumed to perform work. These systems are therefore highly out-of-equilibrium (thermodynamically) and (can) thus defy description using the standard framework of statistical mechanics. Active systems are, however, ubiquitous. On our length scale, we encounter flocks of birds~\cite{Ballerini_08}, schools of fish~\cite{Katz_11}, and, of course, humans~\cite{Helbing_00,Zhang_13,Sliverberg_13}; on the mesoscopic level examples are found in bacteria~\cite{Sokolov_07,Schwarz-Linek_12,Reufer_14}, sperm~\cite{Woolley_03,Riedel_05,Ma_14}, and algae~\cite{Polin_09,Geyer_13}; and on the nanoscopic level, transport along the cytoskeleton is achieved by myosin motors~\cite{Mizuno07}. This exemplifies that range of length scales which the field of active matter encompasses, as well as its diversity. Recent years have seen a huge increase in studies into systems consisting of self-propelled particles, in particular artificial ones in the colloidal regime~\cite{ismagilov,Paxton_04,Wang_06,Brown,Ebbens,Ebbens_12,Howse_07,Valadares_10,simmchen,Yoshinaga,Baraban_13a,Buttinoni_12,Solovev_09,Mei_11}. These self-propelled colloids show promise as physical model systems for complex biological behavior (bacteria moving collectively) and could be used to answer fundamental questions concerning out-of-equilibrium statistical physics~\cite{Cates_12,Cates_14}. Simulations can also play an important role in this regard, as the parameters are more easily tunable and the results `cleaner' than in experiments. The above should give you some idea of the importance of the field of active matter and why you should be interested in performing simulations in it.
 
 \section{\label{sec:swimming}Active Particles in ESPResSo}
 
@@ -51,7 +51,7 @@ The current development master of \es{} ships with the new \code{ENGINE} feature
 
 \subsection{\label{sub:langevin}Self-Propulsion without Hydrodynamics}
 
-For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid bonds)~\cite{UG} to construct complex self-propelled objects.
+For this type of self-propulsion the Langevin thermostat is exploited. The Langevin thermostat causes a particle to experience a velocity-dependent friction~\cite{UG}. When a constant force is applied along the director, the friction causes the particle to attain a terminal velocity, due to the balance of driving and friction force, see Fig.~\ref{fig:balance}. The exponent with which the particle's velocity relaxes towards this value, depends on the strength of the friction and the mass of the particle. The \code{ENGINE} feature implies that rotation of the particles (the \code{ROTATION} feature) is compiled into \es{}. The particle can thus reorient due to external torques or due to thermal fluctuations, whenever the rotational degrees of freedom are thermalized. This `engine' building block can be connected to other particles,~\textit{e.g.}, via the virtual sites (rigid bonds)~\cite{UG} to construct complex self-propelled objects.
 
 \begin{figure}[!htb]
 \begin{center}
@@ -125,14 +125,14 @@ with enhanced diffusion coefficient $D_{\mathrm{eff}} = D + v^{2}\tau_{R}/6$.  N
 
 \subsection{\label{sub:config}Configuring \es{} for Active Matter}
 
-To start, you will need the latest version of the \es active-matter master. This can be obtained as follows, provided that you have correctly configured git. First acquire \es{} from the online source
+To start, you will need the latest version of the \es master. This can be obtained as follows, provided that you have correctly configured git. First acquire \es{} from the online source
 \footnote{\protect\url{https://github.com/espressomd/espresso}} via
 \begin{bash}
 $ git clone https://github.com/espressomd/espresso.git
 \end{bash}
-Then checkout the right commit to perform the simulations with. N.B. the active matter capability of \es{} is not yet a part of the release version. You can set the branch to the right commit via
+Then checkout the right commit to perform the simulations with. N.B. the active matter capability of \es{} is not yet a part of the release version. You can set get it via
 \begin{bash}
-$ git checkout Active_Matter -b my_active_matter_branch
+$ git checkout <name_of_remote_repository>/python -b my_active_matter_branch
 \end{bash}
 Now you are ready to configure \es{} in the newly created \es{} directory.
 \begin{bash}
@@ -160,7 +160,7 @@ Now you are ready to build \es{}.  You have to run \code{cmake} again to process
 $ cmake ..
 $ make -j 8
 \end{bash}
-Next you can unpack the archive with the tutorial files in this directory. You will find two folders, one called `EXERCISES' and one called `SOLUTIONS'.
+Next you can find the tutorial files in the ``../tutorials/python/06-active\_mater/'' directory. There are two folders, one called `EXERCISES' and one called `SOLUTIONS'. Copy the content of `EXERCISES' into your build directory.
 
 \subsection{\label{sub:edtut}The Enhanced-Diffusion Tutorial}
 
@@ -222,7 +222,7 @@ Despite the long run length, the quality of the MSD and (A)VACF can be lacking. 
 
 \section{\label{sec:rectify}Rectification}
 
-In this tutorial you will consider the `rectifying' properties of certain geometries on active systems. Rectification can best be understood by considering a system of passive particles first. In an in-equilibrium system, for which the particles are confined to an asymmetric box, we know that the particle density is homogeneous throughout, provided that there are no external potentials acting on the particles. There are, of course, limitations involving the particle size and the size of the geometry, but for an ideal gas this is certainly true. However, in an out-of-equilibrium setting one can have a heterogeneous distribution of particles, which limits the applicability of an 'effective' temperature description. For instance, self-propelled particles will move in a preferred direction a series of wedge-shaped obstacles~\cite{Berdakin13a}. If the obstacles are in a closed tube, then the self-propelled particles will accumulate on one end. Since the speed at which they accumulate depends on their self-motility, different bacteria can be separated in this way~\cite{Berdakin13b}.
+In this tutorial you will consider the `rectifying' properties of certain geometries on active systems. Rectification can best be understood by considering a system of passive particles first. In an in-equilibrium system, for which the particles are confined to an asymmetric box, we know that the particle density is homogeneous throughout, provided that there are no external potentials acting on the particles. There are, of course, limitations involving the particle size and the size of the geometry, but for an ideal gas this is certainly true. However, in an out-of-equilibrium setting one can have a heterogeneous distribution of particles, which limits the applicability of an `effective' temperature description. For instance, self-propelled particles will move in a preferred direction a series of wedge-shaped obstacles~\cite{Berdakin13a}. If the obstacles are in a closed tube, then the self-propelled particles will accumulate on one end. Since the speed at which they accumulate depends on their self-motility, different bacteria can be separated in this way~\cite{Berdakin13b}.
 
 \subsection{\label{sub:rgtut}The Rectifying-Geometry Tutorial}
 
