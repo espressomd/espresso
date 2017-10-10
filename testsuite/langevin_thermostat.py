@@ -25,7 +25,6 @@ from espressomd.interactions import FeneBond
 from time import time
 from espressomd.correlators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularMomentum
-import trace 
 
 
 
@@ -333,8 +332,6 @@ class LangevinThermostat(ut.TestCase):
            kT=kT, gamma=gamma as 3 component vector.
         """
         c=corr[p]
-        print(p,kT,gamma, type(c.obs1))
-        c.finalize()
         # Integral of vacf via Green-Kubo
         #D= int_0^infty <v(t_0)v(t_0+t)> dt     (o 1/3, since we work componentwise)
         acf=c.result()
