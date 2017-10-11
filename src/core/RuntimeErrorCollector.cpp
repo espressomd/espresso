@@ -35,7 +35,7 @@ RuntimeErrorCollector::RuntimeErrorCollector(const communicator &comm)
     : m_comm(comm) {}
 
 void RuntimeErrorCollector::message(const RuntimeError &message) {
-  m_errors.push_back(message);
+  m_errors.emplace_back(message);
 }
 
 void RuntimeErrorCollector::message(RuntimeError &&message) {
