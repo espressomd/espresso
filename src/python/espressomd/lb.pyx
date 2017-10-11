@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
+from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
+import os
 import numpy as np
 from .actors cimport Actor
 from . cimport cuda_init
@@ -25,7 +26,7 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-import os
+from . import system
 
 # Actor class
 ####################################################
@@ -245,6 +246,9 @@ IF LB_GPU:
             lb_lbfluid_get_interpolated_velocity_global(p, v)
             return v
 
+        def get_fluid_velocity_at_particle_positions(self):
+            velocities = lb_lbfluid_get_fluid_velocity_at_particle_positions()
+            return np.array(velocities).reshape(len(velocities)//3, 3)
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):

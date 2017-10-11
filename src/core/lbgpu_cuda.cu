@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+#include <vector>
 
 #include "electrokinetics.hpp"
 #include "electrokinetics_pdb_parse.hpp"
@@ -3728,7 +3729,7 @@ void lb_gpu_get_boundary_forces(double* forces) {
 #endif
 }
 
-__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f, int asdf) {
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, LB_node_force_gpu node_f) {
 
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   float temp_delta[6];
@@ -3853,7 +3854,7 @@ __global__ void fill_lb_radial_velocity_profile(LB_nodes_gpu n_a, radial_profile
   p[2]=z+pdata->center[2];
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = rbin*maxj*maxk + phibin*maxk + zbin;
 
  float v_r,v_phi;
@@ -3921,7 +3922,7 @@ __global__ void fill_lb_velocity_profile(LB_nodes_gpu n_a, profile_data* pdata, 
   p[2]=z;
 
   float v[3];
-  get_interpolated_velocity(n_a, p, v, node_f, 0);
+  get_interpolated_velocity(n_a, p, v, node_f);
   unsigned int linear_index = xbin*maxj*maxk + ybin*maxk + zbin;
 
   data[3*linear_index+0]=v[0];
@@ -4272,39 +4273,42 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
  * (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param n_a                   Pointer to local node residing in array a (Input)
  * @param *particle_data        Pointer to the particle position and velocity (Input)
- * @param *d_v                  Pointer to local device values
+ * @param *u_gpu                Pointer to float array (Output)
+ * @param node_f                Struct for node force (Input)
 */
-__global__ void get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, LB_rho_v_gpu *d_v){
-  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-  unsigned int node_index[8];
-  float delta[8];
-  float interpolated_u[3];
-  float mode[19*LB_COMPONENTS];
-  float position[3];
-  position[0] = particle_data[part_index].p[0];
-  position[1] = particle_data[part_index].p[1];
-  position[2] = particle_data[part_index].p[2];
-
-  // Do the velocity interpolation
-  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+__global__ void lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float* u_gpu, LB_node_force_gpu node_f){
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  if (index < para.number_of_particles) {
+    float position[3];
+    position[0] = particle_data[index].p[0];
+    position[1] = particle_data[index].p[1];
+    position[2] = particle_data[index].p[2];
+    // Do the velocity interpolation
+    get_interpolated_velocity(n_a, position, &u_gpu[3*index], node_f);
+  }
 }
 
 /** interface to get fluid velocities at particle positions
- * @param u velocities at the particle positions (Output)
 */
-void get_fluid_velocity_at_particle_positions(float *u) {
-    //call KERNEL and copy velocities from GPU to host
-    /** call of the particle kernel */
-    /** values for the particle kernel */
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) / 
-                                      (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-    KERNELCALL( get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles, 
-                ( *current_nodes, gpu_get_particle_pointer(), 
-                  device_rho_v )
-              );
+std::vector<float> lb_lbfluid_get_fluid_velocity_at_particle_positions() {
+  //call KERNEL and copy velocities from GPU to host
+  /** call of the particle kernel */
+  /** values for the particle kernel */
+  float* u_gpu;
+  cuda_safe_mem(cudaMalloc((void**)&u_gpu, 3*lbpar_gpu.number_of_particles*sizeof(float)));
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) /
+                                    (threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+  KERNELCALL( lb_lbfluid_get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles,
+              ( *current_nodes, gpu_get_particle_pointer(), u_gpu, node_f)
+            );
+  std::vector<float> u_host(3*lbpar_gpu.number_of_particles);
+
+  cuda_safe_mem(cudaMemcpy(u_host.data(), u_gpu, 3*lbpar_gpu.number_of_particles*sizeof(float), cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaFree(u_gpu));
+  return u_host;
 }
 
 #endif /* LB_GPU */

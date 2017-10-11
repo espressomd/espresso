@@ -104,7 +104,8 @@ IF LB_GPU or LB:
         int lb_lbfluid_get_interpolated_velocity_global(double *p, double *v)
 
     cdef extern from "lbgpu.hpp":
-        int lb_lbfluid_remove_total_momentum();
+        int lb_lbfluid_remove_total_momentum()
+        vector[float] lb_lbfluid_get_fluid_velocity_at_particle_positions()
 
     ###############################################
     #
