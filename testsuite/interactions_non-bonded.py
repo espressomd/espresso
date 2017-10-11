@@ -73,13 +73,15 @@ class InteractionsNonBondedTest(ut.TestCase):
 
     # ... and resulting force
     def lj_generic_force(self, r, eps, sig, cutoff, offset=0., e1=12, e2=6, b1=4., b2=4., delta=0., lam=1.):
-        f_lj = 0.
+        f_lj = 1.
         if (r >= offset + cutoff):
             f_lj = 0.
         else:
-            h = (r - offset)**2 - delta * (lam - 1.) * sig**2
+            h = (r - offset)**2 + delta * (1. - lam) * sig**2
             f_lj = (r - offset) * eps * lam * (
                 b1 * e1 * numpy.power(sig / numpy.sqrt(h), e1) - b2 * e2 * numpy.power(sig / numpy.sqrt(h), e2)) / h
+            if not espressomd.has_features(["LJGEN_SOFTCORE"]):
+                f_lj *= numpy.sign(r - offset)
         return f_lj
 
     # Test Generic Lennard-Jones Potential
