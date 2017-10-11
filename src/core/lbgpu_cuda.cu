@@ -1038,55 +1038,24 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
       
   if(y==0){
 
-    n_b.vd[(2 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
-                                                + para.dim_x*y
-                                                + para.dim_x*para.dim_y*z] =
-    1.0f/18.0f * (
-                       mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
-                     + mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
-                     - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
-                     + 2.0f*(mode[10 + ii * LBQ] - mode[16 + ii * LBQ]) 
-                   ) + nodes_LE_lower.vd[0];
-    
+    mode[2 + ii * LBQ] += nodes_LE_lower.vd[2];
+    mode[4 + ii * LBQ] += nodes_LE_lower.vd[4];
+    mode[5 + ii * LBQ] += nodes_LE_lower.vd[5];
+    mode[6 + ii * LBQ] += nodes_LE_lower.vd[6];
+    mode[7 + ii * LBQ] += nodes_LE_lower.vd[7];
+    mode[8 + ii * LBQ] += nodes_LE_lower.vd[8];
+    mode[9 + ii * LBQ] += nodes_LE_lower.vd[9];
+
     n_b.vd[(4 + ii*LBQ ) * para.number_of_nodes + x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
                                                 + para.dim_x*para.dim_y*z] =
-    1.0f/18.0f * (
+      1.0f/18.0f * (
                        mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
                      - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
                      + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
                      + 2.0f*(mode[11 + ii * LBQ] - mode[16 + ii * LBQ])
-                   ) + nodes_LE_lower.vd[1];
+                   );
 
-    n_b.vd[(5 + ii*LBQ ) * para.number_of_nodes + x
-                                                + para.dim_x*y
-                                                + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
-    1.0f/18.0f * (
-                       mode[0 + ii * LBQ] + mode[3 + ii * LBQ]
-                     - 2.0f*(   mode[ 6 + ii * LBQ] + mode[12 + ii * LBQ]
-                              + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
-                   ) + nodes_LE_lower.vd[2];
-
-    n_b.vd[(6 + ii*LBQ ) * para.number_of_nodes + x
-                                                + para.dim_x*y
-                                                + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
-      1.0f/18.0f * (
-                       mode[0 + ii * LBQ] - mode[3 + ii * LBQ]
-                     - 2.0f*(   mode[6 + ii * LBQ] - mode[12 + ii * LBQ]
-                              + mode[16 + ii * LBQ] - mode[18 + ii * LBQ])
-                   ) + nodes_LE_lower.vd[3];
-
-    n_b.vd[(7 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
-                                                + para.dim_x*((y+1)%para.dim_y)
-                                                + para.dim_x*para.dim_y*z] =
-      1.0f/36.0f * (
-                       mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
-                     + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
-                     + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
-                     + mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
-                     + mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
-                     + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                   ) + nodes_LE_lower.vd[4];
 
     n_b.vd[(8 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
@@ -1098,7 +1067,7 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      - mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
                      - mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                   ) + nodes_LE_lower.vd[5];
+                   );
 
     n_b.vd[(9 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
@@ -1110,12 +1079,102 @@ __device__ void calc_n_from_modes_push_LE(LB_nodes_gpu n_b, LB_nodes_gpu nodes_L
                      + mode[10 + ii * LBQ] - mode[11 + ii * LBQ]
                      + mode[13 + ii * LBQ] - mode[14 + ii * LBQ]
                      + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
-                   ) + nodes_LE_lower.vd[6];
+                   );
 
-   }
+    n_b.vd[(16 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
+                     - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                     + mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
+                     - mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
+                     + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                     - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                   );
 
-   else if(y == para.dim_y-1){
- 
+    n_b.vd[(18 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((para.dim_y+y-1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] - mode[ 2 + ii * LBQ]
+                     + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                     - mode[ 9 + ii * LBQ] - mode[11 + ii * LBQ]
+                     + mode[12 + ii * LBQ] + mode[14 + ii * LBQ]
+                     - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                     - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                   );
+    }
+
+  else if(y == para.dim_y-1){
+    
+    mode[2 + ii * LBQ] += nodes_LE_upper.vd[2];
+    mode[4 + ii * LBQ] += nodes_LE_upper.vd[4];
+    mode[5 + ii * LBQ] += nodes_LE_upper.vd[5];
+    mode[6 + ii * LBQ] += nodes_LE_upper.vd[6];
+    mode[7 + ii * LBQ] += nodes_LE_upper.vd[7];
+    mode[8 + ii * LBQ] += nodes_LE_upper.vd[8];
+    mode[9 + ii * LBQ] += nodes_LE_upper.vd[9];
+
+    n_b.vd[(3 + ii*LBQ ) * para.number_of_nodes + x
+                                                + para.dim_x*((y+1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] =
+      1.0f/18.0f * (
+                       mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                     - mode[ 5 + ii * LBQ] + mode[ 6 + ii * LBQ]
+                     + mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                     - 2.0f*(mode[11 + ii * LBQ] + mode[16 + ii * LBQ])
+                   );
+    n_b.vd[(7 + ii*LBQ ) * para.number_of_nodes + (x+1)%para.dim_x
+                                                + para.dim_x*((y+1)%para.dim_y)
+                                                + para.dim_x*para.dim_y*z] =
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] + mode[ 1 + ii * LBQ]
+                     + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     + 2.0f*mode[ 6 + ii * LBQ] + mode[ 7 + ii * LBQ]
+                     + mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
+                     + mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
+                     + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                   );
+    n_b.vd[(10 + ii*LBQ ) * para.number_of_nodes + (para.dim_x+x-1)%para.dim_x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*z] = 
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] - mode[ 1 + ii * LBQ]
+                     + mode[ 2 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     + 2.0f*mode[ 6 + ii * LBQ] - mode[ 7 + ii * LBQ]
+                     - mode[10 + ii * LBQ] + mode[11 + ii * LBQ]
+                     - mode[13 + ii * LBQ] + mode[14 + ii * LBQ]
+                     + mode[16 + ii * LBQ] + 2.0f*mode[18 + ii * LBQ]
+                   );
+
+    n_b.vd[(15 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((z+1)%para.dim_z)] =
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                     + mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                     + mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
+                     + mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
+                     - mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                     - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                   );
+
+    n_b.vd[(17 + ii*LBQ ) * para.number_of_nodes + x
+                                                 + para.dim_x*((y+1)%para.dim_y)
+                                                 + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] =
+      1.0f/36.0f * (
+                       mode[ 0 + ii * LBQ] + mode[ 2 + ii * LBQ]
+                     - mode[ 3 + ii * LBQ] + mode[ 4 + ii * LBQ]
+                     - mode[ 5 + ii * LBQ] - mode[ 6 + ii * LBQ]
+                     - mode[ 9 + ii * LBQ] + mode[11 + ii * LBQ]
+                     - mode[12 + ii * LBQ] - mode[14 + ii * LBQ]
+                     + mode[15 + ii * LBQ] + mode[16 + ii * LBQ]
+                     - mode[17 + ii * LBQ] - mode[18 + ii * LBQ]
+                   );
  } 
 }
 
@@ -2949,14 +3008,27 @@ __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_
     equilibrium_modes(mode, ii, u, &rho, modes_pi_with_LE);
 
     delta_m = nodes_LE_lower.vd;
+  
+    delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[2*para.dim_x*para.dim_z + delta_index]  = -lees_edwards_velocity * rho;
+    delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[4*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[0] - modes_pi_without_LE[0];
+    delta_m[5*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[1] - modes_pi_without_LE[1];
+    delta_m[6*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[2] - modes_pi_without_LE[2];
+    delta_m[7*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[3] - modes_pi_without_LE[3];
+    delta_m[8*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[4] - modes_pi_without_LE[4];
+    delta_m[9*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[5] - modes_pi_without_LE[5];
+    delta_m[10*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[11*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[12*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[13*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[14*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[15*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[16*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[17*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[18*para.dim_x*para.dim_z + delta_index]  = 0.0f;
 
-    delta_m[0*para.dim_x*para.dim_z + delta_index]  = -lees_edwards_velocity * rho;
-    delta_m[1*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[0] - modes_pi_without_LE[0];
-    delta_m[2*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[1] - modes_pi_without_LE[1];
-    delta_m[3*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[2] - modes_pi_without_LE[2];
-    delta_m[4*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[3] - modes_pi_without_LE[3];
-    delta_m[5*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[4] - modes_pi_without_LE[4];
-    delta_m[6*para.dim_x*para.dim_z + delta_index]  = modes_pi_with_LE[5] - modes_pi_without_LE[5];
   }
   else if(pos[1] == para.dim_y-1) {
     equilibrium_modes(mode, ii, u, &rho, modes_pi_without_LE);
@@ -2965,14 +3037,27 @@ __device__ void calculate_LE_mode_delta(float *mode, int index, LB_rho_v_gpu *d_
     equilibrium_modes(mode, ii, u, &rho, modes_pi_with_LE);
 
     delta_m = nodes_LE_upper.vd;
-
-    delta_m[0*para.dim_x*para.dim_z + delta_index] = lees_edwards_velocity * rho;
-    delta_m[1*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[0] - modes_pi_without_LE[0];
-    delta_m[2*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[1] - modes_pi_without_LE[1];
-    delta_m[3*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[2] - modes_pi_without_LE[2];
-    delta_m[4*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[3] - modes_pi_without_LE[3];
-    delta_m[5*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[4] - modes_pi_without_LE[4];
-    delta_m[6*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[5] - modes_pi_without_LE[5];
+    
+    delta_m[0*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[1*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[2*para.dim_x*para.dim_z + delta_index] = lees_edwards_velocity * rho;
+    delta_m[3*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[4*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[0] - modes_pi_without_LE[0];
+    delta_m[5*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[1] - modes_pi_without_LE[1];
+    delta_m[6*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[2] - modes_pi_without_LE[2];
+    delta_m[7*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[3] - modes_pi_without_LE[3];
+    delta_m[8*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[4] - modes_pi_without_LE[4];
+    delta_m[9*para.dim_x*para.dim_z + delta_index] = modes_pi_with_LE[5] - modes_pi_without_LE[5];
+    delta_m[10*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[11*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[12*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[13*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[14*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[15*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[16*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[17*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+    delta_m[18*para.dim_x*para.dim_z + delta_index]  = 0.0f;
+  
   }
 }
 
@@ -3400,8 +3485,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 #endif
 
 #ifdef LEES_EDWARDS
-  free_and_realloc(nodes_LE_upper.vd, lbpar_gpu->dim_x * lbpar_gpu->dim_z * 7 * sizeof(float));
-  free_and_realloc(nodes_LE_lower.vd, lbpar_gpu->dim_x * lbpar_gpu->dim_z * 7 * sizeof(float));
+  free_and_realloc(nodes_LE_upper.vd, lbpar_gpu->dim_x * lbpar_gpu->dim_z * 19 * sizeof(float));
+  free_and_realloc(nodes_LE_lower.vd, lbpar_gpu->dim_x * lbpar_gpu->dim_z * 19 * sizeof(float));
 #endif
 
   free_and_realloc(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
