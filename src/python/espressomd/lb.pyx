@@ -248,6 +248,10 @@ IF LB_GPU:
 
         def get_fluid_velocity_at_particle_positions(self):
             """ Calculate the fluid velocity at all particle positions.
+            
+            Note
+            ----
+            Velocities are ordered by particle id.
 
             Returns
             -------
