@@ -209,7 +209,13 @@ IF REACTION_ENSEMBLE:
         
         def reaction(self, reaction_steps = 1):
             """
-            performs one randomly selected reaction of the provided reaction system
+            performs randomly selected reactions of the provided reaction system
+            
+            Parameters
+            ----------
+            reaction_steps : int
+                              the number of reactions to be performed at once, defaults to 1
+                         
             """
             RE.do_reaction(reaction_steps)
         
