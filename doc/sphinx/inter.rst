@@ -232,9 +232,9 @@ section :ref:`Capping the force during warmup`
 The optional ``LJGEN_SOFTCORE`` feature activates a softcore version of
 the potential, where the following transformations apply:
 :math:`\epsilon \rightarrow \lambda \epsilon` and
-:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 -
-(1-\lambda) \delta \sigma^2}`. allows to tune the strength of the
-interaction, while varies how smoothly the potential goes to zero as
+:math:`r-r_\mathrm{off} \rightarrow \sqrt{(r-r_\mathrm{off})^2 +
+(1-\lambda) \delta \sigma^2}`. :math:`\lambda` allows to tune the strength of the
+interaction, while :math:`\delta` varies how smoothly the potential goes to zero as
 :math:`\lambda\rightarrow 0`. Such a feature allows one to perform
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
