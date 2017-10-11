@@ -2190,6 +2190,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 
 }
 
+
+
 /**calculation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
   (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  * @param *delta        Pointer for the weighting of particle position (Input)
@@ -4264,5 +4266,45 @@ void lb_lbfluid_get_population( int xyz[3], float population_host[LBQ], int c )
   cuda_safe_mem(cudaFree(population_device));
 }
 
+
+/**
+ * get_fluid_velocity_at_particle_positions_kernel
+ * (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ * @param n_a                   Pointer to local node residing in array a (Input)
+ * @param *particle_data        Pointer to the particle position and velocity (Input)
+ * @param *d_v                  Pointer to local device values
+*/
+__global__ void get_fluid_velocity_at_particle_positions_kernel(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, LB_rho_v_gpu *d_v){
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int node_index[8];
+  float delta[8];
+  float interpolated_u[3];
+  float mode[19*LB_COMPONENTS];
+  float position[3];
+  position[0] = particle_data[part_index].p[0];
+  position[1] = particle_data[part_index].p[1];
+  position[2] = particle_data[part_index].p[2];
+
+  // Do the velocity interpolation
+  interpolation_two_point_coupling(n_a, position, node_index, mode, d_v, delta, interpolated_u);
+}
+
+/** interface to get fluid velocities at particle positions
+ * @param u velocities at the particle positions (Output)
+*/
+void get_fluid_velocity_at_particle_positions(float *u) {
+    //call KERNEL and copy velocities from GPU to host
+    /** call of the particle kernel */
+    /** values for the particle kernel */
+    int threads_per_block_particles = 64;
+    int blocks_per_grid_particles_y = 4;
+    int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1) / 
+                                      (threads_per_block_particles * blocks_per_grid_particles_y);
+    dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+    KERNELCALL( get_fluid_velocity_at_particle_positions_kernel, dim_grid_particles, threads_per_block_particles, 
+                ( *current_nodes, gpu_get_particle_pointer(), 
+                  device_rho_v )
+              );
+}
 
 #endif /* LB_GPU */
