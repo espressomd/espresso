@@ -225,6 +225,26 @@ IF LB_GPU:
                 return
             ELSE:
                 raise Exception("LB_GPU not compiled in")
+            
+        def get_interpolated_velocity(self, pos):
+            """Get LB fluid velocity at specified position.
+
+            Parameters
+            ----------
+            pos : array_like :obj:`float`
+                  The position at which velocity is requested.
+
+            Returns
+            -------
+            v : array_like :obj:`float`
+                The LB fluid velocity at ``pos``.
+
+            """
+            cdef double[3] p = pos
+            cdef double[3] v
+            lb_lbfluid_get_interpolated_velocity_global(p, v)
+            return v
+
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
