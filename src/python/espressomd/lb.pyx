@@ -26,7 +26,6 @@ from . import cuda_init
 from globals cimport *
 from copy import deepcopy
 from . import utils
-from . import system
 
 # Actor class
 ####################################################
