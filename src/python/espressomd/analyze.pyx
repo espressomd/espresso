@@ -628,10 +628,28 @@ class Analysis(object):
 
 
     def calc_re(self, chain_start=None, number_of_chains=None, chain_length=None):
+        """
+        Calculates the Root Mean Square end-to-end distance of chains and its standard deviation, as well as Mean Square end-to-end distance of chains and its standard deviation.
+        
+        Parameters
+        ----------
+        chain_start : :obj:`int`.
+        number_of_chains : :obj:`int`.
+        chain_length : :obj:`int`.
+        
+        Returns            
+        -------
+        array_like
+            Where [0] is the Root Mean Square end-to-end distance of chains
+            and [1] its standard deviation,
+            [2] the Mean Square end-to-end distance
+            and [3] its standard deviation.
+
+        """
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
         c_analyze.calc_re(c_analyze.partCfg(), & re)
-        tuple_re = (re[0], re[1], re[2])
+        tuple_re = (re[0], re[1], re[2], re[3])
         free(re)
         return tuple_re
 
