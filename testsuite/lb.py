@@ -21,7 +21,7 @@ class LBTest(ut.TestCase):
     """
     system = espressomd.System()
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    system.seed = np.random.randint(low=1, high=2**31 - 1, size=n_nodes)
+    system.seed = range(n_nodes)
 
     def setUp(self):
         self.params = {'int_steps': 100,
