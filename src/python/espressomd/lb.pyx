@@ -277,8 +277,17 @@ IF LB or LB_GPU:
                 lb_lbnode_get_u(self.node, double_return)
                 return double_return
 
-            def __set__(self, value):
-                raise Exception("Not implemented.")
+            IF LB_GPU:
+                def __set__(self, value):
+                    cdef double[3] host_velocity
+                    if all(isinstance(v, float) for v in value) and len(value) == 3:
+                        host_velocity = value
+                        lb_lbnode_set_u(self.node, host_velocity)
+                    else:
+                        raise ValueError("Velocity has to be of shape 3 and type float.")
+            ELSE:
+                def __set__(self, value):
+                    raise NotImplementedError("Not implemented for CPU LB.")
 
         property density:
             def __get__(self):
@@ -287,7 +296,7 @@ IF LB or LB_GPU:
                 return double_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
 
         property pi:
@@ -299,7 +308,7 @@ IF LB or LB_GPU:
                                  [pi[3],pi[4],pi[5]]])
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property pi_neq:
             def __get__(self):
@@ -310,7 +319,7 @@ IF LB or LB_GPU:
                                  [pi[3],pi[4],pi[5]]])
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
 
         property population:
             def __get__(self):
@@ -329,4 +338,4 @@ IF LB or LB_GPU:
                 return int_return
 
             def __set__(self, value):
-                raise Exception("Not implemented.")
+                raise NotImplementedError
