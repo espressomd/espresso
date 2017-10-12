@@ -33,9 +33,11 @@ ReactionEnsemble::~ReactionEnsemble(){
 /**
 * Performs a randomly selected reaction in the reaction ensemble
 */
-int ReactionEnsemble::do_reaction(){
-	int reaction_id=i_random(m_current_reaction_system.nr_single_reactions);
-	generic_oneway_reaction(reaction_id, reaction_ensemble_mode);
+int ReactionEnsemble::do_reaction(int reaction_steps){
+    for (int i = 0; i< reaction_steps; i++){
+        int reaction_id=i_random(m_current_reaction_system.nr_single_reactions);
+    	generic_oneway_reaction(reaction_id, reaction_ensemble_mode);
+    }
 	return 0;
 }
 
