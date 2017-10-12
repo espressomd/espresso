@@ -143,7 +143,7 @@ public:
   bool m_system_is_in_1_over_t_regime = false;
 
   void set_cuboid_reaction_ensemble_volume();
-  int do_reaction();
+  int do_reaction(int reaction_steps);
   int check_reaction_ensemble();
   int calculate_nu_bar(int *reactant_coefficients, int len_reactant_types,
                        int *product_coefficients,
