@@ -43,6 +43,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
         p = np.array(s.analysis.analyze_linear_momentum())
 
         self.assertAlmostEqual(np.max(p), 0., places=3)
+        self.assertAlmostEqual(np.min(p), 0., places=3)
 
 if __name__ == "__main__":
     #print("Features: ", espressomd.features())
