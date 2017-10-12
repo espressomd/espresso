@@ -24,7 +24,8 @@ class RemoveTotalMomentumTest(ut.TestCase):
         for i in range(100):
             r = s.box_l * np.random.random(3)
             v = [1., 1., 1.] * np.random.random(3)
-            s.part.add(pos=r, v=v)
+            # Make sure that id gaps work correctly
+            s.part.add(id=2*i, pos=r, v=v)
 
         if espressomd.has_features(["MASS"]):
             # Avoid masses too small for the time step

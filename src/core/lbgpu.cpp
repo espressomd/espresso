@@ -41,6 +41,7 @@
 #include "lbboundaries.hpp"
 #include "cuda_interface.hpp"
 #include "statistics.hpp"
+#include "partCfg_global.hpp"
 #ifdef LB_GPU
 
 
@@ -442,24 +443,19 @@ int lb_lbfluid_load_checkpoint_wrapper(char* filename, int binary)
   return lb_lbfluid_load_checkpoint(filename, binary);
 }
 
-void lb_lbfluid_particles_add_momentum ( float momentum[3] )
-{
-  for (int i = 0; i < lbpar_gpu.number_of_particles; ++i)
-  {
-    double mass;
-#ifdef MASS
-    mass = particle_data_host[i].mass;
-#else
-    mass = 1.;
-#endif
+void lb_lbfluid_particles_add_momentum(float momentum[3]) {
+  auto & parts = partCfg();
+  auto const n_part = parts.size();
 
+  for (auto const &p : parts) {
     double new_velocity[3] = {
-      particle_data_host[i].v[0] + momentum[0] / mass * time_step / lbpar_gpu.number_of_particles,
-      particle_data_host[i].v[1] + momentum[1] / mass * time_step / lbpar_gpu.number_of_particles,
-      particle_data_host[i].v[2] + momentum[2] / mass * time_step / lbpar_gpu.number_of_particles
-    };
-
-    set_particle_v( i, new_velocity );
+        p.m.v[0] +
+            momentum[0] / p.p.mass * time_step / n_part,
+        p.m.v[1] +
+            momentum[1] / p.p.mass * time_step / n_part,
+        p.m.v[2] +
+            momentum[2] / p.p.mass * time_step / n_part};
+    set_particle_v(p.p.identity, new_velocity);
   }
 }
 
